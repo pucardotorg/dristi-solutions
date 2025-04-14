@@ -768,11 +768,6 @@ const ComplainantSignature = ({ path }) => {
                     uuid: advocate?.additionalDetails?.uuid,
                   }))
                 : []),
-              ...(Array.isArray(caseDetails?.poaHolders)
-                ? caseDetails?.poaHolders?.map((poaHolder) => ({
-                    uuid: poaHolder?.additionalDetails?.uuid,
-                  }))
-                : []),
             ];
             await DRISTIService.customApiService(Urls.dristi.pendingTask, {
               pendingTask: {

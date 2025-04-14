@@ -111,14 +111,14 @@
                         },
                         {
                           "type": "phonenumber",
-                          "label": "CS_POA_MOBILE_NUMBER",
+                          "label": "PHONE_NUMBER",
                           "value": "poaVerification.mobileNumber",
                           "dependentOn": "transferredPOA.code",
                           "dependentValue": "YES"
                         },
                         {
                           "type": "image",
-                          "label": "CS_POA_ID_PROOF",
+                          "label": "CS_ID_PROOF",
                           "value": [
                             "poaVerification.individualDetails.document"
                           ],
@@ -128,18 +128,10 @@
                         },
                         {
                           "type": "address",
-                          "label": "CS_POA_ADDRESS",
+                          "label": "ADDRESS",
                           "dependentOn": "transferredPOA.code",
                           "dependentValue": "YES",
                           "value": "poaAddressDetails",
-                          "enableScrutinyField": true
-                        },
-                        {
-                          "type": "image",
-                          "label": "POA_AUTHORIZATION_DOCUMENT",
-                          "dependentOn": "transferredPOA.code",
-                          "dependentValue": "YES",
-                          "value": ["poaAuthorizationDocument.poaDocument"],
                           "enableScrutinyField": true
                         }
                       ],
@@ -574,9 +566,9 @@
       "isActive": true,
       "auditDetails": {
         "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
-        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "5eea71ba-9e58-4a55-8be5-5345f235437d",
         "createdTime": 1728658386904,
-        "lastModifiedTime": 1744367468128
+        "lastModifiedTime": 1742381589221
       }
     }
   ]

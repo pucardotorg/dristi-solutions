@@ -742,10 +742,6 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
           ?.documents?.some((document) => document?.additionalDetails?.fileType === "respondent-response");
 
         if ("PENDING_RESPONSE" === caseDetails?.status && !party?.isComplainant && !isResponseSubmitted) {
-          const poaHolders = (caseDetails?.poaHolders || [])
-            ?.filter((poa) => poa?.representingLitigants?.some((represent) => represent?.individualId === individual?.individualId))
-            ?.map((poaHolder) => ({ uuid: poaHolder?.additionalDetails?.uuid }));
-
           try {
             await DRISTIService.customApiService(Urls.dristi.pendingTask, {
               pendingTask: {
@@ -753,7 +749,7 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
                 entityType: "case-default",
                 referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${individual?.individualId}`,
                 status: "PENDING_RESPONSE",
-                assignedTo: [{ uuid: individual?.userUuid }, ...(poaHolders?.length > 0 ? poaHolders : [])],
+                assignedTo: [{ uuid: individual?.userUuid }],
                 assignedRole: ["CASE_RESPONDER"],
                 cnrNumber: caseDetails?.cnrNumber,
                 filingNumber: caseDetails?.filingNumber,
@@ -1139,11 +1135,6 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
                     })
                     ?.map((user) => {
                       const { isFound, representatives } = searchLitigantInRepresentives(caseDetails?.representatives, user?.individualId);
-
-                      const poaHolders = (caseDetails?.poaHolders || [])
-                        ?.filter((poa) => poa?.representingLitigants?.some((represent) => represent?.individualId === user?.individualId))
-                        ?.map((poaHolder) => ({ uuid: poaHolder?.additionalDetails?.uuid }));
-
                       return DRISTIService.customApiService(Urls.dristi.pendingTask, {
                         pendingTask: {
                           name: `${t("PENDING_RESPONSE_FOR")} ${user?.fullName}`,
@@ -1154,7 +1145,6 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
                             { uuid: user?.uuid },
                             ...(isFound ? representatives?.map((representative) => ({ uuid: representative?.additionalDetails?.uuid })) : []),
                             { uuid: individual?.userUuid },
-                            ...(poaHolders?.length > 0 ? poaHolders : []),
                           ],
                           assignedRole: ["CASE_RESPONDER"],
                           cnrNumber: caseDetails?.cnrNumber,
