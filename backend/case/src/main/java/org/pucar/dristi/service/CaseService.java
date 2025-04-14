@@ -1394,12 +1394,14 @@ public class CaseService {
     }
 
     private boolean checkPIPAffidavitPresent(Party litigant) {
-        for (Document document : litigant.getDocuments()) {
-            Object additionalDetails = document.getAdditionalDetails();
-            ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
-            String documentName = additionalDetailsNode.get("documentName").asText();
-            if (UPLOAD_PIP_AFFIDAVIT.equals(documentName)) {
-                 return true;
+        if(litigant.getDocuments()!=null && !litigant.getDocuments().isEmpty()) {
+            for (Document document : litigant.getDocuments()) {
+                Object additionalDetails = document.getAdditionalDetails();
+                ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
+                String documentName = additionalDetailsNode.get("documentName").asText();
+                if (UPLOAD_PIP_AFFIDAVIT.equals(documentName)) {
+                    return true;
+                }
             }
         }
         return false;
