@@ -1076,7 +1076,6 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
                     const { isFound } = searchLitigantInRepresentives(caseDetails?.representatives, item?.individualId);
                     return {
                       individualId: item?.individualId,
-                      uniqueId: item?.uniqueId,
                       replaceAdvocates: (litigantAdvocateGroup?.[item?.individualId] || [])
                         ?.map((advocate) => advocate?.advocateId)
                         ?.filter((advocateId) => Boolean(advocateId))
