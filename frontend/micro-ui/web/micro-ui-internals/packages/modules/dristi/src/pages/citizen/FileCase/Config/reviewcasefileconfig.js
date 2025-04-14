@@ -276,6 +276,12 @@ export const reviewCaseFileFormConfig = [
                   value: "chequeAmount",
                 },
                 {
+                  type: "text",
+                  label: "POLICE_STATION",
+                  value: "policeStation.name",
+                  isLocalizationRequired: true,
+                },
+                {
                   type: "date",
                   label: "CS_DATE_OF_CHEQUE_DEPOSIT",
                   value: "depositDate",

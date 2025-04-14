@@ -1312,6 +1312,9 @@ function EFilingCases({ path }) {
                     key = formComponent.key + "." + formComponent?.name;
                   }
                 }
+                if (selected === "chequeDetails" && ["dropdown"].includes(formComponent.type)) {
+                  key = formComponent.key + "." + formComponent?.populators?.optionsKey;
+                }
                 if (selected === "demandNoticeDetails" && formComponent.component === "SelectUserTypeComponent") {
                   key =
                     formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name + "." + formComponent.populators?.inputs?.[0]?.optionsKey;
