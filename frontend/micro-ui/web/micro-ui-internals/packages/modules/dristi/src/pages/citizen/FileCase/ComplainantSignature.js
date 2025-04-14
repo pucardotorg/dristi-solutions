@@ -530,7 +530,8 @@ const ComplainantSignature = ({ path }) => {
         ?.join(", ");
       return `${litigant?.additionalDetails?.fullName} - Complainant ${litigant?.additionalDetails?.currentPosition}, PoA holder for ${representedNames}`;
     } else if (isCurrentPersonPoa) {
-      const poaHolder = poaHolders?.find((poa) => poa?.additionalDetails?.uuid === userInfo?.uuid);
+      const advocate = caseDetails?.representatives?.find((adv) => adv?.additionalDetails?.uuid === userInfo?.uuid);
+      const poaHolder = poaHolders?.find((poa) => poa?.individualId === advocate?.individualId);
       const representedNames = poaHolder?.representingLitigants
         ?.map((rep) => rep?.additionalDetails?.fullName)
         ?.filter(Boolean)
@@ -822,7 +823,7 @@ const ComplainantSignature = ({ path }) => {
   };
 
   const isSubmitEnabled = () => {
-    return isEsignSuccess || isCurrentAdvocateSigned || isCurrentLitigantSigned || isCurrentPoaSigned || isCurrentLitigantContainPoa || uploadDoc;
+    return isEsignSuccess || isCurrentAdvocateSigned || isCurrentLitigantSigned || isCurrentPoaSigned || !isCurrentLitigantContainPoa || uploadDoc;
   };
 
   useEffect(() => {
