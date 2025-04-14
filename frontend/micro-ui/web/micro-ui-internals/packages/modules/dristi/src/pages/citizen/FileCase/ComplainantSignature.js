@@ -351,10 +351,9 @@ const ComplainantSignature = ({ path }) => {
     userInfo,
   ]);
 
-  const isCurrentPersonPoaComplainant = useMemo(
-    () => isCurrentPersonPoa && litigants?.some((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid),
-    [litigants, userInfo, isCurrentPersonPoa]
-  );
+  const isCurrentPersonPoaComplainant = useMemo(() => {
+    isCurrentPersonPoa && litigants?.some((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid);
+  }, [litigants, userInfo, isCurrentPersonPoa]);
 
   const state = useMemo(() => caseDetails?.status, [caseDetails]);
   const isSelectedEsign = useMemo(() => {
