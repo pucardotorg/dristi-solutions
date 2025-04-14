@@ -75,6 +75,7 @@ public class ServiceConstants {
     public static final String BREAKUP_TO_HEAD_MASTER = "breakUpToHeadMapping";
     public static final String PAYMENT_TO_BREAKUP_MASTER = "paymentTypeToBreakupMapping";
     public static final String PAYMENT_TYPE_MASTER = "paymentType";
+    public static final String PAYMENTMASTERCODE = "PaymentMasterCode";
     public static final String PAYMENT_DISTRIBUTION_EXISTS = "PAYMENT_DISTRIBUTION_EXISTS";
     public static final String DEMAND_CREATION_ERROR = "DEMAND_CREATION_ERROR";
     public static final String MDMS_DATA_MISSING = "MDMS_DATA_MISSING";
