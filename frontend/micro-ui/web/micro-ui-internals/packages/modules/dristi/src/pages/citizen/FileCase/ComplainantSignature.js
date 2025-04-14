@@ -859,7 +859,7 @@ const ComplainantSignature = ({ path }) => {
     if (isAdvocateFilingCase) {
       return !(isCurrentAdvocateSigned || isOtherAdvocateSigned || isCurrentPoaSigned || isEsignSuccess || uploadDoc);
     }
-    return !(isCurrentLitigantSigned || isCurrentPoaSigned || (isCurrentLitigantContainPoa && !isCurrentPersonPoa) || isEsignSuccess);
+    return !(isCurrentLitigantSigned || isCurrentPoaSigned || isCurrentLitigantContainPoa || isEsignSuccess);
   };
 
   if (isLoading) {
