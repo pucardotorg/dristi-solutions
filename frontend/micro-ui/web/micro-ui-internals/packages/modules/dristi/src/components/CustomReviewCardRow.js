@@ -829,7 +829,7 @@ const CustomReviewCardRow = ({
                         justifyContent: "space-between",
                       }}
                     >
-                      <div className="label">{t("Address")}</div>
+                      <div className="label">{t(label)}</div>
                       <div className="value">
                         <p style={{ marginBottom: "8px" }}>{item?.address}</p>
                         <LocationContent
