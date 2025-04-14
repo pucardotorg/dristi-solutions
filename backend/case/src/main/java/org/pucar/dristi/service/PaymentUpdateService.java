@@ -90,7 +90,7 @@ public class PaymentUpdateService {
 
         try {
             TaskRequest taskRequest = mapper.convertValue(record, TaskRequest.class);
-            if(JOIN_CASE_PAYMENT.equalsIgnoreCase(taskRequest.getTask().getTaskType())){
+            if(JOIN_CASE_PAYMENT.equalsIgnoreCase(taskRequest.getTask().getTaskType()) && APPROVED.equalsIgnoreCase(taskRequest.getTask().getStatus())) {
                 Object taskDetails = taskRequest.getTask().getTaskDetails();
                 Map<String, Object> taskDetailsMap = mapper.convertValue(taskDetails, new TypeReference<Map<String, Object>>() {
                 });
