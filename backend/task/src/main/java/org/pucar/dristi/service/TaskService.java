@@ -71,11 +71,11 @@ public class TaskService {
 
     public Task createTask(TaskRequest body) {
         try {
-            validator.validateTaskRegistration(body);
-
-            enrichmentUtil.enrichTaskRegistration(body);
-
-            workflowUpdate(body);
+//            validator.validateTaskRegistration(body);
+//
+//            enrichmentUtil.enrichTaskRegistration(body);
+//
+//            workflowUpdate(body);
 
             if(body.getTask().getTaskType().equalsIgnoreCase("SUMMONS")
              || body.getTask().getTaskType().equalsIgnoreCase("WARRANT")) {
@@ -482,21 +482,20 @@ public class TaskService {
             JsonNode taskDetails = getTaskDetails(taskRequest);
             JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
 
-            additionalDetails = updateGeoLocationFromTask(
-                    additionalDetails,
-                    taskDetails,
-                    "respondentDetails",
-                    "/respondentDetails/formdata"
+            Map<String, String> partyToPathMap = Map.of(
+                    "respondentDetails", "/respondentDetails/formdata",
+                    "witnessDetails", "/witnessDetails/formdata"
             );
 
-            if (taskDetails.has("witnessDetails")) {
-                additionalDetails = updateGeoLocationFromTask(
-                        additionalDetails,
-                        taskDetails,
-                        "witnessDetails",
-                        "/witnessDetails/formdata"
-                );
+            for (Map.Entry<String, String> entry : partyToPathMap.entrySet()) {
+                String partyKey = entry.getKey();
+                String formDataPath = entry.getValue();
+
+                if (taskDetails.has(partyKey)) {
+                    additionalDetails = updateGeoLocationFromTask(additionalDetails, taskDetails, partyKey, formDataPath);
+                }
             }
+
 
             courtCase.setAdditionalDetails(additionalDetails);
             caseUtil.editCase(taskRequest.getRequestInfo(), courtCase);
