@@ -117,6 +117,7 @@ public class ServiceConstants {
     public static final String ADVOCATE_ROLE = "ADVOCATE_ROLE";
     public static final String EMPLOYEE = "EMPLOYEE";
     public static final String PAYMENT_PENDING = "PENDING_PAYMENT";
+    public static final String UPLOAD_PIP_AFFIDAVIT = "UPLOAD_PIP_AFFIDAVIT";
 
     public static final String PENDING_E_SIGN = "PENDING_E-SIGN";
 
