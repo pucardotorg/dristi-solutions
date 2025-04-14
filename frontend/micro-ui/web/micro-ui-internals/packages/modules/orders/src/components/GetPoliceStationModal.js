@@ -2,6 +2,20 @@ import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { Modal, CloseSvg, TextInput, CardLabel, Dropdown } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
+import SelectCustomNote from "@egovernments/digit-ui-module-dristi/src/components/SelectCustomNote";
+import { InfoIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
+
+const customNoteConfig = {
+  populators: {
+    inputs: [
+      {
+        infoHeader: "CS_COMMON_NOTE",
+        infoText: "POLICE_STATION_LOCATION_INFO",
+        showTooltip: true,
+      },
+    ],
+  },
+};
 
 const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect, address }) => {
   const { t } = useTranslation();
@@ -144,7 +158,7 @@ const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect,
     <Modal
       headerBarMain={<h1 className="heading-m">{t("FIND_POLICE_STATION")}</h1>}
       headerBarEnd={<CloseBtn onClick={onClose} />}
-      actionCancelLabel={t("CANCEL")}
+      actionCancelLabel={t("CS_COMMON_CANCEL")}
       actionCancelOnSubmit={onClose}
       actionSaveLabel={t("SAVE")}
       actionSaveOnSubmit={handleSave}
@@ -154,7 +168,7 @@ const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect,
       isOpen={isOpen}
       popmoduleClassName={"get-police-station-modal"}
     >
-      <div style={{ padding: "24px" }}>
+      <div style={{ padding: "24px 0px" }}>
         <div style={{ marginBottom: "24px" }}>
           <div
             style={{
@@ -172,70 +186,49 @@ const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect,
           </div>
         </div>
 
-        <div
-          className="info-banner"
-          style={{
-            background: "#F6F6FF",
-            padding: "16px",
-            marginBottom: "24px",
-            borderRadius: "4px",
-            display: "flex",
-            alignItems: "flex-start",
-            gap: "12px",
-          }}
-        >
-          <div
-            style={{
-              color: "#0B0C0C",
-              fontWeight: "bold",
-              fontSize: "16px",
-              marginRight: "8px",
-            }}
-          >
-            {t("NOTE")}
-          </div>
-          <div style={{ color: "#505A5F", fontSize: "14px" }}>{t("POLICE_STATION_LOCATION_INFO")}</div>
+        <div style={{ marginBottom: "16px" }}>
+          <SelectCustomNote t={t} config={customNoteConfig}></SelectCustomNote>
         </div>
 
         <div style={{ display: "flex", gap: "24px", marginBottom: "24px", alignItems: "center" }}>
           <div style={{ flex: 1 }}>
-            <CardLabel>{t("LATITUDE")}</CardLabel>
+            <CardLabel style={{ paddingBottom: "5px" }}>{t("LATITUDE")}</CardLabel>
             <TextInput
               type="text"
               value={coordinates.latitude}
               onChange={(e) => handleInputChange(e, "latitude")}
-              style={{ width: "100%" }}
+              style={{ width: "100%", height: "40px" }}
               disable={isLoading}
               error={errors.latitude}
             />
             {errors.latitude && <div style={{ color: "#d4351c", fontSize: "14px", marginTop: "4px" }}>{errors.latitude}</div>}
           </div>
           <div style={{ flex: 1 }}>
-            <CardLabel>{t("LONGITUDE")}</CardLabel>
+            <CardLabel style={{ paddingBottom: "5px" }}>{t("LONGITUDE")}</CardLabel>
             <TextInput
               type="text"
               value={coordinates.longitude}
               onChange={(e) => handleInputChange(e, "longitude")}
-              style={{ width: "100%" }}
+              style={{ width: "100%", height: "40px" }}
               disable={isLoading}
               error={errors.longitude}
             />
             {errors.longitude && <div style={{ color: "#d4351c", fontSize: "14px", marginTop: "4px" }}>{errors.longitude}</div>}
           </div>
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, marginTop: "4px" }}>
             <button
               onClick={getPoliceStationByLocation}
               disabled={isLoading || hasValidationErrors}
               style={{
                 background: "white",
-                border: "1px solid #1DB4AE",
-                color: "#1DB4AE",
+                height: "40px",
+                border: "1px solid #007E7E",
+                color: "#007E7E",
                 padding: "8px 24px",
-                borderRadius: "4px",
                 cursor: hasValidationErrors || isLoading ? "not-allowed" : "pointer",
-                fontSize: "14px",
+                fontSize: "16px",
+                fontWeight: "700",
                 marginTop: "20px",
-                opacity: hasValidationErrors || isLoading ? 0.5 : 1,
               }}
             >
               {t("GET_POLICE_STATION")}
@@ -246,16 +239,16 @@ const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect,
         {policeStationError && <div style={{ color: "#d4351c", fontSize: "14px", marginBottom: "24px" }}>{policeStationError}</div>}
 
         <div>
-          <CardLabel>{t("POLICE_STATION")}</CardLabel>
-          <Dropdown
-            option={policeStationOptions}
-            optionKey="name"
-            selected={policeStation}
-            select={setPoliceStation}
-            t={t}
-            placeholder={t("SELECT_POLICE_STATION")}
-            className="police-station-dropdown"
-            disable={policeStationOptions.length === 0}
+          <div style={{ display: "flex", flexDirection: "row", gap: "10px", alignItems: "end", marginBottom: "10px" }}>
+            <span>{t("POLICE_STATION")}</span>
+            <InfoIcon />
+          </div>
+          <TextInput
+            type="text"
+            value={policeStation?.name}
+            style={{ height: "40px", background: "#D9D9D9" }}
+            textInputStyle={{ maxWidth: "100%" }}
+            disable={true}
           />
         </div>
       </div>
@@ -264,7 +257,7 @@ const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect,
 };
 
 const CloseBtn = (props) => (
-  <div className="icon-bg-secondary" onClick={props.onClick} style={{ cursor: "pointer", padding: "8px" }}>
+  <div className="icon-bg-secondary" onClick={props.onClick} style={{ cursor: "pointer", padding: "8px", background: "none" }}>
     <CloseSvg />
   </div>
 );

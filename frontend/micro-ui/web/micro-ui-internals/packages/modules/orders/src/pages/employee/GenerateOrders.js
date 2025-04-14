@@ -930,34 +930,6 @@ const GenerateOrders = () => {
               };
             });
           }
-          // if (orderType === "WARRANT") {
-          //   orderTypeForm = orderTypeForm?.map((section) => {
-          //     return {
-          //       ...section,
-          //       body: section.body.map((field) => {
-          //         if (field.key === "warrantFor") {
-          //           return {
-          //             ...field,
-          //             ...(!currentOrder?.additionalDetails?.warrantFor && {
-          //               disable: false,
-          //             }),
-          //             populators: {
-          //               ...field.populators,
-          //               options: [
-          //                 ...(currentOrder?.additionalDetails?.warrantFor
-          //                   ? [currentOrder?.additionalDetails?.warrantFor]
-          //                   : [...respondents, ...unJoinedLitigant].map((data) => {
-          //                       return { name: data?.name || "", uniqueId: data?.uniqueId };
-          //                     })),
-          //               ],
-          //             },
-          //           };
-          //         }
-          //         return field;
-          //       }),
-          //     };
-          //   });
-          // }
           if (orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE") {
             orderTypeForm = orderTypeForm?.map((section) => {
               return {
@@ -1187,34 +1159,6 @@ const GenerateOrders = () => {
             };
           });
         }
-        // if (orderType === "WARRANT") {
-        //   orderTypeForm = orderTypeForm?.map((section) => {
-        //     return {
-        //       ...section,
-        //       body: section.body.map((field) => {
-        //         if (field.key === "warrantFor") {
-        //           return {
-        //             ...field,
-        //             ...(!currentOrder?.additionalDetails?.warrantFor && {
-        //               disable: false,
-        //             }),
-        //             populators: {
-        //               ...field.populators,
-        //               options: [
-        //                 ...(currentOrder?.additionalDetails?.warrantFor
-        //                   ? [currentOrder?.additionalDetails?.warrantFor]
-        //                   : [...respondents, ...unJoinedLitigant].map((data) => {
-        //                       return { name: data?.name || "", uniqueId: data?.uniqueId };
-        //                     })),
-        //               ],
-        //             },
-        //           };
-        //         }
-        //         return field;
-        //       }),
-        //     };
-        //   });
-        // }
 
         if (orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE") {
           orderTypeForm = orderTypeForm?.map((section) => {
@@ -3137,6 +3081,25 @@ const GenerateOrders = () => {
               age: "",
               gender: "",
             };
+
+            if (clonedPayload?.witnessDetails) {
+              clonedPayload.witnessDetails = {
+                ...clonedPayload.witnessDetails,
+                address: ["Via Police"].includes(item?.type)
+                  ? address
+                  : ["e-Post", "Registered Post"].includes(item?.type)
+                  ? {
+                      ...address,
+                      locality: item?.value?.locality || address?.locality,
+                      coordinate: item?.value?.coordinates || address?.coordinates,
+                    }
+                  : { ...address, coordinate: address?.coordinates } || "",
+                phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
+                email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
+                age: "",
+                gender: "",
+              };
+            }
           }
           if ("deliveryChannel" in clonedPayload) {
             const channelDetailsEnum = {

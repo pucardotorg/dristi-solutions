@@ -66,7 +66,7 @@ const HomeView = () => {
   });
   const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles, [Digit.UserService]);
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
-  const isCourtRoomRole = useMemo(() => roles?.some((role) => role?.code === "COURT_ADMIN"), [roles]);
+  const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
   const isNyayMitra = roles.some((role) => role.code === "NYAY_MITRA_ROLE");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   const userInfo = Digit?.UserService?.getUser()?.info;
@@ -413,7 +413,7 @@ const HomeView = () => {
                   </Link>
                 </div>
               )}
-              {isCourtRoomRole && <ReviewCard data={data} userInfoType={userInfoType} />}
+              {showReviewSummonsWarrantNotice && <ReviewCard data={data} userInfoType={userInfoType} />}
             </div>
             <div className="content-wrapper">
               <div className="header-class">

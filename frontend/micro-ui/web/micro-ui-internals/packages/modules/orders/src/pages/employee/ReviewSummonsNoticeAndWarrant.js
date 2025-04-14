@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Header, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
+import { FileIcon, Header, InboxSearchComposer, PrintIcon } from "@egovernments/digit-ui-react-components";
 import { SummonsTabsConfig } from "../../configs/SuumonsConfig";
 import { useTranslation } from "react-i18next";
 import DocumentModal from "../../components/DocumentModal";
@@ -45,6 +45,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [showActionModal, setShowActionModal] = useState(false);
   const [showNoticeModal, setshowNoticeModal] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
+  const [isIcops, setIsIcops] = useState({ state: null, errorMessage: "" });
   const [actionModalType, setActionModalType] = useState("");
   const [isDisabled, setIsDisabled] = useState(true);
   const [rowData, setRowData] = useState({});
@@ -62,6 +63,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const dayInMillisecond = 24 * 3600 * 1000;
   const todayDate = new Date().getTime();
   const [updateStatusDate, setUpdateStatusDate] = useState("");
+  const roles = Digit.UserService.getUser()?.info?.roles;
+  const isJudge = roles.some((role) => role.code === "JUDGE_ROLE");
 
   const [tabData, setTabData] = useState(
     SummonsTabsConfig?.SummonsTabsConfig?.map((configItem, index) => ({ key: index, label: configItem.label, active: index === 0 ? true : false }))
@@ -400,7 +403,39 @@ const ReviewSummonsNoticeAndWarrant = () => {
       };
 
       // Attempt to upload the document and handle the response
-      const update = await taskService.UploadTaskDocument(reqBody, { tenantId });
+      const response = await taskService.UploadTaskDocument(reqBody, { tenantId });
+      if (rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE") {
+        localStorage.removeItem("SignedFileStoreID");
+        const { data: tasksData } = await refetch();
+        if (tasksData) {
+          try {
+            const task = tasksData?.list?.[0];
+            const reqBody = {
+              task: {
+                ...task,
+                ...(typeof task?.taskDetails === "string" && { taskDetails: JSON.parse(task?.taskDetails) }),
+                taskDetails: {
+                  ...(typeof task?.taskDetails === "string" ? JSON.parse(task?.taskDetails) : task?.taskDetails),
+                  deliveryChannels: {
+                    ...task?.taskDetails?.deliveryChannels,
+                    statusChangeDate: formatDate(new Date()),
+                  },
+                },
+                workflow: {
+                  ...tasksData?.list?.[0]?.workflow,
+                  action: "SEND",
+                  documents: [{}],
+                },
+              },
+            };
+            const res = await taskService.updateTask(reqBody, { tenantId });
+            setIsIcops({ state: "success", message: "" });
+          } catch (error) {
+            setIsIcops({ state: "failed", message: `Something went wrong. ${t(error)}` });
+            console.error("Error updating task data:", error);
+          }
+        }
+      }
     } catch (error) {
       // Handle errors that occur during the upload process
       console.error("Error uploading document:", error);
@@ -419,47 +454,90 @@ const ReviewSummonsNoticeAndWarrant = () => {
           type: "document",
           modalBody: <DocumentViewerWithComment infos={infos} documents={documents} links={links} />,
           actionSaveOnSubmit: () => {},
+          hideSubmit: rowData?.taskType === "WARRANT" && rowData?.documentStatus === "SIGN_PENDING" && !isJudge,
         },
         {
           heading: { label: t("ADD_SIGNATURE") },
           actionSaveLabel: deliveryChannel === "Email" ? t("SEND_EMAIL_TEXT") : t("PROCEED_TO_SENT"),
           actionCancelLabel: t("BACK"),
           modalBody: (
-            <AddSignatureComponent
-              t={t}
-              isSigned={isSigned}
-              setIsSigned={setIsSigned}
-              handleSigned={() => setIsSigned(true)}
-              rowData={rowData}
-              setSignatureId={setSignatureId}
-              deliveryChannel={deliveryChannel}
-            />
+            <div>
+              <AddSignatureComponent
+                t={t}
+                isSigned={isSigned}
+                setIsSigned={setIsSigned}
+                handleSigned={() => setIsSigned(true)}
+                rowData={rowData}
+                setSignatureId={setSignatureId}
+                signatureId={signatureId}
+                deliveryChannel={deliveryChannel}
+              />
+            </div>
           ),
           isDisabled: isSigned ? false : true,
           actionSaveOnSubmit: handleSubmitEsign,
         },
         {
-          type: "success",
+          type: isIcops?.state === "failed" ? "failure" : "success",
           hideSubmit: true,
-          modalBody: (
-            <CustomStepperSuccess
-              successMessage={successMessage}
-              bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-              submitButtonText={documents ? "MARK_AS_SENT" : "CS_CLOSE"}
-              closeButtonText={documents ? "CS_CLOSE" : "DOWNLOAD_DOCUMENT"}
-              closeButtonAction={handleClose}
-              submitButtonAction={handleSubmit}
-              t={t}
-              submissionData={submissionData}
-              documents={documents}
-              deliveryChannel={deliveryChannel}
-              orderType={orderType}
-            />
-          ),
+          heading: isIcops?.state === "failed" ? { label: t("FIELD_ERROR") } : null,
+          actionCancelLabel: isIcops?.state === "failed" ? t("CS_COMMON_BACK") : null,
+          modalBody:
+            isIcops?.state === "failed" ? (
+              <div>
+                <h1>{isIcops?.message}</h1>
+              </div>
+            ) : isIcops?.state === "success" ? (
+              // <CustomStepperSuccess
+              //   successMessage={successMessage}
+              //   bannerSubText={t("")}
+              //   submitButtonText={}
+              //   closeButtonText={}
+              //   closeButtonAction={handleClose}
+              //   submitButtonAction={handleSubmit}
+              //   t={t}
+              //   submissionData={submissionData}
+              //   documents={documents}
+              //   deliveryChannel={deliveryChannel}
+              //   orderType={orderType}
+              // />
+              <h1>hhh</h1> // success modal here when icops api starts working.
+            ) : (
+              <CustomStepperSuccess
+                successMessage={successMessage}
+                bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
+                submitButtonText={documents ? "MARK_AS_SENT" : "CS_CLOSE"}
+                closeButtonText={documents ? "CS_CLOSE" : "DOWNLOAD_DOCUMENT"}
+                closeButtonAction={handleClose}
+                submitButtonAction={handleSubmit}
+                t={t}
+                submissionData={submissionData}
+                documents={documents}
+                deliveryChannel={deliveryChannel}
+                orderType={orderType}
+              />
+            ),
         },
       ],
     };
-  }, [deliveryChannel, documents, handleClose, handleSubmit, handleSubmitEsign, infos, isSigned, links, orderType, rowData, submissionData, t]);
+  }, [
+    handleClose,
+    t,
+    rowData,
+    infos,
+    documents,
+    links,
+    isJudge,
+    deliveryChannel,
+    isSigned,
+    signatureId,
+    handleSubmitEsign,
+    isIcops,
+    successMessage,
+    handleSubmit,
+    submissionData,
+    orderType,
+  ]);
 
   const handleCloseActionModal = useCallback(() => {
     setShowActionModal(false);
