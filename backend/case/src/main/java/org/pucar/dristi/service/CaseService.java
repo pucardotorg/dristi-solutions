@@ -1398,7 +1398,9 @@ public class CaseService {
             for (Document document : litigant.getDocuments()) {
                 Object additionalDetails = document.getAdditionalDetails();
                 ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
-                String documentName = additionalDetailsNode.get("documentName").asText();
+                String documentName = additionalDetailsNode.has("documentName")
+                        ? additionalDetailsNode.get("documentName").asText()
+                        : "";
                 if (UPLOAD_PIP_AFFIDAVIT.equals(documentName)) {
                     return true;
                 }
@@ -1415,13 +1417,6 @@ public class CaseService {
         } else {
             return isValidAdvocateReplacement(courtCase, representative,representingJoinCase);
         }
-    }
-
-    private Party findActiveLitigantById(String litigantId, List<Party> parties) {
-        return parties.stream()
-                .filter(party -> party.getIndividualId().equalsIgnoreCase(litigantId) && party.getIsActive())
-                .findFirst()
-                .orElse(null);
     }
 
     private boolean isLitigantStillSelfRepresented(String litigantId, List<AdvocateMapping> advocateMappings) {
