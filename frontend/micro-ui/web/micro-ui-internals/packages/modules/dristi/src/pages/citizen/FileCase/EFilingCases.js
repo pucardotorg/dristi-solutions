@@ -71,10 +71,9 @@ import ConfirmCaseDetailsModal from "./ConfirmCaseDetailsModal";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 import ConfirmDcaSkipModal from "./ConfirmDcaSkipModal";
 import ErrorDataModal from "./ErrorDataModal";
-import WarningModal from "../../../components/WarningModal";
 import { documentLabels } from "../../../Utils";
 
-const OutlinedInfoIcon = () => (
+export const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
     <g clip-path="url(#clip0_7603_50401)">
       <path
@@ -102,7 +101,7 @@ function isEmptyValue(value) {
   }
 }
 
-const extractValue = (data, key) => {
+export const extractValue = (data, key) => {
   if (!key.includes(".") && data && typeof data === "object") {
     return data[key];
   }
@@ -148,7 +147,7 @@ const getTotalCountFromSideMenuConfig = (sideMenuConfig, selected) => {
   return countObj;
 };
 
-const extractCodeFromErrorMsg = (error) => {
+export const extractCodeFromErrorMsg = (error) => {
   const statusCodeMatch = error?.message.match(/status code (\d+)/);
   const statusCode = statusCodeMatch ? parseInt(statusCodeMatch[1], 10) : null;
   return statusCode;
@@ -225,7 +224,6 @@ function EFilingCases({ path }) {
   const [showEditCaseNameModal, setShowEditCaseNameModal] = useState(false);
   const [modalCaseName, setModalCaseName] = useState("");
   const [isFilingParty, setIsFilingParty] = useState(false);
-  const [warningModal, setWarningModal] = useState(false);
 
   const [{ showSuccessToast, successMsg }, setSuccessToast] = useState({
     showSuccessToast: false,
@@ -1024,15 +1022,22 @@ function EFilingCases({ path }) {
     }
     return modifiedFormData.map(({ data }, index) => {
       let disableConfigFields = [];
-      formConfig.forEach((config) => {
-        config.body.forEach((body) => {
-          if ("disableConfigFields" in body && "disableConfigKey" in body && "key" in body) {
-            if (!!data?.[body.key]?.[body.disableConfigKey]) {
-              disableConfigFields = [...disableConfigFields, ...body.disableConfigFields];
-            }
-          }
-        });
-      });
+      // According to new feature (profile editing - #3425), we can edit fields in complainant details page so disabling the fields is no more required.
+      // formConfig.forEach((config) => {
+      //   config.body.forEach((body) => {
+      //     if ("disableConfigFields" in body && "disableConfigKey" in body && "key" in body) {
+      //       if (!!data?.[body.key]?.[body.disableConfigKey]) {
+      //         const currentScrutinyObj = scrutinyObj?.litigentDetails?.complainantDetails?.form?.[index];
+      //         const isAddressDetailsMarked = currentScrutinyObj?.hasOwnProperty?.("addressDetails");
+      //         if (isAddressDetailsMarked) {
+      //           disableConfigFields = [...disableConfigFields, ...["firstName", "middleName", "lastName"]];
+      //         } else {
+      //           disableConfigFields = [...disableConfigFields, ...body.disableConfigFields];
+      //         }
+      //       }
+      //     }
+      //   });
+      // });
       return formConfig
         .filter((config) => {
           const dependentKeys = config?.dependentKey;
@@ -1935,15 +1940,6 @@ function EFilingCases({ path }) {
       return;
     }
 
-    if (
-      selected === "complainantDetails" &&
-      !isWarning &&
-      formdata?.some((item) => item?.data?.complainantVerification?.individualDetails === null)
-    ) {
-      setWarningModal(true);
-      return;
-    }
-
     if (selected === "reviewCaseFile" && isCaseReAssigned && !openConfirmCorrectionModal && !isCaseLocked) {
       setOpenConfirmCorrectionModal(true);
       return;
@@ -2265,35 +2261,42 @@ function EFilingCases({ path }) {
       Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0")
     );
 
-    await DRISTIService.createDemand({
-      Demands: [
-        {
-          tenantId,
-          consumerCode: caseDetails?.filingNumber + `_${suffix}`,
-          consumerType: "case-default",
-          businessService: "case-default",
-          taxPeriodFrom: taxPeriod?.fromDate,
-          taxPeriodTo: taxPeriod?.toDate,
-          demandDetails: [
-            {
-              taxHeadMasterCode: "CASE_ADVANCE_CARRYFORWARD",
-              taxAmount: 4, // amount to be replaced with calculationResponse
-              collectionAmount: 0,
-              isDelayCondonation: isDelayCondonation,
-            },
-          ],
-          additionalDetails: {
-            filingNumber: caseDetails?.filingNumber,
-            chequeDetails: chequeDetails,
-            cnrNumber: caseDetails?.cnrNumber,
-            payer: caseDetails?.litigants?.[0]?.additionalDetails?.fullName,
-            payerMobileNo: caseDetails?.additionalDetails?.payerMobileNo,
-            isDelayCondonation: isDelayCondonation,
-          },
-        },
-      ],
-    });
+    // await DRISTIService.createDemand({
+    //   Demands: [
+    //     {
+    //       tenantId,
+    //       consumerCode: caseDetails?.filingNumber + `_${suffix}`,
+    //       consumerType: "case-default",
+    //       businessService: "case-default",
+    //       taxPeriodFrom: taxPeriod?.fromDate,
+    //       taxPeriodTo: taxPeriod?.toDate,
+    //       demandDetails: [
+    //         {
+    //           taxHeadMasterCode: "CASE_ADVANCE_CARRYFORWARD",
+    //           taxAmount: 4, // amount to be replaced with calculationResponse
+    //           collectionAmount: 0,
+    //           isDelayCondonation: isDelayCondonation,
+    //         },
+    //       ],
+    //       additionalDetails: {
+    //         filingNumber: caseDetails?.filingNumber,
+    //         chequeDetails: chequeDetails,
+    //         cnrNumber: caseDetails?.cnrNumber,
+    //         payer: caseDetails?.litigants?.[0]?.additionalDetails?.fullName,
+    //         payerMobileNo: caseDetails?.additionalDetails?.payerMobileNo,
+    //         isDelayCondonation: isDelayCondonation,
+    //       },
+    //     },
+    //   ],
+    // });
 
+    await DRISTIService.etreasuryCreateDemand({
+      tenantId,
+      entityType: "case-default",
+      filingNumber: caseDetails?.filingNumber,
+      consumerCode: caseDetails?.filingNumber + `_${suffix}`,
+      calculation: calculationResponse?.Calculation,
+    });
     return calculationResponse;
   };
   const onSubmitCase = async (data) => {
@@ -2502,10 +2505,6 @@ function EFilingCases({ path }) {
     margin-top:0 !important;
   }
 `;
-
-  const handleCancelWarningModal = () => {
-    setWarningModal(!warningModal);
-  };
 
   return (
     <div className="file-case">
@@ -2992,16 +2991,6 @@ function EFilingCases({ path }) {
           <h3 className="input-label">{t("CS_CASE_NAME")}</h3>
           <TextInput defaultValue={newCaseName || caseDetails?.caseTitle} type="text" onChange={(e) => setModalCaseName(e.target.value)} />
         </Modal>
-      )}
-      {warningModal && (
-        <WarningModal
-          t={t}
-          heading={t("CONFIRM_COMPLAINT_DETAILS")}
-          info={t("COMPLAINT_INFO")}
-          onCancel={handleCancelWarningModal}
-          setWarningModal={setWarningModal}
-          onSubmit={onSubmit}
-        />
       )}
     </div>
   );

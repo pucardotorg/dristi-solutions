@@ -265,7 +265,21 @@ const SubmissionsCreate = ({ path }) => {
     },
     {},
     applicationNumber + filingNumber,
-    Boolean(applicationNumber + filingNumber)
+    Boolean(applicationNumber && filingNumber)
+  );
+
+  const { data: delayCondonationData } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        filingNumber,
+        applicationType: "DELAY_CONDONATION",
+        tenantId,
+      },
+      tenantId,
+    },
+    {},
+    filingNumber,
+    Boolean(filingNumber)
   );
 
   const fullName = useMemo(() => {
@@ -289,9 +303,9 @@ const SubmissionsCreate = ({ path }) => {
     const submissionConfigKeys = {
       APPLICATION: applicationTypeConfig,
     };
-    if (applicationData && caseDetails && Array.isArray(submissionConfigKeys[submissionType])) {
+    if (caseDetails && Array.isArray(submissionConfigKeys[submissionType])) {
       const isDelayApplicationPending = Boolean(
-        applicationData?.applicationList?.some(
+        delayCondonationData?.applicationList?.some(
           (item) =>
             item?.applicationType === "DELAY_CONDONATION" &&
             [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(item?.status)
@@ -332,7 +346,7 @@ const SubmissionsCreate = ({ path }) => {
       }
     }
     return [];
-  }, [applicationData, caseDetails, submissionType, orderNumber, hearingId, applicationTypeUrl, isCitizen]);
+  }, [caseDetails, submissionType, orderNumber, hearingId, applicationTypeUrl, isCitizen, delayCondonationData]);
 
   const applicationType = useMemo(() => {
     return formdata?.applicationType?.type || applicationTypeUrl;
@@ -435,11 +449,11 @@ const SubmissionsCreate = ({ path }) => {
       applicationNumber
         ? applicationData?.applicationList?.[0]
         : "DELAY_CONDONATION" === formdata?.applicationType?.type
-        ? applicationData?.applicationList?.find(
+        ? delayCondonationData?.applicationList?.find(
             (application) => !["REJECTED", "COMPLETED"].includes(application?.status) && "DELAY_CONDONATION" === application?.applicationType
           )
         : undefined,
-    [applicationData?.applicationList, formdata?.applicationType?.type]
+    [applicationData?.applicationList, delayCondonationData?.applicationList, formdata?.applicationType?.type]
   );
 
   useEffect(() => {
@@ -519,28 +533,23 @@ const SubmissionsCreate = ({ path }) => {
   );
   const latestExtensionOrder = useMemo(() => extensionOrders?.[0], [extensionOrders]);
 
-  const { entityType, taxHeadMasterCode } = useMemo(() => {
+  const { entityType } = useMemo(() => {
     const isResponseRequired = isComposite
       ? compositeMandatorySubmissionItem?.orderSchema?.orderDetails?.isResponseRequired?.code === true
       : orderDetails?.orderDetails?.isResponseRequired?.code === true;
     if ((orderNumber || orderRefNumber) && referenceId) {
       return {
         entityType: isResponseRequired ? "application-order-submission-feedback" : "application-order-submission-default",
-        taxHeadMasterCode: isResponseRequired
-          ? "APPLICATION_ORDER_SUBMISSION_FEEDBACK_ADVANCE_CARRYFORWARD"
-          : "APPLICATION_ORDER_SUBMISSION_DEFAULT_ADVANCE_CARRY_FORWARD",
       };
     }
     // need Specific for request for bail
     if (applicationType === "REQUEST_FOR_BAIL") {
       return {
         entityType: "voluntary-application-submission-bail",
-        taxHeadMasterCode: "APPLICATION_VOLUNTARY_BAIL_SUBMISSION_ADVANCE_CARRY_FORWARD",
       };
     }
     return {
       entityType: "application-voluntary-submission",
-      taxHeadMasterCode: "APPLICATION_VOLUNTARY_SUBMISSION_ADVANCE_CARRY_FORWARD",
     };
   }, [applicationType, orderDetails, orderNumber, orderRefNumber, referenceId, isComposite, compositeMandatorySubmissionItem]);
 
@@ -1205,15 +1214,35 @@ const SubmissionsCreate = ({ path }) => {
       }
       const response = await updateSubmission(SubmissionWorkflowAction.ESIGN);
       if (response && response?.application?.additionalDetails?.isResponseRequired) {
+        const assignedTo = response?.application?.additionalDetails?.respondingParty
+          ?.flatMap((item) => item?.uuid?.map((u) => ({ uuid: u })))
+          ?.filter((item) => item?.uuid !== userInfo?.uuid);
+        const uniqueAssignedTo = new Set(assignedTo?.map((item) => item?.uuid));
+        const litigants = [];
+        uniqueAssignedTo.forEach((uuid) => {
+          const representative = caseDetails?.representatives?.find((item) => item?.additionalDetails?.uuid === uuid);
+          if (representative) {
+            litigants.push(...representative?.representing?.map((item) => item?.individualId));
+          }
+        });
+        uniqueAssignedTo.forEach((uuid) => {
+          const litigant = caseDetails?.litigants?.find((item) => item?.additionalDetails?.uuid === uuid);
+          if (litigant) {
+            litigants.push(litigant?.individualId);
+          }
+        });
+        const uniqueLitigants = new Set(litigants);
+        const litigantsArray = Array.from(uniqueLitigants);
         await submissionService.customApiService(Urls.application.taskCreate, {
           task: {
             workflow: {
               action: "CREATE",
+              additionalDetails: {
+                litigants: litigantsArray,
+              },
             },
             filingNumber: response?.application?.filingNumber,
-            assignedTo: response?.application?.additionalDetails?.respondingParty
-              ?.flatMap((item) => item?.uuid?.map((u) => ({ uuid: u })))
-              ?.filter((item) => item?.uuid !== userInfo?.uuid),
+            assignedTo,
             state: "PENDINGRESPONSE",
             referenceId: response?.application?.applicationNumber,
             taskType: "PENDING_TASK",
@@ -1258,7 +1287,7 @@ const SubmissionsCreate = ({ path }) => {
     service: entityType,
     path,
     caseDetails,
-    totalAmount: "2",
+    totalAmount: "20",
     scenario,
   });
 
@@ -1271,29 +1300,49 @@ const SubmissionsCreate = ({ path }) => {
 
   const createDemand = async () => {
     if (billResponse?.Bill?.length === 0) {
-      const taxPeriod = getTaxPeriodByBusinessService(taxPeriodData, entityType);
-      await DRISTIService.createDemand({
-        Demands: [
+      // const taxPeriod = getTaxPeriodByBusinessService(taxPeriodData, entityType);
+      // await DRISTIService.createDemand({
+      //   Demands: [
+      //     {
+      //       tenantId,
+      //       consumerCode: applicationDetails?.applicationNumber + `_${suffix}`,
+      //       consumerType: entityType,
+      //       businessService: entityType,
+      //       taxPeriodFrom: taxPeriod?.fromDate,
+      //       taxPeriodTo: taxPeriod?.toDate,
+      //       demandDetails: [
+      //         {
+      //           taxHeadMasterCode: taxHeadMasterCode,
+      //           taxAmount: 20,
+      //           collectionAmount: 0,
+      //         },
+      //       ],
+      //       additionalDetails: {
+      //         filingNumber: caseDetails?.filingNumber,
+      //         cnrNumber: caseDetails?.cnrNumber,
+      //         payer: caseDetails?.litigants?.[0]?.additionalDetails?.fullName,
+      //         payerMobileNo: caseDetails?.additionalDetails?.payerMobileNo,
+      //       },
+      //     },
+      //   ],
+      // });
+      await DRISTIService.etreasuryCreateDemand({
+        tenantId,
+        entityType,
+        filingNumber: caseDetails?.filingNumber,
+        consumerCode: applicationDetails?.applicationNumber + `_${suffix}`,
+        calculation: [
           {
-            tenantId,
-            consumerCode: applicationDetails?.applicationNumber + `_${suffix}`,
-            consumerType: entityType,
-            businessService: entityType,
-            taxPeriodFrom: taxPeriod?.fromDate,
-            taxPeriodTo: taxPeriod?.toDate,
-            demandDetails: [
+            tenantId: tenantId,
+            totalAmount: 20,
+            breakDown: [
               {
-                taxHeadMasterCode: taxHeadMasterCode,
-                taxAmount: 2,
-                collectionAmount: 0,
+                type: "Application Fee",
+                code: "APPLICATION_FEE",
+                amount: 20.0,
+                additionalParams: {},
               },
             ],
-            additionalDetails: {
-              filingNumber: caseDetails?.filingNumber,
-              cnrNumber: caseDetails?.cnrNumber,
-              payer: caseDetails?.litigants?.[0]?.additionalDetails?.fullName,
-              payerMobileNo: caseDetails?.additionalDetails?.payerMobileNo,
-            },
           },
         ],
       });
@@ -1304,7 +1353,7 @@ const SubmissionsCreate = ({ path }) => {
     try {
       const bill = await fetchBill(applicationDetails?.applicationNumber + `_${suffix}`, tenantId, entityType);
       if (bill?.Bill?.length) {
-        const billPaymentStatus = await openPaymentPortal(bill);
+        const billPaymentStatus = await openPaymentPortal(bill, bill?.Bill?.totalAmount);
         setPaymentStatus(billPaymentStatus);
         await applicationRefetch();
         if (billPaymentStatus === true) {

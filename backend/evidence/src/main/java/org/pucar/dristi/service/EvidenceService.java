@@ -7,6 +7,7 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -139,6 +140,10 @@ public class EvidenceService {
                 }
                 case EMPLOYEE_UPPER -> {
                     searchCriteria.setIsCourtEmployee(true);
+                    searchCriteria.setUserUuid(userInfo.getUuid());
+                    if(requestInfo.getUserInfo().getRoles().contains(Role.builder().name(BENCH_CLERK).code(BENCH_CLERK).tenantId(searchCriteria.getTenantId()).build())) {
+                        searchCriteria.setBenchClerk(true);
+                    }
                 }
             }
         }
@@ -249,6 +254,8 @@ public class EvidenceService {
             String smsTopic = getSmsTopic(isEvidence, artifact, isCreateCall);
             log.info("Message Code : {}", smsTopic);
             Set<String> individualIds = extractIndividualIds(caseDetails,null);
+            Set<String> powerOfAttorneyIds = extractPowerOfAttorneyIds(caseDetails,individualIds);
+            individualIds.addAll(powerOfAttorneyIds);
 
             // Individual ids of filing advocate and related litigant
             Set<String> filingIndividualIds = new HashSet<>();
@@ -262,6 +269,13 @@ public class EvidenceService {
                     receiverParty = getReceiverParty(partyType);
                 }
                 filingIndividualIds = extractIndividualIds(caseDetails,receiverParty);
+                if (receiverParty != null && receiverParty.equalsIgnoreCase(COMPLAINANT)) {
+                    // Add the power of attorney ids to the filing advocate ids
+                    filingIndividualIds.addAll(powerOfAttorneyIds);
+                } else if (receiverParty != null && receiverParty.equalsIgnoreCase(RESPONDENT)) {
+                    // Add the power of attorney ids to the opposite party ids
+                    oppositeIndividualIds.addAll(powerOfAttorneyIds);
+                }
                 oppositeIndividualIds.removeAll(filingIndividualIds);
             }
 
@@ -423,5 +437,18 @@ public class EvidenceService {
             }
         }
         return uuids;
+    }
+
+    public Set<String> extractPowerOfAttorneyIds(JsonNode caseDetails, Set<String> individualIds) {
+        JsonNode poaHolders = caseDetails.get("poaHolders");
+        if (poaHolders != null && poaHolders.isArray()) {
+            for (JsonNode poaHolder : poaHolders) {
+                String individualId = poaHolder.path("individualId").textValue();
+                if (individualId != null && !individualId.isEmpty()) {
+                    individualIds.add(individualId);
+                }
+            }
+        }
+        return individualIds;
     }
 }

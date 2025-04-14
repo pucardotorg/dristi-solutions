@@ -13,8 +13,7 @@ import { TabLitigantSearchConfig } from "../../configs/LitigantHomeConfig";
 import ReviewCard from "../../components/ReviewCard";
 import { InboxIcon, DocumentIcon } from "../../../homeIcon";
 import { Link } from "react-router-dom";
-import OrderBulkReviewModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderBulkReviewModal";
-import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
+import useSearchOrdersNotificationService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersNotificationService";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
 import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
 
@@ -60,7 +59,7 @@ const HomeView = () => {
 
   const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
   const [responsePendingTask, setResponsePendingTask] = useState({});
-  const [showBulkSignAllModal, setShowBulkSignAllModal] = useState(false);
+  const bulkSignSuccess = history.location?.state?.bulkSignSuccess;
   const [issueBulkSuccessData, setIssueBulkSuccessData] = useState({
     show: false,
     bulkSignOrderListLength: null,
@@ -114,10 +113,22 @@ const HomeView = () => {
     userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
   );
 
-  const { data: ordersData, refetch: refetchOrdersData, isLoading: isOrdersLoading } = useSearchOrdersService(
+  const { data: ordersNotificationData, isLoading: isOrdersLoading } = useSearchOrdersNotificationService(
     {
-      tenantId,
-      criteria: { status: OrderWorkflowState.PENDING_BULK_E_SIGN },
+      inbox: {
+        processSearchCriteria: {
+          businessService: ["notification"],
+          moduleName: "Transformer service",
+        },
+        limit: 1,
+        offset: 0,
+        tenantId: tenantId,
+        moduleSearchCriteria: {
+          entityType: "Order",
+          tenantId: tenantId,
+          status: OrderWorkflowState.PENDING_BULK_E_SIGN,
+        },
+      },
     },
     { tenantId },
     OrderWorkflowState.PENDING_BULK_E_SIGN,
@@ -174,7 +185,10 @@ const HomeView = () => {
 
   useEffect(() => {
     state && state.taskType && setTaskType(state.taskType);
-  }, [state]);
+    if (bulkSignSuccess) {
+      setIssueBulkSuccessData(bulkSignSuccess);
+    }
+  }, [state, bulkSignSuccess]);
 
   const { isLoading: isOutcomeLoading, data: outcomeTypeData } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -305,6 +319,9 @@ const HomeView = () => {
   };
 
   const onRowClick = (row) => {
+    if (userInfoType === "citizen" && row?.original?.advocateStatus === "PENDING") {
+      return;
+    }
     const searchParams = new URLSearchParams();
     if (
       onRowClickData?.urlDependentOn && onRowClickData?.urlDependentValue && Array.isArray(onRowClickData?.urlDependentValue)
@@ -388,10 +405,10 @@ const HomeView = () => {
                   <Link to={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle}>
                     {t("OPEN_DASHBOARD")}
                   </Link>
-                  <Link to={`/${window.contextPath}/employee/home/dashboard?select=5`} style={linkStyle}>
+                  <Link to={`/${window.contextPath}/employee/home/dashboard?select=2`} style={linkStyle}>
                     {t("OPEN_REPORTS")}
                   </Link>
-                  <Link to={`/${window.contextPath}/employee/home/adiary`} style={linkStyle}>
+                  <Link to={`/${window.contextPath}/employee/home/dashboard/adiary`} style={linkStyle}>
                     {t("OPEN_A_DIARY")}
                   </Link>
                 </div>
@@ -461,23 +478,13 @@ const HomeView = () => {
           joinCaseShowSubmitResponseModal={showSubmitResponseModal}
           setJoinCaseShowSubmitResponseModal={setShowSubmitResponseModal}
           hideTaskComponent={individualId && userType && userInfoType === "citizen" && !caseDetails}
-          pendingSignOrderList={ordersData?.list}
-          setShowBulkSignAllModal={setShowBulkSignAllModal}
+          pendingSignOrderList={ordersNotificationData}
         />
       </div>
-      {showBulkSignAllModal && (
-        <OrderBulkReviewModal
-          t={t}
-          showActions={isJudge}
-          refetchOrdersData={refetchOrdersData}
-          pendingSignOrderList={ordersData?.list}
-          setShowBulkSignAllModal={setShowBulkSignAllModal}
-          setIssueBulkSuccessData={setIssueBulkSuccessData}
-        />
-      )}
       {issueBulkSuccessData.show && (
         <OrderIssueBulkSuccesModal
           t={t}
+          history={history}
           bulkSignOrderListLength={issueBulkSuccessData.bulkSignOrderListLength}
           setIssueBulkSuccessData={setIssueBulkSuccessData}
         />

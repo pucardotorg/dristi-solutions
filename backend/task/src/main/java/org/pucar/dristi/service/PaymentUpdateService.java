@@ -8,7 +8,6 @@ import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.models.RequestInfoWrapper;
-import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.tracer.model.CustomException;
@@ -16,6 +15,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.repository.TaskRepository;
+import org.pucar.dristi.util.DemandUtil;
 import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.util.WorkflowUtil;
 import org.pucar.dristi.web.models.*;
@@ -26,10 +26,8 @@ import org.springframework.util.CollectionUtils;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -44,11 +42,12 @@ public class PaymentUpdateService {
     private final Configuration config;
     private final MdmsUtil mdmsUtil;
     private final ObjectMapper objectMapper;
+    private final DemandUtil demandUtil;
 
     private ServiceRequestRepository serviceRequestRepository;
 
     @Autowired
-    public PaymentUpdateService(WorkflowUtil workflowUtil, ObjectMapper mapper, TaskRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository) {
+    public PaymentUpdateService(WorkflowUtil workflowUtil, ObjectMapper mapper, TaskRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository, DemandUtil demandUtil) {
         this.workflowUtil = workflowUtil;
         this.mapper = mapper;
         this.repository = repository;
@@ -57,6 +56,7 @@ public class PaymentUpdateService {
         this.mdmsUtil = mdmsUtil;
         this.objectMapper = objectMapper;
         this.serviceRequestRepository = serviceRequestRepository;
+        this.demandUtil = demandUtil;
     }
 
     public void process(Map<String, Object> record) {
@@ -70,8 +70,8 @@ public class PaymentUpdateService {
             String tenantId = paymentRequest.getPayment().getTenantId();
 
             for (PaymentDetail paymentDetail : paymentDetails) {
-                if (paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskSummonBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskNoticeBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskWarrantBusinessServiceName())) {
-                    updateWorkflowForCasePayment(requestInfo, tenantId, paymentDetail);
+                if (paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskPaymentBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskSummonBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskNoticeBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskWarrantBusinessServiceName())) {
+                    updateWorkflowForTaskPayment(requestInfo, tenantId, paymentDetail);
                 }
             }
         } catch (Exception e) {
@@ -80,7 +80,7 @@ public class PaymentUpdateService {
 
     }
 
-    private void updateWorkflowForCasePayment(RequestInfo requestInfo, String tenantId, PaymentDetail paymentDetail) {
+    private void updateWorkflowForTaskPayment(RequestInfo requestInfo, String tenantId, PaymentDetail paymentDetail) {
 
         try {
 
@@ -189,17 +189,22 @@ public class PaymentUpdateService {
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
                 }
-                case JOIN_CASE_TASK -> {
-                    WorkflowObject workflow = new WorkflowObject();
-                    workflow.setAction("CLOSE");
+                case JOIN_CASE_PAYMENT -> {
+                    WorkflowObject  workflow = new WorkflowObject();
+                    workflow.setAction(MAKE_PAYMENT);
                     task.setWorkflow(workflow);
 
                     String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
-                            config.getTaskBusinessServiceName(), workflow, config.getTaskBusinessName());
+                            config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskPaymentBusinessName());
                     task.setStatus(status);
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
-                    producer.push(config.getTaskJoinCaseUpdateTopic(), taskRequest);
+                    producer.push(config.getTaskUpdateTopic(), taskRequest);
+
+                    // update remaining pending task of payment's of the advocate
+
+                    updatePaymentStatusOfRemainingPendingPaymentTasks(taskRequest, tenantId, task.getFilingNumber());
+
                 }
             }
         }
@@ -251,5 +256,75 @@ public class PaymentUpdateService {
                 .toList();
 
 
+    }
+
+    private void updatePaymentStatusOfRemainingPendingPaymentTasks(TaskRequest taskRequestResponse, String tenantId, String filingNumber) {
+
+        Task taskResponse = taskRequestResponse.getTask();
+
+        RequestInfo requestInfo = taskRequestResponse.getRequestInfo();
+
+        LinkedHashMap taskDetailsMap = ((LinkedHashMap) taskResponse.getTaskDetails());
+
+        String advocateUuid = taskDetailsMap.get("advocateUuid").toString();
+
+        TaskCriteria criteria = TaskCriteria.builder()
+                .userUuid(advocateUuid)
+                .status(PENDING_PAYMENT)
+                .filingNumber(filingNumber)
+                .taskType(JOIN_CASE_PAYMENT)
+                .build();
+
+        List<Task> tasks = repository.getTasks(criteria, null);
+
+        if (CollectionUtils.isEmpty(tasks)) {
+            log.info("No other pending payment task's found for advocate :: {}", advocateUuid);
+            return;
+        }
+        String paidTaskNumber = taskResponse.getTaskNumber();
+        tasks = tasks.stream().filter(task -> !task.getTaskNumber().equalsIgnoreCase(paidTaskNumber)).collect(Collectors.toList());
+
+        tasks.forEach(task -> {
+
+                WorkflowObject workflow = new WorkflowObject();
+                workflow.setAction(REJECT);
+                task.setWorkflow(workflow);
+                String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
+                        config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskPaymentBusinessName());
+                log.info("Rejecting remaining pending payment task for advocate by system :: {}", advocateUuid);
+                task.setStatus(status);
+
+                TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
+                producer.push(config.getTaskUpdateTopic(), taskRequest);
+        });
+        searchAndCancelTaskRelatedDemands(tenantId, tasks, requestInfo);
+    }
+
+    private void searchAndCancelTaskRelatedDemands(String tenantId, List<Task> tasks, RequestInfo requestInfo) {
+        Set<String> consumerCodes = tasks.stream().map(this::extractConsumerCode).collect(Collectors.toSet());
+        DemandCriteria demandCriteria = new DemandCriteria();
+        demandCriteria.setConsumerCode(consumerCodes);
+        demandCriteria.setTenantId(tenantId);
+        RequestInfoWrapper requestInfoWrapper = new RequestInfoWrapper();
+        requestInfoWrapper.setRequestInfo(requestInfo);
+        DemandResponse demandResponse = demandUtil.searchDemand(demandCriteria, requestInfoWrapper);
+        if (demandResponse != null && !CollectionUtils.isEmpty(demandResponse.getDemands())) {
+            for (Demand demand : demandResponse.getDemands()) {
+                demand.setStatus(Demand.StatusEnum.CANCELLED);
+                }
+            DemandRequest demandRequest = new DemandRequest();
+            demandRequest.setRequestInfo(requestInfo);
+            demandRequest.setDemands(demandResponse.getDemands());
+            DemandResponse updatedDemandResponse = demandUtil.updateDemand(demandRequest);
+            log.info("Updating demand status to cancelled for consumer codes :: {}", consumerCodes);
+            }
+    }
+
+
+    public String extractConsumerCode(Task task) {
+        Object taskDetails = task.getTaskDetails();
+        Map<String, Object> taskDetailsMap = mapper.convertValue(taskDetails, new TypeReference<>() {
+        });
+        return (String) taskDetailsMap.get("consumerCode");
     }
 }

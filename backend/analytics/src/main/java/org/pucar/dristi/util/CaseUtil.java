@@ -19,8 +19,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.pucar.dristi.config.ServiceConstants.CASE_PATH;
-import static org.pucar.dristi.config.ServiceConstants.ERROR_WHILE_FETCHING_FROM_CASE;
+import static org.pucar.dristi.config.ServiceConstants.*;
 
 @Slf4j
 @Component
@@ -62,6 +61,7 @@ public class CaseUtil {
 		}
 		criteriaArray.put(criteria);
 		request.put("criteria", criteriaArray);
+		request.put("flow",FLOW_JAC);
 
 		log.info("Inside CaseUtil getCaseInternal :: Criteria: {}", criteriaArray);
 
@@ -152,6 +152,18 @@ public class CaseUtil {
 		return response;
 	}
 
+	public Set<String> extractPowerOfAttorneyIds(JsonNode caseDetails, Set<String> individualIds) {
+		JsonNode poaHolders = caseDetails.get("poaHolders");
+		if (poaHolders != null && poaHolders.isArray()) {
+			for (JsonNode poaHolder : poaHolders) {
+				String individualId = poaHolder.path("individualId").textValue();
+				if (individualId != null && !individualId.isEmpty()) {
+					individualIds.add(individualId);
+				}
+			}
+		}
+		return individualIds;
+	}
 
 	private StringBuilder getSearchURLWithParams() {
 		return new StringBuilder(config.getCaseHost())

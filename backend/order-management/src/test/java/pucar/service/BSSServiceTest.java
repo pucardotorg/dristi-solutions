@@ -1,6 +1,7 @@
 package pucar.service;
 
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.response.ResponseInfo;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -9,15 +10,20 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.Resource;
+import pucar.config.Configuration;
 import pucar.util.*;
 import pucar.web.models.*;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class BSSServiceTest {
@@ -36,6 +42,11 @@ class BSSServiceTest {
 
     @Mock
     private OrderUtil orderUtil;
+
+    @Mock
+    private Configuration configuration;
+    @Mock
+    private ADiaryUtil aDiaryUtil;
 
     @InjectMocks
     private BSSService bssService;
@@ -57,11 +68,12 @@ class BSSServiceTest {
 
     @Test
     void createOrderToSignRequest_Success() throws IOException {
-        Coordinate coordinate = new Coordinate(0.0F, 0.0F, true, 1, "123","kl");
+        Coordinate coordinate = new Coordinate(0.0F, 0.0F, true, 1, "123", "kl");
         when(eSignUtil.getCoordinateForSign(any())).thenReturn(Collections.singletonList(coordinate));
         when(fileStoreUtil.fetchFileStoreObjectById(anyString(), anyString())).thenReturn(mock(Resource.class));
         when(cipherUtil.encodePdfToBase64(any())).thenReturn("base64EncodedString");
         when(xmlRequestGenerator.createXML(anyString(), any())).thenReturn("<xmlRequest>");
+        when(configuration.getZoneId()).thenReturn("Asia/Kolkata");
 
         List<OrderToSign> result = bssService.createOrderToSignRequest(request);
 
@@ -81,6 +93,7 @@ class BSSServiceTest {
         UpdateSignedOrderRequest updateRequest = new UpdateSignedOrderRequest();
         SignedOrder signedOrder = new SignedOrder("ORD123", "base64Data", true, null, "tenant1");
         updateRequest.setSignedOrders(Collections.singletonList(signedOrder));
+        when(orderUtil.getOrders(any())).thenReturn(OrderListResponse.builder().responseInfo(new ResponseInfo()).list(new ArrayList<>()).build());
 
         assertThrows(CustomException.class, () -> bssService.updateOrderWithSignDoc(updateRequest));
     }

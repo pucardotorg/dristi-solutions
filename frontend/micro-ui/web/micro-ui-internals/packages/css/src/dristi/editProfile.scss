@@ -1,0 +1,94 @@
+.respondent-edit,
+.complainant-edit {
+  .card-section-header:first-child {
+    margin-bottom: 8px;
+  }
+
+  .label-field-pair {
+    margin-bottom: 20px;
+    padding-bottom: 0px !important;
+
+    .bolder {
+      font-family: Roboto;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 18.75px;
+      text-align: left;
+      color: #0a0a0a !important;
+    }
+  }
+
+  .card-section-header {
+    margin-bottom: 20px;
+    padding-bottom: 0px !important;
+  }
+
+  input {
+    margin: 0px !important;
+  }
+}
+
+.edit-profile-style {
+  width: 90% !important;
+}
+
+.review-litigant-profile {
+  .supporting-document {
+    .docviewer-wrapper {
+      margin-top: 20px !important;
+      .employeeCard {
+        -webkit-box-shadow: none !important;
+        box-shadow: none !important;
+        padding: 0px !important;
+      }
+    }
+  }
+  .review-profile-editing {
+    width: 100% !important;
+  }
+  .review-litigant-profile-old-data,
+  .review-litigant-profile-new-data {
+    .accordion-title {
+      display: none !important;
+    }
+  }
+
+  .submit-bar {
+    width: 147px !important;
+  }
+
+  .previous-button {
+    width: 149px !important;
+    background-color: #bb2c2f !important;
+    border: none !important;
+    color: white !important;
+  }
+}
+
+.review-profile-editing-modal-accept {
+  .selector-button-border {
+    background-color: none !important;
+  }
+  .selector-button-primary {
+    background-color: #007e7e !important;
+  }
+}
+
+.review-profile-editing-modal-reject {
+  .selector-button-border {
+    background-color: none !important;
+  }
+  .selector-button-primary {
+    background-color: #bb2c2f !important;
+  }
+}
+
+.profile-editing-submission-modal {
+  .selector-button-border {
+    background-color: white !important;
+    border: solid 1px #007e7e !important;
+    h2 {
+      color: #007e7e !important;
+    }
+  }
+}

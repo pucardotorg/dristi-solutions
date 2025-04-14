@@ -1,11 +1,13 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.common.contract.workflow.ProcessInstance;
 import org.egov.common.contract.workflow.State;
@@ -119,6 +121,7 @@ class EvidenceServiceTest {
     @Test
     void testSearchEvidence_NoArtifacts() {
         RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setUserInfo(User.builder().type("EMPLOYEE").roles(Collections.singletonList(Role.builder().build())).build());
         EvidenceSearchCriteria criteria = new EvidenceSearchCriteria();
         when(repository.getArtifacts(criteria,null)).thenReturn(Collections.emptyList());
 
@@ -130,6 +133,7 @@ class EvidenceServiceTest {
     @Test
     void testSearchEvidence_WithArtifacts() {
         RequestInfo requestInfo = new RequestInfo();
+        requestInfo.setUserInfo(User.builder().type("EMPLOYEE").roles(Collections.singletonList(Role.builder().build())).build());
         EvidenceSearchCriteria criteria = new EvidenceSearchCriteria();
         when(repository.getArtifacts(criteria,null)).thenReturn(List.of(artifact));
 
@@ -274,4 +278,51 @@ class EvidenceServiceTest {
         verify(repository).getArtifacts(any(),any());
         verify(producer, never()).push(anyString(), any());
     }
+
+    @Test
+    void testExtractPowerOfAttorneyIds_EmptyIndividualId() throws Exception {
+        String json = """
+                    {
+                        "poaHolders": [
+                            { "individualId": "" },
+                            { "individualId": null }
+                        ]
+                    }
+                """;
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode caseDetails = mapper.readTree(json);
+
+        Set<String> individualIds = new HashSet<>();
+        Set<String> result = evidenceService.extractPowerOfAttorneyIds(caseDetails, individualIds);
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testExtractPowerOfAttorneyIds_IndividualId() throws Exception {
+        String json = """
+                    {
+                    "representatives": [
+                        { "individualId": "IND-123" },
+                        { "individualId": null }
+                    ],
+                        "poaHolders": [
+                            { "individualId": "IND-123" },
+                            { "individualId": null }
+                        ]
+                    }
+                """;
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode caseDetails = mapper.readTree(json);
+
+        Set<String> individualIds = new HashSet<>();
+        Set<String> result = evidenceService.extractPowerOfAttorneyIds(caseDetails, individualIds);
+
+        assertFalse(result.isEmpty());
+        assertEquals(1, result.size());
+        assertTrue(result.contains("IND-123"));
+    }
+
 }

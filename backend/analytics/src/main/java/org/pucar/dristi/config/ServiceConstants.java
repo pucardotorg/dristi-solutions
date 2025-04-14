@@ -229,4 +229,10 @@ public class ServiceConstants {
     public static final String COMPOSITE = "composite";
     public static final String HOME = "home";
     public static final String ADIARY = "Adiary";
+
+    public static final String ADVOCATE = "advocate";
+    public static final String LITIGANT = "litigant";
+
+    public static final String FLOW_JAC = "flow_jac";
+
 }

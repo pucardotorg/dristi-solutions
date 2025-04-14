@@ -142,7 +142,8 @@ async function adrCaseReferral(req, res, qrCode, order, compositeOrder) {
 
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
-    const additionalComments = order?.comments || "";
+    const additionalComments =
+      order?.additionalDetails?.formdata?.comments?.text || "";
     const modeOfAdr = adr?.name || "";
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const data = {

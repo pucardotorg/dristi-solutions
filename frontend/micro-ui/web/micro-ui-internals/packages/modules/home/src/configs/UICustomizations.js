@@ -3,6 +3,11 @@ import { Link } from "react-router-dom";
 import { formatDate } from "../../../cases/src/utils";
 import { formatDateDifference } from "../../../orders/src/utils";
 import { formatNoticeDeliveryDate } from "../utils";
+import { OrderName } from "@egovernments/digit-ui-module-dristi/src/components/OrderName";
+import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
+import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";
+import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
+import { BulkCheckBox } from "@egovernments/digit-ui-module-dristi/src/components/BulkCheckbox";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
@@ -487,8 +492,10 @@ export const UICustomizations = {
       };
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
-      const caseDetails = handleTaskDetails(row?.taskDetails);
-      const delieveryDate = formatNoticeDeliveryDate(caseDetails?.deliveryChannels?.statusChangeDate || row?.createdDate);
+      const taskDetails = handleTaskDetails(row?.taskDetails);
+      const delieveryDate = formatNoticeDeliveryDate(taskDetails?.deliveryChannels?.statusChangeDate || row?.createdDate);
+      const hearingDate = formatNoticeDeliveryDate(taskDetails?.caseDetails?.hearingDate);
+
       switch (key) {
         case "CASE_NAME_ID":
           return `${row?.caseName}, ${value}`;
@@ -499,12 +506,82 @@ export const UICustomizations = {
         case "ORDER_TYPE":
           return t(value);
         case "DELIEVERY_CHANNEL":
-          return caseDetails?.deliveryChannels?.channelName || "N/A";
+          return taskDetails?.deliveryChannels?.channelName || "N/A";
         case "DELIEVRY_DATE":
           return delieveryDate || "-";
+        case "HEARING_DATE":
+          return hearingDate || "-";
         default:
           return t("ES_COMMON_NA");
       }
+    },
+  },
+
+  bulkESignOrderConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const entityType = "Order";
+      const caseTitle = requestCriteria?.state?.searchForm?.caseTitle;
+      const status = requestCriteria?.state?.searchForm?.status;
+      const startOfTheDay = requestCriteria?.state?.searchForm?.startOfTheDay;
+      const moduleSearchCriteria = {
+        entityType,
+        tenantId,
+        ...(caseTitle && { caseTitle }),
+        status: status?.type,
+        ...(startOfTheDay && {
+          startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
+          endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
+        }),
+      };
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            limit: requestCriteria?.state?.tableForm?.limit,
+            offset: requestCriteria?.state?.tableForm?.offset,
+            tenantId: tenantId,
+            moduleSearchCriteria: moduleSearchCriteria,
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "TITLE":
+          return <OrderName rowData={row} colData={column} value={value} />;
+        case "STATUS":
+          return <CustomChip text={t(value)} shade={value === OrderWorkflowState.PENDING_BULK_E_SIGN && "orange"} />;
+        case "DATE_ADDED":
+          const date = new Date(value);
+          const day = date.getDate().toString().padStart(2, "0");
+          const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
+          const year = date.getFullYear();
+          const formattedDate = `${day}-${month}-${year}`;
+          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} />;
+        case "CS_ACTIONS":
+          return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="bulkESignOrderConfig" />;
+        default:
+          break;
+      }
+    },
+    dropDownItems: (row, column, t) => {
+      return [
+        {
+          label: t("DELETE_BULK_ORDER"),
+          id: "delete_order",
+          hide: false,
+          disabled: false,
+          action: (history, column, row, item) => {
+            column?.clickFunc(row);
+          },
+        },
+      ];
     },
   },
 };

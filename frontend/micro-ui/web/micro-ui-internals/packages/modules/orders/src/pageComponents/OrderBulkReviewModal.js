@@ -3,29 +3,17 @@ import React, { useEffect, useMemo, useState } from "react";
 import Modal from "../../../dristi/src/components/Modal";
 import { Toast } from "@egovernments/digit-ui-react-components";
 import { OrderWorkflowAction } from "../utils/orderWorkflow";
-import { orderManagementService, ordersService } from "../hooks/services";
-import { Loader } from "@egovernments/digit-ui-react-components";
-import axios from "axios";
-import qs from "qs";
+import { ordersService } from "../hooks/services";
+import { Loader, TextInput } from "@egovernments/digit-ui-react-components";
 
-const parseXml = (xmlString, tagName) => {
-  const parser = new DOMParser();
-  const xmlDoc = parser.parseFromString(xmlString, "application/xml");
-
-  const element = xmlDoc.getElementsByTagName(tagName)[0];
-  return element ? element.textContent.trim() : null;
-};
-
-function OrderBulkReviewModal({ t, showActions, refetchOrdersData, pendingSignOrderList, setShowBulkSignAllModal, setIssueBulkSuccessData }) {
-  const [pendingOrderList, setPendingOrderList] = useState(pendingSignOrderList);
-  const [selectedOrder, setSelectedOrder] = useState(pendingOrderList?.[0]);
+function OrderBulkReviewModal({ t, history, orderDetails }) {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+  const userInfo = Digit.UserService.getUser()?.info;
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [showOrderDeleteModal, setShowOrderDeleteModal] = useState(false);
-  const [deleteOrder, setDeleteOrder] = useState(null);
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -53,8 +41,8 @@ function OrderBulkReviewModal({ t, showActions, refetchOrdersData, pendingSignOr
   };
 
   const orderFileStoreId = useMemo(() => {
-    return selectedOrder?.documents?.find((doc) => doc?.documentType === "UNSIGNED")?.fileStore;
-  }, [selectedOrder]);
+    return orderDetails?.documents?.find((doc) => doc?.documentType === "UNSIGNED")?.fileStore;
+  }, [orderDetails]);
 
   const showDocument = useMemo(() => {
     return (
@@ -66,13 +54,7 @@ function OrderBulkReviewModal({ t, showActions, refetchOrdersData, pendingSignOr
         }}
       >
         {orderFileStoreId ? (
-          <DocViewerWrapper
-            docWidth={"calc(80vw* 62/ 100)"}
-            docHeight={"60vh"}
-            fileStoreId={orderFileStoreId}
-            tenantId={tenantId}
-            showDownloadOption={false}
-          />
+          <DocViewerWrapper docWidth={"74vw"} docHeight={"50vh"} fileStoreId={orderFileStoreId} tenantId={tenantId} showDownloadOption={false} />
         ) : (
           <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
         )}
@@ -87,19 +69,16 @@ function OrderBulkReviewModal({ t, showActions, refetchOrdersData, pendingSignOr
         .updateOrder(
           {
             order: {
-              ...deleteOrder,
-              workflow: { ...deleteOrder.workflow, action, documents: [{}] },
+              ...orderDetails,
+              workflow: { ...orderDetails.workflow, action, documents: [{}] },
             },
           },
           { tenantId }
         )
-        .then(async () => {
-          setPendingOrderList((prevList) => prevList?.filter((prevOrder) => prevOrder?.id !== deleteOrder?.id));
-          setSelectedOrder(() => {
-            const updatedList = pendingOrderList?.filter((prevOrder) => prevOrder?.id !== deleteOrder?.id);
-            return updatedList?.length > 0 ? updatedList?.[0] : null;
-          });
-          await refetchOrdersData();
+        .then(async (response) => {
+          history.replace(
+            `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${response?.order?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
+          );
         });
     } catch (e) {
       setShowErrorToast({ label: t("FAILED_TO_REMOVE_ORDER_FROM_BULK_LIST"), error: true });
@@ -107,84 +86,6 @@ function OrderBulkReviewModal({ t, showActions, refetchOrdersData, pendingSignOr
     } finally {
       setIsLoading(false);
       setShowOrderDeleteModal(false);
-      setDeleteOrder(null);
-    }
-  };
-
-  const fetchResponseFromXmlRequest = async (orderRequestList) => {
-    const responses = [];
-
-    const requests = orderRequestList?.map(async (order) => {
-      try {
-        // URL encoding the XML request
-        const formData = qs.stringify({ response: order?.request });
-        const response = await axios.post(bulkSignUrl, formData, {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-          },
-        });
-
-        const data = response?.data;
-
-        if (parseXml(data, "status") !== "failed") {
-          responses.push({
-            orderNumber: order?.orderNumber,
-            signedOrderData: parseXml(data, "data"),
-            signed: true,
-            errorMsg: null,
-            tenantId: tenantId,
-          });
-        } else {
-          responses.push({
-            orderNumber: order?.orderNumber,
-            signedOrderData: parseXml(data, "data"),
-            signed: false,
-            errorMsg: parseXml(data, "error"),
-            tenantId: tenantId,
-          });
-        }
-      } catch (error) {
-        console.error(`Error fetching order ${order?.orderNumber}:`, error);
-      }
-    });
-
-    await Promise.allSettled(requests);
-    return responses;
-  };
-
-  const handleSignLater = async () => {
-    setIsLoading(true);
-    const criteriaList = pendingOrderList?.map((order) => {
-      return {
-        fileStoreId: order?.documents?.find((doc) => doc?.documentType === "UNSIGNED")?.fileStore || "",
-        orderNumber: order?.orderNumber,
-        placeholder: order?.orderCategory === "COMPOSITE" ? "Fduy44hjb" : "Signature",
-        tenantId: tenantId,
-      };
-    });
-    try {
-      const response = await orderManagementService.getOrdersToSign(
-        {
-          criteria: criteriaList,
-        },
-        {}
-      );
-      await fetchResponseFromXmlRequest(response?.orderList).then(async (responseArray) => {
-        const updateOrderResponse = await orderManagementService.updateSignedOrders(
-          {
-            signedOrders: responseArray,
-          },
-          {}
-        );
-        await refetchOrdersData();
-        setIssueBulkSuccessData({ show: true, bulkSignOrderListLength: updateOrderResponse?.orders?.length });
-        setShowBulkSignAllModal(false);
-      });
-    } catch (e) {
-      setShowErrorToast({ label: t("FAILED_TO_PERFORM_BULK_SIGN"), error: true });
-      console.error("Failed to perform bulk sign", e);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -196,46 +97,34 @@ function OrderBulkReviewModal({ t, showActions, refetchOrdersData, pendingSignOr
           <CloseBtn
             onClick={async () => {
               if (isLoading) return;
-              setShowBulkSignAllModal(false);
-              await refetchOrdersData();
+              history.goBack();
             }}
           />
         }
-        actionSaveLabel={showActions && t("BULK_SIGN_ALL")}
-        actionSaveOnSubmit={() => handleSignLater()}
+        actionSaveLabel={t("BULK_EDIT")}
+        actionSaveOnSubmit={() => setShowOrderDeleteModal(true)}
         isDisabled={isLoading}
         className={"review-order-modal"}
       >
         {
           <div className="review-order-body-main">
-            {isLoading ? (
-              <div style={{ alignContent: "center", width: "100%" }}>
-                <Loader />
-              </div>
-            ) : (
+            {
               <React.Fragment>
-                <div className="review-bulk-order-modal-list-div">
-                  {pendingOrderList?.map((order) => (
-                    <div
-                      className="review-bulk-order-type-side-stepper"
-                      style={selectedOrder?.id === order?.id ? { backgroundColor: "#E8E8E8" } : { background: "none" }}
-                      onClick={() => {
-                        setSelectedOrder(order);
-                      }}
-                    >
-                      <h1>{order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}</h1>
-                      <CloseBtn
-                        onClick={() => {
-                          setShowOrderDeleteModal(true);
-                          setDeleteOrder(order);
-                        }}
-                      />
-                    </div>
-                  ))}
+                <div className="review-order-modal-document-div" style={{ padding: "0px 20px", width: "100%", overflow: "auto" }}>
+                  {showDocument}
+                  <h3 style={{ marginTop: 0, marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
+                  <div style={{ display: "flex", gap: "10px" }}>
+                    <TextInput
+                      className="field desktop-w-full"
+                      disable={true}
+                      defaultValue={orderDetails?.additionalDetails?.businessOfTheDay}
+                      style={{ minWidth: "500px" }}
+                      textInputStyle={{ maxWidth: "100%" }}
+                    />
+                  </div>
                 </div>
-                <div className="review-bulk-order-modal-document-div">{showDocument}</div>
               </React.Fragment>
-            )}
+            }
           </div>
         }
         {showErrorToast && (
@@ -251,17 +140,9 @@ function OrderBulkReviewModal({ t, showActions, refetchOrdersData, pendingSignOr
       {showOrderDeleteModal && (
         <Modal
           headerBarMain={<Heading label={t("CONFIRM_BULK_REMOVAL")} />}
-          headerBarEnd={
-            <CloseBtn
-              onClick={() => {
-                setShowOrderDeleteModal(false);
-              }}
-            />
-          }
+          headerBarEnd={<CloseBtn onClick={() => !isLoading && setShowOrderDeleteModal(false)} />}
           actionCancelLabel={t("CS_BULK_BACK")}
-          actionCancelOnSubmit={() => {
-            !isLoading && setShowOrderDeleteModal(false);
-          }}
+          actionCancelOnSubmit={() => setShowOrderDeleteModal(false)}
           actionSaveLabel={t("CS_BULK_REMOVE")}
           actionSaveOnSubmit={() => handleRemoveOrderFromBulkList(OrderWorkflowAction.SAVE_DRAFT)}
           style={{ height: "40px", background: "#BB2C2F" }}

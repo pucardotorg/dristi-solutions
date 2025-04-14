@@ -43,6 +43,14 @@ export const DRISTIService = {
       data,
       params,
     }),
+  searchEmployeeUser: (data, params) =>
+    Request({
+      url: Urls.dristi.searchEmployee,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
 
   advocateClerkService: (url, data, tenantId, userService = false, additionInfo) =>
     Request({
@@ -402,6 +410,30 @@ export const DRISTIService = {
   getLocationBasedJurisdiction: (data, params) =>
     Request({
       url: Urls.dristi.getLocationBasedJurisdiction,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  createProfileRequest: (data, params) =>
+    Request({
+      url: Urls.dristi.createProfileRequest,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  processProfileRequest: (data, params) =>
+    Request({
+      url: Urls.dristi.processProfileRequest,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  etreasuryCreateDemand: (data, params) =>
+    Request({
+      url: Urls.dristi.etreasuryCreateDemand,
       useCache: false,
       userService: false,
       data,

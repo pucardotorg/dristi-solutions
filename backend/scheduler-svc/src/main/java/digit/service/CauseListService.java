@@ -402,6 +402,7 @@ public class CauseListService {
     public List<SlotList> buildSlotList(List<CauseList> causeLists) {
         List<SlotList> slots = new ArrayList<>();
         List<MdmsHearing> mdmsHearings = getHearingDataFromMdms();
+        List<MdmsSlot> mdmsSlots = getSlottingDataFromMdms();
         for (CauseList causeList : causeLists) {
             String slotName = causeList.getSlot();
             if(slotName == null)continue;
@@ -418,8 +419,11 @@ public class CauseListService {
                 mutableCauseLists.add(causeList);
                 existingSlot.setCauseLists(mutableCauseLists);
             } else {
-                String slotStartTime = Objects.equals(slotName, "Morning Slot") ? "10:00:00" : "14:00:00";
-                String slotEndTime = Objects.equals(slotName, "Morning Slot") ? "13:00:00" : "17:00:00";
+                Optional<MdmsSlot> slot = mdmsSlots.stream()
+                        .filter(s -> slotName.equalsIgnoreCase(s.getSlotName()))
+                        .findFirst();
+                String slotStartTime = slot.map(MdmsSlot::getSlotStartTime).orElse("17:00:00");
+                String slotEndTime = slot.map(MdmsSlot::getSlotEndTime).orElse("17:00:00");
                 SlotList newSlot = SlotList.builder()
                         .slotName(slotName)
                         .slotStartTime(slotStartTime)
@@ -595,30 +599,36 @@ public class CauseListService {
     public void enrichApplication(CauseList causeList) {
         log.info("operation = enrichApplication, result = IN_PROGRESS, filingNumber = {}", causeList.getFilingNumber());
 
-        ApplicationCriteria criteria = ApplicationCriteria.builder()
-                .filingNumber(causeList.getFilingNumber())
-                .tenantId(config.getEgovStateTenantId())
-                .status(serviceConstants.APPLICATION_STATE)
-                .build();
-        ApplicationRequest applicationRequest = ApplicationRequest.builder()
-                .requestInfo(createInternalRequestInfo())
-                .criteria(criteria)
-                .build();
+        List<String> applicationNumbers = new ArrayList<>();
 
-        try {
-            JsonNode applicationList = applicationUtil.getApplications(applicationRequest);
+        for (String status : List.of(serviceConstants.APPLICATION_STATE, serviceConstants.APPLICATION_PENDING_REVIEW_STATE)) {
+            ApplicationCriteria criteria = ApplicationCriteria.builder()
+                    .filingNumber(causeList.getFilingNumber())
+                    .tenantId(config.getEgovStateTenantId())
+                    .status(status)
+                    .build();
+            ApplicationRequest applicationRequest = ApplicationRequest.builder()
+                    .requestInfo(createInternalRequestInfo())
+                    .criteria(criteria)
+                    .build();
 
-            if(applicationList != null) {
-                List<String> applicationNumbers = new ArrayList<>();
-                for (JsonNode application : applicationList) {
-                    if(!DELAY_CONDONATION.equalsIgnoreCase(application.get("applicationType").asText()))
-                     applicationNumbers.add(application.get("applicationNumber").asText());
+            try {
+                JsonNode applicationList = applicationUtil.getApplications(applicationRequest);
+
+                if(applicationList != null) {
+                    for (JsonNode application : applicationList) {
+                        if(!DELAY_CONDONATION.equalsIgnoreCase(application.get("applicationType").asText())) {
+                            applicationNumbers.add(application.get("applicationNumber").asText());
+                        }
+                    }
                 }
-                causeList.setApplicationNumbers(applicationNumbers);
+            } catch (Exception e) {
+                log.error("Error occurred while fetching applications for filing number: {}, status: {}",
+                        causeList.getFilingNumber(), status, e);
             }
-        } catch (Exception e) {
-            log.error("Error occurred while fetching applications for filing number: {}", causeList.getFilingNumber());
         }
+
+        causeList.setApplicationNumbers(applicationNumbers);
     }
 
     public void updateBulkHearing(List<CauseList> causeLists) {

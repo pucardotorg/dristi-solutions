@@ -83,6 +83,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
   const [newCaseName, setNewCaseName] = useState("");
   const [modalCaseName, setModalCaseName] = useState("");
   const [highlightChecklist, setHighlightChecklist] = useState(false);
+  const [comment, setComment] = useState("");
 
   const { downloadPdf } = useDownloadCasePdf();
 
@@ -250,9 +251,15 @@ function ViewCaseFile({ t, inViewCase = false }) {
                     delete input.data;
                     if (input?.key === "submissionFromAccused") {
                       const responseDocuments = caseDetails?.litigants
-                        ?.filter((litigant) => litigant?.partyType?.includes("respondent") && litigant?.document?.length > 0)
-                        ?.map((litigant) => litigant?.documents)
-                        ?.flat();
+                        ?.filter((party) => party.partyType && party.partyType.includes("respondent"))
+                        ?.flatMap((party) =>
+                          (party.documents || [])
+                            .filter((doc) => doc.additionalDetails?.fileType === "respondent-response")
+                            ?.map((doc) => ({
+                              ...doc,
+                              fileName: `${t("RESPONSE_SUBMISSION")} (${party?.additionalDetails?.fullName})`,
+                            }))
+                        );
                       const vakalatnamaDocument = caseDetails?.representatives
                         ?.filter((representative) => representative?.representing?.some((represent) => represent?.partyType?.includes("respondent")))
                         ?.flatMap((item) =>
@@ -261,6 +268,25 @@ function ViewCaseFile({ t, inViewCase = false }) {
                             ...(rep.additionalDetails?.document?.vakalatnamaFileUpload || []),
                           ])
                         );
+                      const supportingDocument = caseDetails?.representatives
+                        ?.filter((representative) => representative?.representing?.some((represent) => represent?.partyType?.includes("respondent")))
+                        ?.flatMap((item) =>
+                          (item.documents || [])?.map((doc) => ({
+                            ...doc,
+                            fileName: `${t("REASON_FOR_REPLACEMENT")} (${item?.additionalDetails?.advocateName})`,
+                          }))
+                        );
+                      const pipAffidavitDocument = caseDetails?.litigants
+                        ?.filter((party) => party.partyType && party.partyType.includes("respondent"))
+                        ?.flatMap((party) =>
+                          (party.documents || [])
+                            .filter((doc) => doc?.additionalDetails?.documentName === "UPLOAD_PIP_AFFIDAVIT")
+                            ?.map((doc) => ({
+                              ...doc,
+                              fileName: `${t(doc?.additionalDetails?.documentName)} (${party?.additionalDetails?.fullName})`,
+                            }))
+                        );
+
                       return {
                         ...input,
                         data: [
@@ -272,6 +298,8 @@ function ViewCaseFile({ t, inViewCase = false }) {
                               },
                               responseDocuments: responseDocuments,
                               vakalatnamaDocument: vakalatnamaDocument,
+                              pipAffidavitDocument: pipAffidavitDocument,
+                              supportingDocument: supportingDocument,
                             },
                           },
                         ],
@@ -330,7 +358,11 @@ function ViewCaseFile({ t, inViewCase = false }) {
     const scrutinyObj = action === CaseWorkflowAction.VALIDATE ? {} : CaseWorkflowAction.SEND_BACK && isPrevScrutiny ? newScrutinyData : formdata;
     const newcasedetails = {
       ...caseDetails,
-      additionalDetails: { ...caseDetails.additionalDetails, scrutiny: scrutinyObj },
+      additionalDetails: {
+        ...caseDetails.additionalDetails,
+        scrutiny: scrutinyObj,
+        ...(comment && { scrutinyComment: comment }),
+      },
       caseTitle: newCaseName !== "" ? newCaseName : caseDetails?.caseTitle,
     };
     const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
@@ -686,6 +718,8 @@ function ViewCaseFile({ t, inViewCase = false }) {
           )}
           {actionModal == "registerCase" && (
             <SendCaseBackModal
+              comment={comment}
+              setComment={setComment}
               actionCancelLabel={"CS_COMMON_BACK"}
               actionSaveLabel={"CS_COMMON_CONFIRM"}
               t={t}

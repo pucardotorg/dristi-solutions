@@ -16,33 +16,49 @@ const LitigantVerification = ({
   setAlreadyJoinedMobileNumber,
   isDisabled,
   setIsDisabled,
+  selectPartyData,
+  isApiCalled,
 }) => {
   const modalRef = useRef(null);
   const [index, setIndex] = useState(0);
-  const [litigants, setLitigants] = useState(party);
+  const [litigants, setLitigants] = useState([]);
+
+  useEffect(() => {
+    if (party?.length > 0) {
+      if (selectPartyData?.advocateToReplaceList?.length > 0 && selectPartyData?.isReplaceAdvocate?.value === "YES") {
+        const uniqueIndividuals = new Set(selectPartyData?.advocateToReplaceList?.map((item) => item.litigantIndividualId));
+        const filteredParty = party.filter((p) => uniqueIndividuals.has(p.individualId));
+        setLitigants(filteredParty);
+      } else {
+        setLitigants(party);
+      }
+    }
+  }, [party, selectPartyData?.advocateToReplaceList, selectPartyData?.isReplaceAdvocate?.value, selectPartyData?.partyInvolve?.value]);
 
   const modifiedFormConfig = useMemo(() => {
     const applyUiChanges = (config) => ({
       ...config,
       head: litigants?.some((litigant) => litigant?.isComplainant) ? t("COMPLAINANT_BASIC_DETAILS") : t("ACCUSED_BASIC_DETAILS"),
-      body: config?.body?.map((body) => {
-        let tempBody = {
-          ...body,
-        };
-        if (body?.labelChildren === "optional") {
-          tempBody = {
-            ...tempBody,
-            labelChildren: <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>,
+      body: config?.body
+        ?.filter((body) => (litigants?.[index]?.isVakalatnamaNew?.code === "NO" ? !["noOfAdvocates", "vakalatnama"].includes(body?.key) : true))
+        ?.map((body) => {
+          let tempBody = {
+            ...body,
           };
-        }
-        if (litigants?.[index]?.phoneNumberVerification?.isUserVerified && config?.body?.[3]?.disableConfigFields?.includes(body?.key)) {
-          tempBody = {
-            ...tempBody,
-            disable: true,
-          };
-        }
-        return tempBody;
-      }),
+          if (body?.labelChildren === "optional") {
+            tempBody = {
+              ...tempBody,
+              labelChildren: <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>,
+            };
+          }
+          if (litigants?.[index]?.phoneNumberVerification?.isUserVerified && config?.body?.[3]?.disableConfigFields?.includes(body?.key)) {
+            tempBody = {
+              ...tempBody,
+              disable: true,
+            };
+          }
+          return tempBody;
+        }),
     });
 
     return VerifyMultipartyLitigantConfig?.map((config) => applyUiChanges(config));
@@ -71,7 +87,7 @@ const LitigantVerification = ({
   const shouldUpdateState = (selectedParty, formData) => {
     const commonFields = ["firstName", "middleName", "lastName"];
 
-    const hasBasicInfoChanged = commonFields.some((field) => selectedParty[field] !== formData[field]);
+    const hasBasicInfoChanged = commonFields?.some((field) => selectedParty[field] !== formData[field]);
 
     const hasPhoneNumberChanged =
       selectedParty?.phoneNumberVerification?.mobileNumber !== formData?.phoneNumberVerification?.mobileNumber ||
@@ -83,13 +99,29 @@ const LitigantVerification = ({
       !areFilesEqual(selectedParty?.vakalatnama?.document?.[0], formData?.vakalatnama?.document?.[0]);
     const isDocumentNull = formData?.vakalatnama === null && selectedParty?.vakalatnama !== null;
 
-    return hasBasicInfoChanged || hasPhoneNumberChanged || hasDocumentChanged || isDocumentNull;
+    const hasIsVakalatnamaNewChanged = selectedParty?.isVakalatnamaNew?.code !== formData?.isVakalatnamaNew?.code;
+
+    const hasNumberOfVakalatnamaChanged = selectedParty?.isVakalatnamaNew?.code === "YES" && selectedParty?.noOfAdvocates !== formData?.noOfAdvocates;
+
+    return (
+      hasBasicInfoChanged ||
+      hasPhoneNumberChanged ||
+      hasDocumentChanged ||
+      isDocumentNull ||
+      hasIsVakalatnamaNewChanged ||
+      hasNumberOfVakalatnamaChanged
+    );
   };
 
   useEffect(
     () =>
       setIsDisabled(
-        !litigants.every((litigant) => litigant?.phoneNumberVerification?.isUserVerified === true && litigant?.vakalatnama?.document?.length > 0)
+        !litigants.every(
+          (litigant) =>
+            litigant?.phoneNumberVerification?.isUserVerified === true &&
+            ((litigant?.isVakalatnamaNew?.code === "YES" && litigant?.noOfAdvocates > 0 && litigant?.vakalatnama?.document?.length > 0) ||
+              litigant?.isVakalatnamaNew?.code === "NO")
+        )
       ),
     [litigants, setIsDisabled]
   );
@@ -126,6 +158,20 @@ const LitigantVerification = ({
               }, 0);
             }
           }
+        } else if (key === "noOfAdvocates") {
+          const value = formDataCopy[key];
+          if (typeof value === "string") {
+            const numValue = value.replace(/\D/g, "");
+            if (numValue !== value) {
+              const element = document.querySelector(`[name="${key}"]`);
+              const start = element?.selectionStart;
+              const end = element?.selectionEnd;
+              setValue(key, !isNaN(numValue) && numValue > 0 ? numValue.toString() : "");
+              setTimeout(() => {
+                element?.setSelectionRange(start, end);
+              }, 0);
+            }
+          }
         }
       }
     }
@@ -136,6 +182,7 @@ const LitigantVerification = ({
             ? {
                 ...item,
                 ...formData,
+                ...(formData?.isVakalatnamaNew?.code === "NO" && { noOfAdvocates: "", vakalatnama: null }),
               }
             : item;
         })
@@ -178,18 +225,24 @@ const LitigantVerification = ({
   return (
     <React.Fragment>
       <div ref={modalRef} className="litigant-verification">
-        <FormComposerV2
-          key={index}
-          config={modifiedFormConfig}
-          onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors) =>
-            onFormValueChange(setValue, formData, formState, reset, setError, clearErrors)
-          }
-          defaultValues={{
-            ...litigants?.[index],
-          }}
-          fieldStyle={fieldStyle}
-          className={"multi-litigant-composer"}
-        />
+        {litigants?.length > 0 && (
+          <FormComposerV2
+            key={index}
+            config={modifiedFormConfig}
+            onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors) =>
+              onFormValueChange(setValue, formData, formState, reset, setError, clearErrors)
+            }
+            defaultValues={{
+              ...litigants?.[index],
+              isVakalatnamaNew: {
+                code: litigants?.[index]?.isVakalatnamaNew?.code || "NO",
+                name: litigants?.[index]?.isVakalatnamaNew?.name || "NO",
+              },
+            }}
+            fieldStyle={fieldStyle}
+            className={"multi-litigant-composer"}
+          />
+        )}
       </div>
       <div className={"multi-litigant-composer-footer"}>
         <div className={"multi-litigant-composer-footer-left"}>
@@ -221,7 +274,7 @@ const LitigantVerification = ({
               setParty(litigants);
               onProceed(litigants);
             }}
-            isDisabled={isDisabled}
+            isDisabled={isDisabled || isApiCalled}
           />
         </div>
       </div>

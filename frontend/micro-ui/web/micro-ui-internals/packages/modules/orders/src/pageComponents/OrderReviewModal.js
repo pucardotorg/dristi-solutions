@@ -32,6 +32,7 @@ function OrderReviewModal({
   businessOfDay,
   updateOrder,
   setShowBulkModal,
+  setPrevOrder,
 }) {
   const [fileStoreId, setFileStoreID] = useState(null);
   const [fileName, setFileName] = useState();
@@ -181,24 +182,30 @@ function OrderReviewModal({
   };
 
   const handleSignLater = () => {
-    if (showActions) {
-      setUpdateLoading(true);
-      handleDocumentUpload(async (fileStoreId) => {
-        if (fileStoreId) {
-          await updateOrder(order, OrderWorkflowAction.SUBMIT_BULK_E_SIGN, fileStoreId)
-            .then(() => {
-              setShowReviewModal(false);
-              setShowBulkModal(true);
-              setUpdateLoading(false);
-            })
-            .catch((e) => {
-              setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
-              console.error("Failed to save draft:", e);
-              setUpdateLoading(false);
-            });
-        }
-      });
-    }
+    setUpdateLoading(true);
+    handleDocumentUpload(async (fileStoreId) => {
+      if (fileStoreId) {
+        const updatedOrder = {
+          ...order,
+          additionalDetails: {
+            ...order.additionalDetails,
+            businessOfTheDay: businessDay,
+          },
+        };
+        await updateOrder(updatedOrder, OrderWorkflowAction.SUBMIT_BULK_E_SIGN, fileStoreId)
+          .then((response) => {
+            setShowReviewModal(false);
+            setShowBulkModal(true);
+            setUpdateLoading(false);
+            setPrevOrder(response?.order);
+          })
+          .catch((e) => {
+            setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
+            console.error("Failed to save draft:", e);
+            setUpdateLoading(false);
+          });
+      }
+    });
   };
 
   return (
@@ -206,11 +213,16 @@ function OrderReviewModal({
       <Modal
         headerBarMain={<Heading label={t("REVIEW_ORDERS_HEADING")} />}
         headerBarEnd={<CloseBtn onClick={handleReviewGoBack} />}
-        actionCancelLabel={showActions && t("ADD_SIGNATURE")}
-        actionSaveLabel={t("SIGN_LATER")}
+        actionCancelLabel={showActions && t("BULK_EDIT")}
+        actionCustomLabel={showActions && t("ADD_SIGNATURE")}
+        actionSaveLabel={showActions && t("SAVE_FINALISE_AND_SIGN_LATER")}
         isBackButtonDisabled={isLoading || isUpdateLoading || !businessDay}
+        isCustomButtonDisabled={isLoading || isUpdateLoading || !businessDay}
         isDisabled={isLoading || isUpdateLoading || !businessDay}
-        actionCancelOnSubmit={handleAddSignature}
+        actionCancelOnSubmit={handleReviewGoBack}
+        actionCustomLabelSubmit={handleAddSignature}
+        customActionStyle={{ border: "1px solid #007E7E", backgroundColor: "white" }}
+        customActionTextStyle={{ color: "#007E7E" }}
         actionSaveOnSubmit={handleSignLater}
         className={"review-order-modal"}
       >

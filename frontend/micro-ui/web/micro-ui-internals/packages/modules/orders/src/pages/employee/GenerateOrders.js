@@ -12,7 +12,8 @@ import {
   configsBail,
   configsCaseSettlement,
   configsCaseTransfer,
-  configsCaseWithdrawal,
+  configsCaseWithdrawalAccept,
+  configsCaseWithdrawalReject,
   configsCreateOrderWarrant,
   configsInitiateRescheduleHearingDate,
   configsIssueNotice,
@@ -33,15 +34,16 @@ import {
   configsIssueBailReject,
   configsSetTermBail,
   configsAcceptRejectDelayCondonation,
-  configsAdmitDismissCase,
   configsAdmitCase,
   configsDismissCase,
+  configsApproveRejectLitigantDetailsChange,
+  replaceAdvocateConfig,
 } from "../../configs/ordersCreateConfig";
 import { CustomAddIcon, CustomDeleteIcon, WarningInfoIconYellow } from "../../../../dristi/src/icons/svgIndex";
 import OrderReviewModal from "../../pageComponents/OrderReviewModal";
 import OrderSignatureModal from "../../pageComponents/OrderSignatureModal";
 import OrderDeleteModal from "../../pageComponents/OrderDeleteModal";
-import { ordersService, schedulerService } from "../../hooks/services";
+import { ordersService, schedulerService, taskService } from "../../hooks/services";
 import { Loader } from "@egovernments/digit-ui-components";
 import OrderSucessModal from "../../pageComponents/OrderSucessModal";
 import { applicationTypes } from "../../utils/applicationTypes";
@@ -57,19 +59,19 @@ import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName } from "../../utils";
 import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
-import ErrorDataModal from "@egovernments/digit-ui-module-dristi/src/pages/citizen/FileCase/ErrorDataModal";
 import CompositeOrdersErrorModal from "./CompositeOrdersErrorModal";
 import OrderItemDeleteModal from "./OrderItemDeleteModal";
 import TasksComponent from "../../../../home/src/components/TaskComponent";
 import MandatoryFieldsErrorModal from "./MandatoryFieldsErrorModal";
 import OrderAddToBulkSuccessModal from "../../pageComponents/OrderAddToBulkSuccessModal";
+import { getFullName } from "../../../../cases/src/utils/joinCaseUtils";
 
 // any order type from orderTypes can not be paired with any order from unAllowedOrderTypes when creating composite order.
 export const compositeOrderAllowedTypes = [
   {
     key: "finalStageOrders",
-    orderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL", "SETTLEMENT", "CASE_TRANSFER", "DISMISS_CASE"],
-    unAllowedOrderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL", "SETTLEMENT", "CASE_TRANSFER", ""],
+    orderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL_ACCEPT", "SETTLEMENT", "CASE_TRANSFER", "DISMISS_CASE"],
+    unAllowedOrderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL_ACCEPT", "SETTLEMENT", "CASE_TRANSFER", ""],
   },
   {
     key: "schedule_Reschedule",
@@ -113,7 +115,8 @@ const configKeys = {
   NOTICE: configsIssueNotice,
   BAIL: configsBail,
   WARRANT: configsCreateOrderWarrant,
-  WITHDRAWAL: configsCaseWithdrawal,
+  WITHDRAWAL_ACCEPT: configsCaseWithdrawalAccept,
+  WITHDRAWAL_REJECT: configsCaseWithdrawalReject,
   OTHERS: configsOthers,
   APPROVE_VOLUNTARY_SUBMISSIONS: configsVoluntarySubmissionStatus,
   REJECT_VOLUNTARY_SUBMISSIONS: configRejectSubmission,
@@ -124,6 +127,8 @@ const configKeys = {
   ACCEPTANCE_REJECTION_DCA: configsAcceptRejectDelayCondonation,
   ADMIT_CASE: configsAdmitCase,
   DISMISS_CASE: configsDismissCase,
+  APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE: configsApproveRejectLitigantDetailsChange,
+  ADVOCATE_REPLACEMENT_APPROVAL: replaceAdvocateConfig,
 };
 
 function applyMultiSelectDropdownFix(setValue, formData, keys) {
@@ -183,7 +188,8 @@ const stateSlaMap = {
   NOTICE: 3,
   BAIL: 3,
   WARRANT: 3,
-  WITHDRAWAL: 3,
+  WITHDRAWAL_ACCEPT: 3,
+  WITHDRAWAL_REJECT: 3,
   OTHERS: 3,
   APPROVE_VOLUNTARY_SUBMISSIONS: 3,
   REJECT_VOLUNTARY_SUBMISSIONS: 3,
@@ -250,7 +256,7 @@ const GenerateOrders = () => {
   const [showEditTitleNameModal, setShowEditTitleNameModal] = useState(false);
   const [modalTitleName, setModalTitleName] = useState("");
   const [showMandatoryFieldsErrorModal, setShowMandatoryFieldsErrorModal] = useState({ showModal: false, errorsData: [] });
-
+  const [profileEditorName, setProfileEditorName] = useState("");
   const currentDiaryEntry = history.location?.state?.diaryEntry;
 
   const setSelectedOrder = (orderIndex) => {
@@ -356,6 +362,9 @@ const GenerateOrders = () => {
         ?.filter((item) => item?.partyType?.includes("respondent"))
         .map((item) => {
           const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
+          const uniqueId = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
+            (obj) => obj?.data?.respondentVerification?.individualDetails?.individualId === item?.individualId
+          )?.uniqueId;
           return {
             code: fullName,
             name: `${fullName} (Accused)`,
@@ -364,6 +373,7 @@ const GenerateOrders = () => {
             individualId: item?.individualId,
             isJoined: true,
             partyType: "respondent",
+            uniqueId,
           };
         }) || []
     );
@@ -375,7 +385,14 @@ const GenerateOrders = () => {
         ?.filter((data) => !data?.data?.respondentVerification?.individualDetails?.individualId)
         ?.map((data) => {
           const fullName = constructFullName(data?.data?.respondentFirstName, data?.data?.respondentMiddleName, data?.data?.respondentLastName);
-          return { code: fullName, name: `${fullName} (Accused)`, uuid: data?.data?.uuid, isJoined: false, partyType: "respondent" };
+          return {
+            code: fullName,
+            name: `${fullName} (Accused)`,
+            uuid: data?.data?.uuid,
+            isJoined: false,
+            partyType: "respondent",
+            uniqueId: data?.uniqueId,
+          };
         }) || []
     );
   }, [caseDetails]);
@@ -417,6 +434,28 @@ const GenerateOrders = () => {
     filingNumber,
     Boolean(filingNumber)
   );
+
+  // Get all the published orders corresponding to approval/rejection of litigants profile change request.
+  const { data: approveRejectLitigantDetailsChangeOrderData } = useSearchOrdersService(
+    {
+      tenantId,
+      criteria: {
+        filingNumber,
+        applicationNumber: "",
+        cnrNumber,
+        orderType: "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE",
+        status: OrderWorkflowState.PUBLISHED,
+      },
+      pagination: { limit: 1000, offset: 0 },
+    },
+    { tenantId },
+    filingNumber + OrderWorkflowState.PUBLISHED,
+    Boolean(filingNumber && cnrNumber)
+  );
+
+  const publishedLitigantDetailsChangeOrders = useMemo(() => approveRejectLitigantDetailsChangeOrderData?.list || [], [
+    approveRejectLitigantDetailsChangeOrderData,
+  ]);
 
   const isDCANoticeGenerated = useMemo(
     () =>
@@ -533,7 +572,12 @@ const GenerateOrders = () => {
   }, [showErrorToast]);
 
   useEffect(() => {
-    if (defaultIndex && defaultIndex !== -1 && orderNumber && defaultIndex !== selectedOrder) {
+    const currentSelectedOrderIndex = localStorage.getItem("currentSelectedOrder");
+
+    if (currentSelectedOrderIndex) {
+      setSelectedOrder(currentSelectedOrderIndex);
+      localStorage.removeItem("currentSelectedOrder");
+    } else if (defaultIndex && defaultIndex !== -1 && orderNumber && defaultIndex !== selectedOrder) {
       setSelectedOrder(defaultIndex);
     }
     const isSignSuccess = localStorage.getItem("esignProcess");
@@ -544,7 +588,7 @@ const GenerateOrders = () => {
       localStorage.removeItem("esignProcess");
       localStorage.removeItem("orderPDF");
     }
-  }, [defaultIndex]);
+  }, [defaultIndex, orderNumber, selectedOrder]);
 
   useEffect(() => {
     const getOrder = async () => {
@@ -902,9 +946,27 @@ const GenerateOrders = () => {
                         options: [
                           ...(currentOrder?.additionalDetails?.warrantFor
                             ? [currentOrder?.additionalDetails?.warrantFor]
-                            : [...respondents, ...unJoinedLitigant].map((data) => data?.name || "")),
+                            : [...respondents, ...unJoinedLitigant].map((data) => {
+                                return { name: data?.name || "", uniqueId: data?.uniqueId };
+                              })),
                         ],
                       },
+                    };
+                  }
+                  return field;
+                }),
+              };
+            });
+          }
+          if (orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE") {
+            orderTypeForm = orderTypeForm?.map((section) => {
+              return {
+                ...section,
+                body: section.body.map((field) => {
+                  if (field.key === "applicationGrantedRejected") {
+                    return {
+                      ...field,
+                      disable: true,
                     };
                   }
                   return field;
@@ -1141,9 +1203,28 @@ const GenerateOrders = () => {
                       options: [
                         ...(currentOrder?.additionalDetails?.warrantFor
                           ? [currentOrder?.additionalDetails?.warrantFor]
-                          : [...respondents, ...unJoinedLitigant].map((data) => data?.name || "")),
+                          : [...respondents, ...unJoinedLitigant].map((data) => {
+                              return { name: data?.name || "", uniqueId: data?.uniqueId };
+                            })),
                       ],
                     },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
+        }
+
+        if (orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE") {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "applicationGrantedRejected") {
+                  return {
+                    ...field,
+                    disable: true,
                   };
                 }
                 return field;
@@ -1378,7 +1459,20 @@ const GenerateOrders = () => {
 
       // }
 
-      if (orderType === "WITHDRAWAL") {
+      if (orderType === "WITHDRAWAL_ACCEPT") {
+        if (newApplicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
+          updatedFormdata.applicationOnBehalfOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
+          setValueRef?.current?.[index]?.("applicationOnBehalfOf", updatedFormdata.applicationOnBehalfOf);
+
+          updatedFormdata.partyType = t(newApplicationDetails?.additionalDetails?.partyType);
+          setValueRef?.current?.[index]?.("partyType", updatedFormdata.partyType);
+
+          updatedFormdata.reasonForWithdrawal = t(newApplicationDetails?.additionalDetails?.formdata?.reasonForWithdrawal?.code);
+          setValueRef?.current?.[index]?.("reasonForWithdrawal", updatedFormdata.reasonForWithdrawal);
+        }
+      }
+
+      if (orderType === "WITHDRAWAL_REJECT") {
         if (newApplicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
           updatedFormdata.applicationOnBehalfOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
           setValueRef?.current?.[index]?.("applicationOnBehalfOf", updatedFormdata.applicationOnBehalfOf);
@@ -1418,8 +1512,8 @@ const GenerateOrders = () => {
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
-          updatedFormdata.dateForHearing = newCurrentOrder?.additionalDetails?.formdata?.newHearingDate || "";
-        } else {
+          updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+        } else if (isHearingScheduled) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         }
         setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
@@ -1460,8 +1554,8 @@ const GenerateOrders = () => {
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
-          updatedFormdata.dateForHearing = newCurrentOrder?.additionalDetails?.formdata?.newHearingDate || "";
-        } else {
+          updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+        } else if (isHearingScheduled) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         }
         setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
@@ -1506,8 +1600,8 @@ const GenerateOrders = () => {
         if (scheduleHearingOrderItem) {
           updatedFormdata.dateOfHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
-          updatedFormdata.dateOfHearing = newCurrentOrder?.additionalDetails?.formdata?.newHearingDate || "";
-        } else {
+          updatedFormdata.dateOfHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
+        } else if (isHearingScheduled) {
           updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));
         }
         setValueRef?.current?.[index]?.("dateOfHearing", updatedFormdata.dateOfHearing);
@@ -1764,7 +1858,11 @@ const GenerateOrders = () => {
     } else if (type === "MANDATORY_SUBMISSIONS_RESPONSES") {
       parties = [...orderSchema?.orderDetails?.partyDetails?.partiesToRespond, ...orderSchema?.orderDetails?.partyDetails?.partyToMakeSubmission];
     } else if (["WARRANT", "SUMMONS", "NOTICE"].includes(type)) {
-      parties = orderSchema?.orderDetails?.respondentName ? [orderSchema?.orderDetails?.respondentName] : [];
+      parties = orderSchema?.orderDetails?.respondentName?.name
+        ? [orderSchema?.orderDetails?.respondentName?.name]
+        : orderSchema?.orderDetails?.respondentName
+        ? [orderSchema?.orderDetails?.respondentName]
+        : [];
     } else if (type === "SECTION_202_CRPC") {
       parties = [orderSchema?.orderDetails?.applicationFilledBy, orderSchema?.orderDetails.soughtOfDetails];
     } else if (
@@ -1799,6 +1897,71 @@ const GenerateOrders = () => {
     }
     return parties.map((party) => party.partyName).join(", ");
   };
+
+  const fetchAdvocateIndividualInfo = useCallback(async (uuid) => {
+    try {
+      const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
+        {
+          Individual: {
+            userUuid: [uuid],
+          },
+        },
+        { tenantId, limit: 1000, offset: 0 }
+      );
+      return individualData;
+    } catch (error) {
+      console.error("Error fetching advocate info:", error);
+      return null;
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchAdvocateName = async () => {
+      if (!currentOrder?.orderType) {
+        setProfileEditorName("");
+        return;
+      }
+
+      // if the editor is a complainant (pip), we will get its name from litigant
+      if (currentOrder?.additionalDetails?.applicantType === "COMPLAINANT") {
+        for (let i = 0; i < caseDetails?.litigants?.length; i++) {
+          const lit = caseDetails?.litigants?.[i];
+          if (lit?.additionalDetails?.uuid === currentOrder?.additionalDetails?.applicantPartyUuid) {
+            setProfileEditorName(lit?.additionalDetails?.fullName || "");
+            return;
+          }
+        }
+      }
+
+      // If the editor is an advocate, we will get its name from representatives,
+      if (currentOrder?.additionalDetails?.applicantType === "ADVOCATE") {
+        let advFound = false;
+        for (let i = 0; i < caseDetails?.representatives?.length; i++) {
+          const rep = caseDetails?.representatives?.[i];
+          if (rep?.additionalDetails?.uuid === currentOrder?.additionalDetails?.applicantPartyUuid) {
+            advFound = true;
+            setProfileEditorName(rep?.additionalDetails?.advocateName || "");
+            return;
+          }
+        }
+
+        // if the advocate is not found in representatives, we have to get its name using individual search api.
+        if (!advFound) {
+          try {
+            const individualData = await fetchAdvocateIndividualInfo(currentOrder?.additionalDetails?.applicantPartyUuid);
+            const { givenName = "", otherNames = "", familyName = "" } = individualData?.Individual?.[0]?.name || {};
+            const fullName = getFullName(" ", givenName, otherNames, familyName);
+            setProfileEditorName(fullName);
+          } catch (error) {
+            console.error("Error fetching advocate name:", error);
+            setProfileEditorName("");
+          }
+        }
+      }
+    };
+
+    fetchAdvocateName();
+  }, [caseDetails, currentOrder, fetchAdvocateIndividualInfo]);
 
   const defaultBOTD = useMemo(() => {
     if (!currentOrder?.orderType) return "";
@@ -1879,10 +2042,10 @@ const GenerateOrders = () => {
         return "Bail";
       case "WARRANT":
         return `Issue ${t(currentOrder?.orderDetails?.warrantType)} to ${currentOrder?.orderDetails?.parties?.[0]?.partyName}`;
-      case "WITHDRAWAL":
-        return currentOrder?.orderDetails?.applicationStatus === "APPROVED"
-          ? "The application to withdraw the case has been accepted. Case closed"
-          : `The application to withdraw the case raised by ${applicationDetails?.additionalDetails?.owner} has been rejected`;
+      case "WITHDRAWAL_ACCEPT":
+        return "The application to withdraw the case has been accepted. Case closed";
+      case "WITHDRAWAL_REJECT":
+        return `The application to withdraw the case raised by ${applicationDetails?.additionalDetails?.owner} has been rejected`;
       case "OTHERS":
         return "Others";
       case "APPROVE_VOLUNTARY_SUBMISSIONS":
@@ -1907,13 +2070,22 @@ const GenerateOrders = () => {
         return `Cognizance of the offence taken on file as ${caseDetails?.cmpNumber} under Section 138 of the Negotiable Instruments Act`;
       case "DISMISS_CASE":
         return `Case has been dismissed`;
+      case "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE":
+        return `Application by ${profileEditorName} to update litigant details is hereby ${t(
+          currentOrder?.additionalDetails?.formdata?.applicationGrantedRejected?.code
+        )}`;
       default:
         return "";
     }
-  }, [t, applicationDetails, caseDetails, currentOrder]);
+  }, [t, applicationDetails, caseDetails, currentOrder, profileEditorName]);
 
   useEffect(() => {
-    setBusinessOfTheDay(defaultBOTD);
+    const businessOfTheDay = localStorage.getItem("businessOfTheDay");
+    if (businessOfTheDay) {
+      setBusinessOfTheDay(businessOfTheDay);
+    } else {
+      setBusinessOfTheDay(defaultBOTD);
+    }
   }, [defaultBOTD]);
 
   const getUpdateDocuments = (documents, documentsFile) => {
@@ -1941,6 +2113,48 @@ const GenerateOrders = () => {
     try {
       const localStorageID = localStorage.getItem("fileStoreId");
       const documents = Array.isArray(order?.documents) ? order.documents : [];
+      let taskDetails = null;
+      const newCompositeItems = [];
+      if (unsignedFileStoreId) {
+        if (order?.orderCategory === "COMPOSITE") {
+          const updatedOrders = order?.compositeItems?.map((item) => {
+            return {
+              order: {
+                ...order,
+                additionalDetails: item?.orderSchema?.additionalDetails,
+                orderDetails: item?.orderSchema?.orderDetails,
+                orderType: item?.orderType,
+                itemId: item?.id,
+              },
+            };
+          });
+          for (const item of updatedOrders) {
+            const matchedItem = order?.compositeItems?.find((compositeItem) => compositeItem?.id === item?.order?.itemId);
+            if (["NOTICE", "SUMMONS", "WARRANT"]?.includes(item?.order?.orderType)) {
+              const payloads = await createTaskPayload(item?.order?.orderType, item);
+              if (matchedItem) {
+                const newItem = {
+                  ...matchedItem,
+                  orderSchema: {
+                    ...matchedItem?.orderSchema,
+                    additionalDetails: {
+                      ...matchedItem?.orderSchema?.additionalDetails,
+                      taskDetails: JSON.stringify(payloads),
+                    },
+                  },
+                };
+                newCompositeItems?.push(newItem);
+              }
+            } else if (matchedItem) {
+              newCompositeItems?.push(matchedItem);
+            }
+          }
+        } else if (["NOTICE", "SUMMONS", "WARRANT"]?.includes(order?.orderType)) {
+          const payloads = await createTaskPayload(order?.orderType, { order });
+          taskDetails = JSON.stringify(payloads);
+        }
+      }
+
       const documentsFile =
         signedDoucumentUploadedID !== "" || localStorageID
           ? {
@@ -1981,6 +2195,17 @@ const GenerateOrders = () => {
           order: {
             ...order,
             ...orderSchema,
+            ...(unsignedFileStoreId && order?.orderCategory === "COMPOSITE" && { compositeItems: newCompositeItems }),
+            ...(unsignedFileStoreId &&
+              order?.orderCategory === "INTERMEDIATE" && {
+                additionalDetails: {
+                  ...order?.additionalDetails,
+                  ...(taskDetails && { taskDetails }),
+                },
+              }),
+            ...((newHearingNumber || hearingNumber || hearingDetails?.hearingId) && {
+              hearingNumber: newHearingNumber || hearingNumber || hearingDetails?.hearingId,
+            }),
             documents: updatedDocuments,
             workflow: { ...order.workflow, action, documents: [{}] },
           },
@@ -2117,7 +2342,7 @@ const GenerateOrders = () => {
     createTask = false,
     taskStatus = "CREATE_SUBMISSION",
     taskName = "",
-    channel = "",
+    channelCode = "",
     orderType = "",
     compositeOrderItemId,
     newApplicationDetails,
@@ -2131,7 +2356,7 @@ const GenerateOrders = () => {
     let additionalDetails = {};
     let entityType = orderEntityType
       ? orderEntityType
-      : formdata?.isResponseRequired?.code === "Yes"
+      : formdata?.responseInfo?.isResponseRequired?.code === true
       ? "application-order-submission-feedback"
       : "application-order-submission-default";
     let status = taskStatus;
@@ -2228,10 +2453,10 @@ const GenerateOrders = () => {
       entityType = "order-default";
       return ordersService.customApiService(Urls.orders.pendingTask, {
         pendingTask: {
-          name: t(`MAKE_PAYMENT_FOR_SUMMONS_${channelTypeEnum?.[channel?.type]?.code}`),
+          name: t(`MAKE_PAYMENT_FOR_SUMMONS_${channelCode}`),
           entityType,
           referenceId: `MANUAL_${refId}`,
-          status: `PAYMENT_PENDING_${channelTypeEnum?.[channel?.type]?.code}`,
+          status: `PAYMENT_PENDING_${channelCode}`,
           assignedTo: assignees,
           assignedRole,
           cnrNumber: cnrNumber,
@@ -2258,10 +2483,10 @@ const GenerateOrders = () => {
       assignees = [...assignee, ...complainantUuids]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
       const pendingTask = {
-        name: t(`MAKE_PAYMENT_FOR_NOTICE_${channelTypeEnum?.[channel?.type]?.code}`),
+        name: t(`MAKE_PAYMENT_FOR_NOTICE_${channelCode}`),
         entityType,
         referenceId: `MANUAL_${refId}`,
-        status: `PAYMENT_PENDING_${channelTypeEnum?.[channel?.type]?.code}`,
+        status: `PAYMENT_PENDING_${channelCode}`,
         assignedTo: assignees,
         assignedRole,
         cnrNumber: cnrNumber,
@@ -2439,7 +2664,11 @@ const GenerateOrders = () => {
       else {
         if (order?.orderNumber) {
           count += 1;
-          return await addOrderItem(order, OrderWorkflowAction.SAVE_DRAFT, index);
+          const updatedOrder = {
+            ...order,
+            compositeItems: order?.compositeItems?.filter((item) => item?.isEnabled),
+          };
+          return await addOrderItem(updatedOrder, OrderWorkflowAction.SAVE_DRAFT, index);
         } else {
           // create call first, get order number from response
           // then add item call
@@ -2648,7 +2877,7 @@ const GenerateOrders = () => {
     }
   };
 
-  const createTask = async (orderType, caseDetails, orderDetails) => {
+  const createTaskPayload = async (orderType, orderDetails) => {
     let payload = {};
     const { litigants } = caseDetails;
     const complainantIndividualId = litigants?.find((item) => item?.partyType === "complainant.primary")?.individualId;
@@ -2669,9 +2898,12 @@ const GenerateOrders = () => {
     const noticeType = orderData?.additionalDetails?.formdata?.noticeType?.type;
     const respondentAddress = orderFormData?.addressDetails
       ? orderFormData?.addressDetails?.map((data) => ({ ...data?.addressDetails }))
+      : respondentNameData?.address
+      ? respondentNameData?.address
       : caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.addressDetails?.map((data) => data?.addressDetails);
     const partyIndex = orderFormData?.party?.data?.partyIndex || "";
-    const respondentName = getRespondantName(respondentNameData);
+    const result = getRespondantName(respondentNameData);
+    const respondentName = result?.name || result;
     const respondentPhoneNo = orderFormData?.party?.data?.phone_numbers || [];
     const respondentEmail = orderFormData?.party?.data?.email || [];
     const complainantDetails = individualDetail?.Individual?.[0];
@@ -2851,72 +3083,89 @@ const GenerateOrders = () => {
       default:
         break;
     }
-    if (Object.keys(payload || {}).length > 0 && Array.isArray(selectedChannel)) {
+    if (Object.keys(payload || {}).length > 0 && !Array.isArray(selectedChannel)) return [payload];
+    else if (Object.keys(payload || {}).length > 0 && Array.isArray(selectedChannel)) {
       const channelMap = new Map();
-      selectedChannel.forEach(async (item) => {
-        let courtFees = await getCourtFee(item?.code, payload?.respondentDetails?.address?.pincode, orderType);
+      const channelPayloads = await Promise.all(
+        selectedChannel?.map(async (item) => {
+          let clonedPayload = JSON.parse(JSON.stringify(payload));
 
-        if (channelMap.get(item?.type)) {
-          channelMap.set(item?.type, channelMap.get(item?.type) + 1);
-        } else {
-          channelMap.set(item?.type, 1);
-        }
-        if ("deliveryChannels" in payload) {
-          payload.deliveryChannels = {
-            ...payload.deliveryChannels,
-            channelName: channelTypeEnum?.[item?.type]?.type,
-            fees: courtFees,
-          };
+          let courtFees = await getCourtFee(item?.code, clonedPayload?.respondentDetails?.address?.pincode, orderType);
 
-          const address = ["e-Post", "Via Police", "Registered Post"].includes(item?.type)
-            ? respondentAddress[channelMap.get(item?.type) - 1]
-            : respondentAddress[0];
-          const sms = ["SMS"].includes(item?.type) ? respondentPhoneNo[channelMap.get(item?.type) - 1] : respondentPhoneNo[0];
-          const email = ["E-mail"].includes(item?.type) ? respondentEmail[channelMap.get(item?.type) - 1] : respondentEmail[0];
+          if (channelMap.get(item?.type)) {
+            channelMap.set(item?.type, channelMap.get(item?.type) + 1);
+          } else {
+            channelMap.set(item?.type, 1);
+          }
+          if ("deliveryChannels" in clonedPayload) {
+            clonedPayload.deliveryChannels = {
+              ...clonedPayload.deliveryChannels,
+              channelName: channelTypeEnum?.[item?.type]?.type,
+              fees: courtFees,
+              channelCode: channelTypeEnum?.[item?.type]?.code,
+            };
 
-          payload.respondentDetails = {
-            ...payload.respondentDetails,
-            address: ["e-Post", "Via Police", "Registered Post"].includes(item?.type)
-              ? {
-                  ...address,
-                  locality: item?.value?.locality || address?.locality,
-                  coordinate: item?.value?.coordinates || address?.coordinates,
-                }
-              : { ...address, coordinate: address?.coordinates } || "",
-            phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
-            email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
-            age: "",
-            gender: "",
-          };
-        }
-        if ("deliveryChannel" in payload) {
-          const channelDetailsEnum = {
-            SMS: "phone",
-            "E-mail": "email",
-            "e-Post": "address",
-            "Via Police": "address",
-            "Registered Post": "address",
-          };
-          payload.deliveryChannel = {
-            ...payload.deliveryChannel,
-            channelName: channelTypeEnum?.[item?.type]?.type,
-            [channelDetailsEnum?.[item?.type]]: item?.value || "",
-          };
+            const address = ["e-Post", "Via Police", "Registered Post"].includes(item?.type)
+              ? respondentAddress[channelMap.get(item?.type) - 1]
+              : respondentAddress[0];
+            const sms = ["SMS"].includes(item?.type) ? respondentPhoneNo[channelMap.get(item?.type) - 1] : respondentPhoneNo[0];
+            const email = ["E-mail"].includes(item?.type) ? respondentEmail[channelMap.get(item?.type) - 1] : respondentEmail[0];
 
-          const address = respondentAddress[channelMap.get(item?.type) - 1];
+            clonedPayload.respondentDetails = {
+              ...clonedPayload.respondentDetails,
+              address: ["e-Post", "Via Police", "Registered Post"].includes(item?.type)
+                ? {
+                    ...address,
+                    locality: item?.value?.locality || address?.locality,
+                    coordinate: item?.value?.coordinates || address?.coordinates,
+                  }
+                : { ...address, coordinate: address?.coordinates } || "",
+              phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
+              email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
+              age: "",
+              gender: "",
+            };
+          }
+          if ("deliveryChannel" in clonedPayload) {
+            const channelDetailsEnum = {
+              SMS: "phone",
+              "E-mail": "email",
+              "e-Post": "address",
+              "Via Police": "address",
+              "Registered Post": "address",
+            };
+            clonedPayload.deliveryChannel = {
+              ...clonedPayload.deliveryChannel,
+              channelName: channelTypeEnum?.[item?.type]?.type,
+              [channelDetailsEnum?.[item?.type]]: item?.value || "",
+            };
 
-          const sms = respondentPhoneNo[channelMap.get(item?.type) - 1];
-          const email = respondentEmail[channelMap.get(item?.type) - 1];
+            const address = respondentAddress[channelMap.get(item?.type) - 1];
 
-          payload.respondentDetails = {
-            ...payload.respondentDetails,
-            address: ["e-Post", "Via Police", "Registered Post"].includes(item?.type) ? item?.value : address || "",
-            phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
-            email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
-            age: "",
-            gender: "",
-          };
-        }
+            const sms = respondentPhoneNo[channelMap.get(item?.type) - 1];
+            const email = respondentEmail[channelMap.get(item?.type) - 1];
+
+            clonedPayload.respondentDetails = {
+              ...clonedPayload.respondentDetails,
+              address: ["e-Post", "Via Police", "Registered Post"].includes(item?.type) ? item?.value : address || "",
+              phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
+              email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
+              age: "",
+              gender: "",
+            };
+          }
+          return clonedPayload;
+        })
+      );
+      return channelPayloads;
+    }
+  };
+
+  const createTask = async (orderType, orderDetails) => {
+    const orderData = orderDetails?.order;
+    const payloads = await createTaskPayload(orderType, orderDetails);
+    for (const payload of payloads) {
+      if (["SUMMONS", "NOTICE"]?.includes(orderType)) {
         await ordersService
           .customApiService(Urls.orders.taskCreate, {
             task: {
@@ -2953,50 +3202,50 @@ const GenerateOrders = () => {
           })
           .then(async (data) => {
             if (["SUMMONS", "NOTICE"].includes(orderType)) {
-              await createPendingTask({ refId: data?.task?.taskNumber, channel: item, orderType: orderType });
+              await createPendingTask({ refId: data?.task?.taskNumber, channelCode: payload?.deliveryChannels?.channelCode, orderType: orderType });
             }
           });
-      });
-    } else if (Object.keys(payload || {}).length > 0) {
-      await ordersService
-        .customApiService(Urls.orders.taskCreate, {
-          task: {
-            taskDetails: payload,
-            workflow: {
-              action: "CREATE",
-              comments: orderType,
-              documents: [
-                {
-                  documentType: null,
-                  fileStore: null,
-                  documentUid: null,
-                  additionalDetails: {},
-                },
-              ],
-              assignes: null,
-              rating: null,
+      } else if (orderType === "WARRANT") {
+        await ordersService
+          .customApiService(Urls.orders.taskCreate, {
+            task: {
+              taskDetails: payload,
+              workflow: {
+                action: "CREATE",
+                comments: orderType,
+                documents: [
+                  {
+                    documentType: null,
+                    fileStore: null,
+                    documentUid: null,
+                    additionalDetails: {},
+                  },
+                ],
+                assignes: null,
+                rating: null,
+              },
+              createdDate: new Date().getTime(),
+              orderId: orderData?.id,
+              filingNumber,
+              cnrNumber,
+              taskType: orderType,
+              status: "INPROGRESS",
+              tenantId,
+              amount: {
+                type: "FINE",
+                status: "DONE",
+                amount: summonsCourtFee,
+              },
+              ...(orderData?.itemId && { additionalDetails: { itemId: orderData?.itemId } }),
             },
-            createdDate: new Date().getTime(),
-            orderId: orderData?.id,
-            filingNumber,
-            cnrNumber,
-            taskType: orderType,
-            status: "INPROGRESS",
             tenantId,
-            amount: {
-              type: "FINE",
-              status: "DONE",
-              amount: summonsCourtFee,
-            },
-            ...(orderData?.itemId && { additionalDetails: { itemId: orderData?.itemId } }),
-          },
-          tenantId,
-        })
-        .then(async (data) => {
-          if (["WARRANT"].includes(orderType)) {
-            await createPendingTask({ refId: data?.task?.taskNumber, orderType: orderType });
-          }
-        });
+          })
+          .then(async (data) => {
+            if (["WARRANT"].includes(orderType)) {
+              await createPendingTask({ refId: data?.task?.taskNumber, orderType: orderType });
+            }
+          });
+      }
     }
   };
 
@@ -3276,6 +3525,8 @@ const GenerateOrders = () => {
           {}
         );
 
+        localStorage.removeItem("businessOfTheDay");
+
         const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
 
         await DRISTIService.addADiaryEntry(
@@ -3329,12 +3580,18 @@ const GenerateOrders = () => {
         }
 
         try {
-          await Promise.all(updatedOrders?.map((item) => createTask(item?.order?.orderType, caseDetails, item)));
+          await Promise.all(
+            updatedOrders
+              ?.filter((item) => ["SUMMONS", "WARRANT", "NOTICE"].includes(item?.order?.orderType))
+              ?.map((item) => createTask(item?.order?.orderType, item))
+          );
         } catch (error) {
           console.error("Error in creating tasks:", error);
         }
       } else {
-        createTask(currentOrder?.orderType, caseDetails, orderResponse);
+        if (["SUMMONS", "WARRANT", "NOTICE"].includes(currentOrder?.orderType)) {
+          createTask(currentOrder?.orderType, orderResponse);
+        }
       }
 
       setShowSuccessModal(true);
@@ -3403,6 +3660,28 @@ const GenerateOrders = () => {
           action: HearingWorkflowAction.BULK_RESCHEDULE,
           startTime: Date.parse(currentOrder?.additionalDetails?.formdata?.newHearingDate),
           endTime: Date.parse(currentOrder?.additionalDetails?.formdata?.newHearingDate),
+        });
+      }
+      if (orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE") {
+        let processInfoObj = {
+          caseId: caseDetails?.id,
+          action: currentOrder?.additionalDetails?.formdata?.applicationGrantedRejected?.code === "REJECTED" ? "REJECT" : "ACCEPT",
+          pendingTaskRefId: currentOrder?.additionalDetails?.pendingTaskRefId,
+          tenantId,
+        };
+        await DRISTIService.processProfileRequest({
+          processInfo: { ...processInfoObj },
+          tenantId: tenantId,
+        });
+
+        await ordersService.customApiService(Urls.orders.pendingTask, {
+          pendingTask: {
+            referenceId: currentOrder?.additionalDetails?.pendingTaskRefId,
+            status: "PROFILE_EDIT_REQUEST",
+            filingNumber: filingNumber,
+            isCompleted: true,
+            tenantId,
+          },
         });
       }
       if (orderType === "INITIATING_RESCHEDULING_OF_HEARING_DATE") {
@@ -3645,6 +3924,30 @@ const GenerateOrders = () => {
           }
         });
       }
+      if ("ADVOCATE_REPLACEMENT_APPROVAL" === orderType) {
+        const taskData = await DRISTIService.customApiService(Urls.orders.searchTasks, {
+          criteria: {
+            tenantId: tenantId,
+            taskNumber: currentOrder?.additionalDetails?.taskNumber,
+          },
+        });
+        const task = taskData?.list?.[0];
+
+        try {
+          const reqBody = {
+            task: {
+              ...task,
+              workflow: {
+                action: currentOrder?.additionalDetails?.formdata?.replaceAdvocateStatus?.code === "GRANT" ? "APPROVE" : "REJECT",
+              },
+            },
+          };
+          await taskService.updateTask(reqBody, { tenantId });
+        } catch (error) {
+          console.error("Error updating task data:", error);
+        }
+        return;
+      }
       if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType)) {
         return newhearingId;
       }
@@ -3784,6 +4087,8 @@ const GenerateOrders = () => {
   }, [currentOrder, prevOrder?.orderType, t, isCaseAdmitted]);
 
   const handleGoBackSignatureModal = () => {
+    localStorage.removeItem("fileStoreId");
+    localStorage.removeItem("businessOfTheDay");
     setShowsignatureModal(false);
     setShowReviewModal(true);
   };
@@ -3797,6 +4102,11 @@ const GenerateOrders = () => {
     // history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
     //   from: "orderSuccessModal",
     // });
+  };
+
+  const handleBulkDownloadOrder = () => {
+    const fileStoreId = prevOrder?.documents?.find((doc) => doc?.documentType === "UNSIGNED")?.fileStore;
+    downloadPdf(tenantId, fileStoreId);
   };
 
   const handleCustomSubmit = () => {
@@ -3880,22 +4190,66 @@ const GenerateOrders = () => {
     return errrors;
   };
 
-  const handleReviewOrderClick = () => {
+  const handleReviewOrderClick = async () => {
     const items = structuredClone(currentOrder?.orderCategory === "INTERMEDIATE" ? [currentOrder] : currentOrder?.compositeItems);
     let hasError = false; // Flag to track if an error occurs
-
     for (let index = 0; index < items?.length; index++) {
       const item = items[index];
 
       if (currentOrder?.orderCategory === "INTERMEDIATE" || item?.isEnabled) {
-        const formData =
+        const additionalDetails =
           currentOrder?.orderCategory === "INTERMEDIATE"
-            ? currentOrder?.additionalDetails?.formdata
-            : currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails?.formdata;
+            ? currentOrder?.additionalDetails
+            : currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails;
+        const formData = additionalDetails?.formdata;
         const orderType = item?.orderType;
         const newApplicationDetails = applicationData?.applicationList?.find(
           (application) => application?.applicationNumber === formData?.refApplicationId
         );
+
+        if (["APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE"].includes(orderType)) {
+          // we will check if for the current referenceid, if an order is already published for a
+          // previous profile request(check by dateofApplication) -> then  don't allow another oorder get published.
+          const isPublished = publishedLitigantDetailsChangeOrders?.some((order) => {
+            const itemAdditionalDetails =
+              order?.orderCategory === "INTERMEDIATE"
+                ? order?.additionalDetails
+                : order?.compositeItems?.find((item) => item?.orderSchema?.orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE")?.orderSchema
+                    ?.additionalDetails;
+            if (
+              itemAdditionalDetails?.dateOfApplication === additionalDetails?.dateOfApplication &&
+              itemAdditionalDetails?.pendingTaskRefId === additionalDetails?.pendingTaskRefId
+            ) {
+              return true;
+            }
+            return false;
+          });
+          if (isPublished) {
+            setShowErrorToast({
+              label: t("AN_ORDER_HAS_ALREADY_BEEN_PUBLISHED_FOR_THIS_PROFILE_EDIT_REQUEST"),
+              error: true,
+            });
+            hasError = true;
+            break;
+          }
+        }
+
+        if ("ADVOCATE_REPLACEMENT_APPROVAL" === orderType) {
+          const taskSearch = await taskService?.searchTask({
+            criteria: {
+              tenantId: tenantId,
+              taskNumber: additionalDetails?.taskNumber,
+            },
+          });
+          if (["APPROVED", "REJECTED"].includes(taskSearch?.list?.[0]?.status)) {
+            setShowErrorToast({
+              label: t("AN_ORDER_HAS_ALREADY_BEEN_PUBLISHED_FOR_THIS_ADVOCATE_REPLACEMENT_REQUEST"),
+              error: true,
+            });
+            hasError = true;
+            break;
+          }
+        }
 
         if (
           formData?.refApplicationId &&
@@ -4062,6 +4416,11 @@ const GenerateOrders = () => {
     });
   };
 
+  const handleBulkCloseSuccessModal = () => {
+    setShowBulkModal(false);
+    history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`);
+  };
+
   if (!filingNumber) {
     history.push("/employee/home/home-pending-task");
   }
@@ -4080,7 +4439,9 @@ const GenerateOrders = () => {
             compositeItemsNew = [
               {
                 orderType: obj?.orderType,
-                ...(obj?.orderNumber && { orderSchema: { orderDetails: obj?.orderDetails } }),
+                ...(obj?.orderNumber && {
+                  orderSchema: { orderDetails: obj?.orderDetails, additionalDetails: obj?.additionalDetails, orderType: obj?.orderType },
+                }),
                 isEnabled: true,
                 displayindex: 0,
               },
@@ -4348,7 +4709,7 @@ const GenerateOrders = () => {
               <FormComposerV2
                 className={"generate-orders"}
                 key={`${selectedOrder}=${index}`}
-                label={t("REVIEW_ORDER")}
+                label={t("PREVIEW_ORDER_PDF")}
                 config={config}
                 defaultValues={getDefaultValue(index)}
                 onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
@@ -4437,6 +4798,7 @@ const GenerateOrders = () => {
           businessOfDay={businessOfTheDay}
           updateOrder={updateOrder}
           setShowBulkModal={setShowBulkModal}
+          setPrevOrder={setPrevOrder}
         />
       )}
       {showsignatureModal && (
@@ -4448,6 +4810,8 @@ const GenerateOrders = () => {
           setSignedDocumentUploadID={setSignedDocumentUploadID}
           orderPdfFileStoreID={orderPdfFileStoreID}
           saveOnsubmitLabel={"ISSUE_ORDER"}
+          businessOfDay={businessOfTheDay}
+          selectedOrder={selectedOrder}
         />
       )}
       {showSuccessModal && (
@@ -4512,10 +4876,8 @@ const GenerateOrders = () => {
         <OrderAddToBulkSuccessModal
           t={t}
           order={currentOrder}
-          handleDownloadOrders={handleDownloadOrders}
-          handleClose={handleClose}
-          handleCloseSuccessModal={handleCloseSuccessModal}
-          actionSaveLabel={successModalActionSaveLabel}
+          handleDownloadOrders={handleBulkDownloadOrder}
+          handleCloseSuccessModal={handleBulkCloseSuccessModal}
         ></OrderAddToBulkSuccessModal>
       )}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}

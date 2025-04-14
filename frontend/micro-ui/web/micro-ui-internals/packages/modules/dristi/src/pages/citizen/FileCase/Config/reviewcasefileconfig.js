@@ -22,6 +22,7 @@ export const reviewCaseFileFormConfig = [
                   type: "title",
                   value: ["firstName", "middleName", "lastName"],
                   badgeType: "complainantType.name",
+                  enableScrutinyField: true,
                 },
                 {
                   type: "phonenumber",
@@ -32,6 +33,7 @@ export const reviewCaseFileFormConfig = [
                   type: "text",
                   label: "AGE",
                   value: "complainantAge",
+                  enableScrutinyField: true,
                 },
                 {
                   type: "text",
@@ -39,6 +41,7 @@ export const reviewCaseFileFormConfig = [
                   dependentOn: "complainantType.code",
                   dependentValue: "REPRESENTATIVE",
                   value: "complainantDesignation",
+                  enableScrutinyField: true,
                 },
                 {
                   type: "image",
@@ -52,6 +55,7 @@ export const reviewCaseFileFormConfig = [
                   dependentOn: "complainantType.code",
                   dependentValue: "INDIVIDUAL",
                   value: "addressDetails",
+                  enableScrutinyField: true,
                 },
                 {
                   type: "text",
@@ -60,6 +64,7 @@ export const reviewCaseFileFormConfig = [
                   dependentValue: "REPRESENTATIVE",
                   value: "complainantTypeOfEntity.name",
                   isLocalizationRequired: true,
+                  enableScrutinyField: true,
                 },
                 {
                   type: "text",
@@ -67,6 +72,7 @@ export const reviewCaseFileFormConfig = [
                   dependentOn: "complainantType.code",
                   dependentValue: "REPRESENTATIVE",
                   value: "complainantCompanyName",
+                  enableScrutinyField: true,
                 },
                 {
                   type: "address",
@@ -74,6 +80,44 @@ export const reviewCaseFileFormConfig = [
                   dependentOn: "complainantType.code",
                   dependentValue: "REPRESENTATIVE",
                   value: "addressCompanyDetails",
+                  enableScrutinyField: true,
+                },
+                {
+                  type: "text",
+                  label: "HAS_LITIGANT_TRANFERRED_POA_TO_SOMEONE",
+                  value: "transferredPOA.name",
+                  enableScrutinyField: true,
+                  isLocalizationRequired: true,
+                },
+                {
+                  type: "text",
+                  label: "POA_HOLDER_NAME",
+                  value: ["poaFirstName", "poaMiddleName", "poaLastName"],
+                  dependentOn: "transferredPOA.code",
+                  dependentValue: "YES",
+                },
+                {
+                  type: "phonenumber",
+                  label: "PHONE_NUMBER",
+                  value: "poaVerification.mobileNumber",
+                  dependentOn: "transferredPOA.code",
+                  dependentValue: "YES",
+                },
+                {
+                  type: "image",
+                  label: "CS_ID_PROOF",
+                  value: ["poaVerification.individualDetails.document"],
+                  dependentOn: "transferredPOA.code",
+                  dependentValue: "YES",
+                  enableScrutinyField: true,
+                },
+                {
+                  type: "address",
+                  label: "ADDRESS",
+                  dependentOn: "transferredPOA.code",
+                  dependentValue: "YES",
+                  value: "poaAddressDetails",
+                  enableScrutinyField: true,
                 },
               ],
               data: {},
@@ -563,7 +607,7 @@ export const reviewCaseFileFormConfig = [
                 {
                   type: "image",
                   label: "CS_DOCUMENT",
-                  value: ["vakalatnamaDocument", "responseDocuments"],
+                  value: ["vakalatnamaDocument", "responseDocuments", "pipAffidavitDocument", "supportingDocument"],
                 },
               ],
               data: {},

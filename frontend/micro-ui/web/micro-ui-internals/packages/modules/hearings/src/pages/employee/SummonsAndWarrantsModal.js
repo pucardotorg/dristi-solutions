@@ -8,6 +8,7 @@ import { formatDate } from "../../utils";
 import { hearingService } from "../../hooks/services";
 import { Urls } from "../../hooks/services/Urls";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 
 const modalPopup = {
   height: "70%",
@@ -453,7 +454,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
               }}
               className={`round-item ${index === activeIndex?.orderIndex ? "active" : ""}`}
             >
-              <div style={{ display: "flex", flexDirection: "column", width: "90px" }}>
+              <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "auto", whiteSpace: "nowrap" }}>
                 <span>{`${orderList?.length - index} (${item?.orderType})`}</span>
               </div>
             </div>
@@ -496,7 +497,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
             )
           )}
           <Button
-            label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : "Notice"}`)}
+            label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : orderType === "NOTICE" ? "Notice" : "Warrant"}`)}
             onButtonClick={() => {
               handleNavigate();
             }}

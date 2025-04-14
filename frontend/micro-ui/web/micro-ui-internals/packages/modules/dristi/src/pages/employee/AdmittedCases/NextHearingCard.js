@@ -20,6 +20,7 @@ const NextHearingCard = ({ caseData, width }) => {
   const { t } = useTranslation();
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const isCourtRoomManager = userRoles.includes("COURT_ROOM_MANAGER");
+  const { data: slotTime } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "court", [{ name: "slots" }]);
 
   const { data: hearingRes, isLoading: isHearingsLoading } = Digit.Hooks.hearings.useGetHearings(
     {
@@ -37,6 +38,20 @@ const NextHearingCard = ({ caseData, width }) => {
   const scheduledHearing = hearingRes?.HearingList?.filter(
     (hearing) => ![HearingWorkflowState.COMPLETED, HearingWorkflowState?.OPTOUT, HearingWorkflowState?.ABATED].includes(hearing?.status)
   ).sort((hearing1, hearing2) => hearing1.startTime - hearing2.startTime)[0];
+
+  const hiddenOutcomes = [
+    "DISMISSED",
+    "WITHDRAWN",
+    "PARTIALLYALLOWED",
+    "PARTIALLYCONVICTED",
+    "TRANSFERRED",
+    "ALLOWED",
+    "CONVICTED",
+    "ABATED",
+    "SETTLED",
+  ];
+
+  const shouldShowButton = !hiddenOutcomes.includes(caseData?.case?.outcome);
 
   const formattedTime = () => {
     const date1 = new Date(scheduledHearing?.startTime);
@@ -76,6 +91,23 @@ const NextHearingCard = ({ caseData, width }) => {
       window.location.href = `/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`;
     }
   };
+
+  function formatTimeTo12Hour(timeString) {
+    if (!timeString) return "";
+
+    // Extract hours and minutes, ignore seconds if present
+    const [hours, minutes] = timeString.split(":").slice(0, 2).map(Number);
+
+    if (isNaN(hours) || isNaN(minutes)) return "";
+
+    const suffix = hours >= 12 ? "pm" : "am";
+    const displayHours = hours % 12 || 12;
+
+    const formattedHours = String(displayHours).padStart(2, "0");
+    const formattedMinutes = String(minutes).padStart(2, "0");
+
+    return `${formattedHours}:${formattedMinutes} ${suffix}`;
+  }
 
   if (isHearingsLoading) {
     return <Loader />;
@@ -122,7 +154,8 @@ const NextHearingCard = ({ caseData, width }) => {
                 marginTop: "5px",
               }}
             >
-              {formattedTime()}
+              {/* {formattedTime()} */}
+              {formatTimeTo12Hour(slotTime?.court?.slots[0]?.slotStartTime)} {" -"}
             </div>
             <div
               style={{
@@ -137,20 +170,22 @@ const NextHearingCard = ({ caseData, width }) => {
             </div>
           </div>
         </div>
-        <Button
-          variation={"outlined"}
-          onButtonClick={handleButtonClick}
-          isDisabled={isCourtRoomManager || (userRoles.includes("CITIZEN") && scheduledHearing?.status === "SCHEDULED")}
-          label={
-            userRoles.includes("CITIZEN")
-              ? scheduledHearing?.status === "SCHEDULED"
-                ? t("AWAIT_START_HEARING")
+        {shouldShowButton && (
+          <Button
+            variation={"outlined"}
+            onButtonClick={handleButtonClick}
+            isDisabled={isCourtRoomManager || (userRoles.includes("CITIZEN") && scheduledHearing?.status === "SCHEDULED")}
+            label={
+              userRoles.includes("CITIZEN")
+                ? scheduledHearing?.status === "SCHEDULED"
+                  ? t("AWAIT_START_HEARING")
+                  : t("JOIN_HEARING")
+                : scheduledHearing?.status === "SCHEDULED"
+                ? t("START_NOW")
                 : t("JOIN_HEARING")
-              : scheduledHearing?.status === "SCHEDULED"
-              ? t("START_NOW")
-              : t("JOIN_HEARING")
-          }
-        />
+            }
+          />
+        )}
       </div>
     </Card>
   );

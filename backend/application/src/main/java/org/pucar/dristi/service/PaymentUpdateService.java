@@ -130,7 +130,7 @@ public class PaymentUpdateService {
                 applicationRequest.setApplication(application);
                 applicationRequest.setRequestInfo(requestInfo);
 
-                if (PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus())){
+                if (PENDINGAPPROVAL.equalsIgnoreCase(application.getStatus()) || PENDINGREVIEW.equalsIgnoreCase(application.getStatus())){
                     enrichment.enrichApplicationNumberByCMPNumber(applicationRequest);
                 }
 
@@ -158,6 +158,10 @@ public class PaymentUpdateService {
         JsonNode formData = additionalData.path("formdata");
 
         Set<String> individualIds = extractIndividualIds(caseDetails, party);
+
+        if (party != null && party.contains("complainant")) {
+            extractPoaHoldersIndividualIds(caseDetails, individualIds);
+        }
 
         Set<String> phoneNumbers = callIndividualService(applicationRequest.getRequestInfo(), individualIds);
 

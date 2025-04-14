@@ -1,23 +1,19 @@
 package org.pucar.dristi.web.models;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
-import jakarta.validation.constraints.NotNull;
-import org.egov.common.contract.models.AuditDetails;
-import org.pucar.dristi.web.models.Document;
-import org.egov.common.contract.models.Workflow;
-import org.springframework.validation.annotation.Validated;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.egov.common.contract.models.AuditDetails;
+import org.springframework.validation.annotation.Validated;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 /**
  * Case registry
@@ -31,140 +27,151 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CourtCase {
 
-	@JsonProperty("id")
-	@Valid
-	private UUID id = null;
+    @JsonProperty("id")
+    @Valid
+    private UUID id = null;
 
-	@JsonProperty("tenantId")
-	@NotNull
-	//@Size(min = 2, max = 64)
-	private String tenantId = null;
+    @JsonProperty("tenantId")
+    @NotNull
+    //@Size(min = 2, max = 64)
+    private String tenantId = null;
 
-	@JsonProperty("resolutionMechanism")
-	//@Size(min = 2, max = 128)
-	private String resolutionMechanism = null;
+    @JsonProperty("resolutionMechanism")
+    //@Size(min = 2, max = 128)
+    private String resolutionMechanism = null;
 
-	@JsonProperty("caseTitle")
-	//@Size(min = 2, max = 512)
-	private String caseTitle = null;
+    @JsonProperty("caseTitle")
+    //@Size(min = 2, max = 512)
+    private String caseTitle = null;
 
-	@JsonProperty("isActive")
-	private Boolean isActive = true;
+    @JsonProperty("isActive")
+    private Boolean isActive = true;
 
-	@JsonProperty("caseDescription")
-	//@Size(min = 2, max = 10000)
-	private String caseDescription = null;
+    @JsonProperty("caseDescription")
+    //@Size(min = 2, max = 10000)
+    private String caseDescription = null;
 
-	@JsonProperty("filingNumber")
-	//@Size(min = 2, max = 64)
-	private String filingNumber = null;
+    @JsonProperty("filingNumber")
+    //@Size(min = 2, max = 64)
+    private String filingNumber = null;
 
-	@JsonProperty("advocateCount")
-	private Integer advocateCount = null;
+    @JsonProperty("advocateCount")
+    private Integer advocateCount = null;
 
-	@JsonProperty("courtCaseNumber")
-	//@Size(min=10,max=24)
-	private String courtCaseNumber = null;
+    @JsonProperty("courtCaseNumber")
+    //@Size(min=10,max=24)
+    private String courtCaseNumber = null;
 
-	@JsonProperty("caseNumber")
+    @JsonProperty("caseNumber")
 
-	//@Size(min = 2, max = 32)
-	private String caseNumber = null;
+    //@Size(min = 2, max = 32)
+    private String caseNumber = null;
 
-	@JsonProperty("caseType")
-	private String caseType = null;
+    @JsonProperty("caseType")
+    private String caseType = null;
 
-	@JsonProperty("cnrNumber")
-	//@Size(min = 2, max = 32)
-	private String cnrNumber = null;
+    @JsonProperty("cnrNumber")
+    //@Size(min = 2, max = 32)
+    private String cnrNumber = null;
 
-	@JsonProperty("cmpNumber")
-	private String cmpNumber = null;
+    @JsonProperty("cmpNumber")
+    private String cmpNumber = null;
 
-	@JsonProperty("accessCode")
-	private String accessCode = null;
+    @JsonProperty("accessCode")
+    private String accessCode = null;
 
-	@JsonProperty("outcome")
-	private String outcome = null;
+    @JsonProperty("outcome")
+    private String outcome = null;
 
-	@JsonProperty("courtId")
-	//@Size(min = 2, max = 64)
-	private String courtId = null;
+    @JsonProperty("pendingAdvocateRequests")
+    private List<PendingAdvocateRequest> pendingAdvocateRequests;
 
-	@JsonProperty("benchId")
-	//@Size(min = 2, max = 64)
-	private String benchId = null;
+    @JsonProperty("courtId")
+    //@Size(min = 2, max = 64)
+    private String courtId = null;
 
-	@JsonProperty("linkedCases")
-	@Valid
-	private List<LinkedCase> linkedCases = new ArrayList<>();
+    @JsonProperty("benchId")
+    //@Size(min = 2, max = 64)
+    private String benchId = null;
 
-	@JsonProperty("filingDate")
-	//@NotNull
-	@Valid
-	private Long filingDate = null;
+    @JsonProperty("linkedCases")
+    @Valid
+    private List<LinkedCase> linkedCases = new ArrayList<>();
 
-	@JsonProperty("registrationDate")
-	private Long registrationDate = null;
+    @JsonProperty("filingDate")
+    //@NotNull
+    @Valid
+    private Long filingDate = null;
 
-	@JsonProperty("judgementDate")
-	private Long judgementDate = null;
+    @JsonProperty("registrationDate")
+    private Long registrationDate = null;
 
-	@JsonProperty("caseDetails")
-	private Object caseDetails = null;
+    @JsonProperty("judgementDate")
+    private Long judgementDate = null;
 
-	@JsonProperty("caseCategory")
-	//@NotNull
-	//@Size(min = 2, max = 64)
-	private String caseCategory = null;
+    @JsonProperty("caseDetails")
+    private Object caseDetails = null;
 
-	@JsonProperty("judgeId")
-	private String judgeId = null;
+    @JsonProperty("caseCategory")
+    //@NotNull
+    //@Size(min = 2, max = 64)
+    private String caseCategory = null;
 
-	@JsonProperty("stage")
-	private String stage = null;
+    @JsonProperty("judgeId")
+    private String judgeId = null;
 
-	@JsonProperty("substage")
-	private String substage = null;
+    @JsonProperty("stage")
+    private String stage = null;
 
-	@JsonProperty("natureOfPleading")
-	//@Size(min = 2, max = 64)
-	private String natureOfPleading = null;
+    @JsonProperty("substage")
+    private String substage = null;
 
-	@JsonProperty("statutesAndSections")
-	//@NotNull
-	@Valid
-	private List<StatuteSection> statutesAndSections = new ArrayList<>();
+    @JsonProperty("natureOfPleading")
+    //@Size(min = 2, max = 64)
+    private String natureOfPleading = null;
 
-	@JsonProperty("litigants")
-	//@NotNull
-	@Valid
-	//@Size(min = 2) //FIX
-	private List<Party> litigants = new ArrayList<>();
+    @JsonProperty("statutesAndSections")
+    //@NotNull
+    @Valid
+    private List<StatuteSection> statutesAndSections = new ArrayList<>();
 
-	@JsonProperty("representatives")
-	@Valid
-	private List<AdvocateMapping> representatives = new ArrayList<>();
+    @JsonProperty("litigants")
+    //@NotNull
+    @Valid
+    //@Size(min = 2) //FIX
+    private List<Party> litigants = new ArrayList<>();
 
-	@JsonProperty("status")
-	private String status = null;
+    @JsonProperty("representatives")
+    @Valid
+    private List<AdvocateMapping> representatives = new ArrayList<>();
 
-	@JsonProperty("documents")
-	@Valid
-	private List<Document> documents = new ArrayList<>();
+    @JsonProperty("status")
+    private String status = null;
 
-	@JsonProperty("remarks")
-	private String remarks = null;
+    @JsonProperty("documents")
+    @Valid
+    private List<Document> documents = new ArrayList<>();
 
-	@JsonProperty("workflow")
-	@Valid
-	private WorkflowObject workflow = null;
+    @JsonProperty("remarks")
+    private String remarks = null;
 
-	@JsonProperty("additionalDetails")
-	private Object additionalDetails = null;
+    @JsonProperty("workflow")
+    @Valid
+    private WorkflowObject workflow = null;
 
-	@JsonProperty("auditDetails")
-	@Valid
-	private AuditDetails auditdetails = null;
+    @JsonProperty("additionalDetails")
+    private Object additionalDetails = null;
+
+    @JsonProperty("auditDetails")
+    @Valid
+    private AuditDetails auditdetails = null;
+
+    @JsonProperty("advocateStatus")
+    private String advocateStatus = null;
+
+
+    @JsonProperty("poaHolders")
+    @Valid
+    private List<POAHolder> poaHolders = new ArrayList<>();
 
 }

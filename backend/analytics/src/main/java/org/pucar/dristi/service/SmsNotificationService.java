@@ -91,6 +91,7 @@ public class SmsNotificationService {
         smsDetails.put("tenantId", smsTemplateData.getTenantId());
         smsDetails.put("mobileNumber", mobileNumber);
         smsDetails.put("efilingNumber", smsTemplateData.getEfilingNumber());
+        smsDetails.put("cmpNumber",smsTemplateData.getCmpNumber());
 
         return smsDetails;
     }
@@ -124,7 +125,7 @@ public class SmsNotificationService {
      */
     public String buildMessage(Map<String, String> userDetailsForSMS, String message) {
         message = message.replace("{{caseId}}", Optional.ofNullable(userDetailsForSMS.get("caseId")).orElse(""))
-                .replace("{{efilingNumber}}", Optional.ofNullable(userDetailsForSMS.get("efilingNumber")).orElse(""))
+                .replace("{{efilingNumber}}",(userDetailsForSMS.get("cmpNumber").isEmpty() && userDetailsForSMS.get("cmpNumber") != null) ? userDetailsForSMS.get("efilingNumber") : userDetailsForSMS.get("cmpNumber"))
                 .replace("{{cnr}}", Optional.ofNullable(userDetailsForSMS.get("cnr")).orElse(""))
                 .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
                 .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""));
@@ -146,7 +147,7 @@ public class SmsNotificationService {
         StringBuilder uri = new StringBuilder();
         RequestInfoWrapper requestInfoWrapper = new RequestInfoWrapper();
         requestInfoWrapper.setRequestInfo(requestInfo);
-        uri.append(config.getLocalizationHost()).append(config.getLocalizationSearchEndpoint())
+        uri.append(config.getLocalizationHost()).append(config.getLocalizationContextPath()).append(config.getLocalizationSearchEndpoint())
                 .append("?tenantId=" + rootTenantId).append("&module=" + module).append("&locale=" + locale);
         List<String> codes = null;
         List<String> messages = null;

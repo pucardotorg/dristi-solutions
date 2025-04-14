@@ -1,6 +1,7 @@
 package org.pucar.dristi.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
@@ -16,13 +17,6 @@ import org.pucar.dristi.config.MdmsDataConfig;
 import org.pucar.dristi.kafka.consumer.EventConsumerConfig;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.service.SmsNotificationService;
-import org.pucar.dristi.util.AdvocateUtil;
-import org.pucar.dristi.util.ApplicationUtil;
-import org.pucar.dristi.util.CaseOverallStatusUtil;
-import org.pucar.dristi.util.CaseUtil;
-import org.pucar.dristi.util.EvidenceUtil;
-import org.pucar.dristi.util.TaskUtil;
-import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.CaseCriteria;
 import org.pucar.dristi.web.models.CaseSearchRequest;
 import org.pucar.dristi.web.models.PendingTask;
@@ -202,7 +196,6 @@ public class IndexerUtils {
         String assignedRole = new JSONArray(assignedRoleSet).toString();
         String tenantId = JsonPath.read(jsonItem, TENANT_ID_PATH);
         String action = JsonPath.read(jsonItem, ACTION_PATH);
-        String additionalDetails;
         boolean isCompleted;
         boolean isGeneric;
 
@@ -219,6 +212,7 @@ public class IndexerUtils {
         String name = details.get("name");
         isCompleted = isNullOrEmpty(name);
         isGeneric = details.containsKey("isGeneric");
+        String actors = details.get("actors");
 
         if (isGeneric) {
             log.info("creating pending task from generic task");
@@ -231,32 +225,59 @@ public class IndexerUtils {
         }
         if(!isCompleted) {
             try {
-                String jsonString = requestInfo.toString();
-                RequestInfo request = mapper.readValue(jsonString, RequestInfo.class);
-                org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(request, filingNumber);
-                JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
-                JsonNode litigants = caseUtil.getLitigants(caseDetails);
-                Set<String> individualIds = caseUtil.getIndividualIds(litigants);
-                JsonNode representatives = caseUtil.getRepresentatives(caseDetails);
-                Set<String> representativeIds = caseUtil.getAdvocateIds(representatives);
+                if (actors.toLowerCase().contains(ADVOCATE) || actors.toLowerCase().contains(LITIGANT)) {
+                    String jsonString = requestInfo.toString();
+                    RequestInfo request = mapper.readValue(jsonString, RequestInfo.class);
+                    org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(request, filingNumber);
+                    JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+                    JsonNode litigants = caseUtil.getLitigants(caseDetails);
+                    Set<String> individualIds = caseUtil.getIndividualIds(litigants);
+                    JsonNode representatives = caseUtil.getRepresentatives(caseDetails);
+                    Set<String> representativeIds = caseUtil.getAdvocateIds(representatives);
+                    Set<String> powerOfAttorneyIds = caseUtil.extractPowerOfAttorneyIds(caseDetails, individualIds);
+                    if (!powerOfAttorneyIds.isEmpty()) {
+                        individualIds.addAll(powerOfAttorneyIds);
+                    }
 
-                if(!representativeIds.isEmpty()){
-                    representativeIds = advocateUtil.getAdvocate(request,representativeIds.stream().toList());
-                }
-                individualIds.addAll(representativeIds);
-                org.pucar.dristi.web.models.SmsTemplateData smsTemplateData = enrichSmsTemplateData(details,tenantId);
-                List<String> phonenumbers = callIndividualService(request, new ArrayList<>(individualIds));
-                for (String number : phonenumbers) {
-                    notificationService.sendNotification(request, smsTemplateData, PENDING_TASK_CREATED, number);
+                    if (!representativeIds.isEmpty()) {
+                        representativeIds = advocateUtil.getAdvocate(request, representativeIds.stream().toList());
+                    }
+                    individualIds.addAll(representativeIds);
+                    org.pucar.dristi.web.models.SmsTemplateData smsTemplateData = enrichSmsTemplateData(details, tenantId);
+                    List<String> phonenumbers = callIndividualService(request, new ArrayList<>(individualIds));
+                    for (String number : phonenumbers) {
+                        notificationService.sendNotification(request, smsTemplateData, PENDING_TASK_CREATED, number);
+                    }
                 }
             } catch (Exception e) {
                 // Log the exception and continue the execution without throwing
                 log.error("Error occurred while sending notification: {}", e.toString());
             }
         }
-
+        Object additionalDetails;
         try {
-            additionalDetails = mapper.writeValueAsString(JsonPath.read(jsonItem, "$.additionalDetails"));
+            additionalDetails = JsonPath.read(jsonItem, "additionalDetails");
+            if(additionalDetails!=null){
+                additionalDetails = mapper.writeValueAsString(additionalDetails);
+            }else {
+                additionalDetails="{}";
+            }
+            JsonNode additonalDetailsJsonNode = mapper.readTree(additionalDetails.toString());
+            if (additonalDetailsJsonNode != null && additonalDetailsJsonNode.has("excludeRoles")) {
+                log.info("additional details contains exclude roles");
+                JsonNode excludeRoles = additonalDetailsJsonNode.path("excludeRoles");
+                if (excludeRoles.isArray()) {
+                    List<String> excludeRolesList = new ArrayList<>();
+                    if (excludeRoles.isArray()) {
+                        for (JsonNode node : excludeRoles) {
+                            excludeRolesList.add(node.asText());  // Extract string values
+                        }
+                    }
+                    log.info("removing roles from assignedRoleList : {} ", excludeRolesList);
+                    excludeRolesList.forEach(assignedRoleSet::remove);
+                    assignedRole = new JSONArray(assignedRoleSet).toString();
+                }
+            }
         } catch (Exception e) {
             log.error("Error while building listener payload");
             throw new CustomException(Pending_Task_Exception, "Error occurred while preparing pending task: " + e);
@@ -322,6 +343,7 @@ public class IndexerUtils {
 	private SmsTemplateData enrichSmsTemplateData(Map<String, String> details,String tenantId) {
 		return SmsTemplateData.builder()
 				.cmpNumber(details.get("cmpNumber"))
+                .efilingNumber(details.get("filingNumber"))
                 .tenantId(tenantId).build();
 	}
 
@@ -341,6 +363,7 @@ public class IndexerUtils {
         String screenType = null;
         boolean isCompleted = true;
         boolean isGeneric = false;
+        String actors = null;
 
         List<org.pucar.dristi.web.models.PendingTaskType> pendingTaskTypeList = mdmsDataConfig.getPendingTaskTypeMap().get(entityType);
         if (pendingTaskTypeList == null) return caseDetails;
@@ -352,6 +375,7 @@ public class IndexerUtils {
                 screenType = pendingTaskType.getScreenType();
                 isCompleted = false;
                 isGeneric = pendingTaskType.getIsgeneric();
+                actors = pendingTaskType.getActor();
                 break;
             }
         }
@@ -370,6 +394,7 @@ public class IndexerUtils {
         caseDetails.putAll(entityDetails);
         caseDetails.put("name", name);
         caseDetails.put("screenType", screenType);
+        caseDetails.put("actors",actors);
         if (isGeneric) caseDetails.put("isGeneric", "Generic");
 
         return caseDetails;

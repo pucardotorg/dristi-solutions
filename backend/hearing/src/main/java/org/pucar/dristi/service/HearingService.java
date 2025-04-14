@@ -270,11 +270,12 @@ public class HearingService {
             log.info("Message code: {}", messageCode);
 
             String hearingDate = hearingRequest.getHearing().getStartTime() != null ? hearingRequest.getHearing().getStartTime().toString() : "";
-            LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(hearingDate)), ZoneId.systemDefault());
+            LocalDateTime dateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(Long.parseLong(hearingDate)), ZoneId.of(config.getZoneId()));
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DOB_FORMAT_D_M_Y);
             String date = dateTime.format(formatter);
 
             Set<String> individualIds = extractIndividualIds(caseDetails);
+            extractPowerOfAttorneyIds(caseDetails, individualIds);
 
             Set<String> phoneNumbers = callIndividualService(hearingRequest.getRequestInfo(), individualIds);
 
@@ -344,6 +345,18 @@ public class HearingService {
             }
         }
         return uuids;
+    }
+
+    public void extractPowerOfAttorneyIds(JsonNode caseDetails, Set<String> individualIds) {
+        JsonNode poaHolders = caseDetails.get("poaHolders");
+        if (poaHolders != null && poaHolders.isArray()) {
+            for (JsonNode poaHolder : poaHolders) {
+                String individualId = poaHolder.path("individualId").textValue();
+                if (individualId != null && !individualId.isEmpty()) {
+                    individualIds.add(individualId);
+                }
+            }
+        }
     }
 
     private Set<String> callIndividualService(RequestInfo requestInfo, Set<String> ids) {

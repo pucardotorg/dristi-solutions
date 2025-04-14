@@ -8,6 +8,7 @@ import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
 import org.postgresql.util.PGobject;
 import org.pucar.dristi.web.models.CourtCase;
+import org.pucar.dristi.web.models.PendingAdvocateRequest;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 
@@ -73,6 +74,7 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
                             .registrationDate(parseDateToLong(rs.getString("registrationdate")))
                             .caseCategory(rs.getString("casecategory"))
                             .natureOfPleading(rs.getString("natureofpleading"))
+                            .pendingAdvocateRequests(getObjectListFromJson(rs.getString("pendingadvocaterequests"), new TypeReference<List<PendingAdvocateRequest>>() {}))
                             .status(rs.getString("status"))
                             .remarks(rs.getString("remarks"))
                             .auditdetails(auditdetails)
@@ -95,6 +97,21 @@ public class CaseRowMapper implements ResultSetExtractor<List<CourtCase>> {
             throw new CustomException(ROW_MAPPER_EXCEPTION, "Exception occurred while processing Case ResultSet: " + e.getMessage());
         }
         return new ArrayList<>(caseMap.values());
+    }
+
+    public <T> T getObjectListFromJson(String json, TypeReference<T> typeRef) {
+        if (json == null || json.trim().isEmpty()) {
+            try {
+                return objectMapper.readValue("[]", typeRef); // Return an empty object of the specified type
+            } catch (IOException e) {
+                throw new CustomException("Failed to create an empty instance of " + typeRef.getType(), e.getMessage());
+            }
+        }
+        try {
+            return objectMapper.readValue(json, typeRef);
+        } catch (Exception e) {
+            throw new CustomException("Failed to convert JSON to " + typeRef.getType(), e.getMessage());
+        }
     }
 
     public <T> T getObjectFromJson(String json, TypeReference<T> typeRef) {

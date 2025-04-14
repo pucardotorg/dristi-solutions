@@ -11,9 +11,9 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 import java.util.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.models.AuditDetails;
-import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
@@ -31,11 +31,9 @@ import org.pucar.dristi.enrichment.EnrichmentService;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.repository.ServiceRequestRepository;
-import org.pucar.dristi.util.AdvocateUtil;
-import org.pucar.dristi.util.BillingUtil;
-import org.pucar.dristi.util.EncryptionDecryptionUtil;
-import org.pucar.dristi.util.TaskUtil;
+import org.pucar.dristi.util.*;
 import org.pucar.dristi.validators.CaseRegistrationValidator;
+import org.pucar.dristi.validators.EvidenceValidator;
 import org.pucar.dristi.web.OpenApiCaseSummary;
 import org.pucar.dristi.web.models.*;
 import org.springframework.web.client.RestTemplate;
@@ -76,14 +74,32 @@ public class CaseServiceTest {
     private TaskUtil taskUtil;
 
     @Mock
+    private UserService userService;
+
+    @Mock
+    private HearingUtil hearingUtil;
+
+    @Mock
     private EnrichmentService enrichmentService;
 
     @Mock
     private ServiceRequestRepository repository;
 
+    @Mock
+    private EvidenceUtil evidenceUtil;
+
+    @Mock
+    private EvidenceValidator evidenceValidator;
+
+    @Mock
+    private PaymentCalculaterUtil paymentCalculaterUtil;
+
 
     @InjectMocks
     private CaseService caseService;
+
+    @Mock
+    private CaseUtil caseUtil;
 
     private CaseRequest caseRequest;
     private RequestInfo requestInfo;
@@ -131,7 +147,7 @@ public class CaseServiceTest {
         courtCase = new CourtCase();
         objectMapper = new ObjectMapper();
         enrichmentService = new EnrichmentService(new ArrayList<>());
-        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,new BillingUtil(new RestTemplate(),config),encryptionDecryptionUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil);
+        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,new EtreasuryUtil(new RestTemplate(),config),encryptionDecryptionUtil, hearingUtil,userService,paymentCalculaterUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator,caseUtil);
     }
 
     CaseCriteria setupTestCaseCriteria(CourtCase courtCase) {
@@ -944,4 +960,143 @@ public class CaseServiceTest {
 
         assertNotNull(response);
     }
+
+    @Test
+    void testVerifyJoinCaseCodeV2Request_ValidAccessCode() {
+        // Setup
+        CaseCodeRequest caseCodeRequest = new CaseCodeRequest();
+        CaseCodeCriteria caseCode = new CaseCodeCriteria();
+        caseCode.setFilingNumber(TEST_FILING_NUMBER);
+        caseCode.setCode("VALID_CODE");
+        caseCodeRequest.setCode(caseCode);
+        caseCodeRequest.setRequestInfo(requestInfo);
+
+        CourtCase courtCase = new CourtCase();
+        courtCase.setAccessCode("VALID_CODE");
+        CaseCriteria caseCriteria = setupTestCaseCriteria(courtCase);
+        List<CaseCriteria> existingApplications = Collections.singletonList(caseCriteria);
+
+        when(caseRepository.getCases(any(), any())).thenReturn(existingApplications);
+        when(encryptionDecryptionUtil.decryptObject(any(), any(), any(), any())).thenReturn(courtCase);
+
+        // Execute
+        CaseCodeResponse response = caseService.verifyJoinCaseCodeV2Request(caseCodeRequest);
+
+        // Verify
+        assertNotNull(response);
+        assertTrue(response.getIsValid());
+        verify(caseRepository, times(1)).getCases(any(), any());
+        verify(encryptionDecryptionUtil, times(1)).decryptObject(any(), any(), any(), any());
+    }
+
+    @Test
+    void testVerifyJoinCaseCodeV2Request_InvalidAccessCode() {
+        // Setup
+        CaseCodeRequest caseCodeRequest = new CaseCodeRequest();
+        CaseCodeCriteria caseCode = new CaseCodeCriteria();
+        caseCode.setFilingNumber(TEST_FILING_NUMBER);
+        caseCode.setCode("INVALID_CODE");
+        caseCodeRequest.setCode(caseCode);
+        caseCodeRequest.setRequestInfo(requestInfo);
+
+        CourtCase courtCase = new CourtCase();
+        courtCase.setAccessCode("VALID_CODE");
+        CaseCriteria caseCriteria = setupTestCaseCriteria(courtCase);
+        List<CaseCriteria> existingApplications = Collections.singletonList(caseCriteria);
+
+        when(caseRepository.getCases(any(), any())).thenReturn(existingApplications);
+        when(encryptionDecryptionUtil.decryptObject(any(), any(), any(), any())).thenReturn(courtCase);
+
+        // Execute
+        CaseCodeResponse response = caseService.verifyJoinCaseCodeV2Request(caseCodeRequest);
+
+        // Verify
+        assertNotNull(response);
+        assertFalse(response.getIsValid());
+        verify(caseRepository, times(1)).getCases(any(), any());
+        verify(encryptionDecryptionUtil, times(1)).decryptObject(any(), any(), any(), any());
+    }
+
+    @Test
+    void testVerifyJoinCaseCodeV2Request_CaseDoesNotExist() {
+        // Setup
+        CaseCodeRequest caseCodeRequest = new CaseCodeRequest();
+        CaseCodeCriteria caseCode = new CaseCodeCriteria();
+        caseCode.setFilingNumber(TEST_FILING_NUMBER);
+        caseCode.setCode("SOME_CODE");
+        caseCodeRequest.setCode(caseCode);
+        caseCodeRequest.setRequestInfo(requestInfo);
+
+        when(caseRepository.getCases(any(), any())).thenReturn(Collections.emptyList());
+
+        // Execute & Verify
+        CustomException exception = assertThrows(CustomException.class, () -> caseService.verifyJoinCaseCodeV2Request(caseCodeRequest));
+        assertEquals(CASE_EXIST_ERR, exception.getCode());
+        assertEquals("Case does not exist", exception.getMessage());
+        verify(caseRepository, times(1)).getCases(any(), any());
+    }
+
+    @Test
+    void testVerifyJoinCaseCodeV2Request_CaseHasNoAccessCode() {
+        // Setup
+        CaseCodeRequest caseCodeRequest = new CaseCodeRequest();
+        CaseCodeCriteria caseCode = new CaseCodeCriteria();
+        caseCode.setFilingNumber(TEST_FILING_NUMBER);
+        caseCode.setCode("SOME_CODE");
+        caseCodeRequest.setCode(caseCode);
+        caseCodeRequest.setRequestInfo(requestInfo);
+
+        CourtCase courtCase = new CourtCase();
+        courtCase.setAccessCode(null); // No access code set
+        CaseCriteria caseCriteria = setupTestCaseCriteria(courtCase);
+        List<CaseCriteria> existingApplications = Collections.singletonList(caseCriteria);
+
+        when(caseRepository.getCases(any(), any())).thenReturn(existingApplications);
+        when(encryptionDecryptionUtil.decryptObject(any(), any(), any(), any())).thenReturn(courtCase);
+
+        // Execute & Verify
+        CustomException exception = assertThrows(CustomException.class, () -> caseService.verifyJoinCaseCodeV2Request(caseCodeRequest));
+        assertEquals(VALIDATION_ERR, exception.getCode());
+        assertEquals("Access code not generated", exception.getMessage());
+        verify(caseRepository, times(1)).getCases(any(), any());
+        verify(encryptionDecryptionUtil, times(1)).decryptObject(any(), any(), any(), any());
+    }
+
+    @Test
+    void testVerifyJoinCaseCodeV2Request_ExceptionHandling() {
+        // Setup
+        CaseCodeRequest caseCodeRequest = new CaseCodeRequest();
+        CaseCodeCriteria caseCode = new CaseCodeCriteria();
+        caseCode.setFilingNumber(TEST_FILING_NUMBER);
+        caseCode.setCode("SOME_CODE");
+        caseCodeRequest.setCode(caseCode);
+        caseCodeRequest.setRequestInfo(requestInfo);
+
+        when(caseRepository.getCases(any(), any())).thenThrow(new RuntimeException("Database error"));
+
+        // Execute & Verify
+        CustomException exception = assertThrows(CustomException.class, () -> caseService.verifyJoinCaseCodeV2Request(caseCodeRequest));
+        assertEquals(JOIN_CASE_ERR, exception.getCode());
+        assertEquals(JOIN_CASE_CODE_INVALID_REQUEST, exception.getMessage());
+        verify(caseRepository, times(1)).getCases(any(), any());
+    }
+
+    @Test
+    void testExtractPowerOfAttorneyIds_IndividualId() {
+
+        POAHolder poaHolders = new POAHolder();
+        poaHolders.setIndividualId("IND-123");
+        CourtCase courtCase = new CourtCase();
+
+        courtCase.setPoaHolders(Collections.singletonList(poaHolders));
+
+        Set<String> individualIds = new HashSet<>();
+        individualIds.add("IND-123");
+        Set<String> result = caseService.getPocHolderIndividualIdsOfLitigants(courtCase, individualIds);
+
+        assertFalse(result.isEmpty());
+        assertEquals(1, result.size());
+        assertTrue(result.contains("IND-123"));
+    }
+
 }

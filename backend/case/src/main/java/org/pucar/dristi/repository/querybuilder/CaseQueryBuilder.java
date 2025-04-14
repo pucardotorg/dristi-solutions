@@ -1,13 +1,5 @@
 package org.pucar.dristi.repository.querybuilder;
 
-import static org.pucar.dristi.config.ServiceConstants.CASE_SEARCH_QUERY_EXCEPTION;
-import static org.pucar.dristi.config.ServiceConstants.DOCUMENT_SEARCH_QUERY_EXCEPTION;
-import static org.pucar.dristi.config.ServiceConstants.LINKED_CASE_SEARCH_QUERY_EXCEPTION;
-import static org.pucar.dristi.config.ServiceConstants.LITIGANT_SEARCH_QUERY_EXCEPTION;
-import static org.pucar.dristi.config.ServiceConstants.REPRESENTATIVES_SEARCH_QUERY_EXCEPTION;
-import static org.pucar.dristi.config.ServiceConstants.REPRESENTING_SEARCH_QUERY_EXCEPTION;
-import static org.pucar.dristi.config.ServiceConstants.STATUTE_SECTION_SEARCH_QUERY_EXCEPTION;
-
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,19 +14,21 @@ import org.springframework.stereotype.Component;
 
 import lombok.extern.slf4j.Slf4j;
 
+import static org.pucar.dristi.config.ServiceConstants.*;
+
 @Component
 @Slf4j
 public class CaseQueryBuilder {
     private static final String BASE_CASE_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.resolutionmechanism as resolutionmechanism, cases.casetitle as casetitle, cases.casedescription as casedescription, " +
             "cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.accesscode as accesscode, cases.advocatecount as advocatecount, cases.courtcasenumber as courtcasenumber, cases.cnrNumber as cnrNumber, " +
-            " cases.outcome as outcome, cases.cmpnumber as cmpnumber, cases.courtid as courtid, cases.benchid as benchid, cases.casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.isactive as isactive, cases.casedetails as casedetails, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdby as createdby," +
+            " cases.outcome as outcome, cases.pendingadvocaterequests as pendingadvocaterequests, cases.cmpnumber as cmpnumber, cases.courtid as courtid, cases.benchid as benchid, cases.casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.isactive as isactive, cases.casedetails as casedetails, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdby as createdby," +
             " cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime ";
     private static final String FROM_CASES_TABLE = " FROM dristi_cases cases";
     private static final String ORDERBY_CLAUSE = " ORDER BY cases.{orderBy} {sortingOrder} ";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY cases.createdtime DESC ";
 
     private static final String DOCUMENT_SELECT_QUERY_CASE = "Select doc.id as id, doc.documenttype as documenttype, doc.filestore as filestore," +
-            " doc.documentuid as documentuid, doc.additionaldetails as docadditionaldetails, doc.case_id as case_id, doc.isactive as isactive, doc.linked_case_id as linked_case_id, doc.litigant_id as litigant_id, doc.representative_id as representative_id, doc.representing_id as representing_id ";
+            " doc.documentuid as documentuid, doc.additionaldetails as docadditionaldetails, doc.case_id as case_id, doc.isactive as isactive, doc.linked_case_id as linked_case_id, doc.litigant_id as litigant_id, doc.representative_id as representative_id, doc.representing_id as representing_id, doc.poaholder_id as poaholder_id ";
     private static final String FROM_DOCUMENTS_TABLE = " FROM dristi_case_document doc";
 
     private  static  final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
@@ -71,6 +65,11 @@ public class CaseQueryBuilder {
             " rpst.organisationid as organisationid, rpst.partytype as partytype, rpst.isactive as isactive, rpst.additionaldetails as additionaldetails, rpst.createdby as createdby," +
             " rpst.lastmodifiedby as lastmodifiedby, rpst.createdtime as createdtime, rpst.lastmodifiedtime as lastmodifiedtime ";
     private static final String FROM_REPRESENTING_TABLE = " FROM dristi_case_representing rpst";
+
+    private static final String BASE_POA_HOLDER_QUERY = " SELECT poaholder.id as id, poaholder.tenant_id as tenant_id, poaholder.individual_id as individual_id, poaholder.name as name, poaholder.case_id as case_id, " +
+            " poaholder.is_active as is_active, poaholder.additional_details as additional_details, poaholder.created_by as created_by, poaholder.representing_litigants as representing_litigants, poaholder.poa_type as poa_type, " +
+            " poaholder.last_modified_by as last_modified_by, poaholder.created_time as created_time, poaholder.last_modified_time as last_modified_time , poaholder.hasSigned as hasSigned ";
+    private static final String FROM_POA_HOLDER_TABLE = " FROM dristi_case_poaholders poaholder";
 
     private static final String BASE_CASE_EXIST_QUERY = " SELECT COUNT(*) FROM dristi_cases cases ";
 
@@ -196,10 +195,23 @@ public class CaseQueryBuilder {
     private boolean addAdvocateCriteria(CaseCriteria criteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, RequestInfo requestInfo, StringBuilder query, boolean firstCriteria) {
         if (criteria.getAdvocateId() != null && !criteria.getAdvocateId().isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
-            query.append("((cases.id IN ( SELECT advocate.case_id from dristi_case_representatives advocate WHERE advocate.advocateId = ? AND advocate.isactive = true)) OR cases.status='DRAFT_IN_PROGRESS' AND cases.createdby = ?) AND (cases.status NOT IN ('DELETED_DRAFT'))");
+            query.append("((cases.id IN (" +
+                    "        SELECT advocate.case_id" +
+                    "        FROM dristi_case_representatives advocate" +
+                    "        WHERE advocate.advocateId = ? AND advocate.isactive = true" +
+                    "        UNION" +
+                    "        SELECT poaholders.case_id" +
+                    "        FROM dristi_case_poaholders poaholders" +
+                    "        WHERE poaholders.individual_id = ? AND poaholders.is_active = true))" +
+                    " OR cases.status='DRAFT_IN_PROGRESS' AND cases.createdby = ?" +
+                    " OR EXISTS (SELECT 1 FROM jsonb_array_elements(pendingAdvocateRequests) elem WHERE elem->>'advocateId' = ?) ) AND (cases.status NOT IN ('DELETED_DRAFT'))");
             preparedStmtList.add(criteria.getAdvocateId());
             preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtList.add(criteria.getPoaHolderIndividualId());
+            preparedStmtArgList.add(Types.VARCHAR);
             preparedStmtList.add(requestInfo.getUserInfo().getUuid());
+            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtList.add(criteria.getAdvocateId());
             preparedStmtArgList.add(Types.VARCHAR);
             firstCriteria = false;
         }
@@ -209,8 +221,18 @@ public class CaseQueryBuilder {
     private boolean addLitigantCriteria(CaseCriteria criteria, List<Object> preparedStmtList,List<Integer> preparedStmtArgList, RequestInfo requestInfo, StringBuilder query, boolean firstCriteria) {
         if (criteria.getLitigantId() != null && !criteria.getLitigantId().isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
-            query.append("((cases.id IN ( SELECT litigant.case_id from dristi_case_litigants litigant WHERE litigant.individualId = ? AND litigant.isactive = true)) OR cases.status ='DRAFT_IN_PROGRESS' AND cases.createdby = ?) AND (cases.status NOT IN ('DELETED_DRAFT'))");
+            query.append(" ((cases.id IN (" +
+                    " SELECT litigant.case_id" +
+                    " FROM dristi_case_litigants litigant" +
+                    " WHERE litigant.individualId = ? AND litigant.isactive = true" +
+                    " UNION" +
+                    " SELECT poaholders.case_id" +
+                    " FROM dristi_case_poaholders poaholders" +
+                    " WHERE poaholders.individual_id = ? AND poaholders.is_active = true))" +
+                    " OR cases.status ='DRAFT_IN_PROGRESS' AND cases.createdby = ?) AND (cases.status NOT IN ('DELETED_DRAFT'))");
             preparedStmtList.add(criteria.getLitigantId());
+            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtList.add(criteria.getPoaHolderIndividualId());
             preparedStmtArgList.add(Types.VARCHAR);
             preparedStmtList.add(requestInfo.getUserInfo().getUuid());
             preparedStmtArgList.add(Types.VARCHAR);
@@ -339,6 +361,27 @@ public class CaseQueryBuilder {
         }
     }
 
+    public String getPoaHoldersSearchQuery(List<String> ids, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        try {
+            StringBuilder query = new StringBuilder(BASE_POA_HOLDER_QUERY);
+            query.append(FROM_POA_HOLDER_TABLE);
+            if (!ids.isEmpty()) {
+                query.append(" WHERE poaholder.case_id IN (")
+                        .append(ids.stream().map(id -> "?").collect(Collectors.joining(",")))
+                        .append(")")
+                        .append(AND)
+                        .append("poaholder.is_active = true");
+                preparedStmtList.addAll(ids);
+                ids.forEach(i->preparedStmtArgList.add(Types.VARCHAR));
+            }
+
+            return query.toString();
+        } catch (Exception e) {
+            log.error("Error while building poa holder search query :: {}",e.toString());
+            throw new CustomException(POA_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the poa holder search query: " + e.getMessage());
+        }
+    }
+
     public String getRepresentingSearchQuery(List<String> ids, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         try {
             StringBuilder query = new StringBuilder(BASE_REPRESENTING_QUERY);
@@ -414,6 +457,25 @@ public class CaseQueryBuilder {
         } catch (Exception e) {
             log.error("Error while building representative document search query :: {}",e.toString());
             throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the representative document search query: " + e.getMessage());
+        }
+    }
+
+    public String getPoaDocumentSearchQuery(List<String> ids, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        try {
+            StringBuilder query = new StringBuilder(DOCUMENT_SELECT_QUERY_CASE);
+            query.append(FROM_DOCUMENTS_TABLE);
+            if (!ids.isEmpty()) {
+                query.append(" WHERE doc.isactive = true AND doc.poaholder_id IN (")
+                        .append(ids.stream().map(id -> "?").collect(Collectors.joining(",")))
+                        .append(")");
+                preparedStmtList.addAll(ids);
+                ids.forEach(i->preparedStmtArgList.add(Types.VARCHAR));
+            }
+
+            return query.toString();
+        } catch (Exception e) {
+            log.error("Error while building poa holder document search query :: {}",e.toString());
+            throw new CustomException(DOCUMENT_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the poa holder document search query: " + e.getMessage());
         }
     }
 

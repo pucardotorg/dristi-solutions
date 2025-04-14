@@ -10,13 +10,18 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import static org.pucar.dristi.config.ServiceConstants.ERROR_WHILE_FETCHING_FROM_CASE;
-import static org.pucar.dristi.config.ServiceConstants.REQUEST_INFO;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.pucar.dristi.config.ServiceConstants.*;
 
 @Slf4j
 @Component
@@ -27,13 +32,16 @@ public class CaseUtil {
     private final ObjectMapper mapper;
     private final ServiceRequestRepository repository;
 
+    private final ObjectMapper objectMapper;
+
     @Autowired
-    public CaseUtil(Configuration config, RestTemplate restTemplate, ObjectMapper mapper, ServiceRequestRepository repository) {
+    public CaseUtil(Configuration config, RestTemplate restTemplate, ObjectMapper mapper, ServiceRequestRepository repository, ObjectMapper objectMapper) {
         this.config = config;
         this.restTemplate = restTemplate;
         this.mapper = mapper;
 
         this.repository = repository;
+        this.objectMapper = objectMapper;
     }
 
     public JsonNode searchCaseDetails(RequestInfo requestInfo, String tenantId, String cnrNumber, String filingNumber, String caseId) {
@@ -75,4 +83,53 @@ public class CaseUtil {
         }
     }
 
+    public List<CourtCase> getCaseDetails(TaskRequest taskRequest) {
+
+        String filingNumber = taskRequest.getTask().getFilingNumber();
+        RequestInfo requestInfo = taskRequest.getRequestInfo();
+
+        StringBuilder uri = new StringBuilder();
+        uri.append(config.getCaseHost()).append(config.getCaseSearchPath());
+
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber)
+                .defaultFields(false)
+                .build();
+
+        CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                .requestInfo(requestInfo)
+                .criteria(Collections.singletonList(caseCriteria))
+                .build();
+
+        Object response;
+        CaseListResponse caseListResponse;
+
+        try {
+            response = restTemplate.postForObject(uri.toString(), caseSearchRequest, Map.class);
+            caseListResponse = objectMapper.convertValue(response,CaseListResponse.class);
+            log.info("Case response : {} ", caseListResponse);
+        }
+        catch (Exception e) {
+            log.error("Error while fetching from case service");
+            throw new CustomException(ERROR_FROM_CASE,e.getMessage());
+        }
+
+        if (caseListResponse != null && caseListResponse.getCriteria() != null && !caseListResponse.getCriteria().isEmpty()) {
+            return caseListResponse.getCriteria().get(0).getResponseList();
+        }
+        return null;
+    }
+
+    public void editCase(RequestInfo requestInfo, CourtCase courtCase) {
+        StringBuilder uri = new StringBuilder();
+        uri.append(config.getCaseHost()).append(config.getCaseEditPath());
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("RequestInfo", requestInfo);
+        requestMap.put("cases", courtCase);
+        try {
+            repository.fetchResult(uri, requestMap);
+        } catch (Exception e) {
+            log.error("Error while editing case", e);
+            throw new CustomException(ERROR_FROM_CASE, e.getMessage());
+        }
+    }
 }

@@ -51,6 +51,8 @@ const SubmissionDocuments = ({ path }) => {
   const todayDate = new Date().getTime();
   const [loader, setLoader] = useState(false);
   const entityType = "voluntary-document-submission";
+  const roles = Digit.UserService.getUser()?.info?.roles;
+  const isBenchClerk = roles.some((role) => role.code === "BENCH_CLERK");
 
   const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "FilingType" },
@@ -162,14 +164,9 @@ const SubmissionDocuments = ({ path }) => {
     }
   }, [showErrorToast]);
 
-  const handleNextSubmission = () => {
-    localStorage.removeItem("fileStoreId");
-    history.replace(`/digit-ui/citizen/submissions/submit-document?filingNumber=${filingNumber}`);
-  };
-
   const handleClose = () => {
     setShowSubmissionSuccessModal(false);
-    history.replace(`/digit-ui/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}`);
+    history.replace(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}`);
   };
 
   const handleSuccessDownloadSubmission = () => {
@@ -237,7 +234,7 @@ const SubmissionDocuments = ({ path }) => {
               comments: [],
               file,
               sourceType,
-              sourceID: individualId,
+              sourceID: isBenchClerk ? userInfo?.uuid: individualId,
               filingType: filingType,
               additionalDetails: {
                 uuid: userInfo?.uuid,
@@ -256,9 +253,15 @@ const SubmissionDocuments = ({ path }) => {
             stateSla: todayDate + stateSla.PENDINGESIGN_SUBMIT_DOCUMENT,
           });
         }
-        history.replace(
-          `/digit-ui/citizen/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${evidence?.artifact?.artifactNumber}`
-        );
+        if (isBenchClerk) {
+          history.replace(
+            `/digit-ui/employee/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${evidence?.artifact?.artifactNumber}`
+          );
+        } else {
+          history.replace(
+            `/digit-ui/citizen/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${evidence?.artifact?.artifactNumber}`
+          );
+        }
       } else {
         const localStorageID = localStorage.getItem("fileStoreId");
         const documentsFile =
@@ -365,15 +368,33 @@ const SubmissionDocuments = ({ path }) => {
         if (body?.labelChildren === "optional") {
           return {
             ...body,
-            labelChildren: <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>,
+            labelChildren: (
+              <span style={{ color: "#77787B" }}>
+                &nbsp;{`${t("CS_IS_OPTIONAL")}`}
+              </span>
+            ),
+          };
+        }
+  
+        if (body?.key === "documentType") {
+          return {
+            ...body,
+            populators: {
+              ...body.populators,
+              mdmsConfig: {
+                moduleName: "Submission",
+                masterName: "SubmissionDocumentType",
+                select: `(data) => {return data['Submission'].SubmissionDocumentType?.filter((item) => {return !(item.code === "MISCELLANEOUS" && ${!isBenchClerk});});}`,
+              },
+            },
           };
         }
         return body;
       }),
     });
-
+  
     const originalFormConfig = submissionDocumentDetailsConfig.formConfig;
-
+    
     if (!artifactNumber) {
       return originalFormConfig?.map((config) => applyUiChanges(config));
     } else {
@@ -384,7 +405,9 @@ const SubmissionDocuments = ({ path }) => {
         })
       );
     }
-  }, [artifactNumber, t]);
+  }, [artifactNumber, t, isBenchClerk]);
+  
+  
 
   if (loader || isFilingTypeLoading || isEvidenceLoading) {
     return <Loader />;
@@ -403,14 +426,22 @@ const SubmissionDocuments = ({ path }) => {
             font-weight: 400;
             font-size : 16px;
             margin-bottom: 8px !important;
-          }          
+          }   
+            
+          .formComposer .employeeCard .label-field-pair {
+            flex-direction: column;
+          } 
         `}
       </style>
 
       <div className="citizen create-submission" style={{ padding: "24px 24px 24px 40px" }}>
         {" "}
         <Header> {t(submissionDocumentDetailsConfig.header)}</Header>
-        <div style={{ lineHeight: "24px" }}> {t(submissionDocumentDetailsConfig.subText1)}</div>
+        {isBenchClerk ? (
+          <div style={{ lineHeight: "24px" }}> {t(submissionDocumentDetailsConfig.subText11)}</div>
+        ) : (
+          <div style={{ lineHeight: "24px" }}> {t(submissionDocumentDetailsConfig.subText1)}</div>
+        )}
         <div style={{ marginBottom: "10px" }}> {t(submissionDocumentDetailsConfig.subText2)}</div>
         <div style={{ minHeight: "550px", overflowY: "auto", marginTop: "15px", width: "50%" }}>
           <FormComposerV2
@@ -441,7 +472,6 @@ const SubmissionDocuments = ({ path }) => {
           <SubmissionDocumentSuccessModal
             t={t}
             handleClose={handleClose}
-            handleNextSubmission={handleNextSubmission}
             handleSuccessDownloadSubmission={handleSuccessDownloadSubmission}
             documentSubmissionNumber={evidenceDetails?.artifactNumber}
           />

@@ -20,6 +20,16 @@ import lombok.Setter;
 @Getter
 public class Configuration {
 
+	//Hearing
+	@Value("${egov.hearing.host}")
+	private String hearingHost;
+
+	@Value("${egov.hearing.path}")
+	private String hearingPath;
+
+	@Value("${egov.hearing.search.path}")
+	private String hearingSearchPath;
+
 	// User Config
 	@Value("${egov.user.host}")
 	private String userHost;
@@ -156,6 +166,13 @@ public class Configuration {
 	@Value("${egov.demand.create.endpoint}")
 	private String demandCreateEndPoint;
 
+	//Billing
+	@Value("${egov.etreasury.host}")
+	private String etreasuryHost;
+
+	@Value("${egov.etreasury.demand.create.endpoint}")
+	private String etreasuryDemandCreateEndPoint;
+
 	//Join a Case
 	@Value("${egov.litigant.join.case.kafka.topic}")
 	private String litigantJoinCaseTopic;
@@ -169,10 +186,16 @@ public class Configuration {
 	@Value("${egov.additional.join.case.kafka.topic}")
 	private String additionalJoinCaseTopic;
 
+	@Value("${egov.update.additional.join.case.kafka.topic}")
+	private String updateAdditionalJoinCaseTopic;
+
 	//Mdms
 
 	@Value("${mdms.case.module.name}")
 	private String caseModule;
+
+	@Value("${state.level.tenant.id}")
+	private String tenantId;
 
 	@Value("${egov.localization.statelevel}")
 	private Boolean isLocalizationStateLevel;
@@ -247,6 +270,12 @@ public class Configuration {
 
 	@Value("${notification.sms.enabled}")
 	private Boolean isSMSEnabled;
+
+	@Value("${egov.sms.notification.accept.profile.request.template.id}")
+	private String smsNotificationAcceptProfileRequestTemplateId;
+
+	@Value("${egov.sms.notification.reject.profile.request.template.id}")
+	private String smsNotificationRejectProfileRequestTemplateId;
 
 	//Localization
 	@Value("${egov.localization.host}")
@@ -325,12 +354,47 @@ public class Configuration {
 	@Value("${pucar.lock.search.endpoint}")
 	private String lockEndPoint;
 
+	@Value("${egov.payment.calculator.host}")
+	private String paymentCalculatorHost;
+
+	@Value("${egov.payment.calculator.endpoint}")
+	private String paymentCalculatorEndpoint;
+
 	@Value("${egov.task.service.host}")
 	private String taskServiceHost;
 
 	@Value("${egov.task.service.create.endpoint}")
 	private String taskServiceCreateEndpoint;
 
+	@Value("${egov.task.service.search.endpoint}")
+	private String taskServiceSearchEndpoint;
+
+	@Value("${egov.task.service.update.endpoint}")
+	private String taskServiceUpdateEndpoint;
+
 	@Value("${hearing.case.reference.number.update}")
 	private String caseReferenceUpdateTopic;
+
+	@Value("${egov.analytics.host}")
+	private String analyticsServiceHost;
+
+	@Value("${egov.analytics.path}")
+	private String analyticsServicePath;
+
+	@Value("${egov.pending.advocate.request.join.case.kafka.topic}")
+	private String updatePendingAdvocateRequestKafkaTopic;
+  
+	@Value("${kafka.case.update.last.modified.time}")
+	private String caseUpdateLastModifiedTimeTopic;
+
+	// evidence
+	@Value("${egov.evidence.host}")
+	private String evidenceServiceHost;
+
+	@Value("${egov.evidence.create.path}")
+	private String evidenceServiceCreatePath;
+
+	@Value("${egov.evidence.search.path}")
+	private String evidenceServiceSearchPath;
+
 }
