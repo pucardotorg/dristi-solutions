@@ -4,6 +4,33 @@ const defaultSearchValues = {
   orderType: null,
 };
 
+export const defaultSearchValuesForJudgePending = {
+  searchText: "",
+  applicationStatus: {
+    id: 2,
+    code: "SIGN_PENDING",
+    name: "Sign Pending",
+    isActive: true,
+  },
+  orderType: {
+    id: 2,
+    code: "WARRANT",
+    name: "Warrant",
+    isActive: true,
+  },
+};
+
+export const defaultSearchValuesForJudgeSent = {
+  searchText: "",
+  applicationStatus: "",
+  orderType: {
+    id: 2,
+    code: "WARRANT",
+    name: "Warrant",
+    isActive: true,
+  },
+};
+
 export const SummonsTabsConfig = {
   tenantId: "pg",
   moduleName: "reviewSummonWarrantNotice",
