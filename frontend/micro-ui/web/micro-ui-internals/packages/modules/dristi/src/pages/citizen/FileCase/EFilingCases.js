@@ -2532,7 +2532,29 @@ function EFilingCases({ path }) {
         {isCaseReAssigned && (
           <div className="side-stepper-error-count">
             {judgeObj ? (
-              <FlagBox t={t} judgeObj={judgeObj} />
+              <React.Fragment>
+                <FlagBox t={t} judgeObj={judgeObj} />
+                {caseDetails?.additionalDetails?.scrutinyCommentSendBack &&
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      backgroundColor: "#fdf7ec",
+                      padding: "10px",
+                      fontSize: "14px",
+                      fontFamily: "Arial, sans-serif",
+                      margin: "16px 0px",
+                    }}
+                  >
+                    <div style={{ marginRight: "8px" }}>
+                      <WarningInfoRedIcon />
+                    </div>
+                    <p style={{ margin: 0, fontWeight: "bold" }}>
+                      {t("FSO_COMMENTS")} <span style={{ fontWeight: "normal" }}>{caseDetails?.additionalDetails?.scrutinyCommentSendBack}</span>
+                    </p>
+                  </div>
+                }
+              </React.Fragment>
             ) : (
               <React.Fragment>
                 <ErrorsAccordion
