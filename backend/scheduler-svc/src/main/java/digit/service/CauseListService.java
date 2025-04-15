@@ -740,17 +740,23 @@ public class CauseListService {
 
     public List<RecentCauseList>  getRecentCauseList(RecentCauseListSearchRequest searchRequest) {
         log.info("operation = getRecentCauseList, with searchRequest : {}", searchRequest.toString());
-        List<RecentCauseList> recentCauseLists = new ArrayList<>();
-        List<CauseListSearchCriteria> recentSearchCriteriaList = generateRecentSearchCriteriaList(searchRequest.getRecentCauseListSearchCriteria());
-        for( CauseListSearchCriteria searchCriteria: recentSearchCriteriaList) {
-            List<String> fileStoreIds = getFileStoreForCauseList(searchCriteria);
-            recentCauseLists.add(RecentCauseList.builder()
-                    .courtId(searchCriteria.getCourtId())
-                    .fileStoreId(fileStoreIds != null && !fileStoreIds.isEmpty() ? fileStoreIds.get(0) : null)
-                    .date(searchCriteria.getSearchDate())
-                    .build());
+        try {
+            List<RecentCauseList> recentCauseLists = new ArrayList<>();
+            List<CauseListSearchCriteria> recentSearchCriteriaList = generateRecentSearchCriteriaList(searchRequest.getRecentCauseListSearchCriteria());
+            for( CauseListSearchCriteria searchCriteria: recentSearchCriteriaList) {
+                List<String> fileStoreIds = getFileStoreForCauseList(searchCriteria);
+                recentCauseLists.add(RecentCauseList.builder()
+                        .courtId(searchCriteria.getCourtId())
+                        .fileStoreId(fileStoreIds != null && !fileStoreIds.isEmpty() ? fileStoreIds.get(0) : null)
+                        .date(searchCriteria.getSearchDate())
+                        .build());
+            }
+            log.info("operation = getRecentCauseList, result = SUCCESS");
+            return recentCauseLists;
+        } catch (Exception e) {
+            log.error("operation = getRecentCauseList, result = FAILURE, error = {}", e.getMessage(), e);
+            throw e;
         }
-        return  recentCauseLists;
     }
 
     public List<CauseListSearchCriteria> generateRecentSearchCriteriaList(RecentCauseListSearchCriteria recentCauseListSearchCriteria) {
