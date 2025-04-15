@@ -251,7 +251,7 @@
                       "masterName": "PoliceStation",
                       "moduleName": "case"
                     },
-                    "optionsKey": "code",
+                    "optionsKey": "name",
                     "isMandatory": true
                   },
                   "isMandatory": true
@@ -638,7 +638,7 @@
                           {
                             "type": "text",
                             "label": "POLICE_STATION",
-                            "value": "policeStation.code",
+                            "value": "policeStation.name",
                             "isLocalizationRequired": true
                           },
                           {
