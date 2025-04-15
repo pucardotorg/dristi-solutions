@@ -8,8 +8,9 @@ import { useTranslation } from "react-i18next";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import { DRISTIService } from "../../../services";
-import { getSuffixByBusinessCode, getUniqueAcronym } from "../../../Utils";
+import { getSuffixByBusinessCode, getTaxPeriodByBusinessService } from "../../../Utils";
 import UploadSignatureModal from "../../../components/UploadSignatureModal";
+import { getAllAssignees } from "./EfilingValidationUtils";
 import { Urls } from "../../../hooks";
 import { useToast } from "../../../components/Toast/useToast";
 import Modal from "../../../components/Modal";
@@ -206,6 +207,8 @@ const ComplainantSignature = ({ path }) => {
   const { handleEsign } = Digit.Hooks.orders.useESign();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const name = "Signature";
+  const complainantPlaceholder = "Complainant Signature";
+  const advocatePlaceholder = "Advocate Signature";
   const [calculationResponse, setCalculationResponse] = useState({});
 
   const uploadModalConfig = useMemo(() => {
@@ -304,26 +307,8 @@ const ComplainantSignature = ({ path }) => {
           caseDetails?.representatives?.filter((rep) =>
             rep?.representing?.some((complainant) => complainant?.individualId === litigant?.individualId)
           ) || [],
-        poaHolder: caseDetails?.poaHolders?.find((poaHolder) =>
-          poaHolder?.representingLitigants?.some((complainant) => complainant?.individualId === litigant?.individualId)
-        ),
       }));
   }, [caseDetails]);
-
-  const poaHolders = useMemo(() => {
-    return caseDetails?.poaHolders?.map((poaHolder) => {
-      const representingWithLitigant = poaHolder?.representingLitigants?.map((rep) => {
-        return {
-          ...litigants?.find((lit) => rep?.individualId === lit?.individualId),
-          ...rep,
-        };
-      });
-      return {
-        ...poaHolder,
-        representingLitigants: representingWithLitigant,
-      };
-    });
-  }, [caseDetails, litigants]);
 
   const isFilingParty = useMemo(() => {
     return caseDetails?.auditDetails?.createdBy === userInfo?.uuid;
@@ -336,25 +321,6 @@ const ComplainantSignature = ({ path }) => {
   const isCurrentAdvocateSigned = useMemo(() => {
     return caseDetails?.representatives?.some((advocate) => advocate?.hasSigned && advocate?.additionalDetails?.uuid === userInfo?.uuid);
   }, [caseDetails?.representatives, userInfo?.uuid]);
-
-  const isCurrentPoaSigned = useMemo(() => {
-    return caseDetails?.poaHolders?.some((poa) => poa?.hasSigned && poa?.additionalDetails?.uuid === userInfo?.uuid);
-  }, [caseDetails, userInfo]);
-
-  const isCurrentLitigantContainPoa = useMemo(() => litigants?.some((lit) => lit?.additionalDetails?.uuid === userInfo?.uuid && lit?.poaHolder), [
-    litigants,
-    userInfo,
-  ]);
-
-  const isCurrentPersonPoa = useMemo(() => caseDetails?.poaHolders?.some((poaHolder) => poaHolder?.additionalDetails?.uuid === userInfo?.uuid), [
-    caseDetails,
-    userInfo,
-  ]);
-
-  const isCurrentPersonPoaComplainant = useMemo(
-    () => isCurrentPersonPoa && litigants?.some((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid),
-    [litigants, userInfo, isCurrentPersonPoa]
-  );
 
   const state = useMemo(() => caseDetails?.status, [caseDetails]);
   const isSelectedEsign = useMemo(() => {
@@ -372,10 +338,9 @@ const ComplainantSignature = ({ path }) => {
     if (!litigants?.length) return false;
     return litigants?.every((litigant) => {
       const litigantSigned = litigant?.hasSigned;
-      const poaHolderSigned = litigant?.poaHolder?.hasSigned;
       const hasReps = litigant?.representatives?.length > 0;
       const anyRepresentativeSigned = hasReps ? litigant?.representatives?.some((rep) => rep?.hasSigned) : true;
-      return (litigantSigned || poaHolderSigned) && anyRepresentativeSigned;
+      return litigantSigned && anyRepresentativeSigned;
     });
   }, [litigants]);
 
@@ -424,13 +389,11 @@ const ComplainantSignature = ({ path }) => {
         if ([complainantWorkflowState.CASE_REASSIGNED, complainantWorkflowState.DRAFT_IN_PROGRESS].includes(res?.cases?.[0]?.status)) {
           const promises = [
             ...(Array.isArray(caseDetails?.litigants)
-              ? litigants?.map(async (litigant) => {
-                  if (!litigant?.poaHolder) {
-                    return closePendingTask({
-                      status: state,
-                      assignee: litigant?.additionalDetails?.uuid,
-                    });
-                  }
+              ? caseDetails?.litigants?.map(async (litigant) => {
+                  return closePendingTask({
+                    status: state,
+                    assignee: litigant?.additionalDetails?.uuid,
+                  });
                 })
               : []),
             ...(Array.isArray(caseDetails?.representatives)
@@ -438,14 +401,6 @@ const ComplainantSignature = ({ path }) => {
                   return closePendingTask({
                     status: state,
                     assignee: advocate?.additionalDetails?.uuid,
-                  });
-                })
-              : []),
-            ...(Array.isArray(caseDetails?.poaHolders)
-              ? caseDetails?.litigants?.map(async (poaHolder) => {
-                  return closePendingTask({
-                    status: state,
-                    assignee: poaHolder?.additionalDetails?.uuid,
                   });
                 })
               : []),
@@ -519,34 +474,13 @@ const ComplainantSignature = ({ path }) => {
   };
 
   const getPlaceholder = () => {
-    let placeholder = "";
-
-    if (isCurrentPersonPoaComplainant) {
-      const litigant = litigants?.find((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid);
-      const poaHolder = poaHolders?.find((poa) => poa?.individualId === litigant?.individualId);
-      const representedNames = poaHolder?.representingLitigants
-        ?.map((rep) => rep?.additionalDetails?.fullName)
-        ?.filter(Boolean)
-        ?.join(", ");
-      placeholder = `${litigant?.additionalDetails?.fullName} - Complainant ${litigant?.additionalDetails?.currentPosition}, PoA holder for ${representedNames}`;
-    } else if (isCurrentPersonPoa) {
-      const poaHolder = poaHolders?.find((poa) => poa?.additionalDetails?.uuid === userInfo?.uuid);
-      const representedNames = poaHolder?.representingLitigants
-        ?.map((rep) => rep?.additionalDetails?.fullName)
-        ?.filter(Boolean)
-        ?.join(", ");
-      placeholder = `${poaHolder?.name} - PoA holder for ${representedNames}`;
+    if (isAdvocateFilingCase) {
+      const advocate = caseDetails?.representatives?.find((advocate) => advocate?.additionalDetails?.uuid === userInfo?.uuid);
+      return `Advocate ${advocate?.representing?.[0]?.additionalDetails?.currentPosition} Signature`;
     } else {
-      if (isAdvocateFilingCase) {
-        const advocate = caseDetails?.representatives?.find((advocate) => advocate?.additionalDetails?.uuid === userInfo?.uuid);
-        placeholder = `Advocate ${advocate?.representing?.[0]?.additionalDetails?.currentPosition} Signature`;
-      } else {
-        const litigant = litigants?.find((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid);
-        placeholder = `${litigant?.additionalDetails?.fullName} - Complainant ${litigant?.additionalDetails?.currentPosition}`;
-      }
+      const litigant = litigants?.find((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid);
+      return `Complainant ${litigant?.additionalDetails?.currentPosition} Signature`;
     }
-
-    return getUniqueAcronym(placeholder);
   };
 
   const handleEsignAction = async () => {
@@ -619,8 +553,20 @@ const ComplainantSignature = ({ path }) => {
     }
   );
 
+  const { data: taxPeriodData, isLoading: taxPeriodLoading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "BillingService",
+    [{ name: "TaxPeriod" }],
+    {
+      select: (data) => {
+        return data?.BillingService?.TaxPeriod || [];
+      },
+    }
+  );
+
   const callCreateDemandAndCalculation = async (caseDetails, tenantId, caseId) => {
     const suffix = getSuffixByBusinessCode(paymentTypeData, "case-default");
+    const taxPeriod = getTaxPeriodByBusinessService(taxPeriodData, "case-default");
     const calculationResponse = await DRISTIService.getPaymentBreakup(
       {
         EFillingCalculationCriteria: [
@@ -768,11 +714,6 @@ const ComplainantSignature = ({ path }) => {
                     uuid: advocate?.additionalDetails?.uuid,
                   }))
                 : []),
-              ...(Array.isArray(caseDetails?.poaHolders)
-                ? caseDetails?.poaHolders?.map((poaHolder) => ({
-                    uuid: poaHolder?.additionalDetails?.uuid,
-                  }))
-                : []),
             ];
             await DRISTIService.customApiService(Urls.dristi.pendingTask, {
               pendingTask: {
@@ -817,7 +758,7 @@ const ComplainantSignature = ({ path }) => {
   };
 
   const isSubmitEnabled = () => {
-    return isEsignSuccess || isCurrentAdvocateSigned || isCurrentLitigantSigned || isCurrentPoaSigned || isCurrentLitigantContainPoa || uploadDoc;
+    return isEsignSuccess || isCurrentAdvocateSigned || isCurrentLitigantSigned || uploadDoc;
   };
 
   useEffect(() => {
@@ -863,9 +804,9 @@ const ComplainantSignature = ({ path }) => {
 
   const isRightPannelEnable = () => {
     if (isAdvocateFilingCase) {
-      return !(isCurrentAdvocateSigned || isOtherAdvocateSigned || isCurrentPoaSigned || isEsignSuccess || uploadDoc);
+      return !(isCurrentAdvocateSigned || isOtherAdvocateSigned || isEsignSuccess || uploadDoc);
     }
-    return !(isCurrentLitigantSigned || isCurrentPoaSigned || (isCurrentLitigantContainPoa && !isCurrentPersonPoa) || isEsignSuccess);
+    return !(isCurrentLitigantSigned || isEsignSuccess);
   };
 
   if (isLoading) {
@@ -917,9 +858,7 @@ const ComplainantSignature = ({ path }) => {
             {litigants?.map((litigant, index) => (
               <div key={index} style={{ ...styles.litigantDetails, marginTop: "5px", fontSize: "15px" }}>
                 {litigant?.additionalDetails?.fullName}
-                {litigant?.hasSigned ||
-                litigant?.poaHolder?.hasSigned ||
-                (litigant?.additionalDetails?.uuid === userInfo?.uuid && (isEsignSuccess || uploadDoc)) ? (
+                {litigant?.hasSigned || (litigant?.additionalDetails?.uuid === userInfo?.uuid && (isEsignSuccess || uploadDoc)) ? (
                   <span style={{ ...styles.signedLabel, alignItems: "right" }}>{t("SIGNED")}</span>
                 ) : (
                   <span style={{ ...styles.unSignedLabel, alignItems: "right" }}>{t("PENDING")}</span>
@@ -936,9 +875,6 @@ const ComplainantSignature = ({ path }) => {
                     <div style={{ ...styles.advocateDetails, marginTop: "5px", fontSize: "15px" }}>
                       {`${t("ADVOCATE_FOR")} ${litigant?.additionalDetails?.fullName}`}
                       {litigant?.representatives?.some((rep) => rep?.hasSigned) ||
-                      litigant?.representatives?.some(
-                        (rep) => rep?.additionalDetails?.uuid === litigant?.poaHolder?.additionalDetails?.uuid && litigant?.poaHolder?.hasSigned
-                      ) ||
                       (litigant?.representatives?.some((rep) => rep?.additionalDetails?.uuid === userInfo?.uuid) && (isEsignSuccess || uploadDoc)) ? (
                         <span style={styles.signedLabel}>{t("SIGNED")}</span>
                       ) : (
