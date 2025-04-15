@@ -84,7 +84,6 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
   }, [rowData]);
 
   const fileStore = localStorage.getItem("fileStoreId") || signatureId;
-  debugger;
 
   return (
     <div>

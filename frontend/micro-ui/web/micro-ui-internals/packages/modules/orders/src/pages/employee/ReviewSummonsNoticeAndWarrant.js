@@ -453,7 +453,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             const res = await taskService.updateTask(reqBody, { tenantId });
             setIsIcops({ state: "success", message: "" });
           } catch (error) {
-            setIsIcops({ state: "failed", message: `Something went wrong. ${t(error)}` });
+            setIsIcops({ state: "failed", message: `Something went wrong. ${error}` });
             console.error("Error updating task data:", error);
           }
         }
