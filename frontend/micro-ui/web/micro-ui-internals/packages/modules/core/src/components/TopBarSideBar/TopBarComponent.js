@@ -41,7 +41,7 @@ const TopBarComponent = ({
   const onCourtsImageLink = window?.globalConfigs?.getConfig("ON_COURTS_LOGO");
 
   return (
-    <div className="navbar" style={{ zIndex: "150" }}>
+    <div className="navbar" style={{ zIndex: "999" }}>
       <div className="center-container back-wrapper">
         <div className="hambuger-back-wrapper">
           {isMobile && <Hamburger handleClick={toggleSidebar} />}
