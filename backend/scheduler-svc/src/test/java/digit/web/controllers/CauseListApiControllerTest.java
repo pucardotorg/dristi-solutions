@@ -1,8 +1,9 @@
 package digit.web.controllers;
 
 import digit.service.CauseListService;
-import digit.util.ResponseInfoFactory;
 import digit.web.models.*;
+import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -18,7 +19,7 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -63,4 +64,42 @@ public class CauseListApiControllerTest {
         assertEquals("attachment; filename=\"causelist" + LocalDate.now().plusDays(1).toString() + ".pdf\"", responseEntity.getHeaders().getFirst(HttpHeaders.CONTENT_DISPOSITION));
         assertEquals(resource, responseEntity.getBody());
     }
+
+    @Test
+    void testRecentCauseList_shouldReturnRecentCauseListResponse() {
+        // Given
+        RecentCauseListSearchCriteria criteria = RecentCauseListSearchCriteria.builder()
+                .courtId("COURT001")
+                .build();
+
+        RequestInfo requestInfo = RequestInfo.builder()
+                .userInfo(User.builder().uuid("user-123").build())
+                .build();
+
+        RecentCauseListSearchRequest request = RecentCauseListSearchRequest.builder()
+                .recentCauseListSearchCriteria(criteria)
+                .requestInfo(requestInfo)
+                .build();
+
+        RecentCauseList recent1 = RecentCauseList.builder().fileStoreId("fs1").build();
+        RecentCauseList recent2 = RecentCauseList.builder().fileStoreId("fs2").build();
+
+        List<RecentCauseList> resultList = List.of(recent1, recent2);
+
+        when(causeListService.getRecentCauseList(any())).thenReturn(resultList);
+
+        // When
+        ResponseEntity<Object> response = causeListApiController.recentCauseList(request);
+
+        // Then
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertInstanceOf(RecentCauseListResponse.class, response.getBody());
+
+        RecentCauseListResponse actualResponse = (RecentCauseListResponse) response.getBody();
+        assertNotNull(actualResponse.getResponseInfo());
+        assertEquals(2, actualResponse.getRecentCauseList().size());
+        assertEquals("fs1", actualResponse.getRecentCauseList().get(0).getFileStoreId());
+        assertEquals("fs2", actualResponse.getRecentCauseList().get(1).getFileStoreId());
+    }
+
 }

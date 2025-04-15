@@ -81,6 +81,7 @@ public class CauseListService {
         this.individualService = individualService;
         this.notificationService = notificationService;
     }
+    private static final LocalTime CAUSE_LIST_CUTOFF_TIME = LocalTime.of(17, 0);
 
     public void updateCauseListForTomorrow() {
         log.info("operation = updateCauseListForTomorrow, result = IN_PROGRESS");
@@ -737,5 +738,43 @@ public class CauseListService {
         return mobileNumber;
     }
 
+    public List<RecentCauseList>  getRecentCauseList(RecentCauseListSearchRequest searchRequest) {
+        log.info("operation = getRecentCauseList, with searchRequest : {}", searchRequest.toString());
+        try {
+            List<RecentCauseList> recentCauseLists = new ArrayList<>();
+            List<CauseListSearchCriteria> recentSearchCriteriaList = generateRecentSearchCriteriaList(searchRequest.getRecentCauseListSearchCriteria());
+            for( CauseListSearchCriteria searchCriteria: recentSearchCriteriaList) {
+                List<String> fileStoreIds = getFileStoreForCauseList(searchCriteria);
+                recentCauseLists.add(RecentCauseList.builder()
+                        .courtId(searchCriteria.getCourtId())
+                        .fileStoreId(fileStoreIds != null && !fileStoreIds.isEmpty() ? fileStoreIds.get(0) : null)
+                        .date(searchCriteria.getSearchDate())
+                        .build());
+            }
+            log.info("operation = getRecentCauseList, result = SUCCESS");
+            return recentCauseLists;
+        } catch (Exception e) {
+            log.error("operation = getRecentCauseList, result = FAILURE, error = {}", e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    public List<CauseListSearchCriteria> generateRecentSearchCriteriaList(RecentCauseListSearchCriteria recentCauseListSearchCriteria) {
+        List<CauseListSearchCriteria> criteriaList = new ArrayList<>();
+        LocalDate today = LocalDate.now();
+        LocalDate yesterday = today.minusDays(1);
+        LocalDate tomorrow = today.plusDays(1);
+        LocalTime now = LocalTime.now();
+        String courtId = recentCauseListSearchCriteria.getCourtId();
+
+        criteriaList.add(CauseListSearchCriteria.builder().searchDate(today).courtId(courtId).build());
+
+        criteriaList.add(CauseListSearchCriteria.builder()
+                .searchDate(now.isBefore(CAUSE_LIST_CUTOFF_TIME) ? yesterday : tomorrow)
+                .courtId(courtId)
+                .build());
+
+        return criteriaList;
+    }
 
 }
