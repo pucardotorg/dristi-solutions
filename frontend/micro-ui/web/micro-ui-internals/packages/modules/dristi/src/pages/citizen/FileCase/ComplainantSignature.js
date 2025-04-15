@@ -540,6 +540,7 @@ const ComplainantSignature = ({ path }) => {
       if (isAdvocateFilingCase) {
         const advocate = caseDetails?.representatives?.find((advocate) => advocate?.additionalDetails?.uuid === userInfo?.uuid);
         placeholder = `Advocate ${advocate?.representing?.[0]?.additionalDetails?.currentPosition} Signature`;
+        return placeholder; // Return placeholder directly for advocate filing case
       } else {
         const litigant = litigants?.find((litigant) => litigant?.additionalDetails?.uuid === userInfo?.uuid);
         placeholder = `${litigant?.additionalDetails?.fullName} - Complainant ${litigant?.additionalDetails?.currentPosition}`;
