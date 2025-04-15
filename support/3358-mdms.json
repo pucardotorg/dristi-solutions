@@ -246,6 +246,7 @@
                       "marginBottom": "10px"
                     },
                     "required": false,
+                    "optionsCustomStyle": {"height": "30vh", "overflowY": "auto", "marginTop": "42px"},
                     "mdmsConfig": {
                       "select": "(data) => {return data['case'].PoliceStation?.map((item) => {return item;});}",
                       "masterName": "PoliceStation",
