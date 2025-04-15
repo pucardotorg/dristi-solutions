@@ -62,6 +62,8 @@ public class ServiceConstants {
 
     public static final String PAYMENTMASTERCODE = "PaymentMasterCode";
     public static final String PAYMENTTYPE = "paymentType";
+    public static final String PAYMENTMODE = "paymentMode";
+
     public static final String FILTER_PAYMENT_TYPE_DELIVERY_CHANNEL = "$[?(@.deliveryChannel == '%s')]";
 
     public static final String PENDING_PAYMENT = "PENDING_PAYMENT";

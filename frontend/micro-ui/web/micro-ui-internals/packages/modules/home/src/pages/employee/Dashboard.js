@@ -46,23 +46,28 @@ const DashboardPage = () => {
   };
   const autoLogin = useCallback(() => {
     const iframe = document.querySelector("iframe");
+    setTimeout(() => {
+      try {
+        const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
+        const usernameField = iframeDoc?.querySelector(".euiFieldText");
+        const passwordField = iframeDoc?.querySelector(".euiFieldPassword");
+        const submitButton = iframeDoc?.querySelector(".euiButton");
 
-    try {
-      const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
-      const usernameField = iframeDoc?.querySelector(".euiFieldText");
-      const passwordField = iframeDoc?.querySelector(".euiFieldPassword");
-      const submitButton = iframeDoc?.querySelector(".euiButton");
-
-      if (usernameField && passwordField && submitButton) {
-        usernameField.value = process.env.KIBANA_USERNAME;
-        passwordField.value = process.env.KIBANA_PASSWORD;
-        submitButton.click();
-      } else {
-        console.log("Already logged in or fields missing", iframeDoc, usernameField);
+        if (usernameField && passwordField && submitButton) {
+          usernameField.value = process.env.REACT_APP_KIBANA_USERNAME;
+          passwordField.value = process.env.REACT_APP_KIBANA_PASSWORD;
+          usernameField.dispatchEvent(new Event("input", { bubbles: true }));
+          usernameField.dispatchEvent(new Event("change", { bubbles: true }));
+          passwordField.dispatchEvent(new Event("input", { bubbles: true }));
+          passwordField.dispatchEvent(new Event("change", { bubbles: true }));
+          submitButton.click();
+        } else {
+          console.log("Already logged in or fields missing", iframeDoc, usernameField);
+        }
+      } catch (err) {
+        console.error("Login failed due to cross-origin access issue", err);
       }
-    } catch (err) {
-      console.error("Login failed due to cross-origin access issue", err);
-    }
+    }, 1000); // 1 second delay
   }, []);
 
   useEffect(() => {
@@ -141,12 +146,10 @@ const DashboardPage = () => {
   }, [sortedDashboards, stepper]);
   const handleDownload = async (downloadLink, index) => {
     setDownloadingIndices((prev) => [...prev, index]);
-    console.log(process.env.KIBANA_USERNAME, process.env.KIBANA_USERNAME, "need to remove");
-    const username = process.env.KIBANA_USERNAME || "anonymous";
-    const password = process.env.KIBANA_PASSWORD || "Beehyv@123";
+    console.log("need to remove", process.env.REACT_APP_KIBANA_USERNAME, process.env.REACT_APP_KIBANA_PASSWORD);
+    const username = process.env.REACT_APP_KIBANA_USERNAME || "anonymous";
+    const password = process.env.REACT_APP_KIBANA_PASSWORD || "Beehyv@123";
     const credentials = btoa(`${username}:${password}`);
-    console.log(credentials, "credentials");
-
     const config = {
       headers: {
         "kbn-xsrf": "",

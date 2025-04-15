@@ -62,6 +62,10 @@ public class SmsNotificationUtil {
 
                 Set<String> individualIds = extractIndividualIds(caseDetails, receiver);
 
+                if (receiver != null && receiver.equalsIgnoreCase(COMPLAINANT)) {
+                    extractPoaHoldersIndividualIds(caseDetails, individualIds);
+                }
+
                 Set<String> phoneNumbers = callIndividualService(applicationRequest.getRequestInfo(), individualIds);
 
                 SmsTemplateData smsTemplateData = SmsTemplateData.builder()
@@ -233,4 +237,17 @@ public class SmsNotificationUtil {
         }
         return uuids;
     }
+
+    public static void extractPoaHoldersIndividualIds(JsonNode caseDetails, Set<String> individualIds) {
+        JsonNode poaHoldersNode = caseDetails.get("poaHolders");
+        if (poaHoldersNode != null && poaHoldersNode.isArray()) {
+            for (JsonNode poaHolder : poaHoldersNode) {
+                String individualId = poaHolder.path("individualId").textValue();
+                if (individualId != null && !individualId.isEmpty()) {
+                    individualIds.add(individualId);
+                }
+            }
+        }
+    }
+
 }

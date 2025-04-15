@@ -3,6 +3,7 @@ package org.pucar.dristi.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -76,6 +77,10 @@ public class TaskService {
 
             workflowUpdate(body);
 
+            if(body.getTask().getTaskType().equalsIgnoreCase("SUMMONS")
+             || body.getTask().getTaskType().equalsIgnoreCase("WARRANT")) {
+                updateCase(body);
+            }
             producer.push(config.getTaskCreateTopic(), body);
 
             String status = body.getTask().getStatus();
@@ -253,6 +258,8 @@ public class TaskService {
             String accusedName = taskDetails.has("respondentDetails") ? taskDetails.path("respondentDetails").path("name").asText() : "";
 
             Set<String> individualIds = extractComplainantIndividualIds(caseDetails);
+            extractPowerOfAttorneyIds(caseDetails, individualIds);
+
             if (Objects.equals(messageCode, WARRANT_ISSUED)) {
                  accusedName = accusedName.split(" \\(")[0];
                 individualIds = extractIndividualIds(caseDetails,accusedName);
@@ -326,6 +333,18 @@ public class TaskService {
         }
 
         return uuids;
+    }
+
+    public void extractPowerOfAttorneyIds(JsonNode caseDetails, Set<String> individualIds) {
+        JsonNode poaHolders = caseDetails.get("poaHolders");
+        if (poaHolders != null && poaHolders.isArray()) {
+            for (JsonNode poaHolder : poaHolders) {
+                String individualId = poaHolder.path("individualId").textValue();
+                if (individualId != null && !individualId.isEmpty()) {
+                    individualIds.add(individualId);
+                }
+            }
+        }
     }
 
     private Set<String> callIndividualService(RequestInfo requestInfo, Set<String> ids) {
@@ -453,4 +472,92 @@ public class TaskService {
 
         litigantDetails.setName(fullName);
     }
+
+    public void updateCase(TaskRequest taskRequest) {
+        String filingNumber = taskRequest.getTask().getFilingNumber();
+        log.info("Updating geolocation details for case: {}", filingNumber);
+
+        try {
+            CourtCase courtCase = getCourtCase(taskRequest);
+            JsonNode taskDetails = getTaskDetails(taskRequest);
+            JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+
+            Map<String, String> partyToPathMap = Map.of(
+                    "respondentDetails", "/respondentDetails/formdata",
+                    "witnessDetails", "/witnessDetails/formdata"
+            );
+
+            for (Map.Entry<String, String> entry : partyToPathMap.entrySet()) {
+                String partyKey = entry.getKey();
+                String formDataPath = entry.getValue();
+
+                if (taskDetails.has(partyKey)) {
+                    additionalDetails = updateGeoLocationFromTask(additionalDetails, taskDetails, partyKey, formDataPath);
+                }
+            }
+
+
+            courtCase.setAdditionalDetails(additionalDetails);
+            caseUtil.editCase(taskRequest.getRequestInfo(), courtCase);
+
+            log.info("Successfully updated geolocation details for case: {}", filingNumber);
+
+        } catch (IllegalArgumentException e) {
+            log.info("Error updating geolocation details for case: {}", e.getMessage());
+            throw new CustomException(ERROR_FROM_CASE, e.getMessage());
+        }
+    }
+
+    private JsonNode updateGeoLocationFromTask(JsonNode additionalDetails, JsonNode taskDetails, String partyType, String formDataPath) {
+        JsonNode address = taskDetails.path(partyType).path("address");
+        String addressId = address.path("id").asText();
+        JsonNode geoLocation = address.path(GEOLOCATION);
+
+        return updateGeoLocationInAddress(additionalDetails, addressId, geoLocation, formDataPath);
+    }
+
+
+
+    private CourtCase getCourtCase(TaskRequest taskRequest) {
+        List<CourtCase> caseDetails = caseUtil.getCaseDetails(taskRequest);
+        if (caseDetails.isEmpty()) {
+            throw new IllegalArgumentException("No case found for the given task.");
+        }
+        return caseDetails.get(0);
+    }
+
+    private JsonNode getTaskDetails(TaskRequest taskRequest) {
+        return objectMapper.convertValue(taskRequest.getTask().getTaskDetails(), JsonNode.class);
+    }
+    private JsonNode updateGeoLocationInAddress(JsonNode additionalDetails, String addressDetailId, JsonNode geoLocation, String formDataPath) {
+        if (geoLocation != null && geoLocation.isObject()) {
+            ((ObjectNode) geoLocation).putNull("latitude");
+            ((ObjectNode) geoLocation).putNull("longitude");
+        }
+
+        // Get formDataList from additionalDetails using the JSON path
+        JsonNode formDataList = additionalDetails.at(formDataPath);
+
+        if (formDataList != null && formDataList.isArray()) {
+            for (JsonNode data : formDataList) {
+                JsonNode addressDetails = data.path("data").path("addressDetails");
+                if (addressDetails.isArray()) {
+                    for (JsonNode address : addressDetails) {
+                        String addressId = address.path("id").asText();
+                        if (addressDetailId.equals(addressId) && address instanceof ObjectNode addressNode) {
+                            if (address.has(GEOLOCATION)) {
+                                addressNode.replace(GEOLOCATION, geoLocation);
+                            } else {
+                                addressNode.set(GEOLOCATION, geoLocation);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return additionalDetails;
+    }
+
+
 }

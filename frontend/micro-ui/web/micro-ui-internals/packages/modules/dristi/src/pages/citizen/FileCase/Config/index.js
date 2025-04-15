@@ -375,6 +375,6 @@ export const documentTypeMapping = {
   proofOfReplyFileUpload: "PROOF_OF_REPLY_TO_LEGAL_NOTICE",
   swornStatement: "SWORN_STATEMENT",
   inquiryAffidavitFileUpload: "AFFIDAVIT_UNDER_225",
-  vakalatnamaFileUpload: "VAKALATNAMA",
+  vakalatnamaFileUpload: "VAKALATNAMA_DOC",
   pipAffidavitFileUpload: "COMPLAINANT_PIP_AFFIDAVIT",
 };

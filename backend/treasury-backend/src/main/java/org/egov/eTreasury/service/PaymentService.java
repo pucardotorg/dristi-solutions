@@ -11,7 +11,6 @@ import org.egov.eTreasury.config.PaymentConfiguration;
 import org.egov.eTreasury.enrichment.TreasuryEnrichment;
 import org.egov.eTreasury.kafka.Producer;
 import org.egov.eTreasury.model.demand.*;
-import org.egov.eTreasury.repository.TreasuryMappingRepository;
 import org.egov.eTreasury.repository.TreasuryPaymentRepository;
 import org.egov.eTreasury.util.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -73,13 +72,11 @@ public class PaymentService {
 
     private final DemandUtil demandUtil;
 
-    private final TreasuryMappingRepository treasuryMappingRepository;
-
     @Autowired
     public PaymentService(PaymentConfiguration config, ETreasuryUtil treasuryUtil,
                           ObjectMapper objectMapper, EncryptionUtil encryptionUtil,
                           Producer producer, AuthSekRepository repository, CollectionsUtil collectionsUtil,
-                          FileStorageUtil fileStorageUtil, TreasuryPaymentRepository treasuryPaymentRepository, PdfServiceUtil pdfServiceUtil, TreasuryEnrichment treasuryEnrichment, MdmsUtil mdmsUtil, CaseUtil caseUtil, DemandUtil demandUtil, TreasuryMappingRepository treasuryMappingRepository) {
+                          FileStorageUtil fileStorageUtil, TreasuryPaymentRepository treasuryPaymentRepository, PdfServiceUtil pdfServiceUtil, TreasuryEnrichment treasuryEnrichment, MdmsUtil mdmsUtil, CaseUtil caseUtil, DemandUtil demandUtil) {
         this.config = config;
         this.treasuryUtil = treasuryUtil;
         this.objectMapper = objectMapper;
@@ -94,7 +91,6 @@ public class PaymentService {
         this.mdmsUtil = mdmsUtil;
         this.caseUtil = caseUtil;
         this.demandUtil = demandUtil;
-        this.treasuryMappingRepository = treasuryMappingRepository;
     }
 
     public ConnectionStatus verifyConnection() {
@@ -388,6 +384,20 @@ public class PaymentService {
             throw new CustomException(DEMAND_CREATION_ERROR, "Error occurred during demand creation");
         }
     }
+    private Map<String, String> getTaxHeadMasterCodes(Map<String, Map<String, JSONArray>> mdmsData, String taskBusinessService, String deliveryChannel) {
+        if (mdmsData != null && mdmsData.containsKey("payment") && mdmsData.get("payment").containsKey(PAYMENTMASTERCODE)) {
+            JSONArray masterCode = mdmsData.get("payment").get(PAYMENTMASTERCODE);
+            Map<String, String> result = new HashMap<>();
+            for (Object masterCodeObj : masterCode) {
+                Map<String, String> subType = (Map<String, String>) masterCodeObj;
+                if (taskBusinessService.equals(subType.get("businessService")) && deliveryChannel.equalsIgnoreCase(subType.get("deliveryChannel"))) {
+                    result.put(subType.get("type"), subType.get("masterCode"));
+                }
+            }
+            return result;
+        }
+        return Collections.emptyMap();
+    }
 
     private CourtCase fetchCourtCase(DemandCreateRequest demandRequest) {
         return caseUtil.searchCaseDetails(CaseSearchRequest.builder()
@@ -403,6 +413,7 @@ public class PaymentService {
 
     private Demand createDemandObject(DemandCreateRequest demandRequest, CourtCase courtCase) throws JsonProcessingException {
         Map<String, Map<String, JSONArray>> billingMasterData = mdmsUtil.fetchMdmsData(demandRequest.getRequestInfo(), demandRequest.getTenantId(), "BillingService", List.of("TaxPeriod", "TaxHeadMaster"));
+        Map<String, Map<String, JSONArray>> paymentMasterData = mdmsUtil.fetchMdmsData(demandRequest.getRequestInfo(), demandRequest.getTenantId(), "payment", List.of(PAYMENTMASTERCODE));
         JsonNode taxHeadMaster = objectMapper.readTree(billingMasterData.get("BillingService").get("TaxHeadMaster").toJSONString());
         JsonNode taxPeriod = objectMapper.readTree(billingMasterData.get("BillingService").get("TaxPeriod").toJSONString());
         JsonNode taxPeriodData = getTaxPeriod(taxPeriod, demandRequest.getEntityType());
@@ -414,9 +425,31 @@ public class PaymentService {
                 .businessService(demandRequest.getEntityType())
                 .taxPeriodFrom((taxPeriodData != null) ? taxPeriodData.get("fromDate").asLong() : System.currentTimeMillis())
                 .taxPeriodTo((taxPeriodData != null) ? taxPeriodData.get("toDate").asLong() : System.currentTimeMillis())
-                .demandDetails(List.of(getDemandDetails(demandRequest.getCalculation().get(0).getTotalAmount(), demandRequest.getEntityType(), taxHeadMaster)))
-                .additionalDetails(getAdditionalDetails(courtCase, demandRequest.getEntityType()))
+                .demandDetails(isSummonDemand(demandRequest.getEntityType())
+                        ? getDemandDetailSummons(demandRequest.getCalculation(), demandRequest.getEntityType(), demandRequest.getDeliveryChannel(), paymentMasterData)
+                        : List.of(getDemandDetails(demandRequest.getCalculation().get(0).getTotalAmount(), demandRequest.getEntityType(), taxHeadMaster)))
+                .additionalDetails(getAdditionalDetails(courtCase, demandRequest.getEntityType(), demandRequest.getCalculation().get(0)))
                 .build();
+    }
+
+    private boolean isSummonDemand(String entityType) {
+        return entityType.equals("task-summons") || entityType.equals("task-notice") || entityType.equals("task-warrant");
+    }
+
+    private List<DemandDetail> getDemandDetailSummons(List<Calculation> calculation, String entityType, String deliveryChannel, Map<String, Map<String, JSONArray>> paymentMasterData) {
+        Map<String, String> taxHeadMasterCodes = getTaxHeadMasterCodes(paymentMasterData, entityType, deliveryChannel);
+        List<DemandDetail> demandDetails = new ArrayList<>();
+        for(BreakDown breakDown : calculation.get(0).getBreakDown()) {
+            String taxHeadCode = taxHeadMasterCodes.get(breakDown.getType());
+            if (taxHeadCode != null) {
+                demandDetails.add(DemandDetail.builder()
+                        .tenantId(config.getEgovStateTenantId())
+                        .taxAmount(BigDecimal.valueOf(breakDown.getAmount()))
+                        .taxHeadMasterCode(taxHeadCode)
+                        .build());
+            }
+        }
+        return demandDetails;
     }
 
     private TreasuryMapping generateTreasuryMapping(DemandCreateRequest demandRequest){
@@ -425,7 +458,7 @@ public class PaymentService {
             Map<String, JSONArray> mdmsMasterData = mdmsData.get("payment");
             JsonNode paymentTypeMap = objectMapper.readTree(mdmsMasterData.get(PAYMENT_TYPE_MASTER).toJSONString());
             String paymentType = getPaymentType(demandRequest.getConsumerCode());
-            String paymentTypeCode = extractPaymentTypeCode(paymentTypeMap, paymentType);
+            String paymentTypeCode = extractPaymentTypeCode(paymentTypeMap, paymentType, demandRequest.getEntityType());
             JsonNode paymentTypeToBreakUp = extractPaymentBreakUpToType(objectMapper.readTree(mdmsMasterData.get(PAYMENT_TO_BREAKUP_MASTER).toJSONString()), paymentTypeCode);
             List<JsonNode> breakUpList = new ArrayList<>();
             double totalAmount = 0.0;
@@ -468,14 +501,14 @@ public class PaymentService {
     }
 
 
-    public Object getAdditionalDetails(CourtCase courtCase, String entityType) {
+    public Object getAdditionalDetails(CourtCase courtCase, String entityType, Calculation calculation) {
         ObjectNode objectNode = objectMapper.createObjectNode();
         objectNode.put("filingNumber", courtCase.getFilingNumber());
         objectNode.put("cnrNumber", courtCase.getCnrNumber());
         objectNode.put("payer", objectMapper.convertValue(courtCase.getLitigants().get(0).getAdditionalDetails(), JsonNode.class).get("fullName"));
         objectNode.put("payerMobileNo", objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class).get("payerMobileNo"));
         if(entityType.equalsIgnoreCase("case-default")){
-            objectNode.put("isDelayCondonation",  getIsDelayCondonation(courtCase));
+            objectNode.put("isDelayCondonation",  getIsDelayCondonation(calculation));
             objectNode.put("chequeDetails", addChequeDetails(courtCase));
         }
         return objectNode;
@@ -498,15 +531,13 @@ public class PaymentService {
         }
         return  chequeDetails;
     }
-    private Boolean getIsDelayCondonation(CourtCase courtCase) {
-        JsonNode caseDetails = objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
-        JsonNode dcaData = caseDetails.get("delayApplications").get("formdata").get(0).get("data");
-        if(dcaData.get("delayCondonationType").get("code").asText().equalsIgnoreCase("YES") ||
-                (dcaData.get("delayCondonationType").get("code").asText().equalsIgnoreCase("NO") ||
-                        dcaData.get("isDcaSkippedInEFiling").get("code").asText().equalsIgnoreCase("YES"))){
-            return false;
+    private Boolean getIsDelayCondonation(Calculation calculation) {
+        for(BreakDown breakDown : calculation.getBreakDown()) {
+            if(breakDown.getCode().equals(DELAY_CONDONATION_FEE)) {
+                return true;
+            }
         }
-        return true;
+        return false;
     }
 
 
@@ -557,13 +588,22 @@ public class PaymentService {
         headAmountObject.put("headIdList", headIdList);
         return objectMapper.convertValue(headAmountObject, JsonNode.class);
     }
-    private String extractPaymentTypeCode(JsonNode paymentTypeMap, String paymentType) {
+    private String extractPaymentTypeCode(JsonNode paymentTypeMap, String paymentType, String entityType) {
         for (JsonNode jsonObject : paymentTypeMap) {
-            if (jsonObject.get("suffix").asText().equals(paymentType)) {
+            if (jsonObject.get("suffix").asText().equals(paymentType) && isValidPaymentType(entityType, jsonObject.get("businessService"))) {
                 return jsonObject.get("id").asText();
             }
         }
         throw new CustomException(PAYMENT_TYPE_NOT_FOUND, "No matching payment type code found for: " + paymentType);
+    }
+
+    private boolean isValidPaymentType(String entityType, JsonNode businessService) {
+        for(JsonNode node : businessService) {
+            if(node.get("businessCode").asText().equals(entityType)){
+                return true;
+            }
+        }
+        return false;
     }
 
 

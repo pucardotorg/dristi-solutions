@@ -231,7 +231,10 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
         selectPartyData?.partyInvolve?.value &&
         party?.length > 0 &&
         selectPartyData?.isReplaceAdvocate?.value &&
-        ((selectPartyData?.isReplaceAdvocate?.value === "YES" && selectPartyData?.approver?.label && selectPartyData?.reasonForReplacement) ||
+        ((selectPartyData?.isReplaceAdvocate?.value === "YES" &&
+          selectPartyData?.advocateToReplaceList?.length > 0 &&
+          selectPartyData?.approver?.label &&
+          selectPartyData?.reasonForReplacement) ||
           selectPartyData?.isReplaceAdvocate?.value === "NO")
       ) {
         setIsDisabled(false);
@@ -304,13 +307,6 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
     fetchBasicUserInfo();
     setIsSearchingCase(false);
   }, [show]);
-
-  const paymentCalculation = [
-    { key: "Amount Due", value: 600, currency: "Rs" },
-    { key: "Court Fees", value: 400, currency: "Rs" },
-    { key: "Advocate Fees", value: 1000, currency: "Rs" },
-    { key: "Total Fees", value: 2000, currency: "Rs", isTotalFee: true },
-  ];
 
   const closeModal = () => {
     setAlreadyJoinedMobileNumber([]);
@@ -1080,6 +1076,7 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
                     const { isFound } = searchLitigantInRepresentives(caseDetails?.representatives, item?.individualId);
                     return {
                       individualId: item?.individualId,
+                      uniqueId: item?.uniqueId,
                       replaceAdvocates: (litigantAdvocateGroup?.[item?.individualId] || [])
                         ?.map((advocate) => advocate?.advocateId)
                         ?.filter((advocateId) => Boolean(advocateId))
@@ -1435,6 +1432,10 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
               setStep(step - 1);
               setIsDisabled(false);
               setValidationCode("");
+              setErrors({
+                ...errors,
+                validationCode: undefined,
+              });
             }
           }}
           actionSaveLabel={

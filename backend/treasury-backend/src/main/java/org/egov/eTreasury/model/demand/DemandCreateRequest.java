@@ -28,6 +28,9 @@ public class DemandCreateRequest {
     @JsonProperty("filingNumber")
     private String filingNumber = null;
 
+    @JsonProperty("deliveryChannel")
+    private String deliveryChannel = null;
+
     @JsonProperty("entityType")
     private String entityType = null;
 

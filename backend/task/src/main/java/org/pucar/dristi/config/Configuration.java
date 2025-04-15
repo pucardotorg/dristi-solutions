@@ -176,6 +176,12 @@ public class Configuration {
     @Value("${egov.billingservice.search.bill}")
     private String searchBillEndpoint;
 
+    @Value("${egov.billingservice.demand.search.endpoint}")
+    private String searchDemandEndpoint;
+
+    @Value("${egov.billingservice.demand.update.endpoint}")
+    private String updateDemandEndpoint;
+
     @Value(("${task.business.service}"))
     private String taskBusinessService;
 
@@ -200,6 +206,9 @@ public class Configuration {
 
     @Value("${egov.case.search.endpoint}")
     private String caseSearchPath;
+
+    @Value("${egov.case.edit.path}")
+    private String caseEditPath;
 
     //Localization
     @Value("${egov.localization.host}")

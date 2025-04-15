@@ -1,5 +1,6 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
@@ -277,4 +278,51 @@ class EvidenceServiceTest {
         verify(repository).getArtifacts(any(),any());
         verify(producer, never()).push(anyString(), any());
     }
+
+    @Test
+    void testExtractPowerOfAttorneyIds_EmptyIndividualId() throws Exception {
+        String json = """
+                    {
+                        "poaHolders": [
+                            { "individualId": "" },
+                            { "individualId": null }
+                        ]
+                    }
+                """;
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode caseDetails = mapper.readTree(json);
+
+        Set<String> individualIds = new HashSet<>();
+        Set<String> result = evidenceService.extractPowerOfAttorneyIds(caseDetails, individualIds);
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testExtractPowerOfAttorneyIds_IndividualId() throws Exception {
+        String json = """
+                    {
+                    "representatives": [
+                        { "individualId": "IND-123" },
+                        { "individualId": null }
+                    ],
+                        "poaHolders": [
+                            { "individualId": "IND-123" },
+                            { "individualId": null }
+                        ]
+                    }
+                """;
+
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode caseDetails = mapper.readTree(json);
+
+        Set<String> individualIds = new HashSet<>();
+        Set<String> result = evidenceService.extractPowerOfAttorneyIds(caseDetails, individualIds);
+
+        assertFalse(result.isEmpty());
+        assertEquals(1, result.size());
+        assertTrue(result.contains("IND-123"));
+    }
+
 }

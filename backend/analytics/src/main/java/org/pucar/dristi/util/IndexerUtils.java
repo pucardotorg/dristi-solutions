@@ -234,6 +234,10 @@ public class IndexerUtils {
                     Set<String> individualIds = caseUtil.getIndividualIds(litigants);
                     JsonNode representatives = caseUtil.getRepresentatives(caseDetails);
                     Set<String> representativeIds = caseUtil.getAdvocateIds(representatives);
+                    Set<String> powerOfAttorneyIds = caseUtil.extractPowerOfAttorneyIds(caseDetails, individualIds);
+                    if (!powerOfAttorneyIds.isEmpty()) {
+                        individualIds.addAll(powerOfAttorneyIds);
+                    }
 
                     if (!representativeIds.isEmpty()) {
                         representativeIds = advocateUtil.getAdvocate(request, representativeIds.stream().toList());

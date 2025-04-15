@@ -265,8 +265,9 @@ const SubmissionsCreate = ({ path }) => {
     },
     {},
     applicationNumber + filingNumber,
-    Boolean(applicationNumber + filingNumber)
+    Boolean(applicationNumber && filingNumber)
   );
+
   const { data: delayCondonationData } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
