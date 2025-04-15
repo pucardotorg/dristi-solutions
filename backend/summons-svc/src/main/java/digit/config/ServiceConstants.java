@@ -78,5 +78,8 @@ public class ServiceConstants {
 
     public static final String LOCATION_NOT_FOUND = "LOCATION_NOT_FOUND";
     public static final String FILE_CATEGORY = "FILE_CATEGORY";
+    public static final String SUMMON_TO_ACCUSED="Summons to an accused 138";
+    public static final String SUMMON_TO_WITNESS="Summons to witness";
+    public static final String WARRANT_TO_ACCUSED="Warrant of arrest of accused 138";
 
 }
