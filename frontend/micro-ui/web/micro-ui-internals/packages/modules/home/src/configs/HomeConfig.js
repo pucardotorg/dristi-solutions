@@ -164,21 +164,7 @@ export const rolesToConfigMapping = [
     },
   },
   {
-    roles: ["CASE_VIEWER", "COURT_ADMIN"],
-    config: TabCourtRoomSearchConfig,
-    isCourtOfficer: true,
-    onRowClickRoute: {
-      dependentUrl: "/dristi/admission",
-      urlDependentOn: "status",
-      urlDependentValue: "",
-      params: [
-        { key: "filingNumber", value: "filingNumber" },
-        { key: "caseId", value: "id" },
-      ],
-    },
-  },
-  {
-    roles: ["CASE_VIEWER", "COURT_ROOM_MANAGER"],
+    roles: ["CASE_VIEWER", "COURT_ADMIN", "COURT_ROOM_MANAGER"],
     config: TabCourtRoomSearchConfig,
     isCourtOfficer: true,
     onRowClickRoute: {

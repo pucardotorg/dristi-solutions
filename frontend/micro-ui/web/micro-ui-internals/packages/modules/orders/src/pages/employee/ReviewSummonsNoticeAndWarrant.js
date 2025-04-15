@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FileIcon, Header, InboxSearchComposer, PrintIcon } from "@egovernments/digit-ui-react-components";
-import { SummonsTabsConfig } from "../../configs/SuumonsConfig";
+import { defaultSearchValuesForJudgePending, defaultSearchValuesForJudgeSent, SummonsTabsConfig } from "../../configs/SuumonsConfig";
 import { useTranslation } from "react-i18next";
 import DocumentModal from "../../components/DocumentModal";
 import PrintAndSendDocumentComponent from "../../components/Print&SendDocuments";
@@ -37,11 +37,35 @@ const handleTaskDetails = (taskDetails) => {
   }
 };
 
+export const getConvertedConfig = (isJudge, n) => {
+  return SummonsTabsConfig?.SummonsTabsConfig?.map((item, index) => {
+    return {
+      ...item,
+      sections: {
+        ...item?.sections,
+        search: {
+          ...item?.sections?.search,
+          uiConfig: {
+            ...item?.sections?.search?.uiConfig,
+            defaultValues: isJudge
+              ? index === 0
+                ? defaultSearchValuesForJudgePending
+                : defaultSearchValuesForJudgeSent
+              : item?.sections?.search?.uiConfig?.defaultValues,
+          },
+        },
+      },
+    };
+  })?.[n];
+};
+
 const ReviewSummonsNoticeAndWarrant = () => {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
-  const [config, setConfig] = useState(SummonsTabsConfig?.SummonsTabsConfig?.[0]);
+  const roles = Digit.UserService.getUser()?.info?.roles;
+  const isJudge = roles.some((role) => role.code === "JUDGE_ROLE");
+  const [config, setConfig] = useState(() => getConvertedConfig(isJudge, 0));
   const [showActionModal, setShowActionModal] = useState(false);
   const [showNoticeModal, setshowNoticeModal] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
@@ -63,8 +87,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const dayInMillisecond = 24 * 3600 * 1000;
   const todayDate = new Date().getTime();
   const [updateStatusDate, setUpdateStatusDate] = useState("");
-  const roles = Digit.UserService.getUser()?.info?.roles;
-  const isJudge = roles.some((role) => role.code === "JUDGE_ROLE");
 
   const [tabData, setTabData] = useState(
     SummonsTabsConfig?.SummonsTabsConfig?.map((configItem, index) => ({ key: index, label: configItem.label, active: index === 0 ? true : false }))
@@ -299,7 +321,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const onTabChange = (n) => {
     setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false }))); //setting tab enable which is being clicked
-    setConfig(SummonsTabsConfig?.SummonsTabsConfig?.[n]); // as per tab number filtering the config
+    setConfig(() => getConvertedConfig(isJudge, n)); // as per tab number filtering the config
   };
 
   function findNextHearings(objectsList) {
@@ -477,47 +499,52 @@ const ReviewSummonsNoticeAndWarrant = () => {
           isDisabled: isSigned ? false : true,
           actionSaveOnSubmit: handleSubmitEsign,
         },
-        {
-          type: isIcops?.state === "failed" ? "failure" : "success",
-          hideSubmit: true,
-          heading: isIcops?.state === "failed" ? { label: t("FIELD_ERROR") } : null,
-          actionCancelLabel: isIcops?.state === "failed" ? t("CS_COMMON_BACK") : null,
-          modalBody:
-            isIcops?.state === "failed" ? (
-              <div>
-                <h1>{isIcops?.message}</h1>
-              </div>
-            ) : isIcops?.state === "success" ? (
-              // <CustomStepperSuccess
-              //   successMessage={successMessage}
-              //   bannerSubText={t("")}
-              //   submitButtonText={}
-              //   closeButtonText={}
-              //   closeButtonAction={handleClose}
-              //   submitButtonAction={handleSubmit}
-              //   t={t}
-              //   submissionData={submissionData}
-              //   documents={documents}
-              //   deliveryChannel={deliveryChannel}
-              //   orderType={orderType}
-              // />
-              <h1>hhh</h1> // success modal here when icops api starts working.
-            ) : (
-              <CustomStepperSuccess
-                successMessage={successMessage}
-                bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-                submitButtonText={documents ? "MARK_AS_SENT" : "CS_CLOSE"}
-                closeButtonText={documents ? "CS_CLOSE" : "DOWNLOAD_DOCUMENT"}
-                closeButtonAction={handleClose}
-                submitButtonAction={handleSubmit}
-                t={t}
-                submissionData={submissionData}
-                documents={documents}
-                deliveryChannel={deliveryChannel}
-                orderType={orderType}
-              />
-            ),
-        },
+        ...(rowData?.taskDetails?.deliveryChannels?.channelCode !== "POLICE" ||
+        (rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE" && isIcops?.state)
+          ? [
+              {
+                type: isIcops?.state === "failed" ? "failure" : "success",
+                hideSubmit: true,
+                heading: isIcops?.state === "failed" ? { label: t("FIELD_ERROR") } : null,
+                actionCancelLabel: isIcops?.state === "failed" ? t("CS_COMMON_BACK") : null,
+                modalBody:
+                  isIcops?.state === "failed" ? (
+                    <div style={{ margin: "25px" }}>
+                      <h1>{isIcops?.message}</h1>
+                    </div>
+                  ) : isIcops?.state === "success" ? (
+                    // <CustomStepperSuccess
+                    //   successMessage={successMessage}
+                    //   bannerSubText={t("")}
+                    //   submitButtonText={}
+                    //   closeButtonText={}
+                    //   closeButtonAction={handleClose}
+                    //   submitButtonAction={handleSubmit}
+                    //   t={t}
+                    //   submissionData={submissionData}
+                    //   documents={documents}
+                    //   deliveryChannel={deliveryChannel}
+                    //   orderType={orderType}
+                    // />
+                    <h1>hhh</h1> // success modal here when icops api starts working.
+                  ) : (
+                    <CustomStepperSuccess
+                      successMessage={successMessage}
+                      bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
+                      submitButtonText={documents ? "MARK_AS_SENT" : "CS_CLOSE"}
+                      closeButtonText={documents ? "CS_CLOSE" : "DOWNLOAD_DOCUMENT"}
+                      closeButtonAction={handleClose}
+                      submitButtonAction={handleSubmit}
+                      t={t}
+                      submissionData={submissionData}
+                      documents={documents}
+                      deliveryChannel={deliveryChannel}
+                      orderType={orderType}
+                    />
+                  ),
+              },
+            ]
+          : [{}]),
       ],
     };
   }, [
