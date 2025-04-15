@@ -95,7 +95,7 @@ public class CauseListApiController {
                     .recentCauseList(recentCauseList)
                     .build();
             log.info("api = /causelist/v1/_recentCauseList, result = SUCCESS");
-            return new ResponseEntity<>(recentCauseListResponse, HttpStatus.CREATED);
+            return new ResponseEntity<>(recentCauseListResponse, HttpStatus.OK);
         } catch (Exception e) {
             log.error("api = /causelist/v1/_recentCauseList, result = FAILED, error = {}", e.getMessage());
             return new ResponseEntity<>(CAUSE_LIST_NOT_FOUND, HttpStatus.BAD_REQUEST);

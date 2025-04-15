@@ -92,7 +92,7 @@ public class CauseListApiControllerTest {
         ResponseEntity<Object> response = causeListApiController.recentCauseList(request);
 
         // Then
-        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+        assertEquals(HttpStatus.OK, response.getStatusCode());
         assertInstanceOf(RecentCauseListResponse.class, response.getBody());
 
         RecentCauseListResponse actualResponse = (RecentCauseListResponse) response.getBody();
