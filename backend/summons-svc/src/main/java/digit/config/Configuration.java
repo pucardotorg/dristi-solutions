@@ -291,4 +291,11 @@ public class Configuration {
 
     @Value("${dristi.helpline.number}")
     private String helplineNumber;
+
+    //treasury
+    @Value("${treasury.demand.host}")
+    private String treasuryDemandHost;
+
+    @Value("${treasury.demand.create.endpoint}")
+    private String treasuryDemandCreateEndpoint;
 }

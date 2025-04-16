@@ -303,7 +303,7 @@ function CaseFileAdmission({ t, path }) {
           });
         })
         .catch();
-    } catch (error) {}
+    } catch (error) { }
   };
 
   const updateCaseDetails = async (action, data = {}) => {
@@ -414,9 +414,9 @@ function CaseFileAdmission({ t, path }) {
     () =>
       caseDetails?.statutesAndSections?.[0]?.sections?.[0]
         ? `${caseDetails?.statutesAndSections[0]?.sections[0]
-            ?.split(" ")
-            ?.map((splitString) => splitString.charAt(0))
-            ?.join("")} S${caseDetails?.statutesAndSections[0]?.subsections[0]}`
+          ?.split(" ")
+          ?.map((splitString) => splitString.charAt(0))
+          ?.join("")} S${caseDetails?.statutesAndSections[0]?.subsections[0]}`
         : "",
     [caseDetails?.statutesAndSections]
   );
@@ -1033,7 +1033,7 @@ function CaseFileAdmission({ t, path }) {
           `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`
         );
       })
-      .catch((err) => {});
+      .catch((err) => { });
   };
 
   const handleDownloadPdf = () => {
@@ -1093,9 +1093,9 @@ function CaseFileAdmission({ t, path }) {
                     <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
                       <p style={delayCondonationTextStyle}>
                         {(delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && "PENDING_REGISTRATION" === caseDetails?.status) ||
-                        (delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) ||
-                        isDelayApplicationPending ||
-                        isDelayApplicationCompleted
+                          (delayCondonationData?.isDcaSkippedInEFiling?.code === "NO" && isDelayApplicationPending) ||
+                          isDelayApplicationPending ||
+                          isDelayApplicationCompleted
                           ? t("DELAY_CONDONATION_FILED")
                           : t("DELAY_CONDONATION_NOT_FILED")}
                       </p>
@@ -1104,25 +1104,26 @@ function CaseFileAdmission({ t, path }) {
                 </div>
               </div>
               <CustomCaseInfoDiv t={t} data={caseInfo} style={{ margin: "24px 0px" }} />
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  backgroundColor: "#fdf7ec",
-                  padding: "10px",
-                  fontSize: "14px",
-                  fontFamily: "Arial, sans-serif",
-                  margin: "16px 0px",
-                }}
-              >
-                <div style={{ marginRight: "8px" }}>
-                  <WarningInfoRedIcon />
+              {caseDetails?.additionalDetails?.scrutinyComment &&
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    backgroundColor: "#fdf7ec",
+                    padding: "10px",
+                    fontSize: "14px",
+                    fontFamily: "Arial, sans-serif",
+                    margin: "16px 0px",
+                  }}
+                >
+                  <div style={{ marginRight: "8px" }}>
+                    <WarningInfoRedIcon />
+                  </div>
+                  <p style={{ margin: 0, fontWeight: "bold" }}>
+                    {t("FSO_COMMENTS")} <span style={{ fontWeight: "normal" }}>{caseDetails?.additionalDetails?.scrutinyComment}</span>
+                  </p>
                 </div>
-                <p style={{ margin: 0, fontWeight: "bold" }}>
-                  {t("FSO_COMMENTS")} <span style={{ fontWeight: "normal" }}>{caseDetails?.additionalDetails?.scrutinyComment}</span>
-                </p>
-              </div>
-
+              }
               <FormComposerV2
                 // by disabling label, we hide the action bar for court room manager.
                 label={isCourtRoomManager ? false : isCaseApprover ? t(primaryAction?.label || "") : false}
@@ -1152,7 +1153,7 @@ function CaseFileAdmission({ t, path }) {
               {showScheduleHearingModal && (
                 <ScheduleHearing
                   setUpdateCounter={setUpdateCounter}
-                  showToast={() => {}}
+                  showToast={() => { }}
                   tenantId={tenantId}
                   caseData={caseRelatedData}
                   setShowModal={setShowScheduleHearingModal}

@@ -12,7 +12,6 @@ import org.egov.eTreasury.repository.TreasuryMappingRepository;
 import org.egov.eTreasury.util.DemandUtil;
 import org.egov.eTreasury.util.IdgenUtil;
 import org.egov.eTreasury.util.MdmsUtil;
-import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -89,19 +88,27 @@ public class TreasuryEnrichment {
                 }
             }
         }
-
+        // for staging testing
+        if(config.isTest()) {
+            String amount = String.valueOf(Double.parseDouble(config.getChallanTestAmount())/(headDetailsList.size()));
+            for(HeadDetails headDetails : headDetailsList) {
+                headDetails.setAmount(amount);
+            }
+        }
         List<TsbData> tsbData = new ArrayList<>();
         String tsbReceipt = config.getTsbReceipt();
         for(JsonNode tsbAccount : tsbAccountToHead) {
-            if(tsbAccount.get("isTsbAccount").asBoolean()) {
-                tsbReceipt = "Y";
+            if(containsTsbAccount(headDetailsList, tsbAccount.get("headId").asText())) {
+                if (tsbAccount.get("isTsbAccount").asBoolean()) {
+                    tsbReceipt = "Y";
+                }
+                tsbData.add(TsbData.builder()
+                        .tsbAccNo(tsbAccount.get("tsbAccountNumber").asText())
+                        .tsbAccType(tsbAccount.get("tsbAccountType").asText())
+                        .tsbAmount(getTsbAmount(headDetailsList, tsbAccount.get("headId").asText()))
+                        .tsbPurpose("Fee")
+                        .build());
             }
-            tsbData.add(TsbData.builder()
-                    .tsbAccNo(tsbAccount.get("tsbAccountNumber").asText())
-                    .tsbAccType(tsbAccount.get("tsbAccountType").asText())
-                    .tsbAmount(getTsbAmount(headDetailsList, tsbAccount.get("headId").asText()))
-                    .tsbPurpose("Fee")
-                    .build());
         }
 
 
@@ -124,6 +131,15 @@ public class TreasuryEnrichment {
                 .tsbReceipts(tsbReceipt)
                 .tsbData(tsbData)
                 .build();
+    }
+
+    private boolean containsTsbAccount(List<HeadDetails> headDetailsList, String headId) {
+        for(HeadDetails headDetails : headDetailsList) {
+            if(headDetails.getHeadId().equals(headId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private Double getTsbAmount(List<HeadDetails> headDetailsList, String headId) {
