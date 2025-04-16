@@ -133,6 +133,95 @@ public class CauseListServiceTest {
         verify(fileStoreUtil, times(1)).getFile("someTenantId", "fileStoreId1");
     }
 
+    @Test
+    void testGetRecentCauseList_withValidRequest_shouldReturnResults() {
+        // Given
+        String courtId = "COURT123";
+        RecentCauseListSearchCriteria innerCriteria = RecentCauseListSearchCriteria.builder()
+                .courtId(courtId)
+                .build();
+
+        RecentCauseListSearchRequest request = RecentCauseListSearchRequest.builder()
+                .recentCauseListSearchCriteria(innerCriteria)
+                .build();
+
+        List<String> dummyFileStores = Collections.singletonList("file-123");
+
+        when(config.getCutoffTime()).thenReturn("17:00");
+        when(causeListRepository.getCauseListFileStore(any(CauseListSearchCriteria.class)))
+                .thenReturn(dummyFileStores);
+
+        // When
+        List<RecentCauseList> result = causeListService.getRecentCauseList(request);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertEquals("file-123", result.get(0).getFileStoreId());
+        assertEquals("file-123", result.get(1).getFileStoreId());
+
+        verify(causeListRepository, times(2)).getCauseListFileStore(any(CauseListSearchCriteria.class));
+    }
+
+    @Test
+    void testGetRecentCauseList_withNoFileStores_shouldReturnNullFileStoreId() {
+        // Given
+        String courtId = "COURT999";
+        RecentCauseListSearchRequest request = RecentCauseListSearchRequest.builder()
+                .recentCauseListSearchCriteria(
+                        RecentCauseListSearchCriteria.builder().courtId(courtId).build()
+                ).build();
+        when(config.getCutoffTime()).thenReturn("17:00");
+        when(causeListRepository.getCauseListFileStore(any()))
+                .thenReturn(Collections.emptyList());
+
+        // When
+        List<RecentCauseList> result = causeListService.getRecentCauseList(request);
+
+        // Then
+        assertEquals(2, result.size());
+        assertNull(result.get(0).getFileStoreId());
+        assertNull(result.get(1).getFileStoreId());
+    }
+
+    @Test
+    void testGetFileStoreForCauseList_withFutureDate_shouldThrowException() {
+        // Given
+        LocalDate futureDate = LocalDate.now().plusDays(2);
+        CauseListSearchCriteria criteria = CauseListSearchCriteria.builder()
+                .searchDate(futureDate)
+                .courtId("COURT001")
+                .build();
+
+        // When + Then
+        CustomException ex = assertThrows(CustomException.class, () -> {
+            causeListService.getFileStoreForCauseList(criteria);
+        });
+
+        assertEquals("DK_CL_APP_ERR", ex.getCode());
+        assertEquals("CauseList Search date cannot be after than tomorrow", ex.getMessage());
+    }
+
+    @Test
+    void testGetFileStoreForCauseList_withValidDate_shouldReturnFileStores() {
+        // Given
+        LocalDate today = LocalDate.now();
+        CauseListSearchCriteria criteria = CauseListSearchCriteria.builder()
+                .searchDate(today)
+                .courtId("COURT002")
+                .build();
+
+        List<String> expected = Arrays.asList("fileA", "fileB");
+
+        when(causeListRepository.getCauseListFileStore(criteria)).thenReturn(expected);
+
+        // When
+        List<String> result = causeListService.getFileStoreForCauseList(criteria);
+
+        // Then
+        assertEquals(expected, result);
+    }
+
 
 //    @Test
 //    void testGenerateCauseListForJudge_withHearings() {

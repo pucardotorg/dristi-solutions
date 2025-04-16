@@ -3,9 +3,7 @@ package digit.web.controllers;
 
 import digit.service.CauseListService;
 import digit.util.ResponseInfoFactory;
-import digit.web.models.CauseList;
-import digit.web.models.CauseListSearchRequest;
-import digit.web.models.CauseListResponse;
+import digit.web.models.*;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -84,6 +82,23 @@ public class CauseListApiController {
         } catch (Exception e) {
             log.error("api = /causelist/v1/_generate, result = FAILED, error = {}", e.getMessage());
             return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @RequestMapping(value = "/v1/_recentCauseList", method = RequestMethod.POST)
+    public ResponseEntity<Object> recentCauseList(@Parameter(in = ParameterIn.DEFAULT, description = "RecentCauseList Search criteria + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody RecentCauseListSearchRequest searchRequest) {
+        log.info("api = /causelist/v1/_recentCauseList, result = IN_PROGRESS");
+        try {
+            List<RecentCauseList> recentCauseList = causeListService.getRecentCauseList(searchRequest);
+            RecentCauseListResponse recentCauseListResponse = RecentCauseListResponse.builder()
+                    .responseInfo(ResponseInfoFactory.createResponseInfo(searchRequest.getRequestInfo(), true))
+                    .recentCauseList(recentCauseList)
+                    .build();
+            log.info("api = /causelist/v1/_recentCauseList, result = SUCCESS");
+            return new ResponseEntity<>(recentCauseListResponse, HttpStatus.OK);
+        } catch (Exception e) {
+            log.error("api = /causelist/v1/_recentCauseList, result = FAILED, error = {}", e.getMessage());
+            return new ResponseEntity<>(CAUSE_LIST_NOT_FOUND, HttpStatus.BAD_REQUEST);
         }
     }
 
