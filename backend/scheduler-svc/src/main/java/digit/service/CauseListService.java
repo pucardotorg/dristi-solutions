@@ -81,7 +81,6 @@ public class CauseListService {
         this.individualService = individualService;
         this.notificationService = notificationService;
     }
-    private static final LocalTime CAUSE_LIST_CUTOFF_TIME = LocalTime.of(17, 0);
 
     public void updateCauseListForTomorrow() {
         log.info("operation = updateCauseListForTomorrow, result = IN_PROGRESS");
@@ -770,7 +769,7 @@ public class CauseListService {
         criteriaList.add(CauseListSearchCriteria.builder().searchDate(today).courtId(courtId).build());
 
         criteriaList.add(CauseListSearchCriteria.builder()
-                .searchDate(now.isBefore(CAUSE_LIST_CUTOFF_TIME) ? yesterday : tomorrow)
+                .searchDate(now.isBefore(LocalTime.parse(config.getCutoffTime())) ? yesterday : tomorrow)
                 .courtId(courtId)
                 .build());
 
