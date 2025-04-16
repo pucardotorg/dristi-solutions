@@ -8,6 +8,7 @@ import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.CaseUtil;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -296,11 +298,11 @@ public class CaseRegistrationEnrichment {
         // Iterate through existing documents and compare IDs
         if (existingCourtCaseList.get(0).getDocuments() != null) {
             existingCourtCaseList.get(0).getDocuments().forEach(existingDocument -> {
-                log.info("Checking for existing document Id :: {}", existingDocument.getId());
+                log.info("Checking for existing document Id :: {}",existingDocument.getId());
 
                 // If documentIds is empty or the ID is not in the list, deactivate the document
                 if (documentIds.isEmpty() || !documentIds.contains(existingDocument.getId())) {
-                    log.info("Setting isActive false for document Id :: {}", existingDocument.getId());
+                    log.info("Setting isActive false for document Id :: {}",existingDocument.getId());
                     existingDocument.setIsActive(false);
 
                     if (caseRequest.getCases().getDocuments() == null) {
