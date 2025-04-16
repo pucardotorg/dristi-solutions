@@ -84,6 +84,9 @@ public class IcopsEnrichment {
                     .build();
              processRequest = ProcessRequest.builder()
                     .partyData(partyData)
+                     .processReceiverAddress(taskDetails.getRespondentDetails().getAddress().toString())
+                     .processRespondantType("A")
+                     .processRespondentName(taskDetails.getRespondentDetails().getName())
                     .processCaseno(task.getFilingNumber())
                     .processDoc(docFileString)
                     .processUniqueId(processUniqueId)
