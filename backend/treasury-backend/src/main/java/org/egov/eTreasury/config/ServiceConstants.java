@@ -72,5 +72,17 @@ public class ServiceConstants {
     public static final String FILE_STORE_ID_KEY = "fileStoreId";
     public static final String FILES_KEY = "files";
     public static final String DOCUMENT_TYPE_PDF = "application/pdf";
+    public static final String BREAKUP_TO_HEAD_MASTER = "breakUpToHeadMapping";
+    public static final String PAYMENT_TO_BREAKUP_MASTER = "paymentTypeToBreakupMapping";
+    public static final String PAYMENT_TYPE_MASTER = "paymentType";
+    public static final String PAYMENTMASTERCODE = "PaymentMasterCode";
+    public static final String PAYMENT_DISTRIBUTION_EXISTS = "PAYMENT_DISTRIBUTION_EXISTS";
+    public static final String DEMAND_CREATION_ERROR = "DEMAND_CREATION_ERROR";
+    public static final String MDMS_DATA_MISSING = "MDMS_DATA_MISSING";
+    public static final String PAYMENT_TYPE_NOT_FOUND = "PAYMENT_TYPE_NOT_FOUND";
+    public static final String PAYMENT_BREAKUP_NOT_FOUND = "PAYMENT_BREAKUP_NOT_FOUND";
+    public static final String BREAKUP_TO_HEAD_NOT_FOUND = "BREAKUP_TO_HEAD_NOT_FOUND";
+    public static final String PARTIAL_LIABILITY = "PARTIAL_LIABILITY";
+    public static final String DELAY_CONDONATION_FEE = "DELAY_CONDONATION_FEE";
 
 }

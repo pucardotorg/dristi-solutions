@@ -66,7 +66,7 @@ const HomeView = () => {
   });
   const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles, [Digit.UserService]);
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
-  const isCourtRoomRole = useMemo(() => roles?.some((role) => role?.code === "COURT_ADMIN"), [roles]);
+  const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
   const isNyayMitra = roles.some((role) => role.code === "NYAY_MITRA_ROLE");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   const userInfo = Digit?.UserService?.getUser()?.info;
@@ -405,15 +405,15 @@ const HomeView = () => {
                   <Link to={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle}>
                     {t("OPEN_DASHBOARD")}
                   </Link>
-                  <Link to={`/${window.contextPath}/employee/home/dashboard?select=5`} style={linkStyle}>
+                  <Link to={`/${window.contextPath}/employee/home/dashboard?select=2`} style={linkStyle}>
                     {t("OPEN_REPORTS")}
                   </Link>
-                  <Link to={`/${window.contextPath}/employee/home/adiary`} style={linkStyle}>
+                  <Link to={`/${window.contextPath}/employee/home/dashboard/adiary`} style={linkStyle}>
                     {t("OPEN_A_DIARY")}
                   </Link>
                 </div>
               )}
-              {isCourtRoomRole && <ReviewCard data={data} userInfoType={userInfoType} />}
+              {showReviewSummonsWarrantNotice && <ReviewCard data={data} userInfoType={userInfoType} />}
             </div>
             <div className="content-wrapper">
               <div className="header-class">

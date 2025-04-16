@@ -72,8 +72,8 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute path={`${path}/home-pending-task`} component={() => <HomeView></HomeView>} />
         <PrivateRoute path={`${path}/bulk-esign-order`} component={() => <BulkESignView></BulkESignView>} />
 
-        <PrivateRoute path={`${path}/dashboard`} component={() => <DashboardPage></DashboardPage>} />
-        <PrivateRoute path={`${path}/adiary`} component={() => <ADiaryPage></ADiaryPage>} />
+        <PrivateRoute path={`${path}/dashboard/adiary`} component={() => <ADiaryPage></ADiaryPage>} />
+        <PrivateRoute exact path={`${path}/dashboard`} component={() => <DashboardPage></DashboardPage>} />
         <PrivateRoute
           path={`${path}/home-pending-task/e-filing-payment-breakdown`}
           component={() => <EfilingPaymentBreakdown></EfilingPaymentBreakdown>}

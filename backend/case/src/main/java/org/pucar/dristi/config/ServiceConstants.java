@@ -67,6 +67,7 @@ public class ServiceConstants {
     public static final String LITIGANT_SEARCH_QUERY_EXCEPTION = "LITIGANT_SEARCH_QUERY_EXCEPTION";
     public static final String STATUTE_SECTION_SEARCH_QUERY_EXCEPTION = "STATUTE_SECTION_SEARCH_QUERY_EXCEPTION";
     public static final String REPRESENTATIVES_SEARCH_QUERY_EXCEPTION = "REPRESENTATIVES_SEARCH_QUERY_EXCEPTION";
+    public static final String POA_SEARCH_QUERY_EXCEPTION = "POA_SEARCH_QUERY_EXCEPTION";
     public static final String REPRESENTING_SEARCH_QUERY_EXCEPTION = "REPRESENTING_SEARCH_QUERY_EXCEPTION";
     public static final String DOCUMENT_SEARCH_QUERY_EXCEPTION = "DOCUMENT_SEARCH_QUERY_EXCEPTION";
     public static final String CASE_EXIST_ERR = "CASE_EXIST_EXCEPTION";
@@ -200,6 +201,7 @@ public class ServiceConstants {
     public static final String SYSTEM="SYSTEM";
 
     public static final String JOIN_CASE="JOIN_CASE";
+    public static final String JOIN_CASE_PAYMENT="JOIN_CASE_PAYMENT";
 
     public static final String ACCUSED_PARTY_TYPE="respondent";
 
@@ -208,6 +210,7 @@ public class ServiceConstants {
     public static final String UPLOAD_VAKALATNAMA = "UPLOAD_VAKALATNAMA";
     public static final String EVIDENCE_CREATE_ERROR = "EVIDENCE_CREATE_ERROR";
     public static final String VAKALATNAMA_DOC = "VAKALATNAMA_DOC";
+    public static final String COMPLETED = "COMPLETED";
 
     public static final String REASON_DOCUMENT = "REASON_DOCUMENT";
 

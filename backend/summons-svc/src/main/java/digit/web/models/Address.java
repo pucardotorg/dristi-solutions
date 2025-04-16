@@ -29,6 +29,9 @@ public class Address {
     @JsonProperty("coordinate")
     private Coordinate coordinate;
 
+    @JsonProperty("geoLocationDetails")
+    private GeoLocationDetails geoLocationDetails;
+
     @Override
     public String toString() {
         return String.join(", ",

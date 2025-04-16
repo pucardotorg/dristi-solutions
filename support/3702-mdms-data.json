@@ -1,0 +1,26 @@
+{
+  "tenantId": "kl",
+  "masterName": "Evidence",
+  "moduleName": "EvidenceType",
+  "mdmsPayload": [
+    {
+      "id": "3fee73f4-c660-4028-aea2-8a48810da60f",
+      "tenantId": "kl",
+      "schemaCode": "Evidence.EvidenceType",
+      "uniqueIdentifier": "18",
+      "data": {
+        "id": 18,
+        "type": "VAKALATNAMA_DOC", // updated value
+        "subtype": "",
+        "isactive": true
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "createdTime": 1724417727885,
+        "lastModifiedTime": 1744293683154
+      }
+    }
+  ]
+}

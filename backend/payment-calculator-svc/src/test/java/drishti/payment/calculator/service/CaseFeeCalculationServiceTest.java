@@ -53,7 +53,7 @@ public class CaseFeeCalculationServiceTest {
         List<Calculation> result = caseFeesCalculationService.calculateCaseFees(request);
         assertEquals(1, result.size());
         Calculation calculation = result.get(0);
-        assertEquals(4, calculation.getBreakDown().size());
+        assertEquals(5, calculation.getBreakDown().size());
     }
 
 
@@ -72,7 +72,7 @@ public class CaseFeeCalculationServiceTest {
         List<Calculation> result = caseFeesCalculationService.calculateCaseFees(request);
         assertEquals(1, result.size());
         Calculation calculation = result.get(0);
-        assertEquals(4, calculation.getBreakDown().size());
+        assertEquals(5, calculation.getBreakDown().size());
     }
 
 
@@ -94,8 +94,8 @@ public class CaseFeeCalculationServiceTest {
         assertEquals(1, result.size());
         Calculation calculation = result.get(0);
 
-        assertEquals(4, calculation.getBreakDown().size());
-        assertEquals(125.0, calculation.getBreakDown().get(3).getAmount(), 0.01);
+        assertEquals(5, calculation.getBreakDown().size());
+        assertEquals(125.0, calculation.getBreakDown().get(4).getAmount(), 0.01);
     }
 
 

@@ -1,6 +1,7 @@
 package org.pucar.dristi.service;
 
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
@@ -89,10 +90,35 @@ public class PaymentUpdateService {
 
         try {
             TaskRequest taskRequest = mapper.convertValue(record, TaskRequest.class);
-            Object additionalDetails = taskRequest.getTask().getAdditionalDetails();
-            ObjectMapper objectMapper = new ObjectMapper();
-            JoinCaseRequest joinCaseRequest  = objectMapper.convertValue(additionalDetails, JoinCaseRequest.class);
-            caseService.verifyJoinCaseRequest(joinCaseRequest,true);
+            if(JOIN_CASE_PAYMENT.equalsIgnoreCase(taskRequest.getTask().getTaskType()) && COMPLETED.equalsIgnoreCase(taskRequest.getTask().getStatus())) {
+                Object taskDetails = taskRequest.getTask().getTaskDetails();
+                Map<String, Object> taskDetailsMap = mapper.convertValue(taskDetails, new TypeReference<Map<String, Object>>() {
+                });
+
+                RequestInfo requestInfo = mapper.convertValue(taskDetailsMap.get("RequestInfo"), RequestInfo.class);
+                JoinCaseDataV2 joinCaseData = mapper.convertValue(taskDetailsMap.get("joinCaseData"), JoinCaseDataV2.class);
+
+                JoinCaseV2Request joinCaseRequest = JoinCaseV2Request.builder().requestInfo(requestInfo).joinCaseData(joinCaseData).build();
+
+                String filingNumber = joinCaseData.getFilingNumber();
+                List<CaseCriteria> existingCases = repository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(filingNumber).build()), joinCaseRequest.getRequestInfo());
+                log.info("Existing case list size :: {}", existingCases.size());
+
+                CourtCase courtCase = caseService.validateAccessCodeAndReturnCourtCase(joinCaseRequest, existingCases);
+
+                CourtCase caseObj = CourtCase.builder()
+                        .id(courtCase.getId())
+                        .filingNumber(courtCase.getFilingNumber())
+                        .build();
+
+                AuditDetails auditDetails = AuditDetails.builder()
+                        .createdBy(requestInfo.getUserInfo().getUuid())
+                        .createdTime(System.currentTimeMillis())
+                        .lastModifiedBy(requestInfo.getUserInfo().getUuid())
+                        .lastModifiedTime(System.currentTimeMillis()).build();
+                AdvocateMapping existingRepresentative = caseService.validateAdvocateAlreadyRepresenting(courtCase, joinCaseData);
+                caseService.joinCaseAdvocate(joinCaseRequest, courtCase, caseObj, auditDetails, existingRepresentative);
+            }
         } catch (Exception e) {
             log.error("KAFKA_PROCESS_ERROR:", e);
         }

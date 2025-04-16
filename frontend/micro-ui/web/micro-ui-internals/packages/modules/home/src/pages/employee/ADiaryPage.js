@@ -8,7 +8,7 @@ import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/au
 import { Urls } from "../../hooks";
 import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
 import { HomeService } from "../../hooks/services";
-import Breadcrumb from "@egovernments/digit-ui-module-dristi/src/components/BreadCrumb";
+import { BreadCrumb } from "@egovernments/digit-ui-react-components";
 
 const getStyles = () => ({
   container: { display: "flex", flexDirection: "row", padding: 10 },
@@ -65,13 +65,18 @@ const ProjectBreadCrumb = ({ location }) => {
       show: true,
     },
     {
-      path: `/${window?.contextPath}/${userType}/home/adiary`,
+      path: `/${window?.contextPath}/${userType}/home/dashboard`,
+      content: t("ES_DASHBOARD"),
+      show: true,
+    },
+    {
+      path: `/${window?.contextPath}/${userType}/home/dashboard/adiary`,
       content: t(location.pathname.split("/").pop().toUpperCase()),
       show: true,
       isLast: true,
     },
   ];
-  return <Breadcrumb crumbs={crumbs} spanStyle={bredCrumbStyle} />;
+  return <BreadCrumb crumbs={crumbs} spanStyle={bredCrumbStyle} />;
 };
 
 const ADiaryPage = ({ path }) => {
@@ -301,7 +306,7 @@ const ADiaryPage = ({ path }) => {
     setEntryDate(updatedDate);
     localStorage.setItem("selectedADiaryDate", updatedDate);
     if (queryStrings) {
-      history.push(`/${window.contextPath}/employee/home/adiary`);
+      history.push(`/${window.contextPath}/employee/home/dashboard/adiary`);
     }
   };
 

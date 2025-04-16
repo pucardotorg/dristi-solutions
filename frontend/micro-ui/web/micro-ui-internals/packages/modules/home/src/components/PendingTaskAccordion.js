@@ -117,6 +117,17 @@ function PendingTaskAccordion({
               key={item?.filingNumber}
               style={{ cursor: "pointer" }}
               onClick={() => {
+                if (item?.actionName === "Pay Vakalatnama Fees") {
+                  setPendingTaskActionModals((pendingTaskActionModals) => ({
+                    ...pendingTaskActionModals,
+                    joinCasePaymentModal: true,
+                    data: {
+                      filingNumber: item?.filingNumber,
+                      taskNumber: item?.referenceId,
+                    },
+                  }));
+                  return;
+                }
                 if (item?.actionName === "Review Advocate Replace Request") {
                   setPendingTaskActionModals((pendingTaskActionModals) => ({
                     ...pendingTaskActionModals,
@@ -129,7 +140,7 @@ function PendingTaskAccordion({
                   return;
                 }
                 if (item?.status === "PENDING_SIGN" && item?.screenType === "Adiary") {
-                  history.push(`/${window.contextPath}/employee/home/adiary?date=${item?.params?.referenceId}`);
+                  history.push(`/${window.contextPath}/employee/home/dashboard/adiary?date=${item?.params?.referenceId}`);
                 } else if (item?.status === "PROFILE_EDIT_REQUEST") {
                   const caseId = item?.params?.caseId;
                   const referenceId = item?.referenceId;

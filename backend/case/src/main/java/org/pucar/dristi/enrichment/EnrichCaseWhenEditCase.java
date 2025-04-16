@@ -21,12 +21,15 @@ public class EnrichCaseWhenEditCase implements EnrichmentStrategy {
 
     @Override
     public void enrich(CaseRequest caseRequest) {
-        log.info("Method=EnrichCaseWhenEditCase, Result=IN_PROGRESS, CaseId={},Setting hasSigned to false", caseRequest.getCases().getId());
-        Optional.ofNullable(caseRequest.getCases().getLitigants()).orElse(Collections.emptyList()).forEach((ele) -> {
-            ele.setHasSigned(false);
+        log.info("Method=EnrichCaseWhenEditCase, Result=IN_PROGRESS, CaseId={},Setting hasSigned to false for all litigants, representatives and power of attorneys", caseRequest.getCases().getId());
+        Optional.ofNullable(caseRequest.getCases().getLitigants()).orElse(Collections.emptyList()).forEach((litigant) -> {
+            litigant.setHasSigned(false);
         });
-        Optional.ofNullable(caseRequest.getCases().getRepresentatives()).orElse(Collections.emptyList()).forEach((ele) -> {
-            ele.setHasSigned(false);
+        Optional.ofNullable(caseRequest.getCases().getRepresentatives()).orElse(Collections.emptyList()).forEach((representative) -> {
+            representative.setHasSigned(false);
+        });
+        Optional.ofNullable(caseRequest.getCases().getPoaHolders()).orElse(Collections.emptyList()).forEach((powerOfAttorney) -> {
+            powerOfAttorney.setHasSigned(false);
         });
 
         log.info("Method=EnrichCaseWhenEditCase, Result=SUCCESS, CaseId={}", caseRequest.getCases().getId());

@@ -91,5 +91,4 @@ public class EvidenceValidator {
         return !evidenceSearchResponse.getArtifacts().isEmpty();
     }
 
-
 }

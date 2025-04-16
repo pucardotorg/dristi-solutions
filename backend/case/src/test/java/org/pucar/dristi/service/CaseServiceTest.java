@@ -11,6 +11,7 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 import java.util.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
@@ -90,9 +91,15 @@ public class CaseServiceTest {
     @Mock
     private EvidenceValidator evidenceValidator;
 
+    @Mock
+    private PaymentCalculaterUtil paymentCalculaterUtil;
+
 
     @InjectMocks
     private CaseService caseService;
+
+    @Mock
+    private CaseUtil caseUtil;
 
     private CaseRequest caseRequest;
     private RequestInfo requestInfo;
@@ -140,7 +147,7 @@ public class CaseServiceTest {
         courtCase = new CourtCase();
         objectMapper = new ObjectMapper();
         enrichmentService = new EnrichmentService(new ArrayList<>());
-        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,new BillingUtil(new RestTemplate(),config),encryptionDecryptionUtil, hearingUtil,userService,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator);
+        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,new EtreasuryUtil(new RestTemplate(),config),encryptionDecryptionUtil, hearingUtil,userService,paymentCalculaterUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator,caseUtil);
     }
 
     CaseCriteria setupTestCaseCriteria(CourtCase courtCase) {
@@ -1072,6 +1079,24 @@ public class CaseServiceTest {
         assertEquals(JOIN_CASE_ERR, exception.getCode());
         assertEquals(JOIN_CASE_CODE_INVALID_REQUEST, exception.getMessage());
         verify(caseRepository, times(1)).getCases(any(), any());
+    }
+
+    @Test
+    void testExtractPowerOfAttorneyIds_IndividualId() {
+
+        POAHolder poaHolders = new POAHolder();
+        poaHolders.setIndividualId("IND-123");
+        CourtCase courtCase = new CourtCase();
+
+        courtCase.setPoaHolders(Collections.singletonList(poaHolders));
+
+        Set<String> individualIds = new HashSet<>();
+        individualIds.add("IND-123");
+        Set<String> result = caseService.getPocHolderIndividualIdsOfLitigants(courtCase, individualIds);
+
+        assertFalse(result.isEmpty());
+        assertEquals(1, result.size());
+        assertTrue(result.contains("IND-123"));
     }
 
 }

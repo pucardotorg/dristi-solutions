@@ -23,6 +23,8 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static digit.config.ServiceConstants.*;
@@ -98,7 +100,67 @@ public class DemandService {
             demands.addAll(createDemandList(requestInfo,
                     task, demandDetailList, calculation.getTenantId(), mdmsData, businessService));
         }
-        return callBillServiceAndCreateDemand(requestInfo, demands, task);
+
+        Set<String> consumerCodes = new HashSet<>();
+        Iterator<Demand> iterator = demands.iterator();
+        while (iterator.hasNext()) {
+            Demand demand = iterator.next();
+            String paymentTypeString = getPaymentTypeString(demand.getConsumerCode());
+            JSONArray paymentModeMaster = mdmsData.get("payment").get(PAYMENTMODE);
+            String gatewayType = getPaymentGateway(paymentModeMaster, paymentTypeString);
+
+            if (gatewayType.equalsIgnoreCase("eTreasury")) {
+                String consumerCode = generateDemandForTreasury(demand, task, calculations, requestInfo);
+                consumerCodes.add(consumerCode);
+                iterator.remove();
+            }
+        }
+        if(!demands.isEmpty()){
+            consumerCodes.addAll(callBillServiceAndCreateDemand(requestInfo, demands, task));
+        }
+        return consumerCodes;
+    }
+
+    private String generateDemandForTreasury(Demand demand, Task task, List<Calculation> calculations, RequestInfo requestInfo) {
+        try {
+            log.info("Creating treasury demand for consumer code: {}", demand.getConsumerCode());
+            DemandCreateRequest request = DemandCreateRequest.builder()
+                    .requestInfo(requestInfo)
+                    .consumerCode(demand.getConsumerCode())
+                    .calculation(calculations)
+                    .entityType(demand.getBusinessService())
+                    .tenantId(demand.getTenantId())
+                    .filingNumber(task.getFilingNumber())
+                    .deliveryChannel(ChannelName.fromString(task.getTaskDetails().getDeliveryChannel().getChannelName()).name())
+                    .build();
+            StringBuilder uri = new StringBuilder();
+            uri.append(config.getTreasuryDemandHost()).append(config.getTreasuryDemandCreateEndpoint());
+            Object response = repository.fetchResult(uri, request);
+            DemandResponse demandResponse = mapper.convertValue(response, DemandResponse.class);
+            return demandResponse.getDemands().get(0).getConsumerCode();
+        } catch (CustomException e) {
+            log.error("Error creating treasury demand: ", e);
+            throw new CustomException("Error creating treasury demand: ", e.getMessage());
+        }
+    }
+
+    private String getPaymentGateway(JSONArray paymentModeMaster, String paymentTypeString) {
+        for(Object paymentMode : paymentModeMaster) {
+            Map<String, String> paymentModeMap = (Map<String, String>) paymentMode;
+            if(paymentModeMap.get("suffix").equalsIgnoreCase(paymentTypeString)) {
+                return paymentModeMap.get("gateway");
+            }
+        }
+        return null;
+    }
+
+    private String getPaymentTypeString(String consumerCode) {
+        Pattern pattern = Pattern.compile("_([\\w]+)$");
+        Matcher matcher = pattern.matcher(consumerCode);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+        return null;
     }
 
     private List<DemandDetail> createDemandDetails(Calculation calculation, Task task, Map<String,
@@ -296,6 +358,7 @@ public class DemandService {
         List<String> masterList = new ArrayList<>();
         masterList.add(PAYMENTMASTERCODE);
         masterList.add(PAYMENTTYPE);
+        masterList.add(PAYMENTMODE);
         return masterList;
     }
 
