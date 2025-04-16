@@ -962,12 +962,15 @@
             border-radius: 4px;
 
             .title {
-              font-family: Roboto;
-              font-size: 16px;
-              font-weight: 700;
-              line-height: 18.75px;
-              text-align: left;
-              color: #77787b;
+              .label,
+              .value {
+                font-family: Roboto;
+                font-size: 16px;
+                font-weight: 700;
+                line-height: 18.75px;
+                text-align: left;
+                color: #77787b;
+              }
             }
 
             .title,
@@ -978,6 +981,7 @@
               width: 100%;
               display: flex;
               justify-content: space-between;
+              position: relative;
             }
 
             .phone-number-main,
@@ -1077,6 +1081,8 @@
 
             .flag {
               width: 10%;
+              position: absolute;
+              right: 0;
               display: flex;
               justify-content: flex-end;
               cursor: pointer !important;
