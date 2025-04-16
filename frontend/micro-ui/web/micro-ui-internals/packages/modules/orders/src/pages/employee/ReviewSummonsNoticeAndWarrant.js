@@ -47,6 +47,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [showActionModal, setShowActionModal] = useState(false);
   const [showNoticeModal, setshowNoticeModal] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isIcops, setIsIcops] = useState({ state: null, message: "", icopsAcknowledgementNumber: "" });
   const [actionModalType, setActionModalType] = useState("");
   const [isDisabled, setIsDisabled] = useState(true);
@@ -377,7 +378,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const successMessage = useMemo(() => {
     let msg = "";
-    if (documents) {
+    const isViaPolice = rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE";
+    if (documents && !isViaPolice) {
       if (orderType === "NOTICE") {
         msg = t("SUCCESSFULLY_SIGNED_NOTICE");
       } else if (orderType === "WARRANT") {
@@ -394,7 +396,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         msg = t("SENT_SUMMONS_VIA");
       }
     }
-    return `${msg}${!documents ? " " + deliveryChannel : ""}`;
+    return `${msg}${!documents || isViaPolice ? " " + deliveryChannel : ""}`;
   }, [documents, orderType, deliveryChannel]);
 
   const handleSubmitEsign = useCallback(async () => {
@@ -421,6 +423,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       };
 
       // Attempt to upload the document and handle the response
+      setIsLoading(true);
       const response = await taskService.UploadTaskDocument(reqBody, { tenantId });
       if (rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE") {
         // localStorage.removeItem("SignedFileStoreID");
@@ -449,15 +452,20 @@ const ReviewSummonsNoticeAndWarrant = () => {
             const res = await taskService.updateTask(reqBody, { tenantId });
             const icopsAcknowledgementNumber = res?.task?.taskDetails?.deliveryChannels?.channelAcknowledgementId || "";
             setIsIcops({ state: "success", message: "", icopsAcknowledgementNumber });
+            return { continue: true };
           } catch (error) {
             setIsIcops({ state: "failed", message: `Something went wrong. ${error}`, icopsAcknowledgementNumber: "" });
             console.error("Error updating task data:", error);
+            return { continue: true };
           }
         }
       }
+      return { continue: true };
     } catch (error) {
       // Handle errors that occur during the upload process
       console.error("Error uploading document:", error);
+    } finally {
+      setIsLoading(false);
     }
   }, [rowData, signatureId, tenantId]);
 
@@ -493,8 +501,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
               />
             </div>
           ),
-          isDisabled: isSigned ? false : true,
+          isDisabled: !isSigned || isLoading ? true : false,
           actionSaveOnSubmit: handleSubmitEsign,
+          async: true,
         },
         ...(rowData?.taskDetails?.deliveryChannels?.channelCode !== "POLICE" ||
         (rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE" && isIcops?.state)
