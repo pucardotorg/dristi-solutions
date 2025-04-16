@@ -18,12 +18,15 @@ public class ChannelFactory {
 
     private final EmailChannel emailChannel;
 
+    private final RpadChannel rpadChannel;
+
     @Autowired
-    public ChannelFactory(ICopsChannel iCopsChannel, SMSChannel smsChannel, EPostChannel ePostChannel, EmailChannel emailChannel) {
+    public ChannelFactory(ICopsChannel iCopsChannel, SMSChannel smsChannel, EPostChannel ePostChannel, EmailChannel emailChannel, RpadChannel rpadChannel) {
         this.iCopsChannel = iCopsChannel;
         this.smsChannel = smsChannel;
         this.ePostChannel = ePostChannel;
         this.emailChannel = emailChannel;
+        this.rpadChannel = rpadChannel;
     }
 
     public ExternalChannel getDeliveryChannel(ChannelName channelName) {
@@ -32,6 +35,7 @@ public class ChannelFactory {
             case POLICE -> iCopsChannel;
             case SMS -> smsChannel;
             case EMAIL -> emailChannel;
+            case RPAD -> rpadChannel;
             default ->
                     throw new CustomException("INVALID_DELIVERY_CHANNEL", "Delivery Channel provided is not Valid");
         };
