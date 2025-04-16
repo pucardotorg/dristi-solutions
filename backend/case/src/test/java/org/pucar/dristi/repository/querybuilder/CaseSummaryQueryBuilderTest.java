@@ -159,7 +159,7 @@ public class CaseSummaryQueryBuilderTest {
 
         String result = caseSummaryQueryBuilder.addOrderByQuery(baseQuery, pagination);
 
-        assertTrue(result.contains("SELECT * FROM cases ORDER BY cases.DROP TABLE cases ASC"));
+        assertTrue(result.contains("SELECT * FROM cases ORDER BY cases.createdtime DESC "));
     }
 
     @Test

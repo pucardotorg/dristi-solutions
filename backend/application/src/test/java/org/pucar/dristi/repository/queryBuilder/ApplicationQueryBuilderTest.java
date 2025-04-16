@@ -56,14 +56,14 @@ class ApplicationQueryBuilderTest {
         ApplicationQueryBuilder queryBuilder = new ApplicationQueryBuilder();
         String query = "SELECT * FROM applications";
         Pagination paginationNotNull = new Pagination();
-        paginationNotNull.setSortBy("columnName");
+        paginationNotNull.setSortBy("filingNumber");
         paginationNotNull.setOrder(Order.ASC);
 
         // Execute
         String resultQuery = queryBuilder.addOrderByQuery(query, paginationNotNull);
 
         // Assert
-        String expectedQuery = "SELECT * FROM applications ORDER BY app.columnName ASC ";
+        String expectedQuery = "SELECT * FROM applications ORDER BY app.filingNumber ASC ";
         assertEquals(expectedQuery, resultQuery);
     }
 

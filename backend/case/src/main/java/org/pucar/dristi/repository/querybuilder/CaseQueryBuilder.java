@@ -75,6 +75,15 @@ public class CaseQueryBuilder {
 
     public static final String AND = " AND ";
 
+    private static final List<String> ALLOWED_SORT_FIELDS = List.of(
+            "id", "tenantId", "caseTitle", "filingNumber", "caseNumber",
+            "cnrNumber", "courtCaseNumber", "accessCode", "courtId", "benchId",
+            "filingDate", "registrationDate", "caseCategory", "natureOfPleading",
+            "status", "remarks", "isActive", "createdBy", "lastModifiedBy",
+            "createdTime", "lastModifiedTime"
+    );
+
+
     public String checkCaseExistQuery(CaseExists caseExists, List<Object> preparedStmtList, List<Integer> preparedStmtListArgs) {
         try {
             StringBuilder query = new StringBuilder(BASE_CASE_EXIST_QUERY);
@@ -511,12 +520,14 @@ public class CaseQueryBuilder {
 
     }
     public String addOrderByQuery(String query, Pagination pagination) {
-        if (isEmptyPagination(pagination) || pagination.getSortBy().contains(";")) {
+        if (isEmptyPagination(pagination) || ALLOWED_SORT_FIELDS.stream().noneMatch(field -> field.equalsIgnoreCase(pagination.getSortBy()))) {
             return query + DEFAULT_ORDERBY_CLAUSE;
         } else {
             query = query + ORDERBY_CLAUSE;
         }
-        return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
+
+        return query.replace("{orderBy}", pagination.getSortBy())
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     public String addOrderByQueryForLitigants(String query) {
