@@ -98,10 +98,8 @@ public class TreasuryEnrichment {
         List<TsbData> tsbData = new ArrayList<>();
         String tsbReceipt = config.getTsbReceipt();
         for(JsonNode tsbAccount : tsbAccountToHead) {
-            if(containsTsbAccount(headDetailsList, tsbAccount.get("headId").asText())) {
-                if (tsbAccount.get("isTsbAccount").asBoolean()) {
-                    tsbReceipt = "Y";
-                }
+            if(tsbAccount.get("isTsbAccount").asBoolean() && containsTsbAccount(headDetailsList, tsbAccount.get("headId").asText())) {
+                tsbReceipt = "Y";
                 tsbData.add(TsbData.builder()
                         .tsbAccNo(tsbAccount.get("tsbAccountNumber").asText())
                         .tsbAccType(tsbAccount.get("tsbAccountType").asText())
