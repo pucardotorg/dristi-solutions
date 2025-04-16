@@ -2591,6 +2591,7 @@ const AdmittedCases = () => {
                           setShowMenu(false);
                         }
                       }}
+                      style={{ cursor: "pointer" }}
                     >
                       <CustomThreeDots />
                       {showCitizenMenu && (
