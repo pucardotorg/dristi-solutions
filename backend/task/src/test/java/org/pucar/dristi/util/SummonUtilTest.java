@@ -11,6 +11,9 @@ import org.pucar.dristi.web.models.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -49,17 +52,30 @@ class SummonUtilTest {
 
     @Test
     void testSendSummons_Success() {
-        Object fakeResponse = new Object();
-        TaskResponse taskResponse = new TaskResponse();
+        Map<String, Object> responseMap = new HashMap<>();
+        Map<String, Object> summonsDeliveryMap = new HashMap<>();
+        summonsDeliveryMap.put("channelAcknowledgementId", "123");
+        responseMap.put("SummonsDelivery", summonsDeliveryMap);
 
-        when(restTemplate.postForEntity(eq(mockUri), eq(taskRequest), eq(Object.class)))
-                .thenReturn(ResponseEntity.ok(fakeResponse));
-        when(objectMapper.convertValue(any(), eq(TaskResponse.class)))
-                .thenReturn(taskResponse);
+        SummonsDelivery expectedDelivery = SummonsDelivery.builder()
+                .channelAcknowledgementId("123")
+                .build();
 
-        assertDoesNotThrow(() -> summonUtil.sendSummons(taskRequest));
-        verify(restTemplate, times(1)).postForEntity(eq(mockUri), eq(taskRequest), eq(Object.class));
+        when(restTemplate.postForEntity(eq(mockUri), eq(taskRequest), eq(Map.class)))
+                .thenReturn(ResponseEntity.ok(responseMap));
+
+        when(objectMapper.convertValue(summonsDeliveryMap, SummonsDelivery.class))
+                .thenReturn(expectedDelivery);
+
+        // Act
+        String result = summonUtil.sendSummons(taskRequest);
+
+        // Assert
+        assertEquals("123", result);
+        verify(restTemplate, times(1)).postForEntity(eq(mockUri), eq(taskRequest), eq(Map.class));
+        verify(objectMapper, times(1)).convertValue(summonsDeliveryMap, SummonsDelivery.class);
     }
+
 
     @Test
     void testSendSummons_Failure() {
