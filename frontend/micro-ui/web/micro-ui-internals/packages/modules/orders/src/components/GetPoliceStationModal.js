@@ -120,7 +120,6 @@ const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect,
       const nearestPoliceStation = response?.locationBasedJurisdiction?.nearest_police_station;
 
       if (!nearestPoliceStation) {
-        console.log("No police station found");
         setPoliceStationError(t("NO_POLICE_STATION_FOUND_FOR_THESE_COORDINATES"));
         setPoliceStation(null);
         setPoliceStationOptions([]);
@@ -228,7 +227,7 @@ const GetPoliceStationModal = ({ isOpen = false, onClose, onPoliceStationSelect,
                 cursor: hasValidationErrors || isLoading ? "not-allowed" : "pointer",
                 fontSize: "16px",
                 fontWeight: "700",
-                marginTop: "20px",
+                marginTop: "18px",
               }}
             >
               {t("GET_POLICE_STATION")}
