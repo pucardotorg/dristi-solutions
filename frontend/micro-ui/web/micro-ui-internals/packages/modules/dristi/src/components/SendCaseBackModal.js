@@ -34,6 +34,7 @@ function SendCaseBackModal({
   };
   const textAreaHeader = {
     registerCase: t("COMMENTS_FOR_JUDGE"),
+    sendCaseBack: t("COMMENTS_FOR_SEND_BACK"),
   };
   const subtexts = {
     registerCase: t("CS_NO_ERROR_MARKED"),
@@ -83,10 +84,10 @@ function SendCaseBackModal({
           />
         </div>
         <p>{subtexts[type]}</p>
-        {type === "registerCase" && (
+        {(type === "registerCase" || type === "sendCaseBack") && (
           <React.Fragment>
             <p>{textAreaHeader[type]}</p>
-            <TextArea style={{ marginBottom: "0px" }} name={t("COMMENTS_FOR_JUDGE")} value={comment} onChange={handleChange}></TextArea>
+            <TextArea style={{ marginBottom: "0px" }} name={textAreaHeader[type]} value={comment} onChange={handleChange} maxlength="1000"></TextArea>
           </React.Fragment>
         )}
       </div>
