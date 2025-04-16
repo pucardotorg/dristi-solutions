@@ -16,7 +16,6 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import ReactTooltip from "react-tooltip";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import Accordion from "../../../components/Accordion";
-import ConfirmCorrectionModal from "../../../components/ConfirmCorrectionModal";
 import ConfirmCourtModal from "../../../components/ConfirmCourtModal";
 import ErrorsAccordion from "../../../components/ErrorsAccordion";
 import FlagBox from "../../../components/FlagBox";
@@ -196,13 +195,11 @@ function EFilingCases({ path }) {
 
   const [openConfigurationModal, setOpenConfigurationModal] = useState(false);
   const [openConfirmCourtModal, setOpenConfirmCourtModal] = useState(false);
-  const [openConfirmCorrectionModal, setOpenConfirmCorrectionModal] = useState(false);
   const [serviceOfDemandNoticeModal, setServiceOfDemandNoticeModal] = useState(false);
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
   const [showConfirmMandatoryModal, setShowConfirmMandatoryModal] = useState(false);
   const [showConfirmOptionalModal, setShowConfirmOptionalModal] = useState(false);
   const [showReviewCorrectionModal, setShowReviewCorrectionModal] = useState(false);
-  const [showReviewConfirmationModal, setShowReviewConfirmationModal] = useState(false);
   const [showCaseLockingModal, setShowCaseLockingModal] = useState(false);
   const [showConfirmDcaSkipModal, setShowConfirmDcaSkipModal] = useState(false);
   const [shouldShowConfirmDcaModal, setShouldShowConfirmDcaModal] = useState(false);
@@ -1943,8 +1940,8 @@ function EFilingCases({ path }) {
       return;
     }
 
-    if (selected === "reviewCaseFile" && isCaseReAssigned && !openConfirmCorrectionModal && !isCaseLocked) {
-      setOpenConfirmCorrectionModal(true);
+    if (selected === "reviewCaseFile" && isCaseReAssigned && !isCaseLocked) {
+      setShowCaseLockingModal(true);
       return;
     }
 
@@ -2112,13 +2109,6 @@ function EFilingCases({ path }) {
         }
         setIsDisabled(false);
       });
-  };
-
-  const onErrorCorrectionSubmit = async () => {
-    setOpenConfirmCorrectionModal(false);
-    // onSubmit(CaseWorkflowAction.EDIT_CASE);
-    // await createPendingTask({ name: t("PENDING_E_SIGN_FOR_CASE"), status: "PENDING_E-SIGN" });
-    setShowCaseLockingModal(true);
   };
 
   const handlePageChange = (key, isConfirm) => {
@@ -2864,9 +2854,7 @@ function EFilingCases({ path }) {
         </div>
       </div>
       {openConfirmCourtModal && <ConfirmCourtModal setOpenConfirmCourtModal={setOpenConfirmCourtModal} t={t} onSubmitCase={onSubmitCase} />}
-      {openConfirmCorrectionModal && (
-        <ConfirmCorrectionModal onCorrectionCancel={() => setOpenConfirmCorrectionModal(false)} onSubmit={onErrorCorrectionSubmit} />
-      )}
+
       {caseResubmitSuccess && (
         <CorrectionsSubmitModal
           t={t}
