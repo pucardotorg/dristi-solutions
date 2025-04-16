@@ -147,6 +147,7 @@ public class CauseListServiceTest {
 
         List<String> dummyFileStores = Collections.singletonList("file-123");
 
+        when(config.getCutoffTime()).thenReturn("17:00");
         when(causeListRepository.getCauseListFileStore(any(CauseListSearchCriteria.class)))
                 .thenReturn(dummyFileStores);
 
@@ -170,7 +171,7 @@ public class CauseListServiceTest {
                 .recentCauseListSearchCriteria(
                         RecentCauseListSearchCriteria.builder().courtId(courtId).build()
                 ).build();
-
+        when(config.getCutoffTime()).thenReturn("17:00");
         when(causeListRepository.getCauseListFileStore(any()))
                 .thenReturn(Collections.emptyList());
 
