@@ -98,7 +98,7 @@ public class TreasuryEnrichment {
         List<TsbData> tsbData = new ArrayList<>();
         String tsbReceipt = config.getTsbReceipt();
         for(JsonNode tsbAccount : tsbAccountToHead) {
-            if(tsbAccount.get("isTsbAccount").asBoolean() && containsTsbAccount(headDetailsList, tsbAccount.get("headId").asText())) {
+            if(isIsTsbAccount(tsbAccount) && containsTsbAccount(headDetailsList, tsbAccount.get("headId").asText())) {
                 tsbReceipt = "Y";
                 tsbData.add(TsbData.builder()
                         .tsbAccNo(tsbAccount.get("tsbAccountNumber").asText())
@@ -129,6 +129,10 @@ public class TreasuryEnrichment {
                 .tsbReceipts(tsbReceipt)
                 .tsbData(tsbData)
                 .build();
+    }
+
+    private static boolean isIsTsbAccount(JsonNode tsbAccount) {
+        return tsbAccount.get("isTsbAccount").asBoolean();
     }
 
     private boolean containsTsbAccount(List<HeadDetails> headDetailsList, String headId) {
