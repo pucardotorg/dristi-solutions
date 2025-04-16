@@ -1,0 +1,268 @@
+[
+  {
+    "tenantId": "kl",
+    "masterName": "actions-test",
+    "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 2715,
+          "url": "/hearing/v1/bulk/_reschedule",
+          "code": "2715",
+          "name": "Bulk Reschedule",
+          "enabled": true,
+          "displayName": "Bulk Reschedule",
+          "serviceCode": "Hearing"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": "2716",
+        "data": {
+          "id": 2716,
+          "url": "/hearing/v1/bulk/_update",
+          "code": "2716",
+          "enabled": true,
+          "name": "Bulk update hearing ",
+          "displayName": "Bulk update hearing ",
+          "serviceCode": "Hearing"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 2721,
+          "url": "/notification/v1/_create",
+          "code": "2721",
+          "name": "Notification Create",
+          "enabled": true,
+          "displayName": "Notification Create",
+          "serviceCode": "Notification"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 2722,
+          "url": "/notification/v1/_update",
+          "code": "2722",
+          "name": "Notification Update",
+          "enabled": true,
+          "displayName": "Notification Update",
+          "serviceCode": "Notification"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 2723,
+          "url": "/notification/v1/_search",
+          "code": "2723",
+          "name": "Notification Search",
+          "enabled": true,
+          "displayName": "Notification Search",
+          "serviceCode": "Notification"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": "2724",
+        "data": {
+          "id": 2724,
+          "url": "/notification/v1/_exists",
+          "code": "2724",
+          "name": "Notification Exists",
+          "enabled": true,
+          "displayName": "Notificaton Exists",
+          "serviceCode": "Notification"
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "masterName": "roleactions",
+    "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 432,
+          "actionid": 2715,
+          "rolecode": "JUDGE_ROLE",
+          "tenantid": "kl",
+          "actioncode": "2715"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 433,
+          "actionid": 2715,
+          "rolecode": "COURT_ROOM_MANAGER",
+          "tenantid": "kl",
+          "actioncode": "2715"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 434,
+          "actionid": 2715,
+          "rolecode": "GENERAL_COURT_ROOM_MANAGER",
+          "tenantid": "kl",
+          "actioncode": "2715"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 435,
+          "actionid": 2716,
+          "actioncode": "2716",
+          "tenantid": "kl",
+          "rolecode": "JUDGE_ROLE"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 443,
+          "actionid": 2723,
+          "rolecode": "NOTIFICATION_APPROVER",
+          "tenantid": "kl",
+          "actioncode": "2723"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 442,
+          "actionid": 2722,
+          "rolecode": "NOTIFICATION_CREATOR",
+          "tenantid": "kl",
+          "actioncode": "2722"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 441,
+          "actionid": 2722,
+          "rolecode": "NOTIFICATION_APPROVER",
+          "tenantid": "kl",
+          "actioncode": "2722"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 440,
+          "actionid": 2721,
+          "rolecode": "NOTIFICATION_CREATOR",
+          "tenantid": "kl",
+          "actioncode": "2721"
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "masterName": "roles",
+    "moduleName": "ACCESSCONTROL-ROLES",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLES.roles",
+        "uniqueIdentifier": null,
+        "data": {
+          "code": "NOTIFICATION_CREATOR",
+          "name": "NOTIFICATION_CREATOR",
+          "description": "NOTIFICATION_CREATOR"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLES.roles",
+        "uniqueIdentifier": null,
+        "data": {
+          "code": "NOTIFICATION_APPROVER",
+          "name": "NOTIFICATION_APPROVER",
+          "description": "NOTIFICATION_APPROVER"
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    // disable morning slot and add this in mdms, can be done through workbench-ui
+    "tenantId": "kl",
+    "masterName": "slots",
+    "moduleName": "court",
+    "mdmsPayload": [
+      {
+        "id": "089036ee-8249-4331-93d9-859ccfaedf5c",
+        "tenantId": "kl",
+        "schemaCode": "court.slots",
+        "uniqueIdentifier": "3",
+        "data": {
+          "id": 3,
+          "slotName": "Morning Slot",
+          "slotEndTime": "13:00:00",
+          "slotDuration": "180",
+          "slotStartTime": "10:00:00",
+          "unitOfMeasurement": "Minutes"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1741249575003,
+          "lastModifiedTime": 1741249575003
+        }
+      }
+    ]
+  }
+]
