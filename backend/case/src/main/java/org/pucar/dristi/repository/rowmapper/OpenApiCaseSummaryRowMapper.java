@@ -12,6 +12,8 @@ import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 
+import static org.pucar.dristi.config.ServiceConstants.*;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -86,9 +88,9 @@ public class OpenApiCaseSummaryRowMapper implements ResultSetExtractor<List<Open
                     if (openApiCaseSummary != null) {
                         String representativeType = rs.getString("representing_partytype");
                             if (Objects.equals(representativeType, "complainant.primary")) {
-                                openApiCaseSummary.setAdvocateComplainant(getNameForLitigant(rs));
+                                openApiCaseSummary.setAdvocateComplainant(getNameForRepresentative(rs));
                             } else if (Objects.equals(representativeType, "respondent.primary")) {
-                                openApiCaseSummary.setAdvocateRespondent(getNameForLitigant(rs));
+                                openApiCaseSummary.setAdvocateRespondent(getNameForRepresentative(rs));
                         }
                     }
                     mappedKey.add(representativeId);
@@ -138,7 +140,7 @@ public class OpenApiCaseSummaryRowMapper implements ResultSetExtractor<List<Open
             }
         } catch (Exception e) {
             log.error("Error while fetching status from result set", e);
-            throw new CustomException("ERROR_FETCHING_STATUS", "Error while fetching status from result set") {
+            throw new CustomException(ERROR_FETCHING_STATUS, "Error while fetching status from result set") {
             };
         }
     }
@@ -168,7 +170,26 @@ public class OpenApiCaseSummaryRowMapper implements ResultSetExtractor<List<Open
                 }
             }
         } catch (SQLException | JsonProcessingException e) {
-            throw new CustomException("ERROR_FETCHING_LITIGANT_NAME", "Error while fetching litigant name from result set");
+            throw new CustomException(ERROR_FETCHING_LITIGANT_NAME, "Error while fetching litigant name from result set");
+        }
+
+        return fullName;
+    }
+
+    public String getNameForRepresentative(@NotNull ResultSet rs) {
+        String additionalDetails;
+        String fullName = null;
+        try {
+            additionalDetails = rs.getString("representative_additionaldetails");
+
+            if (additionalDetails != null && !additionalDetails.isEmpty()) {
+                JsonNode jsonNode = objectMapper.readTree(additionalDetails);
+                if (jsonNode.has("advocateName")) {
+                    fullName = jsonNode.get("advocateName").asText();
+                }
+            }
+        } catch (SQLException | JsonProcessingException e) {
+            throw new CustomException(ERROR_FETCHING_REPRESENTATIVE_NAME, "Error while fetching representative name from result set");
         }
 
         return fullName;
