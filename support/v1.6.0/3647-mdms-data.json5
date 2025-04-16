@@ -1,0 +1,29 @@
+{
+  "id": "6d27a9bf-c7bb-475a-951e-2d0d192a2bf9",
+  "tenantId": "kl",
+  "schemaCode": "common-masters.PendingTaskType",
+  "uniqueIdentifier": "23",
+  "data": {
+    "id": "23",
+    "actor": "Advocate",
+    "state": "PENDING_PAYMENT",
+    "isgeneric": false,
+    "screenType": "home",
+    "pendingTask": "Pay Vakalatnama Fees",
+    "closerAction": [
+      "MAKE_PAYMENT",
+      "REJECT"
+    ],
+    "triggerAction": [
+      "CREATE"
+    ],
+    "workflowModule": "task-payment"
+  },
+  "isActive": true,
+  "auditDetails": {
+    "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+    "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+    "createdTime": 1744814449759,
+    "lastModifiedTime": 1744814491137
+  }
+}
