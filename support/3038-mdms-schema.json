@@ -1,0 +1,64 @@
+[
+  {
+    "id": "34e4e3be-29d1-47e1-b898-68280f6cd0a3",
+    "tenantId": "kl",
+    "code": "kibana.dashboards",
+    "description": null,
+    "definition": {
+      "type": "object",
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "required": ["code", "jobId", "id"],
+      "x-unique": ["jobId"],
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "code": {
+          "type": "string"
+        },
+        "jobId": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "1009acaa-6a6e-46f1-a8f4-70d3c70eb188",
+      "lastModifiedBy": "1009acaa-6a6e-46f1-a8f4-70d3c70eb188",
+      "createdTime": 1744036317945,
+      "lastModifiedTime": 1744036317945
+    }
+  },
+  {
+    "id": "306b15e2-ff18-4bea-9e7e-da0a8b3b6d08",
+    "tenantId": "kl",
+    "code": "kibana.reports",
+    "description": null,
+    "definition": {
+      "type": "object",
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "required": ["id", "code", "url"],
+      "x-unique": ["id"],
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "url": {
+          "type": "string"
+        },
+        "code": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "1009acaa-6a6e-46f1-a8f4-70d3c70eb188",
+      "lastModifiedBy": "1009acaa-6a6e-46f1-a8f4-70d3c70eb188",
+      "createdTime": 1744093358300,
+      "lastModifiedTime": 1744093358300
+    }
+  }
+]
