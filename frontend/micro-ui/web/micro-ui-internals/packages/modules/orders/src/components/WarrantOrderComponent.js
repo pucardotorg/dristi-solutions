@@ -220,8 +220,6 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   const [userList, setUserList] = useState([]);
   const [policeStationIdMapping, setPoliceStationIdMapping] = useState([]);
   const [deliveryChannels, setDeliveryChannels] = useState([
-    { label: "SMS", type: "SMS", code: "SMS", values: [] },
-    { label: "EMAIL", type: "E-mail", code: "EMAIL", values: [] },
     {
       label: "EPOST",
       type: "e-Post",
@@ -463,8 +461,6 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       setPoliceStationIdMapping(policeStationIdMapping);
       setDeliveryChannels(
         [
-          { label: "SMS", type: "SMS", code: "SMS", values: [...new Set(phone_numbers || [])] },
-          { label: "EMAIL", type: "E-mail", code: "EMAIL", values: [...new Set(email || [])] },
           {
             label: "EPOST",
             type: "e-Post",
