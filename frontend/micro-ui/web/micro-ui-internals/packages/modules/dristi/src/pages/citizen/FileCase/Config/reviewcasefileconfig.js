@@ -232,8 +232,8 @@ export const reviewCaseFileFormConfig = [
                 },
                 {
                   type: "text",
-                  label: "POLICE_STATION",
-                  value: "policeStation.name",
+                  label: "POLICE_STATION_JURISDICTION_CHEQUE",
+                  value: "policeStationJurisDictionCheque.name",
                   isLocalizationRequired: true,
                 },
                 {
