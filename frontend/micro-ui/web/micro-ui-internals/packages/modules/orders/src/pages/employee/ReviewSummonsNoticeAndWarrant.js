@@ -471,6 +471,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
             setIsIcops({ state: "failed", message: `Something went wrong. ${error}`, icopsAcknowledgementNumber: "" });
             console.error("Error updating task data:", error);
             return { continue: true };
+          } finally {
+            setIsLoading(false);
           }
         }
       }
@@ -516,7 +518,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
               />
             </div>
           ),
-          isDisabled: !isSigned || isLoading ? true : false,
+          isDisabled: !isSigned ? true : false,
           actionSaveOnSubmit: handleSubmitEsign,
           async: true,
         },
