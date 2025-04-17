@@ -7,6 +7,7 @@ import { DocumentUploadError } from "../../../Utils/errorUtil";
 import { userTypeOptions } from "../registration/config";
 import { efilingDocumentKeyAndTypeMapping } from "./Config/efilingDocumentKeyAndTypeMapping";
 import isMatch from "lodash/isMatch";
+import isEqual from "lodash/isEqual";
 
 export const formatName = (value, capitalize = true) => {
   let cleanedValue = value
@@ -2384,6 +2385,7 @@ export const updateCaseDetails = async ({
   if (selected === "advocateDetails") {
     const caseRepresentatives = caseDetails?.representatives || [];
     const advocateDetails = [];
+    const complainantDetails = [];
     let docList = [];
     const newFormData = await Promise.all(
       updatedFormData
@@ -2413,6 +2415,10 @@ export const updateCaseDetails = async ({
                     fileName: pageConfig?.selectDocumentName?.["vakalatnamaFileUpload"],
                   };
                   docList.push(doc);
+                  complainantDetails.push({
+                    individualId: data?.data?.multipleAdvocatesAndPip?.boxComplainant?.individualId,
+                    pipAffidavitFileUpload: null,
+                  });
                   return doc;
                 }
               })
@@ -2434,6 +2440,10 @@ export const updateCaseDetails = async ({
                     fileName: pageConfig?.selectDocumentName?.["pipAffidavitFileUpload"],
                   };
                   docList.push(doc);
+                  complainantDetails.push({
+                    individualId: data?.data?.multipleAdvocatesAndPip?.boxComplainant?.individualId,
+                    pipAffidavitFileUpload: doc,
+                  });
                   return doc;
                 }
               })
@@ -2465,8 +2475,10 @@ export const updateCaseDetails = async ({
               const document = vakalatnamaDocumentData?.vakalatnamaFileUpload?.document?.[0];
               advocateDetails.push({
                 advocate: allAdvocateSearchData?.[i].advocates?.[0]?.responseList?.[0],
-                documents: document ? [document] : [],
-                complainantIndividualId: data?.data?.multipleAdvocatesAndPip?.boxComplainant?.individualId,
+                complainant: {
+                  individualId: data?.data?.multipleAdvocatesAndPip?.boxComplainant?.individualId,
+                  vakalathnamaDoc: document ? [document] : [],
+                },
               });
             }
           }
@@ -2498,13 +2510,12 @@ export const updateCaseDetails = async ({
 
       duplicateAdvocateDetails.forEach((dupObj, index) => {
         if (advObj.advocate?.individualId === dupObj?.advocate?.individualId) {
-          complainants.push(dupObj.complainantIndividualId);
+          complainants.push(dupObj?.complainant);
           indexArray.push(index);
         }
       });
       const newAdvObj = {
         advocate: advObj.advocate,
-        documents: advObj.documents,
         complainants: complainants,
       };
       updatedAdvocateDetails.push(newAdvObj);
@@ -2514,8 +2525,8 @@ export const updateCaseDetails = async ({
     const getRepresentings = (complIndvidualIdArray) => {
       let representings = [];
       if (caseDetails?.litigants && Array.isArray(caseDetails?.litigants)) {
-        complIndvidualIdArray.map((individualId) => {
-          const litigant = caseDetails?.litigants?.find((obj) => obj?.individualId === individualId);
+        complIndvidualIdArray.forEach((complainant) => {
+          const litigant = caseDetails?.litigants?.find((obj) => obj?.individualId === complainant?.individualId);
           if (litigant) {
             const representingData = {
               additionalDetails: {
@@ -2525,7 +2536,8 @@ export const updateCaseDetails = async ({
               caseId: litigant?.caseId,
               partyCategory: litigant?.partyCategory,
               individualId: litigant?.individualId,
-              partyType: litigant?.partyType.includes("complainant") ? "complainant.primary" : "respondent.primary",
+              partyType: litigant?.partyType?.includes("complainant") ? "complainant.primary" : "respondent.primary",
+              documents: complainant?.vakalathnamaDoc,
             };
             representings.push(representingData);
           }
@@ -2541,7 +2553,7 @@ export const updateCaseDetails = async ({
         tenantId,
         caseId: caseDetails?.id,
         advocateId: data?.advocate?.id,
-        documents: data?.documents,
+        documents: [],
         additionalDetails: {
           advocateName: data?.advocate?.additionalDetails?.username,
           uuid: data?.advocate?.auditDetails?.createdBy,
@@ -2557,10 +2569,7 @@ export const updateCaseDetails = async ({
       const existingRepresentative = caseRepresentatives.find((caseRep) => caseRep.advocateId === rep.advocateId);
       if (existingRepresentative) {
         const existingRep = structuredClone(existingRepresentative);
-        if (!isMatch(existingRep.documents, rep.documents)) {
-          existingRep.documents = rep.documents;
-        }
-        if (!isMatch(existingRep.representing, rep.representing)) {
+        if (!isEqual(existingRep.representing, rep.representing)) {
           const existingRepresenting = structuredClone(existingRep.representing || []);
           const newRepresenting = structuredClone(rep.representing || []);
           const updateRepresenting = [];
@@ -2588,7 +2597,7 @@ export const updateCaseDetails = async ({
           });
           existingRep.representing = updateRepresenting;
         }
-        if (!isMatch(existingRep.additionalDetails, rep.additionalDetails)) {
+        if (!isEqual(existingRep.additionalDetails, rep.additionalDetails)) {
           existingRep.additionalDetails = rep.additionalDetails;
         }
         return existingRep;
@@ -2608,6 +2617,15 @@ export const updateCaseDetails = async ({
       }
     });
 
+    const updatedCaseLitigants = caseDetails?.litigants?.map((litigant) => {
+      const lit = complainantDetails?.find((comp) => comp?.individualId === litigant?.individualId);
+      if (lit) {
+        const updatedLitigant = { ...litigant, documents: lit?.pipAffidavitFileUpload ? [lit?.pipAffidavitFileUpload] : [] };
+        return updatedLitigant;
+      } else return litigant;
+    });
+
+    data.litigants = [...updatedCaseLitigants];
     data.representatives = [...updatedRepresentatives];
     data.additionalDetails = {
       ...caseDetails.additionalDetails,
