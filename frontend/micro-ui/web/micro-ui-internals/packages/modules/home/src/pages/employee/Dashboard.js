@@ -256,8 +256,9 @@ const DashboardPage = () => {
   };
 
   const customStyles = `
-  .embPanel__optionsMenuButton {
-    display:0 !important;
+  .content-area{
+   .embPanel__optionsMenuButton {
+    display:none !important;
   }
 `;
 
@@ -346,7 +347,7 @@ const DashboardPage = () => {
                         key={index}
                         className="download-report"
                         onClick={() => {
-                          !downloadingIndices.includes(index) && handleDownload({ baseUrl } + option?.url, index);
+                          !downloadingIndices.includes(index) && handleDownload(`${baseUrl}/${option?.url}`, index);
                         }}
                       >
                         <span>{option.code}</span>
