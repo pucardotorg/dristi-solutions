@@ -43,13 +43,13 @@ public class CaseFeeCalculationService {
         Double legalBasicFund = eFillingDefaultData.getLegalBasicFund();
 
         LinkedHashMap<String, HashMap<String, Integer>> noOfAdvocateFees = eFillingDefaultData.getNoOfAdvocateFees();
-        Map<String, Range> petitionFeeRange = eFillingDefaultData.getPetitionFee();
+        Map<String, Range> complaintFeeRange = eFillingDefaultData.getComplaintFee();
 
 
         List<Calculation> result = new ArrayList<>();
 
         for (EFillingCalculationCriteria criteria : calculationCriteria) {
-            Double petitionFee = getPetitionFee(criteria.getCheckAmount(), petitionFeeRange);
+            Double complaintFee = getComplaintFee(criteria.getCheckAmount(), complaintFeeRange);
             Double delayFee = criteria.getIsDelayCondonation() ? delayCondonationFee : 0.0;
 
             Map<String, List<JsonNode>> litigantAdvocateMap = caseUtil.getAdvocateForLitigant(request.getRequestInfo(), criteria.getFilingNumber(), criteria.getTenantId());
@@ -68,16 +68,16 @@ public class CaseFeeCalculationService {
 
             }
 
-            log.info("petitionFee={}, courtFee={}, legalBasicFund={}, advocateClerkWelfareFund={}, totalApplicationFee={}, petitionFee={}", petitionFee, calculatedCourtFee, calculatedLegalBasicFund, calculatedAdvocateClerkWelfareFund, petitionFee);
+            log.info("complaintFee={}, courtFee={}, legalBasicFund={}, advocateClerkWelfareFund={}, totalApplicationFee={}, complaintFee={}", complaintFee, calculatedCourtFee, calculatedLegalBasicFund, calculatedAdvocateClerkWelfareFund, complaintFee);
             calculatedCourtFee = Math.ceil(calculatedCourtFee);
             calculatedLegalBasicFund = Math.ceil(calculatedLegalBasicFund);
             calculatedAdvocateClerkWelfareFund = Math.ceil(calculatedAdvocateClerkWelfareFund);
-            petitionFee = Math.ceil(petitionFee);
+            complaintFee = Math.ceil(complaintFee);
             delayFee = Math.ceil(delayFee);
             advocateFee = Math.ceil(advocateFee);
 
-            List<BreakDown> feeBreakdown = getFeeBreakdown(calculatedCourtFee, calculatedLegalBasicFund, calculatedAdvocateClerkWelfareFund, petitionFee, delayFee, advocateFee);
-            Double totalCourtFee = calculatedCourtFee + calculatedLegalBasicFund + calculatedAdvocateClerkWelfareFund + petitionFee + delayFee + advocateFee;
+            List<BreakDown> feeBreakdown = getFeeBreakdown(calculatedCourtFee, calculatedLegalBasicFund, calculatedAdvocateClerkWelfareFund, complaintFee, delayFee, advocateFee);
+            Double totalCourtFee = calculatedCourtFee + calculatedLegalBasicFund + calculatedAdvocateClerkWelfareFund + complaintFee + delayFee + advocateFee;
 
             Calculation calculation = Calculation.builder()
                     .applicationId(criteria.getCaseId())
@@ -94,13 +94,13 @@ public class CaseFeeCalculationService {
     }
 
 
-    public List<BreakDown> getFeeBreakdown(double courtFee, double legalBasicFund, double advocateClerkWelfareFund, double petitionFee, double condonationFee, double advocateFee) {
+    public List<BreakDown> getFeeBreakdown(double courtFee, double legalBasicFund, double advocateClerkWelfareFund, double complaintFee, double condonationFee, double advocateFee) {
         List<BreakDown> feeBreakdowns = new ArrayList<>();
 
         feeBreakdowns.add(new BreakDown(COURT_FEE, "COURT_FEE", courtFee, new HashMap<>()));
         feeBreakdowns.add(new BreakDown(LEGAL_BENEFIT_FEE, "LEGAL_BENEFIT_FEE", legalBasicFund, new HashMap<>()));
         feeBreakdowns.add(new BreakDown(ADVOCATE_CLERK_WELFARE_FUND, "ADVOCATE_CLERK_WELFARE_FUND", advocateClerkWelfareFund, new HashMap<>()));
-        feeBreakdowns.add(new BreakDown(PETITION_FEE, "PETITION_FEE", petitionFee, new HashMap<>()));
+        feeBreakdowns.add(new BreakDown(COMPLAINT_FEE, "COMPLAINT_FEE", complaintFee, new HashMap<>()));
         feeBreakdowns.add(new BreakDown(ADVOCATE_FEE, "ADVOCATE_WELFARE_FUND", advocateFee, new HashMap<>()));
         if (condonationFee > 0)
             feeBreakdowns.add(new BreakDown(DELAY_CONDONATION_FEE, "DELAY_CONDONATION_FEE", condonationFee, new HashMap<>()));
@@ -109,7 +109,7 @@ public class CaseFeeCalculationService {
     }
 
 
-    private Double getPetitionFee(Double checkAmount, Map<String, Range> rangeMap) {
+    private Double getComplaintFee(Double checkAmount, Map<String, Range> rangeMap) {
 
         for (Range range : rangeMap.values()) {
             Double lowerBound = range.getMin();

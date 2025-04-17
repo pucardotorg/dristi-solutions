@@ -27,7 +27,7 @@ public class ServiceConstants {
 
     public static final String ADVOCATE_CLERK_WELFARE_FUND = "Advocate Clerk Welfare Fund";
     public static final String TOTAL_APPLICATION_FEE = "Total Application Fee";
-    public static final String PETITION_FEE = "Petition Fee";
+    public static final String COMPLAINT_FEE = "Complaint Fee";
     public static final String DELAY_CONDONATION_FEE = "Delay Condonation Application Fee";
     public static final String ADVOCATE_FEE = "Advocate Welfare Fund";
 
