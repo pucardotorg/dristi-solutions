@@ -210,7 +210,7 @@ const RenderDeliveryChannels = ({
   );
 };
 
-const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) => {
+const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) => {
   const urlParams = new URLSearchParams(window.location.search);
   const filingNumber = urlParams.get("filingNumber");
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -554,4 +554,4 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   );
 };
 
-export default SummonsOrderComponent;
+export default WarrantOrderComponent;
