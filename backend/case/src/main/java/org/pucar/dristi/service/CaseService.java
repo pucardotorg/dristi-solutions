@@ -1370,7 +1370,6 @@ public class CaseService {
                     return;
                 }
             }
-
             replaceAdvocate(joinCaseRequest, courtCase, joinCaseRequest.getJoinCaseData().getRepresentative().getAdvocateId());
 
         } else {
@@ -1384,7 +1383,10 @@ public class CaseService {
     }
 
     private boolean checkIsValidRequestForAdding(JoinCaseV2Request joinCaseRequest, CourtCase courtCase) {
-        List<String> individualIdsOfAllPIP = courtCase.getLitigants().stream().filter(this::checkPIPAffidavitPresent).map(Party::getIndividualId).toList();
+        List<String> individualIdsOfAllPIP = Optional.ofNullable(courtCase.getLitigants())
+                .orElse(Collections.emptyList())
+                .stream().filter(litigant->isPIP(litigant,courtCase)).map(Party::getIndividualId).toList();
+
         for (RepresentingJoinCase representingJoinCase : joinCaseRequest.getJoinCaseData().getRepresentative().getRepresenting()) {
             if (individualIdsOfAllPIP.contains(representingJoinCase.getIndividualId())) {
                 return false;
@@ -1393,20 +1395,38 @@ public class CaseService {
         return true;
     }
 
-    private boolean checkPIPAffidavitPresent(Party litigant) {
-        if(litigant.getDocuments()!=null && !litigant.getDocuments().isEmpty()) {
-            for (Document document : litigant.getDocuments()) {
-                Object additionalDetails = document.getAdditionalDetails();
-                ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
-                String documentName = additionalDetailsNode.has("documentName")
-                        ? additionalDetailsNode.get("documentName").asText()
-                        : "";
-                if (UPLOAD_PIP_AFFIDAVIT.equals(documentName)) {
-                    return true;
+    private boolean isPIP(Party litigant, CourtCase courtCase) {
+        if(litigant.getPartyType().contains("complainant")){
+            if(courtCase.getRepresentatives()!= null && !courtCase.getRepresentatives().isEmpty()) {
+                for (AdvocateMapping mapping : courtCase.getRepresentatives()) {
+                    Party litigantParty = mapping.getRepresenting().stream()
+                                .filter(party -> party.getIndividualId().equalsIgnoreCase(litigant.getIndividualId()) && party.getIsActive())
+                            .findFirst()
+                            .orElse(null);
+
+                    // If litigant is actively represented by an advocate, they're not self-represented
+                    if (litigantParty != null) {
+                        return false;
+                    }
                 }
             }
+            return true;
         }
-        return false;
+        else{
+            if(litigant.getDocuments()!=null && !litigant.getDocuments().isEmpty()) {
+                for (Document document : litigant.getDocuments()) {
+                    Object additionalDetails = document.getAdditionalDetails();
+                    ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
+                    String documentName = additionalDetailsNode.has("documentName")
+                            ? additionalDetailsNode.get("documentName").asText()
+                            : "";
+                    if (UPLOAD_PIP_AFFIDAVIT.equals(documentName)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
     }
 
     private boolean isValidReplacement(CourtCase courtCase, JoinCaseRepresentative representative, RepresentingJoinCase representingJoinCase) {
