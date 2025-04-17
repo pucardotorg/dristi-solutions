@@ -5,6 +5,52 @@
     "masterName": "TaxHeadMaster",
     "mdmsPayload": [
       {
+        "id": "07ed6ad3-4640-42dd-a479-d6b4e970d3ae",
+        "tenantId": "kl",
+        "schemaCode": "BillingService.TaxHeadMaster",
+        "uniqueIdentifier": "TASK_WARRANT_ADVANCE_CARRYFORWARD_POST_PROCESS_FEES",
+        "data": {
+          "code": "TASK_WARRANT_ADVANCE_CARRYFORWARD_POST_PROCESS_FEES",
+          "name": "Warrant Post Process Fee",
+          "order": "0",
+          "isDebit": true,
+          "service": "task-warrant",
+          "category": "ADVANCE_COLLECTION",
+          "isRequired": false,
+          "isActualDemand": false
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1744895157800,
+          "lastModifiedTime": 1744895157800
+        }
+      },
+      {
+        "id": "73dbabc6-041f-4b1c-8fb2-78d2fe774dd1",
+        "tenantId": "kl",
+        "schemaCode": "BillingService.TaxHeadMaster",
+        "uniqueIdentifier": "TASK_WARRANT_ADVANCE_CARRYFORWARD_EPOST_COURT_FEES",
+        "data": {
+          "code": "TASK_WARRANT_ADVANCE_CARRYFORWARD_EPOST_COURT_FEES",
+          "name": "Warrant Post Court Fee",
+          "order": "0",
+          "isDebit": true,
+          "service": "task-warrant",
+          "category": "ADVANCE_COLLECTION",
+          "isRequired": false,
+          "isActualDemand": false
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1744893502802,
+          "lastModifiedTime": 1744893502802
+        }
+      },
+      {
         "id": "60d825de-97b5-49ce-a7ba-ae2056053587",
         "tenantId": "kl",
         "schemaCode": "BillingService.TaxHeadMaster",
@@ -35,6 +81,46 @@
     "masterName": "PaymentMasterCode",
     "mdmsPayload": [
       {
+        "id": "2b7c158d-efa1-4f31-a484-4d03126a0e16",
+        "tenantId": "kl",
+        "schemaCode": "payment.PaymentMasterCode",
+        "uniqueIdentifier": "TASK_WARRANT_ADVANCE_CARRYFORWARD_POST_PROCESS_FEES",
+        "data": {
+          "type": "E Post",
+          "masterCode": "TASK_WARRANT_ADVANCE_CARRYFORWARD_POST_PROCESS_FEES",
+          "paymentType": "Warrant Post Process Fee",
+          "businessService": "task-warrant",
+          "deliveryChannel": "EPOST"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1744895030413,
+          "lastModifiedTime": 1744895030413
+        }
+      },
+      {
+        "id": "cca23d94-b458-425f-a1cb-b91c8806167f",
+        "tenantId": "kl",
+        "schemaCode": "payment.PaymentMasterCode",
+        "uniqueIdentifier": "TASK_WARRANT_ADVANCE_CARRYFORWARD_EPOST_COURT_FEES",
+        "data": {
+          "type": "Court Fee",
+          "masterCode": "TASK_WARRANT_ADVANCE_CARRYFORWARD_EPOST_COURT_FEES",
+          "paymentType": "Warrant Post Court Fee",
+          "businessService": "task-warrant",
+          "deliveryChannel": "EPOST"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1744893397093,
+          "lastModifiedTime": 1744893397093
+        }
+      },
+      {
         "id": "7d91ee12-a852-4635-8cd3-1caf45d383f4",
         "tenantId": "kl",
         "schemaCode": "payment.PaymentMasterCode",
@@ -61,6 +147,31 @@
     "moduleName": "payment",
     "masterName": "paymentType",
     "mdmsPayload": [
+      {
+        "id": "327c5857-e47f-42e8-b0e9-ad17bd83c31a",
+        "tenantId": "kl",
+        "schemaCode": "payment.paymentType",
+        "uniqueIdentifier": "19",
+        "data": {
+          "id": 19,
+          "suffix": "POST_COURT",
+          "paymentType": "Warrant Post Court Fee",
+          "businessService": [
+            {
+              "id": 1,
+              "businessCode": "task-warrant"
+            }
+          ],
+          "deliveryChannel": "EPOST"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1744892813533,
+          "lastModifiedTime": 1744892813533
+        }
+      },
       {
         "id": "e6a478c3-2dce-4b0e-8194-e53ad3374ad8",
         "tenantId": "kl",
