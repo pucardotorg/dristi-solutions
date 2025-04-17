@@ -1,0 +1,193 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "advocateDetails": {
+      "type": "object",
+      "properties": {
+        "barRegistrationNumber": {
+          "type": "string"
+        },
+        "advocateId": {
+          "type": "string"
+        },
+        "advocateUserUuid": {
+          "type": "string"
+        },
+        "mobileNumber": {
+          "type": "string"
+        },
+        "requestedDate": {
+          "type": "integer"
+        },
+        "individualDetails": {
+          "type": "object",
+          "properties": {
+            "firstName": {
+              "type": "string"
+            },
+            "lastName": {
+              "type": "string"
+            },
+            "middleName": {
+              "type": "string"
+            },
+            "individualId": {
+              "type": "string"
+            },
+            "advocateIdProof": {
+              "type": "array",
+              "items": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "fileName": {
+                      "type": "string"
+                    },
+                    "fileStore": {
+                      "type": "string"
+                    },
+                    "documentName": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "fileName",
+                    "fileStore",
+                    "documentName"
+                  ]
+                }
+              ]
+            }
+          },
+          "required": [
+            "firstName",
+            "lastName",
+            "middleName",
+            "individualId",
+            "advocateIdProof"
+          ]
+        }
+      },
+      "required": [
+        "barRegistrationNumber",
+        "advocateId",
+        "advocateUserUuid",
+        "mobileNumber",
+        "requestedDate",
+        "individualDetails"
+      ]
+    },
+    "reason": {
+      "type": "string"
+    },
+    "reasonDocument": {
+      "type": "object",
+      "properties": {
+        "fileStore": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "fileStore"
+      ]
+    },
+    "replacementDetails": {
+      "type": "array",
+      "items": [
+        {
+          "type": "object",
+          "properties": {
+            "advocateDetails": {
+              "type": "object",
+              "properties": {
+                "barRegistrationNumber": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "advocateUuid": {
+                  "type": "string"
+                },
+                "mobileNumber": {
+                  "type": "string"
+                },
+                "userUuid": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "barRegistrationNumber",
+                "name",
+                "advocateUuid",
+                "mobileNumber",
+                "userUuid"
+              ]
+            },
+            "litigantDetails": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "individualId": {
+                  "type": "string"
+                },
+                "partyType": {
+                  "type": "string"
+                },
+                "userUuid": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "individualId",
+                "partyType",
+                "userUuid"
+              ]
+            },
+            "document": {
+              "type": "object",
+              "properties": {
+                "fileStore": {
+                  "type": "string"
+                },
+                "additionalDetails": {
+                  "type": "object"
+                },
+                "documentType": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "fileStore",
+                "additionalDetails",
+                "documentType"
+              ]
+            },
+            "isLitigantPip": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "litigantDetails",
+            "document",
+            "isLitigantPip"
+          ]
+        }
+      ]
+    }
+  },
+  "required": [
+    "advocateDetails",
+    "reason",
+    "reasonDocument",
+    "rePlacementDetails"
+  ]
+}
