@@ -5,6 +5,28 @@
     "masterName": "paymentTypeToBreakupMapping",
     "mdmsPayload": [
       {
+        "id": "d1d81591-cddb-4afb-a80c-3f9628dd0777",
+        "tenantId": "kl",
+        "schemaCode": "payment.paymentTypeToBreakupMapping",
+        "uniqueIdentifier": "16",
+        "data": {
+          "breakUpList": [
+            {
+              "breakUpCode": "COURT_FEE",
+              "breakUpName": "Court Fee"
+            }
+          ],
+          "paymentType": "16"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1744878931657,
+          "lastModifiedTime": 1744878931657
+        }
+      },
+      {
         "id": "3d328cd0-cb2b-4148-8373-5f1d109a76eb",
         "tenantId": "kl",
         "schemaCode": "payment.paymentTypeToBreakupMapping",
@@ -668,6 +690,35 @@
           "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
           "createdTime": 1744621086588,
           "lastModifiedTime": 1744621086588
+        }
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "payment",
+    "master": "paymentMode",
+    "mdmsPayload": [
+      {
+        "id": "c852ea11-eb9c-408f-a1fa-ab4d20fa3fa5",
+        "tenantId": "kl",
+        "schemaCode": "payment.paymentMode",
+        "uniqueIdentifier": "6",
+        "data": {
+          "paymentMode": [
+            "ONLINE",
+            "OFFLINE"
+          ],
+          "id": 6,
+          "suffix": "POST_PROCESS",
+          "gateway": "SBI"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1729236915515,
+          "lastModifiedTime": 1744886684484
         }
       }
     ]
