@@ -1936,10 +1936,7 @@ const GenerateOrders = () => {
           "DD-MM-YYYY"
         )}`;
       case "SCHEDULING_NEXT_HEARING":
-        return `For ${t(currentOrder?.orderDetails?.purposeOfHearing)} on ${formatDate(
-          new Date(currentOrder?.additionalDetails?.formdata?.hearingDate),
-          "DD-MM-YYYY"
-        )}`;
+        return `${currentOrder?.additionalDetails?.formdata?.comments?.text || ""}`;
       case "RESCHEDULE_OF_HEARING_DATE":
         return `Hearing for ${formatDate(
           new Date(currentOrder?.additionalDetails?.formdata?.newHearingDate),
