@@ -48,7 +48,13 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
         {}
       );
       if (gateway) {
-        const status = await handleButtonClick(gateway?.payload?.url, gateway?.payload?.data, gateway?.payload?.headers);
+        const status = await handleButtonClick(
+          gateway?.payload?.url,
+          gateway?.payload?.data,
+          gateway?.payload?.headers,
+          bill?.Bill?.[0]?.consumerCode,
+          bill?.Bill?.[0]?.businessService
+        );
         return status;
       } else {
         handleError("Error calling e-Treasury.");
@@ -59,7 +65,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
     }
   };
 
-  const handleButtonClick = (url, data, header) => {
+  const handleButtonClick = (url, data, header, billConsumerCode, billBusinessService) => {
     return new Promise((resolve) => {
       const popup = window.open("", "popupWindow", "width=1000,height=1000,scrollbars=yes");
       if (popup) {
@@ -91,7 +97,10 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
           setPaymentLoader(false);
           if (retryCount < maxRetries) {
             retryCount++;
-            const billAfterPayment = await DRISTIService.callSearchBill({}, { tenantId, consumerCode, service });
+            const billAfterPayment = await DRISTIService.callSearchBill(
+              {},
+              { tenantId, consumerCode: consumerCode || billConsumerCode, service: service || billBusinessService }
+            );
             if (billAfterPayment?.Bill?.[0]?.status === "PAID") {
               clearInterval(checkPopupClosed);
               resolve(true);
