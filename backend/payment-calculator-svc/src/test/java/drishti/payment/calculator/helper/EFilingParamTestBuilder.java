@@ -2,7 +2,6 @@ package drishti.payment.calculator.helper;
 
 import drishti.payment.calculator.web.models.EFilingParam;
 import drishti.payment.calculator.web.models.Range;
-import io.swagger.models.auth.In;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -40,7 +39,7 @@ public class EFilingParamTestBuilder {
 
     public EFilingParamTestBuilder withPetitionFee() {
 
-        this.builder.petitionFee(Map.of(
+        this.builder.complaintFee(Map.of(
                         "0-50000", Range.builder()
                                 .min(0.0)
                                 .max(50000.0)
