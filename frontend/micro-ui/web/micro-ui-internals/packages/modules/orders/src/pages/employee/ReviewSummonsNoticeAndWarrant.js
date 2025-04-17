@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Header, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
-import { SummonsTabsConfig } from "../../configs/SuumonsConfig";
+import { defaultSearchValuesForJudgePending, SummonsTabsConfig, SummonsTabsConfigJudge } from "../../configs/SuumonsConfig";
 import { useTranslation } from "react-i18next";
 import DocumentModal from "../../components/DocumentModal";
 import PrintAndSendDocumentComponent from "../../components/Print&SendDocuments";
@@ -37,14 +37,36 @@ const handleTaskDetails = (taskDetails) => {
   }
 };
 
+export const getJudgeDefaultConfig = () => {
+  return SummonsTabsConfig?.SummonsTabsConfig?.map((item, index) => {
+    return {
+      ...item,
+      sections: {
+        ...item?.sections,
+        search: {
+          ...item?.sections?.search,
+          uiConfig: {
+            ...item?.sections?.search?.uiConfig,
+            defaultValues: index === 0 ? defaultSearchValuesForJudgePending : defaultSearchValues,
+          },
+        },
+      },
+    };
+  });
+};
+
 const ReviewSummonsNoticeAndWarrant = () => {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
-  const [config, setConfig] = useState(SummonsTabsConfig?.SummonsTabsConfig?.[0]);
+  const roles = Digit.UserService.getUser()?.info?.roles;
+  const isJudge = roles.some((role) => role.code === "JUDGE_ROLE");
+  const [config, setConfig] = useState(isJudge ? getJudgeDefaultConfig()?.[0] : SummonsTabsConfig?.SummonsTabsConfig?.[0]);
   const [showActionModal, setShowActionModal] = useState(false);
   const [showNoticeModal, setshowNoticeModal] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isIcops, setIsIcops] = useState({ state: null, message: "", icopsAcknowledgementNumber: "" });
   const [actionModalType, setActionModalType] = useState("");
   const [isDisabled, setIsDisabled] = useState(true);
   const [rowData, setRowData] = useState({});
@@ -64,7 +86,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [updateStatusDate, setUpdateStatusDate] = useState("");
 
   const [tabData, setTabData] = useState(
-    SummonsTabsConfig?.SummonsTabsConfig?.map((configItem, index) => ({ key: index, label: configItem.label, active: index === 0 ? true : false }))
+    isJudge
+      ? getJudgeDefaultConfig()?.map((configItem, index) => ({ key: index, label: configItem.label, active: index === 0 ? true : false }))
+      : SummonsTabsConfig?.SummonsTabsConfig?.map((configItem, index) => ({
+          key: index,
+          label: configItem.label,
+          active: index === 0 ? true : false,
+        }))
   );
 
   // const handleOpen = (props) => {
@@ -296,7 +324,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const onTabChange = (n) => {
     setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false }))); //setting tab enable which is being clicked
-    setConfig(SummonsTabsConfig?.SummonsTabsConfig?.[n]); // as per tab number filtering the config
+    setConfig(SummonsTabsConfig?.SummonsTabsConfig?.[n]);
+    setReload(!reload);
   };
 
   function findNextHearings(objectsList) {
@@ -354,9 +383,17 @@ const ReviewSummonsNoticeAndWarrant = () => {
     ];
   }, [rowData]);
 
+  const submissionDataIcops = useMemo(() => {
+    return [
+      { key: "Issued Date", value: rowData?.createdDate && convertToDateInputFormat(rowData?.createdDate), copyData: false },
+      { key: "ICOPS_ACKNOWLEDGEMENT_NUMBER", value: isIcops?.icopsAcknowledgementNumber },
+    ];
+  }, [rowData, isIcops]);
+
   const successMessage = useMemo(() => {
     let msg = "";
-    if (documents) {
+    const isViaPolice = rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE";
+    if (documents && !isViaPolice) {
       if (orderType === "NOTICE") {
         msg = t("SUCCESSFULLY_SIGNED_NOTICE");
       } else if (orderType === "WARRANT") {
@@ -373,7 +410,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         msg = t("SENT_SUMMONS_VIA");
       }
     }
-    return `${msg}${!documents ? " " + deliveryChannel : ""}`;
+    return `${msg}${!documents || isViaPolice ? " " + deliveryChannel : ""}`;
   }, [documents, orderType, deliveryChannel]);
 
   const handleSubmitEsign = useCallback(async () => {
@@ -400,10 +437,49 @@ const ReviewSummonsNoticeAndWarrant = () => {
       };
 
       // Attempt to upload the document and handle the response
-      const update = await taskService.UploadTaskDocument(reqBody, { tenantId });
+      setIsLoading(true);
+      const response = await taskService.UploadTaskDocument(reqBody, { tenantId });
+      if (rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE") {
+        // localStorage.removeItem("SignedFileStoreID");
+        const { data: tasksData } = await refetch();
+        if (tasksData) {
+          try {
+            const task = tasksData?.list?.[0];
+            const reqBody = {
+              task: {
+                ...task,
+                ...(typeof task?.taskDetails === "string" && { taskDetails: JSON.parse(task?.taskDetails) }),
+                taskDetails: {
+                  ...(typeof task?.taskDetails === "string" ? JSON.parse(task?.taskDetails) : task?.taskDetails),
+                  deliveryChannels: {
+                    ...task?.taskDetails?.deliveryChannels,
+                    statusChangeDate: formatDate(new Date()),
+                  },
+                },
+                workflow: {
+                  ...tasksData?.list?.[0]?.workflow,
+                  action: "SEND",
+                  documents: [{}],
+                },
+              },
+            };
+            const res = await taskService.updateTask(reqBody, { tenantId });
+            const icopsAcknowledgementNumber = res?.task?.taskDetails?.deliveryChannels?.channelAcknowledgementId || "";
+            setIsIcops({ state: "success", message: "", icopsAcknowledgementNumber });
+            return { continue: true };
+          } catch (error) {
+            setIsIcops({ state: "failed", message: `Something went wrong. ${error}`, icopsAcknowledgementNumber: "" });
+            console.error("Error updating task data:", error);
+            return { continue: true };
+          }
+        }
+      }
+      return { continue: true };
     } catch (error) {
       // Handle errors that occur during the upload process
       console.error("Error uploading document:", error);
+    } finally {
+      setIsLoading(false);
     }
   }, [rowData, signatureId, tenantId]);
 
@@ -419,47 +495,98 @@ const ReviewSummonsNoticeAndWarrant = () => {
           type: "document",
           modalBody: <DocumentViewerWithComment infos={infos} documents={documents} links={links} />,
           actionSaveOnSubmit: () => {},
+          hideSubmit: rowData?.taskType === "WARRANT" && rowData?.documentStatus === "SIGN_PENDING" && !isJudge,
         },
         {
           heading: { label: t("ADD_SIGNATURE") },
           actionSaveLabel: deliveryChannel === "Email" ? t("SEND_EMAIL_TEXT") : t("PROCEED_TO_SENT"),
           actionCancelLabel: t("BACK"),
           modalBody: (
-            <AddSignatureComponent
-              t={t}
-              isSigned={isSigned}
-              setIsSigned={setIsSigned}
-              handleSigned={() => setIsSigned(true)}
-              rowData={rowData}
-              setSignatureId={setSignatureId}
-              deliveryChannel={deliveryChannel}
-            />
+            <div>
+              <AddSignatureComponent
+                t={t}
+                isSigned={isSigned}
+                setIsSigned={setIsSigned}
+                handleSigned={() => setIsSigned(true)}
+                rowData={rowData}
+                setSignatureId={setSignatureId}
+                signatureId={signatureId}
+                deliveryChannel={deliveryChannel}
+              />
+            </div>
           ),
-          isDisabled: isSigned ? false : true,
+          isDisabled: !isSigned || isLoading ? true : false,
           actionSaveOnSubmit: handleSubmitEsign,
+          async: true,
         },
-        {
-          type: "success",
-          hideSubmit: true,
-          modalBody: (
-            <CustomStepperSuccess
-              successMessage={successMessage}
-              bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
-              submitButtonText={documents ? "MARK_AS_SENT" : "CS_CLOSE"}
-              closeButtonText={documents ? "CS_CLOSE" : "DOWNLOAD_DOCUMENT"}
-              closeButtonAction={handleClose}
-              submitButtonAction={handleSubmit}
-              t={t}
-              submissionData={submissionData}
-              documents={documents}
-              deliveryChannel={deliveryChannel}
-              orderType={orderType}
-            />
-          ),
-        },
+        ...(rowData?.taskDetails?.deliveryChannels?.channelCode !== "POLICE" ||
+        (rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE" && isIcops?.state)
+          ? [
+              {
+                type: isIcops?.state === "failed" ? "failure" : "success",
+                hideSubmit: true,
+                heading: isIcops?.state === "failed" ? { label: t("FIELD_ERROR") } : null,
+                actionCancelLabel: isIcops?.state === "failed" ? t("CS_COMMON_BACK") : null,
+                modalBody:
+                  isIcops?.state === "failed" ? (
+                    <div style={{ margin: "25px" }}>
+                      <h1>{isIcops?.message}</h1>
+                    </div>
+                  ) : isIcops?.state === "success" ? (
+                    <CustomStepperSuccess
+                      successMessage={successMessage}
+                      bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
+                      submitButtonText={"CS_COMMON_CLOSE"}
+                      // closeButtonText={}
+                      // closeButtonAction={false}
+                      submitButtonAction={() => {
+                        setShowActionModal(false);
+                        setReload(!reload);
+                      }}
+                      t={t}
+                      submissionData={submissionDataIcops}
+                      documents={documents}
+                      deliveryChannel={deliveryChannel}
+                      orderType={orderType}
+                    />
+                  ) : (
+                    <CustomStepperSuccess
+                      successMessage={successMessage}
+                      bannerSubText={t("PARTY_NOTIFIED_ABOUT_DOCUMENT")}
+                      submitButtonText={documents ? "MARK_AS_SENT" : "CS_CLOSE"}
+                      closeButtonText={documents ? "CS_CLOSE" : "DOWNLOAD_DOCUMENT"}
+                      closeButtonAction={handleClose}
+                      submitButtonAction={handleSubmit}
+                      t={t}
+                      submissionData={submissionData}
+                      documents={documents}
+                      deliveryChannel={deliveryChannel}
+                      orderType={orderType}
+                    />
+                  ),
+              },
+            ]
+          : [{}]),
       ],
     };
-  }, [deliveryChannel, documents, handleClose, handleSubmit, handleSubmitEsign, infos, isSigned, links, orderType, rowData, submissionData, t]);
+  }, [
+    handleClose,
+    t,
+    rowData,
+    infos,
+    documents,
+    links,
+    isJudge,
+    deliveryChannel,
+    isSigned,
+    signatureId,
+    handleSubmitEsign,
+    isIcops,
+    successMessage,
+    handleSubmit,
+    submissionData,
+    orderType,
+  ]);
 
   const handleCloseActionModal = useCallback(() => {
     setShowActionModal(false);

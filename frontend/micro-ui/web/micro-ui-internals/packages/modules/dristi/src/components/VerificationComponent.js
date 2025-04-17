@@ -137,10 +137,8 @@ function VerificationComponent({ t, config, onSelect, formData = {}, errors, set
         let currentValue = (formData && formData[config.key] && formData[config.key][input.name]) || "";
         const isComplainantId =
           formData?.[config?.key]?.[input?.name] === true || formData?.complainantId?.complainantId?.complainantId?.["ID_Proof"]?.[0]?.[1]?.["file"];
-        if (isComplainantId && input?.name === "complainantId") {
+        if (isComplainantId) {
           currentValue = formData?.complainantVerification?.individualDetails?.document;
-        } else if (isComplainantId && input?.name === "poaComplainantId") {
-          currentValue = formData?.poaVerification?.individualDetails?.document;
         }
         let fileErrors =
           currentValue?.["ID_Proof"]?.[0]?.[1]?.["file"] &&

@@ -210,7 +210,7 @@ const RenderDeliveryChannels = ({
   );
 };
 
-const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) => {
+const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) => {
   const urlParams = new URLSearchParams(window.location.search);
   const filingNumber = urlParams.get("filingNumber");
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -220,8 +220,6 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   const [userList, setUserList] = useState([]);
   const [policeStationIdMapping, setPoliceStationIdMapping] = useState([]);
   const [deliveryChannels, setDeliveryChannels] = useState([
-    { label: "SMS", type: "SMS", code: "SMS", values: [] },
-    { label: "EMAIL", type: "E-mail", code: "EMAIL", values: [] },
     {
       label: "EPOST",
       type: "e-Post",
@@ -234,7 +232,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       code: "RPAD",
       values: [],
     },
-    orderType === "SUMMONS" && { label: "VIA_POLICE", type: "Via Police", code: "POLICE", values: [] },
+    orderType === "WARRANT" && { label: "VIA_POLICE", type: "Via Police", code: "POLICE", values: [] },
   ]);
 
   const { data: caseData, refetch } = useSearchCaseService(
@@ -280,7 +278,6 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       let users = [];
       if (caseDetails?.additionalDetails) {
         const respondentData = caseDetails?.additionalDetails?.respondentDetails?.formdata || [];
-        const witnessData = caseDetails?.additionalDetails?.witnessDetails?.formdata || [];
 
         const updatedRespondentData = respondentData.map((item, index) => ({
           ...item,
@@ -301,22 +298,8 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             uniqueId: item?.uniqueId,
           },
         }));
-        const updatedWitnessData = witnessData.map((item, index) => ({
-          ...item,
-          data: {
-            ...item?.data,
-            firstName: item?.data?.firstName,
-            lastName: item?.data?.lastName,
-            witnessDesignation: item?.data?.witnessDesignation,
-            address: mapAddressDetails(item?.data?.addressDetails),
-            partyType: "Witness",
-            phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
-            email: item?.data?.emails?.emailId || [],
-            uuid: item?.data?.uuid,
-            partyIndex: `Witness_${index}`,
-          },
-        }));
-        users = [...updatedRespondentData, ...updatedWitnessData];
+
+        users = [...updatedRespondentData];
       }
       setUserList(users);
     };
@@ -478,8 +461,6 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       setPoliceStationIdMapping(policeStationIdMapping);
       setDeliveryChannels(
         [
-          { label: "SMS", type: "SMS", code: "SMS", values: [...new Set(phone_numbers || [])] },
-          { label: "EMAIL", type: "E-mail", code: "EMAIL", values: [...new Set(email || [])] },
           {
             label: "EPOST",
             type: "e-Post",
@@ -492,7 +473,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             code: "RPAD",
             values: address || [],
           },
-          orderType === "SUMMONS" && { label: "VIA_POLICE", type: "Via Police", code: "POLICE", values: address || [] },
+          orderType === "WARRANT" && { label: "VIA_POLICE", type: "Via Police", code: "POLICE", values: address || [] },
         ]
           .filter((item) => Boolean(item))
           .map((item) => item)
@@ -543,31 +524,6 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
                 style={{ maxWidth: "100%", marginBottom: 8 }}
                 className="party-dropdown"
               />
-              {
-                <Button
-                  onButtonClick={handleAddParty}
-                  className="add-party-btn"
-                  style={{
-                    backgroundColor: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: 0,
-                    WebkitBoxShadow: "none",
-                    boxShadow: "none",
-                    height: "auto",
-                  }}
-                  textStyles={{
-                    marginTop: 0,
-                    fontFamily: "Roboto",
-                    fontSize: "16px",
-                    fontWeight: 700,
-                    lineHeight: "18.75px",
-                    textAlign: "center",
-                    color: "#007E7E",
-                  }}
-                  label={t("+ Add new witness")}
-                />
-              }
             </div>
           )}
           {input.type !== "dropdown" && selectedParty && (
@@ -598,4 +554,4 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   );
 };
 
-export default SummonsOrderComponent;
+export default WarrantOrderComponent;

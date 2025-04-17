@@ -16,11 +16,10 @@ const customNoteConfig = {
   },
 };
 
-function PaymentModal({ t, handleClosePaymentModal, handleSkipPayment, handleMakePayment, tenantId, consumerCode, paymentLoader }) {
+function PaymentModal({ t, handleClosePaymentModal, handleSkipPayment, handleMakePayment, tenantId, consumerCode, paymentLoader, totalAmount }) {
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
   };
-  const totalAmount = 20;
 
   const CloseBtn = (props) => {
     return (

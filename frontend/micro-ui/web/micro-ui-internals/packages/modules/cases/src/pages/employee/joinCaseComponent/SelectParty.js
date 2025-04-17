@@ -64,7 +64,7 @@ const SelectParty = ({
   const advocateToReplaceList = useMemo(() => {
     if (selectPartyData?.userType?.value === "Litigant") return [];
     if (selectPartyData?.userType?.value === "Advocate" && (!party?.length || party?.length === 0)) return [];
-    const partyWithAdvocate = (Array.isArray(party) ? party : [])?.flatMap((party) => {
+    const partyWithAdvocate = party?.flatMap((party) => {
       const { representatives } = searchLitigantInRepresentives(caseDetails?.representatives, party?.individualId);
       if (representatives?.length > 0) {
         return representatives?.map((representative) => ({

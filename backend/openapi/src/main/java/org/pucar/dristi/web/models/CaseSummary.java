@@ -107,7 +107,7 @@ public class CaseSummary {
     public enum CaseTypeEnum {
         CMP("Criminal Miscellaneous Petition"),
 
-        ST("Summary Trail");
+        ST("Summary Trial");
 
         private String value;
 

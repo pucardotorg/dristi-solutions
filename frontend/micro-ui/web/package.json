@@ -23,7 +23,7 @@
     "@egovernments/digit-ui-module-orders": "0.0.1",
     "@egovernments/digit-ui-module-submissions": "0.0.1",
     "@egovernments/digit-ui-react-components": "1.8.2-beta.11",
-    "dristi-ui-css": "0.0.2-dristi-kerala.5",
+    "dristi-ui-css": "0.0.2-dristi-kerala.6",
     "babel-loader": "8.1.0",
     "clean-webpack-plugin": "4.0.0",
     "css-loader": "5.2.6",

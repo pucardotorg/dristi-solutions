@@ -16,7 +16,6 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import ReactTooltip from "react-tooltip";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import Accordion from "../../../components/Accordion";
-import ConfirmCorrectionModal from "../../../components/ConfirmCorrectionModal";
 import ConfirmCourtModal from "../../../components/ConfirmCourtModal";
 import ErrorsAccordion from "../../../components/ErrorsAccordion";
 import FlagBox from "../../../components/FlagBox";
@@ -27,7 +26,7 @@ import { useToast } from "../../../components/Toast/useToast";
 import useGetAllCasesConfig from "../../../hooks/dristi/useGetAllCasesConfig";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import { ReactComponent as InfoIcon } from "../../../icons/info.svg";
-import { CustomAddIcon, CustomArrowDownIcon, CustomDeleteIcon, RightArrow } from "../../../icons/svgIndex";
+import { CustomAddIcon, CustomArrowDownIcon, CustomDeleteIcon, RightArrow, WarningInfoRedIcon } from "../../../icons/svgIndex";
 import { DRISTIService } from "../../../services";
 import { formatDate } from "./CaseType";
 import { sideMenuConfig } from "./Config";
@@ -196,13 +195,11 @@ function EFilingCases({ path }) {
 
   const [openConfigurationModal, setOpenConfigurationModal] = useState(false);
   const [openConfirmCourtModal, setOpenConfirmCourtModal] = useState(false);
-  const [openConfirmCorrectionModal, setOpenConfirmCorrectionModal] = useState(false);
   const [serviceOfDemandNoticeModal, setServiceOfDemandNoticeModal] = useState(false);
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
   const [showConfirmMandatoryModal, setShowConfirmMandatoryModal] = useState(false);
   const [showConfirmOptionalModal, setShowConfirmOptionalModal] = useState(false);
   const [showReviewCorrectionModal, setShowReviewCorrectionModal] = useState(false);
-  const [showReviewConfirmationModal, setShowReviewConfirmationModal] = useState(false);
   const [showCaseLockingModal, setShowCaseLockingModal] = useState(false);
   const [showConfirmDcaSkipModal, setShowConfirmDcaSkipModal] = useState(false);
   const [shouldShowConfirmDcaModal, setShouldShowConfirmDcaModal] = useState(false);
@@ -725,10 +722,10 @@ function EFilingCases({ path }) {
             isDcaSkippedInEFiling: caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data?.isDcaSkippedInEFiling
               ? caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data?.isDcaSkippedInEFiling
               : {
-                  code: "NO",
-                  name: "NO",
-                  showDcaFileUpload: true,
-                },
+                code: "NO",
+                name: "NO",
+                showDcaFileUpload: true,
+              },
             condonationFileUpload: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload,
           };
           if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload) {
@@ -904,15 +901,15 @@ function EFilingCases({ path }) {
                           data:
                             input.key === "advocateDetails"
                               ? [
-                                  {
-                                    name:
-                                      caseDetails?.additionalDetails?.[input.key]?.formdata?.[0]?.data?.advocateBarRegNumberWithName?.[0]
-                                        ?.advocateName,
-                                  },
-                                ] || []
+                                {
+                                  name:
+                                    caseDetails?.additionalDetails?.[input.key]?.formdata?.[0]?.data?.advocateBarRegNumberWithName?.[0]
+                                      ?.advocateName,
+                                },
+                              ] || []
                               : caseDetails?.additionalDetails?.[input.key]?.formdata?.map((data) => ({
-                                  name: `${data?.data?.firstName || ""} ${data?.data?.middleName || ""} ${data?.data?.lastName || ""}`,
-                                })),
+                                name: `${data?.data?.firstName || ""} ${data?.data?.middleName || ""} ${data?.data?.lastName || ""}`,
+                              })),
                         };
                       }),
                     },
@@ -1195,11 +1192,11 @@ function EFilingCases({ path }) {
                               ((address?.addressDetails?.pincode !==
                                 caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.addressDetails?.pincode &&
                                 caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.complainantType?.code ===
-                                  "INDIVIDUAL") ||
+                                "INDIVIDUAL") ||
                                 (address?.addressDetails?.pincode !==
                                   caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.addressCompanyDetails?.pincode &&
                                   caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.complainantType?.code ===
-                                    "REPRESENTATIVE")) &&
+                                  "REPRESENTATIVE")) &&
                               body?.key === "inquiryAffidavitFileUpload"
                           )
                         ) {
@@ -1312,6 +1309,9 @@ function EFilingCases({ path }) {
                     key = formComponent.key + "." + formComponent?.name;
                   }
                 }
+                if (selected === "chequeDetails" && ["dropdown"].includes(formComponent.type)) {
+                  key = formComponent.key + "." + formComponent?.populators?.optionsKey;
+                }
                 if (selected === "demandNoticeDetails" && formComponent.component === "SelectUserTypeComponent") {
                   key =
                     formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name + "." + formComponent.populators?.inputs?.[0]?.optionsKey;
@@ -1373,8 +1373,8 @@ function EFilingCases({ path }) {
                     index + 1 > scrutinyFormLength
                       ? false
                       : scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign)
-                      ? false
-                      : true;
+                        ? false
+                        : true;
                 }
 
                 if (
@@ -1589,9 +1589,9 @@ function EFilingCases({ path }) {
         formdata.map((item, i) => {
           return i === index
             ? {
-                ...item,
-                data: formData,
-              }
+              ...item,
+              data: formData,
+            }
             : item;
         })
       );
@@ -1940,8 +1940,8 @@ function EFilingCases({ path }) {
       return;
     }
 
-    if (selected === "reviewCaseFile" && isCaseReAssigned && !openConfirmCorrectionModal && !isCaseLocked) {
-      setOpenConfirmCorrectionModal(true);
+    if (selected === "reviewCaseFile" && isCaseReAssigned && !isCaseLocked) {
+      setShowCaseLockingModal(true);
       return;
     }
 
@@ -2111,13 +2111,6 @@ function EFilingCases({ path }) {
       });
   };
 
-  const onErrorCorrectionSubmit = async () => {
-    setOpenConfirmCorrectionModal(false);
-    // onSubmit(CaseWorkflowAction.EDIT_CASE);
-    // await createPendingTask({ name: t("PENDING_E_SIGN_FOR_CASE"), status: "PENDING_E-SIGN" });
-    setShowCaseLockingModal(true);
-  };
-
   const handlePageChange = (key, isConfirm) => {
     if (key === selected) {
       return;
@@ -2136,14 +2129,14 @@ function EFilingCases({ path }) {
     const isDrafted =
       caseDetails?.additionalDetails?.[selected]?.isCompleted || caseDetails?.caseDetails?.[selected]?.isCompleted
         ? isMatch(
-            JSON.parse(
-              JSON.stringify(
-                caseDetails?.additionalDetails?.[selected]?.formdata ||
-                  caseDetails?.caseDetails?.[selected]?.formdata || [{ isenabled: true, data: {}, displayindex: 0 }]
-              )
-            ),
-            JSON.parse(JSON.stringify(formdata.filter((data) => data.isenabled)))
-          )
+          JSON.parse(
+            JSON.stringify(
+              caseDetails?.additionalDetails?.[selected]?.formdata ||
+              caseDetails?.caseDetails?.[selected]?.formdata || [{ isenabled: true, data: {}, displayindex: 0 }]
+            )
+          ),
+          JSON.parse(JSON.stringify(formdata.filter((data) => data.isenabled)))
+        )
         : false;
     const newCaseDetails = {
       ...caseDetails,
@@ -2304,10 +2297,6 @@ function EFilingCases({ path }) {
     setIsDisabled(true);
     let calculationResponse = {};
     const assignees = getAllAssignees(caseDetails);
-    const poaHolders = (caseDetails?.poaHolders || [])?.map((poaHolder) => ({
-      uuid: poaHolder?.additionalDetails?.uuid,
-    }));
-
     const fileStoreId = localStorage.getItem("fileStoreId");
     await DRISTIService.caseUpdateService(
       {
@@ -2343,7 +2332,7 @@ function EFilingCases({ path }) {
             entityType: "case-default",
             referenceId: `MANUAL_${caseDetails?.filingNumber}`,
             status: "PENDING_PAYMENT",
-            assignedTo: [...assignees?.map((uuid) => ({ uuid })), ...poaHolders],
+            assignedTo: [...assignees?.map((uuid) => ({ uuid }))],
             assignedRole: ["CASE_CREATOR"],
             cnrNumber: null,
             filingNumber: caseDetails?.filingNumber,
@@ -2390,23 +2379,23 @@ function EFilingCases({ path }) {
         ? isPendingESign
           ? ""
           : isCaseReAssigned
-          ? t("CS_COMMONS_NEXT")
-          : isDraftInProgress
-          ? t("CS_CONFIRM_DETAILS")
-          : isPendingReESign
-          ? t("CS_COMMON_CONTINUE")
-          : t("CS_GO_TO_HOME")
+            ? t("CS_COMMONS_NEXT")
+            : isDraftInProgress
+              ? t("CS_CONFIRM_DETAILS")
+              : isPendingReESign
+                ? t("CS_COMMON_CONTINUE")
+                : t("CS_GO_TO_HOME")
         : selected === "addSignature"
-        ? isPendingESign || isPendingReESign
-          ? t("CS_SUBMIT_CASE")
-          : t("CS_COMMON_CONTINUE")
-        : isDisableAllFieldsMode
-        ? t("CS_GO_TO_HOME")
-        : isCaseReAssigned
-        ? t("CS_COMMONS_NEXT")
-        : isPendingESign
-        ? ""
-        : t("CS_COMMON_CONTINUE"),
+          ? isPendingESign || isPendingReESign
+            ? t("CS_SUBMIT_CASE")
+            : t("CS_COMMON_CONTINUE")
+          : isDisableAllFieldsMode
+            ? t("CS_GO_TO_HOME")
+            : isCaseReAssigned
+              ? t("CS_COMMONS_NEXT")
+              : isPendingESign
+                ? ""
+                : t("CS_COMMON_CONTINUE"),
     [isCaseReAssigned, isDisableAllFieldsMode, isPendingESign, selected, t, isDraftInProgress, isPendingReESign]
   );
 
@@ -2533,19 +2522,63 @@ function EFilingCases({ path }) {
         {isCaseReAssigned && (
           <div className="side-stepper-error-count">
             {judgeObj ? (
-              <FlagBox t={t} judgeObj={judgeObj} />
+              <React.Fragment>
+                <FlagBox t={t} judgeObj={judgeObj} />
+                {caseDetails?.additionalDetails?.scrutinyCommentSendBack &&
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      backgroundColor: "#fdf7ec",
+                      padding: "10px",
+                      fontSize: "14px",
+                      fontFamily: "Arial, sans-serif",
+                      margin: "16px 0px",
+                    }}
+                  >
+                    <div style={{ marginRight: "8px" }}>
+                      <WarningInfoRedIcon />
+                    </div>
+                    <p style={{ margin: 0, fontWeight: "bold" }}>
+                      {t("FSO_COMMENTS")} <span style={{ fontWeight: "normal" }}>{caseDetails?.additionalDetails?.scrutinyCommentSendBack}</span>
+                    </p>
+                  </div>
+                }
+              </React.Fragment>
             ) : (
-              <ErrorsAccordion
-                t={t}
-                totalErrorCount={totalErrors.total}
-                totalWarningCount={totalErrors.warningErrors}
-                pages={errorPages}
-                handlePageChange={handlePageChange}
-                showConfirmModal={confirmModalConfig ? true : false}
-                handleGoToPage={handleGoToPage}
-                selected={selected}
-                onSubmit={onSubmit}
-              />
+              <React.Fragment>
+                <ErrorsAccordion
+                  t={t}
+                  totalErrorCount={totalErrors.total}
+                  totalWarningCount={totalErrors.warningErrors}
+                  pages={errorPages}
+                  handlePageChange={handlePageChange}
+                  showConfirmModal={confirmModalConfig ? true : false}
+                  handleGoToPage={handleGoToPage}
+                  selected={selected}
+                  onSubmit={onSubmit}
+                />
+                {caseDetails?.additionalDetails?.scrutinyCommentSendBack &&
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      backgroundColor: "#fdf7ec",
+                      padding: "10px",
+                      fontSize: "14px",
+                      fontFamily: "Arial, sans-serif",
+                      margin: "16px 0px",
+                    }}
+                  >
+                    <div style={{ marginRight: "8px" }}>
+                      <WarningInfoRedIcon />
+                    </div>
+                    <p style={{ margin: 0, fontWeight: "bold" }}>
+                      {t("FSO_COMMENTS")} <span style={{ fontWeight: "normal" }}>{caseDetails?.additionalDetails?.scrutinyCommentSendBack}</span>
+                    </p>
+                  </div>
+                }
+              </React.Fragment>
             )}
             <div className="total-error-note">
               <div className="header">
@@ -2861,9 +2894,7 @@ function EFilingCases({ path }) {
         </div>
       </div>
       {openConfirmCourtModal && <ConfirmCourtModal setOpenConfirmCourtModal={setOpenConfirmCourtModal} t={t} onSubmitCase={onSubmitCase} />}
-      {openConfirmCorrectionModal && (
-        <ConfirmCorrectionModal onCorrectionCancel={() => setOpenConfirmCorrectionModal(false)} onSubmit={onErrorCorrectionSubmit} />
-      )}
+
       {caseResubmitSuccess && (
         <CorrectionsSubmitModal
           t={t}

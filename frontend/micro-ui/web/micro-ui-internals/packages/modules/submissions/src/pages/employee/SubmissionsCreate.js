@@ -66,6 +66,11 @@ const BAIL_APPLICATION_EXCLUDED_STATUSES = [
   "PENDING_ADMISSION",
 ];
 
+const _getApplicationAmount = (applicationTypeAmountList, applicationType) => {
+  const applicationTypeAmount = applicationTypeAmountList?.find((amount) => amount?.type === applicationType);
+  return applicationTypeAmount?.totalAmount || 20;
+}
+
 const SubmissionsCreate = ({ path }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { t } = useTranslation();
@@ -164,6 +169,19 @@ const SubmissionsCreate = ({ path }) => {
       },
     }
   );
+
+  const { data: applicationTypeAmount, isLoading: isApplicationTypeAmountLoading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "Application",
+    [{ name: "ApplicationType" }],
+    {
+      select: (data) => {
+        return data?.Application?.ApplicationType || [];
+      },
+    }
+  );
+
+  
 
   const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "FilingType" },
@@ -1084,7 +1102,7 @@ const SubmissionsCreate = ({ path }) => {
   const replaceUploadedDocsWithCombinedFile = async (formData) => {
     if (formData?.supportingDocuments?.length) {
       for (let index = 0; index < formData.supportingDocuments.length; index++) {
-        const doc = formData.supportingDocuments[index];
+        const doc = formData?.supportingDocuments[index];
         if (doc?.submissionDocuments?.uploadedDocs?.length) {
           try {
             const docTitle = doc?.documentTitle;
@@ -1287,7 +1305,7 @@ const SubmissionsCreate = ({ path }) => {
     service: entityType,
     path,
     caseDetails,
-    totalAmount: "20",
+    totalAmount: _getApplicationAmount(applicationTypeAmount, applicationType),
     scenario,
   });
 
@@ -1334,12 +1352,12 @@ const SubmissionsCreate = ({ path }) => {
         calculation: [
           {
             tenantId: tenantId,
-            totalAmount: 20,
+            totalAmount: _getApplicationAmount(applicationTypeAmount, applicationType),
             breakDown: [
               {
                 type: "Application Fee",
                 code: "APPLICATION_FEE",
-                amount: 20.0,
+                amount: _getApplicationAmount(applicationTypeAmount, applicationType),
                 additionalParams: {},
               },
             ],
@@ -1386,7 +1404,8 @@ const SubmissionsCreate = ({ path }) => {
     (applicationNumber ? !applicationDetails?.additionalDetails?.formdata : false) ||
     (orderNumber ? !orderDetails?.orderTitle : false) ||
     (hearingId ? (hearingsData?.HearingList?.[0]?.startTime ? false : true) : false) ||
-    isAllOrdersLoading
+    isAllOrdersLoading ||
+    isApplicationTypeAmountLoading
   ) {
     return <Loader />;
   }
@@ -1438,6 +1457,7 @@ const SubmissionsCreate = ({ path }) => {
           consumerCode={applicationDetails?.applicationNumber}
           paymentLoader={paymentLoader}
           entityType={entityType}
+          totalAmount={_getApplicationAmount(applicationTypeAmount, applicationType)}
         />
       )}
       {showSuccessModal && (

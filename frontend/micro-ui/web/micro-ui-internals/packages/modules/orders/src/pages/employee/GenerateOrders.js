@@ -930,34 +930,6 @@ const GenerateOrders = () => {
               };
             });
           }
-          if (orderType === "WARRANT") {
-            orderTypeForm = orderTypeForm?.map((section) => {
-              return {
-                ...section,
-                body: section.body.map((field) => {
-                  if (field.key === "warrantFor") {
-                    return {
-                      ...field,
-                      ...(!currentOrder?.additionalDetails?.warrantFor && {
-                        disable: false,
-                      }),
-                      populators: {
-                        ...field.populators,
-                        options: [
-                          ...(currentOrder?.additionalDetails?.warrantFor
-                            ? [currentOrder?.additionalDetails?.warrantFor]
-                            : [...respondents, ...unJoinedLitigant].map((data) => {
-                                return { name: data?.name || "", uniqueId: data?.uniqueId };
-                              })),
-                        ],
-                      },
-                    };
-                  }
-                  return field;
-                }),
-              };
-            });
-          }
           if (orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE") {
             orderTypeForm = orderTypeForm?.map((section) => {
               return {
@@ -1179,34 +1151,6 @@ const GenerateOrders = () => {
                             }
                           : input
                       ),
-                    },
-                  };
-                }
-                return field;
-              }),
-            };
-          });
-        }
-        if (orderType === "WARRANT") {
-          orderTypeForm = orderTypeForm?.map((section) => {
-            return {
-              ...section,
-              body: section.body.map((field) => {
-                if (field.key === "warrantFor") {
-                  return {
-                    ...field,
-                    ...(!currentOrder?.additionalDetails?.warrantFor && {
-                      disable: false,
-                    }),
-                    populators: {
-                      ...field.populators,
-                      options: [
-                        ...(currentOrder?.additionalDetails?.warrantFor
-                          ? [currentOrder?.additionalDetails?.warrantFor]
-                          : [...respondents, ...unJoinedLitigant].map((data) => {
-                              return { name: data?.name || "", uniqueId: data?.uniqueId };
-                            })),
-                      ],
                     },
                   };
                 }
@@ -1987,15 +1931,11 @@ const GenerateOrders = () => {
       case "REFERRAL_CASE_TO_ADR":
         return "Case referred to Alternative Dispute Resolution to seek settlement";
       case "SCHEDULE_OF_HEARING_DATE":
-        return `For ${t(currentOrder?.orderDetails?.purposeOfHearing)} on ${formatDate(
-          new Date(currentOrder?.additionalDetails?.formdata?.hearingDate),
-          "DD-MM-YYYY"
-        )}`;
+        return `For ${t(
+          currentOrder?.orderDetails?.purposeOfHearing || currentOrder?.additionalDetails?.formdata?.hearingPurpose?.code
+        )} on ${formatDate(new Date(currentOrder?.additionalDetails?.formdata?.hearingDate), "DD-MM-YYYY")}`;
       case "SCHEDULING_NEXT_HEARING":
-        return `For ${t(currentOrder?.orderDetails?.purposeOfHearing)} on ${formatDate(
-          new Date(currentOrder?.additionalDetails?.formdata?.hearingDate),
-          "DD-MM-YYYY"
-        )}`;
+        return `${currentOrder?.additionalDetails?.formdata?.comments?.text || ""}`;
       case "RESCHEDULE_OF_HEARING_DATE":
         return `Hearing for ${formatDate(
           new Date(currentOrder?.additionalDetails?.formdata?.newHearingDate),
@@ -2024,10 +1964,9 @@ const GenerateOrders = () => {
           "DD-MM-YYYY"
         )}`;
       case "ASSIGNING_NEW_HEARING_DATE":
-        return `For ${t(currentOrder?.orderDetails?.purposeOfHearing)} on ${formatDate(
-          new Date(currentOrder?.additionalDetails?.formdata?.hearingDate),
-          "DD-MM-YYYY"
-        )}`;
+        return `For ${t(
+          currentOrder?.orderDetails?.purposeOfHearing || currentOrder?.additionalDetails?.formdata?.hearingPurpose?.code
+        )} on ${formatDate(new Date(currentOrder?.additionalDetails?.formdata?.hearingDate), "DD-MM-YYYY")}`;
       case "CASE_TRANSFER":
         return "The case is transferred to another court for further proceedings";
       case "SETTLEMENT":
@@ -2449,14 +2388,7 @@ const GenerateOrders = () => {
       const complainantUuids = caseDetails?.litigants
         ?.filter((com) => com?.partyType?.startsWith("complainant"))
         .map((com) => com?.additionalDetails?.uuid);
-
-      const poaHolders = (caseDetails?.poaHolders || [])
-        ?.filter((holder) =>
-          holder?.representingLitigants?.some((represent) => complainants?.some((lit) => lit?.individualId === represent?.individualId))
-        )
-        ?.map((holder) => holder?.additionalDetails?.uuid);
-
-      assignees = [...assignee, ...complainantUuids, ...poaHolders]?.map((uuid) => ({ uuid }));
+      assignees = [...assignee, ...complainantUuids]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
       return ordersService.customApiService(Urls.orders.pendingTask, {
         pendingTask: {
@@ -2487,14 +2419,7 @@ const GenerateOrders = () => {
       const complainantUuids = caseDetails?.litigants
         ?.filter((com) => com?.partyType?.startsWith("complainant"))
         .map((com) => com?.additionalDetails?.uuid);
-
-      const poaHolders = (caseDetails?.poaHolders || [])
-        ?.filter((holder) =>
-          holder?.representingLitigants?.some((represent) => complainants?.some((lit) => lit?.individualId === represent?.individualId))
-        )
-        ?.map((holder) => holder?.additionalDetails?.uuid);
-
-      assignees = [...assignee, ...complainantUuids, ...poaHolders]?.map((uuid) => ({ uuid }));
+      assignees = [...assignee, ...complainantUuids]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
       const pendingTask = {
         name: t(`MAKE_PAYMENT_FOR_NOTICE_${channelCode}`),
@@ -2527,14 +2452,7 @@ const GenerateOrders = () => {
       const complainantUuids = caseDetails?.litigants
         ?.filter((com) => com?.partyType?.startsWith("complainant"))
         .map((com) => com?.additionalDetails?.uuid);
-
-      const poaHolders = (caseDetails?.poaHolders || [])
-        ?.filter((holder) =>
-          holder?.representingLitigants?.some((represent) => complainants?.some((lit) => lit?.individualId === represent?.individualId))
-        )
-        ?.map((holder) => holder?.additionalDetails?.uuid);
-
-      assignees = [...assignee, ...complainantUuids, ...poaHolders]?.map((uuid) => ({ uuid }));
+      assignees = [...assignee, ...complainantUuids]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
       return ordersService.customApiService(Urls.orders.pendingTask, {
         pendingTask: {
@@ -2565,22 +2483,13 @@ const GenerateOrders = () => {
       name = t("SUBMIT_BAIL_DOCUMENTS");
       entityType = "voluntary-application-submission-bail-documents";
       const assigneeUuid = order?.additionalDetails?.formdata?.partyId;
-      const litigant = caseDetails?.litigants?.find((litigant) => litigant?.additionalDetails?.uuid === assigneeUuid);
-      let poaHolderUuid;
-
-      if (litigant) {
-        poaHolderUuid = (caseDetails?.poaHolders || [])
-          ?.filter((poaHolder) => poaHolder?.representingLitigants?.some((represent) => represent?.individualId === litigant?.individualId))
-          ?.map((poaHolder) => ({ uuid: poaHolder?.additionalDetails?.uuid }));
-      }
-
       return ordersService.customApiService(Urls.orders.pendingTask, {
         pendingTask: {
           name,
           entityType,
           referenceId: `MANUAL_${compositeOrderItemId ? `${compositeOrderItemId}_` : ""}${assigneeUuid}_${order?.orderNumber}`,
           status,
-          assignedTo: [{ uuid: assigneeUuid }, ...poaHolderUuid],
+          assignedTo: [{ uuid: assigneeUuid }],
           assignedRole,
           cnrNumber: cnrNumber,
           filingNumber: filingNumber,
@@ -2882,7 +2791,7 @@ const GenerateOrders = () => {
   };
 
   const getOrderData = (orderType, orderFormData) => {
-    return ["SUMMONS", "NOTICE"].includes(orderType) ? orderFormData?.party?.data : orderFormData;
+    return ["SUMMONS", "NOTICE", "WARRANT"].includes(orderType) ? orderFormData?.party?.data : orderFormData;
   };
 
   const getCourtFee = async (channelId, receiverPincode, taskType) => {
@@ -2911,20 +2820,22 @@ const GenerateOrders = () => {
     let payload = {};
     const { litigants } = caseDetails;
     const complainantIndividualId = litigants?.find((item) => item?.partyType === "complainant.primary")?.individualId;
-    const individualDetail = await Digit.DRISTIService.searchIndividualUser(
-      {
-        Individual: {
-          individualId: complainantIndividualId,
-        },
-      },
-      { tenantId, limit: 1000, offset: 0 }
-    );
+    // const individualDetail1 = await Digit.DRISTIService.searchIndividualUser(
+    //   {
+    //     Individual: {
+    //       individualId: complainantIndividualId,
+    //     },
+    //   },
+    //   { tenantId, limit: 1000, offset: 0 }
+    // );
 
     const orderData = orderDetails?.order;
     const orderFormData = getFormData(orderType, orderData);
     const orderFormValue = orderDetails?.order?.additionalDetails?.formdata;
     const respondentNameData = getOrderData(orderType, orderFormData);
-    const selectedChannel = orderData?.additionalDetails?.formdata?.[orderType === "NOTICE" ? "noticeOrder" : "SummonsOrder"]?.selectedChannels;
+    const selectedChannel =
+      orderData?.additionalDetails?.formdata?.[orderType === "NOTICE" ? "noticeOrder" : orderType === "SUMMONS" ? "SummonsOrder" : "warrantFor"]
+        ?.selectedChannels;
     const noticeType = orderData?.additionalDetails?.formdata?.noticeType?.type;
     const respondentAddress = orderFormData?.addressDetails
       ? orderFormData?.addressDetails?.map((data) => ({ ...data?.addressDetails }))
@@ -2936,28 +2847,28 @@ const GenerateOrders = () => {
     const respondentName = result?.name || result;
     const respondentPhoneNo = orderFormData?.party?.data?.phone_numbers || [];
     const respondentEmail = orderFormData?.party?.data?.email || [];
-    const complainantDetails = individualDetail?.Individual?.[0];
-    const addressLine1 = complainantDetails?.address[0]?.addressLine1 || "";
-    const addressLine2 = complainantDetails?.address[0]?.addressLine2 || "";
-    const buildingName = complainantDetails?.address[0]?.buildingName || "";
-    const street = complainantDetails?.address[0]?.street || "";
-    const city = complainantDetails?.address[0]?.city || "";
-    const pincode = complainantDetails?.address[0]?.pincode || "";
-    const latitude = complainantDetails?.address[0]?.latitude || "";
-    const longitude = complainantDetails?.address[0]?.longitude || "";
-    const doorNo = complainantDetails?.address[0]?.doorNo || "";
-    const complainantName = getComplainantName(caseDetails?.additionalDetails?.complainantDetails?.formdata[0]?.data);
-    const address = `${doorNo ? doorNo + "," : ""} ${buildingName ? buildingName + "," : ""} ${street}`.trim();
+    const complainantDetails = caseDetails?.additionalDetails?.complainantDetails?.formdata?.find(
+      (d) => d?.data?.complainantVerification?.individualDetails?.individualId === complainantIndividualId
+    )?.data;
+
+    const state = complainantDetails?.addressDetails?.state || "";
+    const district = complainantDetails?.addressDetails?.district || "";
+    const city = complainantDetails?.addressDetails?.city || "";
+    const pincode = complainantDetails?.addressDetails?.pincode || "";
+    const latitude = complainantDetails?.addressDetails?.pincode?.latitude || "";
+    const longitude = complainantDetails?.addressDetails?.pincode?.longitude || "";
+    const complainantName = getComplainantName(complainantDetails);
+    const locality = complainantDetails?.addressDetails?.locality || "";
     const complainantAddress = {
       pincode: pincode,
-      district: addressLine2,
+      district: district,
       city: city,
-      state: addressLine1,
+      state: state,
       coordinate: {
         longitude: longitude,
         latitude: latitude,
       },
-      locality: address,
+      locality: locality,
     };
     const courtDetails = courtRoomData?.Court_Rooms?.find((data) => data?.code === caseDetails?.courtId);
 
@@ -3135,7 +3046,16 @@ const GenerateOrders = () => {
               channelCode: channelTypeEnum?.[item?.type]?.code,
             };
 
-            const address = ["e-Post", "Via Police", "Registered Post"].includes(item?.type)
+            const address = ["Via Police"].includes(item?.type)
+              ? {
+                  ...item?.value,
+                  locality: item?.value?.locality || "",
+                  coordinate: {
+                    longitude: item?.value?.geoLocationDetails?.longitude,
+                    latitude: item?.value?.geoLocationDetails?.latitude,
+                  },
+                }
+              : ["e-Post", "Registered Post"].includes(item?.type)
               ? respondentAddress[channelMap.get(item?.type) - 1]
               : respondentAddress[0];
             const sms = ["SMS"].includes(item?.type) ? respondentPhoneNo[channelMap.get(item?.type) - 1] : respondentPhoneNo[0];
@@ -3143,7 +3063,9 @@ const GenerateOrders = () => {
 
             clonedPayload.respondentDetails = {
               ...clonedPayload.respondentDetails,
-              address: ["e-Post", "Via Police", "Registered Post"].includes(item?.type)
+              address: ["Via Police"].includes(item?.type)
+                ? address
+                : ["e-Post", "Registered Post"].includes(item?.type)
                 ? {
                     ...address,
                     locality: item?.value?.locality || address?.locality,
@@ -3155,6 +3077,25 @@ const GenerateOrders = () => {
               age: "",
               gender: "",
             };
+
+            if (clonedPayload?.witnessDetails) {
+              clonedPayload.witnessDetails = {
+                ...clonedPayload.witnessDetails,
+                address: ["Via Police"].includes(item?.type)
+                  ? address
+                  : ["e-Post", "Registered Post"].includes(item?.type)
+                  ? {
+                      ...address,
+                      locality: item?.value?.locality || address?.locality,
+                      coordinate: item?.value?.coordinates || address?.coordinates,
+                    }
+                  : { ...address, coordinate: address?.coordinates } || "",
+                phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
+                email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
+                age: "",
+                gender: "",
+              };
+            }
           }
           if ("deliveryChannel" in clonedPayload) {
             const channelDetailsEnum = {
@@ -3797,25 +3738,13 @@ const GenerateOrders = () => {
             await updateCaseDetails("ISSUE_ORDER");
             const caseDetails = await refetchCaseData();
             const caseData = caseDetails?.data?.criteria?.[0]?.responseList?.[0];
-            const respondent = caseData?.litigants?.filter((litigant) => litigant?.partyType?.includes("respondent"));
+            const respondent = caseData?.litigants?.find((litigant) => litigant?.partyType?.includes("respondent"));
             const advocate = caseData?.representatives?.find((representative) =>
               representative?.representing?.some((represent) => respondent && represent?.individualId === respondent?.individualId)
             );
 
             const assignees = [];
-            if (respondent?.length > 0) {
-              assignees.push(
-                ...respondent?.map((res) => ({
-                  uuid: res?.additionalDetails?.uuid,
-                }))
-              );
-              const poaHolders = (caseDetails?.poaHolders || [])
-                ?.filter((poaHolder) =>
-                  poaHolder?.representingLitigants?.some((represent) => respondent?.some((res) => res?.individualId === represent?.individualId))
-                )
-                ?.map((poaHolder) => poaHolder?.additionalDetails?.uuid);
-              assignees.push(...poaHolders?.map((uuid) => ({ uuid })));
-            }
+            if (respondent) assignees.push({ uuid: respondent?.additionalDetails?.uuid });
             if (advocate) assignees.push({ uuid: advocate?.additionalDetails?.uuid });
 
             if (respondent && assignees?.length > 0) {
@@ -3864,24 +3793,12 @@ const GenerateOrders = () => {
               await updateCaseDetails("ISSUE_ORDER");
               const caseDetails = await refetchCaseData();
               const caseData = caseDetails?.data?.criteria?.[0]?.responseList?.[0];
-              const respondent = caseData?.litigants?.filter((litigant) => litigant?.partyType?.includes("respondent"));
+              const respondent = caseData?.litigants?.find((litigant) => litigant?.partyType?.includes("respondent"));
               const advocate = caseData?.representatives?.find((representative) =>
                 representative?.representing?.some((represent) => respondent && represent?.individualId === respondent?.individualId)
               );
               const assignees = [];
-              if (respondent?.length > 0) {
-                assignees.push(
-                  ...respondent?.map((res) => ({
-                    uuid: res?.additionalDetails?.uuid,
-                  }))
-                );
-                const poaHolders = (caseDetails?.poaHolders || [])
-                  ?.filter((poaHolder) =>
-                    poaHolder?.representingLitigants?.some((represent) => respondent?.some((res) => res?.individualId === represent?.individualId))
-                  )
-                  ?.map((poaHolder) => poaHolder?.additionalDetails?.uuid);
-                assignees.push(...poaHolders?.map((uuid) => ({ uuid })));
-              }
+              if (respondent) assignees.push({ uuid: respondent?.additionalDetails?.uuid });
               if (advocate) assignees.push({ uuid: advocate?.additionalDetails?.uuid });
 
               if (respondent && assignees?.length > 0) {

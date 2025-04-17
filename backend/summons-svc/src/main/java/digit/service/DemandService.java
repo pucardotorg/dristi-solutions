@@ -115,7 +115,9 @@ public class DemandService {
                 iterator.remove();
             }
         }
-        consumerCodes.addAll(callBillServiceAndCreateDemand(requestInfo, demands, task));
+        if(!demands.isEmpty()){
+            consumerCodes.addAll(callBillServiceAndCreateDemand(requestInfo, demands, task));
+        }
         return consumerCodes;
     }
 

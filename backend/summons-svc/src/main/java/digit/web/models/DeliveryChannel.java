@@ -30,4 +30,7 @@ public class DeliveryChannel {
 
     @JsonProperty("deliveryStatus")
     private String deliveryStatus;
+
+    @JsonProperty("channelAcknowledgementId")
+    private String channelAcknowledgementId;
 }

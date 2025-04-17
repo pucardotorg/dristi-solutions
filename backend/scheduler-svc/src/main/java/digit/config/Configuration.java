@@ -243,4 +243,7 @@ public class Configuration {
     @Value("${hearing.expiry.interval.miliseconds}")
     private Integer expiryIntervalMiliSeconds;
 
+    @Value("${cause.list.cutoff.time}")
+    private String cutoffTime;
+
 }

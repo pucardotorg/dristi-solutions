@@ -143,7 +143,8 @@ public class TaskService {
             String taskType = body.getTask().getTaskType();
             log.info("status , taskType : {} , {} ", status, taskType);
             if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status)){
-                summonUtil.sendSummons(body);
+                String acknowledgementId = summonUtil.sendSummons(body);
+                updateAcknowledgementId(body, acknowledgementId);
             }
 
             // push to join case topic based on status
@@ -175,6 +176,13 @@ public class TaskService {
             throw new CustomException(UPDATE_TASK_ERR, "Error occurred while updating task: " + e.getMessage());
         }
 
+    }
+
+    private void updateAcknowledgementId(TaskRequest body, String acknowledgementId) {
+        JsonNode taskDetails = objectMapper.convertValue(body.getTask().getTaskDetails(), JsonNode.class);
+        ObjectNode deliveryChannels = (ObjectNode) taskDetails.get("deliveryChannels");
+        deliveryChannels.put("channelAcknowledgementId", acknowledgementId);
+        body.getTask().setTaskDetails(taskDetails);
     }
 
     public TaskExists existTask(TaskExistsRequest taskExistsRequest) {
@@ -480,15 +488,24 @@ public class TaskService {
         try {
             CourtCase courtCase = getCourtCase(taskRequest);
             JsonNode taskDetails = getTaskDetails(taskRequest);
-            JsonNode respondentAddress = taskDetails.path("respondentDetails").path("address");
-            String respondentAddressId = respondentAddress.path("id").asText();
-            JsonNode geoLocationFromRespondent = respondentAddress.path(GEOLOCATION);
+            JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
 
-            JsonNode updatedAdditionalDetails = updateGeoLocationInAddress(
-                    courtCase.getAdditionalDetails(), respondentAddressId, geoLocationFromRespondent
+            Map<String, String> partyToPathMap = Map.of(
+                    "respondentDetails", "/respondentDetails/formdata",
+                    "witnessDetails", "/witnessDetails/formdata"
             );
 
-            courtCase.setAdditionalDetails(updatedAdditionalDetails);
+            for (Map.Entry<String, String> entry : partyToPathMap.entrySet()) {
+                String partyKey = entry.getKey();
+                String formDataPath = entry.getValue();
+
+                if (taskDetails.has(partyKey)) {
+                    additionalDetails = updateGeoLocationFromTask(additionalDetails, taskDetails, partyKey, formDataPath);
+                }
+            }
+
+
+            courtCase.setAdditionalDetails(additionalDetails);
             caseUtil.editCase(taskRequest.getRequestInfo(), courtCase);
 
             log.info("Successfully updated geolocation details for case: {}", filingNumber);
@@ -498,6 +515,16 @@ public class TaskService {
             throw new CustomException(ERROR_FROM_CASE, e.getMessage());
         }
     }
+
+    private JsonNode updateGeoLocationFromTask(JsonNode additionalDetails, JsonNode taskDetails, String partyType, String formDataPath) {
+        JsonNode address = taskDetails.path(partyType).path("address");
+        String addressId = address.path("id").asText();
+        JsonNode geoLocation = address.path(GEOLOCATION);
+
+        return updateGeoLocationInAddress(additionalDetails, addressId, geoLocation, formDataPath);
+    }
+
+
 
     private CourtCase getCourtCase(TaskRequest taskRequest) {
         List<CourtCase> caseDetails = caseUtil.getCaseDetails(taskRequest);
@@ -510,25 +537,28 @@ public class TaskService {
     private JsonNode getTaskDetails(TaskRequest taskRequest) {
         return objectMapper.convertValue(taskRequest.getTask().getTaskDetails(), JsonNode.class);
     }
-    private JsonNode updateGeoLocationInAddress(Object additionalDetailsObj, String respondentAddressId, JsonNode geoLocationFromRespondent) {
-        JsonNode additionalDetails = objectMapper.convertValue(additionalDetailsObj, JsonNode.class);
-        JsonNode formDataList = additionalDetails.at("/respondentDetails/formdata");
-
-        if (geoLocationFromRespondent != null && geoLocationFromRespondent.isObject()) {
-            ((ObjectNode) geoLocationFromRespondent).putNull("latitude");
-            ((ObjectNode) geoLocationFromRespondent).putNull("longitude");
+    private JsonNode updateGeoLocationInAddress(JsonNode additionalDetails, String addressDetailId, JsonNode geoLocation, String formDataPath) {
+        if (geoLocation != null && geoLocation.isObject()) {
+            ((ObjectNode) geoLocation).putNull("latitude");
+            ((ObjectNode) geoLocation).putNull("longitude");
         }
-        for (JsonNode data : formDataList) {
-            JsonNode addressDetails = data.path("data").path("addressDetails");
-            for (JsonNode address : addressDetails) {
-                String addressId = address.path("id").asText();
-                if (respondentAddressId.equals(addressId)) {
-                    ObjectNode addressNode = (ObjectNode) address;
 
-                    if (address.has(GEOLOCATION)) {
-                        addressNode.replace(GEOLOCATION, geoLocationFromRespondent);
-                    } else {
-                        addressNode.set(GEOLOCATION, geoLocationFromRespondent);
+        // Get formDataList from additionalDetails using the JSON path
+        JsonNode formDataList = additionalDetails.at(formDataPath);
+
+        if (formDataList != null && formDataList.isArray()) {
+            for (JsonNode data : formDataList) {
+                JsonNode addressDetails = data.path("data").path("addressDetails");
+                if (addressDetails.isArray()) {
+                    for (JsonNode address : addressDetails) {
+                        String addressId = address.path("id").asText();
+                        if (addressDetailId.equals(addressId) && address instanceof ObjectNode addressNode) {
+                            if (address.has(GEOLOCATION)) {
+                                addressNode.replace(GEOLOCATION, geoLocation);
+                            } else {
+                                addressNode.set(GEOLOCATION, geoLocation);
+                            }
+                        }
                     }
                 }
             }
@@ -536,5 +566,6 @@ public class TaskService {
 
         return additionalDetails;
     }
+
 
 }

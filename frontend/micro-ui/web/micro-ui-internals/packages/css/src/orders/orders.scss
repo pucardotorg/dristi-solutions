@@ -447,7 +447,7 @@
         margin-bottom: 10px;
         text-align: center;
       }
-      
+
       .popup-module-action-bar {
         margin: 20px 0px 0px !important;
 
@@ -823,5 +823,99 @@
 
   .employee-card-input.employee-card-input-error {
     margin-bottom: 24px !important;
+  }
+}
+
+.summons-order-component {
+  /* Police Station Dropdown */
+
+  .police-station-dropdown {
+    .options-card {
+      max-height: 320px;
+      overflow: auto;
+      scrollbar-width: thin;
+    }
+  }
+
+  .police-station-dropdown .menu::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .police-station-dropdown .menu::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  .police-station-dropdown .menu::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+  }
+
+  .police-station-dropdown .menu::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+
+  /* Party Dropdown */
+  .party-dropdown .menu {
+    max-height: 320px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  .party-dropdown .menu::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .party-dropdown .menu::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  .party-dropdown .menu::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+  }
+
+  .party-dropdown .menu::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+}
+
+/* Get Police Station Modal */
+.get-police-station-modal {
+  width: 720px;
+  .police-station-dropdown .menu {
+    max-height: 320px; /* Height for approximately 10 items */
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  .police-station-dropdown .menu::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .police-station-dropdown .menu::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+  }
+
+  .police-station-dropdown .menu::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+  }
+
+  .police-station-dropdown .menu::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+
+  .selector-button-border {
+    background: none;
+    border-style: none;
+    border: solid 1px #007e7e;
+    h2 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #007e7e;
+    }
   }
 }

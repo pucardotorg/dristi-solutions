@@ -3336,61 +3336,71 @@ public class CaseService {
     }
 
     private void smsForNewWitnessAddition(CourtCase courtCase, AddWitnessRequest addWitnessRequest) {
-        RequestInfo requestInfo = addWitnessRequest.getRequestInfo();
-        long currentTimeMillis = System.currentTimeMillis();
-        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
-        String formattedDate = sdf.format(currentTimeMillis);
-        SmsTemplateData smsTemplateData = SmsTemplateData.builder()
-                .efilingNumber(courtCase.getFilingNumber())
-                .courtCaseNumber(courtCase.getCourtCaseNumber())
-                .cnrNumber(courtCase.getCnrNumber())
-                .hearingDate(formattedDate)
-                .cmpNumber(courtCase.getCmpNumber())
-                .tenantId(addWitnessRequest.getRequestInfo().getUserInfo().getTenantId())
-                .build();
-        if (addWitnessRequest.getAdditionalDetails() != null) {
-            Object witnessDetails = ((LinkedHashMap<?, ?>) addWitnessRequest.getAdditionalDetails()).get("witnessDetails");
-            Object witnessDetailsFormData = null;
-            if (witnessDetails != null) {
-                witnessDetailsFormData = ((LinkedHashMap<?, ?>) witnessDetails).get("formdata");
-            }
-            if (witnessDetailsFormData != null) {
-                List<?> witnessDetailsFormDataArray = (List<?>) witnessDetailsFormData;
-                for (Object node : witnessDetailsFormDataArray) {
-                    Object witnessData = ((LinkedHashMap<?, ?>) node).get("data");
-                    Object witnessPhoneNumbers = ((LinkedHashMap<?, ?>) witnessData).get("phonenumbers");
-                    Object mobileNumbers = ((LinkedHashMap<?, ?>) witnessPhoneNumbers).get("mobileNumber");
-                    List<?> mobileNumbersText = (List<?>) mobileNumbers;
-                    for (Object mobileNumber : mobileNumbersText) {
-                        notificationService.sendNotification(requestInfo, smsTemplateData, NEW_WITNESS_ADDED, mobileNumber.toString());
+        try {
+            RequestInfo requestInfo = addWitnessRequest.getRequestInfo();
+            long currentTimeMillis = System.currentTimeMillis();
+            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+            String formattedDate = sdf.format(currentTimeMillis);
+            SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                    .efilingNumber(courtCase.getFilingNumber())
+                    .courtCaseNumber(courtCase.getCourtCaseNumber())
+                    .cnrNumber(courtCase.getCnrNumber())
+                    .hearingDate(formattedDate)
+                    .cmpNumber(courtCase.getCmpNumber())
+                    .tenantId(addWitnessRequest.getRequestInfo().getUserInfo().getTenantId())
+                    .build();
+            if (addWitnessRequest.getAdditionalDetails() != null) {
+                Object witnessDetails = ((LinkedHashMap<?, ?>) addWitnessRequest.getAdditionalDetails()).get("witnessDetails");
+                Object witnessDetailsFormData = null;
+                if (witnessDetails != null) {
+                    witnessDetailsFormData = ((LinkedHashMap<?, ?>) witnessDetails).get("formdata");
+                }
+                if (witnessDetailsFormData != null) {
+                    List<?> witnessDetailsFormDataArray = (List<?>) witnessDetailsFormData;
+                    for (Object node : witnessDetailsFormDataArray) {
+                        Object witnessData = ((LinkedHashMap<?, ?>) node).get("data");
+                        Object witnessPhoneNumbers = ((LinkedHashMap<?, ?>) witnessData).get("phonenumbers");
+                        Object mobileNumbers = ((LinkedHashMap<?, ?>) witnessPhoneNumbers).get("mobileNumber");
+                        List<?> mobileNumbersText = (List<?>) mobileNumbers;
+                        for (Object mobileNumber : mobileNumbersText) {
+                            notificationService.sendNotification(requestInfo, smsTemplateData, NEW_WITNESS_ADDED, mobileNumber.toString());
+                        }
                     }
                 }
             }
+        } catch (Exception e) {
+            log.error("Error occurred while sending SMS for new witness addition :: {}", e.toString());
         }
+
     }
 
     private void smsForOthersAsWitnessAdded(CourtCase courtCase, AddWitnessRequest addWitnessRequest) {
-        RequestInfo requestInfo = addWitnessRequest.getRequestInfo();
-        long currentTimeMillis = System.currentTimeMillis();
-        SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
-        String formattedDate = sdf.format(currentTimeMillis);
-        SmsTemplateData smsTemplateData = SmsTemplateData.builder()
-                .efilingNumber(courtCase.getFilingNumber())
-                .courtCaseNumber(courtCase.getCourtCaseNumber())
-                .cnrNumber(courtCase.getCnrNumber())
-                .hearingDate(formattedDate)
-                .cmpNumber(courtCase.getCmpNumber())
-                .tenantId(addWitnessRequest.getRequestInfo().getUserInfo().getTenantId())
-                .build();
-        Set<String> litigantAndAdvocateIndividualId = getLitigantIndividualId(courtCase);
-        CaseRequest caseRequest = CaseRequest.builder()
-                .cases(courtCase)
-                .build();
-        getAdvocateIndividualId(caseRequest, litigantAndAdvocateIndividualId);
-        getPocHolderIndividualIds(caseRequest, litigantAndAdvocateIndividualId);
-        Set<String> phoneNumbers = callIndividualService(requestInfo, litigantAndAdvocateIndividualId);
-        for (String number : phoneNumbers) {
-            notificationService.sendNotification(caseRequest.getRequestInfo(), smsTemplateData, NEW_WITNESS_ADDED_SMS_FOR_OTHERS, number);
+        try {
+            RequestInfo requestInfo = addWitnessRequest.getRequestInfo();
+            long currentTimeMillis = System.currentTimeMillis();
+            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+            String formattedDate = sdf.format(currentTimeMillis);
+            SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                    .efilingNumber(courtCase.getFilingNumber())
+                    .courtCaseNumber(courtCase.getCourtCaseNumber())
+                    .cnrNumber(courtCase.getCnrNumber())
+                    .hearingDate(formattedDate)
+                    .cmpNumber(courtCase.getCmpNumber())
+                    .tenantId(addWitnessRequest.getRequestInfo().getUserInfo().getTenantId())
+                    .build();
+            Set<String> litigantAndAdvocateIndividualId = getLitigantIndividualId(courtCase);
+            CaseRequest caseRequest = CaseRequest.builder()
+                    .cases(courtCase)
+                    .requestInfo(addWitnessRequest.getRequestInfo())
+                    .build();
+            getAdvocateIndividualId(caseRequest, litigantAndAdvocateIndividualId);
+            getPocHolderIndividualIds(caseRequest, litigantAndAdvocateIndividualId);
+            Set<String> phoneNumbers = callIndividualService(requestInfo, litigantAndAdvocateIndividualId);
+            for (String number : phoneNumbers) {
+                notificationService.sendNotification(caseRequest.getRequestInfo(), smsTemplateData, NEW_WITNESS_ADDED_SMS_FOR_OTHERS, number);
+            }
+        } catch (Exception e) {
+            log.error("Error occurred while sending SMS for others as witness added :: {}", e.toString());
         }
     }
 

@@ -235,6 +235,10 @@ public class ServiceConstants {
 
     public static final String INTERNALMICROSERVICEUSER_TYPE = "SYSTEM";
     public static final String msgId = "1730882648558|en_IN";
+
+    public static final String ERROR_FETCHING_STATUS = "ERROR_FETCHING_STATUS";
+    public static final String ERROR_FETCHING_LITIGANT_NAME = "ERROR_FETCHING_LITIGANT_NAME";
+    public static final String ERROR_FETCHING_REPRESENTATIVE_NAME = "ERROR_FETCHING_REPRESENTATIVE_NAME";
     private ServiceConstants() {
     }
 }

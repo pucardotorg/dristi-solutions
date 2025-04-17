@@ -30,7 +30,6 @@ const partyTypes = {
   "complainant.additional": "COMPLAINANT",
   "respondent.primary": "ACCUSED",
   "respondent.additional": "ACCUSED",
-  "poa.regular": "POA_HOLDER",
 };
 
 export const advocateJoinStatus = {
@@ -1309,25 +1308,6 @@ export const UICustomizations = {
                 ...(isEditable && { isAdvocateEditor }),
               };
             });
-
-            const poaHolders = data.criteria[0].responseList[0].poaHolders?.length > 0 ? data.criteria[0].responseList[0].poaHolders : [];
-            const finalPoaHoldersData = poaHolders?.map((poaHolder) => {
-              const representing = poaHolder?.representingLitigants?.map((rep) => {
-                return {
-                  ...litigants?.find((litigant) => litigant?.individualId === rep?.individualId),
-                  ...rep,
-                };
-              });
-              return {
-                ...poaHolder,
-                representingLitigants: representing,
-                representingList: representing?.map((rep) => rep?.additionalDetails?.fullName)?.join(", "),
-                partyType: poaHolder?.poaType,
-                status: "JOINED",
-                isEditable: false,
-              };
-            });
-
             // pendingAdvocateRequests includes list of advocates with pending and partially pending status.
             const pendingAdvocateRequests = data?.criteria?.[0]?.responseList?.[0]?.pendingAdvocateRequests || [];
             // representatives has list of advocates with joined and partially pending status.
@@ -1374,13 +1354,7 @@ export const UICustomizations = {
                 };
               });
 
-            const allParties = [
-              ...finalLitigantsData,
-              ...unjoinedAccused,
-              ...joinedAndPartiallyJoinedAdvocates,
-              ...joinStatusPendingAdvocates,
-              ...finalPoaHoldersData,
-            ];
+            const allParties = [...finalLitigantsData, ...unjoinedAccused, ...joinedAndPartiallyJoinedAdvocates, ...joinStatusPendingAdvocates];
             const paginatedParties = allParties.slice(offset, offset + limit);
             return {
               ...data,
@@ -1403,7 +1377,7 @@ export const UICustomizations = {
           return removeInvalidNameParts(value) || "";
 
         case "ASSOCIATED_WITH":
-          const associatedWith = row?.partyType === "ADVOCATE" || ["poa.regular"]?.includes(row?.partyType) ? row?.representingList : "";
+          const associatedWith = row?.partyType === "ADVOCATE" ? row?.representingList : "";
           return associatedWith;
         case "STATUS":
           const caseJoinStatus = ["respondent.primary", "respondent.additional"].includes(row?.partyType)
@@ -1414,8 +1388,6 @@ export const UICustomizations = {
             ? t("JOINED")
             : ["ADVOCATE"].includes(row?.partyType)
             ? t(row?.status)
-            : ["poa.regular"].includes(row?.partyType)
-            ? t("JOINED")
             : "";
 
           return caseJoinStatus ? <span style={{ backgroundColor: "#E8E8E8", padding: "6px", borderRadius: "14px" }}>{caseJoinStatus}</span> : null;

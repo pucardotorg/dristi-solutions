@@ -8,7 +8,7 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { RightArrow } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { useTranslation } from "react-i18next";
 
-const JoinCaseSuccess = ({ success, messageHeader, type, caseDetails, closeModal, refreshInbox, successScreenData, isCaseViewDisabled }) => {
+const JoinCaseSuccess = ({ success, messageHeader, caseDetails, closeModal, refreshInbox, successScreenData, isCaseViewDisabled }) => {
   const { t } = useTranslation();
 
   const history = useHistory();
@@ -116,18 +116,13 @@ const JoinCaseSuccess = ({ success, messageHeader, type, caseDetails, closeModal
               label={t("BACK_HOME")}
               onButtonClick={() => {
                 closeModal();
-                if (refreshInbox) refreshInbox();
+                refreshInbox();
               }}
             />
             <Button
               className={"selector-button-primary"}
               label={t("VIEW_CASE_FILE")}
               onButtonClick={() => {
-                if (type === "external") {
-                  closeModal();
-                  if (refreshInbox) refreshInbox();
-                  return;
-                }
                 history.push(
                   `/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${caseDetails?.filingNumber}&tab=Overview`
                 );

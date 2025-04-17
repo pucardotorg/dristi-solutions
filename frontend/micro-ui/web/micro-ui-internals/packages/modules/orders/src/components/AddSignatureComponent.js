@@ -1,13 +1,13 @@
 import { InfoCard } from "@egovernments/digit-ui-components";
 import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
-import { Button } from "@egovernments/digit-ui-react-components";
+import { Button, FileIcon, PrintIcon } from "@egovernments/digit-ui-react-components";
 import React, { useEffect, useMemo, useState } from "react";
 import useESign from "../hooks/orders/useESign";
 import { Urls } from "../hooks/services/Urls";
 import useDocumentUpload from "../hooks/orders/useDocumentUpload";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
 
-const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData, setSignatureId, deliveryChannel }) => {
+const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData, setSignatureId, signatureId, deliveryChannel }) => {
   const { handleEsign, checkSignStatus } = useESign();
   const { uploadDocuments } = useDocumentUpload();
   const [formData, setFormData] = useState({}); // storing the file upload data
@@ -70,6 +70,20 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
   useEffect(() => {
     checkSignStatus(name, formData, uploadModalConfig, onSelect, handleSigned);
   }, [checkSignStatus]);
+
+  const documentType = useMemo(() => {
+    let txt = "";
+    if (rowData?.orderType === "SUMMONS") {
+      txt = "Summons";
+    } else if (rowData?.orderType === "WARRANT") {
+      txt = "Warrant";
+    } else {
+      txt = "Notice";
+    }
+    return `${txt} Document`;
+  }, [rowData]);
+
+  const fileStore = localStorage.getItem("fileStoreId") || signatureId;
 
   return (
     <div>
@@ -191,6 +205,29 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
               >
                 {t("SIGNED")}
               </h2>
+              <div>
+                {rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE" && fileStore && (
+                  <div className="print-documents-box-div">
+                    <div className="print-documents-box-text">
+                      <FileIcon />
+                      <div style={{ marginLeft: "0.5rem" }}>{documentType}</div>
+                    </div>
+                    <button className="print-button" disabled={!fileStore}>
+                      <PrintIcon />
+                      {fileStore ? (
+                        <AuthenticatedLink
+                          uri={`${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStore}`}
+                          t={t}
+                          style={{ marginLeft: "0.5rem", color: "#007E7E" }}
+                          displayFilename={"PRINT"}
+                        />
+                      ) : (
+                        <span style={{ marginLeft: "0.5rem", color: "grey" }}>Print</span>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </div>

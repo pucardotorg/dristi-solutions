@@ -252,26 +252,16 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
             firstName: givenName,
             lastName: familyName,
             middleName: otherNames,
-            complainantId: config?.key === "complainantVerification" ? { complainantId: true } : { poaComplainantId: true },
+            complainantId: { complainantId: true },
           };
 
-          if (config?.key === "complainantVerification") {
-            ["addressDetails-select", "complainantId", "firstName", "lastName", "middleName"].forEach((key) => {
-              onSelect(
-                `${key}`,
-                typeof formData?.[key] === "object" && typeof key?.[key] === "object" ? { ...formData?.[key], ...data[key] } : data[key],
-                { shouldValidate: true }
-              );
-            });
-          } else if (config?.key === "poaVerification") {
-            ["addressDetails-select", "complainantId", "firstName", "lastName", "middleName"].forEach((key) => {
-              onSelect(
-                `poa${key?.charAt(0)?.toUpperCase()}${key?.slice(1)}`,
-                typeof formData?.[key] === "object" && typeof key?.[key] === "object" ? { ...formData?.[key], ...data[key] } : data[key],
-                { shouldValidate: true }
-              );
-            });
-          }
+          ["addressDetails-select", "complainantId", "firstName", "lastName", "middleName"].forEach((key) => {
+            onSelect(
+              `${key}`,
+              typeof formData?.[key] === "object" && typeof key?.[key] === "object" ? { ...formData?.[key], ...data[key] } : data[key],
+              { shouldValidate: true }
+            );
+          });
           onSelect(
             config?.key,
             {
@@ -282,16 +272,8 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
                 document: identifierIdDetails?.fileStoreId
                   ? [{ fileName: idType, fileStore: identifierIdDetails?.fileStoreId, documentName: identifierIdDetails?.filename }]
                   : null,
-                ...(config?.key === "poaVerification"
-                  ? {
-                      "poaAddressDetails-select": data["addressDetails-select"],
-                      poaAddressDetails: data["addressDetails-select"],
-                    }
-                  : {
-                      "addressDetails-select": data["addressDetails-select"],
-                      addressDetails: data["addressDetails-select"],
-                    }
-                ),
+                "addressDetails-select": data["addressDetails-select"],
+                addressDetails: data["addressDetails-select"],
               },
               isUserVerified: true,
             },
