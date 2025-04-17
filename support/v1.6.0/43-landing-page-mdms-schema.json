@@ -1,0 +1,110 @@
+[
+    {
+        "tenantId": "kl",
+        "moduleName": "LandingPage",
+        "masterName": "DashboardMeterics",
+        "mdmsPayload": {
+            "id": "cfac230c-0bac-47e2-9c28-f02f296c4b8f",
+            "tenantId": "kl",
+            "code": "LandingPage.DashboardMeterics",
+            "description": null,
+            "definition": {
+                "type": "object",
+                "$schema": "http://json-schema.org/draft-04/schema#",
+                "required": [
+                    "id",
+                    "numberOfCasesFiled",
+                    "numberOfAdvocatesRegistered",
+                    "averageNumberOfDaysBetweenHearingsForCase",
+                    "percentageOfCasesMovedFromFilingToRegistrationUnder3Days",
+                    "percentageOfSupportRequestsResolved"
+                ],
+                "x-unique": [
+                    "id"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "description": "The unique identifier for the record"
+                    },
+                    "numberOfCasesFiled": {
+                        "type": "integer",
+                        "description": "The total number of cases filed"
+                    },
+                    "numberOfAdvocatesRegistered": {
+                        "type": "integer",
+                        "description": "The total number of advocates registered"
+                    },
+                    "percentageOfSupportRequestsResolved": {
+                        "type": "integer",
+                        "description": "The percentage of support requests resolved"
+                    },
+                    "averageNumberOfDaysBetweenHearingsForCase": {
+                        "type": "integer",
+                        "description": "The average number of days between hearings for a case"
+                    },
+                    "percentageOfCasesMovedFromFilingToRegistrationUnder3Days": {
+                        "type": "integer",
+                        "description": "The percentage of cases moved from filing to registration within 3 days"
+                    }
+                }
+            },
+            "isActive": true
+        }
+    },
+    {
+        "tenantId": "kl",
+        "moduleName": "LandingPage",
+        "masterName": "LatestAndComingSoon",
+        "mdmsPayload": {
+            "id": "3782e37e-f0e4-40f5-a9b6-7900c2a2a279",
+            "tenantId": "kl",
+            "code": "LandingPage.LatestAndComingSoon",
+            "description": null,
+            "definition": {
+                "type": "object",
+                "$schema": "http://json-schema.org/draft-04/schema#",
+                "required": [
+                    "itemName",
+                    "itemCategory",
+                    "itemDescription",
+                    "itemId"
+                ],
+                "x-unique": [
+                    "itemId"
+                ],
+                "properties": {
+                    "itemId": {
+                        "type": "string",
+                        "description": "The unique identifier for the item"
+                    },
+                    "itemName": {
+                        "type": "string",
+                        "description": "The name of the item"
+                    },
+                    "itemIconUrl": {
+                        "type": "string",
+                        "description": "The URL of the item's icon"
+                    },
+                    "itemCategory": {
+                        "enum": [
+                            "LIVE_NOW",
+                            "COMING_SOON"
+                        ],
+                        "type": "string",
+                        "description": "The category to which the item belongs"
+                    },
+                    "itemDateAdded": {
+                        "type": "string",
+                        "description": "The date when the item was added"
+                    },
+                    "itemDescription": {
+                        "type": "string",
+                        "description": "A brief description of the item"
+                    }
+                }
+            },
+            "isActive": true
+        }
+    }
+]
