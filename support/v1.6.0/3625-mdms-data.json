@@ -5,6 +5,40 @@
     "masterName": "paymentTypeToBreakupMapping",
     "mdmsPayload": [
       {
+        "id": "3d328cd0-cb2b-4148-8373-5f1d109a76eb",
+        "tenantId": "kl",
+        "schemaCode": "payment.paymentTypeToBreakupMapping",
+        "uniqueIdentifier": "15",
+        "data": {
+          "breakUpList": [
+            {
+              "breakUpCode": "COURT_FEE",
+              "breakUpName": "Court Fee"
+            },
+            {
+              "breakUpCode": "ADVOCATE_CLERK_WELFARE_FUND",
+              "breakUpName": "Advocate Clerk Welfare Fund"
+            },
+            {
+              "breakUpCode": "LEGAL_BENEFIT_FEE",
+              "breakUpName": "Legal Benefit Fee"
+            },
+            {
+              "breakUpCode": "ADVOCATE_WELFARE_FUND",
+              "breakUpName": "Advocate Welfare Fund"
+            }
+          ],
+          "paymentType": "15"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1744872922177,
+          "lastModifiedTime": 1744872922177
+        }
+      },
+      {
         "id": "62e749cb-5437-460d-bcdf-e360f4e2ce80",
         "tenantId": "kl",
         "schemaCode": "payment.paymentTypeToBreakupMapping",
