@@ -32,7 +32,7 @@ const DashboardPage = () => {
   const [showPicker, setShowPicker] = useState(false);
   const [dateRange, setDateRange] = useState([
     {
-      startDate: new Date(),
+      startDate: new Date(2024, 10, 14),
       endDate: new Date(),
       key: "selection",
     },
@@ -255,6 +255,13 @@ const DashboardPage = () => {
     }
   };
 
+  const customStyles = `
+  .content-area{
+   .embPanel__optionsMenuButton {
+    display:none !important;
+  }
+`;
+
   return (
     <div className="dashboard">
       <React.Fragment>
@@ -320,9 +327,10 @@ const DashboardPage = () => {
               </div>
             )}
             <div className="content-area">
+              <style>{customStyles}</style>
               {stepper === 1 && (
                 <iframe
-                  src={`${baseUrl}/kibana/app/dashboards#/view/${jobId}?embed=true&_g=(refreshInterval:(pause:!t,value:60000),time:(from:'${selectedRange.startDate}',to:'${selectedRange.endDate}'))&_a=()&hide-filter-bar=true`}
+                  src={`${baseUrl}/kibana/app/dashboards#/view/${jobId}?embed=true&chrome=false&_g=(refreshInterval:(pause:!t,value:60000),time:(from:'${selectedRange.startDate}',to:'${selectedRange.endDate}'))&_a=()&hide-filter-bar=true`}
                   height="600"
                   width="100%"
                   title="case"
@@ -339,7 +347,7 @@ const DashboardPage = () => {
                         key={index}
                         className="download-report"
                         onClick={() => {
-                          !downloadingIndices.includes(index) && handleDownload(option?.url, index);
+                          !downloadingIndices.includes(index) && handleDownload(`${baseUrl}/${option?.url}`, index);
                         }}
                       >
                         <span>{option.code}</span>
@@ -350,16 +358,16 @@ const DashboardPage = () => {
                     ))}
                   </div>
                   {/* <div style={{ flex: 2 }}>
-                    <TasksComponent
-                      taskType={taskType}
-                      setTaskType={setTaskType}
-                      isLitigant={userRoles.includes("CITIZEN")}
-                      uuid={userInfo?.uuid}
-                      userInfoType={userInfoType}
-                      hideFilters={true}
-                      isDiary={true}
-                    />
-                  </div> */}
+                      <TasksComponent
+                        taskType={taskType}
+                        setTaskType={setTaskType}
+                        isLitigant={userRoles.includes("CITIZEN")}
+                        uuid={userInfo?.uuid}
+                        userInfoType={userInfoType}
+                        hideFilters={true}
+                        isDiary={true}
+                      />
+                    </div> */}
                 </div>
               )}
             </div>
