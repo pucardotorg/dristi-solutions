@@ -58,19 +58,6 @@ class OpenApiCaseSummaryQueryBuilderTest {
         assertEquals(Types.VARCHAR, preparedStatementValueTypes.get(0));
     }
 
-    @Test
-    void testGetCaseBaseQuery_WithCaseType() {
-        searchCriteria.setCaseType("CMP");
-        searchCriteria.setCaseNumber(123);
-
-        String query = queryBuilder.getCaseBaseQuery(searchCriteria, preparedStatementValues, preparedStatementValueTypes);
-
-        assertNotNull(query);
-        assertTrue(query.contains("cases.caseType = ?"));
-        assertEquals(1, preparedStatementValues.size());
-        assertEquals("CMP", preparedStatementValues.get(0));
-        assertEquals(Types.VARCHAR, preparedStatementValueTypes.get(0));
-    }
 
     @Test
     void testGetCaseBaseQuery_WithCaseTypeAndYearRange() {
@@ -82,28 +69,10 @@ class OpenApiCaseSummaryQueryBuilderTest {
         String query = queryBuilder.getCaseBaseQuery(searchCriteria, preparedStatementValues, preparedStatementValueTypes);
 
         assertNotNull(query);
-        assertTrue(query.contains("cases.caseType = ?"));
+        assertFalse(query.contains("cases.caseType = ?"));
         assertTrue(query.contains("cases.registrationdate BETWEEN ? AND ?"));
-        assertEquals(3, preparedStatementValues.size());
-        assertEquals("CMP", preparedStatementValues.get(0));
-        assertEquals(Types.VARCHAR, preparedStatementValueTypes.get(0));
-        assertEquals(2020L, preparedStatementValues.get(1));
-        assertEquals(2021L, preparedStatementValues.get(2));
-    }
-
-    @Test
-    void testGetCaseBaseQuery_WithCaseTypeST() {
-        searchCriteria.setCaseType("ST");
-        searchCriteria.setYear(2020);
-        searchCriteria.setCaseNumber(123);
-
-        String query = queryBuilder.getCaseBaseQuery(searchCriteria, preparedStatementValues, preparedStatementValueTypes);
-
-        assertNotNull(query);
-        assertTrue(query.contains("cases.caseType = ?"));
-        assertEquals(1, preparedStatementValues.size());
-        assertEquals("ST", preparedStatementValues.get(0));
-        assertEquals(Types.VARCHAR, preparedStatementValueTypes.get(0));
+        assertEquals(2, preparedStatementValues.size());
+        assertEquals(2021L, preparedStatementValues.get(1));
     }
 
     @Test

@@ -104,14 +104,6 @@ public class OpenApiCaseSummaryQueryBuilder {
             firstCriteria = false;
         }
 
-        if (searchCriteria.getCaseType() != null) {
-            addWhereClause(query, firstCriteria);
-            query.append("cases.caseType = ?");
-            preparedStatementValues.add(searchCriteria.getCaseType());
-            preparedStatementValueTypes.add(Types.VARCHAR);
-            firstCriteria = false;
-        }
-
         if (Objects.equals(searchCriteria.getCaseType(), OpenApiCaseSummary.CaseTypeEnum.CMP.name())) {
             if (searchCriteria.getYear() != null && searchCriteria.getStartYear() != null && searchCriteria.getEndYear() != null) {
                 addWhereClause(query, firstCriteria);

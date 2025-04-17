@@ -235,18 +235,22 @@
             {
               "body": [
                 {
-                  "key": "policeStation",
+                  "key": "policeStationJurisDictionCheque",
                   "type": "dropdown",
-                  "label": "POLICE_STATION",
+                  "label": "POLICE_STATION_JURISDICTION_CHEQUE",
                   "populators": {
-                    "name": "policeStation",
+                    "name": "policeStationJurisDictionCheque",
                     "error": "CORE_REQUIRED_FIELD_ERROR",
                     "styles": {
                       "maxWidth": "100%",
                       "marginBottom": "10px"
                     },
                     "required": false,
-                    "optionsCustomStyle": {"height": "30vh", "overflowY": "auto", "marginTop": "42px"},
+                    "optionsCustomStyle": {
+                      "height": "30vh",
+                      "overflowY": "auto",
+                      "marginTop": "42px"
+                    },
                     "mdmsConfig": {
                       "select": "(data) => {return data['case'].PoliceStation?.map((item) => {return item;});}",
                       "masterName": "PoliceStation",
@@ -638,8 +642,8 @@
                           },
                           {
                             "type": "text",
-                            "label": "POLICE_STATION",
-                            "value": "policeStation.name",
+                            "label": "POLICE_STATION_JURISDICTION_CHEQUE",
+                            "value": "policeStationJurisDictionCheque.name",
                             "isLocalizationRequired": true
                           },
                           {

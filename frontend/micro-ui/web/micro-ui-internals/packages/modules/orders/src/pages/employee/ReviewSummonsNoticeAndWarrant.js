@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Header, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
-import { SummonsTabsConfig, SummonsTabsConfigJudge } from "../../configs/SuumonsConfig";
+import { defaultSearchValuesForJudgePending, SummonsTabsConfig, SummonsTabsConfigJudge } from "../../configs/SuumonsConfig";
 import { useTranslation } from "react-i18next";
 import DocumentModal from "../../components/DocumentModal";
 import PrintAndSendDocumentComponent from "../../components/Print&SendDocuments";
@@ -37,16 +37,35 @@ const handleTaskDetails = (taskDetails) => {
   }
 };
 
+export const getJudgeDefaultConfig = () => {
+  return SummonsTabsConfig?.SummonsTabsConfig?.map((item, index) => {
+    return {
+      ...item,
+      sections: {
+        ...item?.sections,
+        search: {
+          ...item?.sections?.search,
+          uiConfig: {
+            ...item?.sections?.search?.uiConfig,
+            defaultValues: index === 0 ? defaultSearchValuesForJudgePending : defaultSearchValues,
+          },
+        },
+      },
+    };
+  });
+};
+
 const ReviewSummonsNoticeAndWarrant = () => {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isJudge = roles.some((role) => role.code === "JUDGE_ROLE");
-  const [config, setConfig] = useState(isJudge ? SummonsTabsConfigJudge?.SummonsTabsConfig?.[0] : SummonsTabsConfig?.SummonsTabsConfig?.[0]);
+  const [config, setConfig] = useState(isJudge ? getJudgeDefaultConfig()?.[0] : SummonsTabsConfig?.SummonsTabsConfig?.[0]);
   const [showActionModal, setShowActionModal] = useState(false);
   const [showNoticeModal, setshowNoticeModal] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isIcops, setIsIcops] = useState({ state: null, message: "", icopsAcknowledgementNumber: "" });
   const [actionModalType, setActionModalType] = useState("");
   const [isDisabled, setIsDisabled] = useState(true);
@@ -68,11 +87,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const [tabData, setTabData] = useState(
     isJudge
-      ? SummonsTabsConfigJudge?.SummonsTabsConfig?.map((configItem, index) => ({
-          key: index,
-          label: configItem.label,
-          active: index === 0 ? true : false,
-        }))
+      ? getJudgeDefaultConfig()?.map((configItem, index) => ({ key: index, label: configItem.label, active: index === 0 ? true : false }))
       : SummonsTabsConfig?.SummonsTabsConfig?.map((configItem, index) => ({
           key: index,
           label: configItem.label,
@@ -309,7 +324,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const onTabChange = (n) => {
     setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false }))); //setting tab enable which is being clicked
-    setConfig(isJudge ? SummonsTabsConfigJudge?.SummonsTabsConfig?.[n] : SummonsTabsConfig?.SummonsTabsConfig?.[n]); // as per tab number filtering the config
+    setConfig(SummonsTabsConfig?.SummonsTabsConfig?.[n]);
     setReload(!reload);
   };
 
@@ -377,7 +392,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const successMessage = useMemo(() => {
     let msg = "";
-    if (documents) {
+    const isViaPolice = rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE";
+    if (documents && !isViaPolice) {
       if (orderType === "NOTICE") {
         msg = t("SUCCESSFULLY_SIGNED_NOTICE");
       } else if (orderType === "WARRANT") {
@@ -394,7 +410,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         msg = t("SENT_SUMMONS_VIA");
       }
     }
-    return `${msg}${!documents ? " " + deliveryChannel : ""}`;
+    return `${msg}${!documents || isViaPolice ? " " + deliveryChannel : ""}`;
   }, [documents, orderType, deliveryChannel]);
 
   const handleSubmitEsign = useCallback(async () => {
@@ -421,6 +437,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       };
 
       // Attempt to upload the document and handle the response
+      setIsLoading(true);
       const response = await taskService.UploadTaskDocument(reqBody, { tenantId });
       if (rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE") {
         // localStorage.removeItem("SignedFileStoreID");
@@ -449,15 +466,20 @@ const ReviewSummonsNoticeAndWarrant = () => {
             const res = await taskService.updateTask(reqBody, { tenantId });
             const icopsAcknowledgementNumber = res?.task?.taskDetails?.deliveryChannels?.channelAcknowledgementId || "";
             setIsIcops({ state: "success", message: "", icopsAcknowledgementNumber });
+            return { continue: true };
           } catch (error) {
             setIsIcops({ state: "failed", message: `Something went wrong. ${error}`, icopsAcknowledgementNumber: "" });
             console.error("Error updating task data:", error);
+            return { continue: true };
           }
         }
       }
+      return { continue: true };
     } catch (error) {
       // Handle errors that occur during the upload process
       console.error("Error uploading document:", error);
+    } finally {
+      setIsLoading(false);
     }
   }, [rowData, signatureId, tenantId]);
 
@@ -493,8 +515,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
               />
             </div>
           ),
-          isDisabled: isSigned ? false : true,
+          isDisabled: !isSigned || isLoading ? true : false,
           actionSaveOnSubmit: handleSubmitEsign,
+          async: true,
         },
         ...(rowData?.taskDetails?.deliveryChannels?.channelCode !== "POLICE" ||
         (rowData?.taskDetails?.deliveryChannels?.channelCode === "POLICE" && isIcops?.state)

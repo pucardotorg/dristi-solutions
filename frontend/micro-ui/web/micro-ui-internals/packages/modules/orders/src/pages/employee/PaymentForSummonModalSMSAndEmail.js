@@ -438,6 +438,19 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           onClick: onPayOnline,
         },
       ],
+      RPAD: [
+        {
+          label: "Fee Type",
+          amount: "Amount",
+          action: "Actions",
+        },
+        {
+          label: "Court Fees",
+          amount: courtFeeAmount,
+          action: "Pay Online",
+          onClick: onPayOnline,
+        },
+      ],
       POLICE: [
         {
           label: "Fee Type",
@@ -473,7 +486,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const infos = useMemo(() => {
     const formdata =
       orderDetails?.orderCategory === "COMPOSITE" ? compositeItem?.additionalDetails?.formdata : orderDetails?.additionalDetails?.formdata;
-    const orderKey = orderType === "SUMMONS" ? "SummonsOrder" : "noticeOrder";
+    const orderKey = orderType === "SUMMONS" ? "SummonsOrder" : orderType === "WARRANT" ? "warrantFor" : "noticeOrder";
     const partyData = formdata?.[orderKey]?.party?.data;
     const name =
       [partyData?.firstName, partyData?.lastName]?.filter(Boolean)?.join(" ") ||
