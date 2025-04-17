@@ -1,0 +1,166 @@
+[
+    {
+        "tenantId": "kl",
+        "moduleName": "LandingPage",
+        "masterName": "DashboardMeterics",
+        "mdmsPayload": [
+            {
+                "id": "2e359bed-d8ac-49f6-b7bc-5dea62b95b30",
+                "tenantId": "kl",
+                "schemaCode": "LandingPage.DashboardMeterics",
+                "uniqueIdentifier": "1",
+                "data": {
+                    "id": "1",
+                    "numberOfCasesFiled": 347,
+                    "numberOfAdvocatesRegistered": 170,
+                    "percentageOfSupportRequestsResolved": 60,
+                    "averageNumberOfDaysBetweenHearingsForCase": 20,
+                    "percentageOfCasesMovedFromFilingToRegistrationUnder3Days": 77
+                },
+                "isActive": true
+            }
+        ]
+    },
+    {
+        "tenantId": "kl",
+        "moduleName": "LandingPage",
+        "masterName": "LatestAndComingSoon",
+        "mdmsPayload": [
+            {
+                "id": "cdb04d91-acab-48d5-b827-0c2b8c84ba90",
+                "tenantId": "kl",
+                "schemaCode": "LandingPage.LatestAndComingSoon",
+                "uniqueIdentifier": "11",
+                "data": {
+                    "itemId": "11",
+                    "itemName": "Digital Bail Bond Execution",
+                    "itemCategory": "COMING_SOON",
+                    "itemDescription": "Advocates can now complete bail bond execution entirely online, reducing the need for physical visits to court."
+                },
+                "isActive": true
+            },
+            {
+                "id": "e0ac3830-59ae-4c4b-be69-1f6f28378aa8",
+                "tenantId": "kl",
+                "schemaCode": "LandingPage.LatestAndComingSoon",
+                "uniqueIdentifier": "10",
+                "data": {
+                    "itemId": "10",
+                    "itemName": "Dynamic Cause List",
+                    "itemCategory": "COMING_SOON",
+                    "itemDescription": "Real-time updated causelist to know which case is being heard in the court at the moment"
+                },
+                "isActive": true
+            },
+            {
+                "id": "7f061f9e-0d3b-4f1b-ac72-ed4f08ceb50d",
+                "tenantId": "kl",
+                "schemaCode": "LandingPage.LatestAndComingSoon",
+                "uniqueIdentifier": "9",
+                "data": {
+                    "itemId": "9",
+                    "itemName": "Power of Attorney Functionality",
+                    "itemCategory": "COMING_SOON",
+                    "itemDescription": "Litigants represented by someone else will now have a dedicated feature to submit and manage Power of Attorney documents."
+                },
+                "isActive": true
+            },
+            {
+                "id": "360c85b4-0ae6-4275-a5bd-69251d7a92d4",
+                "tenantId": "kl",
+                "schemaCode": "LandingPage.LatestAndComingSoon",
+                "uniqueIdentifier": "8",
+                "data": {
+                    "itemId": "8",
+                    "itemName": "Easier Bail Applications",
+                    "itemCategory": "LIVE_NOW",
+                    "itemDateAdded": "March 2025",
+                    "itemDescription": "Submit anytime, attach all documents, and include terms & conditions in one go."
+                },
+                "isActive": true
+            },
+            {
+                "id": "44e40546-4647-45eb-93c8-ae51eaf52fb4",
+                "tenantId": "kl",
+                "schemaCode": "LandingPage.LatestAndComingSoon",
+                "uniqueIdentifier": "7",
+                "data": {
+                    "itemId": "7",
+                    "itemName": "Public Causelist Access",
+                    "itemCategory": "LIVE_NOW",
+                    "itemDateAdded": "March 2025",
+                    "itemDescription": "Now available directly on the 24x7 ON Courts website landing page for quick reference."
+                },
+                "isActive": true
+            },
+            {
+                "id": "7cc9067a-d004-4289-aa92-9838046c7270",
+                "tenantId": "kl",
+                "schemaCode": "LandingPage.LatestAndComingSoon",
+                "uniqueIdentifier": "6",
+                "data": {
+                    "itemId": "6",
+                    "itemName": "Enhanced SMS Notifications",
+                    "itemCategory": "LIVE_NOW",
+                    "itemDateAdded": "March 2025",
+                    "itemDescription": "Get real-time alerts for case status, pending tasks, hearing updates, and orders passed."
+                },
+                "isActive": true
+            },
+            {
+                "id": "c4ed6f59-6402-4aaf-a081-3d31283ae915",
+                "tenantId": "kl",
+                "schemaCode": "LandingPage.LatestAndComingSoon",
+                "uniqueIdentifier": "5",
+                "data": {
+                    "itemId": "5",
+                    "itemName": "Email OTPs",
+                    "itemCategory": "LIVE_NOW",
+                    "itemDateAdded": "April 2025",
+                    "itemDescription": " Email OTPs are now enabled. Parties will now receive the OTP via both SMS and email!"
+                },
+                "isActive": true
+            },
+            {
+                "id": "4d99f671-5681-4df6-8b98-c0c64fe34c57",
+                "tenantId": "kl",
+                "schemaCode": "LandingPage.LatestAndComingSoon",
+                "uniqueIdentifier": "4",
+                "data": {
+                    "itemId": "4",
+                    "itemName": "Online Payment for 'Join a Case'",
+                    "itemCategory": "COMING_SOON",
+                    "itemDescription": " Parties will soon be able to pay the Vakalatnama fee online while joining a case as an advocate, making the process seamless and convenient."
+                },
+                "isActive": true
+            },
+            {
+                "id": "565b53fc-36f4-4c32-8905-31784238d0ba",
+                "tenantId": "kl",
+                "schemaCode": "LandingPage.LatestAndComingSoon",
+                "uniqueIdentifier": "3",
+                "data": {
+                    "itemId": "3",
+                    "itemName": "Integration to share processes online to Police for delivery",
+                    "itemCategory": "COMING_SOON",
+                    "itemDescription": "Delivery of summons and warrants will now happen directly through the iCOPS platform, significantly reducing turnaround time and improving efficiency."
+                },
+                "isActive": true
+            },
+            {
+                "id": "ba60a4b3-b990-4740-9e3c-953fdc4a32d2",
+                "tenantId": "kl",
+                "schemaCode": "LandingPage.LatestAndComingSoon",
+                "uniqueIdentifier": "2",
+                "data": {
+                    "itemId": "2",
+                    "itemName": "Join a Case",
+                    "itemCategory": "LIVE_NOW",
+                    "itemDateAdded": "April 2025",
+                    "itemDescription": "Advocates can now easily join an existing case as an additional advocate or replace an existing one."
+                },
+                "isActive": true
+            }
+        ]
+    }
+]
