@@ -1,0 +1,116 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "BillingService",
+    "masterName": "TaxHeadMaster",
+    "mdmsPayload": [
+      {
+        "id": "60d825de-97b5-49ce-a7ba-ae2056053587",
+        "tenantId": "kl",
+        "schemaCode": "BillingService.TaxHeadMaster",
+        "uniqueIdentifier": "TASK_WARRANT_ADVANCE_CARRYFORWARD_RPAD_COURT_FEES",
+        "data": {
+          "code": "TASK_WARRANT_ADVANCE_CARRYFORWARD_RPAD_COURT_FEES",
+          "name": "Warrant Rpad Court Fee",
+          "order": "0",
+          "isDebit": true,
+          "service": "task-warrant",
+          "category": "ADVANCE_COLLECTION",
+          "isRequired": false,
+          "isActualDemand": false
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1744876581326,
+          "lastModifiedTime": 1744876581326
+        }
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "payment",
+    "masterName": "PaymentMasterCode",
+    "mdmsPayload": [
+      {
+        "id": "7d91ee12-a852-4635-8cd3-1caf45d383f4",
+        "tenantId": "kl",
+        "schemaCode": "payment.PaymentMasterCode",
+        "uniqueIdentifier": "TASK_WARRANT_ADVANCE_CARRYFORWARD_RPAD_COURT_FEES",
+        "data": {
+          "type": "Court Fee",
+          "masterCode": "TASK_WARRANT_ADVANCE_CARRYFORWARD_RPAD_COURT_FEES",
+          "paymentType": "Warrant Rpad Court Fee",
+          "businessService": "task-warrant",
+          "deliveryChannel": "RPAD"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1744876281466,
+          "lastModifiedTime": 1744876281466
+        }
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "payment",
+    "masterName": "paymentType",
+    "mdmsPayload": [
+      {
+        "id": "e6a478c3-2dce-4b0e-8194-e53ad3374ad8",
+        "tenantId": "kl",
+        "schemaCode": "payment.paymentType",
+        "uniqueIdentifier": "17",
+        "data": {
+          "businessService": [
+            {
+              "id": 1,
+              "businessCode": "task-warrant"
+            }
+          ],
+          "id": 17,
+          "suffix": "POST_PROCESS",
+          "paymentType": "Warrant Post Process Fee",
+          "deliveryChannel": "EPOST"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1744886586258,
+          "lastModifiedTime": 1744886586258
+        }
+      },
+      {
+        "id": "0eb379f5-bc26-424c-8e21-b1f6b8e88817",
+        "tenantId": "kl",
+        "schemaCode": "payment.paymentType",
+        "uniqueIdentifier": "16",
+        "data": {
+          "id": 16,
+          "suffix": "EPOST_COURT",
+          "paymentType": "Warrant Rpad Court Fee",
+          "businessService": [
+            {
+              "id": 1,
+              "businessCode": "task-warrant"
+            }
+          ],
+          "deliveryChannel": "RPAD"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1744878900896,
+          "lastModifiedTime": 1744878900896
+        }
+      }
+    ]
+  }
+]
