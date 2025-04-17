@@ -37,7 +37,7 @@ public class EFilingParamTestBuilder {
         return this;
     }
 
-    public EFilingParamTestBuilder withPetitionFee() {
+    public EFilingParamTestBuilder withComplaintFee() {
 
         this.builder.complaintFee(Map.of(
                         "0-50000", Range.builder()
