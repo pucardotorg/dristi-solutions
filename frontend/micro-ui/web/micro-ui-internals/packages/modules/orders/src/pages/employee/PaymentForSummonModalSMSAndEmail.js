@@ -359,7 +359,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   );
 
   const feeOptions = useMemo(() => {
-    const onPayOnline = async () => {
+    const onPayOnline = async (type) => {
       try {
         const { data: freshBillResponse } = await refetchBill();
         if (!billResponse?.Bill?.length) {
@@ -423,7 +423,25 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
             fileStoreId: fileStoreId || "",
           },
         };
-        if (fileStoreId && ePostBillResponse?.Bill?.[0]?.status === "PAID") {
+
+        if (type !== "EPOST") {
+          await ordersService.customApiService(Urls.orders.pendingTask, {
+            pendingTask: {
+              name: orderType === "WARRANT" ? "PAYMENT_PENDING_FOR_WARRANT" : `MAKE_PAYMENT_FOR_${orderType}_POST`,
+              entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
+              referenceId: `MANUAL_${taskNumber}`,
+              status: status,
+              assignedTo: [],
+              assignedRole: [],
+              cnrNumber: filteredTasks?.[0]?.cnrNumber,
+              filingNumber: filingNumber,
+              isCompleted: true,
+              stateSla: "",
+              additionalDetails: {},
+              tenantId,
+            },
+          });
+        } else if (fileStoreId && ePostBillResponse?.Bill?.[0]?.status === "PAID") {
           await ordersService.customApiService(Urls.orders.pendingTask, {
             pendingTask: {
               name: orderType === "WARRANT" ? "PAYMENT_PENDING_FOR_WARRANT" : `MAKE_PAYMENT_FOR_${orderType}_POST`,
@@ -481,7 +499,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           label: "Court Fees",
           amount: courtFeeAmount,
           action: "Pay Online",
-          onClick: onPayOnline,
+          onClick: () => onPayOnline("EMAIL"),
         },
       ],
       SMS: [
@@ -494,7 +512,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           label: "Court Fees",
           amount: courtFeeAmount,
           action: "Pay Online",
-          onClick: onPayOnline,
+          onClick: () => onPayOnline("SMS"),
         },
       ],
       EPOST: [
@@ -508,7 +526,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           amount: courtFeeAmount,
           action: "Pay Online",
           isCompleted: courtBillResponse?.Bill?.[0]?.status === "PAID",
-          onClick: onPayOnline,
+          onClick: () => onPayOnline("EPOST"),
         },
         {
           label: "Delivery Partner Fee",
@@ -528,7 +546,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           label: "Court Fees",
           amount: courtFeeAmount,
           action: "Pay Online",
-          onClick: onPayOnline,
+          onClick: () => onPayOnline("RPAD"),
         },
       ],
       POLICE: [
@@ -541,7 +559,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           label: "Court Fees",
           amount: courtFeeAmount,
           action: "Pay Online",
-          onClick: onPayOnline,
+          onClick: () => onPayOnline("POLICE"),
         },
       ],
     };
