@@ -438,6 +438,19 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           onClick: onPayOnline,
         },
       ],
+      EPOST: [
+        {
+          label: "Fee Type",
+          amount: "Amount",
+          action: "Actions",
+        },
+        {
+          label: "Court Fees",
+          amount: courtFeeAmount,
+          action: "Pay Online",
+          onClick: onPayOnline,
+        },
+      ],
       RPAD: [
         {
           label: "Fee Type",
@@ -504,6 +517,10 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     } else if (deliveryChannel === "SMS") {
       contactDetail = taskDetails?.respondentDetails?.phone || "Not provided";
     } else if (deliveryChannel === "Police") {
+      contactDetail = taskDetails?.respondentDetails?.phone || "Not provided";
+    } else if (deliveryChannel === "RPAD") {
+      contactDetail = taskDetails?.respondentDetails?.phone || "Not provided";
+    } else if (deliveryChannel === "Post") {
       contactDetail = taskDetails?.respondentDetails?.phone || "Not provided";
     }
 
