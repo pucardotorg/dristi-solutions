@@ -5,6 +5,28 @@
     "masterName": "paymentTypeToBreakupMapping",
     "mdmsPayload": [
       {
+        "id": "acb7aef4-37a3-4155-b11c-8f089a557b15",
+        "tenantId": "kl",
+        "schemaCode": "payment.paymentTypeToBreakupMapping",
+        "uniqueIdentifier": "19",
+        "data": {
+          "breakUpList": [
+            {
+              "breakUpCode": "COURT_FEE",
+              "breakUpName": "Court Fee"
+            }
+          ],
+          "paymentType": "19"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1744894489263,
+          "lastModifiedTime": 1744894489263
+        }
+      },
+      {
         "id": "d1d81591-cddb-4afb-a80c-3f9628dd0777",
         "tenantId": "kl",
         "schemaCode": "payment.paymentTypeToBreakupMapping",
