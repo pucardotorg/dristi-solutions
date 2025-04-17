@@ -2620,7 +2620,14 @@ export const updateCaseDetails = async ({
     const updatedCaseLitigants = caseDetails?.litigants?.map((litigant) => {
       const lit = complainantDetails?.find((comp) => comp?.individualId === litigant?.individualId);
       if (lit) {
-        const updatedLitigant = { ...litigant, documents: lit?.pipAffidavitFileUpload ? [lit?.pipAffidavitFileUpload] : [] };
+        const updatedDoc = lit?.pipAffidavitFileUpload ? structuredClone(lit?.pipAffidavitFileUpload) : null;
+        if (updatedDoc) {
+          const additionalDetails = {
+            documentName: "UPLOAD_PIP_AFFIDAVIT",
+          };
+          updatedDoc.additionalDetails = additionalDetails;
+        }
+        const updatedLitigant = { ...litigant, documents: lit?.pipAffidavitFileUpload ? [updatedDoc] : [] };
         return updatedLitigant;
       } else return litigant;
     });
