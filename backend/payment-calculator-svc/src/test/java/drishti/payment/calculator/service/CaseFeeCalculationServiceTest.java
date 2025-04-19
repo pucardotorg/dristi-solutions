@@ -2,7 +2,6 @@ package drishti.payment.calculator.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import digit.models.coremodels.AuditDetails;
 import drishti.payment.calculator.helper.EFilingParamTestBuilder;
 import drishti.payment.calculator.util.CaseUtil;
 import drishti.payment.calculator.util.EFillingUtil;
@@ -22,7 +21,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static drishti.payment.calculator.config.ServiceConstants.ADVOCATE_FEE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -43,7 +41,7 @@ public class CaseFeeCalculationServiceTest {
     @Test
     @DisplayName("do calculate case fees with one criteria")
     public void doCalculateCaseFeesWithOneCriteria() {
-        EFilingParam eFilingParam = EFilingParamTestBuilder.builder().withConfig().withPetitionFee().withAdvocateFee().build();
+        EFilingParam eFilingParam = EFilingParamTestBuilder.builder().withConfig().withComplaintFee().withAdvocateFee().build();
         when(eFillingUtil.getEFillingDefaultData(any(), anyString())).thenReturn(eFilingParam);
         EFillingCalculationRequest request = EFillingCalculationRequest.builder()
                 .calculationCriteria(Collections.singletonList(
@@ -60,7 +58,7 @@ public class CaseFeeCalculationServiceTest {
     @Test
     @DisplayName("do calculate case fees with one criteria and litigant advocate")
     public void doCalculateCaseFeesWithOneCriteriaAndLitigantAdvocate() {
-        EFilingParam eFilingParam = EFilingParamTestBuilder.builder().withConfig().withPetitionFee().withAdvocateFee().build();
+        EFilingParam eFilingParam = EFilingParamTestBuilder.builder().withConfig().withComplaintFee().withAdvocateFee().build();
         when(eFillingUtil.getEFillingDefaultData(any(), anyString())).thenReturn(eFilingParam);
         Map<String, List<JsonNode>> mockLitigantAdvocateMap = Collections.singletonMap("1", Collections.singletonList(new ObjectMapper().createObjectNode().put("id", "101")));
         when(caseUtil.getAdvocateForLitigant(any(), anyString(), anyString())).thenReturn(mockLitigantAdvocateMap);
@@ -79,7 +77,7 @@ public class CaseFeeCalculationServiceTest {
     @Test
     @DisplayName("do calculate case fees with one criteria and litigant advocate with more than one litigant advocates")
     public void doCalculateCaseFeesWithOneCriteriaAndLitigantAdvocateWithMoreThanOneLitigantAdvocates() {
-        EFilingParam eFilingParam = EFilingParamTestBuilder.builder().withConfig().withPetitionFee().withAdvocateFee().build();
+        EFilingParam eFilingParam = EFilingParamTestBuilder.builder().withConfig().withComplaintFee().withAdvocateFee().build();
         when(eFillingUtil.getEFillingDefaultData(any(), anyString())).thenReturn(eFilingParam);
         Map<String, List<JsonNode>> mockLitigantAdvocateMap = new HashMap<>();
         mockLitigantAdvocateMap.put("1", Collections.nCopies(4, new ObjectMapper().createObjectNode().put("id", "101")));
