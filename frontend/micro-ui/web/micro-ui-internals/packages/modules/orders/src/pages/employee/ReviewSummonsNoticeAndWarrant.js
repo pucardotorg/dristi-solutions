@@ -471,6 +471,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
             setIsIcops({ state: "failed", message: `Something went wrong. ${error}`, icopsAcknowledgementNumber: "" });
             console.error("Error updating task data:", error);
             return { continue: true };
+          } finally {
+            setIsLoading(false);
           }
         }
       }
@@ -499,7 +501,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
         },
         {
           heading: { label: t("ADD_SIGNATURE") },
-          actionSaveLabel: deliveryChannel === "Email" ? t("SEND_EMAIL_TEXT") : t("PROCEED_TO_SENT"),
+          actionSaveLabel:
+            deliveryChannel === "Email" ? t("SEND_EMAIL_TEXT") : deliveryChannel === "Police" ? t("CORE_COMMON_SEND") : t("PROCEED_TO_SENT"),
           actionCancelLabel: t("BACK"),
           modalBody: (
             <div>
@@ -515,7 +518,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
               />
             </div>
           ),
-          isDisabled: !isSigned || isLoading ? true : false,
+          isDisabled: !isSigned ? true : false,
           actionSaveOnSubmit: handleSubmitEsign,
           async: true,
         },

@@ -100,7 +100,7 @@ const PaymentForSummonComponent = ({
                         This is an offline process. <span className="learn-more-text">Learn More</span>
                       </p>
                     ))}
-                  {action?.isCompleted && <p>{t("PAYMEND_ALREADY_COMPLETED")}</p>}
+                  {action?.isCompleted && <p style={{ color: "green" }}>{t("PAYMENT_COMPLETED")}</p>}
                 </div>
               )}
             </div>
@@ -322,8 +322,44 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     Boolean(taskNumber && businessService)
   );
 
+  const deliveryPartnerFeeAmount = useMemo(() => breakupResponse?.Calculation?.[0]?.breakDown?.find((data) => data?.type === "E Post")?.amount, [
+    breakupResponse,
+  ]);
+
+  const service = useMemo(() => (orderType === "WARRANT" ? paymentType.TASK_WARRANT : paymentType.TASK_NOTICE), [orderType]);
+
+  const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchCourtBill } = Digit.Hooks.dristi.useBillSearch(
+    {},
+    {
+      tenantId,
+      consumerCode: `${taskNumber}_POST_COURT`,
+      service: service,
+    },
+    `${taskNumber}_POST_COURT_${service}`,
+    Boolean(taskNumber && orderType)
+  );
+
+  const { data: ePostBillResponse, isLoading: isEPOSTBillLoading } = Digit.Hooks.dristi.useBillSearch(
+    {},
+    {
+      tenantId,
+      consumerCode: `${taskNumber}_POST_PROCESS`,
+      service: service,
+    },
+    `${taskNumber}_POST_PROCESS_${service}`,
+    Boolean(taskNumber && orderType)
+  );
+
+  const partyIndex = useMemo(
+    () =>
+      orderData?.list?.[0]?.orderCategory === "COMPOSITE"
+        ? compositeItem?.orderSchema?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex
+        : orderData?.list?.[0]?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex,
+    [orderData, compositeItem]
+  );
+
   const feeOptions = useMemo(() => {
-    const onPayOnline = async () => {
+    const onPayOnline = async (type) => {
       try {
         const { data: freshBillResponse } = await refetchBill();
         if (!billResponse?.Bill?.length) {
@@ -387,7 +423,25 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
             fileStoreId: fileStoreId || "",
           },
         };
-        if (fileStoreId) {
+
+        if (type !== "EPOST") {
+          await ordersService.customApiService(Urls.orders.pendingTask, {
+            pendingTask: {
+              name: orderType === "WARRANT" ? "PAYMENT_PENDING_FOR_WARRANT" : `MAKE_PAYMENT_FOR_${orderType}_POST`,
+              entityType: paymentType.ASYNC_ORDER_SUBMISSION_MANAGELIFECYCLE,
+              referenceId: `MANUAL_${taskNumber}`,
+              status: status,
+              assignedTo: [],
+              assignedRole: [],
+              cnrNumber: filteredTasks?.[0]?.cnrNumber,
+              filingNumber: filingNumber,
+              isCompleted: true,
+              stateSla: "",
+              additionalDetails: {},
+              tenantId,
+            },
+          });
+        } else if (fileStoreId && ePostBillResponse?.Bill?.[0]?.status === "PAID") {
           await ordersService.customApiService(Urls.orders.pendingTask, {
             pendingTask: {
               name: orderType === "WARRANT" ? "PAYMENT_PENDING_FOR_WARRANT" : `MAKE_PAYMENT_FOR_${orderType}_POST`,
@@ -411,6 +465,29 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       }
     };
 
+    const onPayOnlineSBI = async () => {
+      try {
+        history.push(`/${window?.contextPath}/citizen/home/sbi-epost-payment`, {
+          state: {
+            billData: ePostBillResponse,
+            serviceNumber: taskNumber,
+            businessService: service,
+            caseDetails: caseDetails,
+            consumerCode: `${taskNumber}_POST_PROCESS`,
+            orderData: orderData,
+            partyIndex: partyIndex,
+            filteredTasks: filteredTasks,
+            filingNumber: filingNumber,
+            isCourtBillPaid: courtBillResponse?.Bill?.[0]?.status === "PAID",
+            hearingId: orderData?.list?.[0]?.hearingNumber,
+            orderType: orderType,
+          },
+        });
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
     return {
       EMAIL: [
         {
@@ -422,7 +499,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           label: "Court Fees",
           amount: courtFeeAmount,
           action: "Pay Online",
-          onClick: onPayOnline,
+          onClick: () => onPayOnline("EMAIL"),
         },
       ],
       SMS: [
@@ -435,7 +512,28 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           label: "Court Fees",
           amount: courtFeeAmount,
           action: "Pay Online",
-          onClick: onPayOnline,
+          onClick: () => onPayOnline("SMS"),
+        },
+      ],
+      EPOST: [
+        {
+          label: "Fee Type",
+          amount: "Amount",
+          action: "Actions",
+        },
+        {
+          label: "Court Fees",
+          amount: courtFeeAmount,
+          action: "Pay Online",
+          isCompleted: courtBillResponse?.Bill?.[0]?.status === "PAID",
+          onClick: () => onPayOnline("EPOST"),
+        },
+        {
+          label: "Delivery Partner Fee",
+          amount: deliveryPartnerFeeAmount,
+          isCompleted: ePostBillResponse?.Bill?.[0]?.status === "PAID",
+          action: "Pay Online",
+          onClick: onPayOnlineSBI,
         },
       ],
       RPAD: [
@@ -448,7 +546,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           label: "Court Fees",
           amount: courtFeeAmount,
           action: "Pay Online",
-          onClick: onPayOnline,
+          onClick: () => onPayOnline("RPAD"),
         },
       ],
       POLICE: [
@@ -461,7 +559,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
           label: "Court Fees",
           amount: courtFeeAmount,
           action: "Pay Online",
-          onClick: onPayOnline,
+          onClick: () => onPayOnline("POLICE"),
         },
       ],
     };
@@ -504,6 +602,10 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     } else if (deliveryChannel === "SMS") {
       contactDetail = taskDetails?.respondentDetails?.phone || "Not provided";
     } else if (deliveryChannel === "Police") {
+      contactDetail = taskDetails?.respondentDetails?.phone || "Not provided";
+    } else if (deliveryChannel === "RPAD") {
+      contactDetail = taskDetails?.respondentDetails?.phone || "Not provided";
+    } else if (deliveryChannel === "Post") {
       contactDetail = taskDetails?.respondentDetails?.phone || "Not provided";
     }
 
