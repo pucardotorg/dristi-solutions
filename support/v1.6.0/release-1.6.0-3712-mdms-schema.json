@@ -1,0 +1,73 @@
+[
+  {
+    "tenantId": "kl",
+    "masterName": "case",
+    "moduleName": "e-filling",
+    "mdmsPayload": [
+      {
+        "id": "9a7acba6-2d45-40c3-a5de-e2576b17e10e",
+        "tenantId": "kl",
+        "code": "case.e-filling",
+        "description": null,
+        "definition": {
+          "type": "object",
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "required": [
+            "id",
+            "legalBasicFund",
+            "courtFee",
+            "vakalathnamaFee",
+            "advocateClerkWelfareFund",
+            "noOfAdvocateFees"
+          ],
+          "x-unique": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "courtFee": {
+              "type": "number"
+            },
+            "complaintFee": {
+              "type": "object"
+            },
+            "legalBasicFund": {
+              "type": "number"
+            },
+            "vakalathnamaFee": {
+              "type": "integer"
+            },
+            "noOfAdvocateFees": {
+              "type": "object"
+            },
+            "advocateWelfareFund": {
+              "type": "integer"
+            },
+            "defaultComplaintFee": {
+              "type": "integer"
+            },
+            "delayCondonationFee": {
+              "type": "integer"
+            },
+            "delayCondonationPeriod": {
+              "type": "integer"
+            },
+            "advocateClerkWelfareFund": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1745066877686,
+          "lastModifiedTime": 1745066877686
+        }
+      }
+    ]
+  }
+]
