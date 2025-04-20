@@ -1938,12 +1938,9 @@ const GenerateOrders = () => {
         return `${currentOrder?.additionalDetails?.formdata?.comments?.text || ""}`;
       case "RESCHEDULE_OF_HEARING_DATE":
         return `Hearing for ${formatDate(
-          new Date(currentOrder?.additionalDetails?.formdata?.newHearingDate),
+          new Date(currentOrder?.additionalDetails?.formdata?.originalHearingDate),
           "DD-MM-YYYY"
-        )} rescheduled on petition. Hearing Date to be announced on ${formatDate(
-          new Date(currentOrder?.additionalDetails?.formdata?.newHearingDate),
-          "DD-MM-YYYY"
-        )}`;
+        )} rescheduled to ${formatDate(new Date(currentOrder?.additionalDetails?.formdata?.newHearingDate), "DD-MM-YYYY")}`;
       case "CHECKOUT_ACCEPTANCE":
         return "Order for Approval of Check out (Emergency Reschedule) request";
       case "CHECKOUT_REJECT":
