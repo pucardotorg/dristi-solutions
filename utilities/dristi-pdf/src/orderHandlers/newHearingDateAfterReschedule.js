@@ -133,8 +133,10 @@ async function newHearingDateAfterReschedule(
     }
 
     const formattedToday = formatDate(Date.now());
-    const newHearingDate = order?.orderDetails?.newHearingDate
-      ? formatDate(order?.orderDetails?.newHearingDate)
+    const newHearingDate = order?.orderDetails?.hearingDate
+      ? formatDate(order?.orderDetails?.hearingDate)
+      : order?.additionalDetails?.formdata?.newHearingDate
+      ? formatDate(order?.additionalDetails?.formdata?.newHearingDate)
       : "";
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const data = {
