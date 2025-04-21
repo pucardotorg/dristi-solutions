@@ -1325,8 +1325,13 @@ function EFilingCases({ path }) {
                 if (selected === "complainantDetails" && formComponent.component === "CustomRadioInfoComponent") {
                   key = formComponent.key + "." + formComponent?.populators?.optionsKey;
                 }
-                if (selected === "complainantDetails" && formComponent.component === "VerificationComponent") {
+                if (selected === "complainantDetails" && formComponent.component === "VerificationComponent" && key === "complainantId") {
+                  debugger;
                   key = "complainantVerification.individualDetails.document";
+                }
+                if (selected === "complainantDetails" && formComponent.component === "VerificationComponent" && key === "poaComplainantId") {
+                  debugger;
+                  key = "poaVerification.individualDetails.document";
                 }
                 const modifiedFormComponent = cloneDeep(formComponent);
                 if (modifiedFormComponent?.labelChildren === "optional") {
