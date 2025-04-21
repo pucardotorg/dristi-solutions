@@ -51,13 +51,7 @@ const JudgementViewCard = ({ caseData, width }) => {
   const handleButtonClick = () => {
     setShowFinalOutcomeOrder(true);
   };
-  const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
-    { criteria: { tenantId }, tenantId },
-    { applicationNumber: "", cnrNumber: "", tenantId },
-    "dristi",
-    true
-  );
-  const hearingsList = useMemo(() => hearingsData?.HearingList?.sort((a, b) => b.startTime - a.startTime), [hearingsData]);
+
   const formatDate = (date, format) => {
     const day = String(date.getDate()).padStart(2, "0");
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -127,7 +121,7 @@ const JudgementViewCard = ({ caseData, width }) => {
                 marginTop: "5px",
               }}
             >
-              {formatDate(new Date(hearingsList?.[hearingsList?.length - 1]?.startTime), "DD-MM-YYYY")}
+              {formatDate(new Date(finalOutcomeOrder?.createdDate), "DD-MM-YYYY")}
             </div>
           </div>
           <Button variation={"outlined"} onButtonClick={handleButtonClick} label={`View ${t(finalOutcomeOrderType)} Order`} />
