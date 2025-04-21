@@ -204,7 +204,10 @@ const AdmittedCases = () => {
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
+  const [showCitizenMenu, setShowCitizenMenu] = useState(false);
+  const [showJoinCase, setShowJoinCase] = useState(false);
 
+  const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
   const isCitizen = userRoles.includes("CITIZEN");
   const isCourtStaff = userRoles.includes("COURT_ROOM_MANAGER");
@@ -458,6 +461,10 @@ const AdmittedCases = () => {
     setShowMenu(!showMenu);
     setShowOtherMenu(false);
     setShowMenuFilings(false);
+
+    if (showCitizenMenu) {
+      setShowCitizenMenu(false);
+    }
   };
 
   const handleTakeFilingAction = () => {
@@ -2551,27 +2558,60 @@ const AdmittedCases = () => {
                 onButtonClick={handleDownloadPDF}
               />
             )}
-            {showMakeSubmission && (
+            {(showMakeSubmission || isCitizen) && (
               <div className="evidence-header-wrapper">
                 <div className="evidence-hearing-header" style={{ background: "transparent" }}>
                   <div className="evidence-actions" style={{ ...(isTabDisabled ? { pointerEvents: "none" } : {}) }}>
-                    <ActionButton
-                      variation={"primary"}
-                      label={t("CS_CASE_MAKE_FILINGS")}
-                      icon={showMenu ? "ExpandLess" : "ExpandMore"}
-                      isSuffix={true}
-                      onClick={handleTakeAction}
-                      className={"take-action-btn-class"}
-                    ></ActionButton>
-                    {showMenu && (
-                      <Menu
-                        t={t}
-                        optionKey={"label"}
-                        localeKeyPrefix={"CS_CASE"}
-                        options={citizenActionOptions}
-                        onSelect={(option) => handleCitizenAction(option)}
-                      ></Menu>
+                    {showMakeSubmission && (
+                      <React.Fragment>
+                        <ActionButton
+                          variation={"primary"}
+                          label={t("CS_CASE_MAKE_FILINGS")}
+                          icon={showMenu ? "ExpandLess" : "ExpandMore"}
+                          isSuffix={true}
+                          onClick={handleTakeAction}
+                          className={"take-action-btn-class"}
+                        ></ActionButton>
+                        {showMenu && (
+                          <Menu
+                            t={t}
+                            optionKey={"label"}
+                            localeKeyPrefix={"CS_CASE"}
+                            options={citizenActionOptions}
+                            onSelect={(option) => handleCitizenAction(option)}
+                          ></Menu>
+                        )}
+                      </React.Fragment>
                     )}
+
+                    <div
+                      onClick={() => {
+                        setShowCitizenMenu((prev) => !prev);
+                        if (showMenu) {
+                          setShowMenu(false);
+                        }
+                      }}
+                    >
+                      <CustomThreeDots />
+                      {showCitizenMenu && (
+                        <Menu
+                          options={["MANAGE_CASE_ACCESS"]}
+                          t={t}
+                          onSelect={(option) => {
+                            if (option === "MANAGE_CASE_ACCESS") {
+                              setShowJoinCase(true);
+                              setShowCitizenMenu(false);
+                            }
+                          }}
+                        ></Menu>
+                      )}
+                      <JoinCaseHome
+                        setShowJoinCase={setShowJoinCase}
+                        showJoinCase={showJoinCase}
+                        type={"external"}
+                        data={{ caseDetails: caseDetails }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
