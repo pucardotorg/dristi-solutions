@@ -198,6 +198,7 @@ function EFilingCases({ path }) {
   const [serviceOfDemandNoticeModal, setServiceOfDemandNoticeModal] = useState(false);
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
   const [showConfirmMandatoryModal, setShowConfirmMandatoryModal] = useState(false);
+  const [optionalFieldModalAlreadyViewed, setOptionalFieldModalAlreadyViewed] = useState(false);
   const [showConfirmOptionalModal, setShowConfirmOptionalModal] = useState(false);
   const [showReviewCorrectionModal, setShowReviewCorrectionModal] = useState(false);
   const [showCaseLockingModal, setShowCaseLockingModal] = useState(false);
@@ -1492,6 +1493,10 @@ function EFilingCases({ path }) {
 
   const handleSkip = () => {
     setShowConfirmOptionalModal(false);
+    // optionalFieldModalAlreadyViewed -> We want to show the optional remaining fields modal only once when the user visits the review page for the first time.
+    // Then for viewing it again, user has to go to different page and come back on review page.
+    // This logic is implemented so that this modal does not pop up again and again unnecessarily on review page when save draft or continue button is clicked.
+    setOptionalFieldModalAlreadyViewed(true);
   };
 
   const createPendingTask = async ({
@@ -2124,6 +2129,7 @@ function EFilingCases({ path }) {
     // }
     setParmas({ ...params, [pageConfig.key]: formdata });
     setFormdata([{ isenabled: true, data: {}, displayindex: 0 }]);
+    setOptionalFieldModalAlreadyViewed(false);
     if (resetFormData.current) {
       resetFormData.current();
       setIsDisabled(false);
@@ -2438,6 +2444,7 @@ function EFilingCases({ path }) {
     setPrevSelected(selected);
     history.push(`?caseId=${caseId}&selected=${selectedPage}`);
     setShowConfirmOptionalModal(false);
+    setOptionalFieldModalAlreadyViewed(true);
   };
 
   const handleGoToPage = (key) => {
@@ -2838,17 +2845,28 @@ function EFilingCases({ path }) {
               actionSaveOnSubmit={() => takeUserToRemainingMandatoryFieldsPage()}
             ></Modal>
           )}
-          {showOptionalFieldsRemainingModal && showConfirmOptionalModal && !mandatoryFieldsLeftTotalCount && !isDisableAllFieldsMode && (
-            <Modal
-              headerBarMain={<Heading label={t("TIPS_FOR_STRONGER_CASE")} />}
-              headerBarEnd={<CloseBtn onClick={() => setShowConfirmOptionalModal(false)} />}
-              actionCancelLabel={t("SKIP_AND_CONTINUE")}
-              actionCancelOnSubmit={handleSkip}
-              actionSaveLabel={isFilingParty && t("FILL_NOW")}
-              children={optionalFieldsRemainingText(optionalFieldsLeftTotalCount)}
-              actionSaveOnSubmit={() => takeUserToRemainingOptionalFieldsPage()}
-            ></Modal>
-          )}
+          {showOptionalFieldsRemainingModal &&
+            showConfirmOptionalModal &&
+            !mandatoryFieldsLeftTotalCount &&
+            !isDisableAllFieldsMode &&
+            !optionalFieldModalAlreadyViewed && (
+              <Modal
+                headerBarMain={<Heading label={t("TIPS_FOR_STRONGER_CASE")} />}
+                headerBarEnd={
+                  <CloseBtn
+                    onClick={() => {
+                      setShowConfirmOptionalModal(false);
+                      setOptionalFieldModalAlreadyViewed(true);
+                    }}
+                  />
+                }
+                actionCancelLabel={t("SKIP_AND_CONTINUE")}
+                actionCancelOnSubmit={handleSkip}
+                actionSaveLabel={isFilingParty && t("FILL_NOW")}
+                children={optionalFieldsRemainingText(optionalFieldsLeftTotalCount)}
+                actionSaveOnSubmit={() => takeUserToRemainingOptionalFieldsPage()}
+              ></Modal>
+            )}
           {showReviewCorrectionModal && isDraftInProgress && (
             <Modal
               headerBarMain={<Heading label={t("REVIEW_CASE_HEADER")} />}
