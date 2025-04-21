@@ -356,6 +356,25 @@ const GenerateOrders = () => {
     );
   }, [caseDetails, allAdvocates]);
 
+  const poaHolders = useMemo(() => {
+    const complainantIds = new Set(complainants?.map((c) => c?.individualId));
+    return (
+      caseDetails?.poaHolders
+        ?.filter((item) => !complainantIds.has(item?.individualId))
+        ?.map((item) => {
+          const fullName = removeInvalidNameParts(item?.name);
+          return {
+            code: fullName,
+            name: `${fullName} (PoA Holder)`,
+            representingLitigants: item?.representingLitigants?.map((lit) => lit?.individualId),
+            individualId: item?.individualId,
+            isJoined: true,
+            partyType: "poaHolder",
+          };
+        }) || []
+    );
+  }, [caseDetails, complainants]);
+
   const respondents = useMemo(() => {
     return (
       caseDetails?.litigants
@@ -406,8 +425,9 @@ const GenerateOrders = () => {
     );
   }, [caseDetails]);
 
-  const allParties = useMemo(() => [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses], [
+  const allParties = useMemo(() => [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses], [
     complainants,
+    poaHolders,
     respondents,
     unJoinedLitigant,
     witnesses,
@@ -845,7 +865,7 @@ const GenerateOrders = () => {
                       ...field,
                       populators: {
                         ...field.populators,
-                        options: [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses],
+                        options: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
                       },
                     };
                   }
@@ -1074,7 +1094,7 @@ const GenerateOrders = () => {
                     ...field,
                     populators: {
                       ...field.populators,
-                      options: [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses],
+                      options: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
                     },
                   };
                 }
@@ -2385,7 +2405,14 @@ const GenerateOrders = () => {
       const complainantUuids = caseDetails?.litigants
         ?.filter((com) => com?.partyType?.startsWith("complainant"))
         .map((com) => com?.additionalDetails?.uuid);
-      assignees = [...assignee, ...complainantUuids]?.map((uuid) => ({ uuid }));
+
+      const poaHolders = (caseDetails?.poaHolders || [])
+        ?.filter((holder) =>
+          holder?.representingLitigants?.some((represent) => complainants?.some((lit) => lit?.individualId === represent?.individualId))
+        )
+        ?.map((holder) => holder?.additionalDetails?.uuid);
+
+      assignees = [...assignee, ...complainantUuids, ...poaHolders]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
       return ordersService.customApiService(Urls.orders.pendingTask, {
         pendingTask: {
@@ -2416,7 +2443,14 @@ const GenerateOrders = () => {
       const complainantUuids = caseDetails?.litigants
         ?.filter((com) => com?.partyType?.startsWith("complainant"))
         .map((com) => com?.additionalDetails?.uuid);
-      assignees = [...assignee, ...complainantUuids]?.map((uuid) => ({ uuid }));
+
+      const poaHolders = (caseDetails?.poaHolders || [])
+        ?.filter((holder) =>
+          holder?.representingLitigants?.some((represent) => complainants?.some((lit) => lit?.individualId === represent?.individualId))
+        )
+        ?.map((holder) => holder?.additionalDetails?.uuid);
+
+      assignees = [...assignee, ...complainantUuids, ...poaHolders]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
       const pendingTask = {
         name: t(`MAKE_PAYMENT_FOR_NOTICE_${channelCode}`),
@@ -2449,7 +2483,14 @@ const GenerateOrders = () => {
       const complainantUuids = caseDetails?.litigants
         ?.filter((com) => com?.partyType?.startsWith("complainant"))
         .map((com) => com?.additionalDetails?.uuid);
-      assignees = [...assignee, ...complainantUuids]?.map((uuid) => ({ uuid }));
+
+      const poaHolders = (caseDetails?.poaHolders || [])
+        ?.filter((holder) =>
+          holder?.representingLitigants?.some((represent) => complainants?.some((lit) => lit?.individualId === represent?.individualId))
+        )
+        ?.map((holder) => holder?.additionalDetails?.uuid);
+
+      assignees = [...assignee, ...complainantUuids, ...poaHolders]?.map((uuid) => ({ uuid }));
       entityType = "order-default";
       return ordersService.customApiService(Urls.orders.pendingTask, {
         pendingTask: {
@@ -2480,13 +2521,22 @@ const GenerateOrders = () => {
       name = t("SUBMIT_BAIL_DOCUMENTS");
       entityType = "voluntary-application-submission-bail-documents";
       const assigneeUuid = order?.additionalDetails?.formdata?.partyId;
+      const litigant = caseDetails?.litigants?.find((litigant) => litigant?.additionalDetails?.uuid === assigneeUuid);
+      let poaHolderUuid;
+
+      if (litigant) {
+        poaHolderUuid = (caseDetails?.poaHolders || [])
+          ?.filter((poaHolder) => poaHolder?.representingLitigants?.some((represent) => represent?.individualId === litigant?.individualId))
+          ?.map((poaHolder) => ({ uuid: poaHolder?.additionalDetails?.uuid }));
+      }
+
       return ordersService.customApiService(Urls.orders.pendingTask, {
         pendingTask: {
           name,
           entityType,
           referenceId: `MANUAL_${compositeOrderItemId ? `${compositeOrderItemId}_` : ""}${assigneeUuid}_${order?.orderNumber}`,
           status,
-          assignedTo: [{ uuid: assigneeUuid }],
+          assignedTo: [{ uuid: assigneeUuid }, ...poaHolderUuid],
           assignedRole,
           cnrNumber: cnrNumber,
           filingNumber: filingNumber,
@@ -3735,13 +3785,25 @@ const GenerateOrders = () => {
             await updateCaseDetails("ISSUE_ORDER");
             const caseDetails = await refetchCaseData();
             const caseData = caseDetails?.data?.criteria?.[0]?.responseList?.[0];
-            const respondent = caseData?.litigants?.find((litigant) => litigant?.partyType?.includes("respondent"));
+            const respondent = caseData?.litigants?.filter((litigant) => litigant?.partyType?.includes("respondent"));
             const advocate = caseData?.representatives?.find((representative) =>
               representative?.representing?.some((represent) => respondent && represent?.individualId === respondent?.individualId)
             );
 
             const assignees = [];
-            if (respondent) assignees.push({ uuid: respondent?.additionalDetails?.uuid });
+            if (respondent?.length > 0) {
+              assignees.push(
+                ...respondent?.map((res) => ({
+                  uuid: res?.additionalDetails?.uuid,
+                }))
+              );
+              const poaHolders = (caseDetails?.poaHolders || [])
+                ?.filter((poaHolder) =>
+                  poaHolder?.representingLitigants?.some((represent) => respondent?.some((res) => res?.individualId === represent?.individualId))
+                )
+                ?.map((poaHolder) => poaHolder?.additionalDetails?.uuid);
+              assignees.push(...poaHolders?.map((uuid) => ({ uuid })));
+            }
             if (advocate) assignees.push({ uuid: advocate?.additionalDetails?.uuid });
 
             if (respondent && assignees?.length > 0) {
@@ -3790,12 +3852,24 @@ const GenerateOrders = () => {
               await updateCaseDetails("ISSUE_ORDER");
               const caseDetails = await refetchCaseData();
               const caseData = caseDetails?.data?.criteria?.[0]?.responseList?.[0];
-              const respondent = caseData?.litigants?.find((litigant) => litigant?.partyType?.includes("respondent"));
+              const respondent = caseData?.litigants?.filter((litigant) => litigant?.partyType?.includes("respondent"));
               const advocate = caseData?.representatives?.find((representative) =>
                 representative?.representing?.some((represent) => respondent && represent?.individualId === respondent?.individualId)
               );
               const assignees = [];
-              if (respondent) assignees.push({ uuid: respondent?.additionalDetails?.uuid });
+              if (respondent?.length > 0) {
+                assignees.push(
+                  ...respondent?.map((res) => ({
+                    uuid: res?.additionalDetails?.uuid,
+                  }))
+                );
+                const poaHolders = (caseDetails?.poaHolders || [])
+                  ?.filter((poaHolder) =>
+                    poaHolder?.representingLitigants?.some((represent) => respondent?.some((res) => res?.individualId === represent?.individualId))
+                  )
+                  ?.map((poaHolder) => poaHolder?.additionalDetails?.uuid);
+                assignees.push(...poaHolders?.map((uuid) => ({ uuid })));
+              }
               if (advocate) assignees.push({ uuid: advocate?.additionalDetails?.uuid });
 
               if (respondent && assignees?.length > 0) {

@@ -14,6 +14,7 @@ export const editComplainantValidation = ({
   setFormErrors,
   formState,
   clearFormDataErrors,
+  currentComplainant,
 }) => {
   if (selected === "complainantDetails") {
     if (
@@ -318,6 +319,7 @@ export const updateProfileData = async ({
   complainantIdProofFileName,
   setFormDataValue,
   history,
+  currentComplainant,
 }) => {
   function cloneFormDataRemoveIcon(originalFormDataArray) {
     return originalFormDataArray.map((originalFormData) => {
@@ -447,6 +449,18 @@ export const updateProfileData = async ({
 
     const { complainantIDProofDocument, reasonDetailsSeparator, reasonForChange, supportingDocument, ...remainingFormData } =
       newFormData?.[0]?.data || {};
+    remainingFormData.transferredPOA = currentComplainant?.transferredPOA;
+    if (currentComplainant?.transferredPOA?.showPoaDetails) {
+      remainingFormData.poaVerification = currentComplainant?.poaVerification;
+      remainingFormData.poaComplainantId = currentComplainant?.poaComplainantId;
+      remainingFormData.poaFirstName = currentComplainant?.poaFirstName;
+      remainingFormData.poaMiddleName = currentComplainant?.poaMiddleName;
+      remainingFormData.poaLastName = currentComplainant?.poaLastName;
+      remainingFormData.poaAge = currentComplainant?.poaAge;
+      remainingFormData.poaAddressDetails = currentComplainant?.poaAddressDetails;
+      remainingFormData["poaAddressDetails-select"] = currentComplainant?.["poaAddressDetails-select"];
+      remainingFormData.poaAuthorizationDocument = currentComplainant?.poaAuthorizationDocument;
+    }
     profilePayload = {
       tenantId,
       caseId,
