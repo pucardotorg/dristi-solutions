@@ -1,0 +1,20 @@
+{
+  "tenantId": "kl",
+  "moduleName": "Submission",
+  "masterName": "SubmissionDocumentType",
+  "mdmsPayload": [
+    {
+      "id": "7ee48710-ced9-42fc-9332-993e936075c5",
+      "tenantId": "kl",
+      "schemaCode": "Submission.SubmissionDocumentType",
+      "uniqueIdentifier": "5",
+      "data": {
+        "id": "5",
+        "code": "OTHERS",
+        "name": "OTHERS",
+        "isActive": true
+      },
+      "isActive": true
+    }
+  ]
+}
