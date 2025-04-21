@@ -163,8 +163,6 @@ public class CaseServiceTest {
         Role role = new Role();
         role.setName("employee");
         userInfo.setRoles(Collections.singletonList(role));
-        requestInfo.setUserInfo(userInfo);
-        caseSearchRequest.setRequestInfo(requestInfo);
         // Initialize mocks and create necessary objects for the tests
         joinCaseRequest = new JoinCaseRequest();
         joinCaseRequest.setAdditionalDetails("form-data");
@@ -176,6 +174,8 @@ public class CaseServiceTest {
         requestInfo = RequestInfo.builder()
                 .userInfo(User.builder().uuid("ba8767a6-7cb1-416b-803e-19cf9dca06bc").tenantId(TENANT_ID).build())
                 .build();
+
+        caseSearchRequest.setRequestInfo(requestInfo);
 
         joinCaseData = JoinCaseDataV2.builder()
                 .filingNumber(FILING_NUMBER)
@@ -864,7 +864,6 @@ public class CaseServiceTest {
        CustomException exception = assertThrows(CustomException.class, ()->caseService.verifyJoinCaseRequest(joinCaseRequest,true));
        assertEquals("Invalid request for joining a case",exception.getMessage());
     }
-
 
     @Test
     void testSearchCases() {
