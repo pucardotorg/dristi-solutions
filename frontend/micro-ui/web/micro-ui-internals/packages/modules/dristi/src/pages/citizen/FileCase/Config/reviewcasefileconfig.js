@@ -108,6 +108,8 @@ export const reviewCaseFileFormConfig = [
                   type: "text",
                   label: "CS_POA_AGE",
                   value: "poaAge",
+                  dependentOn: "transferredPOA.code",
+                  dependentValue: "YES",
                   enableScrutinyField: true,
                 },
                 {
