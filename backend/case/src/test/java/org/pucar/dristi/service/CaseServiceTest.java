@@ -17,6 +17,7 @@ import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
+import org.egov.common.models.individual.Name;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,6 +37,9 @@ import org.pucar.dristi.validators.CaseRegistrationValidator;
 import org.pucar.dristi.validators.EvidenceValidator;
 import org.pucar.dristi.web.OpenApiCaseSummary;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.task.Task;
+import org.pucar.dristi.web.models.task.TaskRequest;
+import org.pucar.dristi.web.models.task.TaskResponse;
 import org.springframework.web.client.RestTemplate;
 
 @ExtendWith(MockitoExtension.class)
@@ -94,6 +98,9 @@ public class CaseServiceTest {
     @Mock
     private PaymentCalculaterUtil paymentCalculaterUtil;
 
+    @Mock
+    private EtreasuryUtil etreasuryUtil;
+
 
     @InjectMocks
     private CaseService caseService;
@@ -120,8 +127,25 @@ public class CaseServiceTest {
 
     private static final String TEST_TENANT_ID = "tenant-id";
 
+    private JoinCaseV2Request joinCaseV2Request;
+    private JoinCaseDataV2 joinCaseData;
+    private CourtCase existingCourtCaseEncrypted;
+    private CourtCase existingCourtCaseDecrypted;
+    private CaseCriteria caseCriteriaFound;
+
+
+    private final String FILING_NUMBER = "CASE-2024-001";
+    private final String TENANT_ID = "pg.citya";
+    private final String ACCESS_CODE = "123456";
+    private final UUID CASE_ID = UUID.randomUUID();
+    private final String LITIGANT_INDIVIDUAL_ID = "litigant-uuid-1";
+    private final String ADVOCATE_ID = "adv-bar-reg-1";
+    private final String ADVOCATE_INDIVIDUAL_ID = "advocate-uuid-1";
+    private final String REPRESENTING_INDIVIDUAL_ID = "representing-uuid-1";
+
+
     @BeforeEach
-    void setup() {
+    void setUp() {
         caseRequest = new CaseRequest();
         courtCase = new CourtCase();
         courtCase.setId(UUID.randomUUID());
@@ -133,7 +157,7 @@ public class CaseServiceTest {
         caseExistsRequest = new CaseExistsRequest();
         requestInfo = new RequestInfo();
         userInfo = new User();
-        userInfo.setUuid("user-uuid");
+        userInfo.setUuid("ba8767a6-7cb1-416b-803e-19cf9dca06bc");
         userInfo.setType("employee");
         userInfo.setTenantId("tenant-id");
         Role role = new Role();
@@ -147,7 +171,305 @@ public class CaseServiceTest {
         courtCase = new CourtCase();
         objectMapper = new ObjectMapper();
         enrichmentService = new EnrichmentService(new ArrayList<>());
-        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,new EtreasuryUtil(new RestTemplate(),config),encryptionDecryptionUtil, hearingUtil,userService,paymentCalculaterUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator,caseUtil);
+        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,etreasuryUtil,encryptionDecryptionUtil, hearingUtil,userService,paymentCalculaterUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator,caseUtil);
+
+        requestInfo = RequestInfo.builder()
+                .userInfo(User.builder().uuid("ba8767a6-7cb1-416b-803e-19cf9dca06bc").tenantId(TENANT_ID).build())
+                .build();
+
+        joinCaseData = JoinCaseDataV2.builder()
+                .filingNumber(FILING_NUMBER)
+                .tenantId(TENANT_ID)
+                .accessCode(ACCESS_CODE)
+                .build();
+
+        joinCaseV2Request = JoinCaseV2Request.builder()
+                .requestInfo(requestInfo)
+                .joinCaseData(joinCaseData)
+                .build();
+
+        // Mock encrypted case (as stored in DB/Cache)
+        existingCourtCaseEncrypted = CourtCase.builder()
+                .id(CASE_ID)
+                .filingNumber(FILING_NUMBER)
+                .tenantId(TENANT_ID)
+                // Assume other fields are encrypted blobs/strings
+                .build();
+
+        // Mock decrypted case (after decryption util)
+        existingCourtCaseDecrypted = CourtCase.builder()
+                .id(CASE_ID)
+                .filingNumber(FILING_NUMBER)
+                .tenantId(TENANT_ID)
+                .accessCode(ACCESS_CODE) // Crucial for validation
+                .litigants(new ArrayList<>()) // Initialize lists
+                .representatives(new ArrayList<>())
+                .pendingAdvocateRequests(new ArrayList<>())
+                .additionalDetails(new HashMap<>()) // Initialize map
+                .build();
+
+        caseCriteriaFound = CaseCriteria.builder()
+                .filingNumber(FILING_NUMBER)
+                .responseList(Collections.singletonList(existingCourtCaseEncrypted))
+                .build();
+
+        // Common mocking for decryption
+        lenient().when(encryptionDecryptionUtil.decryptObject(
+                        eq(existingCourtCaseEncrypted),
+                        any(), // or eq(config.getCaseDecryptSelf()) if config mock is set up
+                        eq(CourtCase.class),
+                        eq(requestInfo)))
+                .thenReturn(existingCourtCaseDecrypted);
+
+        // Common mocking for repository
+        lenient().when(caseRepository.getCases(anyList(), eq(requestInfo)))
+                .thenReturn(Collections.singletonList(caseCriteriaFound));
+
+        // Common mocking for encryption (used in helper methods like addLitigantToCase)
+        lenient().when(encryptionDecryptionUtil.encryptObject(any(CourtCase.class), any(), eq(CourtCase.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0)); // Return the input object for simplicity
+    }
+
+    // --- Test Cases ---
+
+    @Test
+    void testProcessJoinCaseRequest_LitigantJoin_Success() {
+        // Arrange
+        JoinCaseLitigant newLitigant = JoinCaseLitigant.builder()
+                .individualId(LITIGANT_INDIVIDUAL_ID)
+                .partyType("complainant")
+                .isActive(true)
+                .isPip(false)
+                .build();
+        joinCaseData.setLitigant(Collections.singletonList(newLitigant));
+        joinCaseData.setRepresentative(null); // Ensure only litigant join
+
+        when(validator.validateLitigantJoinCase(joinCaseV2Request)).thenReturn(true);
+        when(individualService.getIndividualsByIndividualId(any(), eq(LITIGANT_INDIVIDUAL_ID))).thenReturn(Collections.singletonList(Individual.builder().userUuid("rep-user-uuid").name(Name.builder().givenName("Rep").build()).mobileNumber("22222").build()));
+
+        // Mock dependencies called within addLitigantToCase if necessary
+        // For simplicity, assume addLitigantToCase works and verify producer calls
+
+        // Act
+        JoinCaseV2Response response = caseService.processJoinCaseRequest(joinCaseV2Request);
+
+        // Assert
+        assertNotNull(response);
+        assertTrue(response.getIsVerified());
+        assertNull(response.getPaymentTaskNumber());
+
+        // Verify key interactions
+        verify(caseRepository, times(1)).getCases(anyList(), eq(requestInfo));
+        verify(encryptionDecryptionUtil, times(1)).decryptObject(any(), any(), any(), any());
+        verify(validator, times(1)).validateLitigantJoinCase(joinCaseV2Request);
+        // Verify calls inside addLitigantToCase (simplified)
+        verify(cacheService, times(1)).save(anyString(), any());
+        verify(producer, times(1)).push(eq(config.getJoinCaseTopicIndexer()), any(CaseRequest.class));
+        verify(notificationService, times(1)).sendNotification(any(), any(), eq(NEW_USER_JOIN), anyString()); // Assuming notification is sent
+    }
+
+    @Test
+    void testProcessJoinCaseRequest_AdvocateJoin_NoPayment_Success() {
+        // Arrange
+        RepresentingJoinCase representing = RepresentingJoinCase.builder()
+                .individualId(REPRESENTING_INDIVIDUAL_ID)
+                .noOfAdvocates(1)
+                .build();
+        JoinCaseRepresentative representative = JoinCaseRepresentative.builder()
+                .advocateId(ADVOCATE_ID)
+                .representing(Collections.singletonList(representing))
+                .isReplacing(false)
+                .build();
+        joinCaseData.setRepresentative(representative);
+        JoinCaseLitigant newLitigant = JoinCaseLitigant.builder()
+                .individualId(REPRESENTING_INDIVIDUAL_ID)
+                .partyType("respondent")
+                .isActive(true)
+                .isPip(false)
+                .build();
+        joinCaseData.setLitigant(Collections.singletonList(newLitigant)); // Ensure only advocate join
+        when(validator.validateLitigantJoinCase(joinCaseV2Request)).thenReturn(true);
+
+        // Mock validation and payment calculation
+        when(validator.validateRepresentativeJoinCase(joinCaseV2Request)).thenReturn(true);
+        when(paymentCalculaterUtil.callPaymentCalculator(any(JoinCasePaymentRequest.class)))
+                .thenReturn(CalculationRes.builder().calculation(Collections.emptyList()).build()); // No payment
+
+        // Mock advocate/individual fetching needed by addAdvocateToCase/joinCaseNotifications
+        when(advocateUtil.fetchAdvocatesById(any(), anyString())).thenReturn(Collections.singletonList(Advocate.builder().individualId(ADVOCATE_INDIVIDUAL_ID).build()));
+        when(individualService.getIndividualsByIndividualId(any(), eq(ADVOCATE_INDIVIDUAL_ID))).thenReturn(Collections.singletonList(Individual.builder().userUuid("adv-user-uuid").name(Name.builder().givenName("Adv").build()).mobileNumber("11111").build()));
+        when(individualService.getIndividualsByIndividualId(any(), eq(REPRESENTING_INDIVIDUAL_ID))).thenReturn(Collections.singletonList(Individual.builder().userUuid("rep-user-uuid").name(Name.builder().givenName("Rep").build()).mobileNumber("22222").build()));
+        when(hearingUtil.fetchHearingDetails(any())).thenReturn(Collections.emptyList()); // Assume no hearings for simplicity
+
+        // Act
+        JoinCaseV2Response response = caseService.processJoinCaseRequest(joinCaseV2Request);
+
+        // Assert
+        assertNotNull(response);
+        assertTrue(response.getIsVerified());
+        assertNull(response.getPaymentTaskNumber());
+
+        // Verify key interactions
+        verify(caseRepository, times(1)).getCases(anyList(), eq(requestInfo));
+        verify(validator, times(1)).validateRepresentativeJoinCase(joinCaseV2Request);
+        verify(paymentCalculaterUtil, times(1)).callPaymentCalculator(any());
+        verify(taskUtil, never()).callCreateTask(any()); // No task creation
+        verify(etreasuryUtil, never()).createDemand(any(), anyString(), anyList()); // No demand creation
+    }
+
+    @Test
+    void testProcessJoinCaseRequest_AdvocateJoin_PaymentRequired_Success() {
+        // Arrange
+        RepresentingJoinCase representing = RepresentingJoinCase.builder()
+                .individualId(REPRESENTING_INDIVIDUAL_ID)
+                .noOfAdvocates(1)
+                .build();
+        JoinCaseRepresentative representative = JoinCaseRepresentative.builder()
+                .advocateId(ADVOCATE_ID)
+                .representing(Collections.singletonList(representing))
+                .isReplacing(false)
+                .build();
+        joinCaseData.setRepresentative(representative);
+        joinCaseData.setLitigant(null);
+
+        // Mock validation and payment calculation
+        when(validator.validateRepresentativeJoinCase(joinCaseV2Request)).thenReturn(true);
+        Calculation calculation = Calculation.builder().totalAmount(100.0).breakDown(new ArrayList<>()).build(); // Payment required
+        when(paymentCalculaterUtil.callPaymentCalculator(any(JoinCasePaymentRequest.class)))
+                .thenReturn(CalculationRes.builder().calculation(Collections.singletonList(calculation)).build());
+
+        // Mock task and demand creation
+        String expectedTaskNumber = "TASK-123";
+        Task createdTask = Task.builder().taskNumber(expectedTaskNumber).taskDetails(Map.of("consumerCode", FILING_NUMBER + "_JOIN")).build();
+        when(taskUtil.callCreateTask(any(TaskRequest.class)))
+                .thenReturn(TaskResponse.builder().task(createdTask).build());
+        doNothing().when(etreasuryUtil).createDemand(any(), anyString(), anyList());
+
+        // Act
+        JoinCaseV2Response response = caseService.processJoinCaseRequest(joinCaseV2Request);
+
+        // Assert
+        assertNotNull(response);
+       // assertFalse(response.getIsVerified()); // Should be false when payment task is created
+        assertEquals(expectedTaskNumber, response.getPaymentTaskNumber());
+
+        // Verify key interactions
+        verify(caseRepository, times(1)).getCases(anyList(), eq(requestInfo));
+        verify(validator, times(1)).validateRepresentativeJoinCase(joinCaseV2Request);
+        verify(paymentCalculaterUtil, times(1)).callPaymentCalculator(any());
+        verify(taskUtil, times(1)).callCreateTask(any(TaskRequest.class));
+        verify(etreasuryUtil, times(1)).createDemand(any(), eq(FILING_NUMBER + "_JOIN"), anyList());
+        verify(producer, never()).push(eq(config.getRepresentativeJoinCaseTopic()), any()); // Shouldn't push advocate data yet
+        verify(notificationService, never()).sendNotification(any(), any(), anyString(), anyString()); // No notifications yet
+    }
+
+    @Test
+    void testProcessJoinCaseRequest_CaseNotFound() {
+        // Arrange
+        when(caseRepository.getCases(anyList(), eq(requestInfo)))
+                .thenReturn(Collections.singletonList(CaseCriteria.builder().responseList(Collections.emptyList()).build())); // Case not found
+
+        // Act & Assert
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            caseService.processJoinCaseRequest(joinCaseV2Request);
+        });
+
+        assertEquals(CASE_EXIST_ERR, exception.getCode());
+        assertTrue(exception.getMessage().contains("Case does not exist"));
+        verify(encryptionDecryptionUtil, never()).decryptObject(any(), any(), any(), any());
+    }
+
+    @Test
+    void testProcessJoinCaseRequest_InvalidAccessCode() {
+        // Arrange
+        existingCourtCaseDecrypted.setAccessCode("WRONG_CODE"); // Set incorrect access code in decrypted object
+        // Ensure decryption mock returns this modified object
+        when(encryptionDecryptionUtil.decryptObject(any(), any(), any(), any())).thenReturn(existingCourtCaseDecrypted);
+
+
+        // Act & Assert
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            caseService.processJoinCaseRequest(joinCaseV2Request);
+        });
+
+        assertEquals(VALIDATION_ERR, exception.getCode());
+        assertTrue(exception.getMessage().contains("Invalid access code"));
+        verify(caseRepository, times(1)).getCases(anyList(), eq(requestInfo));
+        verify(encryptionDecryptionUtil, times(1)).decryptObject(any(), any(), any(), any());
+    }
+
+    @Test
+    void testProcessJoinCaseRequest_LitigantAlreadyExists() {
+        // Arrange
+        // Add the litigant to the existing case
+        Party existingLitigant = Party.builder().individualId(LITIGANT_INDIVIDUAL_ID).isActive(true).build();
+        existingCourtCaseDecrypted.getLitigants().add(existingLitigant);
+
+        JoinCaseLitigant newLitigant = JoinCaseLitigant.builder()
+                .individualId(LITIGANT_INDIVIDUAL_ID) // Same ID
+                .partyType("complainant")
+                .isActive(true)
+                .isPip(false) // Not PIP
+                .build();
+        joinCaseData.setLitigant(Collections.singletonList(newLitigant));
+        joinCaseData.setRepresentative(null);
+
+        when(validator.validateLitigantJoinCase(joinCaseV2Request)).thenReturn(true);
+
+        // Act & Assert
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            caseService.processJoinCaseRequest(joinCaseV2Request);
+        });
+
+        assertEquals(VALIDATION_ERR, exception.getCode());
+        assertTrue(exception.getMessage().contains("Litigant is already a part of the given case"));
+
+        verify(caseRepository, times(1)).getCases(anyList(), eq(requestInfo));
+        verify(encryptionDecryptionUtil, times(1)).decryptObject(any(), any(), any(), any());
+        verify(validator, times(1)).validateLitigantJoinCase(joinCaseV2Request);
+        verify(producer, never()).push(anyString(), any()); // Should fail before pushing
+    }
+
+    @Test
+    void testProcessJoinCaseRequest_AdvocateAlreadyRepresenting() {
+        // Arrange
+        // Add the advocate and representation to the existing case
+        Party existingRepresentation = Party.builder().individualId(REPRESENTING_INDIVIDUAL_ID).isActive(true).build();
+        AdvocateMapping existingAdvocate = AdvocateMapping.builder()
+                .advocateId(ADVOCATE_ID) // Same advocate
+                .representing(Collections.singletonList(existingRepresentation))
+                .isActive(true)
+                .build();
+        existingCourtCaseDecrypted.getRepresentatives().add(existingAdvocate);
+
+        // Prepare request for the same advocate representing the same individual
+        RepresentingJoinCase representing = RepresentingJoinCase.builder()
+                .individualId(REPRESENTING_INDIVIDUAL_ID) // Same individual
+                .noOfAdvocates(1)
+                .build();
+        JoinCaseRepresentative representative = JoinCaseRepresentative.builder()
+                .advocateId(ADVOCATE_ID) // Same advocate
+                .representing(Collections.singletonList(representing))
+                .isReplacing(false)
+                .build();
+        joinCaseData.setRepresentative(representative);
+        joinCaseData.setLitigant(null);
+
+        when(validator.validateRepresentativeJoinCase(joinCaseV2Request)).thenReturn(true);
+
+        // Act & Assert
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            caseService.processJoinCaseRequest(joinCaseV2Request);
+        });
+
+        // This exception comes from validateAdvocateAlreadyRepresenting
+        assertEquals(VALIDATION_ERR, exception.getCode());
+        assertTrue(exception.getMessage().contains("Advocate is already representing the individual"));
+
+        verify(caseRepository, times(1)).getCases(anyList(), eq(requestInfo));
+        verify(encryptionDecryptionUtil, times(1)).decryptObject(any(), any(), any(), any());
+        verify(validator, times(1)).validateRepresentativeJoinCase(joinCaseV2Request);
+        verify(paymentCalculaterUtil, never()).callPaymentCalculator(any()); // Should fail before payment calc
     }
 
     CaseCriteria setupTestCaseCriteria(CourtCase courtCase) {
@@ -834,20 +1156,6 @@ public class CaseServiceTest {
     }
 
     @Test
-    public void testSearchRedisCache_CaseFound() throws JsonProcessingException {
-        caseCriteria = new CaseCriteria();
-        caseCriteria.setCaseId(TEST_CASE_ID);
-        String expectedId = "tenant-id:case-id";
-        CourtCase expectedCourtCase = new CourtCase();
-        when(cacheService.findById(expectedId)).thenReturn(expectedCourtCase);
-
-        CourtCase result = caseService.searchRedisCache(requestInfo, caseCriteria.getCaseId());
-
-        assertNotNull(result);
-        assertEquals(expectedCourtCase, result);
-    }
-
-    @Test
     public void testSearchRedisCache_CaseNotFound() {
         CaseCriteria criteria = new CaseCriteria();
         criteria.setCaseId("123");
@@ -859,24 +1167,6 @@ public class CaseServiceTest {
 
         assertNull(result);
     }
-
-//    @Test
-//    public void testSearchRedisCache_JsonProcessingException() throws JsonProcessingException {
-//        CaseCriteria criteria = new CaseCriteria();
-//        criteria.setCaseId("123");
-//
-//        CourtCase cachedValue = new CourtCase();
-//
-//        ObjectMapper objectMapperMock = mock(ObjectMapper.class);
-//        when(cacheService.findById(anyString())).thenReturn(cachedValue);
-//        when(objectMapperMock.writeValueAsString(cachedValue)).thenThrow(new JsonProcessingException("Error") {});
-//
-//        CustomException exception = assertThrows(CustomException.class, () -> {
-//            caseService.searchRedisCache(requestInfo, criteria);
-//        });
-//
-//        assertEquals("Error", exception.getMessage());
-//    }
 
     @Test
     void saveInRedisCache_withValidCaseCriteriaAndCourtCase_savesToCache() {

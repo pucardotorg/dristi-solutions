@@ -1330,8 +1330,7 @@ public class CaseService {
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Invalid join case request :: {}", e.toString());
-            throw new CustomException(JOIN_CASE_ERR, JOIN_CASE_INVALID_REQUEST);
+            log.error("Invalid join case request :: {}", e.toString());throw new CustomException(JOIN_CASE_ERR, JOIN_CASE_INVALID_REQUEST);
         }
         joinCaseV2Response.setIsVerified(true);
         return joinCaseV2Response;
