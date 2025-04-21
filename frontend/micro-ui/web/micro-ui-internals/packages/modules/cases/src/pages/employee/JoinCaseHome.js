@@ -39,7 +39,7 @@ const JoinHomeLocalisation = {
   JOIN_CASE_SUCCESS: "JOIN_CASE_SUCCESS",
 };
 
-const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
+const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data }) => {
   const { t } = useTranslation();
   const todayDate = new Date().getTime();
 
@@ -110,6 +110,15 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
     setShowErrorToast(false);
     setIsAttendeeAdded(false);
   };
+
+  useEffect(() => {
+    if (type === "external") {
+      setValidationCode(data?.caseDetails?.accessCode);
+      setCaseDetails(data?.caseDetails);
+      setStep(2);
+      setShow(showJoinCase);
+    }
+  }, [data?.caseDetails, showJoinCase, type]);
 
   useEffect(() => {
     let timer;
@@ -329,6 +338,7 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
     setErrors({});
     setStep(0);
     setShow(false);
+    if (setShowJoinCase) setShowJoinCase(false);
     setIsSignedAdvocate(false);
     setIsSignedParty(false);
     setAdvocateDetailForm({});
@@ -539,27 +549,6 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
   }, [caseDetails, t, selectPartyData?.userType.value]);
 
   useEffect(() => {
-    if (setResponsePendingTask)
-      setResponsePendingTask({
-        actionName: "Pending Response",
-        caseTitle: caseDetails?.caseTitle,
-        filingNumber: caseDetails?.filingNumber,
-        cnrNumber: caseDetails?.cnrNumber,
-        caseId: caseDetails?.id,
-        individualId: selectedParty?.individualId,
-        isCompleted: false,
-        status: "PENDING_RESPONSE",
-      });
-  }, [
-    caseDetails?.caseTitle,
-    caseDetails?.cnrNumber,
-    caseDetails?.filingNumber,
-    caseDetails?.id,
-    selectedParty?.individualId,
-    setResponsePendingTask,
-  ]);
-
-  useEffect(() => {
     if (caseDetails?.cnrNumber && individual && selectPartyData?.userType && selectPartyData?.userType?.value === "Litigant") {
       const litigant = caseDetails?.litigants?.find((item) => item.individualId === individual?.individualId);
       if (litigant !== undefined) {
@@ -742,6 +731,10 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
           ?.documents?.some((document) => document?.additionalDetails?.fileType === "respondent-response");
 
         if ("PENDING_RESPONSE" === caseDetails?.status && !party?.isComplainant && !isResponseSubmitted) {
+          const poaHolders = (caseDetails?.poaHolders || [])
+            ?.filter((poa) => poa?.representingLitigants?.some((represent) => represent?.individualId === individual?.individualId))
+            ?.map((poaHolder) => ({ uuid: poaHolder?.additionalDetails?.uuid }));
+
           try {
             await DRISTIService.customApiService(Urls.dristi.pendingTask, {
               pendingTask: {
@@ -749,7 +742,7 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
                 entityType: "case-default",
                 referenceId: `MANUAL_PENDING_RESPONSE_${caseDetails?.filingNumber}_${individual?.individualId}`,
                 status: "PENDING_RESPONSE",
-                assignedTo: [{ uuid: individual?.userUuid }],
+                assignedTo: [{ uuid: individual?.userUuid }, ...(poaHolders?.length > 0 ? poaHolders : [])],
                 assignedRole: ["CASE_RESPONDER"],
                 cnrNumber: caseDetails?.cnrNumber,
                 filingNumber: caseDetails?.filingNumber,
@@ -782,6 +775,7 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
     caseDetails?.filingNumber,
     caseDetails?.id,
     caseDetails?.litigants,
+    caseDetails?.poaHolders,
     caseDetails?.representatives,
     caseDetails?.status,
     individual?.individualId,
@@ -1135,6 +1129,11 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
                     })
                     ?.map((user) => {
                       const { isFound, representatives } = searchLitigantInRepresentives(caseDetails?.representatives, user?.individualId);
+
+                      const poaHolders = (caseDetails?.poaHolders || [])
+                        ?.filter((poa) => poa?.representingLitigants?.some((represent) => represent?.individualId === user?.individualId))
+                        ?.map((poaHolder) => ({ uuid: poaHolder?.additionalDetails?.uuid }));
+
                       return DRISTIService.customApiService(Urls.dristi.pendingTask, {
                         pendingTask: {
                           name: `${t("PENDING_RESPONSE_FOR")} ${user?.fullName}`,
@@ -1145,6 +1144,7 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
                             { uuid: user?.uuid },
                             ...(isFound ? representatives?.map((representative) => ({ uuid: representative?.additionalDetails?.uuid })) : []),
                             { uuid: individual?.userUuid },
+                            ...(poaHolders?.length > 0 ? poaHolders : []),
                           ],
                           assignedRole: ["CASE_RESPONDER"],
                           cnrNumber: caseDetails?.cnrNumber,
@@ -1205,9 +1205,10 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
       caseDetails?.litigants,
       caseDetails?.filingNumber,
       caseDetails?.representatives,
-      caseDetails?.additionalDetails?.respondentDetails,
       caseDetails?.id,
       caseDetails?.status,
+      caseDetails?.additionalDetails?.respondentDetails,
+      caseDetails?.poaHolders,
       selectPartyData?.userType,
       selectPartyData?.partyInvolve?.value,
       selectPartyData?.isReplaceAdvocate?.value,
@@ -1259,6 +1260,8 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
       window.removeEventListener("keydown", handleKeyDown);
     };
   }, [handleKeyDown]);
+
+  if (type === "external" && !showJoinCase) return <React.Fragment></React.Fragment>;
 
   const modalItem = [
     // 0
@@ -1349,6 +1352,7 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
           refreshInbox={refreshInbox}
           successScreenData={successScreenData}
           isCaseViewDisabled={selectPartyData?.isReplaceAdvocate?.value === "YES" && !isAdvocateJoined}
+          type={type}
         />
       ),
     },
@@ -1356,20 +1360,23 @@ const JoinCaseHome = ({ refreshInbox, setResponsePendingTask }) => {
 
   return (
     <div>
-      <Button
-        variation={"secondary"}
-        className={"secondary-button-selector"}
-        label={t("SEARCH_NEW_CASE")}
-        labelClassName={"secondary-label-selector"}
-        onButtonClick={() => setShow(true)}
-      />
+      {type !== "external" && (
+        <Button
+          variation={"secondary"}
+          className={"secondary-button-selector"}
+          label={t("SEARCH_NEW_CASE")}
+          labelClassName={"secondary-label-selector"}
+          onButtonClick={() => setShow(true)}
+        />
+      )}
+
       {show && (
         <Modal
           headerBarEnd={<CloseBtn onClick={closeModal} />}
           actionCancelLabel={
             step === 1
               ? t("DOWNLOAD_CASE_FILE")
-              : step === 3 || step === 4
+              : (step === 2 && type === "external") || step === 3 || step === 4
               ? undefined
               : ((step === 0 && caseDetails?.cnrNumber) || step !== 0) && t(JoinHomeLocalisation.JOIN_CASE_BACK_TEXT)
           }

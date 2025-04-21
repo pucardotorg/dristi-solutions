@@ -151,6 +151,8 @@ export const getFilingType = (filingTypes, displayName) => {
 
 export const documentsTypeMapping = {
   complainantId: "COMPLAINANT_ID_PROOF",
+  poaComplainantId: "POA_COMPLAINANT_ID_PROOF",
+  poaAuthorizationDocument: "POA_AUTHORIZATION_DOCUMENT",
   complainantCompanyDetailsUpload: "case.authorizationproof.complainant",
   inquiryAffidavitFileUpload: "case.affidavit.225bnss",
   AccusedCompanyDetailsUpload: "case.authorizationproof.accused",
@@ -297,4 +299,23 @@ export const maskEmail = (email) => {
     console.error("Email masking failed:", error);
     return "****@****";
   }
+};
+
+export const getUniqueAcronym = (str) => {
+  if (!str) return "";
+
+  // Remove special characters and split the string into words
+  const words = str
+    ?.replace(/[^a-zA-Z0-9 ]/g, "")
+    ?.split(" ")
+    ?.filter(Boolean);
+  // Get the first letter of each word and join them
+  let acronym = words?.map((word) => word?.[0]?.toUpperCase())?.join("");
+
+  // If the acronym is too short, add more characters from the first word
+  if (acronym?.length < 2 && words[0]) {
+    acronym += words?.[0]?.slice(1, 3 - acronym?.length)?.toUpperCase();
+  }
+
+  return acronym;
 };

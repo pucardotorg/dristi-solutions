@@ -71,6 +71,21 @@ function CaseLockModal({
     return caseDetails?.filingNumber;
   }, [caseDetails]);
 
+  const litigants = useMemo(() => {
+    return caseDetails?.litigants
+      ?.filter((litigant) => litigant.partyType.includes("complainant"))
+      ?.map((litigant) => ({
+        ...litigant,
+        representatives:
+          caseDetails?.representatives?.filter((rep) =>
+            rep?.representing?.some((complainant) => complainant?.individualId === litigant?.individualId)
+          ) || [],
+        poaHolder: caseDetails?.poaHolders?.find((poaHolder) =>
+          poaHolder?.representing?.some((complainant) => complainant?.individualId === litigant?.individualId)
+        ),
+      }));
+  }, [caseDetails]);
+
   const handleSaveOnSubmit = async () => {
     setShowCaseLockingModal(false);
 
@@ -90,13 +105,17 @@ function CaseLockModal({
     try {
       const taskName = isCaseReassigned ? t("PENDING_RE_E_SIGN_FOR_CASE") : t("PENDING_E_SIGN_FOR_CASE");
       const taskStatus = isCaseReassigned ? "PENDING_RE_E-SIGN" : "PENDING_E-SIGN";
-      const promises = [...(caseDetails?.litigants || []), ...(caseDetails?.representatives || [])].map((party) =>
-        createPendingTask({
-          name: taskName,
-          status: taskStatus,
-          assignee: party?.additionalDetails?.uuid,
-        })
-      );
+      const promises = [...(litigants || []), ...(caseDetails?.representatives || []), ...(caseDetails?.poaHolders || [])]?.map((party) => {
+        if (!party?.poaHolder) {
+          return createPendingTask({
+            name: taskName,
+            status: taskStatus,
+            assignee: party?.additionalDetails?.uuid,
+          });
+        } else {
+          return null;
+        }
+      });
       await Promise.all(promises);
       if (isAdvocateFilingCase) {
         history.replace(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
@@ -119,6 +138,12 @@ function CaseLockModal({
           }))
         : [];
 
+      const poaHolders = Array.isArray(caseDetails?.poaHolders)
+        ? caseDetails?.poaHolders?.map((poaHolder) => ({
+            uuid: poaHolder?.additionalDetails?.uuid,
+          }))
+        : [];
+
       const isCaseReassigned = state === CaseWorkflowState.CASE_REASSIGNED;
       const actionType = isCaseReassigned ? "EDIT_CASE_ADVOCATE" : "SUBMIT_CASE_ADVOCATE";
 
@@ -132,7 +157,7 @@ function CaseLockModal({
         await createPendingTask({
           name: taskName,
           status: taskStatus,
-          assignees: assignees,
+          assignees: [...assignees, ...poaHolders],
         });
         history.replace(`${path}/sign-complaint?filingNumber=${filingNumber}`);
       } catch (error) {

@@ -373,7 +373,12 @@ const CustomReviewCardRow = ({
           </div>
         );
       case "text":
-        const textValue = extractValue(data, value);
+        let textValue;
+        if (Array.isArray(value)) {
+          textValue = value.map((key) => extractValue(data, key)).join(" ");
+        } else {
+          textValue = extractValue(data, value);
+        }
         const dependentOnValue = extractValue(data, textDependentOn);
         if ((showFlagIcon && dependentOnValue && t(textDependentValue)) || value === "delayCondonationType.name") {
           showFlagIcon = false;
@@ -824,7 +829,7 @@ const CustomReviewCardRow = ({
                         justifyContent: "space-between",
                       }}
                     >
-                      <div className="label">{t("Address")}</div>
+                      <div className="label">{t(label)}</div>
                       <div className="value">
                         <p style={{ marginBottom: "8px" }}>{item?.address}</p>
                         <LocationContent
