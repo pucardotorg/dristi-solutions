@@ -36,7 +36,7 @@
           "isStateUpdatable": true,
           "actions": [
             {
-              "action": "PAY", //or MAKE_PAYMENT need to check the payment action used in other workflows
+              "action": "MAKE_PAYMENT"
               "nextState": "COMPLETED",
               "roles": [
                 "SYSTEM",
