@@ -2636,7 +2636,7 @@ const AdmittedCases = () => {
             </div>
           )}
         </div>
-        {(groupSummonWarrantOrderByHearingNumber?.length > 0 || groupNoticeOrderByHearingNumber?.length > 0) && (
+        {((groupSummonWarrantOrderByHearingNumber?.length > 0 || groupNoticeOrderByHearingNumber?.length > 0) && userType === "employee") && (
           <NoticeAccordion title={t("PROCESS_STATUS")}>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {groupSummonWarrantOrderByHearingNumber?.map((orders, index) => (

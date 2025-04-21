@@ -40,8 +40,8 @@ public class EFilingParam {
     @JsonProperty("legalBasicFund")
     private Double legalBasicFund;
 
-    @JsonProperty("petitionFee")
-    private Map<String, Range> petitionFee;
+    @JsonProperty("complaintFee")
+    private Map<String, Range> complaintFee;
 
     @JsonProperty("noOfAdvocateFees")
     private LinkedHashMap<String, HashMap<String, Integer>> noOfAdvocateFees;

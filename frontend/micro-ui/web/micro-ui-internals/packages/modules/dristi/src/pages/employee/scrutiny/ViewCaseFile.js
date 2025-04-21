@@ -84,6 +84,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
   const [modalCaseName, setModalCaseName] = useState("");
   const [highlightChecklist, setHighlightChecklist] = useState(false);
   const [comment, setComment] = useState("");
+  const [commentSendBack, setCommentSendBack] = useState("");
 
   const { downloadPdf } = useDownloadCasePdf();
 
@@ -361,7 +362,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
       additionalDetails: {
         ...caseDetails.additionalDetails,
         scrutiny: scrutinyObj,
-        ...(comment && { scrutinyComment: comment }),
+        ...(action === CaseWorkflowAction.VALIDATE ? { scrutinyComment: comment } : action === CaseWorkflowAction.SEND_BACK && { scrutinyCommentSendBack: commentSendBack }),
       },
       caseTitle: newCaseName !== "" ? newCaseName : caseDetails?.caseTitle,
     };
@@ -602,7 +603,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
                           </React.Fragment>
                         </div>
                       </div>
-                      <div className="header-icon" onClick={() => {}}>
+                      <div className="header-icon" onClick={() => { }}>
                         <CustomArrowDownIcon />
                       </div>
                     </div>
@@ -706,6 +707,8 @@ function ViewCaseFile({ t, inViewCase = false }) {
           )}
           {actionModal == "sendCaseBack" && (
             <SendCaseBackModal
+              comment={commentSendBack}
+              setComment={setCommentSendBack}
               actionCancelLabel={"CS_COMMON_BACK"}
               actionSaveLabel={"CS_COMMON_CONFIRM"}
               t={t}

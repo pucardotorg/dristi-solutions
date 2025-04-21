@@ -124,5 +124,34 @@
             }
           }
     ]
+  },
+  {
+    "tenantId": "kl",
+    "masterName": "payment",
+    "moduleName": "paymentMode",
+    "mdmsPayload": [
+      {
+        "id": "fed0f629-1a18-496c-811e-175ca32210e0",
+        "tenantId": "kl",
+        "schemaCode": "payment.paymentMode",
+        "uniqueIdentifier": "15",
+        "data": {
+          "id": 15,
+          "suffix": "JOIN_CASE",
+          "gateway": "eTreasury",
+          "paymentMode": [
+            "ONLINE",
+            "OFFLINE"
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "createdTime": 1737980991835,
+          "lastModifiedTime": 1737980991835
+        }
+      }
+    ]
   }
 ]

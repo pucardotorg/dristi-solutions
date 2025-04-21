@@ -1931,23 +1931,16 @@ const GenerateOrders = () => {
       case "REFERRAL_CASE_TO_ADR":
         return "Case referred to Alternative Dispute Resolution to seek settlement";
       case "SCHEDULE_OF_HEARING_DATE":
-        return `For ${t(currentOrder?.orderDetails?.purposeOfHearing)} on ${formatDate(
-          new Date(currentOrder?.additionalDetails?.formdata?.hearingDate),
-          "DD-MM-YYYY"
-        )}`;
+        return `For ${t(
+          currentOrder?.orderDetails?.purposeOfHearing || currentOrder?.additionalDetails?.formdata?.hearingPurpose?.code
+        )} on ${formatDate(new Date(currentOrder?.additionalDetails?.formdata?.hearingDate), "DD-MM-YYYY")}`;
       case "SCHEDULING_NEXT_HEARING":
-        return `For ${t(currentOrder?.orderDetails?.purposeOfHearing)} on ${formatDate(
-          new Date(currentOrder?.additionalDetails?.formdata?.hearingDate),
-          "DD-MM-YYYY"
-        )}`;
+        return `${currentOrder?.additionalDetails?.formdata?.comments?.text || ""}`;
       case "RESCHEDULE_OF_HEARING_DATE":
         return `Hearing for ${formatDate(
-          new Date(currentOrder?.additionalDetails?.formdata?.newHearingDate),
+          new Date(currentOrder?.additionalDetails?.formdata?.originalHearingDate),
           "DD-MM-YYYY"
-        )} rescheduled on petition. Hearing Date to be announced on ${formatDate(
-          new Date(currentOrder?.additionalDetails?.formdata?.newHearingDate),
-          "DD-MM-YYYY"
-        )}`;
+        )} rescheduled to ${formatDate(new Date(currentOrder?.additionalDetails?.formdata?.newHearingDate), "DD-MM-YYYY")}`;
       case "CHECKOUT_ACCEPTANCE":
         return "Order for Approval of Check out (Emergency Reschedule) request";
       case "CHECKOUT_REJECT":
@@ -1968,10 +1961,9 @@ const GenerateOrders = () => {
           "DD-MM-YYYY"
         )}`;
       case "ASSIGNING_NEW_HEARING_DATE":
-        return `For ${t(currentOrder?.orderDetails?.purposeOfHearing)} on ${formatDate(
-          new Date(currentOrder?.additionalDetails?.formdata?.hearingDate),
-          "DD-MM-YYYY"
-        )}`;
+        return `For ${t(
+          currentOrder?.orderDetails?.purposeOfHearing || currentOrder?.additionalDetails?.formdata?.hearingPurpose?.code
+        )} on ${formatDate(new Date(currentOrder?.additionalDetails?.formdata?.hearingDate), "DD-MM-YYYY")}`;
       case "CASE_TRANSFER":
         return "The case is transferred to another court for further proceedings";
       case "SETTLEMENT":

@@ -1357,7 +1357,7 @@ const SubmissionsCreate = ({ path }) => {
               {
                 type: "Application Fee",
                 code: "APPLICATION_FEE",
-                amount: 20.0,
+                amount: _getApplicationAmount(applicationTypeAmount, applicationType),
                 additionalParams: {},
               },
             ],

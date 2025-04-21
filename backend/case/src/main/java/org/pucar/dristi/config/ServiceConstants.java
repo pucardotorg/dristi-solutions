@@ -117,6 +117,7 @@ public class ServiceConstants {
     public static final String ADVOCATE_ROLE = "ADVOCATE_ROLE";
     public static final String EMPLOYEE = "EMPLOYEE";
     public static final String PAYMENT_PENDING = "PENDING_PAYMENT";
+    public static final String UPLOAD_PIP_AFFIDAVIT = "UPLOAD_PIP_AFFIDAVIT";
 
     public static final String PENDING_E_SIGN = "PENDING_E-SIGN";
 
@@ -234,6 +235,10 @@ public class ServiceConstants {
 
     public static final String INTERNALMICROSERVICEUSER_TYPE = "SYSTEM";
     public static final String msgId = "1730882648558|en_IN";
+
+    public static final String ERROR_FETCHING_STATUS = "ERROR_FETCHING_STATUS";
+    public static final String ERROR_FETCHING_LITIGANT_NAME = "ERROR_FETCHING_LITIGANT_NAME";
+    public static final String ERROR_FETCHING_REPRESENTATIVE_NAME = "ERROR_FETCHING_REPRESENTATIVE_NAME";
     private ServiceConstants() {
     }
 }

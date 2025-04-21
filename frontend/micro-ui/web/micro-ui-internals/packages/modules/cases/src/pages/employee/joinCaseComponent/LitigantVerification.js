@@ -161,7 +161,7 @@ const LitigantVerification = ({
         } else if (key === "noOfAdvocates") {
           const value = formDataCopy[key];
           if (typeof value === "string") {
-            const numValue = value.replace(/\D/g, "");
+            const numValue = value.replace(/\D/g, "").replace(/^0+/, "").slice(0, 3);
             if (numValue !== value) {
               const element = document.querySelector(`[name="${key}"]`);
               const start = element?.selectionStart;
@@ -235,8 +235,8 @@ const LitigantVerification = ({
             defaultValues={{
               ...litigants?.[index],
               isVakalatnamaNew: {
-                code: litigants?.[index]?.isVakalatnamaNew?.code || "NO",
-                name: litigants?.[index]?.isVakalatnamaNew?.name || "NO",
+                code: litigants?.[index]?.isVakalatnamaNew?.code || "YES",
+                name: litigants?.[index]?.isVakalatnamaNew?.name || "YES",
               },
             }}
             fieldStyle={fieldStyle}

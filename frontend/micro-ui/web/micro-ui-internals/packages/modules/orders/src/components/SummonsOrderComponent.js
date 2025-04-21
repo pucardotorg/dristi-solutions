@@ -149,7 +149,6 @@ const RenderDeliveryChannels = ({
                                   selected={policeStationIdMapping?.find((item) => item?.id === value?.id)?.policeStation || {}}
                                   select={(station) => handlePoliceStationSelect(station, value)}
                                   t={t}
-                                  placeholder={t("SELECT_POLICE_STATION")}
                                   className="police-station-dropdown"
                                 />
                               </div>
@@ -170,9 +169,11 @@ const RenderDeliveryChannels = ({
                                     padding: 0,
                                     cursor: "pointer",
                                     fontSize: "16px",
+                                    marginLeft: "10px",
+                                    fontWeight: "700",
                                   }}
                                 >
-                                  {t("CLICK_HERE")}
+                                  {t("CLICK_HERE_POLICE_STATION")}
                                 </button>
                               </div>
                             </div>

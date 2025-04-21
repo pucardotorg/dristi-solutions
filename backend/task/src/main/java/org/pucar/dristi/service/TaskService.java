@@ -143,7 +143,8 @@ public class TaskService {
             String taskType = body.getTask().getTaskType();
             log.info("status , taskType : {} , {} ", status, taskType);
             if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status)){
-                summonUtil.sendSummons(body);
+                String acknowledgementId = summonUtil.sendSummons(body);
+                updateAcknowledgementId(body, acknowledgementId);
             }
 
             // push to join case topic based on status
@@ -175,6 +176,13 @@ public class TaskService {
             throw new CustomException(UPDATE_TASK_ERR, "Error occurred while updating task: " + e.getMessage());
         }
 
+    }
+
+    private void updateAcknowledgementId(TaskRequest body, String acknowledgementId) {
+        JsonNode taskDetails = objectMapper.convertValue(body.getTask().getTaskDetails(), JsonNode.class);
+        ObjectNode deliveryChannels = (ObjectNode) taskDetails.get("deliveryChannels");
+        deliveryChannels.put("channelAcknowledgementId", acknowledgementId);
+        body.getTask().setTaskDetails(taskDetails);
     }
 
     public TaskExists existTask(TaskExistsRequest taskExistsRequest) {

@@ -149,7 +149,6 @@ const RenderDeliveryChannels = ({
                                   selected={policeStationIdMapping?.find((item) => item?.id === value?.id)?.policeStation || {}}
                                   select={(station) => handlePoliceStationSelect(station, value)}
                                   t={t}
-                                  placeholder={t("SELECT_POLICE_STATION")}
                                   className="police-station-dropdown"
                                 />
                               </div>
@@ -170,9 +169,11 @@ const RenderDeliveryChannels = ({
                                     padding: 0,
                                     cursor: "pointer",
                                     fontSize: "16px",
+                                    marginLeft: "10px",
+                                    fontWeight: "700",
                                   }}
                                 >
-                                  {t("CLICK_HERE")}
+                                  {t("CLICK_HERE_POLICE_STATION")}
                                 </button>
                               </div>
                             </div>
@@ -209,7 +210,7 @@ const RenderDeliveryChannels = ({
   );
 };
 
-const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) => {
+const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) => {
   const urlParams = new URLSearchParams(window.location.search);
   const filingNumber = urlParams.get("filingNumber");
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -219,8 +220,6 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   const [userList, setUserList] = useState([]);
   const [policeStationIdMapping, setPoliceStationIdMapping] = useState([]);
   const [deliveryChannels, setDeliveryChannels] = useState([
-    { label: "SMS", type: "SMS", code: "SMS", values: [] },
-    { label: "EMAIL", type: "E-mail", code: "EMAIL", values: [] },
     {
       label: "EPOST",
       type: "e-Post",
@@ -462,8 +461,6 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       setPoliceStationIdMapping(policeStationIdMapping);
       setDeliveryChannels(
         [
-          { label: "SMS", type: "SMS", code: "SMS", values: [...new Set(phone_numbers || [])] },
-          { label: "EMAIL", type: "E-mail", code: "EMAIL", values: [...new Set(email || [])] },
           {
             label: "EPOST",
             type: "e-Post",
@@ -557,4 +554,4 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   );
 };
 
-export default SummonsOrderComponent;
+export default WarrantOrderComponent;
