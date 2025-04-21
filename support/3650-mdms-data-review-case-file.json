@@ -99,7 +99,7 @@
                           "isLocalizationRequired": true
                         },
                         {
-                          "type": "text",
+                          "type": "textTitle",
                           "label": "POA_HOLDER_NAME",
                           "value": [
                             "poaFirstName",
@@ -107,7 +107,8 @@
                             "poaLastName"
                           ],
                           "dependentOn": "transferredPOA.code",
-                          "dependentValue": "YES"
+                          "dependentValue": "YES",
+                          "enableScrutinyField": true
                         },
                         {
                           "type": "phonenumber",
@@ -115,6 +116,12 @@
                           "value": "poaVerification.mobileNumber",
                           "dependentOn": "transferredPOA.code",
                           "dependentValue": "YES"
+                        },
+                        {
+                          "type": "text",
+                          "label": "CS_POA_AGE",
+                          "value": "poaAge",
+                          "enableScrutinyField": true
                         },
                         {
                           "type": "image",

@@ -245,6 +245,17 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     [caseData]
   );
 
+  const litigants = useMemo(() => {
+    return caseDetails?.litigants
+      ?.filter((litigant) => litigant.partyType.includes("complainant"))
+      ?.map((litigant) => ({
+        ...litigant,
+        poaHolder: caseDetails?.poaHolders?.find((poaHolder) =>
+          poaHolder?.representingLitigants?.some((complainant) => complainant?.individualId === litigant?.individualId)
+        ),
+      }));
+  }, [caseDetails]);
+
   const isCaseReAssigned = useMemo(() => {
     const caseStatus = caseDetails?.status;
     if (caseStatus === CaseWorkflowState.CASE_REASSIGNED) {
@@ -594,8 +605,11 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   };
 
   const disableRadio = useMemo(() => {
-    return Boolean(userType === "ADVOCATE" && advocateAndPipData?.boxComplainant?.index === 0 && advocateAndPipData?.boxComplainant?.individualId);
-  }, [userType, advocateAndPipData]);
+    return Boolean(
+      (userType === "ADVOCATE" && advocateAndPipData?.boxComplainant?.index === 0 && advocateAndPipData?.boxComplainant?.individualId) ||
+        litigants?.find((litigant) => litigant?.individualId === advocateAndPipData?.boxComplainant?.individualId)?.poaHolder
+    );
+  }, [userType, advocateAndPipData, litigants]);
 
   if (isCaseLoading) {
     return <Loader></Loader>;

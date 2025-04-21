@@ -356,6 +356,25 @@ const GenerateOrders = () => {
     );
   }, [caseDetails, allAdvocates]);
 
+  const poaHolders = useMemo(() => {
+    const complainantIds = new Set(complainants?.map((c) => c?.individualId));
+    return (
+      caseDetails?.poaHolders
+        ?.filter((item) => !complainantIds.has(item?.individualId))
+        ?.map((item) => {
+          const fullName = removeInvalidNameParts(item?.name);
+          return {
+            code: fullName,
+            name: `${fullName} (PoA Holder)`,
+            representingLitigants: item?.representingLitigants?.map((lit) => lit?.individualId),
+            individualId: item?.individualId,
+            isJoined: true,
+            partyType: "poaHolder",
+          };
+        }) || []
+    );
+  }, [caseDetails, complainants]);
+
   const respondents = useMemo(() => {
     return (
       caseDetails?.litigants
@@ -406,8 +425,9 @@ const GenerateOrders = () => {
     );
   }, [caseDetails]);
 
-  const allParties = useMemo(() => [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses], [
+  const allParties = useMemo(() => [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses], [
     complainants,
+    poaHolders,
     respondents,
     unJoinedLitigant,
     witnesses,
@@ -845,7 +865,7 @@ const GenerateOrders = () => {
                       ...field,
                       populators: {
                         ...field.populators,
-                        options: [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses],
+                        options: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
                       },
                     };
                   }
@@ -1074,7 +1094,7 @@ const GenerateOrders = () => {
                     ...field,
                     populators: {
                       ...field.populators,
-                      options: [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses],
+                      options: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
                     },
                   };
                 }
