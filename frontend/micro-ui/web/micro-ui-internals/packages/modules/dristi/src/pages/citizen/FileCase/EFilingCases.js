@@ -388,6 +388,21 @@ function EFilingCases({ path }) {
     [caseData]
   );
 
+  const litigants = useMemo(() => {
+    return caseDetails?.litigants
+      ?.filter((litigant) => litigant.partyType.includes("complainant"))
+      ?.map((litigant) => ({
+        ...litigant,
+        representatives:
+          caseDetails?.representatives?.filter((rep) =>
+            rep?.representing?.some((complainant) => complainant?.individualId === litigant?.individualId)
+          ) || [],
+        poaHolder: caseDetails?.poaHolders?.find((poaHolder) =>
+          poaHolder?.representingLitigants?.some((complainant) => complainant?.individualId === litigant?.individualId)
+        ),
+      }));
+  }, [caseDetails]);
+
   const prevCaseDetails = useMemo(() => structuredClone(caseDetails), [caseDetails]);
 
   const scrutinyObj = useMemo(() => {
@@ -592,6 +607,14 @@ function EFilingCases({ path }) {
             isAdvDataFound = true;
             const newObj = structuredClone(advData[j]);
             newObj.data.multipleAdvocatesAndPip.boxComplainant = { ...newObj.data.multipleAdvocatesAndPip.boxComplainant, index: i };
+            if (litigants?.find((lit) => lit?.individualId === complainantIndividualId)?.poaHolder) {
+              newObj.data.multipleAdvocatesAndPip.isComplainantPip = {
+                code: "NO",
+                name: "No",
+                isEnabled: true,
+              };
+              newObj.data.multipleAdvocatesAndPip.showAffidavit = false;
+            }
             newAdvData.push(newObj);
             break;
           }
