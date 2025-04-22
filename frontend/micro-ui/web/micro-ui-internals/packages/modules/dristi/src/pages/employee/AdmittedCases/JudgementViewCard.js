@@ -121,7 +121,7 @@ const JudgementViewCard = ({ caseData, width }) => {
                 marginTop: "5px",
               }}
             >
-              {formatDate(new Date(finalOutcomeOrder?.createdDate), "DD-MM-YYYY")}
+              {finalOutcomeOrder?.createdDate ? formatDate(new Date(finalOutcomeOrder?.createdDate), "DD-MM-YYYY") : ""}
             </div>
           </div>
           <Button variation={"outlined"} onButtonClick={handleButtonClick} label={`View ${t(finalOutcomeOrderType)} Order`} />
