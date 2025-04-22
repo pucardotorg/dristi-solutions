@@ -35,7 +35,7 @@ class PendingTaskTest {
         List<String> assignedRole = new ArrayList<>();
         Object additionalDetails = new Object();
         PendingTask pendingTask = new PendingTask("1", "TaskName", "Ref123", "EntityType1", "Status1",
-                assignedTo, assignedRole, "CNR123", "Filing123",
+                assignedTo, assignedRole, "CNR123", "Filing123","test","test",
                 true, 10L, 20L, additionalDetails, "home");
 
         assertEquals("1", pendingTask.getId());
@@ -129,7 +129,6 @@ class PendingTaskTest {
     void testToString() {
         List<User> assignedTo = new ArrayList<>();
         List<String> assignedRole = new ArrayList<>();
-        Object additionalDetails = new Object();
         PendingTask pendingTask = PendingTask.builder()
                 .id("1")
                 .name("TaskName")
@@ -143,11 +142,10 @@ class PendingTaskTest {
                 .isCompleted(true)
                 .stateSla(10L)
                 .businessServiceSla(20L)
-                .additionalDetails(additionalDetails)
                 .screenType("home")
                 .build();
 
-        String expected = "PendingTask(id=1, name=TaskName, referenceId=Ref123, entityType=EntityType1, status=Status1, assignedTo=[], assignedRole=[], cnrNumber=CNR123, filingNumber=Filing123, isCompleted=true, stateSla=10, businessServiceSla=20, additionalDetails=" + additionalDetails + ", screenType=home)";
+        String expected = "PendingTask(id=1, name=TaskName, referenceId=Ref123, entityType=EntityType1, status=Status1, assignedTo=[], assignedRole=[], cnrNumber=CNR123, filingNumber=Filing123, caseId=null, caseTitle=null, isCompleted=true, stateSla=10, businessServiceSla=20, additionalDetails=null, screenType=home)";
         assertEquals(expected, pendingTask.toString());
     }
 }
