@@ -163,6 +163,8 @@ public class IndexerUtils {
         Boolean isCompleted = pendingTask.getIsCompleted();
         String cnrNumber = pendingTask.getCnrNumber();
         String filingNumber = pendingTask.getFilingNumber();
+        String caseId = pendingTask.getCaseId();
+        String caseTitle = pendingTask.getCaseTitle();
         String additionalDetails = "{}";
         String screenType = pendingTask.getScreenType();
         try {
@@ -175,7 +177,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
         );
     }
 
@@ -208,6 +210,8 @@ public class IndexerUtils {
         // Validate details map using the utility function
         String cnrNumber = details.get("cnrNumber");
         String filingNumber = details.get("filingNumber");
+        String caseId = details.get("caseId");
+        String caseTitle = details.get("caseTitle");
         String screenType = details.get("screenType");
         String name = details.get("name");
         isCompleted = isNullOrEmpty(name);
@@ -285,7 +289,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
         );
     }
 
@@ -411,7 +415,7 @@ public class IndexerUtils {
             else if (config.getApplicationBusinessServiceList().contains(entityType))
                 return processApplicationEntity(request, referenceId);
             else if (config.getOrderBusinessServiceList().contains(entityType))
-                return processOrderEntity(object);
+                return processOrderEntity(request, object);
             else if (config.getTaskBusinessServiceList().contains(entityType))
                 return processTaskEntity(request, referenceId);
             else if (config.getADiaryBusinessServiceList().contains(entityType))
@@ -432,6 +436,8 @@ public class IndexerUtils {
         List<String> cnrNumbers = JsonPath.read(hearingObject.toString(), CNR_NUMBERS_PATH);
         String cnrNumber;
         String filingNumber;
+        String caseId;
+        String caseTitle;
 
         if (cnrNumbers == null || cnrNumbers.isEmpty()) {
             List<String> filingNumberList = JsonPath.read(hearingObject.toString(), FILING_NUMBER_PATH);
@@ -443,14 +449,20 @@ public class IndexerUtils {
             }
             Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
             cnrNumber = JsonPath.read(caseObject.toString(), CNR_NUMBER_PATH);
+            caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
+            caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
         } else {
             cnrNumber = cnrNumbers.get(0);
             Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), cnrNumber, null, null);
             filingNumber = JsonPath.read(caseObject.toString(), FILING_NUMBER_PATH);
+            caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
+            caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
         }
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("caseId", caseId);
+        caseDetails.put("caseTitle", caseTitle);
         return caseDetails;
     }
 
@@ -461,9 +473,14 @@ public class IndexerUtils {
         String cnrNumber = JsonPath.read(caseObject.toString(), CNR_NUMBER_PATH);
         String cmpNumber = JsonPath.read(caseObject.toString(), CMP_NUMBER_PATH);
 
+        String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
+        String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
+
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", referenceId);
         caseDetails.put("cmpNumber", cmpNumber);
+        caseDetails.put("caseId", caseId);
+        caseDetails.put("caseTitle", caseTitle);
 
         return caseDetails;
     }
@@ -476,8 +493,13 @@ public class IndexerUtils {
         Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
         String cnrNumber = JsonPath.read(caseObject.toString(), CNR_NUMBER_PATH);
 
+        String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
+        String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
+
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("caseId", caseId);
+        caseDetails.put("caseTitle", caseTitle);
 
         return caseDetails;
     }
@@ -486,11 +508,18 @@ public class IndexerUtils {
         Map<String, String> caseDetails = new HashMap<>();
         Thread.sleep(config.getApiCallDelayInSeconds() * 1000);
         Object taskObject = taskUtil.getTask(request, config.getStateLevelTenantId(), referenceId, null, null);
-        String cnrNumber = JsonPath.read(taskObject.toString(), CNR_NUMBER_PATH);
         String filingNumber = JsonPath.read(taskObject.toString(), FILING_NUMBER_PATH);
+
+        Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+
+        String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
+        String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
+        String cnrNumber = JsonPath.read(caseObject.toString(), CNR_NUMBER_PATH);
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("caseId", caseId);
+        caseDetails.put("caseTitle", caseTitle);
 
         return caseDetails;
     }
@@ -499,6 +528,8 @@ public class IndexerUtils {
         Map<String, String> caseDetails = new HashMap<>();
         caseDetails.put("cnrNumber", null);
         caseDetails.put("filingNumber", null);
+        caseDetails.put("caseId", null);
+        caseDetails.put("caseTitle", null);
         return caseDetails;
     }
 
@@ -506,21 +537,36 @@ public class IndexerUtils {
         Map<String, String> caseDetails = new HashMap<>();
         Thread.sleep(config.getApiCallDelayInSeconds() * 1000);
         Object applicationObject = applicationUtil.getApplication(request, config.getStateLevelTenantId(), referenceId);
-        String cnrNumber = JsonPath.read(applicationObject.toString(), CNR_NUMBER_PATH);
         String filingNumber = JsonPath.read(applicationObject.toString(), FILING_NUMBER_PATH);
+
+        Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+
+        String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
+        String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
+        String cnrNumber = JsonPath.read(caseObject.toString(), CNR_NUMBER_PATH);
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("caseId", caseId);
+        caseDetails.put("caseTitle", caseTitle);
 
         return caseDetails;
     }
 
-    private Map<String, String> processOrderEntity(Object orderObject) throws InterruptedException {
+    private Map<String, String> processOrderEntity(JSONObject request, Object orderObject) throws InterruptedException {
         Map<String, String> caseDetails = new HashMap<>();
-        String cnrNumber = JsonPath.read(orderObject.toString(), CNR_NUMBER_PATH);
         String filingNumber = JsonPath.read(orderObject.toString(), FILING_NUMBER_PATH);
+
+        Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+
+        String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
+        String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
+        String cnrNumber = JsonPath.read(caseObject.toString(), CNR_NUMBER_PATH);
+
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("caseId", caseId);
+        caseDetails.put("caseTitle", caseTitle);
         return caseDetails;
     }
 
