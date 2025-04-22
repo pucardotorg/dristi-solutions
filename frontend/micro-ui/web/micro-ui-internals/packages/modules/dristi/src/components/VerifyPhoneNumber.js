@@ -290,8 +290,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
                   : {
                       "addressDetails-select": data["addressDetails-select"],
                       addressDetails: data["addressDetails-select"],
-                    }
-                ),
+                    }),
               },
               isUserVerified: true,
             },
@@ -432,7 +431,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
         )}
       </div>
       {errors[config.key]?.type === "required" && <CardLabelError className="error-text">{t("CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>}
-      {errors?.[config?.key]?.[config.name] && !formData?.complainantVerification?.isUserVerified && (
+      {errors?.[config?.key]?.[config.name] && (!formData?.complainantVerification?.isUserVerified || !formData?.poaVerification?.isUserVerified) && (
         <CardLabelError className={errors?.[config?.key]?.[config.name] ? "error-text" : "default-text"}>
           {t(errors?.[config?.key]?.[config.name] ? errors?.[config?.key]?.[config.name] || "VERIFY_PHONE_ERROR_TEXT" : "VERIFY_PHONE_DEFAULT_TEXT")}
         </CardLabelError>

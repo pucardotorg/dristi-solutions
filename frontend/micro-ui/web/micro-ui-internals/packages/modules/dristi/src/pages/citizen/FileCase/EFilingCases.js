@@ -1787,6 +1787,25 @@ function EFilingCases({ path }) {
     if (!Array.isArray(formdata)) {
       return;
     }
+    if (selected === "complainantDetails" && userType === "LITIGANT") {
+      if (
+        !formdata
+          ?.filter((data) => data.isenabled)
+          ?.find(
+            (fData) =>
+              (fData?.data?.complainantVerification?.mobileNumber &&
+                fData?.data?.complainantVerification?.otpNumber &&
+                fData?.data?.complainantVerification?.mobileNumber === userInfo?.mobileNumber) ||
+              (fData?.data?.poaVerification?.mobileNumber &&
+                fData?.data?.poaVerification?.otpNumber &&
+                fData?.data?.poaVerification?.mobileNumber === userInfo?.mobileNumber)
+          )
+      ) {
+        setShowErrorToast(true);
+        setErrorMsg("LOGGED_IN_USER_MUST_BE_EITHER_COMPLAINANT_OR_POA");
+        return;
+      }
+    }
     if (
       formdata
         .filter((data) => data.isenabled)
@@ -2729,20 +2748,17 @@ function EFilingCases({ path }) {
                 {pageConfig?.addFormText && (
                   <div className="form-item-name">
                     <h1>{`${t(pageConfig?.formItemName)} ${formdata[index]?.displayindex + 1}`}</h1>
-                    {(activeForms > 1 || t(pageConfig?.formItemName) === "Witness" || pageConfig?.isOptional) &&
-                      isDraftInProgress &&
-                      // check- TODO: instedd of comparison from mobile number, compare with individualId
-                      completedComplainants?.[index]?.data?.complainantVerification?.mobileNumber !== userInfo?.mobileNumber && (
-                        <span
-                          style={{ cursor: "pointer" }}
-                          onClick={() => {
-                            setConfirmDeleteModal(true);
-                            setDeleteFormIndex(index);
-                          }}
-                        >
-                          <CustomDeleteIcon />
-                        </span>
-                      )}
+                    {(activeForms > 1 || t(pageConfig?.formItemName) === "Witness" || pageConfig?.isOptional) && isDraftInProgress && (
+                      <span
+                        style={{ cursor: "pointer" }}
+                        onClick={() => {
+                          setConfirmDeleteModal(true);
+                          setDeleteFormIndex(index);
+                        }}
+                      >
+                        <CustomDeleteIcon />
+                      </span>
+                    )}
                   </div>
                 )}
                 <FormComposerV2

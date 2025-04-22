@@ -576,8 +576,15 @@ export const checkDuplicateMobileEmailValidation = ({
   }
   if (selected === "complainantDetails") {
     const currentMobileNumber = formData?.complainantVerification?.mobileNumber;
-
-    if (currentMobileNumber && respondentMobileNumbersArray.some((number) => number === currentMobileNumber)) {
+    const currentPOAMobileNumber = formData?.poaVerification?.mobileNumber;
+    if (currentMobileNumber && currentPOAMobileNumber && currentMobileNumber === currentPOAMobileNumber) {
+      if (formData?.complainantVerification?.otpNumber && !formData?.poaVerification?.otpNumber) {
+        setError("poaVerification", { mobileNumber: "POA_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM", isDuplicateNumber: true });
+      }
+      if (formData?.poaVerification?.otpNumber && !formData?.complainantVerification?.otpNumber) {
+        setError("complainantVerification", { mobileNumber: "COMPLAINANT_MOB_NUM_CAN_NOT_BE_SAME_AS_POA_MOB_NUM", isDuplicateNumber: true });
+      }
+    } else if (currentMobileNumber && respondentMobileNumbersArray.some((number) => number === currentMobileNumber)) {
       setError("complainantVerification", { mobileNumber: "COMPLAINANT_MOB_NUM_CAN_NOT_BE_SAME_AS_RESPONDENT_MOB_NUM", isDuplicateNumber: true });
     } else if (
       formdata &&
@@ -592,6 +599,7 @@ export const checkDuplicateMobileEmailValidation = ({
       setError("complainantVerification", { mobileNumber: "DUPLICATE_MOBILE_NUMBER_FOR_COMPLAINANT", isDuplicateNumber: true });
     } else {
       clearErrors("complainantVerification");
+      clearErrors("poaVerification");
     }
   }
 };
