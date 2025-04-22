@@ -1872,6 +1872,8 @@ function EFilingCases({ path }) {
             setFormErrors: setFormErrors.current,
             formState: setFormState.current,
             clearFormDataErrors: clearFormDataErrors.current,
+            setErrorMsg,
+            displayindex: data?.displayindex,
           })
         )
     ) {
