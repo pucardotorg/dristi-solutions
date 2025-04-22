@@ -88,7 +88,7 @@ export const OutlinedInfoIcon = () => (
   </svg>
 );
 
-function isEmptyValue(value) {
+export const isEmptyValue = (value) => {
   if (!value) {
     return true;
   } else if (Array.isArray(value) || typeof value === "object") {
@@ -98,7 +98,7 @@ function isEmptyValue(value) {
   } else {
     return false;
   }
-}
+};
 
 export const extractValue = (data, key) => {
   if (!key.includes(".") && data && typeof data === "object") {
@@ -1872,6 +1872,8 @@ function EFilingCases({ path }) {
             setFormErrors: setFormErrors.current,
             formState: setFormState.current,
             clearFormDataErrors: clearFormDataErrors.current,
+            setErrorMsg,
+            displayindex: data?.displayindex,
           })
         )
     ) {
