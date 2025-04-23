@@ -145,9 +145,9 @@
 						"v1",
 						"_search"
 					]
-				},
-				"response": []
-			}
+				}
+			},
+			"response": []
 		},
 		{
 			"name": "update case",
