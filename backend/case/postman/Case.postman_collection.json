@@ -121,36 +121,33 @@
 				"header": [
 					{
 						"key": "Accept",
-						"value": "application/json",
-						"uuid": "915d507f-ead6-4e12-a678-bfa0ff0b779f"
+						"value": "application/json"
 					},
 					{
 						"key": "Content-Type",
-						"value": "application/json",
-						"uuid": "3b6d1b63-ee8d-4799-ae62-3ede533dffa3"
+						"value": "application/json"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n\t\"RequestInfo\": {\n\t\t\"apiId\": \"null\",\n\t\t\"ver\": \"null\",\n\t\t\"ts\": null,\n\t\t\"action\": \"POST\",\n\t\t\"did\": null,\n\t\t\"key\": null,\n\t\t\"msgId\": \"8c11c5ca-03bd-11e7-93ae-92361f002671\",\n\t\t\"userInfo\": {\n\t\t\t\"id\": 188,\n\t\t\t\"userName\": \"devuser5\",\n\t\t\t\"salutation\": null,\n\t\t\t\"name\": \"Ram babu\",\n\t\t\t\"gender\": \"MALE\",\n\t\t\t\"mobileNumber\": \"3989999999\",\n\t\t\t\"alternatemobilenumber\": null,\n\t\t\t\"emailId\": null,\n\t\t\t\"altContactNumber\": null,\n\t\t\t\"pan\": null,\n\t\t\t\"aadhaarNumber\": null,\n\t\t\t\"permanentAddress\": null,\n\t\t\t\"permanentCity\": null,\n\t\t\t\"permanentPinCode\": null,\n\t\t\t\"correspondenceAddress\": null,\n\t\t\t\"correspondenceCity\": null,\n\t\t\t\"correspondencePinCode\": null,\n\t\t\t\"active\": true,\n\t\t\t\"locale\": null,\n\t\t\t\"type\": \"EMPLOYEE\",\n\t\t\t\"accountLocked\": false,\n\t\t\t\"accountLockedDate\": null,\n\t\t\t\"fatherOrHusbandName\": null,\n\t\t\t\"relationship\": null,\n\t\t\t\"signature\": null,\n\t\t\t\"bloodGroup\": null,\n\t\t\t\"photo\": null,\n\t\t\t\"identificationMark\": null,\n\t\t\t\"createdBy\": 130,\n\t\t\t\"password\": null,\n\t\t\t\"otpReference\": null,\n\t\t\t\"lastModifiedBy\": 130,\n\t\t\t\"tenantId\": \"pg\",\n\t\t\t\"roles\": [\n\t\t\t\t{\n\t\t\t\t\t\"code\": \"CASE_CREATOR\",\n\t\t\t\t\t\"name\": \"CASE_CREATOR\",\n\t\t\t\t\t\"tenantId\": \"pg\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"code\": \"MDMS_ADMIN\",\n\t\t\t\t\t\"name\": \"MDMS ADMIN\",\n\t\t\t\t\t\"tenantId\": \"pg\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"code\": \"SUPERUSER\",\n\t\t\t\t\t\"name\": \"Super User\",\n\t\t\t\t\t\"tenantId\": \"pg\"\n\t\t\t\t},\n\t\t\t\t{\n\t\t\t\t\t\"code\": \"HRMS_ADMIN\",\n\t\t\t\t\t\"name\": \"HRMS_ADMIN\",\n\t\t\t\t\t\"tenantId\": \"pg\"\n\t\t\t\t}\n\t\t\t],\n\t\t\t\"uuid\": \"16a7d2e8-a04d-4494-9110-687df70d8700\",\n\t\t\t\"createdDate\": \"06-05-2024 12:29:35\",\n\t\t\t\"lastModifiedDate\": \"06-05-2024 12:29:35\",\n\t\t\t\"dob\": null,\n\t\t\t\"pwdExpiryDate\": \"04-08-2024 12:29:35\"\n\t\t},\n\t\t\"authToken\": \"7f6a545f-ca06-46fc-875e-e40dcd660930\"\n\t},\n\t\"tenantId\": \"pg\",\n\t\"criteria\": [\n\t\t{\n            \"filingNumber\": \"F-C.1973.002-2024-000130\"\n\t\t}\n\t]\n}"
+					"raw": "{\n  \"tenantId\": \"kl\",\n  \"criteria\": [\n    {\n      \"stage\": [\"Pre-Trial\", \"Trial\", \"Post-Trial\"],\n      \"status\": [\n        \"PENDING_REGISTRATION\",\n        \"PENDING_ADMISSION\",\n        \"CASE_ADMITTED\",\n        \"PENDING_ADMISSION_HEARING\",\n        \"PENDING_NOTICE\",\n        \"PENDING_RESPONSE\"\n      ],\n      \"caseSearchText\": \"\",\n      \"caseType\": \"NIA S138\",\n      \"substage\": \"\",\n      \"tenantId\": \"kl\",\n      \"pagination\": {\n        \"limit\": 10,\n        \"offSet\": 0\n      }\n    }\n  ],\n  \"limit\": 10,\n  \"offset\": 0,\n  \"RequestInfo\": {\n    \"apiId\": \"Rainmaker\",\n    \"authToken\": \"<replace_with_valid_authToken>\",\n    \"userInfo\": {\n      \"id\": 1927,\n      \"uuid\": \"2933b77e-29d5-4624-acdf-f0552b4e491a\",\n      \"userName\": \"gJudge\",\n      \"name\": \"JUDGE\",\n      \"mobileNumber\": \"1002335566\",\n      \"type\": \"EMPLOYEE\",\n      \"roles\": [\n        {\n          \"name\": \"CASE_VIEWER\",\n          \"code\": \"CASE_VIEWER\",\n          \"tenantId\": \"kl\"\n        },\n        {\n          \"name\": \"JUDGE_ROLE\",\n          \"code\": \"JUDGE_ROLE\",\n          \"tenantId\": \"kl\"\n        }\n      ],\n      \"active\": true,\n      \"tenantId\": \"kl\"\n    },\n    \"msgId\": \"1745384532724|en_IN\"\n  }\n}"
 				},
 				"url": {
-					"raw": "https://dristi-dev.pucar.org/case/case/v1/_search",
+					"raw": "https://dristi-kerala-dev.pucar.org/case/v1/_search",
 					"protocol": "https",
 					"host": [
-						"dristi-dev",
+						"dristi-kerala-dev",
 						"pucar",
 						"org"
 					],
 					"path": [
 						"case",
-						"case",
 						"v1",
 						"_search"
 					]
-				}
-			},
-			"response": []
+				},
+				"response": []
+			}
 		},
 		{
 			"name": "update case",
