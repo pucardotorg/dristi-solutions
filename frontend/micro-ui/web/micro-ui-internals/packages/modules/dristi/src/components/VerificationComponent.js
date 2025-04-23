@@ -151,7 +151,7 @@ function VerificationComponent({ t, config, onSelect, formData = {}, errors, set
             <CardLabel className="card-label-smaller">{t(input.label)}</CardLabel>
             {!currentValue?.["ID_Proof"] ? (
               <React.Fragment>
-                {!isUserVerified && (
+                {(!isUserVerified || !currentValue) && (
                   <React.Fragment>
                     <div className="button-field">
                       {/* <Button
@@ -196,7 +196,7 @@ function VerificationComponent({ t, config, onSelect, formData = {}, errors, set
                   </React.Fragment>
                 )}
 
-                {isUserVerified && (
+                {(isUserVerified && currentValue) && (
                   <InfoCard
                     variant={isUserVerified ? "success" : "default"}
                     label={isUserVerified ? t("CS_AADHAR_VERIFIED") : t("CS_COMMON_NOTE")}
