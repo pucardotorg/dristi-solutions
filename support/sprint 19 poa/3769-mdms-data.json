@@ -1,9 +1,9 @@
-{
-  "tenantId": "kl",
-  "masterName": "commonUiConfig",
-  "moduleName": "reviewCaseFileConfig",
-  "mdmsPayload": [
-    {
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "commonUiConfig",
+    "masterName": "reviewCaseFileConfig",
+    "mdmsPayload": {
       "id": "569fb70c-445d-4635-8b52-32d0a4af2aa0",
       "tenantId": "kl",
       "schemaCode": "commonUiConfig.reviewCaseFileConfig",
@@ -121,6 +121,8 @@
                           "type": "text",
                           "label": "CS_POA_AGE",
                           "value": "poaAge",
+                          "dependentOn": "transferredPOA.code",
+                          "dependentValue": "YES",
                           "enableScrutinyField": true
                         },
                         {
@@ -136,17 +138,17 @@
                         {
                           "type": "address",
                           "label": "CS_POA_ADDRESS",
+                          "value": "poaAddressDetails",
                           "dependentOn": "transferredPOA.code",
                           "dependentValue": "YES",
-                          "value": "poaAddressDetails",
                           "enableScrutinyField": true
                         },
                         {
                           "type": "image",
                           "label": "POA_AUTHORIZATION_DOCUMENT",
+                          "value": ["poaAuthorizationDocument.poaDocument"],
                           "dependentOn": "transferredPOA.code",
                           "dependentValue": "YES",
-                          "value": ["poaAuthorizationDocument.poaDocument"],
                           "enableScrutinyField": true
                         }
                       ],
@@ -301,8 +303,8 @@
                         },
                         {
                           "type": "text",
-                          "label": "POLICE_STATION",
-                          "value": "policeStation.code",
+                          "label": "POLICE_STATION_JURISDICTION_CHEQUE",
+                          "value": "policeStationJurisDictionCheque.name",
                           "isLocalizationRequired": true
                         },
                         {
@@ -581,10 +583,10 @@
       "isActive": true,
       "auditDetails": {
         "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
-        "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+        "lastModifiedBy": "5eea71ba-9e58-4a55-8be5-5345f235437d",
         "createdTime": 1728658386904,
-        "lastModifiedTime": 1744367468128
+        "lastModifiedTime": 1744872772263
       }
     }
-  ]
-}
+  }
+]

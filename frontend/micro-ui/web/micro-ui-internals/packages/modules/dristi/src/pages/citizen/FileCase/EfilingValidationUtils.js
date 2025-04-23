@@ -1,13 +1,13 @@
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { getUserDetails } from "../../../hooks/useGetAccessToken";
 import { DRISTIService } from "../../../services";
-import { combineMultipleFiles, documentsTypeMapping, generateUUID } from "../../../Utils";
+import { combineMultipleFiles, documentsTypeMapping, extractValue, generateUUID, isEmptyValue } from "../../../Utils";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 
 import { userTypeOptions } from "../registration/config";
 import { efilingDocumentKeyAndTypeMapping } from "./Config/efilingDocumentKeyAndTypeMapping";
-import isMatch from "lodash/isMatch";
 import isEqual from "lodash/isEqual";
+import { sideMenuConfig } from "./Config";
 
 export const formatName = (value, capitalize = true) => {
   let cleanedValue = value
@@ -576,8 +576,15 @@ export const checkDuplicateMobileEmailValidation = ({
   }
   if (selected === "complainantDetails") {
     const currentMobileNumber = formData?.complainantVerification?.mobileNumber;
-
-    if (currentMobileNumber && respondentMobileNumbersArray.some((number) => number === currentMobileNumber)) {
+    const currentPOAMobileNumber = formData?.poaVerification?.mobileNumber;
+    if (currentMobileNumber && currentPOAMobileNumber && currentMobileNumber === currentPOAMobileNumber) {
+      if (formData?.complainantVerification?.otpNumber && !formData?.poaVerification?.otpNumber) {
+        setError("poaVerification", { mobileNumber: "POA_MOB_NUM_CAN_NOT_BE_SAME_AS_COMPLAINANT_MOB_NUM", isDuplicateNumber: true });
+      }
+      if (formData?.poaVerification?.otpNumber && !formData?.complainantVerification?.otpNumber) {
+        setError("complainantVerification", { mobileNumber: "COMPLAINANT_MOB_NUM_CAN_NOT_BE_SAME_AS_POA_MOB_NUM", isDuplicateNumber: true });
+      }
+    } else if (currentMobileNumber && respondentMobileNumbersArray.some((number) => number === currentMobileNumber)) {
       setError("complainantVerification", { mobileNumber: "COMPLAINANT_MOB_NUM_CAN_NOT_BE_SAME_AS_RESPONDENT_MOB_NUM", isDuplicateNumber: true });
     } else if (
       formdata &&
@@ -592,6 +599,7 @@ export const checkDuplicateMobileEmailValidation = ({
       setError("complainantVerification", { mobileNumber: "DUPLICATE_MOBILE_NUMBER_FOR_COMPLAINANT", isDuplicateNumber: true });
     } else {
       clearErrors("complainantVerification");
+      clearErrors("poaVerification");
     }
   }
 };
@@ -896,11 +904,36 @@ export const complainantValidation = ({
   setFormErrors,
   formState,
   clearFormDataErrors,
+  displayindex,
+  setErrorMsg,
 }) => {
   if (selected === "complainantDetails") {
-    if (!formData?.complainantId?.complainantId) {
-      setShowErrorToast(true);
-      return true;
+    const complainantFields = sideMenuConfig
+      ?.find((item, index) => item?.key === "litigentDetails")
+      ?.children?.find((config) => config?.key === "complainantDetails");
+    const complainantMandatoryFields = complainantFields?.mandatoryFields;
+    const complainantDependentMandatoryFields = complainantFields?.dependentMandatoryFields;
+
+    for (const key of complainantMandatoryFields) {
+      const value = extractValue(formData, key);
+      const isValueEmpty = isEmptyValue(value);
+      if (isValueEmpty) {
+        setShowErrorToast(true);
+        setErrorMsg(`Mandatory field missing- Complainant ${displayindex + 1} (${key})`);
+        return true;
+      }
+    }
+
+    for (const obj of complainantDependentMandatoryFields) {
+      if (formData?.[obj?.dependentOn]?.[obj?.dependentOnKey]) {
+        const value = extractValue(formData, obj?.field);
+        const isValueEmpty = isEmptyValue(value);
+        if (isValueEmpty) {
+          setShowErrorToast(true);
+          setErrorMsg(`Mandatory field missing- Complainant ${displayindex + 1} (${obj?.field})`);
+          return true;
+        }
+      }
     }
     if (
       formData?.complainantType?.code !== "INDIVIDUAL" &&

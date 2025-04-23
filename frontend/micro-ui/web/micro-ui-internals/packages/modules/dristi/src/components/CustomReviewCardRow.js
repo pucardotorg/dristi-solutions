@@ -234,12 +234,19 @@ const CustomReviewCardRow = ({
         bgclassname = titleError && isCaseReAssigned ? "preverrorside" : bgclassname;
         return (
           <div className={`title-main ${bgclassname}`}>
-            <div className={`title ${isScrutiny && (dataError ? "column" : "")}`}>
-              <div style={{ display: "flex", flexDirection: "row", gap: "8px", alignItems: "center" }}>
+            <div
+              className={`title ${isScrutiny && (dataError ? "column" : "")}`}
+              style={!isScrutiny ? { width: "100%", display: "flex", justifyContent: "space-between" } : {}}
+            >
+              <div className="label" style={!isScrutiny ? { width: "fit-content" } : {}}>
                 {`${titleIndex}. ${titleHeading ? t("CS_CHEQUE_NO") + " " : prefix ? prefix + " " : ""}${title || t("")}`}
                 {data?.partyInPerson && <div style={badgeStyle}>{t("PARTY_IN_PERSON_TEXT")}</div>}
               </div>
-              {badgeType && <div>{extractValue(data, badgeType)}</div>}
+              {badgeType && (
+                <div className="value" style={!isScrutiny ? { width: "fit-content" } : {}}>
+                  {extractValue(data, badgeType)}
+                </div>
+              )}
 
               {showFlagIcon && (
                 <div
@@ -372,6 +379,72 @@ const CustomReviewCardRow = ({
             )}
           </div>
         );
+
+      case "textTitle":
+        const textTitle = dataError?.textTitle?.FSOError;
+        const prevTextError = prevDataError?.textTitle?.FSOError;
+        if (isPrevScrutiny && !prevTextError && !disableScrutiny) {
+          showFlagIcon = false;
+        }
+        let textTitleValue;
+        if (Array.isArray(value)) {
+          textTitleValue = value.map((key) => extractValue(data, key)).join(" ");
+        } else {
+          textTitleValue = extractValue(data, value);
+        }
+        bgclassname = isScrutiny && textTitle ? (textTitle === prevTextError ? "preverror" : "error") : "";
+        bgclassname = textTitle && isCaseReAssigned ? "preverrorside" : bgclassname;
+        return (
+          <div className={`text-main ${bgclassname}`}>
+            <div className={`text ${isScrutiny && (dataError ? "column" : "")}`}>
+              <div className="label">{t(label)}</div>
+              <div className="value">{textTitleValue}</div>
+
+              {showFlagIcon && (
+                <div
+                  className="flag"
+                  onClick={(e) => {
+                    handleOpenPopup(
+                      e,
+                      configKey,
+                      name,
+                      dataIndex,
+                      Array.isArray(value) ? type : value,
+                      Array.isArray(value) ? [...value, type] : [value, type]
+                    );
+                  }}
+                  key={dataIndex}
+                >
+                  {textTitle ? (
+                    <React.Fragment>
+                      <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
+                        {" "}
+                        <EditPencilIcon />
+                      </span>
+                      <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
+                        {t("CS_CLICK_TO_EDIT")}
+                      </ReactTooltip>
+                    </React.Fragment>
+                  ) : (
+                    <FlagIcon />
+                  )}
+                </div>
+              )}
+            </div>
+            {textTitle && isScrutiny && (
+              <div className="scrutiny-error input">
+                {bgclassname === "preverror" ? (
+                  <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
+                ) : (
+                  <FlagIcon isError={true} />
+                )}
+
+                {textTitle}
+              </div>
+            )}
+          </div>
+        );
+
       case "text":
         let textValue;
         if (Array.isArray(value)) {
@@ -607,7 +680,7 @@ const CustomReviewCardRow = ({
           <div className={`image-main ${bgclassname}`}>
             <div className={`image ${!isScrutiny ? "column" : ""}`}>
               <div className="label">{t(label)}</div>
-              <div className={`value ${!isScrutiny ? "column" : ""}`} style={{ overflowX: "scroll", width: "100%" }}>
+              <div className={`value ${!isScrutiny ? "column" : ""}`} style={{ overflowX: "scroll", width: "100%", marginRight: "56px" }}>
                 {Array.isArray(files)
                   ? files?.map((file, fileIndex) =>
                       file && Array.isArray(file) ? (

@@ -90,11 +90,12 @@ export const reviewCaseFileFormConfig = [
                   isLocalizationRequired: true,
                 },
                 {
-                  type: "text",
+                  type: "textTitle",
                   label: "POA_HOLDER_NAME",
                   value: ["poaFirstName", "poaMiddleName", "poaLastName"],
                   dependentOn: "transferredPOA.code",
                   dependentValue: "YES",
+                  enableScrutinyField: true,
                 },
                 {
                   type: "phonenumber",
@@ -102,6 +103,14 @@ export const reviewCaseFileFormConfig = [
                   value: "poaVerification.mobileNumber",
                   dependentOn: "transferredPOA.code",
                   dependentValue: "YES",
+                },
+                {
+                  type: "text",
+                  label: "CS_POA_AGE",
+                  value: "poaAge",
+                  dependentOn: "transferredPOA.code",
+                  dependentValue: "YES",
+                  enableScrutinyField: true,
                 },
                 {
                   type: "image",

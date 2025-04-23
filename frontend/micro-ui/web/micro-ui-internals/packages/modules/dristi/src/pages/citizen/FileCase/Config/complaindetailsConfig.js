@@ -593,7 +593,6 @@ const complainantDetailsFormConfig = [
       complainantType: ["showCompanyDetails"],
     },
   },
-
   {
     body: [
       {
@@ -633,6 +632,27 @@ const complainantDetailsFormConfig = [
     dependentKey: {
       complainantType: ["commonFields"],
     },
+  },
+  {
+    dependentKey: { transferredPOA: ["showPoaDetails"] },
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomNote",
+        key: "poaDetailNote",
+        withoutLabel: true,
+        populators: {
+          inputs: [
+            {
+              infoHeader: "CS_COMMON_NOTE",
+              infoText: "ALL_RIGHTS_IN_SYSTEM_WILL_TRANSFER_TO_POA_HOLDER",
+              infoTooltipMessage: "ALL_RIGHTS_IN_SYSTEM_WILL_TRANSFER_TO_POA_HOLDER_TOOLTIP",
+              type: "InfoComponent",
+            },
+          ],
+        },
+      },
+    ],
   },
   {
     body: [
@@ -752,6 +772,19 @@ const complainantDetailsFormConfig = [
         },
         isMandatory: false,
         labelChildren: "optional",
+      },
+      {
+        type: "text",
+        label: "AGE",
+        populators: {
+          name: "poaAge",
+          error: "AGE_VALIDATION",
+          validation: {
+            maxLength: 3,
+            patternType: "Number",
+          },
+        },
+        isMandatory: true,
       },
     ],
     head: "CS_POA_BASIC_DETAILS",

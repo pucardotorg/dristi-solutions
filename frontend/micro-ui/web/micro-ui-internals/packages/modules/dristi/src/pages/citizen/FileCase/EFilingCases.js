@@ -198,6 +198,7 @@ function EFilingCases({ path }) {
   const [serviceOfDemandNoticeModal, setServiceOfDemandNoticeModal] = useState(false);
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
   const [showConfirmMandatoryModal, setShowConfirmMandatoryModal] = useState(false);
+  const [optionalFieldModalAlreadyViewed, setOptionalFieldModalAlreadyViewed] = useState(false);
   const [showConfirmOptionalModal, setShowConfirmOptionalModal] = useState(false);
   const [showReviewCorrectionModal, setShowReviewCorrectionModal] = useState(false);
   const [showCaseLockingModal, setShowCaseLockingModal] = useState(false);
@@ -386,6 +387,21 @@ function EFilingCases({ path }) {
     }),
     [caseData]
   );
+
+  const litigants = useMemo(() => {
+    return caseDetails?.litigants
+      ?.filter((litigant) => litigant.partyType.includes("complainant"))
+      ?.map((litigant) => ({
+        ...litigant,
+        representatives:
+          caseDetails?.representatives?.filter((rep) =>
+            rep?.representing?.some((complainant) => complainant?.individualId === litigant?.individualId)
+          ) || [],
+        poaHolder: caseDetails?.poaHolders?.find((poaHolder) =>
+          poaHolder?.representingLitigants?.some((complainant) => complainant?.individualId === litigant?.individualId)
+        ),
+      }));
+  }, [caseDetails]);
 
   const prevCaseDetails = useMemo(() => structuredClone(caseDetails), [caseDetails]);
 
@@ -591,6 +607,14 @@ function EFilingCases({ path }) {
             isAdvDataFound = true;
             const newObj = structuredClone(advData[j]);
             newObj.data.multipleAdvocatesAndPip.boxComplainant = { ...newObj.data.multipleAdvocatesAndPip.boxComplainant, index: i };
+            if (litigants?.find((lit) => lit?.individualId === complainantIndividualId)?.poaHolder) {
+              newObj.data.multipleAdvocatesAndPip.isComplainantPip = {
+                code: "NO",
+                name: "No",
+                isEnabled: true,
+              };
+              newObj.data.multipleAdvocatesAndPip.showAffidavit = false;
+            }
             newAdvData.push(newObj);
             break;
           }
@@ -722,10 +746,10 @@ function EFilingCases({ path }) {
             isDcaSkippedInEFiling: caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data?.isDcaSkippedInEFiling
               ? caseDetails?.caseDetails?.[selected]?.formdata?.[index]?.data?.isDcaSkippedInEFiling
               : {
-                code: "NO",
-                name: "NO",
-                showDcaFileUpload: true,
-              },
+                  code: "NO",
+                  name: "NO",
+                  showDcaFileUpload: true,
+                },
             condonationFileUpload: caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload,
           };
           if (caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data?.condonationFileUpload) {
@@ -901,15 +925,15 @@ function EFilingCases({ path }) {
                           data:
                             input.key === "advocateDetails"
                               ? [
-                                {
-                                  name:
-                                    caseDetails?.additionalDetails?.[input.key]?.formdata?.[0]?.data?.advocateBarRegNumberWithName?.[0]
-                                      ?.advocateName,
-                                },
-                              ] || []
+                                  {
+                                    name:
+                                      caseDetails?.additionalDetails?.[input.key]?.formdata?.[0]?.data?.advocateBarRegNumberWithName?.[0]
+                                        ?.advocateName,
+                                  },
+                                ] || []
                               : caseDetails?.additionalDetails?.[input.key]?.formdata?.map((data) => ({
-                                name: `${data?.data?.firstName || ""} ${data?.data?.middleName || ""} ${data?.data?.lastName || ""}`,
-                              })),
+                                  name: `${data?.data?.firstName || ""} ${data?.data?.middleName || ""} ${data?.data?.lastName || ""}`,
+                                })),
                         };
                       }),
                     },
@@ -1192,11 +1216,11 @@ function EFilingCases({ path }) {
                               ((address?.addressDetails?.pincode !==
                                 caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.addressDetails?.pincode &&
                                 caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.complainantType?.code ===
-                                "INDIVIDUAL") ||
+                                  "INDIVIDUAL") ||
                                 (address?.addressDetails?.pincode !==
                                   caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.addressCompanyDetails?.pincode &&
                                   caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.[0]?.data?.complainantType?.code ===
-                                  "REPRESENTATIVE")) &&
+                                    "REPRESENTATIVE")) &&
                               body?.key === "inquiryAffidavitFileUpload"
                           )
                         ) {
@@ -1325,8 +1349,11 @@ function EFilingCases({ path }) {
                 if (selected === "complainantDetails" && formComponent.component === "CustomRadioInfoComponent") {
                   key = formComponent.key + "." + formComponent?.populators?.optionsKey;
                 }
-                if (selected === "complainantDetails" && formComponent.component === "VerificationComponent") {
+                if (selected === "complainantDetails" && formComponent.component === "VerificationComponent" && key === "complainantId") {
                   key = "complainantVerification.individualDetails.document";
+                }
+                if (selected === "complainantDetails" && formComponent.component === "VerificationComponent" && key === "poaComplainantId") {
+                  key = "poaVerification.individualDetails.document";
                 }
                 const modifiedFormComponent = cloneDeep(formComponent);
                 if (modifiedFormComponent?.labelChildren === "optional") {
@@ -1373,8 +1400,8 @@ function EFilingCases({ path }) {
                     index + 1 > scrutinyFormLength
                       ? false
                       : scrutiny?.[selected]?.scrutinyMessage?.FSOError || (judgeObj && !isPendingReESign)
-                        ? false
-                        : true;
+                      ? false
+                      : true;
                 }
 
                 if (
@@ -1489,6 +1516,10 @@ function EFilingCases({ path }) {
 
   const handleSkip = () => {
     setShowConfirmOptionalModal(false);
+    // optionalFieldModalAlreadyViewed -> We want to show the optional remaining fields modal only once when the user visits the review page for the first time.
+    // Then for viewing it again, user has to go to different page and come back on review page.
+    // This logic is implemented so that this modal does not pop up again and again unnecessarily on review page when save draft or continue button is clicked.
+    setOptionalFieldModalAlreadyViewed(true);
   };
 
   const createPendingTask = async ({
@@ -1589,9 +1620,9 @@ function EFilingCases({ path }) {
         formdata.map((item, i) => {
           return i === index
             ? {
-              ...item,
-              data: formData,
-            }
+                ...item,
+                data: formData,
+              }
             : item;
         })
       );
@@ -1784,6 +1815,25 @@ function EFilingCases({ path }) {
     if (!Array.isArray(formdata)) {
       return;
     }
+    if (selected === "complainantDetails" && userType === "LITIGANT") {
+      if (
+        !formdata
+          ?.filter((data) => data.isenabled)
+          ?.find(
+            (fData) =>
+              (fData?.data?.complainantVerification?.mobileNumber &&
+                fData?.data?.complainantVerification?.otpNumber &&
+                fData?.data?.complainantVerification?.mobileNumber === userInfo?.mobileNumber) ||
+              (fData?.data?.poaVerification?.mobileNumber &&
+                fData?.data?.poaVerification?.otpNumber &&
+                fData?.data?.poaVerification?.mobileNumber === userInfo?.mobileNumber)
+          )
+      ) {
+        setShowErrorToast(true);
+        setErrorMsg("LOGGED_IN_USER_MUST_BE_EITHER_COMPLAINANT_OR_POA");
+        return;
+      }
+    }
     if (
       formdata
         .filter((data) => data.isenabled)
@@ -1845,6 +1895,8 @@ function EFilingCases({ path }) {
             setFormErrors: setFormErrors.current,
             formState: setFormState.current,
             clearFormDataErrors: clearFormDataErrors.current,
+            displayindex: data?.displayindex,
+            setErrorMsg,
           })
         )
     ) {
@@ -2121,6 +2173,7 @@ function EFilingCases({ path }) {
     // }
     setParmas({ ...params, [pageConfig.key]: formdata });
     setFormdata([{ isenabled: true, data: {}, displayindex: 0 }]);
+    setOptionalFieldModalAlreadyViewed(false);
     if (resetFormData.current) {
       resetFormData.current();
       setIsDisabled(false);
@@ -2129,14 +2182,14 @@ function EFilingCases({ path }) {
     const isDrafted =
       caseDetails?.additionalDetails?.[selected]?.isCompleted || caseDetails?.caseDetails?.[selected]?.isCompleted
         ? isMatch(
-          JSON.parse(
-            JSON.stringify(
-              caseDetails?.additionalDetails?.[selected]?.formdata ||
-              caseDetails?.caseDetails?.[selected]?.formdata || [{ isenabled: true, data: {}, displayindex: 0 }]
-            )
-          ),
-          JSON.parse(JSON.stringify(formdata.filter((data) => data.isenabled)))
-        )
+            JSON.parse(
+              JSON.stringify(
+                caseDetails?.additionalDetails?.[selected]?.formdata ||
+                  caseDetails?.caseDetails?.[selected]?.formdata || [{ isenabled: true, data: {}, displayindex: 0 }]
+              )
+            ),
+            JSON.parse(JSON.stringify(formdata.filter((data) => data.isenabled)))
+          )
         : false;
     const newCaseDetails = {
       ...caseDetails,
@@ -2383,23 +2436,23 @@ function EFilingCases({ path }) {
         ? isPendingESign
           ? ""
           : isCaseReAssigned
-            ? t("CS_COMMONS_NEXT")
-            : isDraftInProgress
-              ? t("CS_CONFIRM_DETAILS")
-              : isPendingReESign
-                ? t("CS_COMMON_CONTINUE")
-                : t("CS_GO_TO_HOME")
+          ? t("CS_COMMONS_NEXT")
+          : isDraftInProgress
+          ? t("CS_CONFIRM_DETAILS")
+          : isPendingReESign
+          ? t("CS_COMMON_CONTINUE")
+          : t("CS_GO_TO_HOME")
         : selected === "addSignature"
-          ? isPendingESign || isPendingReESign
-            ? t("CS_SUBMIT_CASE")
-            : t("CS_COMMON_CONTINUE")
-          : isDisableAllFieldsMode
-            ? t("CS_GO_TO_HOME")
-            : isCaseReAssigned
-              ? t("CS_COMMONS_NEXT")
-              : isPendingESign
-                ? ""
-                : t("CS_COMMON_CONTINUE"),
+        ? isPendingESign || isPendingReESign
+          ? t("CS_SUBMIT_CASE")
+          : t("CS_COMMON_CONTINUE")
+        : isDisableAllFieldsMode
+        ? t("CS_GO_TO_HOME")
+        : isCaseReAssigned
+        ? t("CS_COMMONS_NEXT")
+        : isPendingESign
+        ? ""
+        : t("CS_COMMON_CONTINUE"),
     [isCaseReAssigned, isDisableAllFieldsMode, isPendingESign, selected, t, isDraftInProgress, isPendingReESign]
   );
 
@@ -2435,6 +2488,7 @@ function EFilingCases({ path }) {
     setPrevSelected(selected);
     history.push(`?caseId=${caseId}&selected=${selectedPage}`);
     setShowConfirmOptionalModal(false);
+    setOptionalFieldModalAlreadyViewed(true);
   };
 
   const handleGoToPage = (key) => {
@@ -2528,7 +2582,7 @@ function EFilingCases({ path }) {
             {judgeObj ? (
               <React.Fragment>
                 <FlagBox t={t} judgeObj={judgeObj} />
-                {caseDetails?.additionalDetails?.scrutinyCommentSendBack &&
+                {caseDetails?.additionalDetails?.scrutinyCommentSendBack && (
                   <div
                     style={{
                       display: "flex",
@@ -2547,7 +2601,7 @@ function EFilingCases({ path }) {
                       {t("FSO_COMMENTS")} <span style={{ fontWeight: "normal" }}>{caseDetails?.additionalDetails?.scrutinyCommentSendBack}</span>
                     </p>
                   </div>
-                }
+                )}
               </React.Fragment>
             ) : (
               <React.Fragment>
@@ -2562,7 +2616,7 @@ function EFilingCases({ path }) {
                   selected={selected}
                   onSubmit={onSubmit}
                 />
-                {caseDetails?.additionalDetails?.scrutinyCommentSendBack &&
+                {caseDetails?.additionalDetails?.scrutinyCommentSendBack && (
                   <div
                     style={{
                       display: "flex",
@@ -2581,7 +2635,7 @@ function EFilingCases({ path }) {
                       {t("FSO_COMMENTS")} <span style={{ fontWeight: "normal" }}>{caseDetails?.additionalDetails?.scrutinyCommentSendBack}</span>
                     </p>
                   </div>
-                }
+                )}
               </React.Fragment>
             )}
             <div className="total-error-note">
@@ -2726,20 +2780,17 @@ function EFilingCases({ path }) {
                 {pageConfig?.addFormText && (
                   <div className="form-item-name">
                     <h1>{`${t(pageConfig?.formItemName)} ${formdata[index]?.displayindex + 1}`}</h1>
-                    {(activeForms > 1 || t(pageConfig?.formItemName) === "Witness" || pageConfig?.isOptional) &&
-                      isDraftInProgress &&
-                      // check- TODO: instedd of comparison from mobile number, compare with individualId
-                      completedComplainants?.[index]?.data?.complainantVerification?.mobileNumber !== userInfo?.mobileNumber && (
-                        <span
-                          style={{ cursor: "pointer" }}
-                          onClick={() => {
-                            setConfirmDeleteModal(true);
-                            setDeleteFormIndex(index);
-                          }}
-                        >
-                          <CustomDeleteIcon />
-                        </span>
-                      )}
+                    {(activeForms > 1 || t(pageConfig?.formItemName) === "Witness" || pageConfig?.isOptional) && isDraftInProgress && (
+                      <span
+                        style={{ cursor: "pointer" }}
+                        onClick={() => {
+                          setConfirmDeleteModal(true);
+                          setDeleteFormIndex(index);
+                        }}
+                      >
+                        <CustomDeleteIcon />
+                      </span>
+                    )}
                   </div>
                 )}
                 <FormComposerV2
@@ -2835,17 +2886,28 @@ function EFilingCases({ path }) {
               actionSaveOnSubmit={() => takeUserToRemainingMandatoryFieldsPage()}
             ></Modal>
           )}
-          {showOptionalFieldsRemainingModal && showConfirmOptionalModal && !mandatoryFieldsLeftTotalCount && !isDisableAllFieldsMode && (
-            <Modal
-              headerBarMain={<Heading label={t("TIPS_FOR_STRONGER_CASE")} />}
-              headerBarEnd={<CloseBtn onClick={() => setShowConfirmOptionalModal(false)} />}
-              actionCancelLabel={t("SKIP_AND_CONTINUE")}
-              actionCancelOnSubmit={handleSkip}
-              actionSaveLabel={isFilingParty && t("FILL_NOW")}
-              children={optionalFieldsRemainingText(optionalFieldsLeftTotalCount)}
-              actionSaveOnSubmit={() => takeUserToRemainingOptionalFieldsPage()}
-            ></Modal>
-          )}
+          {showOptionalFieldsRemainingModal &&
+            showConfirmOptionalModal &&
+            !mandatoryFieldsLeftTotalCount &&
+            !isDisableAllFieldsMode &&
+            !optionalFieldModalAlreadyViewed && (
+              <Modal
+                headerBarMain={<Heading label={t("TIPS_FOR_STRONGER_CASE")} />}
+                headerBarEnd={
+                  <CloseBtn
+                    onClick={() => {
+                      setShowConfirmOptionalModal(false);
+                      setOptionalFieldModalAlreadyViewed(true);
+                    }}
+                  />
+                }
+                actionCancelLabel={t("SKIP_AND_CONTINUE")}
+                actionCancelOnSubmit={handleSkip}
+                actionSaveLabel={isFilingParty && t("FILL_NOW")}
+                children={optionalFieldsRemainingText(optionalFieldsLeftTotalCount)}
+                actionSaveOnSubmit={() => takeUserToRemainingOptionalFieldsPage()}
+              ></Modal>
+            )}
           {showReviewCorrectionModal && isDraftInProgress && (
             <Modal
               headerBarMain={<Heading label={t("REVIEW_CASE_HEADER")} />}

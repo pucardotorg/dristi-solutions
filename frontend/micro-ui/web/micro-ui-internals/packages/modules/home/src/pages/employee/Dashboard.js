@@ -15,12 +15,12 @@ const DashboardPage = () => {
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
+    const day = String(today.getDate() + 1).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
   const history = useHistory();
   const [stepper, setStepper] = useState(Number(select) || 0);
-  const [selectedRange, setSelectedRange] = useState({ startDate: getCurrentDate(), endDate: getCurrentDate() });
+  const [selectedRange, setSelectedRange] = useState({ startDate: "2024-11-14", endDate: getCurrentDate() });
   const [downloadingIndices, setDownloadingIndices] = useState([]);
   const [navbarCollapsed, setNavbarCollapsed] = useState(false);
   const userInfo = Digit?.UserService?.getUser()?.info;
@@ -73,25 +73,35 @@ const DashboardPage = () => {
   useEffect(() => {
     let retryCount = 0;
     const maxRetries = 30;
-
     const interval = setInterval(() => {
       retryCount++;
       const iframe = document.querySelector("iframe");
+      if (iframe) {
+        try {
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
 
-      try {
-        const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
-        const passwordField = iframeDoc?.querySelector(".euiFieldPassword");
+          // Inject custom styles
+          const style = iframeDoc.createElement("style");
+          style.textContent = ".embPanel__optionsMenuButton { display: none !important; }";
+          iframeDoc.head.appendChild(style);
 
-        if (stepper === 1 && passwordField) {
-          autoLogin();
+          // Perform auto-login if needed
+          if (stepper === 1) {
+            const passwordField = iframeDoc.querySelector(".euiFieldPassword");
+            if (passwordField) {
+              autoLogin();
+            }
+          }
+
           clearInterval(interval);
-        } else if (retryCount >= maxRetries) {
-          clearInterval(interval);
-          console.warn("Iframe not ready within 30 seconds");
+        } catch (err) {
+          console.warn("Cross-origin issue or iframe still not loaded");
         }
-      } catch (err) {
-        console.warn("Cross-origin issue or iframe still not loaded");
+      }
+
+      if (retryCount >= maxRetries) {
         clearInterval(interval);
+        console.warn("Iframe not ready within 30 seconds");
       }
     }, 1000);
 

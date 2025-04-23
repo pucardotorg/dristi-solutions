@@ -139,6 +139,13 @@ function applyMultiSelectDropdownFix(setValue, formData, keys) {
   });
 }
 
+function appendRoleToName(name, newRole) {
+  const nameWithoutParentheses = name?.replace(/\([^)]*\)/, "")?.trim();
+  const existingRoles = name?.match(/\(([^)]+)\)/);
+  const roles = existingRoles ? `${existingRoles[1]}, ${newRole}` : newRole;
+  return `${nameWithoutParentheses} (${roles})`;
+}
+
 const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
     <g clip-path="url(#clip0_7603_50401)">
@@ -341,8 +348,21 @@ const GenerateOrders = () => {
     return (
       caseDetails?.litigants
         ?.filter((item) => item?.partyType?.includes("complainant"))
-        .map((item) => {
+        ?.map((item) => {
           const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
+          const poaHolder = caseDetails?.poaHolders?.find((poa) => poa?.individualId === item?.individualId);
+          if (poaHolder) {
+            return {
+              code: fullName,
+              name: `${fullName} (Complainant, PoA Holder)`,
+              uuid: allAdvocates[item?.additionalDetails?.uuid],
+              partyUuid: item?.additionalDetails?.uuid,
+              individualId: item?.individualId,
+              isJoined: true,
+              partyType: "complainant",
+              representingLitigants: poaHolder?.representingLitigants?.map((lit) => lit?.individualId),
+            };
+          }
           return {
             code: fullName,
             name: `${fullName} (Complainant)`,
@@ -355,6 +375,25 @@ const GenerateOrders = () => {
         }) || []
     );
   }, [caseDetails, allAdvocates]);
+
+  const poaHolders = useMemo(() => {
+    const complainantIds = new Set(complainants?.map((c) => c?.individualId));
+    return (
+      caseDetails?.poaHolders
+        ?.filter((item) => !complainantIds.has(item?.individualId))
+        ?.map((item) => {
+          const fullName = removeInvalidNameParts(item?.name);
+          return {
+            code: fullName,
+            name: `${fullName} (PoA Holder)`,
+            representingLitigants: item?.representingLitigants?.map((lit) => lit?.individualId),
+            individualId: item?.individualId,
+            isJoined: true,
+            partyType: "poaHolder",
+          };
+        }) || []
+    );
+  }, [caseDetails, complainants]);
 
   const respondents = useMemo(() => {
     return (
@@ -406,8 +445,9 @@ const GenerateOrders = () => {
     );
   }, [caseDetails]);
 
-  const allParties = useMemo(() => [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses], [
+  const allParties = useMemo(() => [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses], [
     complainants,
+    poaHolders,
     respondents,
     unJoinedLitigant,
     witnesses,
@@ -845,7 +885,7 @@ const GenerateOrders = () => {
                       ...field,
                       populators: {
                         ...field.populators,
-                        options: [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses],
+                        options: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
                       },
                     };
                   }
@@ -1074,7 +1114,7 @@ const GenerateOrders = () => {
                     ...field,
                     populators: {
                       ...field.populators,
-                      options: [...complainants, ...respondents, ...unJoinedLitigant, ...witnesses],
+                      options: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
                     },
                   };
                 }
@@ -3462,6 +3502,58 @@ const GenerateOrders = () => {
     } catch (error) {}
   };
 
+  const getHearingAttendees = (currentOrder) => {
+    const advocateData = advocateDetails?.advocates?.map((advocate) => {
+      return {
+        individualId: advocate?.responseList?.[0]?.individualId,
+        name: advocate?.responseList?.[0]?.additionalDetails?.username,
+        type: "Advocate",
+      };
+    });
+
+    const complainantsAndAccused = [];
+    const advocatesList = [];
+
+    const existingAttendees = new Map(
+      currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.map((attendee) => [
+        attendee?.individualId,
+        {
+          name: attendee?.name,
+          individualId: attendee?.individualId,
+          type: attendee?.partyType,
+        },
+      ])
+    );
+
+    advocateData?.forEach((advocate) => {
+      const existing = existingAttendees?.get(advocate?.individualId);
+      if (existing) {
+        advocatesList?.push({
+          ...existing,
+          name: appendRoleToName(existing?.name, "Advocate"),
+          type: "Advocate",
+        });
+      } else {
+        advocatesList?.push({
+          ...advocate,
+          type: "Advocate",
+        });
+      }
+    });
+
+    currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.forEach((attendee) => {
+      if (!advocatesList?.some((a) => a?.individualId === attendee?.individualId)) {
+        complainantsAndAccused?.push({
+          name: attendee?.name,
+          individualId: attendee?.individualId,
+          type: attendee?.partyType,
+        });
+      }
+    });
+
+    return [...complainantsAndAccused, ...advocatesList];
+  };
+
   const processHandleIssueOrder = async () => {
     setLoader(true);
     try {
@@ -3606,13 +3698,6 @@ const GenerateOrders = () => {
       const referenceId = currentOrder?.additionalDetails?.formdata?.refApplicationId;
       const newApplicationDetails = applicationData?.applicationList?.find((application) => application?.applicationNumber === referenceId);
       if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType)) {
-        const advocateData = advocateDetails.advocates.map((advocate) => {
-          return {
-            individualId: advocate.responseList[0].individualId,
-            name: advocate.responseList[0].additionalDetails.username,
-            type: "Advocate",
-          };
-        });
         const hearingres = await ordersService.createHearings(
           {
             hearing: {
@@ -3623,12 +3708,7 @@ const GenerateOrders = () => {
               cmpNumber: caseDetails?.cmpNumber,
               hearingType: currentOrder?.additionalDetails?.formdata?.hearingPurpose?.type,
               status: true,
-              attendees: [
-                ...currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired.map((attendee) => {
-                  return { name: attendee.name, individualId: attendee.individualId, type: attendee.partyType };
-                }),
-                ...advocateData,
-              ],
+              attendees: getHearingAttendees(currentOrder),
               startTime: new Date(currentOrder?.additionalDetails?.formdata?.hearingDate).setHours(0, 0, 0, 0),
               endTime: new Date(currentOrder?.additionalDetails?.formdata?.hearingDate).setHours(0, 0, 0, 0),
               workflow: {

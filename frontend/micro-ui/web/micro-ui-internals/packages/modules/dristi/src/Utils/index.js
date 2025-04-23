@@ -319,3 +319,31 @@ export const getUniqueAcronym = (str) => {
 
   return acronym;
 };
+
+export const extractValue = (data, key) => {
+  if (!key.includes(".") && data && typeof data === "object") {
+    return data[key];
+  }
+  const keyParts = key.split(".");
+  let value = data;
+  keyParts.forEach((part) => {
+    if (value && value.hasOwnProperty(part)) {
+      value = value[part];
+    } else {
+      value = undefined;
+    }
+  });
+  return value;
+};
+
+export const isEmptyValue = (value) => {
+  if (!value) {
+    return true;
+  } else if (Array.isArray(value) || typeof value === "object") {
+    return Object.keys(value).length === 0;
+  } else if (typeof value === "string") {
+    return value.trim().length === 0;
+  } else {
+    return false;
+  }
+};

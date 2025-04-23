@@ -2515,7 +2515,7 @@ const AdmittedCases = () => {
       )}
       <div
         className="admitted-case-header"
-        style={{ position: "sticky", top: "72px", width: "100%", height: "100%", zIndex: 150, background: "white" }}
+        style={{ position: showJoinCase ? "" : "sticky", top: "72px", width: "100%", height: "100%", zIndex: 150, background: "white" }}
       >
         {caseDetails?.caseTitle && <Header styles={{ marginBottom: "-30px" }}>{caseDetails?.caseTitle}</Header>}
         <div className="admitted-case-details" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px" }}>
@@ -2591,6 +2591,7 @@ const AdmittedCases = () => {
                           setShowMenu(false);
                         }
                       }}
+                      style={{ cursor: "pointer" }}
                     >
                       <CustomThreeDots />
                       {showCitizenMenu && (
@@ -2676,7 +2677,7 @@ const AdmittedCases = () => {
             </div>
           )}
         </div>
-        {((groupSummonWarrantOrderByHearingNumber?.length > 0 || groupNoticeOrderByHearingNumber?.length > 0) && userType === "employee") && (
+        {(groupSummonWarrantOrderByHearingNumber?.length > 0 || groupNoticeOrderByHearingNumber?.length > 0) && userType === "employee" && (
           <NoticeAccordion title={t("PROCESS_STATUS")}>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               {groupSummonWarrantOrderByHearingNumber?.map((orders, index) => (

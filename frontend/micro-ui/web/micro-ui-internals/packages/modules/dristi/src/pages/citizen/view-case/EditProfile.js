@@ -586,32 +586,38 @@ const EditProfile = ({ path }) => {
     }
   };
 
+  const currentComplainant = useMemo(() => {
+    return caseDetails?.additionalDetails?.["complainantDetails"]?.formdata?.find(
+      (item, index) => item?.data?.complainantVerification?.individualDetails?.individualId === uniqueId
+    )?.data;
+  }, [caseDetails, uniqueId]);
+
+  const currentRespondent = useMemo(() => {
+    return caseDetails?.additionalDetails?.["respondentDetails"]?.formdata?.find(
+      (item, index) => item?.data?.respondentVerification?.individualDetails?.individualId === uniqueId || item?.uniqueId === uniqueId
+    )?.data;
+  }, [caseDetails, uniqueId]);
+
   const getDefaultValues = useMemo(() => {
     if (selected === "complainantDetails") {
-      const currentComplainant = caseDetails?.additionalDetails?.[selected]?.formdata?.find(
-        (item, index) => item?.data?.complainantVerification?.individualDetails?.individualId === uniqueId
-      );
-      if (currentComplainant?.data) {
-        const updatedData = structuredClone(currentComplainant?.data);
+      if (currentComplainant) {
+        const updatedData = structuredClone(currentComplainant);
         updatedData.complainantIDProofDocument = {
-          document: currentComplainant?.data?.complainantVerification?.individualDetails?.document || [],
+          document: currentComplainant?.complainantVerification?.individualDetails?.document || [],
         };
-        const idProofFileName = currentComplainant?.data?.complainantVerification?.individualDetails?.document?.[0]?.fileName || "ID proof";
+        const idProofFileName = currentComplainant?.complainantVerification?.individualDetails?.document?.[0]?.fileName || "ID proof";
         setComplainantIdProofFileName(idProofFileName);
         return updatedData;
       } else return formdata?.[0]?.data;
     }
     if (selected === "respondentDetails") {
-      const currentRespondent = caseDetails?.additionalDetails?.[selected]?.formdata?.find(
-        (item, index) => item?.data?.respondentVerification?.individualDetails?.individualId === uniqueId || item?.uniqueId === uniqueId
-      );
-      if (currentRespondent?.data) {
-        const { inquiryAffidavitFileUpload, ...updatedData } = structuredClone(currentRespondent?.data);
+      if (currentRespondent) {
+        const { inquiryAffidavitFileUpload, ...updatedData } = structuredClone(currentRespondent);
         return updatedData;
       } else return {};
     }
     return {};
-  }, [caseDetails, selected, uniqueId, caseId]);
+  }, [selected, currentComplainant, currentRespondent]);
 
   const onFormSubmit = () => {
     setShowConfirmSubmission(true);
@@ -681,6 +687,7 @@ const EditProfile = ({ path }) => {
           setFormDataValue: setFormDataValue.current,
           action,
           history,
+          currentComplainant,
         });
       } catch (error) {
         let message = t("SOMETHING_WENT_WRONG");

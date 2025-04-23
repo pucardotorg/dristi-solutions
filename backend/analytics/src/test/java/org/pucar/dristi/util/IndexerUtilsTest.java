@@ -96,6 +96,8 @@ public class IndexerUtilsTest {
         pendingTask.setIsCompleted(true);
         pendingTask.setCnrNumber("cnrNumber");
         pendingTask.setFilingNumber("filingNumber");
+        pendingTask.setCaseId("caseId");
+        pendingTask.setCaseTitle("caseTitle");
         pendingTask.setAdditionalDetails(Map.of("key", "value"));
         return pendingTask;
     }
@@ -190,7 +192,7 @@ public class IndexerUtilsTest {
 
         String expected = String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", "[null]", "[\"role\"]", "cnrNumber", "filingNumber", true, 123L, 456L, "{\"key\":\"value\"}", null
+                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", "[null]", "[\"role\"]", "cnrNumber", "filingNumber", "caseId", "caseTitle",true, 123L, 456L, "{\"key\":\"value\"}", null
         );
 
         when(config.getIndex()).thenReturn("index");
@@ -226,7 +228,7 @@ public class IndexerUtilsTest {
 
         String expected = String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", "[\"user1\"]", "[\"role1\"]", "null", "null", false, ONE_DAY_DURATION_MILLIS+1000000000L, 456L, "{\"key\":\"value\", \"excludeRoles\":[\"role2\"]}", null
+                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", "[\"user1\"]", "[\"role1\"]", "null", "null", "null","null",false, ONE_DAY_DURATION_MILLIS+1000000000L, 456L, "{\"key\":\"value\", \"excludeRoles\":[\"role2\"]}", null
         );
 
         PendingTaskType pendingTaskType = PendingTaskType.builder().isgeneric(false).pendingTask("name").state("status").triggerAction(List.of("action")).build();
