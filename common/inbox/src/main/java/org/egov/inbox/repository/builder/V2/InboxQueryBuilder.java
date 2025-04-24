@@ -50,7 +50,7 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
             SortParam.Order sortOrder = inboxRequest.getInbox().getModuleSearchCriteria().containsKey(SORT_ORDER_CONSTANT) ? SortParam.Order.valueOf((String) inboxRequest.getInbox().getModuleSearchCriteria().get(SORT_ORDER_CONSTANT)) : configuration.getSortParam().getOrder();
 
             if(configuration.getIndex().equals(OPEN_HEARING_INDEX) ||
-            configuration.getIndex().equals(ORDER_NOTIFICATION_INDEX)) {
+                    (configuration.getIndex().equals(ORDER_NOTIFICATION_INDEX) && PENDING_BULK_E_SIGN.equals(params.get("status")))) {
                 addIndexSort(baseEsQuery, configuration.getIndex());
             } else {
                 addSortClauseToBaseQuery(baseEsQuery, sortClauseFieldPath, sortOrder);
