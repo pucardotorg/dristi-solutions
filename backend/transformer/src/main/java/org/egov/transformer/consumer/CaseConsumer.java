@@ -98,7 +98,9 @@ public class CaseConsumer {
             CaseRequest caseRequest = new CaseRequest();
             caseRequest.setCases(courtCase);
             logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCase));
+            // TODO : currently some topics are missing in indexer files
             producer.push(topic, caseRequest);
+            producer.push("case-legacy-index", caseRequest);
         } catch (Exception exception) {
             log.error("error in saving case", exception);
         }
@@ -117,6 +119,7 @@ public class CaseConsumer {
             caseRequest.setCases(courtCase);
             logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCase));
             producer.push(updateCaseTopic, caseRequest);
+            producer.push("case-legacy-index", caseRequest);
         } catch (Exception exception) {
             log.error("error in saving case", exception);
         }
@@ -139,6 +142,7 @@ public class CaseConsumer {
             updatedElasticSearchCaseRequest.setCases(courtCaseElasticSearch);
             logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCaseElasticSearch));
             producer.push(updateCaseTopic, updatedElasticSearchCaseRequest);
+            producer.push("case-legacy-index", caseRequest);
         } catch (Exception exception) {
             log.error("error in saving case", exception);
         }
@@ -156,6 +160,7 @@ public class CaseConsumer {
             caseRequest.setCases(courtCase);
             logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCase));
             producer.push(updateCaseTopic, caseRequest);
+            producer.push("case-legacy-index", caseRequest);
         } catch (Exception exception) {
             log.error("error in saving case", exception);
         }

@@ -227,13 +227,12 @@ public class LegacyIndexService {
                         Object request = null;
                         try {
                             request = legacyIndexRequest.getApiDetails().getRequest();
-                            request = mapper.readValue(mapper.writeValueAsString(request).replace("\"%offset%\"", offset.toString()), Object.class);
-                            System.out.println(mapper.writeValueAsString(request));
                             if (null == legacyIndexRequest.getApiDetails().getRequest()) {
                                 HashMap<String, Object> map = new HashMap<>();
                                 map.put("RequestInfo", legacyIndexRequest.getRequestInfo());
                                 request = map;
                             }
+                            request = mapper.readValue(mapper.writeValueAsString(request).replace("\"%offset%\"", offset.toString()), Object.class);
                             String jsonContent = serviceRequestRepository.fetchResult(uri, request, legacyIndexRequest.getTenantId());
                             Object response = mapper.readValue(jsonContent, Map.class);
                             if (null == response) {
@@ -337,22 +336,6 @@ public class LegacyIndexService {
                 //PGRIndexObject indexObject = pgrCustomDecorator.dataTransformationForPGR(serviceResponse);
                 //log.info("childThreadExecutor + indexObject----"+mapper.writeValueAsString(indexObject));
                 indexerProducer.producer(legacyIndexRequest.getLegacyIndexTopic(), serviceResponse);
-            } else if(legacyIndexRequest.getLegacyIndexTopic().equals(applicationLegacyTopic)){
-                ApplicationResponse applicationResponse = mapper.readValue(mapper.writeValueAsString(response), ApplicationResponse.class);
-                applicationResponse.setApplicationList(applicationCustomDecorator.transformData(applicationResponse.getApplicationList()));
-                indexerProducer.producer(legacyIndexRequest.getLegacyIndexTopic(), applicationResponse);
-            } else if(legacyIndexRequest.getLegacyIndexTopic().equals(caseLegacyTopic)){
-                CaseResponse caseResponse = mapper.readValue(mapper.writeValueAsString(response), CaseResponse.class);
-                caseResponse.setCriteria(caseCustomDecorator.transformData(caseResponse.getCriteria()));
-                indexerProducer.producer(legacyIndexRequest.getLegacyIndexTopic(), caseResponse);
-            } else if(legacyIndexRequest.getLegacyIndexTopic().equals(hearingLegacyTopic)){
-                HearingResponse hearingResponse = mapper.readValue(mapper.writeValueAsString(response), HearingResponse.class);
-                hearingResponse.setHearingList(hearingCustomDecorator.transformData(hearingResponse.getHearingList()));
-                indexerProducer.producer(legacyIndexRequest.getLegacyIndexTopic(), hearingResponse);
-            } else if(legacyIndexRequest.getLegacyIndexTopic().equals(billingLegacyTopic)){
-                BillingResponse billingResponse = mapper.readValue(mapper.writeValueAsString(response), BillingResponse.class);
-                billingResponse.setBill(billCustomDecorator.transformData(billingResponse.getBill()));
-                indexerProducer.producer(legacyIndexRequest.getLegacyIndexTopic(), billingResponse);
             } else {
                 if (legacyIndexRequest.getLegacyIndexTopic().equals(ptLegacyTopic)) {
                     PropertyResponse propertyResponse = mapper.readValue(mapper.writeValueAsString(response), PropertyResponse.class);

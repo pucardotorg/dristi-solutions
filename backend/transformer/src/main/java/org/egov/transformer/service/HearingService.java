@@ -44,6 +44,7 @@ public class HearingService {
         HearingRequest hearingRequest = new HearingRequest();
         hearingRequest.setHearing(hearing);
         producer.push(properties.getSaveHearingTopic(), hearingRequest);
+        producer.push("hearing-legacy-topic", hearingRequest);
     }
 
     public void enrichOpenHearings(HearingRequest hearingRequest) {
