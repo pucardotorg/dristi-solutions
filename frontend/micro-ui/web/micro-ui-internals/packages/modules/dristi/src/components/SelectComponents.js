@@ -173,7 +173,7 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
     } else {
       onSelect(`${configKey}.${input}`, value, { shouldValidate: true });
       onSelect(config.key, { ...formData?.[config.key], [input]: value }, { shouldValidate: true });
-      if(config?.key === "poaAddressDetails") {
+      if (config?.key === "poaAddressDetails") {
         onSelect("poaVerification", {
           ...formData?.["poaVerification"],
           individualDetails: {
@@ -187,8 +187,7 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
           },
           isUserVerified: true,
         });
-      }
-      else {
+      } else {
         onSelect("complainantVerification", {
           ...formData?.["complainantVerification"],
           individualDetails: {
