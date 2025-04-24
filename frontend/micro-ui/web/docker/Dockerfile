@@ -12,7 +12,7 @@ RUN ls -lah
 RUN cd web/ \
     &&  ./install-deps.sh \
     && yarn install \
-    && yarn build:webpack 
+    && yarn build:webpack
 
 FROM nginx:mainline-alpine
 ENV WORK_DIR=/var/web/digit-ui
@@ -21,3 +21,4 @@ RUN mkdir -p ${WORK_DIR}
 
 COPY --from=build /app/web/build ${WORK_DIR}/
 COPY --from=build /app/web/docker/nginx.conf /etc/nginx/conf.d/default.conf
+
