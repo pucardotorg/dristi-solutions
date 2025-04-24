@@ -1,0 +1,2 @@
+ALTER TABLE dristi_orders
+ADD COLUMN courtId VARCHAR(64) DEFAULT 'KLKM52';
