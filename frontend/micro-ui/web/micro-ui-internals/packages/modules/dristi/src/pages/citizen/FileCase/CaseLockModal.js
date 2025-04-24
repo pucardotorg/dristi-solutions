@@ -81,11 +81,11 @@ function CaseLockModal({
             rep?.representing?.some((complainant) => complainant?.individualId === litigant?.individualId)
           ) || [],
         poaHolder: caseDetails?.poaHolders?.find((poaHolder) =>
-          poaHolder?.representing?.some((complainant) => complainant?.individualId === litigant?.individualId)
+          poaHolder?.representingLitigants?.some((complainant) => complainant?.individualId === litigant?.individualId)
         ),
       }));
   }, [caseDetails]);
-
+  debugger;
   const handleSaveOnSubmit = async () => {
     setShowCaseLockingModal(false);
 
@@ -105,6 +105,7 @@ function CaseLockModal({
     try {
       const taskName = isCaseReassigned ? t("PENDING_RE_E_SIGN_FOR_CASE") : t("PENDING_E_SIGN_FOR_CASE");
       const taskStatus = isCaseReassigned ? "PENDING_RE_E-SIGN" : "PENDING_E-SIGN";
+      debugger;
       const promises = [...(litigants || []), ...(caseDetails?.representatives || []), ...(caseDetails?.poaHolders || [])]?.map((party) => {
         if (!party?.poaHolder) {
           return createPendingTask({
