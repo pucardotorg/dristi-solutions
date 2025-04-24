@@ -1,5 +1,66 @@
 [
   {
+    // need to delete the schema and update
+    "tenantId": "kl",
+    "masterName": "case",
+    "moduleName": "e-filling",
+    "mdmsPayload": [
+      {
+        "id": "41a256c5-eed1-4677-9f23-018cce1ef84c",
+        "tenantId": "kl",
+        "code": "case.e-filling",
+        "description": null,
+        "definition": {
+          "type": "object",
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "required": [
+            "id",
+            "courtFee",
+            "advocateClerkWelfareFund",
+            "noOfAdvocateFees"
+          ],
+          "x-unique": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "integer"
+            },
+            "courtFee": {
+              "type": "number"
+            },
+            "petitionFee": {
+              "type": "object"
+            },
+            "legalBasicFund": {
+              "type": "number"
+            },
+            "noOfAdvocateFees": {
+              "type": "object"
+            },
+            "defaultPetitionFee": {
+              "type": "integer"
+            },
+            "advocateWelfareFund": {
+              "type": "integer"
+            },
+            "delayCondonationFee": {
+              "type": "integer"
+            },
+            "delayCondonationPeriod": {
+              "type": "integer"
+            },
+            "advocateClerkWelfareFund": {
+              "type": "integer"
+            }
+          },
+          "additionalProperties": false
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
     "tenantId": "kl",
     "masterName": "case",
     "moduleName": "e-filling",
@@ -12,7 +73,7 @@
         "data": {
           "id": 1,
           "courtFee": 25,
-          "complaintFee": {
+          "petitionFee": {
             "0-50000": {
               "fee": 250,
               "max": 50000,
@@ -71,13 +132,7 @@
           "delayCondonationPeriod": 2629800000,
           "advocateClerkWelfareFund": 12
         },
-        "isActive": true,
-        "auditDetails": {
-          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
-          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
-          "createdTime": 1726562380558,
-          "lastModifiedTime": 1744813206973
-        }
+        "isActive": true
       }
     ]
   }
