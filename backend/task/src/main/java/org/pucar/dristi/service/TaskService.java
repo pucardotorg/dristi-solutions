@@ -75,7 +75,7 @@ public class TaskService {
 
             enrichmentUtil.enrichTaskRegistration(body);
 
-         //   workflowUpdate(body);
+            workflowUpdate(body);
 
             if(body.getTask().getTaskType().equalsIgnoreCase("SUMMONS")
              || body.getTask().getTaskType().equalsIgnoreCase("WARRANT")) {
