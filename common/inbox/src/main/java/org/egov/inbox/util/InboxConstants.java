@@ -71,8 +71,9 @@ public class InboxConstants {
 
     public static final String STATE = "state";
 
-    public static final String TYPE_SORTING_SCRIPT = "{\"_script\":{\"type\":\"string\",\"script\":{\"source\":\"def value = doc['Data.hearingDetails.caseNumber.keyword']; if (value.size() > 0) { def parts = value.value.splitOnToken('/'); if (parts.length > 1) { return parts[0]; } else { return ''; } } else { return ''; }\"},\"order\":\"desc\"}}";
-    public static final String YEAR_SORTING_SCRIPT = "{\"_script\":{\"type\":\"number\",\"script\":{\"source\":\"def value = doc['Data.hearingDetails.caseNumber.keyword']; if (value.size() > 0) { def parts = value.value.splitOnToken('/'); if (parts.length > 2) { return Long.parseLong(parts[2]); } else { return 0; } } else { return 0; }\"},\"order\":\"asc\"}}";
-    public static final String NUMBER_SORTING_SCRIPT= "{\"_script\":{\"type\":\"number\",\"script\":{\"source\":\"def value = doc['Data.hearingDetails.caseNumber.keyword']; if (value.size() > 0) { def parts = value.value.splitOnToken('/'); if (parts.length > 1) { return Long.parseLong(parts[1]); } else { return 0; } } else { return 0; }\"},\"order\":\"asc\"}}";
+    public static final String TYPE_SORTING_SCRIPT = "{\"_script\":{\"type\":\"string\",\"script\":{\"source\":\"def value = doc['Data.%s.keyword']; if (value.size() > 0) { def parts = value.value.splitOnToken('/'); if (parts.length > 1) { return parts[0]; } else { return ''; } } else { return ''; }\"},\"order\":\"desc\"}}";
+    public static final String YEAR_SORTING_SCRIPT = "{\"_script\":{\"type\":\"number\",\"script\":{\"source\":\"def value = doc['Data.%s.keyword']; if (value.size() > 0) { def parts = value.value.splitOnToken('/'); if (parts.length > 2) { return Long.parseLong(parts[2]); } else { return 0; } } else { return 0; }\"},\"order\":\"asc\"}}";
+    public static final String NUMBER_SORTING_SCRIPT= "{\"_script\":{\"type\":\"number\",\"script\":{\"source\":\"def value = doc['Data.%s.keyword']; if (value.size() > 0) { def parts = value.value.splitOnToken('/'); if (parts.length > 1) { return Long.parseLong(parts[1]); } else { return 0; } } else { return 0; }\"},\"order\":\"asc\"}}";
     public static final String OPEN_HEARING_INDEX = "open-hearing-index";
+    public static final String ORDER_NOTIFICATION_INDEX = "order-notification-view";
 }

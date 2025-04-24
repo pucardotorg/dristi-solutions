@@ -59,6 +59,7 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
                 .documents(event.getDocuments())
                 .createdTime(event.getAuditDetails().getCreatedTime())
                 .caseTitle(enrichCaseTitle(courtCase))
+                .caseSTNumber(courtCase.getCourtCaseNumber() != null ? courtCase.getCourtCaseNumber() : courtCase.getCmpNumber())
                 .build();
 
         OrderNotificationRequest request = OrderNotificationRequest.builder()
