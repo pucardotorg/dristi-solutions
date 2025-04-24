@@ -4316,6 +4316,18 @@ const GenerateOrders = () => {
             hasError = true;
             break;
           }
+
+          if (
+            formData?.warrantFor?.selectedChannels?.some(
+              (channel) =>
+                (channel?.code === "RPAD" || channel?.code === "POLICE") &&
+                (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
+            )
+          ) {
+            setShowErrorToast({label:"Please Enter Police Station", error:true})
+            hasError = true;
+            break;
+          }
         }
 
         if (
