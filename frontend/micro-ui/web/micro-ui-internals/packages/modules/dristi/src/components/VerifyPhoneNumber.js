@@ -252,16 +252,26 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
             firstName: givenName,
             lastName: familyName,
             middleName: otherNames,
-            complainantId: { complainantId: true },
+            complainantId: config?.key === "complainantVerification" ? { complainantId: true } : { poaComplainantId: true },
           };
 
-          ["addressDetails-select", "complainantId", "firstName", "lastName", "middleName"].forEach((key) => {
-            onSelect(
-              `${key}`,
-              typeof formData?.[key] === "object" && typeof key?.[key] === "object" ? { ...formData?.[key], ...data[key] } : data[key],
-              { shouldValidate: true }
-            );
-          });
+          if (config?.key === "complainantVerification") {
+            ["addressDetails-select", "complainantId", "firstName", "lastName", "middleName"].forEach((key) => {
+              onSelect(
+                `${key}`,
+                typeof formData?.[key] === "object" && typeof key?.[key] === "object" ? { ...formData?.[key], ...data[key] } : data[key],
+                { shouldValidate: true }
+              );
+            });
+          } else if (config?.key === "poaVerification") {
+            ["addressDetails-select", "complainantId", "firstName", "lastName", "middleName"].forEach((key) => {
+              onSelect(
+                `poa${key?.charAt(0)?.toUpperCase()}${key?.slice(1)}`,
+                typeof formData?.[key] === "object" && typeof key?.[key] === "object" ? { ...formData?.[key], ...data[key] } : data[key],
+                { shouldValidate: true }
+              );
+            });
+          }
           onSelect(
             config?.key,
             {
@@ -272,8 +282,15 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
                 document: identifierIdDetails?.fileStoreId
                   ? [{ fileName: idType, fileStore: identifierIdDetails?.fileStoreId, documentName: identifierIdDetails?.filename }]
                   : null,
-                "addressDetails-select": data["addressDetails-select"],
-                addressDetails: data["addressDetails-select"],
+                ...(config?.key === "poaVerification"
+                  ? {
+                      "poaAddressDetails-select": data["addressDetails-select"],
+                      poaAddressDetails: data["addressDetails-select"],
+                    }
+                  : {
+                      "addressDetails-select": data["addressDetails-select"],
+                      addressDetails: data["addressDetails-select"],
+                    }),
               },
               isUserVerified: true,
             },
@@ -414,7 +431,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
         )}
       </div>
       {errors[config.key]?.type === "required" && <CardLabelError className="error-text">{t("CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>}
-      {errors?.[config?.key]?.[config.name] && !formData?.complainantVerification?.isUserVerified && (
+      {errors?.[config?.key]?.[config.name] && (!formData?.complainantVerification?.isUserVerified || !formData?.poaVerification?.isUserVerified) && (
         <CardLabelError className={errors?.[config?.key]?.[config.name] ? "error-text" : "default-text"}>
           {t(errors?.[config?.key]?.[config.name] ? errors?.[config?.key]?.[config.name] || "VERIFY_PHONE_ERROR_TEXT" : "VERIFY_PHONE_DEFAULT_TEXT")}
         </CardLabelError>

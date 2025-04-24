@@ -12,7 +12,7 @@ RUN ls -lah
 RUN cd web/ \
     &&  ./install-deps.sh \
     && yarn install \
-    && yarn build:webpack 
+    && yarn build:webpack
 
 FROM nginx:mainline-alpine
 ENV WORK_DIR=/var/web/digit-ui

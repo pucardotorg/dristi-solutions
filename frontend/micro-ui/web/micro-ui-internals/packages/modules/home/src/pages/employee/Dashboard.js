@@ -15,12 +15,12 @@ const DashboardPage = () => {
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
+    const day = String(today.getDate() + 1).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
   const history = useHistory();
   const [stepper, setStepper] = useState(Number(select) || 0);
-  const [selectedRange, setSelectedRange] = useState({ startDate: getCurrentDate(), endDate: getCurrentDate() });
+  const [selectedRange, setSelectedRange] = useState({ startDate: "2024-11-14", endDate: getCurrentDate() });
   const [downloadingIndices, setDownloadingIndices] = useState([]);
   const [navbarCollapsed, setNavbarCollapsed] = useState(false);
   const userInfo = Digit?.UserService?.getUser()?.info;
@@ -32,7 +32,7 @@ const DashboardPage = () => {
   const [showPicker, setShowPicker] = useState(false);
   const [dateRange, setDateRange] = useState([
     {
-      startDate: new Date(),
+      startDate: new Date(2024, 10, 14),
       endDate: new Date(),
       key: "selection",
     },
@@ -73,25 +73,35 @@ const DashboardPage = () => {
   useEffect(() => {
     let retryCount = 0;
     const maxRetries = 30;
-
     const interval = setInterval(() => {
       retryCount++;
       const iframe = document.querySelector("iframe");
+      if (iframe) {
+        try {
+          const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
 
-      try {
-        const iframeDoc = iframe?.contentDocument || iframe?.contentWindow?.document;
-        const passwordField = iframeDoc?.querySelector(".euiFieldPassword");
+          // Inject custom styles
+          const style = iframeDoc.createElement("style");
+          style.textContent = ".embPanel__optionsMenuButton { display: none !important; }";
+          iframeDoc.head.appendChild(style);
 
-        if (stepper === 1 && passwordField) {
-          autoLogin();
+          // Perform auto-login if needed
+          if (stepper === 1) {
+            const passwordField = iframeDoc.querySelector(".euiFieldPassword");
+            if (passwordField) {
+              autoLogin();
+            }
+          }
+
           clearInterval(interval);
-        } else if (retryCount >= maxRetries) {
-          clearInterval(interval);
-          console.warn("Iframe not ready within 30 seconds");
+        } catch (err) {
+          console.warn("Cross-origin issue or iframe still not loaded");
         }
-      } catch (err) {
-        console.warn("Cross-origin issue or iframe still not loaded");
+      }
+
+      if (retryCount >= maxRetries) {
         clearInterval(interval);
+        console.warn("Iframe not ready within 30 seconds");
       }
     }, 1000);
 
@@ -255,6 +265,13 @@ const DashboardPage = () => {
     }
   };
 
+  const customStyles = `
+  .content-area{
+   .embPanel__optionsMenuButton {
+    display:none !important;
+  }
+`;
+
   return (
     <div className="dashboard">
       <React.Fragment>
@@ -320,9 +337,10 @@ const DashboardPage = () => {
               </div>
             )}
             <div className="content-area">
+              <style>{customStyles}</style>
               {stepper === 1 && (
                 <iframe
-                  src={`${baseUrl}/kibana/app/dashboards#/view/${jobId}?embed=true&_g=(refreshInterval:(pause:!t,value:60000),time:(from:'${selectedRange.startDate}',to:'${selectedRange.endDate}'))&_a=()&hide-filter-bar=true`}
+                  src={`${baseUrl}/kibana/app/dashboards#/view/${jobId}?embed=true&chrome=false&_g=(refreshInterval:(pause:!t,value:60000),time:(from:'${selectedRange.startDate}',to:'${selectedRange.endDate}'))&_a=()&hide-filter-bar=true`}
                   height="600"
                   width="100%"
                   title="case"
@@ -339,7 +357,7 @@ const DashboardPage = () => {
                         key={index}
                         className="download-report"
                         onClick={() => {
-                          !downloadingIndices.includes(index) && handleDownload(option?.url, index);
+                          !downloadingIndices.includes(index) && handleDownload(`${baseUrl}/${option?.url}`, index);
                         }}
                       >
                         <span>{option.code}</span>
@@ -350,16 +368,16 @@ const DashboardPage = () => {
                     ))}
                   </div>
                   {/* <div style={{ flex: 2 }}>
-                    <TasksComponent
-                      taskType={taskType}
-                      setTaskType={setTaskType}
-                      isLitigant={userRoles.includes("CITIZEN")}
-                      uuid={userInfo?.uuid}
-                      userInfoType={userInfoType}
-                      hideFilters={true}
-                      isDiary={true}
-                    />
-                  </div> */}
+                      <TasksComponent
+                        taskType={taskType}
+                        setTaskType={setTaskType}
+                        isLitigant={userRoles.includes("CITIZEN")}
+                        uuid={userInfo?.uuid}
+                        userInfoType={userInfoType}
+                        hideFilters={true}
+                        isDiary={true}
+                      />
+                    </div> */}
                 </div>
               )}
             </div>

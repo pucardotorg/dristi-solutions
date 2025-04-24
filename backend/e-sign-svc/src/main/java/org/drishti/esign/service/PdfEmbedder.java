@@ -8,6 +8,7 @@ import com.itextpdf.text.pdf.security.MakeSignature;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.drishti.esign.config.Configuration;
 import org.drishti.esign.util.ByteArrayMultipartFile;
 import org.drishti.esign.util.FileStoreUtil;
 import org.drishti.esign.util.TextLocationFinder;
@@ -31,10 +32,12 @@ import static org.drishti.esign.config.ServiceConstants.*;
 public class PdfEmbedder {
 
     private final FileStoreUtil fileStoreUtil;
+    private final Configuration configuration;
 
     @Autowired
-    public PdfEmbedder(FileStoreUtil fileStoreUtil) {
+    public PdfEmbedder(FileStoreUtil fileStoreUtil, Configuration configuration) {
         this.fileStoreUtil = fileStoreUtil;
+        this.configuration = configuration;
     }
 
 
@@ -75,7 +78,7 @@ public class PdfEmbedder {
                     // Once found, use the coordinates of the keyword
                     float x = finder.getKeywordX();
                     float y = finder.getKeywordY();
-                    coordinate.setX(x - signaturePlace.length() * 5);
+                    coordinate.setX(x - signaturePlace.length() * configuration.getPositionOffset());
                     coordinate.setY(y);
                     coordinate.setFound(true);
                     coordinate.setPageNumber(i);

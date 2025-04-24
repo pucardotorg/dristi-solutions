@@ -173,19 +173,35 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
     } else {
       onSelect(`${configKey}.${input}`, value, { shouldValidate: true });
       onSelect(config.key, { ...formData?.[config.key], [input]: value }, { shouldValidate: true });
-      onSelect("complainantVerification", {
-        ...formData?.["complainantVerification"],
-        individualDetails: {
-          ...formData?.["complainantVerification"]?.individualDetails,
-          "addressDetails-select": { ...formData?.["addressDetails-select"], [input]: value },
-          addressDetails: {
-            ...formData?.["addressDetails"],
-            [input]: value,
-            coordinates: formData?.["addressDetails"]?.coordinates ? formData["addressDetails"].coordinates : { longitude: "", latitude: "" },
+      if (config?.key === "poaAddressDetails") {
+        onSelect("poaVerification", {
+          ...formData?.["poaVerification"],
+          individualDetails: {
+            ...formData?.["poaVerification"]?.individualDetails,
+            "poaAddressDetails-select": { ...formData?.["poaAddressDetails-select"], [input]: value },
+            poaAddressDetails: {
+              ...formData?.["poaAddressDetails"],
+              [input]: value,
+              coordinates: formData?.["poaAddressDetails"]?.coordinates ? formData["poaAddressDetails"].coordinates : { longitude: "", latitude: "" },
+            },
           },
-        },
-        isUserVerified: true,
-      });
+          isUserVerified: true,
+        });
+      } else {
+        onSelect("complainantVerification", {
+          ...formData?.["complainantVerification"],
+          individualDetails: {
+            ...formData?.["complainantVerification"]?.individualDetails,
+            "addressDetails-select": { ...formData?.["addressDetails-select"], [input]: value },
+            addressDetails: {
+              ...formData?.["addressDetails"],
+              [input]: value,
+              coordinates: formData?.["addressDetails"]?.coordinates ? formData["addressDetails"].coordinates : { longitude: "", latitude: "" },
+            },
+          },
+          isUserVerified: true,
+        });
+      }
     }
   }
 
@@ -196,7 +212,6 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
   return (
     <div>
       {config?.notes && <SelectCustomNote t={t} config={config?.notes} onClick={() => {}} />}
-      <br></br>
       {inputs?.map((input, index) => {
         let currentValue = (formData && formData[configKey] && formData[configKey][input.name]) || "";
         let isFirstRender = true;

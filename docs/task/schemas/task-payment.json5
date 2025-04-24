@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "joinCaseRequest": {
+      "type": "object",
+      "description": "storage for join case request"
+    },
+    "paymentBreakUp": {
+      "type": "object",
+      "description": "joincase payment calculator response"
+    },
+    "advocateUuid": {
+      "type": "string",
+      "description": "advocate uuid"
+    },
+    "consumerCode": {
+      "type": "string",
+      "description": "consumer code used for creating demand. "
+    }
+  },
+  "required": [
+    "joinCaseRequest",
+    "paymentBreakUp",
+    "advocateUuid",
+    "consumerCode"
+  ]
+}

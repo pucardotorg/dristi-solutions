@@ -137,8 +137,10 @@ function VerificationComponent({ t, config, onSelect, formData = {}, errors, set
         let currentValue = (formData && formData[config.key] && formData[config.key][input.name]) || "";
         const isComplainantId =
           formData?.[config?.key]?.[input?.name] === true || formData?.complainantId?.complainantId?.complainantId?.["ID_Proof"]?.[0]?.[1]?.["file"];
-        if (isComplainantId) {
+        if (isComplainantId && input?.name === "complainantId") {
           currentValue = formData?.complainantVerification?.individualDetails?.document;
+        } else if (isComplainantId && input?.name === "poaComplainantId") {
+          currentValue = formData?.poaVerification?.individualDetails?.document;
         }
         let fileErrors =
           currentValue?.["ID_Proof"]?.[0]?.[1]?.["file"] &&
@@ -196,7 +198,7 @@ function VerificationComponent({ t, config, onSelect, formData = {}, errors, set
                   </React.Fragment>
                 )}
 
-                {(isUserVerified && currentValue) && (
+                {isUserVerified && currentValue && (
                   <InfoCard
                     variant={isUserVerified ? "success" : "default"}
                     label={isUserVerified ? t("CS_AADHAR_VERIFIED") : t("CS_COMMON_NOTE")}
@@ -225,6 +227,7 @@ function VerificationComponent({ t, config, onSelect, formData = {}, errors, set
                       uploadErrorInfo={fileErrors?.[index]}
                       input={input}
                       isDisabled={true}
+                      disableUploadDelete={config?.disable}
                     />
                   ))}
               </React.Fragment>

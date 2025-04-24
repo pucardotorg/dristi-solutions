@@ -1400,7 +1400,7 @@ public class CaseService {
             if(courtCase.getRepresentatives()!= null && !courtCase.getRepresentatives().isEmpty()) {
                 for (AdvocateMapping mapping : courtCase.getRepresentatives()) {
                     Party litigantParty = mapping.getRepresenting().stream()
-                            .filter(party -> party.getIndividualId().equalsIgnoreCase(litigant.getIndividualId()) && party.getIsActive())
+                                .filter(party -> party.getIndividualId().equalsIgnoreCase(litigant.getIndividualId()) && party.getIsActive())
                             .findFirst()
                             .orElse(null);
 
