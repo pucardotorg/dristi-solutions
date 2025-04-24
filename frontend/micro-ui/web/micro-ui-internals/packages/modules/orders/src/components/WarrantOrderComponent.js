@@ -4,9 +4,8 @@ import { Button, Dropdown } from "@egovernments/digit-ui-react-components";
 import _ from "lodash";
 import AddParty from "../../../hearings/src/pages/employee/AddParty";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { useTranslation } from "react-i18next";
 import { getFormattedName } from "../utils";
-import GetPoliceStationModal from "./GetPoliceStationModal";
+import WarrantRenderDeliveryChannels from "./WarrantRenderDeliveryChannels";
 
 // Helper function to compare addresses without police station data
 const compareAddressValues = (value1, value2) => {
@@ -54,160 +53,6 @@ const getUserOptions = (userList, t, displayPartyType) => {
 
     return { label, value: user };
   });
-};
-
-const RenderDeliveryChannels = ({
-  partyDetails,
-  deliveryChannels,
-  handleCheckboxChange,
-  handlePoliceStationChange,
-  policeStationIdMapping,
-  setPoliceStationIdMapping,
-}) => {
-  const { t } = useTranslation();
-  const [isPoliceStationModalOpen, setIsPoliceStationModalOpen] = useState(false);
-  const [selectedAddress, setSelectedAddress] = useState(null);
-  const [addressId, setAddressId] = useState(null);
-  const { data: policeStationData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "case", [{ name: "PoliceStation" }]);
-
-  const handlePoliceStationSelect = (station, address, fromModal = false) => {
-    const updatedPartyDetails = partyDetails.map((detail) => {
-      const changeFromModal = fromModal && detail.value?.id === addressId;
-      if (detail.type === "Via Police" && (compareAddressValues(detail.value, address) || changeFromModal)) {
-        return {
-          ...detail,
-          value: {
-            ...detail.value,
-            geoLocationDetails: {
-              ...detail.value.geoLocationDetails,
-              policeStation: station,
-            },
-          },
-        };
-      }
-      return detail;
-    });
-    const policeStationIdMappingNew = policeStationIdMapping?.map((item, index) => {
-      if (item?.id === address?.id) {
-        return {
-          ...item,
-          policeStation: station,
-        };
-      } else return item;
-    });
-    handlePoliceStationChange(updatedPartyDetails, policeStationIdMappingNew);
-  };
-
-  return (
-    <div>
-      <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", alignItems: "center", height: 32 }}>
-        <h1>{t("SELECT_DELIVERY_CHANNELS")}</h1>
-        <p>
-          {partyDetails?.length || 0} of {deliveryChannels.reduce((acc, channel) => acc + (channel.values?.length || 0), 0)} {t("SELECTED")}
-        </p>
-      </div>
-      <form>
-        {deliveryChannels.map((channel) => (
-          <div key={channel?.type}>
-            {Array.isArray(channel?.values) && channel?.values?.length > 0 && channel?.values[0] != null && (
-              <div>
-                <h2>
-                  <strong>{t(channel.label)} to </strong>
-                </h2>
-
-                {Array.isArray(channel?.values) &&
-                  channel?.values?.map((value, index) => (
-                    <div key={`${channel.type}-${index}`} style={{ marginBottom: "16px" }}>
-                      <div style={{ display: "flex", alignItems: "flex-start" }}>
-                        <input
-                          type="checkbox"
-                          id={`${channel.type}-${index}`}
-                          checked={
-                            Array.isArray(partyDetails) &&
-                            partyDetails.some((data) => data.type === channel.type && compareAddressValues(value, data.value))
-                          }
-                          onChange={() => handleCheckboxChange(channel.type, channel.code, value)}
-                          style={{ marginTop: "4px" }}
-                        />
-                        <div style={{ marginLeft: "12px", flex: 1 }}>
-                          <label htmlFor={`${channel.type}-${index}`} style={{ fontSize: "16px", color: "#0B0C0C" }}>
-                            {channel.type === "e-Post" || channel.type === "Via Police" || channel.type === "Registered Post"
-                              ? typeof value.address === "string"
-                                ? value.address
-                                : `${value.locality}, ${value.city}, ${value.district}, ${value.pincode}`
-                              : value}
-                          </label>
-                          {channel.type === "Via Police" && (
-                            <div style={{ marginTop: "16px" }}>
-                              <div style={{ marginBottom: "5px" }}>
-                                <div>{t("POLICE_STATION")}</div>
-                              </div>
-                              <div style={{ marginBottom: "8px" }}>
-                                <Dropdown
-                                  option={policeStationData?.case?.PoliceStation || []}
-                                  optionKey="name"
-                                  selected={policeStationIdMapping?.find((item) => item?.id === value?.id)?.policeStation || {}}
-                                  select={(station) => handlePoliceStationSelect(station, value)}
-                                  t={t}
-                                  className="police-station-dropdown"
-                                />
-                              </div>
-                              <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                                <div>{t("TO_IDENTIFY_POLICE_STATION_FROM_LAT_LONG")}</div>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    setSelectedAddress(value);
-                                    setAddressId(value?.id);
-                                    setIsPoliceStationModalOpen(true);
-                                  }}
-                                  style={{
-                                    background: "none",
-                                    border: "none",
-                                    color: "#007E7E",
-                                    padding: 0,
-                                    cursor: "pointer",
-                                    fontSize: "16px",
-                                    marginLeft: "10px",
-                                    fontWeight: "700",
-                                  }}
-                                >
-                                  {t("CLICK_HERE_POLICE_STATION")}
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </form>
-      {isPoliceStationModalOpen && (
-        <GetPoliceStationModal
-          isOpen={isPoliceStationModalOpen}
-          onClose={() => {
-            setIsPoliceStationModalOpen(false);
-            setAddressId(null);
-          }}
-          onPoliceStationSelect={(station) => {
-            handlePoliceStationSelect(station, selectedAddress, true);
-            setIsPoliceStationModalOpen(false);
-            setAddressId(null);
-          }}
-          address={
-            typeof selectedAddress === "string"
-              ? selectedAddress
-              : `${selectedAddress?.locality}, ${selectedAddress?.city}, ${selectedAddress?.district}, ${selectedAddress?.pincode}`
-          }
-        />
-      )}
-    </div>
-  );
 };
 
 const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) => {
@@ -317,80 +162,95 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   };
 
   const handleCheckboxChange = (channelType, code, value) => {
-    const partyDetails = selectedChannels.length === 0 ? formData[config.key]?.selectedChannels : selectedChannels;
-    const isPresent =
-      Array.isArray(partyDetails) &&
-      partyDetails.some((data) => {
-        // Use compareAddressValues for Via Police type, otherwise use direct comparison
-        if (channelType === "Via Police") {
-          return data.type === channelType && compareAddressValues(value, data.value);
-        }
-        return data.type === channelType && JSON.stringify(value) === JSON.stringify(data.value);
-      });
+    const partyDetails = selectedChannels?.length === 0 ? formData[config?.key]?.selectedChannels || [] : selectedChannels;
+
+    const isPresent = partyDetails.some((data) => {
+      if (channelType === "Via Police") {
+        return data?.type === channelType && compareAddressValues(value, data?.value);
+      }
+      return data?.type === channelType && JSON.stringify(value) === JSON.stringify(data?.value);
+    });
 
     let updatedSelectedChannels;
 
     if (isPresent) {
-      updatedSelectedChannels = partyDetails.filter((channel) => {
-        // Use compareAddressValues for Via Police type, otherwise use direct comparison
+      // Remove the existing selection
+      updatedSelectedChannels = partyDetails?.filter((data) => {
         if (channelType === "Via Police") {
-          return !(channel.type === channelType && compareAddressValues(value, channel.value));
+          return !(data?.type === channelType && compareAddressValues(value, data?.value));
         }
-        return !(channel.type === channelType && JSON.stringify(value) === JSON.stringify(channel.value));
+        return !(data?.type === channelType && JSON.stringify(value) === JSON.stringify(data?.value));
       });
     } else {
-      updatedSelectedChannels = Array.isArray(partyDetails)
-        ? [...partyDetails, { type: channelType, code: code, value: value }]
-        : [{ type: channelType, code: code, value: value }];
+      // Add the selection
+      updatedSelectedChannels = [...partyDetails, { type: channelType, code, value }];
 
-      // Auto-select police station if geoLocationDetails.policeStation is present
+      // If police station is already available, reflect that in the state
       if (channelType === "Via Police" && value?.geoLocationDetails?.policeStation) {
-        const policeStation = value?.geoLocationDetails?.policeStation;
-        if (policeStation) {
-          handlePoliceStationChange(updatedSelectedChannels);
-        }
+        handlePoliceStationChange(updatedSelectedChannels);
       }
     }
-    const updatedSelectedChannelsNew = updatedSelectedChannels?.map((item, index) => {
+
+    // Enrich Via Police addresses with latest selected police station
+    const updatedSelectedChannelsWithPolice = updatedSelectedChannels?.map((item) => {
       if (item?.type === "Via Police") {
-        const foundObj = policeStationIdMapping?.find((obj) => obj?.id === item?.value?.id);
-        if (foundObj) {
+        const policeDetails = policeStationIdMapping?.find((p) => p?.id === item?.value?.id);
+        if (policeDetails) {
           return {
             ...item,
             value: {
-              ...item?.value,
-              geoLocationDetails: { ...item?.value?.geoLocationDetails, policeStation: foundObj?.policeStation },
+              ...item.value,
+              geoLocationDetails: {
+                ...item.value.geoLocationDetails,
+                policeStation: policeDetails.policeStation,
+              },
             },
           };
-        } else return item;
-      } else return item;
+        }
+      }
+      return item;
     });
-    setSelectedChannels(updatedSelectedChannelsNew);
-    onSelect(config.key, { ...formData[config.key], selectedChannels: updatedSelectedChannelsNew });
+
+    setSelectedChannels(updatedSelectedChannelsWithPolice);
+    onSelect(config.key, {
+      ...formData[config.key],
+      selectedChannels: updatedSelectedChannelsWithPolice,
+    });
   };
 
   const handlePoliceStationChange = (updatedPartyDetails, policeStationIdMap) => {
+    if (!Array.isArray(updatedPartyDetails)) return;
+
+    let updatedPartyDetailsNew = [...updatedPartyDetails];
+
     if (policeStationIdMap) {
       setPoliceStationIdMapping(policeStationIdMap);
-      const updatedPartyDetailsNew = updatedPartyDetails?.map((item, index) => {
+
+      updatedPartyDetailsNew = updatedPartyDetails?.map((item) => {
         if (item?.type === "Via Police") {
           const foundObj = policeStationIdMap?.find((obj) => obj?.id === item?.value?.id);
           if (foundObj) {
             return {
               ...item,
               value: {
-                ...item?.value,
-                geoLocationDetails: { ...item?.value?.geoLocationDetails, policeStation: foundObj?.policeStation },
+                ...item.value,
+                geoLocationDetails: {
+                  ...item.value.geoLocationDetails,
+                  policeStation: foundObj.policeStation,
+                },
               },
             };
-          } else return item;
-        } else return item;
+          }
+        }
+        return item;
       });
-      setSelectedChannels(updatedPartyDetailsNew);
-      onSelect(config.key, { ...formData[config.key], selectedChannels: updatedPartyDetailsNew });
     }
-    setSelectedChannels(updatedPartyDetails);
-    onSelect(config.key, { ...formData[config.key], selectedChannels: updatedPartyDetails });
+
+    setSelectedChannels(updatedPartyDetailsNew);
+    onSelect(config.key, {
+      ...formData[config.key],
+      selectedChannels: updatedPartyDetailsNew,
+    });
   };
 
   const displayPartyType = {
@@ -527,7 +387,7 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             </div>
           )}
           {input.type !== "dropdown" && selectedParty && (
-            <RenderDeliveryChannels
+            <WarrantRenderDeliveryChannels
               deliveryChannels={deliveryChannels}
               handleCheckboxChange={handleCheckboxChange}
               partyDetails={partyDetails}
