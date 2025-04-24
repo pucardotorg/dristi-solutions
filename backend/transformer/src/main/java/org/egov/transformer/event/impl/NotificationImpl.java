@@ -52,7 +52,7 @@ public class NotificationImpl implements EventListener<Notification, RequestInfo
                 .documents(event.getDocuments())
                 .createdTime(event.getAuditDetails().getCreatedTime())
                 .caseTitle(null)
-                .caseSTNumber(courtCase.getCourtCaseNumber() != null ? courtCase.getCourtCaseNumber() : courtCase.getCmpNumber())
+                .caseSTNumber(null)
                 .build();
 
         OrderNotificationRequest request = OrderNotificationRequest.builder()
