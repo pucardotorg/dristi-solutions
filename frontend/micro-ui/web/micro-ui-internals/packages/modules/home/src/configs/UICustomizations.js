@@ -502,7 +502,7 @@ export const UICustomizations = {
         case "STATUS":
           return t(value); // document status
         case "ISSUED":
-          return `${formatDateDifference(value)} days ago`;
+          return `${formatDate(new Date(value))}`;
         case "ORDER_TYPE":
           return t(value);
         case "DELIEVERY_CHANNEL":
