@@ -62,7 +62,13 @@ export const formatDateDifference = (previousDate) => {
   return dayDifference;
 };
 
-export const formatDate = (date) => {
+export const formatDate = (dateInput) => {
+  if (!dateInput) return "N/A";
+
+  const date = new Date(dateInput);
+  // Check for invalid date
+  if (isNaN(date)) return "N/A";
+
   const day = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();

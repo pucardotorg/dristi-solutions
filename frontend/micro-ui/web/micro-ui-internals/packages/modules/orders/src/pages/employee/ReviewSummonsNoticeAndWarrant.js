@@ -372,7 +372,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       return [
         { key: "ISSUE_TO", value: caseDetails?.respondentDetails?.name },
         { key: "ISSUE_DATE", value: convertToDateInputFormat(rowData?.createdDate) },
-        { key: "SENT_ON", value: caseDetails?.deliveryChannels?.statusChangeDate || "N/A" },
+        { key: "SENT_ON", value: formatDate(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
         { key: "NEXT_HEARING_DATE", value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A" },
       ];
@@ -387,7 +387,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
         { key: "NEXT_HEARING_DATE", value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A" },
         { key: "STATUS", value: rowData?.status },
-        { key: "STATUS_UPDATED_ON", value: caseDetails?.deliveryChannels?.statusChangeDate || "N/A" },
+        { key: "STATUS_UPDATED_ON", value: formatDate(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
         { key: "REMARKS", value: caseDetails?.remarks?.remark ? caseDetails?.remarks?.remark : "N/A" },
       ];
     }
