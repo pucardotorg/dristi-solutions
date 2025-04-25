@@ -4458,7 +4458,7 @@ const GenerateOrders = () => {
                 (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
             )
           ) {
-            setShowErrorToast({label:"Please Enter Police Station", error:true})
+            setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
             hasError = true;
             break;
           }
