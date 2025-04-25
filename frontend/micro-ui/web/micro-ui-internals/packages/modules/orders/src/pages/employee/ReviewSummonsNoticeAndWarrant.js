@@ -357,13 +357,41 @@ const ReviewSummonsNoticeAndWarrant = () => {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
         { key: "ISSUE_TO", value: caseDetails?.respondentDetails?.name },
-        { key: "ISSUE_DATE", value: convertToDateInputFormat(rowData?.createdDate) },
-        // { key: "Next Hearing Date", value: nextHearingDate?.startTime ? formatDate(nextHearingDate?.startTime) : "N/A" },
-        { key: "AMOUNT_PAID_TEXT", value: `Rs. ${caseDetails?.deliveryChannels?.fees || 100}` },
+        { key: "NEXT_HEARING_DATE", value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A" },
+        // process fee paid on
+        // { key: "AMOUNT_PAID_TEXT", value: `Rs. ${caseDetails?.deliveryChannels?.fees || 100}` },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
+        { key: "E_PROCESS_ID", value: rowData?.taskNumber },
       ];
     }
   }, [rowData, nextHearingDate]);
+
+  const sentInfos = useMemo(() => {
+    if (rowData?.taskDetails || nextHearingDate) {
+      const caseDetails = handleTaskDetails(rowData?.taskDetails);
+      return [
+        { key: "ISSUE_TO", value: caseDetails?.respondentDetails?.name },
+        { key: "ISSUE_DATE", value: convertToDateInputFormat(rowData?.createdDate) },
+        { key: "SENT_ON", value: convertToDateInputFormat(caseDetails?.deliveryChannels?.statusChangeDate) },
+        { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
+        { key: "NEXT_HEARING_DATE", value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A" },
+      ];
+    }
+  }, [rowData, nextHearingDate]);
+
+  const ReviewInfo = useMemo(() => {
+    if (rowData?.taskDetails || nextHearingDate) {
+      const caseDetails = handleTaskDetails(rowData?.taskDetails);
+      return [
+        { key: "ISSUE_TO", value: caseDetails?.respondentDetails?.name },
+        { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
+        { key: "NEXT_HEARING_DATE", value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A" },
+        { key: "STATUS", value: rowData?.status },
+        { key: "STATUS_UPDATED_ON", value: caseDetails?.deliveryChannels?.statusChangeDate },
+        { key: "REMARKS", value: caseDetails?.remarks?.remark ? caseDetails?.remarks?.remark : "N/A" },
+      ];
+    }
+  },[rowData, nextHearingDate]);
 
   const links = useMemo(() => {
     return [{ text: "View order", link: "" }];
@@ -623,7 +651,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       isStepperModal: false,
       modalBody: (
         <UpdateDeliveryStatusComponent
-          infos={infos}
+          infos={sentInfos}
           links={links}
           t={t}
           handleSubmitButtonDisable={handleSubmitButtonDisable}
@@ -640,7 +668,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       actionCancelOnSubmit: handleDownload,
       isDisabled: isDisabled,
     };
-  }, [handleCloseActionModal, handleDownload, handleUpdateStatus, infos, isDisabled, links, orderType, rowData, selectedDelievery, t]);
+  }, [handleCloseActionModal, handleDownload, handleUpdateStatus, sentInfos, isDisabled, links, orderType, rowData, selectedDelievery, t]);
 
   useEffect(() => {
     // if (rowData?.id) getTaskDocuments();
@@ -710,7 +738,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             currentStep={step}
           />
         )}
-        {showNoticeModal && <ReviewNoticeModal rowData={rowData} handleCloseNoticeModal={handleCloseNoticeModal} t={t} />}
+        {showNoticeModal && <ReviewNoticeModal infos={ReviewInfo} rowData={rowData} handleCloseNoticeModal={handleCloseNoticeModal} t={t} />}
       </div>
     </div>
   );
