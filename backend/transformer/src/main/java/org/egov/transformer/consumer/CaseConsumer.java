@@ -176,6 +176,8 @@ public class CaseConsumer {
         List<CourtCase> courtCaseList = new ArrayList<>();
         courtCaseList.add(courtCase);
         caseCriteria.setResponseList(courtCaseList);
+        caseCriteria.setCaseId(String.valueOf(courtCase.getId()));
+        caseCriteriaList.add(caseCriteria);
         caseResponse.setCriteria(caseCriteriaList);
         producer.push("case-legacy-topic", caseResponse);
     }
