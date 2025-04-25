@@ -1,4 +1,4 @@
-package pucar.strategy;
+package pucar.strategy.ordertype;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -9,6 +9,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.*;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
@@ -26,7 +27,7 @@ import static pucar.config.ServiceConstants.*;
 
 @Component
 @Slf4j
-public class Notice implements OrderUpdateStrategy {
+public class PublishOrderNotice implements OrderUpdateStrategy {
 
     private final AdvocateUtil advocateUtil;
     private final CaseUtil caseUtil;
@@ -36,7 +37,7 @@ public class Notice implements OrderUpdateStrategy {
     private final TaskUtil taskUtil;
 
     @Autowired
-    public Notice(AdvocateUtil advocateUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, ObjectMapper objectMapper, TaskUtil taskUtil) {
+    public PublishOrderNotice(AdvocateUtil advocateUtil, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, ObjectMapper objectMapper, TaskUtil taskUtil) {
         this.advocateUtil = advocateUtil;
         this.caseUtil = caseUtil;
         this.pendingTaskUtil = pendingTaskUtil;
@@ -53,7 +54,8 @@ public class Notice implements OrderUpdateStrategy {
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
-        return order.getOrderType() != null && NOTICE.equalsIgnoreCase(order.getOrderType());
+        String action = order.getWorkflow().getAction();
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && NOTICE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -107,6 +109,8 @@ public class Notice implements OrderUpdateStrategy {
 
             List<String> assignees = new ArrayList<>();
 
+            // add poa holder to assignees
+            Map<String, List<POAHolder>> litigantPoaMapping = caseUtil.getLitigantPoaMapping(courtCase);
             respondent.ifPresent(party -> {
                 if (party.getAdditionalDetails() != null) {
                     String uuid = jsonUtil.getNestedValue(party.getAdditionalDetails(), List.of("uuid"), String.class);
@@ -120,6 +124,7 @@ public class Notice implements OrderUpdateStrategy {
                     if (uuid != null) assignees.add(uuid);
                 }
             });
+
             log.info("assignees:{}", assignees);
             if (!assignees.isEmpty()) {
                 List<User> users = new ArrayList<>();
@@ -145,6 +150,8 @@ public class Notice implements OrderUpdateStrategy {
                         .assignedTo(users)
                         .assignedRole(List.of("CASE_RESPONDER"))
                         .cnrNumber(courtCase.getCnrNumber())
+                        .caseId(courtCase.getId().toString())
+                        .caseTitle(courtCase.getCaseTitle())
                         .filingNumber(courtCase.getFilingNumber())
                         .isCompleted(true)
                         .screenType("home")
@@ -216,6 +223,8 @@ public class Notice implements OrderUpdateStrategy {
                         .assignedTo(uniqueAssignee)
                         .cnrNumber(courtCase.getCnrNumber())
                         .filingNumber(courtCase.getFilingNumber())
+                        .caseId(courtCase.getId().toString())
+                        .caseTitle(courtCase.getCaseTitle())
                         .isCompleted(false)
                         .stateSla(sla)
                         .additionalDetails(additionalDetails)

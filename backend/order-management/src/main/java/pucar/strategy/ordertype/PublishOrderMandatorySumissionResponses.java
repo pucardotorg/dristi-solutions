@@ -1,4 +1,4 @@
-package pucar.strategy;
+package pucar.strategy.ordertype;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -8,12 +8,17 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import pucar.strategy.OrderUpdateStrategy;
+import pucar.util.CaseUtil;
 import pucar.util.DateUtil;
 import pucar.util.JsonUtil;
 import pucar.util.PendingTaskUtil;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
+import pucar.web.models.courtCase.CaseCriteria;
+import pucar.web.models.courtCase.CaseSearchRequest;
+import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.pendingtask.PendingTask;
 import pucar.web.models.pendingtask.PendingTaskRequest;
 
@@ -23,17 +28,19 @@ import static pucar.config.ServiceConstants.*;
 
 @Slf4j
 @Component
-public class MandatorySumissionResponses implements OrderUpdateStrategy {
+public class PublishOrderMandatorySumissionResponses implements OrderUpdateStrategy {
 
     private final PendingTaskUtil pendingTaskUtil;
     private final JsonUtil jsonUtil;
     private final DateUtil dateUtil;
+    private final CaseUtil caseUtil ;
 
     @Autowired
-    public MandatorySumissionResponses(PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, DateUtil dateUtil) {
+    public PublishOrderMandatorySumissionResponses(PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, DateUtil dateUtil, CaseUtil caseUtil) {
         this.pendingTaskUtil = pendingTaskUtil;
         this.jsonUtil = jsonUtil;
         this.dateUtil = dateUtil;
+        this.caseUtil = caseUtil;
     }
 
     @Override
@@ -44,7 +51,8 @@ public class MandatorySumissionResponses implements OrderUpdateStrategy {
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
-        return order.getOrderType() != null && MANDATORY_SUBMISSIONS_RESPONSES.equalsIgnoreCase(order.getOrderType());
+        String action = order.getWorkflow().getAction();
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && MANDATORY_SUBMISSIONS_RESPONSES.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -58,6 +66,15 @@ public class MandatorySumissionResponses implements OrderUpdateStrategy {
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
         log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
+
+        // case search
+
+        List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
+                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
+                .requestInfo(requestInfo).build());
+
+        // add validation here
+        CourtCase courtCase = cases.get(0);
 
         String submissionDueDate = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "submissionDeadline"), String.class);
         log.info("submissionDueDate:{}", submissionDueDate);
@@ -88,8 +105,10 @@ public class MandatorySumissionResponses implements OrderUpdateStrategy {
                     .entityType(entityType)
                     .status("CREATE_SUBMISSION")
                     .assignedTo(List.of(User.builder().uuid(assigneeNode.get("uuid").asText()).build()))
-                    .cnrNumber(order.getCnrNumber())
-                    .filingNumber(order.getFilingNumber())
+                    .cnrNumber(courtCase.getCnrNumber())
+                    .filingNumber(courtCase.getFilingNumber())
+                    .caseId(courtCase.getId().toString())
+                    .caseTitle(courtCase.getCaseTitle())
                     .isCompleted(false)
                     .stateSla(sla)
                     .additionalDetails(additionalDetailsMap)

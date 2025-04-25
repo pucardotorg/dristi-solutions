@@ -1,4 +1,4 @@
-package pucar.strategy;
+package pucar.strategy.ordertype;
 
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
@@ -6,6 +6,7 @@ import org.egov.common.contract.request.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pucar.config.Configuration;
+import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.*;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
@@ -32,7 +33,7 @@ import static pucar.config.ServiceConstants.*;
 
 @Slf4j
 @Component
-public class InitiatingReschedulingOfHearingDate implements OrderUpdateStrategy {
+public class PublishOrderInitiatingReschedulingOfHearingDate implements OrderUpdateStrategy {
 
 
     private final ApplicationUtil applicationUtil;
@@ -47,7 +48,7 @@ public class InitiatingReschedulingOfHearingDate implements OrderUpdateStrategy 
     private final AdvocateUtil advocateUtil;
 
     @Autowired
-    public InitiatingReschedulingOfHearingDate(ApplicationUtil applicationUtil, OrderUtil orderUtil, JsonUtil jsonUtil, HearingUtil hearingUtil, Configuration config, DateUtil dateUtil, SchedulerUtil schedulerUtil, PendingTaskUtil pendingTaskUtil, CaseUtil caseUtil, AdvocateUtil advocateUtil) {
+    public PublishOrderInitiatingReschedulingOfHearingDate(ApplicationUtil applicationUtil, OrderUtil orderUtil, JsonUtil jsonUtil, HearingUtil hearingUtil, Configuration config, DateUtil dateUtil, SchedulerUtil schedulerUtil, PendingTaskUtil pendingTaskUtil, CaseUtil caseUtil, AdvocateUtil advocateUtil) {
         this.applicationUtil = applicationUtil;
         this.orderUtil = orderUtil;
         this.jsonUtil = jsonUtil;
@@ -68,7 +69,8 @@ public class InitiatingReschedulingOfHearingDate implements OrderUpdateStrategy 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
-        return order.getOrderType() != null && INITIATING_RESCHEDULING_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());
+        String action = order.getWorkflow().getAction();
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && INITIATING_RESCHEDULING_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -176,6 +178,8 @@ public class InitiatingReschedulingOfHearingDate implements OrderUpdateStrategy 
                     .assignedTo(List.of(User.builder().uuid(assigneeUUID).build()))
                     .cnrNumber(courtCase.getCnrNumber())
                     .filingNumber(courtCase.getFilingNumber())
+                    .caseId(courtCase.getId().toString())
+                    .caseTitle(courtCase.getCaseTitle())
                     .isCompleted(false)
                     .stateSla(pendingTaskUtil.getStateSla(INITIATING_RESCHEDULING_OF_HEARING_DATE))
                     .additionalDetails(pendingTaskUtil.getAdditionalDetails(courtCase, assigneeUUID))

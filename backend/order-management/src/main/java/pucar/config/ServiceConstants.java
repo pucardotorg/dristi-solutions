@@ -95,6 +95,7 @@ public class ServiceConstants {
     public static final String PENDING_NOTICE = "PENDING_NOTICE";
     public static final String ISSUE_ORDER = "ISSUE_ORDER";
     public static final String UNSIGNED = "UNSIGNED";
+    public static final String DELETE = "DELETE";
 
 
     // order type

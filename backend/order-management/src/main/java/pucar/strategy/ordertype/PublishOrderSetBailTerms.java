@@ -1,10 +1,11 @@
-package pucar.strategy;
+package pucar.strategy.ordertype;
 
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.ApplicationUtil;
 import pucar.util.CaseUtil;
 import pucar.util.JsonUtil;
@@ -28,7 +29,7 @@ import static pucar.config.ServiceConstants.*;
 
 @Component
 @Slf4j
-public class SetBailTerms implements OrderUpdateStrategy {
+public class PublishOrderSetBailTerms implements OrderUpdateStrategy {
 
     private final CaseUtil caseUtil;
     private final ApplicationUtil applicationUtil;
@@ -36,7 +37,7 @@ public class SetBailTerms implements OrderUpdateStrategy {
     private final PendingTaskUtil pendingTaskUtil;
 
     @Autowired
-    public SetBailTerms(CaseUtil caseUtil, ApplicationUtil applicationUtil, JsonUtil jsonUtil, PendingTaskUtil pendingTaskUtil) {
+    public PublishOrderSetBailTerms(CaseUtil caseUtil, ApplicationUtil applicationUtil, JsonUtil jsonUtil, PendingTaskUtil pendingTaskUtil) {
         this.caseUtil = caseUtil;
         this.applicationUtil = applicationUtil;
         this.jsonUtil = jsonUtil;
@@ -51,7 +52,8 @@ public class SetBailTerms implements OrderUpdateStrategy {
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
-        return order.getOrderType() != null && SET_BAIL_TERMS.equalsIgnoreCase(order.getOrderType());
+        String action = order.getWorkflow().getAction();
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && SET_BAIL_TERMS.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -106,6 +108,8 @@ public class SetBailTerms implements OrderUpdateStrategy {
                 .assignedTo(List.of(User.builder().uuid(assigneeUUID).build()))
                 .cnrNumber(courtCase.getCnrNumber())
                 .filingNumber(courtCase.getFilingNumber())
+                .caseTitle(courtCase.getCaseTitle())
+                .caseId(courtCase.getId().toString())
                 .isCompleted(false)
                 .stateSla(pendingTaskUtil.getStateSla("SUBMIT_BAIL_DOCUMENTS"))
                 .additionalDetails(additionalDetails)

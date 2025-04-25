@@ -42,6 +42,9 @@ public class Configuration {
     @Value("${dristi.order.search.endpoint}")
     private String orderSearchEndPoint;
 
+    @Value("${dristi.order.create.endpoint}")
+    private String orderCreateEndPoint;
+
     // ESign Config
     @Value("${dristi.esign.host}")
     private String esignHost;

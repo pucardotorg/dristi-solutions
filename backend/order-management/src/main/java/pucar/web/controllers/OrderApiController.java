@@ -13,11 +13,11 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import pucar.service.OrderService;
 import pucar.util.ResponseInfoFactory;
-import pucar.web.models.BulkUpdateRequest;
-import pucar.web.models.BulkUpdateResponse;
 import pucar.web.models.Order;
+import pucar.web.models.OrderRequest;
+import pucar.web.models.OrderResponse;
 
-import java.util.List;
+
 
 @RestController
 @RequestMapping("")
@@ -30,11 +30,20 @@ public class OrderApiController {
         this.orderService = orderService;
     }
 
-    @RequestMapping(value = "/v1/bulk/_update", method = RequestMethod.POST)
-    public ResponseEntity<BulkUpdateResponse> bulkOrderUpdate(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody BulkUpdateRequest request) {
-        List<Order> orders = orderService.updateBulkOrder(request);
-        BulkUpdateResponse response = BulkUpdateResponse.builder()
-                .orders(orders).responseInfo(ResponseInfoFactory.createResponseInfo(request.getRequestInfo(), true)).build();
+    @RequestMapping(value = "/v1/_updateOrder", method = RequestMethod.POST)
+    public ResponseEntity<OrderResponse> updateOrder(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody OrderRequest request) {
+        Order order = orderService.updateOrder(request);
+        OrderResponse response = OrderResponse.builder()
+                .order(order).responseInfo(ResponseInfoFactory.createResponseInfo(request.getRequestInfo(), true)).build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
+    @RequestMapping(value = "/v1/_createOrder", method = RequestMethod.POST)
+    public ResponseEntity<OrderResponse> createOrder(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody OrderRequest request) {
+        Order order = orderService.createOrder(request);
+        OrderResponse response = OrderResponse.builder()
+                .order(order).responseInfo(ResponseInfoFactory.createResponseInfo(request.getRequestInfo(), true)).build();
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 

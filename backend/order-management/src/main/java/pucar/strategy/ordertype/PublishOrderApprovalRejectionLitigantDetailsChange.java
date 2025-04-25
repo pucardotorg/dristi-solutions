@@ -1,9 +1,10 @@
-package pucar.strategy;
+package pucar.strategy.ordertype;
 
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.CaseUtil;
 import pucar.util.JsonUtil;
 import pucar.util.PendingTaskUtil;
@@ -23,14 +24,14 @@ import static pucar.config.ServiceConstants.*;
 
 @Component
 @Slf4j
-public class ApprovalRejectionLitigantDetailsChange implements OrderUpdateStrategy {
+public class PublishOrderApprovalRejectionLitigantDetailsChange implements OrderUpdateStrategy {
 
     private final CaseUtil caseUtil;
     private final JsonUtil jsonUtil;
     private final PendingTaskUtil pendingTaskUtil;
 
     @Autowired
-    public ApprovalRejectionLitigantDetailsChange(CaseUtil caseUtil, JsonUtil jsonUtil, PendingTaskUtil pendingTaskUtil) {
+    public PublishOrderApprovalRejectionLitigantDetailsChange(CaseUtil caseUtil, JsonUtil jsonUtil, PendingTaskUtil pendingTaskUtil) {
         this.caseUtil = caseUtil;
         this.jsonUtil = jsonUtil;
         this.pendingTaskUtil = pendingTaskUtil;
@@ -45,7 +46,8 @@ public class ApprovalRejectionLitigantDetailsChange implements OrderUpdateStrate
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
-        return order.getOrderType() != null && APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE.equalsIgnoreCase(order.getOrderType());
+        String action = order.getWorkflow().getAction();
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -87,6 +89,9 @@ public class ApprovalRejectionLitigantDetailsChange implements OrderUpdateStrate
                 .isCompleted(true)
                 .referenceId(pendingTaskRefId)
                 .filingNumber(courtCase.getFilingNumber())
+                .caseTitle(courtCase.getCaseTitle())
+                .caseId(courtCase.getId().toString())
+                .cnrNumber(courtCase.getCnrNumber())
                 .status(PROFILE_EDIT_REQUEST).build();
 
         pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo)

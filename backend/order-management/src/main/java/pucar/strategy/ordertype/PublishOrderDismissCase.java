@@ -1,10 +1,11 @@
-package pucar.strategy;
+package pucar.strategy.ordertype;
 
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pucar.config.Configuration;
+import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.CaseUtil;
 import pucar.util.HearingUtil;
 import pucar.web.models.Order;
@@ -27,14 +28,14 @@ import static pucar.config.ServiceConstants.*;
 
 @Component
 @Slf4j
-public class DismissCase implements OrderUpdateStrategy {
+public class PublishOrderDismissCase implements OrderUpdateStrategy {
 
     private final CaseUtil caseUtil;
     private final HearingUtil hearingUtil;
     private final Configuration config;
 
     @Autowired
-    public DismissCase(CaseUtil caseUtil, HearingUtil hearingUtil, Configuration config) {
+    public PublishOrderDismissCase(CaseUtil caseUtil, HearingUtil hearingUtil, Configuration config) {
         this.caseUtil = caseUtil;
         this.hearingUtil = hearingUtil;
         this.config = config;
@@ -48,7 +49,8 @@ public class DismissCase implements OrderUpdateStrategy {
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
-        return order.getOrderType() != null && DISMISS_CASE.equalsIgnoreCase(order.getOrderType());
+        String action = order.getWorkflow().getAction();
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && DISMISS_CASE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
