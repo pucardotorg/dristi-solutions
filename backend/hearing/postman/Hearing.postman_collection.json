@@ -208,9 +208,7 @@
 				{
 					"listen": "test",
 					"script": {
-						"exec": [
-							""
-						],
+						"exec": [""],
 						"type": "text/javascript",
 						"packages": {}
 					}
@@ -231,21 +229,33 @@
 					{
 						"key": "Accept",
 						"value": "application/json"
+					},
+					{
+						"key": "Origin",
+						"value": "https://dristi-kerala-dev.pucar.org"
+					},
+					{
+						"key": "Referer",
+						"value": "https://dristi-kerala-dev.pucar.org/digit-ui/employee/dristi/home/view-case?caseId=d0ff5565-fa9a-4189-b8b9-2baa2ae9b7fd&filingNumber=KL-001287-2025&tab=Hearings"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"RequestInfo\": {\n        \"apiId\": \"Rainmaker\",\n           \"authToken\": \"f8b382b0-ed28-450d-98c7-4bf143145992\",\n        \"userInfo\": {\n            \"id\": 1779,\n            \"userName\": \"hearinguser\",\n            \"salutation\": null,\n            \"name\": \"Rajat\",\n            \"gender\": \"MALE\",\n            \"mobileNumber\": \"9996301590\",\n            \"alternatemobilenumber\": null,\n            \"emailId\": null,\n            \"altContactNumber\": null,\n            \"pan\": null,\n            \"aadhaarNumber\": null,\n            \"permanentAddress\": null,\n            \"permanentCity\": null,\n            \"permanentPinCode\": null,\n            \"correspondenceAddress\": null,\n            \"correspondenceCity\": null,\n            \"correspondencePinCode\": null,\n            \"active\": true,\n            \"locale\": null,\n            \"type\": \"EMPLOYEE\",\n            \"accountLocked\": false,\n            \"accountLockedDate\": null,\n            \"fatherOrHusbandName\": null,\n            \"relationship\": null,\n            \"signature\": null,\n            \"bloodGroup\": null,\n            \"photo\": null,\n            \"identificationMark\": null,\n            \"createdBy\": null,\n            \"password\": null,\n            \"otpReference\": null,\n            \"lastModifiedBy\": null,\n            \"tenantId\": \"pg\",\n            \"roles\": [\n                {\n                    \"code\": \"ADVOCATE_APPROVER\",\n                    \"name\": \"ADVOCATE_APPROVER\",\n                    \"tenantId\": \"pg\"\n                },\n                {\n                    \"code\": \"HEARING_CREATOR\",\n                    \"name\": \"HEARING_CREATOR\",\n                    \"tenantId\": \"pg\"\n                },\n                {\n                    \"code\": \"EMPLOYEE\",\n                    \"name\": \"Employee\",\n                    \"tenantId\": \"pg\"\n                },\n                {\n                    \"code\": \"HEARING_SCHEDULER\",\n                    \"name\": \"HEARING_SCHEDULER\",\n                    \"tenantId\": \"pg\"\n                },\n                {\n                    \"code\": \"HEARING_DATE_REQUESTOR\",\n                    \"name\": \"HEARING_DATE_REQUESTOR\",\n                    \"tenantId\": \"pg\"\n                },\n                {\n                    \"code\": \"HEARING_START\",\n                    \"name\": \"HEARING_START\",\n                    \"tenantId\": \"pg\"\n                },\n                {\n                    \"code\": \"ADVOCATE_CLERK_APPROVER\",\n                    \"name\": \"ADVOCATE_CLERK_APPROVER\",\n                    \"tenantId\": \"pg\"\n                },\n                {\n                    \"code\": \"HEARING_CLOSER\",\n                    \"name\": \"HEARING_CLOSER\",\n                    \"tenantId\": \"pg\"\n                },\n                {\n                    \"code\": \"HEARING_ACCEPTOR\",\n                    \"name\": \"HEARING_ACCEPTOR\",\n                    \"tenantId\": \"pg\"\n                },\n                {\n                    \"code\": \"HEARING_APPROVER\",\n                    \"name\": \"HEARING_APPROVER\",\n                    \"tenantId\": \"pg\"\n                },\n                {\n                    \"code\": \"CITIZEN\",\n                    \"name\": \"Citizen\",\n                    \"tenantId\": \"pg\"\n                },\n                {\n                    \"code\": \"SUPERUSER\",\n                    \"name\": \"Super User\",\n                    \"tenantId\": \"pg\"\n                }\n            ],\n            \"uuid\": \"bf5d8028-18c7-41e6-abea-82eecf79da29\",\n            \"createdDate\": \"12-06-2024 13:29:45\",\n            \"lastModifiedDate\": \"12-06-2024 13:29:45\",\n            \"dob\": null,\n            \"pwdExpiryDate\": \"10-09-2024 13:29:45\"\n        },\n        \"msgId\": \"1716373887208|en_IN\",\n        \"plainAccessRequest\": {}\n    },\n    \"tenantId\": \"pg\",\n    \"criteria\":{\n        \"status\":[\"SCHEDULED\",\"INPROGRESS\"]\n        // \"applicationNumber\": null,\n        // \"cnrNumber\": null,\n     // \"hearingId\": \"HEARING-ID-2024-08-07-000325\"\n        // ,\n        // \"filingNumber\":null,\n        // \"tenantId\": \"pg\",\n        // \"fromDate\": \"2024-05-01\",\n        // \"toDate\": \"2024-06-30\"\n        // \"limit\": 10,\n        // \"offset\": 0\n    },\n    \"pagination\":{\n        \"limit\":5,\n        \"offSet\":0,\n        \"sortBy\":\"startTime\",\n        \"order\":\"asc\"\n    }\n}"
+					"raw": "{\n  \"apiOperation\": \"SEARCH\",\n  \"Individual\": {\n    \"tenantId\": \"kl\"\n  },\n  \"criteria\": {\n    \"filingNumber\": \"KL-001287-2025\",\n    \"tenantId\": \"kl\",\n    \"orderNumber\": \"\",\n    \"applicationCMPNumber\": \"\",\n    \"artifactNumber\": \"\"\n  },\n  \"HearingList\": {},\n  \"tenantId\": \"kl\",\n  \"pagination\": {\n    \"limit\": 10,\n    \"offSet\": 0\n  },\n  \"RequestInfo\": {\n    \"apiId\": \"Rainmaker\",\n    \"authToken\": \"301c8c82-280c-4e48-a34e-1206db10edc8\",\n    \"userInfo\": {\n      \"id\": 1927,\n      \"uuid\": \"2933b77e-29d5-4624-acdf-f0552b4e491a\",\n      \"userName\": \"gJudge\",\n      \"name\": \"JUDGE\",\n      \"mobileNumber\": \"1002335566\",\n      \"emailId\": null,\n      \"locale\": null,\n      \"type\": \"EMPLOYEE\",\n      \"roles\": [\n        { \"name\": \"DIARY_APPROVER\", \"code\": \"DIARY_APPROVER\", \"tenantId\": \"kl\" },\n        { \"name\": \"HEARING_VIEWER\", \"code\": \"HEARING_VIEWER\", \"tenantId\": \"kl\" },\n        { \"name\": \"WORKFLOW_ABANDON\", \"code\": \"WORKFLOW_ABANDON\", \"tenantId\": \"kl\" },\n        { \"name\": \"ORDER_ESIGN\", \"code\": \"ORDER_ESIGN\", \"tenantId\": \"kl\" },\n        { \"name\": \"Workflow Admin\", \"code\": \"WORKFLOW_ADMIN\", \"tenantId\": \"kl\" },\n        { \"name\": \"APPLICATION_CREATOR\", \"code\": \"APPLICATION_CREATOR\", \"tenantId\": \"kl\" },\n        { \"name\": \"DEPOSITION_PUBLISHER\", \"code\": \"DEPOSITION_PUBLISHER\", \"tenantId\": \"kl\" },\n        { \"name\": \"HEARING_APPROVER\", \"code\": \"HEARING_APPROVER\", \"tenantId\": \"kl\" },\n        { \"name\": \"ORDER_VIEWER\", \"code\": \"ORDER_VIEWER\", \"tenantId\": \"kl\" },\n        { \"name\": \"SUBMISSION_RESPONDER\", \"code\": \"SUBMISSION_RESPONDER\", \"tenantId\": \"kl\" },\n        { \"name\": \"ORDER_REASSIGN\", \"code\": \"ORDER_REASSIGN\", \"tenantId\": \"kl\" },\n        { \"name\": \"CASE_EDITOR\", \"code\": \"CASE_EDITOR\", \"tenantId\": \"kl\" },\n        { \"name\": \"APPLICATION_APPROVER\", \"code\": \"APPLICATION_APPROVER\", \"tenantId\": \"kl\" },\n        { \"name\": \"TASK_CREATOR\", \"code\": \"TASK_CREATOR\", \"tenantId\": \"kl\" },\n        { \"name\": \"DIARY_VIEWER\", \"code\": \"DIARY_VIEWER\", \"tenantId\": \"kl\" },\n        { \"name\": \"Employee\", \"code\": \"EMPLOYEE\", \"tenantId\": \"kl\" },\n        { \"name\": \"ORDER_DELETE\", \"code\": \"ORDER_DELETE\", \"tenantId\": \"kl\" },\n        { \"name\": \"NOTIFICATION_APPROVER\", \"code\": \"NOTIFICATION_APPROVER\", \"tenantId\": \"kl\" },\n        { \"name\": \"CASE_VIEWER\", \"code\": \"CASE_VIEWER\", \"tenantId\": \"kl\" },\n        { \"name\": \"HEARING_EDITOR\", \"code\": \"HEARING_EDITOR\", \"tenantId\": \"kl\" },\n        { \"name\": \"APPLICATION_REJECTOR\", \"code\": \"APPLICATION_REJECTOR\", \"tenantId\": \"kl\" },\n        { \"name\": \"TASK_EDITOR\", \"code\": \"TASK_EDITOR\", \"tenantId\": \"kl\" },\n        { \"name\": \"DIARY_EDITOR\", \"code\": \"DIARY_EDITOR\", \"tenantId\": \"kl\" },\n        { \"name\": \"ORDER_APPROVER\", \"code\": \"ORDER_APPROVER\", \"tenantId\": \"kl\" },\n        { \"name\": \"NOTIFICATION_CREATOR\", \"code\": \"NOTIFICATION_CREATOR\", \"tenantId\": \"kl\" },\n        { \"name\": \"HEARING_CREATOR\", \"code\": \"HEARING_CREATOR\", \"tenantId\": \"kl\" },\n        { \"name\": \"ORDER_CREATOR\", \"code\": \"ORDER_CREATOR\", \"tenantId\": \"kl\" },\n        { \"name\": \"EVIDENCE_CREATOR\", \"code\": \"EVIDENCE_CREATOR\", \"tenantId\": \"kl\" },\n        { \"name\": \"CALCULATION_VIEWER\", \"code\": \"CALCULATION_VIEWER\", \"tenantId\": \"kl\" },\n        { \"name\": \"JUDGE_ROLE\", \"code\": \"JUDGE_ROLE\", \"tenantId\": \"kl\" },\n        { \"name\": \"EVIDENCE_EDITOR\", \"code\": \"EVIDENCE_EDITOR\", \"tenantId\": \"kl\" },\n        { \"name\": \"CASE_APPROVER\", \"code\": \"CASE_APPROVER\", \"tenantId\": \"kl\" },\n        { \"name\": \"SUBMISSION_APPROVER\", \"code\": \"SUBMISSION_APPROVER\", \"tenantId\": \"kl\" },\n        { \"name\": \"TASK_VIEWER\", \"code\": \"TASK_VIEWER\", \"tenantId\": \"kl\" },\n        { \"name\": \"HEARING_SCHEDULER\", \"code\": \"HEARING_SCHEDULER\", \"tenantId\": \"kl\" }\n      ],\n      \"active\": true,\n      \"tenantId\": \"kl\",\n      \"permanentCity\": null\n    },\n    \"msgId\": \"1745327942248|en_IN\",\n    \"plainAccessRequest\": {}\n  }\n}"
 				},
 				"url": {
-					"raw": "{{local}}/hearing/v1/search",
+					"raw": "https://dristi-kerala-dev.pucar.org/hearing/v1/search?tenantId=kl&limit=10&offset=0",
+					"protocol": "https",
 					"host": [
-						"{{local}}"
+						"dristi-kerala-dev",
+						"pucar",
+						"org"
 					],
-					"path": [
-						"hearing",
-						"v1",
-						"search"
+					"path": ["hearing", "v1", "search"],
+					"query": [
+						{ "key": "tenantId", "value": "kl" },
+						{ "key": "limit", "value": "10" },
+						{ "key": "offset", "value": "0" }
 					]
 				}
 			},

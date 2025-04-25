@@ -66,4 +66,7 @@ public class Configuration {
     @Value("${esign.update.topic}")
     private String esignUpdateTopic;
 
+    @Value("${esign.position.offset}")
+    private Float positionOffset;
+
 }

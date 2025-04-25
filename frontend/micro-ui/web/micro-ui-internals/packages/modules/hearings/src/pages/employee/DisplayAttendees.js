@@ -63,7 +63,9 @@ const DisplayAttendees = ({ partiesToAttend, onlineAttendees = [], offlineAttend
           <ul>
             {onlineAttendees.map((attendee) => (
               <li key={attendee.individualId || attendee.name}>
-                {attendee.name} - {t(displayPartyType[attendee.type.toLowerCase()])}
+                {attendee.name.includes("(") && attendee.name.includes(")")
+                  ? attendee.name
+                  : `${attendee.name} (${t(displayPartyType[attendee.type.toLowerCase()])})`}
               </li>
             ))}
           </ul>
@@ -76,7 +78,9 @@ const DisplayAttendees = ({ partiesToAttend, onlineAttendees = [], offlineAttend
           <ul>
             {offlineAttendees.map((attendee) => (
               <li key={attendee.individualId || attendee.name}>
-                {attendee.name} - {t(displayPartyType[attendee.type.toLowerCase()])}
+                {attendee.name.includes("(") && attendee.name.includes(")")
+                  ? attendee.name
+                  : `${attendee.name} (${t(displayPartyType[attendee.type.toLowerCase()])})`}
               </li>
             ))}
           </ul>
