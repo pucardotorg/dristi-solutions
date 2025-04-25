@@ -304,7 +304,7 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       const addressList = await Promise.all(
         address.map(async (item) => {
           const policeStationInOrderSaved = formData?.[config?.key]?.selectedChannels?.find(
-            (channel, index) => channel?.type === "Via Police" && channel?.value?.id === item?.id
+            (channel, index) => channel?.value?.id === item?.id
           )?.value?.geoLocationDetails?.policeStation;
           policeStationIdMapping.push({ id: item?.id, policeStation: policeStationInOrderSaved || item?.geoLocationDetails?.policeStation });
           if (item?.pincode) {
