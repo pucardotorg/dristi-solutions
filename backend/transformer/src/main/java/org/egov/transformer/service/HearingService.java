@@ -3,16 +3,15 @@ package org.egov.transformer.service;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.transformer.config.TransformerProperties;
-import org.egov.transformer.models.CourtCase;
-import org.egov.transformer.models.Hearing;
-import org.egov.transformer.models.HearingRequest;
-import org.egov.transformer.models.OpenHearing;
+import org.egov.transformer.models.*;
 import org.egov.transformer.producer.TransformerProducer;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import static org.egov.transformer.config.ServiceConstants.*;
@@ -44,7 +43,7 @@ public class HearingService {
         HearingRequest hearingRequest = new HearingRequest();
         hearingRequest.setHearing(hearing);
         producer.push(properties.getSaveHearingTopic(), hearingRequest);
-        producer.push("hearing-legacy-topic", hearingRequest);
+        pushHearingToLegacy(hearingRequest);
     }
 
     public void enrichOpenHearings(HearingRequest hearingRequest) {
@@ -87,4 +86,13 @@ public class HearingService {
                 ? courtCaseNumber
                 : courtCase.getCmpNumber();
     }
+
+    public void pushHearingToLegacy(HearingRequest hearingRequest) {
+        HearingResponse hearingResponse = new HearingResponse();
+        List<Hearing> hearingList = new ArrayList<>();
+        hearingList.add(hearingRequest.getHearing());
+        hearingResponse.setHearingList(hearingList);
+        producer.push("hearing-legacy-topic", hearingResponse);
+    }
+
 }
