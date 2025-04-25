@@ -357,13 +357,21 @@ function ViewCaseFile({ t, inViewCase = false }) {
 
   const updateCaseDetails = async (action) => {
     const scrutinyObj = action === CaseWorkflowAction.VALIDATE ? {} : CaseWorkflowAction.SEND_BACK && isPrevScrutiny ? newScrutinyData : formdata;
+    const newAdditionalDetails = {
+      ...caseDetails.additionalDetails,
+      scrutiny: scrutinyObj,
+      ...(action === CaseWorkflowAction.VALIDATE
+        ? { scrutinyComment: comment }
+        : action === CaseWorkflowAction.SEND_BACK && { scrutinyCommentSendBack: commentSendBack }),
+    }
+
+    if ('judge' in newAdditionalDetails) {
+      delete newAdditionalDetails.judge;
+    }
+    
     const newcasedetails = {
       ...caseDetails,
-      additionalDetails: {
-        ...caseDetails.additionalDetails,
-        scrutiny: scrutinyObj,
-        ...(action === CaseWorkflowAction.VALIDATE ? { scrutinyComment: comment } : action === CaseWorkflowAction.SEND_BACK && { scrutinyCommentSendBack: commentSendBack }),
-      },
+      additionalDetails: newAdditionalDetails,
       caseTitle: newCaseName !== "" ? newCaseName : caseDetails?.caseTitle,
     };
     const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
@@ -603,7 +611,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
                           </React.Fragment>
                         </div>
                       </div>
-                      <div className="header-icon" onClick={() => { }}>
+                      <div className="header-icon" onClick={() => {}}>
                         <CustomArrowDownIcon />
                       </div>
                     </div>
