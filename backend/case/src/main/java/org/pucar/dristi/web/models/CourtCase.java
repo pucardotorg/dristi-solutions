@@ -31,9 +31,6 @@ public class CourtCase {
     @Valid
     private UUID id = null;
 
-    @JsonProperty("courtRoom")
-    private String courtRoom = null;
-
     @JsonProperty("tenantId")
     @NotNull
     //@Size(min = 2, max = 64)
