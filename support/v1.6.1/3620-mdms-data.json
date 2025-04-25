@@ -1,0 +1,104 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "INBOX",
+    "masterName": "InboxQueryConfiguration",
+    "mdmsPayload": [
+      {
+        "id": "ab9e5531-885d-4784-8760-4c039bef4046",
+        "tenantId": "kl",
+        "schemaCode": "INBOX.InboxQueryConfiguration",
+        "uniqueIdentifier": "order-notification-view",
+        "data": {
+          "sortBy": {
+            "path": "Data.orderNotification.createdTime",
+            "defaultOrder": "DESC"
+          },
+          "sourceFilterPathList": [
+            "Data"
+          ],
+          "allowedSearchCriteria": [
+            {
+              "name": "id",
+              "path": "Data.orderNotification.id.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "tenantId",
+              "path": "Data.orderNotification.tenantId.keyword",
+              "operator": "EQUAL",
+              "isMandatory": true
+            },
+            {
+              "name": "type",
+              "path": "Data.orderNotification.type.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "partyName",
+              "path": "Data.orderNotification.parties.partyName.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "status",
+              "path": "Data.orderNotification.status.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "entityType",
+              "path": "Data.orderNotification.entityType.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "title",
+              "path": "Data.orderNotification.title.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "filingNumbers",
+              "path": "Data.orderNotification.filingNumbers.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "caseNumbers",
+              "path": "Data.orderNotification.caseNumbers.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "caseTitle",
+              "path": "Data.orderNotification.caseTitle.keyword",
+              "operator": "WILDCARD",
+              "isMandatory": false
+            },
+            {
+              "name": "startOfTheDay",
+              "path": "Data.orderNotification.createdTime",
+              "operator": "GTE",
+              "isMandatory": false
+            },
+            {
+              "name": "endOfTheDay",
+              "path": "Data.orderNotification.createdTime",
+              "operator": "LTE",
+              "isMandatory": false
+            },
+            {
+              "name": "caseSTNumber",
+              "path": "Data.orderNotification.caseSTNumber",
+              "isMandatory": false
+            }
+          ],
+          "index": "order-notification-view",
+          "module": "Transformer service"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1741325570977,
+          "lastModifiedTime": 1745476166553
+        }
+      }
+    ]
+  }
+]
