@@ -225,8 +225,10 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
             entityType: "case-default",
             referenceId: `MANUAL_${caseDetails?.filingNumber}`,
             status: "PENDING_PAYMENT",
-            cnrNumber: null,
+            cnrNumber: caseDetails?.cnrNumber,
             filingNumber: caseDetails?.filingNumber,
+            caseId: caseDetails?.id,
+            caseTitle: caseDetails?.caseTitle,
             isCompleted: true,
             stateSla: null,
             additionalDetails: {},
@@ -348,10 +350,9 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
           </div>
         </div>
         {toastMsg && (
-        <Toast error={toastMsg.key === "error"} label={t(toastMsg.action)} onClose={() => setToastMsg(null)} style={{ maxWidth: "500px" }} />
-      )}
+          <Toast error={toastMsg.key === "error"} label={t(toastMsg.action)} onClose={() => setToastMsg(null)} style={{ maxWidth: "500px" }} />
+        )}
       </Modal>
-      
     </div>
   );
 }
