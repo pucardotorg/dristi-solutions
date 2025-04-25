@@ -458,7 +458,9 @@ export const UICustomizations = {
       return link;
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
-      const caseId = row?.businessObject?.billDetails?.caseTitleFilingNumber.split(",")[1].trim();
+      const caseId = row?.businessObject?.billDetails?.caseId;
+      const filingNumber = row?.businessObject?.billDetails?.caseTitleFilingNumber.split(",")[1].trim();
+      const caseTitle = row?.businessObject?.billDetails?.caseTitleFilingNumber.split(",")[0].trim();
       const consumerCode = row?.businessObject?.billDetails?.consumerCode;
       const service = row?.businessObject?.billDetails?.service;
       const billStatus = row?.businessObject?.billDetails?.billStatus;
@@ -468,7 +470,7 @@ export const UICustomizations = {
           return billStatus === "ACTIVE" ? (
             <span className="link">
               <Link
-                to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?filingNumber=${caseId}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}`}
+                to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&filingNumber=${filingNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}&caseTitle=${caseTitle}`}
               >
                 {String(value || t("ES_COMMON_NA"))}
               </Link>
@@ -483,7 +485,7 @@ export const UICustomizations = {
             <span className="action-link">
               <Link
                 style={{ display: "flex", alignItem: "center", color: "#9E400A" }}
-                to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?filingNumber=${caseId}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}`}
+                to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&filingNumber=${filingNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}&caseTitle=${caseTitle}`}
               >
                 {" "}
                 <span style={{ display: "flex", alignItem: "center", textDecoration: "underline", color: "#9E400A" }}>
