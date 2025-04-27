@@ -4,8 +4,9 @@ import { CalendarLeftArrow, CalendarRightArrow } from "../icons/svgIndex";
 import { Button, CardHeader } from "@egovernments/digit-ui-react-components";
 
 function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCustomDate, tenantId, minDate, maxDate }) {
-  const [currentMonth, setCurrentMonth] = useState(new Date(selectedCustomDate) || new Date()); // State to track the current month
-  const [selectedDate, setSelectedDate] = useState(new Date(selectedCustomDate)); // State to track the current month
+  const initialDate = selectedCustomDate ? new Date(selectedCustomDate) : new Date();
+  const [currentMonth, setCurrentMonth] = useState(initialDate); // State to track the current month
+  const [selectedDate, setSelectedDate] = useState(initialDate); // State to track the current month
   const selectedMonth = useMemo(() => new Date(currentMonth).getMonth(), [currentMonth]);
   const selectedYear = useMemo(() => new Date(currentMonth).getFullYear(), [currentMonth]);
   const { data: hearingResponse } = Digit.Hooks.hearings.useGetHearings(
@@ -24,7 +25,6 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
     "",
     30 * 1000
   );
-  debugger;
 
   const hearingDetails = useMemo(() => hearingResponse?.HearingList || null, [hearingResponse]);
   // useEffect(() => {
@@ -57,8 +57,6 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
   // }, [hearingCounts]);
 
   const selectedDateHearingCount = useMemo(() => {
-    console.log(selectedDate, "selectedDate");
-
     const dateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(
       2,
       "0"
