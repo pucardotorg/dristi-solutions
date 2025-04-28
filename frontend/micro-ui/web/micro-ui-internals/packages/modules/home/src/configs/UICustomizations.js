@@ -221,6 +221,7 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const today = new Date();
       const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const caseId = row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "Draft Name":
         case "CS_CASE_NAME":
@@ -237,6 +238,8 @@ export const UICustomizations = {
           return t(value);
         case "CS_FILING_DATE":
           return <span>{formatDate(new Date(value))}</span>;
+        case "CS_CASE_NUMBER_HOME":
+          return caseId;
         case "CS_LAST_EDITED":
           const createdAt = new Date(value);
           const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
@@ -315,6 +318,7 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const today = new Date();
       const formattedToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const caseId = row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "CASE_TYPE":
           return <span>NIA S138</span>;
@@ -322,6 +326,8 @@ export const UICustomizations = {
           return t(value);
         case "CS_SCRUTINY_STATUS":
           return t(row?.status === "UNDER_SCRUTINY" ? "IN_PROGRESS" : "NOT_STARTED");
+        case "CS_CASE_NUMBER_HOME":
+          return caseId;
         case "CS_DAYS_FILING":
           const createdAt = new Date(value);
           const formattedCreatedAt = new Date(createdAt.getFullYear(), createdAt.getMonth(), createdAt.getDate());
@@ -410,6 +416,7 @@ export const UICustomizations = {
       };
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      const caseId = row?.courtCaseNumber || row?.cmpNumber || row?.filingNumber;
       switch (key) {
         case "CASE_TYPE":
           return <span>NIA S138</span>;
@@ -419,6 +426,8 @@ export const UICustomizations = {
           return t(value);
         case "CS_STAGE":
           return t(value);
+        case "CS_CASE_NUMBER_HOME":
+          return caseId;
         default:
           return t("ES_COMMON_NA");
       }
