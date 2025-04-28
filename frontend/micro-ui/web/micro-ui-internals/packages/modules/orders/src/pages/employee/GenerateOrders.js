@@ -3259,6 +3259,8 @@ const GenerateOrders = () => {
               orderId: orderData?.id,
               filingNumber,
               cnrNumber,
+              caseId: caseDetails?.id,
+              caseTitle: caseDetails?.caseTitle,
               taskType: orderType,
               status: "INPROGRESS",
               tenantId,
