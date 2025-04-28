@@ -6,20 +6,15 @@ import org.egov.common.contract.request.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pucar.strategy.OrderUpdateStrategy;
-import pucar.util.ApplicationUtil;
-import pucar.util.CaseUtil;
-import pucar.util.JsonUtil;
-import pucar.util.PendingTaskUtil;
+import pucar.util.*;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.application.Application;
 import pucar.web.models.application.ApplicationCriteria;
 import pucar.web.models.application.ApplicationSearchRequest;
-import pucar.web.models.courtCase.CaseCriteria;
-import pucar.web.models.courtCase.CaseSearchRequest;
-import pucar.web.models.courtCase.CourtCase;
-import pucar.web.models.courtCase.Party;
+import pucar.web.models.courtCase.*;
+import pucar.web.models.individual.IndividualSearchRequest;
 import pucar.web.models.pendingtask.PendingTask;
 import pucar.web.models.pendingtask.PendingTaskRequest;
 
@@ -35,13 +30,15 @@ public class PublishOrderSetBailTerms implements OrderUpdateStrategy {
     private final ApplicationUtil applicationUtil;
     private final JsonUtil jsonUtil;
     private final PendingTaskUtil pendingTaskUtil;
+    private final IndividualUtil individualUtil;
 
     @Autowired
-    public PublishOrderSetBailTerms(CaseUtil caseUtil, ApplicationUtil applicationUtil, JsonUtil jsonUtil, PendingTaskUtil pendingTaskUtil) {
+    public PublishOrderSetBailTerms(CaseUtil caseUtil, ApplicationUtil applicationUtil, JsonUtil jsonUtil, PendingTaskUtil pendingTaskUtil, IndividualUtil individualUtil) {
         this.caseUtil = caseUtil;
         this.applicationUtil = applicationUtil;
         this.jsonUtil = jsonUtil;
         this.pendingTaskUtil = pendingTaskUtil;
+        this.individualUtil = individualUtil;
     }
 
     @Override
@@ -82,6 +79,27 @@ public class PublishOrderSetBailTerms implements OrderUpdateStrategy {
         String referenceId = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "refApplicationId"), String.class);
         log.info("referenceId:{}", referenceId);
         String assigneeUUID = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "partyId"), String.class);
+
+        log.info("fetching individual id for uuid :{}", assigneeUUID);
+        String individualId = individualUtil.getIndividualId(IndividualSearchRequest.builder().build(), order.getTenantId(), 1);
+        Map<String, List<POAHolder>> litigantPoaMapping = caseUtil.getLitigantPoaMapping(courtCase);
+        List<User> assignee = new ArrayList<>();
+        assignee.add(User.builder().uuid(assigneeUUID).build());
+        log.info("iterating poa holder for individual id :{}, if present adding into assignee", individualId);
+        if (litigantPoaMapping.containsKey(individualId)) {
+            List<POAHolder> poaHolders = litigantPoaMapping.get(individualId);
+            if (poaHolders != null) {
+                for (POAHolder poaHolder : poaHolders) {
+                    if (poaHolder.getAdditionalDetails() != null) {
+                        String uuid = jsonUtil.getNestedValue(poaHolder.getAdditionalDetails(), List.of("uuid"), String.class);
+                        if (uuid != null) assignee.add(User.builder().uuid(uuid).build());
+
+                    }
+                }
+            }
+        }
+
+        log.info(" no of assignee :{}", assignee.size());
         List<Application> applications = applicationUtil.searchApplications(ApplicationSearchRequest.builder()
                 .criteria(ApplicationCriteria.builder()
                         .applicationNumber(referenceId)
@@ -105,7 +123,7 @@ public class PublishOrderSetBailTerms implements OrderUpdateStrategy {
                 .referenceId(pendingTaskReferenceId)
                 .entityType("voluntary-application-submission-bail-documents")
                 .status("CREATE_SUBMISSION")
-                .assignedTo(List.of(User.builder().uuid(assigneeUUID).build()))
+                .assignedTo(assignee)
                 .cnrNumber(courtCase.getCnrNumber())
                 .filingNumber(courtCase.getFilingNumber())
                 .caseTitle(courtCase.getCaseTitle())

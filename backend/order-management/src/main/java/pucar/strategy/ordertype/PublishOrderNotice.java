@@ -81,6 +81,9 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
         // case update if matches particular condition
         String section = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "noticeType", "code"), String.class);
         log.info("section:{}", section);
+
+        Map<String, List<POAHolder>> litigantPoaMapping = caseUtil.getLitigantPoaMapping(courtCase);
+
         if (NOTICE.equalsIgnoreCase(order.getOrderType()) && SECTION_223.equalsIgnoreCase(section) && PENDING_NOTICE.equalsIgnoreCase(courtCase.getStatus())) {
 
             // update case with issue order
@@ -110,11 +113,22 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
             List<String> assignees = new ArrayList<>();
 
             // add poa holder to assignees
-            Map<String, List<POAHolder>> litigantPoaMapping = caseUtil.getLitigantPoaMapping(courtCase);
             respondent.ifPresent(party -> {
                 if (party.getAdditionalDetails() != null) {
                     String uuid = jsonUtil.getNestedValue(party.getAdditionalDetails(), List.of("uuid"), String.class);
                     if (uuid != null) assignees.add(uuid);
+                }
+
+                if (litigantPoaMapping.containsKey(party.getIndividualId())) {
+                    List<POAHolder> poaHolders = litigantPoaMapping.get(party.getIndividualId());
+                    if (poaHolders != null) {
+                        for (POAHolder poaHolder : poaHolders) {
+                            if (poaHolder.getAdditionalDetails() != null) {
+                                String uuid = jsonUtil.getNestedValue(poaHolder.getAdditionalDetails(), List.of("uuid"), String.class);
+                                if (uuid != null) assignees.add(uuid);
+                            }
+                        }
+                    }
                 }
             });
 
@@ -177,6 +191,18 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
             }
             complainantIndividualId.add(party.getIndividualId());
 
+            if (litigantPoaMapping.containsKey(party.getIndividualId())) {
+                List<POAHolder> poaHolders = litigantPoaMapping.get(party.getIndividualId());
+                if (poaHolders != null) {
+                    for (POAHolder poaHolder : poaHolders) {
+                        if (poaHolder.getAdditionalDetails() != null) {
+                            String poaUUID = jsonUtil.getNestedValue(poaHolder.getAdditionalDetails(), List.of("uuid"), String.class);
+                            if (poaUUID != null) assignees.add(poaUUID);
+                        }
+                    }
+                }
+            }
+
         }
 
         for (String userUUID : assignees) {
@@ -202,7 +228,7 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
             JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
             log.info("taskDetailsArray size:{}", taskDetailsArray.size());
             for (JsonNode taskDetail : taskDetailsArray) {
-                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail);
+                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase);
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
 
                 // create pending task

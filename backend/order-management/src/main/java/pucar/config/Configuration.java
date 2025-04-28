@@ -148,6 +148,15 @@ public class Configuration {
     @Value("${dristi.scheduler.reschedule.endpoint}")
     private String rescheduleEndPoint;
 
+    // Individual Config
+
+    @Value("${dristi.individual.host}")
+    private String individualHost;
+
+    @Value("${dristi.individual.search.endpoint}")
+    private String individualSearchEndPoint;
+
+
     @Value("${spring.redis.timeout}")
     private Long redisTimeout;
 

@@ -14,10 +14,7 @@ import pucar.util.*;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
-import pucar.web.models.courtCase.CaseCriteria;
-import pucar.web.models.courtCase.CaseSearchRequest;
-import pucar.web.models.courtCase.CourtCase;
-import pucar.web.models.courtCase.Party;
+import pucar.web.models.courtCase.*;
 import pucar.web.models.pendingtask.PendingTask;
 import pucar.web.models.pendingtask.PendingTaskRequest;
 import pucar.web.models.task.TaskRequest;
@@ -86,6 +83,9 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
         List<User> uniqueAssignee = new ArrayList<>();
         Set<String> uniqueSet = new HashSet<>();
         List<String> complainantIndividualId = new ArrayList<>();
+
+        Map<String, List<POAHolder>> litigantPoaMapping = caseUtil.getLitigantPoaMapping(courtCase);
+
         for (Party party : complainants) {
             String uuid = jsonUtil.getNestedValue(party.getAdditionalDetails(), List.of("uuid"), String.class);
             if (litigantAdvocateMapping.containsKey(uuid)) {
@@ -93,6 +93,18 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
                 assignees.add(uuid);
             }
             complainantIndividualId.add(party.getIndividualId());
+
+            if (litigantPoaMapping.containsKey(party.getIndividualId())) {
+                List<POAHolder> poaHolders = litigantPoaMapping.get(party.getIndividualId());
+                if (poaHolders != null) {
+                    for (POAHolder poaHolder : poaHolders) {
+                        if (poaHolder.getAdditionalDetails() != null) {
+                            String poaUUID = jsonUtil.getNestedValue(poaHolder.getAdditionalDetails(), List.of("uuid"), String.class);
+                            if (poaUUID != null) assignees.add(poaUUID);
+                        }
+                    }
+                }
+            }
 
         }
 
@@ -118,7 +130,7 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
         try {
             JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
             for (JsonNode taskDetail : taskDetailsArray) {
-                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail);
+                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase);
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
 
                 // create pending task
