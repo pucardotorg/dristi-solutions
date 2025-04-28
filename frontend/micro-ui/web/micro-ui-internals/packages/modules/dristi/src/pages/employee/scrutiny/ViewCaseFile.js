@@ -68,7 +68,7 @@ const delayCondonationTextStyle = {
   color: "#231F20",
 };
 
-function ViewCaseFile({ t, inViewCase = false }) {
+function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const history = useHistory();
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
@@ -140,9 +140,13 @@ function ViewCaseFile({ t, inViewCase = false }) {
     {},
     `dristi-${caseId}`,
     caseId,
-    Boolean(caseId)
+    Boolean(caseId && !caseDetailsAdmitted)
   );
-  const caseDetails = useMemo(() => caseFetchResponse?.criteria?.[0]?.responseList?.[0] || null, [caseFetchResponse]);
+
+  const caseDetails = useMemo(() => caseFetchResponse?.criteria?.[0]?.responseList?.[0] || caseDetailsAdmitted || null, [
+    caseFetchResponse,
+    caseDetailsAdmitted,
+  ]);
 
   const defaultScrutinyErrors = useMemo(() => {
     return caseDetails?.additionalDetails?.scrutiny || {};
@@ -363,12 +367,12 @@ function ViewCaseFile({ t, inViewCase = false }) {
       ...(action === CaseWorkflowAction.VALIDATE
         ? { scrutinyComment: comment }
         : action === CaseWorkflowAction.SEND_BACK && { scrutinyCommentSendBack: commentSendBack }),
-    }
+    };
 
-    if ('judge' in newAdditionalDetails) {
+    if ("judge" in newAdditionalDetails) {
       delete newAdditionalDetails.judge;
     }
-    
+
     const newcasedetails = {
       ...caseDetails,
       additionalDetails: newAdditionalDetails,
