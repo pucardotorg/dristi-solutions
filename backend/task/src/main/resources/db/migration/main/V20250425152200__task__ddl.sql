@@ -1,5 +1,5 @@
 ALTER TABLE dristi_task
-ADD COLUMN caseTitle varchar(64);
+ADD COLUMN caseTitle varchar(256);
 
 ALTER TABLE dristi_task
 ADD COLUMN caseId varchar(64);
