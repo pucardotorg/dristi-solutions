@@ -32,7 +32,7 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
 
   const employeeCrumbs = [
     {
-      path: `/digit-ui/employee`,
+      path: `/${window?.contextPath}/employee`,
       content: t("ES_COMMON_HOME"),
       show: !hideHomeCrumb.includes(location.pathname),
       isLast: false,
