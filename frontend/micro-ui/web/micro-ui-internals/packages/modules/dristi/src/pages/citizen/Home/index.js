@@ -33,12 +33,12 @@ function CitizenHome({ tenantId, setHideBack }) {
   );
 
   const cardIcons = [
-    { Icon: <FileCaseIcon />, label: "File a Case", path: "/digit-ui/citizen/dristi/home/file-case" },
-    { Icon: <CaseInProgressIcon />, label: "Case in Progress", path: "/digit-ui/employee/citizen/dristi/case-progress" },
-    { Icon: <MyHearingsIcon />, label: "My hearing", path: "/digit-ui/employee/citzen/dristi/my-hearings" },
-    { Icon: <JoinCaseIcon />, label: "Join a case", path: "/digit-ui/employee/citizen/dristi/join-case" },
-    { Icon: <ClosedCasesIcon />, label: "Closed Cases", path: "/digit-ui/employee/citizen/dristi/closed-cases" },
-    { Icon: <PendingActionsIcon />, label: "Pending Actions", path: "/digit-ui/employee/citizen/dristi/pending-actions" },
+    { Icon: <FileCaseIcon />, label: "File a Case", path: "/ui/citizen/dristi/home/file-case" },
+    { Icon: <CaseInProgressIcon />, label: "Case in Progress", path: "/ui/employee/citizen/dristi/case-progress" },
+    { Icon: <MyHearingsIcon />, label: "My hearing", path: "/ui/employee/citzen/dristi/my-hearings" },
+    { Icon: <JoinCaseIcon />, label: "Join a case", path: "/ui/employee/citizen/dristi/join-case" },
+    { Icon: <ClosedCasesIcon />, label: "Closed Cases", path: "/ui/employee/citizen/dristi/closed-cases" },
+    { Icon: <PendingActionsIcon />, label: "Pending Actions", path: "/ui/employee/citizen/dristi/pending-actions" },
   ];
 
   const individualId = useMemo(() => data?.Individual?.[0]?.individualId, [data?.Individual]);

@@ -50,5 +50,6 @@ public class TaskCriteria {
     @JsonProperty("userUuid")
     private String userUuid;
 
-
+    @JsonProperty("courtId")
+    private String courtId;
 }

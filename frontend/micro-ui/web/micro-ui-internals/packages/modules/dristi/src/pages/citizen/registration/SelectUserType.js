@@ -191,9 +191,9 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
       ((userTypeSelcted === "LITIGANT" || userTypeSelcted === "ADVOCATE_CLERK") && !data?.Individual?.[0]?.individualId) ||
       (userTypeSelcted === "ADVOCATE_CLERK" && data?.Individual?.[0]?.individualId)
     ) {
-      history.push(`/digit-ui/citizen/dristi/home/registration/terms-condition`);
+      history.push(`/${window?.contextPath}/citizen/dristi/home/registration/terms-condition`);
     } else {
-      history.push(`/digit-ui/citizen/dristi/home/registration/additional-details`);
+      history.push(`/${window?.contextPath}/citizen/dristi/home/registration/additional-details`);
     }
   };
   if (!params?.indentity && showUsename === false && !params?.Individual?.[0]?.additionalFields) {
