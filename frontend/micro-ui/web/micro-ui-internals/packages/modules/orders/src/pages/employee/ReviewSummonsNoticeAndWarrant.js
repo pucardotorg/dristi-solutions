@@ -286,6 +286,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
               assignedRole: ["JUDGE_ROLE"],
               cnrNumber: tasksData?.list[0]?.cnrNumber,
               filingNumber: tasksData?.list[0]?.filingNumber,
+              caseId: tasksData?.list[0]?.caseId,
+              caseTitle: tasksData?.list[0]?.caseTitle,
               isCompleted: false,
               stateSla: 3 * dayInMillisecond + todayDate,
               additionalDetails: {},
