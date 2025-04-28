@@ -231,38 +231,57 @@ const HomeView = () => {
       );
       setTabData(updatedTabData);
     },
-    [additionalDetails, outcomeTypeData, tenantId]
+    [additionalDetails, outcomeTypeData, tenantId, t, defaultSearchValues]
   );
 
-  useEffect(() => {
-    if (!(isLoading && isFetching && isSearchLoading && isFetchCaseLoading && isOutcomeLoading)) {
-      if (state?.role && rolesToConfigMapping?.find((item) => item[state.role])[state.role]) {
-        const rolesToConfigMappingData = rolesToConfigMapping?.find((item) => item[state.role]);
-        const tabConfig = rolesToConfigMappingData.config;
-        const rowClickData = rolesToConfigMappingData.onRowClickRoute;
-        setOnRowClickData(rowClickData);
-        setConfig(tabConfig?.TabSearchConfig?.[0]);
-        setTabConfig(tabConfig);
-        getTotalCountForTab(tabConfig);
-      } else {
-        const rolesToConfigMappingData =
-          rolesToConfigMapping?.find((item) =>
-            item.roles?.reduce((res, curr) => {
-              if (!res) return res;
-              res = roles.some((role) => role.code === curr);
-              return res;
-            }, true)
-          ) || TabLitigantSearchConfig;
-        const tabConfig = rolesToConfigMappingData?.config;
-        const rowClickData = rolesToConfigMappingData?.onRowClickRoute;
-        setOnRowClickData(rowClickData);
-        setConfig(tabConfig?.TabSearchConfig?.[0]);
-        setTabConfig(tabConfig);
-        getTotalCountForTab(tabConfig);
-      }
+  const configData = useMemo(() => {
+    if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOutcomeLoading) {
+      return null;
     }
-  }, [additionalDetails, getTotalCountForTab, isOutcomeLoading, isFetchCaseLoading, isFetching, isLoading, isSearchLoading, roles, state, tenantId]);
-
+  
+    let rolesToConfigMappingData;
+  
+    if (state?.role) {
+      rolesToConfigMappingData = rolesToConfigMapping?.find((item) => item[state.role]);
+    }
+  
+    if (!rolesToConfigMappingData) {
+      rolesToConfigMappingData = rolesToConfigMapping?.find((item) =>
+        item.roles?.some((roleCode) => roles.some((role) => role.code === roleCode))
+      ) || TabLitigantSearchConfig;
+    }
+  
+    return rolesToConfigMappingData
+      ? {
+          tabConfig: rolesToConfigMappingData.config,
+          rowClickData: rolesToConfigMappingData.onRowClickRoute,
+          initialConfig: rolesToConfigMappingData.config?.TabSearchConfig?.[0],
+        }
+      : null;
+  }, [
+    isLoading,
+    isFetching,
+    isSearchLoading,
+    isFetchCaseLoading,
+    isOutcomeLoading,
+    state?.role,
+    roles,
+    rolesToConfigMapping,
+  ]);
+  
+  useEffect(() => {
+    if (!configData) return;
+  
+    setOnRowClickData(configData.rowClickData);
+    setConfig(configData.initialConfig);
+    setTabConfig(configData.tabConfig);
+  
+    if (configData.tabConfig) {
+      getTotalCountForTab(configData.tabConfig);
+    }
+  }, [configData, getTotalCountForTab]);
+  
+  
   // calling case api for tab's count
   useEffect(() => {
     (async function () {
