@@ -1,8 +1,8 @@
 ALTER TABLE dristi_task
-ADD COLUMN caseTitle varchar(256);
+ADD COLUMN caseTitle varchar(1000);
 
 ALTER TABLE dristi_task
-ADD COLUMN caseId varchar(64);
+ADD COLUMN caseId varchar(1000);
 
 UPDATE dristi_task
 SET caseId = dristi_cases.id, caseTitle= dristi_cases.caseTitle
