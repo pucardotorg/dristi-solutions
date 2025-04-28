@@ -224,10 +224,13 @@ function AdmissionActionModal({
       };
       DRISTIService.customApiService(Urls.dristi.ordersCreate, orderBody, { tenantId })
         .then((res) => {
-          history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`, {
-            caseId: caseDetails?.id,
-            tab: "Orders",
-          });
+          history.push(
+            `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+            {
+              caseId: caseDetails?.id,
+              tab: "Orders",
+            }
+          );
         })
         .catch();
     } catch (error) {}

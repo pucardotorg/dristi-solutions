@@ -299,10 +299,13 @@ function CaseFileAdmission({ t, path }) {
               tenantId,
             },
           });
-          history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`, {
-            caseId: caseDetails?.id,
-            tab: "Orders",
-          });
+          history.push(
+            `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+            {
+              caseId: caseDetails?.id,
+              tab: "Orders",
+            }
+          );
         })
         .catch();
     } catch (error) {}
@@ -917,10 +920,13 @@ function CaseFileAdmission({ t, path }) {
     };
     DRISTIService.customApiService(Urls.dristi.ordersCreate, reqBody, { tenantId })
       .then((res) => {
-        history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`, {
-          caseId: caseId,
-          tab: "Orders",
-        });
+        history.push(
+          `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+          {
+            caseId: caseId,
+            tab: "Orders",
+          }
+        );
         DRISTIService.customApiService(Urls.dristi.pendingTask, {
           pendingTask: {
             name: "Schedule Hearing",

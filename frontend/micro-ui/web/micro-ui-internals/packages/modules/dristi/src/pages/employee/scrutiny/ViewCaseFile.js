@@ -425,13 +425,13 @@ function ViewCaseFile({ t, inViewCase = false }) {
         if (res?.criteria?.[0]?.responseList?.[0]?.id) {
           history.push(`/${window?.contextPath}/employee/dristi/case?caseId=${res?.criteria?.[0]?.responseList?.[0]?.id}`);
         } else {
-          history.push("/digit-ui/employee/dristi/cases");
+          history.push(`/${window?.contextPath}/employee/dristi/cases`);
         }
         setActionModal(false);
       })
       .catch(() => {
         setActionModal(false);
-        history.push("/digit-ui/employee/dristi/cases");
+        history.push(`/${window?.contextPath}/employee/dristi/cases`);
       });
   };
   const handleAllocationJudge = () => {
@@ -450,18 +450,18 @@ function ViewCaseFile({ t, inViewCase = false }) {
         if (res?.criteria?.[0]?.responseList?.[0]?.id) {
           history.push(`/${window?.contextPath}/employee/dristi/case?caseId=${res?.criteria?.[0]?.responseList?.[0]?.id}`);
         } else {
-          history.push("/digit-ui/employee/dristi/cases");
+          history.push(`/${window?.contextPath}/employee/dristi/cases`);
         }
         setActionModal(false);
       })
       .catch(() => {
         setActionModal(false);
-        history.push("/digit-ui/employee/dristi/cases");
+        history.push(`/${window?.contextPath}/employee/dristi/cases`);
       });
   };
   const handleCloseSucessModal = () => {
     setActionModal(false);
-    history.push("/digit-ui/employee/dristi/cases");
+    history.push(`/${window?.contextPath}/employee/dristi/cases`);
   };
   const handleRegisterCase = () => {
     updateCaseDetails(CaseWorkflowAction.VALIDATE).then((res) => {
@@ -500,7 +500,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
     return <Loader />;
   }
   // if (isScrutiny && state !== CaseWorkflowState.UNDER_SCRUTINY) {
-  //   history.push("/digit-ui/employee/dristi/cases");
+  //   history.push(`/${window?.contextPath}/employee/dristi/cases`);
   // }
   const labels = {
     litigentDetails: "CS_LITIGENT_DETAILS",
