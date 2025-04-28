@@ -1,8 +1,9 @@
 package org.pucar.dristi.config;
 
+import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -13,17 +14,29 @@ import javax.sql.DataSource;
 @Configuration
 public class DataSourceConfig {
 
+    @Bean
+    @Primary
+    @ConfigurationProperties(prefix = "spring.datasource.writer")
+    public DataSourceProperties writerDataSourceProperties() {
+        return new DataSourceProperties();
+    }
+
+    @Bean
+    @Primary
+    @ConfigurationProperties(prefix = "spring.datasource.reader")
+    public DataSourceProperties readerDataSourceProperties() {
+        return new DataSourceProperties();
+    }
+
     @Primary
     @Bean(name = "writerDataSource")
-    @ConfigurationProperties(prefix = "spring.datasource.writer")
     public DataSource writerDataSource() {
-        return DataSourceBuilder.create().build();
+        return writerDataSourceProperties().initializeDataSourceBuilder().type(HikariDataSource.class).build();
     }
 
     @Bean(name = "readerDataSource")
-    @ConfigurationProperties(prefix = "spring.datasource.reader")
     public DataSource readerDataSource() {
-        return DataSourceBuilder.create().build();
+        return readerDataSourceProperties().initializeDataSourceBuilder().type(HikariDataSource.class).build();
     }
 
     @Primary
