@@ -79,8 +79,9 @@ const HomeView = () => {
     },
     { tenantId, limit: 1000, offset: 0 },
     "Home",
-    "",
-    userInfo?.uuid && isUserLoggedIn
+    userInfo?.uuid || "",
+    Boolean(userInfo?.uuid && isUserLoggedIn),
+    6*1000
   );
   const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData]);
 
@@ -238,19 +239,18 @@ const HomeView = () => {
     if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOutcomeLoading) {
       return null;
     }
-  
+
     let rolesToConfigMappingData;
-  
+
     if (state?.role) {
       rolesToConfigMappingData = rolesToConfigMapping?.find((item) => item[state.role]);
     }
-  
+
     if (!rolesToConfigMappingData) {
-      rolesToConfigMappingData = rolesToConfigMapping?.find((item) =>
-        item.roles?.some((roleCode) => roles.some((role) => role.code === roleCode))
-      ) || TabLitigantSearchConfig;
+      rolesToConfigMappingData =
+        rolesToConfigMapping?.find((item) => item.roles?.some((roleCode) => roles.some((role) => role.code === roleCode))) || TabLitigantSearchConfig;
     }
-  
+
     return rolesToConfigMappingData
       ? {
           tabConfig: rolesToConfigMappingData.config,
@@ -258,30 +258,20 @@ const HomeView = () => {
           initialConfig: rolesToConfigMappingData.config?.TabSearchConfig?.[0],
         }
       : null;
-  }, [
-    isLoading,
-    isFetching,
-    isSearchLoading,
-    isFetchCaseLoading,
-    isOutcomeLoading,
-    state?.role,
-    roles,
-    rolesToConfigMapping,
-  ]);
-  
+  }, [isLoading, isFetching, isSearchLoading, isFetchCaseLoading, isOutcomeLoading, state?.role, roles, rolesToConfigMapping]);
+
   useEffect(() => {
     if (!configData) return;
-  
+
     setOnRowClickData(configData.rowClickData);
     setConfig(configData.initialConfig);
     setTabConfig(configData.tabConfig);
-  
+
     if (configData.tabConfig) {
       getTotalCountForTab(configData.tabConfig);
     }
   }, [configData, getTotalCountForTab]);
-  
-  
+
   // calling case api for tab's count
   useEffect(() => {
     (async function () {
@@ -418,7 +408,14 @@ const HomeView = () => {
         <React.Fragment>
           <div className="left-side" style={{ width: individualId && userType && userInfoType === "citizen" && !caseDetails ? "100vw" : "70vw" }}>
             <div className="home-header-wrapper">
-              <UpcomingHearings handleNavigate={handleNavigate} attendeeIndividualId={individualId} userInfoType={userInfoType} t={t} />
+              <UpcomingHearings
+                handleNavigate={handleNavigate}
+                individualData={individualData}
+                attendeeIndividualId={individualId}
+                userInfoType={userInfoType}
+                advocateId={advocateId}
+                t={t}
+              />
               {isJudge && (
                 <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start" }}>
                   <Link to={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle}>
