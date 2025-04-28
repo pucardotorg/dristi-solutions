@@ -49,8 +49,9 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
             String sortClauseFieldPath = configuration.getSortParam().getPath();
             SortParam.Order sortOrder = inboxRequest.getInbox().getModuleSearchCriteria().containsKey(SORT_ORDER_CONSTANT) ? SortParam.Order.valueOf((String) inboxRequest.getInbox().getModuleSearchCriteria().get(SORT_ORDER_CONSTANT)) : configuration.getSortParam().getOrder();
 
-            if(configuration.getIndex().equals(OPEN_HEARING_INDEX)) {
-                addOpenHearingIndexSort(baseEsQuery);
+            if(configuration.getIndex().equals(OPEN_HEARING_INDEX) ||
+                    (configuration.getIndex().equals(ORDER_NOTIFICATION_INDEX) && PENDING_BULK_E_SIGN.equals(params.get("status")))) {
+                addIndexSort(baseEsQuery, configuration.getIndex());
             } else {
                 addSortClauseToBaseQuery(baseEsQuery, sortClauseFieldPath, sortOrder);
             }
@@ -79,16 +80,25 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
         return baseEsQuery;
     }
 
-    private void addOpenHearingIndexSort(Map<String, Object> baseEsQuery) {
-        baseEsQuery.put(SORT_KEY, sortClauseList());
+    private void addIndexSort(Map<String, Object> baseEsQuery, String indexName) {
+        baseEsQuery.put(SORT_KEY, sortClauseList(indexName));
     }
 
-    private List<Map<String, Object>> sortClauseList() {
+    private List<Map<String, Object>> sortClauseList(String indexName) {
         List<Map<String, Object>> outerClauseList = new ArrayList<>();
-        outerClauseList.add(getScriptObject(TYPE_SORTING_SCRIPT));
-        outerClauseList.add(getScriptObject(YEAR_SORTING_SCRIPT));
-        outerClauseList.add(getScriptObject(NUMBER_SORTING_SCRIPT));
+        String placeHolder = (String) getPlaceHolder(indexName);
+        outerClauseList.add(getScriptObject(String.format(TYPE_SORTING_SCRIPT, placeHolder)));
+        outerClauseList.add(getScriptObject(String.format(YEAR_SORTING_SCRIPT, placeHolder)));
+        outerClauseList.add(getScriptObject(String.format(NUMBER_SORTING_SCRIPT, placeHolder)));
         return outerClauseList;
+    }
+
+    private Object getPlaceHolder(String indexName) {
+        if(indexName.equals(OPEN_HEARING_INDEX)) {
+            return "hearingDetails.caseNumber";
+        } else {
+            return "orderNotification.caseSTNumber";
+        }
     }
 
     private Map<String, Object> getScriptObject(String scriptType) {
