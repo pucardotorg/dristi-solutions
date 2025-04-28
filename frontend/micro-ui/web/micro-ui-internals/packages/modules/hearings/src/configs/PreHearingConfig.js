@@ -98,15 +98,15 @@ export const preHearingConfig = {
               name: "caseNameOrId",
             },
           },
-          // {
-          //   label: "SEARCH_CASE_ID",
-          //   isMandatory: false,
-          //   key: "caseId",
-          //   type: "text",
-          //   populators: {
-          //     name: "caseId",
-          //   },
-          // },
+          {
+            label: "SEARCH_CASE_ID",
+            isMandatory: false,
+            key: "caseId",
+            type: "text",
+            populators: {
+              name: "caseId",
+            },
+          },
         ],
       },
       show: true,

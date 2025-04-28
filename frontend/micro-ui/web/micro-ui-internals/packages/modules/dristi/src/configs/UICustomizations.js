@@ -310,7 +310,7 @@ export const UICustomizations = {
           return (
             <span className="link">
               <Link
-                to={`/digit-ui/employee/dristi/registration-requests/details?applicationNo=${value}&individualId=${individualId}&type=${usertype}`}
+                to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${value}&individualId=${individualId}&type=${usertype}`}
               >
                 {String(value ? (column?.translate ? t(column?.prefix ? `${column?.prefix}${value}` : value) : value) : t("ES_COMMON_NA"))}
               </Link>
@@ -319,7 +319,7 @@ export const UICustomizations = {
         case "ACTION":
           return (
             <Link
-              to={`/digit-ui/employee/dristi/registration-requests/details?applicationNo=${applicationNumber}&individualId=${value}&type=${usertype}`}
+              to={`/${window?.contextPath}/employee/dristi/registration-requests/details?applicationNo=${applicationNumber}&individualId=${value}&type=${usertype}`}
             >
               <span className="action-link"> {t("CS_VERIFY")}</span>
             </Link>
@@ -470,7 +470,7 @@ export const UICustomizations = {
           return billStatus === "ACTIVE" ? (
             <span className="link">
               <Link
-                to={`/digit-ui/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&filingNumber=${filingNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}&caseTitle=${caseTitle}`}
+                to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?filingNumber=${caseId}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}`}
               >
                 {String(value || t("ES_COMMON_NA"))}
               </Link>
@@ -485,7 +485,7 @@ export const UICustomizations = {
             <span className="action-link">
               <Link
                 style={{ display: "flex", alignItem: "center", color: "#9E400A" }}
-                to={`/digit-ui/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&filingNumber=${filingNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}&caseTitle=${caseTitle}`}
+                to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?filingNumber=${caseId}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}`}
               >
                 {" "}
                 <span style={{ display: "flex", alignItem: "center", textDecoration: "underline", color: "#9E400A" }}>
@@ -920,7 +920,7 @@ export const UICustomizations = {
             id: "reschedule",
             action: (history) => {
               history.push(
-                `/digit-ui/citizen/submissions/submissions-create?filingNumber=${row.filingNumber[0]}&hearingId=${row.hearingId}&applicationType=RE_SCHEDULE`
+                `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${row.filingNumber[0]}&hearingId=${row.hearingId}&applicationType=RE_SCHEDULE`
               );
             },
           },
@@ -929,7 +929,7 @@ export const UICustomizations = {
             id: "reschedule",
             action: (history) => {
               history.push(
-                `/digit-ui/citizen/submissions/submissions-create?filingNumber=${row.filingNumber[0]}&hearingId=${row.hearingId}&applicationType=CHECKOUT_REQUEST`
+                `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${row.filingNumber[0]}&hearingId=${row.hearingId}&applicationType=CHECKOUT_REQUEST`
               );
             },
           },

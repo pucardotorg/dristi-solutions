@@ -45,6 +45,7 @@ class EvidenceRowMapperTest {
         when(rs.getString("artifactType")).thenReturn("artifactType1");
         when(rs.getString("sourceType")).thenReturn("sourceType1");
         when(rs.getString("sourceID")).thenReturn("sourceID1");
+        when(rs.getString("courtId")).thenReturn("courtId");
         when(rs.getString("sourceName")).thenReturn("sourceName1");
         when(rs.getString("applicableTo")).thenReturn("[\"applicable1\"]");
         when(rs.getString("comments")).thenReturn("[{\"id\":\"123e4567-e89b-12d3-a456-556642440002\",\"tenantId\":\"tenant1\",\"artifactId\":\"123e4567-e89b-12d3-a456-556642440000\",\"individualId\":\"individual1\",\"comment\":\"This is a comment\",\"isActive\":true,\"additionalDetails\":{\"key\":\"value\"},\"auditdetails\":{\"createdBy\":\"user1\",\"createdTime\":1609459200000,\"lastModifiedBy\":\"user2\",\"lastModifiedTime\":1609545600000}}]");
@@ -96,6 +97,7 @@ class EvidenceRowMapperTest {
         assertEquals("artifactType1", artifact1.getArtifactType());
         assertEquals("sourceType1", artifact1.getSourceType());
         assertEquals("sourceID1", artifact1.getSourceID());
+        assertEquals("courtId", artifact1.getCourtId());
         assertEquals("sourceName1", artifact1.getSourceName());
         assertEquals(List.of("applicable1"), artifact1.getApplicableTo());
     }
