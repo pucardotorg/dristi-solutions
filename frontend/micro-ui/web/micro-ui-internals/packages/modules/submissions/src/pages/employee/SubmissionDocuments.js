@@ -255,11 +255,11 @@ const SubmissionDocuments = ({ path }) => {
         }
         if (isBenchClerk) {
           history.replace(
-            `/digit-ui/employee/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${evidence?.artifact?.artifactNumber}`
+            `/${window?.contextPath}/employee/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${evidence?.artifact?.artifactNumber}`
           );
         } else {
           history.replace(
-            `/digit-ui/citizen/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${evidence?.artifact?.artifactNumber}`
+            `/${window?.contextPath}/citizen/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${evidence?.artifact?.artifactNumber}`
           );
         }
       } else {
@@ -320,7 +320,9 @@ const SubmissionDocuments = ({ path }) => {
 
   const handleGoBack = async () => {
     if ([SubmissionDocumentWorkflowState.PENDING_ESIGN, SubmissionDocumentWorkflowState.SUBMITTED].includes(currentSubmissionStatus)) {
-      history.replace(`/digit-ui/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Documents`);
+      history.replace(
+        `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Documents`
+      );
     } else {
       setShowReviewModal(false);
     }

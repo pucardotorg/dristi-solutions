@@ -270,7 +270,7 @@ const Registration = ({ stateCode }) => {
   };
   const handleUserTypeSave = (userType) => {
     setNewParams({ ...newParams, userType });
-    history.push(`/digit-ui/citizen/dristi/home/response`);
+    history.push(`/${window?.contextPath}/citizen/dristi/home/response`);
   };
   const onDocumentUpload = async (filename, filedata, IdType) => {
     const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", filedata, Digit.ULBService.getStateId());

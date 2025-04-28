@@ -23,8 +23,12 @@ function TakeUserToRegistration({ message, isRejected, data, userType }) {
             sessionStorage.removeItem("Digit.aadharNumber");
             sessionStorage.removeItem("Digit.isAadharNumberVerified");
             !isRejected
-              ? history.push(`/digit-ui/citizen/dristi/home/registration/user-name`)
-              : history.push(`/digit-ui/citizen/dristi/home/registration/user-type`, { newParams: data, userType: userType, isRejected: isRejected });
+              ? history.push(`/${window?.contextPath}/citizen/dristi/home/registration/user-name`)
+              : history.push(`/${window?.contextPath}/citizen/dristi/home/registration/user-type`, {
+                  newParams: data,
+                  userType: userType,
+                  isRejected: isRejected,
+                });
           }}
           label={t("Register")}
         >

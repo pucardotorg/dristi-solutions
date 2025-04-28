@@ -550,7 +550,7 @@ const AdmittedCases = () => {
       if (isCitizen || isBenchClerk) {
         if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
           history.push(
-            `/digit-ui/${
+            `/${window?.contextPath}/${
               isCitizen ? "citizen" : "employee"
             }/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`
           );
@@ -560,7 +560,7 @@ const AdmittedCases = () => {
         ) {
           if (createdByUuid === userInfo?.uuid) {
             history.push(
-              `/digit-ui/${
+              `/${window?.contextPath}/${
                 isCitizen ? "citizen" : "employee"
               }/submissions/submissions-create?filingNumber=${filingNumber}&applicationNumber=${applicationNumber}`
             );
@@ -1450,10 +1450,13 @@ const AdmittedCases = () => {
               tenantId,
             },
           });
-          history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`, {
-            caseId: caseDetails?.id,
-            tab: "Orders",
-          });
+          history.push(
+            `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+            {
+              caseId: caseDetails?.id,
+              tab: "Orders",
+            }
+          );
         })
         .catch((error) => {
           console.error("Error while creating order", error);
@@ -1720,10 +1723,13 @@ const AdmittedCases = () => {
     };
     DRISTIService.customApiService(Urls.dristi.ordersCreate, reqBody, { tenantId })
       .then((res) => {
-        history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`, {
-          caseId: caseId,
-          tab: "Orders",
-        });
+        history.push(
+          `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${res.order.orderNumber}`,
+          {
+            caseId: caseId,
+            tab: "Orders",
+          }
+        );
         DRISTIService.customApiService(Urls.dristi.pendingTask, {
           pendingTask: {
             name: "Schedule Hearing",
@@ -2015,10 +2021,13 @@ const AdmittedCases = () => {
             (orderData?.orderCategory === "COMPOSITE" && orderData?.compositeItems?.some((item) => item?.orderType === "NOTICE")) ||
             orderData?.orderType === "NOTICE"
           ) {
-            history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${orderData.orderNumber}`, {
-              caseId: caseId,
-              tab: "Orders",
-            });
+            history.push(
+              `/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${orderData.orderNumber}`,
+              {
+                caseId: caseId,
+                tab: "Orders",
+              }
+            );
           } else {
             handleIssueNotice(hearingDate, hearingNumber);
           }
@@ -2115,28 +2124,28 @@ const AdmittedCases = () => {
   };
 
   const handleMakeSubmission = () => {
-    history.push(`/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
+    history.push(`/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
   };
 
   const handleSubmitDocuments = () => {
-    history.push(`/digit-ui/citizen/submissions/submit-document?filingNumber=${filingNumber}`);
+    history.push(`/${window?.contextPath}/citizen/submissions/submit-document?filingNumber=${filingNumber}`);
   };
 
   const handleCitizenAction = (option) => {
     if (option.value === "RAISE_APPLICATION") {
-      history.push(`/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
+      history.push(`/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
     } else if (option.value === "SUBMIT_DOCUMENTS") {
-      history.push(`/digit-ui/citizen/submissions/submit-document?filingNumber=${filingNumber}`);
+      history.push(`/${window?.contextPath}/citizen/submissions/submit-document?filingNumber=${filingNumber}`);
     }
   };
 
   const handleCourtAction = () => {
-    history.push(`/digit-ui/employee/submissions/submit-document?filingNumber=${filingNumber}`);
+    history.push(`/${window?.contextPath}/employee/submissions/submit-document?filingNumber=${filingNumber}`);
   };
 
   const handleSelect = (option) => {
     if (option === t("MAKE_SUBMISSION")) {
-      history.push(`/digit-ui/employee/submissions/submissions-create?filingNumber=${filingNumber}&applicationType=DOCUMENT`);
+      history.push(`/${window?.contextPath}/employee/submissions/submissions-create?filingNumber=${filingNumber}&applicationType=DOCUMENT`);
       return;
     }
     if (option === t("SCHEDULE_HEARING")) {
@@ -2262,14 +2271,16 @@ const AdmittedCases = () => {
   };
 
   const handleExtensionRequest = (orderNumber, itemId, litigant, litigantIndId) => {
-    let url = `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&isExtension=true&litigant=${
+    let url = `/${
+      window?.contextPath
+    }/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&isExtension=true&litigant=${
       currentOrder?.litigant || litigant
     }&litigantIndId=${currentOrder?.litigantIndId || litigantIndId}`;
     if (itemId) url += `&itemId=${itemId}`;
     history.push(url);
   };
   const handleSubmitDocument = (orderNumber, itemId, litigant, litigantIndId) => {
-    let url = `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&litigant=${
+    let url = `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&litigant=${
       currentOrder?.litigant || litigant
     }&litigantIndId=${currentOrder?.litigantIndId || litigantIndId}`;
     if (itemId) url += `&itemId=${itemId}`;
