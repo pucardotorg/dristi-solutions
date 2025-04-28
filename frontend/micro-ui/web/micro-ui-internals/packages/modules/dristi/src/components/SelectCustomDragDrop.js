@@ -102,8 +102,8 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
     if (file.size > maxFileSize) {
       setError(config.key, { message: `${t("CS_YOUR_FILE_EXCEEDED_THE")} ${input?.maxFileSize}${t("CS_COMMON_LIMIT_MB")}` });
-    }else if(clearErrors){
-      clearErrors(config.key)
+    } else if (clearErrors) {
+      clearErrors(config.key);
     }
     setValue(currentValue, input?.name, file.size > maxFileSize);
   };
@@ -131,10 +131,10 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
             <div className="drag-drop-heading-main">
               {!config?.disableScrutinyHeader && (
                 <div className="drag-drop-heading" style={{ marginLeft: 0 }}>
-                  <h1 className="card-label custom-document-header" style={input?.documentHeaderStyle}>
+                  <h1 className="card-label custom-document-header" style={{ ...input?.documentHeaderStyle, margin: 0 }}>
                     {t(input?.documentHeader)}
                   </h1>
-                  {input?.isOptional && <span style={{ color: "#77787B" }}>&nbsp;{`${t(input?.isOptional)}`}</span>}
+                  {input?.isOptional && <span style={{ color: "#77787B", verticalAlign: "middle" }}>&nbsp;{`${t(input?.isOptional)}`}</span>}
                   <CustomErrorTooltip message={t(input?.infoTooltipMessage)} showTooltip={Boolean(input?.infoTooltipMessage)} icon />
                 </div>
               )}
