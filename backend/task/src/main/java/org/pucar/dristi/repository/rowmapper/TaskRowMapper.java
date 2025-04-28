@@ -59,6 +59,7 @@ public class TaskRowMapper implements ResultSetExtractor<List<Task>> {
                             .caseId(rs.getString("caseId"))
                             .caseTitle(rs.getString("caseTitle"))
                             .cnrNumber(rs.getString("cnrnumber"))
+                            .courtId(rs.getString("courtId"))
                             .createdDate(rs.getLong("createddate"))
                             .dateCloseBy(rs.getLong("datecloseby"))
                             .dateClosed(rs.getLong("dateclosed"))

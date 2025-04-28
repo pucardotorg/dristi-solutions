@@ -33,6 +33,9 @@ public class Task {
     @Valid
     private UUID id = null;
 
+    @JsonProperty("courtId")
+    private String courtId;
+
     @JsonProperty("tenantId")
     @NotNull
     private String tenantId = null;

@@ -17,7 +17,7 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 @Slf4j
 public class TaskQueryBuilder {
 
-    private static final String BASE_CASE_QUERY = "SELECT task.id as id, task.tenantid as tenantid, task.orderid as orderid, task.createddate as createddate," +
+    private static final String BASE_CASE_QUERY = "SELECT task.id as id, task.tenantid as tenantid, task.orderid as orderid, task.courtId as courtId, task.createddate as createddate," +
             " task.filingnumber as filingnumber, task.tasknumber as tasknumber, task.caseTitle as caseTitle, task.caseId as caseId, task.datecloseby as datecloseby, task.dateclosed as dateclosed, task.taskdescription as taskdescription, task.cnrnumber as cnrnumber," +
             " task.taskdetails as taskdetails, task.assignedto as assignedto, task.tasktype as tasktype, task.assignedto as assignedto, task.status as status, task.isactive as isactive,task.additionaldetails as additionaldetails, task.createdby as createdby," +
             " task.lastmodifiedby as lastmodifiedby, task.createdtime as createdtime, task.lastmodifiedtime as lastmodifiedtime ,task.referenceid as referenceid , task.state as state ,task.duedate as duedate";
@@ -94,6 +94,7 @@ public class TaskQueryBuilder {
             String state = criteria.getState();
             String filingNumber = criteria.getFilingNumber();
             String taskType = criteria.getTaskType();
+            String courtId = criteria.getCourtId();
             String uuid = criteria.getUserUuid();
             String condition = """
                         EXISTS (
@@ -120,6 +121,7 @@ public class TaskQueryBuilder {
             firstCriteria = addTaskCriteria(referenceId, query, firstCriteria, "task.referenceid = ?", preparedStmtList,preparedStmtArgList);
             firstCriteria = addTaskCriteria(state, query, firstCriteria, "task.state = ?", preparedStmtList,preparedStmtArgList);
             firstCriteria = addTaskCriteria(taskType, query, firstCriteria, "task.tasktype = ?", preparedStmtList, preparedStmtArgList);
+            firstCriteria = addTaskCriteria(courtId, query, firstCriteria, "task.courtId = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(filingNumber, query, firstCriteria, "task.filingnumber = ?", preparedStmtList, preparedStmtArgList);
             firstCriteria = addTaskCriteria(uuid, query, firstCriteria, condition, preparedStmtList, preparedStmtArgList);
             addTaskCriteria(taskNumber, query, firstCriteria, "task.tasknumber = ?", preparedStmtList, preparedStmtArgList);
