@@ -18,7 +18,7 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 public class TaskQueryBuilder {
 
     private static final String BASE_CASE_QUERY = "SELECT task.id as id, task.tenantid as tenantid, task.orderid as orderid, task.courtId as courtId, task.createddate as createddate," +
-            " task.filingnumber as filingnumber, task.tasknumber as tasknumber, task.datecloseby as datecloseby, task.dateclosed as dateclosed, task.taskdescription as taskdescription, task.cnrnumber as cnrnumber," +
+            " task.filingnumber as filingnumber, task.tasknumber as tasknumber, task.caseTitle as caseTitle, task.caseId as caseId, task.datecloseby as datecloseby, task.dateclosed as dateclosed, task.taskdescription as taskdescription, task.cnrnumber as cnrnumber," +
             " task.taskdetails as taskdetails, task.assignedto as assignedto, task.tasktype as tasktype, task.assignedto as assignedto, task.status as status, task.isactive as isactive,task.additionaldetails as additionaldetails, task.createdby as createdby," +
             " task.lastmodifiedby as lastmodifiedby, task.createdtime as createdtime, task.lastmodifiedtime as lastmodifiedtime ,task.referenceid as referenceid , task.state as state ,task.duedate as duedate";
     private static final String FROM_TASK_TABLE = " FROM dristi_task task";

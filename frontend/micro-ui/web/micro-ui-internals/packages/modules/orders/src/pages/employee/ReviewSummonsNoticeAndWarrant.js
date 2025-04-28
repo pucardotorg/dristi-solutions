@@ -286,6 +286,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
               assignedRole: ["JUDGE_ROLE"],
               cnrNumber: tasksData?.list[0]?.cnrNumber,
               filingNumber: tasksData?.list[0]?.filingNumber,
+              caseId: tasksData?.list[0]?.caseId,
+              caseTitle: tasksData?.list[0]?.caseTitle,
               isCompleted: false,
               stateSla: 3 * dayInMillisecond + todayDate,
               additionalDetails: {},
@@ -366,13 +368,28 @@ const ReviewSummonsNoticeAndWarrant = () => {
     }
   }, [rowData, nextHearingDate]);
 
+  const reverseToDDMMYYYY = (dateStr) => {
+    if (!dateStr) return "N/A";
+  
+    const parts = dateStr.split("-");
+  
+    if (parts.length !== 3) return "N/A";
+  
+    // Check if it's in YYYY-MM-DD format
+    if (parts[0].length === 4) {
+      return `${parts[2]}-${parts[1]}-${parts[0]}`;
+    }
+    // Already in DD-MM-YYYY
+    return dateStr;
+  };
+
   const sentInfos = useMemo(() => {
     if (rowData?.taskDetails || nextHearingDate) {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
         { key: "ISSUE_TO", value: caseDetails?.respondentDetails?.name },
         { key: "ISSUE_DATE", value: convertToDateInputFormat(rowData?.createdDate) },
-        { key: "SENT_ON", value: convertToDateInputFormat(caseDetails?.deliveryChannels?.statusChangeDate) },
+        { key: "SENT_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
         { key: "NEXT_HEARING_DATE", value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A" },
       ];
@@ -387,7 +404,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
         { key: "NEXT_HEARING_DATE", value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A" },
         { key: "STATUS", value: rowData?.status },
-        { key: "STATUS_UPDATED_ON", value: caseDetails?.deliveryChannels?.statusChangeDate },
+        { key: "STATUS_UPDATED_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
         { key: "REMARKS", value: caseDetails?.remarks?.remark ? caseDetails?.remarks?.remark : "N/A" },
       ];
     }

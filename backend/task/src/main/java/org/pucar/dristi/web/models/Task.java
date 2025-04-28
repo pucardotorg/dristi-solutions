@@ -53,6 +53,12 @@ public class Task {
     @JsonProperty("cnrNumber")
     private String cnrNumber = null;
 
+    @JsonProperty("caseTitle")
+    private String caseTitle = null;
+
+    @JsonProperty("caseId")
+    private String caseId = null;
+
     @JsonProperty("createdDate")
     @Valid
     private Long createdDate = null;
