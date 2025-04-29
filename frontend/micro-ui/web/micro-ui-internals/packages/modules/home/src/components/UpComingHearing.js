@@ -74,19 +74,15 @@ function timeInMillisFromDateAndTime(date, hhmmssms) {
   return startOfDate.getTime() + millis;
 }
 
-const UpcomingHearings = ({ t, userInfoType, ...props }) => {
+const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...props }) => {
   const userName = Digit.SessionStorage.get("User");
-  const token = window.localStorage.getItem("token");
-  const isUserLoggedIn = Boolean(token);
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const roles = userInfo?.roles;
   const isFSO = roles?.some((role) => role?.code === "FSO_ROLE");
   const [hearingCaseList, setHearingCaseList] = useState([]);
-  const [isAdvocateLoading, setIsAdvocateLoading] = useState(false);
   const [isCaseLoading, setIsCaseLoading] = useState(false);
-  const [isAdvocate, setIsAdvocate] = useState(false);
   const { data: slotTime } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "court", [{ name: "slots" }]);
 
   // Get the current date
@@ -139,17 +135,6 @@ const UpcomingHearings = ({ t, userInfoType, ...props }) => {
     [dayLeftInOngoingMonthRange, props?.attendeeIndividualId, tenantId]
   );
 
-  const { data: individualData } = window?.Digit.Hooks.dristi.useGetIndividualUser(
-    {
-      Individual: {
-        userUuid: [userInfo?.uuid],
-      },
-    },
-    { tenantId, limit: 1000, offset: 0 },
-    "Home",
-    "",
-    userInfo?.uuid && isUserLoggedIn
-  );
 
   const individualId = useMemo(() => {
     return individualData?.Individual?.[0]?.individualId;
@@ -200,36 +185,6 @@ const UpcomingHearings = ({ t, userInfoType, ...props }) => {
     [tenantId]
   );
 
-  const fetchBasicUserInfo = useCallback(async () => {
-    setIsAdvocateLoading(true);
-    const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
-      {
-        Individual: {
-          userUuid: [userInfo?.uuid],
-        },
-      },
-      { tenantId, limit: 1000, offset: 0 },
-      "",
-      userInfo?.uuid
-    );
-
-    const advocateResponse = await window?.Digit.DRISTIService.searchIndividualAdvocate(
-      {
-        criteria: [
-          {
-            individualId: individualData?.Individual?.[0]?.individualId,
-          },
-        ],
-        tenantId,
-      },
-      {}
-    );
-
-    if (advocateResponse?.advocates[0]?.responseList?.length === 1) {
-      setIsAdvocate(true);
-    }
-    setIsAdvocateLoading(false);
-  }, [tenantId, userInfo?.uuid]);
 
   const { data: hearingResponse, isLoading } = Digit.Hooks.hearings.useGetHearings(
     reqBody,
@@ -244,7 +199,7 @@ const UpcomingHearings = ({ t, userInfoType, ...props }) => {
     reqBodyMonthly,
     { applicationNumber: "", cnrNumber: "", tenantId },
     `monthly-${dateRange.start}-${dateRange.end}`,
-    Boolean(dateRange.start && dateRange.end && (individualUserType === "citizen" ? individualId : true)),
+    Boolean(dateRange.start && dateRange.end && (individualUserType === "citizen" ? (individualId && advocateId) : false)), // monthly hearing count is calculated for advocate screen only.
     false,
     individualUserType === "citizen" && individualId
   );
@@ -287,8 +242,7 @@ const UpcomingHearings = ({ t, userInfoType, ...props }) => {
     if (earliestHearingSlot) {
       searchCase(earliestHearingSlot.hearings);
     }
-    fetchBasicUserInfo();
-  }, [fetchBasicUserInfo, hearingResponse, earliestHearingSlot, searchCase]);
+  }, [hearingResponse, earliestHearingSlot, searchCase]);
 
   const hearingCountsByType = useMemo(() => {
     const hearingCountsByType = {};
@@ -313,7 +267,7 @@ const UpcomingHearings = ({ t, userInfoType, ...props }) => {
   const ongoingMonthHearingCount = useMemo(() => {
     return monthlyHearingResponse?.TotalCount;
   }, [monthlyHearingResponse]);
-  if (isLoading || isLoadingMonthly || isAdvocateLoading || isCaseLoading) {
+  if (isLoading || isLoadingMonthly || isCaseLoading) {
     return <Loader />;
   }
   const name = userName?.info?.name
@@ -374,7 +328,7 @@ const UpcomingHearings = ({ t, userInfoType, ...props }) => {
               <Button className={"view-hearing-button"} label={t("VIEW_HEARINGS")} variation={"primary"} onClick={props.handleNavigate} />
             </React.Fragment>
           </div>
-          {ongoingMonthHearingCount > 0 && userInfoType === "citizen" && isAdvocate && (
+          {ongoingMonthHearingCount > 0 && userInfoType === "citizen" && advocateId && (
             <div className="ongoing-month-hearing">
               <p>
                 {t("YOU_HAVE_TEXT")} <span>{`${ongoingMonthHearingCount} ${t("UPCOMING_HEARINGS_TEXT")}`}</span> {t("THIS_MONTH_TEXT")}
