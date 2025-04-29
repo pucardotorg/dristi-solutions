@@ -31,6 +31,7 @@ public class EvidenceSearchCriteria {
     private UUID owner;
     private String tenantId;
     private String fileStoreId;
+    private String courtId;
 
     @JsonIgnore
     private String userUuid;

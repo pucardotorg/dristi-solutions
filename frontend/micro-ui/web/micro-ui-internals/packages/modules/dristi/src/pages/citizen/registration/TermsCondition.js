@@ -67,7 +67,7 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
           });
         }
       } catch (error) {
-        history.push(`/digit-ui/citizen/dristi/home/response`, { response: "error" });
+        history.push(`/${window?.contextPath}/citizen/dristi/home/response`, { response: "error" });
       } finally {
         setParams({});
       }
@@ -137,20 +137,20 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
                 }
               })
               .catch(() => {
-                history.push(`/digit-ui/citizen/dristi/home/response`, { response: "error" });
+                history.push(`/${window?.contextPath}/citizen/dristi/home/response`, { response: "error" });
               })
               .finally(() => {
                 setParams({});
               });
           } else {
-            history.push(`/digit-ui/citizen/dristi/home/response`, {
+            history.push(`/${window?.contextPath}/citizen/dristi/home/response`, {
               response: "success",
               createType: params?.userType?.clientDetails?.selectUserType?.code,
             });
           }
         })
         .catch(() => {
-          history.push(`/digit-ui/citizen/dristi/home/response`, { response: "error" });
+          history.push(`/${window?.contextPath}/citizen/dristi/home/response`, { response: "error" });
         })
         .finally(() => {
           setParams({});
@@ -224,13 +224,13 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
             }
           })
           .catch(() => {
-            history.push(`/digit-ui/citizen/dristi/home/response`, { response: "error" });
+            history.push(`/${window?.contextPath}/citizen/dristi/home/response`, { response: "error" });
           })
           .finally(() => {
             setParams({});
           });
       } else {
-        history.push(`/digit-ui/citizen/dristi/home/response`, {
+        history.push(`/${window?.contextPath}/citizen/dristi/home/response`, {
           response: "success",
           createType: params?.userType?.clientDetails?.selectUserType?.code,
         });
@@ -317,13 +317,13 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
                     }
                   })
                   .catch(() => {
-                    history.push(`/digit-ui/citizen/dristi/home/response`, { response: "error" });
+                    history.push(`/${window?.contextPath}/citizen/dristi/home/response`, { response: "error" });
                   });
               });
             }
           })
           .catch(() => {
-            history.push(`/digit-ui/citizen/dristi/home/response`, { response: "error", createType: "LITIGANT" });
+            history.push(`/${window?.contextPath}/citizen/dristi/home/response`, { response: "error", createType: "LITIGANT" });
           })
           .finally(() => {
             setShowSuccess(true);
@@ -408,7 +408,7 @@ const TermsCondition = ({ t, config, params, setParams, pathOnRefresh }) => {
                 }
               })
               .catch(() => {
-                history.push(`/digit-ui/citizen/dristi/home/response`, { response: "error" });
+                history.push(`/${window?.contextPath}/citizen/dristi/home/response`, { response: "error" });
               });
           });
         }

@@ -70,12 +70,12 @@ const OrdersHome = () => {
     ordersService
       .createOrder(reqbody, { tenantId })
       .then(() => {
-        history.push(`/digit-ui/employee/orders/generate-orders?filingNumber=${filingNumber}`);
+        history.push(`/${window?.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}`);
       })
       .catch(() => {});
   };
   if (!cnrNumber || !filingNumber) {
-    history.push("/digit-ui/employee");
+    history.push(`/${window?.contextPath}/employee`);
   }
   return (
     <React.Fragment>
