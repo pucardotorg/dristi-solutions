@@ -1,0 +1,81 @@
+ServiceMaps:
+  serviceName: hearing-service
+  version: 1.0.0
+  mappings:
+    - topic: hearing-legacy-topic
+      configKey: LEGACYINDEX
+      indexes:
+        - name: hearing-index-v1
+          type: hearing
+          id: $.id
+          isBulk: true
+          jsonPath: $.HearingList
+          timeStampField: $.auditDetails.createdTime
+          customJsonMapping:
+            indexMapping:
+              {
+                "hearingId": "",
+                "cnrNumbers": {},
+                "transcript": {},
+                "attendees": {},
+                "startDateTime": "",
+                "presidedBy": {},
+                "additionalDetails": {},
+                "filingNumber": "",
+                "stage": "",
+                "substage": "",
+                "filingDateTime": "",
+                "registrationDateTime": ""
+              }
+
+            fieldMapping:
+              - inJsonPath: $.hearingId
+                outJsonPath: $.hearingId
+              - inJsonPath: $.cnrNumbers
+                outJsonPath: $.cnrNumbers
+              - inJsonPath: $.transcript
+                outJsonPath: $.transcript
+              - inJsonPath: $.attendees
+                outJsonPath: $.attendees
+              - inJsonPath: $.startDateTime
+                outJsonPath: $.startDateTime
+              - inJsonPath: $.presidedBy
+                outJsonPath: $.presidedBy
+              - inJsonPath: $.additionalDetails
+                outJsonPath: $.additionalDetails
+              - inJsonPath: $.filingNumber[0]
+                outJsonPath: $.filingNumber
+
+            externalUriMapping:
+              - path: http://localhost:8070/case/v1/_search
+                apiRequest: {
+                  "criteria": [
+                    { "filingNumber": "$.filingNumber[0]" }
+                  ],
+                  "RequestInfo": {
+                    "apiId": "Rainmaker",
+                    "authToken": "9e737b13-14d2-45e7-8b96-09de66952e81",
+                    "msgId": "1730970507148|en_IN",
+                    "plainAccessRequest": { },
+                    "userInfo": {
+                      "userName": "newUser",
+                      "uuid": "r456t5tt4fr454tt5tt",
+                      "type": "EMPLOYEE",
+                      "roles": [
+                        {
+                          "name": "TASK_CREATOR",
+                          "code": "TASK_CREATOR"
+                        }
+                      ]
+                    }
+                  }
+                }
+                uriResponseMapping:
+                  - inJsonPath: $.criteria[0].responseList[0].stage
+                    outJsonPath: $.stage
+                  - inJsonPath: $.criteria[0].responseList[0].substage
+                    outJsonPath: $.substage
+                  - inJsonPath: $.criteria[0].responseList[0].filingDateTime
+                    outJsonPath: $.filingDateTime
+                  - inJsonPath: $.criteria[0].responseList[0].registrationDateTime
+                    outJsonPath: $.registrationDateTime

@@ -1,0 +1,78 @@
+ServiceMaps:
+  serviceName: application-service
+  version: 1.0.0
+  mappings:
+    - topic: application-legacy-topic
+      configKey: LEGACYINDEX
+      indexes:
+        - name: application-index-v1
+          type: application
+          id: $.id
+          isBulk: true
+          jsonPath: $.applicationList
+          timeStampField: $.auditDetails.createdTime
+          customJsonMapping:
+            indexMapping:
+              { 
+                "applicationNumber": "",
+                "caseId": "",
+                "filingNumber": "",
+                "createdDateTime": "",
+                "applicationType": "",
+                "applicationDetails": {},
+                "documents": {},
+                "createdTime": "",
+                "filingDateTime": "",
+                "judgementDateTime": "",
+                "outcome": ""
+              }
+
+            fieldMapping:
+              - inJsonPath: $.applicationNumber
+                outJsonPath: $.applicationNumber
+              - inJsonPath: $.caseId
+                outJsonPath: $.caseId
+              - inJsonPath: $.filingNumber
+                outJsonPath: $.filingNumber
+              - inJsonPath: $.createdDateTime
+                outJsonPath: $.createdDateTime
+              - inJsonPath: $.applicationType
+                outJsonPath: $.applicationType
+              - inJsonPath: $.applicationDetails
+                outJsonPath: $.applicationDetails
+              - inJsonPath: $.documents
+                outJsonPath: $.documents
+              - inJsonPath: $.auditDetails.createdTime
+                outJsonPath: $.createdTime
+            externalUriMapping:
+              - path: http://localhost:8070/case/v1/_search
+                apiRequest: {
+                  "criteria": [
+                    {"filingNumber": "$.filingNumber"}
+                  ],
+                  "RequestInfo": {
+                    "apiId": "Rainmaker",
+                    "authToken": "9e737b13-14d2-45e7-8b96-09de66952e81",
+                    "msgId": "1730970507148|en_IN",
+                    "plainAccessRequest": {},
+                    "userInfo": {
+                      "userName": "newUser",
+                      "uuid": "r456t5tt4fr454tt5tt",
+                      "type": "EMPLOYEE",
+                      "roles": [
+                        {
+                          "name": "TASK_CREATOR",
+                          "code": "TASK_CREATOR"
+                        }
+                      ]
+                    }
+                  }
+                }
+
+                uriResponseMapping:
+                  - inJsonPath: $.criteria[0].responseList[0].filingDateTime
+                    outJsonPath: $.filingDateTime
+                  - inJsonPath: $.criteria[0].responseList[0].judgementDateTime
+                    outJsonPath: $.judgementDateTime
+                  - inJsonPath: $.criteria[0].responseList[0].outcome
+                    outJsonPath: $.outcome
