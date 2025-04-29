@@ -1,9 +1,10 @@
-package pucar.strategy;
+package pucar.strategy.ordertype;
 
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.DateUtil;
 import pucar.util.JsonUtil;
 import pucar.util.PendingTaskUtil;
@@ -17,11 +18,12 @@ import java.util.HashMap;
 import java.util.List;
 
 import static pucar.config.ServiceConstants.EXTENSION_OF_DOCUMENT_SUBMISSION_DATE;
+import static pucar.config.ServiceConstants.E_SIGN;
 
 
 @Component
 @Slf4j
-public class ExtensionOfDocumentSubmissionDate implements OrderUpdateStrategy {
+public class PublishOrderExtensionOfDocumentSubmissionDate implements OrderUpdateStrategy {
 
     private final JsonUtil jsonUtil;
     private final DateUtil dateUtil;
@@ -29,7 +31,7 @@ public class ExtensionOfDocumentSubmissionDate implements OrderUpdateStrategy {
 
 
     @Autowired
-    public ExtensionOfDocumentSubmissionDate(JsonUtil jsonUtil, DateUtil dateUtil, PendingTaskUtil pendingTaskUtil) {
+    public PublishOrderExtensionOfDocumentSubmissionDate(JsonUtil jsonUtil, DateUtil dateUtil, PendingTaskUtil pendingTaskUtil) {
         this.jsonUtil = jsonUtil;
         this.dateUtil = dateUtil;
         this.pendingTaskUtil = pendingTaskUtil;
@@ -44,7 +46,8 @@ public class ExtensionOfDocumentSubmissionDate implements OrderUpdateStrategy {
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
-        return order.getOrderType() != null && EXTENSION_OF_DOCUMENT_SUBMISSION_DATE.equalsIgnoreCase(order.getOrderType());
+        String action = order.getWorkflow().getAction();
+        return order.getOrderType() != null  && E_SIGN.equalsIgnoreCase(action) &&  EXTENSION_OF_DOCUMENT_SUBMISSION_DATE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
