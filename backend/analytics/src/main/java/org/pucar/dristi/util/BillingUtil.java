@@ -76,13 +76,14 @@ public class BillingUtil {
         // fetch case detail
         Object caseObject = caseUtil.getCase(request, tenantId, cnrNumber, filingNumber, null);
         String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
+        String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
         String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
         net.minidev.json.JSONArray statutesAndSections = JsonPath.read(caseObject.toString(), CASE_STATUTES_AND_SECTIONS);
         String caseType = getCaseType(statutesAndSections);
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_BILLING_FORMAT,
-                config.getBillingIndex(), id, id, tenantId, caseTitle, filingNumber, caseStage, caseType, paymentType, totalAmount, status, consumerCode, businessService, auditJsonString
+                config.getBillingIndex(), id, id, tenantId, caseTitle, filingNumber, caseStage, caseId, caseType, paymentType, totalAmount, status, consumerCode, businessService, auditJsonString
         );
     }
 

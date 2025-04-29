@@ -17,7 +17,7 @@ const SelectName = ({ config, t, onSubmit, isDisabled, params, history, value, i
   }, [closeToast]);
 
   if (!params?.mobileNumber && !isUserLoggedIn) {
-    history.push("/digit-ui/citizen/dristi/home/login");
+    history.push(`/${window?.contextPath}/citizen/dristi/home/login`);
   }
 
   if (!params?.isSkip && !params?.email) {

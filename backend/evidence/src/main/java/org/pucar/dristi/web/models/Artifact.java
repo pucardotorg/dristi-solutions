@@ -57,6 +57,9 @@ public class Artifact {
 	@Size(min = 2, max = 128)
 	private String externalRefNumber = null;
 
+	@JsonProperty("courtId")
+	private String courtId = null;
+
 	@JsonProperty("caseId")
 	@NotNull
 

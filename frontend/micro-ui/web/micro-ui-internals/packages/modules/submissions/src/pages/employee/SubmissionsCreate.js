@@ -69,7 +69,7 @@ const BAIL_APPLICATION_EXCLUDED_STATUSES = [
 const _getApplicationAmount = (applicationTypeAmountList, applicationType) => {
   const applicationTypeAmount = applicationTypeAmountList?.find((amount) => amount?.type === applicationType);
   return applicationTypeAmount?.totalAmount || 20;
-}
+};
 
 const SubmissionsCreate = ({ path }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -180,8 +180,6 @@ const SubmissionsCreate = ({ path }) => {
       },
     }
   );
-
-  
 
   const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "FilingType" },
@@ -866,6 +864,8 @@ const SubmissionsCreate = ({ path }) => {
         assignedRole: assignedRole,
         cnrNumber: caseDetails?.cnrNumber,
         filingNumber: filingNumber,
+        caseId: caseDetails?.id,
+        caseTitle: caseDetails?.caseTitle,
         isCompleted,
         stateSla,
         additionalDetails: {},
@@ -1220,7 +1220,9 @@ const SubmissionsCreate = ({ path }) => {
 
   const handleBack = () => {
     if (!paymentLoader) {
-      history.replace(`/digit-ui/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`);
+      history.replace(
+        `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
+      );
     }
   };
 
@@ -1392,7 +1394,7 @@ const SubmissionsCreate = ({ path }) => {
 
   const handleDownloadSubmission = () => {
     downloadPdf(tenantId, applicationDetails?.documents?.filter((doc) => doc?.documentType === "SIGNED")?.[0]?.fileStore);
-    // history.push(`/digit-ui/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`);
+    // history.push(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`);
   };
   if (!filingNumber) {
     handleBack();
