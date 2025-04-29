@@ -1,0 +1,99 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "INBOX",
+    "masterName": "InboxQueryConfiguration",
+    "mdmsPayload": [
+      {
+        "id": "50cfa6a6-916c-4810-bd1f-a24435f6c63f",
+        "tenantId": "kl",
+        "schemaCode": "INBOX.InboxQueryConfiguration",
+        "uniqueIdentifier": "open-hearing-index",
+        "data": {
+          "index": "open-hearing-index",
+          "module": "Hearing Service",
+          "sortBy": {
+            "path": "Data.hearingDetails.caseNumber.keyword",
+            "defaultOrder": "DESC"
+          },
+          "sourceFilterPathList": [
+            "Data"
+          ],
+          "allowedSearchCriteria": [
+            {
+              "name": "filingNumber",
+              "path": "Data.hearingDetails.filingNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "caseTitle",
+              "path": "Data.hearingDetails.caseTitle.keyword",
+              "operator": "WILDCARD",
+              "isMandatory": false
+            },
+            {
+              "name": "caseId",
+              "path": "Data.hearingDetails.caseId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "hearingNumber",
+              "path": "Data.hearingDetails.hearingNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "caseNumber",
+              "path": "Data.hearingDetails.caseNumber.keyword",
+              "operator": "WILDCARD",
+              "isMandatory": false
+            },
+            {
+              "name": "hearingUuid",
+              "path": "Data.hearingDetails.hearingUuid.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "stage",
+              "path": "Data.hearingDetails.stage.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "status",
+              "path": "Data.hearingDetails.status.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "tenantId",
+              "path": "Data.hearingDetails.tenantId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "fromDate",
+              "path": "Data.hearingDetails.fromDate",
+              "operator": "GTE",
+              "isMandatory": false
+            },
+            {
+              "name": "toDate",
+              "path": "Data.hearingDetails.toDate",
+              "operator": "LTE",
+              "isMandatory": false
+            },
+            {
+              "name": "subStage",
+              "path": "Data.hearingDetails.subStage.keyword",
+              "isMandatory": false
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1741340209026,
+          "lastModifiedTime": 1745930647179
+        }
+      }
+    ]
+  }
+]
