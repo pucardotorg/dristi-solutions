@@ -127,7 +127,7 @@ public class IndividualUtil {
 
     private StringBuilder buildIndividualSearchUri(String tenantId, Integer limit) {
         return new StringBuilder(configuration.getIndividualHost())
-                .append(configuration.getIndexSearchEndPoint())
+                .append(configuration.getIndividualSearchEndPoint())
                 .append("?limit=").append(limit)
                 .append("&offset=0")
                 .append("&tenantId=").append(tenantId);
