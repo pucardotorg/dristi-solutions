@@ -51,9 +51,6 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   );
 
   const individualId = useMemo(() => data?.Individual?.[0]?.individualId, [data?.Individual]);
-  if (individualId && !localStorage.getItem(individualId)) {
-    localStorage.setItem("individualId", individualId);
-  }
 
   const isLitigantPartialRegistered = useMemo(() => {
     if (userInfoType !== "citizen") return false;
@@ -138,7 +135,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     `${path}/home/registration/terms-condition`,
   ];
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
-  const eSignWindowObject = localStorage.getItem("eSignWindowObject");
+  const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = JSON.parse(eSignWindowObject);
   if (!isUserLoggedIn && !whiteListedRoutes.includes(location.pathname)) {
     history.push(`${path}/home/login`);
@@ -154,14 +151,14 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     history.push(`${path}/home/registration/user-name`);
   }
   if (result) {
-    localStorage.setItem("isSignSuccess", result);
+    sessionStorage.setItem("isSignSuccess", result);
   }
   if (fileStoreId) {
-    localStorage.setItem("fileStoreId", fileStoreId);
+    sessionStorage.setItem("fileStoreId", fileStoreId);
   }
   if (isUserLoggedIn && retrievedObject) {
     history.push(`${retrievedObject?.path}${retrievedObject?.param}`);
-    localStorage.removeItem("eSignWindowObject");
+    sessionStorage.removeItem("eSignWindowObject");
   }
   if (isLoading) {
     return <Loader />;

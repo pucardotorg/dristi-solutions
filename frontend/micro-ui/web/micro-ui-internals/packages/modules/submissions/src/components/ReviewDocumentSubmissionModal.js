@@ -70,7 +70,7 @@ function ReviewDocumentSubmissionModal({
   const [isSignedHeading, setIsSignedHeading] = useState(false);
   const [signedId, setSignedId] = useState(null);
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const signedDisplayFileStoreId = useMemo(() => signedId || localStorage.getItem("fileStoreId"), [signedId]);
+  const signedDisplayFileStoreId = useMemo(() => signedId || sessionStorage.getItem("fileStoreId"), [signedId]);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -114,8 +114,8 @@ function ReviewDocumentSubmissionModal({
             currentSubmissionStatus !== SubmissionDocumentWorkflowState.PENDING_ESIGN
               ? t("REVIEW_SUBMISSION_DOCUMENT_HEADING")
               : !isSignedHeading
-                ? t("SIGN_SUBMISSION")
-                : t("VIEW_SIGNED_SUBMISSION")
+              ? t("SIGN_SUBMISSION")
+              : t("VIEW_SIGNED_SUBMISSION")
           }
         />
       }

@@ -157,7 +157,7 @@ const SBIEpostPayment = () => {
           partyIndex: orderType === "NOTICE" && partyIndex,
         };
 
-        localStorage.setItem("paymentReceiptData", JSON.stringify({ receiptData }));
+        sessionStorage.setItem("paymentReceiptData", JSON.stringify({ receiptData }));
         await handleButtonClick(gateway?.transactionUrl, gateway.encryptedMultiAccountString, gateway?.encryptedString, gateway?.merchantId);
         setPaymentLoader(false);
       }
