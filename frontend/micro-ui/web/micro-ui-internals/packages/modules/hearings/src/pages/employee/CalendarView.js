@@ -75,7 +75,8 @@ const MonthlyCalendar = () => {
     `${dateRange.start?.toISOString()}-${dateRange.end?.toISOString()}`,
     Boolean(dateRange.start && dateRange.end && (userType === "citizen" ? individualId : true)),
     false,
-    userType === "citizen" && individualId
+    userType === "citizen" && individualId,
+    10*1000,
   );
   const { data: hearingSlots } = useGetHearingSlotMetaData(true);
   const hearingDetails = useMemo(() => hearingResponse?.HearingList || [], [hearingResponse]);

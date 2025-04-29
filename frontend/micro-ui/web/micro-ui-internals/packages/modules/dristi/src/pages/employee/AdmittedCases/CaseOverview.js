@@ -65,15 +65,15 @@ const CaseOverview = ({
     );
   }, [userRoles, caseStatus, isAdvocatePresent]);
 
-  const { data: advocateDetails, isLoading: isAdvocatesLoading } = useGetIndividualAdvocate(
-    {
-      criteria: advocateIds,
-    },
-    { tenantId: tenantId },
-    "DRISTI",
-    cnrNumber + filingNumber,
-    Boolean(filingNumber)
-  );
+  // const { data: advocateDetails, isLoading: isAdvocatesLoading } = useGetIndividualAdvocate(
+  //   {
+  //     criteria: advocateIds,
+  //   },
+  //   { tenantId: tenantId },
+  //   "DRISTI",
+  //   cnrNumber + filingNumber,
+  //   Boolean(filingNumber)
+  // );
 
   const { data: hearingRes, refetch: refetchHearingsData, isLoading: isHearingsLoading } = Digit.Hooks.hearings.useGetHearings(
     {

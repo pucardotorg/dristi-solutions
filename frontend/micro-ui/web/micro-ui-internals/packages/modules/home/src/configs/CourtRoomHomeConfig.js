@@ -230,8 +230,9 @@ export const TabCourtRoomSearchConfig = {
                 additionalCustomization: true,
               },
               {
-                label: "CS_CASE_ID",
+                label: "CS_CASE_NUMBER_HOME",
                 jsonPath: "filingNumber",
+                additionalCustomization: true,
               },
               {
                 label: "CASE_TYPE",
@@ -364,8 +365,9 @@ export const TabCourtRoomSearchConfig = {
                 additionalCustomization: true,
               },
               {
-                label: "CS_CASE_ID",
+                label: "CS_CASE_NUMBER_HOME",
                 jsonPath: "filingNumber",
+                additionalCustomization: true,
               },
               {
                 label: "CASE_TYPE",
@@ -506,8 +508,9 @@ export const TabCourtRoomSearchConfig = {
               },
 
               {
-                label: "CS_CASE_ID",
+                label: "CS_CASE_NUMBER_HOME",
                 jsonPath: "filingNumber",
+                additionalCustomization: true,
               },
               {
                 label: "CASE_TYPE",
@@ -651,8 +654,9 @@ export const TabCourtRoomSearchConfig = {
                 additionalCustomization: true,
               },
               {
-                label: "CS_CASE_ID",
+                label: "CS_CASE_NUMBER_HOME",
                 jsonPath: "filingNumber",
+                additionalCustomization: true,
               },
               {
                 label: "CASE_TYPE",

@@ -690,14 +690,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
   useEffect(() => {
     // if (rowData?.id) getTaskDocuments();
     if (rowData?.filingNumber) getHearingFromCaseId();
-    setSelectedDelievery(
-      rowData?.status === "NOTICE_SENT" || rowData?.status === "SUMMON_SENT" || rowData?.status === "WARRANT_SENT" || rowData?.status === "DELIVERED"
-        ? {
-            key: "DELIVERED",
-            value: "Delivered",
-          }
-        : {}
-    );
+    // setSelectedDelievery(
+    //   rowData?.status === "NOTICE_SENT" || rowData?.status === "SUMMON_SENT" || rowData?.status === "WARRANT_SENT" || rowData?.status === "DELIVERED"
+    //     ? {
+    //         key: "DELIVERED",
+    //         value: "Delivered",
+    //       }
+    //     : {}
+    // );
   }, [rowData]);
 
   const handleRowClick = (props) => {
@@ -708,6 +708,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     }
 
     setRemarks("");
+    setSelectedDelievery({});
     setRowData(props?.original);
     setActionModalType(props?.original?.documentStatus);
     setShowActionModal(true);

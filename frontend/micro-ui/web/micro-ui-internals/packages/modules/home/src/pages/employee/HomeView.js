@@ -57,8 +57,6 @@ const HomeView = () => {
   const [taskType, setTaskType] = useState(state?.taskType || {});
   const [caseType, setCaseType] = useState(state?.caseType || {});
 
-  const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
-  const [responsePendingTask, setResponsePendingTask] = useState({});
   const bulkSignSuccess = history.location?.state?.bulkSignSuccess;
   const [issueBulkSuccessData, setIssueBulkSuccessData] = useState({
     show: false,
@@ -79,8 +77,9 @@ const HomeView = () => {
     },
     { tenantId, limit: 1000, offset: 0 },
     "Home",
-    "",
-    userInfo?.uuid && isUserLoggedIn
+    userInfo?.uuid || "",
+    Boolean(userInfo?.uuid && isUserLoggedIn),
+    6*1000
   );
   const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData]);
 
@@ -111,28 +110,6 @@ const HomeView = () => {
     individualId,
     Boolean(isUserLoggedIn && individualId && userType !== "LITIGANT"),
     userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
-  );
-
-  const { data: ordersNotificationData, isLoading: isOrdersLoading } = useSearchOrdersNotificationService(
-    {
-      inbox: {
-        processSearchCriteria: {
-          businessService: ["notification"],
-          moduleName: "Transformer service",
-        },
-        limit: 1,
-        offset: 0,
-        tenantId: tenantId,
-        moduleSearchCriteria: {
-          entityType: "Order",
-          tenantId: tenantId,
-          status: OrderWorkflowState.PENDING_BULK_E_SIGN,
-        },
-      },
-    },
-    { tenantId },
-    OrderWorkflowState.PENDING_BULK_E_SIGN,
-    true
   );
 
   const refreshInbox = () => {
@@ -231,37 +208,45 @@ const HomeView = () => {
       );
       setTabData(updatedTabData);
     },
-    [additionalDetails, outcomeTypeData, tenantId]
+    [additionalDetails, outcomeTypeData, tenantId, t, defaultSearchValues]
   );
 
-  useEffect(() => {
-    if (!(isLoading && isFetching && isSearchLoading && isFetchCaseLoading && isOutcomeLoading)) {
-      if (state?.role && rolesToConfigMapping?.find((item) => item[state.role])[state.role]) {
-        const rolesToConfigMappingData = rolesToConfigMapping?.find((item) => item[state.role]);
-        const tabConfig = rolesToConfigMappingData.config;
-        const rowClickData = rolesToConfigMappingData.onRowClickRoute;
-        setOnRowClickData(rowClickData);
-        setConfig(tabConfig?.TabSearchConfig?.[0]);
-        setTabConfig(tabConfig);
-        getTotalCountForTab(tabConfig);
-      } else {
-        const rolesToConfigMappingData =
-          rolesToConfigMapping?.find((item) =>
-            item.roles?.reduce((res, curr) => {
-              if (!res) return res;
-              res = roles.some((role) => role.code === curr);
-              return res;
-            }, true)
-          ) || TabLitigantSearchConfig;
-        const tabConfig = rolesToConfigMappingData?.config;
-        const rowClickData = rolesToConfigMappingData?.onRowClickRoute;
-        setOnRowClickData(rowClickData);
-        setConfig(tabConfig?.TabSearchConfig?.[0]);
-        setTabConfig(tabConfig);
-        getTotalCountForTab(tabConfig);
-      }
+  const configData = useMemo(() => {
+    if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOutcomeLoading) {
+      return null;
     }
-  }, [additionalDetails, getTotalCountForTab, isOutcomeLoading, isFetchCaseLoading, isFetching, isLoading, isSearchLoading, roles, state, tenantId]);
+
+    let rolesToConfigMappingData;
+
+    if (state?.role) {
+      rolesToConfigMappingData = rolesToConfigMapping?.find((item) => item[state.role]);
+    }
+
+    if (!rolesToConfigMappingData) {
+      rolesToConfigMappingData =
+        rolesToConfigMapping?.find((item) => item.roles?.some((roleCode) => roles.some((role) => role.code === roleCode))) || TabLitigantSearchConfig;
+    }
+
+    return rolesToConfigMappingData
+      ? {
+          tabConfig: rolesToConfigMappingData.config,
+          rowClickData: rolesToConfigMappingData.onRowClickRoute,
+          initialConfig: rolesToConfigMappingData.config?.TabSearchConfig?.[0],
+        }
+      : null;
+  }, [isLoading, isFetching, isSearchLoading, isFetchCaseLoading, isOutcomeLoading, state?.role, roles, rolesToConfigMapping]);
+
+  useEffect(() => {
+    if (!configData) return;
+
+    setOnRowClickData(configData.rowClickData);
+    setConfig(configData.initialConfig);
+    setTabConfig(configData.tabConfig);
+
+    if (configData.tabConfig) {
+      getTotalCountForTab(configData.tabConfig);
+    }
+  }, [configData, getTotalCountForTab]);
 
   // calling case api for tab's count
   useEffect(() => {
@@ -362,7 +347,7 @@ const HomeView = () => {
     }
   };
 
-  if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOrdersLoading) {
+  if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading) {
     return <Loader />;
   }
 
@@ -390,16 +375,19 @@ const HomeView = () => {
   return (
     <div className="home-view-hearing-container">
       {individualId && userType && userInfoType === "citizen" && !caseDetails ? (
-        <LitigantHomePage
-          isApprovalPending={isApprovalPending}
-          setShowSubmitResponseModal={setShowSubmitResponseModal}
-          setResponsePendingTask={setResponsePendingTask}
-        />
+        <LitigantHomePage isApprovalPending={isApprovalPending} />
       ) : (
         <React.Fragment>
           <div className="left-side" style={{ width: individualId && userType && userInfoType === "citizen" && !caseDetails ? "100vw" : "70vw" }}>
             <div className="home-header-wrapper">
-              <UpcomingHearings handleNavigate={handleNavigate} attendeeIndividualId={individualId} userInfoType={userInfoType} t={t} />
+              <UpcomingHearings
+                handleNavigate={handleNavigate}
+                individualData={individualData}
+                attendeeIndividualId={individualId}
+                userInfoType={userInfoType}
+                advocateId={advocateId}
+                t={t}
+              />
               {isJudge && (
                 <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start" }}>
                   <Link to={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle}>
@@ -421,11 +409,7 @@ const HomeView = () => {
                 {individualId && userType && userInfoType === "citizen" && (
                   <div className="button-field" style={{ width: "50%" }}>
                     <React.Fragment>
-                      <JoinCaseHome
-                        refreshInbox={refreshInbox}
-                        setShowSubmitResponseModal={setShowSubmitResponseModal}
-                        setResponsePendingTask={setResponsePendingTask}
-                      />
+                      <JoinCaseHome refreshInbox={refreshInbox} />
                       <Button
                         className={"tertiary-button-selector"}
                         label={t("FILE_A_CASE")}
@@ -465,22 +449,19 @@ const HomeView = () => {
           </div>
         </React.Fragment>
       )}
-      <div className="right-side" style={{ width: individualId && userType && userInfoType === "citizen" && !caseDetails ? "0vw" : "30vw" }}>
-        <TasksComponent
-          taskType={taskType}
-          setTaskType={setTaskType}
-          caseType={caseType}
-          setCaseType={setCaseType}
-          isLitigant={Boolean(individualId && userType && userInfoType === "citizen")}
-          uuid={userInfo?.uuid}
-          userInfoType={userInfoType}
-          joinCaseResponsePendingTask={responsePendingTask}
-          joinCaseShowSubmitResponseModal={showSubmitResponseModal}
-          setJoinCaseShowSubmitResponseModal={setShowSubmitResponseModal}
-          hideTaskComponent={individualId && userType && userInfoType === "citizen" && !caseDetails}
-          pendingSignOrderList={ordersNotificationData}
-        />
-      </div>
+      {individualId && userType && userInfoType === "citizen" && caseDetails && (
+        <div className="right-side" style={{ width: "30vw" }}>
+          <TasksComponent
+            taskType={taskType}
+            setTaskType={setTaskType}
+            caseType={caseType}
+            setCaseType={setCaseType}
+            isLitigant={Boolean(individualId && userType && userInfoType === "citizen")}
+            uuid={userInfo?.uuid}
+            userInfoType={userInfoType}
+          />
+        </div>
+      )}
       {issueBulkSuccessData.show && (
         <OrderIssueBulkSuccesModal
           t={t}
