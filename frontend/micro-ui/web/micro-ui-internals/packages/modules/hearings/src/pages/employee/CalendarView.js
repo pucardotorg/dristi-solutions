@@ -8,7 +8,6 @@ import { useHistory } from "react-router-dom/";
 import PreHearingModal from "../../components/PreHearingModal";
 import TasksComponent from "../../components/TaskComponentCalander";
 import useGetHearings from "../../hooks/hearings/useGetHearings";
-import useGetHearingSlotMetaData from "../../hooks/useGetHearingSlotMetaData";
 import { Button } from "@egovernments/digit-ui-react-components";
 import BulkReschedule from "./BulkReschedule";
 
@@ -27,7 +26,7 @@ const MonthlyCalendar = () => {
   });
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
-  const userInfo = Digit.UserService.getUser()?.info;
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const { data: individualData } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
@@ -38,10 +37,10 @@ const MonthlyCalendar = () => {
     { tenantId, limit: 1000, offset: 0 },
     "Home",
     "",
-    userInfo?.uuid && isUserLoggedIn
+    userInfo?.uuid && isUserLoggedIn,
+    6 * 1000
   );
   const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData]);
-  const userType = Digit.UserService.getType();
 
   const [dateRange, setDateRange] = useState({});
   const [taskType, setTaskType] = useState({});
@@ -69,25 +68,17 @@ const MonthlyCalendar = () => {
     },
   };
 
-  const { data: hearingResponse, refetch: refetch } = useGetHearings(
+  const { data: hearingResponse, refetch } = useGetHearings(
     reqBody,
     { applicationNumber: "", cnrNumber: "", tenantId },
     `${dateRange.start?.toISOString()}-${dateRange.end?.toISOString()}`,
-    Boolean(dateRange.start && dateRange.end && (userType === "citizen" ? individualId : true)),
+    Boolean(dateRange.start && dateRange.end && (userInfoType === "citizen" ? individualId : true)),
     false,
-    userType === "citizen" && individualId,
-    10*1000,
+    userInfoType === "citizen" && individualId,
+    6 * 1000
   );
-  const { data: hearingSlots } = useGetHearingSlotMetaData(true);
+
   const hearingDetails = useMemo(() => hearingResponse?.HearingList || [], [hearingResponse]);
-
-  // const events = useMemo(() => hearingSlots || [], [hearingSlots]);
-
-  useEffect(() => {
-    if (stepper === 0) {
-      refetch();
-    }
-  }, [stepper]);
 
   const mdmsEvents = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "court", [{ name: "slots" }], {
     cacheTime: 0,
@@ -197,14 +188,6 @@ const MonthlyCalendar = () => {
     history.replace({ search: searchParams.toString() });
   };
 
-  const Close = () => (
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <g>
-        <path d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L5 17.59L6.41 19L12 13.41L17.59 19L19 17.59L13.41 12L19 6.41Z" fill="#0A0A0A" />
-      </g>
-    </svg>
-  );
-
   const onSubmit = () => {
     setStepper((prev) => prev + 1);
   };
@@ -268,7 +251,7 @@ const MonthlyCalendar = () => {
                 onCancel={closeModal}
                 hearingData={{ fromDate, toDate, slot, slotId, count }}
                 individualId={individualId}
-                userType={userType}
+                userType={userInfoType}
                 events={events}
               />
             )}
