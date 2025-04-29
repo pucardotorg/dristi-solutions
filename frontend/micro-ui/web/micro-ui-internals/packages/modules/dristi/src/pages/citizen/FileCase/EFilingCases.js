@@ -2354,7 +2354,7 @@ function EFilingCases({ path }) {
       uuid: poaHolder?.additionalDetails?.uuid,
     }));
 
-    const fileStoreId = localStorage.getItem("fileStoreId");
+    const fileStoreId = sessionStorage.getItem("fileStoreId");
     await DRISTIService.caseUpdateService(
       {
         cases: {

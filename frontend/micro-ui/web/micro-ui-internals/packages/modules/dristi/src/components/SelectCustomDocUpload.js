@@ -42,10 +42,10 @@ function SelectCustomDocUpload({ t, config, formUploadData = {}, setData, docume
   };
 
   const handleEsign = () => {
-    localStorage.removeItem("docSubmission");
-    localStorage.removeItem("formUploadData");
-    localStorage.removeItem("EvidenceFile");
-    const localStorageID = localStorage.getItem("fileStoreId") || signedDocumentUploadId;
+    sessionStorage.removeItem("docSubmission");
+    sessionStorage.removeItem("formUploadData");
+    sessionStorage.removeItem("EvidenceFile");
+    const localStorageID = sessionStorage.getItem("fileStoreId") || signedDocumentUploadId;
     setData((prevData) => ({
       ...prevData,
       SelectUserTypeComponent: {
@@ -61,7 +61,7 @@ function SelectCustomDocUpload({ t, config, formUploadData = {}, setData, docume
         ],
       },
     }));
-    localStorage.removeItem("fileStoreId");
+    sessionStorage.removeItem("fileStoreId");
     setShowDocument(true);
     setEsignModal(false);
   };
@@ -72,7 +72,7 @@ function SelectCustomDocUpload({ t, config, formUploadData = {}, setData, docume
   };
 
   const loadFileFromLocalStorage = () => {
-    const storedData = localStorage.getItem("EvidenceFile");
+    const storedData = sessionStorage.getItem("EvidenceFile");
 
     if (storedData) {
       const storedObject = JSON.parse(storedData);
@@ -115,8 +115,8 @@ function SelectCustomDocUpload({ t, config, formUploadData = {}, setData, docume
   };
 
   useEffect(() => {
-    const isSignSuccess = localStorage.getItem("esignProcess");
-    const formData = localStorage.getItem("formUploadData");
+    const isSignSuccess = sessionStorage.getItem("esignProcess");
+    const formData = sessionStorage.getItem("formUploadData");
     const restoreFileData = loadFileFromLocalStorage();
 
     if (isSignSuccess) {
@@ -137,7 +137,7 @@ function SelectCustomDocUpload({ t, config, formUploadData = {}, setData, docume
       }
 
       setEsignModal(true);
-      localStorage.removeItem("esignProcess");
+      sessionStorage.removeItem("esignProcess");
     }
   }, []);
 

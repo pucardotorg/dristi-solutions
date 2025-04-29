@@ -214,8 +214,9 @@
     }
   }
 }
-.orders-tab-inobox-wrapper {
+.orders-tab-inbox-wrapper {
   .search-wrapper {
+    padding-top: 0;
     .search-field-wrapper.search.custom-both-clear-search {
       display: flex;
       .label-field-pair {
@@ -236,6 +237,9 @@
         }
       }
     }
+  }
+  .section {
+    min-height: auto !important;
   }
 }
 .admitted-case-details {

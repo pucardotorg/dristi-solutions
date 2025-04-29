@@ -32,7 +32,7 @@ const SBIPaymentStatus = ({ path }) => {
   const { status, businessService, serviceNumber } = Digit.Hooks.useQueryParams();
   const { state } = useLocation();
   const history = useHistory();
-  const localStorageData = localStorage?.getItem("paymentReceiptData");
+  const localStorageData = sessionStorage?.getItem("paymentReceiptData");
   const storedData = localStorageData ? JSON.parse(localStorageData) : {};
   const receiptData = storedData?.receiptData;
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -159,7 +159,7 @@ const SBIPaymentStatus = ({ path }) => {
             style={{ width: "100%" }}
             labelClassName="tertiary-label-selector"
             onClick={() => {
-              localStorage.removeItem("paymentReceiptData");
+              sessionStorage.removeItem("paymentReceiptData");
               history.replace(`/${window?.contextPath}/citizen/home/home-pending-task`);
             }}
           />

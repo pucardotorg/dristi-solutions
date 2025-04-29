@@ -72,7 +72,6 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
         setSignedId(uploadedFileId?.[0]?.fileStoreId);
         setIsSigned(true);
         setIsSignedHeading(true);
-        localStorage.setItem("formData", JSON.stringify(formData));
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);
@@ -101,7 +100,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
             <Button
               label={""}
               onButtonClick={() => {
-                localStorage.setItem("combineDocumentsPdf", combinedFileStoreId);
+                sessionStorage.setItem("combineDocumentsPdf", combinedFileStoreId);
                 handleEsign(name, pageModule, combinedFileStoreId);
               }}
               style={{ boxShadow: "none", backgroundColor: "#007E7E", border: "none", padding: "20px 30px", maxWidth: "fit-content" }}

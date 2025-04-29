@@ -185,14 +185,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
   };
 
   const handleClose = useCallback(() => {
-    localStorage.removeItem("SignedFileStoreID");
+    sessionStorage.removeItem("SignedFileStoreID");
     setShowActionModal(false);
     if (taskNumber) history.replace(`/${window?.contextPath}/employee/orders/Summons&Notice`);
     setReload(!reload);
   }, [history, reload, taskNumber]);
 
   const handleSubmit = useCallback(async () => {
-    localStorage.removeItem("SignedFileStoreID");
+    sessionStorage.removeItem("SignedFileStoreID");
     const { data: tasksData } = await refetch();
     if (tasksData) {
       try {
@@ -304,9 +304,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
   useEffect(() => {
     // Set default values when component mounts
     setDefaultValues(defaultSearchValues);
-    const isSignSuccess = localStorage.getItem("esignProcess");
-    const isRowData = JSON.parse(localStorage.getItem("ESignSummons"));
-    const delieveryCh = localStorage.getItem("delieveryChannel");
+    const isSignSuccess = sessionStorage.getItem("esignProcess");
+    const isRowData = JSON.parse(sessionStorage.getItem("ESignSummons"));
+    const delieveryCh = sessionStorage.getItem("delieveryChannel");
     if (isSignSuccess) {
       if (rowData) {
         setRowData(isRowData);
@@ -317,8 +317,9 @@ const ReviewSummonsNoticeAndWarrant = () => {
       setShowActionModal(true);
       setActionModalType("SIGN_PENDING");
       setStep(1);
-      localStorage.removeItem("esignProcess");
-      localStorage.removeItem("ESignSummons");
+      sessionStorage.removeItem("esignProcess");
+      sessionStorage.removeItem("ESignSummons");
+      sessionStorage.removeItem("delieveryChannel");
     }
   }, []);
 
@@ -357,7 +358,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
       const caseDetails = handleTaskDetails(rowData?.taskDetails);
       return [
         { key: "ISSUE_TO", value: caseDetails?.respondentDetails?.name },
-        { key: "NEXT_HEARING_DATE", value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A" },
+        {
+          key: "NEXT_HEARING_DATE",
+          value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
+        },
         // process fee paid on
         // { key: "AMOUNT_PAID_TEXT", value: `Rs. ${caseDetails?.deliveryChannels?.fees || 100}` },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
@@ -368,11 +372,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const reverseToDDMMYYYY = (dateStr) => {
     if (!dateStr) return "N/A";
-  
+
     const parts = dateStr.split("-");
-  
+
     if (parts.length !== 3) return "N/A";
-  
+
     // Check if it's in YYYY-MM-DD format
     if (parts[0].length === 4) {
       return `${parts[2]}-${parts[1]}-${parts[0]}`;
@@ -389,7 +393,10 @@ const ReviewSummonsNoticeAndWarrant = () => {
         { key: "ISSUE_DATE", value: convertToDateInputFormat(rowData?.createdDate) },
         { key: "SENT_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
-        { key: "NEXT_HEARING_DATE", value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A" },
+        {
+          key: "NEXT_HEARING_DATE",
+          value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
+        },
       ];
     }
   }, [rowData, nextHearingDate]);
@@ -400,13 +407,16 @@ const ReviewSummonsNoticeAndWarrant = () => {
       return [
         { key: "ISSUE_TO", value: caseDetails?.respondentDetails?.name },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
-        { key: "NEXT_HEARING_DATE", value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A" },
+        {
+          key: "NEXT_HEARING_DATE",
+          value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
+        },
         { key: "STATUS", value: rowData?.status },
         { key: "STATUS_UPDATED_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
         { key: "REMARKS", value: caseDetails?.remarks?.remark ? caseDetails?.remarks?.remark : "N/A" },
       ];
     }
-  },[rowData, nextHearingDate]);
+  }, [rowData, nextHearingDate]);
 
   const links = useMemo(() => {
     return [{ text: "View order", link: "" }];
@@ -458,7 +468,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const handleSubmitEsign = useCallback(async () => {
     try {
-      const localStorageID = localStorage.getItem("fileStoreId");
+      const localStorageID = sessionStorage.getItem("fileStoreId");
       const documents = Array.isArray(rowData?.documents) ? rowData.documents : [];
       const documentsFile =
         signatureId !== "" || localStorageID
@@ -467,8 +477,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
               fileStore: signatureId || localStorageID,
             }
           : null;
-      localStorage.removeItem("fileStoreId");
-      localStorage.setItem("SignedFileStoreID", documentsFile?.fileStore);
+      sessionStorage.removeItem("fileStoreId");
+      sessionStorage.setItem("SignedFileStoreID", documentsFile?.fileStore);
       const reqBody = {
         task: {
           ...rowData,

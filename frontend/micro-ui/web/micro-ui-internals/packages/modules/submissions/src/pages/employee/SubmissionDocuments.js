@@ -170,13 +170,13 @@ const SubmissionDocuments = ({ path }) => {
   };
 
   const handleSuccessDownloadSubmission = () => {
-    const fileStoreId = localStorage.getItem("fileStoreId");
+    const fileStoreId = sessionStorage.getItem("fileStoreId");
     downloadPdf(tenantId, signedDocumentUploadedID || fileStoreId);
   };
 
   const handleDownloadReviewModal = async () => {
     if ([SubmissionDocumentWorkflowState.PENDING_ESIGN].includes(currentSubmissionStatus)) {
-      const fileStoreId = localStorage.getItem("fileStoreId");
+      const fileStoreId = sessionStorage.getItem("fileStoreId");
       downloadPdf(tenantId, signedDocumentUploadedID || fileStoreId || evidenceDetails?.file?.fileStore);
     } else {
       await downloadPdfFromFile(combinedDocumentFile?.[0]);
@@ -263,7 +263,7 @@ const SubmissionDocuments = ({ path }) => {
           );
         }
       } else {
-        const localStorageID = localStorage.getItem("fileStoreId");
+        const localStorageID = sessionStorage.getItem("fileStoreId");
         const documentsFile =
           signedDocumentUploadedID !== "" || localStorageID
             ? {
@@ -355,11 +355,11 @@ const SubmissionDocuments = ({ path }) => {
   };
 
   useEffect(() => {
-    const esignProcess = localStorage.getItem("esignProcess");
+    const esignProcess = sessionStorage.getItem("esignProcess");
     if (esignProcess) {
       setShowReviewModal(true);
-      localStorage.removeItem("esignProcess");
-      localStorage.removeItem("combineDocumentsPdf");
+      sessionStorage.removeItem("esignProcess");
+      sessionStorage.removeItem("combineDocumentsPdf");
     }
   }, []);
 
