@@ -1,0 +1,108 @@
+ServiceMaps:
+  serviceName: case-service
+  version: 1.0.0
+  mappings:
+    - topic: case-legacy-topic
+      configKey: LEGACYINDEX
+      indexes:
+        - name: case-index-v1
+          type: case
+          id: $.id
+          isBulk: true
+          jsonPath: $.criteria[0].responseList
+          timeStampField: $.auditDetails.createdTime
+          customJsonMapping:
+            indexMapping:
+              {
+                "caseNumber": "",
+                "caseTitle": "",
+                "stage": "",
+                "substage": "",
+                "judgementDateTime": "",
+                "outcome": "",
+                "remarks": "",
+                "filingDateTime": "",
+                "status": "",
+                "courtId": "",
+                "registrationDateTime": "",
+                "filingNumber": "",
+                "sections": {},
+                "subsections": {},
+                "courtCaseNumber": "",
+                "cnrNumber": "",
+                "cmpNumber": "",
+                "name": {},
+                "dateOfBirth": "",
+                "address": {},
+                "@timestamp":""
+              }
+
+            fieldMapping:
+              - inJsonPath: $.caseNumber
+                outJsonPath: $.caseNumber
+              - inJsonPath: $.caseTitle
+                outJsonPath: $.caseTitle
+              - inJsonPath: $.stage
+                outJsonPath: $.stage
+              - inJsonPath: $.substage
+                outJsonPath: $.substage
+              - inJsonPath: $.judgementDateTime
+                outJsonPath: $.judgementDateTime
+              - inJsonPath: $.outcome
+                outJsonPath: $.outcome
+              - inJsonPath: $.remarks
+                outJsonPath: $.remarks
+              - inJsonPath: $.filingDateTime
+                outJsonPath: $.filingDateTime
+              - inJsonPath: $.status
+                outJsonPath: $.status
+              - inJsonPath: $.courtId
+                outJsonPath: $.courtId
+              - inJsonPath: $.registrationDateTime
+                outJsonPath: $.registrationDateTime
+              - inJsonPath: $.filingNumber
+                outJsonPath: $.filingNumber
+              - inJsonPath: $.statutesAndSections[0].sections
+                outJsonPath: $.sections
+              - inJsonPath: $.statutesAndSections[0].subsections
+                outJsonPath: $.subsections
+              - inJsonPath: $.courtCaseNumber
+                outJsonPath: $.courtCaseNumber
+              - inJsonPath: $.cnrNumber
+                outJsonPath: $.cnrNumber
+              - inJsonPath: $.cmpNumber
+                outJsonPath: $.cmpNumber
+              - inJsonPath: $.@timestamp
+                outJsonPath: $.@timestamp
+
+            externalUriMapping:
+              - path: http://localhost:8040/individual/v1/_search?limit=1&offset=0&tenantId=kl
+                apiRequest: {
+                  "Individual": {
+                    "individualId": "$.litigants[0].individualId"
+                  },
+                  "RequestInfo": {
+                    "apiId": "Rainmaker",
+                    "authToken": "9e737b13-14d2-45e7-8b96-09de66952e81",
+                    "msgId": "1730970507148|en_IN",
+                    "plainAccessRequest": {},
+                    "userInfo": {
+                      "userName": "newUser",
+                      "uuid": "r456t5tt4fr454tt5tt",
+                      "type": "EMPLOYEE",
+                      "roles": [
+                        {
+                          "name": "TASK_CREATOR",
+                          "code": "TASK_CREATOR"
+                        }
+                      ]
+                    }
+                  }
+                }
+                uriResponseMapping:
+                  - inJsonPath: $.Individual[0].name
+                    outJsonPath: $.petitionerName
+                  - inJsonPath: $.Individual[0].dateOfBirth
+                    outJsonPath: $.petitionerDateOfBirth
+                  - inJsonPath: $.Individual[0].address
+                    outJsonPath: $.petitionerAddress
