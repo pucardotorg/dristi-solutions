@@ -40,7 +40,7 @@ function CaseType({ t }) {
   const requiredDocumentsListLink = window?.globalConfigs?.getConfig("CASE_FILE_REQUIRED_DOCUMENTS");
 
   const onCancel = () => {
-    history.push("/digit-ui/citizen/home/home-pending-task");
+    history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
   };
   const onSelect = () => {
     setPage(1);

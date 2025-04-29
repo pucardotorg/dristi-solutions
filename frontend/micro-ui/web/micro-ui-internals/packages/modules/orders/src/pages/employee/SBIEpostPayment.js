@@ -149,6 +149,8 @@ const SBIEpostPayment = () => {
           filingNumber: filingNumber,
           filteredTasks: filteredTasks,
           orderNumber: orderData?.list?.[0]?.orderNumber,
+          caseId: caseDetails?.id,
+          caseTitle: caseDetails?.caseTitle,
           isCourtBillPaid: isCourtBillPaid,
           hearingId: hearingId,
           orderType: orderType,

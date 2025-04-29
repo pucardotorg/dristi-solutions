@@ -88,12 +88,12 @@ const Home = ({
           serviceCode: "",
           code: "DRISTI",
           path: "",
-          navigationURL: "/digit-ui/citizen/dristi/home",
+          navigationURL: "/ui/citizen/dristi/home",
           leftIcon: "HomeIcon",
           rightIcon: "",
           queryParams: "",
           sidebar: "digit-ui-links",
-          sidebarURL: "/digit-ui/citizen/dristi/home",
+          sidebarURL: "/ui/citizen/dristi/home",
         },
       ],
     }),
@@ -154,7 +154,7 @@ const Home = ({
                   isInfo={code === "OBPS" ? true : false}
                 />
               )}
-              <Links key={index} matchPath={`/digit-ui/citizen/${code.toLowerCase()}`} userType={"citizen"} />
+              <Links key={index} matchPath={`/${window?.contextPath}/citizen/${code.toLowerCase()}`} userType={"citizen"} />
             </div>
             <StaticDynamicCard moduleCode={code?.toUpperCase()} />
           </div>

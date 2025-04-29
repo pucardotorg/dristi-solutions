@@ -135,6 +135,9 @@ public class Configuration {
     @Value("${egov.filestore.path}")
     private String fileStorePath;
 
+    @Value("${egov.courtId}")
+    private String courtId;
+
     //Idgen
     @Value("${egov.idgen.orderConfig}")
     private String orderConfig;

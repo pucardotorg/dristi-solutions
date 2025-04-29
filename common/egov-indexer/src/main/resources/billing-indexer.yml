@@ -35,6 +35,7 @@ ServiceMaps:
               - path: http://localhost:8070/case/v1/_search
                 apiRequest: {
                   "criteria": [
+                    # need to check
                     {"filingNumber": "$.billDetails[0].additionalDetails.filingNumber"}
                   ],
                   "RequestInfo": {

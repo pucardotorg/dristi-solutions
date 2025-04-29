@@ -62,6 +62,7 @@ public class EvidenceEnrichment {
                 comment.setId(UUID.randomUUID());
             }
 
+            evidenceRequest.getArtifact().setCourtId(configuration.getCourtId());
             evidenceRequest.getArtifact().setIsActive(true);
             evidenceRequest.getArtifact().setCreatedDate(System.currentTimeMillis());
 

@@ -89,7 +89,7 @@ const SelectEmail = ({
       if (!isProfile) {
         history.push(`${path}/user-name`);
       } else {
-        history.replace(`/digit-ui/citizen/dristi/home`);
+        history.replace(`/${window?.contextPath}/citizen/dristi/home`);
       }
     } catch (error) {
       console.error("error: ", error);
@@ -100,7 +100,7 @@ const SelectEmail = ({
   };
 
   if (!params?.mobileNumber && !isUserLoggedIn) {
-    history.push("/digit-ui/citizen/dristi/home/login");
+    history.push(`/${window?.contextPath}/citizen/dristi/home/login`);
   }
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues, index, currentDisplayIndex) => {

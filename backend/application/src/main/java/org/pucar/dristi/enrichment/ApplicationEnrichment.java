@@ -54,6 +54,7 @@ public class ApplicationEnrichment {
                 application.setId(UUID.randomUUID());
                 application.setCreatedDate(System.currentTimeMillis());
                 application.setIsActive(true);
+                application.setCourtId(configuration.getCourtId());
 
                 if (application.getStatuteSection() != null) {
                     application.getStatuteSection().setId(UUID.randomUUID());

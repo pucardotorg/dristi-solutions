@@ -1,0 +1,19 @@
+{
+  "tenantId": "kl",
+  "moduleName": "Order",
+  "masterName": "WarrantType",
+  "mdmsPayload": [
+    {
+      "id": "6b8934b6-1b57-4398-acac-4b0ce32cb23b",
+      "tenantId": "kl",
+      "schemaCode": "Order.WarrantType",
+      "uniqueIdentifier": "2",
+      "data": {
+        "id": 2,
+        "code": "BENCH",
+        "name": "Bench"
+      },
+      "isActive": false
+    }
+  ]
+}

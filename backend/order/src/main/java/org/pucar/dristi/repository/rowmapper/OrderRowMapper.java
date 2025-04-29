@@ -15,9 +15,6 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.sql.ResultSet;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @Component
@@ -55,6 +52,7 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
                             .id(UUID.fromString(rs.getString("id")))
                             .tenantId(rs.getString("tenantid"))
                             .orderNumber(rs.getString("ordernumber"))
+                            .courtId(rs.getString("courtId"))
                             .linkedOrderNumber(rs.getString("linkedordernumber"))
                             .hearingNumber(rs.getString("hearingnumber"))
                             .cnrNumber(rs.getString("cnrnumber"))

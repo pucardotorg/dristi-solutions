@@ -213,7 +213,7 @@ function EFilingCases({ path }) {
   const [caseResubmitSuccess, setCaseResubmitSuccess] = useState(false);
   const [prevSelected, setPrevSelected] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
-  const homepagePath = "/digit-ui/citizen/dristi/home";
+  const homepagePath = `/${window?.contextPath}/citizen/dristi/home`;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoader, setIsLoader] = useState(false);
   const [pdfDetails, setPdfDetails] = useState(null);
@@ -1544,6 +1544,8 @@ function EFilingCases({ path }) {
         assignedRole: assignedRole,
         cnrNumber: caseDetails?.cnrNumber,
         filingNumber: filingNumber,
+        caseId: caseDetails?.id,
+        caseTitle: caseDetails?.caseTitle,
         isCompleted,
         stateSla,
         additionalDetails: {},
@@ -1562,6 +1564,8 @@ function EFilingCases({ path }) {
         referenceId: `MANUAL_${filingNumber}`,
         cnrNumber: caseDetails?.cnrNumber,
         filingNumber: filingNumber,
+        caseId: caseDetails?.id,
+        caseTitle: caseDetails?.caseTitle,
         isCompleted: true,
         additionalDetails: {},
         tenantId,
@@ -2391,8 +2395,10 @@ function EFilingCases({ path }) {
             status: "PENDING_PAYMENT",
             assignedTo: [...assignees?.map((uuid) => ({ uuid })), ...poaHolders],
             assignedRole: ["CASE_CREATOR"],
-            cnrNumber: null,
+            cnrNumber: caseDetails?.cnrNumber,
             filingNumber: caseDetails?.filingNumber,
+            caseId: caseDetails?.id,
+            caseTitle: caseDetails?.caseTitle,
             isCompleted: false,
             stateSla: stateSla.PENDING_PAYMENT * dayInMillisecond + todayDate,
             additionalDetails: {},

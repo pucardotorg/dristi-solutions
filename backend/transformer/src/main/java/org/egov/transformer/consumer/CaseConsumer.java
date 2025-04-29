@@ -17,6 +17,9 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Component
 @Slf4j
 public class CaseConsumer {
@@ -98,7 +101,9 @@ public class CaseConsumer {
             CaseRequest caseRequest = new CaseRequest();
             caseRequest.setCases(courtCase);
             logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCase));
+            // TODO : currently some topics are missing in indexer files
             producer.push(topic, caseRequest);
+            pushToLegacyTopic(courtCase);
         } catch (Exception exception) {
             log.error("error in saving case", exception);
         }
@@ -117,6 +122,7 @@ public class CaseConsumer {
             caseRequest.setCases(courtCase);
             logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCase));
             producer.push(updateCaseTopic, caseRequest);
+            pushToLegacyTopic(courtCase);
         } catch (Exception exception) {
             log.error("error in saving case", exception);
         }
@@ -139,6 +145,7 @@ public class CaseConsumer {
             updatedElasticSearchCaseRequest.setCases(courtCaseElasticSearch);
             logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCaseElasticSearch));
             producer.push(updateCaseTopic, updatedElasticSearchCaseRequest);
+            pushToLegacyTopic(courtCaseElasticSearch);
         } catch (Exception exception) {
             log.error("error in saving case", exception);
         }
@@ -156,8 +163,22 @@ public class CaseConsumer {
             caseRequest.setCases(courtCase);
             logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCase));
             producer.push(updateCaseTopic, caseRequest);
+            pushToLegacyTopic(courtCase);
         } catch (Exception exception) {
             log.error("error in saving case", exception);
         }
+    }
+
+    private void pushToLegacyTopic(CourtCase courtCase) {
+        CaseResponse caseResponse = new CaseResponse();
+        List<CaseCriteria> caseCriteriaList = new ArrayList<>();
+        CaseCriteria caseCriteria = new CaseCriteria();
+        List<CourtCase> courtCaseList = new ArrayList<>();
+        courtCaseList.add(courtCase);
+        caseCriteria.setResponseList(courtCaseList);
+        caseCriteria.setCaseId(String.valueOf(courtCase.getId()));
+        caseCriteriaList.add(caseCriteria);
+        caseResponse.setCriteria(caseCriteriaList);
+        producer.push("case-legacy-topic", caseResponse);
     }
 }

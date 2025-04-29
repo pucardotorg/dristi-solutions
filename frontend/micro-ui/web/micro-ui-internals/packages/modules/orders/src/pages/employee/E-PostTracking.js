@@ -183,6 +183,8 @@ const EpostTrackingPage = () => {
             assignedRole: ["JUDGE_ROLE"],
             cnrNumber: taskData?.list[0]?.cnrNumber,
             filingNumber: taskData?.list[0]?.filingNumber,
+            caseId: taskData?.list[0]?.caseId,
+            caseTitle: taskData?.list[0]?.caseTitle,
             isCompleted: false,
             stateSla: 3 * dayInMillisecond + todayDate,
             additionalDetails: {},

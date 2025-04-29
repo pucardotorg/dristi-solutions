@@ -1,8 +1,6 @@
 package org.pucar.dristi.enrichment;
 
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -11,7 +9,6 @@ import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.IdgenUtil;
-import org.pucar.dristi.web.models.CompositeItem;
 import org.pucar.dristi.web.models.OrderRequest;
 import org.springframework.stereotype.Component;
 
@@ -59,6 +56,7 @@ public class OrderRegistrationEnrichment {
 
                 String orderNumber = orderRequest.getOrder().getFilingNumber() + "-" + orderRegistrationIdList.get(0);
                 orderRequest.getOrder().setOrderNumber(orderNumber);
+                orderRequest.getOrder().setCourtId(configuration.getCourtId());
             }
 
         } catch (CustomException e) {

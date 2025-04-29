@@ -85,7 +85,7 @@ function CaseLockModal({
         ),
       }));
   }, [caseDetails]);
-  debugger;
+
   const handleSaveOnSubmit = async () => {
     setShowCaseLockingModal(false);
 
@@ -105,7 +105,7 @@ function CaseLockModal({
     try {
       const taskName = isCaseReassigned ? t("PENDING_RE_E_SIGN_FOR_CASE") : t("PENDING_E_SIGN_FOR_CASE");
       const taskStatus = isCaseReassigned ? "PENDING_RE_E-SIGN" : "PENDING_E-SIGN";
-      debugger;
+
       const promises = [...(litigants || []), ...(caseDetails?.representatives || []), ...(caseDetails?.poaHolders || [])]?.map((party) => {
         if (!party?.poaHolder) {
           return createPendingTask({

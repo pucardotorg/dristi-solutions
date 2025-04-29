@@ -14,9 +14,7 @@ const SelectMobileNumber = ({ t, onSelect, mobileNumber, onMobileChange, config,
         onChange={onMobileChange}
         value={mobileNumber}
         buttonStyle={{ color: "red" }}
-      >
-
-      </FormStep>
+      ></FormStep>
       {!isRegister && (
         <h3>
           {t("CS_REGISTER_ACCOUNT")}
@@ -24,8 +22,8 @@ const SelectMobileNumber = ({ t, onSelect, mobileNumber, onMobileChange, config,
             <Link
               to={
                 !isUserLoggedIn
-                  ? `/digit-ui/citizen/dristi/home/registration/mobile-number`
-                  : `/digit-ui/citizen/dristi/home/registration/user-name`
+                  ? `/${window?.contextPath}/citizen/dristi/home/registration/mobile-number`
+                  : `/${window?.contextPath}/citizen/dristi/home/registration/user-name`
               }
             >
               {String(t("CS_REGISTER_LINK"))}

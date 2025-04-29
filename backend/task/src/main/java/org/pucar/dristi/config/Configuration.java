@@ -185,6 +185,9 @@ public class Configuration {
     @Value(("${task.business.service}"))
     private String taskBusinessService;
 
+    @Value("${egov.courtId}")
+    private String courtId;
+
     //Idgen
     @Value("${egov.idgen.taskConfig}")
     private String taskConfig;

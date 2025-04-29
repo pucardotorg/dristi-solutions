@@ -647,6 +647,8 @@ export const updateProfileData = async ({
           assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "COURT_ROOM_MANAGER"],
           cnrNumber: caseDetails?.cnrNumber,
           filingNumber: caseDetails?.filingNumber,
+          caseId: caseDetails?.id,
+          caseTitle: caseDetails?.caseTitle,
           isCompleted: false,
           additionalDetails: {
             dateOfApplication: new Date().getTime(),

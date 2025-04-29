@@ -7,7 +7,7 @@ import { hearingService } from "../services";
  * @param {number} refetchInterval
  * @returns data
  */
-function useGetHearings(data, params, keys, enabled, refetchInterval = false, attendeeIndividualId = "") {
+function useGetHearings(data, params, keys, enabled, refetchInterval = false, attendeeIndividualId = "", cacheTime = 0) {
   const { isLoading, data: hearingResponse, isFetching, refetch, error } = useQuery(
     `GET_HEARING_${keys}`,
     () =>
@@ -25,7 +25,7 @@ function useGetHearings(data, params, keys, enabled, refetchInterval = false, at
         .then((data) => data)
         .catch(() => null),
     {
-      cacheTime: 0,
+      cacheTime: cacheTime,
       enabled: Boolean(enabled),
       retry: false, // Disable automatic retries to prevent flooding the API with requests
       refetchInterval,

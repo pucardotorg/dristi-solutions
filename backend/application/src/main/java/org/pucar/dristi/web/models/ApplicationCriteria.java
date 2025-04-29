@@ -22,6 +22,9 @@ public class ApplicationCriteria {
     @JsonProperty("cnrNumber")
     private String cnrNumber = null;
 
+    @JsonProperty("courtId")
+    private String courtId = null;
+
     @JsonProperty("filingNumber")
     private String filingNumber = null;
     @JsonProperty("applicationType")

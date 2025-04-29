@@ -112,7 +112,7 @@ const CaseOverview = ({
     : ordersRes?.list?.filter((order) => order.status !== "DRAFT_IN_PROGRESS");
 
   const handleMakeSubmission = () => {
-    history.push(`/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
+    history.push(`/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
   };
 
   if (isHearingsLoading || isOrdersLoading) {

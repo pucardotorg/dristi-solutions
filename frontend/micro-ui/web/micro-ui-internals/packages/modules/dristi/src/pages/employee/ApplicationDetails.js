@@ -303,7 +303,7 @@ const ApplicationDetails = ({ location, match }) => {
             <Modal
               headerBarMain={<Heading label={t("CONFIRM_APPROVE_ADVOCATE_APPLICATION_HEADER")} />}
               headerBarEnd={<CloseBtn onClick={() => setShowApproveModal(false)} />}
-              actionCancelLabel={t("CS_BACK")} 
+              actionCancelLabel={t("CS_BACK")}
               actionCancelOnSubmit={() => {
                 setShowApproveModal(false);
               }}
@@ -312,7 +312,7 @@ const ApplicationDetails = ({ location, match }) => {
                 takeAction("APPROVE");
               }}
             >
-              <div style={{padding:"20px 0px"}}>{t(`CONFIRM_APPROVE_ADVOCATE_APPLICATION_TEXT`)}</div>
+              <div style={{ padding: "20px 0px" }}>{t(`CONFIRM_APPROVE_ADVOCATE_APPLICATION_TEXT`)}</div>
             </Modal>
           )}
           {showInfoModal?.isOpen && (
@@ -323,8 +323,8 @@ const ApplicationDetails = ({ location, match }) => {
                     setShowInfoModal({ isOpen: false, status: "" });
                     history.push(
                       userType === "ADVOCATE_CLERK"
-                        ? `/digit-ui/employee/dristi/registration-requests?type=clerk`
-                        : `/digit-ui/employee/dristi/registration-requests?type=advocate`,
+                        ? `/${window?.contextPath}/employee/dristi/registration-requests?type=clerk`
+                        : `/${window?.contextPath}/employee/dristi/registration-requests?type=advocate`,
                       { isSentBack: true }
                     );
                   }}
@@ -335,8 +335,8 @@ const ApplicationDetails = ({ location, match }) => {
                 setShowInfoModal({ isOpen: false, status: "" });
                 history.push(
                   userType === "ADVOCATE_CLERK"
-                    ? `/digit-ui/employee/dristi/registration-requests?type=clerk`
-                    : `/digit-ui/employee/dristi/registration-requests?type=advocate`,
+                    ? `/${window?.contextPath}/employee/dristi/registration-requests?type=clerk`
+                    : `/${window?.contextPath}/employee/dristi/registration-requests?type=advocate`,
                   { isSentBack: true }
                 );
               }}

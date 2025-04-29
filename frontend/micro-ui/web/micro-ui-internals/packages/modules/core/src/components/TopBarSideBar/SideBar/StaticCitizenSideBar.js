@@ -224,8 +224,8 @@ const StaticCitizenSideBar = ({ linkData, islinkDataLoading }) => {
                 className={`sidebar-list ${
                   pathname === item?.link ||
                   pathname === item?.sidebarURL ||
-                  (pathname.includes(item?.link) && pathname !== "/digit-ui/citizen/dristi/home/login") ||
-                  (item.type !== "link" && pathname === "/digit-ui/citizen/dristi/home/login")
+                  (pathname.includes(item?.link) && pathname !== `/${window?.contextPath}/citizen/dristi/home/login`) ||
+                  (item.type !== "link" && pathname === `/${window?.contextPath}/citizen/dristi/home/login`)
                     ? "active"
                     : ""
                 }`}

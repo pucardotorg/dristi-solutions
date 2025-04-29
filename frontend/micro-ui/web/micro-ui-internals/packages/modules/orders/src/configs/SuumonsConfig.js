@@ -146,11 +146,6 @@ export const SummonsTabsConfig = {
           uiConfig: {
             columns: [
               {
-                label: "E_PROCESS_ID",
-                jsonPath: "taskNumber",
-              },
-
-              {
                 label: "CASE_NAME_ID",
                 jsonPath: "filingNumber",
                 additionalCustomization: true,
@@ -161,13 +156,13 @@ export const SummonsTabsConfig = {
                 additionalCustomization: true,
               },
               {
-                label: "DELIEVERY_CHANNEL",
-                jsonPath: "delieveryChannel",
+                label: "STATUS",
+                jsonPath: "documentStatus",
                 additionalCustomization: true,
               },
               {
-                label: "STATUS",
-                jsonPath: "documentStatus",
+                label: "DELIEVERY_CHANNEL",
+                jsonPath: "delieveryChannel",
                 additionalCustomization: true,
               },
               {
@@ -298,13 +293,13 @@ export const SummonsTabsConfig = {
           uiConfig: {
             columns: [
               {
-                label: "E_PROCESS_ID",
-                jsonPath: "taskNumber",
-              },
-
-              {
                 label: "CASE_NAME_ID",
                 jsonPath: "filingNumber",
+                additionalCustomization: true,
+              },
+              {
+                label: "STATUS",
+                jsonPath: "status",
                 additionalCustomization: true,
               },
               {
@@ -318,18 +313,13 @@ export const SummonsTabsConfig = {
                 additionalCustomization: true,
               },
               {
-                label: "STATUS",
-                jsonPath: "status",
+                label: "ISSUED",
+                jsonPath: "createdDate",
                 additionalCustomization: true,
               },
               {
                 label: "DELIEVRY_DATE",
                 jsonPath: "statusChangeDate",
-                additionalCustomization: true,
-              },
-              {
-                label: "ISSUED",
-                jsonPath: "createdDate",
                 additionalCustomization: true,
               },
               {

@@ -99,7 +99,7 @@ function Home() {
               label={t("FILE_A_CASE")}
               labelClassName={"tertiary-label-selector"}
               onButtonClick={() => {
-                history.push("/digit-ui/citizen/dristi/home/file-case");
+                history.push(`/${window?.contextPath}/citizen/dristi/home/file-case`);
               }}
             />
           </div>

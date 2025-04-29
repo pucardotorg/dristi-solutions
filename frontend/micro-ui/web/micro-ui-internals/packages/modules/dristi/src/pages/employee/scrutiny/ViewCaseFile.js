@@ -68,7 +68,7 @@ const delayCondonationTextStyle = {
   color: "#231F20",
 };
 
-function ViewCaseFile({ t, inViewCase = false }) {
+function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const history = useHistory();
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
@@ -140,9 +140,13 @@ function ViewCaseFile({ t, inViewCase = false }) {
     {},
     `dristi-${caseId}`,
     caseId,
-    Boolean(caseId)
+    Boolean(caseId && !caseDetailsAdmitted)
   );
-  const caseDetails = useMemo(() => caseFetchResponse?.criteria?.[0]?.responseList?.[0] || null, [caseFetchResponse]);
+
+  const caseDetails = useMemo(() => caseFetchResponse?.criteria?.[0]?.responseList?.[0] || caseDetailsAdmitted || null, [
+    caseFetchResponse,
+    caseDetailsAdmitted,
+  ]);
 
   const defaultScrutinyErrors = useMemo(() => {
     return caseDetails?.additionalDetails?.scrutiny || {};
@@ -357,13 +361,21 @@ function ViewCaseFile({ t, inViewCase = false }) {
 
   const updateCaseDetails = async (action) => {
     const scrutinyObj = action === CaseWorkflowAction.VALIDATE ? {} : CaseWorkflowAction.SEND_BACK && isPrevScrutiny ? newScrutinyData : formdata;
+    const newAdditionalDetails = {
+      ...caseDetails.additionalDetails,
+      scrutiny: scrutinyObj,
+      ...(action === CaseWorkflowAction.VALIDATE
+        ? { scrutinyComment: comment }
+        : action === CaseWorkflowAction.SEND_BACK && { scrutinyCommentSendBack: commentSendBack }),
+    };
+
+    if ("judge" in newAdditionalDetails) {
+      delete newAdditionalDetails.judge;
+    }
+
     const newcasedetails = {
       ...caseDetails,
-      additionalDetails: {
-        ...caseDetails.additionalDetails,
-        scrutiny: scrutinyObj,
-        ...(action === CaseWorkflowAction.VALIDATE ? { scrutinyComment: comment } : action === CaseWorkflowAction.SEND_BACK && { scrutinyCommentSendBack: commentSendBack }),
-      },
+      additionalDetails: newAdditionalDetails,
       caseTitle: newCaseName !== "" ? newCaseName : caseDetails?.caseTitle,
     };
     const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
@@ -417,13 +429,13 @@ function ViewCaseFile({ t, inViewCase = false }) {
         if (res?.criteria?.[0]?.responseList?.[0]?.id) {
           history.push(`/${window?.contextPath}/employee/dristi/case?caseId=${res?.criteria?.[0]?.responseList?.[0]?.id}`);
         } else {
-          history.push("/digit-ui/employee/dristi/cases");
+          history.push(`/${window?.contextPath}/employee/dristi/cases`);
         }
         setActionModal(false);
       })
       .catch(() => {
         setActionModal(false);
-        history.push("/digit-ui/employee/dristi/cases");
+        history.push(`/${window?.contextPath}/employee/dristi/cases`);
       });
   };
   const handleAllocationJudge = () => {
@@ -442,18 +454,18 @@ function ViewCaseFile({ t, inViewCase = false }) {
         if (res?.criteria?.[0]?.responseList?.[0]?.id) {
           history.push(`/${window?.contextPath}/employee/dristi/case?caseId=${res?.criteria?.[0]?.responseList?.[0]?.id}`);
         } else {
-          history.push("/digit-ui/employee/dristi/cases");
+          history.push(`/${window?.contextPath}/employee/dristi/cases`);
         }
         setActionModal(false);
       })
       .catch(() => {
         setActionModal(false);
-        history.push("/digit-ui/employee/dristi/cases");
+        history.push(`/${window?.contextPath}/employee/dristi/cases`);
       });
   };
   const handleCloseSucessModal = () => {
     setActionModal(false);
-    history.push("/digit-ui/employee/dristi/cases");
+    history.push(`/${window?.contextPath}/employee/dristi/cases`);
   };
   const handleRegisterCase = () => {
     updateCaseDetails(CaseWorkflowAction.VALIDATE).then((res) => {
@@ -492,7 +504,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
     return <Loader />;
   }
   // if (isScrutiny && state !== CaseWorkflowState.UNDER_SCRUTINY) {
-  //   history.push("/digit-ui/employee/dristi/cases");
+  //   history.push(`/${window?.contextPath}/employee/dristi/cases`);
   // }
   const labels = {
     litigentDetails: "CS_LITIGENT_DETAILS",
@@ -603,7 +615,7 @@ function ViewCaseFile({ t, inViewCase = false }) {
                           </React.Fragment>
                         </div>
                       </div>
-                      <div className="header-icon" onClick={() => { }}>
+                      <div className="header-icon" onClick={() => {}}>
                         <CustomArrowDownIcon />
                       </div>
                     </div>

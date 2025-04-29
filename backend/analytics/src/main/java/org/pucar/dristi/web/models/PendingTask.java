@@ -64,9 +64,11 @@ public class PendingTask {
     private String filingNumber = null;
 
     @JsonProperty("caseId")
+    @NotNull
     private String caseId = null;
 
     @JsonProperty("caseTitle")
+    @NotNull
     private String caseTitle = null;
 
     @JsonProperty("isCompleted")

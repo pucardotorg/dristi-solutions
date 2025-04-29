@@ -25,6 +25,7 @@ public class ServiceConstants {
                     + "\"tenantId\": \"%s\","
                     + "\"caseTitleFilingNumber\": \"%s, %s\","
                     + "\"stage\": \"%s\","
+                    + "\"caseId\": \"%s\","
                     + "\"caseType\": \"%s\","
                     + "\"paymentType\": \"%s\","
                     + "\"amount\": %f,"

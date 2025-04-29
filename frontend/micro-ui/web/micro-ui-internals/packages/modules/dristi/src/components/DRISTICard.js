@@ -35,7 +35,7 @@ const DRISTICard = () => {
           case "isJudge":
             return (
               <div className={"file-case-main"}>
-                <JudgeScreen path={`/digit-ui/employee/dristi`} />
+                <JudgeScreen path={`/${window?.contextPath}/employee/dristi`} />
               </div>
             );
           default:
@@ -49,7 +49,7 @@ const DRISTICard = () => {
                     buttonLabel={t("CS_VIEW_PENDING_REQUESTS")}
                     className="custom-card-style"
                     onClick={() => {
-                      history.push("/digit-ui/employee/dristi/registration-requests");
+                      history.push(`/${window?.contextPath}/employee/dristi/registration-requests`);
                     }}
                   />
                   <CustomCard
@@ -58,7 +58,9 @@ const DRISTICard = () => {
                     buttonLabel={isNyayMitra ? t("CS_VIEW_PENDING_PAYMENTS") : t("CS_VIEW_CASES")}
                     className="custom-card-style"
                     onClick={() => {
-                      isNyayMitra ? history.push("/digit-ui/employee/dristi/pending-payment-inbox") : history.push("/digit-ui/employee/dristi/cases");
+                      isNyayMitra
+                        ? history.push(`/${window?.contextPath}/employee/dristi/pending-payment-inbox`)
+                        : history.push(`/${window?.contextPath}/employee/dristi/cases`);
                     }}
                   />
                 </div>

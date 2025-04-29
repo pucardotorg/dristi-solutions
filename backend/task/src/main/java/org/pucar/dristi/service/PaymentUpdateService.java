@@ -277,12 +277,14 @@ public class PaymentUpdateService {
 
         List<Task> tasks = repository.getTasks(criteria, null);
 
+
+        String paidTaskNumber = taskResponse.getTaskNumber();
+        tasks = tasks.stream().filter(task -> !task.getTaskNumber().equalsIgnoreCase(paidTaskNumber)).collect(Collectors.toList());
+
         if (CollectionUtils.isEmpty(tasks)) {
             log.info("No other pending payment task's found for advocate :: {}", advocateUuid);
             return;
         }
-        String paidTaskNumber = taskResponse.getTaskNumber();
-        tasks = tasks.stream().filter(task -> !task.getTaskNumber().equalsIgnoreCase(paidTaskNumber)).collect(Collectors.toList());
 
         tasks.forEach(task -> {
 

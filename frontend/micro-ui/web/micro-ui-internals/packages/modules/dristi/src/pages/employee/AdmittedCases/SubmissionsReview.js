@@ -238,7 +238,7 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
                   ? app.status === "PENDINGRESPONSE"
                     ? await openResponseModal(app.referenceId)
                     : history.push(
-                        `/digit-ui/citizen/submissions/submissions-create?filingNumber=${filingNumber}&${
+                        `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}&${
                           app.status === "CREATE_SUBMISSION" ? "orderNumber" : "applicationNumber"
                         }=${app.referenceId.split("_").pop()}`
                       )

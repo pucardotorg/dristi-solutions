@@ -2362,6 +2362,8 @@ const GenerateOrders = () => {
             assignedRole,
             cnrNumber: cnrNumber,
             filingNumber: filingNumber,
+            caseId: caseDetails?.id,
+            caseTitle: caseDetails?.caseTitle,
             isCompleted: false,
             stateSla,
             additionalDetails: { ...additionalDetails, litigants: [assignee?.assigneeInfo?.individualId], litigantUuid: [assignee?.partyUuid] },
@@ -2403,6 +2405,8 @@ const GenerateOrders = () => {
             assignedRole,
             cnrNumber: cnrNumber,
             filingNumber: filingNumber,
+            caseId: caseDetails?.id,
+            caseTitle: caseDetails?.caseTitle,
             isCompleted: false,
             stateSla,
             additionalDetails: {
@@ -2444,6 +2448,8 @@ const GenerateOrders = () => {
           assignedRole,
           cnrNumber: cnrNumber,
           filingNumber: filingNumber,
+          caseId: caseDetails?.id,
+          caseTitle: caseDetails?.caseTitle,
           isCompleted: false,
           stateSla: stateSlaMap?.[order?.orderType || orderType] * dayInMillisecond + todayDate,
           additionalDetails: {
@@ -2481,6 +2487,8 @@ const GenerateOrders = () => {
         assignedRole,
         cnrNumber: cnrNumber,
         filingNumber: filingNumber,
+        caseId: caseDetails?.id,
+        caseTitle: caseDetails?.caseTitle,
         isCompleted: false,
         stateSla: stateSlaMap?.[order?.orderType || orderType] * dayInMillisecond + todayDate,
         additionalDetails: {
@@ -2522,6 +2530,8 @@ const GenerateOrders = () => {
           assignedRole,
           cnrNumber: cnrNumber,
           filingNumber: filingNumber,
+          caseId: caseDetails?.id,
+          caseTitle: caseDetails?.caseTitle,
           isCompleted: false,
           stateSla: stateSlaMap?.[order?.orderType || orderType] * dayInMillisecond + todayDate,
           additionalDetails: {
@@ -2560,6 +2570,8 @@ const GenerateOrders = () => {
           assignedRole,
           cnrNumber: cnrNumber,
           filingNumber: filingNumber,
+          caseId: caseDetails?.id,
+          caseTitle: caseDetails?.caseTitle,
           isCompleted: false,
           stateSla,
           additionalDetails: {
@@ -2613,6 +2625,8 @@ const GenerateOrders = () => {
           assignedRole,
           cnrNumber: cnrNumber,
           filingNumber: filingNumber,
+          caseId: caseDetails?.id,
+          caseTitle: caseDetails?.caseTitle,
           isCompleted: false,
           stateSla: stateSlaMap?.[order?.orderType] * dayInMillisecond + todayDate,
           additionalDetails: additionalDetails,
@@ -2634,6 +2648,8 @@ const GenerateOrders = () => {
           assignedRole: [],
           cnrNumber: cnrNumber,
           filingNumber: filingNumber,
+          caseId: caseDetails?.id,
+          caseTitle: caseDetails?.caseTitle,
           isCompleted: true,
           stateSla: null,
           additionalDetails: {},
@@ -3113,32 +3129,49 @@ const GenerateOrders = () => {
               channelCode: channelTypeEnum?.[item?.type]?.code,
             };
 
-            const address = ["Via Police"].includes(item?.type)
-              ? {
-                  ...item?.value,
-                  locality: item?.value?.locality || "",
-                  coordinate: {
-                    longitude: item?.value?.geoLocationDetails?.longitude,
-                    latitude: item?.value?.geoLocationDetails?.latitude,
-                  },
-                }
-              : ["e-Post", "Registered Post"].includes(item?.type)
-              ? respondentAddress[channelMap.get(item?.type) - 1]
-              : respondentAddress[0];
+            let address = {};
+            if (orderType === "WARRANT") {
+              address = {
+                ...item?.value,
+                locality: item?.value?.locality || "",
+                coordinate: {
+                  longitude: item?.value?.geoLocationDetails?.longitude,
+                  latitude: item?.value?.geoLocationDetails?.latitude,
+                },
+              };
+            } else {
+              address = ["Via Police"].includes(item?.type)
+                ? {
+                    ...item?.value,
+                    locality: item?.value?.locality || "",
+                    coordinate: {
+                      longitude: item?.value?.geoLocationDetails?.longitude,
+                      latitude: item?.value?.geoLocationDetails?.latitude,
+                    },
+                  }
+                : ["e-Post", "Registered Post"].includes(item?.type)
+                ? respondentAddress[channelMap.get(item?.type) - 1]
+                : respondentAddress[0];
+            }
             const sms = ["SMS"].includes(item?.type) ? respondentPhoneNo[channelMap.get(item?.type) - 1] : respondentPhoneNo[0];
             const email = ["E-mail"].includes(item?.type) ? respondentEmail[channelMap.get(item?.type) - 1] : respondentEmail[0];
 
+            let resolvedAddress = {};
+            if (orderType === "WARRANT" || ["Via Police"].includes(item?.type)) {
+              resolvedAddress = address;
+            } else if (["e-Post", "Registered Post"].includes(item?.type)) {
+              resolvedAddress = {
+                ...address,
+                locality: item?.value?.locality || address?.locality,
+                coordinate: item?.value?.coordinates || address?.coordinates,
+              };
+            } else {
+              resolvedAddress = { ...address, coordinate: address?.coordinates } || "";
+            }
+
             clonedPayload.respondentDetails = {
               ...clonedPayload.respondentDetails,
-              address: ["Via Police"].includes(item?.type)
-                ? address
-                : ["e-Post", "Registered Post"].includes(item?.type)
-                ? {
-                    ...address,
-                    locality: item?.value?.locality || address?.locality,
-                    coordinate: item?.value?.coordinates || address?.coordinates,
-                  }
-                : { ...address, coordinate: address?.coordinates } || "",
+              address: resolvedAddress,
               phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
               email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
               age: "",
@@ -3226,6 +3259,8 @@ const GenerateOrders = () => {
               orderId: orderData?.id,
               filingNumber,
               cnrNumber,
+              caseId: caseDetails?.id,
+              caseTitle: caseDetails?.caseTitle,
               taskType: orderType,
               status: "INPROGRESS",
               tenantId,
@@ -3757,6 +3792,8 @@ const GenerateOrders = () => {
             referenceId: currentOrder?.additionalDetails?.pendingTaskRefId,
             status: "PROFILE_EDIT_REQUEST",
             filingNumber: filingNumber,
+            caseId: caseDetails?.id,
+            caseTitle: caseDetails?.caseTitle,
             isCompleted: true,
             tenantId,
           },
@@ -3878,6 +3915,8 @@ const GenerateOrders = () => {
                     assignedRole: ["CASE_RESPONDER"],
                     cnrNumber: caseData?.cnrNumber,
                     filingNumber: caseData?.filingNumber,
+                    caseId: caseData?.id,
+                    caseTitle: caseData?.caseTitle,
                     isCompleted: false,
                     stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
                     additionalDetails: {
@@ -3944,6 +3983,8 @@ const GenerateOrders = () => {
                       assignedRole: ["CASE_RESPONDER"],
                       cnrNumber: caseData?.cnrNumber,
                       filingNumber: caseData?.filingNumber,
+                      caseId: caseData?.id,
+                      caseTitle: caseData?.caseTitle,
                       isCompleted: false,
                       stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
                       additionalDetails: {
@@ -3995,6 +4036,8 @@ const GenerateOrders = () => {
                   assignedRole: ["JUDGE_ROLE"],
                   cnrNumber: caseDetails?.cnrNumber,
                   filingNumber: caseDetails?.filingNumber,
+                  caseId: caseDetails?.id,
+                  caseTitle: caseDetails?.caseTitle,
                   isCompleted: false,
                   stateSla: todayDate + stateSla.SCHEDULE_HEARING,
                   additionalDetails: {},
@@ -4012,6 +4055,8 @@ const GenerateOrders = () => {
                     assignedRole: ["CASE_RESPONDER"],
                     cnrNumber: caseDetails?.cnrNumber,
                     filingNumber: caseDetails?.filingNumber,
+                    caseId: caseDetails?.id,
+                    caseTitle: caseDetails?.caseTitle,
                     isCompleted: true,
                     stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
                     additionalDetails: {},
@@ -4430,6 +4475,18 @@ const GenerateOrders = () => {
             formData?.bailInfo?.isBailable?.code === true
           ) {
             setFormErrors?.current?.[index]?.("bailableAmount", { message: t("CS_VALID_AMOUNT_DECIMAL") });
+            hasError = true;
+            break;
+          }
+
+          if (
+            formData?.warrantFor?.selectedChannels?.some(
+              (channel) =>
+                (channel?.code === "RPAD" || channel?.code === "POLICE") &&
+                (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
+            )
+          ) {
+            setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
             hasError = true;
             break;
           }

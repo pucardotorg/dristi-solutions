@@ -45,7 +45,7 @@ ServiceMaps:
                 outJsonPath: $.additionalDetails
               - inJsonPath: $.filingNumber[0]
                 outJsonPath: $.filingNumber
-
+            # TODO : need to review case search api related to ticket 2494
             externalUriMapping:
               - path: http://localhost:8070/case/v1/_search
                 apiRequest: {

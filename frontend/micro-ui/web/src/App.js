@@ -15,7 +15,7 @@ import { initHomeComponents } from "@egovernments/digit-ui-module-home";
 import "dristi-ui-css/dist/index.min.css";
 
 window.contextPath =
-  window?.globalConfigs?.getConfig("CONTEXT_PATH") || "digit-ui";
+  window?.globalConfigs?.getConfig("CONTEXT_PATH") || "ui";
 
 const enabledModules = [
   "DRISTI",
@@ -46,8 +46,6 @@ initLibraries().then(() => {
 });
 
 function App() {
-  window.contextPath =
-    window?.globalConfigs?.getConfig("CONTEXT_PATH") || "digit-ui";
   const stateCode =
     window.globalConfigs?.getConfig("STATE_LEVEL_TENANT_ID") ||
     process.env.REACT_APP_STATE_LEVEL_TENANT_ID;

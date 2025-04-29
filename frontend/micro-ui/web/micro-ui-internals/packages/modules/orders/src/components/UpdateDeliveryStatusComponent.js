@@ -44,7 +44,7 @@ const UpdateDeliveryStatusComponent = ({
   }, [selectedDelievery, date]);
 
   return (
-    <div className="update-delivery-status" style={{ width: 616 }}>
+    <div className="update-delivery-status">
       <LabelFieldPair className="case-label-field-pair">
         <CardLabel className="case-input-label">{`${t("Update Delivery Status")}`}</CardLabel>
         <Dropdown t={t} option={deliveryOptions} selected={selectedDelievery} optionKey={"value"} select={(e) => setSelectedDelievery(e)} />

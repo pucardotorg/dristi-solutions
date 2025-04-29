@@ -30,6 +30,9 @@ public class Configuration {
 	@Value("${egov.user.update.path}")
 	private String userUpdateEndpoint;
 
+	@Value("${egov.courtId}")
+	private String courtId;
+
 	// Idgen Config
 	@Value("${egov.idgen.host}")
 	private String idGenHost;

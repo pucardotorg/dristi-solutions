@@ -63,11 +63,13 @@ const SBIPaymentStatus = ({ path }) => {
                 assignedRole: ["JUDGE_ROLE"],
                 cnrNumber: receiptData?.filteredTasks?.[0]?.cnrNumber,
                 filingNumber: receiptData?.filingNumber,
+                caseId: receiptData?.caseId,
+                caseTitle: receiptData?.caseTitle,
                 isCompleted: false,
                 stateSla: 3 * dayInMillisecond + todayDate,
                 additionalDetails: {
                   hearingId: receiptData?.hearingId,
-                  partyIndex: receiptData?.partyIndex
+                  partyIndex: receiptData?.partyIndex,
                 },
                 tenantId,
               },
@@ -82,6 +84,8 @@ const SBIPaymentStatus = ({ path }) => {
                 assignedRole: [],
                 cnrNumber: receiptData?.filteredTasks?.[0]?.cnrNumber,
                 filingNumber: receiptData?.filingNumber,
+                caseId: receiptData?.caseId,
+                caseTitle: receiptData?.caseTitle,
                 isCompleted: true,
                 stateSla: "",
                 additionalDetails: {},

@@ -1,8 +1,9 @@
 import { CloseSvg } from "@egovernments/digit-ui-components";
 import React, { useMemo } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
+import ApplicationInfoComponent from "./ApplicationInfoComponent";
 
-function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData }) {
+function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const doc = rowData?.documents?.find((doc) => doc.documentType === "SIGNED_TASK_DOCUMENT");
@@ -67,6 +68,7 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData }) {
       actionSaveOnSubmit={() => {}}
       popupStyles={{ minWidth: "880px", width: "80%" }}
     >
+      {infos && <ApplicationInfoComponent infos={infos} />}
       {showDocument}
 
       <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: "16px" }}>

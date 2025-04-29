@@ -191,13 +191,13 @@ function TermsConditions({ params = {}, setParams = () => {}, path, refetchIndiv
               ],
             })
               .then(() => {
-                history.push(`/digit-ui/citizen/dristi/home/response`, {
+                history.push(`/${window?.contextPath}/citizen/dristi/home/response`, {
                   response: "success",
                   createType: data?.clientDetails?.selectUserType?.code,
                 });
               })
               .catch(() => {
-                history.push(`/digit-ui/citizen/dristi/home/response`, { response: "error" });
+                history.push(`/${window?.contextPath}/citizen/dristi/home/response`, { response: "error" });
               });
           });
         } else if (data?.clientDetails?.selectUserType?.apiDetails && data?.clientDetails?.selectUserType?.apiDetails?.serviceName && result) {
@@ -251,24 +251,24 @@ function TermsConditions({ params = {}, setParams = () => {}, path, refetchIndiv
             ],
           })
             .then(() => {
-              history.push(`/digit-ui/citizen/dristi/home/response`, {
+              history.push(`/${window?.contextPath}/citizen/dristi/home/response`, {
                 response: "success",
                 createType: data?.clientDetails?.selectUserType?.code,
               });
             })
             .catch(() => {
-              history.push(`/digit-ui/citizen/dristi/home/response`, { response: "error" });
+              history.push(`/${window?.contextPath}/citizen/dristi/home/response`, { response: "error" });
             })
             .finally(() => {
               setParams({});
             });
         } else {
-          history.push(`/digit-ui/citizen/dristi/home/response`, { response: "success", createType: "LITIGANT" });
+          history.push(`/${window?.contextPath}/citizen/dristi/home/response`, { response: "success", createType: "LITIGANT" });
           setParams({});
         }
       })
       .catch(() => {
-        history.push(`/digit-ui/citizen/dristi/home/response`, { response: "error", createType: "LITIGANT" });
+        history.push(`/${window?.contextPath}/citizen/dristi/home/response`, { response: "error", createType: "LITIGANT" });
         setParams({});
       });
   };

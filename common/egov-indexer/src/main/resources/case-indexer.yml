@@ -101,8 +101,8 @@ ServiceMaps:
                 }
                 uriResponseMapping:
                   - inJsonPath: $.Individual[0].name
-                    outJsonPath: $.name
+                    outJsonPath: $.petitionerName
                   - inJsonPath: $.Individual[0].dateOfBirth
-                    outJsonPath: $.dateOfBirth
+                    outJsonPath: $.petitionerDateOfBirth
                   - inJsonPath: $.Individual[0].address
-                    outJsonPath: $.address
+                    outJsonPath: $.petitionerAddress

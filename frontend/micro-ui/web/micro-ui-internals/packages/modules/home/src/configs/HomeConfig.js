@@ -477,6 +477,8 @@ export const pendingTaskOrderActions = {
     redirectDetails: {
       url: "/home/home-pending-task/reissue-summons-modal",
       params: [
+        { key: "caseId", value: "id" },
+        { key: "caseTitle", value: "caseTitle" },
         { key: "filingNumber", value: "filingNumber" },
         { key: "cnrNumber", value: "cnrNumber" },
         { key: "hearingId", value: "referenceId" },
@@ -489,6 +491,8 @@ export const pendingTaskOrderActions = {
     redirectDetails: {
       url: "/home/home-pending-task/reissue-summons-modal",
       params: [
+        { key: "caseId", value: "id" },
+        { key: "caseTitle", value: "caseTitle" },
         { key: "filingNumber", value: "filingNumber" },
         { key: "cnrNumber", value: "cnrNumber" },
         { key: "hearingId", value: "referenceId" },

@@ -99,7 +99,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
 
   const citizenCrumb = [
     {
-      path: `/digit-ui/citizen/home/home-pending-task`,
+      path: `/${window?.contextPath}/citizen/home/home-pending-task`,
       content: t("ES_COMMON_HOME"),
       show: !hideHomeCrumb.includes(location.pathname),
       isLast: false,
