@@ -47,7 +47,8 @@ public class CompositeOrderService implements OrderProcessor {
                     .order(compositeOrderItem)
                     .requestInfo(requestInfo).build());
 
-            order.setHearingNumber(compositeOrderItem.getHearingNumber());
+            if (compositeOrderItem.getHearingNumber() != null)
+                order.setHearingNumber(compositeOrderItem.getHearingNumber());
 
         }
 
