@@ -22,7 +22,6 @@ public class DataSourceConfig {
     }
 
     @Bean
-    @Primary
     @ConfigurationProperties(prefix = "spring.datasource.reader")
     public DataSourceProperties readerDataSourceProperties() {
         return new DataSourceProperties();
