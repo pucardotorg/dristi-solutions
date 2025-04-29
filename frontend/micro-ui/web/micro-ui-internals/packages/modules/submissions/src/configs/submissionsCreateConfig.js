@@ -1743,11 +1743,11 @@ export const configsOthers = [
         type: "component",
         component: "SelectCustomDragDrop",
         key: "othersDocument",
-        isMandatory: true,
+        isMandatory: false,
         populators: {
           inputs: [
             {
-              isMandatory: true,
+              isMandatory: false,
               name: "documents",
               documentHeader: "OTHERS_DOCUMENT",
               documentHeaderStyle: { fontSize: "19px", fontWeight: 700 },
@@ -1757,6 +1757,7 @@ export const configsOthers = [
               fileTypes: ["PDF", "JPEG", "PNG", "JPG"],
               uploadGuidelines: "UPLOAD_PDF_JPEG_50",
               headerClassName: "dristi-font-bold",
+              isOptional: "CS_IS_OPTIONAL",
             },
           ],
         },
