@@ -448,7 +448,7 @@ const containerJoinFileCaseStyle = {
   border: "1px solid #e8e8e8",
   borderRadius: "8px",
 };
-const LitigantHomePage = ({ isApprovalPending, setShowSubmitResponseModal, setResponsePendingTask }) => {
+const LitigantHomePage = ({ isApprovalPending }) => {
   const userName = Digit.SessionStorage.get("User");
   const { t } = useTranslation();
   const today = new Date();
@@ -542,11 +542,7 @@ const LitigantHomePage = ({ isApprovalPending, setShowSubmitResponseModal, setRe
                 {t("CS_JOIN_ONGOING_CASE_SUBTEXT_1")}
               </span>
             </React.Fragment>
-            <JoinCaseHome
-              refreshInbox={refreshInbox}
-              setShowSubmitResponseModal={setShowSubmitResponseModal}
-              setResponsePendingTask={setResponsePendingTask}
-            />
+            <JoinCaseHome refreshInbox={refreshInbox} />
           </div>
         </div>
       </div>
