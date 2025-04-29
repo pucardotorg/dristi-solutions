@@ -1,6 +1,6 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
 import { ActionBar, SubmitBar, Button, Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
@@ -1861,13 +1861,15 @@ const AdmittedCases = () => {
 
   const ordersData = historyOrderData || apiOrdersData;
 
-  const onTabChange = (n) => {
-    history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${newTabSearchConfig?.TabSearchconfig?.[n].label}`, {
-      caseData: caseData,
-      orderData: ordersData,
-    });
-    // urlParams.set("tab", newTabSearchConfig?.TabSearchconfig?.[n].label);
-  };
+  const onTabChange = useCallback(
+    (n) => {
+      history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${newTabSearchConfig?.TabSearchconfig?.[n].label}`, {
+        caseData: caseData,
+        orderData: ordersData,
+      });
+    },
+    [caseData, caseId, filingNumber, history, newTabSearchConfig?.TabSearchconfig, ordersData, path]
+  );
 
   const groupByHearingNumberDescending = (list) => {
     const grouped = new Map();
@@ -2273,11 +2275,14 @@ const AdmittedCases = () => {
     }, duration);
   };
 
-  const handleDownload = (filestoreId) => {
-    if (filestoreId) {
-      downloadPdf(tenantId, filestoreId);
-    }
-  };
+  const handleDownload = useCallback(
+    (filestoreId) => {
+      if (filestoreId) {
+        downloadPdf(tenantId, filestoreId);
+      }
+    },
+    [downloadPdf, tenantId]
+  );
   const handleOrdersTab = () => {
     if (history.location?.state?.orderObj) {
       history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`);
@@ -2287,29 +2292,36 @@ const AdmittedCases = () => {
     }
   };
 
-  const handleExtensionRequest = (orderNumber, itemId, litigant, litigantIndId) => {
-    let url = `/${
-      window?.contextPath
-    }/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&isExtension=true&litigant=${
-      currentOrder?.litigant || litigant
-    }&litigantIndId=${currentOrder?.litigantIndId || litigantIndId}`;
-    if (itemId) url += `&itemId=${itemId}`;
-    history.push(url);
-  };
-  const handleSubmitDocument = (orderNumber, itemId, litigant, litigantIndId) => {
-    let url = `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&litigant=${
-      currentOrder?.litigant || litigant
-    }&litigantIndId=${currentOrder?.litigantIndId || litigantIndId}`;
-    if (itemId) url += `&itemId=${itemId}`;
-    history.push(url);
-  };
+  const handleExtensionRequest = useCallback(
+    (orderNumber, itemId, litigant, litigantIndId) => {
+      let url = `/${
+        window?.contextPath
+      }/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&isExtension=true&litigant=${
+        currentOrder?.litigant || litigant
+      }&litigantIndId=${currentOrder?.litigantIndId || litigantIndId}`;
+      if (itemId) url += `&itemId=${itemId}`;
+      history.push(url);
+    },
+    [currentOrder?.litigant, currentOrder?.litigantIndId, filingNumber, history]
+  );
 
-  const openHearingModule = () => {
+  const handleSubmitDocument = useCallback(
+    (orderNumber, itemId, litigant, litigantIndId) => {
+      let url = `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&litigant=${
+        currentOrder?.litigant || litigant
+      }&litigantIndId=${currentOrder?.litigantIndId || litigantIndId}`;
+      if (itemId) url += `&itemId=${itemId}`;
+      history.push(url);
+    },
+    [currentOrder?.litigant, currentOrder?.litigantIndId, filingNumber, history]
+  );
+
+  const openHearingModule = useCallback(() => {
     setShowScheduleHearingModal(true);
     if (!isCaseAdmitted) {
       setCreateAdmissionOrder(true);
     }
-  };
+  }, [isCaseAdmitted]);
 
   const handleActionModal = () => {
     updateCaseDetails("REJECT").then(() => {

@@ -57,8 +57,6 @@ const HomeView = () => {
   const [taskType, setTaskType] = useState(state?.taskType || {});
   const [caseType, setCaseType] = useState(state?.caseType || {});
 
-  const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
-  const [responsePendingTask, setResponsePendingTask] = useState({});
   const bulkSignSuccess = history.location?.state?.bulkSignSuccess;
   const [issueBulkSuccessData, setIssueBulkSuccessData] = useState({
     show: false,
@@ -112,28 +110,6 @@ const HomeView = () => {
     individualId,
     Boolean(isUserLoggedIn && individualId && userType !== "LITIGANT"),
     userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
-  );
-
-  const { data: ordersNotificationData, isLoading: isOrdersLoading } = useSearchOrdersNotificationService(
-    {
-      inbox: {
-        processSearchCriteria: {
-          businessService: ["notification"],
-          moduleName: "Transformer service",
-        },
-        limit: 1,
-        offset: 0,
-        tenantId: tenantId,
-        moduleSearchCriteria: {
-          entityType: "Order",
-          tenantId: tenantId,
-          status: OrderWorkflowState.PENDING_BULK_E_SIGN,
-        },
-      },
-    },
-    { tenantId },
-    OrderWorkflowState.PENDING_BULK_E_SIGN,
-    true
   );
 
   const refreshInbox = () => {
@@ -371,7 +347,7 @@ const HomeView = () => {
     }
   };
 
-  if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOrdersLoading) {
+  if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading) {
     return <Loader />;
   }
 
@@ -399,11 +375,7 @@ const HomeView = () => {
   return (
     <div className="home-view-hearing-container">
       {individualId && userType && userInfoType === "citizen" && !caseDetails ? (
-        <LitigantHomePage
-          isApprovalPending={isApprovalPending}
-          setShowSubmitResponseModal={setShowSubmitResponseModal}
-          setResponsePendingTask={setResponsePendingTask}
-        />
+        <LitigantHomePage isApprovalPending={isApprovalPending} />
       ) : (
         <React.Fragment>
           <div className="left-side" style={{ width: individualId && userType && userInfoType === "citizen" && !caseDetails ? "100vw" : "70vw" }}>
@@ -437,11 +409,7 @@ const HomeView = () => {
                 {individualId && userType && userInfoType === "citizen" && (
                   <div className="button-field" style={{ width: "50%" }}>
                     <React.Fragment>
-                      <JoinCaseHome
-                        refreshInbox={refreshInbox}
-                        setShowSubmitResponseModal={setShowSubmitResponseModal}
-                        setResponsePendingTask={setResponsePendingTask}
-                      />
+                      <JoinCaseHome refreshInbox={refreshInbox} />
                       <Button
                         className={"tertiary-button-selector"}
                         label={t("FILE_A_CASE")}
@@ -481,22 +449,19 @@ const HomeView = () => {
           </div>
         </React.Fragment>
       )}
-      <div className="right-side" style={{ width: individualId && userType && userInfoType === "citizen" && !caseDetails ? "0vw" : "30vw" }}>
-        <TasksComponent
-          taskType={taskType}
-          setTaskType={setTaskType}
-          caseType={caseType}
-          setCaseType={setCaseType}
-          isLitigant={Boolean(individualId && userType && userInfoType === "citizen")}
-          uuid={userInfo?.uuid}
-          userInfoType={userInfoType}
-          joinCaseResponsePendingTask={responsePendingTask}
-          joinCaseShowSubmitResponseModal={showSubmitResponseModal}
-          setJoinCaseShowSubmitResponseModal={setShowSubmitResponseModal}
-          hideTaskComponent={individualId && userType && userInfoType === "citizen" && !caseDetails}
-          pendingSignOrderList={ordersNotificationData}
-        />
-      </div>
+      {individualId && userType && userInfoType === "citizen" && caseDetails && (
+        <div className="right-side" style={{ width: "30vw" }}>
+          <TasksComponent
+            taskType={taskType}
+            setTaskType={setTaskType}
+            caseType={caseType}
+            setCaseType={setCaseType}
+            isLitigant={Boolean(individualId && userType && userInfoType === "citizen")}
+            uuid={userInfo?.uuid}
+            userInfoType={userInfoType}
+          />
+        </div>
+      )}
       {issueBulkSuccessData.show && (
         <OrderIssueBulkSuccesModal
           t={t}
