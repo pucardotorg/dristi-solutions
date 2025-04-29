@@ -44,6 +44,7 @@
             {
               "name": "caseNumber",
               "path": "Data.hearingDetails.caseNumber.keyword",
+              "operator": "WILDCARD",
               "isMandatory": false
             },
             {
@@ -90,7 +91,7 @@
           "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
           "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
           "createdTime": 1741340209026,
-          "lastModifiedTime": 1745907836046
+          "lastModifiedTime": 1745930647179
         }
       }
     ]
