@@ -381,45 +381,35 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
 			throw new CustomException(ErrorConstants.INVALID_OPERATOR_DATA, " Unsupported Operator : " + operator);
 
 	}
-	
-	private List<Map<String, Object>> prepareMustClauseWildCardChild(Map<String, Object> params, String key,
-			Map<String, String> nameToPathMap, Map<String, SearchParam.Operator> nameToOperatorMap) {
-		// Add wildcard clause in case the search criteria has a list of values
-		Object value = params.get(key);
-		List<Map<String, Object>> wildcardClauses = new ArrayList<>();
+
+    private List<Map<String, Object>> prepareMustClauseWildCardChild(Map<String, Object> params, String key,
+                                                                     Map<String, String> nameToPathMap, Map<String, SearchParam.Operator> nameToOperatorMap) {
+        // Add wildcard clause in case the search criteria has a list of values
+        Object value = params.get(key);
+        List<Map<String, Object>> wildcardClauses = new ArrayList<>();
         if (value instanceof List) {
             List<Object> values = (List<Object>) value;
             for (Object item : values) {
-                Map<String, Object> wildcardClause = new HashMap<>();
-                Map<String, Object> wildcardContent = new HashMap<>();
-                Map<String, Object> wildcardInnerMap = new HashMap<>();
-
-                wildcardContent.put("value", "*" + (item != null ? item.toString().toLowerCase() : "") + "*");
-                wildcardContent.put("case_insensitive", true);
-
-                wildcardInnerMap.put(addDataPathToSearchParamKey(key, nameToPathMap), wildcardContent);
-                wildcardClause.put("wildcard", wildcardInnerMap);
-
-                wildcardClauses.add(wildcardClause);
+                wildcardClauses.add(createWildcardClause(item, key, nameToPathMap));
             }
-
             return wildcardClauses;
         } else {
-            Map<String, Object> wildcardClause = new HashMap<>();
-            Map<String, Object> wildcardContent = new HashMap<>();
-            Map<String, Object> wildcardInnerMap = new HashMap<>();
-
-            wildcardContent.put("value", "*" + (value != null ? value.toString().toLowerCase() : "") + "*");
-            wildcardContent.put("case_insensitive", true);
-
-            wildcardInnerMap.put(addDataPathToSearchParamKey(key, nameToPathMap), wildcardContent);
-            wildcardClause.put("wildcard", wildcardInnerMap);
-
-            wildcardClauses.add(wildcardClause);
+            wildcardClauses.add(createWildcardClause(value, key, nameToPathMap));
             return wildcardClauses;
         }
-
-
+    }
+    /**
+     * Creates a wildcard clause for Elasticsearch query with case-insensitive matching
+     */
+    private Map<String, Object> createWildcardClause(Object value, String key, Map<String, String> nameToPathMap) {
+        Map<String, Object> wildcardClause = new HashMap<>();
+        Map<String, Object> wildcardContent = new HashMap<>();
+        Map<String, Object> wildcardInnerMap = new HashMap<>();
+        wildcardContent.put("value", "*" + (value != null ? value.toString().toLowerCase() : "") + "*");
+        wildcardContent.put("case_insensitive", true);
+        wildcardInnerMap.put(addDataPathToSearchParamKey(key, nameToPathMap), wildcardContent);
+        wildcardClause.put("wildcard", wildcardInnerMap);
+        return wildcardClause;
     }
 
     private String addDataPathToSearchParamKey(String key, Map<String, String> nameToPathMap){
