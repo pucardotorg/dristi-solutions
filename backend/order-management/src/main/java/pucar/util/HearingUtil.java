@@ -96,7 +96,13 @@ public class HearingUtil {
 
     public String getHearingTypeFromAdditionalDetails(Object additionalDetails) {
 
-        return jsonUtil.getNestedValue(additionalDetails, Arrays.asList("formdata", "hearingPurpose", "type"), String.class);
+        String type = jsonUtil.getNestedValue(additionalDetails,
+                List.of("formdata","hearingPurpose","type"), String.class);
+        if (type == null) {
+            throw new CustomException("ERROR_IN_ADDITIONAL_DETAILS",
+                    "Hearing Purpose Type not found in additional details");
+        }
+        return type;
 //        return Optional.ofNullable(additionalDetails)
 //                .filter(Map.class::isInstance)
 //                .map(map -> (Map<?, ?>) map)
