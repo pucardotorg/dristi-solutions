@@ -2,7 +2,7 @@ import { useMemo, useCallback } from "react";
 
 const useESign = () => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const storedObj = useMemo(() => localStorage.getItem("signStatus"), []);
+  const storedObj = useMemo(() => sessionStorage.getItem("signStatus"), []);
   const parsedObj = JSON.parse(storedObj) || [];
   const esignUrl = window?.globalConfigs?.getConfig("ESIGN_URL") || "https://es-staging.cdac.in/esignlevel2/2.1/form/signdoc";
 
@@ -10,7 +10,7 @@ const useESign = () => {
     async (name, pageModule, fileStoreId, signPlaceHolder) => {
       try {
         const newSignStatuses = [...parsedObj, { name: name, isSigned: true }];
-        localStorage.setItem("signStatus", JSON.stringify(newSignStatuses));
+        sessionStorage.setItem("signStatus", JSON.stringify(newSignStatuses));
 
         const eSignResponse = await Digit.DRISTIService.eSignService({
           ESignParameter: {
@@ -29,9 +29,8 @@ const useESign = () => {
             param: window.location.search,
             isEsign: true,
           };
-          localStorage.setItem("esignResponse", JSON.stringify(eSignResponse));
-          localStorage.setItem("eSignWindowObject", JSON.stringify(eSignData));
-          localStorage.setItem("esignProcess", true);
+          sessionStorage.setItem("eSignWindowObject", JSON.stringify(eSignData));
+          sessionStorage.setItem("esignProcess", true);
           const form = document.createElement("form");
           form.method = "POST";
           form.action = esignUrl;
@@ -76,8 +75,8 @@ const useESign = () => {
       }
     };
 
-    const isSignSuccess = localStorage.getItem("isSignSuccess");
-    const storedESignObj = localStorage.getItem("signStatus");
+    const isSignSuccess = sessionStorage.getItem("isSignSuccess");
+    const storedESignObj = sessionStorage.getItem("signStatus");
     const parsedESignObj = JSON.parse(storedESignObj);
 
     if (isSignSuccess) {
@@ -90,19 +89,19 @@ const useESign = () => {
 
       localStorage.removeItem("signStatus");
       localStorage.removeItem("name");
-      localStorage.removeItem("isSignSuccess");
-      localStorage.removeItem("esignProcess");
+      sessionStorage.removeItem("isSignSuccess");
+      sessionStorage.removeItem("esignProcess");
     }
   };
 
   const checkJoinACaseESignStatus = (setIsSignedAdvocate, setIsSignedParty) => {
-    const isSignSuccess = localStorage.getItem("isSignSuccess");
-    const storedESignObj = localStorage.getItem("signStatus");
+    const isSignSuccess = sessionStorage.getItem("isSignSuccess");
+    const storedESignObj = sessionStorage.getItem("signStatus");
     const parsedESignObj = JSON.parse(storedESignObj);
 
     if (isSignSuccess) {
       if (isSignSuccess === "success") {
-        const joinCaseData = JSON.parse(localStorage.getItem("appState"));
+        const joinCaseData = JSON.parse(sessionStorage.getItem("appState"));
         parsedESignObj?.forEach((sign) => {
           if (sign?.name === "Advocate" && sign?.isSigned) {
             setIsSignedAdvocate(true);
@@ -117,14 +116,14 @@ const useESign = () => {
           }
         });
         if (joinCaseData) {
-          localStorage.setItem("appState", JSON.stringify(joinCaseData));
+          sessionStorage.setItem("appState", JSON.stringify(joinCaseData));
         }
       }
 
       localStorage.removeItem("signStatus");
       localStorage.removeItem("name");
-      localStorage.removeItem("isSignSuccess");
-      localStorage.removeItem("esignProcess");
+      sessionStorage.removeItem("isSignSuccess");
+      sessionStorage.removeItem("esignProcess");
     }
   };
 

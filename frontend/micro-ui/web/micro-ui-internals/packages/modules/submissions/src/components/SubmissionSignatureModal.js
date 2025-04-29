@@ -57,7 +57,6 @@ function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup,
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setIsSigned(true);
-        localStorage.setItem("formData", JSON.stringify(formData));
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);
@@ -105,7 +104,7 @@ function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup,
                 onClick={() => {
                   // setOpenAadharModal(true);
                   // setIsSigned(true);
-                  localStorage.setItem("applicationPDF", applicationPdfFileStoreId);
+                  sessionStorage.setItem("applicationPDF", applicationPdfFileStoreId);
                   handleEsign(name, pageModule, applicationPdfFileStoreId, advocatePlaceholder);
                 }}
                 className={"aadhar-sign-in"}
