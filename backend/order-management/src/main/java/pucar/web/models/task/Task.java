@@ -103,6 +103,13 @@ public class Task {
     private Long duedate;
 
 
+    @JsonProperty("caseTitle")
+    private String caseTitle = null;
+
+    @JsonProperty("caseId")
+    private String caseId = null;
+
+
     public Task addDocumentsItem(Document documentsItem) {
         this.documents.add(documentsItem);
         return this;

@@ -165,10 +165,7 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
     const partyDetails = selectedChannels?.length === 0 ? formData[config?.key]?.selectedChannels || [] : selectedChannels;
 
     const isPresent = partyDetails.some((data) => {
-      if (channelType === "Via Police") {
-        return data?.type === channelType && compareAddressValues(value, data?.value);
-      }
-      return data?.type === channelType && JSON.stringify(value) === JSON.stringify(data?.value);
+      return data?.type === channelType && compareAddressValues(value, data?.value);
     });
 
     let updatedSelectedChannels;
@@ -176,37 +173,32 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
     if (isPresent) {
       // Remove the existing selection
       updatedSelectedChannels = partyDetails?.filter((data) => {
-        if (channelType === "Via Police") {
-          return !(data?.type === channelType && compareAddressValues(value, data?.value));
-        }
-        return !(data?.type === channelType && JSON.stringify(value) === JSON.stringify(data?.value));
+        return !(data?.type === channelType && compareAddressValues(value, data?.value));
       });
     } else {
       // Add the selection
       updatedSelectedChannels = [...partyDetails, { type: channelType, code, value }];
 
       // If police station is already available, reflect that in the state
-      if (channelType === "Via Police" && value?.geoLocationDetails?.policeStation) {
+      if (value?.geoLocationDetails?.policeStation) {
         handlePoliceStationChange(updatedSelectedChannels);
       }
     }
 
     // Enrich Via Police addresses with latest selected police station
     const updatedSelectedChannelsWithPolice = updatedSelectedChannels?.map((item) => {
-      if (item?.type === "Via Police") {
-        const policeDetails = policeStationIdMapping?.find((p) => p?.id === item?.value?.id);
-        if (policeDetails) {
-          return {
-            ...item,
-            value: {
-              ...item.value,
-              geoLocationDetails: {
-                ...item.value.geoLocationDetails,
-                policeStation: policeDetails.policeStation,
-              },
+      const policeDetails = policeStationIdMapping?.find((p) => p?.id === item?.value?.id);
+      if (policeDetails) {
+        return {
+          ...item,
+          value: {
+            ...item.value,
+            geoLocationDetails: {
+              ...item.value.geoLocationDetails,
+              policeStation: policeDetails.policeStation,
             },
-          };
-        }
+          },
+        };
       }
       return item;
     });
@@ -227,20 +219,18 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       setPoliceStationIdMapping(policeStationIdMap);
 
       updatedPartyDetailsNew = updatedPartyDetails?.map((item) => {
-        if (item?.type === "Via Police") {
-          const foundObj = policeStationIdMap?.find((obj) => obj?.id === item?.value?.id);
-          if (foundObj) {
-            return {
-              ...item,
-              value: {
-                ...item.value,
-                geoLocationDetails: {
-                  ...item.value.geoLocationDetails,
-                  policeStation: foundObj.policeStation,
-                },
+        const foundObj = policeStationIdMap?.find((obj) => obj?.id === item?.value?.id);
+        if (foundObj) {
+          return {
+            ...item,
+            value: {
+              ...item.value,
+              geoLocationDetails: {
+                ...item.value.geoLocationDetails,
+                policeStation: foundObj.policeStation,
               },
-            };
-          }
+            },
+          };
         }
         return item;
       });
@@ -303,9 +293,8 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       const policeStationIdMapping = [];
       const addressList = await Promise.all(
         address.map(async (item) => {
-          const policeStationInOrderSaved = formData?.[config?.key]?.selectedChannels?.find(
-            (channel, index) => channel?.value?.id === item?.id
-          )?.value?.geoLocationDetails?.policeStation;
+          const policeStationInOrderSaved = formData?.[config?.key]?.selectedChannels?.find((channel, index) => channel?.value?.id === item?.id)
+            ?.value?.geoLocationDetails?.policeStation;
           policeStationIdMapping.push({ id: item?.id, policeStation: policeStationInOrderSaved || item?.geoLocationDetails?.policeStation });
           if (item?.pincode) {
             const verifiedPincode = await getRespondentPincodeDetails(item.pincode);

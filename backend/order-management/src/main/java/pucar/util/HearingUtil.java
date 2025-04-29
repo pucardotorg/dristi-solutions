@@ -21,7 +21,6 @@ import pucar.web.models.hearing.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static pucar.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
 import static pucar.config.ServiceConstants.SEARCHER_SERVICE_EXCEPTION;
@@ -94,37 +93,29 @@ public class HearingUtil {
         }
 
     }
-//    public @NotNull String getHearingTypeFormAddtionalDetails(Object additionalDetails) {
-//        String hearingType = null;
-//        if (additionalDetails != null) {
-//            Object formdata = ((Map) additionalDetails).get("formdata");
-//            if (formdata != null) {
-//                Object hearingPurpose = ((Map) formdata).get("hearingPurpose");
-//                if (hearingPurpose != null) {
-//                    hearingType = (String) ((Map) hearingPurpose).get("type");
-//                }
-//            }
-//        }
-//        if (hearingType == null) {
-//            throw new CustomException("ERROR_IN_ADDITIONAL_DETAILS", "Hearing Purpose Type not found in additional details");
-//        }
-//        return hearingType;
-//    }
 
     public String getHearingTypeFromAdditionalDetails(Object additionalDetails) {
-        return Optional.ofNullable(additionalDetails)
-                .filter(Map.class::isInstance)
-                .map(map -> (Map<?, ?>) map)
-                .map(map -> map.get("formdata"))
-                .filter(Map.class::isInstance)
-                .map(map -> (Map<?, ?>) map)
-                .map(map -> map.get("hearingPurpose"))
-                .filter(Map.class::isInstance)
-                .map(map -> (Map<?, ?>) map)
-                .map(map -> map.get("type"))
-                .filter(String.class::isInstance)
-                .map(String.class::cast)
-                .orElseThrow(() -> new CustomException("ERROR_IN_ADDITIONAL_DETAILS", "Hearing Purpose Type not found in additional details"));
+
+        String type = jsonUtil.getNestedValue(additionalDetails,
+                List.of("formdata","hearingPurpose","type"), String.class);
+        if (type == null) {
+            throw new CustomException("ERROR_IN_ADDITIONAL_DETAILS",
+                    "Hearing Purpose Type not found in additional details");
+        }
+        return type;
+//        return Optional.ofNullable(additionalDetails)
+//                .filter(Map.class::isInstance)
+//                .map(map -> (Map<?, ?>) map)
+//                .map(map -> map.get("formdata"))
+//                .filter(Map.class::isInstance)
+//                .map(map -> (Map<?, ?>) map)
+//                .map(map -> map.get("hearingPurpose"))
+//                .filter(Map.class::isInstance)
+//                .map(map -> (Map<?, ?>) map)
+//                .map(map -> map.get("type"))
+//                .filter(String.class::isInstance)
+//                .map(String.class::cast)
+//                .orElseThrow(() -> new CustomException("ERROR_IN_ADDITIONAL_DETAILS", "Hearing Purpose Type not found in additional details"));
     }
 
     public List<Attendee> getAttendeesFromAdditionalDetails(Order order) {
@@ -161,7 +152,10 @@ public class HearingUtil {
 
     }
 
-    public List<Attendee> getAdvocateAttendees(RequestInfo requestInfo, CourtCase courtCase) {
+    public List<Attendee> getAttendees(RequestInfo requestInfo, CourtCase courtCase, Order order) {
+
+
+        List<Attendee> litigantAndPOAHolders = getAttendeesFromAdditionalDetails(order);
 
         List<String> advocateIds = courtCase.getRepresentatives() == null ?
                 Collections.emptyList() :
@@ -171,15 +165,38 @@ public class HearingUtil {
 
         Map<String, String> advocate = advocateUtil.getAdvocate(requestInfo, advocateIds);
 
-        return advocate.entrySet().stream()
-                .map(entry -> Attendee.builder()
+        // check if this individual id exist in litigantAndPoaHolders map
+        // if yes then update name
+        // else add in last this entry
+        List<Attendee> assingee = new ArrayList<>(litigantAndPOAHolders);
+        for (Map.Entry<String, String> entry : advocate.entrySet()) {
+            String individualId = entry.getKey();
+            int index = -1;
+            Attendee attendee = null;
+            for (int i = 0; i < litigantAndPOAHolders.size(); i++) {
+                attendee = litigantAndPOAHolders.get(i);
+                if (attendee.getIndividualId().equalsIgnoreCase(individualId)) {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (attendee != null) {
+                String name = attendee.getName();
+                String modifiedName = addValueToBrackets(name, "Advocate");
+                attendee.setName(modifiedName);
+
+                assingee.add(index, attendee);
+
+            } else {
+                assingee.add(Attendee.builder()
                         .individualId(entry.getKey())
                         .name(entry.getValue())
                         .type("Advocate")
-                        .build())
-                .toList();
-
-
+                        .build());
+            }
+        }
+        return assingee;
     }
 
 
@@ -197,12 +214,9 @@ public class HearingUtil {
                 .cmpNumber(courtCase.getCmpNumber())
                 .hearingType(getHearingTypeFromAdditionalDetails(order.getAdditionalDetails()))
                 .status("true") // this is not confirmed ui is sending true
-                .attendees(Stream.concat(
-                        getAttendeesFromAdditionalDetails(order).stream(),
-                        getAdvocateAttendees(requestInfo, courtCase).stream()
-                ).collect(Collectors.toList()))
-                .startTime(getCreateStartAndEndTime(order.getAdditionalDetails(),Arrays.asList("formdata", "hearingDate")))
-                .endTime(getCreateStartAndEndTime(order.getAdditionalDetails(),Arrays.asList("formdata", "hearingDate")))
+                .attendees(getAttendees(requestInfo, courtCase, order))
+                .startTime(getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "hearingDate")))
+                .endTime(getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "hearingDate")))
                 .workflow(workflowObject)
                 .applicationNumbers(new ArrayList<>())
                 .presidedBy(PresidedBy.builder()  // todo:this is hardcoded but needs to come from order
@@ -221,4 +235,44 @@ public class HearingUtil {
     }
 
 
+    /**
+     * Adds a new value inside the first pair of brackets in the given text.
+     * If no brackets are present, it appends a new bracketed section with the new value.
+     *
+     * @param text     The original text which may contain brackets.
+     * @param newValue The value to add inside the brackets.
+     * @return Updated text with the new value added.
+     * @throws IllegalArgumentException if text or newValue is null or empty.
+     */
+    public String addValueToBrackets(String text, String newValue) {
+        if (text == null || text.isBlank()) {
+            throw new CustomException("INVALID_TEXT_EXCEPTION", "Text must not be null or empty");
+        }
+        if (newValue == null || newValue.isBlank()) {
+            throw new CustomException("INVALID_TEXT_EXCEPTION", "Text must not be null or empty");
+        }
+
+        text = text.trim();
+        int startIdx = text.indexOf('(');
+        int endIdx = text.indexOf(')');
+
+        if (startIdx >= 0 && endIdx > startIdx) {
+            String beforeBracket = text.substring(0, startIdx + 1);
+            String insideBracket = text.substring(startIdx + 1, endIdx).trim();
+            String afterBracket = text.substring(endIdx);
+
+            StringBuilder updatedBracket = new StringBuilder();
+            if (!insideBracket.isEmpty()) {
+                updatedBracket.append(insideBracket).append(", ").append(newValue);
+            } else {
+                updatedBracket.append(newValue);
+            }
+
+            return beforeBracket + updatedBracket + afterBracket;
+        } else {
+            // No valid brackets found, append new brackets
+            return text + " (" + newValue + ")";
+        }
+
+    }
 }
