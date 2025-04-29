@@ -583,7 +583,9 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
 
   const infos = useMemo(() => {
     const formdata =
-      orderDetails?.orderCategory === "COMPOSITE" ? compositeItem?.additionalDetails?.formdata : orderDetails?.additionalDetails?.formdata;
+      orderDetails?.orderCategory === "COMPOSITE"
+        ? compositeItem?.orderSchema?.additionalDetails?.formdata
+        : orderDetails?.additionalDetails?.formdata;
     const orderKey = orderType === "SUMMONS" ? "SummonsOrder" : orderType === "WARRANT" ? "warrantFor" : "noticeOrder";
     const partyData = formdata?.[orderKey]?.party?.data;
     const name =
