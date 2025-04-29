@@ -45,27 +45,26 @@ const Accordian = ({ groupedData, caseDataDetails }) => {
           {groupedData
             .filter((data) => data !== null) // Filter out null values
             .map((data) => {
-              const matchedCase = caseDataDetails.find((caseData) => caseData.filingNumber === data.filingNumber);
+              const caseTitle = data?.data?.[0]?.fields?.find((field) => field.key === "caseTitle")?.value;
+              const filingNumber = data?.data?.[0]?.fields?.find((field) => field.key === "filingNumber")?.value;
               return (
                 <div key={data.filingNumber}>
-                  {matchedCase && (
-                    <div style={{ width: "100%", padding: "16px 12px", borderBottom: "1px solid #E8E8E8" }}>
-                      <div style={{ fontWeight: "400", fontSize: "16px", marginBottom: "3px" }}>{matchedCase?.caseDetail?.caseTitle}</div>
-                      <div
-                        style={{
-                          fontWeight: 400,
-                          fontSize: "14px",
-                          color: "#3D3C3C",
-                          display: "flex",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <div>NIA S138</div>
-                        <div>PB-PT-2023</div>
-                        <div style={{ color: "#9E400A" }}>{`${data?.data?.length} tasks`}</div>
-                      </div>
+                  <div style={{ width: "100%", padding: "16px 12px", borderBottom: "1px solid #E8E8E8" }}>
+                    <div style={{ fontWeight: "400", fontSize: "16px", marginBottom: "3px" }}>{caseTitle}</div>
+                    <div
+                      style={{
+                        fontWeight: 400,
+                        fontSize: "14px",
+                        color: "#3D3C3C",
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div>NIA S138</div>
+                      <div>{filingNumber}</div>
+                      <div style={{ color: "#9E400A" }}>{`${data?.data?.length} tasks`}</div>
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}
