@@ -394,7 +394,7 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
                 Map<String, Object> wildcardContent = new HashMap<>();
                 Map<String, Object> wildcardInnerMap = new HashMap<>();
 
-                wildcardContent.put("value", "*" + item.toString().toLowerCase() + "*");
+                wildcardContent.put("value", "*" + (item != null ? item.toString().toLowerCase() : "") + "*");
                 wildcardContent.put("case_insensitive", true);
 
                 wildcardInnerMap.put(addDataPathToSearchParamKey(key, nameToPathMap), wildcardContent);
@@ -409,7 +409,7 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
             Map<String, Object> wildcardContent = new HashMap<>();
             Map<String, Object> wildcardInnerMap = new HashMap<>();
 
-            wildcardContent.put("value", "*" + value.toString().toLowerCase() + "*");
+            wildcardContent.put("value", "*" + (value != null ? value.toString().toLowerCase() : "") + "*");
             wildcardContent.put("case_insensitive", true);
 
             wildcardInnerMap.put(addDataPathToSearchParamKey(key, nameToPathMap), wildcardContent);
