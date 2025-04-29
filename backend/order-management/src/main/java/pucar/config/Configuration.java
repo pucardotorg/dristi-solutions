@@ -42,6 +42,9 @@ public class Configuration {
     @Value("${dristi.order.search.endpoint}")
     private String orderSearchEndPoint;
 
+    @Value("${dristi.order.create.endpoint}")
+    private String orderCreateEndPoint;
+
     // ESign Config
     @Value("${dristi.esign.host}")
     private String esignHost;
@@ -144,6 +147,15 @@ public class Configuration {
 
     @Value("${dristi.scheduler.reschedule.endpoint}")
     private String rescheduleEndPoint;
+
+    // Individual Config
+
+    @Value("${dristi.individual.host}")
+    private String individualHost;
+
+    @Value("${dristi.individual.search.endpoint}")
+    private String individualSearchEndPoint;
+
 
     @Value("${spring.redis.timeout}")
     private Long redisTimeout;

@@ -65,20 +65,24 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
   const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
 
-  const bulkNotificationStepper = localStorage.getItem("bulkNotificationStepper") ? parseInt(localStorage.getItem("bulkNotificationStepper")) : null;
-
-  const bulkNotificationFormData = localStorage.getItem("bulkNotificationFormData")
-    ? JSON.parse(localStorage.getItem("bulkNotificationFormData"))
+  const bulkNotificationStepper = sessionStorage.getItem("bulkNotificationStepper")
+    ? parseInt(sessionStorage.getItem("bulkNotificationStepper"))
     : null;
 
-  const bulkOldHearingData = localStorage.getItem("bulkOldHearingData") ? JSON.parse(localStorage.getItem("bulkOldHearingData")) : null;
+  const bulkNotificationFormData = sessionStorage.getItem("bulkNotificationFormData")
+    ? JSON.parse(sessionStorage.getItem("bulkNotificationFormData"))
+    : null;
 
-  const bulkNewHearingData = localStorage.getItem("bulkNewHearingData") ? JSON.parse(localStorage.getItem("bulkNewHearingData")) : [];
+  const bulkOldHearingData = sessionStorage.getItem("bulkOldHearingData") ? JSON.parse(sessionStorage.getItem("bulkOldHearingData")) : null;
 
-  const bulkNotificationNumber = localStorage.getItem("bulkNotificationNumber") ? JSON.parse(localStorage.getItem("bulkNotificationNumber")) : null;
+  const bulkNewHearingData = sessionStorage.getItem("bulkNewHearingData") ? JSON.parse(sessionStorage.getItem("bulkNewHearingData")) : [];
 
-  const bulkNotificationFileStoreId = localStorage.getItem("bulkNotificationFileStoreId")
-    ? JSON.parse(localStorage.getItem("bulkNotificationFileStoreId"))
+  const bulkNotificationNumber = sessionStorage.getItem("bulkNotificationNumber")
+    ? JSON.parse(sessionStorage.getItem("bulkNotificationNumber"))
+    : null;
+
+  const bulkNotificationFileStoreId = sessionStorage.getItem("bulkNotificationFileStoreId")
+    ? JSON.parse(sessionStorage.getItem("bulkNotificationFileStoreId"))
     : null;
 
   const currentDiaryEntry = history.location?.state?.diaryEntry;
@@ -110,12 +114,17 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
 
   useEffect(() => {
     if (currentDiaryEntry) setStepper(1);
+    const esignProcess = sessionStorage.getItem("esignProcess");
+    if (esignProcess) {
+      sessionStorage.removeItem("esignProcess");
+      clearLocalStorage();
+    }
   }, [currentDiaryEntry]);
 
   useEffect(() => {
     if (bulkNotificationStepper) {
       setStepper(bulkNotificationStepper);
-      localStorage.removeItem("bulkNotificationStepper");
+      sessionStorage.removeItem("bulkNotificationStepper");
     }
   }, [bulkNotificationStepper]);
 
@@ -192,21 +201,19 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   }, [name]);
 
   const clearLocalStorage = () => {
-    localStorage.removeItem("bulkNotificationStepper");
-    localStorage.removeItem("bulkNotificationFormData");
-    localStorage.removeItem("bulkOldHearingData");
-    localStorage.removeItem("bulkNewHearingData");
-    localStorage.removeItem("bulkNotificationNumber");
-    localStorage.removeItem("bulkNotificationFileStoreId");
-    localStorage.removeItem("bulkNotificationReviewBlob");
-    localStorage.removeItem("bulkNotificationFileName");
+    sessionStorage.removeItem("bulkNotificationStepper");
+    sessionStorage.removeItem("bulkNotificationFormData");
+    sessionStorage.removeItem("bulkOldHearingData");
+    sessionStorage.removeItem("bulkNewHearingData");
+    sessionStorage.removeItem("bulkNotificationNumber");
+    sessionStorage.removeItem("bulkNotificationFileStoreId");
     return;
   };
 
   const uploadSignedPdf = async () => {
     try {
       setLoader(true);
-      const localStorageID = localStorage.getItem("fileStoreId");
+      const localStorageID = sessionStorage.getItem("fileStoreId");
       const searchNotification = await hearingService?.searchNotification({
         criteria: {
           tenantId: tenantId,
@@ -246,7 +253,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       const diaryEntries = newHearingData?.map((hearing) => {
         return {
           judgeId: judgeId,
-          businessOfDay: `No sitting notified on ${formatDate(hearing?.originalHearingDate)}. Case adjourned to ${formatDate(hearing?.hearingDate)}`,
+          businessOfDay: `No sitting notified on ${formatDate(hearing?.originalHearingDate)}. Case posted to ${formatDate(hearing?.hearingDate)}`,
           tenantId: tenantId,
           entryDate: new Date().setHours(0, 0, 0, 0),
           hearingDate: hearing?.startTime,
@@ -562,7 +569,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     }
   };
   const handleDownloadOrders = () => {
-    const downloadFileStoreId = signedDocumentUploadID || localStorage.getItem("fileStoreId");
+    const downloadFileStoreId = signedDocumentUploadID || sessionStorage.getItem("fileStoreId");
     downloadPdf(tenantId, downloadFileStoreId);
   };
 
@@ -572,7 +579,6 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         const uploadedFileId = await uploadDocuments(signFormData?.uploadSignature?.Signature, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setIsSigned(true);
-        localStorage.setItem("formData", JSON.stringify(signFormData));
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);
@@ -747,12 +753,12 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
                 <Button
                   label={t("CS_ESIGN")}
                   onButtonClick={() => {
-                    localStorage.setItem("bulkNotificationStepper", parseInt(stepper));
-                    localStorage.setItem("bulkNotificationFormData", JSON.stringify(bulkFormData));
-                    localStorage.setItem("bulkOldHearingData", JSON.stringify(originalHearingData));
-                    localStorage.setItem("bulkNewHearingData", JSON.stringify(newHearingData));
-                    localStorage.setItem("bulkNotificationNumber", JSON.stringify(notificationNumber));
-                    localStorage.setItem("bulkNotificationFileStoreId", JSON.stringify(notificationFileStoreId));
+                    sessionStorage.setItem("bulkNotificationStepper", parseInt(stepper));
+                    sessionStorage.setItem("bulkNotificationFormData", JSON.stringify(bulkFormData));
+                    sessionStorage.setItem("bulkOldHearingData", JSON.stringify(originalHearingData));
+                    sessionStorage.setItem("bulkNewHearingData", JSON.stringify(newHearingData));
+                    sessionStorage.setItem("bulkNotificationNumber", JSON.stringify(notificationNumber));
+                    sessionStorage.setItem("bulkNotificationFileStoreId", JSON.stringify(notificationFileStoreId));
                     handleEsign(name, pageModule, notificationFileStoreId, "Signature");
                   }} //as sending null throwing error in esign
                   className="aadhar-sign-in"
@@ -866,7 +872,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           actionSaveLabel={t("CS_CLOSE")}
           actionSaveOnSubmit={async () => {
             setSignedDocumentUploadID("");
-            localStorage.removeItem("fileStoreId");
+            sessionStorage.removeItem("fileStoreId");
             setStepper(0);
             await refetch();
           }}

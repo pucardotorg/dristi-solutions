@@ -85,7 +85,6 @@ const WitnessModal = ({ handleClose, hearingId, setSignedDocumentUploadID, handl
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setUploaded(true);
-        localStorage.setItem("formData", JSON.stringify(formData));
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);

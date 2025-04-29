@@ -1,4 +1,4 @@
-package pucar.strategy;
+package pucar.strategy.ordertype;
 
 
 import lombok.extern.slf4j.Slf4j;
@@ -6,6 +6,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pucar.config.Configuration;
+import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.CaseUtil;
 import pucar.util.HearingUtil;
 import pucar.util.PendingTaskUtil;
@@ -28,7 +29,7 @@ import static pucar.config.ServiceConstants.*;
 
 @Component
 @Slf4j
-public class AdmitCase implements OrderUpdateStrategy {
+public class PublishOrderAdmitCase implements OrderUpdateStrategy {
 
     private final CaseUtil caseUtil;
     private final HearingUtil hearingUtil;
@@ -36,7 +37,7 @@ public class AdmitCase implements OrderUpdateStrategy {
     private final PendingTaskUtil pendingTaskUtil;
 
     @Autowired
-    public AdmitCase(CaseUtil caseUtil, HearingUtil hearingUtil, Configuration config, PendingTaskUtil pendingTaskUtil) {
+    public PublishOrderAdmitCase(CaseUtil caseUtil, HearingUtil hearingUtil, Configuration config, PendingTaskUtil pendingTaskUtil) {
         this.caseUtil = caseUtil;
         this.hearingUtil = hearingUtil;
         this.config = config;
@@ -51,7 +52,9 @@ public class AdmitCase implements OrderUpdateStrategy {
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
-        return order.getOrderType() != null && ADMIT_CASE.equalsIgnoreCase(order.getOrderType());
+        String action = order.getWorkflow().getAction();
+
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && ADMIT_CASE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -118,6 +121,8 @@ public class AdmitCase implements OrderUpdateStrategy {
         PendingTask pendingTask = PendingTask.builder()
                 .name(SCHEDULE_HEARING)
                 .referenceId(MANUAL + courtCase.getFilingNumber())
+                .caseId(courtCase.getId().toString())
+                .caseTitle(courtCase.getCaseTitle())
                 .entityType("case-default")
                 .status("SCHEDULE_HEARING")
                 .assignedRole(List.of("JUDGE_ROLE"))
@@ -148,6 +153,8 @@ public class AdmitCase implements OrderUpdateStrategy {
                     .assignedRole(List.of("CASE_RESPONDER"))
                     .cnrNumber(courtCase.getCnrNumber())
                     .filingNumber(courtCase.getFilingNumber())
+                    .caseId(courtCase.getId().toString())
+                    .caseTitle(courtCase.getCaseTitle())
                     .isCompleted(true)
                     .screenType("home")
                     .build();

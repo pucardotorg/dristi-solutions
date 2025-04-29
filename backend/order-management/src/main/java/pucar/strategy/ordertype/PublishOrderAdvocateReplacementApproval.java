@@ -1,8 +1,9 @@
-package pucar.strategy;
+package pucar.strategy.ordertype;
 
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.stereotype.Component;
+import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.JsonUtil;
 import pucar.util.TaskUtil;
 import pucar.web.models.Order;
@@ -15,16 +16,17 @@ import java.util.Arrays;
 import java.util.List;
 
 import static pucar.config.ServiceConstants.ADVOCATE_REPLACEMENT_APPROVAL;
+import static pucar.config.ServiceConstants.E_SIGN;
 
 
 @Component
 @Slf4j
-public class AdvocateReplacementApproval implements OrderUpdateStrategy {
+public class PublishOrderAdvocateReplacementApproval implements OrderUpdateStrategy {
 
     private final TaskUtil taskUtil;
     private final JsonUtil jsonUtil;
 
-    public AdvocateReplacementApproval(TaskUtil taskUtil, JsonUtil jsonUtil) {
+    public PublishOrderAdvocateReplacementApproval(TaskUtil taskUtil, JsonUtil jsonUtil) {
         this.taskUtil = taskUtil;
         this.jsonUtil = jsonUtil;
     }
@@ -37,7 +39,8 @@ public class AdvocateReplacementApproval implements OrderUpdateStrategy {
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
-        return order.getOrderType() != null && ADVOCATE_REPLACEMENT_APPROVAL.equalsIgnoreCase(order.getOrderType());
+        String action = order.getWorkflow().getAction();
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && ADVOCATE_REPLACEMENT_APPROVAL.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override

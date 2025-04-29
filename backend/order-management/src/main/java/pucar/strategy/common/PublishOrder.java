@@ -1,9 +1,10 @@
-package pucar.strategy;
+package pucar.strategy.common;
 
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.*;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
@@ -25,12 +26,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static pucar.config.ServiceConstants.E_SIGN;
 import static pucar.config.ServiceConstants.SCHEDULED;
 
 
 @Component
 @Slf4j
-public class DefaultOrderUpdate implements OrderUpdateStrategy {
+public class PublishOrder implements OrderUpdateStrategy {
 
     private final ApplicationUtil applicationUtil;
     private final PendingTaskUtil pendingTaskUtil;
@@ -40,7 +42,7 @@ public class DefaultOrderUpdate implements OrderUpdateStrategy {
     private final DateUtil dateUtil;
 
     @Autowired
-    public DefaultOrderUpdate(ApplicationUtil applicationUtil, PendingTaskUtil pendingTaskUtil, OrderUtil orderUtil, CaseUtil caseUtil, HearingUtil hearingUtil, DateUtil dateUtil) {
+    public PublishOrder(ApplicationUtil applicationUtil, PendingTaskUtil pendingTaskUtil, OrderUtil orderUtil, CaseUtil caseUtil, HearingUtil hearingUtil, DateUtil dateUtil) {
         this.applicationUtil = applicationUtil;
         this.pendingTaskUtil = pendingTaskUtil;
         this.orderUtil = orderUtil;
@@ -71,7 +73,9 @@ public class DefaultOrderUpdate implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsCommon(OrderRequest orderRequest) {
-        return true;
+        Order order = orderRequest.getOrder();
+        String action = order.getWorkflow().getAction();
+        return E_SIGN.equalsIgnoreCase(action);
     }
 
     @Override
@@ -113,7 +117,7 @@ public class DefaultOrderUpdate implements OrderUpdateStrategy {
 
         //close pending task
         log.info("closing pending task for order number:{}", order.getOrderNumber());
-        pendingTaskUtil.closeManualPendingTask(order.getOrderNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber());
+        pendingTaskUtil.closeManualPendingTask(order.getOrderNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(), courtCase.getId().toString(), courtCase.getCaseTitle());
 
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder()
                 .criteria(HearingCriteria.builder().tenantId(order.getTenantId())

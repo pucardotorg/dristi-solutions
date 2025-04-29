@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.ServiceCallException;
@@ -143,7 +144,7 @@ public class PendingTaskUtil {
     }
 
 
-    private  Object convertValue(Object value, Class<?> targetType) {
+    private Object convertValue(Object value, Class<?> targetType) {
         if (value == null) return null;
 
         if (targetType.isInstance(value)) {
@@ -165,8 +166,8 @@ public class PendingTaskUtil {
         return value; // Return as is if no conversion logic is provided
     }
 
-    public void closeManualPendingTask(String referenceNo, RequestInfo requestInfo, String filingNumber, String
-            cnrNumber) {
+    public void closeManualPendingTask(String referenceNo, RequestInfo requestInfo, String filingNumber, @NotNull String
+            cnrNumber, @NotNull String caseId, @NotNull String caseTitle) {
         // here data will be lost , we need to search first then update the pending task , this is as per ui
         createPendingTask(PendingTaskRequest.builder()
                 .pendingTask(PendingTask.builder().referenceId(MANUAL + referenceNo)
@@ -174,6 +175,7 @@ public class PendingTaskUtil {
                         .entityType("order-default")
                         .status("DRAFT_IN_PROGRESS")
                         .filingNumber(filingNumber)
+                        .caseId(caseId).caseTitle(caseTitle)
                         .cnrNumber(cnrNumber).isCompleted(true).build()).requestInfo(requestInfo).build());
     }
 

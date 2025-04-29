@@ -1,25 +1,21 @@
-package pucar.strategy;
+package pucar.strategy.ordertype;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.*;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
-import pucar.web.models.courtCase.CaseCriteria;
-import pucar.web.models.courtCase.CaseSearchRequest;
-import pucar.web.models.courtCase.CourtCase;
-import pucar.web.models.courtCase.Party;
+import pucar.web.models.courtCase.*;
 import pucar.web.models.pendingtask.PendingTask;
 import pucar.web.models.pendingtask.PendingTaskRequest;
-import pucar.web.models.task.Task;
 import pucar.web.models.task.TaskRequest;
 import pucar.web.models.task.TaskResponse;
 
@@ -29,7 +25,7 @@ import static pucar.config.ServiceConstants.*;
 
 @Component
 @Slf4j
-public class Warrant implements OrderUpdateStrategy {
+public class PublishOrderWarrant implements OrderUpdateStrategy {
 
     private final TaskUtil taskUtil;
     private final ObjectMapper objectMapper;
@@ -39,7 +35,7 @@ public class Warrant implements OrderUpdateStrategy {
     private final AdvocateUtil advocateUtil;
 
     @Autowired
-    public Warrant(TaskUtil taskUtil, ObjectMapper objectMapper, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, AdvocateUtil advocateUtil) {
+    public PublishOrderWarrant(TaskUtil taskUtil, ObjectMapper objectMapper, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, AdvocateUtil advocateUtil) {
         this.taskUtil = taskUtil;
         this.objectMapper = objectMapper;
         this.caseUtil = caseUtil;
@@ -56,7 +52,8 @@ public class Warrant implements OrderUpdateStrategy {
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
-        return order.getOrderType() != null && WARRANT.equalsIgnoreCase(order.getOrderType());
+        String action = order.getWorkflow().getAction();
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && WARRANT.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -86,6 +83,8 @@ public class Warrant implements OrderUpdateStrategy {
         List<User> uniqueAssignee = new ArrayList<>();
         Set<String> uniqueSet = new HashSet<>();
         List<String> complainantIndividualId = new ArrayList<>();
+        Map<String, List<POAHolder>> litigantPoaMapping = caseUtil.getLitigantPoaMapping(courtCase);
+
         for (Party party : complainants) {
             String uuid = jsonUtil.getNestedValue(party.getAdditionalDetails(), List.of("uuid"), String.class);
             if (litigantAdvocateMapping.containsKey(uuid)) {
@@ -93,6 +92,17 @@ public class Warrant implements OrderUpdateStrategy {
                 assignees.add(uuid);
             }
             complainantIndividualId.add(party.getIndividualId());
+            if (litigantPoaMapping.containsKey(party.getIndividualId())) {
+                List<POAHolder> poaHolders = litigantPoaMapping.get(party.getIndividualId());
+                if (poaHolders != null) {
+                    for (POAHolder poaHolder : poaHolders) {
+                        if (poaHolder.getAdditionalDetails() != null) {
+                            String poaUUID = jsonUtil.getNestedValue(poaHolder.getAdditionalDetails(), List.of("uuid"), String.class);
+                            if (poaUUID != null) assignees.add(poaUUID);
+                        }
+                    }
+                }
+            }
 
         }
 
@@ -119,7 +129,7 @@ public class Warrant implements OrderUpdateStrategy {
             log.info("taskDetailsArray:{}", taskDetailsArray.size());
 
             for (JsonNode taskDetail : taskDetailsArray) {
-                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail);
+                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase);
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
 
                 // create pending task
@@ -132,6 +142,8 @@ public class Warrant implements OrderUpdateStrategy {
                         .assignedTo(uniqueAssignee)
                         .cnrNumber(courtCase.getCnrNumber())
                         .filingNumber(courtCase.getFilingNumber())
+                        .caseId(courtCase.getId().toString())
+                        .caseTitle(courtCase.getCaseTitle())
                         .isCompleted(false)
                         .stateSla(sla)
                         .additionalDetails(additionalDetails)

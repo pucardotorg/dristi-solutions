@@ -1,10 +1,11 @@
-package pucar.strategy;
+package pucar.strategy.ordertype;
 
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pucar.config.Configuration;
+import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.ApplicationUtil;
 import pucar.util.HearingUtil;
 import pucar.util.OrderUtil;
@@ -23,12 +24,11 @@ import pucar.web.models.hearing.HearingSearchRequest;
 import java.util.Arrays;
 import java.util.List;
 
-import static pucar.config.ServiceConstants.ASSIGNING_DATE_RESCHEDULED_HEARING;
-import static pucar.config.ServiceConstants.SETDATE;
+import static pucar.config.ServiceConstants.*;
 
 @Component
 @Slf4j
-public class AssigningDateRescheduledHearing implements OrderUpdateStrategy {
+public class PublishOrderRescheduleOfHearingDate implements OrderUpdateStrategy {
 
     private final HearingUtil hearingUtil;
     private final OrderUtil orderUtil;
@@ -36,7 +36,7 @@ public class AssigningDateRescheduledHearing implements OrderUpdateStrategy {
     private final Configuration config;
 
     @Autowired
-    public AssigningDateRescheduledHearing(HearingUtil hearingUtil, OrderUtil orderUtil, ApplicationUtil applicationUtil, Configuration config) {
+    public PublishOrderRescheduleOfHearingDate(HearingUtil hearingUtil, OrderUtil orderUtil, ApplicationUtil applicationUtil, Configuration config) {
         this.hearingUtil = hearingUtil;
         this.orderUtil = orderUtil;
         this.applicationUtil = applicationUtil;
@@ -45,23 +45,14 @@ public class AssigningDateRescheduledHearing implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-       return false;
+        return false;
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
-        return order.getOrderType() != null && ASSIGNING_DATE_RESCHEDULED_HEARING.equalsIgnoreCase(order.getOrderType());
-    }
-
-    @Override
-    public boolean supportsCommon(OrderRequest orderRequest) {
-        return false;
-    }
-
-    @Override
-    public CaseDiaryEntry execute(OrderRequest request) {
-        return null;
+        String action = order.getWorkflow().getAction();
+        return order.getOrderType() != null  && E_SIGN.equalsIgnoreCase(action) && RESCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -77,7 +68,6 @@ public class AssigningDateRescheduledHearing implements OrderUpdateStrategy {
         log.info("After order publish process,result = IN_PROGRESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
         String hearingNumber = order.getHearingNumber();
 
-        // hearing update and application case search if required
         if (hearingNumber == null) {
             String referenceId = orderUtil.getReferenceId(order);
 
@@ -94,19 +84,30 @@ public class AssigningDateRescheduledHearing implements OrderUpdateStrategy {
                 .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
         Hearing hearing = hearings.get(0);
 
-        order.setHearingNumber(hearing.getHearingId());
-
-        Long time = hearingUtil.getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "newHearingDate"));
-        if (time != null) {
-            hearing.setStartTime(time);
-            hearing.setEndTime(time);
+        Long newHearingDate = hearingUtil.getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "newHearingDate"));
+        if (newHearingDate != null) {
+            hearing.setStartTime(newHearingDate);
+            hearing.setEndTime(newHearingDate);
         }
         WorkflowObject workflow = new WorkflowObject();
-        workflow.setAction(SETDATE);
+        workflow.setAction(BULK_RESCHEDULE);
         workflow.setComments("Update Hearing");
 
         StringBuilder updateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
+        log.info("update hearing with hearingNumber:{}, action:{}", hearingNumber, BULK_RESCHEDULE);
         hearingUtil.createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(requestInfo).build(), updateUri);
+
+        log.info("After order publish process,result = SUCCESS, orderType :{}, orderNumber:{}", order.getOrderType(), order.getOrderNumber());
+        return null;
+    }
+
+    @Override
+    public boolean supportsCommon(OrderRequest orderRequest) {
+        return false;
+    }
+
+    @Override
+    public CaseDiaryEntry execute(OrderRequest request) {
         return null;
     }
 

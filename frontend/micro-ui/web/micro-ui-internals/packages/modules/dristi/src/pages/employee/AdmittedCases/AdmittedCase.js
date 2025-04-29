@@ -154,19 +154,18 @@ const AdmittedCases = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const { path } = useRouteMatch();
-  const urlParams = new URLSearchParams(window.location.search);
+  const urlParams = useMemo(() => new URLSearchParams(window.location.search), []);
   const { hearingId, taskOrderType, artifactNumber } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
-  const roles = Digit.UserService.getUser()?.info?.roles;
-  const isFSO = roles.some((role) => role.code === "FSO_ROLE");
-  const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
-  const isBenchClerk = roles.some((role) => role.code === "BENCH_CLERK");
-  const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
-  const filingNumber = urlParams.get("filingNumber");
-  const applicationNumber = urlParams.get("applicationNumber");
-  const triggerAdmitCase = urlParams.get("triggerAdmitCase");
-  const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
-  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+  const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles, []);
+  const isFSO = useMemo(() => roles.some((role) => role.code === "FSO_ROLE"), [roles]);
+  const isCourtRoomManager = useMemo(() => roles.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
+  const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const activeTab = useMemo(() => (isFSO ? "Complaints" : urlParams.get("tab") || "Overview"), [isFSO, urlParams]);
+  const filingNumber = useMemo(() => urlParams.get("filingNumber"), [urlParams]);
+  const applicationNumber = useMemo(() => urlParams.get("applicationNumber"), [urlParams]);
+  const userRoles = useMemo(() => Digit.UserService.getUser()?.info?.roles.map((role) => role.code), []);
+  const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
 
   const [show, setShow] = useState(false);
   const [openAdmitCaseModal, setOpenAdmitCaseModal] = useState(true);
@@ -210,15 +209,17 @@ const AdmittedCases = () => {
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
-  const isCitizen = userRoles.includes("CITIZEN");
-  const isCourtStaff = userRoles.includes("COURT_ROOM_MANAGER");
-  const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
-  const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
-  const OrderReviewModal = Digit.ComponentRegistryService.getComponent("OrderReviewModal") || {};
-  const SummonsAndWarrantsModal = Digit.ComponentRegistryService.getComponent("SummonsAndWarrantsModal") || <React.Fragment></React.Fragment>;
-  const userInfo = Digit.UserService.getUser()?.info;
+  const isCitizen = useMemo(() => userRoles.includes("CITIZEN"), [userRoles]);
+  const isCourtStaff = useMemo(() => userRoles.includes("COURT_ROOM_MANAGER"), [userRoles]);
+  const OrderWorkflowAction = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {}, []);
+  const ordersService = useMemo(() => Digit.ComponentRegistryService.getComponent("OrdersService") || {}, []);
+  const OrderReviewModal = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderReviewModal") || {}, []);
+  const SummonsAndWarrantsModal = useMemo(
+    () => Digit.ComponentRegistryService.getComponent("SummonsAndWarrantsModal") || <React.Fragment></React.Fragment>,
+    []
+  );
+  const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
-  const isJudge = userInfo?.roles?.some((role) => role.code === "JUDGE_ROLE");
   const todayDate = new Date().getTime();
   const { downloadPdf } = useDownloadCasePdf();
   const currentDiaryEntry = history.location?.state?.diaryEntry;
@@ -1026,12 +1027,18 @@ const AdmittedCases = () => {
     setShowConfirmationModal(false);
   };
 
-  const newTabSearchConfig = {
-    ...TabSearchconfig,
-    TabSearchconfig: configList,
-  };
+  const newTabSearchConfig = useMemo(
+    () => ({
+      ...TabSearchconfig,
+      TabSearchconfig: configList,
+    }),
+    [configList]
+  );
 
-  const indexOfActiveTab = newTabSearchConfig?.TabSearchconfig?.findIndex((tabData) => tabData.label === activeTab);
+  const indexOfActiveTab = useMemo(() => newTabSearchConfig?.TabSearchconfig?.findIndex((tabData) => tabData.label === activeTab), [
+    activeTab,
+    newTabSearchConfig?.TabSearchconfig,
+  ]);
 
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues); // State to hold default values for search fields
   const config = useMemo(() => {
@@ -1386,8 +1393,8 @@ const AdmittedCases = () => {
   useEffect(() => {
     // Set default values when component mounts
     setDefaultValues(defaultSearchValues);
-    const isSignSuccess = localStorage.getItem("esignProcess");
-    const doc = JSON.parse(localStorage.getItem("docSubmission"));
+    const isSignSuccess = sessionStorage.getItem("esignProcess");
+    const doc = JSON.parse(sessionStorage.getItem("docSubmission"));
     if (isSignSuccess) {
       if (doc) {
         setDocumentSubmission(doc);
@@ -2820,7 +2827,7 @@ const AdmittedCases = () => {
         />
       )}
       {config?.label !== "Overview" && config?.label !== "Complaint" && config?.label !== "History" && (
-        <div style={{ width: "100%", background: "white", padding: "10px", display: "flex", justifyContent: "space-between" }}>
+        <div style={{ width: "100%", background: "white", padding: "10px", display: "flex", justifyContent: "space-between", marginTop: "10px" }}>
           <div style={{ fontWeight: 700, fontSize: "24px", lineHeight: "28.8px" }}>{t(`All_${config?.label.toUpperCase()}_TABLE_HEADER`)}</div>
           {/* {(!userRoles.includes("CITIZENS") || userRoles.includes("ADVOCATE_ROLE")) &&
             (config?.label === "Hearings" || config?.label === "Documents") && (
@@ -2880,10 +2887,7 @@ const AdmittedCases = () => {
           )}
         </div>
       )}
-      <div
-        className={`inbox-search-wrapper ${activeTab === "Orders" && "orders-tab-inobox-wrapper"}`}
-        style={showActionBar && !isWorkFlowFetching ? { marginBottom: "56px" } : {}}
-      >
+      <div className={`inbox-search-wrapper orders-tab-inbox-wrapper`}>
         {/* Pass defaultValues as props to InboxSearchComposer */}
         <InboxSearchComposer
           key={`${config?.label}-${updateCounter}`}

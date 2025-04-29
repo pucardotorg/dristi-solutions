@@ -28,7 +28,7 @@ const CustomStepperSuccess = ({
   orderType,
 }) => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const fileStore = localStorage.getItem("SignedFileStoreID");
+  const fileStore = sessionStorage.getItem("SignedFileStoreID");
 
   const documentType = useMemo(() => {
     let txt = "";

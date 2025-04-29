@@ -1,10 +1,11 @@
-package pucar.strategy;
+package pucar.strategy.ordertype;
 
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pucar.config.Configuration;
+import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.CaseUtil;
 import pucar.util.HearingUtil;
 import pucar.util.PendingTaskUtil;
@@ -26,7 +27,7 @@ import static pucar.config.ServiceConstants.*;
 
 @Slf4j
 @Component
-public class ScheduleOfHearingDate implements OrderUpdateStrategy {
+public class PublishOrderScheduleOfHearingDate implements OrderUpdateStrategy {
 
     private final HearingUtil hearingUtil;
     private final Configuration configuration;
@@ -34,7 +35,7 @@ public class ScheduleOfHearingDate implements OrderUpdateStrategy {
     private final PendingTaskUtil pendingTaskUtil;
 
     @Autowired
-    public ScheduleOfHearingDate(HearingUtil hearingUtil, Configuration configuration, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil) {
+    public PublishOrderScheduleOfHearingDate(HearingUtil hearingUtil, Configuration configuration, CaseUtil caseUtil, PendingTaskUtil pendingTaskUtil) {
         this.hearingUtil = hearingUtil;
         this.configuration = configuration;
         this.caseUtil = caseUtil;
@@ -44,13 +45,15 @@ public class ScheduleOfHearingDate implements OrderUpdateStrategy {
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
-        return order.getOrderType() != null && SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());
+        String action = order.getWorkflow().getAction();
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
-        return order.getOrderType() != null && SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());
+        String action = order.getWorkflow().getAction();
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && SCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -110,7 +113,7 @@ public class ScheduleOfHearingDate implements OrderUpdateStrategy {
 
         // close manual pending task for filing number
         log.info("close manual pending task for hearing number:{}", order.getHearingNumber());
-        pendingTaskUtil.closeManualPendingTask(order.getHearingNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber());
+        pendingTaskUtil.closeManualPendingTask(order.getHearingNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(), courtCase.getId().toString(),courtCase.getCaseTitle());
 
         log.info("post processing, result= SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
 

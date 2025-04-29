@@ -112,14 +112,14 @@ function ReviewSubmissionModal({
   });
 
   useEffect(() => {
-    const isSignSuccess = localStorage.getItem("esignProcess");
-    const applicationPDF = localStorage.getItem("applicationPDF");
+    const isSignSuccess = sessionStorage.getItem("esignProcess");
+    const applicationPDF = sessionStorage.getItem("applicationPDF");
     if (isSignSuccess) {
       setShowReviewModal(false);
       setShowsignatureModal(true);
       setApplicationPdfFileStoreId(applicationPDF);
-      localStorage.removeItem("esignProcess");
-      localStorage.removeItem("applicationPDF");
+      sessionStorage.removeItem("esignProcess");
+      sessionStorage.removeItem("applicationPDF");
     }
   }, []);
 
