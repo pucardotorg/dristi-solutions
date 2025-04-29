@@ -37,7 +37,7 @@ const TopBar = ({
       if (usersResponse && usersResponse.user && usersResponse.user.length) {
         const userDetails = usersResponse.user[0];
         const thumbs = userDetails?.photo?.split(",");
-        setProfilePic(thumbs?.at(0));
+        setProfilePic(thumbs?.at(0) || null); 
       }
     }
   }, [profilePic !== null, userDetails?.info?.uuid]);

@@ -42,10 +42,12 @@ const SelectOtp = ({
   };
 
   const setUserDetails = async () => {
-    const {
-      user: [user],
-    } = await Digit.UserService.userSearch(tenantId, { mobileNumber: mobileNumber }, {});
-    setUser(user);
+    if (!user) {
+      const {
+        user: [user],
+      } = await Digit.UserService.userSearch(tenantId, { mobileNumber: mobileNumber }, {});
+      setUser(user);
+    }
   };
 
   useEffect(() => {
