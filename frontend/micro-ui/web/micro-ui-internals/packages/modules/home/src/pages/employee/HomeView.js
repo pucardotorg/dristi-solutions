@@ -112,6 +112,28 @@ const HomeView = () => {
     userType === "ADVOCATE" ? "/advocate/v1/_search" : "/advocate/clerk/v1/_search"
   );
 
+  const { data: ordersNotificationData, isLoading: isOrdersLoading } = useSearchOrdersNotificationService(
+    {
+      inbox: {
+        processSearchCriteria: {
+          businessService: ["notification"],
+          moduleName: "Transformer service",
+        },
+        limit: 1,
+        offset: 0,
+        tenantId: tenantId,
+        moduleSearchCriteria: {
+          entityType: "Order",
+          tenantId: tenantId,
+          status: OrderWorkflowState.PENDING_BULK_E_SIGN,
+        },
+      },
+    },
+    { tenantId },
+    OrderWorkflowState.PENDING_BULK_E_SIGN,
+    Boolean(isJudge)
+  );
+
   const refreshInbox = () => {
     setCallRefetch(!callRefetch);
   };
@@ -347,7 +369,7 @@ const HomeView = () => {
     }
   };
 
-  if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading) {
+  if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOrdersLoading) {
     return <Loader />;
   }
 
@@ -459,6 +481,7 @@ const HomeView = () => {
             isLitigant={Boolean(individualId && userType && userInfoType === "citizen")}
             uuid={userInfo?.uuid}
             userInfoType={userInfoType}
+            pendingSignOrderList={ordersNotificationData}
           />
         </div>
       )}

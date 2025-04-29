@@ -40,6 +40,7 @@ const TasksComponent = ({
   taskIncludes,
   isApplicationCompositeOrder = false,
   compositeOrderObj,
+  pendingSignOrderList,
 }) => {
   const JoinCasePayment = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCasePayment"), []);
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
@@ -73,28 +74,6 @@ const TasksComponent = ({
         return data?.case?.pendingTaskFilterText || [];
       },
     }
-  );
-
-  const { data: pendingSignOrderList, isLoading: isPendingSignOrderListLoading } = useSearchOrdersNotificationService(
-    {
-      inbox: {
-        processSearchCriteria: {
-          businessService: ["notification"],
-          moduleName: "Transformer service",
-        },
-        limit: 1,
-        offset: 0,
-        tenantId: tenantId,
-        moduleSearchCriteria: {
-          entityType: "Order",
-          tenantId: tenantId,
-          status: OrderWorkflowState.PENDING_BULK_E_SIGN,
-        },
-      },
-    },
-    { tenantId },
-    OrderWorkflowState.PENDING_BULK_E_SIGN,
-    true
   );
 
   const { data: pendingTaskDetails = [], isLoading, refetch } = useGetPendingTask({
@@ -672,7 +651,7 @@ const TasksComponent = ({
             isDisabled={pendingSignOrderList?.totalCount === 0}
           />
         )}
-        {isLoading || isOptionsLoading || isPendingSignOrderListLoading ? (
+        {isLoading || isOptionsLoading ? (
           <Loader />
         ) : totalPendingTask !== undefined && totalPendingTask > 0 ? (
           <React.Fragment>
