@@ -79,7 +79,7 @@ const HomeView = () => {
     "Home",
     userInfo?.uuid || "",
     Boolean(userInfo?.uuid && isUserLoggedIn),
-    6*1000
+    6 * 1000
   );
   const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData]);
 
@@ -449,7 +449,7 @@ const HomeView = () => {
           </div>
         </React.Fragment>
       )}
-      {individualId && userType && userInfoType === "citizen" && caseDetails && (
+      {((individualId && userType && userInfoType === "citizen" && caseDetails) || userInfoType === "employee") && (
         <div className="right-side" style={{ width: "30vw" }}>
           <TasksComponent
             taskType={taskType}
