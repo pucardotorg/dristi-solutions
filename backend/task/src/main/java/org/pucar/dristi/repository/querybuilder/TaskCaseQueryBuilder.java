@@ -22,7 +22,7 @@ public class TaskCaseQueryBuilder {
     private static final String BASE_TASK_QUERY = "SELECT task.id as id, task.tenantid as tenantid, task.orderid as orderid, task.createddate as createddate," +
             " task.filingnumber as filingnumber, task.tasknumber as tasknumber, task.datecloseby as datecloseby, task.dateclosed as dateclosed, task.taskdescription as taskdescription, task.cnrnumber as cnrnumber," +
             " task.taskdetails as taskdetails, task.assignedto as assignedto, task.tasktype as tasktype, task.assignedto as assignedto, task.status as status, task.isactive as isactive,task.additionaldetails as additionaldetails, task.createdby as createdby," +
-            " task.lastmodifiedby as lastmodifiedby, task.createdtime as createdtime, task.lastmodifiedtime as lastmodifiedtime ,c.caseTitle as caseName , o.orderType as orderType, c.cmpnumber as cmpnumber, c.courtCaseNumber as courtCaseNumber";
+            " task.lastmodifiedby as lastmodifiedby, task.createdtime as createdtime, task.lastmodifiedtime as lastmodifiedtime ,c.caseTitle as caseName , o.orderType as orderType, c.cmpNumber as cmpNumber, c.courtCaseNumber as courtCaseNumber";
 
     private static final String DOCUMENT_SWITCH_CASE = " ,CASE WHEN EXISTS (SELECT 1 FROM dristi_task_document dtd WHERE dtd.task_id = task.id AND dtd.documentType = 'SIGNED_TASK_DOCUMENT')" +
             "THEN 'SIGNED' ELSE 'SIGN_PENDING' END AS documentstatus";
