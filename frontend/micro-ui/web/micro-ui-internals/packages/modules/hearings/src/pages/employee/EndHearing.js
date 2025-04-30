@@ -67,8 +67,15 @@ const EndHearing = ({
 
   const endHearing = async (updatedTranscriptText) => {
     try {
-      const updatedHearing = structuredClone(hearing);
-      updatedHearing.transcript[0] = updatedTranscriptText;
+      let updatedHearing = structuredClone(hearing);
+      if(updatedHearing?.transcript){
+        updatedHearing.transcript[0] = updatedTranscriptText;
+      }else{
+        updatedHearing = {
+          ...updatedHearing,
+          transcript: [updatedTranscriptText],
+        };
+      }
       updatedHearing.workflow = updatedHearing.workflow || {};
       updatedHearing.workflow.action = "CLOSE";
       const response = await hearingService.updateHearings(
