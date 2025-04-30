@@ -100,7 +100,7 @@ const ViewPaymentDetails = ({ location, match }) => {
       consumerCode,
       service: businessService,
     },
-    `summons-warrant-notice-bill-${consumerCodeWithoutSuffix}-${paymentDetails?.Bill[0].billNumber}`,
+    `summons-warrant-notice-bill-${consumerCodeWithoutSuffix}-${paymentDetails?.Bill?.[0]?.billNumber}`,
     Boolean(businessService && consumerCode)
   );
 
