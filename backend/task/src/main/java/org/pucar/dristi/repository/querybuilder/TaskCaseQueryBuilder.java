@@ -22,7 +22,7 @@ public class TaskCaseQueryBuilder {
     private static final String BASE_TASK_QUERY = "SELECT task.id as id, task.tenantid as tenantid, task.orderid as orderid, task.createddate as createddate," +
             " task.filingnumber as filingnumber, task.tasknumber as tasknumber, task.datecloseby as datecloseby, task.dateclosed as dateclosed, task.taskdescription as taskdescription, task.cnrnumber as cnrnumber," +
             " task.taskdetails as taskdetails, task.assignedto as assignedto, task.tasktype as tasktype, task.assignedto as assignedto, task.status as status, task.isactive as isactive,task.additionaldetails as additionaldetails, task.createdby as createdby," +
-            " task.lastmodifiedby as lastmodifiedby, task.createdtime as createdtime, task.lastmodifiedtime as lastmodifiedtime ,c.caseTitle as caseName , o.orderType as orderType";
+            " task.lastmodifiedby as lastmodifiedby, task.createdtime as createdtime, task.lastmodifiedtime as lastmodifiedtime ,c.caseTitle as caseName , o.orderType as orderType, c.cmpnumber as cmpnumber, c.courtCaseNumber as courtCaseNumber";
 
     private static final String DOCUMENT_SWITCH_CASE = " ,CASE WHEN EXISTS (SELECT 1 FROM dristi_task_document dtd WHERE dtd.task_id = task.id AND dtd.documentType = 'SIGNED_TASK_DOCUMENT')" +
             "THEN 'SIGNED' ELSE 'SIGN_PENDING' END AS documentstatus";
@@ -133,9 +133,18 @@ public class TaskCaseQueryBuilder {
 
         if (!ObjectUtils.isEmpty(taskCaseSearchCriteria.getSearchText())) {
             addClauseIfRequired(query, preparedStmtList);
-            query.append("(task.tasknumber ILIKE ").append(" ? ").append(" or task.cnrnumber ILIKE ").append(" ? ").append(" or task.filingnumber ILIKE ").append(" ? ").append(" or c.caseTitle ILIKE ").append(" ? ").append(" )");
-            for (int i = 0; i < 4; i++) {
-                preparedStmtList.add("%" + taskCaseSearchCriteria.getSearchText() + "%");
+            query.append("(")
+                    .append("task.tasknumber ILIKE ? ")
+                    .append("or task.cnrnumber ILIKE ? ")
+                    .append("or c.caseTitle ILIKE ? ")
+                    .append("or c.cmpNumber ILIKE ? ")
+                    .append("or c.courtCaseNumber ILIKE ? ")
+                    .append(")");
+
+            // Add 6 parameters to the list
+            String searchPattern = "%" + taskCaseSearchCriteria.getSearchText() + "%";
+            for (int i = 0; i < 6; i++) {
+                preparedStmtList.add(searchPattern);
             }
         }
 
