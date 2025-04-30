@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.config.TracerConfiguration;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -16,6 +17,7 @@ import org.springframework.web.client.RestTemplate;
 @PropertySource("classpath:application.properties")
 @Configuration
 @Slf4j
+@EnableConfigurationProperties
 public class Main {
 
 	public static void main(String[] args) {
