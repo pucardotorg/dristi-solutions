@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { CustomArrowDownIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { useTranslation } from "react-i18next";
 
-const Accordian = ({ groupedData, caseDataDetails }) => {
+const Accordian = ({ groupedData }) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const handleAccordionClick = () => {
@@ -45,27 +45,25 @@ const Accordian = ({ groupedData, caseDataDetails }) => {
           {groupedData
             .filter((data) => data !== null) // Filter out null values
             .map((data) => {
-              const matchedCase = caseDataDetails.find((caseData) => caseData.filingNumber === data.filingNumber);
+              const caseTitle = data?.data?.[0]?.fields?.find((field) => field.key === "caseTitle")?.value;
               return (
                 <div key={data.filingNumber}>
-                  {matchedCase && (
-                    <div style={{ width: "100%", padding: "16px 12px", borderBottom: "1px solid #E8E8E8" }}>
-                      <div style={{ fontWeight: "400", fontSize: "16px", marginBottom: "3px" }}>{matchedCase?.caseDetail?.caseTitle}</div>
-                      <div
-                        style={{
-                          fontWeight: 400,
-                          fontSize: "14px",
-                          color: "#3D3C3C",
-                          display: "flex",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <div>NIA S138</div>
-                        <div>PB-PT-2023</div>
-                        <div style={{ color: "#9E400A" }}>{`${data?.data?.length} tasks`}</div>
-                      </div>
+                  <div style={{ width: "100%", padding: "16px 12px", borderBottom: "1px solid #E8E8E8" }}>
+                    <div style={{ fontWeight: "400", fontSize: "16px", marginBottom: "3px" }}>{caseTitle}</div>
+                    <div
+                      style={{
+                        fontWeight: 400,
+                        fontSize: "14px",
+                        color: "#3D3C3C",
+                        display: "flex",
+                        justifyContent: "space-between",
+                      }}
+                    >
+                      <div>NIA S138</div>
+                      <div>PB-PT-2023</div>
+                      <div style={{ color: "#9E400A" }}>{`${data?.data?.length} tasks`}</div>
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}

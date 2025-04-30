@@ -1043,7 +1043,7 @@ const SubmissionsCreate = ({ path }) => {
 
   const updateSubmission = async (action) => {
     try {
-      const localStorageID = localStorage.getItem("fileStoreId");
+      const localStorageID = sessionStorage.getItem("fileStoreId");
       const documents = Array.isArray(applicationDetails?.documents) ? applicationDetails.documents : [];
       const documentsFile =
         signedDoucumentUploadedID !== "" || localStorageID
@@ -1055,7 +1055,7 @@ const SubmissionsCreate = ({ path }) => {
             }
           : null;
 
-      localStorage.removeItem("fileStoreId");
+      sessionStorage.removeItem("fileStoreId");
       const reqBody = {
         application: {
           ...applicationDetails,

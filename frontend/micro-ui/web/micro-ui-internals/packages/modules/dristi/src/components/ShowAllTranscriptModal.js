@@ -29,7 +29,7 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, hearingList }) => {
 
   return (
     <Modal
-      headerBarMain={<Heading heading={"ALL_HEARING_TRANSCRIPT"} />}
+      headerBarMain={<Heading heading={t("ALL_HEARING_TRANSCRIPT")} />}
       headerBarEnd={<CloseBtn onClick={() => setShowAllTranscript(false)} />}
       actionCancelLabel={null}
       actionCancelOnSubmit={() => {}}

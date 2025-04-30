@@ -39,7 +39,8 @@ const UpdateDeliveryStatusComponent = ({
 
   useEffect(() => {
     if (date) setUpdateStatusDate(date);
-    if (selectedDelievery && date) handleSubmitButtonDisable(false);
+    const isSelectedDeliveryEmpty = !selectedDelievery || Object.keys(selectedDelievery).length === 0;
+    if (!isSelectedDeliveryEmpty && date) handleSubmitButtonDisable(false);
     else handleSubmitButtonDisable(true);
   }, [selectedDelievery, date]);
 

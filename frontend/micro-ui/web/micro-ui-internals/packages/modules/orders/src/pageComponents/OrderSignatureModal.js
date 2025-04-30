@@ -29,7 +29,7 @@ function OrderSignatureModal({
   setSignedDocumentUploadID,
   orderPdfFileStoreID,
   businessOfDay,
-  selectedOrder
+  selectedOrder,
 }) {
   const [isSigned, setIsSigned] = useState(false);
   const { handleEsign, checkSignStatus } = useESign();
@@ -81,7 +81,6 @@ function OrderSignatureModal({
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setIsSigned(true);
-        localStorage.setItem("formData", JSON.stringify(formData));
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);
@@ -131,9 +130,9 @@ function OrderSignatureModal({
                 onButtonClick={() => {
                   // setOpenAadharModal(true);
                   // setIsSigned(true);
-                  localStorage.setItem("orderPDF", orderPdfFileStoreID);
-                  localStorage.setItem("businessOfTheDay", businessOfDay);
-                  localStorage.setItem("currentSelectedOrder", selectedOrder);
+                  sessionStorage.setItem("orderPDF", orderPdfFileStoreID);
+                  sessionStorage.setItem("businessOfTheDay", businessOfDay);
+                  sessionStorage.setItem("currentSelectedOrder", selectedOrder);
                   handleEsign(name, pageModule, orderPdfFileStoreID, judgePlaceholder);
                 }}
                 className={"aadhar-sign-in"}

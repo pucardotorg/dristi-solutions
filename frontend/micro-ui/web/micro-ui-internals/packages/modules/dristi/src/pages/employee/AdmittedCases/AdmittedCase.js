@@ -1,8 +1,8 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
 import { ActionBar, SubmitBar, Button, Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory, useRouteMatch } from "react-router-dom";
+import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
 import { CustomThreeDots, InfoIconRed } from "../../../icons/svgIndex";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
@@ -152,20 +152,20 @@ const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
 
 const AdmittedCases = () => {
   const { t } = useTranslation();
+  const location = useLocation();
   const { path } = useRouteMatch();
-  const urlParams = new URLSearchParams(window.location.search);
+  const urlParams = useMemo(() => new URLSearchParams(window.location.search), []);
   const { hearingId, taskOrderType, artifactNumber } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
-  const roles = Digit.UserService.getUser()?.info?.roles;
-  const isFSO = roles.some((role) => role.code === "FSO_ROLE");
-  const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
-  const isBenchClerk = roles.some((role) => role.code === "BENCH_CLERK");
-  const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
-  const filingNumber = urlParams.get("filingNumber");
-  const applicationNumber = urlParams.get("applicationNumber");
-  const triggerAdmitCase = urlParams.get("triggerAdmitCase");
-  const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
-  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+  const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles, []);
+  const isFSO = useMemo(() => roles.some((role) => role.code === "FSO_ROLE"), [roles]);
+  const isCourtRoomManager = useMemo(() => roles.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
+  const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const activeTab = useMemo(() => (isFSO ? "Complaints" : urlParams.get("tab") || "Overview"), [isFSO, urlParams]);
+  const filingNumber = useMemo(() => urlParams.get("filingNumber"), [urlParams]);
+  const applicationNumber = useMemo(() => urlParams.get("applicationNumber"), [urlParams]);
+  const userRoles = useMemo(() => Digit.UserService.getUser()?.info?.roles.map((role) => role.code), []);
+  const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
 
   const [show, setShow] = useState(false);
   const [openAdmitCaseModal, setOpenAdmitCaseModal] = useState(true);
@@ -209,19 +209,22 @@ const AdmittedCases = () => {
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
-  const isCitizen = userRoles.includes("CITIZEN");
-  const isCourtStaff = userRoles.includes("COURT_ROOM_MANAGER");
-  const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
-  const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
-  const OrderReviewModal = Digit.ComponentRegistryService.getComponent("OrderReviewModal") || {};
-  const SummonsAndWarrantsModal = Digit.ComponentRegistryService.getComponent("SummonsAndWarrantsModal") || <React.Fragment></React.Fragment>;
-  const userInfo = Digit.UserService.getUser()?.info;
+  const isCitizen = useMemo(() => userRoles.includes("CITIZEN"), [userRoles]);
+  const isCourtStaff = useMemo(() => userRoles.includes("COURT_ROOM_MANAGER"), [userRoles]);
+  const OrderWorkflowAction = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {}, []);
+  const ordersService = useMemo(() => Digit.ComponentRegistryService.getComponent("OrdersService") || {}, []);
+  const OrderReviewModal = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderReviewModal") || {}, []);
+  const SummonsAndWarrantsModal = useMemo(
+    () => Digit.ComponentRegistryService.getComponent("SummonsAndWarrantsModal") || <React.Fragment></React.Fragment>,
+    []
+  );
+  const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
-  const isJudge = userInfo?.roles?.some((role) => role.code === "JUDGE_ROLE");
   const todayDate = new Date().getTime();
   const { downloadPdf } = useDownloadCasePdf();
   const currentDiaryEntry = history.location?.state?.diaryEntry;
-
+  const historyCaseData = location?.state?.caseData;
+  const historyOrderData = location?.state?.orderData;
   const reqEvidenceUpdate = {
     url: Urls.dristi.evidenceUpdate,
     params: {},
@@ -233,7 +236,7 @@ const AdmittedCases = () => {
 
   const evidenceUpdateMutation = Digit.Hooks.useCustomAPIMutationHook(reqEvidenceUpdate);
 
-  const { data: caseData, isLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useSearchCaseService(
+  const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useSearchCaseService(
     {
       criteria: [
         {
@@ -243,10 +246,12 @@ const AdmittedCases = () => {
       tenantId,
     },
     {},
-    `dristi-${caseId}`,
+    `dristi-admitted-${caseId}`,
     caseId,
-    Boolean(caseId)
+    Boolean(caseId && !historyCaseData)
   );
+
+  const caseData = historyCaseData || apiCaseData;
   const caseDetails = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0] || {}, [caseData]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
@@ -1022,12 +1027,18 @@ const AdmittedCases = () => {
     setShowConfirmationModal(false);
   };
 
-  const newTabSearchConfig = {
-    ...TabSearchconfig,
-    TabSearchconfig: configList,
-  };
+  const newTabSearchConfig = useMemo(
+    () => ({
+      ...TabSearchconfig,
+      TabSearchconfig: configList,
+    }),
+    [configList]
+  );
 
-  const indexOfActiveTab = newTabSearchConfig?.TabSearchconfig?.findIndex((tabData) => tabData.label === activeTab);
+  const indexOfActiveTab = useMemo(() => newTabSearchConfig?.TabSearchconfig?.findIndex((tabData) => tabData.label === activeTab), [
+    activeTab,
+    newTabSearchConfig?.TabSearchconfig,
+  ]);
 
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues); // State to hold default values for search fields
   const config = useMemo(() => {
@@ -1382,8 +1393,8 @@ const AdmittedCases = () => {
   useEffect(() => {
     // Set default values when component mounts
     setDefaultValues(defaultSearchValues);
-    const isSignSuccess = localStorage.getItem("esignProcess");
-    const doc = JSON.parse(localStorage.getItem("docSubmission"));
+    const isSignSuccess = sessionStorage.getItem("esignProcess");
+    const doc = JSON.parse(sessionStorage.getItem("docSubmission"));
     if (isSignSuccess) {
       if (doc) {
         setDocumentSubmission(doc);
@@ -1391,11 +1402,6 @@ const AdmittedCases = () => {
       setShow(true);
     }
   }, []);
-
-  const onTabChange = (n) => {
-    history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${newTabSearchConfig?.TabSearchconfig?.[n].label}`);
-    // urlParams.set("tab", newTabSearchConfig?.TabSearchconfig?.[n].label);
-  };
 
   const handleIssueNotice = async (hearingDate, hearingNumber) => {
     try {
@@ -1810,28 +1816,28 @@ const AdmittedCases = () => {
     Boolean(filingNumber)
   );
 
-  const isDcaHearingScheduled = useMemo(() => {
-    const isDcaHearingScheduled = Boolean(
-      hearingDetails?.HearingList?.find(
-        (hearing) =>
-          ["DELAY_CONDONATION_HEARING", "DELAY_CONDONATION_AND_ADMISSION"].includes(hearing?.hearingType) &&
-          [HearingWorkflowState?.INPROGRESS, HearingWorkflowState?.SCHEDULED].includes(hearing?.status)
-      )
-    );
-    return isDcaHearingScheduled;
-  }, [hearingDetails]);
+  // const isDcaHearingScheduled = useMemo(() => {
+  //   const isDcaHearingScheduled = Boolean(
+  //     hearingDetails?.HearingList?.find(
+  //       (hearing) =>
+  //         ["DELAY_CONDONATION_HEARING", "DELAY_CONDONATION_AND_ADMISSION"].includes(hearing?.hearingType) &&
+  //         [HearingWorkflowState?.INPROGRESS, HearingWorkflowState?.SCHEDULED].includes(hearing?.status)
+  //     )
+  //   );
+  //   return isDcaHearingScheduled;
+  // }, [hearingDetails]);
 
-  const isAdmissionHearingCompletedOnce = useMemo(() => {
-    if (!hearingDetails?.HearingList?.length) {
-      return false;
-    } else {
-      return Boolean(
-        hearingDetails?.HearingList?.find(
-          (hearing) => hearing?.hearingType === "ADMISSION" && [HearingWorkflowState?.COMPLETED].includes(hearing?.status)
-        )
-      );
-    }
-  }, [hearingDetails]);
+  // const isAdmissionHearingCompletedOnce = useMemo(() => {
+  //   if (!hearingDetails?.HearingList?.length) {
+  //     return false;
+  //   } else {
+  //     return Boolean(
+  //       hearingDetails?.HearingList?.find(
+  //         (hearing) => hearing?.hearingType === "ADMISSION" && [HearingWorkflowState?.COMPLETED].includes(hearing?.status)
+  //       )
+  //     );
+  //   }
+  // }, [hearingDetails]);
 
   const currentHearingAdmissionHearing = useMemo(
     () =>
@@ -1852,12 +1858,24 @@ const AdmittedCases = () => {
     [hearingDetails?.HearingList]
   );
 
-  const { data: ordersData } = useSearchOrdersService(
+  const { data: apiOrdersData } = useSearchOrdersService(
     { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED" } },
     { tenantId },
     filingNumber + currentHearingId,
-    Boolean(filingNumber),
+    Boolean(filingNumber && !historyOrderData),
     0
+  );
+
+  const ordersData = historyOrderData || apiOrdersData;
+
+  const onTabChange = useCallback(
+    (n) => {
+      history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${newTabSearchConfig?.TabSearchconfig?.[n].label}`, {
+        caseData: caseData,
+        orderData: ordersData,
+      });
+    },
+    [caseData, caseId, filingNumber, history, newTabSearchConfig?.TabSearchconfig, ordersData, path]
   );
 
   const groupByHearingNumberDescending = (list) => {
@@ -1911,57 +1929,57 @@ const AdmittedCases = () => {
     return groupedByhearingNumber;
   }, [ordersData?.list]);
 
-  const orderListFiltered = useMemo(() => {
-    if (!ordersData?.list) return [];
+  // const orderListFiltered = useMemo(() => {
+  //   if (!ordersData?.list) return [];
 
-    const filteredOrders = ordersData?.list?.filter((item) => item?.hearingNumber === currentHearingId);
-    const sortedOrders = filteredOrders?.sort((a, b) => new Date(b.auditDetails.createdTime) - new Date(a.auditDetails.createdTime));
+  //   const filteredOrders = ordersData?.list?.filter((item) => item?.hearingNumber === currentHearingId);
+  //   const sortedOrders = filteredOrders?.sort((a, b) => new Date(b.auditDetails.createdTime) - new Date(a.auditDetails.createdTime));
 
-    // Group by partyIndex
-    const groupedOrders = sortedOrders?.reduce((acc, item) => {
-      if (item?.orderCategory === "COMPOSITE") {
-        const compositeItems = item?.compositeItems?.filter((item) => item?.orderType === "NOTICE");
-        compositeItems.forEach((itemDetails) => {
-          const partyIndex = itemDetails?.orderSchema?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex;
-          if (partyIndex !== undefined) {
-            acc[partyIndex] = acc[partyIndex] || [];
-            acc[partyIndex].push(item);
-          }
-        });
-      } else {
-        const partyIndex = item?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex;
-        if (partyIndex !== undefined) {
-          acc[partyIndex] = acc[partyIndex] || [];
-          acc[partyIndex].push(item);
-        }
-      }
-      return acc;
-    }, {});
+  //   // Group by partyIndex
+  //   const groupedOrders = sortedOrders?.reduce((acc, item) => {
+  //     if (item?.orderCategory === "COMPOSITE") {
+  //       const compositeItems = item?.compositeItems?.filter((item) => item?.orderType === "NOTICE");
+  //       compositeItems.forEach((itemDetails) => {
+  //         const partyIndex = itemDetails?.orderSchema?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex;
+  //         if (partyIndex !== undefined) {
+  //           acc[partyIndex] = acc[partyIndex] || [];
+  //           acc[partyIndex].push(item);
+  //         }
+  //       });
+  //     } else {
+  //       const partyIndex = item?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex;
+  //       if (partyIndex !== undefined) {
+  //         acc[partyIndex] = acc[partyIndex] || [];
+  //         acc[partyIndex].push(item);
+  //       }
+  //     }
+  //     return acc;
+  //   }, {});
 
-    return groupedOrders;
-  }, [currentHearingId, ordersData]);
+  //   return groupedOrders;
+  // }, [currentHearingId, ordersData]);
 
-  const noticeFailureCount = useMemo(() => {
-    if (isCaseAdmitted) return [];
+  // const noticeFailureCount = useMemo(() => {
+  //   if (isCaseAdmitted) return [];
 
-    return Object.entries(orderListFiltered)
-      ?.map(([partyIndex, orders]) => {
-        const firstOrder = orders?.[0];
-        const partyName =
-          firstOrder?.orderCategory === "COMPOSITE"
-            ? firstOrder?.compositeItems?.find(
-                (item) =>
-                  item?.orderType === "NOTICE" && item?.orderSchema?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex === partyIndex
-              )?.orderSchema?.orderDetails?.parties?.[0]?.partyName
-            : firstOrder?.orderDetails?.parties?.[0]?.partyName;
-        return {
-          partyIndex,
-          partyName,
-          failureCount: orders.length - 1,
-        };
-      })
-      ?.filter(({ failureCount }) => failureCount > 0);
-  }, [isCaseAdmitted, orderListFiltered]);
+  //   return Object.entries(orderListFiltered)
+  //     ?.map(([partyIndex, orders]) => {
+  //       const firstOrder = orders?.[0];
+  //       const partyName =
+  //         firstOrder?.orderCategory === "COMPOSITE"
+  //           ? firstOrder?.compositeItems?.find(
+  //               (item) =>
+  //                 item?.orderType === "NOTICE" && item?.orderSchema?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex === partyIndex
+  //             )?.orderSchema?.orderDetails?.parties?.[0]?.partyName
+  //           : firstOrder?.orderDetails?.parties?.[0]?.partyName;
+  //       return {
+  //         partyIndex,
+  //         partyName,
+  //         failureCount: orders.length - 1,
+  //       };
+  //     })
+  //     ?.filter(({ failureCount }) => failureCount > 0);
+  // }, [isCaseAdmitted, orderListFiltered]);
 
   const getHearingData = async () => {
     try {
@@ -2264,11 +2282,14 @@ const AdmittedCases = () => {
     }, duration);
   };
 
-  const handleDownload = (filestoreId) => {
-    if (filestoreId) {
-      downloadPdf(tenantId, filestoreId);
-    }
-  };
+  const handleDownload = useCallback(
+    (filestoreId) => {
+      if (filestoreId) {
+        downloadPdf(tenantId, filestoreId);
+      }
+    },
+    [downloadPdf, tenantId]
+  );
   const handleOrdersTab = () => {
     if (history.location?.state?.orderObj) {
       history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`);
@@ -2278,29 +2299,36 @@ const AdmittedCases = () => {
     }
   };
 
-  const handleExtensionRequest = (orderNumber, itemId, litigant, litigantIndId) => {
-    let url = `/${
-      window?.contextPath
-    }/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&isExtension=true&litigant=${
-      currentOrder?.litigant || litigant
-    }&litigantIndId=${currentOrder?.litigantIndId || litigantIndId}`;
-    if (itemId) url += `&itemId=${itemId}`;
-    history.push(url);
-  };
-  const handleSubmitDocument = (orderNumber, itemId, litigant, litigantIndId) => {
-    let url = `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&litigant=${
-      currentOrder?.litigant || litigant
-    }&litigantIndId=${currentOrder?.litigantIndId || litigantIndId}`;
-    if (itemId) url += `&itemId=${itemId}`;
-    history.push(url);
-  };
+  const handleExtensionRequest = useCallback(
+    (orderNumber, itemId, litigant, litigantIndId) => {
+      let url = `/${
+        window?.contextPath
+      }/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&isExtension=true&litigant=${
+        currentOrder?.litigant || litigant
+      }&litigantIndId=${currentOrder?.litigantIndId || litigantIndId}`;
+      if (itemId) url += `&itemId=${itemId}`;
+      history.push(url);
+    },
+    [currentOrder?.litigant, currentOrder?.litigantIndId, filingNumber, history]
+  );
 
-  const openHearingModule = () => {
+  const handleSubmitDocument = useCallback(
+    (orderNumber, itemId, litigant, litigantIndId) => {
+      let url = `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}&orderNumber=${orderNumber}&litigant=${
+        currentOrder?.litigant || litigant
+      }&litigantIndId=${currentOrder?.litigantIndId || litigantIndId}`;
+      if (itemId) url += `&itemId=${itemId}`;
+      history.push(url);
+    },
+    [currentOrder?.litigant, currentOrder?.litigantIndId, filingNumber, history]
+  );
+
+  const openHearingModule = useCallback(() => {
     setShowScheduleHearingModal(true);
     if (!isCaseAdmitted) {
       setCreateAdmissionOrder(true);
     }
-  };
+  }, [isCaseAdmitted]);
 
   const handleActionModal = () => {
     updateCaseDetails("REJECT").then(() => {
@@ -2437,18 +2465,18 @@ const AdmittedCases = () => {
     [primaryAction.action, secondaryAction.action, tertiaryAction.action, caseDetails?.status, caseDetails?.outcome, isCitizen, isCourtRoomManager]
   );
 
-  const handleOpenSummonNoticeModal = async (partyIndex) => {
-    if (currentHearingId) {
-      history.push(`${path}?filingNumber=${filingNumber}&caseId=${caseId}&taskOrderType=NOTICE&hearingId=${currentHearingId}&tab=${config?.label}`, {
-        state: {
-          params: {
-            partyIndex: partyIndex,
-            taskCnrNumber: cnrNumber,
-          },
-        },
-      });
-    }
-  };
+  // const handleOpenSummonNoticeModal = async (partyIndex) => {
+  //   if (currentHearingId) {
+  //     history.push(`${path}?filingNumber=${filingNumber}&caseId=${caseId}&taskOrderType=NOTICE&hearingId=${currentHearingId}&tab=${config?.label}`, {
+  //       state: {
+  //         params: {
+  //           partyIndex: partyIndex,
+  //           taskCnrNumber: cnrNumber,
+  //         },
+  //       },
+  //     });
+  //   }
+  // };
 
   const handleAllNoticeGeneratedForHearing = async (hearingNumber) => {
     if (hearingNumber) {
@@ -2505,7 +2533,7 @@ const AdmittedCases = () => {
     }
   };
 
-  if (isLoading || isWorkFlowLoading || isApplicationLoading || isCaseFetching) {
+  if (caseApiLoading || isWorkFlowLoading || isApplicationLoading || isCaseFetching) {
     return <Loader />;
   }
   if (
@@ -2799,7 +2827,7 @@ const AdmittedCases = () => {
         />
       )}
       {config?.label !== "Overview" && config?.label !== "Complaint" && config?.label !== "History" && (
-        <div style={{ width: "100%", background: "white", padding: "10px", display: "flex", justifyContent: "space-between" }}>
+        <div style={{ width: "100%", background: "white", padding: "10px", display: "flex", justifyContent: "space-between", marginTop: "10px" }}>
           <div style={{ fontWeight: 700, fontSize: "24px", lineHeight: "28.8px" }}>{t(`All_${config?.label.toUpperCase()}_TABLE_HEADER`)}</div>
           {/* {(!userRoles.includes("CITIZENS") || userRoles.includes("ADVOCATE_ROLE")) &&
             (config?.label === "Hearings" || config?.label === "Documents") && (
@@ -2859,10 +2887,7 @@ const AdmittedCases = () => {
           )}
         </div>
       )}
-      <div
-        className={`inbox-search-wrapper ${activeTab === "Orders" && "orders-tab-inobox-wrapper"}`}
-        style={showActionBar && !isWorkFlowFetching ? { marginBottom: "56px" } : {}}
-      >
+      <div className={`inbox-search-wrapper orders-tab-inbox-wrapper`}>
         {/* Pass defaultValues as props to InboxSearchComposer */}
         <InboxSearchComposer
           key={`${config?.label}-${updateCounter}`}
@@ -2894,7 +2919,7 @@ const AdmittedCases = () => {
       )}
       {tabData?.filter((tab) => tab.label === "Complaint")?.[0]?.active && (
         <div className="view-case-file-wrapper">
-          <ViewCaseFile t={t} inViewCase={true} />
+          <ViewCaseFile t={t} inViewCase={true} caseDetailsAdmitted={caseDetails} />
         </div>
       )}
       {show && (

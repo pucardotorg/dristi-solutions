@@ -77,7 +77,6 @@ function ESignSignatureModal({
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setIsSigned(true);
-        localStorage.setItem("formData", JSON.stringify(formData));
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);
@@ -115,7 +114,7 @@ function ESignSignatureModal({
           },
         };
 
-        localStorage.setItem("EvidenceFile", JSON.stringify(storedData));
+        sessionStorage.setItem("EvidenceFile", JSON.stringify(storedData));
       };
       reader.readAsDataURL(file);
     }
@@ -157,8 +156,8 @@ function ESignSignatureModal({
                 onButtonClick={() => {
                   // setOpenAadharModal(true);
                   // setIsSigned(true);
-                  localStorage.setItem("docSubmission", JSON.stringify(documentSubmission));
-                  localStorage.setItem("formUploadData", JSON.stringify(formUploadData));
+                  sessionStorage.setItem("docSubmission", JSON.stringify(documentSubmission));
+                  sessionStorage.setItem("formUploadData", JSON.stringify(formUploadData));
                   saveFileToLocalStorage(formUploadData?.SelectUserTypeComponent?.doc?.[0]?.[1]);
                   handleEsign(name, pageModule, formUploadData?.SelectUserTypeComponent?.doc?.[0]?.[1]?.fileStoreId?.fileStoreId);
                 }}

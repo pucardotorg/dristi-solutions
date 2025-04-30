@@ -14,9 +14,7 @@ import pucar.config.Configuration;
 import pucar.repository.ServiceRequestRepository;
 import pucar.web.models.courtCase.*;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static pucar.config.ServiceConstants.*;
@@ -135,5 +133,28 @@ public class CaseUtil {
             log.error(SEARCHER_SERVICE_EXCEPTION, e);
             throw new CustomException();  // write msg and code here
         }
+    }
+
+    public Map<String, List<POAHolder>> getLitigantPoaMapping(CourtCase cases) {
+        List<String> litigantIds = Optional.ofNullable(cases.getLitigants()).orElse(Collections.emptyList()).stream().filter(Party::getIsActive).map(Party::getIndividualId).filter(Objects::nonNull).toList();
+        Map<String, List<POAHolder>> litigantPoaMapping = Optional.ofNullable(cases.getPoaHolders())
+                .orElse(Collections.emptyList())
+                .stream()
+                .filter(POAHolder::getIsActive)
+                .flatMap(poa -> {
+                    // Create pairs of (litigantId, poa) for each litigant this POA represents
+                    return poa.getRepresentingLitigants().stream()
+                            .filter(party -> party.getIndividualId() != null)
+                            .map(party -> new AbstractMap.SimpleEntry<>(party.getIndividualId(), poa));
+                })
+                .collect(Collectors.groupingBy(
+                        Map.Entry::getKey,  // Group by litigant ID
+                        Collectors.mapping(Map.Entry::getValue, Collectors.toList())
+                ));
+
+        for (String id : litigantIds) {
+            litigantPoaMapping.putIfAbsent(id, new ArrayList<>()); // fill in missing ones with empty list
+        }
+        return litigantPoaMapping;
     }
 }

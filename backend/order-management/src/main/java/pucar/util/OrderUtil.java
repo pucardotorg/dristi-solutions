@@ -66,6 +66,22 @@ public class OrderUtil {
         return orderResponse;
     }
 
+    public OrderResponse createOrder(OrderRequest orderRequest) {
+        StringBuilder uri = new StringBuilder();
+        uri.append(configuration.getOrderHost()).append(configuration.getOrderCreateEndPoint());
+        Object response;
+        OrderResponse orderResponse;
+        try {
+            response = serviceRequestRepository.fetchResult(uri, orderRequest);
+            orderResponse = objectMapper.convertValue(response, OrderResponse.class);
+        } catch (Exception e) {
+            log.error(ERROR_WHILE_FETCHING_FROM_ORDER, e);
+            throw new CustomException(ERROR_WHILE_FETCHING_FROM_ORDER, e.getMessage());
+
+        }
+        return orderResponse;
+    }
+
     public OrderListResponse getOrders(OrderSearchRequest searchRequest) {
         StringBuilder uri = new StringBuilder();
         uri.append(configuration.getOrderHost()).append(configuration.getOrderSearchEndPoint());

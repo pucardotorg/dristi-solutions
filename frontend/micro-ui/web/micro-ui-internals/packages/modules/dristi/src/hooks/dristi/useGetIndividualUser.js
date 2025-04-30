@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "react-query";
 import { DRISTIService } from "../../services";
 
-function useGetIndividualUser(reqData, params, moduleCode, individualId, enabled) {
+function useGetIndividualUser(reqData, params, moduleCode, individualId, enabled, cacheTime = 0) {
   const client = useQueryClient();
   const { isLoading, data, isFetching, refetch, error } = useQuery(
     `GET_INDIVIDUAL_USER_${moduleCode}_${individualId}`,
@@ -10,7 +10,7 @@ function useGetIndividualUser(reqData, params, moduleCode, individualId, enabled
         .then((data) => data)
         .catch(() => ({})),
     {
-      cacheTime: 0,
+      cacheTime: cacheTime,
       enabled: Boolean(enabled),
     }
   );
