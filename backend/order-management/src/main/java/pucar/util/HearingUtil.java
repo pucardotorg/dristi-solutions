@@ -175,7 +175,7 @@ public class HearingUtil {
             Attendee attendee = null;
             for (int i = 0; i < litigantAndPOAHolders.size(); i++) {
                 attendee = litigantAndPOAHolders.get(i);
-                if (attendee.getIndividualId().equalsIgnoreCase(individualId)) {
+                if (individualId.equalsIgnoreCase(attendee.getIndividualId())) {
                     index = i;
                     break;
                 }
