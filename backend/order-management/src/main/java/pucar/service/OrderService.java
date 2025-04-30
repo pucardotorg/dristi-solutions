@@ -53,7 +53,7 @@ public class OrderService {
         orderProcessor.postProcessOrder(request);
 
         // create diary entry
-        aDiaryUtil.createBulkADiaryEntry(BulkDiaryEntryRequest.builder()
+        if (!diaryEntries.isEmpty()) aDiaryUtil.createBulkADiaryEntry(BulkDiaryEntryRequest.builder()
                 .requestInfo(request.getRequestInfo())
                 .caseDiaryList(diaryEntries).build());
 
