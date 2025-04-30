@@ -6,6 +6,8 @@ export const Urls = {
     orderRemoveItem: "/order/v2/remove-item",
     orderUpdate: "/order/v1/update",
     orderSearch: "/order/v1/search",
+    orderManagementCreate: "/order-management/v1/_createOrder",
+    orderManagementUpdate: "/order-management/v1/_updateOrder",
     taskCreate: "/task/v1/create",
     pendingTask: "/analytics/pending_task/v1/create",
     createHearings: "/hearing/v1/create",
