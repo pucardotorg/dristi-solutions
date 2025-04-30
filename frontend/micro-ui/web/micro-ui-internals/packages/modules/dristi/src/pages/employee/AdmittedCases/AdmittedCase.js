@@ -154,18 +154,18 @@ const AdmittedCases = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const { path } = useRouteMatch();
-  const urlParams = useMemo(() => new URLSearchParams(window.location.search), []);
+  const urlParams = new URLSearchParams(location.search);
   const { hearingId, taskOrderType, artifactNumber } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
-  const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles, []);
-  const isFSO = useMemo(() => roles.some((role) => role.code === "FSO_ROLE"), [roles]);
-  const isCourtRoomManager = useMemo(() => roles.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
-  const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const activeTab = useMemo(() => (isFSO ? "Complaints" : urlParams.get("tab") || "Overview"), [isFSO, urlParams]);
-  const filingNumber = useMemo(() => urlParams.get("filingNumber"), [urlParams]);
-  const applicationNumber = useMemo(() => urlParams.get("applicationNumber"), [urlParams]);
-  const userRoles = useMemo(() => Digit.UserService.getUser()?.info?.roles.map((role) => role.code), []);
-  const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
+  const roles = Digit.UserService.getUser()?.info?.roles;
+  const isFSO = roles.some((role) => role.code === "FSO_ROLE");
+  const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
+  const isBenchClerk = roles.some((role) => role.code === "BENCH_CLERK");
+  const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
+  const filingNumber = urlParams.get("filingNumber");
+  const applicationNumber = urlParams.get("applicationNumber");
+  const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 
   const [show, setShow] = useState(false);
   const [openAdmitCaseModal, setOpenAdmitCaseModal] = useState(true);
@@ -209,8 +209,8 @@ const AdmittedCases = () => {
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
-  const isCitizen = useMemo(() => userRoles.includes("CITIZEN"), [userRoles]);
-  const isCourtStaff = useMemo(() => userRoles.includes("COURT_ROOM_MANAGER"), [userRoles]);
+  const isCitizen = userRoles.includes("CITIZEN");
+  const isCourtStaff = userRoles.includes("COURT_ROOM_MANAGER");
   const OrderWorkflowAction = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {}, []);
   const ordersService = useMemo(() => Digit.ComponentRegistryService.getComponent("OrdersService") || {}, []);
   const OrderReviewModal = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderReviewModal") || {}, []);
