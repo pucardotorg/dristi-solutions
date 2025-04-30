@@ -441,7 +441,7 @@ const ComplainantSignature = ({ path }) => {
                 })
               : []),
             ...(Array.isArray(caseDetails?.poaHolders)
-              ? caseDetails?.litigants?.map(async (poaHolder) => {
+              ? caseDetails?.poaHolders?.map(async (poaHolder) => {
                   return closePendingTask({
                     status: state,
                     assignee: poaHolder?.additionalDetails?.uuid,
