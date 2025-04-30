@@ -313,7 +313,9 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   };
 
   useEffect(() => {
-    fetchBasicUserInfo();
+    if(show === true) {
+      fetchBasicUserInfo();
+    }
     setIsSearchingCase(false);
   }, [show]);
 
