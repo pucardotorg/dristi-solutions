@@ -48,7 +48,7 @@ const TaskComponentCalander = ({ isLitigant, uuid, filingNumber, inCase = false 
   const todayDate = getFormattedDate();
   const [groupedData, setGroupedData] = useState([]);
   const { t } = useTranslation();
-  const { data: pendingTaskDetails = [], isLoading, refetch } = Digit.Hooks.home.useGetPendingTask({
+  const { data: pendingTaskDetails = [], isLoading } = Digit.Hooks.home.useGetPendingTask({
     data: {
       SearchCriteria: {
         tenantId,
@@ -70,8 +70,6 @@ const TaskComponentCalander = ({ isLitigant, uuid, filingNumber, inCase = false 
 
   useEffect(() => {
     const fetchData = async () => {
-      await refetch();
-
       if (!isLoading && pendingTaskDetails?.data?.length > 0) {
         const grouped = groupByFilingNumber(pendingTaskDetails?.data);
         setGroupedData(grouped);
@@ -79,7 +77,7 @@ const TaskComponentCalander = ({ isLitigant, uuid, filingNumber, inCase = false 
     };
 
     fetchData();
-  }, [refetch, isLoading, pendingTaskDetails.length]);
+  }, [isLoading, pendingTaskDetails?.data, pendingTaskDetails.length]);
 
   const downloadCauseList = async () => {
     return await hearingService.customApiService(

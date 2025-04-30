@@ -202,6 +202,20 @@ const HomeView = () => {
     }
   );
 
+  const rolesToConfigMappingData = useMemo(() => {
+    if (state?.role && rolesToConfigMapping?.find((item) => item[state.role])) {
+      return rolesToConfigMapping?.find((item) => item[state.role]);
+    } else {
+      return (
+        rolesToConfigMapping?.find((item) => item.roles?.reduce((res, curr) => res && roles.some((role) => role.code === curr), true)) ||
+        TabLitigantSearchConfig
+      );
+    }
+  }, [state?.role, roles]);
+
+  const tabConfigs = useMemo(() => rolesToConfigMappingData.config, [rolesToConfigMappingData]);
+  const rowClickData = useMemo(() => rolesToConfigMappingData.onRowClickRoute, [rolesToConfigMappingData]);
+
   const getTotalCountForTab = useCallback(
     async function (tabConfig) {
       const updatedTabData = await Promise.all(
@@ -233,43 +247,15 @@ const HomeView = () => {
     [additionalDetails, outcomeTypeData, tenantId, t, defaultSearchValues]
   );
 
-  const configData = useMemo(() => {
-    if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOutcomeLoading) {
-      return null;
-    }
-
-    let rolesToConfigMappingData;
-
-    if (state?.role) {
-      rolesToConfigMappingData = rolesToConfigMapping?.find((item) => item[state.role]);
-    }
-
-    if (!rolesToConfigMappingData) {
-      rolesToConfigMappingData =
-        rolesToConfigMapping?.find((item) => item.roles?.some((roleCode) => roles.some((role) => role.code === roleCode))) || TabLitigantSearchConfig;
-    }
-
-    return rolesToConfigMappingData
-      ? {
-          tabConfig: rolesToConfigMappingData.config,
-          rowClickData: rolesToConfigMappingData.onRowClickRoute,
-          initialConfig: rolesToConfigMappingData.config?.TabSearchConfig?.[0],
-        }
-      : null;
-  }, [isLoading, isFetching, isSearchLoading, isFetchCaseLoading, isOutcomeLoading, state?.role, roles, rolesToConfigMapping]);
-
   useEffect(() => {
-    if (!configData) return;
-
-    setOnRowClickData(configData.rowClickData);
-    setConfig(configData.initialConfig);
-    setTabConfig(configData.tabConfig);
-
-    if (configData.tabConfig) {
-      getTotalCountForTab(configData.tabConfig);
+    const isAnyLoading = isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOutcomeLoading;
+    if (!isAnyLoading) {
+      setOnRowClickData(rowClickData);
+      setConfig(tabConfigs?.TabSearchConfig?.[0]);
+      setTabConfig(tabConfigs);
+      getTotalCountForTab(tabConfigs);
     }
-  }, [configData, getTotalCountForTab]);
-
+  }, [isLoading, isFetching, isSearchLoading, isFetchCaseLoading, isOutcomeLoading, rowClickData, tabConfigs, getTotalCountForTab]);
   // calling case api for tab's count
   useEffect(() => {
     (async function () {
