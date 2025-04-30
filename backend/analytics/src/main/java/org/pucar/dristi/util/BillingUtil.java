@@ -67,12 +67,6 @@ public class BillingUtil {
         log.info("Inside billing utils build payload:: entityType: {}, referenceId: {}, status: {},  tenantId: {}", businessService, consumerCode, status, tenantId);
 
         JSONObject request = new JSONObject();
-        if (requestInfo.has("userInfo")) {
-            JSONObject userInfo = requestInfo.getJSONObject("userInfo");
-            if (!userInfo.has("type")) {
-                userInfo.put("type", "SYSTEM");
-            }
-        }
         request.put(REQUEST_INFO, requestInfo);
         Map<String, String> details = indexerUtil.processEntityByType(businessService, request, consumerCodeSplitArray[0], null);
 

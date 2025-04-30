@@ -63,6 +63,19 @@ public class CaseUtil {
 		request.put("criteria", criteriaArray);
 		request.put("flow",FLOW_JAC);
 
+		if (request.has("RequestInfo")) {
+			JSONObject requestInfo = request.getJSONObject("RequestInfo");
+
+			if (requestInfo.has("userInfo")) {
+				JSONObject userInfo = requestInfo.getJSONObject("userInfo");
+
+				if (!userInfo.has("type")) {
+					userInfo.put("type", "SYSTEM");
+				}
+			}
+		}
+		log.info("Request body for case search ::{}",request);
+
 		log.info("Inside CaseUtil getCaseInternal :: Criteria: {}", criteriaArray);
 
 		try {
