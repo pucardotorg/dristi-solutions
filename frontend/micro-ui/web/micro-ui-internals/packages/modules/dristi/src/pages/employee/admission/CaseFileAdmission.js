@@ -1190,6 +1190,7 @@ function CaseFileAdmission({ t, path }) {
                   hearingDetails={hearingDetails}
                   isDelayApplicationPending={isDelayApplicationPending}
                   isDelayApplicationCompleted={isDelayApplicationPending}
+                  tenantId={tenantId}
                 ></AdmissionActionModal>
               )}
             </div>
