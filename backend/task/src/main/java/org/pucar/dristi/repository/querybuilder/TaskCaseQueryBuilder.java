@@ -143,7 +143,7 @@ public class TaskCaseQueryBuilder {
 
             // Add 6 parameters to the list
             String searchPattern = "%" + taskCaseSearchCriteria.getSearchText() + "%";
-            for (int i = 0; i < 6; i++) {
+            for (int i = 0; i < 5; i++) {
                 preparedStmtList.add(searchPattern);
             }
         }
