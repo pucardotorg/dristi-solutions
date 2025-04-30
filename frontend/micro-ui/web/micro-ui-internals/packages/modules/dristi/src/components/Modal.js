@@ -58,13 +58,7 @@ const Modal = ({
   return (
     <PopUp popUpStyleMain={popUpStyleMain}>
       <div className={`popup-module ${className}`} style={popupStyles}>
-        {headerBarMain && <HeaderBar main={headerBarMain} end={headerBarEnd} style={{
-          ...(headerBarMainStyle || {}),
-          position: "sticky",
-          top: "0",
-          zIndex: 1000,
-          backgroundColor: "grey",
-        }} />}
+      {headerBarMain && <HeaderBar main={headerBarMain} end={headerBarEnd} style={headerBarMainStyle ? headerBarMainStyle : {}} />}
         <div
           className={`popup-module-main ${popupModuleMianClassName ? popupModuleMianClassName : ""}`}
           style={popupModuleMianStyles ? popupModuleMianStyles : {}}
