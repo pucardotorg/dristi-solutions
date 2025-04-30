@@ -38,12 +38,13 @@ function OrderReviewModal({
   const [fileName, setFileName] = useState();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
-  const filestoreId = "9d23b127-c9e9-4fd1-9dc8-e2e762269046";
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [isDisabled, setIsDisabled] = useState();
   const orderFileStore = order?.documents?.find((doc) => doc?.documentType === "SIGNED")?.fileStore;
   const [businessDay, setBusinessDay] = useState(businessOfDay);
   const [isUpdateLoading, setUpdateLoading] = useState(false);
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const accessToken = window.localStorage.getItem("token");
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -74,8 +75,8 @@ function OrderReviewModal({
         },
         data: {
           RequestInfo: {
-            authToken: Digit.UserService.getUser().access_token,
-            userInfo: Digit.UserService.getUser()?.info,
+            authToken: accessToken,
+            userInfo: userInfo,
             msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
             apiId: "Rainmaker",
           },

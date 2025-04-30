@@ -16,6 +16,7 @@ import { Link } from "react-router-dom";
 import useSearchOrdersNotificationService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersNotificationService";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
 import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
+import isEqual from "lodash/isEqual";
 
 const defaultSearchValues = {
   caseSearchText: "",
@@ -202,6 +203,25 @@ const HomeView = () => {
     }
   );
 
+  const rolesToConfigMappingData = useMemo(() => {
+    if (state?.role && rolesToConfigMapping?.find((item) => item[state.role])) {
+      return rolesToConfigMapping?.find((item) => item[state.role]);
+    } else {
+      return (
+        rolesToConfigMapping?.find((item) =>
+          item.roles?.reduce((res, curr) => {
+            if (!res) return res;
+            res = roles.some((role) => role.code === curr);
+            return res;
+          }, true)
+        ) || TabLitigantSearchConfig
+      );
+    }
+  }, [state?.role, roles]);
+
+  const tabConfigs = useMemo(() => rolesToConfigMappingData.config, [rolesToConfigMappingData]);
+  const rowClickData = useMemo(() => rolesToConfigMappingData.onRowClickRoute, [rolesToConfigMappingData]);
+
   const getTotalCountForTab = useCallback(
     async function (tabConfig) {
       const updatedTabData = await Promise.all(
@@ -233,43 +253,28 @@ const HomeView = () => {
     [additionalDetails, outcomeTypeData, tenantId, t, defaultSearchValues]
   );
 
-  const configData = useMemo(() => {
-    if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOutcomeLoading) {
-      return null;
-    }
-
-    let rolesToConfigMappingData;
-
-    if (state?.role) {
-      rolesToConfigMappingData = rolesToConfigMapping?.find((item) => item[state.role]);
-    }
-
-    if (!rolesToConfigMappingData) {
-      rolesToConfigMappingData =
-        rolesToConfigMapping?.find((item) => item.roles?.some((roleCode) => roles.some((role) => role.code === roleCode))) || TabLitigantSearchConfig;
-    }
-
-    return rolesToConfigMappingData
-      ? {
-          tabConfig: rolesToConfigMappingData.config,
-          rowClickData: rolesToConfigMappingData.onRowClickRoute,
-          initialConfig: rolesToConfigMappingData.config?.TabSearchConfig?.[0],
-        }
-      : null;
-  }, [isLoading, isFetching, isSearchLoading, isFetchCaseLoading, isOutcomeLoading, state?.role, roles, rolesToConfigMapping]);
-
   useEffect(() => {
-    if (!configData) return;
-
-    setOnRowClickData(configData.rowClickData);
-    setConfig(configData.initialConfig);
-    setTabConfig(configData.tabConfig);
-
-    if (configData.tabConfig) {
-      getTotalCountForTab(configData.tabConfig);
+    const isAnyLoading = isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOutcomeLoading;
+    if (!isAnyLoading || (rolesToConfigMappingData && rowClickData && tabConfigs)) {
+      setOnRowClickData(rowClickData);
+      if(tabConfigs && !isEqual(tabConfigs, tabConfig)) {
+        setConfig(tabConfigs?.TabSearchConfig?.[0]);
+        setTabConfig(tabConfigs);
+        getTotalCountForTab(tabConfigs);
+      }
     }
-  }, [configData, getTotalCountForTab]);
-
+  }, [
+    isLoading,
+    isFetching,
+    isSearchLoading,
+    isFetchCaseLoading,
+    isOutcomeLoading,
+    rowClickData,
+    tabConfig,
+    tabConfigs,
+    getTotalCountForTab,
+    rolesToConfigMappingData,
+  ]);
   // calling case api for tab's count
   useEffect(() => {
     (async function () {
@@ -369,9 +374,8 @@ const HomeView = () => {
     }
   };
 
-  if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOrdersLoading) {
-    return <Loader />;
-  }
+
+  
 
   if (isUserLoggedIn && !individualId && userInfoType === "citizen") {
     history.push(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
@@ -393,6 +397,10 @@ const HomeView = () => {
       actionLink: "",
     },
   ];
+
+  if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOrdersLoading || isOutcomeLoading) {
+    return <Loader />;
+  }
 
   return (
     <div className="home-view-hearing-container">

@@ -37,7 +37,7 @@ const Heading = ({ label }) => {
     </div>
   );
 };
-const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHours(0, 0, 0, 0), selectedSlot = [] }) => {
+const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date().setHours(0, 0, 0, 0), selectedSlot = [] }) => {
   const { t } = useTranslation();
   const history = useHistory();
   const toast = useToast();
@@ -57,7 +57,8 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
   const [businessOfTheDay, setBusinessOfTheDay] = useState("");
   const [Loading, setLoader] = useState(false);
   const [toastMsg, setToastMsg] = useState(null);
-  const userInfo = Digit.UserService.getUser()?.info;
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const accessToken = window.localStorage.getItem("token");
 
   const name = "Signature";
   const pageModule = "en";
@@ -137,7 +138,7 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
     },
     {},
     `${bulkFromDate}-${bulkToDate}`,
-    Boolean(bulkFromDate && bulkToDate)
+    Boolean(bulkFromDate && bulkToDate && stepper > 0)
   );
 
   function formatTimeFromEpoch(epoch) {
@@ -486,8 +487,8 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
 
         {
           RequestInfo: {
-            authToken: Digit.UserService.getUser().access_token,
-            userInfo: Digit.UserService.getUser()?.info,
+            authToken: accessToken,
+            userInfo: userInfo,
             msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
             apiId: "Rainmaker",
           },
@@ -869,10 +870,11 @@ const BulkReschedule = ({ stepper, setStepper, selectedDate = new Date().setHour
           actionCancelLabel={t("CS_COMMON_DOWNLOAD")}
           actionCancelOnSubmit={handleDownloadOrders}
           actionSaveLabel={t("CS_CLOSE")}
-          actionSaveOnSubmit={() => {
+          actionSaveOnSubmit={async () => {
             setSignedDocumentUploadID("");
             sessionStorage.removeItem("fileStoreId");
             setStepper(0);
+            await refetch();
           }}
           className={"orders-success-modal"}
           cancelButtonBody={<FileDownloadIcon></FileDownloadIcon>}
