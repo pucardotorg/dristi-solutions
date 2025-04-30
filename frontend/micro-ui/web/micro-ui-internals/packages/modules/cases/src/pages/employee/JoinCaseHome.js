@@ -316,7 +316,9 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   }, [t, tenantId, userInfo?.uuid]);
 
   useEffect(() => {
-    fetchBasicUserInfo();
+    if(show === true) {
+      fetchBasicUserInfo();
+    }
     setIsSearchingCase(false);
   }, [show, fetchBasicUserInfo]);
 
