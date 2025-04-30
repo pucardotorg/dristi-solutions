@@ -1285,12 +1285,24 @@ const AdmittedCases = () => {
           {}
         );
 
-        const evidence = await Promise.all(
-          response?.artifacts.map(async (artifact) => {
+        const uniqueArtifactsMap = new Map();
+        response?.artifacts.forEach(artifact => {
+          if (!uniqueArtifactsMap.has(artifact.sourceID)) {
+            uniqueArtifactsMap.set(artifact.sourceID, artifact);
+          }
+        });
+        const uniqueArtifacts = Array.from(uniqueArtifactsMap.values());
+
+        const ownerNames = await Promise.all(
+          uniqueArtifacts?.map(async (artifact) => {
             const ownerName = await getOwnerName(artifact);
-            return { ...artifact, owner: ownerName };
+            return { owner: ownerName, sourceID: artifact.sourceID };
           })
         );
+        const evidence = response?.artifacts?.map((artifact) => {
+          const ownerName = ownerNames?.find((item) => item.sourceID === artifact.sourceID)?.owner;
+          return { artifact, owner: ownerName };
+        });
         setArtifacts(evidence);
       } catch (error) {
         console.error("Error fetching evidence:", error);
@@ -1298,7 +1310,7 @@ const AdmittedCases = () => {
     };
 
     fetchEvidence();
-  }, [filingNumber, artifactNumber, tenantId]);
+  }, [filingNumber, artifactNumber, tenantId, activeTab]);
 
   useEffect(() => {
     if (
