@@ -141,7 +141,7 @@ public class TaskCaseQueryBuilder {
                     .append("or c.courtCaseNumber ILIKE ? ")
                     .append(")");
 
-            // Add 6 parameters to the list
+            // Add 5 parameters to the list
             String searchPattern = "%" + taskCaseSearchCriteria.getSearchText() + "%";
             for (int i = 0; i < 5; i++) {
                 preparedStmtList.add(searchPattern);
