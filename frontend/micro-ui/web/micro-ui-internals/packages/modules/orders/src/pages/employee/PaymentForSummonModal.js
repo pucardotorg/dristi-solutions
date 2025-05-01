@@ -255,22 +255,22 @@ const PaymentForSummonModal = ({ path }) => {
   }, [taskNumber]);
   const service = useMemo(() => (orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE), [orderType]);
   const taskType = useMemo(() => getTaskType(service), [service]);
-  const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchBill } = Digit.Hooks.dristi.useBillSearch(
+  const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchBill } = Digit.Hooks.dristi.useFetchBill(
     {},
     {
       tenantId,
       consumerCode: `${taskNumber}_POST_COURT`,
-      service: service,
+      businessService: service,
     },
     `${taskNumber}_POST_COURT_${service}`,
     Boolean(taskNumber && orderType)
   );
-  const { data: ePostBillResponse, isLoading: isEPOSTBillLoading } = Digit.Hooks.dristi.useBillSearch(
+  const { data: ePostBillResponse, isLoading: isEPOSTBillLoading } = Digit.Hooks.dristi.useFetchBill(
     {},
     {
       tenantId,
       consumerCode: `${taskNumber}_POST_PROCESS`,
-      service: service,
+      businessService: service,
     },
     `${taskNumber}_POST_PROCESS_${service}`,
     Boolean(taskNumber && orderType)

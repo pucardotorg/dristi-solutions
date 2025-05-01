@@ -255,12 +255,12 @@ const PaymentForRPADModal = ({ path }) => {
 
   const service = useMemo(() => (orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE), [orderType]);
   const taskType = useMemo(() => getTaskType(service), [service]);
-  const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchBill } = Digit.Hooks.dristi.useBillSearch(
+  const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchBill } = Digit.Hooks.dristi.useFetchBill(
     {},
     {
       tenantId,
       consumerCode: `${taskNumber}_EPOST_COURT`,
-      service: service,
+      businessService: service,
     },
     `courtBillResponse-${service}${taskNumber}`,
     Boolean(taskNumber)
@@ -312,12 +312,11 @@ const PaymentForRPADModal = ({ path }) => {
 
   const getPartyIndex = (orderType, orderDetails, compositeItem) => {
     if (orderType !== "NOTICE") return "";
-    
+
     return orderDetails?.orderCategory === "COMPOSITE"
       ? compositeItem?.orderSchema?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex || ""
       : orderDetails?.additionalDetails?.formdata?.noticeOrder?.party?.data?.partyIndex || "";
   };
-  
 
   const feeOptions = useMemo(() => {
     const taskAmount = filteredTasks?.[0]?.amount?.amount || 0;
