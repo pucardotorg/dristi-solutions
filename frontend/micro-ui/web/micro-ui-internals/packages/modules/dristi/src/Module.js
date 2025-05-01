@@ -67,6 +67,7 @@ import CustomEmailTextInput from "./pages/citizen/registration/CustomEmailTextIn
 import OrSeparator from "./components/OrSeparator";
 import ShowAllTranscriptModal from "./components/ShowAllTranscriptModal";
 import SearchableDropdown from "./components/SearchableDropdown";
+import useFetchBill from "./hooks/dristi/useFetchBill";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -169,6 +170,7 @@ const componentsToRegister = {
   CustomCalendar,
   RightArrow,
   useBillSearch,
+  useFetchBill,
   SelectTranscriptTextArea,
   SelectMultiUpload,
   SupportingDocsComponent,
