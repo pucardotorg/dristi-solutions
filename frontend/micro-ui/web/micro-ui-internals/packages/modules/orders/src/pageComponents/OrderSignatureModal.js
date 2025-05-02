@@ -113,7 +113,7 @@ function OrderSignatureModal({
           label={t("PLEASE_NOTE")}
           additionalElements={[
             <p>
-              {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")} <span style={{ fontWeight: "bold" }}>{t(order?.orderType)}</span>
+              {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")} <span style={{ fontWeight: "bold" }}>{t(order?.orderTitle)}</span>
             </p>,
           ]}
           inline

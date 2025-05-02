@@ -97,7 +97,7 @@ public class HearingUtil {
     public String getHearingTypeFromAdditionalDetails(Object additionalDetails) {
 
         String type = jsonUtil.getNestedValue(additionalDetails,
-                List.of("formdata","hearingPurpose","type"), String.class);
+                List.of("formdata", "hearingPurpose", "type"), String.class);
         if (type == null) {
             throw new CustomException("ERROR_IN_ADDITIONAL_DETAILS",
                     "Hearing Purpose Type not found in additional details");
@@ -175,13 +175,13 @@ public class HearingUtil {
             Attendee attendee = null;
             for (int i = 0; i < litigantAndPOAHolders.size(); i++) {
                 attendee = litigantAndPOAHolders.get(i);
-                if (attendee.getIndividualId().equalsIgnoreCase(individualId)) {
+                if (individualId.equalsIgnoreCase(attendee.getIndividualId())) {
                     index = i;
                     break;
                 }
             }
 
-            if (attendee != null) {
+            if (index != -1) {
                 String name = attendee.getName();
                 String modifiedName = addValueToBrackets(name, "Advocate");
                 attendee.setName(modifiedName);
