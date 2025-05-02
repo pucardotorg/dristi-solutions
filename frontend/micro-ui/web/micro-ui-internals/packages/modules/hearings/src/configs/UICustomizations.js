@@ -45,7 +45,7 @@ export const UICustomizations = {
       const userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
       const searchParams = new URLSearchParams();
       const showAction =
-        (row.hearing.status === "SCHEDULED" && userInfo?.roles.map((role) => role.code).includes("HEARING_EDITOR")) ||
+        (userInfo?.roles.map((role) => role.code).includes("HEARING_EDITOR")) ||
         row.hearing.status === HearingWorkflowState?.INPROGRESS;
       searchParams.set("hearingId", row.hearingId);
       switch (key) {
@@ -142,8 +142,7 @@ export const UICustomizations = {
               action: (history) => {
                 searchParams.set("caseId", row.caseId);
                 searchParams.set("filingNumber", row.filingNumber);
-
-                history.push({ pathname: `/${window.contextPath}/${userType}/dristi/home/view-case`, search: searchParams.toString() });
+                window.open(`/${window.contextPath}/${userType}/dristi/home/view-case?${searchParams.toString()}`, '_blank');
               },
             },
             {
@@ -162,8 +161,7 @@ export const UICustomizations = {
             action: (history) => {
               searchParams.set("caseId", row.caseId);
               searchParams.set("filingNumber", row.filingNumber);
-
-              history.push({ pathname: `/${window.contextPath}/${userType}/dristi/home/view-case`, search: searchParams.toString() });
+              window.open(`/${window.contextPath}/${userType}/dristi/home/view-case?${searchParams.toString()}`, '_blank');
             },
           },
           {

@@ -744,6 +744,12 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
           }}
           isPrevScrutiny={isPrevScrutiny}
           disableScrutiny={false}
+          headerBarMainStyle={{
+            position: "sticky",
+            top: "0",
+            zIndex: 1000,
+            backgroundColor: "grey",
+          }}
         />
       )}
     </div>
