@@ -42,7 +42,7 @@ const HomeView = () => {
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
-  const [config, setConfig] = useState(TabLitigantSearchConfig?.TabSearchConfig?.[0]);
+
   const [caseDetails, setCaseDetails] = useState(null);
   const [isFetchCaseLoading, setIsFetchCaseLoading] = useState(false);
   const [tabData, setTabData] = useState(
@@ -70,6 +70,11 @@ const HomeView = () => {
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   const userInfo = Digit?.UserService?.getUser()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const setInitialConfig = () => {
+    if (userInfoType !== "employee") return TabLitigantSearchConfig?.TabSearchConfig?.[0];
+    else return null;
+  };
+  const [config, setConfig] = useState(() => setInitialConfig());
   const { data: individualData, isLoading, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
@@ -257,11 +262,18 @@ const HomeView = () => {
     const isAnyLoading = isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOutcomeLoading;
     if (!isAnyLoading || (rolesToConfigMappingData && rowClickData && tabConfigs)) {
       setOnRowClickData(rowClickData);
-      if(tabConfigs && !isEqual(tabConfigs, tabConfig)) {
+      if (userInfoType === "employee") {
+      if (tabConfigs && !isEqual(tabConfigs, tabConfig)) {
         setConfig(tabConfigs?.TabSearchConfig?.[0]);
         setTabConfig(tabConfigs);
         getTotalCountForTab(tabConfigs);
       }
+    }
+    else {
+      setConfig(tabConfigs?.TabSearchConfig?.[0]);
+        setTabConfig(tabConfigs);
+        getTotalCountForTab(tabConfigs);
+    }
     }
   }, [
     isLoading,
@@ -453,27 +465,31 @@ const HomeView = () => {
                 )}
               </div>
               <div className="inbox-search-wrapper pucar-home home-view">
-                <InboxSearchComposer
-                  key={`InboxSearchComposer-${callRefetch}`}
-                  configs={{
-                    ...config,
-                    ...{
-                      additionalDetails: {
-                        ...config?.additionalDetails,
-                        ...additionalDetails,
+                {config ? (
+                  <InboxSearchComposer
+                    key={`InboxSearchComposer-${callRefetch}`}
+                    configs={{
+                      ...config,
+                      ...{
+                        additionalDetails: {
+                          ...config?.additionalDetails,
+                          ...additionalDetails,
+                        },
                       },
-                    },
-                  }}
-                  defaultValues={defaultValues}
-                  showTab={true}
-                  tabData={tabData}
-                  onTabChange={onTabChange}
-                  additionalConfig={{
-                    resultsTable: {
-                      onClickRow: onRowClick,
-                    },
-                  }}
-                />
+                    }}
+                    defaultValues={defaultValues}
+                    showTab={true}
+                    tabData={tabData}
+                    onTabChange={onTabChange}
+                    additionalConfig={{
+                      resultsTable: {
+                        onClickRow: onRowClick,
+                      },
+                    }}
+                  />
+                ) : (
+                  <Loader />
+                )}
               </div>
             </div>
           </div>
