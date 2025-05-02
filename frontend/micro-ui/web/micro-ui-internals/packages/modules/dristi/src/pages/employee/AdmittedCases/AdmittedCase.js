@@ -43,8 +43,6 @@ import PublishedNotificationModal from "./publishedNotificationModal";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import NoticeAccordion from "../../../components/NoticeAccordion";
 
-const defaultSearchValues = {};
-
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -836,8 +834,8 @@ const AdmittedCases = () => {
               requestBody: {
                 ...tabConfig.apiDetails.requestBody,
                 criteria: {
-                  caseId: caseId,
-                  filingNumber: filingNumber,
+                  caseId: caseDetails?.id,
+                  filingNumber: caseDetails?.filingNumber,
                   tenantId: tenantId,
                 },
               },
@@ -969,7 +967,6 @@ const AdmittedCases = () => {
     return getTabConfig(activeTabConfig);
   }, [
     activeTab,
-    caseId,
     caseRelatedData,
     cnrNumber,
     filingNumber,
@@ -1048,10 +1045,9 @@ const AdmittedCases = () => {
     [configList]
   );
 
-  const [defaultValues, setDefaultValues] = useState(defaultSearchValues); // State to hold default values for search fields
   const config = useMemo(() => {
     return newTabSearchConfig?.TabSearchconfig;
-  }, [newTabSearchConfig?.TabSearchconfig]); // initially setting first index config as default from jsonarray
+  }, [newTabSearchConfig?.TabSearchconfig]);
 
   const voidModalConfig = useMemo(() => {
     if (!showVoidModal) return {};
@@ -1412,7 +1408,6 @@ const AdmittedCases = () => {
   }, [applicationData, applicationNumber]);
 
   useEffect(() => {
-    setDefaultValues(defaultSearchValues);
     const isSignSuccess = sessionStorage.getItem("esignProcess");
     const doc = JSON.parse(sessionStorage.getItem("docSubmission"));
     if (isSignSuccess) {
@@ -2608,6 +2603,17 @@ const AdmittedCases = () => {
     }
   }, [caseDetails, downloadPdf, tenantId, showToast]);
 
+  const inboxComposer = useMemo(() => {
+    if (
+      activeTab === "Documents" &&
+      config?.sections?.search?.uiConfig?.fields?.[0]?.key === "owner" &&
+      !(config?.sections?.search?.uiConfig?.fields?.[0]?.populators?.options?.length > 0)
+    ) {
+      return;
+    }
+    return <InboxSearchComposer key={`${config?.label}-${updateCounter}`} configs={config} showTab={false}></InboxSearchComposer>;
+  }, [config, activeTab, updateCounter]);
+
   if (caseApiLoading || isWorkFlowLoading || isApplicationLoading || isCaseFetching) {
     return <Loader />;
   }
@@ -2944,16 +2950,7 @@ const AdmittedCases = () => {
           )}
         </div>
       )}
-      <div className={`inbox-search-wrapper orders-tab-inbox-wrapper`}>
-        <InboxSearchComposer
-          key={`${config?.label}-${updateCounter}`}
-          configs={config}
-          defaultValues={defaultValues}
-          showTab={false}
-          tabData={tabData}
-          // onTabChange={onTabChange}
-        ></InboxSearchComposer>
-      </div>
+      <div className={`inbox-search-wrapper orders-tab-inbox-wrapper`}>{inboxComposer}</div>
       {tabData?.filter((tab) => tab.label === "Overview")?.[0]?.active && (
         <div className="case-overview-wrapper">
           <CaseOverview
