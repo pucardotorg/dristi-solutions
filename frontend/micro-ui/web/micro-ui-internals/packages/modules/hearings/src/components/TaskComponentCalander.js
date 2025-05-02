@@ -50,7 +50,7 @@ const TaskComponentCalander = ({ isLitigant, uuid, filingNumber, inCase = false 
   const [searchCaseLoading, setSearchCaseLoading] = useState(false);
   const [caseDataDetails, setCaseDataDetails] = useState([]);
   const { t } = useTranslation();
-  const { data: pendingTaskDetails = [], isLoading, refetch } = Digit.Hooks.home.useGetPendingTask({
+  const { data: pendingTaskDetails = [], isLoading } = Digit.Hooks.home.useGetPendingTask({
     data: {
       SearchCriteria: {
         tenantId,
@@ -72,8 +72,6 @@ const TaskComponentCalander = ({ isLitigant, uuid, filingNumber, inCase = false 
 
   useEffect(() => {
     const fetchData = async () => {
-      await refetch();
-
       if (!isLoading && pendingTaskDetails?.data?.length > 0) {
         const grouped = groupByFilingNumber(pendingTaskDetails?.data);
         setGroupedData(grouped);
@@ -81,7 +79,7 @@ const TaskComponentCalander = ({ isLitigant, uuid, filingNumber, inCase = false 
     };
 
     fetchData();
-  }, [refetch, isLoading, pendingTaskDetails.length]);
+  }, [isLoading, pendingTaskDetails?.data, pendingTaskDetails.length]);
 
   const pendingTaskActionDetails = useMemo(() => {
     return isLoading ? [] : pendingTaskDetails?.data || [];

@@ -1307,7 +1307,7 @@ const AdmittedCases = () => {
         const ownerNames = await Promise.all(
           uniqueArtifacts?.map(async (artifact) => {
             const ownerName = await getOwnerName(artifact);
-            return { ...artifact, owner: ownerName };
+            return { owner: ownerName, sourceID: artifact.sourceID };
           })
         );
         const evidence = response?.artifacts?.map((artifact) => {

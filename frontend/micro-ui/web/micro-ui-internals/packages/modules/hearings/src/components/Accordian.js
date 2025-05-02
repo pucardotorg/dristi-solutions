@@ -46,6 +46,7 @@ const Accordian = ({ groupedData, caseDataDetails }) => {
             .filter((data) => data !== null) // Filter out null values
             .map((data) => {
               const matchedCase = caseDataDetails.find((caseData) => caseData.filingNumber === data.filingNumber);
+              const filingNumber = data?.data?.[0]?.fields?.find((field) => field.key === "filingNumber")?.value;
               return (
                 <div key={data.filingNumber}>
                   {matchedCase && (
@@ -61,7 +62,7 @@ const Accordian = ({ groupedData, caseDataDetails }) => {
                         }}
                       >
                         <div>NIA S138</div>
-                        <div>PB-PT-2023</div>
+                        <div>{filingNumber}</div>
                         <div style={{ color: "#9E400A" }}>{`${data?.data?.length} tasks`}</div>
                       </div>
                     </div>

@@ -16,6 +16,7 @@ import { Link } from "react-router-dom";
 import useSearchOrdersNotificationService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersNotificationService";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
 import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
+import isEqual from "lodash/isEqual";
 
 const defaultSearchValues = {
   caseSearchText: "",
@@ -41,7 +42,7 @@ const HomeView = () => {
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
-  const [config, setConfig] = useState(TabLitigantSearchConfig?.TabSearchConfig?.[0]);
+
   const [caseDetails, setCaseDetails] = useState(null);
   const [isFetchCaseLoading, setIsFetchCaseLoading] = useState(false);
   const [tabData, setTabData] = useState(
@@ -62,13 +63,18 @@ const HomeView = () => {
     show: false,
     bulkSignOrderListLength: null,
   });
-  const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles, [Digit.UserService]);
+  const userInfo = useMemo(() => Digit?.UserService?.getUser()?.info, [Digit.UserService]);
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
   const isNyayMitra = roles.some((role) => role.code === "NYAY_MITRA_ROLE");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
-  const userInfo = Digit?.UserService?.getUser()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const setInitialConfig = () => {
+    if (userInfoType !== "employee") return TabLitigantSearchConfig?.TabSearchConfig?.[0];
+    else return null;
+  };
+  const [config, setConfig] = useState(() => setInitialConfig());
   const { data: individualData, isLoading, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
@@ -202,6 +208,25 @@ const HomeView = () => {
     }
   );
 
+  const rolesToConfigMappingData = useMemo(() => {
+    if (state?.role && rolesToConfigMapping?.find((item) => item[state.role])) {
+      return rolesToConfigMapping?.find((item) => item[state.role]);
+    } else {
+      return (
+        rolesToConfigMapping?.find((item) =>
+          item.roles?.reduce((res, curr) => {
+            if (!res) return res;
+            res = roles.some((role) => role.code === curr);
+            return res;
+          }, true)
+        ) || TabLitigantSearchConfig
+      );
+    }
+  }, [state?.role, roles]);
+
+  const tabConfigs = useMemo(() => rolesToConfigMappingData.config, [rolesToConfigMappingData]);
+  const rowClickData = useMemo(() => rolesToConfigMappingData.onRowClickRoute, [rolesToConfigMappingData]);
+
   const getTotalCountForTab = useCallback(
     async function (tabConfig) {
       const updatedTabData = await Promise.all(
@@ -230,38 +255,62 @@ const HomeView = () => {
       );
       setTabData(updatedTabData);
     },
-    [additionalDetails, outcomeTypeData, tenantId]
+    [additionalDetails, outcomeTypeData, tenantId, t, defaultSearchValues]
   );
 
+  const configData = useMemo(() => {
+    if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOutcomeLoading) {
+      return null;
+    }
+
+    let rolesToConfigMappingData;
+
+    if (state?.role) {
+      rolesToConfigMappingData = rolesToConfigMapping?.find((item) => item[state.role]);
+    }
+
+    if (!rolesToConfigMappingData) {
+      rolesToConfigMappingData =
+        rolesToConfigMapping?.find((item) => item.roles?.some((roleCode) => roles.some((role) => role.code === roleCode))) || TabLitigantSearchConfig;
+    }
+
+    return rolesToConfigMappingData
+      ? {
+          tabConfig: rolesToConfigMappingData.config,
+          rowClickData: rolesToConfigMappingData.onRowClickRoute,
+          initialConfig: rolesToConfigMappingData.config?.TabSearchConfig?.[0],
+        }
+      : null;
+  }, [isLoading, isFetching, isSearchLoading, isFetchCaseLoading, isOutcomeLoading, state?.role, roles, rolesToConfigMapping]);
+
   useEffect(() => {
-    if (!(isLoading && isFetching && isSearchLoading && isFetchCaseLoading && isOutcomeLoading)) {
-      if (state?.role && rolesToConfigMapping?.find((item) => item[state.role])[state.role]) {
-        const rolesToConfigMappingData = rolesToConfigMapping?.find((item) => item[state.role]);
-        const tabConfig = rolesToConfigMappingData.config;
-        const rowClickData = rolesToConfigMappingData.onRowClickRoute;
-        setOnRowClickData(rowClickData);
-        setConfig(tabConfig?.TabSearchConfig?.[0]);
-        setTabConfig(tabConfig);
-        getTotalCountForTab(tabConfig);
+    const isAnyLoading = isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOutcomeLoading;
+    if (!isAnyLoading || (rolesToConfigMappingData && rowClickData && tabConfigs)) {
+      setOnRowClickData(rowClickData);
+      if (userInfoType === "employee") {
+        if (tabConfigs && !isEqual(tabConfigs, tabConfig)) {
+          setConfig(tabConfigs?.TabSearchConfig?.[0]);
+          setTabConfig(tabConfigs);
+          getTotalCountForTab(tabConfigs);
+        }
       } else {
-        const rolesToConfigMappingData =
-          rolesToConfigMapping?.find((item) =>
-            item.roles?.reduce((res, curr) => {
-              if (!res) return res;
-              res = roles.some((role) => role.code === curr);
-              return res;
-            }, true)
-          ) || TabLitigantSearchConfig;
-        const tabConfig = rolesToConfigMappingData?.config;
-        const rowClickData = rolesToConfigMappingData?.onRowClickRoute;
-        setOnRowClickData(rowClickData);
-        setConfig(tabConfig?.TabSearchConfig?.[0]);
-        setTabConfig(tabConfig);
-        getTotalCountForTab(tabConfig);
+        setConfig(tabConfigs?.TabSearchConfig?.[0]);
+        setTabConfig(tabConfigs);
+        getTotalCountForTab(tabConfigs);
       }
     }
-  }, [additionalDetails, getTotalCountForTab, isOutcomeLoading, isFetchCaseLoading, isFetching, isLoading, isSearchLoading, roles, state, tenantId]);
-
+  }, [
+    isLoading,
+    isFetching,
+    isSearchLoading,
+    isFetchCaseLoading,
+    isOutcomeLoading,
+    rowClickData,
+    tabConfig,
+    tabConfigs,
+    getTotalCountForTab,
+    rolesToConfigMappingData,
+  ]);
   // calling case api for tab's count
   useEffect(() => {
     (async function () {
@@ -361,10 +410,6 @@ const HomeView = () => {
     }
   };
 
-  if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOrdersLoading) {
-    return <Loader />;
-  }
-
   if (isUserLoggedIn && !individualId && userInfoType === "citizen") {
     history.push(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
   }
@@ -386,6 +431,10 @@ const HomeView = () => {
     },
   ];
 
+  if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOrdersLoading || isOutcomeLoading) {
+    return <Loader />;
+  }
+
   return (
     <div className="home-view-hearing-container">
       {individualId && userType && userInfoType === "citizen" && !caseDetails ? (
@@ -394,7 +443,14 @@ const HomeView = () => {
         <React.Fragment>
           <div className="left-side" style={{ width: individualId && userType && userInfoType === "citizen" && !caseDetails ? "100vw" : "70vw" }}>
             <div className="home-header-wrapper">
-              <UpcomingHearings handleNavigate={handleNavigate} attendeeIndividualId={individualId} userInfoType={userInfoType} t={t} />
+              <UpcomingHearings
+                handleNavigate={handleNavigate}
+                individualData={individualData}
+                attendeeIndividualId={individualId}
+                userInfoType={userInfoType}
+                advocateId={advocateId}
+                t={t}
+              />
               {isJudge && (
                 <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start" }}>
                   <Link to={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle}>
@@ -430,27 +486,31 @@ const HomeView = () => {
                 )}
               </div>
               <div className="inbox-search-wrapper pucar-home home-view">
-                <InboxSearchComposer
-                  key={`InboxSearchComposer-${callRefetch}`}
-                  configs={{
-                    ...config,
-                    ...{
-                      additionalDetails: {
-                        ...config?.additionalDetails,
-                        ...additionalDetails,
+                {config ? (
+                  <InboxSearchComposer
+                    key={`InboxSearchComposer-${callRefetch}`}
+                    configs={{
+                      ...config,
+                      ...{
+                        additionalDetails: {
+                          ...config?.additionalDetails,
+                          ...additionalDetails,
+                        },
                       },
-                    },
-                  }}
-                  defaultValues={defaultValues}
-                  showTab={true}
-                  tabData={tabData}
-                  onTabChange={onTabChange}
-                  additionalConfig={{
-                    resultsTable: {
-                      onClickRow: onRowClick,
-                    },
-                  }}
-                />
+                    }}
+                    defaultValues={defaultValues}
+                    showTab={true}
+                    tabData={tabData}
+                    onTabChange={onTabChange}
+                    additionalConfig={{
+                      resultsTable: {
+                        onClickRow: onRowClick,
+                      },
+                    }}
+                  />
+                ) : (
+                  <Loader />
+                )}
               </div>
             </div>
           </div>
