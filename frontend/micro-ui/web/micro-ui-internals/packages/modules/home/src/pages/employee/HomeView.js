@@ -53,6 +53,7 @@ const HomeView = () => {
       active: index === 0 ? true : false,
     }))
   );
+  const [isCounted, setIsCounted] = useState(false);
   const [callRefetch, setCallRefetch] = useState(false);
   const [tabConfig, setTabConfig] = useState(TabLitigantSearchConfig);
   const [onRowClickData, setOnRowClickData] = useState({ url: "", params: [] });
@@ -271,9 +272,10 @@ const HomeView = () => {
           setTabConfig(tabConfigs);
           getTotalCountForTab(tabConfigs);
         }
-      } else {
+      } else if (userInfoType !== "employee" && !isCounted) {
         setConfig(tabConfigs?.TabSearchConfig?.[0]);
         setTabConfig(tabConfigs);
+        setIsCounted(true);
         getTotalCountForTab(tabConfigs);
       }
     }
