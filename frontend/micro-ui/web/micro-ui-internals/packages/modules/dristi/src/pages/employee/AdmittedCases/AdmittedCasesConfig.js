@@ -256,7 +256,7 @@ export const TabSearchconfig = {
           uiConfig: {
             columns: [
               {
-                label: "ORDER_TILTE",
+                label: "ORDER_TITLE",
                 jsonPath: "businessObject.orderNotification.title",
                 additionalCustomization: true,
               },
