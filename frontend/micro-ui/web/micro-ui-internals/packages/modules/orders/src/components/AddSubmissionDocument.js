@@ -186,6 +186,7 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
                     )}
                     {input?.type === "dropdown" && (
                       <CustomDropdown
+                        t={t}
                         label={input.name}
                         type={input.type}
                         value={docObj?.documentType}
