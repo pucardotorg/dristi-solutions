@@ -36,9 +36,9 @@ const CaseOverview = ({
   const [currentOrder, setCurrentOrder] = useState({});
   const [taskType, setTaskType] = useState({});
   const [showAllTranscript, setShowAllTranscript] = useState(false);
-  const userInfo = Digit.UserService.getUser()?.info;
+  const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const userRoles = userInfo?.roles?.map((role) => role.code);
+  const userRoles = useMemo(() => userInfo?.roles?.map((role) => role.code), [userInfo]);
   const advocateIds = caseData?.case?.representatives?.map((representative) => {
     return {
       id: representative?.advocateId,
@@ -65,17 +65,17 @@ const CaseOverview = ({
     );
   }, [userRoles, caseStatus, isAdvocatePresent]);
 
-  const { data: advocateDetails, isLoading: isAdvocatesLoading } = useGetIndividualAdvocate(
-    {
-      criteria: advocateIds,
-    },
-    { tenantId: tenantId },
-    "DRISTI",
-    cnrNumber + filingNumber,
-    Boolean(filingNumber)
-  );
+  // const { data: advocateDetails, isLoading: isAdvocatesLoading } = useGetIndividualAdvocate(
+  //   {
+  //     criteria: advocateIds,
+  //   },
+  //   { tenantId: tenantId },
+  //   "DRISTI",
+  //   cnrNumber + filingNumber,
+  //   Boolean(filingNumber)
+  // );
 
-  const { data: hearingRes, refetch: refetchHearingsData, isLoading: isHearingsLoading } = Digit.Hooks.hearings.useGetHearings(
+  const { data: hearingRes, isLoading: isHearingsLoading } = Digit.Hooks.hearings.useGetHearings(
     {
       criteria: {
         filingNumber: filingNumber,
@@ -107,9 +107,13 @@ const CaseOverview = ({
     history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}`);
   };
 
-  const orderList = userRoles.includes("CITIZEN")
-    ? ordersRes?.list.filter((order) => order.status === "PUBLISHED")
-    : ordersRes?.list?.filter((order) => order.status !== "DRAFT_IN_PROGRESS");
+  const orderList = useMemo(
+    () =>
+      userRoles.includes("CITIZEN")
+        ? ordersRes?.list.filter((order) => order.status === "PUBLISHED")
+        : ordersRes?.list?.filter((order) => order.status !== "DRAFT_IN_PROGRESS"),
+    [userRoles, ordersRes?.list]
+  );
 
   const handleMakeSubmission = () => {
     history.push(`/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);

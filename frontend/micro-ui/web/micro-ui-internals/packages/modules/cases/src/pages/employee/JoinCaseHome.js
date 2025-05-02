@@ -203,17 +203,20 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     [caseDetails?.representatives]
   );
 
-  const getUserUUID = async (individualId) => {
-    const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
-      {
-        Individual: {
-          individualId: individualId,
+  const getUserUUID = useCallback(
+    async (individualId) => {
+      const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
+        {
+          Individual: {
+            individualId: individualId,
+          },
         },
-      },
-      { tenantId, limit: 1000, offset: 0 }
-    );
-    return individualData;
-  };
+        { tenantId, limit: 1000, offset: 0 }
+      );
+      return individualData;
+    },
+    [tenantId]
+  );
 
   useEffect(() => {
     if (step === 0 && caseNumber) {
@@ -277,7 +280,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     selectPartyData,
   ]);
 
-  const fetchBasicUserInfo = async () => {
+  const fetchBasicUserInfo = useCallback(async () => {
     const individualData = await searchIndividualUserWithUuid(userInfo?.uuid, tenantId);
 
     setIndividualId(individualData?.Individual?.[0]?.individualId);
@@ -310,16 +313,16 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
         userType: { label: t(JoinHomeLocalisation.LITIGANT_OPT), value: "Litigant" },
       }));
     }
-  };
+  }, [t, tenantId, userInfo?.uuid]);
 
   useEffect(() => {
     if(show === true) {
       fetchBasicUserInfo();
     }
     setIsSearchingCase(false);
-  }, [show]);
+  }, [show, fetchBasicUserInfo]);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setAlreadyJoinedMobileNumber([]);
     setSelectPartyData({
       userType: { label: "", value: "" },
@@ -349,7 +352,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     setCaseList([]);
     setIsLitigantJoined(false);
     setSuccess(false);
-  };
+  }, [setShowJoinCase]);
 
   const onSelect = (option) => {
     if (
@@ -773,6 +776,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     setIsApiCalled(false);
     setIsPipApiCalled(false);
   }, [
+    caseDetails?.caseTitle,
     caseDetails?.cnrNumber,
     caseDetails?.filingNumber,
     caseDetails?.id,
@@ -1210,6 +1214,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       caseDetails?.id,
       caseDetails?.status,
       caseDetails?.additionalDetails?.respondentDetails,
+      caseDetails?.caseTitle,
       caseDetails?.poaHolders,
       selectPartyData?.userType,
       selectPartyData?.partyInvolve?.value,
