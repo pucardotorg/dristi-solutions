@@ -15,7 +15,7 @@ RUN cd web/ \
     && yarn build:webpack
 
 FROM nginx:mainline-alpine
-ENV WORK_DIR=/var/web/digit-ui
+ENV WORK_DIR=/var/web/ui
 
 RUN mkdir -p ${WORK_DIR}
 
