@@ -1220,7 +1220,9 @@ const SubmissionsCreate = ({ path }) => {
 
   const handleBack = () => {
     if (!paymentLoader) {
-      history.replace(`/digit-ui/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`);
+      history.replace(
+        `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
+      );
     }
   };
 
@@ -1392,7 +1394,7 @@ const SubmissionsCreate = ({ path }) => {
 
   const handleDownloadSubmission = () => {
     downloadPdf(tenantId, applicationDetails?.documents?.filter((doc) => doc?.documentType === "SIGNED")?.[0]?.fileStore);
-    // history.push(`/digit-ui/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`);
+    // history.push(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`);
   };
   if (!filingNumber) {
     handleBack();
