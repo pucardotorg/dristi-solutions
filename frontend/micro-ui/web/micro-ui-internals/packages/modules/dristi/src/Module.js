@@ -22,7 +22,6 @@ import SelectCustomDragDrop from "./components/SelectCustomDragDrop";
 import SelectCustomNote from "./components/SelectCustomNote";
 import SelectCustomTextArea from "./components/SelectCustomTextArea";
 import SelectReviewAccordion from "./components/SelectReviewAccordion";
-import SelectSignature from "./components/SelectSignature";
 import SelectUploadDocWithName from "./components/SelectUploadDocWithName";
 import SelectUploadFiles from "./components/SelectUploadFiles";
 import { ToastProvider } from "./components/Toast/useToast";
@@ -143,7 +142,6 @@ const componentsToRegister = {
   SelectCustomTextArea,
   IdProofUploadComponent,
   SelectReviewAccordion,
-  SelectSignature,
   CustomRadioCard,
   CustomCheckBoxCard,
   AddressComponent,

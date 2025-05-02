@@ -247,7 +247,6 @@ const ComplainantSignature = ({ path }) => {
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         setSignatureDocumentId(uploadedFileId?.[0]?.fileStoreId);
         setUploadDoc(true);
-        localStorage.setItem("formData", JSON.stringify(formData));
         setDocumentUpload(false);
       } catch (error) {
         console.error("error", error);
@@ -839,27 +838,27 @@ const ComplainantSignature = ({ path }) => {
       await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
     };
 
-    const isSignSuccess = localStorage.getItem("isSignSuccess");
-    const storedESignObj = localStorage.getItem("signStatus");
+    const isSignSuccess = sessionStorage.getItem("isSignSuccess");
+    const storedESignObj = sessionStorage.getItem("signStatus");
     const parsedESignObj = JSON.parse(storedESignObj);
-    const esignProcess = localStorage.getItem("esignProcess");
+    const esignProcess = sessionStorage.getItem("esignProcess");
 
     if (isSignSuccess) {
       const matchedSignStatus = parsedESignObj?.find((obj) => obj.name === name && obj.isSigned === true);
       if (isSignSuccess === "success" && matchedSignStatus) {
-        const fileStoreId = localStorage.getItem("fileStoreId");
+        const fileStoreId = sessionStorage.getItem("fileStoreId");
         setSignatureDocumentId(fileStoreId);
         setEsignSuccess(true);
       }
     }
     if (esignProcess && caseDetails?.filingNumber) {
       handleCaseUnlocking();
-      localStorage.removeItem("esignProcess");
+      sessionStorage.removeItem("esignProcess");
     }
 
-    localStorage.removeItem("isSignSuccess");
+    sessionStorage.removeItem("isSignSuccess");
     localStorage.removeItem("signStatus");
-    localStorage.removeItem("fileStoreId");
+    sessionStorage.removeItem("fileStoreId");
   }, [caseDetails]);
 
   const isRightPannelEnable = () => {

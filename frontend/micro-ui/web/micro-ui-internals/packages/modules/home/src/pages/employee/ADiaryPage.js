@@ -96,24 +96,22 @@ const ADiaryPage = ({ path }) => {
   const userRoles = Digit?.UserService?.getUser?.()?.info?.roles || [];
   const styles = getStyles();
   const [selectedDate, setSelectedDate] = useState(
-    getCurrentDate(queryStrings?.date?.split("-")[1] || localStorage.getItem("selectedADiaryDate") || "")
+    getCurrentDate(queryStrings?.date?.split("-")[1] || sessionStorage.getItem("selectedADiaryDate") || "")
   );
   const [entryDate, setEntryDate] = useState(
-    parseInt(queryStrings?.date?.split("-")[1] || localStorage.getItem("selectedADiaryDate")) || new Date().setHours(0, 0, 0, 0)
+    parseInt(queryStrings?.date?.split("-")[1] || sessionStorage.getItem("selectedADiaryDate")) || new Date().setHours(0, 0, 0, 0)
   );
 
   const [offSet, setOffset] = useState(0);
   const limit = 10;
-  const emblemBigImageLink = window?.globalConfigs?.getConfig("EMBLEM_BIG");
-  const onCourtsImageLink = window?.globalConfigs?.getConfig("ON_COURTS_LOGO");
   const [taskType, setTaskType] = useState({});
   const name = "Signature";
   const pageModule = "en";
 
-  const [ADiarypdf, setADiarypdf] = useState(localStorage.getItem("adiarypdf") || "");
+  const [ADiarypdf, setADiarypdf] = useState(sessionStorage.getItem("adiarypdf") || "");
   const [isSelectedDataSigned, setIsSelectedDataSigned] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
-  const [stepper, setStepper] = useState(parseInt(localStorage.getItem("adiaryStepper")) || 0);
+  const [stepper, setStepper] = useState(parseInt(sessionStorage.getItem("adiaryStepper")) || 0);
 
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
   const [formData, setFormData] = useState({});
@@ -153,13 +151,13 @@ const ADiaryPage = ({ path }) => {
   }, [name]);
 
   const onCancel = () => {
-    localStorage.setItem("adiaryStepper", parseInt(stepper) - 1);
+    sessionStorage.setItem("adiaryStepper", parseInt(stepper) - 1);
     if (parseInt(stepper) === 1) {
-      localStorage.removeItem("adiarypdf");
-      localStorage.removeItem("adiaryStepper");
-      localStorage.removeItem("selectedADiaryDate");
+      sessionStorage.removeItem("adiarypdf");
+      sessionStorage.removeItem("adiaryStepper");
+      sessionStorage.removeItem("selectedADiaryDate");
     } else if (parseInt(stepper) === 2) {
-      localStorage.removeItem("fileStoreId");
+      sessionStorage.removeItem("fileStoreId");
     }
     setStepper(parseInt(stepper) - 1);
   };
@@ -179,16 +177,16 @@ const ADiaryPage = ({ path }) => {
         });
         setGenerateAdiaryLoader(false);
         setADiarypdf(generateADiaryPDF?.fileStoreID);
-        localStorage.setItem("adiaryStepper", parseInt(stepper) + 1);
+        sessionStorage.setItem("adiaryStepper", parseInt(stepper) + 1);
         setStepper(parseInt(stepper) + 1);
       } catch (error) {
         console.log("Error :", error);
         setGenerateAdiaryLoader(false);
       }
     } else if (parseInt(stepper) === 1) {
-      localStorage.setItem("adiaryStepper", parseInt(stepper) + 1);
+      sessionStorage.setItem("adiaryStepper", parseInt(stepper) + 1);
       setStepper(parseInt(stepper) + 1);
-      localStorage.setItem("adiarypdf", ADiarypdf);
+      sessionStorage.setItem("adiarypdf", ADiarypdf);
     }
   };
 
@@ -210,7 +208,6 @@ const ADiaryPage = ({ path }) => {
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setIsSigned(true);
-        localStorage.setItem("formData", JSON.stringify(formData));
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);
@@ -250,7 +247,7 @@ const ADiaryPage = ({ path }) => {
 
   const uploadSignedPdf = async () => {
     try {
-      const localStorageID = localStorage.getItem("fileStoreId");
+      const localStorageID = sessionStorage.getItem("fileStoreId");
       await HomeService.updateADiaryPDF({
         diary: {
           tenantId: tenantId,
@@ -268,14 +265,14 @@ const ADiaryPage = ({ path }) => {
       setStepper(0);
       setIsSelectedDataSigned(true);
       setADiarypdf(signedDocumentUploadID || localStorageID);
-      localStorage.removeItem("fileStoreId");
-      localStorage.removeItem("adiarypdf");
-      localStorage.removeItem("adiaryStepper");
+      sessionStorage.removeItem("fileStoreId");
+      sessionStorage.removeItem("adiarypdf");
+      sessionStorage.removeItem("adiaryStepper");
     } catch (error) {
       console.log("Error :", error);
       setIsSigned(false);
       setSignedDocumentUploadID("");
-      localStorage.removeItem("fileStoreId");
+      sessionStorage.removeItem("fileStoreId");
       setIsSelectedDataSigned(false);
     }
   };
@@ -304,7 +301,7 @@ const ADiaryPage = ({ path }) => {
   const handleGoClick = () => {
     const updatedDate = new Date(selectedDate).setHours(0, 0, 0, 0);
     setEntryDate(updatedDate);
-    localStorage.setItem("selectedADiaryDate", updatedDate);
+    sessionStorage.setItem("selectedADiaryDate", updatedDate);
     if (queryStrings) {
       history.push(`/${window.contextPath}/employee/home/dashboard/adiary`);
     }

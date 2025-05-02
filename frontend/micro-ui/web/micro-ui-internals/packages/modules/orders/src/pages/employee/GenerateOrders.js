@@ -612,21 +612,21 @@ const GenerateOrders = () => {
   }, [showErrorToast]);
 
   useEffect(() => {
-    const currentSelectedOrderIndex = localStorage.getItem("currentSelectedOrder");
+    const currentSelectedOrderIndex = sessionStorage.getItem("currentSelectedOrder");
 
     if (currentSelectedOrderIndex) {
       setSelectedOrder(currentSelectedOrderIndex);
-      localStorage.removeItem("currentSelectedOrder");
+      sessionStorage.removeItem("currentSelectedOrder");
     } else if (defaultIndex && defaultIndex !== -1 && orderNumber && defaultIndex !== selectedOrder) {
       setSelectedOrder(defaultIndex);
     }
-    const isSignSuccess = localStorage.getItem("esignProcess");
-    const savedOrderPdf = localStorage.getItem("orderPDF");
+    const isSignSuccess = sessionStorage.getItem("esignProcess");
+    const savedOrderPdf = sessionStorage.getItem("orderPDF");
     if (isSignSuccess) {
       setShowsignatureModal(true);
       setOrderPdfFileStoreID(savedOrderPdf);
-      localStorage.removeItem("esignProcess");
-      localStorage.removeItem("orderPDF");
+      sessionStorage.removeItem("esignProcess");
+      sessionStorage.removeItem("orderPDF");
     }
   }, [defaultIndex, orderNumber, selectedOrder]);
 
@@ -2056,7 +2056,7 @@ const GenerateOrders = () => {
   }, [t, applicationDetails, caseDetails, currentOrder, profileEditorName]);
 
   useEffect(() => {
-    const businessOfTheDay = localStorage.getItem("businessOfTheDay");
+    const businessOfTheDay = sessionStorage.getItem("businessOfTheDay");
     if (businessOfTheDay) {
       setBusinessOfTheDay(businessOfTheDay);
     } else {
@@ -2087,7 +2087,7 @@ const GenerateOrders = () => {
 
   const updateOrder = async (order, action, unsignedFileStoreId) => {
     try {
-      const localStorageID = localStorage.getItem("fileStoreId");
+      const localStorageID = sessionStorage.getItem("fileStoreId");
       const documents = Array.isArray(order?.documents) ? order.documents : [];
       let taskDetails = null;
       const newCompositeItems = [];
@@ -3632,7 +3632,7 @@ const GenerateOrders = () => {
           {}
         );
 
-        localStorage.removeItem("businessOfTheDay");
+        sessionStorage.removeItem("businessOfTheDay");
 
         const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
 
@@ -4206,8 +4206,8 @@ const GenerateOrders = () => {
   }, [currentOrder, prevOrder?.orderType, t, isCaseAdmitted]);
 
   const handleGoBackSignatureModal = () => {
-    localStorage.removeItem("fileStoreId");
-    localStorage.removeItem("businessOfTheDay");
+    sessionStorage.removeItem("fileStoreId");
+    sessionStorage.removeItem("businessOfTheDay");
     setShowsignatureModal(false);
     setShowReviewModal(true);
   };
@@ -4215,7 +4215,7 @@ const GenerateOrders = () => {
     setSelectedOrder(index);
   };
   const handleDownloadOrders = () => {
-    const fileStoreId = localStorage.getItem("fileStoreId");
+    const fileStoreId = sessionStorage.getItem("fileStoreId");
     downloadPdf(tenantId, signedDoucumentUploadedID || fileStoreId);
     // setShowSuccessModal(false);
     // history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
@@ -4521,7 +4521,7 @@ const GenerateOrders = () => {
   }, [currentOrder]);
 
   const handleClose = async () => {
-    localStorage.removeItem("fileStoreId");
+    sessionStorage.removeItem("fileStoreId");
     if (successModalActionSaveLabel === t("CS_COMMON_CLOSE")) {
       setShowSuccessModal(false);
       history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
@@ -4540,7 +4540,7 @@ const GenerateOrders = () => {
   };
 
   const handleCloseSuccessModal = () => {
-    localStorage.removeItem("fileStoreId");
+    sessionStorage.removeItem("fileStoreId");
     setShowSuccessModal(false);
     history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
       from: "orderSuccessModal",

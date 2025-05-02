@@ -27,7 +27,7 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
   const isJudge = roles.some((role) => role.code === "CASE_APPROVER");
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
-  const eSignWindowObject = localStorage.getItem("eSignWindowObject");
+  const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = JSON.parse(eSignWindowObject);
 
   const employeeCrumbs = [
@@ -78,14 +78,14 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
     location.pathname,
   ]);
   if (result) {
-    localStorage.setItem("isSignSuccess", result);
+    sessionStorage.setItem("isSignSuccess", result);
   }
   if (fileStoreId) {
-    localStorage.setItem("fileStoreId", fileStoreId);
+    sessionStorage.setItem("fileStoreId", fileStoreId);
   }
   if (isUserLoggedIn && retrievedObject) {
     history.push(`${retrievedObject?.path}${retrievedObject?.param}`);
-    localStorage.removeItem("eSignWindowObject");
+    sessionStorage.removeItem("eSignWindowObject");
   }
   return (
     <Switch>
