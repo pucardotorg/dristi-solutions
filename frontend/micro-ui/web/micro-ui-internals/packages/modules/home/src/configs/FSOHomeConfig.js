@@ -230,8 +230,9 @@ export const TabFSOSearchConfig = {
                 additionalCustomization: true,
               },
               {
-                label: "CS_CASE_ID",
+                label: "CS_CASE_NUMBER_HOME",
                 jsonPath: "filingNumber",
+                additionalCustomization: true,
               },
               {
                 label: "CASE_TYPE",
@@ -380,8 +381,9 @@ export const TabFSOSearchConfig = {
                 additionalCustomization: true,
               },
               {
-                label: "CS_CASE_ID",
+                label: "CS_CASE_NUMBER_HOME",
                 jsonPath: "filingNumber",
+                additionalCustomization: true,
               },
               {
                 label: "CASE_TYPE",
