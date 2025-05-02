@@ -57,7 +57,6 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         setSignatureId(uploadedFileId?.[0]?.fileStoreId);
         handleSigned(true);
-        localStorage.setItem("formData", JSON.stringify(formData));
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);
@@ -83,7 +82,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
     return `${txt} Document`;
   }, [rowData]);
 
-  const fileStore = localStorage.getItem("fileStoreId") || signatureId;
+  const fileStore = sessionStorage.getItem("fileStoreId") || signatureId;
 
   return (
     <div>
@@ -130,8 +129,8 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
                 <Button
                   label={t("CS_ESIGN")}
                   onButtonClick={() => {
-                    localStorage.setItem("ESignSummons", JSON.stringify(rowData));
-                    localStorage.setItem("delieveryChannel", deliveryChannel);
+                    sessionStorage.setItem("ESignSummons", JSON.stringify(rowData));
+                    sessionStorage.setItem("delieveryChannel", deliveryChannel);
                     handleEsign(name, pageModule, rowData?.documents?.[0]?.fileStore, signPlaceHolder);
                   }}
                   style={{

@@ -2884,7 +2884,7 @@ const AdmittedCases = () => {
         />
       )}
       {config?.label !== "Overview" && config?.label !== "Complaint" && config?.label !== "History" && (
-        <div style={{ width: "100%", background: "white", padding: "10px", display: "flex", justifyContent: "space-between" }}>
+        <div style={{ width: "100%", background: "white", padding: "10px", display: "flex", justifyContent: "space-between", marginTop: "10px" }}>
           <div style={{ fontWeight: 700, fontSize: "24px", lineHeight: "28.8px" }}>{t(`All_${config?.label.toUpperCase()}_TABLE_HEADER`)}</div>
           {/* {(!userRoles.includes("CITIZENS") || userRoles.includes("ADVOCATE_ROLE")) &&
             (config?.label === "Hearings" || config?.label === "Documents") && (

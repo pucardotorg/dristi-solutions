@@ -47,7 +47,7 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
   const { caseId } = window?.Digit.Hooks.useQueryParams();
   const toast = useToast();
   const scenario = "EfillingCase";
-  const fileStoreId = localStorage.getItem("fileStoreId");
+  const fileStoreId = sessionStorage.getItem("fileStoreId");
   const location = useLocation();
   const calculationResponse = location.state.state.calculationResponse;
   const [toastMsg, setToastMsg] = useState(null);
@@ -347,7 +347,7 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
             style={{ minWidth: "30%" }}
             onButtonClick={() => {
               downloadPdf(tenantId, fileStoreIdToUse);
-              localStorage.removeItem("fileStoreId");
+              sessionStorage.removeItem("fileStoreId");
             }}
           />
           <Button
