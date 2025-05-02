@@ -33,6 +33,7 @@ import downloadPdfFromFile from "../Utils/downloadPdfFromFile.js";
 import useGetAllAdvocates from "./dristi/useGetAllAdvocates.js";
 import useSearchADiaryService from "./dristi/useSearchADiaryService.js";
 import useEtreasuryCreateDemand from "./dristi/useEtreasuryCreateDemand.js";
+import useFetchBill from "./dristi/useFetchBill.js";
 
 export const Urls = {
   Authenticate: "/user/oauth/token",
@@ -119,6 +120,7 @@ const dristi = {
   useWorkflowDetails,
   useGetPendingTask,
   useBillSearch,
+  useFetchBill,
   useCreateDemand,
   useJudgeAvailabilityDates,
   useGetOCRData,
