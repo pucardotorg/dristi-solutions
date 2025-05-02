@@ -128,7 +128,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     return { total, inputErrors, sectionErrors };
   };
 
-  const { data: caseFetchResponse, refetch: refetchCaseData, isLoading } = useSearchCaseService(
+  const { data: caseFetchResponse, isLoading } = useSearchCaseService(
     {
       criteria: [
         {
@@ -345,7 +345,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
         };
       }),
     ];
-  }, [reviewCaseFileFormConfig, caseDetails, defaultScrutinyErrors]);
+  }, [caseDetails, isScrutiny, isPrevScrutiny, defaultScrutinyErrors?.data, t]);
 
   const primaryButtonLabel = useMemo(() => {
     if (isScrutiny) {

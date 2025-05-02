@@ -601,7 +601,7 @@ export const UICustomizations = {
           const year = date.getFullYear();
           const formattedDate = `${day}-${month}-${year}`;
           return <span>{value && value !== "0" ? formattedDate : ""}</span>;
-        case "ORDER_TILTE":
+        case "ORDER_TITLE":
           return <OrderName rowData={row} colData={column} value={value} />;
         default:
           break;
