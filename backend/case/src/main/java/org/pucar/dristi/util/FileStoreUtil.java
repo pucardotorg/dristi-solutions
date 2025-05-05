@@ -2,6 +2,7 @@ package org.pucar.dristi.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.egov.common.contract.request.RequestInfo;
 import org.pucar.dristi.web.models.Document;
 import org.egov.common.models.individual.AdditionalFields;
 import org.egov.common.models.individual.Field;
@@ -17,6 +18,7 @@ import org.springframework.web.client.RestTemplate;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Collections;
+import java.util.List;
 
 import static org.pucar.dristi.config.ServiceConstants.FILE_STORE_UTILITY_EXCEPTION;
 
@@ -121,4 +123,24 @@ public class FileStoreUtil {
             throw new CustomException("INVALID_FILE_STORE_RESPONSE", "Failed to get valid file store id from file store service");
         }
     }
+
+    public void deleteFilesByFileStore(List<String> fileStoreIds, String tenantId) {
+        String url = configs.getFileStoreHost() + configs.getFileStoreDeleteEndPoint() + "?tenantId=" + tenantId;
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("fileStoreIds", fileStoreIds);
+        body.add("module", configs.getFileStoreCaseModule());
+        body.add("isSoftDelete", false);
+
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, new HttpHeaders());
+        Object response = null;
+        try {
+            response = restTemplate.postForEntity(url, requestEntity, Object.class).getBody();
+            System.out.println("Files deleted from filestore: " + response);
+        } catch (CustomException e) {
+            log.error("Error while deleting files from file store: {}", e.getMessage(), e);
+            throw new CustomException(FILE_STORE_UTILITY_EXCEPTION, "Error occurred when deleting files in File Store");
+        }
+    }
+
 }

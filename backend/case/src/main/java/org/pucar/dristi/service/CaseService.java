@@ -80,6 +80,8 @@ public class CaseService {
 
     private final CaseUtil caseUtil;
 
+    private final FileStoreUtil fileStoreUtil;
+
 
     @Autowired
     public CaseService(@Lazy CaseRegistrationValidator validator,
@@ -94,7 +96,7 @@ public class CaseService {
                        HearingUtil analyticsUtil,
                        UserService userService,
                        PaymentCalculaterUtil paymentCalculaterUtil,
-                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator,CaseUtil caseUtil) {
+                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator, CaseUtil caseUtil, FileStoreUtil fileStoreUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
@@ -116,6 +118,7 @@ public class CaseService {
         this.evidenceUtil = evidenceUtil;
         this.evidenceValidator = evidenceValidator;
         this.caseUtil = caseUtil;
+        this.fileStoreUtil = fileStoreUtil;
     }
 
     public static List<String> extractIndividualIds(JsonNode rootNode) {
@@ -431,6 +434,14 @@ public class CaseService {
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
 
+            for(Document document : caseRequest.getCases().getDocuments()) {
+                List<String> fileStoreIds = new ArrayList<>();
+                if(!document.getIsActive()) {
+                    fileStoreIds.add(document.getFileStore());
+                }
+                fileStoreUtil.deleteFilesByFileStore(fileStoreIds, caseRequest.getCases().getTenantId());
+                log.info("Deleted files for case with ids: {}", fileStoreIds);
+            }
             log.info("Encrypting case: {}", caseRequest.getCases().getId());
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
 
