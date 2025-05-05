@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import digit.config.Configuration;
 import digit.repository.ServiceRequestRepository;
+import digit.service.UserService;
 import digit.web.models.PendingTask;
 import digit.web.models.PendingTaskRequest;
 import digit.web.models.ReScheduleHearing;
@@ -37,6 +38,12 @@ public class PendingTaskUtilTest {
 
     @Mock
     private DateUtil dateUtil;
+
+    @Mock
+    private UserService userService;
+
+    @Mock
+    private CaseUtil caseUtil;
 
     @InjectMocks
     private PendingTaskUtil pendingTaskUtil;
