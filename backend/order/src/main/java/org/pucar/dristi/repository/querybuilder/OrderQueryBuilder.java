@@ -26,7 +26,7 @@ public class OrderQueryBuilder {
     private static final String FROM_ORDERS_TABLE = " FROM dristi_orders orders";
 
     private static final String DOCUMENT_SELECT_QUERY_CASE = "SELECT doc.id as id, doc.documenttype as documenttype, doc.filestore as filestore," +
-            "doc.documentuid as documentuid, doc.additionaldetails as additionaldetails, doc.order_id as order_id";
+            "doc.documentuid as documentuid, doc.additionaldetails as additionaldetails, doc.order_id as order_id, doc.isactive as isactive";
 
     private static final String FROM_DOCUMENTS_TABLE = " FROM dristi_order_document doc";
 
