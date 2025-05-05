@@ -125,6 +125,10 @@ public class FileStoreUtil {
     }
 
     public void deleteFilesByFileStore(List<String> fileStoreIds, String tenantId) {
+        if (fileStoreIds == null || fileStoreIds.isEmpty()) {
+            log.warn("No file store IDs provided for deletion");
+            return;
+        }
         String url = configs.getFileStoreHost() + configs.getFileStoreDeleteEndPoint() + "?tenantId=" + tenantId;
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
@@ -135,8 +139,8 @@ public class FileStoreUtil {
         HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, new HttpHeaders());
         Object response = null;
         try {
-            response = restTemplate.postForEntity(url, requestEntity, Object.class).getBody();
-            System.out.println("Files deleted from filestore: " + response);
+            ResponseEntity<Object> responseEntity = restTemplate.postForEntity(url, requestEntity, Object.class);
+            log.info("Files deleted from filestore: {}, status: {}", fileStoreIds, responseEntity.getStatusCode());
         } catch (CustomException e) {
             log.error("Error while deleting files from file store: {}", e.getMessage(), e);
             throw new CustomException(FILE_STORE_UTILITY_EXCEPTION, "Error occurred when deleting files in File Store");
