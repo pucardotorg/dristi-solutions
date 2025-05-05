@@ -59,4 +59,34 @@ public class OrderService {
 
         return orderResponse.getOrder();
     }
+
+    public Order addCompositeOrderItem(@Valid OrderRequest request) {
+        Order order = request.getOrder();
+
+        OrderFactory orderFactory = factoryProvider.getFactory(order.getOrderCategory());
+        OrderProcessor orderProcessor = orderFactory.createProcessor();
+
+        orderProcessor.preProcessOrder(request);
+
+        OrderResponse orderResponse = orderUtil.addOrderItem(request);
+
+        List<CaseDiaryEntry> diaryEntries = orderProcessor.processCommonItems(request);
+
+        orderProcessor.postProcessOrder(request);
+
+        // create diary entry
+        if (!diaryEntries.isEmpty()) aDiaryUtil.createBulkADiaryEntry(BulkDiaryEntryRequest.builder()
+                .requestInfo(request.getRequestInfo())
+                .caseDiaryList(diaryEntries).build());
+
+        return orderResponse.getOrder();
+
+    }
+
+    public Order removeCompositeOrderItem(@Valid OrderRequest request) {
+
+        OrderResponse orderResponse=  orderUtil.removeOrderItem(request);
+        return orderResponse.getOrder();
+
+    }
 }
