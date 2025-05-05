@@ -32,6 +32,7 @@ public class HearingDocumentRowMapper implements ResultSetExtractor<Map<UUID,Lis
                         .documentType(rs.getString("documenttype"))
                         .fileStore(rs.getString("filestore"))
                         .documentUid(rs.getString("documentuid"))
+                        .isActive(rs.getBoolean("isactive"))
                         .build();
 
                 PGobject pgObject = (PGobject) rs.getObject("additionaldetails");
