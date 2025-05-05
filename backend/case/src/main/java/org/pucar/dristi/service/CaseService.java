@@ -437,12 +437,13 @@ public class CaseService {
                 caseRequest.getCases().setCaseType(CMP);
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
-
+            List<String> fileStoreIds = new ArrayList<>();
             for(Document document : caseRequest.getCases().getDocuments()) {
-                List<String> fileStoreIds = new ArrayList<>();
                 if(!document.getIsActive()) {
                     fileStoreIds.add(document.getFileStore());
                 }
+            }
+            if(!fileStoreIds.isEmpty()){
                 fileStoreUtil.deleteFilesByFileStore(fileStoreIds, caseRequest.getCases().getTenantId());
                 log.info("Deleted files for case with ids: {}", fileStoreIds);
             }
