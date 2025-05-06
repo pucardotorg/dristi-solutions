@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.awt.desktop.AboutEvent;
 import java.util.*;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -67,6 +68,7 @@ public class OrderRegistrationService {
             validator.validateOrderRegistration(body);
 
             enrichmentUtil.enrichOrderRegistration(body);
+            enrichmentUtil.enrichCompositeOrderItemIdOnAddItem(body);
 
             workflowUpdate(body);
 
@@ -105,8 +107,11 @@ public class OrderRegistrationService {
              if(!validator.validateApplicationExistence(body))
                 throw new CustomException(ORDER_UPDATE_EXCEPTION, "Order don't exist");
 
+            validator.validateCompositeOrder(body);
             // Enrich application upon update
             enrichmentUtil.enrichOrderRegistrationUponUpdate(body);
+            enrichmentUtil.enrichCompositeOrderItemIdOnAddItem(body);
+
 
             workflowUpdate(body);
             String updatedState = body.getOrder().getStatus();
@@ -139,6 +144,11 @@ public class OrderRegistrationService {
             // Enrich application upon update
             enrichmentUtil.enrichOrderRegistrationUponUpdate(body);
             enrichmentUtil.enrichCompositeOrderItemIdOnAddItem(body);
+
+            WorkflowObject workflow = new WorkflowObject();
+            workflow.setAction(SAVE_DRAFT);
+
+            body.getOrder().setWorkflow(workflow);
 
             workflowUpdate(body);
 
