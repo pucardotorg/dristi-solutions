@@ -273,6 +273,9 @@ const AdmittedCases = () => {
     moduleCode: "case-default",
     config: {
       enabled: Boolean(caseDetails?.filingNumber && tenantId),
+      staleTime: 30000,
+      cacheTime: 60000,
+      retry: 1,
     },
   });
 
