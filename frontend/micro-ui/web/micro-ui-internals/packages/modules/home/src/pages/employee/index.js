@@ -69,41 +69,45 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute path={`${path}/hearings-response`} component={() => <HearingsResponse></HearingsResponse>} />
         <PrivateRoute path={`${path}/inside-hearing`} component={() => <InsideHearingMainPage />} />
         <PrivateRoute path={`${path}/home-pending-task/e-filing-payment-response`} component={() => <EFilingPaymentRes></EFilingPaymentRes>} />
-        <PrivateRoute path={`${path}/home-pending-task`} component={() => <HomeView></HomeView>} />
-        <PrivateRoute path={`${path}/bulk-esign-order`} component={() => <BulkESignView></BulkESignView>} />
-
-        <PrivateRoute path={`${path}/dashboard/adiary`} component={() => <ADiaryPage></ADiaryPage>} />
-        <PrivateRoute exact path={`${path}/dashboard`} component={() => <DashboardPage></DashboardPage>} />
         <PrivateRoute
+          exact
           path={`${path}/home-pending-task/e-filing-payment-breakdown`}
           component={() => <EfilingPaymentBreakdown></EfilingPaymentBreakdown>}
         />
         <PrivateRoute
+          exact
           path={`${path}/home-pending-task/summons-warrants-modal`}
           component={() => <SummonsAndWarrantsModal></SummonsAndWarrantsModal>}
         />
-        <PrivateRoute path={`${path}/home-pending-task/reissue-summons-modal`} component={() => <ReIssueSummonsModal></ReIssueSummonsModal>} />
-        <PrivateRoute path={`${path}/home-pending-task/post-payment-modal`} component={() => <PaymentForSummonModal></PaymentForSummonModal>} />
-        <PrivateRoute path={`${path}/home-pending-task/rpad-payment-modal`} component={() => <PaymentForRPADModal></PaymentForRPADModal>} />
+        <PrivateRoute exact path={`${path}/home-pending-task/reissue-summons-modal`} component={() => <ReIssueSummonsModal></ReIssueSummonsModal>} />
+        <PrivateRoute exact path={`${path}/home-pending-task/post-payment-modal`} component={() => <PaymentForSummonModal></PaymentForSummonModal>} />
+        <PrivateRoute exact path={`${path}/home-pending-task/rpad-payment-modal`} component={() => <PaymentForRPADModal></PaymentForRPADModal>} />
         <PrivateRoute
+          exact
           path={`${path}/home-pending-task/icops-payment-modal`}
           component={() => <PaymentForSummonModalSMSAndEmail></PaymentForSummonModalSMSAndEmail>}
         />
         <PrivateRoute
+          exact
           path={`${path}/home-pending-task/sms-payment-modal`}
           component={() => <PaymentForSummonModalSMSAndEmail></PaymentForSummonModalSMSAndEmail>}
         />
         <PrivateRoute
+          exact
           path={`${path}/home-pending-task/email-payment-modal`}
           component={() => <PaymentForSummonModalSMSAndEmail></PaymentForSummonModalSMSAndEmail>}
         />
+        <PrivateRoute exact path={`${path}/home-pending-task/home-schedule-hearing`} component={() => <ScheduleHearing />} />
+        <PrivateRoute exact path={`${path}/home-pending-task/home-set-next-hearing`} component={() => <ScheduleNextHearing />} />
+        <PrivateRoute exact path={`${path}/home-pending-task`} component={() => <HomeView></HomeView>} />
+        <PrivateRoute path={`${path}/bulk-esign-order`} component={() => <BulkESignView></BulkESignView>} />
+        <PrivateRoute path={`${path}/dashboard/adiary`} component={() => <ADiaryPage></ADiaryPage>} />
+        <PrivateRoute exact path={`${path}/dashboard`} component={() => <DashboardPage></DashboardPage>} />
         <PrivateRoute path={`${path}/sbi-epost-payment`} component={() => <SBIEpostPayment></SBIEpostPayment>} />
         <PrivateRoute path={`${path}/post-payment-screen`} component={() => <PaymentStatus></PaymentStatus>} />
         <PrivateRoute path={`${path}/sbi-payment-screen`} component={() => <SBIPaymentStatus />} />
         <PrivateRoute path={`${path}/view-hearing`} component={() => <ViewHearing></ViewHearing>} />
         <PrivateRoute path={`${path}/home-popup`} component={() => <HomePopUp></HomePopUp>} />
-        <PrivateRoute path={`${path}/home-pending-task/home-schedule-hearing`} component={() => <ScheduleHearing />} />
-        <PrivateRoute path={`${path}/home-pending-task/home-set-next-hearing`} component={() => <ScheduleNextHearing />} />
       </AppContainer>
     </Switch>
   );

@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo, useState } from "react";
-import { Button, Loader } from "@egovernments/digit-ui-react-components";
+import React, { useCallback, useMemo, useState, useEffect } from "react";
+import { Loader } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import ApplicationInfoComponent from "../../components/ApplicationInfoComponent";
@@ -9,7 +9,6 @@ import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { ordersService } from "../../hooks/services";
 import { Urls } from "../../hooks/services/Urls";
-import { useEffect } from "react";
 import { paymentType } from "../../utils/paymentType";
 import { extractFeeMedium, getTaskType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { getSuffixByDeliveryChannel } from "../../utils";
@@ -117,9 +116,15 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const { filingNumber, taskNumber } = Digit.Hooks.useQueryParams();
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [caseId, setCaseId] = useState();
-  const { t } = useTranslation();
   const [isCaseLocked, setIsCaseLocked] = useState(false);
   const [payOnlineButtonTitle, setPayOnlineButtonTitle] = useState("CS_BUTTON_PAY_ONLINE_SOMEONE_PAYING");
+
+  useEffect(() => {
+    // If we don't have query params, redirect to home
+    if (!filingNumber || !taskNumber) {
+      history.replace(`/${window.contextPath}/citizen/home/home-pending-task`);
+    }
+  }, [filingNumber, history, taskNumber]);
 
   const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
     {
@@ -565,10 +570,12 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     };
   }, [
     courtFeeAmount,
+    courtBillResponse?.Bill,
+    deliveryPartnerFeeAmount,
+    ePostBillResponse,
     refetchBill,
     billResponse,
-    caseDetails?.filingNumber,
-    caseDetails?.caseTitle,
+    caseDetails,
     tenantId,
     openPaymentPortal,
     mockSubmitModalInfo,
@@ -579,6 +586,9 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     status,
     filteredTasks,
     filingNumber,
+    service,
+    orderData,
+    partyIndex,
   ]);
 
   const infos = useMemo(() => {
@@ -669,7 +679,21 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         />
       ),
     };
-  }, [channelId, feeOptions, history, infos, isCaseAdmitted, links, orderDate, orderType, paymentLoader, isUserAdv]);
+  }, [
+    channelId,
+    orderType,
+    isCaseLocked,
+    payOnlineButtonTitle,
+    infos,
+    links,
+    feeOptions,
+    orderDate,
+    paymentLoader,
+    isCaseAdmitted,
+    isUserAdv,
+    history,
+  ]);
+
   if (isOrdersLoading || isPaymentTypeLoading || isSummonsBreakUpLoading || isBillLoading) {
     return <Loader />;
   }
