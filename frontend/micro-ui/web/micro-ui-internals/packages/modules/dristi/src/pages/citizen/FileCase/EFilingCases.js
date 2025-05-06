@@ -950,7 +950,7 @@ function EFilingCases({ path }) {
                 body.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
               }
 
-              if (body?.labelChildren === "OutlinedInfoIcon" && Object.keys(caseDetails?.additionalDetails?.scrutiny?.data || {}).length === 0) {
+              if (body?.labelChildren === "OutlinedInfoIcon") {
                 body.labelChildren = (
                   <React.Fragment>
                     <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`${body.label}-tooltip`}>
@@ -1130,7 +1130,7 @@ function EFilingCases({ path }) {
                 body.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
               }
 
-              if (body?.labelChildren === "OutlinedInfoIcon" && Object.keys(caseDetails?.additionalDetails?.scrutiny?.data || {}).length === 0) {
+              if (body?.labelChildren === "OutlinedInfoIcon") {
                 body.labelChildren = (
                   <React.Fragment>
                     <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`${body.label}-tooltip`}>
@@ -1361,8 +1361,7 @@ function EFilingCases({ path }) {
                 }
                 modifiedFormComponent.state = state;
                 if (
-                  modifiedFormComponent?.labelChildren === "OutlinedInfoIcon" &&
-                  Object.keys(caseDetails?.additionalDetails?.scrutiny?.data || {}).length === 0
+                  modifiedFormComponent?.labelChildren === "OutlinedInfoIcon"
                 ) {
                   modifiedFormComponent.labelChildren = (
                     <React.Fragment>
