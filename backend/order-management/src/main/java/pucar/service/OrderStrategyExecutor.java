@@ -1,6 +1,7 @@
 package pucar.service;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.stereotype.Service;
 import pucar.strategy.OrderUpdateStrategy;
 import pucar.web.models.OrderRequest;
@@ -37,7 +38,7 @@ public class OrderStrategyExecutor {
                 .filter(strategy -> strategy.supportsCommon(orderRequest))
                 .forEach((strategy) -> {
                     CaseDiaryEntry diaryEntry = strategy.execute(orderRequest);
-                    diaryEntries.add(diaryEntry);
+                    if (!ObjectUtils.isEmpty(diaryEntry)) diaryEntries.add(diaryEntry);
 
                 });
 
