@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.micrometer.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
@@ -21,7 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -67,13 +69,14 @@ public class OrderRegistrationService {
             validator.validateOrderRegistration(body);
 
             enrichmentUtil.enrichOrderRegistration(body);
+            enrichmentUtil.enrichCompositeOrderItemIdOnAddItem(body);
 
             workflowUpdate(body);
 
             producer.push(config.getSaveOrderKafkaTopic(), body);
 
             return body.getOrder();
-        }catch (CustomException e) {
+        } catch (CustomException e) {
             log.error("Custom Exception occurred while creating order");
             throw e;
         } catch (Exception e) {
@@ -93,7 +96,7 @@ public class OrderRegistrationService {
             return orderList;
 
         } catch (Exception e) {
-            log.error("Error while fetching to search results :: {}",e.toString());
+            log.error("Error while fetching to search results :: {}", e.toString());
             throw new CustomException(ORDER_SEARCH_EXCEPTION, e.getMessage());
         }
     }
@@ -102,11 +105,14 @@ public class OrderRegistrationService {
 
         try {
             // Validate whether the application that is being requested for update indeed exists
-             if(!validator.validateApplicationExistence(body))
+            if (!validator.validateApplicationExistence(body))
                 throw new CustomException(ORDER_UPDATE_EXCEPTION, "Order don't exist");
 
+            validator.validateCompositeOrder(body);
             // Enrich application upon update
             enrichmentUtil.enrichOrderRegistrationUponUpdate(body);
+            enrichmentUtil.enrichCompositeOrderItemIdOnAddItem(body);
+
 
             workflowUpdate(body);
             String updatedState = body.getOrder().getStatus();
@@ -140,6 +146,8 @@ public class OrderRegistrationService {
             enrichmentUtil.enrichOrderRegistrationUponUpdate(body);
             enrichmentUtil.enrichCompositeOrderItemIdOnAddItem(body);
 
+            WorkflowObject workflow = body.getOrder().getWorkflow();
+            workflow.setAction(SAVE_DRAFT);
             workflowUpdate(body);
 
             producer.push(config.getUpdateOrderKafkaTopic(), body);
@@ -250,7 +258,7 @@ public class OrderRegistrationService {
 //        if(orderType.equalsIgnoreCase(SCHEDULE_OF_HEARING_DATE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
 //            return ADMISSION_HEARING_SCHEDULED;
 //        }
-        if(orderType.equalsIgnoreCase(JUDGEMENT) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
+        if (orderType.equalsIgnoreCase(JUDGEMENT) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
             return CASE_DECISION_AVAILABLE;
         }
         if (orderType.equalsIgnoreCase(ASSIGNING_DATE_RESCHEDULED_HEARING) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
@@ -271,7 +279,7 @@ public class OrderRegistrationService {
         if (orderType.equalsIgnoreCase(MANDATORY_SUBMISSIONS_RESPONSES) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
             return ADDITIONAL_INFORMATION_MESSAGE;
         }
-        if(orderType.equalsIgnoreCase(NOTICE) && updatedStatus.equalsIgnoreCase(PUBLISHED)){
+        if (orderType.equalsIgnoreCase(NOTICE) && updatedStatus.equalsIgnoreCase(PUBLISHED)) {
             return NOTICE_ISSUED;
         }
         if (updatedStatus.equalsIgnoreCase(PUBLISHED)) {
@@ -323,7 +331,7 @@ public class OrderRegistrationService {
 
             if (receiver != null && receiver.equalsIgnoreCase(RESPONDENT)) {
                 JsonNode respondentDetails = caseDetails.get("additionalDetails").get("respondentDetails").get("formdata");
-                for (int i = 0 ; i < respondentDetails.size() ; i++) {
+                for (int i = 0; i < respondentDetails.size(); i++) {
                     phonenumbers.add(respondentDetails.get(i).get("data").get("phonenumbers").get("mobileNumber").get(0).textValue());
                 }
             }
@@ -357,7 +365,7 @@ public class OrderRegistrationService {
         }
     }
 
-    private void workflowUpdate(OrderRequest orderRequest){
+    private void workflowUpdate(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
 
@@ -366,7 +374,7 @@ public class OrderRegistrationService {
         WorkflowObject workflow = order.getWorkflow();
 
         String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, orderNumber, config.getOrderBusinessServiceName(),
-                    workflow, config.getOrderBusinessName());
+                workflow, config.getOrderBusinessName());
         order.setStatus(status);
         if (PUBLISHED.equalsIgnoreCase(status))
             order.setCreatedDate(System.currentTimeMillis());
@@ -377,7 +385,7 @@ public class OrderRegistrationService {
         Set<String> mobileNumber = new HashSet<>();
 
         List<Individual> individuals = individualService.getIndividuals(requestInfo, new ArrayList<>(ids));
-        for(Individual individual : individuals) {
+        for (Individual individual : individuals) {
             if (individual.getMobileNumber() != null) {
                 mobileNumber.add(individual.getMobileNumber());
             }
@@ -385,7 +393,7 @@ public class OrderRegistrationService {
         return mobileNumber;
     }
 
-    public  Set<String> extractIndividualIds(JsonNode caseDetails, String receiver) {
+    public Set<String> extractIndividualIds(JsonNode caseDetails, String receiver) {
         JsonNode litigantNode = caseDetails.get("litigants");
         JsonNode representativeNode = caseDetails.get("representatives");
         String partyTypeToMatch = (receiver != null) ? receiver.toLowerCase() : "";

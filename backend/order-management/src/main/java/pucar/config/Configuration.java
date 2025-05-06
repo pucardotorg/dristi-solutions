@@ -33,6 +33,13 @@ public class Configuration {
     @Value("${dristi.order.host}")
     private String orderHost;
 
+
+    @Value("${dristi.order.add.item.endpoint}")
+    private String addOrderItemEndPoint;
+
+    @Value("${dristi.order.remove.item.endpoint}")
+    private String removeOrderItemEndPoint;
+
     @Value("${dristi.order.exists.endpoint}")
     private String orderExistsEndPoint;
 
@@ -131,7 +138,7 @@ public class Configuration {
     @Value("${dristi.inbox.host}")
     private String inboxHost;
 
-    @Value("${dristi.inbox.index.search.endpoint")
+    @Value("${dristi.inbox.index.search.endpoint}")
     private String indexSearchEndPoint;
 
     // Analytics Config

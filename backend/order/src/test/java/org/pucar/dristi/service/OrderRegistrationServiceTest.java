@@ -197,6 +197,7 @@ import static org.mockito.Mockito.*;
       Order order = new Order();
       order.setOrderNumber("TEST-ORDER-123");
       order.setTenantId("test-tenant");
+      order.setWorkflow(new WorkflowObject());
       orderRequest.setOrder(order);
       RequestInfo requestInfo = new RequestInfo();
       orderRequest.setRequestInfo(requestInfo);

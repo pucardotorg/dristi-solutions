@@ -75,6 +75,6 @@ public class DeleteOrder implements OrderUpdateStrategy {
         CourtCase courtCase = cases.get(0);
 
         pendingTaskUtil.closeManualPendingTask(order.getOrderNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(), courtCase.getId().toString(), courtCase.getCaseTitle());
-        return null;
+        return new CaseDiaryEntry();
     }
 }
