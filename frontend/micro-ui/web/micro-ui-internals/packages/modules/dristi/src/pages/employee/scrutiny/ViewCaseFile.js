@@ -1,5 +1,5 @@
 import { BackButton, CheckSvg, CloseSvg, EditIcon, FormComposerV2, Header, Loader, TextInput, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Redirect, useHistory, useLocation } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import { CaseWorkflowAction } from "../../../Utils/caseWorkflow";
@@ -147,6 +147,29 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     caseFetchResponse,
     caseDetailsAdmitted,
   ]);
+  const filingNumberRef = useRef(null);
+
+  useEffect(() => {
+    if (caseDetails) {
+      filingNumberRef.current = caseDetails?.filingNumber;
+    }
+  }, [caseDetails]);
+
+  const unlockCase = async (filingNumber) => {
+    try {
+      await DRISTIService.setCaseUnlock({}, { uniqueId: filingNumber, tenantId: tenantId });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (isScrutiny) {
+        unlockCase(filingNumberRef.current);
+      }
+    };
+  }, [location]);
 
   const defaultScrutinyErrors = useMemo(() => {
     return caseDetails?.additionalDetails?.scrutiny || {};
