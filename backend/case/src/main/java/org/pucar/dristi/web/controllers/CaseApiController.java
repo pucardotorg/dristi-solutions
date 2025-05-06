@@ -8,6 +8,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.response.ResponseInfo;
 import org.pucar.dristi.service.CasePdfService;
 import org.pucar.dristi.service.CaseService;
+import org.pucar.dristi.service.CaseServiceV2;
 import org.pucar.dristi.service.WitnessService;
 import org.pucar.dristi.util.ResponseInfoFactory;
 import org.pucar.dristi.web.OpenApiCaseSummary;
@@ -30,6 +31,8 @@ public class CaseApiController {
 
     private final CaseService caseService;
 
+    private final CaseServiceV2 caseServiceV2;
+
     private final WitnessService witnessService;
 
     private final ResponseInfoFactory responseInfoFactory;
@@ -38,8 +41,9 @@ public class CaseApiController {
 
 
     @Autowired
-    public CaseApiController(CaseService caseService, WitnessService witnessService, ResponseInfoFactory responseInfoFactory, CasePdfService casePdfService) {
+    public CaseApiController(CaseService caseService, CaseServiceV2 caseServiceV2, WitnessService witnessService, ResponseInfoFactory responseInfoFactory, CasePdfService casePdfService) {
         this.caseService = caseService;
+        this.caseServiceV2 = caseServiceV2;
         this.witnessService = witnessService;
         this.responseInfoFactory = responseInfoFactory;
         this.casePdfService = casePdfService;
@@ -71,6 +75,16 @@ public class CaseApiController {
         caseService.searchCases(body);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
         CaseListResponse caseResponse = CaseListResponse.builder().criteria(body.getCriteria()).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(caseResponse, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v2/search/details")
+    public ResponseEntity<CaseSearchResponse> caseV2SearchDetails(
+            @Parameter(in = ParameterIn.DEFAULT, description = "Search criteria + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseSearchRequestV2 body) {
+
+        CourtCase courtCase = caseServiceV2.searchCases(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        CaseSearchResponse caseResponse = CaseSearchResponse.builder().cases(courtCase).responseInfo(responseInfo).build();
         return new ResponseEntity<>(caseResponse, HttpStatus.OK);
     }
 

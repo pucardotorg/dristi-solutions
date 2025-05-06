@@ -9,6 +9,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.web.models.CaseCriteria;
 import org.pucar.dristi.web.models.CaseExists;
+import org.pucar.dristi.web.models.CaseSearchCriteriaV2;
 import org.pucar.dristi.web.models.Pagination;
 import org.springframework.stereotype.Component;
 
@@ -74,6 +75,76 @@ public class CaseQueryBuilder {
     private static final String BASE_CASE_EXIST_QUERY = " SELECT COUNT(*) FROM dristi_cases cases ";
 
     public static final String AND = " AND ";
+
+    public String getCasesSearchDetailsQuery(CaseSearchCriteriaV2 criteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, RequestInfo requestInfo) {
+        try {
+            StringBuilder query = new StringBuilder(BASE_CASE_QUERY);
+            query.append(FROM_CASES_TABLE);
+            boolean firstCriteria = true; // To check if it's the first criteria
+            if (criteria != null) {
+
+                firstCriteria = addCriteria(criteria.getCaseId(), query, firstCriteria, "cases.id = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+
+                firstCriteria = addLitigantCriteria(criteria,preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+
+                addAdvocateCriteria(criteria,preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
+            }
+
+            return query.toString();
+        } catch (Exception e) {
+            log.error("Error while building case details search query :: {}",e.toString());
+            throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Exception occurred while building the case details search query: " + e.getMessage());
+        }
+    }
+
+    private boolean addAdvocateCriteria(CaseSearchCriteriaV2 criteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, RequestInfo requestInfo, StringBuilder query, boolean firstCriteria) {
+        if (criteria.getAdvocateId() != null && !criteria.getAdvocateId().isEmpty()) {
+            addClauseIfRequired(query, firstCriteria);
+            query.append("((cases.id IN (" +
+                    "        SELECT advocate.case_id" +
+                    "        FROM dristi_case_representatives advocate" +
+                    "        WHERE advocate.advocateId = ? AND advocate.isactive = true" +
+                    "        UNION" +
+                    "        SELECT poaholders.case_id" +
+                    "        FROM dristi_case_poaholders poaholders" +
+                    "        WHERE poaholders.individual_id = ? AND poaholders.is_active = true))" +
+                    " OR cases.status='DRAFT_IN_PROGRESS' AND cases.createdby = ?" +
+                    " OR EXISTS (SELECT 1 FROM jsonb_array_elements(pendingAdvocateRequests) elem WHERE elem->>'advocateId' = ?) ) AND (cases.status NOT IN ('DELETED_DRAFT'))");
+            preparedStmtList.add(criteria.getAdvocateId());
+            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtList.add(criteria.getPoaHolderIndividualId());
+            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtList.add(requestInfo.getUserInfo().getUuid());
+            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtList.add(criteria.getAdvocateId());
+            preparedStmtArgList.add(Types.VARCHAR);
+            firstCriteria = false;
+        }
+        return firstCriteria;
+    }
+
+    private boolean addLitigantCriteria(CaseSearchCriteriaV2 criteria, List<Object> preparedStmtList,List<Integer> preparedStmtArgList, RequestInfo requestInfo, StringBuilder query, boolean firstCriteria) {
+        if (criteria.getLitigantId() != null && !criteria.getLitigantId().isEmpty()) {
+            addClauseIfRequired(query, firstCriteria);
+            query.append(" ((cases.id IN (" +
+                    " SELECT litigant.case_id" +
+                    " FROM dristi_case_litigants litigant" +
+                    " WHERE litigant.individualId = ? AND litigant.isactive = true" +
+                    " UNION" +
+                    " SELECT poaholders.case_id" +
+                    " FROM dristi_case_poaholders poaholders" +
+                    " WHERE poaholders.individual_id = ? AND poaholders.is_active = true))" +
+                    " OR cases.status ='DRAFT_IN_PROGRESS' AND cases.createdby = ?) AND (cases.status NOT IN ('DELETED_DRAFT'))");
+            preparedStmtList.add(criteria.getLitigantId());
+            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtList.add(criteria.getPoaHolderIndividualId());
+            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtList.add(requestInfo.getUserInfo().getUuid());
+            preparedStmtArgList.add(Types.VARCHAR);
+            firstCriteria = false;
+        }
+        return firstCriteria;
+    }
 
     public String checkCaseExistQuery(CaseExists caseExists, List<Object> preparedStmtList, List<Integer> preparedStmtListArgs) {
         try {

@@ -436,4 +436,58 @@ public class CaseRegistrationEnrichment {
 
     }
 
+    public void enrichCaseSearchRequest(CaseSearchRequestV2 caseSearchRequests) {
+        RequestInfo requestInfo = caseSearchRequests.getRequestInfo();
+        User userInfo = requestInfo.getUserInfo();
+        String type = userInfo.getType();
+        List<Role> roles = userInfo.getRoles();
+
+        switch (type.toLowerCase()) {
+            case "employee" -> enrichEmployeeUserId(roles, caseSearchRequests);
+            case "citizen" -> enrichCitizenUserId(roles, caseSearchRequests);
+            default -> throw new IllegalArgumentException("Unknown user type: " + type);
+        }
+    }
+
+    private void enrichEmployeeUserId(List<Role> roles, CaseSearchRequestV2 searchRequest) {
+
+        boolean isJudge = roles.stream()
+                .anyMatch(role -> JUDGE_ROLE.equals(role.getCode()));
+
+        boolean isBenchClerk = roles.stream()
+                .anyMatch(role -> BENCH_CLERK.equals(role.getCode()));
+
+        // TO DO- Need to enhance this after HRMS integration
+        if (isJudge || isBenchClerk) {
+            searchRequest.getCriteria().setJudgeId(JUDGE_ID);
+        }
+
+    }
+
+    private void enrichCitizenUserId(List<Role> roles, CaseSearchRequestV2 searchRequest) {
+
+        RequestInfo requestInfo = searchRequest.getRequestInfo();
+
+        String individualId = individualService.getIndividualId(requestInfo);
+
+        boolean isAdvocate = roles.stream()
+                .anyMatch(role -> ADVOCATE_ROLE.equals(role.getCode()));
+
+        if (isAdvocate) {
+
+            List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
+
+            if (!advocates.isEmpty()) {
+                String advocateId = advocates.get(0).getId().toString();
+                searchRequest.getCriteria().setAdvocateId(advocateId);
+            }
+
+        } else {
+            searchRequest.getCriteria().setLitigantId(individualId);
+        }
+
+        searchRequest.getCriteria().setPoaHolderIndividualId(individualId);
+
+    }
+
 }
