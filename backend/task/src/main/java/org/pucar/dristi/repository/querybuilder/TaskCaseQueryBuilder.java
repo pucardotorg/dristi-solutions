@@ -128,6 +128,7 @@ public class TaskCaseQueryBuilder {
             addClauseIfRequired(query, preparedStmtList);
             query.append(" orderType IN ( ").append(createQuery(taskCaseSearchCriteria.getOrderType())).append(" ) ");
             addToPreparedStatement(preparedStmtList, taskCaseSearchCriteria.getOrderType());
+            addToPreparedStatement(preparedStmtList, taskCaseSearchCriteria.getOrderType());
 
         }
 
