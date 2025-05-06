@@ -131,7 +131,7 @@ public class Configuration {
     @Value("${dristi.inbox.host}")
     private String inboxHost;
 
-    @Value("${dristi.inbox.index.search.endpoint")
+    @Value("${dristi.inbox.index.search.endpoint}")
     private String indexSearchEndPoint;
 
     // Analytics Config
