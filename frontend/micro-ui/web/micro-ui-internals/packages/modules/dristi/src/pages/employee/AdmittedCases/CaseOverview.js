@@ -126,7 +126,53 @@ const CaseOverview = ({
     <div style={{ display: "flex" }}>
       <div style={{ width: "70%" }}>
         {caseData?.case?.outcome ? (
-          <JudgementViewCard caseData={caseData} />
+          <React.Fragment>
+            <JudgementViewCard caseData={caseData} />
+            {hearingRes?.HearingList?.filter((hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status)).length !== 0 && (
+              <Card>
+                <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
+                  <div
+                    style={{
+                      fontWeight: 700,
+                      fontSize: "16px",
+                      lineHeight: "18.75px",
+                      color: "#231F20",
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                  >
+                    <PreviousHearingIcon />
+                    <span style={{ lineHeight: "normal", marginLeft: "12px" }}>
+                      {`Previous Hearing - ${previousHearing?.[0]?.hearingType.charAt(0).toUpperCase()}${previousHearing?.[0]?.hearingType
+                        .slice(1)
+                        .toLowerCase()} Hearing`}
+                    </span>
+                  </div>
+                  <div
+                    style={{ color: "#007E7E", cursor: "pointer", fontWeight: 700, fontSize: "16px", lineHeight: "18.75px" }}
+                    onClick={() => setShowAllTranscript(true)}
+                  >
+                    {t("ALL_HEARING_TRANSCRIPT")}
+                  </div>
+                </div>
+                <hr style={{ border: "1px solid #FFF6E880" }} />
+                <div
+                  style={{
+                    padding: "10px",
+                    color: "#505A5F",
+                    fontWeight: 400,
+                    fontSize: "16px",
+                    lineHeight: "24px",
+                  }}
+                >
+                  {previousHearing?.[0]?.transcript?.length
+                    ? previousHearing?.[0]?.transcript?.map((transcript) => <div>{transcript}</div>)
+                    : "No Transcript available for this hearing"}
+                </div>
+              </Card>
+            )}
+            {showAllTranscript && <ShowAllTranscriptModal setShowAllTranscript={setShowAllTranscript} hearingList={previousHearing} />}
+          </React.Fragment>
         ) : hearingRes?.HearingList?.length === 0 && orderList?.length === 0 ? (
           <div
             style={{
