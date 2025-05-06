@@ -55,6 +55,8 @@
 .litigant-verification {
   width: 712px;
   margin-bottom: 0px !important;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
   .multi-litigant-composer {
     .card {
       margin: 0px;
