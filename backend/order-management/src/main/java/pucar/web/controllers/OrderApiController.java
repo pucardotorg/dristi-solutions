@@ -47,4 +47,21 @@ public class OrderApiController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    @RequestMapping(value = "/v2/add-item", method = RequestMethod.POST)
+    public ResponseEntity<OrderResponse> addItemWrapper(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody OrderRequest request) {
+        Order order = orderService.addCompositeOrderItem(request);
+        OrderResponse response = OrderResponse.builder()
+                .order(order).responseInfo(ResponseInfoFactory.createResponseInfo(request.getRequestInfo(), true)).build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
+    @RequestMapping(value = "/v2/remove-item", method = RequestMethod.POST)
+    public ResponseEntity<OrderResponse> removeItemWrapper(@Parameter(in = ParameterIn.DEFAULT, description = "", required = true, schema = @Schema()) @Valid @RequestBody OrderRequest request) {
+        Order order = orderService.removeCompositeOrderItem(request);
+        OrderResponse response = OrderResponse.builder()
+                .order(order).responseInfo(ResponseInfoFactory.createResponseInfo(request.getRequestInfo(), true)).build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
 }
