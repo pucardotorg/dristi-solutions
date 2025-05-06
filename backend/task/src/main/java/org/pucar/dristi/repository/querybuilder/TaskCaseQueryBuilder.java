@@ -129,6 +129,7 @@ public class TaskCaseQueryBuilder {
             // TODO: can remove joining of order table
             query.append(" ( orderType IN ( ").append(createQuery(taskCaseSearchCriteria.getOrderType())).append(" ) " + "or task.tasktype IN ( ").append(createQuery(taskCaseSearchCriteria.getOrderType())).append(" ) )");
             addToPreparedStatement(preparedStmtList, taskCaseSearchCriteria.getOrderType());
+            addToPreparedStatement(preparedStmtList, taskCaseSearchCriteria.getOrderType());
 
         }
 
