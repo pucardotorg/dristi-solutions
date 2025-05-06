@@ -126,7 +126,8 @@ public class TaskCaseQueryBuilder {
 
         if (!CollectionUtils.isEmpty(taskCaseSearchCriteria.getOrderType())) {
             addClauseIfRequired(query, preparedStmtList);
-            query.append(" orderType IN ( ").append(createQuery(taskCaseSearchCriteria.getOrderType())).append(" ) ");
+            // TODO: can remove joining of order table
+            query.append(" ( orderType IN ( ").append(createQuery(taskCaseSearchCriteria.getOrderType())).append(" ) " + "or task.tasktype IN ( ").append(createQuery(taskCaseSearchCriteria.getOrderType())).append(" ) )");
             addToPreparedStatement(preparedStmtList, taskCaseSearchCriteria.getOrderType());
 
         }
