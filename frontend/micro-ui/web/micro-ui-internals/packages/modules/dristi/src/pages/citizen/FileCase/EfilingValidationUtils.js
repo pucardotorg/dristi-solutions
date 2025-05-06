@@ -88,8 +88,8 @@ export const showDemandNoticeModal = ({ selected, setValue, formData, setError, 
             setError("dateOfDispatch", { message: "CS_DATE_ERROR_MSG" });
           } else if (
             formData?.dateOfDispatch &&
-            chequeDetails?.issuanceDate &&
-            new Date(chequeDetails?.issuanceDate).getTime() > new Date(formData?.dateOfDispatch).getTime()
+            chequeDetails?.depositDate &&
+            new Date(chequeDetails?.depositDate).getTime() > new Date(formData?.dateOfDispatch).getTime()
           ) {
             setError("dateOfDispatch", { message: "CS_DISPATCH_DATE_ERROR_MSG" });
           } else {
