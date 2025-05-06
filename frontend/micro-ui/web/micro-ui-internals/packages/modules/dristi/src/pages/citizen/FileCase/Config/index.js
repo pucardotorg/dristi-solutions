@@ -200,6 +200,7 @@ export const sideMenuConfig = [
           "proofOfDispatchFileUpload.document",
           "proofOfReply",
           "dateOfAccrual",
+          "dateOfService",
         ],
         initialMandatoryFieldCount: 7,
         dependentMandatoryFields: [],
