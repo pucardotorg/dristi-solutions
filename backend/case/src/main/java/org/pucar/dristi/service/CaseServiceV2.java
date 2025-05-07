@@ -7,21 +7,18 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
-import org.pucar.dristi.enrichment.EnrichmentService;
-import org.pucar.dristi.kafka.Producer;
-import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.repository.CaseRepositoryV2;
 import org.pucar.dristi.util.*;
-import org.pucar.dristi.validators.CaseRegistrationValidator;
-import org.pucar.dristi.validators.EvidenceValidator;
-import org.pucar.dristi.web.models.CaseSearchCriteriaV2;
-import org.pucar.dristi.web.models.CaseSearchRequestV2;
-import org.pucar.dristi.web.models.CourtCase;
-import org.pucar.dristi.web.models.PendingAdvocateRequest;
+import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.v2.CaseSummaryList;
+import org.pucar.dristi.web.models.v2.CaseSummaryListRequest;
+import org.pucar.dristi.web.models.v2.CaseSummarySearch;
+import org.pucar.dristi.web.models.v2.CaseSummarySearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.pucar.dristi.config.ServiceConstants.SEARCH_CASE_ERR;
@@ -31,71 +28,25 @@ import static org.pucar.dristi.config.ServiceConstants.SEARCH_CASE_ERR;
 @Slf4j
 public class CaseServiceV2 {
 
-    private final CaseRegistrationValidator validator;
     private final CaseRegistrationEnrichment enrichmentUtil;
-    private final CaseRepository caseRepository;
-    private final CaseRepositoryV2 caseRepositoryV2;
-    private final WorkflowService workflowService;
+    private final CaseRepositoryV2 caseRepository;
     private final Configuration config;
-    private final Producer producer;
-    private final EtreasuryUtil etreasuryUtil;
     private final EncryptionDecryptionUtil encryptionDecryptionUtil;
     private final ObjectMapper objectMapper;
     private final CacheService cacheService;
 
-    private final EnrichmentService enrichmentService;
-
-    private final SmsNotificationService notificationService;
-
-    private final IndividualService individualService;
-
-    private final AdvocateUtil advocateUtil;
-    private final TaskUtil taskUtil;
-    private final HearingUtil hearingUtil;
-    private final UserService userService;
-    private final EvidenceUtil evidenceUtil;
-    private final EvidenceValidator evidenceValidator;
-    private final PaymentCalculaterUtil paymentCalculaterUtil;
-
-    private final CaseUtil caseUtil;
-
-
     @Autowired
-    public CaseServiceV2(@Lazy CaseRegistrationValidator validator,
-                         CaseRegistrationEnrichment enrichmentUtil,
-                         CaseRepository caseRepository, CaseRepositoryV2 caseRepositoryV2,
-                         WorkflowService workflowService,
+    public CaseServiceV2(CaseRegistrationEnrichment enrichmentUtil,
+                         CaseRepositoryV2 caseRepository,
                          Configuration config,
-                         Producer producer,
-                         TaskUtil taskUtil,
-                         EtreasuryUtil etreasuryUtil,
                          EncryptionDecryptionUtil encryptionDecryptionUtil,
-                         HearingUtil analyticsUtil,
-                         UserService userService,
-                         PaymentCalculaterUtil paymentCalculaterUtil,
-                         ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator, CaseUtil caseUtil) {
-        this.validator = validator;
+                         ObjectMapper objectMapper, CacheService cacheService) {
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
-        this.caseRepositoryV2 = caseRepositoryV2;
-        this.workflowService = workflowService;
         this.config = config;
-        this.producer = producer;
-        this.taskUtil = taskUtil;
-        this.etreasuryUtil = etreasuryUtil;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
-        this.hearingUtil = analyticsUtil;
-        this.userService = userService;
-        this.paymentCalculaterUtil = paymentCalculaterUtil;
         this.objectMapper = objectMapper;
         this.cacheService = cacheService;
-        this.enrichmentService = enrichmentService;
-        this.notificationService = notificationService;
-        this.individualService = individualService;
-        this.advocateUtil = advocateUtil;
-        this.evidenceUtil = evidenceUtil;
-        this.evidenceValidator = evidenceValidator;
-        this.caseUtil = caseUtil;
     }
 
     public CourtCase searchCases(CaseSearchRequestV2 caseSearchRequests) {
@@ -117,7 +68,7 @@ public class CaseServiceV2 {
                 log.debug("CourtCase not found in Redis cache for caseId: {}", criteria.getCaseId());
             }
 
-            courtCase = caseRepositoryV2.getCases(criteria, caseSearchRequests.getRequestInfo());
+            courtCase = caseRepository.getCases(criteria, caseSearchRequests.getRequestInfo());
             saveInRedisCache(courtCase, caseSearchRequests.getRequestInfo());
 
             CourtCase decryptedCourtCases = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo());
@@ -129,6 +80,31 @@ public class CaseServiceV2 {
             throw e;
         } catch (Exception e) {
             log.error("Error while fetching to search results :: {}", e.toString());
+            throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
+        }
+    }
+
+    public List<CaseSummaryList> searchCasesList(CaseSummaryListRequest caseListRequest) {
+
+        enrichmentUtil.enrichCaseSearchRequest(caseListRequest);
+
+        return caseRepository.getCaseList(caseListRequest);
+    }
+
+    public List<CaseSummarySearch> searchCasesSummary(CaseSummarySearchRequest caseSummarySearchRequest) {
+        try {
+            List<CaseSummarySearch> caseSummarySearchList = caseRepository.getCaseSummary(caseSummarySearchRequest);
+
+            List<CaseSummarySearch> decryptedCaseSummary = new ArrayList<>();
+            caseSummarySearchList.forEach(caseSummarySearch -> {
+                    decryptedCaseSummary.add(encryptionDecryptionUtil.decryptObject(caseSummarySearch, config.getCaseDecryptSelf(), CaseSummarySearch.class, caseSummarySearchRequest.getRequestInfo()));
+            });
+            return decryptedCaseSummary;
+
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error while fetching to case summary search :: {}", e.toString());
             throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
         }
     }
@@ -166,5 +142,4 @@ public class CaseServiceV2 {
     public void saveInRedisCache(CourtCase courtCase, RequestInfo requestInfo) {
         cacheService.save(requestInfo.getUserInfo().getTenantId() + ":" + courtCase.getId().toString(), courtCase);
     }
-
 }

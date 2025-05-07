@@ -4,10 +4,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.repository.querybuilder.CaseQueryBuilder;
-import org.pucar.dristi.repository.querybuilder.CaseSummaryQueryBuilder;
-import org.pucar.dristi.repository.querybuilder.OpenApiCaseSummaryQueryBuilder;
 import org.pucar.dristi.repository.rowmapper.*;
+import org.pucar.dristi.repository.rowmapper.v2.*;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -21,14 +21,11 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 @Repository
 public class CaseRepositoryV2 {
 
-    private final CaseSummaryQueryBuilder caseSummaryQueryBuilder;
-    private final CaseSummaryRowMapper caseSummaryRowMapper;
     private final CaseQueryBuilder queryBuilder;
-    private final OpenApiCaseSummaryQueryBuilder openApiCaseSummaryQueryBuilder;
-    private final OpenApiCaseSummaryRowMapper openApiCaseSummaryRowMapper;
-    private final OpenApiCaseListRowMapper openApiCaseListRowMapper;
     private final JdbcTemplate jdbcTemplate;
     private final CaseRowMapper rowMapper;
+    private final CaseListSummaryRowMapper caseListSummaryRowMapper;
+    private final CaseSummarySearchRowMapper caseSummarySearchRowMapper;
     private final DocumentRowMapper caseDocumentRowMapper;
     private final LinkedCaseDocumentRowMapper linkedCaseDocumentRowMapper;
     private final LitigantDocumentRowMapper litigantDocumentRowMapper;
@@ -41,13 +38,20 @@ public class CaseRepositoryV2 {
     private final RepresentingRowMapper representingRowMapper;
     private final PoaDocumentRowMapper poaDocumentRowMapper;
     private final PoaRowMapper poaRowMapper;
+    private final RepresentativeRowMapperV2 representativeRowMapperV2;
+    private final RepresentingRowMapperV2 representingRowMapperV2;
+    private final LitigantRowMapperV2 litigantRowMapperV2;
+    private final StatuteSectionRowMapperV2 statuteSectionRowMapperV2;
+    private final PoaRowMapperV2 poaRowMapperV2;
 
 
     @Autowired
-    public CaseRepositoryV2(CaseQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate, CaseRowMapper rowMapper, DocumentRowMapper caseDocumentRowMapper, LinkedCaseDocumentRowMapper linkedCaseDocumentRowMapper, LitigantDocumentRowMapper litigantDocumentRowMapper, RepresentiveDocumentRowMapper representativeDocumentRowMapper, RepresentingDocumentRowMapper representingDocumentRowMapper, LinkedCaseRowMapper linkedCaseRowMapper, LitigantRowMapper litigantRowMapper, StatuteSectionRowMapper statuteSectionRowMapper, RepresentativeRowMapper representativeRowMapper, RepresentingRowMapper representingRowMapper, CaseSummaryQueryBuilder caseSummaryQueryBuilder, CaseSummaryRowMapper caseSummaryRowMapper, OpenApiCaseSummaryQueryBuilder openApiCaseSummaryQueryBuilder, OpenApiCaseSummaryRowMapper openApiCaseSummaryRowMapper, OpenApiCaseListRowMapper openApiCaseListRowMapper, PoaDocumentRowMapper poaDocumentRowMapper, PoaRowMapper poaRowMapper) {
+    public CaseRepositoryV2(CaseQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate, CaseRowMapper rowMapper, CaseListSummaryRowMapper caseListSummaryRowMapper, CaseSummarySearchRowMapper caseSummarySearchRowMapper, DocumentRowMapper caseDocumentRowMapper, LinkedCaseDocumentRowMapper linkedCaseDocumentRowMapper, LitigantDocumentRowMapper litigantDocumentRowMapper, RepresentiveDocumentRowMapper representativeDocumentRowMapper, RepresentingDocumentRowMapper representingDocumentRowMapper, LinkedCaseRowMapper linkedCaseRowMapper, LitigantRowMapper litigantRowMapper, StatuteSectionRowMapper statuteSectionRowMapper, RepresentativeRowMapper representativeRowMapper, RepresentingRowMapper representingRowMapper, PoaDocumentRowMapper poaDocumentRowMapper, PoaRowMapper poaRowMapper, RepresentativeRowMapperV2 representativeRowMapperV2, RepresentingRowMapperV2 representingRowMapperV2, LitigantRowMapperV2 litigantRowMapperV2, StatuteSectionRowMapperV2 statuteSectionRowMapperV2, PoaRowMapperV2 poaRowMapperV2) {
         this.queryBuilder = queryBuilder;
         this.jdbcTemplate = jdbcTemplate;
         this.rowMapper = rowMapper;
+        this.caseListSummaryRowMapper = caseListSummaryRowMapper;
+        this.caseSummarySearchRowMapper = caseSummarySearchRowMapper;
         this.caseDocumentRowMapper = caseDocumentRowMapper;
         this.linkedCaseDocumentRowMapper = linkedCaseDocumentRowMapper;
         this.litigantDocumentRowMapper = litigantDocumentRowMapper;
@@ -58,19 +62,103 @@ public class CaseRepositoryV2 {
         this.statuteSectionRowMapper = statuteSectionRowMapper;
         this.representativeRowMapper = representativeRowMapper;
         this.representingRowMapper = representingRowMapper;
-        this.caseSummaryQueryBuilder = caseSummaryQueryBuilder;
-        this.caseSummaryRowMapper = caseSummaryRowMapper;
-        this.openApiCaseSummaryQueryBuilder = openApiCaseSummaryQueryBuilder;
-        this.openApiCaseSummaryRowMapper = openApiCaseSummaryRowMapper;
-        this.openApiCaseListRowMapper = openApiCaseListRowMapper;
         this.poaDocumentRowMapper = poaDocumentRowMapper;
         this.poaRowMapper = poaRowMapper;
+        this.representativeRowMapperV2 = representativeRowMapperV2;
+        this.representingRowMapperV2 = representingRowMapperV2;
+        this.litigantRowMapperV2 = litigantRowMapperV2;
+        this.statuteSectionRowMapperV2 = statuteSectionRowMapperV2;
+        this.poaRowMapperV2 = poaRowMapperV2;
+    }
+
+    public List<CaseSummarySearch> getCaseSummary(CaseSummarySearchRequest caseSummarySearchRequest) {
+
+        try {
+            CaseSummarySearchCriteria searchCriteria = caseSummarySearchRequest.getCriteria();
+
+            List<Object> preparedStmtList = new ArrayList<>();
+            List<Integer> preparedStmtArgList = new ArrayList<>();
+
+            String casesQuery = "";
+            casesQuery = queryBuilder.getCaseSummarySearchQuery(searchCriteria, preparedStmtList, preparedStmtArgList);
+            casesQuery = queryBuilder.addOrderByQuery(casesQuery, searchCriteria.getPagination());
+            log.info("Final case summary query :: {}", casesQuery);
+            if (searchCriteria.getPagination() != null) {
+                Integer totalRecords = getTotalCount(casesQuery, preparedStmtList);
+                searchCriteria.getPagination().setTotalCount(Double.valueOf(totalRecords));
+                casesQuery = queryBuilder.addPaginationQuery(casesQuery, preparedStmtList, searchCriteria.getPagination(), preparedStmtArgList);
+            }
+            if (preparedStmtList.size() != preparedStmtArgList.size()) {
+                log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(), preparedStmtArgList.size());
+                throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Arg and ArgType size mismatch ");
+            }
+            List<CaseSummarySearch> list = jdbcTemplate.query(casesQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), caseSummarySearchRowMapper);
+            if (list != null && !list.isEmpty()) {
+                log.info("Case list size :: {}", list.size());
+            }else {
+                throw new CustomException(SEARCH_CASE_ERR, "No cases found");
+            }
+
+            enrichCaseSummary(list);
+
+            return list;
+
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error while fetching case application list :: {}", e.toString());
+            throw new CustomException(SEARCH_CASE_ERR, "Exception while fetching case application list: " + e.getMessage());
+        }
+    }
+
+    public List<CaseSummaryList> getCaseList(CaseSummaryListRequest caseListRequest) {
+
+        try {
+                RequestInfo requestInfo = caseListRequest.getRequestInfo();
+                CaseSummaryListCriteria searchCriteria = caseListRequest.getCriteria();
+
+                List<Object> preparedStmtList = new ArrayList<>();
+                List<Integer> preparedStmtArgList = new ArrayList<>();
+
+                String casesQuery = "";
+                casesQuery = queryBuilder.getCasesListSearchQuery(searchCriteria, preparedStmtList, preparedStmtArgList, requestInfo);
+                casesQuery = queryBuilder.addOrderByQuery(casesQuery, searchCriteria.getPagination());
+                log.info("Final case query :: {}", casesQuery);
+                if (searchCriteria.getPagination() != null) {
+                    Integer totalRecords = getTotalCount(casesQuery, preparedStmtList);
+                    searchCriteria.getPagination().setTotalCount(Double.valueOf(totalRecords));
+                    casesQuery = queryBuilder.addPaginationQuery(casesQuery, preparedStmtList, searchCriteria.getPagination(), preparedStmtArgList);
+                }
+                if (preparedStmtList.size() != preparedStmtArgList.size()) {
+                    log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(), preparedStmtArgList.size());
+                    throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Arg and ArgType size mismatch ");
+                }
+                List<CaseSummaryList> list = jdbcTemplate.query(casesQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), caseListSummaryRowMapper);
+                if (list != null && !list.isEmpty()) {
+                    log.info("Case list size :: {}", list.size());
+                    return list;
+                }else {
+                    throw new CustomException(SEARCH_CASE_ERR, "No cases found");
+                }
+
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error while fetching case application list :: {}", e.toString());
+            throw new CustomException(SEARCH_CASE_ERR, "Exception while fetching case application list: " + e.getMessage());
+        }
+    }
+
+    public Integer getTotalCount(String baseQuery, List<Object> preparedStmtList) {
+        String countQuery = queryBuilder.getTotalCountQuery(baseQuery);
+        log.info("Final count query :: {}", countQuery);
+        return jdbcTemplate.queryForObject(countQuery, preparedStmtList.toArray(), Integer.class);
     }
 
     public CourtCase getCases(CaseSearchCriteriaV2 caseCriteria, RequestInfo requestInfo) {
 
         try {
-            CourtCase courtCase = new CourtCase();
+            CourtCase courtCase;
             List<Object> preparedStmtList = new ArrayList<>();
             List<Object> preparedStmtListDoc = new ArrayList<>();
 
@@ -95,6 +183,108 @@ public class CaseRepositoryV2 {
         } catch (Exception e) {
             log.error("Error while fetching case application list :: {}", e.toString());
             throw new CustomException(SEARCH_CASE_ERR, "Exception while fetching case application list: " + e.getMessage());
+        }
+    }
+
+    private void enrichCaseSummary(List<CaseSummarySearch> caseSummarySearchList) {
+        List<String> ids = new ArrayList<>();
+        caseSummarySearchList.forEach(caseSummarySearch -> ids.add(String.valueOf(caseSummarySearch.getCaseId())));
+
+        List<String> idsRepresentative = new ArrayList<>();
+
+        setPoaHolders(caseSummarySearchList, ids);
+
+        setLitigants(caseSummarySearchList, ids);
+
+        setRepresentatives(caseSummarySearchList, ids);
+
+        extractRepresentativeIds(caseSummarySearchList, idsRepresentative);
+
+        if (!idsRepresentative.isEmpty())
+            setRepresenting(caseSummarySearchList, idsRepresentative);
+
+        setStatuteAndSections(caseSummarySearchList, ids);
+    }
+
+    private void setRepresenting(List<CaseSummarySearch> caseSummarySearchList, List<String> idsRepresentative) {
+        String representingQuery = "";
+        List<Object> preparedStmtList = new ArrayList<>();
+
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+
+        representingQuery = queryBuilder.getRepresentativesSummarySearchQuery(idsRepresentative, preparedStmtList, preparedStmtArgList);
+        log.info("Final representing query :: {}", representingQuery);
+        Map<UUID, List<RepresentingV2>> representingMap = jdbcTemplate.query(representingQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), representingRowMapperV2);
+        if (representingMap != null) {
+            caseSummarySearchList.forEach(caseSummarySearch -> {
+                if (caseSummarySearch.getRepresentatives() != null) {
+                    caseSummarySearch.getRepresentatives().forEach(representative -> representative.setRepresenting(representingMap.get(UUID.fromString(representative.getId()))));
+                }
+            });
+        }
+    }
+
+    private void setRepresentatives(List<CaseSummarySearch> caseSummarySearchList, List<String> ids) {
+        List<Object> preparedStmtList;
+        String representativeQuery = "";
+        preparedStmtList = new ArrayList<>();
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+
+        representativeQuery = queryBuilder.getRepresentingSummarySearchQuery(ids, preparedStmtList, preparedStmtArgList);
+        log.info("Final representative query :: {}", representativeQuery);
+        Map<UUID, List<RepresentativeV2>> representativeMap = jdbcTemplate.query(representativeQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), representativeRowMapperV2);
+        if (representativeMap != null) {
+            caseSummarySearchList.forEach(caseSummarySearch -> caseSummarySearch.setRepresentatives(representativeMap.get(caseSummarySearch.getCaseId())));
+        }
+    }
+
+    private void setPoaHolders(List<CaseSummarySearch> caseSummarySearchList, List<String> ids) {
+        List<Object> preparedStmtList;
+        String poaHolderQuery = "";
+        preparedStmtList = new ArrayList<>();
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+
+        poaHolderQuery = queryBuilder.getPoaHoldersSummarySearchQuery(ids, preparedStmtList, preparedStmtArgList);
+        log.info("Final POA holder query :: {}", poaHolderQuery);
+        Map<UUID, List<POAHolderV2>> poaMap = jdbcTemplate.query(poaHolderQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), poaRowMapperV2);
+        if (poaMap != null) {
+            caseSummarySearchList.forEach(caseSummarySearch -> caseSummarySearch.setPoaHolders(poaMap.get(caseSummarySearch.getCaseId())));
+        }
+    }
+
+    private void setStatuteAndSections(List<CaseSummarySearch> caseSummarySearchList, List<String> ids) {
+        List<Object> preparedStmtListDoc;
+        String statueAndSectionQuery = "";
+        preparedStmtListDoc = new ArrayList<>();
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+
+        statueAndSectionQuery = queryBuilder.getStatuteSectionSummarySearchQuery(ids, preparedStmtListDoc, preparedStmtArgList);
+        log.info("Final statute and sections query :: {}", statueAndSectionQuery);
+        Map<UUID, StatuteSectionV2> statuteSectionsMap = jdbcTemplate.query(statueAndSectionQuery, preparedStmtListDoc.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), statuteSectionRowMapperV2);
+        if (statuteSectionsMap != null) {
+            caseSummarySearchList.forEach(caseSummarySearch -> caseSummarySearch.setStatutesAndSection(statuteSectionsMap.get(caseSummarySearch.getCaseId())));
+        }
+    }
+
+    private void setLitigants(List<CaseSummarySearch> caseSummarySearchList, List<String> ids) {
+        List<Object> preparedStmtListDoc;
+        String litigantQuery = "";
+        preparedStmtListDoc = new ArrayList<>();
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+
+        litigantQuery = queryBuilder.getLitigantSummarySearchQuery(ids, preparedStmtListDoc, preparedStmtArgList);
+        log.info("Final litigant query :: {}", litigantQuery);
+        Map<UUID, List<LitigantV2>> litigantMap = jdbcTemplate.query(litigantQuery, preparedStmtListDoc.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), litigantRowMapperV2);
+        if (litigantMap != null) {
+            caseSummarySearchList.forEach(caseSummarySearch -> caseSummarySearch.setLitigants(litigantMap.get(caseSummarySearch.getCaseId())));
+        }
+    }
+
+    private static void extractRepresentativeIds(List<CaseSummarySearch> caseSummarySearchList, List<String> idsRepresentative) {
+        for (CaseSummarySearch caseSummarySearch : caseSummarySearchList) {
+            if (caseSummarySearch.getRepresentatives() != null) {
+                caseSummarySearch.getRepresentatives().forEach(rep -> idsRepresentative.add(rep.getId()));
+            }
         }
     }
 

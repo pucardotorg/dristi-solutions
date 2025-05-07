@@ -13,6 +13,7 @@ import org.pucar.dristi.service.WitnessService;
 import org.pucar.dristi.util.ResponseInfoFactory;
 import org.pucar.dristi.web.OpenApiCaseSummary;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -86,6 +87,26 @@ public class CaseApiController {
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
         CaseSearchResponse caseResponse = CaseSearchResponse.builder().cases(courtCase).responseInfo(responseInfo).build();
         return new ResponseEntity<>(caseResponse, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v2/search/list")
+    public ResponseEntity<CaseSummaryListResponse> caseV2SearchList(
+            @Parameter(in = ParameterIn.DEFAULT, description = "Search criteria + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseSummaryListRequest body) {
+
+        List<CaseSummaryList> caseSummaryLists = caseServiceV2.searchCasesList(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        CaseSummaryListResponse caseSummaryListResponse = CaseSummaryListResponse.builder().caseSummaries(caseSummaryLists).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(caseSummaryListResponse, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v2/search/summary")
+    public ResponseEntity<CaseSummarySearchResponse> caseV2SearchSummary(
+            @Parameter(in = ParameterIn.DEFAULT, description = "Search criteria + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseSummarySearchRequest body) {
+
+        List<CaseSummarySearch> caseSummarySearchList = caseServiceV2.searchCasesSummary(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        CaseSummarySearchResponse caseSummarySearchResponse = CaseSummarySearchResponse.builder().caseSummaries(caseSummarySearchList).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(caseSummarySearchResponse, HttpStatus.OK);
     }
 
     @PostMapping(value = "/v1/_verify")

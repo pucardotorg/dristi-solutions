@@ -13,6 +13,10 @@ import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.v2.CaseSummaryListCriteria;
+import org.pucar.dristi.web.models.v2.CaseSummaryListRequest;
+import org.pucar.dristi.web.models.v2.CaseSummarySearchCriteria;
+import org.pucar.dristi.web.models.v2.CaseSummarySearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -436,20 +440,20 @@ public class CaseRegistrationEnrichment {
 
     }
 
-    public void enrichCaseSearchRequest(CaseSearchRequestV2 caseSearchRequests) {
-        RequestInfo requestInfo = caseSearchRequests.getRequestInfo();
+    public void enrichCaseSearchRequest(CaseSearchRequestV2 caseSearchRequest) {
+        RequestInfo requestInfo = caseSearchRequest.getRequestInfo();
         User userInfo = requestInfo.getUserInfo();
         String type = userInfo.getType();
         List<Role> roles = userInfo.getRoles();
 
         switch (type.toLowerCase()) {
-            case "employee" -> enrichEmployeeUserId(roles, caseSearchRequests);
-            case "citizen" -> enrichCitizenUserId(roles, caseSearchRequests);
+            case "employee" -> enrichEmployeeUserId(roles, caseSearchRequest.getCriteria());
+            case "citizen" -> enrichCitizenUserId(roles, caseSearchRequest.getCriteria(),requestInfo);
             default -> throw new IllegalArgumentException("Unknown user type: " + type);
         }
     }
 
-    private void enrichEmployeeUserId(List<Role> roles, CaseSearchRequestV2 searchRequest) {
+    private void enrichEmployeeUserId(List<Role> roles, CaseSearchCriteriaV2 criteria){
 
         boolean isJudge = roles.stream()
                 .anyMatch(role -> JUDGE_ROLE.equals(role.getCode()));
@@ -459,14 +463,12 @@ public class CaseRegistrationEnrichment {
 
         // TO DO- Need to enhance this after HRMS integration
         if (isJudge || isBenchClerk) {
-            searchRequest.getCriteria().setJudgeId(JUDGE_ID);
+            criteria.setJudgeId(JUDGE_ID);
         }
 
     }
 
-    private void enrichCitizenUserId(List<Role> roles, CaseSearchRequestV2 searchRequest) {
-
-        RequestInfo requestInfo = searchRequest.getRequestInfo();
+    private void enrichCitizenUserId(List<Role> roles, CaseSearchCriteriaV2 criteria,RequestInfo requestInfo) {
 
         String individualId = individualService.getIndividualId(requestInfo);
 
@@ -479,15 +481,66 @@ public class CaseRegistrationEnrichment {
 
             if (!advocates.isEmpty()) {
                 String advocateId = advocates.get(0).getId().toString();
-                searchRequest.getCriteria().setAdvocateId(advocateId);
+                criteria.setAdvocateId(advocateId);
             }
 
         } else {
-            searchRequest.getCriteria().setLitigantId(individualId);
+            criteria.setLitigantId(individualId);
         }
 
-        searchRequest.getCriteria().setPoaHolderIndividualId(individualId);
+        criteria.setPoaHolderIndividualId(individualId);
 
     }
 
+    public void enrichCaseSearchRequest(CaseSummaryListRequest caseListRequest) {
+        RequestInfo requestInfo = caseListRequest.getRequestInfo();
+        User userInfo = requestInfo.getUserInfo();
+        String type = userInfo.getType();
+        List<Role> roles = userInfo.getRoles();
+
+        switch (type.toLowerCase()) {
+            case "employee" -> enrichEmployeeUserId(roles, caseListRequest.getCriteria());
+            case "citizen" -> enrichCitizenUserId(roles, caseListRequest.getCriteria(),requestInfo);
+            default -> throw new IllegalArgumentException("Unknown user type: " + type);
+        }
+    }
+
+    private void enrichEmployeeUserId(List<Role> roles, CaseSummaryListCriteria caseSummaryListCriteria){
+
+        boolean isJudge = roles.stream()
+                .anyMatch(role -> JUDGE_ROLE.equals(role.getCode()));
+
+        boolean isBenchClerk = roles.stream()
+                .anyMatch(role -> BENCH_CLERK.equals(role.getCode()));
+
+        // TO DO- Need to enhance this after HRMS integration
+        if (isJudge || isBenchClerk) {
+            caseSummaryListCriteria.setJudgeId(JUDGE_ID);
+        }
+
+    }
+
+    private void enrichCitizenUserId(List<Role> roles, CaseSummaryListCriteria caseSummaryListCriteria, RequestInfo requestInfo) {
+
+        String individualId = individualService.getIndividualId(requestInfo);
+
+        boolean isAdvocate = roles.stream()
+                .anyMatch(role -> ADVOCATE_ROLE.equals(role.getCode()));
+
+        if (isAdvocate) {
+
+            List<Advocate> advocates = advocateUtil.fetchAdvocatesByIndividualId(requestInfo, individualId);
+
+            if (!advocates.isEmpty()) {
+                String advocateId = advocates.get(0).getId().toString();
+                caseSummaryListCriteria.setAdvocateId(advocateId);
+            }
+
+        } else {
+            caseSummaryListCriteria.setLitigantId(individualId);
+        }
+
+        caseSummaryListCriteria.setPoaHolderIndividualId(individualId);
+
+    }
 }
