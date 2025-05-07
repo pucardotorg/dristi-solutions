@@ -91,6 +91,16 @@ public class DiaryService {
 
             workflowService.updateWorkflowStatus(caseDiaryRequest);
 
+            List<String> fileStoreIds = new ArrayList<>();
+            for(CaseDiaryDocument document : caseDiaryRequest.getDiary().getDocuments()) {
+                if(!document.isActive()) {
+                    fileStoreUtil.deleteFilesByFileStore(fileStoreIds, caseDiaryRequest.getDiary().getTenantId());
+                }
+            }
+            if(!fileStoreIds.isEmpty()) {
+                fileStoreUtil.deleteFilesByFileStore(fileStoreIds, caseDiaryRequest.getDiary().getTenantId());
+                log.info("Deleted files from file store with ids: {}", fileStoreIds);
+            }
             producer.push(configuration.getDiaryUpdateTopic(), caseDiaryRequest);
 
         } catch (CustomException e) {
