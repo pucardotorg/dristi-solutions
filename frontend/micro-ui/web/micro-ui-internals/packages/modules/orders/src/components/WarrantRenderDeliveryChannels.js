@@ -1,32 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, Dropdown } from "@egovernments/digit-ui-react-components";
 import _ from "lodash";
 import { useTranslation } from "react-i18next";
 import GetPoliceStationModal from "./GetPoliceStationModal";
 
 const compareAddressValues = (value1, value2) => {
-  // Create copies without geoLocationDetails.policeStation
   const compareValue1 = {
     ...value1,
-    geoLocationDetails: value1?.geoLocationDetails
-      ? {
-          ...value1.geoLocationDetails,
-          policeStation: undefined,
-        }
-      : {
-          policeStation: undefined,
-        },
+    geoLocationDetails: value1?.geoLocationDetails ? { ...value1.geoLocationDetails, policeStation: undefined } : { policeStation: undefined },
   };
   const compareValue2 = {
     ...value2,
-    geoLocationDetails: value2?.geoLocationDetails
-      ? {
-          ...value2.geoLocationDetails,
-          policeStation: undefined,
-        }
-      : {
-          policeStation: undefined,
-        },
+    geoLocationDetails: value2?.geoLocationDetails ? { ...value2.geoLocationDetails, policeStation: undefined } : { policeStation: undefined },
   };
   return JSON.stringify(compareValue1) === JSON.stringify(compareValue2);
 };
@@ -38,12 +23,49 @@ const WarrantRenderDeliveryChannels = ({
   handlePoliceStationChange,
   policeStationIdMapping,
   setPoliceStationIdMapping,
+  config,
+  setSelectedChannels,
+  onSelect,
+  formData,
 }) => {
   const { t } = useTranslation();
   const [isPoliceStationModalOpen, setIsPoliceStationModalOpen] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [addressId, setAddressId] = useState(null);
+  const [enabledAddresses, setEnabledAddresses] = useState([]);
+
   const { data: policeStationData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "case", [{ name: "PoliceStation" }]);
+
+  // Map addresses by ID
+  const addressMap = {};
+  deliveryChannels?.forEach((channel) => {
+    channel?.values?.forEach((value) => {
+      const key = value?.id;
+      if (!addressMap[key]) {
+        addressMap[key] = {
+          address: value,
+          channels: [],
+        };
+      }
+      addressMap[key]?.channels?.push({ ...channel, value });
+    });
+  });
+
+  const addressList = Object.values(addressMap);
+
+  // Auto-select addresses based on existing partyDetails
+  useEffect(() => {
+    const autoSelected = [];
+
+    addressList.forEach(({ address }) => {
+      const isChecked = partyDetails?.some((detail) => compareAddressValues(detail.value, address));
+      if (isChecked) {
+        autoSelected.push(address?.id);
+      }
+    });
+
+    setEnabledAddresses((prev) => _.uniq([...prev, ...autoSelected]));
+  }, [partyDetails, deliveryChannels]);
 
   const handlePoliceStationSelect = (station, address, fromModal = false) => {
     const updatedPartyDetails = partyDetails?.map((detail) => {
@@ -81,21 +103,26 @@ const WarrantRenderDeliveryChannels = ({
     handlePoliceStationChange(updatedPartyDetails, updatedMapping);
   };
 
-  const addressMap = {};
-  deliveryChannels?.forEach((channel) => {
-    channel?.values?.forEach((value) => {
-      const key = value?.id;
-      if (!addressMap[key]) {
-        addressMap[key] = {
-          address: value,
-          channels: [],
-        };
-      }
-      addressMap[key]?.channels?.push({ ...channel, value });
-    });
-  });
+  const handleAddressToggle = (address, isChecked) => {
+    const id = address?.id;
+    if (isChecked) {
+      setEnabledAddresses((prev) => _.uniq([...prev, id]));
+    } else {
+      setEnabledAddresses((prev) => prev.filter((addrId) => addrId !== id));
 
-  const addressList = Object.values(addressMap);
+      const currentPartyDetails = partyDetails || [];
+
+      // Filter out all entries related to this address in one operation
+      const filteredPartyDetails = currentPartyDetails?.filter((detail) => !compareAddressValues(detail.value, address));
+
+      // Update state in one go rather than multiple calls
+      setSelectedChannels(filteredPartyDetails);
+      onSelect(config?.key, {
+        ...formData[config?.key],
+        selectedChannels: filteredPartyDetails,
+      });
+    }
+  };
 
   return (
     <div>
@@ -116,17 +143,28 @@ const WarrantRenderDeliveryChannels = ({
         </p>
       </div>
 
+      <div style={{ marginBottom: "1rem", fontSize: "medium", fontWeight: 700 }}>{t("VIA_POLICE_TO")}</div>
+
       {addressList?.map((entry, index) => {
         const { address, channels } = entry;
-        return (
-          <div key={address?.id || index}>
-            <label style={{ fontSize: "16px", color: "#0B0C0C", marginBottom: "1rem", fontWeight: "700" }}>
-              {`${index + 1}. ${
-                typeof address === "string" ? address : `${address?.locality}, ${address?.city}, ${address?.district}, ${address?.pincode}`
-              }`}
-            </label>
+        const isEnabled = enabledAddresses.includes(address?.id);
 
-            <div style={{ padding: "1rem" }}>
+        return (
+          <div key={address?.id || index} style={{ marginBottom: "2rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "0.1rem" }}>
+              <input type="checkbox" id={`address-${index}`} checked={isEnabled} onChange={(e) => handleAddressToggle(address, e.target.checked)} />
+              <label htmlFor={`address-${index}`} style={{ fontSize: "16px", fontWeight: "700" }}>
+                {typeof address === "string" ? address : `${address?.locality}, ${address?.city}, ${address?.district}, ${address?.pincode}`}
+              </label>
+            </div>
+
+            <div
+              style={{
+                padding: "1rem",
+                opacity: isEnabled ? 1 : 0.5,
+                pointerEvents: isEnabled ? "auto" : "none",
+              }}
+            >
               {channels?.some((ch) => ch.type === "Via Police") && (
                 <div style={{ marginBottom: "1rem" }}>
                   <div style={{ marginBottom: "5px" }}>{t("POLICE_STATION")}</div>
