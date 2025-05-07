@@ -16,8 +16,8 @@ public class CaseSearchCriteriaV2 {
 
     @NotNull
     @NotEmpty
-    @JsonProperty("tenantId")
-    private String tenantId;
+    @JsonProperty("courtId")
+    private String courtId;
 
     @JsonProperty("caseId")
     @NotNull

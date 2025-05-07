@@ -25,9 +25,6 @@ public class CaseSummarySearchCriteria {
     @JsonProperty("filingNumber")
     private String filingNumber = null;
 
-    @JsonProperty("tenantId")
-    private String tenantId = null;
-
     @JsonProperty("courtId")
     private String courtId = null;
 
