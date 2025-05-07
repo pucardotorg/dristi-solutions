@@ -25,6 +25,9 @@ import java.util.UUID;
 @Builder
 public class LitigantV2 {
 
+    @JsonProperty("id")
+    private UUID id = null;
+
     @JsonProperty("individualId")
     private String individualId = null;
 

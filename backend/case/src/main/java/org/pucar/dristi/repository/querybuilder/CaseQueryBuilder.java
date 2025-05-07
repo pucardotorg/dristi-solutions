@@ -53,7 +53,7 @@ public class CaseQueryBuilder {
             " ltg.organisationid as organisationid, ltg.partytype as partytype, ltg.isactive as isactive, ltg.additionaldetails as additionaldetails, ltg.createdby as createdby," +
             " ltg.lastmodifiedby as lastmodifiedby, ltg.createdtime as createdtime, ltg.lastmodifiedtime as lastmodifiedtime , ltg.hassigned as hassigned ";
 
-    private static final String BASE_LITIGANT_SUMMARY_QUERY = " SELECT ltg.individualid as individualid, ltg.partytype as partytype";
+    private static final String BASE_LITIGANT_SUMMARY_QUERY = " SELECT ltg.case_id as case_id, ltg.individualid as individualid, ltg.partytype as partytype";
 
     private static final String FROM_LITIGANT_TABLE = " FROM dristi_case_litigants ltg";
 
@@ -62,7 +62,7 @@ public class CaseQueryBuilder {
             "stse.sections as sections," +
             " stse.subsections as subsections, stse.additionaldetails as additionaldetails, stse.createdby as createdby," +
             " stse.lastmodifiedby as lastmodifiedby, stse.createdtime as createdtime, stse.lastmodifiedtime as lastmodifiedtime ";
-    private static final String BASE_STATUTE_SECTION_SUMMARY_QUERY = " SELECT stse.sections as sections, stse.subsections as subsections";
+    private static final String BASE_STATUTE_SECTION_SUMMARY_QUERY = " SELECT stse.case_id as case_id, stse.sections as sections, stse.subsections as subsections";
 
     private static final String FROM_STATUTE_SECTION_TABLE = " FROM dristi_case_statutes_and_sections stse";
 
@@ -71,7 +71,7 @@ public class CaseQueryBuilder {
             " rep.isactive as isactive, rep.additionaldetails as additionaldetails, rep.createdby as createdby," +
             " rep.lastmodifiedby as lastmodifiedby, rep.createdtime as createdtime, rep.lastmodifiedtime as lastmodifiedtime , rep.hassigned as hassigned ";
 
-    private static final String BASE_REPRESENTATIVES_SUMMARY_QUERY = " SELECT rep.id as id, rep.advocateid as advocateid";
+    private static final String BASE_REPRESENTATIVES_SUMMARY_QUERY = " SELECT  rep.case_id as case_id, rep.id as id, rep.advocateid as advocateid";
 
     private static final String FROM_REPRESENTATIVES_TABLE = " FROM dristi_case_representatives rep";
 
@@ -80,7 +80,7 @@ public class CaseQueryBuilder {
             " rpst.organisationid as organisationid, rpst.partytype as partytype, rpst.isactive as isactive, rpst.additionaldetails as additionaldetails, rpst.createdby as createdby," +
             " rpst.lastmodifiedby as lastmodifiedby, rpst.createdtime as createdtime, rpst.lastmodifiedtime as lastmodifiedtime ";
 
-    private static final String BASE_REPRESENTING_SUMMARY_QUERY = " SELECT rpst.individualid as individualid, rpst.partytype as partytype";
+    private static final String BASE_REPRESENTING_SUMMARY_QUERY = " SELECT rpst.representative_id as representative_id, rpst.individualid as individualid, rpst.partytype as partytype";
 
     private static final String FROM_REPRESENTING_TABLE = " FROM dristi_case_representing rpst";
 
@@ -88,7 +88,7 @@ public class CaseQueryBuilder {
             " poaholder.is_active as is_active, poaholder.additional_details as additional_details, poaholder.created_by as created_by, poaholder.representing_litigants as representing_litigants, poaholder.poa_type as poa_type, " +
             " poaholder.last_modified_by as last_modified_by, poaholder.created_time as created_time, poaholder.last_modified_time as last_modified_time , poaholder.hasSigned as hasSigned ";
 
-    private static final String BASE_POA_HOLDER_SUMMARY_QUERY = " SELECT poaholder.additional_details as additional_details, poaholder.individual_id as individual_id, poaholder.representing_litigants as representing_litigants";
+    private static final String BASE_POA_HOLDER_SUMMARY_QUERY = " SELECT poaholder.case_id as case_id, poaholder.additional_details as additional_details, poaholder.individual_id as individual_id, poaholder.representing_litigants as representing_litigants";
 
     private static final String FROM_POA_HOLDER_TABLE = " FROM dristi_case_poaholders poaholder";
 

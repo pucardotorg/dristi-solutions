@@ -17,11 +17,11 @@ public class RepresentativeRowMapperV2 implements ResultSetExtractor<Map<UUID, L
         Map<UUID, List<RepresentativeV2>> advocateMap = new LinkedHashMap<>();
 
         try {
-            ObjectMapper objectMapper = new ObjectMapper();
             while (rs.next()) {
                 UUID id = UUID.fromString(rs.getString("case_id"));
                 RepresentativeV2 representativeV2 = RepresentativeV2.builder()
                         .advocateId(rs.getString("advocateid"))
+                        .id(rs.getString("id"))
                         .build();
 
                 if (advocateMap.containsKey(id)) {
