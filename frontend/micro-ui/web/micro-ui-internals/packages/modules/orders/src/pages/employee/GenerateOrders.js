@@ -2542,7 +2542,7 @@ const GenerateOrders = () => {
       entityType = "voluntary-application-submission-bail-documents";
       const assigneeUuid = order?.additionalDetails?.formdata?.partyId;
       const litigant = caseDetails?.litigants?.find((litigant) => litigant?.additionalDetails?.uuid === assigneeUuid);
-      let poaHolderUuid;
+      let poaHolderUuid=[];
 
       if (litigant) {
         poaHolderUuid = (caseDetails?.poaHolders || [])
