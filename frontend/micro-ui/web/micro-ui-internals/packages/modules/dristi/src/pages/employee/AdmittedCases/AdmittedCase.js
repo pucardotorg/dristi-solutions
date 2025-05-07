@@ -273,8 +273,7 @@ const AdmittedCases = () => {
     moduleCode: "case-default",
     config: {
       enabled: Boolean(caseDetails?.filingNumber && tenantId),
-      staleTime: 30000,
-      cacheTime: 60000,
+      cacheTime: 10000,
       retry: 1,
     },
   });
@@ -1952,9 +1951,9 @@ const AdmittedCases = () => {
 
   const hasAnyRelevantOrderType = useMemo(() => {
     if (!ordersData?.list) return false;
-  
+
     const validTypes = ["NOTICE", "SUMMONS", "WARRANT"];
-  
+
     return ordersData.list.some((item) => {
       if (item?.orderCategory === "COMPOSITE") {
         return item?.compositeItems?.some((subItem) => validTypes.includes(subItem?.orderType));
@@ -2768,29 +2767,31 @@ const AdmittedCases = () => {
             </div>
           )}
         </div>
-        {hasAnyRelevantOrderType && <div
-          style={{
-            backgroundColor: "#FFF6EA",
-            padding: "8px 12px",
-            borderRadius: "4px",
-            display: "inline-block",
-            fontSize: "14px",
-            color: "#333",
-          }}
-        >
-          {t("VIEW_NOTICE_SUMMONS")}{" "}
-          <span
+        {hasAnyRelevantOrderType && (
+          <div
             style={{
-              color: "#007F80",
-              fontWeight: "600",
-              cursor: "pointer",
+              backgroundColor: "#FFF6EA",
+              padding: "8px 12px",
+              borderRadius: "4px",
+              display: "inline-block",
+              fontSize: "14px",
+              color: "#333",
             }}
-            className="click-here"
-            onClick={handleAllNoticeGeneratedForHearing}
           >
-            {t("NOTICE_CLICK_HERE")}
-          </span>
-        </div> }
+            {t("VIEW_NOTICE_SUMMONS")}{" "}
+            <span
+              style={{
+                color: "#007F80",
+                fontWeight: "600",
+                cursor: "pointer",
+              }}
+              className="click-here"
+              onClick={handleAllNoticeGeneratedForHearing}
+            >
+              {t("NOTICE_CLICK_HERE")}
+            </span>
+          </div>
+        )}
 
         <CustomCaseInfoDiv t={t} data={caseBasicDetails} column={6} />
         <div className="search-tabs-container">
