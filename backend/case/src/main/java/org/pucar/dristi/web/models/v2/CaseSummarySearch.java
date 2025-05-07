@@ -103,6 +103,9 @@ public class CaseSummarySearch {
     @JsonProperty("remarks")
     private String remarks = null;
 
+    @JsonProperty("createdBy")
+    private String createdBy = null;
+
     @JsonProperty("additionalDetails")
     private Object additionalDetails = null;
 

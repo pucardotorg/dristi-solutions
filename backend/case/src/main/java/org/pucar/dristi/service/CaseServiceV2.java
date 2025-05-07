@@ -3,6 +3,7 @@ package org.pucar.dristi.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -98,6 +99,7 @@ public class CaseServiceV2 {
             caseSummarySearchList.forEach(caseSummarySearch -> {
                 CourtCase courtCaseEncryptedAdditionalDetails = new CourtCase();
                 courtCaseEncryptedAdditionalDetails.setAdditionalDetails(caseSummarySearch.getAdditionalDetails());
+                courtCaseEncryptedAdditionalDetails.setAuditdetails(AuditDetails.builder().createdBy(caseSummarySearch.getCreatedBy()).build());
                 CourtCase courtCaseDecryptedAdditionalDetails = encryptionDecryptionUtil.decryptObject(courtCaseEncryptedAdditionalDetails, config.getCaseDecryptSelf(), CourtCase.class, caseSummarySearchRequest.getRequestInfo());
                 caseSummarySearch.setAdditionalDetails(courtCaseDecryptedAdditionalDetails.getAdditionalDetails());
             });

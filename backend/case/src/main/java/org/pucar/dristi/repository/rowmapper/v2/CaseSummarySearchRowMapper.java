@@ -59,7 +59,7 @@ public class CaseSummarySearchRowMapper implements ResultSetExtractor<List<CaseS
                         .caseCategory(rs.getString("casecategory"))
                         .natureOfPleading(rs.getString("natureofpleading"))
                         .status(rs.getString("status"))
-                        .remarks(rs.getString("remarks"))
+                        .createdBy(rs.getString("createdby"))
                         .build();
 
                 caseMap.put(caseId, caseSummary);
