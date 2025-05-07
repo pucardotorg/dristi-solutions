@@ -85,6 +85,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const [highlightChecklist, setHighlightChecklist] = useState(false);
   const [comment, setComment] = useState("");
   const [commentSendBack, setCommentSendBack] = useState("");
+  const [toastMsg, setToastMsg] = useState(null);
 
   const { downloadPdf } = useDownloadCasePdf();
 
@@ -165,7 +166,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
 
   useEffect(() => {
     return () => {
-      if (isScrutiny) {
+      if (isScrutiny && filingNumberRef?.current) {
         unlockCase(filingNumberRef.current);
       }
     };
@@ -436,6 +437,34 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     }
     // Write isAdmission condition here
   };
+
+  const showToast = (type, message, duration = 5000) => {
+    setToastMsg({ key: type, action: message });
+    setTimeout(() => {
+      setToastMsg(null);
+    }, duration);
+  };
+
+  const handleScrutinyAndLock = async (filingNumber) => {
+    const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
+    if (isScrutiny) {
+      try {
+        const response = await DRISTIService.getCaseLockStatus({}, { uniqueId: filingNumber, tenantId: tenantId });
+        if (response?.Lock?.isLocked) {
+          showToast("error", t("CASE_IS_ALREADY_LOCKED_REDIRECT_TO_HOME"), 2000);
+          return false;
+        } else {
+          await DRISTIService.setCaseLock({ Lock: { uniqueId: filingNumber, tenantId: tenantId, lockType: "SCRUTINY" } }, {});
+
+          return true;
+        }
+      } catch (error) {
+        showToast("error", t("ISSUE_WITH_LOCK_REDIRECT_TO_HOME"), 2000);
+        console.error(error);
+        return false;
+      }
+    } else return true;
+  };
   const handleNextCase = () => {
     DRISTIService.searchCaseService(
       {
@@ -448,9 +477,15 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
       },
       {}
     )
-      .then((res) => {
+      .then(async (res) => {
         if (res?.criteria?.[0]?.responseList?.[0]?.id) {
-          history.push(`/${window?.contextPath}/employee/dristi/case?caseId=${res?.criteria?.[0]?.responseList?.[0]?.id}`);
+          const isUnderScrutinyUnLocked = await handleScrutinyAndLock(res?.criteria?.[0]?.responseList?.[0]?.filingNumber);
+          if (!isUnderScrutinyUnLocked) {
+            setTimeout(() => {
+              history.push(`/${window?.contextPath}/employee/dristi/cases`, { caseLockError: "ERROR_CODE" });
+              return;
+            }, 2000);
+          } else history.push(`/${window?.contextPath}/employee/dristi/case?caseId=${res?.criteria?.[0]?.responseList?.[0]?.id}`);
         } else {
           history.push(`/${window?.contextPath}/employee/dristi/cases`);
         }
@@ -473,9 +508,15 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
       },
       {}
     )
-      .then((res) => {
+      .then(async (res) => {
         if (res?.criteria?.[0]?.responseList?.[0]?.id) {
-          history.push(`/${window?.contextPath}/employee/dristi/case?caseId=${res?.criteria?.[0]?.responseList?.[0]?.id}`);
+          const isUnderScrutinyUnLocked = await handleScrutinyAndLock(res?.criteria?.[0]?.responseList?.[0]?.filingNumber);
+          if (!isUnderScrutinyUnLocked) {
+            setTimeout(() => {
+              history.push(`/${window?.contextPath}/employee/dristi/cases`, { caseLockError: "ERROR_CODE" });
+              return;
+            }, 2000);
+          } else history.push(`/${window?.contextPath}/employee/dristi/case?caseId=${res?.criteria?.[0]?.responseList?.[0]?.id}`);
         } else {
           history.push(`/${window?.contextPath}/employee/dristi/cases`);
         }
@@ -828,6 +869,15 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
               caseName: newCaseName !== "" ? newCaseName : caseDetails?.caseTitle,
               errorsMarked: totalErrors.total,
             }}
+          />
+        )}
+        {toastMsg && (
+          <Toast
+            error={toastMsg.key === "error"}
+            label={t(toastMsg.action)}
+            onClose={() => setToastMsg(null)}
+            isDleteBtn={true}
+            style={{ maxWidth: "500px" }}
           />
         )}
       </div>
