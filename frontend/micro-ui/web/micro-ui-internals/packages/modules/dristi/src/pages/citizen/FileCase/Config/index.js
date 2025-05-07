@@ -198,19 +198,12 @@ export const sideMenuConfig = [
           "dateOfDispatch",
           "legalDemandNoticeFileUpload.document",
           "proofOfDispatchFileUpload.document",
-          "proofOfService",
           "proofOfReply",
           "dateOfAccrual",
+          "dateOfService",
         ],
-        initialMandatoryFieldCount: 9,
-        dependentMandatoryFields: [
-          { field: "dateOfService", dependentOn: "proofOfService", dependentOnKey: "showProofOfAcknowledgment" },
-          {
-            field: "proofOfAcknowledgmentFileUpload.document",
-            dependentOn: "proofOfService",
-            dependentOnKey: "showProofOfAcknowledgment",
-          },
-        ],
+        initialMandatoryFieldCount: 7,
+        dependentMandatoryFields: [],
         optionalFields: [],
         dependentOptionalFields: [
           { field: "dateOfReply", dependentOn: "proofOfReply", dependentOnKey: "showProofOfReply" },

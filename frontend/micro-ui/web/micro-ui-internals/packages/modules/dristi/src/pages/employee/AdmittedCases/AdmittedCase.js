@@ -212,14 +212,15 @@ const AdmittedCases = () => {
   const OrderWorkflowAction = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {}, []);
   const ordersService = useMemo(() => Digit.ComponentRegistryService.getComponent("OrdersService") || {}, []);
   const OrderReviewModal = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderReviewModal") || {}, []);
-  const SummonsAndWarrantsModal = useMemo(
-    () => Digit.ComponentRegistryService.getComponent("SummonsAndWarrantsModal") || <React.Fragment></React.Fragment>,
+  const NoticeProcessModal = useMemo(
+    () => Digit.ComponentRegistryService.getComponent("NoticeProcessModal") || <React.Fragment></React.Fragment>,
     []
   );
   const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const todayDate = new Date().getTime();
   const { downloadPdf } = useDownloadCasePdf();
+  const [isShow, setIsShow] = useState(false);
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const historyCaseData = location?.state?.caseData;
   const historyOrderData = location?.state?.orderData;
@@ -272,6 +273,8 @@ const AdmittedCases = () => {
     moduleCode: "case-default",
     config: {
       enabled: Boolean(caseDetails?.filingNumber && tenantId),
+      cacheTime: 10000,
+      retry: 1,
     },
   });
 
@@ -1948,55 +1951,18 @@ const AdmittedCases = () => {
     [caseData, caseId, filingNumber, history, ordersData, path]
   );
 
-  const groupByHearingNumberDescending = (list) => {
-    const grouped = new Map();
+  const hasAnyRelevantOrderType = useMemo(() => {
+    if (!ordersData?.list) return false;
 
-    list.forEach((item) => {
-      const match = item.hearingNumber.match(/^(.*HR)(\d+)$/);
-      if (!match) return;
+    const validTypes = ["NOTICE", "SUMMONS", "WARRANT"];
 
-      const prefix = match[1];
-      const number = parseInt(match[2], 10);
-
-      if (!grouped.has(number)) {
-        grouped.set(number, { hearingNumber: `${prefix}${number}`, cases: [] });
-      }
-      grouped.get(number).cases.push(item);
-    });
-
-    return Array.from(grouped.values()).sort((a, b) => b.hearingNumber.match(/\d+$/) - a.hearingNumber.match(/\d+$/));
-  };
-
-  const groupNoticeOrderByHearingNumber = useMemo(() => {
-    if (!ordersData?.list) return [];
-
-    const noticeOrder = ordersData?.list?.filter((item) => {
+    return ordersData.list.some((item) => {
       if (item?.orderCategory === "COMPOSITE") {
-        const compositeItems = item?.compositeItems?.filter((item) => item?.orderType === "NOTICE");
-        return compositeItems.length > 0 && item?.hearingNumber;
+        return item?.compositeItems?.some((subItem) => validTypes.includes(subItem?.orderType));
       } else {
-        return item?.orderType === "NOTICE" && item?.hearingNumber;
+        return validTypes.includes(item?.orderType);
       }
     });
-
-    const groupedByhearingNumber = groupByHearingNumberDescending(noticeOrder);
-    return groupedByhearingNumber;
-  }, [ordersData?.list]);
-
-  const groupSummonWarrantOrderByHearingNumber = useMemo(() => {
-    if (!ordersData?.list) return [];
-
-    const noticeOrder = ordersData?.list?.filter((item) => {
-      if (item?.orderCategory === "COMPOSITE") {
-        const compositeItems = item?.compositeItems?.filter((item) => ["SUMMONS", "WARRANT"].includes(item?.orderType));
-        return compositeItems.length > 0 && item?.hearingNumber;
-      } else {
-        return ["SUMMONS", "WARRANT"].includes(item?.orderType) && item?.hearingNumber;
-      }
-    });
-
-    const groupedByhearingNumber = groupByHearingNumberDescending(noticeOrder);
-    return groupedByhearingNumber;
   }, [ordersData?.list]);
 
   // const orderListFiltered = useMemo(() => {
@@ -2546,10 +2512,8 @@ const AdmittedCases = () => {
   //   }
   // };
 
-  const handleAllNoticeGeneratedForHearing = async (hearingNumber) => {
-    if (hearingNumber) {
-      history.push(`${path}?filingNumber=${filingNumber}&caseId=${caseId}&taskOrderType=NOTICE&hearingId=${hearingNumber}&tab=${config?.label}`);
-    }
+  const handleAllNoticeGeneratedForHearing = (hearingNumber) => {
+    setIsShow(!isShow);
   };
 
   const handleAllSummonWarrantGeneratedForHearing = useCallback(
@@ -2809,58 +2773,30 @@ const AdmittedCases = () => {
             </div>
           )}
         </div>
-        {(groupSummonWarrantOrderByHearingNumber?.length > 0 || groupNoticeOrderByHearingNumber?.length > 0) && userType === "employee" && (
-          <NoticeAccordion title={t("PROCESS_STATUS")}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              {groupSummonWarrantOrderByHearingNumber?.map((orders, index) => (
-                <React.Fragment>
-                  {userType === "employee" && orders?.cases?.length > 0 && (
-                    <div key={orders?.hearingNumber} className="notice-failed-notification" style={styles.container}>
-                      <div className="notice-failed-icon" style={styles.icon}>
-                        <InfoIconRed style={styles.icon} />
-                      </div>
-                      <p className="notice-failed-text" style={styles.text}>
-                        {`${t("SUMMON_WARRANT_FOR")} ${
-                          currentHearingId === orders?.hearingNumber
-                            ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
-                            : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
-                        }, `}
-                        <span
-                          onClick={() => handleAllSummonWarrantGeneratedForHearing(orders?.hearingNumber)}
-                          className="click-here"
-                          style={styles.link}
-                        >
-                          {t("NOTICE_CLICK_HERE")}
-                        </span>
-                      </p>
-                    </div>
-                  )}
-                </React.Fragment>
-              ))}
-
-              {groupNoticeOrderByHearingNumber?.map((orders, index) => (
-                <React.Fragment>
-                  {userType === "employee" && orders?.cases?.length > 0 && (
-                    <div key={orders?.hearingNumber} className="notice-failed-notification" style={styles.container}>
-                      <div className="notice-failed-icon" style={styles.icon}>
-                        <InfoIconRed style={styles.icon} />
-                      </div>
-                      <p className="notice-failed-text" style={styles.text}>
-                        {`${t("NOTICE_GENERATED_FOR")} ${
-                          currentHearingId === orders?.hearingNumber
-                            ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
-                            : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
-                        }, `}
-                        <span onClick={() => handleAllNoticeGeneratedForHearing(orders?.hearingNumber)} className="click-here" style={styles.link}>
-                          {t("NOTICE_CLICK_HERE")}
-                        </span>
-                      </p>
-                    </div>
-                  )}
-                </React.Fragment>
-              ))}
-            </div>
-          </NoticeAccordion>
+        {hasAnyRelevantOrderType && (
+          <div
+            style={{
+              backgroundColor: "#FFF6EA",
+              padding: "8px 12px",
+              borderRadius: "4px",
+              display: "inline-block",
+              fontSize: "14px",
+              color: "#333",
+            }}
+          >
+            {t("VIEW_NOTICE_SUMMONS")}{" "}
+            <span
+              style={{
+                color: "#007F80",
+                fontWeight: "600",
+                cursor: "pointer",
+              }}
+              className="click-here"
+              onClick={handleAllNoticeGeneratedForHearing}
+            >
+              {t("NOTICE_CLICK_HERE")}
+            </span>
+          </div>
         )}
 
         <CustomCaseInfoDiv t={t} data={caseBasicDetails} column={6} />
@@ -3141,11 +3077,14 @@ const AdmittedCases = () => {
           }}
         ></Modal>
       )}
-      {taskOrderType && hearingId && (
-        <SummonsAndWarrantsModal
+      {isShow && (
+        <NoticeProcessModal
           handleClose={() => {
-            history.push(`${path}?filingNumber=${filingNumber}&caseId=${caseId}&tab=${config?.label}`);
+            setIsShow(false);
           }}
+          filingNumber={filingNumber}
+          currentHearingId={currentHearingId}
+          caseDetails={caseDetails}
         />
       )}
       {showVoidModal && <DocumentModal config={voidModalConfig} />}

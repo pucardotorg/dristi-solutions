@@ -11,7 +11,6 @@ import Axios from "axios";
 import { useHistory } from "react-router-dom";
 import { FileDownloadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
-import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 const CloseBtn = ({ onClick }) => {
@@ -40,7 +39,6 @@ const Heading = ({ label }) => {
 const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date().setHours(0, 0, 0, 0), selectedSlot = [] }) => {
   const { t } = useTranslation();
   const history = useHistory();
-  const toast = useToast();
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
@@ -119,16 +117,16 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       sessionStorage.removeItem("esignProcess");
       clearLocalStorage();
     }
-  }, [currentDiaryEntry]);
+  }, [currentDiaryEntry, setStepper]);
 
   useEffect(() => {
     if (bulkNotificationStepper) {
       setStepper(bulkNotificationStepper);
       sessionStorage.removeItem("bulkNotificationStepper");
     }
-  }, [bulkNotificationStepper]);
+  }, [bulkNotificationStepper, setStepper]);
 
-  const { data: hearingDetails, refetch: refetchHearingDetails } = Digit.Hooks.hearings.useGetHearings(
+  const { data: hearingDetails } = Digit.Hooks.hearings.useGetHearings(
     {
       criteria: {
         tenantId,
@@ -166,7 +164,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     setOriginalHearingData(hearingDetails?.HearingList);
     const filteredHearings = hearingDetails?.HearingList?.filter((hearing) => hearing?.status != "COMPLETED");
     return filteredHearings?.length || 0;
-  }, [hearingDetails, bulkFormData?.slotIds]);
+  }, [hearingDetails]);
 
   const onSelect = (key, value) => {
     if (value?.Signature === null) {
@@ -224,7 +222,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           limit: 100,
         },
       });
-      const updateNotificationResponse = await hearingService?.updateNotification({
+      await hearingService?.updateNotification({
         notification: {
           ...searchNotification?.list?.[0],
           documents: searchNotification?.list?.[0]?.documents?.map((doc) =>
@@ -247,7 +245,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
             }
           : newHearing;
       });
-      const newBulkHearings = await hearingService?.updateBulkHearing({
+      await hearingService?.updateBulkHearing({
         hearings: updatedHearingsData,
       });
       const diaryEntries = newHearingData?.map((hearing) => {
@@ -267,7 +265,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           },
         };
       });
-      const addBulkDiaryEntries = await hearingService?.addBulkDiaryEntries({
+      await hearingService?.addBulkDiaryEntries({
         diaryEntries: diaryEntries,
       });
       setLoader(false);
@@ -314,11 +312,11 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       }
     };
     upload();
-  }, [signFormData]);
+  }, [signFormData, uploadDocuments]);
 
   useEffect(() => {
     checkSignStatus(name, signFormData, uploadModalConfig, onSelect, setIsSigned);
-  }, [checkSignStatus]);
+  }, [checkSignStatus, signFormData, uploadModalConfig]);
 
   const onCancel = () => {
     if (stepper === 1) {
@@ -327,72 +325,75 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     setStepper((prev) => prev - 1);
   };
 
-  const config = [
-    {
-      body: [
-        {
-          type: "dropdown",
-          key: "reason",
-          label: "BULK_RESCHEDULE_REASON",
-          isMandatory: true,
-          disable: currentDiaryEntry ? true : false,
-          populators: {
-            label: "Reason for Reschedule",
-            optionsKey: "name",
+  const config = useMemo(
+    () => [
+      {
+        body: [
+          {
+            type: "dropdown",
+            key: "reason",
+            label: "BULK_RESCHEDULE_REASON",
             isMandatory: true,
-            name: "reason",
-            mdmsConfig: {
-              masterName: "BulkRescheduleReason",
-              moduleName: "Hearing",
-              select: "(data) => { return data['Hearing'].BulkRescheduleReason?.map((item) => {return item;});}",
+            disable: currentDiaryEntry ? true : false,
+            populators: {
+              label: "Reason for Reschedule",
+              optionsKey: "name",
+              isMandatory: true,
+              name: "reason",
+              mdmsConfig: {
+                masterName: "BulkRescheduleReason",
+                moduleName: "Hearing",
+                select: "(data) => { return data['Hearing'].BulkRescheduleReason?.map((item) => {return item;});}",
+              },
             },
           },
-        },
-        {
-          type: "component",
-          component: "CustomDatePicker",
-          disable: currentDiaryEntry ? true : false,
-          key: "fromDate",
-          label: "BULK_FROM_DATE",
-          isMandatory: true,
-          populators: {
-            name: "fromDate",
-            // error: "Required",
-          },
-        },
-        {
-          label: "BULK_TO_DATE",
-          isMandatory: true,
-          key: "toDate",
-          type: "component",
-          component: "CustomDatePicker",
-          disable: currentDiaryEntry ? true : false,
-          populators: {},
-        },
-        {
-          label: "BULK_SLOT",
-          isMandatory: true,
-          key: "slotIds",
-          type: "dropdown",
-          disable: currentDiaryEntry ? true : false,
-          // disable: true,//dynamic based on dates court.slots
-          populators: {
-            name: "slotIds",
-            optionsKey: "slotName",
-            allowMultiSelect: true,
+          {
+            type: "component",
+            component: "CustomDatePicker",
+            disable: currentDiaryEntry ? true : false,
+            key: "fromDate",
+            label: "BULK_FROM_DATE",
             isMandatory: true,
-            // defaultText: "select slot",
-            selectedText: "Slot(s)",
-            mdmsConfig: {
-              masterName: "slots",
-              moduleName: "court",
-              select: "(data) => {return data['court'].slots?.map((item) => {return item;});}",
+            populators: {
+              name: "fromDate",
+              // error: "Required",
             },
           },
-        },
-      ],
-    },
-  ];
+          {
+            label: "BULK_TO_DATE",
+            isMandatory: true,
+            key: "toDate",
+            type: "component",
+            component: "CustomDatePicker",
+            disable: currentDiaryEntry ? true : false,
+            populators: {},
+          },
+          {
+            label: "BULK_SLOT",
+            isMandatory: true,
+            key: "slotIds",
+            type: "dropdown",
+            disable: currentDiaryEntry ? true : false,
+            // disable: true,//dynamic based on dates court.slots
+            populators: {
+              name: "slotIds",
+              optionsKey: "slotName",
+              allowMultiSelect: true,
+              isMandatory: true,
+              // defaultText: "select slot",
+              selectedText: "Slot(s)",
+              mdmsConfig: {
+                masterName: "slots",
+                moduleName: "court",
+                select: "(data) => {return data['court'].slots?.map((item) => {return item;});}",
+              },
+            },
+          },
+        ],
+      },
+    ],
+    [currentDiaryEntry]
+  );
 
   const compareDates = (dateStr1, dateStr2) => {
     const date1 = new Date(dateStr1);
@@ -410,7 +411,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       return updatedConfig;
     }
     return config;
-  }, [bulkFromDate, bulkToDate]);
+  }, [bulkFromDate, bulkToDate, config]);
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors) => {
     const newFromDate = formData?.fromDate;
@@ -563,7 +564,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         },
       });
       setNotificationNumber(createNotificationResponse?.notification?.notificationNumber);
-      if (stepper == 2) setStepper(3);
+      if (stepper === 2) setStepper(3);
     } catch (error) {
       console.error("Error:", error);
     }
