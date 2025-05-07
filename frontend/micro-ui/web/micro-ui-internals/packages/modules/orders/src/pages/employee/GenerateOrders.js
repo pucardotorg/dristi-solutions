@@ -258,6 +258,7 @@ const GenerateOrders = () => {
   const formStateRef = useRef([]);
   const clearFormErrors = useRef([]);
   const [deleteOrderItemIndex, setDeleteOrderItemIndex] = useState(null);
+  const [isOrderChanged, setIsOrderChanged] = useState(false);
 
   const [OrderTitles, setOrderTitles] = useState([]);
   const [showEditTitleNameModal, setShowEditTitleNameModal] = useState(false);
@@ -617,7 +618,7 @@ const GenerateOrders = () => {
     if (currentSelectedOrderIndex) {
       setSelectedOrder(currentSelectedOrderIndex);
       sessionStorage.removeItem("currentSelectedOrder");
-    } else if (defaultIndex && defaultIndex !== -1 && orderNumber && defaultIndex !== selectedOrder) {
+    } else if (defaultIndex && defaultIndex !== -1 && orderNumber && defaultIndex !== selectedOrder && !isOrderChanged) {
       setSelectedOrder(defaultIndex);
     }
     const isSignSuccess = sessionStorage.getItem("esignProcess");
@@ -1815,7 +1816,7 @@ const GenerateOrders = () => {
             orderType: item?.orderCategory !== "COMPOSITE" ? formData?.orderType?.code : null,
             compositeItems: item?.orderCategory !== "COMPOSITE" ? null : updatedCompositeItems,
             additionalDetails: item?.orderCategory !== "COMPOSITE" ? { ...item?.additionalDetails, formdata: updatedFormData } : null,
-            orderDetailsDetails: item?.orderCategory !== "COMPOSITE" ? item?.orderDetailsDetails : null,
+            orderDetails: item?.orderCategory !== "COMPOSITE" ? item?.orderDetails : null,
           };
         });
       });
@@ -2198,67 +2199,63 @@ const GenerateOrders = () => {
           }
         });
     } catch (error) {
-      setShowErrorToast({ label: t("ERROR_PUBLISHING_THE_ORDER"), error: true });
+      setShowErrorToast({ label: action === OrderWorkflowAction.ESIGN ? t("ERROR_PUBLISHING_THE_ORDER") : t("SOMETHING_WENT_WRONG"), error: true });
     }
   };
 
   const addOrderItem = async (order, action, index) => {
-    try {
-      const compositeItems = [];
-      order?.compositeItems?.forEach((item, index) => {
-        let orderSchema = {};
-        try {
-          let orderTypeDropDownConfig = item?.id
-            ? applicationTypeConfig?.map((obj) => ({ body: obj.body.map((input) => ({ ...input, disable: true })) }))
-            : structuredClone(applicationTypeConfig);
-          let orderFormConfig = configKeys.hasOwnProperty(item?.orderSchema?.additionalDetails?.formdata?.orderType?.code)
-            ? configKeys[item?.orderSchema?.additionalDetails?.formdata?.orderType?.code]
-            : [];
-          const modifiedPlainFormConfig = [...orderTypeDropDownConfig, ...orderFormConfig];
-          orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(
-            item?.orderSchema?.additionalDetails?.formdata,
-            modifiedPlainFormConfig
-          );
-        } catch (error) {
-          console.error("error :>> ", error);
-        }
-        const parties = getParties(item?.orderSchema?.additionalDetails?.formdata?.orderType?.code, {
-          ...orderSchema,
-          orderDetails: { ...orderSchema?.orderDetails },
-        });
-        const orderSchemaUpdated = {
-          ...orderSchema,
-          orderDetails: { ...orderSchema?.orderDetails, parties: parties },
-          additionalDetails: item?.orderSchema?.additionalDetails,
-          ...(orderSchema?.orderDetails?.refApplicationId && {
-            applicationNumber: [orderSchema.orderDetails.refApplicationId],
-          }),
-        };
-        compositeItems.push({
-          ...(item?.id ? { id: item.id } : {}),
-          orderType: item?.orderSchema?.additionalDetails?.formdata?.orderType?.code,
-          orderSchema: orderSchemaUpdated,
-        });
+    const compositeItems = [];
+    order?.compositeItems?.forEach((item, index) => {
+      let orderSchema = {};
+      try {
+        let orderTypeDropDownConfig = item?.id
+          ? applicationTypeConfig?.map((obj) => ({ body: obj.body.map((input) => ({ ...input, disable: true })) }))
+          : structuredClone(applicationTypeConfig);
+        let orderFormConfig = configKeys.hasOwnProperty(item?.orderSchema?.additionalDetails?.formdata?.orderType?.code)
+          ? configKeys[item?.orderSchema?.additionalDetails?.formdata?.orderType?.code]
+          : [];
+        const modifiedPlainFormConfig = [...orderTypeDropDownConfig, ...orderFormConfig];
+        orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(
+          item?.orderSchema?.additionalDetails?.formdata,
+          modifiedPlainFormConfig
+        );
+      } catch (error) {
+        console.error("error :>> ", error);
+      }
+      const parties = getParties(item?.orderSchema?.additionalDetails?.formdata?.orderType?.code, {
+        ...orderSchema,
+        orderDetails: { ...orderSchema?.orderDetails },
       });
-      return await ordersService.addOrderItem(
-        {
-          order: {
-            ...order,
-            additionalDetails: null,
-            orderDetails: null,
-            orderType: null,
-            orderCategory: "COMPOSITE",
-            // orderTitle: currentOrderTitle,
-            orderTitle: OrderTitles[index],
-            compositeItems,
-            workflow: { ...order.workflow, action, documents: [{}] },
-          },
-        },
-        { tenantId }
-      );
-    } catch (error) {
-      console.error(error);
+      const orderSchemaUpdated = {
+        ...orderSchema,
+        orderDetails: { ...orderSchema?.orderDetails, parties: parties },
+        additionalDetails: item?.orderSchema?.additionalDetails,
+        ...(orderSchema?.orderDetails?.refApplicationId && {
+          applicationNumber: [orderSchema.orderDetails.refApplicationId],
+        }),
+      };
+      compositeItems.push({
+        ...(item?.id ? { id: item.id } : {}),
+        orderType: item?.orderSchema?.additionalDetails?.formdata?.orderType?.code,
+        orderSchema: orderSchemaUpdated,
+      });
+    });
+    const payload = {
+      order: {
+        ...order,
+        additionalDetails: null,
+        orderDetails: null,
+        orderType: null,
+        orderCategory: "COMPOSITE",
+        orderTitle: OrderTitles[index],
+        compositeItems,
+        workflow: { ...order.workflow, action, documents: [{}] },
+      },
+    };
+    if (order?.orderNumber) {
+      return await ordersService.addOrderItem(payload, { tenantId });
     }
+    return await ordersService.createOrder(payload, { tenantId });
   };
 
   const deleteOrderItem = async (order, itemID) => {
@@ -2315,6 +2312,7 @@ const GenerateOrders = () => {
     setFormList((prev) => {
       return [...prev, defaultOrderData];
     });
+    setIsOrderChanged(true);
     setSelectedOrder(formList?.length);
     setOrderTitles([...OrderTitles, t("CS_ORDER")]);
   };
@@ -2375,42 +2373,42 @@ const GenerateOrders = () => {
   };
 
   const handleSaveDraft = async ({ showReviewModal }) => {
-    if (showReviewModal) {
-      setLoader(true);
-    }
-    let count = 0;
-    const promises = formList.map(async (order, index) => {
-      // check for Composite order
-      if (order?.orderCategory === "INTERMEDIATE") {
-        if (order?.orderType) {
-          count += 1;
-          if (order?.orderNumber) {
-            const updatedOrder = structuredClone(order);
-            updatedOrder.orderTitle = t(order?.orderTitle);
-            return await updateOrder(updatedOrder, OrderWorkflowAction.SAVE_DRAFT);
-          } else {
-            const updatedOrder = structuredClone(order);
-            updatedOrder.orderTitle = t(order?.orderTitle);
-            return await createOrder(updatedOrder);
-          }
-        } else {
-          return Promise.resolve();
-        }
+    try {
+      if (showReviewModal) {
+        setLoader(true);
       }
-      // IF order Type is composite
-      else {
-        if (order?.orderNumber) {
-          count += 1;
-          const updatedOrder = {
-            ...order,
-            compositeItems: order?.compositeItems?.filter((item) => item?.isEnabled),
-          };
-          return await addOrderItem(updatedOrder, OrderWorkflowAction.SAVE_DRAFT, index);
-        } else {
-          // create call first, get order number from response
-          // then add item call
-          count += 1;
-          try {
+      let count = 0;
+      const promises = formList.map(async (order, index) => {
+        // check for Composite order
+        if (order?.orderCategory === "INTERMEDIATE") {
+          if (order?.orderType) {
+            count += 1;
+            if (order?.orderNumber) {
+              const updatedOrder = structuredClone(order);
+              updatedOrder.orderTitle = t(order?.orderTitle);
+              return await updateOrder(updatedOrder, OrderWorkflowAction.SAVE_DRAFT);
+            } else {
+              const updatedOrder = structuredClone(order);
+              updatedOrder.orderTitle = t(order?.orderTitle);
+              return await createOrder(updatedOrder);
+            }
+          } else {
+            return Promise.resolve();
+          }
+        }
+        // IF order Type is composite
+        else {
+          if (order?.orderNumber) {
+            count += 1;
+            const updatedOrder = {
+              ...order,
+              compositeItems: order?.compositeItems?.filter((item) => item?.isEnabled),
+            };
+            return await addOrderItem(updatedOrder, OrderWorkflowAction.SAVE_DRAFT, index);
+          } else {
+            // create call first, get order number from response
+            // then add item call
+            count += 1;
             const totalEnabled = order?.compositeItems?.filter((compItem) => compItem?.isEnabled && compItem?.orderType)?.length;
             // if totalEnabled is 1 -> treat it as composite only and call create api only
             if (totalEnabled === 1) {
@@ -2426,39 +2424,17 @@ const GenerateOrders = () => {
             // if totalEnabled is greater than 1 -> call create api for 1st isEnabled item and get orderNUmber from create reponse and call add item api.
             else {
               const updatedOrder = structuredClone(order);
-              const firstCompositeItem = order?.compositeItems?.find((item) => item?.isEnabled);
-              updatedOrder.additionalDetails = firstCompositeItem?.orderSchema?.additionalDetails;
-              updatedOrder.compositeItems = null;
-              updatedOrder.orderType = firstCompositeItem?.orderType;
-              updatedOrder.orderCategory = "INTERMEDIATE";
 
-              const response = await createOrder(updatedOrder);
-
-              if (response?.order?.orderNumber) {
-                const orderForAddItem = structuredClone(response?.order);
-                // Send only isEnabled composite items from current order;
-                const enabledCompositeItems = order?.compositeItems?.filter((item) => item?.isEnabled);
-                orderForAddItem.additionalDetails = null;
-                orderForAddItem.orderType = null;
-                orderForAddItem.orderDetails = null;
-                orderForAddItem.orderCategory = "COMPOSITE";
-                orderForAddItem.compositeItems = enabledCompositeItems;
-                // orderForAddItem.orderTitle = currentOrderTitle;
-                orderForAddItem.orderTitle = t(OrderTitles[index]);
-                return await addOrderItem(orderForAddItem, OrderWorkflowAction.SAVE_DRAFT, index);
-              } else {
-                console.error("Error: Order creation failed, orderNumber missing.");
-                return Promise.reject(new Error("Order creation failed"));
-              }
+              // Send only isEnabled composite items from current order;
+              const enabledCompositeItems = order?.compositeItems?.filter((item) => item?.isEnabled);
+              updatedOrder.compositeItems = enabledCompositeItems;
+              updatedOrder.orderTitle = t(OrderTitles[index]);
+              return await addOrderItem(updatedOrder, OrderWorkflowAction.SAVE_DRAFT, index);
             }
-          } catch (error) {
-            console.error(error);
           }
         }
-      }
-    });
+      });
 
-    try {
       await Promise.all(promises);
       if (showReviewModal) {
         setLoader(false);
@@ -2486,7 +2462,8 @@ const GenerateOrders = () => {
       }
     } catch (error) {
       console.error("Error while saving draft:", error);
-      setShowErrorToast({ label: t("ERROR_SAVING_DRAFT"), error: true });
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      setLoader(false);
     }
   };
 
@@ -3208,6 +3185,7 @@ const GenerateOrders = () => {
     setShowReviewModal(true);
   };
   const handleOrderChange = (index) => {
+    setIsOrderChanged(true);
     setSelectedOrder(index);
   };
   const handleDownloadOrders = () => {
@@ -3443,6 +3421,12 @@ const GenerateOrders = () => {
             formData?.bailInfo?.isBailable?.code === true
           ) {
             setFormErrors?.current?.[index]?.("bailableAmount", { message: t("CS_VALID_AMOUNT_DECIMAL") });
+            hasError = true;
+            break;
+          }
+          
+          if (formData?.warrantFor?.selectedChannels?.length === 0) {
+            setShowErrorToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
             hasError = true;
             break;
           }

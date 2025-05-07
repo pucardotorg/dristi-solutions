@@ -1,0 +1,22 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "Hearing",
+    "masterName": "HearingType",
+    "mdmsPayload": [
+      {
+        "id": "ec84a932-aea6-4ba0-9a51-52e846647254",
+        "tenantId": "kl",
+        "schemaCode": "Hearing.HearingType",
+        "uniqueIdentifier": "16",
+        "data": {
+          "id": 16,
+          "code": "APPLICATION_REVIEW",
+          "type": "APPLICATION_REVIEW",
+          "isactive": true
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

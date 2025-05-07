@@ -34,12 +34,15 @@ public class OrderService {
 
 
     public Order createOrder(@Valid OrderRequest request) {
+        log.info("creating order, result= IN_PROGRESS,orderNumber:{}, orderType:{}", request.getOrder().getOrderNumber(), request.getOrder().getOrderType());
         OrderResponse orderResponse = orderUtil.createOrder(request);
+        log.info("created order, result= SUCCESS");
         return orderResponse.getOrder();
     }
 
     public Order updateOrder(@Valid OrderRequest request) {
         Order order = request.getOrder();
+        log.info("updating order, result= IN_PROGRESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
 
         OrderFactory orderFactory = factoryProvider.getFactory(order.getOrderCategory());
         OrderProcessor orderProcessor = orderFactory.createProcessor();
@@ -52,10 +55,16 @@ public class OrderService {
 
         orderProcessor.postProcessOrder(request);
 
+        log.info("creating diary entry, result= IN_PROGRESS,orderNumber:{}, orderType:{}, entryCount:{}", order.getOrderNumber(), order.getOrderType(), diaryEntries.size());
+
         // create diary entry
-        if (!diaryEntries.isEmpty()) aDiaryUtil.createBulkADiaryEntry(BulkDiaryEntryRequest.builder()
-                .requestInfo(request.getRequestInfo())
-                .caseDiaryList(diaryEntries).build());
+        if (!diaryEntries.isEmpty()) {
+            aDiaryUtil.createBulkADiaryEntry(BulkDiaryEntryRequest.builder()
+                    .requestInfo(request.getRequestInfo())
+                    .caseDiaryList(diaryEntries).build());
+        }
+
+        log.info("updated order and created diary entry, result= SUCCESS");
 
         return orderResponse.getOrder();
     }

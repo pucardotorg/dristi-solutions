@@ -1178,6 +1178,8 @@ export const UICustomizations = {
           );
         case "OWNER":
           return removeInvalidNameParts(value);
+        case "REPRESENTATIVES":
+          return t(value) || "";
         case "CS_ACTIONS":
           return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="FilingsConfig" />;
         case "EVIDENCE_NUMBER":
