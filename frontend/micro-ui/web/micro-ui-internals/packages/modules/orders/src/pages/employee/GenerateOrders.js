@@ -2542,7 +2542,7 @@ const GenerateOrders = () => {
       entityType = "voluntary-application-submission-bail-documents";
       const assigneeUuid = order?.additionalDetails?.formdata?.partyId;
       const litigant = caseDetails?.litigants?.find((litigant) => litigant?.additionalDetails?.uuid === assigneeUuid);
-      let poaHolderUuid;
+      let poaHolderUuid=[];
 
       if (litigant) {
         poaHolderUuid = (caseDetails?.poaHolders || [])
@@ -4447,6 +4447,12 @@ const GenerateOrders = () => {
             formData?.bailInfo?.isBailable?.code === true
           ) {
             setFormErrors?.current?.[index]?.("bailableAmount", { message: t("CS_VALID_AMOUNT_DECIMAL") });
+            hasError = true;
+            break;
+          }
+          
+          if (formData?.warrantFor?.selectedChannels?.length === 0) {
+            setShowErrorToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
             hasError = true;
             break;
           }
