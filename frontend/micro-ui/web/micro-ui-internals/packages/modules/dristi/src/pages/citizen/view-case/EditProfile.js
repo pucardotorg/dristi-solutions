@@ -545,6 +545,24 @@ const EditProfile = ({ path }) => {
     });
   }, [formdata, isDependentEnabled, selected, formConfig, caseDetails?.additionalDetails, caseDetails?.caseDetails, t]);
 
+  const pincodeConfigs = useMemo(
+    () => ({
+      individual: editComplainantDetailsConfig?.formconfig
+        ?.find((item) => item.body?.[0]?.key === "addressDetails")
+        ?.body?.[0]?.populators?.inputs?.find((item) => item?.name === "pincode"),
+      representative: editComplainantDetailsConfig?.formconfig
+        ?.find((item) => item.body?.[0]?.key === "addressCompanyDetails")
+        ?.body?.[0]?.populators?.inputs?.find((item) => item?.name === "pincode"),
+    }),
+    []
+  );
+
+  const checkIfValidated = (currentValue, input) => {
+    if (!currentValue) return false;
+    const isEmpty = /^\s*$/.test(currentValue);
+    return isEmpty || !currentValue.match(window?.Digit.Utils.getPattern(input.validation.patternType) || input.validation.pattern);
+  };
+
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues, index, currentDisplayIndex) => {
     editCheckNameValidation({ formData, setValue, selected, formdata, index, reset, clearErrors, formState });
     if (!isEqual(formData, formdata[index].data)) {
@@ -579,7 +597,12 @@ const EditProfile = ({ path }) => {
     setFormDataValue.current = setValue;
     clearFormDataErrors.current = clearErrors;
 
-    if (Object.keys(formState?.errors).length) {
+    const checkPincodeValidation =
+      (formData?.complainantType?.code === "INDIVIDUAL" && checkIfValidated(formData?.addressDetails?.pincode, pincodeConfigs.individual)) ||
+      (formData?.complainantType?.code === "REPRESENTATIVE" &&
+        checkIfValidated(formData?.addressCompanyDetails?.pincode, pincodeConfigs.representative));
+
+    if (Object.keys(formState?.errors).length || checkPincodeValidation) {
       setIsSubmitDisabled(true);
     } else {
       setIsSubmitDisabled(false);
