@@ -111,6 +111,14 @@ export const DRISTIService = {
       data,
       params,
     }),
+  summaryCaseSearchService: (data, params) =>
+    Request({
+      url: Urls.dristi.summaryCaseSearch,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
   generateCasePdf: (data, params) =>
     Request({
       url: Urls.dristi.casePfGeneration,

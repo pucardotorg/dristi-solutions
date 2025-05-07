@@ -47,6 +47,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
 
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const tenantId = Digit.ULBService.getCurrentTenantId();
+  const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
 
   const [show, setShow] = useState(false);
 
@@ -136,24 +137,22 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     async (caseNumber) => {
       if (caseNumber && !caseDetails?.filingNumber) {
         try {
-          const response = await DRISTIService.searchCaseService(
+          const response = await DRISTIService.summaryCaseSearchService(
             {
-              criteria: [
-                {
-                  filingNumber: caseNumber,
-                  pagination: {
-                    limit: 5,
-                    offSet: 0,
-                  },
+              criteria: {
+                filingNumber: caseNumber,
+                tenantId,
+                courtId,
+                pagination: {
+                  limit: 5,
+                  offSet: 0,
                 },
-              ],
-              flow: "flow_jac",
-              tenantId,
+              },
             },
             {}
           );
-          setCaseList(response?.criteria[0]?.responseList?.slice(0, 5));
-          if (response?.criteria[0]?.responseList?.length === 0) {
+          setCaseList(response?.caseSummaries);
+          if (response?.caseSummaries?.length === 0) {
             setErrors((errors) => ({
               ...errors,
               caseNumber: {
@@ -168,7 +167,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       }
       setIsSearchingCase(false);
     },
-    [caseDetails?.filingNumber, tenantId]
+    [caseDetails?.filingNumber, tenantId, courtId]
   );
 
   const searchLitigantInRepresentives = useCallback((representatives, individualId) => {
@@ -316,7 +315,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   }, [t, tenantId, userInfo?.uuid]);
 
   useEffect(() => {
-    if(show === true) {
+    if (show === true) {
       fetchBasicUserInfo();
     }
     setIsSearchingCase(false);
@@ -480,11 +479,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
               },
             }));
           }
-          const isPip = Boolean(
-            caseDetails?.litigants
-              ?.find((litigant) => litigant?.individualId === individualId)
-              ?.documents?.find((document) => document?.additionalDetails?.documentName === "UPLOAD_PIP_AFFIDAVIT")?.fileStore
-          );
+          const isPip = caseDetails?.litigants?.find((litigant) => litigant?.individualId === individualId)?.isPartyInPerson;
 
           if (individualId) {
             response = await getUserUUID(individualId);
@@ -731,9 +726,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           }));
         }
 
-        const isResponseSubmitted = caseDetails?.litigants
-          ?.filter((litigant) => litigant?.individualId === party?.individualId)
-          ?.documents?.some((document) => document?.additionalDetails?.fileType === "respondent-response");
+        const isResponseSubmitted = caseDetails?.litigants?.filter((litigant) => litigant?.individualId === party?.individualId)?.isResponseSubmitted;
 
         if ("PENDING_RESPONSE" === caseDetails?.status && !party?.isComplainant && !isResponseSubmitted) {
           const poaHolders = (caseDetails?.poaHolders || [])
