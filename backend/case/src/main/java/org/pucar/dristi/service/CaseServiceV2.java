@@ -95,11 +95,13 @@ public class CaseServiceV2 {
         try {
             List<CaseSummarySearch> caseSummarySearchList = caseRepository.getCaseSummary(caseSummarySearchRequest);
 
-            List<CaseSummarySearch> decryptedCaseSummary = new ArrayList<>();
             caseSummarySearchList.forEach(caseSummarySearch -> {
-                    decryptedCaseSummary.add(encryptionDecryptionUtil.decryptObject(caseSummarySearch, config.getCaseDecryptSelf(), CaseSummarySearch.class, caseSummarySearchRequest.getRequestInfo()));
+                CourtCase courtCaseEncryptedAdditionalDetails = new CourtCase();
+                courtCaseEncryptedAdditionalDetails.setAdditionalDetails(caseSummarySearch.getAdditionalDetails());
+                CourtCase courtCaseDecryptedAdditionalDetails = encryptionDecryptionUtil.decryptObject(courtCaseEncryptedAdditionalDetails, config.getCaseDecryptSelf(), CourtCase.class, caseSummarySearchRequest.getRequestInfo());
+                caseSummarySearch.setAdditionalDetails(courtCaseDecryptedAdditionalDetails.getAdditionalDetails());
             });
-            return decryptedCaseSummary;
+            return caseSummarySearchList;
 
         } catch (CustomException e) {
             throw e;
