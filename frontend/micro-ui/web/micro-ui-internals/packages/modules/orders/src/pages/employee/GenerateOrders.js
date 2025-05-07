@@ -4450,6 +4450,12 @@ const GenerateOrders = () => {
             hasError = true;
             break;
           }
+          
+          if (formData?.warrantFor?.selectedChannels?.length === 0) {
+            setShowErrorToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
+            hasError = true;
+            break;
+          }
 
           if (
             formData?.warrantFor?.selectedChannels?.some(
