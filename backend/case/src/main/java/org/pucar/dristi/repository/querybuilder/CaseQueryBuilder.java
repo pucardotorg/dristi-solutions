@@ -24,11 +24,11 @@ public class CaseQueryBuilder {
             " cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime ";
 
     private static final String BASE_CASE_SUMMARY_LIST_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.casetitle as casetitle, cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.courtcasenumber as courtcasenumber, cases.cnrNumber as cnrNumber, " +
-            " cases.cmpnumber as cmpnumber, cases.stage as stage, cases.filingdate as filingdate, cases.createdby as createdby";
+            " cases.cmpnumber as cmpnumber, cases.stage as stage, cases.filingdate as filingdate";
 
     private static final String BASE_CASE_SUMMARY_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.resolutionmechanism as resolutionmechanism, cases.casetitle as casetitle, cases.casedescription as casedescription, " +
-            "cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.advocatecount as advocatecount, cases.courtcasenumber as courtcasenumber, cases.cnrNumber as cnrNumber, " +
-            " cases.outcome as outcome, cases.cmpnumber as cmpnumber, cases.courtid as courtid, cases.benchid as benchid, cases.casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory";
+            "cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.advocatecount as advocatecount, cases.courtcasenumber as courtcasenumber, cases.cnrnumber as cnrnumber, " +
+            " cases.outcome as outcome, cases.cmpnumber as cmpnumber,cases.createdby as createdby,cases.courtid as courtid, cases.benchid as benchid, cases.casetype as casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory";
 
     private static final String FROM_CASES_TABLE = " FROM dristi_cases cases";
     private static final String ORDERBY_CLAUSE = " ORDER BY cases.{orderBy} {sortingOrder} ";
@@ -102,7 +102,7 @@ public class CaseQueryBuilder {
             query.append(FROM_CASES_TABLE);
             boolean firstCriteria = true;
             if (criteria != null) {
-                firstCriteria = addCriteria(criteria.getCourtId(), query, firstCriteria, "cases.courtId = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+                firstCriteria = addCriteria(criteria.getCourtId(), query, firstCriteria, "cases.courtid = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
                 addCriteria(criteria.getFilingNumber() == null ? null : "%" + criteria.getFilingNumber() + "%", query, firstCriteria, "LOWER(cases.filingnumber) LIKE LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             }
@@ -377,55 +377,6 @@ public class CaseQueryBuilder {
         }
         return firstCriteria;
     }
-
-//    private boolean addAdvocateCriteria(CaseCriteria criteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, RequestInfo requestInfo, StringBuilder query, boolean firstCriteria) {
-//        if (criteria.getAdvocateId() != null && !criteria.getAdvocateId().isEmpty()) {
-//            addClauseIfRequired(query, firstCriteria);
-//            query.append("((cases.id IN (" +
-//                    "        SELECT advocate.case_id" +
-//                    "        FROM dristi_case_representatives advocate" +
-//                    "        WHERE advocate.advocateId = ? AND advocate.isactive = true" +
-//                    "        UNION" +
-//                    "        SELECT poaholders.case_id" +
-//                    "        FROM dristi_case_poaholders poaholders" +
-//                    "        WHERE poaholders.individual_id = ? AND poaholders.is_active = true))" +
-//                    " OR cases.status='DRAFT_IN_PROGRESS' AND cases.createdby = ?" +
-//                    " OR EXISTS (SELECT 1 FROM jsonb_array_elements(pendingAdvocateRequests) elem WHERE elem->>'advocateId' = ?) ) AND (cases.status NOT IN ('DELETED_DRAFT'))");
-//            preparedStmtList.add(criteria.getAdvocateId());
-//            preparedStmtArgList.add(Types.VARCHAR);
-//            preparedStmtList.add(criteria.getPoaHolderIndividualId());
-//            preparedStmtArgList.add(Types.VARCHAR);
-//            preparedStmtList.add(requestInfo.getUserInfo().getUuid());
-//            preparedStmtArgList.add(Types.VARCHAR);
-//            preparedStmtList.add(criteria.getAdvocateId());
-//            preparedStmtArgList.add(Types.VARCHAR);
-//            firstCriteria = false;
-//        }
-//        return firstCriteria;
-//    }
-//
-//    private boolean addLitigantCriteria(CaseCriteria criteria, List<Object> preparedStmtList,List<Integer> preparedStmtArgList, RequestInfo requestInfo, StringBuilder query, boolean firstCriteria) {
-//        if (criteria.getLitigantId() != null && !criteria.getLitigantId().isEmpty()) {
-//            addClauseIfRequired(query, firstCriteria);
-//            query.append(" ((cases.id IN (" +
-//                    " SELECT litigant.case_id" +
-//                    " FROM dristi_case_litigants litigant" +
-//                    " WHERE litigant.individualId = ? AND litigant.isactive = true" +
-//                    " UNION" +
-//                    " SELECT poaholders.case_id" +
-//                    " FROM dristi_case_poaholders poaholders" +
-//                    " WHERE poaholders.individual_id = ? AND poaholders.is_active = true))" +
-//                    " OR cases.status ='DRAFT_IN_PROGRESS' AND cases.createdby = ?) AND (cases.status NOT IN ('DELETED_DRAFT'))");
-//            preparedStmtList.add(criteria.getLitigantId());
-//            preparedStmtArgList.add(Types.VARCHAR);
-//            preparedStmtList.add(criteria.getPoaHolderIndividualId());
-//            preparedStmtArgList.add(Types.VARCHAR);
-//            preparedStmtList.add(requestInfo.getUserInfo().getUuid());
-//            preparedStmtArgList.add(Types.VARCHAR);
-//            firstCriteria = false;
-//        }
-//        return firstCriteria;
-//    }
 
     private boolean addCriteria(String criteria, StringBuilder query, boolean firstCriteria, String str, List<Object> preparedStmtList, List<Integer> preparedStmtArgList, int type) {
         if (criteria != null && !criteria.isEmpty()) {

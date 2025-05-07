@@ -30,7 +30,7 @@ public class PoaRowMapperV2 implements ResultSetExtractor<Map<UUID, List<POAHold
                 UUID id = UUID.fromString(rs.getString("case_id"));
                 POAHolderV2 poaHolder = POAHolderV2.builder()
                         .individualId(rs.getString("individual_id"))
-                        .representingLitigants(getObjectListFromJson(rs.getString("representing_litigants"), new TypeReference<List<PoaPartyV2>>() {}))
+                        .representingLitigants(getObjectListFromJson(rs.getString("representing_litigants")))
                         .build();
 
                 if (poaHolderMap.containsKey(id)) {
@@ -50,18 +50,18 @@ public class PoaRowMapperV2 implements ResultSetExtractor<Map<UUID, List<POAHold
         return poaHolderMap;
     }
 
-    public <T> T getObjectListFromJson(String json, TypeReference<T> typeRef) {
+    public List<PoaPartyV2> getObjectListFromJson(String json) {
         if (json == null || json.trim().isEmpty()) {
-            try {
-                return objectMapper.readValue("[]", typeRef); // Return an empty object of the specified type
-            } catch (IOException e) {
-                throw new CustomException("Failed to create an empty instance of " + typeRef.getType(), e.getMessage());
-            }
+                return new ArrayList<>(); // Return an empty object of the specified type
         }
         try {
-            return objectMapper.readValue(json, typeRef);
+            List<PoaParty> poaPartyList = objectMapper.readValue(json, new TypeReference<List<PoaParty>>() {});
+            List<PoaPartyV2> poaPartyV2List = new ArrayList<>();
+            poaPartyList.stream().map(PoaParty::getIndividualId).forEach(individualId -> poaPartyV2List.add(PoaPartyV2.builder().individualId(individualId).build()));
+
+            return poaPartyV2List;
         } catch (Exception e) {
-            throw new CustomException("Failed to convert JSON to " + typeRef.getType(), e.getMessage());
+            throw new CustomException("Failed to convert JSON to ", e.getMessage());
         }
     }
 }
