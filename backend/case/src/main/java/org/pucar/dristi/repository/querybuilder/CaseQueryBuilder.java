@@ -23,8 +23,8 @@ public class CaseQueryBuilder {
             " cases.outcome as outcome, cases.pendingadvocaterequests as pendingadvocaterequests, cases.cmpnumber as cmpnumber, cases.courtid as courtid, cases.benchid as benchid, cases.casetype, cases.judgeid as judgeid, cases.stage as stage, cases.substage as substage, cases.filingdate as filingdate, cases.judgementdate as judgementdate, cases.registrationdate as registrationdate, cases.natureofpleading as natureofpleading, cases.status as status, cases.remarks as remarks, cases.isactive as isactive, cases.casedetails as casedetails, cases.additionaldetails as additionaldetails, cases.casecategory as casecategory, cases.createdby as createdby," +
             " cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime ";
 
-    private static final String BASE_CASE_SUMMARY_LIST_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.casetitle as casetitle, cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.courtcasenumber as courtcasenumber, cases.cnrNumber as cnrNumber, " +
-            " cases.cmpnumber as cmpnumber, cases.stage as stage, cases.filingdate as filingdate";
+    private static final String BASE_CASE_SUMMARY_LIST_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.courtid as courtid, cases.casetitle as casetitle, cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.courtcasenumber as courtcasenumber, cases.cnrnumber as cnrnumber, " +
+            " cases.cmpnumber as cmpnumber, cases.stage as stage, cases.outcome as outcome, cases.status as status, cases.advocatecount as advocatecount, cases.substage as substage, cases.filingdate as filingdate,cases.lastmodifiedtime as lastmodifiedtime";
 
     private static final String BASE_CASE_SUMMARY_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.resolutionmechanism as resolutionmechanism, cases.casetitle as casetitle, cases.casedescription as casedescription, " +
             "cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.advocatecount as advocatecount, cases.courtcasenumber as courtcasenumber, cases.cnrnumber as cnrnumber, " +
@@ -123,7 +123,7 @@ public class CaseQueryBuilder {
 
                 firstCriteria = addCriteria(criteria.getCaseId(), query, firstCriteria, "cases.id = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
-                firstCriteria = addCriteria(criteria.getCourtId(), query, firstCriteria, "cases.courtId = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+                firstCriteria = addCriteria(criteria.getCourtId(), query, firstCriteria, "cases.courtid = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
                 firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 
@@ -146,7 +146,7 @@ public class CaseQueryBuilder {
 
                 firstCriteria = addCriteria(criteria.getCaseId(), query, firstCriteria, "cases.id = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
-                firstCriteria = addCriteria(criteria.getCnrNumber(), query, firstCriteria, "cases.cnrNumber = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+                firstCriteria = addCriteria(criteria.getCnrNumber(), query, firstCriteria, "cases.cnrnumber = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
                 firstCriteria = addCriteria(criteria.getFilingNumber() == null ? null : "%" + criteria.getFilingNumber() + "%", query, firstCriteria, "LOWER(cases.filingnumber) LIKE LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
@@ -154,7 +154,7 @@ public class CaseQueryBuilder {
 
                 firstCriteria = addCriteria(criteria.getJudgeId(), query, firstCriteria, "cases.judgeid = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
-                firstCriteria = addCriteria(criteria.getCourtId(), query, firstCriteria, "cases.courtId = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+                firstCriteria = addCriteria(criteria.getCourtId(), query, firstCriteria, "cases.courtid = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
                 firstCriteria = addListCriteria(criteria.getStage(), query, firstCriteria, "cases.stage", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 

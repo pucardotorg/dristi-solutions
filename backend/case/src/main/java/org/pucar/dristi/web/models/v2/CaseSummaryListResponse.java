@@ -24,8 +24,8 @@ public class CaseSummaryListResponse {
     @Valid
     private ResponseInfo responseInfo = null;
 
-    @JsonProperty("caseSummaries")
+    @JsonProperty("caseList")
     @Valid
-    private List<CaseSummaryList> caseSummaries = null;
+    private List<CaseSummaryList> caseList = null;
 
 }

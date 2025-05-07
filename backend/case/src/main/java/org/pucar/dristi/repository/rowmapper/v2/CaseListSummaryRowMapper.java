@@ -39,9 +39,18 @@ public class CaseListSummaryRowMapper implements ResultSetExtractor<List<CaseSum
                         .caseTitle(rs.getString("casetitle"))
                         .filingDate(rs.getLong("filingdate"))
                         .stage(rs.getString("stage"))
-                        .caseType(rs.getString("casetype"))
+                        .outcome(rs.getString("outcome"))
+                        .advocateCount(rs.getInt("advocatecount"))
+                        .status(rs.getString("status"))
+                        .substage(rs.getString("substage"))
+                        .stage(rs.getString("stage"))
+                        .courtCaseNumber(rs.getString("courtcasenumber"))
+                        .cnrNumber(rs.getString("cnrnumber"))
+                        .cmpNumber(rs.getString("cmpnumber"))
                         .caseNumber(rs.getString("casenumber"))
+                        .courtId(rs.getString("courtid"))
                         .filingNumber(rs.getString("filingnumber"))
+                        .lastModifiedTime(rs.getLong("lastmodifiedtime"))
                         .build();
 
                 caseMap.put(caseId, caseSummary);

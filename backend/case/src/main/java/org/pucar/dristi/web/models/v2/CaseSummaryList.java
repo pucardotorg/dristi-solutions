@@ -35,4 +35,31 @@ public class CaseSummaryList {
 
     @JsonProperty("filingNumber")
     private String filingNumber;
+
+    @JsonProperty("outcome")
+    private String outcome;
+
+    @JsonProperty("substage")
+    private String substage;
+
+    @JsonProperty("cmpNumber")
+    private String cmpNumber;
+
+    @JsonProperty("courtId")
+    private String courtId;
+
+    @JsonProperty("advocateCount")
+    private Integer advocateCount;
+
+    @JsonProperty("status")
+    private String status;
+
+    @JsonProperty("courtCaseNumber")
+    private String courtCaseNumber;
+
+    @JsonProperty("cnrNumber")
+    private String cnrNumber;
+
+    @JsonProperty("lastModifiedTime")
+    private Long lastModifiedTime;
 }
