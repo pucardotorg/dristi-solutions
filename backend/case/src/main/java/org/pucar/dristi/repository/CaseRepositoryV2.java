@@ -214,7 +214,7 @@ public class CaseRepositoryV2 {
         extractLitigantIds(caseSummarySearch, idsLitigant);
 
         if (!idsLitigant.isEmpty())
-            setLitigantDocuments(caseSummarySearch, idsLitigant);
+            updateLitigantsUsingDocuments(caseSummarySearch, idsLitigant);
     }
 
     private void setRepresenting(CaseSummarySearch caseSummarySearch, List<String> idsRepresentative) {
@@ -223,7 +223,7 @@ public class CaseRepositoryV2 {
 
         List<Integer> preparedStmtArgList = new ArrayList<>();
 
-        representingQuery = queryBuilder.getRepresentativesSummarySearchQuery(idsRepresentative, preparedStmtList, preparedStmtArgList);
+        representingQuery = queryBuilder.getRepresentingSummarySearchQuery(idsRepresentative, preparedStmtList, preparedStmtArgList);
         log.info("Final representing query :: {}", representingQuery);
         Map<UUID, List<RepresentingV2>> representingMap = jdbcTemplate.query(representingQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), representingRowMapperV2);
         if (representingMap != null) {
@@ -239,7 +239,7 @@ public class CaseRepositoryV2 {
         preparedStmtList = new ArrayList<>();
         List<Integer> preparedStmtArgList = new ArrayList<>();
 
-        representativeQuery = queryBuilder.getRepresentingSummarySearchQuery(ids, preparedStmtList, preparedStmtArgList);
+        representativeQuery = queryBuilder.getRepresentativesSummarySearchQuery(ids, preparedStmtList, preparedStmtArgList);
         log.info("Final representative query :: {}", representativeQuery);
         Map<UUID, List<RepresentativeV2>> representativeMap = jdbcTemplate.query(representativeQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), representativeRowMapperV2);
         if (representativeMap != null) {
@@ -289,10 +289,9 @@ public class CaseRepositoryV2 {
         }
     }
 
-    private void setLitigantDocuments(CaseSummarySearch caseSummarySearch, List<String> idsLitigant) {
+    private void updateLitigantsUsingDocuments(CaseSummarySearch caseSummarySearch, List<String> idsLitigant) {
         String litigantDocumentQuery;
-        List<Object> preparedStmtListDoc;
-        preparedStmtListDoc = new ArrayList<>();
+        List<Object> preparedStmtListDoc = new ArrayList<>();
         List<Integer> preparedStmtArgList = new ArrayList<>();
 
         litigantDocumentQuery = queryBuilder.getLitigantDocumentSearchQuery(idsLitigant, preparedStmtListDoc, preparedStmtArgList);
@@ -301,10 +300,27 @@ public class CaseRepositoryV2 {
         if (caseLitigantDocumentMap != null) {
                 if (caseSummarySearch.getLitigants() != null) {
                     caseSummarySearch.getLitigants().forEach(litigant -> {
-                        List<Document> litigantDocuments = caseLitigantDocumentMap.get(litigant.getId());
-                        if (litigantDocuments != null && !litigantDocuments.isEmpty()) {
-                            litigant.setResponseSubmitted(isResponseSubmitted(litigantDocuments));
-                            litigant.setPartyInPerson(isPIP(litigant, caseSummarySearch.getRepresentatives(), litigantDocuments));
+
+                        if (litigant.getPartyType().contains("complainant")) {
+                             litigant.setPartyInPerson(isSelfRepresentedComplainant(litigant, caseSummarySearch.getRepresentatives()));
+                        }else{
+                            if(caseLitigantDocumentMap.containsKey(litigant.getId())){
+                                List<Document> litigantDocuments = caseLitigantDocumentMap.get(litigant.getId());
+                                if (litigantDocuments != null && !litigantDocuments.isEmpty()) {
+                                    litigant.setPartyInPerson(hasPipAffidavit(litigantDocuments));
+                                }
+                            }else {
+                                litigant.setPartyInPerson(false);
+                            }
+                        }
+
+                        if(caseLitigantDocumentMap.containsKey(litigant.getId())){
+                            List<Document> litigantDocuments = caseLitigantDocumentMap.get(litigant.getId());
+                            if (litigantDocuments != null && !litigantDocuments.isEmpty()) {
+                                litigant.setResponseSubmitted(isResponseSubmitted(litigantDocuments));
+                            }
+                        }else {
+                            litigant.setResponseSubmitted(false);
                         }
 
                     });
@@ -328,37 +344,37 @@ public class CaseRepositoryV2 {
             return false;
     }
 
-    private boolean isPIP(LitigantV2 litigant, List<RepresentativeV2> representativeV2, List<Document> documents) {
-        if (litigant.getPartyType().contains("complainant")) {
-            if (representativeV2 != null && !representativeV2.isEmpty()) {
-                for (RepresentativeV2 representative : representativeV2) {
-                    RepresentingV2 litigantParty = representative.getRepresenting().stream()
-                            .filter(party -> party.getIndividualId().equalsIgnoreCase(litigant.getIndividualId()))
-                            .findFirst()
-                            .orElse(null);
+    private boolean isSelfRepresentedComplainant(LitigantV2 litigant, List<RepresentativeV2> representativeV2) {
+        if (representativeV2 != null && !representativeV2.isEmpty()) {
+            for (RepresentativeV2 representative : representativeV2) {
+                RepresentingV2 litigantParty = representative.getRepresenting().stream()
+                        .filter(party -> party.getIndividualId().equalsIgnoreCase(litigant.getIndividualId()))
+                        .findFirst()
+                        .orElse(null);
 
-                    // If litigant is actively represented by an advocate, they're not self-represented
-                    if (litigantParty != null) {
-                        return false;
-                    }
+                // If litigant is actively represented by an advocate, they're not self-represented
+                if (litigantParty != null) {
+                    return false;
                 }
             }
-            return true;
-        } else {
-            if (documents != null && !documents.isEmpty()) {
-                for (Document document : documents) {
-                    Object additionalDetails = document.getAdditionalDetails();
-                    ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
-                    String documentName = additionalDetailsNode.has("documentName")
-                            ? additionalDetailsNode.get("documentName").asText()
-                            : "";
-                    if (UPLOAD_PIP_AFFIDAVIT.equals(documentName)) {
-                        return true;
-                    }
-                }
-            }
-            return false;
         }
+        return true;
+    }
+
+    private boolean hasPipAffidavit(List<Document> documents) {
+        if (documents != null && !documents.isEmpty()) {
+            for (Document document : documents) {
+                Object additionalDetails = document.getAdditionalDetails();
+                ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
+                String documentName = additionalDetailsNode.has("documentName")
+                        ? additionalDetailsNode.get("documentName").asText()
+                        : "";
+                if (UPLOAD_PIP_AFFIDAVIT.equals(documentName)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static void extractRepresentativeIds(CaseSummarySearch caseSummarySearch, List<String> idsRepresentative) {

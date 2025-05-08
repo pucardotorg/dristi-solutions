@@ -1,4 +1,4 @@
-package org.pucar.dristi.web.models;
+package org.pucar.dristi.web.models.v2;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotEmpty;
@@ -14,15 +14,14 @@ import lombok.NoArgsConstructor;
 @Data
 public class CaseSearchCriteriaV2 {
 
-    @NotNull
-    @NotEmpty
     @JsonProperty("courtId")
     private String courtId;
 
     @JsonProperty("caseId")
-    @NotNull
-    @NotEmpty
     private String caseId;
+
+    @JsonProperty("filingNumber")
+    private String filingNumber;
 
     @JsonProperty("advocateId")
     private String advocateId;

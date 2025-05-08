@@ -1,4 +1,4 @@
-package org.pucar.dristi.web.models;
+package org.pucar.dristi.web.models.v2;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
@@ -6,11 +6,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.egov.common.contract.response.ResponseInfo;
+import org.egov.common.contract.request.RequestInfo;
 import org.springframework.validation.annotation.Validated;
 
 /**
- * CaseResponse
+ * CaseSearchRequest
  */
 @Validated
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-04-15T11:31:40.281899+05:30[Asia/Kolkata]")
@@ -18,14 +18,14 @@ import org.springframework.validation.annotation.Validated;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CaseSearchResponse {
+public class CaseSearchRequestV2 {
 
-	@JsonProperty("ResponseInfo")
+	@JsonProperty("RequestInfo")
 	@Valid
-	private ResponseInfo responseInfo = null;
+	private RequestInfo requestInfo = null;
 
-	@JsonProperty("cases")
+	@JsonProperty("criteria")
 	@Valid
-	private CourtCase cases = null;
+	private CaseSearchCriteriaV2 criteria = null;
 
 }

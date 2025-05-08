@@ -95,7 +95,7 @@ public class CaseApiController {
 
         List<CaseSummaryList> caseSummaryLists = caseServiceV2.searchCasesList(body);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
-        CaseSummaryListResponse caseSummaryListResponse = CaseSummaryListResponse.builder().caseList(caseSummaryLists).responseInfo(responseInfo).build();
+        CaseSummaryListResponse caseSummaryListResponse = CaseSummaryListResponse.builder().caseList(caseSummaryLists).pagination(body.getCriteria().getPagination()).responseInfo(responseInfo).build();
         return new ResponseEntity<>(caseSummaryListResponse, HttpStatus.OK);
     }
 

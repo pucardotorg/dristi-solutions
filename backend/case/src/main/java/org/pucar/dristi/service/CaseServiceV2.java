@@ -11,14 +11,10 @@ import org.pucar.dristi.enrichment.CaseRegistrationEnrichment;
 import org.pucar.dristi.repository.CaseRepositoryV2;
 import org.pucar.dristi.util.*;
 import org.pucar.dristi.web.models.*;
-import org.pucar.dristi.web.models.v2.CaseSummaryList;
-import org.pucar.dristi.web.models.v2.CaseSummaryListRequest;
-import org.pucar.dristi.web.models.v2.CaseSummarySearch;
-import org.pucar.dristi.web.models.v2.CaseSummarySearchRequest;
+import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -61,14 +57,12 @@ public class CaseServiceV2 {
             if (criteria.getCaseId() != null) {
                 log.info("Searching in redis :: {}", criteria.getCaseId());
                 courtCase = searchRedisCache(caseSearchRequests.getRequestInfo(), criteria.getCaseId());
-            }
-            if (courtCase != null) {
+
                 log.info("CourtCase found in Redis cache for caseId: {}", criteria.getCaseId());
-                return courtCase;
-            } else {
-                log.debug("CourtCase not found in Redis cache for caseId: {}", criteria.getCaseId());
+                return encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo());
             }
 
+            log.info("Searching case in DB");
             courtCase = caseRepository.getCases(criteria, caseSearchRequests.getRequestInfo());
             saveInRedisCache(courtCase, caseSearchRequests.getRequestInfo());
 

@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.response.ResponseInfo;
+import org.pucar.dristi.web.models.Pagination;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
@@ -27,5 +28,8 @@ public class CaseSummaryListResponse {
     @JsonProperty("caseList")
     @Valid
     private List<CaseSummaryList> caseList = null;
+
+    @JsonProperty("pagination")
+    private Pagination pagination;
 
 }

@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.v2.CaseSearchCriteriaV2;
 import org.pucar.dristi.web.models.v2.CaseSummaryListCriteria;
 import org.pucar.dristi.web.models.v2.CaseSummarySearchCriteria;
 import org.springframework.stereotype.Component;
@@ -124,6 +125,8 @@ public class CaseQueryBuilder {
                 firstCriteria = addCriteria(criteria.getCaseId(), query, firstCriteria, "cases.id = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
                 firstCriteria = addCriteria(criteria.getCourtId(), query, firstCriteria, "cases.courtid = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+
+                firstCriteria = addCriteria(criteria.getFilingNumber() == null ? null : "%" + criteria.getFilingNumber() + "%", query, firstCriteria, "LOWER(cases.filingnumber) LIKE LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
                 firstCriteria = addLitigantCriteria(criteria.getLitigantId(), criteria.getPoaHolderIndividualId(), preparedStmtList, preparedStmtArgList, requestInfo, query, firstCriteria);
 

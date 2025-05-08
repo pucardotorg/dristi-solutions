@@ -13,10 +13,7 @@ import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.web.models.*;
-import org.pucar.dristi.web.models.v2.CaseSummaryListCriteria;
-import org.pucar.dristi.web.models.v2.CaseSummaryListRequest;
-import org.pucar.dristi.web.models.v2.CaseSummarySearchCriteria;
-import org.pucar.dristi.web.models.v2.CaseSummarySearchRequest;
+import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
