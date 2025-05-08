@@ -1467,7 +1467,6 @@ export const updateCaseDetails = async ({
   caseComplaintDocument,
   filingType,
 }) => {
-  debugger;
   const data = {};
   setIsDisabled(true);
   let tempDocList = structuredClone(caseDetails?.documents || []);
