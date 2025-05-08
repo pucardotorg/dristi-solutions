@@ -107,6 +107,12 @@ const WarrantRenderDeliveryChannels = ({
     const id = address?.id;
     if (isChecked) {
       setEnabledAddresses((prev) => _.uniq([...prev, id]));
+      const viaPoliceChannel = addressMap?.[id]?.channels?.find((ch) => ch.type === "Via Police");
+
+      const alreadyExists = partyDetails?.some((detail) => detail.type === "Via Police" && compareAddressValues(detail.value, address));
+      if (viaPoliceChannel && !alreadyExists) {
+        handleCheckboxChange("Via Police", "POLICE", address);
+      }
     } else {
       setEnabledAddresses((prev) => prev.filter((addrId) => addrId !== id));
 
