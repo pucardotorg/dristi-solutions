@@ -67,7 +67,7 @@ public class ServiceConstants {
     public static final String SCHEDULE_ADMISSION_HEARING = "SCHEDULE_ADMISSION_HEARING";
 
     public static final String BULK_RESCHEDULE = "BULK_RESCHEDULE";
-    public static final String SETDATE = "SETDATE";
+    public static final String SET_DATE = "SET_DATE";
     public static final String ADMIT = "ADMIT";
     public static final String ADMISSION = "ADMISSION";
     public static final String ABANDON = "ABANDON";
