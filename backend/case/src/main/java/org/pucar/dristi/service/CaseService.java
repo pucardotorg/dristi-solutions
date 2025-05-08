@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.servlet.http.Part;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -437,16 +438,7 @@ public class CaseService {
                 caseRequest.getCases().setCaseType(CMP);
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
-            List<String> fileStoreIds = new ArrayList<>();
-            for(Document document : caseRequest.getCases().getDocuments()) {
-                if(!document.getIsActive()) {
-                    fileStoreIds.add(document.getFileStore());
-                }
-            }
-            if(!fileStoreIds.isEmpty()){
-                fileStoreUtil.deleteFilesByFileStore(fileStoreIds, caseRequest.getCases().getTenantId());
-                log.info("Deleted files for case with ids: {}", fileStoreIds);
-            }
+            removeInactiveDocuments(caseRequest);
             log.info("Encrypting case: {}", caseRequest.getCases().getId());
 
             //to prevent from double encryption
@@ -514,6 +506,62 @@ public class CaseService {
             throw new CustomException(UPDATE_CASE_ERR, "Exception occurred while updating case: " + e.getMessage());
         }
 
+    }
+
+    private void removeInactiveDocuments(CaseRequest caseRequest) {
+        List<String> fileStoreIds = new ArrayList<>();
+        List<Document> documentList = buildDocumentList(caseRequest.getCases());
+        for(Document document : documentList) {
+            if(!document.getIsActive()) {
+                fileStoreIds.add(document.getFileStore());
+            }
+        }
+        if(!fileStoreIds.isEmpty()){
+            fileStoreUtil.deleteFilesByFileStore(fileStoreIds, caseRequest.getCases().getTenantId());
+            log.info("Deleted files for case with ids: {}", fileStoreIds);
+        }
+    }
+
+    private List<Document> buildDocumentList(@Valid CourtCase cases) {
+        Set<Document> documentSet = new LinkedHashSet<>();
+
+        if (cases.getDocuments() != null) {
+            documentSet.addAll(cases.getDocuments());
+        }
+        if (cases.getRepresentatives() != null) {
+            for (AdvocateMapping advocateMapping : cases.getRepresentatives()) {
+                if (advocateMapping.getDocuments() != null) {
+                    documentSet.addAll(advocateMapping.getDocuments());
+                }
+                for(Party party : advocateMapping.getRepresenting()) {
+                    if (party.getDocuments() != null) {
+                        documentSet.addAll(party.getDocuments());
+                    }
+                }
+            }
+        }
+        if (cases.getLitigants() != null) {
+            for (Party party : cases.getLitigants()) {
+                if (party.getDocuments() != null) {
+                    documentSet.addAll(party.getDocuments());
+                }
+            }
+        }
+        if (cases.getPoaHolders() != null) {
+            for (POAHolder poaHolder : cases.getPoaHolders()) {
+                if (poaHolder.getDocuments() != null) {
+                    documentSet.addAll(poaHolder.getDocuments());
+                }
+            }
+        }
+        if (cases.getLinkedCases() != null) {
+            for (LinkedCase linkedCase : cases.getLinkedCases()) {
+                if (linkedCase.getDocuments() != null) {
+                    documentSet.addAll(linkedCase.getDocuments());
+                }
+            }
+        }
+        return new ArrayList<>(documentSet);
     }
 
     private Object createHearingUpdateRequest(CaseRequest caseRequest) {
