@@ -436,7 +436,10 @@ public class CaseService {
             //to prevent from double encryption
             String encryptedAccessCode = caseRequest.getCases().getAccessCode();
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
-            caseRequest.getCases().setAccessCode(encryptedAccessCode);
+
+            if (!PENDING_ADMISSION_HEARING_STATUS.equals(caseRequest.getCases().getStatus())) {
+                caseRequest.getCases().setAccessCode(encryptedAccessCode);
+            }
 
             producer.push(config.getCaseUpdateTopic(), caseRequest);
 
