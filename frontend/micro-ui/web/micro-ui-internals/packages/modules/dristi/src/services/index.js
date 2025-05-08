@@ -149,7 +149,7 @@ export const DRISTIService = {
       url: Urls.dristi.searchHearings,
       useCache: false,
       userService: false,
-      data,
+      data:{...data,criteria: {...data?.criteria,courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52'}},
       params,
     });
   },
