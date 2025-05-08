@@ -102,8 +102,9 @@ public class AssigningDateRescheduledHearing implements OrderUpdateStrategy {
             hearing.setEndTime(time);
         }
         WorkflowObject workflow = new WorkflowObject();
-        workflow.setAction(SETDATE);
+        workflow.setAction(SET_DATE);
         workflow.setComments("Update Hearing");
+        hearing.setWorkflow(workflow);
 
         StringBuilder updateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
         hearingUtil.createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(requestInfo).build(), updateUri);

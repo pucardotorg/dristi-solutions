@@ -91,6 +91,7 @@ public class RescheduleOfHearingDate implements OrderUpdateStrategy {
         WorkflowObject workflow = new WorkflowObject();
         workflow.setAction(BULK_RESCHEDULE);
         workflow.setComments("Update Hearing");
+        hearing.setWorkflow(workflow);
 
         StringBuilder updateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
         log.info("update hearing with hearingNumber:{}, action:{}", hearingNumber, BULK_RESCHEDULE);
