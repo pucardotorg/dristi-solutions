@@ -141,7 +141,6 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             {
               criteria: {
                 filingNumber: caseNumber,
-                tenantId,
                 courtId,
                 pagination: {
                   limit: 5,
@@ -546,7 +545,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       getComplainantListNew(caseDetails?.additionalDetails?.complainantDetails?.formdata);
       getRespondentList(caseDetails?.additionalDetails?.respondentDetails?.formdata);
     }
-  }, [caseDetails, t, selectPartyData?.userType.value]);
+  }, [caseDetails, t, selectPartyData?.userType?.value]);
 
   useEffect(() => {
     if (caseDetails?.cnrNumber && individual && selectPartyData?.userType && selectPartyData?.userType?.value === "Litigant") {
