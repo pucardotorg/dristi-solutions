@@ -19,12 +19,14 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
       tenantId,
     },
     { applicationNumber: "", cnrNumber: "", tenantId },
-    `dristi-${selectedMonth}-${selectedYear}`,
-    true,
-    false,
-    "",
-    30 * 1000
+    "dristi",
+    true
   );
+  const { data: nonWorkingDay } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "schedule-hearing", [{ name: "COURT000334" }], {
+    select: (data) => {
+      return data || [];
+    },
+  });
 
   const hearingDetails = useMemo(() => hearingResponse?.HearingList || null, [hearingResponse]);
   // useEffect(() => {
@@ -67,20 +69,32 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
 
   const renderCustomDay = (date) => {
     const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    const formattedDate = date.toLocaleDateString("en-GB");
+    const formattedForCheck = formattedDate.replace(/\//g, "-");
+    const isNonWorkingDay = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
     const hearingCount = hearingCounts[dateStr] || 0;
     return (
-      <div>
-        <span className="rdrDayNumber">{date.getDate()}</span>
+      <div
+        style={{
+          backgroundColor: isNonWorkingDay ? "#ffcccc" : "transparent",
+          borderRadius: "50%",
+          height: "40px",
+          width: "40px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+        }}
+      >
+        <span>{date.getDate()}</span>
         {hearingCount > 0 && (
           <div
             style={{
               fontSize: "8px",
               color: "#931847",
-              marginTop: "2px",
+              position: "absolute",
               top: "25px",
               right: 2,
-              position: "absolute",
-              width: "100%",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
