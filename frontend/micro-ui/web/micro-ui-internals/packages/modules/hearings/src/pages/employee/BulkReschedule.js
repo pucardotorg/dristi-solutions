@@ -162,7 +162,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     //   return filteredHearings?.length || 0;
     // }
     setOriginalHearingData(hearingDetails?.HearingList);
-    const filteredHearings = hearingDetails?.HearingList?.filter((hearing) => hearing?.status != "COMPLETED");
+    const filteredHearings = hearingDetails?.HearingList?.filter((hearing) => hearing?.status !== "COMPLETED");
     return filteredHearings?.length || 0;
   }, [hearingDetails]);
 

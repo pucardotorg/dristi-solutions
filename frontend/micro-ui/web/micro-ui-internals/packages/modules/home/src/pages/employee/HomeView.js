@@ -296,12 +296,13 @@ const HomeView = () => {
     (async function () {
       if (userType) {
         setIsFetchCaseLoading(true);
+        // Add courtId to criteria if it exists
         const caseData = await HomeService.customApiService(Urls.caseSearch, {
           tenantId,
           criteria: [
             {
               ...(advocateId ? { advocateId } : { litigantId: individualId }),
-
+              courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52',
               pagination: { offSet: 0, limit: 1 },
             },
           ],
