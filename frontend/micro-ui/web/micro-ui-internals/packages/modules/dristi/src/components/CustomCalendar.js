@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Calendar } from "react-date-range";
 import { CalendarLeftArrow, CalendarRightArrow } from "../icons/svgIndex";
 import { Button, CardHeader } from "@egovernments/digit-ui-react-components";
@@ -25,7 +25,7 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
   const { data: hearingResponse } = Digit.Hooks.hearings.useGetHearingsCounts(
     hearingCriteria,
     { applicationNumber: "", cnrNumber: "", tenantId },
-    "dristi",
+    `${currentMonth.getMonth()}-${currentMonth.getFullYear()}`,
     true,
     false,
     "",
