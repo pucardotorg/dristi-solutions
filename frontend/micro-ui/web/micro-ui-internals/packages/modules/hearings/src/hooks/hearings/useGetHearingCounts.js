@@ -3,7 +3,7 @@ import { hearingService } from "../services";
 
 function useGetHearingsCounts(data, params, keys, enabled, refetchInterval = false, attendeeIndividualId = "", cacheTime = 0) {
   const { isLoading, data: hearingCountResponse, isFetching, refetch, error } = useQuery(
-    ["GET_HEARING_COUNT", keys, data?.criteria?.fromDate, data?.criteria?.toDate],
+    `GET_HEARING_COUNT_${keys}`,
     () =>
       hearingService
         .searchHearingCount(
