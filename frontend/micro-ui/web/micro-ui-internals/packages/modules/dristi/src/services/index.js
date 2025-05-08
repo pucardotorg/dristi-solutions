@@ -104,12 +104,11 @@ export const DRISTIService = {
     });
   },
   searchCaseService: (data, params) =>
-    // Add courtId to criteria if it exists
     Request({
       url: Urls.dristi.caseSearch,
       useCache: false,
       userService: false,
-      data:{...data,criteria: {...data?.criteria,courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52'}},
+      data,
       params,
     }),
   generateCasePdf: (data, params) =>
