@@ -1860,7 +1860,7 @@ const GenerateOrders = () => {
       return parties;
     }
     parties = parties?.map((party) => {
-      const matchingParty = allParties.find((p) => p.code === party);
+      const matchingParty = allParties.find((p) => p.code.trim() === party.trim());
       if (matchingParty) {
         return {
           partyName: matchingParty.name,
