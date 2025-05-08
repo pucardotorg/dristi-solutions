@@ -178,7 +178,7 @@ export const taskService = {
       url: Urls.Task.search,
       useCache: true,
       userService: true,
-      data: { ...data, criteria: { ...data.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52' } },
+      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52' } },
       params,
     }),
 };

@@ -56,7 +56,7 @@ export const submissionService = {
       url: Urls.evidence.evidenceSearch,
       useCache: false,
       userService: false,
-      data: {...data,criteria:{...data.criteria,courtId:window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52"}},
+      data: {...data,criteria:{...data?.criteria,courtId:window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52"}},
       params,
     }),
 };
