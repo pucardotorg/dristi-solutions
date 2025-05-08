@@ -339,7 +339,7 @@ public class PaymentUpdateService {
     }
 
     private void updateDeliveryChannels(Task task) {
-        // Specify Indian time zone (IST)
+        // Indian time zone (IST)
         ZoneId indianZone = ZoneId.of("Asia/Kolkata");
         String todayDate = LocalDate.now(indianZone).format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
 
@@ -354,12 +354,7 @@ public class PaymentUpdateService {
             deliveryChannels = objectMapper.createObjectNode();
             ((ObjectNode) taskDetails).set("deliveryChannels", deliveryChannels);
         }
-
-        // Only add feePaidDate if it doesn't already exist
-        if (!deliveryChannels.has("feePaidDate") || deliveryChannels.get("feePaidDate").isNull()) {
-            deliveryChannels.put("feePaidDate", todayDate);
-        }
-
+        deliveryChannels.put("feePaidDate", todayDate);
         task.setTaskDetails(taskDetails);
     }
 
