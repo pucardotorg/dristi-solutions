@@ -1,13 +1,19 @@
 package digit.util;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import digit.config.Configuration;
 import digit.repository.ServiceRequestRepository;
+import digit.service.UserService;
 import digit.web.models.PendingTask;
 import digit.web.models.PendingTaskRequest;
 import digit.web.models.ReScheduleHearing;
+import digit.web.models.cases.CaseCriteria;
+import digit.web.models.cases.SearchCaseRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.egov.tracer.model.ServiceCallException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
@@ -15,6 +21,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import static digit.config.ServiceConstants.*;
@@ -31,11 +38,20 @@ public class PendingTaskUtil {
 
     private final DateUtil dateUtil;
 
-    public PendingTaskUtil(ObjectMapper objectMapper, Configuration configuration, RestTemplate restTemplate, ServiceRequestRepository serviceRequestRepository, DateUtil dateUtil) {
+    private final CaseUtil caseUtil;
+
+    private final UserService userService;
+
+    private final Configuration config;
+
+    public PendingTaskUtil(ObjectMapper objectMapper, Configuration configuration, RestTemplate restTemplate, ServiceRequestRepository serviceRequestRepository, DateUtil dateUtil, CaseUtil caseUtil, UserService userService, Configuration config) {
         this.objectMapper = objectMapper;
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
         this.dateUtil = dateUtil;
+        this.caseUtil = caseUtil;
+        this.userService = userService;
+        this.config = config;
     }
 
     public PendingTask createPendingTask(ReScheduleHearing reScheduleHearing) {
@@ -52,7 +68,35 @@ public class PendingTaskUtil {
 
         log.info("sla date {}", slaDate);
         pendingTask.setStateSla(dateUtil.getEpochFromLocalDateTime(slaDate));
+        enrichCaseDetails(pendingTask);
         return pendingTask;
+    }
+
+    private void enrichCaseDetails(PendingTask pendingTask) {
+
+        CaseCriteria criteria = CaseCriteria.builder().filingNumber(pendingTask.getFilingNumber()).build();
+        SearchCaseRequest searchCaseRequest = SearchCaseRequest.builder()
+                .RequestInfo(createInternalRequestInfo())
+                .tenantId(config.getEgovStateTenantId())
+                .criteria(Collections.singletonList(criteria))
+                .flow(FLOW_JAC)
+                .build();
+
+        JsonNode caseList = caseUtil.getCases(searchCaseRequest);
+
+        if (caseList != null && caseList.isArray() && !caseList.isEmpty()) {
+            pendingTask.setCaseTitle(caseList.get(0).get("caseTitle").isNull() ? null : caseList.get(0).get("caseTitle").asText());
+            pendingTask.setCaseId(caseList.get(0).get("id").isNull() ? null : caseList.get(0).get("id").asText());
+        }
+
+    }
+
+    private RequestInfo createInternalRequestInfo() {
+        User userInfo = new User();
+        userInfo.setUuid(userService.internalMicroserviceRoleUuid);
+        userInfo.setRoles(userService.internalMicroserviceRoles);
+        userInfo.setTenantId(config.getEgovStateTenantId());
+        return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
     }
 
     public void callAnalytics(PendingTaskRequest request) {

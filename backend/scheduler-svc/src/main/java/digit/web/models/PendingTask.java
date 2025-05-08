@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.egov.common.contract.request.User;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +42,12 @@ public class PendingTask {
 
     @JsonProperty("filingNumber")
     private String filingNumber = null;
+
+    @JsonProperty("caseId")
+    private String caseId = null;
+
+    @JsonProperty("caseTitle")
+    private String caseTitle = null;
 
     @JsonProperty("isCompleted")
     private Boolean isCompleted = null;
