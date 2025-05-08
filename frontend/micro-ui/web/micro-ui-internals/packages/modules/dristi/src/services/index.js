@@ -136,11 +136,12 @@ export const DRISTIService = {
       params,
     }),
   searchEvidence: (data) => {
+    // Add courtId to criteria if it exists
     return Request({
       url: Urls.dristi.evidenceSearch,
       useCache: false,
       userService: false,
-      data,
+      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52' } },
     });
   },
   searchHearings: (data, params) => {
@@ -179,20 +180,22 @@ export const DRISTIService = {
     });
   },
   searchOrders: (data, params) => {
+    // Add courtId to criteria if it exists
     return Request({
       url: Urls.dristi.ordersSearch,
       useCache: false,
       userService: false,
-      data,
+      data: {...data,criteria: {...data?.criteria,courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52'}},
       params,
     });
   },
   searchSubmissions: (data, params) => {
+    // Add courtId to criteria if it exists
     return Request({
       url: Urls.dristi.submissionsSearch,
       useCache: false,
       userService: false,
-      data,
+      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52' } },
       params,
     });
   },

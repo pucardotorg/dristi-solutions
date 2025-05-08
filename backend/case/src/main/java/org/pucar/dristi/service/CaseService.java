@@ -4602,4 +4602,33 @@ public class CaseService {
         }
     }
 
+    public Map<String,AtomicBoolean> enrichAccessCode(AccessCodeGenerateRequest accessCodeGenerateRequest) {
+        Map<String,AtomicBoolean> responseMap = new HashMap<>();
+        for (String filingNumber : accessCodeGenerateRequest.getFilingNumberList()) {
+            AtomicBoolean generated = new AtomicBoolean(false);
+
+            List<CaseCriteria> casesList  = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(filingNumber).build()), accessCodeGenerateRequest.getRequestInfo());
+            casesList.forEach(caseCriteria -> {
+                caseCriteria.getResponseList().forEach(cases -> {
+                    if(cases.getAccessCode()==null || cases.getAccessCode().isEmpty()){
+                        CourtCase decryptedCourtCase = encryptionDecryptionUtil.decryptObject(cases, config.getCaseDecryptSelf(), CourtCase.class, accessCodeGenerateRequest.getRequestInfo());
+                        CaseRequest caseRequest = CaseRequest.builder().cases(decryptedCourtCase).requestInfo(accessCodeGenerateRequest.getRequestInfo()).build();
+
+                        enrichmentUtil.enrichAccessCode(caseRequest);
+                        log.info("In enrich access code if null for caseId :: {}, access-code :: {}", caseRequest.getCases().getId(),caseRequest.getCases().getAccessCode());
+
+                        caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
+
+                        producer.push(config.getCaseUpdateStatusTopic(),caseRequest);
+                        cacheService.save(accessCodeGenerateRequest.getRequestInfo().getUserInfo().getTenantId() + ":" + cases.getId().toString(), caseRequest.getCases());
+                        generated.set(true);
+                    }
+                });
+            });
+
+            responseMap.put(filingNumber,generated);
+        }
+
+        return responseMap;
+    }
 }

@@ -107,6 +107,7 @@ public class PublishOrderCheckoutAcceptance implements OrderUpdateStrategy {
         WorkflowObject workflow = new WorkflowObject();
         workflow.setAction(BULK_RESCHEDULE);
         workflow.setComments("Update Hearing");
+        hearing.setWorkflow(workflow);
 
         StringBuilder updateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
         log.info("updating hearing for hearing number:{},action:{}", hearing.getHearingId(), workflow.getAction());
