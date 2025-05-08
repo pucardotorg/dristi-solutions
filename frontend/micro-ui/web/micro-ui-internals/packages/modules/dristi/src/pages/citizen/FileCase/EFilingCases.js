@@ -195,7 +195,7 @@ function EFilingCases({ path }) {
 
   const [openConfigurationModal, setOpenConfigurationModal] = useState(false);
   const [openConfirmCourtModal, setOpenConfirmCourtModal] = useState(false);
-  const [serviceOfDemandNoticeModal, setServiceOfDemandNoticeModal] = useState(false);
+  const [serviceOfDemandNoticeModal, setServiceOfDemandNoticeModal] = useState({ show: false, index: 0 });
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
   const [showConfirmMandatoryModal, setShowConfirmMandatoryModal] = useState(false);
   const [optionalFieldModalAlreadyViewed, setOptionalFieldModalAlreadyViewed] = useState(false);
@@ -1360,9 +1360,7 @@ function EFilingCases({ path }) {
                   modifiedFormComponent.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
                 }
                 modifiedFormComponent.state = state;
-                if (
-                  modifiedFormComponent?.labelChildren === "OutlinedInfoIcon"
-                ) {
+                if (modifiedFormComponent?.labelChildren === "OutlinedInfoIcon") {
                   modifiedFormComponent.labelChildren = (
                     <React.Fragment>
                       <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`${modifiedFormComponent.label}-tooltip`}>
@@ -2117,8 +2115,23 @@ function EFilingCases({ path }) {
     }
   };
 
-  const onSaveDraft = (props) => {
-    setParmas({ ...params, [pageConfig.key]: formdata });
+  const onSaveDraft = (removeDateOfService = false) => {
+    let newFormData = structuredClone(formdata);
+    if (removeDateOfService) {
+      newFormData = formdata.map((item, index) =>
+        index === serviceOfDemandNoticeModal?.index
+          ? {
+              ...item,
+              data: {
+                ...item.data,
+                dateOfService: "",
+              },
+            }
+          : item
+      );
+    }
+    setParmas({ ...params, [pageConfig.key]: newFormData });
+
     const newCaseDetails = {
       ...caseDetails,
       additionalDetails: {
@@ -2130,7 +2143,7 @@ function EFilingCases({ path }) {
       t,
       caseDetails: newCaseDetails,
       prevCaseDetails: prevCaseDetails,
-      formdata,
+      formdata: newFormData,
       setFormDataValue: setFormDataValue.current,
       pageConfig,
       selected,
@@ -2843,7 +2856,7 @@ function EFilingCases({ path }) {
               className={"confirm-delete-modal"}
             ></Modal>
           )}
-          {serviceOfDemandNoticeModal && (
+          {serviceOfDemandNoticeModal?.show && (
             <Modal
               headerBarMain={<Heading label={t("CS_IMPORTANT_NOTICE")} />}
               headerBarEnd={
@@ -2851,33 +2864,34 @@ function EFilingCases({ path }) {
                   onClick={() => {
                     setFormDataValue.current?.("dateOfService", "");
                     clearFormDataErrors.current?.("dateOfService");
-                    setServiceOfDemandNoticeModal(false);
+                    setServiceOfDemandNoticeModal((prev) => {
+                      return { ...prev, show: false };
+                    });
                   }}
                 />
               }
               actionCancelOnSubmit={() => {
                 setFormDataValue.current?.("dateOfService", "");
                 clearFormDataErrors.current?.("dateOfService");
-                setServiceOfDemandNoticeModal(false);
+                setServiceOfDemandNoticeModal((prev) => {
+                  return { ...prev, show: false };
+                });
               }}
               actionSaveLabel={t("CS_SAVE_DRAFT")}
               children={<div style={{ padding: "16px 0" }}>{t("CS_SAVE_AS_DRAFT_TEXT")}</div>}
               actionSaveOnSubmit={async () => {
-                await DRISTIService.caseUpdateService(
-                  {
-                    cases: {
-                      ...caseDetails,
-                      litigants: !caseDetails?.litigants ? [] : caseDetails?.litigants,
-                      workflow: {
-                        ...caseDetails?.workflow,
-                        action: "SAVE_DRAFT",
-                      },
-                    },
-                    tenantId,
-                  },
-                  tenantId
-                );
-                history.push(`/${window?.contextPath}/citizen/dristi/home`);
+                try {
+                  setFormDataValue.current?.("dateOfService", "");
+                  clearFormDataErrors.current?.("dateOfService");
+                  setServiceOfDemandNoticeModal((prev) => {
+                    return { ...prev, show: false };
+                  });
+                  onSaveDraft(true);
+                } catch (error) {
+                  console.log(error);
+                }
+
+                history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
               }}
             ></Modal>
           )}
