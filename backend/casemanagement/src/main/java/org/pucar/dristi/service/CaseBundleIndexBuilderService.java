@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.JsonPath;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Value;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +17,6 @@ import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.MdmsV2Util;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.stereotype.Component;
 import org.springframework.core.io.Resource;
 
@@ -35,13 +35,14 @@ public class CaseBundleIndexBuilderService {
     private final MdmsV2Util mdmsV2Util;
     private final ServiceRequestRepository serviceRequestRepository;
     private final ElasticSearchRepository esRepository;
+    private final FileStoreUtil fileStoreUtil;
 
     @Value("classpath:CaseBundleDefault.json")
     private Resource caseDataResource;
 
     @Autowired
     public CaseBundleIndexBuilderService(Configuration configuration, ObjectMapper objectMapper, CaseBundleService caseBundleService, MdmsV2Util mdmsV2Util,
-                                         ServiceRequestRepository serviceRequestRepository, ElasticSearchRepository esRepository) {
+                                         ServiceRequestRepository serviceRequestRepository, ElasticSearchRepository esRepository, FileStoreUtil fileStoreUtil) {
 
         this.configuration = configuration;
         this.objectMapper = objectMapper;
@@ -49,6 +50,7 @@ public class CaseBundleIndexBuilderService {
         this.mdmsV2Util=mdmsV2Util;
         this.serviceRequestRepository=serviceRequestRepository;
         this.esRepository=esRepository;
+        this.fileStoreUtil = fileStoreUtil;
     }
 
     public Boolean isValidState(String moduleName, String businessService, String state,String tenantID,RequestInfo requestInfo){
@@ -161,6 +163,7 @@ public class CaseBundleIndexBuilderService {
                         log.error("not able to get data from es for given case ID");
                     } else {
                         JsonNode indexJson = hitsNode.get(0).path("_source");
+                        List<String> curFileStore = extractFileStore(indexJson);
                         ProcessCaseBundlePdfRequest processCaseBundlePdfRequest = new ProcessCaseBundlePdfRequest();
                         processCaseBundlePdfRequest.setRequestInfo(requestInfo);
                         processCaseBundlePdfRequest.setCaseId(caseID);
@@ -179,6 +182,8 @@ public class CaseBundleIndexBuilderService {
 
                         Map<String, Object> pdfResponseMap = objectMapper.convertValue(pdfResponse, Map.class);
                         Map<String, Object> indexMap = (Map<String, Object>) pdfResponseMap.get("index");
+                        List<String> fileStoreIds = extractFileStore((JsonNode) indexMap);
+                        removeFileStore(curFileStore, fileStoreIds, tenantId);
                         JsonNode updateIndexJson = objectMapper.valueToTree(indexMap);
 
                         String esUpdateUrl = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + "/_update/" + caseID;
@@ -203,6 +208,41 @@ public class CaseBundleIndexBuilderService {
         }
 
 
+    }
+
+    private void removeFileStore(List<String> curFileStore, List<String> fileStoreIds, String tenantId) {
+        List<String> fileStoreToRemove = new ArrayList<>();
+        try {
+             fileStoreToRemove = curFileStore.stream()
+                    .filter(fileStoreId -> !fileStoreIds.contains(fileStoreId))
+                    .toList();
+             if(fileStoreToRemove.isEmpty()) {
+                 log.info("No files to delete.");
+             }
+            fileStoreUtil.deleteFilesByFileStore(fileStoreToRemove, tenantId);
+        } catch (Exception e) {
+            log.error("Error deleting files :: {}", fileStoreToRemove);
+        }
+    }
+
+    private List<String> extractFileStore(JsonNode indexJson) {
+        List<String> fileStoreIds = new ArrayList<>();
+
+        JsonNode sections = indexJson.path("sections");
+        if (sections.isArray()) {
+            for (JsonNode section : sections) {
+                JsonNode lineItems = section.path("lineItems");
+                if (lineItems.isArray()) {
+                    for (JsonNode item : lineItems) {
+                        JsonNode fileStoreId = item.get("fileStoreId");
+                        if (fileStoreId != null && !fileStoreId.isNull()) {
+                            fileStoreIds.add(fileStoreId.asText());
+                        }
+                    }
+                }
+            }
+        }
+        return fileStoreIds;
     }
 
     @KafkaListener(topics = {"${casemanagement.kafka.case.application.topic}"})
