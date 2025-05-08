@@ -1,0 +1,76 @@
+{
+	"info": {
+		"_postman_id": "c7be458a-613c-4671-8b0f-c2d0cb55d27b",
+		"name": "hearing-management",
+		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
+		"_exporter_id": "34981239"
+	},
+	"item": [
+		{
+			"name": "hearing-management search for calendar view",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "authority",
+						"value": "dristi-kerala-dev.pucar.org"
+					},
+					{
+						"key": "accept",
+						"value": "application/json, text/plain, */*"
+					},
+					{
+						"key": "accept-language",
+						"value": "en-GB,en;q=0.9"
+					},
+					{
+						"key": "content-type",
+						"value": "application/json;charset=UTF-8"
+					},
+					{
+						"key": "origin",
+						"value": "https://dristi-kerala-dev.pucar.org"
+					},
+					{
+						"key": "referer",
+						"value": "https://dristi-kerala-dev.pucar.org/ui/employee/dristi/home/view-case?caseId=b4454903-0eed-4db6-ba79-a11d06667184&filingNumber=KL-001479-2025&tab=Overview"
+					},
+					{
+						"key": "sec-ch-ua",
+						"value": "\"Not A(Brand\";v=\"99\", \"Google Chrome\";v=\"121\", \"Chromium\";v=\"121\""
+					},
+					{
+						"key": "sec-ch-ua-mobile",
+						"value": "?0"
+					},
+					{
+						"key": "sec-ch-ua-platform",
+						"value": "\"Linux\""
+					},
+					{
+						"key": "sec-fetch-dest",
+						"value": "empty"
+					},
+					{
+						"key": "sec-fetch-mode",
+						"value": "cors"
+					},
+					{
+						"key": "sec-fetch-site",
+						"value": "same-origin"
+					},
+					{
+						"key": "user-agent",
+						"value": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"criteria\": {\n        \"tenantId\": \"kl\",\n        \"fromDate\": 1746037800000,\n        \"toDate\": 1748629800000\n    },\n    \"tenantId\": \"kl\",\n    \"RequestInfo\": {\n        \"apiId\": \"Rainmaker\",\n        \"authToken\": \"9b8f5ab7-1e8b-492b-8a45-9f81c791d0c4\",\n        \"msgId\": \"1746703795484|en_IN\",\n        \"plainAccessRequest\": {}\n    }\n}"
+				},
+				"url": "localhost:8080/hearing-management/hearing/v1/search"
+			},
+			"response": []
+		}
+	]
+}
