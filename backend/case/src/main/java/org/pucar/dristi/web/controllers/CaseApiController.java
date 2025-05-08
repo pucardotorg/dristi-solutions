@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-04-15T11:31:40.281899+05:30[Asia/Kolkata]")
 @RestController
@@ -226,9 +228,8 @@ public class CaseApiController {
     }
 
     @PostMapping(value = "/enrich/access-code")
-    public ResponseEntity<Void> enrichAccessCode(@Parameter(in = ParameterIn.DEFAULT, description = "enrich access code", required = true, schema = @Schema()) @Valid @RequestBody AccessCodeGenerateRequest body) {
-        caseService.enrichAccessCode(body);
-
-        return new ResponseEntity<>(HttpStatus.OK);
+    public ResponseEntity<Map<String, AtomicBoolean>> enrichAccessCode(@Parameter(in = ParameterIn.DEFAULT, description = "enrich access code", required = true, schema = @Schema()) @Valid @RequestBody AccessCodeGenerateRequest body) {
+        Map<String,AtomicBoolean> response = caseService.enrichAccessCode(body);
+        return new ResponseEntity<>(response,HttpStatus.OK);
     }
 }

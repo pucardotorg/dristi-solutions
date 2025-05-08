@@ -4602,8 +4602,11 @@ public class CaseService {
         }
     }
 
-    public void enrichAccessCode(AccessCodeGenerateRequest accessCodeGenerateRequest) {
+    public Map<String,AtomicBoolean> enrichAccessCode(AccessCodeGenerateRequest accessCodeGenerateRequest) {
+        Map<String,AtomicBoolean> responseMap = new HashMap<>();
         for (String filingNumber : accessCodeGenerateRequest.getFilingNumberList()) {
+            AtomicBoolean generated = new AtomicBoolean(false);
+
             List<CaseCriteria> casesList  = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(filingNumber).build()), accessCodeGenerateRequest.getRequestInfo());
             casesList.forEach(caseCriteria -> {
                 caseCriteria.getResponseList().forEach(cases -> {
@@ -4618,12 +4621,14 @@ public class CaseService {
 
                         producer.push(config.getCaseUpdateStatusTopic(),caseRequest);
                         cacheService.save(accessCodeGenerateRequest.getRequestInfo().getUserInfo().getTenantId() + ":" + cases.getId().toString(), caseRequest.getCases());
+                        generated.set(true);
                     }
-
-
                 });
             });
+
+            responseMap.put(filingNumber,generated);
         }
 
+        return responseMap;
     }
 }
