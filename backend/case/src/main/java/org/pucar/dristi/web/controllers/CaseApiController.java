@@ -224,4 +224,11 @@ public class CaseApiController {
         caseCodeResponse.setResponseInfo(responseInfo);
         return new ResponseEntity<>(caseCodeResponse, HttpStatus.OK);
     }
+
+    @PostMapping(value = "/enrich/access-code")
+    public ResponseEntity<Void> enrichAccessCode(@Parameter(in = ParameterIn.DEFAULT, description = "enrich access code", required = true, schema = @Schema()) @Valid @RequestBody AccessCodeGenerateRequest body) {
+        caseService.enrichAccessCode(body);
+
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
 }
