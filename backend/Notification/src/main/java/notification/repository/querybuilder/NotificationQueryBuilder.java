@@ -58,7 +58,7 @@ public class NotificationQueryBuilder {
                 BASE_QUERY_NOTIFICATION_DOCUMENT +
                 FROM_CTE_TABLE +
                 LEFT_JOIN + NOTIFICATION_DOCUMENT_TABLE + ON +
-                " pn.id = nd.notification_id ";
+                " pn.id = nd.notification_id WHERE nd.isActive = true";
 
         String paginatedQuery = addPaginationQuery(baseQuery, preparedStmtList, pagination, preparedStmtArgList);
 
