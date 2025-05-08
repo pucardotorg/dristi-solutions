@@ -4,22 +4,12 @@ const { renderError } = require("../utils/renderError");
 const {
   search_multiple_cases,
   create_pdf,
-  bulk_hearing_reschedule,
   search_sunbirdrc_credential_service,
   search_mdms,
   search_message,
 } = require("../api");
 const { formatDate } = require("./formatDate");
-
-const requiredFields = [
-  "judgeId",
-  "courtId",
-  "scheduleAfter",
-  "startTime",
-  "endTime",
-  "slotIds",
-  "reason",
-];
+const { getCourtAndJudgeDetails } = require("../utils/commonUtils");
 
 // compare time and return slots
 function formatTimeFromEpoch(epoch) {
@@ -227,8 +217,16 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
       base64Url = imgTag.attr("src");
     }
 
-    const mdmsCourtRoom = config.constants.mdmsCourtRoom;
-    const judgeDetails = config.constants.judgeDetails;
+    const courtCaseJudgeDetails = await getCourtAndJudgeDetails(
+      res,
+      tenantId,
+      "Judge",
+      bulkRescheduleData?.courtId,
+      requestInfo
+    );
+
+    const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
+    const judgeDetails = courtCaseJudgeDetails.judgeDetails;
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
 
