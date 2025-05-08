@@ -422,7 +422,11 @@ public class CaseService {
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
 
+            boolean isAccessCodeGenerated = false;
             if (PENDING_ADMISSION_HEARING_STATUS.equals(caseRequest.getCases().getStatus())) {
+                if (caseRequest.getCases().getAccessCode() == null) {
+                    isAccessCodeGenerated = true;
+                }
                 enrichmentUtil.enrichAccessCode(caseRequest);
                 enrichmentUtil.enrichCNRNumber(caseRequest);
                 enrichmentUtil.enrichCMPNumber(caseRequest);
@@ -432,7 +436,14 @@ public class CaseService {
             }
 
             log.info("Encrypting case: {}", caseRequest.getCases().getId());
+
+            //to prevent from double encryption
+            String encryptedAccessCode = caseRequest.getCases().getAccessCode();
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
+
+            if (!isAccessCodeGenerated) {
+                caseRequest.getCases().setAccessCode(encryptedAccessCode);
+            }
 
             producer.push(config.getCaseUpdateTopic(), caseRequest);
 

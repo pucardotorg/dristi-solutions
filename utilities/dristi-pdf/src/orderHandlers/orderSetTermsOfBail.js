@@ -13,7 +13,14 @@ const { formatDate } = require("./formatDate");
 const { getAdvocates } = require("../applicationHandlers/getAdvocates");
 const { handleApiCall } = require("../utils/handleApiCall");
 
-async function orderSetTermsOfBail(req, res, qrCode, order, compositeOrder) {
+async function orderSetTermsOfBail(
+  req,
+  res,
+  qrCode,
+  order,
+  compositeOrder,
+  courtCaseJudgeDetails
+) {
   const cnrNumber = req.query.cnrNumber;
   const tenantId = req.query.tenantId;
   const entityId = req.query.entityId;
@@ -59,8 +66,8 @@ async function orderSetTermsOfBail(req, res, qrCode, order, compositeOrder) {
       return renderError(res, "Court case not found", 404);
     }
 
-    const mdmsCourtRoom = config.constants.mdmsCourtRoom;
-    const judgeDetails = config.constants.judgeDetails;
+    const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
+    const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
     const resApplication = await handleApiCall(
       res,
