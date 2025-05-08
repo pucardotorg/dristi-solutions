@@ -110,6 +110,7 @@ async function processOrder(
   qrCode,
   order,
   orderPreviewKey,
+  courtCaseJudgeDetails,
   compositeOrder = false
 ) {
   switch (orderPreviewKey.toLowerCase()) {
@@ -119,17 +120,26 @@ async function processOrder(
         res,
         qrCode,
         order,
-        compositeOrder
+        compositeOrder,
+        courtCaseJudgeDetails
       );
     case "schedule-hearing-date":
-      return await scheduleHearingDate(req, res, qrCode, order, compositeOrder);
+      return await scheduleHearingDate(
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder,
+        courtCaseJudgeDetails
+      );
     case "accept-reschedule-request":
       return await acceptReschedulingRequest(
         req,
         res,
         qrCode,
         order,
-        compositeOrder
+        compositeOrder,
+        courtCaseJudgeDetails
       );
     case "mandatory-async-submissions-responses":
       return await mandatoryAsyncSubmissionsResponses(
@@ -137,17 +147,26 @@ async function processOrder(
         res,
         qrCode,
         order,
-        compositeOrder
+        compositeOrder,
+        courtCaseJudgeDetails
       );
     case "order-referral-case-adr":
-      return await adrCaseReferral(req, res, qrCode, order, compositeOrder);
+      return await adrCaseReferral(
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder,
+        courtCaseJudgeDetails
+      );
     case "order-case-settlement-rejected":
       return await caseSettlementRejection(
         req,
         res,
         qrCode,
         order,
-        compositeOrder
+        compositeOrder,
+        courtCaseJudgeDetails
       );
     case "order-for-extension-deadline":
       return await orderAcceptExtension(
@@ -155,7 +174,8 @@ async function processOrder(
         res,
         qrCode,
         order,
-        compositeOrder
+        compositeOrder,
+        courtCaseJudgeDetails
       );
     case "order-reject-application-submission-deadline":
       return await orderRejectExtension(
@@ -163,7 +183,8 @@ async function processOrder(
         res,
         qrCode,
         order,
-        compositeOrder
+        compositeOrder,
+        courtCaseJudgeDetails
       );
     case "order-case-settlement-acceptance":
       return await caseSettlementAcceptance(
@@ -171,25 +192,62 @@ async function processOrder(
         res,
         qrCode,
         order,
-        compositeOrder
+        compositeOrder,
+        courtCaseJudgeDetails
       );
     case "order-case-transfer":
-      return await caseTransfer(req, res, qrCode, order, compositeOrder);
+      return await caseTransfer(
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder,
+        courtCaseJudgeDetails
+      );
     case "summons-issue":
-      return await summonsIssue(req, res, qrCode, order, compositeOrder);
+      return await summonsIssue(
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder,
+        courtCaseJudgeDetails
+      );
     case "order-generic":
-      return await orderGeneric(req, res, qrCode, order, compositeOrder);
+      return await orderGeneric(
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder,
+        courtCaseJudgeDetails
+      );
     case "order-bail-acceptance":
-      return await orderBailAcceptance(req, res, qrCode, order, compositeOrder);
+      return await orderBailAcceptance(
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder,
+        courtCaseJudgeDetails
+      );
     case "order-bail-rejection":
-      return await orderBailRejection(req, res, qrCode, order, compositeOrder);
+      return await orderBailRejection(
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder,
+        courtCaseJudgeDetails
+      );
     case "order-for-rejection-rescheduling-request":
       return await orderForRejectionReschedulingRequest(
         req,
         res,
         qrCode,
         order,
-        compositeOrder
+        compositeOrder,
+        courtCaseJudgeDetails
       );
     case "order-accept-voluntary":
       return await orderAcceptVoluntary(
@@ -197,7 +255,8 @@ async function processOrder(
         res,
         qrCode,
         order,
-        compositeOrder
+        compositeOrder,
+        courtCaseJudgeDetails
       );
     case "order-reject-voluntary":
       return await orderRejectVoluntary(
@@ -205,23 +264,53 @@ async function processOrder(
         res,
         qrCode,
         order,
-        compositeOrder
+        compositeOrder,
+        courtCaseJudgeDetails
       );
     case "order-accept-checkout-request":
-      return await orderAcceptCheckout(req, res, qrCode, order, compositeOrder);
+      return await orderAcceptCheckout(
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder,
+        courtCaseJudgeDetails
+      );
     case "order-reject-checkout-request":
-      return await orderRejectCheckout(req, res, qrCode, order, compositeOrder);
+      return await orderRejectCheckout(
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder,
+        courtCaseJudgeDetails
+      );
     case "order-notice":
-      return await orderNotice(req, res, qrCode, order, compositeOrder);
+      return await orderNotice(
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder,
+        courtCaseJudgeDetails
+      );
     case "order-warrant":
-      return await orderWarrant(req, res, qrCode, order, compositeOrder);
+      return await orderWarrant(
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder,
+        courtCaseJudgeDetails
+      );
     case "order-case-withdrawal-acceptance":
       return await orderWithdrawalAccept(
         req,
         res,
         qrCode,
         order,
-        compositeOrder
+        compositeOrder,
+        courtCaseJudgeDetails
       );
     case "order-case-withdrawal-rejected":
       return await orderWithdrawalReject(
@@ -229,40 +318,91 @@ async function processOrder(
         res,
         qrCode,
         order,
-        compositeOrder
+        compositeOrder,
+        courtCaseJudgeDetails
       );
     case "order-202-crpc":
-      return await orderSection202Crpc(req, res, qrCode, order, compositeOrder);
+      return await orderSection202Crpc(
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder,
+        courtCaseJudgeDetails
+      );
     case "order-acceptance-rejection-dca":
       return await orderAcceptanceRejectionDca(
         req,
         res,
         qrCode,
         order,
-        compositeOrder
+        compositeOrder,
+        courtCaseJudgeDetails
       );
     case "order-set-terms-of-bail":
-      return await orderSetTermsOfBail(req, res, qrCode, order, compositeOrder);
+      return await orderSetTermsOfBail(
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder,
+        courtCaseJudgeDetails
+      );
     case "order-admit-case":
-      return await orderAdmitCase(req, res, qrCode, order, compositeOrder);
+      return await orderAdmitCase(
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder,
+        courtCaseJudgeDetails
+      );
     case "order-dismiss-case":
-      return await orderDismissCase(req, res, qrCode, order, compositeOrder);
+      return await orderDismissCase(
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder,
+        courtCaseJudgeDetails
+      );
     case "order-approval-rejection-litigant-details":
       return await orderApprovalRejectionLitigantDetails(
         req,
         res,
         qrCode,
         order,
-        compositeOrder
+        compositeOrder,
+        courtCaseJudgeDetails
       );
     case "order-replace-advocate":
-      return await orderChangeAdvocate(req, res, qrCode, order, compositeOrder);
+      return await orderChangeAdvocate(
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder,
+        courtCaseJudgeDetails
+      );
     default:
-      return await orderGeneric(req, res, qrCode, order, compositeOrder);
+      return await orderGeneric(
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder,
+        courtCaseJudgeDetails
+      );
   }
 }
 
-async function handleCompositePDF(req, res, qrCode, order) {
+async function handleCompositePDF(
+  req,
+  res,
+  qrCode,
+  order,
+  courtCaseJudgeDetails
+) {
   try {
     if (
       !order ||
@@ -294,6 +434,7 @@ async function handleCompositePDF(req, res, qrCode, order) {
         qrCode,
         newOrder,
         orderPreviewKey,
+        courtCaseJudgeDetails,
         true
       );
       if (!pdfResponseData) {
