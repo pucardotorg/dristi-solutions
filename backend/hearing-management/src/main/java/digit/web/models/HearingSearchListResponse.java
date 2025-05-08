@@ -29,6 +29,10 @@ public class HearingSearchListResponse {
     @Valid
     private ResponseInfo responseInfo = null;
 
+    @JsonProperty("totalCount")
+    @Valid
+    private Integer totalCount = null;
+
     @JsonProperty("HearingList")
     @Valid
     private List<HearingSearchResponse> hearingList = null;

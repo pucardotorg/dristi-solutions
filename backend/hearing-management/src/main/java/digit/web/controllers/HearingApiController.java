@@ -40,13 +40,10 @@ public class HearingApiController {
 
     @RequestMapping(value = "/hearing/v1/search", method = RequestMethod.POST)
     public ResponseEntity<HearingSearchListResponse> hearingV1SearchPost(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the search hearing(s) + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody HearingSearchRequest body) {
-        List<HearingSearchResponse> hearingList = hearingService.searchHearings(body);
+        log.info("Hearing search request: {}", body);
+        HearingSearchListResponse hearingSearchListResponse = hearingService.searchHearings(body);
 
-        HearingSearchListResponse hearingSearchListResponse = HearingSearchListResponse.builder()
-                .responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true))
-                .hearingList(hearingList)
-                .build();
-
+        hearingSearchListResponse.setResponseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true));
         return new ResponseEntity<>(hearingSearchListResponse, HttpStatus.OK);
     }
 

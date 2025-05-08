@@ -3,6 +3,7 @@ package digit.service;
 import digit.enrichment.HearingsEnrichment;
 import digit.util.HearingUtil;
 import digit.web.models.HearingListResponse;
+import digit.web.models.HearingSearchListResponse;
 import digit.web.models.HearingSearchRequest;
 import digit.web.models.HearingSearchResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,7 @@ public class HearingService {
         this.hearingsEnrichment = hearingsEnrichment;
     }
 
-    public List<HearingSearchResponse> searchHearings(HearingSearchRequest hearingSearchRequest) {
+    public HearingSearchListResponse searchHearings(HearingSearchRequest hearingSearchRequest) {
 
         log.info("search hearings, result= IN_PROGRESS,  request = {} ", hearingSearchRequest);
 
@@ -37,13 +38,22 @@ public class HearingService {
 
             HearingListResponse hearingListResponse = hearingUtil.getHearings(hearingSearchRequest);
 
+            List<HearingSearchResponse> hearingSearchResponseList = new ArrayList<>();
+
             if (hearingListResponse != null && hearingListResponse.getHearingList() != null) {
-                return hearingsEnrichment.enrichHearings(hearingListResponse.getHearingList());
+                hearingSearchResponseList = hearingsEnrichment.enrichHearings(hearingListResponse.getHearingList());
+                return HearingSearchListResponse.builder()
+                        .totalCount(hearingListResponse.getTotalCount())
+                        .hearingList(hearingSearchResponseList)
+                        .build();
             }
 
             log.info("search hearings, result= SUCCESS, response = {} ", hearingListResponse);
 
-            return new ArrayList<>();
+            return HearingSearchListResponse.builder()
+                    .totalCount(0)
+                    .hearingList(hearingSearchResponseList)
+                    .build();
 
         } catch (Exception e) {
             log.error("Error occurred while searching hearings");
