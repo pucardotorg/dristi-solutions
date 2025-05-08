@@ -52,6 +52,16 @@ export const hearingService = {
       params,
     });
   },
+  searchHearingCount: (data, params) => {
+    return Request({
+      url: Urls.hearing.searchHearingCount,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
+
   searchTaskList: (data, params) => {
     return Request({
       url: Urls.hearing.searchTasks,

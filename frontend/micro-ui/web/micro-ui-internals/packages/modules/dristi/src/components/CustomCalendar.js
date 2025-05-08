@@ -4,13 +4,32 @@ import { CalendarLeftArrow, CalendarRightArrow } from "../icons/svgIndex";
 import { Button, CardHeader } from "@egovernments/digit-ui-react-components";
 
 function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCustomDate, tenantId, minDate, maxDate }) {
-  const [currentMonth, setCurrentMonth] = useState(new Date()); // State to track the current month
-  const [selectedDate, setSelectedDate] = useState(new Date()); // State to track the current month
-  const { data: hearingResponse, refetch: refetch } = Digit.Hooks.hearings.useGetHearings(
-    { criteria: { tenantId }, tenantId },
+  const initialDate = selectedCustomDate ? new Date(selectedCustomDate) : new Date();
+  const [currentMonth, setCurrentMonth] = useState(initialDate); // State to track the current month
+  const [selectedDate, setSelectedDate] = useState(initialDate); // State to track the current month
+  const selectedMonth = useMemo(() => new Date(currentMonth).getMonth(), [currentMonth]);
+  const selectedYear = useMemo(() => new Date(currentMonth).getFullYear(), [currentMonth]);
+
+  const hearingCriteria = useMemo(
+    () => ({
+      criteria: {
+        tenantId,
+        fromDate: new Date(selectedYear, selectedMonth, 1).getTime(),
+        toDate: new Date(selectedYear, selectedMonth + 1, 0).getTime(),
+      },
+      tenantId,
+    }),
+    [selectedMonth, selectedYear, tenantId]
+  );
+
+  const { data: hearingResponse } = Digit.Hooks.hearings.useGetHearingsCounts(
+    hearingCriteria,
     { applicationNumber: "", cnrNumber: "", tenantId },
     "dristi",
-    true
+    true,
+    false,
+    "",
+    10 * 1000
   );
   const { data: nonWorkingDay } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "schedule-hearing", [{ name: "COURT000334" }], {
     select: (data) => {
@@ -34,15 +53,17 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
   const hearingCounts = useMemo(() => {
     const counts = {};
     if (!hearingDetails) return counts;
-    const filteredHearings = hearingDetails.filter((hearing) => {
-      const hearingDate = new Date(hearing.startTime);
-      return hearingDate.getMonth() === currentMonth.getMonth() && hearingDate.getFullYear() === currentMonth.getFullYear();
+    hearingDetails.forEach((hearing) => {
+      if (hearing?.hearingDate && hearing?.noOfHearing) {
+        counts[hearing.hearingDate] = hearing.noOfHearing;
+      }
     });
 
-    filteredHearings.forEach((hearing) => {
-      const date = new Date(hearing.startTime).toLocaleDateString("en-CA");
-      counts[date] = counts[date] ? counts[date] + 1 : 1;
-    });
+    // hearingDetails.forEach((hearing) => {
+    //   const dateObj = new Date(hearing.startTime);
+    //   const date = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}-${String(dateObj.getDate()).padStart(2, "0")}`;
+    //   counts[date] = counts[date] ? counts[date] + 1 : 1;
+    // });
 
     return counts;
   }, [currentMonth, hearingDetails]);
