@@ -21,7 +21,7 @@ public class CaseDetails {
     @JsonProperty("caseTitle")
     private String caseTitle;
 
-    @JsonProperty("caseYear")
+    @JsonProperty("year")
     private String caseYear;
 
     @JsonProperty("caseCharge")
@@ -43,5 +43,8 @@ public class CaseDetails {
     private String phoneNumber;
 
     @JsonProperty("courtAddress")
-    private Address courtAddress;
+    private String courtAddress;
+
+    @JsonProperty("hearingNumber")
+    private String hearingNumber;
 }

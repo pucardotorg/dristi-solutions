@@ -97,6 +97,7 @@ public class ServiceConstants {
     public static final String UNSIGNED = "UNSIGNED";
     public static final String DELETE = "DELETE";
     public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
+    public static final String ERROR_WHILE_FETCHING_FROM_MDMS = "ERROR_WHILE_FETCHING_FROM_MDMS";
 
 
     // order type
