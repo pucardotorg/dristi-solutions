@@ -421,35 +421,44 @@ const ComplainantSignature = ({ path }) => {
         tenantId
       ).then(async (res) => {
         if ([complainantWorkflowState.CASE_REASSIGNED, complainantWorkflowState.DRAFT_IN_PROGRESS].includes(res?.cases?.[0]?.status)) {
-          const promises = [
-            ...(Array.isArray(caseDetails?.litigants)
-              ? litigants?.map(async (litigant) => {
-                  if (!litigant?.poaHolder) {
+          if (isAdvocateFilingCase && isSelectedUploadDoc) {
+            await closePendingTask({
+              status: state,
+              assignee: userInfo?.uuid,
+              closeUploadDoc: true,
+            });
+          }
+          if (isSelectedEsign) {
+            const promises = [
+              ...(Array.isArray(caseDetails?.litigants)
+                ? litigants?.map(async (litigant) => {
+                    if (!litigant?.poaHolder) {
+                      return closePendingTask({
+                        status: state,
+                        assignee: litigant?.additionalDetails?.uuid,
+                      });
+                    }
+                  })
+                : []),
+              ...(Array.isArray(caseDetails?.representatives)
+                ? caseDetails?.representatives?.map(async (advocate) => {
                     return closePendingTask({
                       status: state,
-                      assignee: litigant?.additionalDetails?.uuid,
+                      assignee: advocate?.additionalDetails?.uuid,
                     });
-                  }
-                })
-              : []),
-            ...(Array.isArray(caseDetails?.representatives)
-              ? caseDetails?.representatives?.map(async (advocate) => {
-                  return closePendingTask({
-                    status: state,
-                    assignee: advocate?.additionalDetails?.uuid,
-                  });
-                })
-              : []),
-            ...(Array.isArray(caseDetails?.poaHolders)
-              ? caseDetails?.poaHolders?.map(async (poaHolder) => {
-                  return closePendingTask({
-                    status: state,
-                    assignee: poaHolder?.additionalDetails?.uuid,
-                  });
-                })
-              : []),
-          ];
-          await Promise.all(promises);
+                  })
+                : []),
+              ...(Array.isArray(caseDetails?.poaHolders)
+                ? caseDetails?.poaHolders?.map(async (poaHolder) => {
+                    return closePendingTask({
+                      status: state,
+                      assignee: poaHolder?.additionalDetails?.uuid,
+                    });
+                  })
+                : []),
+            ];
+            await Promise.all(promises);
+          }
           history.replace(
             `/${window?.contextPath}/${userInfoType}/dristi/home/file-case/case?caseId=${res?.cases?.[0]?.id}&selected=complainantDetails`
           );
