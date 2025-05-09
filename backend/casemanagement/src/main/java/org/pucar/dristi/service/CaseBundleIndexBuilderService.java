@@ -218,6 +218,7 @@ public class CaseBundleIndexBuilderService {
                     .toList();
              if(fileStoreToRemove.isEmpty()) {
                  log.info("No files to delete.");
+                 return;
              }
             fileStoreUtil.deleteFilesByFileStore(fileStoreToRemove, tenantId);
         } catch (Exception e) {
@@ -227,7 +228,7 @@ public class CaseBundleIndexBuilderService {
 
     private List<String> extractFileStore(JsonNode indexJson) {
         List<String> fileStoreIds = new ArrayList<>();
-
+        fileStoreIds.add(indexJson.path("fileStoreId").textValue());
         JsonNode sections = indexJson.path("sections");
         if (sections.isArray()) {
             for (JsonNode section : sections) {
@@ -236,7 +237,7 @@ public class CaseBundleIndexBuilderService {
                     for (JsonNode item : lineItems) {
                         JsonNode fileStoreId = item.get("fileStoreId");
                         if (fileStoreId != null && !fileStoreId.isNull()) {
-                            fileStoreIds.add(fileStoreId.asText());
+                            fileStoreIds.add(fileStoreId.textValue());
                         }
                     }
                 }
