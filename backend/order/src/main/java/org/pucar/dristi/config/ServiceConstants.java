@@ -111,4 +111,5 @@ public class ServiceConstants {
     public static final String COMPLAINANT = "COMPLAINANT";
     public static final String INTERMEDIATE = "INTERMEDIATE";
     public static final String COMPOSITE = "COMPOSITE";
+    public static final String SAVE_DRAFT = "SAVE_DRAFT";
 }
