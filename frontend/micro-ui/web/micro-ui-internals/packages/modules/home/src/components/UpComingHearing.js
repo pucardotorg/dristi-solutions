@@ -135,7 +135,6 @@ const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...prop
     [dayLeftInOngoingMonthRange, props?.attendeeIndividualId, tenantId]
   );
 
-
   const individualId = useMemo(() => {
     return individualData?.Individual?.[0]?.individualId;
   }, [individualData]);
@@ -185,7 +184,6 @@ const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...prop
     [tenantId]
   );
 
-
   const { data: hearingResponse, isLoading } = Digit.Hooks.hearings.useGetHearings(
     reqBody,
     { applicationNumber: "", cnrNumber: "", tenantId },
@@ -199,7 +197,7 @@ const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...prop
     reqBodyMonthly,
     { applicationNumber: "", cnrNumber: "", tenantId },
     `monthly-${dateRange.start}-${dateRange.end}`,
-    Boolean(dateRange.start && dateRange.end && (individualUserType === "citizen" ? (individualId && advocateId) : false)), // monthly hearing count is calculated for advocate screen only.
+    Boolean(dateRange.start && dateRange.end && (individualUserType === "citizen" ? individualId && advocateId : false)), // monthly hearing count is calculated for advocate screen only.
     false,
     individualUserType === "citizen" && individualId
   );
@@ -239,10 +237,10 @@ const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...prop
   }, [earliestHearing, hearingResponse, hearingSlotsResponse]);
 
   useEffect(() => {
-    if (earliestHearingSlot) {
+    if (earliestHearingSlot && userType === "citizen") {
       searchCase(earliestHearingSlot.hearings);
     }
-  }, [hearingResponse, earliestHearingSlot, searchCase]);
+  }, [hearingResponse, earliestHearingSlot, searchCase, userType]);
 
   const hearingCountsByType = useMemo(() => {
     const hearingCountsByType = {};
