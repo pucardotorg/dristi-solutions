@@ -197,26 +197,35 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
 
     const sortedOrders = [...filteredOrders]?.sort((a, b) => new Date(b?.createdDate) - new Date(a?.createdDate));
 
-    const typeCounters = {};
+    const groupedByParty = groupOrdersByParty(sortedOrders);
 
-    const withDisplayTitles = sortedOrders?.map((order) => {
-      const type = order?.orderType;
-      if (!typeCounters[type]) {
-        typeCounters[type] = sortedOrders.filter((o) => o.orderType === type)?.length;
-      }
+    const updatedGrouped = groupedByParty?.map((partyGroup) => {
+      const typeCounters = {};
 
-      const round = typeCounters[type]--;
-      const titleCaseType = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
+      partyGroup?.ordersList?.forEach((order) => {
+        const type = order?.orderType;
+        if (!typeCounters[type]) typeCounters[type] = 0;
+        typeCounters[type]++;
+      });
+
+      const updatedOrdersList = partyGroup?.ordersList?.map((order) => {
+        const type = order?.orderType;
+        const round = typeCounters[type]--;
+        const titleCaseType = type.charAt(0).toUpperCase() + type.slice(1).toLowerCase();
+
+        return {
+          ...order,
+          displayTitle: `${titleCaseType} - R${round}`,
+        };
+      });
 
       return {
-        ...order,
-        displayTitle: `${titleCaseType} - R${round}`,
+        ...partyGroup,
+        ordersList: updatedOrdersList,
       };
     });
 
-    const groupedByParty = groupOrdersByParty(withDisplayTitles);
-
-    return groupedByParty;
+    return updatedGrouped;
   }, [ordersData]);
 
   const [activeIndex, setActiveIndex] = useState({ partyIndex: 0, orderIndex: 0 });
