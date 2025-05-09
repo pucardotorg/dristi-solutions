@@ -19,6 +19,7 @@ import pucar.config.Configuration;
 import pucar.repository.ServiceRequestRepository;
 import pucar.web.models.Order;
 import pucar.web.models.WorkflowObject;
+import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.task.*;
 
 import java.util.*;
@@ -107,7 +108,7 @@ public class TaskUtil {
     }
 
 
-    public TaskRequest createTaskRequestForSummonWarrantAndNotice(RequestInfo requestInfo, Order order, Object taskDetails) {
+    public TaskRequest createTaskRequestForSummonWarrantAndNotice(RequestInfo requestInfo, Order order, Object taskDetails, CourtCase courtCase) {
         String itemId = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("itemId"), String.class);
 
         Map<String, Object> additionalDetails = new HashMap<>();
@@ -127,6 +128,8 @@ public class TaskUtil {
                 .cnrNumber(order.getCnrNumber())
                 .createdDate(dateUtil.getCurrentTimeInMilis())
                 .taskType(order.getOrderType())
+                .caseId(courtCase.getId().toString())
+                .caseTitle(courtCase.getCaseTitle())
                 .taskDetails(taskDetails)
                 .amount(Amount.builder().type("FINE").status("DONE").amount("0").build()) // here amount need to fetch from somewhere
                 .status("INPROGRESS")

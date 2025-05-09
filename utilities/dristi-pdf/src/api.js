@@ -160,6 +160,7 @@ async function search_hrms(tenantId, employeeTypes, courtRooms, requestinfo) {
     tenantId: tenantId,
     employeetypes: employeeTypes,
     courtrooms: courtRooms,
+    isActive: true,
     limit: 10,
     offset: 0,
   };

@@ -195,7 +195,7 @@ public class Notice implements OrderUpdateStrategy {
             JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
             log.info("taskDetailsArray size:{}", taskDetailsArray.size());
             for (JsonNode taskDetail : taskDetailsArray) {
-                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail);
+                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase);
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
 
                 // create pending task

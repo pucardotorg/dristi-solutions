@@ -16,8 +16,6 @@ import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { updateCaseDetails } from "../../../cases/src/utils/joinCaseUtils";
 import AdvocateReplacementComponent from "./AdvocateReplacementComponent";
-import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
-import useSearchOrdersNotificationService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersNotificationService";
 
 export const CaseWorkflowAction = {
   SAVE_DRAFT: "SAVE_DRAFT",
@@ -121,25 +119,6 @@ const TasksComponent = ({
     return options?.filter((item) => listOfActionName.has(item?.code)) || [];
   }, [listOfActionName, options]);
 
-  const { data: caseData, isLoading: isCaseDataLoading } = Digit.Hooks.dristi.useSearchCaseService(
-    {
-      criteria: listOfFilingNumber,
-      tenantId,
-    },
-    {},
-    `case-details-${listOfFilingNumber?.length}`,
-    listOfFilingNumber?.length > 0,
-    listOfFilingNumber?.length > 0
-  );
-
-  const pendingTaskToCaseDetailMap = useMemo(() => {
-    const temp = new Map();
-    caseData?.criteria?.forEach((element) => {
-      temp.set(element?.filingNumber, element?.responseList?.[0]);
-    });
-    return temp;
-  }, [caseData?.criteria]);
-
   useEffect(() => {
     refetch();
   }, [refetch, filingNumber]);
@@ -147,11 +126,13 @@ const TasksComponent = ({
   const getApplicationDetail = useCallback(
     async (applicationNumber) => {
       setSearchCaseLoading(true);
+      // Add courtId to criteria if it exists
       const applicationData = await HomeService.customApiService(Urls.applicationSearch, {
         criteria: {
           filingNumber,
           tenantId,
           applicationNumber,
+          courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
         },
         tenantId,
       });
@@ -164,11 +145,13 @@ const TasksComponent = ({
   const getOrderDetail = useCallback(
     async (orderNumber) => {
       setSearchCaseLoading(true);
+      // Add courtId to criteria if it exists
       const orderData = await HomeService.customApiService(Urls.orderSearch, {
         criteria: {
           filingNumber,
           tenantId,
           orderNumber,
+          courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
         },
         tenantId,
       });
@@ -256,7 +239,7 @@ const TasksComponent = ({
   );
 
   const handleCreateOrder = useCallback(
-    async ({ cnrNumber, filingNumber, orderType, referenceId }) => {
+    async ({ cnrNumber, filingNumber, orderType, referenceId, caseId, caseTitle }) => {
       let reqBody = {
         order: {
           createdDate: null,
@@ -301,8 +284,10 @@ const TasksComponent = ({
             status: "SAVE_DRAFT",
             assignedTo: [],
             assignedRole: ["JUDGE_ROLE"],
-            cnrNumber: null,
+            cnrNumber,
             filingNumber: filingNumber,
+            caseId,
+            caseTitle,
             isCompleted: true,
             stateSla: null,
             additionalDetails: {},
@@ -316,8 +301,7 @@ const TasksComponent = ({
   );
 
   const pendingTasks = useMemo(() => {
-    if (isLoading || isOptionsLoading || isCaseDataLoading || pendingTaskActionDetails?.length === 0 || pendingTaskToCaseDetailMap?.size === 0)
-      return [];
+    if (isLoading || isOptionsLoading || pendingTaskActionDetails?.length === 0) return [];
     const getCustomFunction = {
       handleCreateOrder,
       handleReviewSubmission,
@@ -326,7 +310,8 @@ const TasksComponent = ({
     const tasks = pendingTaskActionDetails?.map((data) => {
       const filingNumber = data?.fields?.find((field) => field.key === "filingNumber")?.value || "";
       const cnrNumber = data?.fields?.find((field) => field.key === "cnrNumber")?.value || "";
-      const caseDetail = pendingTaskToCaseDetailMap.get(filingNumber);
+      const caseId = data?.fields?.find((field) => field.key === "caseId")?.value || "";
+      const caseTitle = data?.fields?.find((field) => field.key === "caseTitle")?.value || "";
       const status = data?.fields?.find((field) => field.key === "status")?.value;
       const dueInSec = data?.fields?.find((field) => field.key === "businessServiceSla")?.value;
       const stateSla = data?.fields?.find((field) => field.key === "stateSla")?.value;
@@ -335,7 +320,6 @@ const TasksComponent = ({
       const referenceId = data?.fields?.find((field) => field.key === "referenceId")?.value;
       const entityType = data?.fields?.find((field) => field.key === "entityType")?.value;
       const individualId = data?.fields?.find((field) => field.key === "additionalDetails.individualId")?.value;
-      const caseId = data?.fields?.find((field) => field.key === "additionalDetails.caseId")?.value;
       const litigant = data?.fields?.find((field) => field.key === "additionalDetails.litigantUuid[0]")?.value;
       const litigantIndId = data?.fields?.find((field) => field.key === "additionalDetails.litigants[0]")?.value;
       const screenType = data?.fields?.find((field) => field.key === "screenType")?.value;
@@ -343,7 +327,7 @@ const TasksComponent = ({
       const uniqueId = data?.fields?.find((field) => field.key === "additionalDetails.uniqueId")?.value;
 
       const updateReferenceId = referenceId.split("_").pop();
-      const defaultObj = { referenceId: updateReferenceId, ...caseDetail };
+      const defaultObj = { referenceId: updateReferenceId, id: caseId, cnrNumber, filingNumber, caseTitle };
       const pendingTaskActions = selectTaskType?.[entityType || taskTypeCode];
       const isCustomFunction = Boolean(pendingTaskActions?.[status]?.customFunction);
       const dayCount = stateSla
@@ -368,7 +352,7 @@ const TasksComponent = ({
         status,
         individualId,
         caseId,
-        caseTitle: caseDetail?.caseTitle || "",
+        caseTitle,
         filingNumber: filingNumber,
         caseType: "NIA S138",
         due: due,
@@ -380,7 +364,7 @@ const TasksComponent = ({
           ...additionalDetails,
           cnrNumber,
           filingNumber,
-          caseId: caseDetail?.id,
+          caseId,
           referenceId: updateReferenceId,
           litigant,
           litigantIndId,
@@ -406,12 +390,10 @@ const TasksComponent = ({
     handleCreateOrder,
     handleReviewOrder,
     handleReviewSubmission,
-    isCaseDataLoading,
     isCourtRoomManager,
     isLoading,
     isOptionsLoading,
     pendingTaskActionDetails,
-    pendingTaskToCaseDetailMap,
     taskType?.code,
     taskType?.keyword,
     taskTypeCode,
@@ -671,7 +653,7 @@ const TasksComponent = ({
             isDisabled={pendingSignOrderList?.totalCount === 0}
           />
         )}
-        {isLoading || isOptionsLoading || isCaseDataLoading ? (
+        {isLoading || isOptionsLoading ? (
           <Loader />
         ) : totalPendingTask !== undefined && totalPendingTask > 0 ? (
           <React.Fragment>

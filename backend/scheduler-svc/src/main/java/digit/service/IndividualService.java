@@ -58,8 +58,7 @@ public class IndividualService {
             individualSearchRequest.setIndividual(individualSearch);
             StringBuilder uri = new StringBuilder(config.getIndividualHost()).append(config.getIndividualSearchEndpoint());
             uri.append("?limit=").append(uuids.size()).append("&offset=0")
-                    .append("&tenantId=").append(requestInfo.getUserInfo().getTenantId())
-                    .append("&includeDeleted=true");
+                    .append("&tenantId=").append(requestInfo.getUserInfo().getTenantId());
                 List<Individual> individual = individualUtils.getIndividualByIndividualId(individualSearchRequest, uri);
             if (individual != null ) {
                 return individual;

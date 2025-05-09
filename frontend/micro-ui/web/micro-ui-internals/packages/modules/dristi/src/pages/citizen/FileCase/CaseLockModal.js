@@ -139,12 +139,6 @@ function CaseLockModal({
           }))
         : [];
 
-      const poaHolders = Array.isArray(caseDetails?.poaHolders)
-        ? caseDetails?.poaHolders?.map((poaHolder) => ({
-            uuid: poaHolder?.additionalDetails?.uuid,
-          }))
-        : [];
-
       const isCaseReassigned = state === CaseWorkflowState.CASE_REASSIGNED;
       const actionType = isCaseReassigned ? "EDIT_CASE_ADVOCATE" : "SUBMIT_CASE_ADVOCATE";
 
@@ -158,7 +152,7 @@ function CaseLockModal({
         await createPendingTask({
           name: taskName,
           status: taskStatus,
-          assignees: [...assignees, ...poaHolders],
+          assignees: [...assignees],
         });
         history.replace(`${path}/sign-complaint?filingNumber=${filingNumber}`);
       } catch (error) {

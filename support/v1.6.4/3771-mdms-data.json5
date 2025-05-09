@@ -1,0 +1,108 @@
+[
+  // can be added through workbench ui
+  {
+    "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+    "masterName": "actions-test",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 2733,
+          "url": "/order-management/v1/_createOrder",
+          "code": "2733",
+          "name": "order management create order",
+          "displayName": "order management create order",
+          "serviceCode": "Order-Management"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 2734,
+          "url": "/order-management/v1/_updateOrder",
+          "code": "2734",
+          "name": "order management update order",
+          "displayName": "order management update order",
+          "serviceCode": "Or"
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+    "masterName": "roleactions",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 456,
+          "actionid": 2733,
+          "rolecode": "ORDER_CREATOR",
+          "tenantid": "kl",
+          "actioncode": "2733"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 457,
+          "actionid": 2733,
+          "rolecode": "EMPLOYEE",
+          "tenantid": "kl",
+          "actioncode": "2733"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 458,
+          "actionid": 2733,
+          "rolecode": "SUPERUSER",
+          "tenantid": "kl",
+          "actioncode": "2733"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 459,
+          "actionid": 2734,
+          "rolecode": "SUPERUSER",
+          "tenantid": "kl",
+          "actioncode": "2734"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 460,
+          "actionid": 2734,
+          "rolecode": "ORDER_APPROVER",
+          "tenantid": "kl",
+          "actioncode": "2734"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

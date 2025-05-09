@@ -13,7 +13,7 @@ const presidedBy = {
 export const ordersService = {
   createOrder: (data, params) =>
     Request({
-      url: Urls.orders.orderCreate,
+      url: Urls.orders.orderManagementCreate,
       useCache: false,
       userService: true,
       data,
@@ -37,18 +37,19 @@ export const ordersService = {
     }),
   updateOrder: (data, params) =>
     Request({
-      url: Urls.orders.orderUpdate,
+      url: Urls.orders.orderManagementUpdate,
       useCache: false,
       userService: true,
       data,
       params,
     }),
   searchOrder: (data, params) =>
+    // Add courtId to criteria if it exists
     Request({
       url: Urls.orders.orderSearch,
       useCache: true,
       userService: true,
-      data,
+      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52' } },
       params,
     }),
   searchOrderNotifications: (data, params) =>
@@ -177,7 +178,7 @@ export const taskService = {
       url: Urls.Task.search,
       useCache: true,
       userService: true,
-      data,
+      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52' } },
       params,
     }),
 };
