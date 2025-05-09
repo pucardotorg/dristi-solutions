@@ -431,11 +431,11 @@ const HomeView = () => {
       title: t("REVIEW_SUMMON_NOTICE_WARRANTS_TEXT"),
       actionLink: "orders/Summons&Notice",
     },
-    {
-      logo: <DocumentIcon />,
-      title: t("VIEW_ISSUED_ORDERS"),
-      actionLink: "",
-    },
+    // {
+    //   logo: <DocumentIcon />,
+    //   title: t("VIEW_ISSUED_ORDERS"),
+    //   actionLink: "",
+    // },
   ];
 
   if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOrdersLoading || isOutcomeLoading) {
