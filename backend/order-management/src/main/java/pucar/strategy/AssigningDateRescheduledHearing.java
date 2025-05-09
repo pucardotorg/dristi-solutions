@@ -23,8 +23,7 @@ import pucar.web.models.hearing.HearingSearchRequest;
 import java.util.Arrays;
 import java.util.List;
 
-import static pucar.config.ServiceConstants.ASSIGNING_DATE_RESCHEDULED_HEARING;
-import static pucar.config.ServiceConstants.SETDATE;
+import static pucar.config.ServiceConstants.*;
 
 @Component
 @Slf4j
