@@ -1,6 +1,7 @@
 package pucar.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +54,22 @@ public class OrderUtil {
     public OrderResponse updateOrder(OrderRequest orderRequest) {
         StringBuilder uri = new StringBuilder();
         uri.append(configuration.getOrderHost()).append(configuration.getOrderUpdateEndPoint());
+        Object response;
+        OrderResponse orderResponse;
+        try {
+            response = serviceRequestRepository.fetchResult(uri, orderRequest);
+            orderResponse = objectMapper.convertValue(response, OrderResponse.class);
+        } catch (Exception e) {
+            log.error(ERROR_WHILE_FETCHING_FROM_ORDER, e);
+            throw new CustomException(ERROR_WHILE_FETCHING_FROM_ORDER, e.getMessage());
+
+        }
+        return orderResponse;
+    }
+
+    public OrderResponse createOrder(OrderRequest orderRequest) {
+        StringBuilder uri = new StringBuilder();
+        uri.append(configuration.getOrderHost()).append(configuration.getOrderCreateEndPoint());
         Object response;
         OrderResponse orderResponse;
         try {
@@ -146,5 +163,39 @@ public class OrderUtil {
                 .map(map -> map.get("businessOfTheDay"))
                 .filter(String.class::isInstance)
                 .map(String.class::cast).orElse(null);
+    }
+
+    public OrderResponse  removeOrderItem(@Valid OrderRequest request) {
+
+        StringBuilder uri = new StringBuilder();
+        uri.append(configuration.getOrderHost()).append(configuration.getRemoveOrderItemEndPoint());
+        Object response;
+        OrderResponse orderResponse;
+        try {
+            response = serviceRequestRepository.fetchResult(uri, request);
+            orderResponse = objectMapper.convertValue(response, OrderResponse.class);
+        } catch (Exception e) {
+            log.error(ERROR_WHILE_FETCHING_FROM_ORDER, e);
+            throw new CustomException(ERROR_WHILE_FETCHING_FROM_ORDER, e.getMessage());
+
+        }
+        return orderResponse;
+    }
+
+    public OrderResponse addOrderItem(@Valid OrderRequest request) {
+
+        StringBuilder uri = new StringBuilder();
+        uri.append(configuration.getOrderHost()).append(configuration.getAddOrderItemEndPoint());
+        Object response;
+        OrderResponse orderResponse;
+        try {
+            response = serviceRequestRepository.fetchResult(uri, request);
+            orderResponse = objectMapper.convertValue(response, OrderResponse.class);
+        } catch (Exception e) {
+            log.error(ERROR_WHILE_FETCHING_FROM_ORDER, e);
+            throw new CustomException(ERROR_WHILE_FETCHING_FROM_ORDER, e.getMessage());
+
+        }
+        return orderResponse;
     }
 }
