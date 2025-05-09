@@ -149,7 +149,10 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     return [];
   }, [hearingsData, currentHearingId]);
 
-  const { caseId, cnrNumber } = useMemo(() => ({ cnrNumber: caseDetails?.cnrNumber || "", caseId: caseDetails?.id }), [caseDetails]);
+  const { caseId, cnrNumber, caseTitle } = useMemo(
+    () => ({ cnrNumber: caseDetails?.cnrNumber || "", caseId: caseDetails?.id, caseTitle: caseDetails?.caseTitle }),
+    [caseDetails]
+  );
 
   const handleCloseModal = () => {
     if (handleClose) {
@@ -160,7 +163,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
   const handleNavigate = () => {
     const contextPath = window?.contextPath || "";
     history.push(
-      `/${contextPath}/employee/home/home-pending-task/reissue-summons-modal?filingNumber=${filingNumber}&hearingId=${currentHearingId}&cnrNumber=${cnrNumber}&orderType=${orderType}`
+      `/${contextPath}/employee/home/home-pending-task/reissue-summons-modal?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&hearingId=${currentHearingId}&cnrNumber=${cnrNumber}&orderType=${orderType}`
     );
   };
 
