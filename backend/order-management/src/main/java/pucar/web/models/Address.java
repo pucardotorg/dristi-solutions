@@ -11,6 +11,9 @@ import pucar.web.models.task.GeoLocationDetails;
 @Builder
 public class Address {
 
+    @JsonProperty("id")
+    private String id;
+
     @JsonProperty("state")
     private String state;
 
@@ -26,8 +29,11 @@ public class Address {
     @JsonProperty("locality")
     private String locality;
 
+    @JsonProperty("typeOfAddress")
+    private Object typeOfAddress;
+
     @JsonProperty("coordinate")
-    private Coordinate coordinate;
+    private CoordinateAddress coordinate;
 
     @JsonProperty("geoLocationDetails")
     private GeoLocationDetails geoLocationDetails;

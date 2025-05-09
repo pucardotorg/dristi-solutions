@@ -4,8 +4,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import pucar.web.models.Address;
 
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class WitnessDetails {
 
     @JsonProperty("name")

@@ -12,4 +12,10 @@ public class GeoLocationDetails {
 
     @JsonProperty("policeStation")
     private PoliceStationDetails policeStationDetails;
+
+    @JsonProperty("latitude")
+    private  String latitude;
+
+    @JsonProperty("longitude")
+    private String longitude;
 }

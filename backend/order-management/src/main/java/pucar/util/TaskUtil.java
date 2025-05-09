@@ -17,11 +17,17 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import pucar.config.ChannelTypeMap;
 import pucar.config.Configuration;
 import pucar.repository.ServiceRequestRepository;
 import pucar.web.models.Address;
+import pucar.web.models.CoordinateAddress;
 import pucar.web.models.Order;
 import pucar.web.models.WorkflowObject;
+import pucar.web.models.calculator.BreakDown;
+import pucar.web.models.calculator.CalculationRes;
+import pucar.web.models.calculator.TaskPaymentCriteria;
+import pucar.web.models.calculator.TaskPaymentRequest;
 import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.task.*;
 
@@ -29,8 +35,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static pucar.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
-import static pucar.config.ServiceConstants.SEARCHER_SERVICE_EXCEPTION;
+import static pucar.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -43,8 +48,9 @@ public class TaskUtil {
     private final JsonUtil jsonUtil;
     private final Configuration config;
     private final MdmsUtil mdmsUtil;
+    private final PaymentCalculatorUtil paymentCalculatorUtil;
 
-    public TaskUtil(RestTemplate restTemplate, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, JsonUtil jsonUtil, Configuration config, MdmsUtil mdmsUtil) {
+    public TaskUtil(RestTemplate restTemplate, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, JsonUtil jsonUtil, Configuration config, MdmsUtil mdmsUtil, ChannelTypeMap channelTypeMap, PaymentCalculatorUtil paymentCalculatorUtil) {
         this.restTemplate = restTemplate;
         this.serviceRequestRepository = serviceRequestRepository;
         this.objectMapper = objectMapper;
@@ -52,6 +58,7 @@ public class TaskUtil {
         this.jsonUtil = jsonUtil;
         this.config = config;
         this.mdmsUtil = mdmsUtil;
+        this.paymentCalculatorUtil = paymentCalculatorUtil;
     }
 
     public TaskResponse callCreateTask(TaskRequest taskRequest) {
@@ -113,14 +120,13 @@ public class TaskUtil {
     }
 
 
-    public TaskRequest createTaskRequestForSummonWarrantAndNotice(RequestInfo requestInfo, Order order, Object taskDetails, CourtCase courtCase) {
+    public List<TaskRequest> createTaskRequestForSummonWarrantAndNotice(RequestInfo requestInfo, Order order, CourtCase courtCase) {
 
         Map<String, Map<String, JSONArray>> courtRooms = mdmsUtil.fetchMdmsData(requestInfo, order.getTenantId(), "common-masters", List.of("Court_Rooms"));
 
         JSONArray courtRoomsArray = courtRooms.get("common-masters").get("Court_Rooms");
 
         Map<String, Object> courtDetails = getCourtDetails(courtRoomsArray, courtCase);
-
         String itemId = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("itemId"), String.class);
 
         Map<String, Object> additionalDetails = new HashMap<>();
@@ -133,23 +139,30 @@ public class TaskUtil {
         workflowObject.setComments(order.getOrderType());
         workflowObject.setDocuments(Collections.singletonList(Document.builder().build()));
 
-        Task task = Task.builder()
-                .tenantId(order.getTenantId())
-                .orderId(order.getId())
-                .filingNumber(order.getFilingNumber())
-                .cnrNumber(order.getCnrNumber())
-                .createdDate(dateUtil.getCurrentTimeInMilis())
-                .taskType(order.getOrderType())
-                .caseId(courtCase.getId().toString())
-                .caseTitle(courtCase.getCaseTitle())
-                .taskDetails(taskDetails)
-                .amount(Amount.builder().type("FINE").status("DONE").amount("0").build()) // here amount need to fetch from somewhere
-                .status("INPROGRESS")
-                .additionalDetails(additionalDetails) // here new hashmap
-                .workflow(workflowObject)
-                .build();
+        List<TaskDetails> taskDetailsList = getTaskDetails(order, courtCase, courtDetails, requestInfo);
+        List<TaskRequest> taskRequestList = new ArrayList<>();
+        taskDetailsList.forEach(taskDetail -> {
 
-        return TaskRequest.builder().requestInfo(requestInfo).task(task).build();
+                    Task task = Task.builder()
+                            .tenantId(order.getTenantId())
+                            .orderId(order.getId())
+                            .filingNumber(order.getFilingNumber())
+                            .cnrNumber(order.getCnrNumber())
+                            .createdDate(dateUtil.getCurrentTimeInMilis())
+                            .taskType(order.getOrderType())
+                            .caseId(courtCase.getId().toString())
+                            .caseTitle(courtCase.getCaseTitle())
+                            .taskDetails(taskDetail)
+                            .amount(Amount.builder().type("FINE").status("DONE").amount("0").build()) // here amount need to fetch from somewhere
+                            .status("INPROGRESS")
+                            .additionalDetails(additionalDetails) // here new hashmap
+                            .workflow(workflowObject)
+                            .build();
+                    taskRequestList.add(TaskRequest.builder().requestInfo(requestInfo).task(task).build());
+                }
+        );
+
+        return taskRequestList;
     }
 
     @SuppressWarnings("unchecked")
@@ -191,35 +204,106 @@ public class TaskUtil {
     }
 
 
-    public TaskDetails getTaskDetails(Order order, CourtCase courtCase, Map<String, Object> courtDetails) {
+    public List<TaskDetails> getTaskDetails(Order order, CourtCase courtCase, Map<String, Object> courtDetails, RequestInfo requestInfo) {
 
         TaskDetails taskDetails = TaskDetails.builder().build();
-
-        getSummonWarrantOrNoticeDetails(order, taskDetails, courtCase);
-        getRespondentDetails(order, taskDetails, courtCase);
-        getWitnessDetails(order, taskDetails, courtCase);
-        getCaseDetails(order, taskDetails, courtCase, courtDetails);
-        getDeliveryChannel(order, taskDetails, courtCase);
-        return taskDetails;
+        try {
+            getSummonWarrantOrNoticeDetails(order, taskDetails, courtCase);
+            getRespondentDetails(order, taskDetails, courtCase);
+            getWitnessDetails(order, taskDetails, courtCase);
+            getCaseDetails(order, taskDetails, courtCase, courtDetails);
+            return getDeliveryChannel(order, taskDetails, courtCase, requestInfo);
+        } catch (Exception e) {
+            log.error("Exception in getTaskDetails", e);
+            throw new CustomException();
+        }
 
     }
 
-    private void getDeliveryChannel(Order order, TaskDetails taskDetails, CourtCase courtCase) throws JsonProcessingException {
+    private List<TaskDetails> getDeliveryChannel(Order order, TaskDetails taskDetails, CourtCase courtCase, RequestInfo requestInfo) throws JsonProcessingException {
+
+        RespondentDetails respondentDetails = taskDetails.getRespondentDetails();
+
+        String receiverPinCode = respondentDetails.getAddress().getPinCode();
 
         Object orderFormData = getOrderFormDataByOrderType(order.getAdditionalDetails(), order.getOrderType());
         Object deliveryChannels = jsonUtil.getNestedValue(orderFormData, List.of("selectedChannels"), Object.class);
         JSONArray deliveryChannelArray = objectMapper.convertValue(objectMapper.writeValueAsBytes(deliveryChannels), JSONArray.class);
         List<Map<String, Object>> channelMap = extractDeliveryChannels(deliveryChannelArray);
 
+        TaskPaymentCriteria taskPaymentCriteria = TaskPaymentCriteria.builder()
+                .receiverPincode(receiverPinCode)
+                .taskType(order.getOrderType())
+                .tenantId(order.getTenantId()).build();
+
+        List<TaskDetails> taskDetailsList = new ArrayList<>();
+
         for (Map<String, Object> channel : channelMap) {
+
+            TaskDetails taskDetailsClone = objectMapper.convertValue(objectMapper.writeValueAsBytes(taskDetails), TaskDetails.class);
 
             String channelType = channel.get("type").toString();
             String channelValue = channel.get("code").toString();
 
-            DeliveryChannel deliveryChannel = DeliveryChannel.builder().build();
+            taskPaymentCriteria.setChannelId(channelValue);
 
+            TaskPaymentRequest taskPaymentRequest = TaskPaymentRequest.builder()
+                    .requestInfo(requestInfo)
+                    .calculationCriteria(Collections.singletonList(
+                            taskPaymentCriteria
+                    )).build();
 
+            CalculationRes calculationRes = paymentCalculatorUtil.callPaymentCalculator(taskPaymentRequest);
+            Double courtFee = calculationRes.getCalculation().stream()
+                    .flatMap(c -> c.getBreakDown().stream())
+                    .filter(bd -> bd.getCode().equals("COURT_FEE"))
+                    .mapToDouble(BreakDown::getAmount)
+                    .sum();
+
+            DeliveryChannel deliveryChannel = DeliveryChannel.builder()
+                    .channelName(ChannelTypeMap.getStateSlaMap().get(channelType).get("type"))
+                    .channelCode(ChannelTypeMap.getStateSlaMap().get(channelType).get("code"))
+                    .fees(courtFee.toString())
+                    .feesStatus("pending").build();
+            taskDetailsClone.setDeliveryChannel(deliveryChannel);
+
+            updateAddressInRespondentDetails(order.getOrderType(), taskDetailsClone, channel);
+            updateAddressInWitnessDetails(order.getOrderType(), taskDetailsClone, channel);
+            taskDetailsList.add(taskDetailsClone);
         }
+        return taskDetailsList;
+    }
+
+    private void updateAddressInWitnessDetails(String orderType, TaskDetails taskDetails, Map<String, Object> value) {
+        if (taskDetails.getWitnessDetails() != null) {
+            Address address = taskDetails.getRespondentDetails().getAddress();
+            taskDetails.getWitnessDetails().setAddress(address);
+        }
+    }
+
+    private void updateAddressInRespondentDetails(String orderType, TaskDetails taskDetails, Map<String, Object> channel) throws JsonProcessingException {
+
+        if (WARRANT.equalsIgnoreCase(orderType) || "Via Police".equalsIgnoreCase(channel.get("type").toString()) || Arrays.asList("e-Post", "Registered Post").contains(channel.get("type").toString())) {
+            Object addressObject = channel.get("value");
+            Object insideAddressObject = jsonUtil.getNestedValue(addressObject, List.of("address"), Object.class);
+            Object geoLocationObject = jsonUtil.getNestedValue(addressObject, List.of("geoLocationDetails"), Object.class);
+            String id = jsonUtil.getNestedValue(addressObject, List.of("id"), String.class);
+            Address address = objectMapper.convertValue(objectMapper.writeValueAsString(insideAddressObject), Address.class);
+            GeoLocationDetails geoLocationDetails = objectMapper.convertValue(objectMapper.writeValueAsString(geoLocationObject), GeoLocationDetails.class);
+            address.setGeoLocationDetails(geoLocationDetails);
+            address.setId(id);
+            address.setCoordinate(CoordinateAddress.builder()
+                    .latitude(geoLocationDetails.getLatitude())
+                    .longitude(geoLocationDetails.getLongitude()).build());
+            taskDetails.getRespondentDetails().setAddress(address);
+
+        } else if (channel.get("type") == "SMS" || channel.get("type") == "E-mail") {
+            String phoneNumber = channel.get("type") == "SMS" ? channel.get("value").toString() : null;
+            String emailId = channel.get("type") == "E-mail" ? channel.get("value").toString() : null;
+            taskDetails.getRespondentDetails().setPhone(phoneNumber);
+            taskDetails.getRespondentDetails().setEmail(emailId);
+        }
+
     }
 
     private void getCaseDetails(Order order, TaskDetails taskDetails, CourtCase courtCase, Map<String, Object> courtDetails) {
