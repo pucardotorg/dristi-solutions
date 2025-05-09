@@ -82,7 +82,7 @@ const MonthlyCalendar = () => {
     reqBody,
     { applicationNumber: "", cnrNumber: "", tenantId },
     `${dateRange.start?.toISOString()}-${dateRange.end?.toISOString()}`,
-    true,
+    Boolean(dateRange.start && dateRange.end),
     false,
     "",
     10 * 1000
