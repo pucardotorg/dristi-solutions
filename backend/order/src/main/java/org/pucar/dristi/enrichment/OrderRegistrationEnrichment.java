@@ -56,7 +56,7 @@ public class OrderRegistrationEnrichment {
                         document.setDocumentUid(document.getId());
                     });
                 }
-
+                orderRequest.getOrder().setCourtId(configuration.getCourtId());
                 String orderNumber = orderRequest.getOrder().getFilingNumber() + "-" + orderRegistrationIdList.get(0);
                 orderRequest.getOrder().setOrderNumber(orderNumber);
             }

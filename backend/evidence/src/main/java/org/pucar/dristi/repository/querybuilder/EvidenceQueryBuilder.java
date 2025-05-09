@@ -16,7 +16,7 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 public class EvidenceQueryBuilder {
 
     private static final String BASE_ARTIFACT_QUERY = " SELECT art.id as id, art.tenantId as tenantId, art.artifactNumber as artifactNumber, " +
-            "art.evidenceNumber as evidenceNumber, art.externalRefNumber as externalRefNumber, art.caseId as caseId, " +
+            "art.evidenceNumber as evidenceNumber, art.externalRefNumber as externalRefNumber, art.caseId as caseId, art.courtId as courtId," +
             "art.application as application, art.filingNumber as filingNumber, art.hearing as hearing, art.orders as orders, art.mediaType as mediaType, " +
             "art.artifactType as artifactType, art.sourceType as sourceType, art.sourceID as sourceID, art.sourceName as sourceName, art.applicableTo as applicableTo, " +
             "art.comments as comments, art.file as file, art.createdDate as createdDate, art.isActive as isActive, art.isEvidence as isEvidence, art.status as status, art.description as description, " +
@@ -48,6 +48,7 @@ public class EvidenceQueryBuilder {
             String sourceName = criteria.getSourceName();
             String artifactNumber = criteria.getArtifactNumber();
             String fileStoreId = criteria.getFileStoreId();
+            String courtId = criteria.getCourtId();
 
             // Build the query using the extracted fields
             firstCriteria = addArtifactCriteria(id, query, preparedStmtList, firstCriteria, "art.id = ?",preparedStmtArgList);
@@ -60,6 +61,7 @@ public class EvidenceQueryBuilder {
             firstCriteria = addArtifactCriteria(order, query, preparedStmtList, firstCriteria, "art.orders = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(sourceId, query, preparedStmtList, firstCriteria, "art.sourceId = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(owner != null ? owner.toString() : null, query, preparedStmtList, firstCriteria, "art.createdBy = ?",preparedStmtArgList);
+            firstCriteria = addArtifactCriteria(courtId, query, preparedStmtList, firstCriteria, "art.courtId = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(sourceName, query, preparedStmtList, firstCriteria, "art.sourceName = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(fileStoreId, query, preparedStmtList, firstCriteria, "art.file ->> 'fileStore' = ?",preparedStmtArgList);
             addArtifactPartialCriteria(artifactNumber, query, preparedStmtList, firstCriteria,preparedStmtArgList);
