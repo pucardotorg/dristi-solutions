@@ -12,6 +12,8 @@ const OverlayDropdown = ({ column, row, master, module }) => {
 
   const dropdownItems = Digit.Customizations[master]?.[module]?.dropDownItems?.(row, column, t) || [];
 
+  const filteredDropdownItems = dropdownItems.filter((item) => !item.hide);
+
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
@@ -42,20 +44,21 @@ const OverlayDropdown = ({ column, row, master, module }) => {
             zIndex: 1000,
           }}
         >
-          {dropdownItems
-            .filter((item) => !item.hide)
-            .map((item) => (
-              <li
-                key={item.id}
-                style={{ padding: "10px", cursor: "pointer", color: item.disabled ? "grey" : "black" }}
-                onClick={() => {
-                  setIsDropdownOpen(false);
-                  return !item.disabled && item.action(history, column, row, item);
-                }}
-              >
-                {t(item.label)}
-              </li>
-            ))}
+          {filteredDropdownItems.map((item) => (
+            <li
+              key={item.id}
+              style={{ padding: "10px", cursor: "pointer", color: item.disabled ? "grey" : "black" }}
+              onClick={() => {
+                setIsDropdownOpen(false);
+                return !item.disabled && item.action(history, column, row, item);
+              }}
+            >
+              {t(item.label)}
+            </li>
+          ))}
+          {Array.isArray(filteredDropdownItems) && filteredDropdownItems.length === 0 && (
+            <p style={{ padding: "5px" }}>{t("ACTIONS_NOT_AVAILABLE")}</p>
+          )}
         </ul>
       )}
     </div>
