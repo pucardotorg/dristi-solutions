@@ -817,300 +817,133 @@ const EvidenceModal = ({
 
       if (generateOrder && compositeOrderObj && compositeOrderObj?.orderTitle && !isNewOrder) {
         try {
+          let response;
           if (compositeOrderObj?.orderCategory === "INTERMEDIATE") {
-            if (compositeOrderObj?.orderNumber) {
-              const compositeItems = [
-                {
-                  orderType: compositeOrderObj?.orderType,
-                  orderSchema: {
+            const compositeItems = [
+              {
+                orderType: compositeOrderObj?.orderType,
+                orderSchema: {
+                  applicationNumber: compositeOrderObj?.applicationNumber,
+                  orderDetails: compositeOrderObj?.orderDetails,
+                  additionalDetails: {
+                    ...compositeOrderObj?.additionalDetails,
+                    hearingNumber: compositeOrderObj?.hearingNumber,
+                    linkedOrderNumber: compositeOrderObj?.linkedOrderNumber,
                     applicationNumber: compositeOrderObj?.applicationNumber,
-                    orderDetails: compositeOrderObj?.orderDetails,
-                    additionalDetails: {
-                      ...compositeOrderObj?.additionalDetails,
-                      hearingNumber: compositeOrderObj?.hearingNumber,
-                      linkedOrderNumber: compositeOrderObj?.linkedOrderNumber,
-                    },
                   },
                 },
-                {
-                  orderType: orderType,
-                  orderSchema: {
-                    additionalDetails: additionalDetails,
-                    ...(parties && { orderDetails: parties }),
-                    ...(hearingNumber && {
-                      hearingNumber: hearingNumber,
-                    }),
-                    ...(linkedOrderNumber && { linkedOrderNumber }),
-                    ...(applicationNumber && {
-                      applicationNumber: applicationNumber,
-                    }),
-                  },
+              },
+              {
+                orderType: orderType,
+                orderSchema: {
+                  additionalDetails: additionalDetails,
+                  ...(parties && { orderDetails: parties }),
+                  ...(hearingNumber && {
+                    hearingNumber: hearingNumber,
+                  }),
+                  ...(linkedOrderNumber && { linkedOrderNumber }),
+                  ...(applicationNumber && {
+                    applicationNumber: applicationNumber,
+                  }),
                 },
-              ];
-              await ordersService.addOrderItem(
-                {
-                  order: {
-                    ...compositeOrderObj,
-                    additionalDetails: null,
-                    orderDetails: null,
-                    orderType: null,
-                    orderCategory: "COMPOSITE",
-                    applicationNumber: null,
-                    orderTitle: `${t(compositeOrderObj?.orderType)} and Other Items`,
-                    compositeItems,
-                    ...(hearingNumber && {
-                      hearingNumber: hearingNumber,
-                    }),
-                    ...(linkedOrderNumber && { linkedOrderNumber }),
-                    workflow: {
-                      action: OrderWorkflowAction.SAVE_DRAFT,
-                      comments: "Creating order",
-                      assignes: null,
-                      rating: null,
-                      documents: [{}],
-                    },
-                  },
+              },
+            ];
+            const payload = {
+              order: {
+                ...compositeOrderObj,
+                additionalDetails: null,
+                orderDetails: null,
+                orderType: null,
+                orderCategory: "COMPOSITE",
+                orderTitle: `${t(compositeOrderObj?.orderType)} and Other Items`,
+                compositeItems,
+                ...(hearingNumber && {
+                  hearingNumber: hearingNumber,
+                }),
+                ...(linkedOrderNumber && { linkedOrderNumber }),
+                workflow: {
+                  action: OrderWorkflowAction.SAVE_DRAFT,
+                  comments: "Creating order",
+                  assignes: null,
+                  rating: null,
+                  documents: [{}],
                 },
-                { tenantId }
-              );
-              DRISTIService.customApiService(Urls.dristi.pendingTask, {
-                pendingTask: {
-                  name: `${t(compositeOrderObj?.orderType)} and Other Items`,
-                  entityType: "order-default",
-                  referenceId: `MANUAL_${compositeOrderObj?.orderNumber}`,
-                  status: "DRAFT_IN_PROGRESS",
-                  assignedTo: [],
-                  assignedRole: ["JUDGE_ROLE"],
-                  cnrNumber,
-                  filingNumber,
-                  isCompleted: false,
-                  stateSla: stateSla.DRAFT_IN_PROGRESS * dayInMillisecond + todayDate,
-                  additionalDetails: { orderType },
-                  tenantId,
-                },
-              });
-              history.replace(
-                `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${compositeOrderObj?.orderNumber}`
-              );
+              },
+            };
+            if (compositeOrderObj?.orderNumber) {
+              response = await ordersService.addOrderItem(payload, { tenantId });
             } else {
-              const response = await ordersService.createOrder(
-                {
-                  order: {
-                    ...compositeOrderObj,
-                    applicationNumber: [...(compositeOrderObj?.applicationNumber || []), refApplicationId],
-                  },
-                },
-                { tenantId }
-              );
-              if (response?.order?.orderNumber) {
-                const compositeItems = [
-                  {
-                    orderType: response?.order?.orderType,
-                    orderSchema: {
-                      orderDetails: response?.order?.orderDetails,
-                      additionalDetails: {
-                        ...response?.order?.additionalDetails,
-                        hearingNumber: response?.order?.hearingNumber,
-                        linkedOrderNumber: response?.order?.linkedOrderNumber,
-                        applicationNumber: response?.order?.applicationNumber,
-                      },
-                    },
-                  },
-                  {
-                    orderType: orderType,
-                    orderSchema: {
-                      ...(parties && { orderDetails: parties }),
-                      additionalDetails: additionalDetails,
-                      ...(hearingNumber && {
-                        hearingNumber: hearingNumber,
-                      }),
-                      ...(linkedOrderNumber && { linkedOrderNumber }),
-                      ...(applicationNumber && {
-                        applicationNumber: applicationNumber,
-                      }),
-                    },
-                  },
-                ];
-                await ordersService.addOrderItem(
-                  {
-                    order: {
-                      ...response?.order,
-                      additionalDetails: null,
-                      orderDetails: null,
-                      orderType: null,
-                      orderCategory: "COMPOSITE",
-                      orderTitle: `${t(response?.order?.orderType)} and Other Items`,
-                      compositeItems,
-                      ...(hearingNumber && {
-                        hearingNumber: hearingNumber,
-                      }),
-                      ...(linkedOrderNumber && { linkedOrderNumber }),
-                      workflow: {
-                        action: OrderWorkflowAction.SAVE_DRAFT,
-                        comments: "Creating order",
-                        assignes: null,
-                        rating: null,
-                        documents: [{}],
-                      },
-                    },
-                  },
-                  { tenantId }
-                );
-                DRISTIService.customApiService(Urls.dristi.pendingTask, {
-                  pendingTask: {
-                    name: `${t(response?.order?.orderType)} and Other Items`,
-                    entityType: "order-default",
-                    referenceId: `MANUAL_${response?.order?.orderNumber}`,
-                    status: "DRAFT_IN_PROGRESS",
-                    assignedTo: [],
-                    assignedRole: ["JUDGE_ROLE"],
-                    cnrNumber,
-                    filingNumber,
-                    isCompleted: false,
-                    stateSla: stateSla.DRAFT_IN_PROGRESS * dayInMillisecond + todayDate,
-                    additionalDetails: { orderType },
-                    tenantId,
-                  },
-                });
-                history.replace(
-                  `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`
-                );
-              }
+              response = await ordersService.createOrder(payload, { tenantId });
             }
           } else {
+            const compositeItems = [
+              ...compositeOrderObj?.compositeItems?.filter((item) => item?.isEnabled && item?.orderType),
+              {
+                orderType: orderType,
+                orderSchema: {
+                  additionalDetails: additionalDetails,
+                  ...(parties && { orderDetails: parties }),
+                  ...(hearingNumber && {
+                    hearingNumber: hearingNumber,
+                  }),
+                  ...(linkedOrderNumber && { linkedOrderNumber }),
+                  ...(applicationNumber && {
+                    applicationNumber: applicationNumber,
+                  }),
+                },
+              },
+            ];
+            const payload = {
+              order: {
+                ...compositeOrderObj,
+                additionalDetails: null,
+                orderDetails: null,
+                orderType: null,
+                compositeItems,
+                workflow: {
+                  action: OrderWorkflowAction.SAVE_DRAFT,
+                  comments: "Creating order",
+                  assignes: null,
+                  rating: null,
+                  documents: [{}],
+                },
+                applicationNumber: [...(compositeOrderObj?.applicationNumber || []), refApplicationId],
+                ...(hearingNumber && {
+                  hearingNumber: hearingNumber,
+                }),
+                ...(linkedOrderNumber && { linkedOrderNumber }),
+              },
+            };
             if (compositeOrderObj?.orderNumber) {
-              const compositeItems = [
-                ...compositeOrderObj?.compositeItems?.filter((item) => item?.isEnabled),
-                {
-                  orderType: orderType,
-                  orderSchema: {
-                    additionalDetails: additionalDetails,
-                    ...(parties && { orderDetails: parties }),
-                    ...(hearingNumber && {
-                      hearingNumber: hearingNumber,
-                    }),
-                    ...(linkedOrderNumber && { linkedOrderNumber }),
-                    ...(applicationNumber && {
-                      applicationNumber: applicationNumber,
-                    }),
-                  },
-                },
-              ];
-              await ordersService.addOrderItem(
-                {
-                  order: {
-                    ...compositeOrderObj,
-                    compositeItems,
-                    ...(hearingNumber && {
-                      hearingNumber: hearingNumber,
-                    }),
-                    applicationNumber: null,
-                    ...(linkedOrderNumber && { linkedOrderNumber }),
-                    workflow: {
-                      action: OrderWorkflowAction.SAVE_DRAFT,
-                      comments: "Creating order",
-                      assignes: null,
-                      rating: null,
-                      documents: [{}],
-                    },
-                  },
-                },
-                { tenantId }
-              );
-              DRISTIService.customApiService(Urls.dristi.pendingTask, {
-                pendingTask: {
-                  name: `${t(compositeOrderObj?.orderType)} and Other Items`,
-                  entityType: "order-default",
-                  referenceId: `MANUAL_${compositeOrderObj?.orderNumber}`,
-                  status: "DRAFT_IN_PROGRESS",
-                  assignedTo: [],
-                  assignedRole: ["JUDGE_ROLE"],
-                  cnrNumber,
-                  filingNumber,
-                  isCompleted: false,
-                  stateSla: stateSla.DRAFT_IN_PROGRESS * dayInMillisecond + todayDate,
-                  additionalDetails: { orderType },
-                  tenantId,
-                },
-              });
-              history.replace(
-                `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${compositeOrderObj?.orderNumber}`
-              );
+              response = await ordersService.addOrderItem(payload, { tenantId });
             } else {
-              const response = await ordersService.createOrder(
-                {
-                  order: {
-                    ...compositeOrderObj,
-                    orderCategory: "INTERMEDIATE",
-                    compositeItems: null,
-                    orderTitle: compositeOrderObj?.compositeItems?.[0]?.orderType,
-                    orderType: compositeOrderObj?.compositeItems?.[0]?.orderType,
-                    applicationNumber: [...(compositeOrderObj?.applicationNumber || []), refApplicationId],
-                    status: "",
-                    isActive: true,
-                    workflow: {
-                      action: OrderWorkflowAction.SAVE_DRAFT,
-                      comments: "Creating order",
-                      assignes: null,
-                      rating: null,
-                      documents: [{}],
-                    },
-                    additionalDetails: compositeOrderObj?.compositeItems?.[0]?.orderSchema?.additionalDetails,
-                    orderDetails: compositeOrderObj?.compositeItems?.[0]?.orderSchema?.orderDetails,
-                    ...(hearingNumber && {
-                      hearingNumber: hearingNumber,
-                    }),
-                    ...(linkedOrderNumber && { linkedOrderNumber }),
-                  },
-                },
-                { tenantId }
-              );
-              if (response?.order?.orderNumber) {
-                const enabledCompositeItems = compositeOrderObj?.compositeItems?.filter((item) => item?.isEnabled);
-                await ordersService.addOrderItem(
-                  {
-                    order: {
-                      ...response?.order,
-                      additionalDetails: null,
-                      orderDetails: null,
-                      orderType: null,
-                      orderCategory: compositeOrderObj?.orderCategory,
-                      orderTitle: compositeOrderObj?.orderTitle,
-                      enabledCompositeItems,
-                      workflow: {
-                        action: OrderWorkflowAction.SAVE_DRAFT,
-                        comments: "Creating order",
-                        assignes: null,
-                        rating: null,
-                        documents: [{}],
-                      },
-                    },
-                  },
-                  { tenantId }
-                );
-                DRISTIService.customApiService(Urls.dristi.pendingTask, {
-                  pendingTask: {
-                    name: `${t(response?.order?.orderType)} and Other Items`,
-                    entityType: "order-default",
-                    referenceId: `MANUAL_${response?.order?.orderNumber}`,
-                    status: "DRAFT_IN_PROGRESS",
-                    assignedTo: [],
-                    assignedRole: ["JUDGE_ROLE"],
-                    cnrNumber,
-                    filingNumber,
-                    isCompleted: false,
-                    stateSla: stateSla.DRAFT_IN_PROGRESS * dayInMillisecond + todayDate,
-                    additionalDetails: { orderType },
-                    tenantId,
-                  },
-                });
-                history.replace(
-                  `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`
-                );
-              }
+              response = await ordersService.createOrder(payload, { tenantId });
             }
           }
-        } catch (error) {}
+          DRISTIService.customApiService(Urls.dristi.pendingTask, {
+            pendingTask: {
+              name: `${compositeOrderObj?.orderTitle}`,
+              entityType: "order-default",
+              referenceId: `MANUAL_${response?.order?.orderNumber}`,
+              status: "DRAFT_IN_PROGRESS",
+              assignedTo: [],
+              assignedRole: ["JUDGE_ROLE"],
+              cnrNumber,
+              filingNumber,
+              caseId,
+              caseTitle: caseData?.title,
+              isCompleted: false,
+              stateSla: stateSla.DRAFT_IN_PROGRESS * dayInMillisecond + todayDate,
+              additionalDetails: { orderType },
+              tenantId,
+            },
+          });
+          history.replace(
+            `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${response?.order?.orderNumber}`
+          );
+        } catch (error) {
+          toast.error(t("SOMETHING_WENT_WRONG"));
+        }
       } else if (generateOrder) {
         const reqbody = {
           order: {
@@ -1156,6 +989,8 @@ const EvidenceModal = ({
               assignedRole: ["JUDGE_ROLE"],
               cnrNumber,
               filingNumber,
+              caseId,
+              caseTitle: caseData?.title,
               isCompleted: false,
               stateSla: stateSla.DRAFT_IN_PROGRESS * dayInMillisecond + todayDate,
               additionalDetails: { orderType },
@@ -1237,6 +1072,8 @@ const EvidenceModal = ({
               referenceId: `MANUAL_${signedSubmission?.applicationList?.applicationNumber}`,
               cnrNumber,
               filingNumber,
+              caseId,
+              caseTitle: caseData?.title,
               isCompleted: true,
               tenantId,
             },

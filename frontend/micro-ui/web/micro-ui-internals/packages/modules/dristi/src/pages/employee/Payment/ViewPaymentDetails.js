@@ -67,7 +67,7 @@ const ViewPaymentDetails = ({ location, match }) => {
   const [additionDetails, setAdditionalDetails] = useState("");
   const toast = useToast();
   const [isDisabled, setIsDisabled] = useState(false);
-  const { caseId, filingNumber, consumerCode, businessService, paymentType } = window?.Digit.Hooks.useQueryParams();
+  const { caseId, caseTitle, filingNumber, consumerCode, businessService, paymentType } = window?.Digit.Hooks.useQueryParams();
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
 
   const consumerCodeWithoutSuffix = consumerCode.split("_")[0];
@@ -261,8 +261,10 @@ const ViewPaymentDetails = ({ location, match }) => {
             entityType: businessService,
             referenceId: `MANUAL_${referenceId}`,
             status: "PENDING_PAYMENT",
-            cnrNumber: null,
+            cnrNumber: demandBill?.additionalDetails?.cnrNumber,
             filingNumber: demandBill?.additionalDetails?.filingNumber || taskFilingNumber,
+            caseId: caseId,
+            caseTitle: caseTitle,
             isCompleted: true,
             stateSla: null,
             additionalDetails: {},
@@ -282,6 +284,8 @@ const ViewPaymentDetails = ({ location, match }) => {
             assignedRole: ["JUDGE_ROLE"],
             cnrNumber: demandBill?.additionalDetails?.cnrNumber,
             filingNumber: filingNumber,
+            caseId: caseId,
+            caseTitle: caseTitle,
             isCompleted: false,
             stateSla: 3 * dayInMillisecond + todayDate,
             additionalDetails: {

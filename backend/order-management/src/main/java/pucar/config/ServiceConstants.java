@@ -10,12 +10,12 @@ public class ServiceConstants {
     public static final String EXTERNAL_SERVICE_EXCEPTION = "External Service threw an Exception: ";
     public static final String SEARCHER_SERVICE_EXCEPTION = "Exception while fetching from searcher: ";
 
-    public static final String ERROR_WHILE_FETCHING_FROM_ORDER = "";
-    public static final String FILE_STORE_UTILITY_EXCEPTION = "";
-    public static final String ESIGN_SERVICE_EXCEPTION = "";
+    public static final String ERROR_WHILE_FETCHING_FROM_ORDER = "ERROR_WHILE_FETCHING_FROM_ORDER";
+    public static final String FILE_STORE_UTILITY_EXCEPTION = "FILE_STORE_UTILITY_EXCEPTION";
+    public static final String ESIGN_SERVICE_EXCEPTION = "ESIGN_SERVICE_EXCEPTION";
 
-    public static final String FILE_STORE_SERVICE_EXCEPTION_CODE = "";
-    public static final String FILE_STORE_SERVICE_EXCEPTION_MESSAGE = "";
+    public static final String FILE_STORE_SERVICE_EXCEPTION_CODE = "FILE_STORE_SERVICE_EXCEPTION_CODE";
+    public static final String FILE_STORE_SERVICE_EXCEPTION_MESSAGE = "FILE_STORE_SERVICE_EXCEPTION_MESSAGE";
 
     public static final String RES_MSG_ID = "uief87324";
     public static final String SUCCESSFUL = "successful";
@@ -57,9 +57,9 @@ public class ServiceConstants {
     public static final String ERROR_WHILE_FETCHING_FROM_ADVOCATE = "ERROR_WHILE_FETCHING_FROM_ADVOCATE";
     public static final String ERROR_WHILE_CREATING_DEMAND_FOR_CASE = "ERROR_WHILE_CREATING_DEMAND_FOR_CASE";
 
-    public static final String ERROR_WHILE_FETCHING_FROM_APPLICATION_SERVICE = "";
+    public static final String ERROR_WHILE_FETCHING_FROM_APPLICATION_SERVICE = "ERROR_WHILE_FETCHING_FROM_APPLICATION_SERVICE";
 
-    public static final String ERROR_WHILE_FETCHING_FROM_CASE = "";
+    public static final String ERROR_WHILE_FETCHING_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE";
 
     //
 
@@ -71,6 +71,7 @@ public class ServiceConstants {
     public static final String ADMIT = "ADMIT";
     public static final String ADMISSION = "ADMISSION";
     public static final String ABANDON = "ABANDON";
+    public static final String CLOSE = "CLOSE";
     public static final String COMPLETED = "COMPLETED";
     public static final String ABATED = "ABATED";
     public static final String MANUAL = "MANUAL_";
@@ -80,7 +81,7 @@ public class ServiceConstants {
     public static final String SCHEDULED = "SCHEDULED";
     public static final String INTERMEDIATE = "INTERMEDIATE";
     public static final String RESCHEDULE = "RESCHEDULE";
-    public static final String CHOOSE_DATES_FOR_RESCHEDULE_OF_HEARING_DATE = "";
+    public static final String CHOOSE_DATES_FOR_RESCHEDULE_OF_HEARING_DATE = "CHOOSE_DATES_FOR_RESCHEDULE_OF_HEARING_DATE";
     public static final Long ONE_DAY_TIME_IN_MILLIS = 86400000L;
     public static final String SCHEDULE_HEARING = "Schedule Hearing";
     public static final String PENDING_RESPONSE = "Pending Response";
@@ -95,6 +96,8 @@ public class ServiceConstants {
     public static final String PENDING_NOTICE = "PENDING_NOTICE";
     public static final String ISSUE_ORDER = "ISSUE_ORDER";
     public static final String UNSIGNED = "UNSIGNED";
+    public static final String DELETE = "DELETE";
+    public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
 
 
     // order type

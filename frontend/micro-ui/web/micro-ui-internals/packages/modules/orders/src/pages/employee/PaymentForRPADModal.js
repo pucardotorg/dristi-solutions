@@ -398,6 +398,8 @@ const PaymentForRPADModal = ({ path }) => {
                 assignedRole: ["JUDGE_ROLE"],
                 cnrNumber: filteredTasks?.[0]?.cnrNumber,
                 filingNumber: filingNumber,
+                caseId: caseDetails?.id,
+                caseTitle: caseDetails?.caseTitle,
                 isCompleted: false,
                 stateSla: 3 * dayInMillisecond + todayDate,
                 additionalDetails: {
@@ -417,6 +419,8 @@ const PaymentForRPADModal = ({ path }) => {
                 assignedRole: [],
                 cnrNumber: filteredTasks?.[0]?.cnrNumber,
                 filingNumber: filingNumber,
+                caseId: caseDetails?.id,
+                caseTitle: caseDetails?.caseTitle,
                 isCompleted: true,
                 stateSla: "",
                 additionalDetails: {},

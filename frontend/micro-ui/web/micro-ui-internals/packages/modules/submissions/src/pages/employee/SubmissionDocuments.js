@@ -203,6 +203,8 @@ const SubmissionDocuments = ({ path }) => {
         assignedRole: assignedRole,
         cnrNumber: caseDetails?.cnrNumber,
         filingNumber: filingNumber,
+        caseId: caseDetails?.id,
+        caseTitle: caseDetails?.caseTitle,
         isCompleted,
         stateSla,
         additionalDetails: {},
@@ -234,7 +236,7 @@ const SubmissionDocuments = ({ path }) => {
               comments: [],
               file,
               sourceType,
-              sourceID: isBenchClerk ? userInfo?.uuid: individualId,
+              sourceID: isBenchClerk ? userInfo?.uuid : individualId,
               filingType: filingType,
               additionalDetails: {
                 uuid: userInfo?.uuid,
@@ -370,14 +372,10 @@ const SubmissionDocuments = ({ path }) => {
         if (body?.labelChildren === "optional") {
           return {
             ...body,
-            labelChildren: (
-              <span style={{ color: "#77787B" }}>
-                &nbsp;{`${t("CS_IS_OPTIONAL")}`}
-              </span>
-            ),
+            labelChildren: <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>,
           };
         }
-  
+
         if (body?.key === "documentType") {
           return {
             ...body,
@@ -394,9 +392,9 @@ const SubmissionDocuments = ({ path }) => {
         return body;
       }),
     });
-  
+
     const originalFormConfig = submissionDocumentDetailsConfig.formConfig;
-    
+
     if (!artifactNumber) {
       return originalFormConfig?.map((config) => applyUiChanges(config));
     } else {
@@ -408,8 +406,6 @@ const SubmissionDocuments = ({ path }) => {
       );
     }
   }, [artifactNumber, t, isBenchClerk]);
-  
-  
 
   if (loader || isFilingTypeLoading || isEvidenceLoading) {
     return <Loader />;

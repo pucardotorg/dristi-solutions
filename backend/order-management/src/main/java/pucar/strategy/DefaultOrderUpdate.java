@@ -113,7 +113,7 @@ public class DefaultOrderUpdate implements OrderUpdateStrategy {
 
         //close pending task
         log.info("closing pending task for order number:{}", order.getOrderNumber());
-        pendingTaskUtil.closeManualPendingTask(order.getOrderNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber());
+        pendingTaskUtil.closeManualPendingTask(order.getOrderNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(),courtCase.getId().toString(), courtCase.getCaseTitle());
 
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder()
                 .criteria(HearingCriteria.builder().tenantId(order.getTenantId())

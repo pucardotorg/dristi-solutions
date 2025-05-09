@@ -47,8 +47,6 @@ const TaskComponentCalander = ({ isLitigant, uuid, filingNumber, inCase = false 
   const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles?.map((role) => role?.code) || [], []);
   const todayDate = getFormattedDate();
   const [groupedData, setGroupedData] = useState([]);
-  const [searchCaseLoading, setSearchCaseLoading] = useState(false);
-  const [caseDataDetails, setCaseDataDetails] = useState([]);
   const { t } = useTranslation();
   const { data: pendingTaskDetails = [], isLoading } = Digit.Hooks.home.useGetPendingTask({
     data: {
@@ -80,58 +78,6 @@ const TaskComponentCalander = ({ isLitigant, uuid, filingNumber, inCase = false 
 
     fetchData();
   }, [isLoading, pendingTaskDetails?.data, pendingTaskDetails.length]);
-
-  const pendingTaskActionDetails = useMemo(() => {
-    return isLoading ? [] : pendingTaskDetails?.data || [];
-  }, [isLoading, pendingTaskDetails?.data]);
-
-  const getCaseDetailByFilingNumber = useCallback(
-    async (payload) => {
-      setSearchCaseLoading(true);
-      const caseData = await hearingService.customApiService(Urls.case.caseSearch, {
-        tenantId,
-        ...payload,
-      });
-      setSearchCaseLoading(false);
-      return caseData || {};
-    },
-    [tenantId]
-  );
-
-  const fetchPendingTasks = useCallback(
-    async function () {
-      if (isLoading) return;
-
-      const filingNumberSet = new Set();
-      pendingTaskActionDetails?.forEach((data) => {
-        const filingNumber = data?.fields?.find((field) => field.key === "filingNumber")?.value;
-        if (filingNumber) {
-          filingNumberSet.add(filingNumber);
-        }
-      });
-
-      const criteriaList = [];
-
-      for (const filingNumber of filingNumberSet.values()) {
-        criteriaList.push({ filingNumber });
-      }
-
-      const allPendingTaskCaseDetails = await getCaseDetailByFilingNumber({
-        criteria: criteriaList,
-      });
-      const caseDataDetailsArray =
-        allPendingTaskCaseDetails?.criteria?.map((element) => ({
-          filingNumber: element?.filingNumber,
-          caseDetail: element?.responseList?.[0],
-        })) || [];
-      setCaseDataDetails(caseDataDetailsArray);
-    },
-    [getCaseDetailByFilingNumber, isLoading, pendingTaskActionDetails]
-  );
-
-  useEffect(() => {
-    fetchPendingTasks();
-  }, [fetchPendingTasks]);
 
   const downloadCauseList = async () => {
     return await hearingService.customApiService(
@@ -202,9 +148,9 @@ const TaskComponentCalander = ({ isLitigant, uuid, filingNumber, inCase = false 
         </button>
       </div>
       <div style={{ width: "100%", padding: "24px" }}>
-        {!searchCaseLoading ? (
+        {!isLoading ? (
           <div className="task-section">
-            <Accordian groupedData={groupedData} caseDataDetails={caseDataDetails} />
+            <Accordian groupedData={groupedData} />
           </div>
         ) : (
           <Loader />

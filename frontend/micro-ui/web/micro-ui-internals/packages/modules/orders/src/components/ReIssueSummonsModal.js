@@ -9,7 +9,7 @@ import { Urls } from "../hooks/services/Urls";
 function ReIssueSummonsModal() {
   const { t } = useTranslation();
   const history = useHistory();
-  const { hearingId, filingNumber, cnrNumber, orderType } = Digit.Hooks.useQueryParams();
+  const { hearingId, filingNumber, cnrNumber, orderType, caseId, caseTitle } = Digit.Hooks.useQueryParams();
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { data: hearingsData, isLoading: isHearingLoading } = Digit.Hooks.hearings.useGetHearings(
     {
@@ -102,6 +102,8 @@ function ReIssueSummonsModal() {
         assignedRole: [],
         cnrNumber: cnrNumber,
         filingNumber: filingNumber,
+        caseId: caseId,
+        caseTitle: caseTitle,
         isCompleted: true,
         stateSla: null,
         additionalDetails: {},
@@ -118,6 +120,8 @@ function ReIssueSummonsModal() {
         assignedRole: ["JUDGE_ROLE"],
         cnrNumber,
         filingNumber,
+        caseId: caseId,
+        caseTitle: caseTitle,
         isCompleted: false,
         stateSla: 3 * dayInMillisecond + todayDate,
         additionalDetails: {},

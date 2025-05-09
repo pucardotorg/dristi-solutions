@@ -33,6 +33,13 @@ public class Configuration {
     @Value("${dristi.order.host}")
     private String orderHost;
 
+
+    @Value("${dristi.order.add.item.endpoint}")
+    private String addOrderItemEndPoint;
+
+    @Value("${dristi.order.remove.item.endpoint}")
+    private String removeOrderItemEndPoint;
+
     @Value("${dristi.order.exists.endpoint}")
     private String orderExistsEndPoint;
 
@@ -41,6 +48,9 @@ public class Configuration {
 
     @Value("${dristi.order.search.endpoint}")
     private String orderSearchEndPoint;
+
+    @Value("${dristi.order.create.endpoint}")
+    private String orderCreateEndPoint;
 
     // ESign Config
     @Value("${dristi.esign.host}")
@@ -128,7 +138,7 @@ public class Configuration {
     @Value("${dristi.inbox.host}")
     private String inboxHost;
 
-    @Value("${dristi.inbox.index.search.endpoint")
+    @Value("${dristi.inbox.index.search.endpoint}")
     private String indexSearchEndPoint;
 
     // Analytics Config
@@ -144,6 +154,15 @@ public class Configuration {
 
     @Value("${dristi.scheduler.reschedule.endpoint}")
     private String rescheduleEndPoint;
+
+    // Individual Config
+
+    @Value("${dristi.individual.host}")
+    private String individualHost;
+
+    @Value("${dristi.individual.search.endpoint}")
+    private String individualSearchEndPoint;
+
 
     @Value("${spring.redis.timeout}")
     private Long redisTimeout;

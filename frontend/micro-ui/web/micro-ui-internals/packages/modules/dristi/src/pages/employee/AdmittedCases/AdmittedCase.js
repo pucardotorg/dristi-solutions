@@ -1223,12 +1223,14 @@ const AdmittedCases = () => {
 
   const getEvidence = async () => {
     try {
+      // Add courtId to criteria if it exists
       const response = await DRISTIService.searchEvidence(
         {
           criteria: {
             filingNumber: filingNumber,
             artifactNumber: artifactNumber,
             tenantId: tenantId,
+            courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
           },
           tenantId,
         },
@@ -1263,13 +1265,9 @@ const AdmittedCases = () => {
         if (artifact.sourceID === undefined) {
           return "NA";
         }
-        const owner = await DRISTIService.searchEmployeeUser(
-          {
-            authToken: localStorage.getItem("token"),
-          },
-          { tenantId, uuids: artifact?.sourceID, limit: 1000, offset: 0 }
-        );
-        return `${owner?.Employees?.[0]?.user?.name}`.trim();
+        const owner = await Digit.UserService.userSearch(tenantId, { uuid: [artifact?.sourceID] }, {});
+        if (owner?.user?.length > 1) return "";
+        return `${owner?.user?.[0]?.name}`.trim();
       } else {
         if (artifact?.sourceID === undefined) {
           return "NA";
@@ -1825,6 +1823,8 @@ const AdmittedCases = () => {
             assignedRole: ["JUDGE_ROLE"],
             cnrNumber: updatedCaseDetails?.cnrNumber,
             filingNumber: caseDetails?.filingNumber,
+            caseId: caseDetails?.id,
+            caseTitle: caseDetails?.caseTitle,
             isCompleted: true,
             stateSla: todayDate + stateSla.SCHEDULE_HEARING,
             additionalDetails: {},
@@ -2419,6 +2419,8 @@ const AdmittedCases = () => {
             assignedRole: ["JUDGE_ROLE"],
             cnrNumber: updatedCaseDetails?.cnrNumber,
             filingNumber: caseDetails?.filingNumber,
+            caseId: caseDetails?.id,
+            caseTitle: caseDetails?.caseTitle,
             isCompleted: false,
             stateSla: todayDate + stateSla.SCHEDULE_HEARING,
             additionalDetails: {},
@@ -2434,6 +2436,8 @@ const AdmittedCases = () => {
             assignedRole: ["CASE_RESPONDER"],
             cnrNumber: caseDetails?.cnrNumber,
             filingNumber: caseDetails?.filingNumber,
+            caseId: caseDetails?.id,
+            caseTitle: caseDetails?.caseTitle,
             isCompleted: true,
             tenantId,
           },

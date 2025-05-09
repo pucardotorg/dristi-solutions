@@ -148,7 +148,10 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
 
   const isCaseAdmitted = useMemo(() => caseDetails?.status === "CASE_ADMITTED", [caseDetails]);
 
-  const { caseId, cnrNumber } = useMemo(() => ({ cnrNumber: caseDetails.cnrNumber || "", caseId: caseDetails?.id }), [caseDetails]);
+  const { caseId, cnrNumber, caseTitle } = useMemo(
+    () => ({ cnrNumber: caseDetails.cnrNumber || "", caseId: caseDetails?.id, caseTitle: caseDetails?.caseTitle }),
+    [caseDetails]
+  );
 
   const handleCloseModal = () => {
     if (handleClose) {
@@ -159,7 +162,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
   const handleNavigate = () => {
     const contextPath = window?.contextPath || "";
     history.push(
-      `/${contextPath}/employee/home/home-pending-task/reissue-summons-modal?filingNumber=${filingNumber}&hearingId=${hearingId}&cnrNumber=${cnrNumber}&orderType=${orderType}`
+      `/${contextPath}/employee/home/home-pending-task/reissue-summons-modal?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&hearingId=${hearingId}&cnrNumber=${cnrNumber}&orderType=${orderType}`
     );
   };
 
@@ -211,8 +214,10 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
           status: "DRAFT_IN_PROGRESS",
           assignedTo: [],
           assignedRole: ["JUDGE_ROLE"],
-          cnrNumber: null,
+          cnrNumber: caseDetails?.cnrNumber,
           filingNumber: filingNumber,
+          caseId: caseDetails?.id,
+          caseTitle: caseDetails?.caseTitle,
           isCompleted: true,
           stateSla: null,
           additionalDetails: {},

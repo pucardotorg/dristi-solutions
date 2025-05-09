@@ -60,7 +60,7 @@ public class OrderRegistrationValidator {
         if (ObjectUtils.isEmpty(orderRequest.getOrder().getStatuteSection()))
             throw new CustomException(CREATE_ORDER_ERR, "statute and section is mandatory for creating order");
 
-        if (orderRequest.getOrder().getOrderType() == null)
+        if (!COMPOSITE.equalsIgnoreCase(orderRequest.getOrder().getOrderCategory()) && orderRequest.getOrder().getOrderType() == null)
             throw new CustomException(CREATE_ORDER_ERR, "orderType is mandatory for intermediate order");
 
         if (!ADMINISTRATIVE.equalsIgnoreCase(orderRequest.getOrder().getOrderCategory()) && !caseUtil.fetchCaseDetails(requestInfo, orderRequest.getOrder().getCnrNumber(), orderRequest.getOrder().getFilingNumber())) {
@@ -71,6 +71,15 @@ public class OrderRegistrationValidator {
         validateDocuments(orderRequest.getOrder());
 
         validateMDMSDocumentTypes(orderRequest);
+
+        validateCompositeOrder(orderRequest);
+    }
+
+    public void validateCompositeOrder(OrderRequest orderRequest) {
+
+        if (COMPOSITE.equalsIgnoreCase(orderRequest.getOrder().getOrderCategory())) {
+            validateAddItem(orderRequest);
+        }
     }
 
     public boolean validateApplicationExistence(OrderRequest orderRequest) {
