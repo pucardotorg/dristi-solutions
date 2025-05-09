@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import jakarta.servlet.http.Part;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +41,8 @@ import org.springframework.stereotype.Service;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -465,6 +466,30 @@ public class CaseService {
                 poaHolder.setRepresentingLitigants(activeLitigants);
             });
 
+            filterDocuments(activeAdvocateMapping,
+                    AdvocateMapping::getDocuments,
+                    AdvocateMapping::setDocuments);
+
+            activeAdvocateMapping.forEach(advocate ->
+                    filterDocuments(advocate.getRepresenting(),
+                            Party::getDocuments,
+                            Party::setDocuments)
+            );
+
+            filterDocuments(activeParty,
+                    Party::getDocuments,
+                    Party::setDocuments);
+
+            filterDocuments(activePOAHolder,
+                    POAHolder::getDocuments,
+                    POAHolder::setDocuments);
+
+            activePOAHolder.forEach(poaHolder ->
+                    filterDocuments(poaHolder.getRepresentingLitigants(),
+                            PoaParty::getDocuments,
+                            PoaParty::setDocuments)
+            );
+
             caseRequest.getCases().setPoaHolders(activePOAHolder);
             caseRequest.getCases().setDocuments(isActiveTrueDocuments);
             caseRequest.getCases().setRepresentatives(activeAdvocateMapping);
@@ -495,6 +520,22 @@ public class CaseService {
             throw new CustomException(UPDATE_CASE_ERR, "Exception occurred while updating case: " + e.getMessage());
         }
 
+    }
+
+    private <T> void filterDocuments(List<T> entities,
+                                     Function<T, List<Document>> getDocs,
+                                     BiConsumer<T, List<Document>> setDocs) {
+        if (entities == null) return;
+
+        for (T entity : entities) {
+            List<Document> docs = getDocs.apply(entity);
+            if (docs != null) {
+                List<Document> activeDocs = docs.stream()
+                        .filter(Document::getIsActive)
+                        .collect(Collectors.toList());
+                setDocs.accept(entity, activeDocs); // ✅ set it back
+            }
+        }
     }
 
     private void removeInactiveDocuments(CaseRequest caseRequest) {
