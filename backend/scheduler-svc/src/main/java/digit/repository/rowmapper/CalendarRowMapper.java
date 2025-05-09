@@ -4,6 +4,7 @@ import digit.models.coremodels.AuditDetails;
 import digit.web.models.JudgeCalendarRule;
 import digit.web.models.enums.JudgeRuleType;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.tracer.model.CustomException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +24,7 @@ public class CalendarRowMapper implements RowMapper<JudgeCalendarRule> {
                 .id(resultSet.getString("id"))
                 .judgeId(resultSet.getString("judge_id"))
                 .ruleType(resultSet.getString("rule_type"))
-                .date(Long.parseLong(resultSet.getString("date")))
+                .date(parseDateToLong(resultSet.getString("date")))
                 .notes(resultSet.getString("notes"))
                 .tenantId(resultSet.getString("tenant_id"))
                 .auditDetails(AuditDetails.builder()
@@ -36,5 +37,18 @@ public class CalendarRowMapper implements RowMapper<JudgeCalendarRule> {
                 .build();
 
         return calendar;
+    }
+
+    private Long parseDateToLong(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.valueOf(dateStr);
+        } catch (NumberFormatException e) {
+            log.error("Invalid date format: {}", dateStr);
+            throw new CustomException("INVALID_DATE_FORMAT",
+                    "Date must be a valid timestamp: " + dateStr);
+        }
     }
 }
