@@ -38,17 +38,17 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
   });
 
   const hearingDetails = useMemo(() => hearingResponse?.HearingList || null, [hearingResponse]);
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        await refetch(); // Call your refetch function from useGetHearings hook
-      } catch (error) {
-        console.error("Error refetching data:", error);
-      }
-    };
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       await refetch(); // Call your refetch function from useGetHearings hook
+  //     } catch (error) {
+  //       console.error("Error refetching data:", error);
+  //     }
+  //   };
 
-    fetchData();
-  }, [currentMonth, refetch]);
+  //   fetchData();
+  // }, [currentMonth, refetch]);
 
   const hearingCounts = useMemo(() => {
     const counts = {};
@@ -66,20 +66,23 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
     // });
 
     return counts;
-  }, [currentMonth, hearingDetails]);
+  }, [hearingDetails]);
 
-  const monthlyCount = useMemo(() => {
-    return Object.values(hearingCounts).reduce((sum, value) => sum + value, 0);
-  }, [hearingCounts]);
+  // const monthlyCount = useMemo(() => {
+  //   return Object.values(hearingCounts).reduce((sum, value) => sum + value, 0);
+  // }, [hearingCounts]);
 
   const selectedDateHearingCount = useMemo(() => {
-    const dateStr = selectedDate.toLocaleDateString("en-CA");
+    const dateStr = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(
+      2,
+      "0"
+    )}`;
     const hearingCount = hearingCounts[dateStr] || 0;
     return hearingCount;
   }, [hearingCounts, selectedDate]);
 
   const renderCustomDay = (date) => {
-    const dateStr = date.toLocaleDateString("en-CA");
+    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
     const formattedDate = date.toLocaleDateString("en-GB");
     const formattedForCheck = formattedDate.replace(/\//g, "-");
     const isNonWorkingDay = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
@@ -104,7 +107,7 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
               fontSize: "8px",
               color: "#931847",
               position: "absolute",
-              top: 18,
+              top: "25px",
               right: 2,
               whiteSpace: "nowrap",
               overflow: "hidden",
