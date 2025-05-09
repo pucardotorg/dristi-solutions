@@ -221,18 +221,13 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
         additionalDetails.put("applicationNumber", applicationNumber);
         additionalDetails.put("litigants", complainantIndividualId);
 
-
-        String taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), String.class);
-
         try {
-            JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
-            log.info("taskDetailsArray size:{}", taskDetailsArray.size());
-            for (JsonNode taskDetail : taskDetailsArray) {
-                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase);
+            List<TaskRequest> taskRequests = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, courtCase);
+            for (TaskRequest taskRequest : taskRequests) {
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
 
                 // create pending task
-                String taskDetailString = objectMapper.writeValueAsString(taskDetail);
+                String taskDetailString = objectMapper.writeValueAsString(taskRequest.getTask().getTaskDetails());
 
                 Map<String, Object> jsonMap = objectMapper.readValue(taskDetailString, new TypeReference<Map<String, Object>>() {
                 });

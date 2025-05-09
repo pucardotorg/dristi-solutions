@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pucar.strategy.OrderUpdateStrategy;
@@ -122,14 +123,9 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
         additionalDetails.put("applicationNumber", applicationNumber);
         additionalDetails.put("litigants", complainantIndividualId);
 
-
-        String taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), String.class);
         try {
-            JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
-            log.info("taskDetailsArray:{}", taskDetailsArray.size());
-
-            for (JsonNode taskDetail : taskDetailsArray) {
-                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase);
+            List<TaskRequest> taskRequests = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, courtCase);
+            for (TaskRequest taskRequest : taskRequests) {
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
 
                 // create pending task
@@ -153,11 +149,10 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
                 pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
                 ).pendingTask(pendingTask).build());
 
-
             }
 
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new CustomException();
         }
 
         return null;
