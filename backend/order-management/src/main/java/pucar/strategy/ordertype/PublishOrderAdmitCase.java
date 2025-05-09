@@ -107,7 +107,7 @@ public class PublishOrderAdmitCase implements OrderUpdateStrategy {
                 .filter(list -> list.getHearingType().equalsIgnoreCase(ADMISSION) && !(list.getStatus().equalsIgnoreCase(COMPLETED) || list.getStatus().equalsIgnoreCase(ABATED)))
                 .findFirst().ifPresent(hearing -> {
                     WorkflowObject workflowObject = new WorkflowObject();
-                    workflowObject.setAction(ABANDON);
+                    workflowObject.setAction(CLOSE);
                     hearing.setWorkflow(workflowObject);
                     log.info("hearingId:{}", hearing.getHearingId());
                     HearingRequest request = HearingRequest.builder()
@@ -115,27 +115,6 @@ public class PublishOrderAdmitCase implements OrderUpdateStrategy {
 
                     hearingUtil.createOrUpdateHearing(request, hearingUpdateUri);
                 });
-
-        // create pending task
-        // schedule hearing pending task
-        PendingTask pendingTask = PendingTask.builder()
-                .name(SCHEDULE_HEARING)
-                .referenceId(MANUAL + courtCase.getFilingNumber())
-                .caseId(courtCase.getId().toString())
-                .caseTitle(courtCase.getCaseTitle())
-                .entityType("case-default")
-                .status("SCHEDULE_HEARING")
-                .assignedRole(List.of("JUDGE_ROLE"))
-                .cnrNumber(courtCase.getCnrNumber())
-                .filingNumber(courtCase.getFilingNumber())
-                .isCompleted(false)
-                .stateSla(pendingTaskUtil.getStateSla("SCHEDULE_HEARING"))
-                .screenType("home")
-                .build();
-        log.info("creating pending task of schedule hearing for judge of filing number :{}", courtCase.getFilingNumber());
-
-        pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
-        ).pendingTask(pendingTask).build());
 
         // pending response pending task
 
@@ -145,7 +124,7 @@ public class PublishOrderAdmitCase implements OrderUpdateStrategy {
         for (Party party : respondent) {
 
             String referenceId = MANUAL + "PENDING_RESPONSE_" + courtCase.getFilingNumber() + "_" + party.getIndividualId();
-            pendingTask = PendingTask.builder()
+            PendingTask pendingTask = PendingTask.builder()
                     .name(PENDING_RESPONSE)
                     .referenceId(referenceId)
                     .entityType("case-default")
