@@ -495,6 +495,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           },
           BulkReschedule: {
             reason: bulkFormData?.reason,
+            courtId: courtId,
             hearings:
               tentativeDates?.Hearings?.map(({ filingNumber, startTime, originalHearingDate, hearingType }) => ({
                 filingNumber,

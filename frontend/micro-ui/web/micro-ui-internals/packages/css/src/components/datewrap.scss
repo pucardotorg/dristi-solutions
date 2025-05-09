@@ -58,12 +58,12 @@
 }
 
 .rdrDayNumber span {
-  background: none !important;
-  border: none !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  box-shadow: none !important;
-  transition: none !important;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
 }
 
 .rdrDayNumber span::before,
@@ -117,34 +117,12 @@
   border: 1px solid #007e7e;
   color: #fff !important;
 }
-.rdrDayStartPreview {
-  height: 40px !important;
-  width: 40px !important;
-  border-radius: 100px !important;
-  border-right-width: 1px;
+.rdrDayStartPreview .rdrDayEndPreview {
+  margin: auto;
+  top: 5px;
+  left: 0;
   right: 0;
-  color: #007e7e !important;
-}
-.rdrDayEndPreview {
-  height: 40px !important;
-  width: 40px !important;
-  border-radius: 100px !important;
-  border-right-width: 1px;
-  right: 0;
-  color: #007e7e !important;
-}
-.rdrSelected {
-  border-radius: 100px !important;
-  height: 40px !important;
-  width: 40px !important;
-  color: #007e7e !important;
-  left: 4px !important;
-}
-.rdrDayHovered span:after {
-  border-radius: 100px !important;
-  height: 40px !important;
-  width: 40px !important;
-  color: #007e7e;
+  margin: auto;
 }
 
 .rdrDayEndOfMonth .rdrDayInPreview,
@@ -157,10 +135,25 @@
 }
 
 .rdrDay {
-  height: 50px !important;
+  height: 52px !important;
   line-height: 45px !important;
   position: relative;
+  margin: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 50px !important;
 }
+
+.rdrDayNumber {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  top: 0;
+}
+
 .rdrMonth {
   margin-top: 20px !important;
   width: 350px !important;
