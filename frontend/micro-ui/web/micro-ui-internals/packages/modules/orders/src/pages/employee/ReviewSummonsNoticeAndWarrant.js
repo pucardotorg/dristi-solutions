@@ -362,8 +362,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
           key: "NEXT_HEARING_DATE",
           value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
         },
-        // process fee paid on
         // { key: "AMOUNT_PAID_TEXT", value: `Rs. ${caseDetails?.deliveryChannels?.fees || 100}` },
+        { key: "PROCESS_FEE_PAID_ON", value: caseDetails?.deliveryChannels?.feePaidDate || "N/A" },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
         { key: "E_PROCESS_ID", value: rowData?.taskNumber },
       ];
@@ -391,6 +391,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       return [
         { key: "ISSUE_TO", value: caseDetails?.respondentDetails?.name },
         { key: "ISSUE_DATE", value: convertToDateInputFormat(rowData?.createdDate) },
+        { key: "PROCESS_FEE_PAID_ON", value: caseDetails?.deliveryChannels?.feePaidDate || "N/A" },
         { key: "SENT_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
         {
@@ -411,6 +412,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
           key: "NEXT_HEARING_DATE",
           value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
         },
+        { key: "PROCESS_FEE_PAID_ON", value: caseDetails?.deliveryChannels?.feePaidDate || "N/A" },
+        { key: "SENT_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
         { key: "STATUS", value: rowData?.status },
         { key: "STATUS_UPDATED_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
         { key: "REMARKS", value: caseDetails?.remarks?.remark ? caseDetails?.remarks?.remark : "N/A" },
