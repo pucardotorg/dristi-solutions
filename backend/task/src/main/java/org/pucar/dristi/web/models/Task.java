@@ -47,6 +47,15 @@ public class Task {
     @JsonProperty("taskNumber")
     private String taskNumber = null;
 
+    @JsonProperty("caseTitle")
+    private String caseTitle = null;
+
+    @JsonProperty("courtId")
+    private String courtId;
+
+    @JsonProperty("caseId")
+    private String caseId = null;
+
     @JsonProperty("cnrNumber")
     private String cnrNumber = null;
 

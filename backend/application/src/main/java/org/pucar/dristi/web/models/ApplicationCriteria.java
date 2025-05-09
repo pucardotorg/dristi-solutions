@@ -30,6 +30,9 @@ public class ApplicationCriteria {
     @NotNull
     private String tenantId = null;
 
+    @JsonProperty("courtId")
+    private String courtId = null;
+
     @JsonProperty("applicationNumber")
     @Valid
     private String applicationNumber = null;

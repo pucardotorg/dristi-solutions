@@ -357,6 +357,9 @@ public class Configuration {
 	@Value("${egov.payment.calculator.host}")
 	private String paymentCalculatorHost;
 
+	@Value("${egov.courtId}")
+	private String courtId;
+
 	@Value("${egov.payment.calculator.endpoint}")
 	private String paymentCalculatorEndpoint;
 

@@ -131,6 +131,9 @@ public class Configuration {
 	@Value("${egov.order.path}")
 	private String orderExistsPath;
 
+	@Value("${egov.courtId}")
+	private String courtId;
+
 	// Hearing Config
 	@Value("${egov.hearing.host}")
 	private String hearingHost;

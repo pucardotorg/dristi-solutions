@@ -57,7 +57,7 @@ public class EvidenceEnrichment {
 
             evidenceRequest.getArtifact().setAuditdetails(auditDetails);
             evidenceRequest.getArtifact().setId(UUID.randomUUID());
-
+            evidenceRequest.getArtifact().setCourtId(configuration.getCourtId());
             for (Comment comment : evidenceRequest.getArtifact().getComments()) {
                 comment.setId(UUID.randomUUID());
             }

@@ -27,6 +27,7 @@ public class EvidenceSearchCriteria {
     private String sourceName;
     private String status;
     private String artifactNumber;
+    private String courtId = null;
     private String filingNumber;
     private UUID owner;
     private String tenantId;

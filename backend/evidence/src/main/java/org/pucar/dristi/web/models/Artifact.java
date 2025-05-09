@@ -39,6 +39,9 @@ public class Artifact {
 
 	private String tenantId = null;
 
+	@JsonProperty("courtId")
+	private String courtId = null;
+
 	@JsonProperty("artifactNumber")
 
 	@Size(min = 2, max = 64)

@@ -98,6 +98,9 @@ public class Configuration {
     @Value("${task.kafka.summon.topic}")
     private String taskIssueSummonTopic;
 
+    @Value("${egov.courtId}")
+    private String courtId;
+
     @Value("${egov.workflow.task.join.case.business.name}")
     private String taskjoinCaseBusinessName;
 

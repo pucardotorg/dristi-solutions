@@ -174,7 +174,7 @@ public class CaseRegistrationEnrichment {
 
             courtCase.setId(UUID.randomUUID());
             enrichCaseRegistrationUponCreateAndUpdate(courtCase, auditDetails);
-
+            courtCase.setCourtId(config.getCourtId());
             courtCase.setFilingNumber(courtCaseRegistrationFillingNumberIdList.get(0));
 
 

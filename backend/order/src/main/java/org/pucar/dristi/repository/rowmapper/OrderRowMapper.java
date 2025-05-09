@@ -61,6 +61,7 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
                             .orderCategory(rs.getString("ordercategory"))
                             .isActive(rs.getBoolean("isactive"))
                             .orderType(rs.getString("ordertype"))
+                            .courtId(rs.getString("courtId"))
                             .createdDate(rs.getLong("createddate"))
                             .comments(rs.getString("comments"))
                             .filingNumber(rs.getString("filingnumber"))
