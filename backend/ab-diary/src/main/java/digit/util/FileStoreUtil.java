@@ -18,6 +18,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
+
 import static digit.config.ServiceConstants.FILE_STORE_UTILITY_EXCEPTION;
 
 @Component
@@ -97,6 +99,28 @@ public class FileStoreUtil {
         } else {
             log.error("Failed to get valid file store id from File Store Service Response");
             throw new CustomException("INVALID_FILE_STORE_RESPONSE", "Failed to get valid file store id from file store service");
+        }
+    }
+
+    public void deleteFilesByFileStore(List<String> fileStoreIds, String tenantId) {
+        if (fileStoreIds == null || fileStoreIds.isEmpty()) {
+            log.warn("No file store IDs provided for deletion");
+            return;
+        }
+        String url = configs.getFileStoreHost() + configs.getFileStoreDeleteEndPoint() + "?tenantId=" + tenantId;
+
+        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
+        body.add("fileStoreIds", fileStoreIds);
+        body.add("isSoftDelete", false);
+
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, new HttpHeaders());
+        Object response = null;
+        try {
+            ResponseEntity<Object> responseEntity = restTemplate.postForEntity(url, requestEntity, Object.class);
+            log.info("Files deleted from filestore: {}, status: {}", fileStoreIds, responseEntity.getStatusCode());
+        } catch (CustomException e) {
+            log.error("Error while deleting files from file store: {}", e.getMessage(), e);
+            throw new CustomException("FILE_STORE_UTILITY_EXCEPTION", "Error occurred when deleting files in File Store");
         }
     }
 }
