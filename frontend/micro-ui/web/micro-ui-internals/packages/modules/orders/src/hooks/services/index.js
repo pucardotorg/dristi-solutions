@@ -13,7 +13,7 @@ const presidedBy = {
 export const ordersService = {
   createOrder: (data, params) =>
     Request({
-      url: Urls.orders.orderCreate,
+      url: Urls.orders.orderManagementCreate,
       useCache: false,
       userService: true,
       data,
@@ -37,7 +37,7 @@ export const ordersService = {
     }),
   updateOrder: (data, params) =>
     Request({
-      url: Urls.orders.orderUpdate,
+      url: Urls.orders.orderManagementUpdate,
       useCache: false,
       userService: true,
       data,
