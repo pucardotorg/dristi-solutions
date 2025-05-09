@@ -82,6 +82,35 @@
 .rdrSelected {
   background: #007e7e !important;
   color: #fff !important;
+  left: 0 !important;
+  right: 0 !important;
+  margin: auto !important;
+  border-radius: 50%;
+  height: 40px;
+  width: 40px;
+}
+
+.rdrDayHovered .rdrDayNumber {
+  width: 40px;
+  height: 40px;
+  position: relative;
+  border: 1px solid;
+  border-radius: 50%;
+}
+.rdrDayStartPreview.rdrDayHovered span:after,
+.rdrDayEndPreview.rdrDayHovered span:after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 100px !important;
+  height: 40px !important;
+  width: 40px !important;
+  border: 1px solid #007e7e !important;
+  background: rgba(0, 126, 126, 0.1) !important;
+  z-index: 1;
+  margin: auto;
 }
 
 .rdrDayToday .rdrDayNumber span:after {
@@ -117,18 +146,16 @@
   width: 40px !important;
   color: #007e7e;
 }
-.rdrDayHovered {
-  border-radius: 100px !important;
+
+.rdrDayEndOfMonth .rdrDayInPreview,
+.rdrDayEndOfMonth .rdrDayStartPreview,
+.rdrDayEndOfWeek .rdrDayInPreview,
+.rdrDayEndOfWeek .rdrDayStartPreview {
   height: 40px !important;
   width: 40px !important;
-  color: #007e7e;
+  border-radius: 50% !important;
 }
-.rdrDayActive {
-  border-radius: 100px !important;
-  height: 40px !important;
-  width: 40px !important;
-  color: #007e7e;
-}
+
 .rdrDay {
   height: 50px !important;
   line-height: 45px !important;
@@ -145,4 +172,11 @@
 .rdrDayDisabled {
   background-color: #ffffff !important;
   color: #9ca3af !important;
+}
+
+.rdrDayEndPreview {
+  margin: auto;
+  height: 40px;
+  width: 40px;
+  border-radius: 50%;
 }
