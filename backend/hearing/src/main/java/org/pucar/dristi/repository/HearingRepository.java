@@ -12,6 +12,7 @@ import org.pucar.dristi.web.models.HearingCriteria;
 import org.pucar.dristi.web.models.HearingSearchRequest;
 import org.pucar.dristi.web.models.Pagination;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -29,18 +30,21 @@ public class HearingRepository {
 
     private final HearingQueryBuilder queryBuilder;
 
-    private final JdbcTemplate jdbcTemplate;
-
     private final HearingRowMapper rowMapper;
 
     private final HearingDocumentRowMapper hearingDocumentRowMapper;
 
+    private final JdbcTemplate writerJdbcTemplate;
+
+    private final JdbcTemplate readerJdbcTemplate;
+
     @Autowired
-    public HearingRepository(HearingQueryBuilder queryBuilder, JdbcTemplate jdbcTemplate, HearingRowMapper rowMapper, HearingDocumentRowMapper hearingDocumentRowMapper) {
+    public HearingRepository(HearingQueryBuilder queryBuilder, HearingRowMapper rowMapper, HearingDocumentRowMapper hearingDocumentRowMapper, @Qualifier("writerJdbcTemplate") JdbcTemplate writerJdbcTemplate, @Qualifier("readerJdbcTemplate") JdbcTemplate readerJdbcTemplate) {
         this.queryBuilder = queryBuilder;
-        this.jdbcTemplate = jdbcTemplate;
         this.rowMapper = rowMapper;
         this.hearingDocumentRowMapper = hearingDocumentRowMapper;
+        this.writerJdbcTemplate = writerJdbcTemplate;
+        this.readerJdbcTemplate = readerJdbcTemplate;
     }
 
 
@@ -69,7 +73,7 @@ public class HearingRepository {
                 log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(),preparedStmtArgList.size());
                 throw new CustomException(HEARING_SEARCH_EXCEPTION, "Arg and ArgType size mismatch");
             }
-            List<Hearing> list = jdbcTemplate.query(hearingQuery, preparedStmtList.toArray(),preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), rowMapper);
+            List<Hearing> list = readerJdbcTemplate.query(hearingQuery, preparedStmtList.toArray(),preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), rowMapper);
             if (list != null) {
                 hearingList.addAll(list);
             }
@@ -89,7 +93,7 @@ public class HearingRepository {
                 log.info("Doc Arg size :: {}, and ArgType size :: {}", preparedStmtListDoc.size(),preparedStmtListArgDoc.size());
                 throw new CustomException(HEARING_SEARCH_EXCEPTION, "Arg and ArgType size mismatch for document search");
             }
-            Map<UUID, List<Document>> hearingDocumentMap = jdbcTemplate.query(hearingDocumentQuery, preparedStmtListDoc.toArray(),preparedStmtListArgDoc.stream().mapToInt(Integer::intValue).toArray(), hearingDocumentRowMapper);
+            Map<UUID, List<Document>> hearingDocumentMap = readerJdbcTemplate.query(hearingDocumentQuery, preparedStmtListDoc.toArray(),preparedStmtListArgDoc.stream().mapToInt(Integer::intValue).toArray(), hearingDocumentRowMapper);
             if (hearingDocumentMap != null) {
                 hearingList.forEach(hearing -> hearing.setDocuments(hearingDocumentMap.get(hearing.getId())));
             }
@@ -108,7 +112,7 @@ public class HearingRepository {
     public Integer getTotalCountHearing(String baseQuery, List<Object> preparedStmtList) {
         String countQuery = queryBuilder.getTotalCountQuery(baseQuery);
         log.info("Final count query :: {}", countQuery);
-        return jdbcTemplate.queryForObject(countQuery,Integer.class, preparedStmtList.toArray());
+        return readerJdbcTemplate.queryForObject(countQuery,Integer.class, preparedStmtList.toArray());
     }
 
     public List<Hearing> checkHearingsExist(Hearing hearing) {
@@ -122,7 +126,7 @@ public class HearingRepository {
         List<Object> preparedStmtList = new ArrayList<>();
         String hearingUpdateQuery = queryBuilder.buildUpdateTranscriptAdditionalAttendeesQuery(preparedStmtList, hearing);
         log.info("Final update query: {}", hearingUpdateQuery);
-        int check = jdbcTemplate.update(hearingUpdateQuery, preparedStmtList.toArray());
+        int check = writerJdbcTemplate.update(hearingUpdateQuery, preparedStmtList.toArray());
         if(check==0) throw new CustomException(HEARING_UPDATE_EXCEPTION,"Error while updating hearing");
     }
 }
