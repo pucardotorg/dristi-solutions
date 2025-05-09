@@ -3,7 +3,6 @@ const config = require("../config");
 const {
   search_case,
   search_sunbirdrc_credential_service,
-  search_application,
   create_pdf,
   search_advocate,
 } = require("../api");
@@ -25,7 +24,13 @@ function getOrdinalSuffix(day) {
   }
 }
 
-const applicationDelayCondonation = async (req, res, qrCode) => {
+const applicationDelayCondonation = async (
+  req,
+  res,
+  qrCode,
+  application,
+  courtCaseJudgeDetails
+) => {
   const cnrNumber = req.query.cnrNumber;
   const applicationNumber = req.query.applicationNumber;
   const tenantId = req.query.tenantId;
@@ -69,17 +74,8 @@ const applicationDelayCondonation = async (req, res, qrCode) => {
       return renderError(res, "Court case not found", 404);
     }
 
-    const mdmsCourtRoom = config.constants.mdmsCourtRoom;
+    const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
 
-    // Search for application details
-    const resApplication = await handleApiCall(
-      () => search_application(tenantId, applicationNumber, requestInfo),
-      "Failed to query application service"
-    );
-    const application = resApplication?.data?.applicationList[0];
-    if (!application) {
-      return renderError(res, "Application not found", 404);
-    }
     let applicationTitle = "APPLICATION FOR CONDONATION OF DELAY";
     let barRegistrationNumber = "";
     let advocateName = "";

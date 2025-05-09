@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Calendar } from "react-date-range";
 import { CalendarLeftArrow, CalendarRightArrow } from "../icons/svgIndex";
 import { Button, CardHeader } from "@egovernments/digit-ui-react-components";
@@ -9,18 +9,27 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
   const [selectedDate, setSelectedDate] = useState(initialDate); // State to track the current month
   const selectedMonth = useMemo(() => new Date(currentMonth).getMonth(), [currentMonth]);
   const selectedYear = useMemo(() => new Date(currentMonth).getFullYear(), [currentMonth]);
-  const { data: hearingResponse } = Digit.Hooks.hearings.useGetHearings(
-    {
+
+  const hearingCriteria = useMemo(
+    () => ({
       criteria: {
         tenantId,
         fromDate: new Date(selectedYear, selectedMonth, 1).getTime(),
         toDate: new Date(selectedYear, selectedMonth + 1, 0).getTime(),
       },
       tenantId,
-    },
+    }),
+    [selectedMonth, selectedYear, tenantId]
+  );
+
+  const { data: hearingResponse } = Digit.Hooks.hearings.useGetHearingsCounts(
+    hearingCriteria,
     { applicationNumber: "", cnrNumber: "", tenantId },
-    "dristi",
-    true
+    `${currentMonth.getMonth()}-${currentMonth.getFullYear()}`,
+    Boolean(selectedYear && selectedMonth),
+    false,
+    "",
+    10 * 1000
   );
   const { data: nonWorkingDay } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "schedule-hearing", [{ name: "COURT000334" }], {
     select: (data) => {
@@ -44,12 +53,17 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
   const hearingCounts = useMemo(() => {
     const counts = {};
     if (!hearingDetails) return counts;
-
     hearingDetails.forEach((hearing) => {
-      const dateObj = new Date(hearing.startTime);
-      const date = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}-${String(dateObj.getDate()).padStart(2, "0")}`;
-      counts[date] = counts[date] ? counts[date] + 1 : 1;
+      if (hearing?.hearingDate && hearing?.noOfHearing) {
+        counts[hearing.hearingDate] = hearing.noOfHearing;
+      }
     });
+
+    // hearingDetails.forEach((hearing) => {
+    //   const dateObj = new Date(hearing.startTime);
+    //   const date = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}-${String(dateObj.getDate()).padStart(2, "0")}`;
+    //   counts[date] = counts[date] ? counts[date] + 1 : 1;
+    // });
 
     return counts;
   }, [hearingDetails]);
