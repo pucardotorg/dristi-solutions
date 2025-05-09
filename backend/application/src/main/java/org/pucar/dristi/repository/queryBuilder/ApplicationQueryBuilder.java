@@ -40,6 +40,14 @@ public class ApplicationQueryBuilder {
     private static final String ORDERBY_CLAUSE = " ORDER BY app.{orderBy} {sortingOrder} ";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY app.createdtime DESC ";
     private static final String BASE_APPLICATION_EXIST_QUERY = "SELECT COUNT(*) FROM dristi_application app";
+    private static final List<String> ALLOWED_SORT_FIELDS = List.of(
+            "id", "tenantId", "caseId", "filingNumber", "cnrNumber",
+            "referenceId", "createdDate", "applicationCreatedBy",
+            "applicationType", "applicationNumber", "status", "comment",
+            "isActive", "documents", "createdBy", "lastModifiedBy",
+            "createdTime", "lastModifiedTime"
+    );
+
 
     public String checkApplicationExistQuery(String filingNumber, String cnrNumber, String applicationNumber, List<Object> preparedStmtList) {
         try {
@@ -143,12 +151,14 @@ public class ApplicationQueryBuilder {
         return query + " LIMIT ? OFFSET ?";
     }
     public String addOrderByQuery(String query, Pagination pagination) {
-        if (isPaginationInvalid(pagination) || pagination.getSortBy().contains(";")) {
+        if (isPaginationInvalid(pagination) || ALLOWED_SORT_FIELDS.stream().noneMatch(field -> field.equalsIgnoreCase(pagination.getSortBy()))) {
             return query + DEFAULT_ORDERBY_CLAUSE;
         } else {
             query = query + ORDERBY_CLAUSE;
         }
-        return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
+
+        return query.replace("{orderBy}", pagination.getSortBy())
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     private static boolean isPaginationInvalid(Pagination pagination) {

@@ -28,6 +28,15 @@ public class EvidenceQueryBuilder {
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY art.createdtime DESC ";
     private static final String ORDERBY_CLAUSE = " ORDER BY art.{orderBy} {sortingOrder} ";
     private static final String FROM_ARTIFACTS_TABLE = " FROM dristi_evidence_artifact art";
+
+    private static final List<String> ALLOWED_SORT_FIELDS = List.of(
+            "id", "tenantId", "artifactNumber", "evidenceNumber", "externalRefNumber",
+            "caseId", "application", "hearing", "orders", "mediaType",
+            "artifactType", "sourceID", "sourceName", "applicableTo",
+            "createdDate", "isActive", "status", "description",
+            "createdBy", "lastModifiedBy", "createdTime", "lastModifiedTime"
+    );
+
     public String getArtifactSearchQuery(List<Object> preparedStmtList, List<Integer> preparedStmtArgList, EvidenceSearchCriteria criteria) {
         try {
             StringBuilder query = new StringBuilder(BASE_ARTIFACT_QUERY);
@@ -183,12 +192,14 @@ public class EvidenceQueryBuilder {
         return TOTAL_COUNT_QUERY.replace("{baseQuery}", baseQuery);
     }
     public String addOrderByQuery(String query, Pagination pagination) {
-        if (isPaginationInvalid(pagination) || pagination.getSortBy().contains(";")) {
+        if (isPaginationInvalid(pagination) || ALLOWED_SORT_FIELDS.stream().noneMatch(field -> field.equalsIgnoreCase(pagination.getSortBy()))) {
             return query + DEFAULT_ORDERBY_CLAUSE;
         } else {
             query = query + ORDERBY_CLAUSE;
         }
-        return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
+
+        return query.replace("{orderBy}", pagination.getSortBy())
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     private static boolean isPaginationInvalid(Pagination pagination) {

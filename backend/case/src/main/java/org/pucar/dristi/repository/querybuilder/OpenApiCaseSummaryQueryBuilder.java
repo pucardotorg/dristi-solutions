@@ -81,6 +81,15 @@ public class OpenApiCaseSummaryQueryBuilder {
     private static final String ORDERBY_CLAUSE = " ORDER BY cases.{orderBy} {sortingOrder} ";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY cases.registrationDate DESC ";
 
+    private static final List<String> ALLOWED_SORT_FIELDS = List.of(
+            "id", "tenantId", "caseTitle", "filingNumber", "caseNumber",
+            "cnrNumber", "courtCaseNumber", "accessCode", "courtId", "benchId",
+            "filingDate", "registrationDate", "caseCategory", "natureOfPleading",
+            "status", "remarks", "isActive", "createdBy", "lastModifiedBy",
+            "createdTime", "lastModifiedTime"
+    );
+
+
 
 
     public String getCaseBaseQuery(OpenApiCaseSummaryRequest searchCriteria, List<Object> preparedStatementValues, List<Integer> preparedStatementValueTypes) {
@@ -154,14 +163,15 @@ public class OpenApiCaseSummaryQueryBuilder {
 
     }
 
-    public String addOrderByQuery(String caseSummaryQuery, @Valid Pagination pagination) {
-
-        if (isEmptyPagination(pagination) || pagination.getSortBy().contains(";")) {
+    public String addOrderByQuery(String caseSummaryQuery,@Valid Pagination pagination) {
+        if (isEmptyPagination(pagination) || ALLOWED_SORT_FIELDS.stream().noneMatch(field -> field.equalsIgnoreCase(pagination.getSortBy()))) {
             return caseSummaryQuery + DEFAULT_ORDERBY_CLAUSE;
         } else {
             caseSummaryQuery = caseSummaryQuery + ORDERBY_CLAUSE;
         }
-        return caseSummaryQuery.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
+
+        return caseSummaryQuery.replace("{orderBy}", pagination.getSortBy())
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     private boolean isEmptyPagination(Pagination pagination) {

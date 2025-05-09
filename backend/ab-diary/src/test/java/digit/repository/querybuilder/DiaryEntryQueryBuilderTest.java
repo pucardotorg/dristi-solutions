@@ -150,13 +150,13 @@ class DiaryEntryQueryBuilderTest {
     void addOrderByQuery_WithValidPagination_ReturnsOrderedQuery() {
         String baseQuery = "SELECT * FROM table";
         Pagination pagination = Pagination.builder()
-                .sortBy("name")
+                .sortBy("case_number")
                 .order(Order.ASC)
                 .build();
 
         String result = queryBuilder.addOrderByQuery(baseQuery, pagination);
 
-        assertEquals(baseQuery + " ORDER BY name ASC ", result);
+        assertEquals(baseQuery + " ORDER BY case_number ASC ", result);
     }
 
     @Test

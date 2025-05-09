@@ -39,6 +39,14 @@ public class NotificationQueryBuilder {
     private  static  final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
     private static final String COUNT_ALL = " COUNT(*) ";
 
+    private static final List<String> ALLOWED_SORT_FIELDS = List.of(
+            "id", "tenantId", "notificationType", "courtId", "notificationNumber",
+            "createdDate", "issuedBy", "status", "comment", "isActive",
+            "createdBy", "lastModifiedBy", "createdTime", "lastModifiedTime",
+            "fileStore", "documentUid", "documentType", "notificationId"
+    );
+
+
 
 
     /**
@@ -196,14 +204,16 @@ public class NotificationQueryBuilder {
      * @param pagination the pagination object containing sorting information
      * @return the modified SQL query with the ORDER BY clause
      */
-
-    private String addOrderByQuery(String query, Pagination pagination) {
-        if (isEmptyPagination(pagination) || pagination.getSortBy().contains(";")) {
+    
+    public String addOrderByQuery(String query, Pagination pagination) {
+        if (isEmptyPagination(pagination) || ALLOWED_SORT_FIELDS.stream().noneMatch(field -> field.equalsIgnoreCase(pagination.getSortBy()))) {
             return query + DEFAULT_ORDERBY_CLAUSE;
         } else {
             query = query + ORDERBY_CLAUSE;
         }
-        return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
+
+        return query.replace("{orderBy}", pagination.getSortBy())
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     private boolean isEmptyPagination(Pagination pagination) {

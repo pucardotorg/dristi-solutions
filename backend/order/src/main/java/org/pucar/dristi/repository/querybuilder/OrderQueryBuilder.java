@@ -42,6 +42,14 @@ public class OrderQueryBuilder {
     private static final String ORDERBY_CLAUSE = " ORDER BY orders.{orderBy} {sortingOrder} ";
     private  static  final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
 
+    private static final List<String> ALLOWED_SORT_FIELDS = List.of(
+            "id", "tenantId", "hearingNumber", "orderNumber", "linkedOrderNumber",
+            "filingNumber", "cnrNumber", "orderType", "orderCategory", "createdDate",
+            "comments", "status", "isActive", "createdBy", "lastModifiedBy",
+            "createdTime", "lastModifiedTime"
+    );
+
+
 
     public String getTotalCountQuery(String baseQuery) {
         return TOTAL_COUNT_QUERY.replace("{baseQuery}", baseQuery);
@@ -197,12 +205,14 @@ public class OrderQueryBuilder {
     }
 
     public String addOrderByQuery(String query, Pagination pagination) {
-        if (isPaginationInvalid(pagination) || pagination.getSortBy().contains(";")) {
+        if (isPaginationInvalid(pagination) || ALLOWED_SORT_FIELDS.stream().noneMatch(field -> field.equalsIgnoreCase(pagination.getSortBy()))) {
             return query + DEFAULT_ORDERBY_CLAUSE;
         } else {
             query = query + ORDERBY_CLAUSE;
         }
-        return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
+
+        return query.replace("{orderBy}", pagination.getSortBy())
+                .replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     private static boolean isPaginationInvalid(Pagination pagination) {
