@@ -7,6 +7,7 @@ import useGetHearingSlotMetaData from "./useGetHearingSlotMetaData";
 import useGetTaskList from "./hearings/useGetTaskList";
 import useGetHearingLink from "./hearings/useGetHearingLink";
 import { hearingService } from "./services";
+import useGetHearingsCounts from "./hearings/useGetHearingCounts";
 
 const hearings = {
   useIndividualView,
@@ -16,6 +17,7 @@ const hearings = {
   useGetHearingSlotMetaData,
   useGetTaskList,
   useGetHearingLink,
+  useGetHearingsCounts,
 };
 
 const Hooks = {
