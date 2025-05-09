@@ -116,27 +116,6 @@ public class PublishOrderAdmitCase implements OrderUpdateStrategy {
                     hearingUtil.createOrUpdateHearing(request, hearingUpdateUri);
                 });
 
-        // create pending task
-        // schedule hearing pending task
-//        PendingTask pendingTask = PendingTask.builder()
-//                .name(SCHEDULE_HEARING)
-//                .referenceId(MANUAL + courtCase.getFilingNumber())
-//                .caseId(courtCase.getId().toString())
-//                .caseTitle(courtCase.getCaseTitle())
-//                .entityType("case-default")
-//                .status("SCHEDULE_HEARING")
-//                .assignedRole(List.of("JUDGE_ROLE"))
-//                .cnrNumber(courtCase.getCnrNumber())
-//                .filingNumber(courtCase.getFilingNumber())
-//                .isCompleted(false)
-//                .stateSla(pendingTaskUtil.getStateSla("SCHEDULE_HEARING"))
-//                .screenType("home")
-//                .build();
-//        log.info("creating pending task of schedule hearing for judge of filing number :{}", courtCase.getFilingNumber());
-//
-//        pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
-//        ).pendingTask(pendingTask).build());
-
         // pending response pending task
 
         List<Party> respondent = caseUtil.getRespondentOrComplainant(courtCase, "respondent");
