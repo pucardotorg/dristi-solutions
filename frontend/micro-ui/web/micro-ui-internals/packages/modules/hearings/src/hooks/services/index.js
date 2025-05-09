@@ -44,20 +44,22 @@ export const hearingService = {
     });
   },
   searchHearings: (data, params) => {
+    // Add courtId to criteria if it exists
     return Request({
       url: Urls.hearing.searchHearings,
       useCache: false,
       userService: false,
-      data,
+      data:{...data,criteria: {...data?.criteria,courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52'}},
       params,
     });
   },
   searchTaskList: (data, params) => {
+    // Add courtId to criteria if it exists
     return Request({
       url: Urls.hearing.searchTasks,
       useCache: false,
       userService: false,
-      data,
+      data: {...data,criteria: {...data?.criteria,courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52'}},
       params,
     });
   },

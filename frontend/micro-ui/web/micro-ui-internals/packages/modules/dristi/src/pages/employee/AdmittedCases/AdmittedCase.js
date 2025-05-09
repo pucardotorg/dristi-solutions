@@ -1223,12 +1223,14 @@ const AdmittedCases = () => {
 
   const getEvidence = async () => {
     try {
+      // Add courtId to criteria if it exists
       const response = await DRISTIService.searchEvidence(
         {
           criteria: {
             filingNumber: filingNumber,
             artifactNumber: artifactNumber,
             tenantId: tenantId,
+            courtId:  window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52"
           },
           tenantId,
         },
