@@ -1263,13 +1263,9 @@ const AdmittedCases = () => {
         if (artifact.sourceID === undefined) {
           return "NA";
         }
-        const owner = await DRISTIService.searchEmployeeUser(
-          {
-            authToken: localStorage.getItem("token"),
-          },
-          { tenantId, uuids: artifact?.sourceID, limit: 1000, offset: 0 }
-        );
-        return `${owner?.Employees?.[0]?.user?.name}`.trim();
+        const owner = await Digit.UserService.userSearch(tenantId, { uuid: [artifact?.sourceID] }, {});
+        if (owner?.user?.length > 1) return "";
+        return `${owner?.user?.[0]?.name}`.trim();
       } else {
         if (artifact?.sourceID === undefined) {
           return "NA";
