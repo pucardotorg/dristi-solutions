@@ -815,7 +815,7 @@ export const UICustomizations = {
           break;
       }
     },
-    dropDownItems: (row) => {
+    dropDownItems: (row, configs) => {
       const formatDate = (date) => {
         const day = String(date.getDate()).padStart(2, "0");
         const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -827,6 +827,7 @@ export const UICustomizations = {
       const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
       const date = new Date(row.startTime);
       const future = row.startTime > Date.now();
+      const showActions = configs && configs.hasOwnProperty("showMakeSubmission") ? configs.showMakeSubmission : true;
       if (row.status === "SCHEDULED" && userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE")) {
         return [
           {
@@ -916,6 +917,7 @@ export const UICustomizations = {
           {
             label: "Request for Reschedule hearing",
             id: "reschedule",
+            hide: !showActions,
             action: (history) => {
               history.push(
                 `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${row.filingNumber[0]}&hearingId=${row.hearingId}&applicationType=RE_SCHEDULE`
@@ -925,6 +927,7 @@ export const UICustomizations = {
           {
             label: "Request for Checkout Request",
             id: "reschedule",
+            hide: !showActions,
             action: (history) => {
               history.push(
                 `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${row.filingNumber[0]}&hearingId=${row.hearingId}&applicationType=CHECKOUT_REQUEST`

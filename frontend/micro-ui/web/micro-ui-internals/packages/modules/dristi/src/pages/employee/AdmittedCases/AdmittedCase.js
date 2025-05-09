@@ -809,7 +809,7 @@ const AdmittedCases = () => {
                 uiConfig: {
                   ...tabConfig.sections.searchResult.uiConfig,
                   columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) =>
-                    column.label === "CS_ACTIONS" ? { ...column, clickFunc: takeActionFunc } : column
+                    column.label === "CS_ACTIONS" ? { ...column, clickFunc: takeActionFunc, showMakeSubmission: showMakeSubmission } : column
                   ),
                 },
               },

@@ -4,7 +4,7 @@ import { useHistory } from "react-router-dom";
 import { Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import { rolesToConfigMapping, userTypeOptions } from "../../configs/HomeConfig";
 import UpcomingHearings from "../../components/UpComingHearing";
-import { Loader } from "@egovernments/digit-ui-react-components";
+import { Loader, Toast } from "@egovernments/digit-ui-react-components";
 import TasksComponent from "../../components/TaskComponent";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import { HomeService, Urls } from "../../hooks/services";
@@ -17,6 +17,7 @@ import useSearchOrdersNotificationService from "@egovernments/digit-ui-module-or
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
 import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
 import isEqual from "lodash/isEqual";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 
 const defaultSearchValues = {
   caseSearchText: "",
@@ -71,6 +72,8 @@ const HomeView = () => {
   const isNyayMitra = roles.some((role) => role.code === "NYAY_MITRA_ROLE");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const [toastMsg, setToastMsg] = useState(null);
+
   const setInitialConfig = () => {
     if (userInfoType !== "employee") return TabLitigantSearchConfig?.TabSearchConfig?.[0];
     else return null;
@@ -294,7 +297,7 @@ const HomeView = () => {
           setTabConfig(tabConfigs);
           getTotalCountForTab(tabConfigs);
         }
-      } else if (userInfoType !== "employee" && !isCounted) {
+      } else {
         setConfig(tabConfigs?.TabSearchConfig?.[0]);
         setTabConfig(tabConfigs);
         setIsCounted(true);
@@ -368,7 +371,28 @@ const HomeView = () => {
     }
   };
 
-  const onRowClick = (row) => {
+  const handleScrutinyAndLock = async (filingNumber) => {
+    const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
+    if (isScrutiny) {
+      try {
+        const response = await DRISTIService.getCaseLockStatus({}, { uniqueId: filingNumber, tenantId: tenantId });
+        if (response?.Lock?.isLocked) {
+          showToast("error", t("CASE_IS_ALREADY_LOCKED"), 5000);
+          return false;
+        } else {
+          await DRISTIService.setCaseLock({ Lock: { uniqueId: filingNumber, tenantId: tenantId, lockType: "SCRUTINY" } }, {});
+
+          return true;
+        }
+      } catch (error) {
+        showToast("error", t("ISSUE_WITH_LOCK"), 5000);
+        console.error(error);
+        return false;
+      }
+    } else return true;
+  };
+
+  const onRowClick = async (row) => {
     if (userInfoType === "citizen" && row?.original?.advocateStatus === "PENDING") {
       return;
     }
@@ -381,6 +405,12 @@ const HomeView = () => {
       onRowClickData.params.forEach((item) => {
         searchParams.set(item?.key, row.original[item?.value]);
       });
+
+      const allowed = await handleScrutinyAndLock(row?.original?.filingNumber);
+
+      if (!allowed) {
+        return;
+      }
       history.push(`/${window?.contextPath}/${userInfoType}${onRowClickData?.dependentUrl}?${searchParams.toString()}`);
     } else if (onRowClickData?.url) {
       onRowClickData.params.forEach((item) => {
@@ -436,7 +466,12 @@ const HomeView = () => {
   if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOrdersLoading || isOutcomeLoading) {
     return <Loader />;
   }
-
+  const showToast = (type, message, duration = 5000) => {
+    setToastMsg({ key: type, action: message });
+    setTimeout(() => {
+      setToastMsg(null);
+    }, duration);
+  };
   return (
     <div className="home-view-hearing-container">
       {individualId && userType && userInfoType === "citizen" && !caseDetails ? (
@@ -538,6 +573,15 @@ const HomeView = () => {
           history={history}
           bulkSignOrderListLength={issueBulkSuccessData.bulkSignOrderListLength}
           setIssueBulkSuccessData={setIssueBulkSuccessData}
+        />
+      )}
+      {toastMsg && (
+        <Toast
+          error={toastMsg.key === "error"}
+          label={t(toastMsg.action)}
+          onClose={() => setToastMsg(null)}
+          isDleteBtn={true}
+          style={{ maxWidth: "500px" }}
         />
       )}
     </div>
