@@ -13,6 +13,7 @@ import org.pucar.dristi.enrichment.OrderRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.OrderRepository;
 import org.pucar.dristi.util.CaseUtil;
+import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.WorkflowUtil;
 import org.pucar.dristi.validators.OrderRegistrationValidator;
 import org.pucar.dristi.web.models.*;
@@ -49,9 +50,10 @@ public class OrderRegistrationService {
     private SmsNotificationService notificationService;
 
     private IndividualService individualService;
+    private final FileStoreUtil fileStoreUtil;
 
     @Autowired
-    public OrderRegistrationService(OrderRegistrationValidator validator, Producer producer, Configuration config, WorkflowUtil workflowUtil, OrderRepository orderRepository, OrderRegistrationEnrichment enrichmentUtil, ObjectMapper objectMapper, CaseUtil caseUtil, SmsNotificationService notificationService, IndividualService individualService) {
+    public OrderRegistrationService(OrderRegistrationValidator validator, Producer producer, Configuration config, WorkflowUtil workflowUtil, OrderRepository orderRepository, OrderRegistrationEnrichment enrichmentUtil, ObjectMapper objectMapper, CaseUtil caseUtil, SmsNotificationService notificationService, IndividualService individualService, FileStoreUtil fileStoreUtil) {
         this.validator = validator;
         this.producer = producer;
         this.config = config;
@@ -62,6 +64,7 @@ public class OrderRegistrationService {
         this.caseUtil = caseUtil;
         this.notificationService = notificationService;
         this.individualService = individualService;
+        this.fileStoreUtil = fileStoreUtil;
     }
 
     public Order createOrder(OrderRequest body) {
@@ -115,6 +118,17 @@ public class OrderRegistrationService {
 
 
             workflowUpdate(body);
+
+            List<String> fileStoreIds = new ArrayList<>();
+            for(Document document : body.getOrder().getDocuments()) {
+                if(!document.getIsActive()){
+                    fileStoreIds.add(document.getFileStore());
+                }
+            }
+            if(!fileStoreIds.isEmpty()){
+                fileStoreUtil.deleteFilesByFileStore(fileStoreIds, body.getOrder().getTenantId());
+                log.info("Deleted files from filestore: {}", fileStoreIds);
+            }
             String updatedState = body.getOrder().getStatus();
             String orderType = body.getOrder().getOrderType();
             producer.push(config.getUpdateOrderKafkaTopic(), body);
