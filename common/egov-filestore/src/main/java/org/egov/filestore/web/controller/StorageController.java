@@ -13,11 +13,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.filestore.domain.model.FileInfo;
 import org.egov.filestore.domain.service.StorageService;
 import org.egov.filestore.utils.StorageUtil;
-import org.egov.filestore.web.contract.File;
-import org.egov.filestore.web.contract.FileStoreResponse;
-import org.egov.filestore.web.contract.GetFilesByTagResponse;
-import org.egov.filestore.web.contract.ResponseFactory;
-import org.egov.filestore.web.contract.StorageResponse;
+import org.egov.filestore.web.contract.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -133,11 +129,8 @@ public class StorageController {
 
 	@PostMapping("/delete")
 	@ResponseBody
-	public ResponseEntity<List<String>> deleteFilesByFileStoreIds(@RequestParam(value = "tenantId") String tenantId,
-																  @RequestParam List<String> fileStoreIds,
-																  @RequestParam(value = "module",required = false) String module,
-																  @RequestParam(value = "isSoftDelete",required = false) boolean isSoftDelete) {
-		List<String> deletedFiles = storageService.deleteFiles(fileStoreIds, tenantId, module, isSoftDelete);
+	public ResponseEntity<List<String>> deleteFilesByFileStoreIds(@ModelAttribute DeleteFile deleteFile) {
+		List<String> deletedFiles = storageService.deleteFiles(deleteFile.getFileStoreIds(), deleteFile.getTenantId(), deleteFile.getModule(), deleteFile.isSoftDelete());
 		return ResponseEntity.ok(deletedFiles);
 	}
 }
