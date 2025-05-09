@@ -15,9 +15,21 @@ async function getCourtAndJudgeDetails(
     "Failed to query HRMS service"
   );
 
+  const resMdms = await handleApiCall(
+    res,
+    () =>
+      search_mdms(courtId, "common-masters.Court_Rooms", tenantId, requestInfo),
+    "Failed to query MDMS service for court room"
+  );
+  const mdmsCourtRoom = resMdms?.data?.mdms[0]?.data;
+  if (!mdmsCourtRoom) {
+    renderError(res, "Court room MDMS master not found", 404);
+  }
+
   const employee = resHrms.data.Employees.find(({ assignments }) =>
     assignments.some(
-      ({ courtroom, fromDate, toDate }) =>
+      ({ courtEstablishment, courtroom, fromDate, toDate }) =>
+        mdmsCourtRoom.establishment === courtEstablishment &&
         courtroom === courtId &&
         fromDate <= Date.now() &&
         (toDate === null || toDate > Date.now())
@@ -31,17 +43,6 @@ async function getCourtAndJudgeDetails(
   const assignment = employee.assignments.find(
     (assignment) => assignment.courtroom === courtId
   );
-
-  const resMdms = await handleApiCall(
-    res,
-    () =>
-      search_mdms(courtId, "common-masters.Court_Rooms", tenantId, requestInfo),
-    "Failed to query MDMS service for court room"
-  );
-  const mdmsCourtRoom = resMdms?.data?.mdms[0]?.data;
-  if (!mdmsCourtRoom) {
-    renderError(res, "Court room MDMS master not found", 404);
-  }
 
   const responseMdms = await handleApiCall(
     res,
