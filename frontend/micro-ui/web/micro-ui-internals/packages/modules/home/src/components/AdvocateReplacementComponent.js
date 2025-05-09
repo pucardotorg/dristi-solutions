@@ -177,6 +177,8 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
           assignedRole: ["JUDGE_ROLE"],
           cnrNumber: caseDetails?.cnrNumber,
           filingNumber: filingNumber,
+          caseId: caseDetails?.id,
+          caseTitle: caseDetails?.caseTitle,
           isCompleted: false,
           stateSla: 2 * 24 * 3600 * 1000 + new Date().getTime(),
           additionalDetails: { orderType: "ADVOCATE_REPLACEMENT_APPROVAL" },

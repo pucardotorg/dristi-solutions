@@ -69,7 +69,7 @@ const BAIL_APPLICATION_EXCLUDED_STATUSES = [
 const _getApplicationAmount = (applicationTypeAmountList, applicationType) => {
   const applicationTypeAmount = applicationTypeAmountList?.find((amount) => amount?.type === applicationType);
   return applicationTypeAmount?.totalAmount || 20;
-}
+};
 
 const SubmissionsCreate = ({ path }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
@@ -180,8 +180,6 @@ const SubmissionsCreate = ({ path }) => {
       },
     }
   );
-
-  
 
   const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "FilingType" },
@@ -866,6 +864,8 @@ const SubmissionsCreate = ({ path }) => {
         assignedRole: assignedRole,
         cnrNumber: caseDetails?.cnrNumber,
         filingNumber: filingNumber,
+        caseId: caseDetails?.id,
+        caseTitle: caseDetails?.caseTitle,
         isCompleted,
         stateSla,
         additionalDetails: {},
