@@ -850,28 +850,28 @@ const AdmittedCases = () => {
                 uiConfig: {
                   ...tabConfig.sections.search.uiConfig,
                   fields: [
-                    {
-                      label: "OWNER",
-                      isMandatory: false,
-                      key: "owner",
-                      type: "dropdown",
-                      populators: {
-                        name: "owner",
-                        optionsKey: "name",
-                        options: Array.from(
-                          new Map(
-                            artifacts?.map((artifact) => [
-                              removeInvalidNameParts(artifact.owner), // Key for uniqueness
-                              {
-                                code: removeInvalidNameParts(artifact.owner),
-                                name: removeInvalidNameParts(artifact.owner),
-                                value: artifact.sourceID,
-                              },
-                            ])
-                          ).values()
-                        ),
-                      },
-                    },
+                    // {
+                    //   label: "OWNER",
+                    //   isMandatory: false,
+                    //   key: "owner",
+                    //   type: "dropdown",
+                    //   populators: {
+                    //     name: "owner",
+                    //     optionsKey: "name",
+                    //     options: Array.from(
+                    //       new Map(
+                    //         artifacts?.map((artifact) => [
+                    //           removeInvalidNameParts(artifact.owner), // Key for uniqueness
+                    //           {
+                    //             code: removeInvalidNameParts(artifact.owner),
+                    //             name: removeInvalidNameParts(artifact.owner),
+                    //             value: artifact.sourceID,
+                    //           },
+                    //         ])
+                    //       ).values()
+                    //     ),
+                    //   },
+                    // },
                     ...tabConfig.sections.search.uiConfig.fields,
                   ],
                 },
