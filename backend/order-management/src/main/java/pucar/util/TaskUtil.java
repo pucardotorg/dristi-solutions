@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
-import net.minidev.json.JSONObject;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -208,19 +207,19 @@ public class TaskUtil {
     private void getDeliveryChannel(Order order, TaskDetails taskDetails, CourtCase courtCase) throws JsonProcessingException {
 
         Object orderFormData = getOrderFormDataByOrderType(order.getAdditionalDetails(), order.getOrderType());
+        Object deliveryChannels = jsonUtil.getNestedValue(orderFormData, List.of("selectedChannels"), Object.class);
+        JSONArray deliveryChannelArray = objectMapper.convertValue(objectMapper.writeValueAsBytes(deliveryChannels), JSONArray.class);
+        List<Map<String, Object>> channelMap = extractDeliveryChannels(deliveryChannelArray);
 
-        Object deliveryChannel = jsonUtil.getNestedValue(orderFormData, List.of("selectedChannels"), Object.class);
+        for (Map<String, Object> channel : channelMap) {
 
-        JSONArray deliveryChannelArray = objectMapper.convertValue(objectMapper.writeValueAsBytes(deliveryChannel), JSONArray.class);
+            String channelType = channel.get("type").toString();
+            String channelValue = channel.get("code").toString();
 
-        for (int i = 0; i < deliveryChannelArray.size(); i++) {
-            JSONObject channel = (JSONObject) deliveryChannelArray.get(i);
+            DeliveryChannel deliveryChannel = DeliveryChannel.builder().build();
+
 
         }
-
-
-
-
     }
 
     private void getCaseDetails(Order order, TaskDetails taskDetails, CourtCase courtCase, Map<String, Object> courtDetails) {
