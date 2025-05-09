@@ -192,34 +192,35 @@ import static org.mockito.Mockito.*;
    // New tests for addItem method
    @Test
    void testAddItem_success() {
-      // Setup
-      OrderRequest orderRequest = new OrderRequest();
-      Order order = new Order();
-      order.setOrderNumber("TEST-ORDER-123");
-      order.setTenantId("test-tenant");
-      orderRequest.setOrder(order);
-      RequestInfo requestInfo = new RequestInfo();
-      orderRequest.setRequestInfo(requestInfo);
+       // Setup
+       OrderRequest orderRequest = new OrderRequest();
+       Order order = new Order();
+       order.setOrderNumber("TEST-ORDER-123");
+       order.setTenantId("test-tenant");
+       order.setWorkflow(new WorkflowObject());
+       orderRequest.setOrder(order);
+       RequestInfo requestInfo = new RequestInfo();
+       orderRequest.setRequestInfo(requestInfo);
 
-      // Mocks
-      when(validator.validateApplicationExistence(any(OrderRequest.class))).thenReturn(true);
-      doNothing().when(validator).validateAddItem(any(OrderRequest.class));
-      doNothing().when(enrichmentUtil).enrichOrderRegistrationUponUpdate(any(OrderRequest.class));
-      doNothing().when(enrichmentUtil).enrichCompositeOrderItemIdOnAddItem(any(OrderRequest.class));
-      doNothing().when(producer).push(anyString(), any(OrderRequest.class));
-      when(config.getUpdateOrderKafkaTopic()).thenReturn("update-order-topic");
+       // Mocks
+       when(validator.validateApplicationExistence(any(OrderRequest.class))).thenReturn(true);
+       doNothing().when(validator).validateAddItem(any(OrderRequest.class));
+       doNothing().when(enrichmentUtil).enrichOrderRegistrationUponUpdate(any(OrderRequest.class));
+       doNothing().when(enrichmentUtil).enrichCompositeOrderItemIdOnAddItem(any(OrderRequest.class));
+       doNothing().when(producer).push(anyString(), any(OrderRequest.class));
+       when(config.getUpdateOrderKafkaTopic()).thenReturn("update-order-topic");
 
-      // Method call
-      Order result = orderRegistrationService.addItem(orderRequest);
+       // Method call
+       Order result = orderRegistrationService.addItem(orderRequest);
 
-      // Assertions
-      assertNotNull(result);
-      assertEquals(order, result);
-      verify(validator).validateApplicationExistence(orderRequest);
-      verify(validator).validateAddItem(orderRequest);
-      verify(enrichmentUtil).enrichOrderRegistrationUponUpdate(orderRequest);
-      verify(enrichmentUtil).enrichCompositeOrderItemIdOnAddItem(orderRequest);
-      verify(producer).push("update-order-topic", orderRequest);
+       // Assertions
+       assertNotNull(result);
+       assertEquals(order, result);
+       verify(validator).validateApplicationExistence(orderRequest);
+       verify(validator).validateAddItem(orderRequest);
+       verify(enrichmentUtil).enrichOrderRegistrationUponUpdate(orderRequest);
+       verify(enrichmentUtil).enrichCompositeOrderItemIdOnAddItem(orderRequest);
+       verify(producer).push("update-order-topic", orderRequest);
    }
 
    @Test
