@@ -94,7 +94,7 @@ public class DiaryService {
             List<String> fileStoreIds = new ArrayList<>();
             for(CaseDiaryDocument document : caseDiaryRequest.getDiary().getDocuments()) {
                 if(!document.isActive()) {
-                    fileStoreUtil.deleteFilesByFileStore(fileStoreIds, caseDiaryRequest.getDiary().getTenantId());
+                    fileStoreIds.add(document.getFileStoreId());
                 }
             }
             if(!fileStoreIds.isEmpty()) {
