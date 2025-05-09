@@ -26,7 +26,7 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
     hearingCriteria,
     { applicationNumber: "", cnrNumber: "", tenantId },
     `${currentMonth.getMonth()}-${currentMonth.getFullYear()}`,
-    true,
+    Boolean(selectedYear && selectedMonth),
     false,
     "",
     10 * 1000
