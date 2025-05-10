@@ -133,7 +133,6 @@ public class FileStoreUtil {
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("fileStoreIds", String.join(",", fileStoreIds));
-        body.add("module", configs.getFileStoreCaseModule());
         body.add("isSoftDelete", false);
 
         HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, new HttpHeaders());
