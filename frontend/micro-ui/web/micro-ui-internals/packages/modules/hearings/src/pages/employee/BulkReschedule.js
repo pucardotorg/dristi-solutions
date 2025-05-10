@@ -225,11 +225,17 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       await hearingService?.updateNotification({
         notification: {
           ...searchNotification?.list?.[0],
-          documents: searchNotification?.list?.[0]?.documents?.map((doc) =>
-            doc?.documentType === "Bulk Reschedule unsigned"
-              ? { ...doc, fileStore: signedDocumentUploadID || localStorageID, documentType: "Bulk Reschedule signed" }
-              : doc
-          ),
+          documents: [
+            ...searchNotification?.list?.[0]?.documents?.map((doc) =>
+              doc?.documentType === "Bulk Reschedule unsigned"
+                ? { ...doc, isActive: doc?.fileStore !== (signedDocumentUploadID || localStorageID) ? false : true }
+                : doc
+            ),
+            {
+              fileStore: signedDocumentUploadID || localStorageID,
+              documentType: "Bulk Reschedule signed",
+            },
+          ],
           workflow: {
             action: "E-SIGN",
           },
@@ -547,6 +553,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       const caseNumbers = newHearingData?.filter((hearing) => hearing?.caseId).map((hearing) => hearing.caseId);
       const createNotificationResponse = await hearingService?.createNotification({
         notification: {
+          additionalDetails: { reason: bulkFormData?.reason?.code },
           tenantId: tenantId,
           caseNumber: caseNumbers,
           notificationType: "Notification for Bulk Reschedule",

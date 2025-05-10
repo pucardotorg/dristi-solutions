@@ -2133,6 +2133,15 @@ const GenerateOrders = () => {
         );
       }
     }
+
+    if (documentsFile?.documentType === "SIGNED") {
+      documents.push({
+        isActive: false,
+        documentType: "UNSIGNED",
+        fileStore: orderPdfFileStoreID,
+        documentOrder: documents?.length > 0 ? documents.length + 2 : 2,
+      });
+    }
     return [...documents, documentsFile];
   };
 
@@ -2199,7 +2208,6 @@ const GenerateOrders = () => {
               additionalDetails: { name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.pdf` },
             }
           : null;
-
       const updatedDocuments = getUpdateDocuments(documents, documentsFile);
       let orderSchema = {};
       try {
