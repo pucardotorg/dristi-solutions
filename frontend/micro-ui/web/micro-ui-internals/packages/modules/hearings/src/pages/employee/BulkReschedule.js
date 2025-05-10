@@ -95,6 +95,8 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const [notificationReviewBlob, setNotificationReviewBlob] = useState({});
   const [notificationReviewFilename, setNotificationReviewFilename] = useState("");
 
+  const [fileStoreIds, setFileStoreIds] = useState(new Set());
+
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${notificationFileStoreId}`;
   const defaultValues = {
     toDate: bulkFormData?.toDate || selectedDate,
@@ -222,19 +224,29 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           limit: 100,
         },
       });
+
+      const newFileStoreId = signedDocumentUploadID || localStorageID;
+      fileStoreIds.delete(newFileStoreId);
       await hearingService?.updateNotification({
         notification: {
           ...searchNotification?.list?.[0],
           documents: [
-            ...searchNotification?.list?.[0]?.documents?.map((doc) =>
-              doc?.documentType === "Bulk Reschedule unsigned"
-                ? { ...doc, isActive: doc?.fileStore !== (signedDocumentUploadID || localStorageID) ? false : true }
-                : doc
-            ),
+            ...searchNotification?.list?.[0]?.documents?.map((doc) => {
+              if (doc?.documentType === "Bulk Reschedule unsigned") {
+                const unsignedFileStoreId = doc.fileStore;
+                fileStoreIds.delete(unsignedFileStoreId);
+                return { ...doc, isActive: false };
+              }
+              return { ...doc };
+            }),
             {
               fileStore: signedDocumentUploadID || localStorageID,
               documentType: "Bulk Reschedule signed",
             },
+            ...Array.from(fileStoreIds).map((fileStoreId) => ({
+              fileStore: fileStoreId,
+              isActive: false,
+            })),
           ],
           workflow: {
             action: "E-SIGN",
@@ -312,8 +324,6 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   useEffect(() => {
     const upload = async () => {
       if (signFormData?.uploadSignature?.Signature?.length > 0) {
-        const uploadedFileId = await uploadDocuments(signFormData?.uploadSignature?.Signature, tenantId);
-        setSignedDocumentUploadID(uploadedFileId[0]?.fileStoreId);
         setIsSigned(true);
       }
     };
@@ -546,6 +556,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", pdfFile, Digit.ULBService.getCurrentTenantId());
         fileStoreId = fileUploadRes?.data?.files?.[0]?.fileStoreId;
         setNotificationFileStoreId(fileStoreId);
+        setFileStoreIds((fileStoreIds) => new Set([...fileStoreIds, fileStoreId]));
       } else if (!notificationFileStoreId) {
         showToast("error", t("SOME_ERRORS_IN_HEARING_RESCHEDULE"), 5000);
         return;
@@ -586,7 +597,9 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     if (signFormData?.uploadSignature?.Signature?.length > 0) {
       try {
         const uploadedFileId = await uploadDocuments(signFormData?.uploadSignature?.Signature, tenantId);
-        setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
+        const newFileStoreId = uploadedFileId?.[0]?.fileStoreId;
+        setSignedDocumentUploadID(newFileStoreId);
+        setFileStoreIds((fileStoreIds) => new Set([...fileStoreIds, newFileStoreId]));
         setIsSigned(true);
         setOpenUploadSignatureModal(false);
       } catch (error) {
