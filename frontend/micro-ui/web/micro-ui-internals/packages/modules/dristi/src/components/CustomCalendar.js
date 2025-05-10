@@ -85,15 +85,12 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
     const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
     const formattedDate = date.toLocaleDateString("en-GB");
     const formattedForCheck = formattedDate.replace(/\//g, "-");
-    const isNonWorkingDay =
-      selectedDate.toLocaleDateString("en-GB") !== formattedDate &&
-      nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
+    const isNonWorkingDay = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
     const hearingCount = hearingCounts[dateStr] || 0;
     return (
       <div
-        className={isNonWorkingDay ? "nonWorkingDay" : ""}
         style={{
-          // backgroundColor: isNonWorkingDay ? "#ffcccc" : "transparent",
+          backgroundColor: isNonWorkingDay ? "#ffcccc" : "transparent",
           borderRadius: "50%",
           height: "40px",
           width: "40px",
