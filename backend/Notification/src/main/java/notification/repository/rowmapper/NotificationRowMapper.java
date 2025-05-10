@@ -74,7 +74,7 @@ public class NotificationRowMapper implements ResultSetExtractor<List<Notificati
             if (documentId != null) {
                 Document document = Document.builder()
                         .id(rs.getString("documentid"))
-                        .additionalDetails(rs.getString("additionaldetails"))
+                        .additionalDetails(getObjectFromJson(rs.getString("additionaldetails"), new TypeReference<Map<String, Object>>() {}))
                         .documentType(rs.getString("documenttype"))
                         .documentUid(rs.getString("documentuid"))
                         .fileStore(rs.getString("filestore"))
