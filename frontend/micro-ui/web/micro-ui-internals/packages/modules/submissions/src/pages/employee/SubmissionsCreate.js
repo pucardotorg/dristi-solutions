@@ -1047,19 +1047,28 @@ const SubmissionsCreate = ({ path }) => {
       const documents = Array.isArray(applicationDetails?.documents) ? applicationDetails.documents : [];
       const documentsFile =
         signedDoucumentUploadedID !== "" || localStorageID
-          ? {
-              documentType: "SIGNED",
-              fileStore: signedDoucumentUploadedID || localStorageID,
-              documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
-              additionalDetails: { name: `Application: ${t(applicationType)}.pdf` },
-            }
+          ? [
+              {
+                documentType: "SIGNED",
+                fileStore: signedDoucumentUploadedID || localStorageID,
+                documentOrder: documents?.length > 0 ? documents.length + 2 : 2,
+                additionalDetails: { name: `Application: ${t(applicationType)}.pdf` },
+              },
+              {
+                isActive: applicationPdfFileStoreId && applicationPdfFileStoreId !== (localStorageID || signedDoucumentUploadedID) ? false : true,
+                documentType: "UNSIGNED",
+                fileStore: applicationPdfFileStoreId,
+                documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
+                additionalDetails: { name: `Application : ${t(applicationType)}.pdf` },
+              },
+            ]
           : null;
 
       sessionStorage.removeItem("fileStoreId");
       const reqBody = {
         application: {
           ...applicationDetails,
-          documents: documentsFile ? [...documents, documentsFile] : documents,
+          documents: documentsFile ? [...documents, ...documentsFile] : documents,
           workflow: { ...applicationDetails?.workflow, documents: [{}], action },
           tenantId,
         },
