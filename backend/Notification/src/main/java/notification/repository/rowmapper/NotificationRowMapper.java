@@ -59,7 +59,7 @@ public class NotificationRowMapper implements ResultSetExtractor<List<Notificati
                         .isActive(rs.getBoolean("isactive"))
                         .auditDetails(auditdetails)
                         .notificationDetails(rs.getString("notificationdetails"))
-                        .additionalDetails(rs.getString("additionaldetails"))
+                        .additionalDetails(getObjectFromJson(rs.getString("additionaldetails"), new TypeReference<Map<String, Object>>() {}))
                         .issuedBy(rs.getString("issuedby"))
                         .createdDate(rs.getLong("createddate"))
                         .comments(rs.getString("comment"))
@@ -74,7 +74,7 @@ public class NotificationRowMapper implements ResultSetExtractor<List<Notificati
             if (documentId != null) {
                 Document document = Document.builder()
                         .id(rs.getString("documentid"))
-                        .additionalDetails(rs.getString("additionaldetails"))
+                        .additionalDetails(getObjectFromJson(rs.getString("additionaldetails"), new TypeReference<Map<String, Object>>() {}))
                         .documentType(rs.getString("documenttype"))
                         .documentUid(rs.getString("documentuid"))
                         .fileStore(rs.getString("filestore")).build();
