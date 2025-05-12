@@ -14,10 +14,13 @@ import java.util.Map;
 public class DeliveryChannel {
 
     @JsonProperty("channelName")
-    private ChannelName channelName;
+    private String channelName;
 
-    @JsonProperty("paymentFees")
-    private String paymentFees;
+    @JsonProperty("channelCode")
+    private String channelCode;
+
+    @JsonProperty("fees")
+    private String fees;
 
     @JsonProperty("paymentTransactionId")
     private String paymentTransactionId;
@@ -33,4 +36,7 @@ public class DeliveryChannel {
 
     @JsonProperty("channelDetails")
     private Map<String, String> channelDetails;
+
+    @JsonProperty("feesStatus")
+    private String feesStatus;
 }
