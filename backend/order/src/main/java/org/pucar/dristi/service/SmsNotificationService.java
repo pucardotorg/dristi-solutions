@@ -187,7 +187,12 @@ public class SmsNotificationService {
             return cmpNumber;
         }
 
-        return userDetailsForSMS.get("efilingNumber");
+        String filingNumber = userDetailsForSMS.get("filingNumber");
+        if (filingNumber != null && !filingNumber.isEmpty()) {
+            return filingNumber;
+        }
+
+        return "";
     }
 
 
