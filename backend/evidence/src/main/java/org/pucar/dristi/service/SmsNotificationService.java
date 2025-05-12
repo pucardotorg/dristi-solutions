@@ -136,9 +136,15 @@ public class SmsNotificationService {
                 .replace("{{cnr}}", Optional.ofNullable(userDetailsForSMS.get("cnr")).orElse(""))
                 .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
                 .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""))
-                .replace("{{cmpNumber}}", Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
+                .replace("{{cmpNumber}}",
+                        userDetailsForSMS.get("courtCaseNumber") != null && !userDetailsForSMS.get("courtCaseNumber").isEmpty() ? userDetailsForSMS.get("courtCaseNumber") : Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
                 .replace("{{artifactNumber}}", Optional.ofNullable(userDetailsForSMS.get("artifactNumber")).orElse(""))
-                .replace("{{filingNumber}}",userDetailsForSMS.get("cmpNumber") != null ? userDetailsForSMS.get("cmpNumber") : userDetailsForSMS.get("filingNumber"));
+                .replace("{{filingNumber}}",
+                        userDetailsForSMS.get("courtCaseNumber") != null && !userDetailsForSMS.get("courtCaseNumber").isEmpty() ? userDetailsForSMS.get("courtCaseNumber")
+                                : (userDetailsForSMS.get("cmpNumber") != null && !userDetailsForSMS.get("cmpNumber").isEmpty()
+                                ? userDetailsForSMS.get("cmpNumber")
+                                : Optional.ofNullable(userDetailsForSMS.get("filingNumber")).orElse("")));
+
         return message;
     }
 

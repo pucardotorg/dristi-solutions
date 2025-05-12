@@ -153,7 +153,7 @@ public class CaseUtil {
 	}
 
 	public Set<String> extractPowerOfAttorneyIds(JsonNode caseDetails, Set<String> individualIds) {
-		JsonNode poaHolders = caseDetails.get("poaHolders");
+		JsonNode poaHolders = caseDetails.get(0).get("poaHolders");
 		if (poaHolders != null && poaHolders.isArray()) {
 			for (JsonNode poaHolder : poaHolders) {
 				String individualId = poaHolder.path("individualId").textValue();
@@ -168,5 +168,13 @@ public class CaseUtil {
 	private StringBuilder getSearchURLWithParams() {
 		return new StringBuilder(config.getCaseHost())
 				.append(config.getCaseSearchPath());
+	}
+
+	public String getCourtCaseNumber(JsonNode caseList) {
+		if (caseList != null && caseList.isArray() && !caseList.isEmpty()) {
+			return caseList.get(0).get("courtCaseNumber").textValue();
+		} else {
+			throw new CustomException("DK_RR_CASE_ERR", "case not found");
+		}
 	}
 }

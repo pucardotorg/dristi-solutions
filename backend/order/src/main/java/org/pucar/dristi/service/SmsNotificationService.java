@@ -171,7 +171,10 @@ public class SmsNotificationService {
                 .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
                 .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""))
                 .replace("{{submissionDate}}", Optional.ofNullable(userDetailsForSMS.get("submissionDate")).orElse(""))
-                .replace("{{cmpNumber}}", Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
+                .replace("{{cmpNumber}}",
+                        userDetailsForSMS.get("courtCaseNumber") != null && !userDetailsForSMS.get("courtCaseNumber").isEmpty()
+                                ? userDetailsForSMS.get("courtCaseNumber")
+                                : Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
                 .replace("{{hearingDate}}", Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""));
         return message;
     }

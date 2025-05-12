@@ -178,7 +178,8 @@ public class SmsNotificationService {
                 .replace("{{cnr}}", Optional.ofNullable(userDetailsForSMS.get("cnr")).orElse(""))
                 .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
                 .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""))
-                .replace("{{cmpNumber}}", Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
+                .replace("{{cmpNumber}}", userDetailsForSMS.get("courtCaseNumber") != null && !userDetailsForSMS.get("courtCaseNumber").isEmpty() ? userDetailsForSMS.get("courtCaseNumber")
+                                : Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
                 .replace("{{courtCaseNumber}}", Optional.ofNullable(userDetailsForSMS.get("courtCaseNumber")).orElse(""))
                 .replace("{{advocateName}}", Optional.ofNullable(userDetailsForSMS.get("advocateName")).orElse(""))
                 .replace("{{hearingDate}}",Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""));

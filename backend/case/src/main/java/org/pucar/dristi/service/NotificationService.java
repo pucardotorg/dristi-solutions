@@ -100,6 +100,7 @@ public class NotificationService {
 
         smsDetails.put("caseId", courtCase.getCaseNumber());
         smsDetails.put("efilingNumber", courtCase.getFilingNumber());
+        smsDetails.put("courtCaseNumber", courtCase.getCourtCaseNumber());
         smsDetails.put("cnr", courtCase.getCnrNumber());
         smsDetails.put("date", "");
         smsDetails.put("link", "");
@@ -138,7 +139,9 @@ public class NotificationService {
      */
     public String buildMessage(Map<String, String> userDetailsForSMS, String message) {
         message = message.replace("{{caseId}}", Optional.ofNullable(userDetailsForSMS.get("caseId")).orElse(""))
-                .replace("{{efilingNumber}}", Optional.ofNullable(userDetailsForSMS.get("efilingNumber")).orElse(""))
+                .replace("{{efilingNumber}}",  userDetailsForSMS.get("courtCaseNumber") != null && !userDetailsForSMS.get("courtCaseNumber").isEmpty() ? userDetailsForSMS.get("courtCaseNumber") :
+                        userDetailsForSMS.get("cmpNumber") != null && !userDetailsForSMS.get("cmpNumber").isEmpty() ? userDetailsForSMS.get("cmpNumber") :
+                                userDetailsForSMS.get("efilingNumber"))
                 .replace("{{cnr}}", Optional.ofNullable(userDetailsForSMS.get("cnr")).orElse(""))
                 .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
                 .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""));
