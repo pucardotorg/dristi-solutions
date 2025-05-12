@@ -3557,7 +3557,7 @@ const GenerateOrders = () => {
 
   const handleBulkCloseSuccessModal = () => {
     setShowBulkModal(false);
-    history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`);
+    history.push(`/${window.contextPath}/${userInfoType}/home/bulk-esign-order`);
   };
 
   if (!filingNumber) {
