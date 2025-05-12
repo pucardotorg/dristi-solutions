@@ -5,7 +5,7 @@ import _ from "lodash";
 import AddParty from "../../../hearings/src/pages/employee/AddParty";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { useTranslation } from "react-i18next";
-import { getFormattedName } from "../utils";
+import { formatAddress, getFormattedName } from "../utils";
 import GetPoliceStationModal from "./GetPoliceStationModal";
 
 // Helper function to compare addresses without police station data
@@ -132,9 +132,9 @@ const RenderDeliveryChannels = ({
                         <div style={{ marginLeft: "12px", flex: 1 }}>
                           <label htmlFor={`${channel.type}-${index}`} style={{ fontSize: "16px", color: "#0B0C0C" }}>
                             {channel.type === "e-Post" || channel.type === "Via Police" || channel.type === "Registered Post"
-                              ? typeof value.address === "string"
-                                ? value.address
-                                : `${value.locality}, ${value.city}, ${value.district}, ${value.pincode}`
+                              ? typeof value?.address === "string"
+                                ? value?.address
+                                : formatAddress(value.address)
                               : value}
                           </label>
                           {channel.type === "Via Police" && (
