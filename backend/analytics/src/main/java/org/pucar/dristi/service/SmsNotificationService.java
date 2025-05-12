@@ -125,9 +125,22 @@ public class SmsNotificationService {
      */
     public String buildMessage(Map<String, String> userDetailsForSMS, String message) {
         message = message.replace("{{caseId}}", Optional.ofNullable(userDetailsForSMS.get("caseId")).orElse(""))
-                .replace("{{efilingNumber}}",userDetailsForSMS.get("courtCaseNumber") != null && !userDetailsForSMS.get("courtCaseNumber").isEmpty() ?
-                        userDetailsForSMS.get("courtCaseNumber") : userDetailsForSMS.get("cmpNumber") != null && !userDetailsForSMS.get("cmpNumber").isEmpty() ?
-                        userDetailsForSMS.get("cmpNumber") :  userDetailsForSMS.get("efilingNumber"))
+                .replace("{{efilingNumber}}", getPreferredCaseIdentifier(userDetailsForSMS))
+
+// Add this helper method inside SmsNotificationService class:
+private String getPreferredCaseIdentifier(Map<String, String> userDetailsForSMS) {
+    String courtCaseNumber = userDetailsForSMS.get("courtCaseNumber");
+    if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
+        return courtCaseNumber;
+    }
+
+    String cmpNumber = userDetailsForSMS.get("cmpNumber");
+    if (cmpNumber != null && !cmpNumber.isEmpty()) {
+        return cmpNumber;
+    }
+
+    return userDetailsForSMS.get("efilingNumber");
+}
                 .replace("{{cnr}}", Optional.ofNullable(userDetailsForSMS.get("cnr")).orElse(""))
                 .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
                 .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""));
