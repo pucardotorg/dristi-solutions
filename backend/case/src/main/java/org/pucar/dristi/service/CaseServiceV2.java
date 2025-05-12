@@ -15,6 +15,7 @@ import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Types;
 import java.util.List;
 import java.util.Optional;
 
@@ -60,6 +61,8 @@ public class CaseServiceV2 {
 
                 if(courtCase!=null) {
                     log.info("CourtCase found in Redis cache for caseId: {}", criteria.getCaseId());
+
+                    validateIfUserPartOfCase(criteria, courtCase);
                     return encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo());
                 } else {
                     log.debug("CourtCase not found in Redis cache for caseId: {}", criteria.getCaseId());
@@ -80,6 +83,37 @@ public class CaseServiceV2 {
         } catch (Exception e) {
             log.error("Error while fetching to search results :: {}", e.toString());
             throw new CustomException(SEARCH_CASE_ERR, e.getMessage());
+        }
+    }
+
+    private void validateIfUserPartOfCase(CaseSearchCriteriaV2 criteria, CourtCase courtCase) {
+        boolean isPoaPresent = false;
+        if (criteria.getPoaHolderIndividualId() != null && !criteria.getPoaHolderIndividualId().isEmpty()) {
+             isPoaPresent = courtCase.getPoaHolders() != null &&
+                    courtCase.getPoaHolders().stream()
+                            .anyMatch(poa -> criteria.getPoaHolderIndividualId().equals(poa.getIndividualId()));
+        }
+
+        if (criteria.getAdvocateId() != null && !criteria.getAdvocateId().isEmpty()) {
+            boolean isAdvocatePresent = courtCase.getRepresentatives() != null &&
+                    courtCase.getRepresentatives().stream()
+                            .anyMatch(rep -> criteria.getAdvocateId().equals(rep.getAdvocateId()));
+
+            if(!isPoaPresent && !isAdvocatePresent){
+                log.debug("Advocate is not part of the case for caseId {}", criteria.getCaseId());
+                throw new CustomException(SEARCH_CASE_ERR, "Advocate is not part of the case");
+            }
+        }
+
+        else if (criteria.getLitigantId() != null && !criteria.getLitigantId().isEmpty()) {
+           boolean isLitigantPresent = courtCase.getLitigants() != null &&
+                    courtCase.getLitigants().stream()
+                            .anyMatch(l -> criteria.getLitigantId().equals(l.getIndividualId()));
+
+            if(!isPoaPresent && !isLitigantPresent){
+                log.debug("Litigant is not part of the case for caseId {}", criteria.getCaseId());
+                throw new CustomException(SEARCH_CASE_ERR, "Litigant is not part of the case");
+            }
         }
     }
 
