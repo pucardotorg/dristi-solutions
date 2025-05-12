@@ -58,8 +58,12 @@ public class CaseServiceV2 {
                 log.info("Searching in redis :: {}", criteria.getCaseId());
                 courtCase = searchRedisCache(caseSearchRequests.getRequestInfo(), criteria.getCaseId());
 
-                log.info("CourtCase found in Redis cache for caseId: {}", criteria.getCaseId());
-                return encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo());
+                if(courtCase!=null) {
+                    log.info("CourtCase found in Redis cache for caseId: {}", criteria.getCaseId());
+                    return encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo());
+                } else {
+                    log.debug("CourtCase not found in Redis cache for caseId: {}", criteria.getCaseId());
+                }
             }
 
             log.info("Searching case in DB");
