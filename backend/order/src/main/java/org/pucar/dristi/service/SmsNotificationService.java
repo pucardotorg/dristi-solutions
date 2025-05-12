@@ -171,13 +171,25 @@ public class SmsNotificationService {
                 .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
                 .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""))
                 .replace("{{submissionDate}}", Optional.ofNullable(userDetailsForSMS.get("submissionDate")).orElse(""))
-                .replace("{{cmpNumber}}",
-                        userDetailsForSMS.get("courtCaseNumber") != null && !userDetailsForSMS.get("courtCaseNumber").isEmpty()
-                                ? userDetailsForSMS.get("courtCaseNumber")
-                                : Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
+                .replace("{{cmpNumber}}",getPreferredCaseIdentifier(userDetailsForSMS))
                 .replace("{{hearingDate}}", Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""));
         return message;
     }
+
+    private String getPreferredCaseIdentifier(Map<String, String> userDetailsForSMS) {
+        String courtCaseNumber = userDetailsForSMS.get("courtCaseNumber");
+        if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
+            return courtCaseNumber;
+        }
+
+        String cmpNumber = userDetailsForSMS.get("cmpNumber");
+        if (cmpNumber != null && !cmpNumber.isEmpty()) {
+            return cmpNumber;
+        }
+
+        return userDetailsForSMS.get("efilingNumber");
+    }
+
 
     /**
      * Creates a cache for localization that gets refreshed at every call.

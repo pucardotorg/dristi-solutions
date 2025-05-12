@@ -139,13 +139,27 @@ public class SmsNotificationService {
                 .replace("{{cmpNumber}}",
                         userDetailsForSMS.get("courtCaseNumber") != null && !userDetailsForSMS.get("courtCaseNumber").isEmpty() ? userDetailsForSMS.get("courtCaseNumber") : Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
                 .replace("{{artifactNumber}}", Optional.ofNullable(userDetailsForSMS.get("artifactNumber")).orElse(""))
-                .replace("{{filingNumber}}",
-                        userDetailsForSMS.get("courtCaseNumber") != null && !userDetailsForSMS.get("courtCaseNumber").isEmpty() ? userDetailsForSMS.get("courtCaseNumber")
-                                : (userDetailsForSMS.get("cmpNumber") != null && !userDetailsForSMS.get("cmpNumber").isEmpty()
-                                ? userDetailsForSMS.get("cmpNumber")
-                                : Optional.ofNullable(userDetailsForSMS.get("filingNumber")).orElse("")));
+                .replace("{{filingNumber}}", getPreferredCaseIdentifier(userDetailsForSMS));
 
         return message;
+    }
+
+    private String getPreferredCaseIdentifier(Map<String, String> userDetailsForSMS) {
+        String courtCaseNumber = userDetailsForSMS.get("courtCaseNumber");
+        if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
+            return courtCaseNumber;
+        }
+
+        String cmpNumber = userDetailsForSMS.get("cmpNumber");
+        if (cmpNumber != null && !cmpNumber.isEmpty()) {
+            return cmpNumber;
+        }
+
+        String filingNumber = userDetailsForSMS.get("filingNumber");
+        if (filingNumber != null && !filingNumber.isEmpty()) {
+            return filingNumber;
+        }
+        return "";
     }
 
     /**

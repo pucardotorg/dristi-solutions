@@ -138,13 +138,24 @@ public class SmsNotificationService {
     public String buildMessage(Map<String, String> userDetailsForSMS, String message) {
         message = message.replace("{{cnr}}", Optional.ofNullable(userDetailsForSMS.get("courtCaseNumber")).orElse(""))
                 .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
-                .replace("{{cmpNumber}}",
-                        userDetailsForSMS.get("courtCaseNumber") != null && !userDetailsForSMS.get("courtCaseNumber").isEmpty()
-                                ? userDetailsForSMS.get("courtCaseNumber")
-                                : Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
+                .replace("{{cmpNumber}}", getPreferredCaseIdentifier(userDetailsForSMS))
                 .replace("{{hearingDate}}", Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""))
                 .replace("{{accusedName}}", Optional.ofNullable(userDetailsForSMS.get("accusedName")).orElse(""));
         return message;
+    }
+
+    private String getPreferredCaseIdentifier(Map<String, String> userDetailsForSMS) {
+        String courtCaseNumber = userDetailsForSMS.get("courtCaseNumber");
+        if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
+            return courtCaseNumber;
+        }
+
+        String cmpNumber = userDetailsForSMS.get("cmpNumber");
+        if (cmpNumber != null && !cmpNumber.isEmpty()) {
+            return cmpNumber;
+        }
+
+        return "";
     }
 
     /**
