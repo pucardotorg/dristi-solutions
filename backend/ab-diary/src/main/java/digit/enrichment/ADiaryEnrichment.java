@@ -3,6 +3,7 @@ package digit.enrichment;
 import digit.repository.DiaryRepository;
 import digit.util.ADiaryUtil;
 import digit.web.models.*;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
@@ -44,7 +45,6 @@ public class ADiaryEnrichment {
             diary.setAuditDetails(auditDetails);
 
             if (caseDiaryRequest.getDiary().getDocuments() != null) {
-
                 enrichDiaryDocument(caseDiaryRequest);
             }
 
@@ -60,7 +60,10 @@ public class ADiaryEnrichment {
     public void enrichDiaryDocument(CaseDiaryRequest caseDiaryRequest) {
 
 
-        CaseDiaryDocument caseDiaryDocument = caseDiaryRequest.getDiary().getDocuments().get(0);
+        CaseDiaryDocument caseDiaryDocument = caseDiaryRequest.getDiary().getDocuments().stream()
+                .filter(CaseDiaryDocument::isActive)
+                .findFirst()
+                .orElse(null);
 
         RequestInfo requestInfo = caseDiaryRequest.getRequestInfo();
         User user = requestInfo.getUserInfo();
