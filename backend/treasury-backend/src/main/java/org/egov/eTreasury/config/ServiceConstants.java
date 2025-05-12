@@ -84,5 +84,6 @@ public class ServiceConstants {
     public static final String BREAKUP_TO_HEAD_NOT_FOUND = "BREAKUP_TO_HEAD_NOT_FOUND";
     public static final String PARTIAL_LIABILITY = "PARTIAL_LIABILITY";
     public static final String DELAY_CONDONATION_FEE = "DELAY_CONDONATION_FEE";
+    public static final Long TWO_YEARS_IN_MILLISECOND = (365 * 2 + 1) * 24L * 60 * 60 * 1000;
 
 }
