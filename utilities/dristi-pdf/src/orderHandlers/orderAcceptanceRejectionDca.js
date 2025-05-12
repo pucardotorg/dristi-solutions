@@ -16,7 +16,8 @@ async function orderAcceptanceRejectionDca(
   res,
   qrCode,
   order,
-  compositeOrder
+  compositeOrder,
+  courtCaseJudgeDetails
 ) {
   const cnrNumber = req.query.cnrNumber;
   const tenantId = req.query.tenantId;
@@ -51,8 +52,8 @@ async function orderAcceptanceRejectionDca(
       return renderError(res, "Court case not found", 404);
     }
 
-    const mdmsCourtRoom = config.constants.mdmsCourtRoom;
-    const judgeDetails = config.constants.judgeDetails;
+    const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
+    const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
     const resApplication = await handleApiCall(
       res,

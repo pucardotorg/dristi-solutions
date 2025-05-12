@@ -3,7 +3,9 @@ package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
@@ -26,6 +28,9 @@ import org.springframework.util.CollectionUtils;
 import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -163,6 +168,7 @@ public class PaymentUpdateService {
                     String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
                             config.getTaskSummonBusinessServiceName(), workflow, config.getTaskSummonBusinessName());
                     task.setStatus(status);
+                    updateDeliveryChannels(task);
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
@@ -174,6 +180,7 @@ public class PaymentUpdateService {
                     String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
                             config.getTaskNoticeBusinessServiceName(), workflow, config.getTaskNoticeBusinessName());
                     task.setStatus(status);
+                    updateDeliveryChannels(task);
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
@@ -185,6 +192,7 @@ public class PaymentUpdateService {
                     String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
                             config.getTaskWarrantBusinessServiceName(), workflow, config.getTaskWarrantBusinessName());
                     task.setStatus(status);
+                    updateDeliveryChannels(task);
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
@@ -329,4 +337,25 @@ public class PaymentUpdateService {
         });
         return (String) taskDetailsMap.get("consumerCode");
     }
+
+    private void updateDeliveryChannels(Task task) {
+        // Indian time zone (IST)
+        ZoneId indianZone = ZoneId.of("Asia/Kolkata");
+        String todayDate = LocalDate.now(indianZone).format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+
+        JsonNode taskDetails = objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
+
+        // Check if deliveryChannels exists, create it if it doesn't
+        ObjectNode deliveryChannels;
+        if (taskDetails.has("deliveryChannels") && !taskDetails.get("deliveryChannels").isNull()) {
+            deliveryChannels = (ObjectNode) taskDetails.get("deliveryChannels");
+        } else {
+            // Create a new deliveryChannels node if it doesn't exist
+            deliveryChannels = objectMapper.createObjectNode();
+            ((ObjectNode) taskDetails).set("deliveryChannels", deliveryChannels);
+        }
+        deliveryChannels.put("feePaidDate", todayDate);
+        task.setTaskDetails(taskDetails);
+    }
+
 }

@@ -15,7 +15,14 @@ const getFullName = (seperator, ...strings) => {
   return strings.filter(Boolean).join(seperator);
 };
 
-const orderChangeAdvocate = async (req, res, qrCode, order, compositeOrder) => {
+const orderChangeAdvocate = async (
+  req,
+  res,
+  qrCode,
+  order,
+  compositeOrder,
+  courtCaseJudgeDetails
+) => {
   const cnrNumber = req.query.cnrNumber;
   const tenantId = req.query.tenantId;
   const entityId = req.query.entityId;
@@ -68,8 +75,8 @@ const orderChangeAdvocate = async (req, res, qrCode, order, compositeOrder) => {
       return renderError(res, "Task not found", 404);
     }
 
-    const mdmsCourtRoom = config.constants.mdmsCourtRoom;
-    const judgeDetails = config.constants.judgeDetails;
+    const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
+    const judgeDetails = courtCaseJudgeDetails.judgeDetails;
     const { firstName, middleName, lastName } =
       task?.taskDetails?.advocateDetails?.individualDetails;
 

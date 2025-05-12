@@ -41,6 +41,8 @@ import org.springframework.stereotype.Service;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -80,6 +82,8 @@ public class CaseService {
 
     private final CaseUtil caseUtil;
 
+    private final FileStoreUtil fileStoreUtil;
+
 
     @Autowired
     public CaseService(@Lazy CaseRegistrationValidator validator,
@@ -94,7 +98,7 @@ public class CaseService {
                        HearingUtil analyticsUtil,
                        UserService userService,
                        PaymentCalculaterUtil paymentCalculaterUtil,
-                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator,CaseUtil caseUtil) {
+                       ObjectMapper objectMapper, CacheService cacheService, EnrichmentService enrichmentService, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, EvidenceUtil evidenceUtil, EvidenceValidator evidenceValidator, CaseUtil caseUtil, FileStoreUtil fileStoreUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.caseRepository = caseRepository;
@@ -116,6 +120,7 @@ public class CaseService {
         this.evidenceUtil = evidenceUtil;
         this.evidenceValidator = evidenceValidator;
         this.caseUtil = caseUtil;
+        this.fileStoreUtil = fileStoreUtil;
     }
 
     public static List<String> extractIndividualIds(JsonNode rootNode) {
@@ -422,7 +427,11 @@ public class CaseService {
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
 
+            boolean isAccessCodeGenerated = false;
             if (PENDING_ADMISSION_HEARING_STATUS.equals(caseRequest.getCases().getStatus())) {
+                if (caseRequest.getCases().getAccessCode() == null) {
+                    isAccessCodeGenerated = true;
+                }
                 enrichmentUtil.enrichAccessCode(caseRequest);
                 enrichmentUtil.enrichCNRNumber(caseRequest);
                 enrichmentUtil.enrichCMPNumber(caseRequest);
@@ -430,9 +439,16 @@ public class CaseService {
                 caseRequest.getCases().setCaseType(CMP);
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
-
+            removeInactiveDocuments(caseRequest);
             log.info("Encrypting case: {}", caseRequest.getCases().getId());
+
+            //to prevent from double encryption
+            String encryptedAccessCode = caseRequest.getCases().getAccessCode();
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
+
+            if (!isAccessCodeGenerated) {
+                caseRequest.getCases().setAccessCode(encryptedAccessCode);
+            }
 
             producer.push(config.getCaseUpdateTopic(), caseRequest);
 
@@ -460,6 +476,30 @@ public class CaseService {
                 // Set the filtered active litigants back to the POAHolder
                 poaHolder.setRepresentingLitigants(activeLitigants);
             });
+
+            filterDocuments(activeAdvocateMapping,
+                    AdvocateMapping::getDocuments,
+                    AdvocateMapping::setDocuments);
+
+            activeAdvocateMapping.forEach(advocate ->
+                    filterDocuments(advocate.getRepresenting(),
+                            Party::getDocuments,
+                            Party::setDocuments)
+            );
+
+            filterDocuments(activeParty,
+                    Party::getDocuments,
+                    Party::setDocuments);
+
+            filterDocuments(activePOAHolder,
+                    POAHolder::getDocuments,
+                    POAHolder::setDocuments);
+
+            activePOAHolder.forEach(poaHolder ->
+                    filterDocuments(poaHolder.getRepresentingLitigants(),
+                            PoaParty::getDocuments,
+                            PoaParty::setDocuments)
+            );
 
             caseRequest.getCases().setPoaHolders(activePOAHolder);
             caseRequest.getCases().setDocuments(isActiveTrueDocuments);
@@ -491,6 +531,78 @@ public class CaseService {
             throw new CustomException(UPDATE_CASE_ERR, "Exception occurred while updating case: " + e.getMessage());
         }
 
+    }
+
+    private <T> void filterDocuments(List<T> entities,
+                                     Function<T, List<Document>> getDocs,
+                                     BiConsumer<T, List<Document>> setDocs) {
+        if (entities == null) return;
+
+        for (T entity : entities) {
+            List<Document> docs = getDocs.apply(entity);
+            if (docs != null) {
+                List<Document> activeDocs = docs.stream()
+                        .filter(Document::getIsActive)
+                        .collect(Collectors.toList());
+                setDocs.accept(entity, activeDocs); // ✅ set it back
+            }
+        }
+    }
+
+    private void removeInactiveDocuments(CaseRequest caseRequest) {
+        List<String> fileStoreIds = new ArrayList<>();
+        List<Document> documentList = buildDocumentList(caseRequest.getCases());
+        for(Document document : documentList) {
+            if(!document.getIsActive()) {
+                fileStoreIds.add(document.getFileStore());
+            }
+        }
+        if(!fileStoreIds.isEmpty()){
+            fileStoreUtil.deleteFilesByFileStore(fileStoreIds, caseRequest.getCases().getTenantId());
+            log.info("Deleted files for case with ids: {}", fileStoreIds);
+        }
+    }
+
+    private List<Document> buildDocumentList(@Valid CourtCase cases) {
+        Set<Document> documentSet = new LinkedHashSet<>();
+
+        if (cases.getDocuments() != null) {
+            documentSet.addAll(cases.getDocuments());
+        }
+        if (cases.getRepresentatives() != null) {
+            for (AdvocateMapping advocateMapping : cases.getRepresentatives()) {
+                if (advocateMapping.getDocuments() != null) {
+                    documentSet.addAll(advocateMapping.getDocuments());
+                }
+                for(Party party : advocateMapping.getRepresenting()) {
+                    if (party.getDocuments() != null) {
+                        documentSet.addAll(party.getDocuments());
+                    }
+                }
+            }
+        }
+        if (cases.getLitigants() != null) {
+            for (Party party : cases.getLitigants()) {
+                if (party.getDocuments() != null) {
+                    documentSet.addAll(party.getDocuments());
+                }
+            }
+        }
+        if (cases.getPoaHolders() != null) {
+            for (POAHolder poaHolder : cases.getPoaHolders()) {
+                if (poaHolder.getDocuments() != null) {
+                    documentSet.addAll(poaHolder.getDocuments());
+                }
+            }
+        }
+        if (cases.getLinkedCases() != null) {
+            for (LinkedCase linkedCase : cases.getLinkedCases()) {
+                if (linkedCase.getDocuments() != null) {
+                    documentSet.addAll(linkedCase.getDocuments());
+                }
+            }
+        }
+        return new ArrayList<>(documentSet);
     }
 
     private Object createHearingUpdateRequest(CaseRequest caseRequest) {

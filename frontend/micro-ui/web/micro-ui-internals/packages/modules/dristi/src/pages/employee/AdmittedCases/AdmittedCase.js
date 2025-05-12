@@ -850,28 +850,28 @@ const AdmittedCases = () => {
                 uiConfig: {
                   ...tabConfig.sections.search.uiConfig,
                   fields: [
-                    {
-                      label: "OWNER",
-                      isMandatory: false,
-                      key: "owner",
-                      type: "dropdown",
-                      populators: {
-                        name: "owner",
-                        optionsKey: "name",
-                        options: Array.from(
-                          new Map(
-                            artifacts?.map((artifact) => [
-                              removeInvalidNameParts(artifact.owner), // Key for uniqueness
-                              {
-                                code: removeInvalidNameParts(artifact.owner),
-                                name: removeInvalidNameParts(artifact.owner),
-                                value: artifact.sourceID,
-                              },
-                            ])
-                          ).values()
-                        ),
-                      },
-                    },
+                    // {
+                    //   label: "OWNER",
+                    //   isMandatory: false,
+                    //   key: "owner",
+                    //   type: "dropdown",
+                    //   populators: {
+                    //     name: "owner",
+                    //     optionsKey: "name",
+                    //     options: Array.from(
+                    //       new Map(
+                    //         artifacts?.map((artifact) => [
+                    //           removeInvalidNameParts(artifact.owner), // Key for uniqueness
+                    //           {
+                    //             code: removeInvalidNameParts(artifact.owner),
+                    //             name: removeInvalidNameParts(artifact.owner),
+                    //             value: artifact.sourceID,
+                    //           },
+                    //         ])
+                    //       ).values()
+                    //     ),
+                    //   },
+                    // },
                     ...tabConfig.sections.search.uiConfig.fields,
                   ],
                 },
@@ -1230,7 +1230,7 @@ const AdmittedCases = () => {
             filingNumber: filingNumber,
             artifactNumber: artifactNumber,
             tenantId: tenantId,
-            courtId:  window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52"
+            courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
           },
           tenantId,
         },
@@ -1265,13 +1265,9 @@ const AdmittedCases = () => {
         if (artifact.sourceID === undefined) {
           return "NA";
         }
-        const owner = await DRISTIService.searchEmployeeUser(
-          {
-            authToken: localStorage.getItem("token"),
-          },
-          { tenantId, uuids: artifact?.sourceID, limit: 1000, offset: 0 }
-        );
-        return `${owner?.Employees?.[0]?.user?.name}`.trim();
+        const owner = await Digit.UserService.userSearch(tenantId, { uuid: [artifact?.sourceID] }, {});
+        if (owner?.user?.length > 1) return "";
+        return `${owner?.user?.[0]?.name}`.trim();
       } else {
         if (artifact?.sourceID === undefined) {
           return "NA";

@@ -296,12 +296,13 @@ const HomeView = () => {
     (async function () {
       if (userType) {
         setIsFetchCaseLoading(true);
+        // Add courtId to criteria if it exists
         const caseData = await HomeService.customApiService(Urls.caseSearch, {
           tenantId,
           criteria: [
             {
               ...(advocateId ? { advocateId } : { litigantId: individualId }),
-
+              courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52',
               pagination: { offSet: 0, limit: 1 },
             },
           ],
@@ -431,11 +432,11 @@ const HomeView = () => {
       title: t("REVIEW_SUMMON_NOTICE_WARRANTS_TEXT"),
       actionLink: "orders/Summons&Notice",
     },
-    {
-      logo: <DocumentIcon />,
-      title: t("VIEW_ISSUED_ORDERS"),
-      actionLink: "",
-    },
+    // {
+    //   logo: <DocumentIcon />,
+    //   title: t("VIEW_ISSUED_ORDERS"),
+    //   actionLink: "",
+    // },
   ];
 
   if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOrdersLoading || isOutcomeLoading) {

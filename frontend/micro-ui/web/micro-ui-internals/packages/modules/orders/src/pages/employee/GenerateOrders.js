@@ -267,6 +267,8 @@ const GenerateOrders = () => {
   const [profileEditorName, setProfileEditorName] = useState("");
   const currentDiaryEntry = history.location?.state?.diaryEntry;
 
+  const [fileStoreIds, setFileStoreIds] = useState(new Set());
+
   const setSelectedOrder = (orderIndex) => {
     _setSelectedOrder(orderIndex);
   };
@@ -662,6 +664,15 @@ const GenerateOrders = () => {
       getOrder();
     }
   }, [currentDiaryEntry, filingNumber, orderNumber, tenantId]);
+
+  useEffect(() => {
+    if (orderPdfFileStoreID) {
+      setFileStoreIds((fileStoreIds) => new Set([...fileStoreIds, orderPdfFileStoreID]));
+    }
+    if (signedDoucumentUploadedID) {
+      setFileStoreIds((fileStoreIds) => new Set([...fileStoreIds, signedDoucumentUploadedID]));
+    }
+  }, [orderPdfFileStoreID, signedDoucumentUploadedID]);
 
   const currentOrder = useMemo(() => formList?.[selectedOrder], [formList, selectedOrder]);
   const hearingNumber = useMemo(() => currentOrder?.hearingNumber || currentOrder?.additionalDetails?.hearingId || "", [currentOrder]);
@@ -2083,6 +2094,24 @@ const GenerateOrders = () => {
         );
       }
     }
+
+    if (documentsFile?.documentType === "SIGNED") {
+      const localStorageID = sessionStorage.getItem("fileStoreId");
+      const newFileStoreId = localStorageID || signedDoucumentUploadedID;
+      fileStoreIds.delete(newFileStoreId);
+      let index = 1;
+      for (const fileStoreId of fileStoreIds) {
+        if (fileStoreId !== newFileStoreId) {
+          documents.push({
+            isActive: false,
+            documentType: "UNSIGNED",
+            fileStore: fileStoreId,
+            documentOrder: index,
+          });
+          index++;
+        }
+      }
+    }
     return [...documents, documentsFile];
   };
 
@@ -2149,7 +2178,6 @@ const GenerateOrders = () => {
               additionalDetails: { name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.pdf` },
             }
           : null;
-
       const updatedDocuments = getUpdateDocuments(documents, documentsFile);
       let orderSchema = {};
       try {
@@ -3424,7 +3452,7 @@ const GenerateOrders = () => {
             hasError = true;
             break;
           }
-          
+
           if (formData?.warrantFor?.selectedChannels?.length === 0) {
             setShowErrorToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
             hasError = true;

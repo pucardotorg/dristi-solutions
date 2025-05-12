@@ -6,6 +6,7 @@ export const OrderWorkflowState = {
   PENDING_BULK_E_SIGN: "PENDING_BULK_E-SIGN",
   PUBLISHED: "PUBLISHED",
   DELETED: "DELETED",
+  PENDING_E_SIGN: "PENDING_E-SIGN",
 };
 
 export const OrderWorkflowAction = {

@@ -11,7 +11,14 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { handleApiCall } = require("../utils/handleApiCall");
 
-async function orderDismissCase(req, res, qrCode, order, compositeOrder) {
+async function orderDismissCase(
+  req,
+  res,
+  qrCode,
+  order,
+  compositeOrder,
+  courtCaseJudgeDetails
+) {
   const cnrNumber = req.query.cnrNumber;
   const tenantId = req.query.tenantId;
   const entityId = req.query.entityId;
@@ -45,8 +52,8 @@ async function orderDismissCase(req, res, qrCode, order, compositeOrder) {
       return renderError(res, "Court case not found", 404);
     }
 
-    const mdmsCourtRoom = config.constants.mdmsCourtRoom;
-    const judgeDetails = config.constants.judgeDetails;
+    const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
+    const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
     const listOfAllOrder = await handleApiCall(
       res,
