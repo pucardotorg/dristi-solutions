@@ -3222,6 +3222,13 @@ export const updateCaseDetails = async ({
   if (isCaseSignedState && action === "SUBMIT_CASE") {
     return null;
   }
+  const updatedTempDocList = tempDocList?.map((doc) => {
+    const existingDoc = caseDetails?.documents?.find((existingDoc) => existingDoc?.fileStore === doc?.fileStore);
+    if (existingDoc) {
+      return { ...doc, id: existingDoc?.id };
+    }
+    return doc;
+  });
 
   return await DRISTIService.caseUpdateService(
     {
@@ -3230,7 +3237,7 @@ export const updateCaseDetails = async ({
         caseTitle,
         litigants: !caseDetails?.litigants ? [] : caseDetails?.litigants,
         ...data,
-        documents: tempDocList,
+        documents: updatedTempDocList,
         advocateCount:
           formdata?.[0]?.data?.numberOfAdvocate || caseDetails?.additionalDetails?.advocateDetails?.formdata[0]?.data?.numberOfAdvocate || 0,
         linkedCases: caseDetails?.linkedCases ? caseDetails?.linkedCases : [],
