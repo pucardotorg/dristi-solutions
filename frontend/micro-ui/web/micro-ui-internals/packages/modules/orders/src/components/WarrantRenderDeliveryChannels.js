@@ -3,6 +3,7 @@ import { Button, Dropdown } from "@egovernments/digit-ui-react-components";
 import _ from "lodash";
 import { useTranslation } from "react-i18next";
 import GetPoliceStationModal from "./GetPoliceStationModal";
+import { formatAddress } from "../utils";
 
 const compareAddressValues = (value1, value2) => {
   const compareValue1 = {
@@ -160,7 +161,7 @@ const WarrantRenderDeliveryChannels = ({
             <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "0.1rem" }}>
               <input type="checkbox" id={`address-${index}`} checked={isEnabled} onChange={(e) => handleAddressToggle(address, e.target.checked)} />
               <label htmlFor={`address-${index}`} style={{ fontSize: "16px", fontWeight: "700" }}>
-                {typeof address === "string" ? address : `${address?.locality}, ${address?.city}, ${address?.district}, ${address?.pincode}`}
+                {typeof address === "string" ? address : formatAddress(address)}
               </label>
             </div>
 
