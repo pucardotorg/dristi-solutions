@@ -376,8 +376,8 @@ const SubmissionsCreate = ({ path }) => {
       WITHDRAWAL: configsCaseWithdrawal,
       TRANSFER: configsCaseTransfer,
       SETTLEMENT: configsSettlement,
-      BAIL_BOND: configsBailBond,
-      SURETY: configsSurety,
+      // BAIL_BOND: configsBailBond,
+      // SURETY: configsSurety,
       CHECKOUT_REQUEST: configsCheckoutRequest,
       REQUEST_FOR_BAIL: requestForBail,
       SUBMIT_BAIL_DOCUMENTS: submitDocsForBail,
@@ -1413,7 +1413,7 @@ const SubmissionsCreate = ({ path }) => {
   }
   return (
     <div className="citizen create-submission" style={{ width: "50%", ...(!isCitizen && { padding: "0 8px 24px 16px" }) }}>
-      <Header> {t("CREATE_SUBMISSION")}</Header>
+      <Header styles={{ margin: "25px 0px 0px 25px" }}> {t("CREATE_SUBMISSION")}</Header>
       <div style={{ minHeight: "550px", overflowY: "auto" }}>
         <FormComposerV2
           label={t("REVIEW_SUBMISSION")}
