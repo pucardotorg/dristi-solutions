@@ -9,22 +9,33 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
   const [selectedDate, setSelectedDate] = useState(initialDate); // State to track the current month
   const selectedMonth = useMemo(() => new Date(currentMonth).getMonth(), [currentMonth]);
   const selectedYear = useMemo(() => new Date(currentMonth).getFullYear(), [currentMonth]);
-  const { data: hearingResponse } = Digit.Hooks.hearings.useGetHearings(
-    {
+
+  const hearingCriteria = useMemo(
+    () => ({
       criteria: {
         tenantId,
         fromDate: new Date(selectedYear, selectedMonth, 1).getTime(),
         toDate: new Date(selectedYear, selectedMonth + 1, 0).getTime(),
       },
       tenantId,
-    },
+    }),
+    [selectedMonth, selectedYear, tenantId]
+  );
+
+  const { data: hearingResponse } = Digit.Hooks.hearings.useGetHearingsCounts(
+    hearingCriteria,
     { applicationNumber: "", cnrNumber: "", tenantId },
-    `dristi-${selectedMonth}-${selectedYear}`,
+    "dristi",
     true,
     false,
     "",
-    30 * 1000
+    10 * 1000
   );
+  const { data: nonWorkingDay } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "schedule-hearing", [{ name: "COURT000334" }], {
+    select: (data) => {
+      return data || [];
+    },
+  });
 
   const hearingDetails = useMemo(() => hearingResponse?.HearingList || null, [hearingResponse]);
   // useEffect(() => {
@@ -42,12 +53,17 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
   const hearingCounts = useMemo(() => {
     const counts = {};
     if (!hearingDetails) return counts;
-
     hearingDetails.forEach((hearing) => {
-      const dateObj = new Date(hearing.startTime);
-      const date = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}-${String(dateObj.getDate()).padStart(2, "0")}`;
-      counts[date] = counts[date] ? counts[date] + 1 : 1;
+      if (hearing?.hearingDate && hearing?.noOfHearing) {
+        counts[hearing.hearingDate] = hearing.noOfHearing;
+      }
     });
+
+    // hearingDetails.forEach((hearing) => {
+    //   const dateObj = new Date(hearing.startTime);
+    //   const date = `${dateObj.getFullYear()}-${String(dateObj.getMonth() + 1).padStart(2, "0")}-${String(dateObj.getDate()).padStart(2, "0")}`;
+    //   counts[date] = counts[date] ? counts[date] + 1 : 1;
+    // });
 
     return counts;
   }, [hearingDetails]);
@@ -67,20 +83,32 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
 
   const renderCustomDay = (date) => {
     const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    const formattedDate = date.toLocaleDateString("en-GB");
+    const formattedForCheck = formattedDate.replace(/\//g, "-");
+    const isNonWorkingDay = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
     const hearingCount = hearingCounts[dateStr] || 0;
     return (
-      <div>
-        <span className="rdrDayNumber">{date.getDate()}</span>
+      <div
+        style={{
+          backgroundColor: isNonWorkingDay ? "#ffcccc" : "transparent",
+          borderRadius: "50%",
+          height: "40px",
+          width: "40px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          position: "relative",
+        }}
+      >
+        <span>{date.getDate()}</span>
         {hearingCount > 0 && (
           <div
             style={{
               fontSize: "8px",
               color: "#931847",
-              marginTop: "2px",
+              position: "absolute",
               top: "25px",
               right: 2,
-              position: "absolute",
-              width: "100%",
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",

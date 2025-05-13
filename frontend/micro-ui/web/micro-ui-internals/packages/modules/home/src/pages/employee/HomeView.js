@@ -53,6 +53,7 @@ const HomeView = () => {
       active: index === 0 ? true : false,
     }))
   );
+  const [isCounted, setIsCounted] = useState(false);
   const [callRefetch, setCallRefetch] = useState(false);
   const [tabConfig, setTabConfig] = useState(TabLitigantSearchConfig);
   const [onRowClickData, setOnRowClickData] = useState({ url: "", params: [] });
@@ -271,9 +272,10 @@ const HomeView = () => {
           setTabConfig(tabConfigs);
           getTotalCountForTab(tabConfigs);
         }
-      } else {
+      } else if (userInfoType !== "employee" && !isCounted) {
         setConfig(tabConfigs?.TabSearchConfig?.[0]);
         setTabConfig(tabConfigs);
+        setIsCounted(true);
         getTotalCountForTab(tabConfigs);
       }
     }
@@ -294,12 +296,13 @@ const HomeView = () => {
     (async function () {
       if (userType) {
         setIsFetchCaseLoading(true);
+        // Add courtId to criteria if it exists
         const caseData = await HomeService.customApiService(Urls.caseSearch, {
           tenantId,
           criteria: [
             {
               ...(advocateId ? { advocateId } : { litigantId: individualId }),
-
+              courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52',
               pagination: { offSet: 0, limit: 1 },
             },
           ],

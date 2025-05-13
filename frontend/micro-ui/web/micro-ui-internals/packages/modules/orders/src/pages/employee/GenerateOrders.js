@@ -1860,7 +1860,7 @@ const GenerateOrders = () => {
       return parties;
     }
     parties = parties?.map((party) => {
-      const matchingParty = allParties.find((p) => p.code === party);
+      const matchingParty = allParties.find((p) => p.code.trim() === party.trim());
       if (matchingParty) {
         return {
           partyName: matchingParty.name,
@@ -3421,6 +3421,12 @@ const GenerateOrders = () => {
             formData?.bailInfo?.isBailable?.code === true
           ) {
             setFormErrors?.current?.[index]?.("bailableAmount", { message: t("CS_VALID_AMOUNT_DECIMAL") });
+            hasError = true;
+            break;
+          }
+          
+          if (formData?.warrantFor?.selectedChannels?.length === 0) {
+            setShowErrorToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
             hasError = true;
             break;
           }

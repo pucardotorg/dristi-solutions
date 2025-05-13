@@ -44,20 +44,32 @@ export const hearingService = {
     });
   },
   searchHearings: (data, params) => {
+    // Add courtId to criteria if it exists
     return Request({
       url: Urls.hearing.searchHearings,
+      useCache: false,
+      userService: false,
+      data:{...data,criteria: {...data?.criteria,courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52'}},
+      params,
+    });
+  },
+  searchHearingCount: (data, params) => {
+    return Request({
+      url: Urls.hearing.searchHearingCount,
       useCache: false,
       userService: false,
       data,
       params,
     });
   },
+
   searchTaskList: (data, params) => {
+    // Add courtId to criteria if it exists
     return Request({
       url: Urls.hearing.searchTasks,
       useCache: false,
       userService: false,
-      data,
+      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52" } },
       params,
     });
   },
