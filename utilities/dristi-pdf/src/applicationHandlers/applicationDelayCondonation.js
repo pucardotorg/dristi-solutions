@@ -176,6 +176,7 @@ const applicationDelayCondonation = async (
 
     const ordinalSuffix = getOrdinalSuffix(day);
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const prayer = application?.applicationDetails?.prayer || "";
     const data = {
       Data: [
         {
@@ -192,6 +193,7 @@ const applicationDelayCondonation = async (
           advocateName: advocateName,
           applicationTitle: applicationTitle,
           reasonForDelay: reasonForDelay,
+          prayer,
           additionalComments,
           day: day + ordinalSuffix,
           month: month,
