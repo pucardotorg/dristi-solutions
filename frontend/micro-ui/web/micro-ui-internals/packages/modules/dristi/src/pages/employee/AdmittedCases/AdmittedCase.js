@@ -2613,7 +2613,7 @@ const AdmittedCases = () => {
       )}
       <div
         className="admitted-case-header"
-        style={{ position: showJoinCase ? "" : "sticky", top: "72px", width: "100%", height: "100%", zIndex: 150, background: "white" }}
+        style={{ position: showJoinCase ? "" : "", top: "72px", width: "100%", zIndex: 150, background: "white" }}
       >
         {caseDetails?.caseTitle && <Header styles={{ marginBottom: "-30px" }}>{caseDetails?.caseTitle}</Header>}
         <div className="admitted-case-details" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px" }}>
