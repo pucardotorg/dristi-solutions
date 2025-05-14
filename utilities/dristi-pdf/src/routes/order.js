@@ -12,6 +12,8 @@ const {
   handleCompositePDF,
 } = require("../utils/orderUtils");
 
+const { getCourtAndJudgeDetails } = require("../utils/commonUtils");
+
 router.post(
   "",
   asyncMiddleware(async function (req, res, next) {
@@ -40,8 +42,22 @@ router.post(
       );
       let order = resOrder?.data?.list[0];
 
+      const courtCaseJudgeDetails = await getCourtAndJudgeDetails(
+        res,
+        tenantId,
+        "Judge",
+        order?.courtId,
+        requestInfo
+      );
+
       if (order?.orderCategory === "COMPOSITE") {
-        await handleCompositePDF(req, res, qrCode, order);
+        await handleCompositePDF(
+          req,
+          res,
+          qrCode,
+          order,
+          courtCaseJudgeDetails
+        );
       } else {
         const applicationStatus = applicationStatusType(
           order?.additionalDetails?.applicationStatus
@@ -51,7 +67,14 @@ router.post(
           OrderPreviewOrderTypeMap[
             orderPDFMap?.[orderType]?.[applicationStatus] || orderType
           ];
-        await processOrder(req, res, qrCode, order, orderPreviewKey);
+        await processOrder(
+          req,
+          res,
+          qrCode,
+          order,
+          orderPreviewKey,
+          courtCaseJudgeDetails
+        );
       }
     } catch (error) {
       renderError(

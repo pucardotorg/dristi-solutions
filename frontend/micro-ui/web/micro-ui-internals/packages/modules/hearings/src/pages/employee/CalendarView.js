@@ -78,13 +78,13 @@ const MonthlyCalendar = () => {
   //   6 * 1000
   // );
 
-  const { data: hearingResponse, isLoading } = Digit.Hooks.hearings.useGetHearingsCounts(
+  const { data: hearingResponse } = Digit.Hooks.hearings.useGetHearingsCounts(
     reqBody,
     { applicationNumber: "", cnrNumber: "", tenantId },
-    "dristi",
-    true,
+    `${dateRange.start?.toISOString()}-${dateRange.end?.toISOString()}`,
+    Boolean(dateRange.start && dateRange.end && (userInfoType === "citizen" ? individualId : true)),
     false,
-    "",
+    userInfoType === "citizen" && individualId,
     10 * 1000
   );
 
@@ -250,9 +250,9 @@ const MonthlyCalendar = () => {
 
   const maxHearingCount = 5;
 
-  if (isLoading) {
-    return <Loader />;
-  }
+  // if (isLoading) {
+  //   return <Loader />;
+  // }
   return (
     <React.Fragment>
       {Digit.UserService.getType() === "employee" && (

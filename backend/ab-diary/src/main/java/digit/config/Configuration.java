@@ -110,6 +110,9 @@ public class Configuration {
     @Value("${caseDiary.create.topic}")
     private String caseDiaryTopic;
 
+    @Value("${egov.file.store.delete.endpoint}")
+    private String fileStoreDeleteEndPoint;
+
     //court details
     @Value("${court.id}")
     private String courtId;

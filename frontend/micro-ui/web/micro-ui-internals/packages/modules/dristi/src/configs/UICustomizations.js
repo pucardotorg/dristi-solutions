@@ -521,6 +521,13 @@ export const UICustomizations = {
       const tenantId = window?.Digit.ULBService.getStateId();
       const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
       const moduleSearchCriteria = {
+        status: [
+          OrderWorkflowState.DRAFT_IN_PROGRESS,
+          OrderWorkflowState.PENDING_BULK_E_SIGN,
+          OrderWorkflowState.PUBLISHED,
+          OrderWorkflowState.ABATED,
+          OrderWorkflowState.PENDING_E_SIGN,
+        ],
         ...(Object.keys(requestCriteria?.state?.searchForm?.type || {})?.length && {
           type: requestCriteria?.state?.searchForm?.type?.type,
         }),

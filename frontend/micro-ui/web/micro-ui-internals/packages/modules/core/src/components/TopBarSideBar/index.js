@@ -54,13 +54,16 @@ const TopBarSideBar = ({
   const userProfile = () => {
     history.push(`/${window?.contextPath}/citizen/dristi/home/edit-profile`);
   };
+  const employeeProfile = () => {
+    history.push(`/${window?.contextPath}/employee/dristi/home/edit-profile`);
+  };
   const userOptions = CITIZEN
     ? [
         { name: t("EDIT_PROFILE"), icon: <EditPencilIcon className="icon" />, func: userProfile },
         { name: t("CORE_COMMON_LOGOUT"), icon: <LogoutSvg className="icon" />, func: handleLogout },
       ]
     : [
-        // { name: t("EDIT_PROFILE"), icon: <EditPencilIcon className="icon" />, func: userProfile },
+        { name: t("EDIT_PROFILE"), icon: <EditPencilIcon className="icon" />, func: employeeProfile },
         { name: t("CORE_COMMON_LOGOUT"), icon: <LogoutSvg className="icon" />, func: handleLogout },
       ];
   return (

@@ -52,6 +52,7 @@ class NotificationServiceTest {
     @BeforeEach
     void setUp() {
         notification = new Notification();
+        notification.setDocuments(List.of(new Document()));
         notificationRequest = new NotificationRequest();
         notificationRequest.setNotification(notification);
         searchRequest = new NotificationSearchRequest();

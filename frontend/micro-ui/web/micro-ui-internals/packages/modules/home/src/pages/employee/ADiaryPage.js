@@ -259,6 +259,11 @@ const ADiaryPage = ({ path }) => {
               tenantId: tenantId,
               fileStoreId: signedDocumentUploadID || localStorageID,
             },
+            {
+              tenantId: tenantId,
+              fileStoreId: ADiarypdf,
+              isActive: signedDocumentUploadID && ADiarypdf !== (signedDocumentUploadID || localStorageID) ? false : true,
+            },
           ],
         },
       });

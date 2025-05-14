@@ -3,7 +3,6 @@ const config = require("../config");
 const {
   search_case,
   search_sunbirdrc_credential_service,
-  search_application,
   create_pdf,
   search_advocate,
   search_message,
@@ -26,7 +25,13 @@ function getOrdinalSuffix(day) {
   }
 }
 
-const applicationSubmitBailDocuments = async (req, res, qrCode) => {
+const applicationSubmitBailDocuments = async (
+  req,
+  res,
+  qrCode,
+  application,
+  courtCaseJudgeDetails
+) => {
   const cnrNumber = req.query.cnrNumber;
   const applicationNumber = req.query.applicationNumber;
   const tenantId = req.query.tenantId;
@@ -83,17 +88,8 @@ const applicationSubmitBailDocuments = async (req, res, qrCode) => {
       return renderError(res, "Court case not found", 404);
     }
 
-    const mdmsCourtRoom = config.constants.mdmsCourtRoom;
+    const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
 
-    // Search for application details
-    const resApplication = await handleApiCall(
-      () => search_application(tenantId, applicationNumber, requestInfo),
-      "Failed to query application service"
-    );
-    const application = resApplication?.data?.applicationList[0];
-    if (!application) {
-      return renderError(res, "Application not found", 404);
-    }
     let applicationTitle =
       "APPLICATION TO SUBMIT ADDITIONAL DOCUMENTS FURTHER TO CONDITIONS OF BAIL";
 
@@ -193,6 +189,7 @@ const applicationSubmitBailDocuments = async (req, res, qrCode) => {
 
     const ordinalSuffix = getOrdinalSuffix(day);
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const prayer = application?.applicationDetails?.prayer || "";
     const data = {
       Data: [
         {
@@ -208,6 +205,7 @@ const applicationSubmitBailDocuments = async (req, res, qrCode) => {
           partyName: partyName,
           advocateName: advocateName,
           documentList,
+          prayer,
           additionalComments,
           day: day + ordinalSuffix,
           month: month,
