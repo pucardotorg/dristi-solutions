@@ -9,6 +9,7 @@ import { userTypeOptions } from "../citizen/registration/config";
 import Menu from "../../components/Menu";
 import { useToast } from "../../components/Toast/useToast";
 import { ErrorInfoIcon, SuccessIcon } from "../../icons/svgIndex";
+import ImageModal from "../../components/ImageModal";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -68,6 +69,8 @@ const ApplicationDetails = ({ location, match }) => {
   const [reasons, setReasons] = useState(null);
   const [isAction, setIsAction] = useState(false);
   const [showApproveModal, setShowApproveModal] = useState(false);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [imageInfo, setImageInfo] = useState(null);
 
   const { data: individualData, isLoading: isGetUserLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
@@ -243,6 +246,15 @@ const ApplicationDetails = ({ location, match }) => {
     history.push(`/${window?.contextPath}/citizen/dristi/home`);
   }
 
+  const handleImageModalOpen = (fileStoreId, fileName) => {
+    setIsImageModalOpen(true);
+    setImageInfo({ data: { fileStore: fileStoreId, fileName: fileName } });
+  };
+
+  const handleImageModalClose = () => {
+    setIsImageModalOpen(false);
+  };
+
   if (isSearchLoading || isGetUserLoading || isWorkFlowLoading) {
     return <Loader />;
   }
@@ -252,10 +264,17 @@ const ApplicationDetails = ({ location, match }) => {
         <div className="application-main">
           <Header className="application-header">{header}</Header>
           <div className="application-card">
-            <DocumentDetailCard cardData={aadharData} />
+            <DocumentDetailCard
+              onClick={() => handleImageModalOpen(identifierIdDetails?.fileStoreId, identifierIdDetails?.filename)}
+              cardData={aadharData}
+            />
+
             <DocumentDetailCard cardData={personalData} />
-            {type === "advocate" && userType !== "ADVOCATE_CLERK" && <DocumentDetailCard cardData={barDetails} />}
+            {type === "advocate" && userType !== "ADVOCATE_CLERK" && (
+              <DocumentDetailCard onClick={() => handleImageModalOpen(fileStoreId, fileName)} cardData={barDetails} />
+            )}
           </div>
+          {isImageModalOpen && <ImageModal t={t} imageInfo={imageInfo} handleCloseModal={handleImageModalClose} />}
           {isAdvocateViewer && (
             <div className="action-button-application">
               <SubmitBar
