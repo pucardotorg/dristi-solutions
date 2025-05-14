@@ -550,16 +550,20 @@ public class CaseService {
     }
 
     private void removeInactiveDocuments(CaseRequest caseRequest) {
-        List<String> fileStoreIds = new ArrayList<>();
-        List<Document> documentList = buildDocumentList(caseRequest.getCases());
-        for(Document document : documentList) {
-            if(!document.getIsActive()) {
-                fileStoreIds.add(document.getFileStore());
+        try {
+            List<String> fileStoreIds = new ArrayList<>();
+            List<Document> documentList = buildDocumentList(caseRequest.getCases());
+            for(Document document : documentList) {
+                if(!document.getIsActive()) {
+                    fileStoreIds.add(document.getFileStore());
+                }
             }
-        }
-        if(!fileStoreIds.isEmpty()){
-            fileStoreUtil.deleteFilesByFileStore(fileStoreIds, caseRequest.getCases().getTenantId());
-            log.info("Deleted files for case with ids: {}", fileStoreIds);
+            if(!fileStoreIds.isEmpty()){
+                fileStoreUtil.deleteFilesByFileStore(fileStoreIds, caseRequest.getCases().getTenantId());
+                log.info("Deleted files for case with ids: {}", fileStoreIds);
+            }
+        } catch (Exception e) {
+            log.error("Error occurred while deleting inactive documents: {}", e.getMessage());
         }
     }
 
