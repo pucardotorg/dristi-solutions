@@ -6,6 +6,7 @@ import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.eTreasury.config.PaymentConfiguration;
+import org.egov.eTreasury.enrichment.TreasuryEnrichment;
 import org.egov.eTreasury.kafka.Producer;
 import org.egov.eTreasury.model.*;
 import org.egov.eTreasury.repository.AuthSekRepository;
@@ -58,6 +59,9 @@ class PaymentServiceTest {
     private ObjectMapper objectMapper;
     @Mock
     private TransactionDetails transactionDetails;
+
+    @Mock
+    private TreasuryEnrichment enrichment;
 
     @Test
     void verifyConnection_success() {
@@ -166,7 +170,7 @@ class PaymentServiceTest {
         when(transactionDetails.getAmount()).thenReturn("10");
         when(transactionDetails.getStatus()).thenReturn("success");
         when(requestInfo.getUserInfo()).thenReturn(mock(User.class));
-
+        doNothing().when(enrichment).enrichTreasuryPaymentData(any(), any());
         TreasuryPaymentData treasuryPaymentData = paymentService.decryptAndProcessTreasuryPayload(treasuryParams,requestInfo);
 
         assertNotNull(treasuryPaymentData);

@@ -85,5 +85,8 @@ public class ServiceConstants {
     public static final String PARTIAL_LIABILITY = "PARTIAL_LIABILITY";
     public static final String DELAY_CONDONATION_FEE = "DELAY_CONDONATION_FEE";
     public static final Long TWO_YEARS_IN_MILLISECOND = (365 * 2 + 1) * 24L * 60 * 60 * 1000;
-
+    public static final String CASE_TYPE = "NIA S138";
+    public static final String COURT_FEE = "COURT_FEE";
+    public static final String ADVOCATE_WELFARE_FUND = "ADVOCATE_WELFARE_FUND";
+    public static final String ADVOCATE_CLERK_WELFARE_FUND = "ADVOCATE_CLERK_WELFARE_FUND";
 }
