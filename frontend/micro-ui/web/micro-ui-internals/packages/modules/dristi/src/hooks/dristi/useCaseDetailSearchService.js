@@ -14,7 +14,6 @@ function useCaseDetailSearchService(reqData, params, moduleCode, caseId, enabled
       enabled: Boolean(enabled),
     }
   );
-  console.log("data", data);
 
   return {
     isLoading,

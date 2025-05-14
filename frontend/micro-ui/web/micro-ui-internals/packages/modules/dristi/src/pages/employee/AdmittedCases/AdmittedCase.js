@@ -2588,7 +2588,8 @@ const AdmittedCases = () => {
   }
   if (
     (userRoles?.includes("JUDGE_ROLE") || userRoles?.includes("BENCH_CLERK") || userRoles?.includes("COURT_ROOM_MANAGER")) &&
-    !judgeReviewStages.includes(caseData?.cases?.status)
+    caseData?.cases?.status &&
+    !judgeReviewStages.includes(caseData.cases.status)
   ) {
     history.push(`/${window.contextPath}/employee/home/home-pending-task`);
   }

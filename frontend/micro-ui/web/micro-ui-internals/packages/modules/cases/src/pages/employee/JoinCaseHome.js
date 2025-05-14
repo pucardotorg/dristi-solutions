@@ -723,7 +723,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           }));
         }
 
-        const isResponseSubmitted = caseDetails?.litigants?.filter((litigant) => litigant?.individualId === party?.individualId)?.isResponseSubmitted;
+        const isResponseSubmitted = caseDetails?.litigants?.find((litigant) => litigant?.individualId === party?.individualId)?.isResponseSubmitted;
 
         if ("PENDING_RESPONSE" === caseDetails?.status && !party?.isComplainant && !isResponseSubmitted) {
           const poaHolders = (caseDetails?.poaHolders || [])
