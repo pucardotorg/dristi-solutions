@@ -62,6 +62,7 @@ public class BillingUtil {
         // Extract audit details
         Map<String, Object> auditDetails = JsonPath.read(jsonItem, AUDIT_DETAILS_PATH);
         Long paymentCreatedDate = Long.parseLong(JsonPath.read(jsonItem, PAYMENT_CREATED_TIME_PATH));
+        log.info("paymentCreatedDate: {}, paymentCompletedDate: {}", paymentCreatedDate, paymentCompletedDate);
         Gson gson = new Gson();
         String auditJsonString = gson.toJson(auditDetails);
 
