@@ -72,7 +72,7 @@ public class CaseQueryBuilder {
             " rep.isactive as isactive, rep.additionaldetails as additionaldetails, rep.createdby as createdby," +
             " rep.lastmodifiedby as lastmodifiedby, rep.createdtime as createdtime, rep.lastmodifiedtime as lastmodifiedtime , rep.hassigned as hassigned ";
 
-    private static final String BASE_REPRESENTATIVES_SUMMARY_QUERY = " SELECT  rep.case_id as case_id, rep.id as id, rep.advocateid as advocateid";
+    private static final String BASE_REPRESENTATIVES_SUMMARY_QUERY = " SELECT  rep.case_id as case_id, rep.id as id, rep.advocateid as advocateid, rep.additionaldetails as additionaldetails";
 
     private static final String FROM_REPRESENTATIVES_TABLE = " FROM dristi_case_representatives rep";
 
