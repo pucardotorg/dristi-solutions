@@ -46,7 +46,7 @@ public class BillingUtil {
     }
 
 
-    public String buildPayload(String jsonItem, JSONObject requestInfo) {
+    public String buildPayload(String jsonItem, JSONObject requestInfo, Long paymentCompletedDate) {
 
         String id = JsonPath.read(jsonItem, ID_PATH);
         String businessService = JsonPath.read(jsonItem, BUSINESS_SERVICE_PATH);
@@ -61,6 +61,7 @@ public class BillingUtil {
         Double totalAmount = getTotalAmount(demandDetails);
         // Extract audit details
         Map<String, Object> auditDetails = JsonPath.read(jsonItem, AUDIT_DETAILS_PATH);
+        Long paymentCreatedDate = Long.parseLong(JsonPath.read(jsonItem, PAYMENT_CREATED_TIME_PATH));
         Gson gson = new Gson();
         String auditJsonString = gson.toJson(auditDetails);
 
@@ -76,6 +77,9 @@ public class BillingUtil {
         // fetch case detail
         Object caseObject = caseUtil.getCase(request, tenantId, cnrNumber, filingNumber, null);
         String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
+        String cmpNumber = JsonPath.read(caseObject.toString(), CASE_CMPNUMBER_PATH);
+        String courtCaseNumber = JsonPath.read(caseObject.toString(), CASE_COURTCASENUMBER_PATH);
+
         String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
         String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
         net.minidev.json.JSONArray statutesAndSections = JsonPath.read(caseObject.toString(), CASE_STATUTES_AND_SECTIONS);
@@ -83,7 +87,7 @@ public class BillingUtil {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_BILLING_FORMAT,
-                config.getBillingIndex(), id, id, tenantId, caseTitle, filingNumber, caseStage, caseId, caseType, paymentType, totalAmount, status, consumerCode, businessService, auditJsonString
+                config.getBillingIndex(), id, id, tenantId, paymentCreatedDate,paymentCompletedDate,caseTitle, filingNumber, cmpNumber,courtCaseNumber,caseStage, caseId, caseType, paymentType, totalAmount, status, consumerCode, businessService, auditJsonString
         );
     }
 
