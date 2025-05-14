@@ -184,6 +184,7 @@ async function applicationProductionOfDocuments(
     const additionalComments =
       application?.applicationDetails?.additionalComments || "";
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const prayer = application?.applicationDetails?.prayer || "";
     const data = {
       Data: [
         {
@@ -208,6 +209,7 @@ async function applicationProductionOfDocuments(
           day: day + ordinalSuffix,
           month: month,
           year: year,
+          prayer,
           qrCodeUrl: base64Url,
         },
       ],

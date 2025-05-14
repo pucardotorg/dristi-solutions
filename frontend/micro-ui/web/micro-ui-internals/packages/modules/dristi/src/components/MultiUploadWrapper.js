@@ -81,6 +81,7 @@ const MultiUploadWrapper = ({
   maxFileErrorMessage,
   displayName,
   disable,
+  uploadDivStyle,
   multiple = true,
 }) => {
   const FILES_UPLOADED = "FILES_UPLOADED";
@@ -198,6 +199,7 @@ const MultiUploadWrapper = ({
         enableButton={enableButton || !disable}
         disabled={!enableButton || disable}
         displayName={displayName}
+        uploadDivStyle={uploadDivStyle}
       />
       <span className="error-msg" style={{ display: "flex" }}>
         {fileErrors.length ? (
