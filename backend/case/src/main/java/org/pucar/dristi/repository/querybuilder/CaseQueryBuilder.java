@@ -25,7 +25,7 @@ public class CaseQueryBuilder {
             " cases.lastmodifiedby as lastmodifiedby, cases.createdtime as createdtime, cases.lastmodifiedtime as lastmodifiedtime ";
 
     private static final String BASE_CASE_SUMMARY_LIST_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.courtid as courtid, cases.casetitle as casetitle, cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.courtcasenumber as courtcasenumber, cases.cnrnumber as cnrnumber, " +
-            " cases.cmpnumber as cmpnumber, cases.stage as stage, cases.outcome as outcome, cases.status as status, cases.advocatecount as advocatecount, cases.substage as substage, cases.filingdate as filingdate,cases.lastmodifiedtime as lastmodifiedtime";
+            " cases.cmpnumber as cmpnumber, cases.outcome as outcome, cases.status as status, cases.pendingadvocaterequests as pendingadvocaterequests, cases.substage as substage, cases.filingdate as filingdate,cases.lastmodifiedtime as lastmodifiedtime";
 
     private static final String BASE_CASE_SUMMARY_QUERY = " SELECT cases.id as id, cases.tenantid as tenantid, cases.resolutionmechanism as resolutionmechanism, cases.casetitle as casetitle, cases.casedescription as casedescription, " +
             "cases.filingnumber as filingnumber, cases.casenumber as casenumber, cases.advocatecount as advocatecount, cases.courtcasenumber as courtcasenumber, cases.cnrnumber as cnrnumber, " +
@@ -72,7 +72,7 @@ public class CaseQueryBuilder {
             " rep.isactive as isactive, rep.additionaldetails as additionaldetails, rep.createdby as createdby," +
             " rep.lastmodifiedby as lastmodifiedby, rep.createdtime as createdtime, rep.lastmodifiedtime as lastmodifiedtime , rep.hassigned as hassigned ";
 
-    private static final String BASE_REPRESENTATIVES_SUMMARY_QUERY = " SELECT  rep.case_id as case_id, rep.id as id, rep.advocateid as advocateid";
+    private static final String BASE_REPRESENTATIVES_SUMMARY_QUERY = " SELECT  rep.case_id as case_id, rep.id as id, rep.advocateid as advocateid, rep.additionaldetails as additionaldetails";
 
     private static final String FROM_REPRESENTATIVES_TABLE = " FROM dristi_case_representatives rep";
 
