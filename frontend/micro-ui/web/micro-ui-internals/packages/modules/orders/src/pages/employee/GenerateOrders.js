@@ -2246,6 +2246,9 @@ const GenerateOrders = () => {
             sessionStorage.removeItem("businessOfTheDay");
             setShowSuccessModal(true);
           }
+          if (action === OrderWorkflowAction.SUBMIT_BULK_E_SIGN) {
+            setPrevOrder(response?.order);
+          }
         });
     } catch (error) {
       setShowErrorToast({ label: action === OrderWorkflowAction.ESIGN ? t("ERROR_PUBLISHING_THE_ORDER") : t("SOMETHING_WENT_WRONG"), error: true });
@@ -3958,7 +3961,6 @@ const GenerateOrders = () => {
           businessOfDay={businessOfTheDay}
           updateOrder={updateOrder}
           setShowBulkModal={setShowBulkModal}
-          setPrevOrder={setPrevOrder}
         />
       )}
       {showsignatureModal && (
