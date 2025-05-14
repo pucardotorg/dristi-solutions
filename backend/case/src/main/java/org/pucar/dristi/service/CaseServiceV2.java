@@ -121,7 +121,22 @@ public class CaseServiceV2 {
 
         enrichmentUtil.enrichCaseSearchRequest(caseListRequest);
 
-        return caseRepository.getCaseList(caseListRequest);
+        List<CaseSummaryList> caseSummaryLists =  caseRepository.getCaseList(caseListRequest);
+        caseSummaryLists.forEach(caseSummaryList -> {
+            enrichAdvocateJoinedStatus(caseSummaryList, caseListRequest.getCriteria().getAdvocateId());
+            caseSummaryList.setPendingAdvocateRequests(null);
+        });
+        return caseSummaryLists;
+    }
+
+    private void enrichAdvocateJoinedStatus(CaseSummaryList caseSummary, String advocateId) {
+        if (advocateId != null && caseSummary.getPendingAdvocateRequests() != null) {
+            Optional<PendingAdvocateRequest> foundPendingAdvocateRequest = caseSummary.getPendingAdvocateRequests().stream().filter(pendingAdvocateRequest -> pendingAdvocateRequest.getAdvocateId().equalsIgnoreCase(advocateId)).findFirst();
+            foundPendingAdvocateRequest.ifPresentOrElse(
+                    pendingAdvocateRequest -> caseSummary.setAdvocateStatus(pendingAdvocateRequest.getStatus()),
+                    () -> caseSummary.setAdvocateStatus("JOINED")
+            );
+        }
     }
 
     public List<CaseSummarySearch> searchCasesSummary(CaseSummarySearchRequest caseSummarySearchRequest) {
