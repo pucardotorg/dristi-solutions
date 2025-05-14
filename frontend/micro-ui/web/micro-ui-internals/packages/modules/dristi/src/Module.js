@@ -68,6 +68,7 @@ import OrSeparator from "./components/OrSeparator";
 import ShowAllTranscriptModal from "./components/ShowAllTranscriptModal";
 import SearchableDropdown from "./components/SearchableDropdown";
 import useFetchBill from "./hooks/dristi/useFetchBill";
+import WorkflowTimeline from "./components/WorkflowTimeline";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -187,6 +188,7 @@ const componentsToRegister = {
   TriangleIcon,
   ShowAllTranscriptModal,
   SearchableDropdown,
+  WorkflowTimeline
 };
 
 const overrideHooks = () => {
