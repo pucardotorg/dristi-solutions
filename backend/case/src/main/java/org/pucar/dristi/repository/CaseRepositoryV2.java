@@ -347,13 +347,16 @@ public class CaseRepositoryV2 {
     private boolean isSelfRepresentedComplainant(LitigantV2 litigant, List<RepresentativeV2> representativeV2) {
         if (representativeV2 != null && !representativeV2.isEmpty()) {
             for (RepresentativeV2 representative : representativeV2) {
-                RepresentingV2 litigantParty = representative.getRepresenting().stream()
-                        .filter(party -> party.getIndividualId().equalsIgnoreCase(litigant.getIndividualId()))
-                        .findFirst()
-                        .orElse(null);
-
-                // If litigant is actively represented by an advocate, they're not self-represented
-                if (litigantParty != null) {
+                if(representative.getRepresenting()!=null){
+                    RepresentingV2 litigantParty = representative.getRepresenting().stream()
+                            .filter(party -> party.getIndividualId().equalsIgnoreCase(litigant.getIndividualId()))
+                            .findFirst()
+                            .orElse(null);
+                    // If litigant is actively represented by an advocate, they're not self-represented
+                    if (litigantParty != null) {
+                        return false;
+                    }
+                }else {
                     return false;
                 }
             }
