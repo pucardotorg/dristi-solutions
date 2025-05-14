@@ -178,11 +178,25 @@ public class SmsNotificationService {
                 .replace("{{cnr}}", Optional.ofNullable(userDetailsForSMS.get("cnr")).orElse(""))
                 .replace("{{link}}", Optional.ofNullable(userDetailsForSMS.get("link")).orElse(""))
                 .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""))
-                .replace("{{cmpNumber}}", Optional.ofNullable(userDetailsForSMS.get("cmpNumber")).orElse(""))
+                .replace("{{cmpNumber}}", getPreferredCaseIdentifier(userDetailsForSMS))
                 .replace("{{courtCaseNumber}}", Optional.ofNullable(userDetailsForSMS.get("courtCaseNumber")).orElse(""))
                 .replace("{{advocateName}}", Optional.ofNullable(userDetailsForSMS.get("advocateName")).orElse(""))
                 .replace("{{hearingDate}}",Optional.ofNullable(userDetailsForSMS.get("hearingDate")).orElse(""));
         return message;
+    }
+
+    private String getPreferredCaseIdentifier(Map<String, String> userDetailsForSMS) {
+        String courtCaseNumber = userDetailsForSMS.get("courtCaseNumber");
+        if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
+            return courtCaseNumber;
+        }
+
+        String cmpNumber = userDetailsForSMS.get("cmpNumber");
+        if (cmpNumber != null && !cmpNumber.isEmpty()) {
+            return cmpNumber;
+        }
+
+        return "";
     }
 
     /**
