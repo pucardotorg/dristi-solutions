@@ -237,19 +237,17 @@ const HomeView = () => {
         tabConfig?.TabSearchConfig?.map(async (configItem, index) => {
           const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {
             tenantId,
-            criteria: [
-              {
-                ...configItem?.apiDetails?.requestBody?.criteria?.[0],
-                ...defaultSearchValues,
-                ...additionalDetails,
-                ...(configItem?.apiDetails?.requestBody?.criteria[0]["outcome"] && {
-                  outcome: outcomeTypeData,
-                }),
-                pagination: { offSet: 0, limit: 1 },
-              },
-            ],
+            criteria: {
+              ...configItem?.apiDetails?.requestBody?.criteria,
+              ...defaultSearchValues,
+              ...additionalDetails,
+              ...(configItem?.apiDetails?.requestBody?.criteria?.outcome && {
+                outcome: outcomeTypeData,
+              }),
+              pagination: { offSet: 0, limit: 1 },
+            },
           });
-          const totalCount = response?.criteria?.[0]?.pagination?.totalCount;
+          const totalCount = response?.pagination?.totalCount;
           return {
             key: index,
             label: totalCount ? `${t(configItem.label)} (${totalCount})` : `${t(configItem.label)} (0)`,
@@ -259,7 +257,7 @@ const HomeView = () => {
       );
       setTabData(updatedTabData);
     },
-    [additionalDetails, outcomeTypeData, tenantId, t, defaultSearchValues]
+    [additionalDetails, outcomeTypeData, tenantId, t]
   );
 
   useEffect(() => {
@@ -297,17 +295,15 @@ const HomeView = () => {
       if (userType) {
         setIsFetchCaseLoading(true);
         // Add courtId to criteria if it exists
-        const caseData = await HomeService.customApiService(Urls.caseSearch, {
+        const caseData = await HomeService.customApiService(Urls.caseSearchList, {
           tenantId,
-          criteria: [
-            {
-              ...(advocateId ? { advocateId } : { litigantId: individualId }),
-              courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52',
-              pagination: { offSet: 0, limit: 1 },
-            },
-          ],
+          criteria: {
+            ...(advocateId ? { advocateId } : { litigantId: individualId }),
+            courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+            pagination: { offSet: 0, limit: 1 },
+          },
         });
-        setCaseDetails(caseData?.criteria?.[0]?.responseList?.[0]);
+        setCaseDetails(caseData?.caseList);
         setIsFetchCaseLoading(false);
       }
     })();

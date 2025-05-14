@@ -147,6 +147,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                   offSet: 0,
                 },
               },
+              tenantId,
             },
             {}
           );
@@ -170,12 +171,9 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   );
 
   const searchLitigantInRepresentives = useCallback((representatives, individualId) => {
-    const representativesList = representatives?.filter((data) =>
-      data?.representing?.find((rep) => rep?.individualId === individualId && rep?.isActive === true)
-    );
+    const representativesList = representatives?.filter((data) => data?.representing?.find((rep) => rep?.individualId === individualId));
     let representing;
-    if (representativesList?.length > 0)
-      representing = representativesList?.[0]?.representing?.find((rep) => rep?.individualId === individualId && rep?.isActive === true);
+    if (representativesList?.length > 0) representing = representativesList?.[0]?.representing?.find((rep) => rep?.individualId === individualId);
 
     if (representativesList && representing) {
       return { isFound: true, representatives: representativesList, representing: representing };

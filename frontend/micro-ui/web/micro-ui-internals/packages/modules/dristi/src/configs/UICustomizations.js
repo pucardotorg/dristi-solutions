@@ -669,17 +669,15 @@ export const UICustomizations = {
     preProcess: (requestCriteria, additionalDetails) => {
       const tenantId = window?.Digit.ULBService.getStateId();
       // We need to change tenantId "processSearchCriteria" here
-      const criteria = requestCriteria?.body?.criteria?.map((item) => {
-        return {
-          ...item,
-          ...requestCriteria?.state?.searchForm,
-          tenantId,
-          pagination: {
-            limit: requestCriteria?.body?.inbox?.limit,
-            offSet: requestCriteria?.body?.inbox?.offset,
-          },
-        };
-      });
+      const criteria = {
+        ...requestCriteria?.body?.criteria,
+        ...requestCriteria?.state?.searchForm,
+        tenantId,
+        pagination: {
+          limit: requestCriteria?.body?.inbox?.limit,
+          offSet: requestCriteria?.body?.inbox?.offset,
+        },
+      };
 
       return {
         ...requestCriteria,
@@ -691,7 +689,7 @@ export const UICustomizations = {
         config: {
           ...requestCriteria?.config,
           select: (data) => {
-            return { ...data, totalCount: data?.criteria?.[0]?.pagination?.totalCount };
+            return { ...data, totalCount: data?.pagination?.totalCount };
           },
         },
       };
