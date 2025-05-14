@@ -1540,6 +1540,8 @@ export const updateCaseDetails = async ({
     let poaHolders = [];
     const complainantVerification = {};
     const poaVerification = {};
+    const litigantFilestoreIds = {};
+    const poaFilestoreIds = {};
     // check -in new flow, mltiple complainant forms are possible, so iscompleted logic has to be updated
     // and logic to update litigants also has to be changed.
     if (isCompleted === true) {
@@ -1624,6 +1626,7 @@ export const updateCaseDetails = async ({
                     data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
                     tenantId
                   );
+                  litigantFilestoreIds[index] = documentData;
                   !!setFormDataValue &&
                     setFormDataValue("complainantVerification", {
                       individualDetails: {
@@ -1844,6 +1847,7 @@ export const updateCaseDetails = async ({
                     data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[0],
                     tenantId
                   );
+                  poaFilestoreIds[index] = documentData;
                   !!setFormDataValue &&
                     setFormDataValue("poaVerification", {
                       individualDetails: {
@@ -1952,12 +1956,17 @@ export const updateCaseDetails = async ({
           const poaIndividualDetails = {};
           if (data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file) {
             const documentType = documentsTypeMapping["complainantId"];
-            const uploadedData = await onDocumentUpload(
-              documentType,
-              data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
-              data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
-              tenantId
-            );
+            let uploadedData = null;
+            if (litigantFilestoreIds?.[index]) {
+              uploadedData = litigantFilestoreIds?.[index];
+            } else {
+              uploadedData = await onDocumentUpload(
+                documentType,
+                data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
+                data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
+                tenantId
+              );
+            }
             const doc = {
               documentType,
               fileStore: uploadedData.file?.files?.[0]?.fileStoreId || uploadedData?.fileStore,
@@ -2040,12 +2049,17 @@ export const updateCaseDetails = async ({
           //// updating information for POA
           if (data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file) {
             const documentType = documentsTypeMapping["poaComplainantId"];
-            const uploadedData = await onDocumentUpload(
-              documentType,
-              data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file,
-              data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[0],
-              tenantId
-            );
+            let uploadedData = null;
+            if (poaFilestoreIds?.[index]) {
+              uploadedData = poaFilestoreIds?.[index];
+            } else {
+              uploadedData = await onDocumentUpload(
+                documentType,
+                data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file,
+                data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[0],
+                tenantId
+              );
+            }
             const doc = {
               documentType,
               fileStore: uploadedData.file?.files?.[0]?.fileStoreId || uploadedData?.fileStore,
@@ -3043,6 +3057,9 @@ export const updateCaseDetails = async ({
   if (isCaseSignedState && action === "SUBMIT_CASE") {
     return null;
   }
+
+  const isSignedDocumentsPresent = tempDocList?.some((doc) => doc?.documentType === "case.complaint.signed");
+  if (isSignedDocumentsPresent) tempDocList = tempDocList?.filter((doc) => doc?.documentType !== "case.complaint.unsigned");
   const updatedTempDocList = tempDocList?.map((doc) => {
     const existingDoc = caseDetails?.documents?.find((existingDoc) => existingDoc?.fileStore === doc?.fileStore);
     if (existingDoc) {
