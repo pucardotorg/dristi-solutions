@@ -210,7 +210,7 @@ public class PaymentService {
 
             TransactionDetails transactionDetails = objectMapper.readValue(decryptedData, TransactionDetails.class);
             TreasuryPaymentData data = createTreasuryPaymentData(transactionDetails, authSek);
-
+            treasuryEnrichment.enrichTreasuryPaymentData(data, requestInfo);
             requestInfo.getUserInfo().setTenantId(config.getEgovStateTenantId());
 
             log.info("Request info: {}", requestInfo);
