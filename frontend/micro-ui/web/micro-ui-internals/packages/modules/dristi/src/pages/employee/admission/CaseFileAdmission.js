@@ -25,6 +25,7 @@ import { documentTypeMapping } from "../../citizen/FileCase/Config";
 import ScheduleHearing from "../AdmittedCases/ScheduleHearing";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
+import WorkflowTimeline from "../../../components/WorkflowTimeline";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -353,7 +354,7 @@ function CaseFileAdmission({ t, path }) {
           workflow: {
             ...caseDetails?.workflow,
             action,
-            ...(action === "SEND_BACK" && { assignes: assignees || [] }),
+            ...(action === "SEND_BACK" && { assignes: assignees || [], comments: data?.comment }),
           },
         },
         tenantId,
@@ -1206,6 +1207,9 @@ function CaseFileAdmission({ t, path }) {
                 ></AdmissionActionModal>
               )}
             </div>
+          </div>
+          <div className={"file-case-checklist"}>
+            <WorkflowTimeline t={t} applicationNo={caseDetails?.filingNumber} tenantId={tenantId} businessService="case-default" />
           </div>
         </div>
       </div>

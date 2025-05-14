@@ -16,6 +16,7 @@ import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewca
 import Button from "../../../components/Button";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
+import WorkflowTimeline from "../../../components/WorkflowTimeline";
 const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
 const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
 const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
@@ -414,7 +415,8 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
           workflow: {
             ...caseDetails?.workflow,
             action,
-            ...(action === CaseWorkflowAction.SEND_BACK && { assignes: assignees }),
+            ...(action === CaseWorkflowAction.SEND_BACK && { assignes: assignees, comments: commentSendBack }),
+            ...(action === CaseWorkflowAction.VALIDATE && { comments: comment }),
           },
           ...(action === CaseWorkflowAction.VALIDATE && { judgeId, courtId, benchId }),
         },
@@ -754,6 +756,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
                   </h3>
                 </div>
               </div>
+              <WorkflowTimeline t={t} applicationNo={caseDetails?.filingNumber} tenantId={tenantId} businessService="case-default" />
             </div>
           )}
 
