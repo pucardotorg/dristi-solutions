@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CardLabel, TextInput, CardLabelError, CustomDropdown } from "@egovernments/digit-ui-react-components";
 import MultiUploadWrapper from "../../../dristi/src/components/MultiUploadWrapper";
 import isEqual from "lodash/isEqual";
+import { max } from "lodash";
 
 const CloseBtn = () => {
   return (
@@ -164,6 +165,7 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
                         containerStyles={{ ...input?.containerStyles }}
                         displayName={docObj?.document?.additionalDetails?.name || ""}
                         disable={disable}
+                        uploadDivStyle={input?.uploadDivStyle}
                       />
                     )}
                     {input?.type === "text" && (
@@ -182,6 +184,7 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
                         maxlength={input.validation.maxlength}
                         minlength={input.validation.minlength}
                         style={{ minWidth: "500px" }}
+                        textInputStyle={input?.textInputStyle}
                       />
                     )}
                     {input?.type === "dropdown" && (
