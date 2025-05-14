@@ -118,11 +118,11 @@ export const TabLitigantSearchConfig = {
       label: "CS_ONGOING",
       type: "search",
       apiDetails: {
-        serviceName: "/case/v1/_search",
+        serviceName: "/case/v2/search/list",
         requestParam: {},
         requestBody: {
           tenantId: "pg",
-          criteria: [{}],
+          criteria: {},
         },
         masterName: "commonUiConfig",
         moduleName: "homeLitigantUiConfig",
@@ -227,7 +227,7 @@ export const TabLitigantSearchConfig = {
             ],
 
             enableColumnSort: true,
-            resultsJsonPath: "criteria[0].responseList",
+            resultsJsonPath: "caseList",
           },
           show: true,
         },
@@ -237,15 +237,13 @@ export const TabLitigantSearchConfig = {
       label: "CS_PENDING_SUBMISSION",
       type: "search",
       apiDetails: {
-        serviceName: "/case/v1/_search",
+        serviceName: "/case/v2/search/list",
         requestParam: {},
         requestBody: {
           tenantId: "pg",
-          criteria: [
-            {
-              status: ["DRAFT_IN_PROGRESS", "PENDING_E-SIGN", "PENDING_E-SIGN-2"],
-            },
-          ],
+          criteria: {
+            status: ["DRAFT_IN_PROGRESS", "PENDING_E-SIGN", "PENDING_E-SIGN-2"],
+          },
         },
         masterName: "commonUiConfig",
         moduleName: "homeLitigantUiConfig",
@@ -312,7 +310,7 @@ export const TabLitigantSearchConfig = {
             ],
 
             enableColumnSort: true,
-            resultsJsonPath: "criteria[0].responseList",
+            resultsJsonPath: "caseList",
           },
           show: true,
         },
@@ -325,11 +323,11 @@ export const TabLitigantSearchConfig = {
       label: "CS_CLOSED",
       type: "search",
       apiDetails: {
-        serviceName: "/case/v1/_search",
+        serviceName: "/case/v2/search/list",
         requestParam: {},
         requestBody: {
           tenantId: "pg",
-          criteria: [{ outcome: [] }],
+          criteria: { outcome: [] },
         },
         masterName: "commonUiConfig",
         moduleName: "homeLitigantUiConfig",
@@ -439,7 +437,7 @@ export const TabLitigantSearchConfig = {
             ],
 
             enableColumnSort: true,
-            resultsJsonPath: "criteria[0].responseList",
+            resultsJsonPath: "caseList",
           },
           show: true,
         },

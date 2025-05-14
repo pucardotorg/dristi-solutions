@@ -223,26 +223,19 @@ const HomeView = () => {
     async function (tabConfig) {
       const updatedTabData = await Promise.all(
         tabConfig?.TabSearchConfig?.map(async (configItem, index) => {
-          let totalCount = null;
-          try {
-            const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {
-              tenantId,
-              criteria: [
-                {
-                  ...configItem?.apiDetails?.requestBody?.criteria?.[0],
-                  ...defaultSearchValues,
-                  ...additionalDetails,
-                  ...(configItem?.apiDetails?.requestBody?.criteria[0]["outcome"] && {
-                    outcome: outcomeTypeData,
-                  }),
-                  pagination: { offSet: 0, limit: 1 },
-                },
-              ],
-            });
-            totalCount = response?.criteria?.[0]?.pagination?.totalCount;
-          } catch (error) {
-            console.error("error in fetching count.", error);
-          }
+          const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {
+            tenantId,
+            criteria: {
+              ...configItem?.apiDetails?.requestBody?.criteria,
+              ...defaultSearchValues,
+              ...additionalDetails,
+              ...(configItem?.apiDetails?.requestBody?.criteria?.outcome && {
+                outcome: outcomeTypeData,
+              }),
+              pagination: { offSet: 0, limit: 1 },
+            },
+          });
+          const totalCount = response?.pagination?.totalCount;
           return {
             key: index,
             label: totalCount ? `${t(configItem.label)} (${totalCount})` : `${t(configItem.label)} (0)`,
@@ -252,7 +245,7 @@ const HomeView = () => {
       );
       setTabData(updatedTabData);
     },
-    [additionalDetails, outcomeTypeData, tenantId, t, defaultSearchValues]
+    [additionalDetails, outcomeTypeData, tenantId, t]
   );
 
   const citizenId = useMemo(() => {
