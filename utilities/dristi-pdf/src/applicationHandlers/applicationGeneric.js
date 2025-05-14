@@ -189,6 +189,7 @@ async function applicationGeneric(
       applicationNameMap[application?.applicationType] ||
       "General Application";
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const prayer = application?.applicationDetails?.prayer || "";
     const data = {
       Data: [
         {
@@ -205,6 +206,7 @@ async function applicationGeneric(
           partyName: partyName,
           purposeOfApplication: "asdfasdf",
           complainantName: partyName, //FIXME: REMOVE it from both pdf configs and here,
+          prayer,
           additionalComments,
           reasonForApplication,
           partyType,
