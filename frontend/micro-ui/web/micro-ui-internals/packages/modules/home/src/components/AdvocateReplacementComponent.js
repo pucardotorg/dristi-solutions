@@ -204,6 +204,12 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
         { label: "MOBILE_NUMBER", value: taskDetails?.advocateDetails?.mobileNumber },
         { label: "REQUEST_DATE", value: formatDate(new Date(taskDetails?.advocateDetails?.requestedDate)) },
       ],
+      vakalatnama: {
+        label: "VAKALATNAMA",
+        value: taskDetails?.replacementDetails
+          ?.filter((item) => item?.document?.fileStore)
+          ?.map((item) => ({ name: `Vakalatnama (${item?.litigantDetails?.name})`, fileStoreId: item?.document?.fileStore })),
+      },
       reasonForReplacement: [
         { label: "REASON_FOR_REPLACEMENT", value: taskDetails?.reason },
         ...(taskDetails?.reasonDocument?.fileStore
@@ -235,6 +241,19 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
               <p className="value">{item.value}</p>
             </div>
           ))}
+        </div>
+        <div className="advocate-replacement-request-body">
+          <div className="info-row" style={{ justifyContent: "space-between" }}>
+            <p className="label">{t(advocateReplacementData?.vakalatnama?.label)}</p>
+            <div
+              className="reason-document-wrapper"
+              style={{ width: "fit-content", maxWidth: "60%", overflowX: "auto", gap: "20px", justifyContent: "flex-start" }}
+            >
+              {advocateReplacementData?.vakalatnama?.value?.map((vakalatnama) => (
+                <DocViewerWrapper fileStoreId={vakalatnama.fileStoreId} tenantId={tenantId} displayFilename={vakalatnama.name} />
+              ))}
+            </div>
+          </div>
         </div>
         <div className="advocate-replacement-request-body">
           {advocateReplacementData?.reasonForReplacement?.map((item) => (
