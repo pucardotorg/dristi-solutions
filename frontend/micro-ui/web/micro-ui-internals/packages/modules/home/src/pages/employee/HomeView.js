@@ -45,13 +45,7 @@ const HomeView = () => {
   const isUserLoggedIn = Boolean(token);
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
 
-  const [tabData, setTabData] = useState(
-    TabLitigantSearchConfig?.TabSearchConfig?.map((configItem, index) => ({
-      key: index,
-      label: configItem.label,
-      active: index === 0 ? true : false,
-    }))
-  );
+  const [tabData, setTabData] = useState(null);
   const [callRefetch, setCallRefetch] = useState(false);
   const [tabConfig, setTabConfig] = useState(null);
   const [onRowClickData, setOnRowClickData] = useState({ url: "", params: [] });
@@ -217,10 +211,10 @@ const HomeView = () => {
             res = roles.some((role) => role.code === curr);
             return res;
           }, true)
-        ) || TabLitigantSearchConfig
+        ) || (userInfoType === "citizen" ? TabLitigantSearchConfig : null)
       );
     }
-  }, [state?.role, roles]);
+  }, [state?.role, roles, userInfoType]);
 
   const tabConfigs = useMemo(() => rolesToConfigMappingData.config, [rolesToConfigMappingData]);
   const rowClickData = useMemo(() => rolesToConfigMappingData.onRowClickRoute, [rolesToConfigMappingData]);
@@ -229,19 +223,24 @@ const HomeView = () => {
     async function (tabConfig) {
       const updatedTabData = await Promise.all(
         tabConfig?.TabSearchConfig?.map(async (configItem, index) => {
-          const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {
-            tenantId,
-            criteria: {
-              ...configItem?.apiDetails?.requestBody?.criteria,
-              ...defaultSearchValues,
-              ...additionalDetails,
-              ...(configItem?.apiDetails?.requestBody?.criteria?.outcome && {
-                outcome: outcomeTypeData,
-              }),
-              pagination: { offSet: 0, limit: 1 },
-            },
-          });
-          const totalCount = response?.pagination?.totalCount;
+          let totalCount = null;
+          try {
+            const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {
+              tenantId,
+              criteria: {
+                ...configItem?.apiDetails?.requestBody?.criteria,
+                ...defaultSearchValues,
+                ...additionalDetails,
+                ...(configItem?.apiDetails?.requestBody?.criteria?.outcome && {
+                  outcome: outcomeTypeData,
+                }),
+                pagination: { offSet: 0, limit: 1 },
+              },
+            });
+            totalCount = response?.pagination?.totalCount;
+          } catch (error) {
+            console.error("error in fetching count.", error);
+          }
           return {
             key: index,
             label: totalCount ? `${t(configItem.label)} (${totalCount})` : `${t(configItem.label)} (0)`,
