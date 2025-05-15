@@ -356,8 +356,6 @@ public class CaseRepositoryV2 {
                     if (litigantParty != null) {
                         return false;
                     }
-                }else {
-                    return false;
                 }
             }
         }
