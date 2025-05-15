@@ -1,11 +1,13 @@
 package digit.service;
 
 import digit.config.Configuration;
+import digit.util.HrmsUtil;
 import digit.web.models.CaseDiary;
 import digit.web.models.CaseDiaryGenerateRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import static digit.config.ServiceConstants.*;
 
@@ -29,6 +32,9 @@ public class GenerateDiaryService {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private HrmsUtil hrmsUtil;
+
     private static final String TIME_ZONE = "Asia/Kolkata";
 
     // This runs everyday at 11:59 PM
@@ -44,17 +50,33 @@ public class GenerateDiaryService {
             CaseDiary diary = new CaseDiary();
             diary.setDiaryDate(generateDiaryDate());
             diary.setDiaryType(DIARY_TYPE);
-            diary.setJudgeId(configuration.getJudgeId());
             diary.setTenantId(configuration.getTenantId());
-
-            generateRequest.setDiary(diary);
             generateRequest.setRequestInfo(requestInfo);
-            diaryService.generateDiary(generateRequest);
+
+            List<String> judgeIds = getJudgeIds(diary);
+            judgeIds.forEach(judgeId -> {
+                diary.setJudgeId(judgeId);
+                generateRequest.setDiary(diary);
+                diaryService.generateDiary(generateRequest);
+            });
         } catch (Exception ex) {
             log.error("Error generating diary :: {}", ex.getMessage());
         }
 
         log.info("Cron job completed for generating diary");
+    }
+
+    private List<String> getJudgeIds(CaseDiary diary) {
+
+        List<String> activeJudgeIds = hrmsUtil.getActiveJudgeIds(createInternalRequestInfo());
+
+        if (activeJudgeIds.isEmpty()) {
+            log.error("No active judge found");
+            throw new CustomException("JUDGE_NOT_FOUND", "No active judge found");
+        }
+
+        return activeJudgeIds;
+
     }
 
     private Long generateDiaryDate() {

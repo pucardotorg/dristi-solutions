@@ -178,13 +178,19 @@ public class CaseRegistrationEnrichment {
             enrichCaseRegistrationUponCreateAndUpdate(courtCase, auditDetails);
 
             courtCase.setFilingNumber(courtCaseRegistrationFillingNumberIdList.get(0));
-            courtCase.setCourtId(config.getCourtId());
+            courtCase.setCourtId(getCourtId(caseRequest.getRequestInfo()));
 
 
         } catch (Exception e) {
             log.error("Error enriching case application :: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, e.getMessage());
         }
+    }
+
+    private String getCourtId(RequestInfo requestInfo) {
+
+        return hrmsUtil.getCourtId(requestInfo);
+
     }
 
     private void enrichCaseRegistrationUponCreateAndUpdate(CourtCase courtCase, AuditDetails auditDetails) {
@@ -401,7 +407,8 @@ public class CaseRegistrationEnrichment {
         // TO DO- Need to enhance this after HRMS integration
         if (isJudge || isBenchClerk) {
             for (CaseCriteria element : searchRequest.getCriteria()) {
-                element.setJudgeId(JUDGE_ID);
+                String courtId = getCourtId(searchRequest.getRequestInfo());
+                element.setCourtId(courtId);
             }
 
         }
@@ -463,9 +470,8 @@ public class CaseRegistrationEnrichment {
 
         // TO DO- Need to enhance this after HRMS integration
         if (isJudge || isBenchClerk) {
-
-            String judgeId = hrmsUtil.getJudgeId(requestInfo);
-            criteria.setJudgeId(judgeId);
+            String courtId = getCourtId(requestInfo);
+            criteria.setCourtId(courtId);
         }
 
     }
@@ -517,8 +523,8 @@ public class CaseRegistrationEnrichment {
 
         // TO DO- Need to enhance this after HRMS integration
         if (isJudge || isBenchClerk) {
-            String judgeId = hrmsUtil.getJudgeId(requestInfo);
-            caseSummaryListCriteria.setJudgeId(JUDGE_ID);
+            String courtId = getCourtId(requestInfo);
+            caseSummaryListCriteria.setCourtId(courtId);
         }
 
     }

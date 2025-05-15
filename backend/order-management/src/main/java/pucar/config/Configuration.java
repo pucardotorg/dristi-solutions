@@ -175,4 +175,11 @@ public class Configuration {
     @Value("${app.zone.id}")
     private String zoneId;
 
+    //HRMS
+    @Value("${egov.hrms.host}")
+    private String hrmsHost;
+
+    @Value("${egov.hrms.search.endpoint}")
+    private String hrmsEndPoint;
+
 }
