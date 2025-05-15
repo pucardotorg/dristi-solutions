@@ -60,6 +60,9 @@ public class CaseSummaryList {
     @JsonProperty("lastModifiedTime")
     private Long lastModifiedTime;
 
+    @JsonProperty("createdTime")
+    private Long createdTime;
+
     @JsonProperty("pendingAdvocateRequests")
     private List<PendingAdvocateRequest> pendingAdvocateRequests;
 

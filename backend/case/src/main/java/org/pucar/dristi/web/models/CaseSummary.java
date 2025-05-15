@@ -32,6 +32,9 @@ public class CaseSummary {
     @JsonProperty("stage")
     private String stage;
 
+    @JsonProperty("createdTime")
+    private Long createdTime;
+
     @JsonProperty("subStage")
     private String subStage;
 
