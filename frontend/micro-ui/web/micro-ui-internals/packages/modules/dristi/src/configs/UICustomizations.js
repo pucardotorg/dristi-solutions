@@ -8,7 +8,7 @@ import { RenderInstance } from "../components/RenderInstance";
 import OverlayDropdown from "../components/OverlayDropdown";
 import CustomChip from "../components/CustomChip";
 import ReactTooltip from "react-tooltip";
-import { modifiedEvidenceNumber, removeInvalidNameParts } from "../Utils";
+import { getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../Utils";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
@@ -37,6 +37,20 @@ export const advocateJoinStatus = {
   PENDING: "PENDING",
   PARTIALLY_PENDING: "PARTIALLY_PENDING",
   JOINED: "JOINED",
+};
+
+const getCaseNumber = (billDetails = {}) => {
+  const isValid = (val) => val && !["null", "undefined", ""].includes(val?.toString()?.trim());
+
+  const { courtCaseNumber, cmpNumber, caseTitleFilingNumber } = billDetails;
+
+  const filingNumber = caseTitleFilingNumber?.split(",")?.[1]?.trim();
+
+  if (isValid(courtCaseNumber)) return courtCaseNumber;
+  if (isValid(cmpNumber)) return cmpNumber;
+  if (isValid(filingNumber)) return filingNumber;
+
+  return "";
 };
 
 export const UICustomizations = {
@@ -472,11 +486,11 @@ export const UICustomizations = {
               <Link
                 to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}`}
               >
-                {String(value || t("ES_COMMON_NA"))}
+                {String(`${caseTitle}, ${getCaseNumber(row?.businessObject?.billDetails)}` || t("ES_COMMON_NA"))}
               </Link>
             </span>
           ) : (
-            billStatus === "PAID" && <span>{String(value || t("ES_COMMON_NA"))}</span>
+            billStatus === "PAID" && <span>{String(`${caseTitle}, ${getCaseNumber(row?.businessObject?.billDetails)}` || t("ES_COMMON_NA"))}</span>
           );
         case "AMOUNT_DUE":
           return <span>{`Rs. ${value}/-`}</span>;
@@ -511,6 +525,9 @@ export const UICustomizations = {
               </span>
             )
           );
+        case "PAYMENT_GENERATED_DATE":
+        case "PAYMENT_COMPLETED_DATE":
+          return getDate(value);
         default:
           return t("ES_COMMON_NA");
       }
