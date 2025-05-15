@@ -545,7 +545,7 @@ public class CaseRegistrationEnrichment {
 
     }
 
-    public CourtCase enrichCasePaymentReceipt(CaseRequest caseRequest, String id){
+    public Document enrichCasePaymentReceipt(CaseRequest caseRequest, String id){
         try {
             log.info("Enriching payment receipt for case with id: {}", id);
             JsonNode paymentReceipt = etreasuryUtil.getPaymentReceipt(caseRequest.getRequestInfo(), id);
@@ -554,9 +554,8 @@ public class CaseRegistrationEnrichment {
                     .documentType(PAYMENT_RECEIPT)
                     .build();
             enrichDocumentsOnCreate(paymentReceiptDocument);
-            CourtCase courtCase = caseRequest.getCases();
-            courtCase.setDocuments(Collections.singletonList(paymentReceiptDocument));
-            return courtCase;
+            caseRequest.getCases().getDocuments().add(paymentReceiptDocument);
+            return paymentReceiptDocument;
         } catch (Exception e) {
             log.error("Error enriching payment receipt: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching payment receipt: " + e.getMessage());
