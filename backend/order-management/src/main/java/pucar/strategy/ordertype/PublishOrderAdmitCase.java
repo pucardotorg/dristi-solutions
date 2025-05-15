@@ -15,10 +15,6 @@ import pucar.web.models.OrderRequest;
 import pucar.web.models.WorkflowObject;
 import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.courtCase.*;
-import pucar.web.models.hearing.Hearing;
-import pucar.web.models.hearing.HearingCriteria;
-import pucar.web.models.hearing.HearingRequest;
-import pucar.web.models.hearing.HearingSearchRequest;
 import pucar.web.models.pendingtask.PendingTask;
 import pucar.web.models.pendingtask.PendingTaskRequest;
 
@@ -94,49 +90,6 @@ public class PublishOrderAdmitCase implements OrderUpdateStrategy {
         log.info("Admitting the case with filing number:{}", courtCase.getFilingNumber());
         caseUtil.updateCase(CaseRequest.builder().cases(courtCase).requestInfo(requestInfo).build());
 
-
-        // Hearing search and update
-        List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder()
-                .criteria(HearingCriteria.builder().tenantId(order.getTenantId())
-                        .filingNumber(order.getFilingNumber()).build()).requestInfo(requestInfo).build());
-
-        StringBuilder hearingUpdateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
-
-        log.info("Abandoning Hearing");
-        hearings.stream()
-                .filter(list -> list.getHearingType().equalsIgnoreCase(ADMISSION) && !(list.getStatus().equalsIgnoreCase(COMPLETED) || list.getStatus().equalsIgnoreCase(ABATED)))
-                .findFirst().ifPresent(hearing -> {
-                    WorkflowObject workflowObject = new WorkflowObject();
-                    workflowObject.setAction(ABANDON);
-                    hearing.setWorkflow(workflowObject);
-                    log.info("hearingId:{}", hearing.getHearingId());
-                    HearingRequest request = HearingRequest.builder()
-                            .requestInfo(requestInfo).hearing(hearing).build();
-
-                    hearingUtil.createOrUpdateHearing(request, hearingUpdateUri);
-                });
-
-        // create pending task
-        // schedule hearing pending task
-        PendingTask pendingTask = PendingTask.builder()
-                .name(SCHEDULE_HEARING)
-                .referenceId(MANUAL + courtCase.getFilingNumber())
-                .caseId(courtCase.getId().toString())
-                .caseTitle(courtCase.getCaseTitle())
-                .entityType("case-default")
-                .status("SCHEDULE_HEARING")
-                .assignedRole(List.of("JUDGE_ROLE"))
-                .cnrNumber(courtCase.getCnrNumber())
-                .filingNumber(courtCase.getFilingNumber())
-                .isCompleted(false)
-                .stateSla(pendingTaskUtil.getStateSla("SCHEDULE_HEARING"))
-                .screenType("home")
-                .build();
-        log.info("creating pending task of schedule hearing for judge of filing number :{}", courtCase.getFilingNumber());
-
-        pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
-        ).pendingTask(pendingTask).build());
-
         // pending response pending task
 
         List<Party> respondent = caseUtil.getRespondentOrComplainant(courtCase, "respondent");
@@ -145,7 +98,7 @@ public class PublishOrderAdmitCase implements OrderUpdateStrategy {
         for (Party party : respondent) {
 
             String referenceId = MANUAL + "PENDING_RESPONSE_" + courtCase.getFilingNumber() + "_" + party.getIndividualId();
-            pendingTask = PendingTask.builder()
+            PendingTask pendingTask = PendingTask.builder()
                     .name(PENDING_RESPONSE)
                     .referenceId(referenceId)
                     .entityType("case-default")
