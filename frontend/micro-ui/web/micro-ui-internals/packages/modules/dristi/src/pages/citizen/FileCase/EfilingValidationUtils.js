@@ -1005,7 +1005,6 @@ export const signatureValidation = ({ formData, selected, setShowErrorToast, set
 };
 
 export const addressValidation = ({ formData, selected, setAddressError, config }) => {
-  debugger;
   if (
     config
       ?.find((item) =>
