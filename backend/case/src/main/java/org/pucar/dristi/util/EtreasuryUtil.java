@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -29,11 +30,14 @@ public class EtreasuryUtil {
 
 	private final ObjectMapper mapper;
 
+	private final ServiceRequestRepository repository;
+
 	@Autowired
-	public EtreasuryUtil(RestTemplate restTemplate, Configuration configs, ObjectMapper mapper) {
+	public EtreasuryUtil(RestTemplate restTemplate, Configuration configs, ObjectMapper mapper, ServiceRequestRepository repository) {
 		this.restTemplate = restTemplate;
 		this.configs = configs;
         this.mapper = mapper;
+        this.repository = repository;
     }
 
 	public void createDemand(JoinCaseV2Request joinCaseRequest, String consumerCode,List<Calculation> calculationList) {
@@ -62,12 +66,12 @@ public class EtreasuryUtil {
     public JsonNode getPaymentReceipt(@Valid RequestInfo requestInfo, String id) {
 		StringBuilder uri = new StringBuilder();
 		uri.append(configs.getEtreasuryHost()).append(configs.getTreasuryPaymentReceiptEndPoint())
-				.append("?id=").append(id);
+				.append("?id=").append(id).append("&tenantId=").append(configs.getTenantId());
 
 		log.info("Payment Receipt uri :: {}", uri);
 		Object response = null;
 		try {
-			response = restTemplate.postForObject(uri.toString(), requestInfo, Object.class);
+			response = repository.fetchResult(uri, requestInfo);
 			log.info("Payment Receipt response :: {}", response);
 			return mapper.convertValue(response, JsonNode.class);
 		} catch (Exception e) {
