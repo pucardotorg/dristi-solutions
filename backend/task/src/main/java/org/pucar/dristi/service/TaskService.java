@@ -150,7 +150,7 @@ public class TaskService {
                 updateAcknowledgementId(body, acknowledgementId);
             }
             List<String> fileStoreIds = new ArrayList<>();
-            if(!body.getTask().getDocuments().isEmpty()){
+            if(body.getTask().getDocuments() != null){
                 for (Document document : body.getTask().getDocuments()) {
                     if (!document.getIsActive()) {
                         fileStoreIds.add(document.getFileStore());
