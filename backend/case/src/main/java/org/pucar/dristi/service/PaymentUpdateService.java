@@ -173,6 +173,7 @@ public class PaymentUpdateService {
                 caseService.callNotificationService(caseRequest, CASE_PAYMENT_COMPLETED, null);
             }
             enrichmentUtil.enrichAccessCode(caseRequest);
+            enrichmentUtil.enrichCasePaymentReceipt(caseRequest, bill.getId());
             log.info("In Payment Update, Encrypting: {}", caseRequest.getCases().getId());
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), configuration.getCourtCaseEncrypt(), CourtCase.class));
 
