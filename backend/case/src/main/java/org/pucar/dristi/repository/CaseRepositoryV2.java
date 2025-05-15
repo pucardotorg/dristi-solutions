@@ -100,7 +100,7 @@ public class CaseRepositoryV2 {
             if (caseSummarySearchList != null && !caseSummarySearchList.isEmpty()) {
                 log.info("Case list size :: {}", caseSummarySearchList.size());
             } else {
-                throw new CustomException(SEARCH_CASE_ERR, "No cases found");
+                return new ArrayList<>();
             }
 
             for (CaseSummarySearch caseSummarySearch : caseSummarySearchList) {
@@ -144,7 +144,7 @@ public class CaseRepositoryV2 {
                 log.info("Case list size :: {}", list.size());
                 return list;
             } else {
-                throw new CustomException(SEARCH_CASE_ERR, "No cases found");
+                return new ArrayList<>();
             }
 
         } catch (CustomException e) {
