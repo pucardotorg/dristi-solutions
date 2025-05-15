@@ -100,7 +100,7 @@ public class CaseRepositoryV2 {
             if (caseSummarySearchList != null && !caseSummarySearchList.isEmpty()) {
                 log.info("Case list size :: {}", caseSummarySearchList.size());
             } else {
-                throw new CustomException(SEARCH_CASE_ERR, "No cases found");
+                return new ArrayList<>();
             }
 
             for (CaseSummarySearch caseSummarySearch : caseSummarySearchList) {
@@ -144,7 +144,7 @@ public class CaseRepositoryV2 {
                 log.info("Case list size :: {}", list.size());
                 return list;
             } else {
-                throw new CustomException(SEARCH_CASE_ERR, "No cases found");
+                return new ArrayList<>();
             }
 
         } catch (CustomException e) {
@@ -347,14 +347,15 @@ public class CaseRepositoryV2 {
     private boolean isSelfRepresentedComplainant(LitigantV2 litigant, List<RepresentativeV2> representativeV2) {
         if (representativeV2 != null && !representativeV2.isEmpty()) {
             for (RepresentativeV2 representative : representativeV2) {
-                RepresentingV2 litigantParty = representative.getRepresenting().stream()
-                        .filter(party -> party.getIndividualId().equalsIgnoreCase(litigant.getIndividualId()))
-                        .findFirst()
-                        .orElse(null);
-
-                // If litigant is actively represented by an advocate, they're not self-represented
-                if (litigantParty != null) {
-                    return false;
+                if(representative.getRepresenting()!=null){
+                    RepresentingV2 litigantParty = representative.getRepresenting().stream()
+                            .filter(party -> party.getIndividualId().equalsIgnoreCase(litigant.getIndividualId()))
+                            .findFirst()
+                            .orElse(null);
+                    // If litigant is actively represented by an advocate, they're not self-represented
+                    if (litigantParty != null) {
+                        return false;
+                    }
                 }
             }
         }

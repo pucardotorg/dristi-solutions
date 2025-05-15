@@ -104,5 +104,6 @@ public class Payment {
     @JsonProperty("paymentStatus")
     private String paymentStatus;
 
-
+    @JsonProperty("fileStoreId")
+    private String fileStoreId;
 }

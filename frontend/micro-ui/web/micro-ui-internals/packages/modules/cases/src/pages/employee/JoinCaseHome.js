@@ -162,6 +162,13 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             }));
           }
         } catch (error) {
+          setErrors((errors) => ({
+            ...errors,
+            caseNumber: {
+              type: "not-admitted",
+              message: "NO_CASE_FOUND",
+            },
+          }));
           console.error("error :>> ", error);
         }
       }
