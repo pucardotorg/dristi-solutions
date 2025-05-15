@@ -1328,7 +1328,8 @@ const AdmittedCases = () => {
       }
     };
     if (activeTab === "Documents") {
-      fetchEvidence();
+      // There is no need to set Artifacts now, so commenting the fetchEvidence function call but keeping the code.
+      // fetchEvidence();
     }
   }, [filingNumber, artifactNumber, tenantId, activeTab]);
 
