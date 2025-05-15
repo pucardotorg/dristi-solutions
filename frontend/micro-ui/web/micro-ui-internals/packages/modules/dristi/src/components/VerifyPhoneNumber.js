@@ -283,7 +283,13 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
                 individualId: individualData?.Individual?.[0]?.individualId,
                 userUuid: individualData?.Individual?.[0]?.userUuid,
                 document: identifierIdDetails?.fileStoreId
-                  ? [{ fileName: idType, fileStore: newIndividualFilestoreId?.fileStoreId, documentName: identifierIdDetails?.filename }]
+                  ? [
+                      {
+                        fileName: idType,
+                        fileStore: newIndividualFilestoreId?.fileStoreId || identifierIdDetails.fileStoreId,
+                        documentName: identifierIdDetails?.filename,
+                      },
+                    ]
                   : null,
                 ...(config?.key === "poaVerification"
                   ? {

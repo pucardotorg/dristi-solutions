@@ -30,7 +30,7 @@ const useNewFileStoreId = () => {
       const newFileStoreId = await window?.Digit.UploadServices.Filestorage("DRISTI", blob, tenantId);
       setLoading(false);
 
-      return { file: newFileStoreId?.data, fileType: blob.type, filename, fileStoreId: newFileStoreId?.data.files[0].fileStoreId };
+      return { file: newFileStoreId?.data, fileType: blob.type, filename, fileStoreId: newFileStoreId?.data?.files?.[0]?.fileStoreId };
     } catch (error) {
       setLoading(false);
       setError(error.message);
