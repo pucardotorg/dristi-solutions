@@ -219,7 +219,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
       litigants: isCitizen
         ? [
             { type: "head", data: ["LITIGANTS_FOR_WHOM_REPLACEMENT_IS_REQUESTED"] },
-            ...taskDetails?.replacementDetails?.map((item) => ({ type: "body", data: [item?.litigantDetails?.name || "Maruthi"] })),
+            ...taskDetails?.replacementDetails?.map((item) => ({ type: "body", data: [item?.litigantDetails?.name] })),
           ]
         : [
             { type: "head", data: ["ADVOCATES_TO_BE_REPLACED", "LITIGANTS_FOR_WHOM_REPLACEMENT_IS_REQUESTED", "BAR_REGISTRATION_NO"] },
@@ -242,19 +242,21 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
             </div>
           ))}
         </div>
-        <div className="advocate-replacement-request-body">
-          <div className="info-row" style={{ justifyContent: "space-between" }}>
-            <p className="label">{t(advocateReplacementData?.vakalatnama?.label)}</p>
-            <div
-              className="reason-document-wrapper"
-              style={{ width: "fit-content", maxWidth: "60%", overflowX: "auto", gap: "20px", justifyContent: "flex-start" }}
-            >
-              {advocateReplacementData?.vakalatnama?.value?.map((vakalatnama) => (
-                <DocViewerWrapper fileStoreId={vakalatnama.fileStoreId} tenantId={tenantId} displayFilename={vakalatnama.name} />
-              ))}
+        {advocateReplacementData?.vakalatnama?.value?.length > 0 && (
+          <div className="advocate-replacement-request-body">
+            <div className="info-row" style={{ justifyContent: "space-between" }}>
+              <p className="label">{t(advocateReplacementData?.vakalatnama?.label)}</p>
+              <div
+                className="reason-document-wrapper"
+                style={{ width: "fit-content", maxWidth: "60%", overflowX: "auto", gap: "20px", justifyContent: "flex-start" }}
+              >
+                {advocateReplacementData?.vakalatnama?.value?.map((vakalatnama) => (
+                  <DocViewerWrapper fileStoreId={vakalatnama.fileStoreId} tenantId={tenantId} displayFilename={vakalatnama.name} />
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
         <div className="advocate-replacement-request-body">
           {advocateReplacementData?.reasonForReplacement?.map((item) => (
             <div className="info-row" key={item.label}>
