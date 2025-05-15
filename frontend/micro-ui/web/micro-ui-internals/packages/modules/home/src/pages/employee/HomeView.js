@@ -227,17 +227,19 @@ const HomeView = () => {
           try {
             const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {
               tenantId,
-              criteria: {
-                ...configItem?.apiDetails?.requestBody?.criteria,
-                ...defaultSearchValues,
-                ...additionalDetails,
-                ...(configItem?.apiDetails?.requestBody?.criteria?.outcome && {
-                  outcome: outcomeTypeData,
-                }),
-                pagination: { offSet: 0, limit: 1 },
-              },
+              criteria: [
+                {
+                  ...configItem?.apiDetails?.requestBody?.criteria?.[0],
+                  ...defaultSearchValues,
+                  ...additionalDetails,
+                  ...(configItem?.apiDetails?.requestBody?.criteria[0]["outcome"] && {
+                    outcome: outcomeTypeData,
+                  }),
+                  pagination: { offSet: 0, limit: 1 },
+                },
+              ],
             });
-            totalCount = response?.pagination?.totalCount;
+            totalCount = response?.criteria?.[0]?.pagination?.totalCount;
           } catch (error) {
             console.error("error in fetching count.", error);
           }
