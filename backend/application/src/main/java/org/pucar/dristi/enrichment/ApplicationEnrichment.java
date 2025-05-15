@@ -54,7 +54,7 @@ public class ApplicationEnrichment {
                 application.setId(UUID.randomUUID());
                 application.setCreatedDate(System.currentTimeMillis());
                 application.setIsActive(true);
-                application.setCourtId(configuration.getCourtId());
+                application.setCourtId(getCourtId(applicationRequest));
 
                 if (application.getStatuteSection() != null) {
                     application.getStatuteSection().setId(UUID.randomUUID());
@@ -73,6 +73,24 @@ public class ApplicationEnrichment {
             log.error("Error occurred while enriching application: {}", e.getMessage());
             throw new CustomException(ENRICHMENT_EXCEPTION, e.getMessage());
         }
+    }
+
+    private String getCourtId(ApplicationRequest applicationRequest) {
+        CaseSearchRequest caseSearchRequest = createCaseSearchRequest(
+                applicationRequest.getRequestInfo(), applicationRequest.getApplication());
+
+        JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+
+        if (caseDetails == null || caseDetails.isEmpty()) {
+            throw new CustomException("COURT_ID_NOT_FOUND", "Court ID not found in case details");
+        }
+
+        JsonNode courtIdNode = caseDetails.get(0).get("courtId");
+        if (courtIdNode == null || courtIdNode.isNull()) {
+            throw new CustomException("COURT_ID_NOT_FOUND", "Court ID not found in case details");
+        }
+
+        return courtIdNode.textValue();
     }
 
     public void enrichApplicationNumberByCMPNumber(ApplicationRequest applicationRequest) {
