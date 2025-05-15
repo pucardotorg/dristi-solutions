@@ -578,9 +578,11 @@ public class CaseService {
                 if (advocateMapping.getDocuments() != null) {
                     documentSet.addAll(advocateMapping.getDocuments());
                 }
-                for(Party party : advocateMapping.getRepresenting()) {
-                    if (party.getDocuments() != null) {
-                        documentSet.addAll(party.getDocuments());
+                if (advocateMapping.getRepresenting() != null){
+                    for (Party party : advocateMapping.getRepresenting()) {
+                        if (party.getDocuments() != null) {
+                            documentSet.addAll(party.getDocuments());
+                        }
                     }
                 }
             }
