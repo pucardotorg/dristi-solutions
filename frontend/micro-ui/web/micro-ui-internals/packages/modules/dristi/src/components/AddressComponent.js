@@ -122,7 +122,7 @@ const AddressComponent = ({ t, config, onSelect, formData = {}, errors }) => {
   };
 
   return (
-    <div>
+    <div style={config?.populators?.customStyle}>
       {inputs
         .filter((input) => input.type === "LocationSearch")
         .map((input, index) => {
