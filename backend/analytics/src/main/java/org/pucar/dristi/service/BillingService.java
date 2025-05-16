@@ -49,7 +49,7 @@ public class BillingService {
 
 
         if (topic.equals(demandGenerateTopic)) {
-            processDemand(kafkaJson);
+            processDemand(kafkaJson,null);
         } else if (topic.equals(paymentCollectTopic)) {
             processPayment(kafkaJson);
         } else {
@@ -62,12 +62,13 @@ public class BillingService {
     private void processPayment(String payment) {
         try {
             JSONArray paymentDetailsArray = util.constructArray(payment, PAYMENT_PAYMENT_DETAILS_PATH);
+            Long paymentCompletedDate =  ((Number) JsonPath.read(payment, PAYMENT_TRANSACTION_DATE_PATH)).longValue();
             LinkedHashMap<String, Object> requestInfoMap = JsonPath.read(payment, REQUEST_INFO_PATH);
             JSONObject requestInfo = new JSONObject();
             requestInfo.put(REQUEST_INFO, requestInfoMap);
             Set<String> demandSet = extractDemandIds(paymentDetailsArray);
             String tenantId = config.getStateLevelTenantId();
-            updateDemandStatus(demandSet, tenantId, requestInfoMap);
+            updateDemandStatus(demandSet, tenantId, requestInfoMap,paymentCompletedDate);
         } catch (Exception e) {
             log.error("Error processing payment", e);
         }
@@ -93,7 +94,7 @@ public class BillingService {
         return demandSet;
     }
 
-    private void updateDemandStatus(Set<String> demandSet, String tenantId, LinkedHashMap<String, Object> requestInfoMap) throws JSONException {
+    private void updateDemandStatus(Set<String> demandSet, String tenantId, LinkedHashMap<String, Object> requestInfoMap,Long paymentCompletedDate) throws JSONException {
 
         JSONObject requestInfo = new JSONObject();
         requestInfo.put(REQUEST_INFO, requestInfoMap);
@@ -115,20 +116,20 @@ public class BillingService {
             JSONObject demandRequest = new JSONObject();
             demandRequest.put(REQUEST_INFO, requestInfoMap);
             demandRequest.put(DEMANDS, demandArray);
-            processDemand(demandRequest.toString());
+            processDemand(demandRequest.toString(),paymentCompletedDate);
         }
 
     }
 
 
-    private void processDemand(String demands) {
+    private void processDemand(String demands,Long paymentCompletedDate) {
         try {
             JSONArray kafkaJsonArray = util.constructArray(demands, DEMAND_PATH);
 
             LinkedHashMap<String, Object> requestInfoMap = JsonPath.read(demands, REQUEST_INFO_PATH);
             JSONObject requestInfo = new JSONObject(requestInfoMap);
 
-            StringBuilder bulkRequest = buildBulkRequest(kafkaJsonArray, requestInfo);
+            StringBuilder bulkRequest = buildBulkRequest(kafkaJsonArray, requestInfo,paymentCompletedDate);
 
             if (!bulkRequest.isEmpty()) {
                 String uri = config.getEsHostUrl() + config.getBulkPath();
@@ -139,13 +140,13 @@ public class BillingService {
         }
     }
 
-    StringBuilder buildBulkRequest(JSONArray kafkaJsonArray, JSONObject requestInfo) {
+    StringBuilder buildBulkRequest(JSONArray kafkaJsonArray, JSONObject requestInfo,Long paymentCompletedDate) {
         StringBuilder bulkRequest = new StringBuilder();
         try {
             for (int i = 0; i < kafkaJsonArray.length(); i++) {
                 JSONObject jsonObject = kafkaJsonArray.optJSONObject(i);
                 if (jsonObject != null) {
-                    processJsonObject(jsonObject, bulkRequest, requestInfo);
+                    processJsonObject(jsonObject, bulkRequest, requestInfo,paymentCompletedDate);
                 }
             }
         } catch (JSONException e) {
@@ -155,14 +156,14 @@ public class BillingService {
         return bulkRequest;
     }
 
-    void processJsonObject(JSONObject jsonObject, StringBuilder bulkRequest, JSONObject requestInfo) {
+    void processJsonObject(JSONObject jsonObject, StringBuilder bulkRequest, JSONObject requestInfo, Long paymentCompletedDate) {
         try {
             String stringifiedObject = billingUtil.buildString(jsonObject);
             String consumerCode = JsonPath.read(stringifiedObject, CONSUMER_CODE_PATH);
             String[] consumerCodeSplitArray = consumerCode.split("_", 2);
 
             if (isOfflinePaymentAvailable(consumerCodeSplitArray[1])) {
-                String payload = billingUtil.buildPayload(stringifiedObject, requestInfo);
+                String payload = billingUtil.buildPayload(stringifiedObject, requestInfo,paymentCompletedDate);
                 if (payload != null && !payload.isEmpty())
                     bulkRequest.append(payload);
             } else {

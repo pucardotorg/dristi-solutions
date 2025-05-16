@@ -23,6 +23,8 @@ public class ServiceConstants {
                     + "\"billDetails\": {"
                     + "\"id\": \"%s\","
                     + "\"tenantId\": \"%s\","
+                    + "\"paymentCreatedDate\": %s,"
+                    + "\"paymentCompletedDate\": %s,"
                     + "\"caseTitleFilingNumber\": \"%s, %s\","
                     + "\"stage\": \"%s\","
                     + "\"caseId\": \"%s\","
@@ -52,6 +54,7 @@ public class ServiceConstants {
     //JSON path
     public static final String DEMAND_PATH = "$.Demands.*";
     public static final String PAYMENT_PAYMENT_DETAILS_PATH = "$.Payment.paymentDetails.*";
+    public static final String PAYMENT_TRANSACTION_DATE_PATH = "$.Payment.transactionDate";
     public static final String PAYMENT_PAYMENT_BILL_DETAILS_PATH = "$.bill.billDetails.*";
     public static final String PROCESS_INSTANCE_PATH = "$.ProcessInstances.*";
     public static final String REQUEST_INFO_PATH = "$.RequestInfo";
@@ -79,6 +82,8 @@ public class ServiceConstants {
 
     public static final String CMP_NUMBER_PATH = "$.cmpNumber";
     public static final String CASE_TITLE_PATH = "$.caseTitle";
+    public static final String CASE_CMPNUMBER_PATH = "$.cmpNumber";
+    public static final String CASE_COURTCASENUMBER_PATH = "$.courtCaseNumber";
     public static final String CASEID_PATH = "$.id";
 
     public static final String CASE_STAGE_PATH = "$.stage";
@@ -138,6 +143,7 @@ public class ServiceConstants {
     public static final String PAYER_PATH = "$.payer";
     public static final String DEMAND_DETAILS_PATH = "$.demandDetails";
     public static final String AUDIT_DETAILS_PATH = "$.auditDetails";
+    public static final String PAYMENT_CREATED_TIME_PATH = "$.auditDetails.createdTime";
     public static final String DEMAND_DEMAND_ID_PATH = "$.demandId";
     public static final String DEMAND_TAX_HEAD_MASTER_CODE_PATH = "$.taxHeadMasterCode";
     public static final String DEMAND_COLLECTION_AMOUNT_PATH = "$.collectionAmount";
