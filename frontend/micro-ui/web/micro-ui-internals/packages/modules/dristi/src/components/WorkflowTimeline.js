@@ -44,16 +44,14 @@ const Reason = ({ headComment, otherComment, additionalComment }) => {
 const TLCaption = ({ data, OpenImage, privacy = {} }) => {
   const { t } = useTranslation();
   return (
-    <div>
+    <div style={{minHeight:"75px"}}>
       {data.date && <p>{data.date}</p>}
       {/* <p>{data.name}</p> */}
-      {data?.wfComment.length > 0 ? (
+      {["judge", "fso"].includes(data?.name?.toLowerCase()) && data?.wfComment?.length > 0 ? (
         <div>
-          {data?.wfComment?.map((e) => (
-            <div style={{ backgoundColor: "unset" }}>
-              <p style={{ marginBottom: "2px", color: "black", fontWeight: "medium" }}>{`${
-                ["judge", "fso"].includes(data?.name?.toLowerCase()) ? data?.name : ""
-              } ${t("WF_COMMON_COMMENTS")}`}</p>
+          {data.wfComment.map((e, idx) => (
+            <div key={idx} style={{ backgroundColor: "unset" }}>
+              <p style={{ marginBottom: "2px", color: "black", fontWeight: "500" }}>{`${data.name} ${t("WF_COMMON_COMMENTS")} :`}</p>
               <p style={{ margin: 0 }}>{e}</p>
             </div>
           ))}
@@ -65,7 +63,7 @@ const TLCaption = ({ data, OpenImage, privacy = {} }) => {
           <UnMaskComponent privacy={privacy}></UnMaskComponent>
         </span>
       )} */}
-      {data.source && <p>{t("ES_APPLICATION_DETAILS_APPLICATION_CHANNEL_" + data.source.toUpperCase())}</p>}
+      {/* {data.source && <p>{t("ES_APPLICATION_DETAILS_APPLICATION_CHANNEL_" + data.source.toUpperCase())}</p>}
       {data.comment && <Reason otherComment={data?.otherComment} headComment={data?.comment}></Reason>}
       {data.additionalComment && (
         <Reason otherComment={data?.otherComment} headComment={data?.additionalComment} additionalComment={data?.additionalComment}></Reason>
@@ -81,7 +79,7 @@ const TLCaption = ({ data, OpenImage, privacy = {} }) => {
             }}
           />
         </div>
-      ) : null}
+      ) : null} */}
     </div>
   );
 };
@@ -166,7 +164,9 @@ const WorkflowTimeline = ({
           {workflowDetails?.breakLineRequired === undefined ? <BreakLine /> : workflowDetails?.breakLineRequired ? <BreakLine /> : null}
           {!workflowDetails?.isLoading && (
             <Fragment>
-              <CardSectionHeader style={{ marginBottom: "16px", marginTop: "32px",  fontWeight:"bold" }}>{t("WORKS_WORKFLOW_TIMELINE")}</CardSectionHeader>
+              <CardSectionHeader style={{ marginBottom: "16px", marginTop: "32px", fontWeight: "bold" }}>
+                {t("WORKS_WORKFLOW_TIMELINE")}
+              </CardSectionHeader>
               {filteredTimeline && (
                 <ConnectingCheckPoints>
                   {filteredTimeline.map((checkpoint, index) => {
