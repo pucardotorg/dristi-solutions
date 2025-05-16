@@ -69,6 +69,7 @@ import ShowAllTranscriptModal from "./components/ShowAllTranscriptModal";
 import SearchableDropdown from "./components/SearchableDropdown";
 import useFetchBill from "./hooks/dristi/useFetchBill";
 import WorkflowTimeline from "./components/WorkflowTimeline";
+import ImageModal from "./components/ImageModal";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -123,6 +124,7 @@ export const DRISTIModule = ({ stateCode, userType, tenants }) => {
 };
 
 const componentsToRegister = {
+  ImageModal,
   SelectComponents,
   SelectComponentsMulti,
   SelectUserTypeComponent,

@@ -244,8 +244,8 @@ const ApplicationDetails = ({ location, match }) => {
       { title: t("ID_TYPE"), content: t(individualData?.Individual?.[0]?.identifiers[0]?.identifierType) },
       {
         title: identifierIdDetails?.fileStoreId ? t("CS_ID_PROOF") : t("AADHAR_NUMBER"),
-        content: identifierIdDetails?.fileStoreId ? (
-          <DocViewerWrapper fileStoreId={identifierIdDetails?.fileStoreId} tenantId={tenantId} displayFilename={identifierIdDetails?.filename} />
+        doc: identifierIdDetails?.fileStoreId ? (
+          <DocViewerWrapper fileStoreId={identifierIdDetails?.fileStoreId} tenantId={tenantId} displayFilename={identifierIdDetails?.filename} docViewerCardClassName={"doc-card"}/>
         ) : (
           individualData?.Individual?.[0]?.identifiers[0]?.identifierId
         ),
