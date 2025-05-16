@@ -191,7 +191,8 @@ public class SummonsService {
                 .requestInfo(request.getRequestInfo()).task(task).build();
         taskUtil.callUpdateTask(taskRequest);
 
-        List<Document> documents = task.getDocuments()
+        List<Document> documents = Optional.ofNullable(task.getDocuments())
+                .orElse(Collections.emptyList())
                 .stream().filter(doc -> POLICE_REPORT.equals(doc.getDocumentType()))
                 .toList();
         if(!documents.isEmpty()) {
@@ -251,11 +252,7 @@ public class SummonsService {
     }
 
     private Object getAdditionalDetails(@Valid RequestInfo requestInfo) {
-        Object additionalDetails = null;
-        Map<String, Object> additionalDetailsMap = new HashMap<>();
-        additionalDetailsMap.put("uuid", requestInfo.getUserInfo().getUuid());
-        additionalDetails = additionalDetailsMap;
-        return additionalDetails;
+        return Map.of("uuid", requestInfo.getUserInfo().getUuid());
     }
 
     private String getArtifactType(@Valid RequestInfo requestInfo, @Valid Task task) {
