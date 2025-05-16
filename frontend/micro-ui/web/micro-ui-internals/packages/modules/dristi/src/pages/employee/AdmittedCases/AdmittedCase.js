@@ -1,7 +1,6 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
 import { ActionBar, SubmitBar, Button, Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg } from "@egovernments/digit-ui-react-components";
-import { BreadCrumbContext, pages } from "@egovernments/digit-ui-module-core";
-import React, { useCallback, useEffect, useMemo, useState, useContext } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
 import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
@@ -152,7 +151,6 @@ const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
 const AdmittedCases = () => {
   const { t } = useTranslation();
   const location = useLocation();
-  const { pathname, search, hash } = location;
   const { path } = useRouteMatch();
   const urlParams = new URLSearchParams(location.search);
   const { hearingId, taskOrderType, artifactNumber } = Digit.Hooks.useQueryParams();
@@ -235,39 +233,6 @@ const AdmittedCases = () => {
     },
   };
 
-  // This block uses the BreadCrumbContext to manage and update breadcrumb navigation for the "Admitted Case" page.
-  // It runs inside a useEffect hook, which triggers whenever the `pathname`, `search`, or `hash` values change.
-  // The following steps are performed:
-  // 1. Retrieve the breadcrumb routes for the "View Case" and "Homepage" pages from the context.
-  // 2. Construct the new URL by combining `pathname`, `search`, and `hash`.
-  // 3. Update session storage with the current `filingNumber` and `caseId` if they differ from the values in the URL parameters.
-  // 4. If the breadcrumb route for "View Case" exists and its URL differs from the new URL, update the breadcrumb context:
-  //    - Modify the "View Case" route to use the new URL.
-  //    - Ensure the "Homepage" route has a valid URL, defaulting to '/ui/employee/home/home-pending-task' if not already set.
-  // The `setBreadCrumbs` function is used to update the breadcrumb state while preserving other routes.
-
-  const { breadCrumbs, setBreadCrumbs } = useContext(BreadCrumbContext);
-  useEffect(() => {
-    const viewCaseRoute = breadCrumbs?.routes.find(route => route.page === pages.VIEWCASE);
-    const homeRoute = breadCrumbs?.routes.find(route => route.page === pages.HOMEPAGE);
-    const newUrl = pathname + search + hash;
-    if (window.Digit.SessionStorage.get("BreadCrumb.filingNumber") !== urlParams.get("filingNumber")) {
-      window.Digit.SessionStorage.set("BreadCrumb.filingNumber", urlParams.get("filingNumber"));
-    }
-    if (window.Digit.SessionStorage.get("BreadCrumb.caseId") !== urlParams.get("caseId")) {
-      window.Digit.SessionStorage.set("BreadCrumb.caseId", urlParams.get("caseId"));
-    }
-
-    if (viewCaseRoute && viewCaseRoute.url !== newUrl) {
-      setBreadCrumbs((initial) => ({
-        ...initial,
-        routes: initial.routes.map(route =>
-          route.page === pages.VIEWCASE ? { ...route, url: newUrl } : (route.page === pages.HOMEPAGE ? homeRoute.url ? route : { ...route, url: '/ui/employee/home/home-pending-task' }:route)
-        )
-      }));
-    }
-  }, [pathname, search, hash]);
-  
   const evidenceUpdateMutation = Digit.Hooks.useCustomAPIMutationHook(reqEvidenceUpdate);
 
   const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useSearchCaseService(
@@ -347,9 +312,9 @@ const AdmittedCases = () => {
 
     return section && subsection
       ? `${section
-        ?.split(" ")
-        ?.map((splitString) => splitString.charAt(0))
-        ?.join("")} S${subsection}`
+          ?.split(" ")
+          ?.map((splitString) => splitString.charAt(0))
+          ?.join("")} S${subsection}`
       : "";
   }, [caseDetails?.statutesAndSections]);
 

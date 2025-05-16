@@ -62,7 +62,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
   } else if (!isCitizen && hasCitizenRoute && Boolean(userInfo)) {
     history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
   }
- 
+
   return (
     <Switch>
       <AppContainer className="ground-container">
