@@ -82,5 +82,6 @@ public class ServiceConstants {
     public static final String SUMMON_TO_WITNESS="Summons to witness";
     public static final String WARRANT_TO_ACCUSED="Warrant of arrest of accused 138";
     public static final String POLICE_REPORT = "POLICE_REPORT";
-    public static final String SUBMISSION = "SUBMISSION";
+    public static final String DIRECT = "DIRECT";
+    public static final String COURT ="COURT";
 }

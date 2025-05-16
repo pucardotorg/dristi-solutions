@@ -208,6 +208,7 @@ public class SummonsService {
                     .tenantId(taskRequest.getTask().getTenantId())
                     .comments(new ArrayList<>())
                     .file(document)
+                    .sourceType(COURT) //todo: need to configure if changes
                     .sourceID(taskRequest.getRequestInfo().getUserInfo().getUuid())
                     .filingType(getFilingType(taskRequest.getRequestInfo(), taskRequest.getTask()))
                     .isEvidence(false)
@@ -229,7 +230,8 @@ public class SummonsService {
         JSONArray filingTypeArray = mdmsData.get("common-masters").get("FilingType");
         for (Object o : filingTypeArray) {
             Map<String, Object> filingType = (Map<String, Object>) o;
-            if (filingType.get("code").toString().equalsIgnoreCase(SUBMISSION)) {
+            //todo : check for filing type if changed
+            if (filingType.get("code").toString().equalsIgnoreCase(DIRECT)) {
                 return (String) filingType.get("code");
             }
         }
