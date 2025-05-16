@@ -38,12 +38,13 @@ public class CaseSummarySearchRowMapper implements ResultSetExtractor<List<CaseS
 
                 if (caseSummary == null) {
                     caseSummary = CaseSummarySearch.builder()
-                            .caseId(UUID.fromString(rs.getString("id")))
+                            .id(UUID.fromString(rs.getString("id")))
                             .tenantId(rs.getString("tenantid"))
                             .resolutionMechanism(rs.getString("resolutionmechanism"))
                             .caseTitle(rs.getString("casetitle"))
                             .caseDescription(rs.getString("casedescription"))
                             .filingNumber(rs.getString("filingnumber"))
+                            .createdTime(rs.getLong("createdtime"))
                             .caseNumber(rs.getString("casenumber"))
                             .cnrNumber(rs.getString("cnrnumber"))
                             .courtCaseNumber(rs.getString("courtcasenumber"))
