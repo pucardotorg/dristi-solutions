@@ -142,7 +142,7 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
 
                 // create pending task
 
-                if (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel)) {
+                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))) {
 
                     PendingTask pendingTask = PendingTask.builder()
                             .name(PAYMENT_PENDING_FOR_WARRANT)

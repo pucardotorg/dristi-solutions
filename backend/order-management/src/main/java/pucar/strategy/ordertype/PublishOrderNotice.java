@@ -239,7 +239,7 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
 
                 // create pending task
 
-                if (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel)) {
+                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))) {
                     String name = pendingTaskUtil.getPendingTaskNameForSummonAndNotice(channel, order.getOrderType());
                     String status = PAYMENT_PENDING + channel;
 
