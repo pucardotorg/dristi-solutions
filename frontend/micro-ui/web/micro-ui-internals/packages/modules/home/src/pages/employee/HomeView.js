@@ -91,7 +91,6 @@ const HomeView = () => {
         )
       }));
     }
-    window.Digit.SessionStorage.get("BreadCrumb.filingNumber") && window.Digit.SessionStorage.get("BreadCrumb.caseId")
     if(window.Digit.SessionStorage.get("BreadCrumb.filingNumber")){
       window.Digit.SessionStorage.del("BreadCrumb.filingNumber")
     }
@@ -99,7 +98,7 @@ const HomeView = () => {
       window.Digit.SessionStorage.del("BreadCrumb.caseId")
     }
   }, [pathname, search, hash]);
-  
+
   const { data: individualData, isLoading, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
@@ -323,7 +322,6 @@ const HomeView = () => {
       if (tabConfigs && !isEqual(tabConfigs, tabConfig)) {
         setConfig(tabConfigs?.TabSearchConfig?.[0]);
         setTabConfig(tabConfigs);
-        setIsCounted(true);
         getTotalCountForTab(tabConfigs);
       }
     }
@@ -331,7 +329,6 @@ const HomeView = () => {
     isLoading,
     isFetching,
     isSearchLoading,
-    isFetchCaseLoading,
     isOutcomeLoading,
     rowClickData,
     tabConfig,
@@ -341,27 +338,6 @@ const HomeView = () => {
     isCitizenCaseDataLoading,
     userInfoType,
   ]);
-  // calling case api for tab's count
-  useEffect(() => {
-    (async function () {
-      if (userType) {
-        setIsFetchCaseLoading(true);
-        // Add courtId to criteria if it exists
-        const caseData = await HomeService.customApiService(Urls.caseSearch, {
-          tenantId,
-          criteria: [
-            {
-              ...(advocateId ? { advocateId } : { litigantId: individualId }),
-              courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52',
-              pagination: { offSet: 0, limit: 1 },
-            },
-          ],
-        });
-        setCaseDetails(caseData?.criteria?.[0]?.responseList?.[0]);
-        setIsFetchCaseLoading(false);
-      }
-    })();
-  }, [advocateId, individualId, tenantId, userType]);
 
   const onTabChange = (n) => {
     setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false })));
