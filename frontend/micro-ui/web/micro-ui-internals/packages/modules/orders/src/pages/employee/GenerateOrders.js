@@ -320,6 +320,46 @@ const GenerateOrders = () => {
     [caseData]
   );
 
+  const { data: applicationData, isLoading: isApplicationDetailsLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        filingNumber: filingNumber,
+        tenantId: tenantId,
+      },
+      tenantId,
+    },
+    {},
+    filingNumber,
+    Boolean(filingNumber)
+  );
+
+  const isDelayApplicationPending = useMemo(() => {
+    return Boolean(
+      applicationData?.applicationList?.some(
+        (item) =>
+          item?.applicationType === "DELAY_CONDONATION" &&
+          [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(item?.status)
+      )
+    );
+  }, [applicationData]);
+
+  const applicationTypeConfigUpdated = useMemo(() => {
+    const updatedConfig = structuredClone(applicationTypeConfig);
+    // Showing admit case/Dismiss case order type in the dropdown list depending on the case status.
+    if (
+      ["PENDING_NOTICE"].includes(caseDetails?.status) ||
+      // case admit can not be allowed if there are pending review/approval of some Delay condonation application.
+      (["PENDING_RESPONSE", "PENDING_ADMISSION"].includes(caseDetails?.status) && isDelayApplicationPending)
+    ) {
+      updatedConfig[0].body[0].populators.mdmsConfig.select =
+        "(data) => {return data['Order'].OrderType?.filter((item)=>[`DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+    } else if (["PENDING_RESPONSE", "PENDING_ADMISSION"].includes(caseDetails?.status)) {
+      updatedConfig[0].body[0].populators.mdmsConfig.select =
+        "(data) => {return data['Order'].OrderType?.filter((item)=>[`ADMIT_CASE`, `DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+    }
+    return updatedConfig;
+  }, [caseDetails, isDelayApplicationPending]);
+
   const { data: courtRoomData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "common-masters", [{ name: "Court_Rooms" }], {
     select: (data) => {
       let newData = {};
@@ -749,18 +789,6 @@ const GenerateOrders = () => {
     return [];
   }, [currentOrder?.linkedOrderNumber, pendingTaskDetails]);
 
-  const { data: applicationData, isLoading: isApplicationDetailsLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
-    {
-      criteria: {
-        filingNumber: filingNumber,
-        tenantId: tenantId,
-      },
-      tenantId,
-    },
-    {},
-    filingNumber,
-    Boolean(filingNumber)
-  );
   const applicationDetails = useMemo(
     () =>
       applicationData?.applicationList?.find(
@@ -875,8 +903,8 @@ const GenerateOrders = () => {
         // so values are setting in keys of other order type form fields.
         const orderType = item?.orderType;
         let newConfig = orderType
-          ? applicationTypeConfig?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
-          : structuredClone(applicationTypeConfig);
+          ? applicationTypeConfigUpdated?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
+          : structuredClone(applicationTypeConfigUpdated);
 
         if (orderType && configKeys.hasOwnProperty(orderType)) {
           let orderTypeForm = configKeys[orderType];
@@ -1104,8 +1132,8 @@ const GenerateOrders = () => {
       });
     } else {
       let newConfig = currentOrder?.orderNumber
-        ? applicationTypeConfig?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
-        : structuredClone(applicationTypeConfig);
+        ? applicationTypeConfigUpdated?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
+        : structuredClone(applicationTypeConfigUpdated);
       const orderType = currentOrder?.orderType;
       if (orderType && configKeys.hasOwnProperty(orderType)) {
         let orderTypeForm = configKeys[orderType];
@@ -2203,8 +2231,8 @@ const GenerateOrders = () => {
       let orderSchema = {};
       try {
         let orderTypeDropDownConfig = order?.orderNumber
-          ? applicationTypeConfig?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
-          : structuredClone(applicationTypeConfig);
+          ? applicationTypeConfigUpdated?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
+          : structuredClone(applicationTypeConfigUpdated);
         let orderFormConfig = configKeys.hasOwnProperty(order?.orderType) ? configKeys[order?.orderType] : [];
         const modifiedPlainFormConfig = [...orderTypeDropDownConfig, ...orderFormConfig];
         orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(order.additionalDetails.formdata, modifiedPlainFormConfig);
@@ -2261,8 +2289,8 @@ const GenerateOrders = () => {
       let orderSchema = {};
       try {
         let orderTypeDropDownConfig = item?.id
-          ? applicationTypeConfig?.map((obj) => ({ body: obj.body.map((input) => ({ ...input, disable: true })) }))
-          : structuredClone(applicationTypeConfig);
+          ? applicationTypeConfigUpdated?.map((obj) => ({ body: obj.body.map((input) => ({ ...input, disable: true })) }))
+          : structuredClone(applicationTypeConfigUpdated);
         let orderFormConfig = configKeys.hasOwnProperty(item?.orderSchema?.additionalDetails?.formdata?.orderType?.code)
           ? configKeys[item?.orderSchema?.additionalDetails?.formdata?.orderType?.code]
           : [];
@@ -2332,8 +2360,8 @@ const GenerateOrders = () => {
       let orderSchema = {};
       try {
         let orderTypeDropDownConfig = order?.orderNumber
-          ? applicationTypeConfig?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
-          : structuredClone(applicationTypeConfig);
+          ? applicationTypeConfigUpdated?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
+          : structuredClone(applicationTypeConfigUpdated);
         let orderFormConfig = configKeys.hasOwnProperty(order?.orderType) ? configKeys[order?.orderType] : [];
         const modifiedPlainFormConfig = [...orderTypeDropDownConfig, ...orderFormConfig];
         orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(order.additionalDetails.formdata, modifiedPlainFormConfig);
