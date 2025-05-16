@@ -33,6 +33,7 @@ import { sideMenuConfig } from "./Config";
 import EditFieldsModal from "./EditFieldsModal";
 import axios from "axios";
 import {
+  accusedAddressValidation,
   addressValidation,
   checkDuplicateMobileEmailValidation,
   checkIfscValidation,
@@ -1839,12 +1840,29 @@ function EFilingCases({ path }) {
       }
     }
 
-    if (selected === "complainantDetails" || selected === "respondentDetails") {
+    if (selected === "complainantDetails") {
       if (
         formdata
           ?.filter((data) => data.isenabled)
           ?.some((data, index) =>
             addressValidation({
+              formData: data?.data,
+              selected: selected === "complainantDetails" ? "complainantType" : "respondentType",
+              setAddressError,
+              config: modifiedFormConfig[index],
+            })
+          )
+      ) {
+        return;
+      }
+    }
+
+    if (selected === "respondentDetails") {
+      if (
+        formdata
+          ?.filter((data) => data.isenabled)
+          ?.some((data, index) =>
+            accusedAddressValidation({
               formData: data?.data,
               selected: selected === "complainantDetails" ? "complainantType" : "respondentType",
               setAddressError,
