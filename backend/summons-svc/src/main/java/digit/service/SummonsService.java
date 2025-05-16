@@ -199,7 +199,7 @@ public class SummonsService {
         }
     }
 
-    private void createEvidenceForPoliceReport(TaskRequest taskRequest, Document document) {
+    public void createEvidenceForPoliceReport(TaskRequest taskRequest, Document document) {
         Artifact artifact = Artifact.builder()
                 .artifactType(getArtifactType(taskRequest.getRequestInfo(), taskRequest.getTask()))
                 .caseId(getCaseId(taskRequest))
@@ -207,7 +207,7 @@ public class SummonsService {
                 .tenantId(taskRequest.getTask().getTenantId())
                 .file(document)
                 .sourceID(taskRequest.getRequestInfo().getUserInfo().getUuid())
-                .filingType("need to enrich")
+                .filingType("DIRECT")
                 .additionalDetails(getAdditionalDetails(taskRequest.getRequestInfo()))
                 .build();
 
