@@ -173,11 +173,12 @@ public class PaymentUpdateService {
                 caseService.callNotificationService(caseRequest, CASE_PAYMENT_COMPLETED, null);
             }
             enrichmentUtil.enrichAccessCode(caseRequest);
+            Document paymentReceipt = enrichmentUtil.enrichCasePaymentReceipt(caseRequest, bill.getId());
             log.info("In Payment Update, Encrypting: {}", caseRequest.getCases().getId());
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), configuration.getCourtCaseEncrypt(), CourtCase.class));
-
-            producer.push(configuration.getCaseUpdateStatusTopic(),caseRequest);
             cacheService.save(requestInfo.getUserInfo().getTenantId() + ":" + courtCase.getId().toString(), caseRequest.getCases());
+            caseRequest.getCases().setDocuments(List.of(paymentReceipt));
+            producer.push(configuration.getCaseUpdateStatusTopic(),caseRequest);
 
         });
     }
