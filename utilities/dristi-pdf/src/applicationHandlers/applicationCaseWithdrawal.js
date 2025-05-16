@@ -153,6 +153,7 @@ const applicationCaseWithdrawal = async (
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const prayer = application?.applicationDetails?.prayer || "";
     const data = {
       Data: [
         {
@@ -168,6 +169,7 @@ const applicationCaseWithdrawal = async (
           date: formattedToday,
           partyName: partyName,
           partyType,
+          prayer,
           additionalComments,
           advocateSignature: "Advocate Signature",
           reasonForWithdrawal,

@@ -255,12 +255,12 @@ const PaymentForRPADModal = ({ path }) => {
 
   const service = useMemo(() => (orderType === "SUMMONS" ? paymentType.TASK_SUMMON : paymentType.TASK_NOTICE), [orderType]);
   const taskType = useMemo(() => getTaskType(service), [service]);
-  const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchBill } = Digit.Hooks.dristi.useFetchBill(
+  const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchBill } = Digit.Hooks.dristi.useBillSearch(
     {},
     {
       tenantId,
       consumerCode: `${taskNumber}_EPOST_COURT`,
-      businessService: service,
+      service: service,
     },
     `courtBillResponse-${service}${taskNumber}`,
     Boolean(taskNumber)

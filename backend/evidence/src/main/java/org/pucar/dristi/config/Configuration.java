@@ -192,6 +192,12 @@ public class Configuration {
 	@Value("${egov.idgen.artifactConfig}")
 	private String artifactConfig;
 
+	@Value("${egov.idgen.icopsFormat}")
+	private String icopsFormat;
+
+	@Value("${egov.idgen.icopsConfig}")
+	private String icopsConfig;
+
 	//Localization
 	@Value("${egov.localization.host}")
 	private String localizationHost;

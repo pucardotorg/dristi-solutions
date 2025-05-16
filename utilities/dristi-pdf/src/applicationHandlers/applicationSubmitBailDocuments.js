@@ -189,6 +189,7 @@ const applicationSubmitBailDocuments = async (
 
     const ordinalSuffix = getOrdinalSuffix(day);
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const prayer = application?.applicationDetails?.prayer || "";
     const data = {
       Data: [
         {
@@ -204,6 +205,7 @@ const applicationSubmitBailDocuments = async (
           partyName: partyName,
           advocateName: advocateName,
           documentList,
+          prayer,
           additionalComments,
           day: day + ordinalSuffix,
           month: month,

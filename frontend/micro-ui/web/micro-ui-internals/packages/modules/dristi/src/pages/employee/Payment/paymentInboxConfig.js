@@ -126,21 +126,26 @@ export const paymentTabInboxConfig = {
                 additionalCustomization: true,
               },
               {
-                label: "AMOUNT_DUE",
-                jsonPath: "businessObject.billDetails.amount",
-                additionalCustomization: true,
-              },
-              {
                 label: "CS_STAGE",
                 jsonPath: "businessObject.billDetails.stage",
               },
               {
-                label: "CASE_TYPE",
-                jsonPath: "businessObject.billDetails.caseType",
-              },
-              {
                 label: "NYAY_PAYMENT_TYPE",
                 jsonPath: "businessObject.billDetails.paymentType",
+              },
+              {
+                label: "AMOUNT_DUE",
+                jsonPath: "businessObject.billDetails.amount",
+                additionalCustomization: true,
+              },
+              // {
+              //   label: "CASE_TYPE",
+              //   jsonPath: "businessObject.billDetails.caseType",
+              // },
+              {
+                label: "PAYMENT_GENERATED_DATE",
+                jsonPath: "businessObject.billDetails.paymentCreatedDate",
+                additionalCustomization: true,
               },
               {
                 label: "ACTION",
@@ -156,7 +161,7 @@ export const paymentTabInboxConfig = {
       },
     },
     {
-      label: "COMPLETED",
+      label: "PAID",
       type: "search",
       apiDetails: {
         serviceName: "/inbox/v2/index/_search",
@@ -277,21 +282,31 @@ export const paymentTabInboxConfig = {
                 additionalCustomization: true,
               },
               {
-                label: "AMOUNT_DUE",
-                jsonPath: "businessObject.billDetails.amount",
-                additionalCustomization: true,
-              },
-              {
                 label: "CS_STAGE",
                 jsonPath: "businessObject.billDetails.stage",
               },
               {
-                label: "CASE_TYPE",
-                jsonPath: "businessObject.billDetails.caseType",
-              },
-              {
                 label: "NYAY_PAYMENT_TYPE",
                 jsonPath: "businessObject.billDetails.paymentType",
+              },
+              {
+                label: "AMOUNT_DUE",
+                jsonPath: "businessObject.billDetails.amount",
+                additionalCustomization: true,
+              },
+              // {
+              //   label: "CASE_TYPE",
+              //   jsonPath: "businessObject.billDetails.caseType",
+              // },
+              {
+                label: "PAYMENT_GENERATED_DATE",
+                jsonPath: "businessObject.billDetails.paymentCreatedDate",
+                additionalCustomization: true,
+              },
+              {
+                label: "PAYMENT_COMPLETED_DATE",
+                jsonPath: "businessObject.billDetails.paymentCompletedDate",
+                additionalCustomization: true,
               },
               {
                 label: "ACTION",

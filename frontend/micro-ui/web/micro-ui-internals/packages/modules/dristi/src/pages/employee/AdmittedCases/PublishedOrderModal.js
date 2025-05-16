@@ -117,7 +117,7 @@ function PublishedOrderModal({
 
   const applicationNumberSetTerms = useMemo(() => {
     return isComposite
-      ? compositeSetTermsOfBailItems?.find((item) => item?.id === setTermBailItemId)?.orderSchema?.additionalDetails?.formdata?.applicationNumber?.[0]
+      ? compositeSetTermsOfBailItems?.find((item) => item?.id === setTermBailItemId)?.orderSchema?.additionalDetails?.applicationNumber?.[0]
       : order?.applicationNumber?.[0];
   }, [order, compositeSetTermsOfBailItems, setTermBailItemId, isComposite]);
 
@@ -175,15 +175,11 @@ function PublishedOrderModal({
   );
 
   const showSubmissionButtons = useMemo(() => {
-    const hasMatchingReference = (compositeItems, itemId, applications) =>
-      isComposite ? compositeItems?.length > 0 && itemId === null : applications?.some((item) => item?.referenceId === order?.id);
+    const hasMatchingReference = (itemId, applications) =>
+      isComposite ? itemId === null : applications?.some((item) => item?.referenceId === order?.id);
 
-    const hasMandatorySubmissionMatchingReference = hasMatchingReference(
-      compositeMandatorySubmissionItems,
-      mandatorySubmissionItemId,
-      productionOfDocumentApplications
-    );
-    const hasBailMatchingReference = hasMatchingReference(compositeSetTermsOfBailItems, setTermBailItemId, submitBailDocumentsApplications);
+    const hasMandatorySubmissionMatchingReference = hasMatchingReference(mandatorySubmissionItemId, productionOfDocumentApplications);
+    const hasBailMatchingReference = hasMatchingReference(setTermBailItemId, submitBailDocumentsApplications);
 
     if (hasMandatorySubmissionMatchingReference && hasBailMatchingReference) return false;
 

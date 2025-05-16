@@ -495,6 +495,7 @@ const InsideHearingMainPage = () => {
                       style={{
                         width: "100%",
                         minHeight: "40vh",
+                        fontSize: "large",
                         ...((isDepositionSaved || disableTextArea || !IsSelectedWitness) && {
                           pointerEvents: "unset !important",
                         }),
@@ -517,7 +518,7 @@ const InsideHearingMainPage = () => {
                   <React.Fragment>
                     <TextArea
                       ref={textAreaRef}
-                      style={{ width: "100%", minHeight: "40vh" }}
+                      style={{ width: "100%", minHeight: "40vh", fontSize: "large" }}
                       value={transcriptText || ""}
                       onChange={handleChange}
                       disabled={disableTextArea}

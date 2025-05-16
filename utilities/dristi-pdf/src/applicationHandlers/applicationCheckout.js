@@ -182,6 +182,7 @@ async function applicationCheckout(
 
     const ordinalSuffix = getOrdinalSuffix(day);
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const prayer = application?.applicationDetails?.prayer || "";
     const data = {
       Data: [
         {
@@ -199,6 +200,7 @@ async function applicationCheckout(
           reasonForReschedule,
           reasonForApplication: reasonForReschedule,
           complainantName: partyName,
+          prayer,
           additionalComments,
           initialHearingDate,
           proposedHearingDate,

@@ -14,7 +14,7 @@ const getLocation = (places, code) => {
   return location ? location : null;
 };
 
-const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formState, control, watch, register }) => {
+const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formState, control, watch, register, setError, clearErrors }) => {
   const configKey = `${config.key}-select`;
   // const configKey = config.key;
   const [coordinateData, setCoordinateData] = useState({ callbackFunc: () => {} });
@@ -185,7 +185,6 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
               coordinates: formData?.["poaAddressDetails"]?.coordinates ? formData["poaAddressDetails"].coordinates : { longitude: "", latitude: "" },
             },
           },
-          isUserVerified: true,
         });
       } else {
         onSelect("complainantVerification", {
@@ -199,7 +198,6 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
               coordinates: formData?.["addressDetails"]?.coordinates ? formData["addressDetails"].coordinates : { longitude: "", latitude: "" },
             },
           },
-          isUserVerified: true,
         });
       }
     }
@@ -294,7 +292,12 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
                       control={control}
                       name={`${configKey}.${input.name}`}
                       rules={{
-                        required: input.isMandatory,
+                        ...(input?.validation?.minlength && {
+                          minLength: input?.validation?.minlength,
+                        }),
+                        ...(input?.validation?.maxlength && {
+                          maxLength: input?.validation?.maxlength,
+                        }),
                         ...input.validation,
                       }}
                       render={({ field }) => (
@@ -306,6 +309,9 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
                             let value = e.target.value;
                             if (input?.isFormatRequired) {
                               value = formatAddress(value);
+                            }
+                            if (input?.validation?.maxlength && value.length > input?.validation?.maxlength) {
+                              return;
                             }
                             setValue(value, input.name, input?.autoFill);
                           }}

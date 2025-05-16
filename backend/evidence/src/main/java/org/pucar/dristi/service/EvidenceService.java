@@ -62,13 +62,14 @@ public class EvidenceService {
             // Validate applications
             validator.validateEvidenceRegistration(body);
 
+            String filingType = getFilingTypeMdms(body.getRequestInfo(), body.getArtifact());
+
             // Enrich applications
             evidenceEnrichment.enrichEvidenceRegistration(body);
             if (body.getArtifact().getIsEvidence().equals(true)) {
                 evidenceEnrichment.enrichEvidenceNumber(body);
             }
 
-            String filingType = getFilingTypeMdms(body.getRequestInfo(), body.getArtifact());
 
             // Initiate workflow for the new application- //todo witness deposition is part of case filing or not
             if ((body.getArtifact().getArtifactType() != null &&
@@ -156,6 +157,8 @@ public class EvidenceService {
             // Update workflow
             existingApplication.setWorkflow(evidenceRequest.getArtifact().getWorkflow());
 
+            String filingType = getFilingTypeMdms(evidenceRequest.getRequestInfo(), evidenceRequest.getArtifact());
+
             // Enrich application upon update
             evidenceEnrichment.enrichEvidenceRegistrationUponUpdate(evidenceRequest);
 
@@ -163,7 +166,6 @@ public class EvidenceService {
                 evidenceEnrichment.enrichEvidenceNumber(evidenceRequest);
             }
 
-            String filingType = getFilingTypeMdms(evidenceRequest.getRequestInfo(), evidenceRequest.getArtifact());
 
             if ((evidenceRequest.getArtifact().getArtifactType() != null &&
                     evidenceRequest.getArtifact().getArtifactType().equals(DEPOSITION)) ||

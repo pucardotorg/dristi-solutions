@@ -890,7 +890,7 @@ const CustomReviewCardRow = ({
 
         return (
           <div className={`address-main ${bgclassname}`} style={{ borderBottom: "1px #e8e8e8 solid" }}>
-            <div className="address">
+            <div className="address" style={{ position: "relative" }}>
               <div className="address-container" style={{ display: "flex", flexDirection: "column", gap: "1rem", width: "100%" }}>
                 {address.map((item, index) => (
                   <div key={index} className="address-block">

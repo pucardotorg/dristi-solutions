@@ -209,6 +209,8 @@ async function applicationSubmissionExtension(
       : "";
     const benefitOfExtension = application?.benefitOfExtension;
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const prayer = application?.applicationDetails?.prayer;
+
     const data = {
       Data: [
         {
@@ -231,6 +233,7 @@ async function applicationSubmissionExtension(
           day: day + ordinalSuffix,
           month: month,
           year: year,
+          prayer,
           additionalComments: benefitOfExtension || additionalComments,
           advocateSignature: "Advocate Signature",
           barRegistrationNumber,

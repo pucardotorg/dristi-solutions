@@ -45,7 +45,7 @@ const MonthlyCalendar = () => {
   const [taskType, setTaskType] = useState({});
   const [caseType, setCaseType] = useState({});
   const [stepper, setStepper] = useState(0);
-  const initial = userInfoType === "citizen" ? "timeGridDay" : "dayGridMonth";
+  const initial = "dayGridMonth";
 
   const search = window.location.search;
   const { fromDate, toDate, slot, slotId, initialView, count } = useMemo(() => {

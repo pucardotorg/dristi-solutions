@@ -133,5 +133,8 @@ public class ServiceConstants {
     public static final String WARRANT = "WARRANT";
     public static final String WITHDRAWAL = "WITHDRAWAL";
 
+    public static final String SMS = "SMS";
+
+    public static final String EMAIL = "EMAIL";
 
 }

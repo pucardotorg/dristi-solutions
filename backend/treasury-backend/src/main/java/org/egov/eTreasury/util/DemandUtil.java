@@ -47,7 +47,7 @@ public class DemandUtil {
         }
     }
 
-    public String searchBill(String billId, RequestInfo requestInfo) {
+    public JsonNode searchBill(String billId, RequestInfo requestInfo) {
 
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(configuration.getDemandHost() + configuration.getBillingSearchEndPoint())
                 .queryParam("billId", billId)
@@ -59,14 +59,14 @@ public class DemandUtil {
         requestInfoWrapper.setRequestInfo(requestInfo);
         Object response = null;
         try {
-             response = restTemplate.postForEntity(
+            response = restTemplate.postForEntity(
                     builder.toUriString(),
                     requestInfoWrapper,
                     Object.class
             ).getBody();
             JsonNode billResponse = objectMapper.convertValue(response, JsonNode.class);
             log.info("Bill fetch for id: {}", billId);
-            return billResponse.get("Bill").get(0).get("consumerCode").asText();
+            return billResponse.get("Bill").get(0);
         } catch (Exception e) {
             log.error("Error calling bill search API", e);
             throw new CustomException("BILL_SEARCH_API_ERROR", "Error calling bill search API");

@@ -1643,9 +1643,10 @@
       width: 22.5% !important;
 
       .file-case-select-form-section {
-        width: 22.5%;
-        position: fixed;
+        width: 100%;
+        position: sticky;
         padding-right: 40px;
+        top: 72px
       }
     }
 
@@ -1732,14 +1733,11 @@
     .file-case-checklist {
       width: 17.5% !important;
       height: fit-content;
-      margin-left: 40px;
 
       .checklist-main {
-        width: 17.5%;
         border: 1px #e8e8e8 solid;
         padding: 16px 20px;
         border-radius: 4px;
-        position: fixed;
         bottom: 78px;
         right: 24px;
         display: flex;
@@ -1784,19 +1782,20 @@
           }
         }
       }
+
+      .checkpoint-connect-wrap {
+        padding-bottom: 20px !important;
+      }
     }
 
     .file-case-checklist-highlight {
       width: 17.5% !important;
       height: fit-content;
-      margin-left: 40px;
 
       .checklist-main {
-        width: 17.5%;
         border: 1px #e8e8e8 solid;
         padding: 16px 20px;
         border-radius: 4px;
-        position: fixed;
         bottom: 78px;
         right: 24px;
         display: flex;
@@ -1841,6 +1840,9 @@
             word-wrap: break-word;
           }
         }
+      }
+      .checkpoint-connect-wrap {
+        padding-bottom: 20px !important;
       }
     }
   }

@@ -9,6 +9,7 @@ import { userTypeOptions } from "../citizen/registration/config";
 import Menu from "../../components/Menu";
 import { useToast } from "../../components/Toast/useToast";
 import { ErrorInfoIcon, SuccessIcon } from "../../icons/svgIndex";
+import ImageModal from "../../components/ImageModal";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -49,6 +50,35 @@ const LocationContent = ({ t, latitude = 17.2, longitude = 17.2 }) => {
   );
 };
 
+const extractFormattedAddresses = (individualData, t) => {
+  const addresses = individualData?.Individual?.[0]?.address || [];
+
+  const formatAddress = (addr) => {
+    if (!addr) return "";
+    const { addressLine1 = "", addressLine2 = "", buildingName = "", street = "", city = "", pincode = "" } = addr;
+
+    return `${addressLine1}, ${addressLine2}, ${buildingName}, ${street}, ${city}, ${pincode}`.trim();
+  };
+
+  const permanentAddress = addresses?.find((addr) => addr?.type === "PERMANENT");
+  const correspondingAddress = addresses?.find((addr) => addr?.type === "CORRESPONDENCE");
+
+  return [
+    {
+      title: t("LOCATION"),
+      content: <LocationContent t={t} latitude={permanentAddress?.latitude || ""} longitude={permanentAddress?.longitude || ""} />,
+    },
+    {
+      title: t("PRESENT_ADDRESS"),
+      content: formatAddress(permanentAddress),
+    },
+    {
+      title: t("CURRENT_ADDRESS"),
+      content: correspondingAddress ? formatAddress(correspondingAddress) : t("SAME_AS_PERSENT"),
+    },
+  ];
+};
+
 const ApplicationDetails = ({ location, match }) => {
   const urlParams = new URLSearchParams(window.location.search);
 
@@ -68,6 +98,8 @@ const ApplicationDetails = ({ location, match }) => {
   const [reasons, setReasons] = useState(null);
   const [isAction, setIsAction] = useState(false);
   const [showApproveModal, setShowApproveModal] = useState(false);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [imageInfo, setImageInfo] = useState(null);
 
   const { data: individualData, isLoading: isGetUserLoading } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
@@ -180,31 +212,17 @@ const ApplicationDetails = ({ location, match }) => {
     takeAction(action);
   };
 
-  const addressLine1 = individualData?.Individual?.[0]?.address[0]?.addressLine1 || "";
-  const addressLine2 = individualData?.Individual?.[0]?.address[0]?.addressLine2 || "";
-  const buildingName = individualData?.Individual?.[0]?.address[0]?.buildingName || "";
-  const street = individualData?.Individual?.[0]?.address[0]?.street || "";
-  const city = individualData?.Individual?.[0]?.address[0]?.city || "";
-  const pincode = individualData?.Individual?.[0]?.address[0]?.pincode || "";
-  const latitude = useMemo(() => individualData?.Individual?.[0]?.address[0]?.latitude || "", [individualData?.Individual]);
-  const longitude = useMemo(() => individualData?.Individual?.[0]?.address[0]?.longitude || "", [individualData?.Individual]);
-
-  const address = `${addressLine1} ${addressLine2} ${buildingName} ${street} ${street} ${city} ${pincode}`.trim();
-
   const givenName = individualData?.Individual?.[0]?.name?.givenName || "";
   const otherNames = individualData?.Individual?.[0]?.name?.otherNames || "";
   const familyName = individualData?.Individual?.[0]?.name?.familyName || "";
 
   const fullName = `${givenName} ${otherNames} ${familyName}`.trim();
 
-  const personalData = useMemo(
-    () => [
-      { title: t("CS_NAME"), content: fullName },
-      { title: t("CS_LOCATION"), content: <LocationContent t={t} latitude={latitude} longitude={longitude}></LocationContent> },
-      { title: t("ADDRESS"), content: address },
-    ],
-    [address, fullName, latitude, longitude]
-  );
+  const personalData = useMemo(() => {
+    const addressDetails = extractFormattedAddresses(individualData, t);
+    return [{ title: t("CS_NAME"), content: fullName }, ...addressDetails];
+  }, [individualData, fullName, t]);
+
   const barDetails = useMemo(() => {
     return [
       { title: t("CS_BAR_REGISTRATION_NUMBER"), content: searchResult?.[0]?.[userTypeDetail?.apiDetails?.AdditionalFields?.[0]] || "N/A" },
@@ -226,8 +244,8 @@ const ApplicationDetails = ({ location, match }) => {
       { title: t("ID_TYPE"), content: t(individualData?.Individual?.[0]?.identifiers[0]?.identifierType) },
       {
         title: identifierIdDetails?.fileStoreId ? t("CS_ID_PROOF") : t("AADHAR_NUMBER"),
-        content: identifierIdDetails?.fileStoreId ? (
-          <DocViewerWrapper fileStoreId={identifierIdDetails?.fileStoreId} tenantId={tenantId} displayFilename={identifierIdDetails?.filename} />
+        doc: identifierIdDetails?.fileStoreId ? (
+          <DocViewerWrapper fileStoreId={identifierIdDetails?.fileStoreId} tenantId={tenantId} displayFilename={identifierIdDetails?.filename} docViewerCardClassName={"doc-card"}/>
         ) : (
           individualData?.Individual?.[0]?.identifiers[0]?.identifierId
         ),
@@ -243,6 +261,15 @@ const ApplicationDetails = ({ location, match }) => {
     history.push(`/${window?.contextPath}/citizen/dristi/home`);
   }
 
+  const handleImageModalOpen = (fileStoreId, fileName) => {
+    setIsImageModalOpen(true);
+    setImageInfo({ data: { fileStore: fileStoreId, fileName: fileName } });
+  };
+
+  const handleImageModalClose = () => {
+    setIsImageModalOpen(false);
+  };
+
   if (isSearchLoading || isGetUserLoading || isWorkFlowLoading) {
     return <Loader />;
   }
@@ -252,10 +279,17 @@ const ApplicationDetails = ({ location, match }) => {
         <div className="application-main">
           <Header className="application-header">{header}</Header>
           <div className="application-card">
-            <DocumentDetailCard cardData={aadharData} />
+            <DocumentDetailCard
+              onClick={() => handleImageModalOpen(identifierIdDetails?.fileStoreId, identifierIdDetails?.filename)}
+              cardData={aadharData}
+            />
+
             <DocumentDetailCard cardData={personalData} />
-            {type === "advocate" && userType !== "ADVOCATE_CLERK" && <DocumentDetailCard cardData={barDetails} />}
+            {type === "advocate" && userType !== "ADVOCATE_CLERK" && (
+              <DocumentDetailCard onClick={() => handleImageModalOpen(fileStoreId, fileName)} cardData={barDetails} />
+            )}
           </div>
+          {isImageModalOpen && <ImageModal t={t} imageInfo={imageInfo} handleCloseModal={handleImageModalClose} />}
           {isAdvocateViewer && (
             <div className="action-button-application">
               <SubmitBar

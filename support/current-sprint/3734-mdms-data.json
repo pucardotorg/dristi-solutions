@@ -1,0 +1,37 @@
+[
+  {
+    "moduleName": "Evidence",
+    "masterName": "EvidenceType",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "Evidence.EvidenceType",
+        "uniqueIdentifier": "19",
+        "data": {
+          "id": 19,
+          "type": "POLICE_REPORT",
+          "subtype": " ",
+          "isactive": true
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "moduleName": "common-masters",
+    "masterName": "IdFormat",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "common-masters.IdFormat",
+        "uniqueIdentifier": "case.evidence.icops.[TENANT_ID]",
+        "data": {
+          "format": "E[SEQ_ICOPS_[TENANT_ID]]",
+          "idname": "case.evidence.icops.[TENANT_ID]"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

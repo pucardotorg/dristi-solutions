@@ -33,7 +33,7 @@ const JoinCaseSuccess = ({ success, messageHeader, type, caseDetails, closeModal
         },
         {
           key: "CASE_NUMBER",
-          value: caseDetails?.cmpNumber,
+          value: caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber,
         },
         {
           key: "CASE_CATEGORY",

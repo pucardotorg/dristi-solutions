@@ -228,37 +228,40 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
             JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
             log.info("taskDetailsArray size:{}", taskDetailsArray.size());
             for (JsonNode taskDetail : taskDetailsArray) {
-                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase);
-                TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
 
-                // create pending task
                 String taskDetailString = objectMapper.writeValueAsString(taskDetail);
-
-                Map<String, Object> jsonMap = objectMapper.readValue(taskDetailString, new TypeReference<Map<String, Object>>() {
+                Map<String, Object> jsonMap = objectMapper.readValue(taskDetailString, new TypeReference<>() {
                 });
                 String channel = jsonUtil.getNestedValue(jsonMap, Arrays.asList("deliveryChannels", "channelCode"), String.class);
 
-                String name = pendingTaskUtil.getPendingTaskNameForSummonAndNotice(channel, order.getOrderType());
-                String status = PAYMENT_PENDING + channel;
+                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase, channel);
+                TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
 
-                PendingTask pendingTask = PendingTask.builder()
-                        .name(name)
-                        .referenceId(MANUAL + taskResponse.getTask().getTaskNumber())
-                        .entityType("order-default")
-                        .status(status)
-                        .assignedTo(uniqueAssignee)
-                        .cnrNumber(courtCase.getCnrNumber())
-                        .filingNumber(courtCase.getFilingNumber())
-                        .caseId(courtCase.getId().toString())
-                        .caseTitle(courtCase.getCaseTitle())
-                        .isCompleted(false)
-                        .stateSla(sla)
-                        .additionalDetails(additionalDetails)
-                        .screenType("home")
-                        .build();
+                // create pending task
 
-                pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
-                ).pendingTask(pendingTask).build());
+                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))) {
+                    String name = pendingTaskUtil.getPendingTaskNameForSummonAndNotice(channel, order.getOrderType());
+                    String status = PAYMENT_PENDING + channel;
+
+                    PendingTask pendingTask = PendingTask.builder()
+                            .name(name)
+                            .referenceId(MANUAL + taskResponse.getTask().getTaskNumber())
+                            .entityType("order-default")
+                            .status(status)
+                            .assignedTo(uniqueAssignee)
+                            .cnrNumber(courtCase.getCnrNumber())
+                            .filingNumber(courtCase.getFilingNumber())
+                            .caseId(courtCase.getId().toString())
+                            .caseTitle(courtCase.getCaseTitle())
+                            .isCompleted(false)
+                            .stateSla(sla)
+                            .additionalDetails(additionalDetails)
+                            .screenType("home")
+                            .build();
+
+                    pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
+                    ).pendingTask(pendingTask).build());
+                }
 
 
             }

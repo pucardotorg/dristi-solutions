@@ -78,7 +78,7 @@ public class PaymentUpdateService {
             String tenantId = paymentRequest.getPayment().getTenantId();
 
             for (PaymentDetail paymentDetail : paymentDetails) {
-                updateWorkflowForCasePayment(requestInfo, tenantId, paymentDetail);
+                updateWorkflowForCasePayment(requestInfo, tenantId, paymentDetail, paymentRequest.getPayment().getPaymentMode());
             }
         } catch (Exception e) {
             log.error("KAFKA_PROCESS_ERROR:", e);
@@ -125,7 +125,7 @@ public class PaymentUpdateService {
 
     }
 
-    private void updateWorkflowForCasePayment(RequestInfo requestInfo, String tenantId, PaymentDetail paymentDetail) {
+    private void updateWorkflowForCasePayment(RequestInfo requestInfo, String tenantId, PaymentDetail paymentDetail, String paymentMode) {
 
         Bill bill  = paymentDetail.getBill();
 
@@ -173,11 +173,17 @@ public class PaymentUpdateService {
                 caseService.callNotificationService(caseRequest, CASE_PAYMENT_COMPLETED, null);
             }
             enrichmentUtil.enrichAccessCode(caseRequest);
+            Document paymentReceipt = null;
+            if(ONLINE.equals(paymentMode)){
+                paymentReceipt = enrichmentUtil.enrichCasePaymentReceipt(caseRequest, bill.getId());
+            }
             log.info("In Payment Update, Encrypting: {}", caseRequest.getCases().getId());
             caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), configuration.getCourtCaseEncrypt(), CourtCase.class));
-
-            producer.push(configuration.getCaseUpdateStatusTopic(),caseRequest);
             cacheService.save(requestInfo.getUserInfo().getTenantId() + ":" + courtCase.getId().toString(), caseRequest.getCases());
+            if(paymentReceipt!=null){
+                caseRequest.getCases().setDocuments(List.of(paymentReceipt));
+            }
+            producer.push(configuration.getCaseUpdateStatusTopic(),caseRequest);
 
         });
     }
