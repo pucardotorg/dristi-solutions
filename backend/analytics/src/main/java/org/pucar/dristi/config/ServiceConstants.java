@@ -26,8 +26,6 @@ public class ServiceConstants {
                     + "\"paymentCreatedDate\": %s,"
                     + "\"paymentCompletedDate\": %s,"
                     + "\"caseTitleFilingNumber\": \"%s, %s\","
-                    + "\"cmpNumber\": \"%s\","
-                    + "\"courtCaseNumber\": \"%s\","
                     + "\"stage\": \"%s\","
                     + "\"caseId\": \"%s\","
                     + "\"caseType\": \"%s\","
