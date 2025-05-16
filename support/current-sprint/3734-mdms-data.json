@@ -1,0 +1,21 @@
+[
+  {
+    "moduleName": "Evidence",
+    "masterName": "EvidenceType",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "Evidence.EvidenceType",
+        "uniqueIdentifier": "19",
+        "data": {
+          "id": 19,
+          "type": "POLICE_REPORT",
+          "subtype": " ",
+          "isactive": true
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

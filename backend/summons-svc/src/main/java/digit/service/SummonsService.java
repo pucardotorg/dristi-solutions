@@ -1,12 +1,16 @@
 package digit.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import digit.config.Configuration;
 import digit.enrichment.SummonsDeliveryEnrichment;
 import digit.kafka.Producer;
 import digit.repository.SummonsRepository;
 import digit.util.*;
 import digit.web.models.*;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONArray;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
@@ -16,10 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static digit.config.ServiceConstants.*;
 
@@ -46,11 +47,17 @@ public class SummonsService {
 
     private final CaseManagementUtil caseManagementUtil;
 
+    private final MdmsUtil mdmsUtil;
+
+    private final CaseUtil caseUtil;
+
+    private final EvidenceUtil evidenceUtil;
+
     @Autowired
     public SummonsService(PdfServiceUtil pdfServiceUtil, Configuration config, Producer producer,
                           FileStorageUtil fileStorageUtil, SummonsRepository summonsRepository,
                           SummonsDeliveryEnrichment summonsDeliveryEnrichment, ExternalChannelUtil externalChannelUtil,
-                          TaskUtil taskUtil, CaseManagementUtil caseManagementUtil) {
+                          TaskUtil taskUtil, CaseManagementUtil caseManagementUtil, MdmsUtil mdmsUtil, CaseUtil caseUtil, EvidenceUtil evidenceUtil) {
         this.pdfServiceUtil = pdfServiceUtil;
         this.config = config;
         this.producer = producer;
@@ -60,6 +67,9 @@ public class SummonsService {
         this.externalChannelUtil = externalChannelUtil;
         this.taskUtil = taskUtil;
         this.caseManagementUtil = caseManagementUtil;
+        this.mdmsUtil = mdmsUtil;
+        this.caseUtil = caseUtil;
+        this.evidenceUtil = evidenceUtil;
     }
 
     public TaskResponse generateSummonsDocument(TaskRequest taskRequest) {
@@ -174,12 +184,112 @@ public class SummonsService {
             }
         }
         task.setWorkflow(workflow);
+        enrichPoliceStationReport(task, request.getSummonsDelivery());
 
         Role role = Role.builder().code(config.getSystemAdmin()).tenantId(config.getEgovStateTenantId()).build();
         request.getRequestInfo().getUserInfo().getRoles().add(role);
         TaskRequest taskRequest = TaskRequest.builder()
                 .requestInfo(request.getRequestInfo()).task(task).build();
         taskUtil.callUpdateTask(taskRequest);
+
+        List<Document> documents = Optional.ofNullable(task.getDocuments())
+                .orElse(Collections.emptyList())
+                .stream().filter(doc -> POLICE_REPORT.equals(doc.getDocumentType()))
+                .toList();
+        if(!documents.isEmpty()) {
+            createEvidenceForPoliceReport(taskRequest, documents.get(0));
+        }
+    }
+
+    public void createEvidenceForPoliceReport(TaskRequest taskRequest, Document document) {
+        try {
+            Artifact artifact = Artifact.builder()
+                    .artifactType(getArtifactType(taskRequest.getRequestInfo(), taskRequest.getTask()))
+                    .caseId(getCaseId(taskRequest))
+                    .filingNumber(taskRequest.getTask().getFilingNumber())
+                    .tenantId(taskRequest.getTask().getTenantId())
+                    .comments(new ArrayList<>())
+                    .file(document)
+                    .sourceType(COURT) //todo: need to configure if changes
+                    .sourceID(taskRequest.getRequestInfo().getUserInfo().getUuid())
+                    .filingType(getFilingType(taskRequest.getRequestInfo(), taskRequest.getTask()))
+                    .isEvidence(false)
+                    .additionalDetails(getAdditionalDetails(taskRequest.getRequestInfo()))
+                    .build();
+
+            EvidenceRequest evidenceRequest = EvidenceRequest.builder()
+                    .requestInfo(taskRequest.getRequestInfo())
+                    .artifact(artifact)
+                    .build();
+            evidenceUtil.createEvidence(evidenceRequest);
+        } catch (Exception e) {
+            log.error("Error while creating evidence for police report: {}", document);
+        }
+    }
+
+    private String getFilingType(@Valid RequestInfo requestInfo, @Valid Task task) {
+        Map<String, Map<String, JSONArray>> mdmsData =  mdmsUtil.fetchMdmsData(requestInfo, task.getTenantId(), "common-masters", Collections.singletonList("FilingType"));
+        JSONArray filingTypeArray = mdmsData.get("common-masters").get("FilingType");
+        for (Object o : filingTypeArray) {
+            Map<String, Object> filingType = (Map<String, Object>) o;
+            //todo : check for filing type if changed
+            if (filingType.get("code").toString().equalsIgnoreCase(DIRECT)) {
+                return (String) filingType.get("code");
+            }
+        }
+        return null;
+    }
+
+    private @NotNull String getCaseId(TaskRequest taskRequest) {
+        CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                .requestInfo(taskRequest.getRequestInfo())
+                .criteria(List.of(CaseCriteria.builder()
+                        .filingNumber(taskRequest.getTask().getFilingNumber())
+                        .defaultFields(false)
+                        .build()))
+                .build();
+        JsonNode courtCase = caseUtil.searchCaseDetails(caseSearchRequest);
+        return courtCase.get("id").textValue();
+    }
+
+    private Object getAdditionalDetails(@Valid RequestInfo requestInfo) {
+        return Map.of("uuid", requestInfo.getUserInfo().getUuid());
+    }
+
+    private String getArtifactType(@Valid RequestInfo requestInfo, @Valid Task task) {
+        Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(requestInfo, task.getTenantId(), "Evidence", Collections.singletonList("EvidenceType"));
+        JSONArray evidenceTypeArray = mdmsData.get("Evidence").get("EvidenceType");
+        for (Object o : evidenceTypeArray) {
+            Map<String, Object> evidenceType = (Map<String, Object>) o;
+            if (evidenceType.get("type").toString().equalsIgnoreCase(POLICE_REPORT)) {
+                return (String) evidenceType.get("type");
+            }
+        }
+        return null;
+    }
+    private void enrichPoliceStationReport(Task task, @Valid SummonsDelivery summonsDelivery) {
+        String fileStoreId = extractFileStoreId(summonsDelivery);
+        if(fileStoreId != null) {
+            Document document = Document.builder()
+                    .fileStore(fileStoreId)
+                    .documentType(POLICE_REPORT)
+                    .additionalDetails(AdditionalFields.builder().fields(Collections.emptyList()).build())
+                    .build();
+            task.addDocumentsItem(document);
+        } else {
+            log.error("Police Report not found for the task of type : {} and number : {}", task.getTaskType(), task.getTaskNumber());
+        }
+    }
+
+    private String extractFileStoreId(@Valid SummonsDelivery summonsDelivery) {
+        AdditionalFields additionalFields = summonsDelivery.getAdditionalFields();
+        return Optional.ofNullable(additionalFields)
+                .map(AdditionalFields::getFields)
+                .flatMap(fields -> fields.stream()
+                        .filter(field -> field.getKey().equalsIgnoreCase("policeReportFileStoreId"))
+                        .map(Field::getValue)
+                        .findFirst())
+                .orElse(null);
     }
 
     private String getPdfTemplateKey(String taskType, String docSubType, boolean qrCode, String noticeType) {
