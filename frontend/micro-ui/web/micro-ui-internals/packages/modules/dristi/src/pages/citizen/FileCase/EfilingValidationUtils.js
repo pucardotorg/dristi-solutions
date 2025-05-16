@@ -1626,6 +1626,12 @@ export const updateCaseDetails = async ({
                     data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
                     tenantId
                   );
+                  const duplicateDocumentData = await onDocumentUpload(
+                    documentsTypeMapping["complainantId"],
+                    data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
+                    data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
+                    tenantId
+                  );
                   litigantFilestoreIds[index] = documentData;
                   !!setFormDataValue &&
                     setFormDataValue("complainantVerification", {
@@ -1640,7 +1646,7 @@ export const updateCaseDetails = async ({
                         ],
                       },
                     });
-                  const Individual = await createIndividualUser({ data: data?.data, documentData, tenantId });
+                  const Individual = await createIndividualUser({ data: data?.data, documentData: duplicateDocumentData, tenantId });
                   const addressLine1 = Individual?.Individual?.address[0]?.addressLine1 || "Telangana";
                   const addressLine2 = Individual?.Individual?.address[0]?.addressLine2 || "Rangareddy";
                   const buildingName = Individual?.Individual?.address[0]?.buildingName || "";
@@ -1847,6 +1853,13 @@ export const updateCaseDetails = async ({
                     data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[0],
                     tenantId
                   );
+                  //for filestore delete we are using duplicate document data and updating poaFilestoreIds
+                  const duplicateDocumentData = await onDocumentUpload(
+                    documentsTypeMapping["poaComplainantId"],
+                    data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file,
+                    data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[0],
+                    tenantId
+                  );
                   poaFilestoreIds[index] = documentData;
                   !!setFormDataValue &&
                     setFormDataValue("poaVerification", {
@@ -1861,7 +1874,12 @@ export const updateCaseDetails = async ({
                         ],
                       },
                     });
-                  const Individual = await createIndividualUser({ data: data?.data, documentData, tenantId, isComplainant: false });
+                  const Individual = await createIndividualUser({
+                    data: data?.data,
+                    documentData: duplicateDocumentData,
+                    tenantId,
+                    isComplainant: false,
+                  });
                   const addressLine1 = Individual?.Individual?.address[0]?.addressLine1 || "Telangana";
                   const addressLine2 = Individual?.Individual?.address[0]?.addressLine2 || "Rangareddy";
                   const buildingName = Individual?.Individual?.address[0]?.buildingName || "";
