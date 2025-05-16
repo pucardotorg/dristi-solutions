@@ -1,5 +1,6 @@
 import { AppContainer, BreadCrumb, PrivateRoute } from "@egovernments/digit-ui-react-components";
-import React, { useMemo } from "react";
+import React, { useMemo, useContext } from "react";
+import { BreadCrumbContext, pages } from "@egovernments/digit-ui-module-core";
 import { useTranslation } from "react-i18next";
 import { Switch } from "react-router-dom";
 import HearingsResponse from "./HearingsResponse";
@@ -63,6 +64,8 @@ const App = ({ path, stateCode, userType, tenants }) => {
     history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
   }
 
+  const { breadCrumbs, setBreadCrumbs } = useContext(BreadCrumbContext);
+  
   return (
     <Switch>
       <AppContainer className="ground-container">
