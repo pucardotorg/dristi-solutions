@@ -552,6 +552,7 @@ public class CaseRegistrationEnrichment {
             Document paymentReceiptDocument = Document.builder()
                     .fileStore(paymentReceipt.get("Document").get("fileStore").textValue())
                     .documentType(PAYMENT_RECEIPT)
+                    .isActive(true)
                     .build();
             enrichDocumentsOnCreate(paymentReceiptDocument);
             caseRequest.getCases().getDocuments().add(paymentReceiptDocument);

@@ -86,7 +86,6 @@ public class CaseRepositoryV2 {
             String casesQuery = "";
             casesQuery = queryBuilder.getCaseSummarySearchQuery(searchCriteria, preparedStmtList, preparedStmtArgList);
             casesQuery = queryBuilder.addOrderByQuery(casesQuery, searchCriteria.getPagination());
-            log.info("Final case summary query :: {}", casesQuery);
             if (searchCriteria.getPagination() != null) {
                 Integer totalRecords = getTotalCount(casesQuery, preparedStmtList);
                 searchCriteria.getPagination().setTotalCount(Double.valueOf(totalRecords));
@@ -96,6 +95,8 @@ public class CaseRepositoryV2 {
                 log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(), preparedStmtArgList.size());
                 throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Arg and ArgType size mismatch ");
             }
+            log.info("Final case summary query :: {}", casesQuery);
+
             List<CaseSummarySearch> caseSummarySearchList = jdbcTemplate.query(casesQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), caseSummarySearchRowMapper);
             if (caseSummarySearchList != null && !caseSummarySearchList.isEmpty()) {
                 log.info("Case list size :: {}", caseSummarySearchList.size());
@@ -129,7 +130,6 @@ public class CaseRepositoryV2 {
             String casesQuery = "";
             casesQuery = queryBuilder.getCasesListSearchQuery(searchCriteria, preparedStmtList, preparedStmtArgList, requestInfo);
             casesQuery = queryBuilder.addOrderByQuery(casesQuery, searchCriteria.getPagination());
-            log.info("Final case query :: {}", casesQuery);
             if (searchCriteria.getPagination() != null) {
                 Integer totalRecords = getTotalCount(casesQuery, preparedStmtList);
                 searchCriteria.getPagination().setTotalCount(Double.valueOf(totalRecords));
@@ -139,6 +139,8 @@ public class CaseRepositoryV2 {
                 log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(), preparedStmtArgList.size());
                 throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Arg and ArgType size mismatch ");
             }
+            log.info("Final case query :: {}", casesQuery);
+
             List<CaseSummaryList> list = jdbcTemplate.query(casesQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), caseListSummaryRowMapper);
             if (list != null && !list.isEmpty()) {
                 log.info("Case list size :: {}", list.size());
@@ -178,7 +180,7 @@ public class CaseRepositoryV2 {
                 courtCase = list.get(0);
                 log.info("Case list size :: {}", list.size());
             } else {
-                throw new CustomException(CASE_SEARCH_QUERY_EXCEPTION, "Case doesn't exist");
+                return null;
             }
 
             enrichCaseCriteria(courtCase, Collections.singletonList(String.valueOf(courtCase.getId())), preparedStmtListDoc);
@@ -193,7 +195,7 @@ public class CaseRepositoryV2 {
     }
 
     private void enrichCaseSummary(CaseSummarySearch caseSummarySearch) {
-        List<String> ids = Collections.singletonList(String.valueOf(caseSummarySearch.getCaseId()));
+        List<String> ids = Collections.singletonList(String.valueOf(caseSummarySearch.getId()));
         List<String> idsLitigant = new ArrayList<>();
 
         List<String> idsRepresentative = new ArrayList<>();
@@ -243,7 +245,7 @@ public class CaseRepositoryV2 {
         log.info("Final representative query :: {}", representativeQuery);
         Map<UUID, List<RepresentativeV2>> representativeMap = jdbcTemplate.query(representativeQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), representativeRowMapperV2);
         if (representativeMap != null) {
-            caseSummarySearch.setRepresentatives(representativeMap.get(caseSummarySearch.getCaseId()));
+            caseSummarySearch.setRepresentatives(representativeMap.get(caseSummarySearch.getId()));
         }
     }
 
@@ -257,7 +259,7 @@ public class CaseRepositoryV2 {
         log.info("Final POA holder query :: {}", poaHolderQuery);
         Map<UUID, List<POAHolderV2>> poaMap = jdbcTemplate.query(poaHolderQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), poaRowMapperV2);
         if (poaMap != null) {
-           caseSummarySearch.setPoaHolders(poaMap.get(caseSummarySearch.getCaseId()));
+           caseSummarySearch.setPoaHolders(poaMap.get(caseSummarySearch.getId()));
         }
     }
 
@@ -271,7 +273,7 @@ public class CaseRepositoryV2 {
         log.info("Final statute and sections query :: {}", statueAndSectionQuery);
         Map<UUID, StatuteSectionV2> statuteSectionsMap = jdbcTemplate.query(statueAndSectionQuery, preparedStmtListDoc.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), statuteSectionRowMapperV2);
         if (statuteSectionsMap != null) {
-            caseSummarySearch.setStatutesAndSection(statuteSectionsMap.get(caseSummarySearch.getCaseId()));
+            caseSummarySearch.setStatutesAndSection(statuteSectionsMap.get(caseSummarySearch.getId()));
         }
     }
 
@@ -285,7 +287,7 @@ public class CaseRepositoryV2 {
         log.info("Final litigant query :: {}", litigantQuery);
         Map<UUID, List<LitigantV2>> litigantMap = jdbcTemplate.query(litigantQuery, preparedStmtListDoc.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), litigantRowMapperV2);
         if (litigantMap != null) {
-            caseSummarySearch.setLitigants(litigantMap.get(caseSummarySearch.getCaseId()));
+            caseSummarySearch.setLitigants(litigantMap.get(caseSummarySearch.getId()));
         }
     }
 

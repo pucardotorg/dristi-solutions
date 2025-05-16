@@ -42,6 +42,7 @@ public class CaseListSummaryRowMapper implements ResultSetExtractor<List<CaseSum
                         .tenantId(rs.getString("tenantid"))
                         .caseTitle(rs.getString("casetitle"))
                         .filingDate(rs.getLong("filingdate"))
+                        .createdTime(rs.getLong("createdtime"))
                         .outcome(rs.getString("outcome"))
                         .status(rs.getString("status"))
                         .substage(rs.getString("substage"))

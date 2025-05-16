@@ -71,6 +71,10 @@ public class CaseServiceV2 {
 
             log.info("Searching case in DB");
             courtCase = caseRepository.getCases(criteria, caseSearchRequests.getRequestInfo());
+            if(courtCase==null){
+                log.info("Case doesn't exist");
+                return null;
+            }
             saveInRedisCache(courtCase, caseSearchRequests.getRequestInfo());
 
             CourtCase decryptedCourtCases = encryptionDecryptionUtil.decryptObject(courtCase, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo());
