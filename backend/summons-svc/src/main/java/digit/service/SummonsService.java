@@ -210,10 +210,10 @@ public class SummonsService {
                     .tenantId(taskRequest.getTask().getTenantId())
                     .comments(new ArrayList<>())
                     .file(document)
-                    .sourceType(COURT) //todo: need to configure if changes
+                    .sourceType(ICOPS)
                     .sourceID(taskRequest.getRequestInfo().getUserInfo().getUuid())
                     .filingType(getFilingType(taskRequest.getRequestInfo(), taskRequest.getTask()))
-                    .isEvidence(false)
+                    .isEvidence(true)
                     .additionalDetails(getAdditionalDetails(taskRequest.getRequestInfo()))
                     .build();
 

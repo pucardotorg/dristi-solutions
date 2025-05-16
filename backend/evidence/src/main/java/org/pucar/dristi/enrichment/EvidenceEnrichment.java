@@ -114,6 +114,9 @@ public class EvidenceEnrichment {
                     idName=configuration.getCourtConfig();
                     idFormat=configuration.getCourtFormat();
                 }
+            } else if(ICOPS.equalsIgnoreCase(sourceType)) {
+                idName = configuration.getCourtConfig();
+                idFormat = configuration.getIcopsFormat();
             }
             String tenantId = getTenantId(evidenceRequest.getArtifact().getFilingNumber());
 
