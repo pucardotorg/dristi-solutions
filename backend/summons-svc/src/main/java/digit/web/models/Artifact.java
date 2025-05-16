@@ -143,6 +143,10 @@ public class Artifact {
 
 	private Object artifactDetails = null;
 
+	@JsonProperty("comments")
+	@Valid
+	private List<Comment> comments = null;
+
 	@JsonProperty("additionalDetails")
 
 	private Object additionalDetails = null;

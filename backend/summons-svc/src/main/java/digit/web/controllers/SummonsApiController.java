@@ -70,8 +70,4 @@ public class SummonsApiController {
         return new ResponseEntity<>(response, HttpStatus.ACCEPTED);
     }
 
-    @PostMapping("/task/evidence")
-    public void createEvidence(@RequestBody TaskRequest request){
-        summonsService.createEvidenceForPoliceReport(request, request.getTask().getDocuments().get(0));
-    }
 }

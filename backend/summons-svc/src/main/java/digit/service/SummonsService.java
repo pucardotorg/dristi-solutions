@@ -200,22 +200,40 @@ public class SummonsService {
     }
 
     public void createEvidenceForPoliceReport(TaskRequest taskRequest, Document document) {
-        Artifact artifact = Artifact.builder()
-                .artifactType(getArtifactType(taskRequest.getRequestInfo(), taskRequest.getTask()))
-                .caseId(getCaseId(taskRequest))
-                .filingNumber(taskRequest.getTask().getFilingNumber())
-                .tenantId(taskRequest.getTask().getTenantId())
-                .file(document)
-                .sourceID(taskRequest.getRequestInfo().getUserInfo().getUuid())
-                .filingType("DIRECT")
-                .additionalDetails(getAdditionalDetails(taskRequest.getRequestInfo()))
-                .build();
+        try {
+            Artifact artifact = Artifact.builder()
+                    .artifactType(getArtifactType(taskRequest.getRequestInfo(), taskRequest.getTask()))
+                    .caseId(getCaseId(taskRequest))
+                    .filingNumber(taskRequest.getTask().getFilingNumber())
+                    .tenantId(taskRequest.getTask().getTenantId())
+                    .comments(new ArrayList<>())
+                    .file(document)
+                    .sourceID(taskRequest.getRequestInfo().getUserInfo().getUuid())
+                    .filingType(getFilingType(taskRequest.getRequestInfo(), taskRequest.getTask()))
+                    .isEvidence(false)
+                    .additionalDetails(getAdditionalDetails(taskRequest.getRequestInfo()))
+                    .build();
 
-        EvidenceRequest evidenceRequest = EvidenceRequest.builder()
-                .requestInfo(taskRequest.getRequestInfo())
-                .artifact(artifact)
-                .build();
-        evidenceUtil.createEvidence(evidenceRequest);
+            EvidenceRequest evidenceRequest = EvidenceRequest.builder()
+                    .requestInfo(taskRequest.getRequestInfo())
+                    .artifact(artifact)
+                    .build();
+            evidenceUtil.createEvidence(evidenceRequest);
+        } catch (Exception e) {
+            log.error("Error while creating evidence for police report: {}", document);
+        }
+    }
+
+    private String getFilingType(@Valid RequestInfo requestInfo, @Valid Task task) {
+        Map<String, Map<String, JSONArray>> mdmsData =  mdmsUtil.fetchMdmsData(requestInfo, task.getTenantId(), "common-masters", Collections.singletonList("FilingType"));
+        JSONArray filingTypeArray = mdmsData.get("common-masters").get("FilingType");
+        for (Object o : filingTypeArray) {
+            Map<String, Object> filingType = (Map<String, Object>) o;
+            if (filingType.get("code").toString().equalsIgnoreCase(SUBMISSION)) {
+                return (String) filingType.get("code");
+            }
+        }
+        return null;
     }
 
     private @NotNull String getCaseId(TaskRequest taskRequest) {
@@ -241,8 +259,8 @@ public class SummonsService {
     private String getArtifactType(@Valid RequestInfo requestInfo, @Valid Task task) {
         Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(requestInfo, task.getTenantId(), "Evidence", Collections.singletonList("EvidenceType"));
         JSONArray evidenceTypeArray = mdmsData.get("Evidence").get("EvidenceType");
-        for(int i = 0; i < evidenceTypeArray.size(); i++) {
-            Map<String, Object> evidenceType = (Map<String, Object>) evidenceTypeArray.get(i);
+        for (Object o : evidenceTypeArray) {
+            Map<String, Object> evidenceType = (Map<String, Object>) o;
             if (evidenceType.get("type").toString().equalsIgnoreCase(POLICE_REPORT)) {
                 return (String) evidenceType.get("type");
             }
