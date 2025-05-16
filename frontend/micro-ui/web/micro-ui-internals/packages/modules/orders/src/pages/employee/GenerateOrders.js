@@ -346,9 +346,7 @@ const GenerateOrders = () => {
     {},
     `case-details-${filingNumber}`,
     filingNumber,
-    Boolean(filingNumber),
-    true,
-    6 * 1000
+    Boolean(filingNumber)
   );
   const userInfo = Digit.UserService.getUser()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
@@ -387,16 +385,19 @@ const GenerateOrders = () => {
   const applicationTypeConfigUpdated = useMemo(() => {
     const updatedConfig = structuredClone(applicationTypeConfig);
     // Showing admit case/Dismiss case order type in the dropdown list depending on the case status.
-    if (
-      ["PENDING_NOTICE"].includes(caseDetails?.status) ||
-      // case admit can not be allowed if there are pending review/approval of some Delay condonation application.
-      (["PENDING_RESPONSE", "PENDING_ADMISSION"].includes(caseDetails?.status) && isDelayApplicationPending)
-    ) {
+    if (["PENDING_NOTICE"].includes(caseDetails?.status)) {
       updatedConfig[0].body[0].populators.mdmsConfig.select =
         "(data) => {return data['Order'].OrderType?.filter((item)=>[`DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
     } else if (["PENDING_RESPONSE", "PENDING_ADMISSION"].includes(caseDetails?.status)) {
-      updatedConfig[0].body[0].populators.mdmsConfig.select =
-        "(data) => {return data['Order'].OrderType?.filter((item)=>[`ADMIT_CASE`, `DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+      // case admit can not be allowed if there are pending review/approval of some Delay condonation application.
+
+      if (isDelayApplicationPending) {
+        updatedConfig[0].body[0].populators.mdmsConfig.select =
+          "(data) => {return data['Order'].OrderType?.filter((item)=>[`DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+      } else {
+        updatedConfig[0].body[0].populators.mdmsConfig.select =
+          "(data) => {return data['Order'].OrderType?.filter((item)=>[`ADMIT_CASE`, `DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+      }
     }
     return updatedConfig;
   }, [caseDetails, isDelayApplicationPending]);
@@ -1401,7 +1402,7 @@ const GenerateOrders = () => {
       });
       return [updatedConfig];
     }
-  }, [caseDetails, complainants, currentOrder, respondents, t, unJoinedLitigant, witnesses, selectedOrder]);
+  }, [caseDetails, applicationTypeConfigUpdated, complainants, currentOrder, respondents, t, unJoinedLitigant, witnesses, selectedOrder]);
 
   const multiSelectDropdownKeys = useMemo(() => {
     const foundKeys = [];

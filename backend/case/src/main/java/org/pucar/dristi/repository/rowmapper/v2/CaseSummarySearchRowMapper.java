@@ -30,7 +30,7 @@ public class CaseSummarySearchRowMapper implements ResultSetExtractor<List<CaseS
     @Override
     public List<CaseSummarySearch> extractData(ResultSet rs) throws SQLException, DataAccessException {
 
-        Map<UUID, CaseSummarySearch> caseMap = new HashMap<>();
+        Map<UUID, CaseSummarySearch> caseMap = new LinkedHashMap<>();
         try {
             while (rs.next()) {
                 UUID caseId = UUID.fromString(rs.getString("id"));
