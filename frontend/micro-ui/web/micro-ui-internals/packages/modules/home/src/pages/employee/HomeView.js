@@ -90,7 +90,6 @@ const HomeView = () => {
         )
       }));
     }
-    window.Digit.SessionStorage.get("BreadCrumb.filingNumber") && window.Digit.SessionStorage.get("BreadCrumb.caseId")
     if(window.Digit.SessionStorage.get("BreadCrumb.filingNumber")){
       window.Digit.SessionStorage.del("BreadCrumb.filingNumber")
     }
