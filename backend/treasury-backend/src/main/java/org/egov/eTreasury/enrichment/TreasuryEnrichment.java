@@ -9,16 +9,21 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.eTreasury.config.PaymentConfiguration;
 import org.egov.eTreasury.model.*;
 import org.egov.eTreasury.repository.TreasuryMappingRepository;
+import org.egov.eTreasury.util.CaseUtil;
 import org.egov.eTreasury.util.DemandUtil;
 import org.egov.eTreasury.util.IdgenUtil;
 import org.egov.eTreasury.util.MdmsUtil;
+import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static org.egov.eTreasury.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -34,13 +39,16 @@ public class TreasuryEnrichment {
 
     private final MdmsUtil mdmsUtil;
 
+    private final CaseUtil caseUtil;
+
     private final DemandUtil demandUtil;
-    public TreasuryEnrichment(PaymentConfiguration config, IdgenUtil idgenUtil, TreasuryMappingRepository repository, ObjectMapper objectMapper, MdmsUtil mdmsUtil, DemandUtil demandUtil) {
+    public TreasuryEnrichment(PaymentConfiguration config, IdgenUtil idgenUtil, TreasuryMappingRepository repository, ObjectMapper objectMapper, MdmsUtil mdmsUtil, CaseUtil caseUtil, DemandUtil demandUtil) {
         this.config = config;
         this.idgenUtil = idgenUtil;
         this.repository = repository;
         this.objectMapper = objectMapper;
         this.mdmsUtil = mdmsUtil;
+        this.caseUtil = caseUtil;
         this.demandUtil = demandUtil;
     }
 
@@ -62,7 +70,7 @@ public class TreasuryEnrichment {
         Map<String, JSONArray> tsbMasterData = mdmsData.get("payment");
         JsonNode tsbAccountToHead = objectMapper.convertValue(tsbMasterData.get("tsbAccountToHead"), JsonNode.class);
 
-        String consumerCode = demandUtil.searchBill(challanData.getBillId(), requestInfo);
+        String consumerCode = demandUtil.searchBill(challanData.getBillId(), requestInfo).get("consumerCode").textValue();
         TreasuryMapping treasuryMapping = repository.getTreasuryMapping(consumerCode);
         JsonNode headAmountMapping = objectMapper.readTree(treasuryMapping.getHeadAmountMapping().toString());
         List<HeadDetails> headDetailsList = new ArrayList<>();
@@ -151,5 +159,39 @@ public class TreasuryEnrichment {
             }
         }
         return 1.0;
+    }
+
+    public void enrichTreasuryPaymentData(TreasuryPaymentData data, RequestInfo requestInfo) {
+        try {
+            log.info("operation=enrichTreasuryPaymentData, result=IN_PROCESS");
+            JsonNode bill = demandUtil.searchBill(data.getBillId(), requestInfo);
+            JsonNode additionalDetails = bill.get("billDetails").get(0).get("additionalDetails");
+            String filingNumber = additionalDetails.get("filingNumber").textValue();
+            CourtCase courtCase = caseUtil.searchCaseDetails(CaseSearchRequest.builder()
+                    .criteria(Collections.singletonList(CaseCriteria.builder().defaultFields(false).filingNumber(filingNumber).build()))
+                    .requestInfo(requestInfo).build());
+
+            data.setCaseName(courtCase.getCaseTitle());
+            data.setCaseNumber(courtCase.getFilingNumber());
+            data.setCaseType(CASE_TYPE);
+            data.setPurposeOfPayment("E Filing Fees");
+
+            TreasuryMapping treasuryMapping = repository.getTreasuryMapping(bill.get("consumerCode").textValue());
+            Calculation calculation = treasuryMapping.getCalculation();
+            List<BreakDown> breakDowns = calculation.getBreakDown();
+            for(BreakDown breakDown : breakDowns){
+                switch (breakDown.getCode()) {
+                    case COURT_FEE -> data.setCourtFee(breakDown.getAmount());
+                    case ADVOCATE_WELFARE_FUND -> data.setAdvocateWelfareFund(breakDown.getAmount());
+                    case ADVOCATE_CLERK_WELFARE_FUND -> data.setAdvocateClerkWelfareFund(breakDown.getAmount());
+                }
+            }
+            double totalAmount = data.getCourtFee() + data.getAdvocateWelfareFund() + data.getAdvocateClerkWelfareFund();
+            data.setTotalAmount(totalAmount);
+            log.info("operation=enrichTreasuryPaymentData, result=SUCCESS");
+        } catch (Exception e) {
+            log.error("operation=enrichTreasuryPaymentData, result=Failure");
+            throw new CustomException("ERROR_ENRICH_PAYMENT", "Error enriching payment data.");
+        }
     }
 }
