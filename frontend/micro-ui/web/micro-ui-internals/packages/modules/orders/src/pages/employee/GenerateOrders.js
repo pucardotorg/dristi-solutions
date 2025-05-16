@@ -290,7 +290,7 @@ const GenerateOrders = () => {
     const homeRoute = breadCrumbs?.routes.find(route => route.page === pages.HOMEPAGE);
     if(!viewCaseRoute.url){ 
       if(!(window.Digit.SessionStorage.get("BreadCrumb.filingNumber") && window.Digit.SessionStorage.get("BreadCrumb.caseId"))){
-        timeout = setTimeout(() => { Digit.UserService.logout(); window.localStorage.clear(); window.sessionStorage.clear(); }, 100);
+        window.location.href = homeRoute?.url || '/ui/employee/home/home-pending-task';
         return;
       }
       else{
