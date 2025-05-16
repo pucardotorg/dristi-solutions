@@ -26,8 +26,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static pucar.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
-import static pucar.config.ServiceConstants.SEARCHER_SERVICE_EXCEPTION;
+import static pucar.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -108,7 +107,7 @@ public class TaskUtil {
     }
 
 
-    public TaskRequest createTaskRequestForSummonWarrantAndNotice(RequestInfo requestInfo, Order order, Object taskDetails, CourtCase courtCase) {
+    public TaskRequest createTaskRequestForSummonWarrantAndNotice(RequestInfo requestInfo, Order order, Object taskDetails, CourtCase courtCase, String channel) {
         String itemId = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("itemId"), String.class);
 
         Map<String, Object> additionalDetails = new HashMap<>();
@@ -117,7 +116,12 @@ public class TaskUtil {
         }
 
         WorkflowObject workflowObject = new WorkflowObject();
-        workflowObject.setAction("CREATE");
+        if (EMAIL.equalsIgnoreCase(channel) || SMS.equalsIgnoreCase(channel)) {
+            workflowObject.setAction("CREATE_WITH_OUT_PAYMENT");
+        }
+        else {
+            workflowObject.setAction("CREATE");
+        }
         workflowObject.setComments(order.getOrderType());
         workflowObject.setDocuments(Collections.singletonList(Document.builder().build()));
 
