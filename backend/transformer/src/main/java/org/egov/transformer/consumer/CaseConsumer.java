@@ -8,6 +8,7 @@ import org.egov.common.contract.models.AuditDetails;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.models.*;
 import org.egov.transformer.producer.TransformerProducer;
+import org.egov.transformer.repository.CourtIdRepository;
 import org.egov.transformer.service.CaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,17 +32,17 @@ public class CaseConsumer {
     private final TransformerProducer producer;
     private final TransformerProperties transformerProperties;
     private final CaseService caseService;
-    private final JdbcTemplate jdbcTemplate;
+    private final CourtIdRepository courtIdRepository;
 
     @Autowired
     public CaseConsumer(ObjectMapper objectMapper,
                         TransformerProducer producer,
-                        TransformerProperties transformerProperties, CaseService caseService, JdbcTemplate jdbcTemplate) {
+                        TransformerProperties transformerProperties, CaseService caseService, CourtIdRepository courtIdRepository) {
         this.objectMapper = objectMapper;
         this.producer = producer;
         this.transformerProperties = transformerProperties;
         this.caseService = caseService;
-        this.jdbcTemplate = jdbcTemplate;
+        this.courtIdRepository = courtIdRepository;
     }
 
     @KafkaListener(topics = {"${transformer.consumer.create.case.topic}"})
@@ -60,7 +61,7 @@ public class CaseConsumer {
             })).getCases();
             if ("PENDING_ADMISSION_HEARING".equalsIgnoreCase(courtCase.getStatus())) {
                 logger.info("Enriching courtId :: {} for filingNumber: {} ", courtCase.getCourtId(), courtCase.getFilingNumber());
-                enrichCourtId(courtCase.getCourtId(), courtCase.getFilingNumber());
+                courtIdRepository.updateCourtIdForFilingNumber(courtCase.getCourtId(), courtCase.getFilingNumber());
             }
         } catch (Exception exception) {
             log.error("error in saving case", exception);
@@ -140,25 +141,6 @@ public class CaseConsumer {
         } catch (Exception exception) {
             log.error("error in saving case", exception);
         }
-    }
-
-    private void enrichCourtId(String courtId, String filingNumber) {
-        String queryForApplication = "update dristi_application set courtid=? where filingnumber=?";
-        int rowsUpdated = jdbcTemplate.update(queryForApplication, courtId, filingNumber);
-        log.warn("Number of application rows updated :: {} for filingNumber {}",rowsUpdated, filingNumber);
-
-        String queryForTask = "update dristi_task set courtid=? where filingnumber=?";
-        int rowsUpdatedTask = jdbcTemplate.update(queryForTask, courtId, filingNumber);
-        log.warn("Number of task rows updated :: {} for filingNumber {}",rowsUpdatedTask, filingNumber);
-
-        String queryForOrders = "update dristi_orders set courtid=? where filingnumber=?";
-        int rowsUpdatedOrder = jdbcTemplate.update(queryForOrders, courtId, filingNumber);
-        log.warn("Number of orders rows updated :: {} for filingNumber {}",rowsUpdatedOrder, filingNumber);
-
-        String queryForEvidence = "update dristi_evidence_artifact set courtid=? where filingnumber=?";
-        int rowsUpdatedEvidence = jdbcTemplate.update(queryForEvidence, courtId, filingNumber);
-        log.warn("Number of evidence rows updated :: {} for filingNumber {}",rowsUpdatedEvidence, filingNumber);
-
     }
 
     private void fetchAndPublishEditCase(ConsumerRecord<String, Object> payload, String updateCaseTopic) {
