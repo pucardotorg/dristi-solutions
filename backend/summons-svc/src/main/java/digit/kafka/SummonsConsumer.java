@@ -57,7 +57,7 @@ public class SummonsConsumer {
             }
 
             // Process for generating summons document
-            if (isValid) {
+            if (isValid || (taskRequest.getTask().getWorkflow().getAction().equalsIgnoreCase(CREATE_WITH_OUT_PAYMENT))) {
                 try {
                     log.info("Received message for uploading document {}", taskRequest.getTask());
                     summonsService.generateSummonsDocument(taskRequest);
