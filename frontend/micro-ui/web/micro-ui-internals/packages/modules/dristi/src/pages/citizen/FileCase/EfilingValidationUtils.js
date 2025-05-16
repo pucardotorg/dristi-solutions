@@ -1177,7 +1177,7 @@ export const createIndividualUser = async ({ data, documentData, tenantId, isCom
       }
     : {};
   const identifierType = documentData
-    ? data?.complainantId?.complainantId
+    ? isComplainant
       ? data?.complainantId?.complainantId?.selectIdTypeType?.type
       : data?.poaComplainantId?.poaComplainantId?.selectIdTypeType?.type
     : "AADHAR";
