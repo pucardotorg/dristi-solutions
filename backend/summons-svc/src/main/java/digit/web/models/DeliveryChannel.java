@@ -16,6 +16,12 @@ import java.util.Map;
 @Builder
 public class DeliveryChannel {
 
+    @JsonProperty("fees")
+    private String fees;
+
+    @JsonProperty("status")
+    private String status;
+
     @JsonProperty("channelCode")
     private String channelCode;
 
