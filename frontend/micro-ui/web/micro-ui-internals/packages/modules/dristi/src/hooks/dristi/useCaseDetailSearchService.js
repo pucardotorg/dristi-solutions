@@ -1,16 +1,16 @@
 import { useQuery, useQueryClient } from "react-query";
 import { DRISTIService } from "../../services";
 
-function useSearchCaseService(reqData, params, moduleCode, caseId, enabled, isCacheTimeEnabled = true, cacheTime = 0) {
+function useCaseDetailSearchService(reqData, params, moduleCode, caseId, enabled, isCacheTimeEnabled = true) {
   const client = useQueryClient();
   const { isLoading, data, isFetching, refetch, error } = useQuery(
     `GET_CASE_DETAILS_${moduleCode}_${caseId}`,
     () =>
-      DRISTIService.searchCaseService(reqData, params)
+      DRISTIService.caseDetailSearchService(reqData, params)
         .then((data) => data)
         .catch(() => ({})),
     {
-      ...(isCacheTimeEnabled && { cacheTime }),
+      ...(isCacheTimeEnabled && { cacheTime: 0 }),
       enabled: Boolean(enabled),
     }
   );
@@ -27,4 +27,4 @@ function useSearchCaseService(reqData, params, moduleCode, caseId, enabled, isCa
   };
 }
 
-export default useSearchCaseService;
+export default useCaseDetailSearchService;

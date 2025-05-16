@@ -106,6 +106,8 @@ public class CaseQueryBuilder {
                 firstCriteria = addCriteria(criteria.getCourtId(), query, firstCriteria, "cases.courtid = ? ", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
                 addCriteria(criteria.getFilingNumber() == null ? null : "%" + criteria.getFilingNumber() + "%", query, firstCriteria, "LOWER(cases.filingnumber) LIKE LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+
+                query.append(" AND cases.status NOT IN ('DRAFT_IN_PROGRESS', 'DELETED_DRAFT') ");
             }
 
             return query.toString();

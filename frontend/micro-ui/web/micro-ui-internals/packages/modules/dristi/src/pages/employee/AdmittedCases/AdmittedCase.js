@@ -4,8 +4,7 @@ import { BreadCrumbContext, pages } from "@egovernments/digit-ui-module-core";
 import React, { useCallback, useEffect, useMemo, useState, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
-import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
-import { CustomThreeDots, InfoIconRed } from "../../../icons/svgIndex";
+import { CustomThreeDots } from "../../../icons/svgIndex";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import ViewCaseFile from "../scrutiny/ViewCaseFile";
 import { TabSearchconfig } from "./AdmittedCasesConfig";
@@ -43,6 +42,7 @@ import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import PublishedNotificationModal from "./publishedNotificationModal";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import NoticeAccordion from "../../../components/NoticeAccordion";
+import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -270,13 +270,12 @@ const AdmittedCases = () => {
   
   const evidenceUpdateMutation = Digit.Hooks.useCustomAPIMutationHook(reqEvidenceUpdate);
 
-  const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useSearchCaseService(
+  const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useCaseDetailSearchService(
     {
-      criteria: [
-        {
-          caseId: caseId,
-        },
-      ],
+      criteria: {
+        caseId: caseId,
+        courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+      },
       tenantId,
     },
     {},
@@ -286,7 +285,7 @@ const AdmittedCases = () => {
   );
 
   const caseData = historyCaseData || apiCaseData;
-  const caseDetails = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0] || {}, [caseData]);
+  const caseDetails = useMemo(() => caseData?.cases || {}, [caseData]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber || "", [caseDetails]);
@@ -353,21 +352,29 @@ const AdmittedCases = () => {
       : "";
   }, [caseDetails?.statutesAndSections]);
 
-  const litigants = caseDetails?.litigants?.length > 0 ? caseDetails?.litigants : [];
-  const finalLitigantsData = litigants?.map((litigant) => {
-    return {
-      ...litigant,
-      name: removeInvalidNameParts(litigant.additionalDetails?.fullName),
-    };
-  });
-  const reps = caseDetails?.representatives?.length > 0 ? caseDetails?.representatives : [];
-  const finalRepresentativesData = reps.map((rep) => {
-    return {
-      ...rep,
-      name: removeInvalidNameParts(rep.additionalDetails?.advocateName),
-      partyType: `Advocate (for ${rep.representing?.map((client) => removeInvalidNameParts(client?.additionalDetails?.fullName))?.join(", ")})`,
-    };
-  });
+  const litigants = useMemo(() => (caseDetails?.litigants?.length > 0 ? caseDetails?.litigants : []), [caseDetails]);
+  const finalLitigantsData = useMemo(
+    () =>
+      litigants?.map((litigant) => {
+        return {
+          ...litigant,
+          name: removeInvalidNameParts(litigant.additionalDetails?.fullName),
+        };
+      }),
+    [litigants]
+  );
+  const reps = useMemo(() => (caseDetails?.representatives?.length > 0 ? caseDetails?.representatives : []), [caseDetails]);
+  const finalRepresentativesData = useMemo(
+    () =>
+      reps.map((rep) => {
+        return {
+          ...rep,
+          name: removeInvalidNameParts(rep.additionalDetails?.advocateName),
+          partyType: `Advocate (for ${rep.representing?.map((client) => removeInvalidNameParts(client?.additionalDetails?.fullName))?.join(", ")})`,
+        };
+      }),
+    [reps]
+  );
 
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
   const listAllAdvocates = useMemo(() => Object.values(allAdvocates || {}).flat(), [allAdvocates]);
@@ -470,7 +477,7 @@ const AdmittedCases = () => {
       case: caseDetails,
       statue: statue,
     }),
-    [caseDetails, caseId, cnrNumber, filingNumber, statue]
+    [caseDetails, caseId, cnrNumber, filingNumber, finalLitigantsData, finalRepresentativesData, statue]
   );
 
   const caseStatus = useMemo(() => caseDetails?.status || "", [caseDetails]);
@@ -1356,7 +1363,8 @@ const AdmittedCases = () => {
       }
     };
     if (activeTab === "Documents") {
-      fetchEvidence();
+      // There is no need to set Artifacts now, so commenting the fetchEvidence function call but keeping the code.
+      // fetchEvidence();
     }
   }, [filingNumber, artifactNumber, tenantId, activeTab]);
 
@@ -1977,7 +1985,7 @@ const AdmittedCases = () => {
   const onTabChange = useCallback(
     (_, i) => {
       history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${i?.label}`, {
-        caseData: caseData,
+        caseData,
         orderData: ordersData,
       });
     },
@@ -2616,7 +2624,8 @@ const AdmittedCases = () => {
   }
   if (
     (userRoles?.includes("JUDGE_ROLE") || userRoles?.includes("BENCH_CLERK") || userRoles?.includes("COURT_ROOM_MANAGER")) &&
-    !judgeReviewStages.includes(caseData?.criteria?.[0]?.responseList?.[0]?.status)
+    caseData?.cases?.status &&
+    !judgeReviewStages.includes(caseData.cases.status)
   ) {
     history.push(`/${window.contextPath}/employee/home/home-pending-task`);
   }

@@ -239,6 +239,8 @@ public class ServiceConstants {
     public static final String ERROR_FETCHING_STATUS = "ERROR_FETCHING_STATUS";
     public static final String ERROR_FETCHING_LITIGANT_NAME = "ERROR_FETCHING_LITIGANT_NAME";
     public static final String ERROR_FETCHING_REPRESENTATIVE_NAME = "ERROR_FETCHING_REPRESENTATIVE_NAME";
+
+    public static final String PAYMENT_RECEIPT = "PAYMENT_RECEIPT";
     private ServiceConstants() {
     }
 }
