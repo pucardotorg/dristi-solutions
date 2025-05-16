@@ -113,8 +113,8 @@ const MultiUploadWrapper = ({
   };
 
   const removeFile = (state, payload) => {
-    const __indexOfItemToDelete = state.findIndex((e) => e[1].fileStoreId.fileStoreId === payload.fileStoreId.fileStoreId);
-    const mutatedState = state.filter((e, index) => index !== __indexOfItemToDelete);
+    const __indexOfItemToDelete = state?.findIndex((e) => e[1]?.fileStore === payload?.fileStore);
+    const mutatedState = state?.filter((e, index) => index !== __indexOfItemToDelete);
     setFileErrors([]);
     return [...mutatedState];
   };
