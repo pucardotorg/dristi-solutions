@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useContext } from "react";
+import { BreadCrumbContext, pages } from "@egovernments/digit-ui-module-core";
 import { useHistory } from "react-router-dom";
 import { Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import { rolesToConfigMapping, userTypeOptions } from "../../configs/HomeConfig";
@@ -18,6 +19,7 @@ import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/uti
 import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
 import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
 
 const defaultSearchValues = {
   caseSearchText: "",
@@ -37,25 +39,16 @@ const linkStyle = {
 const HomeView = () => {
   const history = useHistory();
   const location = useLocation();
-  const { state } = location;
+  const { pathname, search, hash, state } = location;
   const { t } = useTranslation();
   const Digit = window.Digit || {};
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
 
-  const [caseDetails, setCaseDetails] = useState(null);
-  const [isFetchCaseLoading, setIsFetchCaseLoading] = useState(false);
-  const [tabData, setTabData] = useState(
-    TabLitigantSearchConfig?.TabSearchConfig?.map((configItem, index) => ({
-      key: index,
-      label: configItem.label,
-      active: index === 0 ? true : false,
-    }))
-  );
-  const [isCounted, setIsCounted] = useState(false);
+  const [tabData, setTabData] = useState(null);
   const [callRefetch, setCallRefetch] = useState(false);
-  const [tabConfig, setTabConfig] = useState(TabLitigantSearchConfig);
+  const [tabConfig, setTabConfig] = useState(null);
   const [onRowClickData, setOnRowClickData] = useState({ url: "", params: [] });
   const [taskType, setTaskType] = useState(state?.taskType || {});
   const [caseType, setCaseType] = useState(state?.caseType || {});
@@ -74,11 +67,38 @@ const HomeView = () => {
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [toastMsg, setToastMsg] = useState(null);
 
-  const setInitialConfig = () => {
-    if (userInfoType !== "employee") return TabLitigantSearchConfig?.TabSearchConfig?.[0];
-    else return null;
-  };
-  const [config, setConfig] = useState(() => setInitialConfig());
+  // This block uses the BreadCrumbContext to manage and update breadcrumb navigation for the "Homepage".
+  // It runs inside a useEffect hook, which triggers whenever the `pathname`, `search`, or `hash` values change.
+  // The following steps are performed:
+  // 1. Retrieve the breadcrumb route for the "Homepage" from the context.
+  // 2. Construct the new URL by combining `pathname`, `search`, and `hash`.
+  // 3. If the "Homepage" route exists and its URL differs from the new URL, update the breadcrumb context:
+  //    - Modify the "Homepage" route to use the new URL.
+  //    - Preserve other breadcrumb routes by mapping over the existing routes.
+  // 4. Check if session storage contains `filingNumber` and `caseId` values.
+  //    - If these values exist, delete them from session storage to ensure they are not reused.
+  // The `setBreadCrumbs` function is used to dynamically update the breadcrumb state.
+  const { breadCrumbs, setBreadCrumbs } = useContext(BreadCrumbContext);
+    useEffect(() => {
+    const homeRoute = breadCrumbs?.routes.find(route => route.page === pages.HOMEPAGE);
+    const newUrl = pathname + search + hash;
+    if (homeRoute && homeRoute.url !== newUrl) {
+      setBreadCrumbs((initial) => ({
+        ...initial,
+        routes: initial.routes.map(route =>
+          route.page === pages.HOMEPAGE ? { ...route, url: newUrl } : route
+        )
+      }));
+    }
+    if(window.Digit.SessionStorage.get("BreadCrumb.filingNumber")){
+      window.Digit.SessionStorage.del("BreadCrumb.filingNumber")
+    }
+    if(window.Digit.SessionStorage.get("BreadCrumb.caseId")){
+      window.Digit.SessionStorage.del("BreadCrumb.caseId")
+    }
+  }, [pathname, search, hash]);
+
+  const [config, setConfig] = useState(null);
   const { data: individualData, isLoading, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
@@ -223,10 +243,10 @@ const HomeView = () => {
             res = roles.some((role) => role.code === curr);
             return res;
           }, true)
-        ) || TabLitigantSearchConfig
+        ) || (userInfoType === "citizen" ? TabLitigantSearchConfig : null)
       );
     }
-  }, [state?.role, roles]);
+  }, [state?.role, roles, userInfoType]);
 
   const tabConfigs = useMemo(() => rolesToConfigMappingData.config, [rolesToConfigMappingData]);
   const rowClickData = useMemo(() => rolesToConfigMappingData.onRowClickRoute, [rolesToConfigMappingData]);
@@ -235,21 +255,26 @@ const HomeView = () => {
     async function (tabConfig) {
       const updatedTabData = await Promise.all(
         tabConfig?.TabSearchConfig?.map(async (configItem, index) => {
-          const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {
-            tenantId,
-            criteria: [
-              {
-                ...configItem?.apiDetails?.requestBody?.criteria?.[0],
-                ...defaultSearchValues,
-                ...additionalDetails,
-                ...(configItem?.apiDetails?.requestBody?.criteria[0]["outcome"] && {
-                  outcome: outcomeTypeData,
-                }),
-                pagination: { offSet: 0, limit: 1 },
-              },
-            ],
-          });
-          const totalCount = response?.criteria?.[0]?.pagination?.totalCount;
+          let totalCount = null;
+          try {
+            const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {
+              tenantId,
+              criteria: [
+                {
+                  ...configItem?.apiDetails?.requestBody?.criteria?.[0],
+                  ...defaultSearchValues,
+                  ...additionalDetails,
+                  ...(configItem?.apiDetails?.requestBody?.criteria[0]["outcome"] && {
+                    outcome: outcomeTypeData,
+                  }),
+                  pagination: { offSet: 0, limit: 1 },
+                },
+              ],
+            });
+            totalCount = response?.criteria?.[0]?.pagination?.totalCount;
+          } catch (error) {
+            console.error("error in fetching count.", error);
+          }
           return {
             key: index,
             label: totalCount ? `${t(configItem.label)} (${totalCount})` : `${t(configItem.label)} (0)`,
@@ -262,45 +287,43 @@ const HomeView = () => {
     [additionalDetails, outcomeTypeData, tenantId, t, defaultSearchValues]
   );
 
-  const configData = useMemo(() => {
-    if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOutcomeLoading) {
-      return null;
-    }
+  const citizenId = useMemo(() => {
+    if (userInfoType === "citizen" && !isSearchLoading) {
+      return advocateId ? advocateId : individualId;
+    } else return null;
+  }, [userInfoType, advocateId, individualId, isSearchLoading]);
 
-    let rolesToConfigMappingData;
+  const { data: citizenCaseData, isLoading: isCitizenCaseDataLoading } = useSearchCaseService(
+    {
+      criteria: [
+        {
+          ...(citizenId ? (advocateId ? { advocateId } : { litigantId: individualId }) : {}),
+          courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+          pagination: { offSet: 0, limit: 1 },
+        },
+      ],
+      tenantId,
+    },
+    {},
+    `dristi-${citizenId}`,
+    "",
+    Boolean(citizenId),
+    true,
+    6 * 1000
+  );
 
-    if (state?.role) {
-      rolesToConfigMappingData = rolesToConfigMapping?.find((item) => item[state.role]);
-    }
-
-    if (!rolesToConfigMappingData) {
-      rolesToConfigMappingData =
-        rolesToConfigMapping?.find((item) => item.roles?.some((roleCode) => roles.some((role) => role.code === roleCode))) || TabLitigantSearchConfig;
-    }
-
-    return rolesToConfigMappingData
-      ? {
-          tabConfig: rolesToConfigMappingData.config,
-          rowClickData: rolesToConfigMappingData.onRowClickRoute,
-          initialConfig: rolesToConfigMappingData.config?.TabSearchConfig?.[0],
-        }
-      : null;
-  }, [isLoading, isFetching, isSearchLoading, isFetchCaseLoading, isOutcomeLoading, state?.role, roles, rolesToConfigMapping]);
+  // This is to check if the citizen has been associated with a case yet.
+  const isCitizenReferredInAnyCase = useMemo(() => {
+    return citizenCaseData?.criteria?.[0]?.responseList?.[0];
+  }, [citizenCaseData]);
 
   useEffect(() => {
-    const isAnyLoading = isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOutcomeLoading;
-    if (!isAnyLoading || (rolesToConfigMappingData && rowClickData && tabConfigs)) {
+    const isAnyLoading = isLoading || isFetching || isSearchLoading || isOutcomeLoading || isCitizenCaseDataLoading;
+    if (!isAnyLoading && tabConfigs && rowClickData && rolesToConfigMappingData && userInfoType) {
       setOnRowClickData(rowClickData);
-      if (userInfoType === "employee") {
-        if (tabConfigs && !isEqual(tabConfigs, tabConfig)) {
-          setConfig(tabConfigs?.TabSearchConfig?.[0]);
-          setTabConfig(tabConfigs);
-          getTotalCountForTab(tabConfigs);
-        }
-      } else {
+      if (tabConfigs && !isEqual(tabConfigs, tabConfig)) {
         setConfig(tabConfigs?.TabSearchConfig?.[0]);
         setTabConfig(tabConfigs);
-        setIsCounted(true);
         getTotalCountForTab(tabConfigs);
       }
     }
@@ -308,34 +331,15 @@ const HomeView = () => {
     isLoading,
     isFetching,
     isSearchLoading,
-    isFetchCaseLoading,
     isOutcomeLoading,
     rowClickData,
     tabConfig,
     tabConfigs,
     getTotalCountForTab,
     rolesToConfigMappingData,
+    isCitizenCaseDataLoading,
+    userInfoType,
   ]);
-  // calling case api for tab's count
-  useEffect(() => {
-    (async function () {
-      if (userType) {
-        setIsFetchCaseLoading(true);
-        const caseData = await HomeService.customApiService(Urls.caseSearch, {
-          tenantId,
-          criteria: [
-            {
-              ...(advocateId ? { advocateId } : { litigantId: individualId }),
-
-              pagination: { offSet: 0, limit: 1 },
-            },
-          ],
-        });
-        setCaseDetails(caseData?.criteria?.[0]?.responseList?.[0]);
-        setIsFetchCaseLoading(false);
-      }
-    })();
-  }, [advocateId, individualId, tenantId, userType]);
 
   const onTabChange = (n) => {
     setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false })));
@@ -463,7 +467,7 @@ const HomeView = () => {
     // },
   ];
 
-  if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOrdersLoading || isOutcomeLoading) {
+  if (isLoading || isFetching || isSearchLoading || isOrdersLoading || isOutcomeLoading || isCitizenCaseDataLoading) {
     return <Loader />;
   }
   const showToast = (type, message, duration = 5000) => {
@@ -474,11 +478,14 @@ const HomeView = () => {
   };
   return (
     <div className="home-view-hearing-container">
-      {individualId && userType && userInfoType === "citizen" && !caseDetails ? (
+      {individualId && userType && userInfoType === "citizen" && !isCitizenReferredInAnyCase ? (
         <LitigantHomePage isApprovalPending={isApprovalPending} />
       ) : (
         <React.Fragment>
-          <div className="left-side" style={{ width: individualId && userType && userInfoType === "citizen" && !caseDetails ? "100vw" : "70vw" }}>
+          <div
+            className="left-side"
+            style={{ width: individualId && userType && userInfoType === "citizen" && !isCitizenReferredInAnyCase ? "100vw" : "70vw" }}
+          >
             <div className="home-header-wrapper">
               <UpcomingHearings
                 handleNavigate={handleNavigate}
@@ -553,7 +560,7 @@ const HomeView = () => {
           </div>
         </React.Fragment>
       )}
-      {((individualId && userType && userInfoType === "citizen" && caseDetails) || userInfoType === "employee") && (
+      {((individualId && userType && userInfoType === "citizen" && isCitizenReferredInAnyCase) || userInfoType === "employee") && (
         <div className="right-side" style={{ width: "30vw" }}>
           <TasksComponent
             taskType={taskType}

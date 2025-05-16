@@ -1643,9 +1643,10 @@
       width: 22.5% !important;
 
       .file-case-select-form-section {
-        width: 22.5%;
-        position: fixed;
+        width: 100%;
+        position: sticky;
         padding-right: 40px;
+        top: 72px
       }
     }
 
@@ -1781,6 +1782,10 @@
           }
         }
       }
+
+      .checkpoint-connect-wrap {
+        padding-bottom: 20px !important;
+      }
     }
 
     .file-case-checklist-highlight {
@@ -1835,6 +1840,9 @@
             word-wrap: break-word;
           }
         }
+      }
+      .checkpoint-connect-wrap {
+        padding-bottom: 20px !important;
       }
     }
   }

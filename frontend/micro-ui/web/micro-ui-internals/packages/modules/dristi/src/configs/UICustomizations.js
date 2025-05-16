@@ -474,6 +474,8 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const caseId = row?.businessObject?.billDetails?.caseId;
       const filingNumber = row?.businessObject?.billDetails?.caseTitleFilingNumber.split(",")[1].trim();
+      const cmpNumber = row?.businessObject?.billDetails?.cmpNumber;
+      const courtCaseNumber = row?.businessObject?.billDetails?.courtCaseNumber;
       const caseTitle = row?.businessObject?.billDetails?.caseTitleFilingNumber.split(",")[0].trim();
       const consumerCode = row?.businessObject?.billDetails?.consumerCode;
       const service = row?.businessObject?.billDetails?.service;
@@ -484,7 +486,7 @@ export const UICustomizations = {
           return billStatus === "ACTIVE" ? (
             <span className="link">
               <Link
-                to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}`}
+                to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&cmpNumber=${cmpNumber}&courtCaseNumber=${courtCaseNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}`}
               >
                 {String(`${caseTitle}, ${getCaseNumber(row?.businessObject?.billDetails)}` || t("ES_COMMON_NA"))}
               </Link>
@@ -499,7 +501,7 @@ export const UICustomizations = {
             <span className="action-link">
               <Link
                 style={{ display: "flex", alignItem: "center", color: "#9E400A" }}
-                to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}`}
+                to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&cmpNumber=${cmpNumber}&courtCaseNumber=${courtCaseNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}`}
               >
                 {" "}
                 <span style={{ display: "flex", alignItem: "center", textDecoration: "underline", color: "#9E400A" }}>
