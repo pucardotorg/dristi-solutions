@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useCallback, useContext } from "react";
+import { BreadCrumbContext, pages } from "@egovernments/digit-ui-module-core";
 import { useHistory } from "react-router-dom";
 import { Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import { rolesToConfigMapping, userTypeOptions } from "../../configs/HomeConfig";
@@ -38,7 +39,7 @@ const linkStyle = {
 const HomeView = () => {
   const history = useHistory();
   const location = useLocation();
-  const { state } = location;
+  const { pathname, search, hash, state } = location;
   const { t } = useTranslation();
   const Digit = window.Digit || {};
   const token = window.localStorage.getItem("token");
@@ -65,6 +66,37 @@ const HomeView = () => {
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [toastMsg, setToastMsg] = useState(null);
+
+  // This block uses the BreadCrumbContext to manage and update breadcrumb navigation for the "Homepage".
+  // It runs inside a useEffect hook, which triggers whenever the `pathname`, `search`, or `hash` values change.
+  // The following steps are performed:
+  // 1. Retrieve the breadcrumb route for the "Homepage" from the context.
+  // 2. Construct the new URL by combining `pathname`, `search`, and `hash`.
+  // 3. If the "Homepage" route exists and its URL differs from the new URL, update the breadcrumb context:
+  //    - Modify the "Homepage" route to use the new URL.
+  //    - Preserve other breadcrumb routes by mapping over the existing routes.
+  // 4. Check if session storage contains `filingNumber` and `caseId` values.
+  //    - If these values exist, delete them from session storage to ensure they are not reused.
+  // The `setBreadCrumbs` function is used to dynamically update the breadcrumb state.
+  const { breadCrumbs, setBreadCrumbs } = useContext(BreadCrumbContext);
+    useEffect(() => {
+    const homeRoute = breadCrumbs?.routes.find(route => route.page === pages.HOMEPAGE);
+    const newUrl = pathname + search + hash;
+    if (homeRoute && homeRoute.url !== newUrl) {
+      setBreadCrumbs((initial) => ({
+        ...initial,
+        routes: initial.routes.map(route =>
+          route.page === pages.HOMEPAGE ? { ...route, url: newUrl } : route
+        )
+      }));
+    }
+    if(window.Digit.SessionStorage.get("BreadCrumb.filingNumber")){
+      window.Digit.SessionStorage.del("BreadCrumb.filingNumber")
+    }
+    if(window.Digit.SessionStorage.get("BreadCrumb.caseId")){
+      window.Digit.SessionStorage.del("BreadCrumb.caseId")
+    }
+  }, [pathname, search, hash]);
 
   const [config, setConfig] = useState(null);
   const { data: individualData, isLoading, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(

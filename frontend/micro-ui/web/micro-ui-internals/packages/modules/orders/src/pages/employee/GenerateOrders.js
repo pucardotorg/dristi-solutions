@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, useContext } from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
+import { BreadCrumbContext, pages } from "@egovernments/digit-ui-module-core";
 import ReactTooltip from "react-tooltip";
 import { Header, FormComposerV2, Toast, Button, EditIcon, Modal, CloseButton, TextInput, CloseSvg } from "@egovernments/digit-ui-react-components";
 import {
@@ -221,6 +222,7 @@ const dayInMillisecond = 24 * 3600 * 1000;
 const GenerateOrders = () => {
   const { t } = useTranslation();
   const { orderNumber, filingNumber } = Digit.Hooks.useQueryParams();
+  const { pathname, search, hash } = useLocation();
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [selectedOrder, _setSelectedOrder] = useState(0);
   const [deleteOrderIndex, setDeleteOrderIndex] = useState(null);
@@ -266,6 +268,46 @@ const GenerateOrders = () => {
   const [showMandatoryFieldsErrorModal, setShowMandatoryFieldsErrorModal] = useState({ showModal: false, errorsData: [] });
   const [profileEditorName, setProfileEditorName] = useState("");
   const currentDiaryEntry = history.location?.state?.diaryEntry;
+
+   // This block uses the BreadCrumbContext to manage and update breadcrumb navigation for the "Generate Orders" page.
+  // It runs inside a useEffect hook, which triggers whenever the `pathname`, `search`, or `hash` values change.
+  // The following steps are performed:
+  // 1. Retrieve the breadcrumb routes for "Orders", "View Case", and "Homepage" from the context.
+  // 2. If the "View Case" route does not have a URL and the required session storage values are missing, log out the user after a timeout.
+  //    Otherwise, construct the "View Case" URL using session storage values for `caseId` and `filingNumber`.
+  // 3. Construct the new URL by combining `pathname`, `search`, and `hash`.
+  // 4. If the "Orders" route exists and its URL differs from the new URL, update the breadcrumb context:
+  //    - Modify the "Orders" route to use the new URL.
+  //    - Update the "View Case" route with the constructed URL if it is missing.
+  //    - Ensure the "Homepage" route has a valid URL, defaulting to '/ui/employee/home/home-pending-task' if not already set.
+  // The `setBreadCrumbs` function is used to update the breadcrumb state dynamically.
+  // A cleanup function is provided to clear the timeout if the component unmounts.
+  const { breadCrumbs, setBreadCrumbs } = useContext(BreadCrumbContext);
+  useEffect(() => {
+    let constructViewCaseUrl;
+    const orderRoute = breadCrumbs?.routes.find(route => route.page === pages.ORDERS);
+    const viewCaseRoute = breadCrumbs?.routes.find(route => route.page === pages.VIEWCASE);
+    const homeRoute = breadCrumbs?.routes.find(route => route.page === pages.HOMEPAGE);
+    if(!viewCaseRoute.url){ 
+      if(!(window.Digit.SessionStorage.get("BreadCrumb.filingNumber") && window.Digit.SessionStorage.get("BreadCrumb.caseId"))){
+        window.location.href = homeRoute?.url || '/ui/employee/home/home-pending-task';
+      }
+      else{
+        constructViewCaseUrl = `/ui/employee/dristi/home/view-case?caseId=${window.Digit.SessionStorage.get("BreadCrumb.caseId")}&filingNumber=${window.Digit.SessionStorage.get("BreadCrumb.filingNumber")}&tab=Overview`
+      }
+    }
+
+    const newUrl = pathname + search + hash;
+    if (orderRoute && orderRoute.url !== newUrl) {
+      setBreadCrumbs((initial) => ({
+        ...initial,
+        routes: initial.routes.map(route =>
+          route.page === pages.ORDERS ? { ...route, url: newUrl } : route.page === pages.VIEWCASE ? route.url ? route: { ...route, url: constructViewCaseUrl } : route.page === pages.HOMEPAGE ? homeRoute.url ? route: { ...route, url: '/ui/employee/home/home-pending-task' } : route
+        )
+      }));
+    }
+    
+  }, [pathname, search, hash]);
 
   const setSelectedOrder = (orderIndex) => {
     _setSelectedOrder(orderIndex);
