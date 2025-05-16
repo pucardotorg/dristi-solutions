@@ -58,9 +58,9 @@ export const showDemandNoticeModal = ({ selected, setValue, formData, setError, 
       switch (key) {
         case "dateOfService":
           if (formData?.dateOfService && new Date(formData?.dateOfService).getTime() + 16 * 24 * 60 * 60 * 1000 > new Date().getTime()) {
-            setServiceOfDemandNoticeModal(true);
             setError("dateOfService", { message: " CS_SERVICE_DATE_ERROR_MSG" });
             setValue("dateOfAccrual", "");
+            setServiceOfDemandNoticeModal({ show: true, index });
           } else if (
             formData?.dateOfDispatch &&
             formData?.dateOfService &&
