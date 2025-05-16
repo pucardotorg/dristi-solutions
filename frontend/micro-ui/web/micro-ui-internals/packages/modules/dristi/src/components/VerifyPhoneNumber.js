@@ -221,15 +221,23 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
     )
       .then(async (individualData) => {
         if (Array.isArray(individualData?.Individual) && individualData?.Individual?.length > 0) {
-          const addressLine1 = individualData?.Individual?.[0]?.address[0]?.addressLine1 || "Telangana";
-          const addressLine2 = individualData?.Individual?.[0]?.address[0]?.addressLine2 || "Rangareddy";
-          const buildingName = individualData?.Individual?.[0]?.address[0]?.buildingName || "";
-          const street = individualData?.Individual?.[0]?.address[0]?.street || "";
-          const city = individualData?.Individual?.[0]?.address[0]?.city || "";
-          const pincode = individualData?.Individual?.[0]?.address[0]?.pincode || "";
-          const latitude = individualData?.Individual?.[0]?.address[0]?.latitude || "";
-          const longitude = individualData?.Individual?.[0]?.address[0]?.longitude || "";
-          const doorNo = individualData?.Individual?.[0]?.address[0]?.doorNo || "";
+          let permanentAddress;
+          const addressArray = individualData?.Individual?.[0]?.address;
+          if(addressArray?.length > 1) {
+            permanentAddress = addressArray?.find((address) => address?.type === "PERMANENT");
+          }else{
+            permanentAddress = addressArray?.[0];
+          }
+
+          const addressLine1 = permanentAddress?.addressLine1 || "Telangana";
+          const addressLine2 = permanentAddress?.addressLine2 || "Rangareddy";
+          const buildingName = permanentAddress?.buildingName || "";
+          const street = permanentAddress?.street || "";
+          const city = permanentAddress?.city || "";
+          const pincode = permanentAddress?.pincode || "";
+          const latitude = permanentAddress?.latitude || "";
+          const longitude = permanentAddress?.longitude || "";
+          const doorNo = permanentAddress?.doorNo || "";
           const idType = individualData?.Individual?.[0]?.identifiers[0]?.identifierType || "";
           const identifierIdDetails = JSON.parse(
             individualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "identifierIdDetails")?.value || "{}"
