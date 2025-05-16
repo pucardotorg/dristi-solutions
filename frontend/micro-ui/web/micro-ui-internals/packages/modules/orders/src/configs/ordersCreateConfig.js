@@ -4003,25 +4003,25 @@ export const configsJudgement = [
       },
     ],
   },
-  {
-    body: [
-      {
-        type: "component",
-        component: "SelectTranscriptTextArea",
-        key: "content",
-        schemaKeyPath: "caseDetails.content",
-        isMandatory: true,
-        populators: {
-          input: {
-            name: "text",
-            textAreaSubHeader: "CONTENT",
-            placeholder: "TYPE_HERE_PLACEHOLDER",
-            type: "TranscriptionTextAreaComponent",
-          },
-        },
-      },
-    ],
-  },
+  // {
+  //   body: [
+  //     {
+  //       type: "component",
+  //       component: "SelectTranscriptTextArea",
+  //       key: "content",
+  //       schemaKeyPath: "caseDetails.content",
+  //       isMandatory: true,
+  //       populators: {
+  //         input: {
+  //           name: "text",
+  //           textAreaSubHeader: "CONTENT",
+  //           placeholder: "TYPE_HERE_PLACEHOLDER",
+  //           type: "TranscriptionTextAreaComponent",
+  //         },
+  //       },
+  //     },
+  //   ],
+  // },
   {
     body: [
       {

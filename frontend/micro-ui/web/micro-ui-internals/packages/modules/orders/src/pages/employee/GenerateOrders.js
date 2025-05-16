@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, useContext } from "react";
 import { useTranslation } from "react-i18next";
-import { useHistory } from "react-router-dom";
+import { useHistory, useLocation } from "react-router-dom";
+import { BreadCrumbContext, pages } from "@egovernments/digit-ui-module-core";
 import ReactTooltip from "react-tooltip";
 import { Header, FormComposerV2, Toast, Button, EditIcon, Modal, CloseButton, TextInput, CloseSvg } from "@egovernments/digit-ui-react-components";
 import {
@@ -221,6 +222,7 @@ const dayInMillisecond = 24 * 3600 * 1000;
 const GenerateOrders = () => {
   const { t } = useTranslation();
   const { orderNumber, filingNumber } = Digit.Hooks.useQueryParams();
+  const { pathname, search, hash } = useLocation();
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [selectedOrder, _setSelectedOrder] = useState(0);
   const [deleteOrderIndex, setDeleteOrderIndex] = useState(null);
@@ -267,6 +269,45 @@ const GenerateOrders = () => {
   const [profileEditorName, setProfileEditorName] = useState("");
   const currentDiaryEntry = history.location?.state?.diaryEntry;
 
+  // This block uses the BreadCrumbContext to manage and update breadcrumb navigation for the "Generate Orders" page.
+  // It runs inside a useEffect hook, which triggers whenever the `pathname`, `search`, or `hash` values change.
+  // The following steps are performed:
+  // 1. Retrieve the breadcrumb routes for "Orders", "View Case", and "Homepage" from the context.
+  // 2. If the "View Case" route does not have a URL and the required session storage values are missing, log out the user after a timeout.
+  //    Otherwise, construct the "View Case" URL using session storage values for `caseId` and `filingNumber`.
+  // 3. Construct the new URL by combining `pathname`, `search`, and `hash`.
+  // 4. If the "Orders" route exists and its URL differs from the new URL, update the breadcrumb context:
+  //    - Modify the "Orders" route to use the new URL.
+  //    - Update the "View Case" route with the constructed URL if it is missing.
+  //    - Ensure the "Homepage" route has a valid URL, defaulting to '/ui/employee/home/home-pending-task' if not already set.
+  // The `setBreadCrumbs` function is used to update the breadcrumb state dynamically.
+  // A cleanup function is provided to clear the timeout if the component unmounts.
+  const { breadCrumbs, setBreadCrumbs } = useContext(BreadCrumbContext);
+  useEffect(() => {
+    let constructViewCaseUrl;
+    const orderRoute = breadCrumbs?.routes.find(route => route.page === pages.ORDERS);
+    const viewCaseRoute = breadCrumbs?.routes.find(route => route.page === pages.VIEWCASE);
+    const homeRoute = breadCrumbs?.routes.find(route => route.page === pages.HOMEPAGE);
+    if (!viewCaseRoute.url) {
+      if (!(window.Digit.SessionStorage.get("BreadCrumb.filingNumber") && window.Digit.SessionStorage.get("BreadCrumb.caseId"))) {
+        window.location.href = homeRoute?.url || '/ui/employee/home/home-pending-task';
+      }
+      else {
+        constructViewCaseUrl = `/ui/employee/dristi/home/view-case?caseId=${window.Digit.SessionStorage.get("BreadCrumb.caseId")}&filingNumber=${window.Digit.SessionStorage.get("BreadCrumb.filingNumber")}&tab=Overview`
+      }
+    }
+    const newUrl = pathname + search + hash;
+    if (orderRoute && orderRoute.url !== newUrl) {
+      setBreadCrumbs((initial) => ({
+        ...initial,
+        routes: initial.routes.map(route =>
+          route.page === pages.ORDERS ? { ...route, url: newUrl } : route.page === pages.VIEWCASE ? route.url ? route : { ...route, url: constructViewCaseUrl } : route.page === pages.HOMEPAGE ? homeRoute.url ? route : { ...route, url: '/ui/employee/home/home-pending-task' } : route
+        )
+      }));
+    }
+
+  }, [pathname, search, hash]);
+  
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
 
   const setSelectedOrder = (orderIndex) => {
@@ -319,6 +360,46 @@ const GenerateOrders = () => {
     }),
     [caseData]
   );
+
+  const { data: applicationData, isLoading: isApplicationDetailsLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        filingNumber: filingNumber,
+        tenantId: tenantId,
+      },
+      tenantId,
+    },
+    {},
+    filingNumber,
+    Boolean(filingNumber)
+  );
+
+  const isDelayApplicationPending = useMemo(() => {
+    return Boolean(
+      applicationData?.applicationList?.some(
+        (item) =>
+          item?.applicationType === "DELAY_CONDONATION" &&
+          [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(item?.status)
+      )
+    );
+  }, [applicationData]);
+
+  const applicationTypeConfigUpdated = useMemo(() => {
+    const updatedConfig = structuredClone(applicationTypeConfig);
+    // Showing admit case/Dismiss case order type in the dropdown list depending on the case status.
+    if (
+      ["PENDING_NOTICE"].includes(caseDetails?.status) ||
+      // case admit can not be allowed if there are pending review/approval of some Delay condonation application.
+      (["PENDING_RESPONSE", "PENDING_ADMISSION"].includes(caseDetails?.status) && isDelayApplicationPending)
+    ) {
+      updatedConfig[0].body[0].populators.mdmsConfig.select =
+        "(data) => {return data['Order'].OrderType?.filter((item)=>[`DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+    } else if (["PENDING_RESPONSE", "PENDING_ADMISSION"].includes(caseDetails?.status)) {
+      updatedConfig[0].body[0].populators.mdmsConfig.select =
+        "(data) => {return data['Order'].OrderType?.filter((item)=>[`ADMIT_CASE`, `DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+    }
+    return updatedConfig;
+  }, [caseDetails, isDelayApplicationPending]);
 
   const { data: courtRoomData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "common-masters", [{ name: "Court_Rooms" }], {
     select: (data) => {
@@ -749,18 +830,6 @@ const GenerateOrders = () => {
     return [];
   }, [currentOrder?.linkedOrderNumber, pendingTaskDetails]);
 
-  const { data: applicationData, isLoading: isApplicationDetailsLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
-    {
-      criteria: {
-        filingNumber: filingNumber,
-        tenantId: tenantId,
-      },
-      tenantId,
-    },
-    {},
-    filingNumber,
-    Boolean(filingNumber)
-  );
   const applicationDetails = useMemo(
     () =>
       applicationData?.applicationList?.find(
@@ -875,8 +944,8 @@ const GenerateOrders = () => {
         // so values are setting in keys of other order type form fields.
         const orderType = item?.orderType;
         let newConfig = orderType
-          ? applicationTypeConfig?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
-          : structuredClone(applicationTypeConfig);
+          ? applicationTypeConfigUpdated?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
+          : structuredClone(applicationTypeConfigUpdated);
 
         if (orderType && configKeys.hasOwnProperty(orderType)) {
           let orderTypeForm = configKeys[orderType];
@@ -1104,8 +1173,8 @@ const GenerateOrders = () => {
       });
     } else {
       let newConfig = currentOrder?.orderNumber
-        ? applicationTypeConfig?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
-        : structuredClone(applicationTypeConfig);
+        ? applicationTypeConfigUpdated?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
+        : structuredClone(applicationTypeConfigUpdated);
       const orderType = currentOrder?.orderType;
       if (orderType && configKeys.hasOwnProperty(orderType)) {
         let orderTypeForm = configKeys[orderType];
@@ -2203,8 +2272,8 @@ const GenerateOrders = () => {
       let orderSchema = {};
       try {
         let orderTypeDropDownConfig = order?.orderNumber
-          ? applicationTypeConfig?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
-          : structuredClone(applicationTypeConfig);
+          ? applicationTypeConfigUpdated?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
+          : structuredClone(applicationTypeConfigUpdated);
         let orderFormConfig = configKeys.hasOwnProperty(order?.orderType) ? configKeys[order?.orderType] : [];
         const modifiedPlainFormConfig = [...orderTypeDropDownConfig, ...orderFormConfig];
         orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(order.additionalDetails.formdata, modifiedPlainFormConfig);
@@ -2261,8 +2330,8 @@ const GenerateOrders = () => {
       let orderSchema = {};
       try {
         let orderTypeDropDownConfig = item?.id
-          ? applicationTypeConfig?.map((obj) => ({ body: obj.body.map((input) => ({ ...input, disable: true })) }))
-          : structuredClone(applicationTypeConfig);
+          ? applicationTypeConfigUpdated?.map((obj) => ({ body: obj.body.map((input) => ({ ...input, disable: true })) }))
+          : structuredClone(applicationTypeConfigUpdated);
         let orderFormConfig = configKeys.hasOwnProperty(item?.orderSchema?.additionalDetails?.formdata?.orderType?.code)
           ? configKeys[item?.orderSchema?.additionalDetails?.formdata?.orderType?.code]
           : [];
@@ -2332,8 +2401,8 @@ const GenerateOrders = () => {
       let orderSchema = {};
       try {
         let orderTypeDropDownConfig = order?.orderNumber
-          ? applicationTypeConfig?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
-          : structuredClone(applicationTypeConfig);
+          ? applicationTypeConfigUpdated?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
+          : structuredClone(applicationTypeConfigUpdated);
         let orderFormConfig = configKeys.hasOwnProperty(order?.orderType) ? configKeys[order?.orderType] : [];
         const modifiedPlainFormConfig = [...orderTypeDropDownConfig, ...orderFormConfig];
         orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(order.additionalDetails.formdata, modifiedPlainFormConfig);
