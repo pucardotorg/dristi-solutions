@@ -1,5 +1,6 @@
 import { AppContainer, BreadCrumb, PrivateRoute } from "@egovernments/digit-ui-react-components";
-import React, { useMemo } from "react";
+import React, { useMemo, useContext } from "react";
+import { BreadCrumbContext, pages } from "@egovernments/digit-ui-module-core";
 import { useTranslation } from "react-i18next";
 import { Switch } from "react-router-dom";
 import OrdersResponse from "./OrdersResponse";
@@ -11,36 +12,45 @@ import EpostTrackingPage from "./E-PostTracking";
 import PaymentForSummonModal from "./PaymentForSummonModal";
 import ReviewSummonsNoticeAndWarrant from "./ReviewSummonsNoticeAndWarrant";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
-const bredCrumbStyle = { maxWidth: "min-content" };
+import BreadCrumbNew from "../../components/BreadCrumbNew";
 
-const ProjectBreadCrumb = ({ location }) => {
-  const { pathname } = useLocation();
+const breadCrumbStyle = { maxWidth: "min-content" };
 
-  const roles = Digit.UserService.getUser()?.info?.roles;
-  const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
-  const userInfo = Digit?.UserService?.getUser()?.info;
-  let userType = "employee";
-  if (userInfo) {
-    userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
-  }
-  const { t } = useTranslation();
-  const crumbs = useMemo(
-    () => [
-      {
-        path: isEpostUser ? pathname : `/${window?.contextPath}/${userType}/home/home-pending-task`,
-        content: t("ES_COMMON_HOME"),
-        show: true,
-      },
-      {
-        path: `/${window?.contextPath}/${userType}`,
-        content: t(location.pathname.split("/").pop()),
-        show: true,
-      },
-    ],
-    [isEpostUser, location.pathname, pathname, t, userType]
-  );
-  return <BreadCrumb crumbs={crumbs} spanStyle={bredCrumbStyle} style={{ color: "rgb(0, 126, 126)" }} />;
-};
+
+// const ProjectBreadCrumb = ({ location }) => {
+//   const { pathname } = useLocation();
+//   const roles = Digit.UserService.getUser()?.info?.roles;
+//   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
+//   const userInfo = Digit?.UserService?.getUser()?.info;
+//   let userType = "employee";
+//   if (userInfo) {
+//     userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
+//   }
+//   const { t } = useTranslation();
+//   const crumbs = useMemo(
+//     () => [
+//       {
+//         path: isEpostUser ? pathname : `/${window?.contextPath}/${userType}/home/home-pending-task`,
+//         content: t("ES_COMMON_HOME"),
+//         show: true,
+//       },
+//       {
+//         path: `/${window?.contextPath}/${userType}`,
+//         content: t(location.pathname.split("/").pop()),
+//         show: true,
+//       },
+//     ],
+//     [isEpostUser, location.pathname, pathname, t, userType]
+//   );
+//   return <BreadCrumb crumbs={crumbs} spanStyle={breadCrumbStyle} style={{ color: "rgb(0, 126, 126)" }} />;
+// };
+
+
+
+const getBreadCrumbsForCasePage = (crumbs) => {
+  const index = (crumbs?.routes || []).findIndex((crumb) => crumb.page === pages.ORDERS);
+  return [...(crumbs?.routes || []).slice(0, index + 1)];
+}
 
 const App = ({ path, stateCode, userType, tenants }) => {
   const history = useHistory();
@@ -48,6 +58,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
   const userInfo = Digit?.UserService?.getUser()?.info;
   const hasCitizenRoute = useMemo(() => path?.includes(`/${window?.contextPath}/citizen`), [path]);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
+  const { breadCrumbs } = useContext(BreadCrumbContext);
 
   if (isCitizen && !hasCitizenRoute && Boolean(userInfo)) {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
@@ -59,7 +70,8 @@ const App = ({ path, stateCode, userType, tenants }) => {
     <Switch>
       <AppContainer className="ground-container order-submission">
         <React.Fragment>
-          <ProjectBreadCrumb location={window.location} />
+          {/* <ProjectBreadCrumb location={window.location} /> */}
+          <BreadCrumbNew crumbs={getBreadCrumbsForCasePage(breadCrumbs)} breadcrumbStyle={{ paddingLeft: 20 }}></BreadCrumbNew>
         </React.Fragment>
         <PrivateRoute path={`${path}/orders-response`} component={() => <OrdersResponse></OrdersResponse>} />
         <PrivateRoute path={`${path}/orders-create`} component={() => <OrdersCreate />} />
