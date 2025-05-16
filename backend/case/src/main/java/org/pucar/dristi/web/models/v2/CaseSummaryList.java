@@ -21,6 +21,9 @@ public class CaseSummaryList {
     @JsonProperty("tenantId")
     private String tenantId;
 
+    @JsonProperty("createdTime")
+    private Long createdTime;
+
     @JsonProperty("caseTitle")
     private String caseTitle;
 
