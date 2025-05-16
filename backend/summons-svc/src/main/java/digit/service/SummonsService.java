@@ -6,6 +6,7 @@ import digit.kafka.Producer;
 import digit.repository.SummonsRepository;
 import digit.util.*;
 import digit.web.models.*;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.models.Workflow;
@@ -174,12 +175,37 @@ public class SummonsService {
             }
         }
         task.setWorkflow(workflow);
-
+        enrichPoliceStationReport(task, request.getSummonsDelivery());
         Role role = Role.builder().code(config.getSystemAdmin()).tenantId(config.getEgovStateTenantId()).build();
         request.getRequestInfo().getUserInfo().getRoles().add(role);
         TaskRequest taskRequest = TaskRequest.builder()
                 .requestInfo(request.getRequestInfo()).task(task).build();
         taskUtil.callUpdateTask(taskRequest);
+    }
+
+    private void enrichPoliceStationReport(Task task, @Valid SummonsDelivery summonsDelivery) {
+        String fileStoreId = extractFileStoreId(summonsDelivery);
+        if(fileStoreId != null) {
+            Document document = Document.builder()
+                    .fileStore(fileStoreId)
+                    .documentType(POLICE_REPORT)
+                    .additionalDetails(AdditionalFields.builder().fields(Collections.emptyList()).build())
+                    .build();
+            task.addDocumentsItem(document);
+        } else {
+            log.error("Police Report not found for the task of type : {} and number : {}", task.getTaskType(), task.getTaskNumber());
+        }
+    }
+
+    private String extractFileStoreId(@Valid SummonsDelivery summonsDelivery) {
+        AdditionalFields additionalFields = summonsDelivery.getAdditionalFields();
+        return Optional.ofNullable(additionalFields)
+                .map(AdditionalFields::getFields)
+                .flatMap(fields -> fields.stream()
+                        .filter(field -> field.getKey().equalsIgnoreCase("policeReportFileStoreId"))
+                        .map(Field::getValue)
+                        .findFirst())
+                .orElse(null);
     }
 
     private String getPdfTemplateKey(String taskType, String docSubType, boolean qrCode, String noticeType) {

@@ -127,7 +127,7 @@ public class DemandService {
             DemandCreateRequest request = DemandCreateRequest.builder()
                     .requestInfo(requestInfo)
                     .consumerCode(demand.getConsumerCode())
-                    .calculation(calculations)
+                    .calculation(getCalculations(calculations))
                     .entityType(demand.getBusinessService())
                     .tenantId(demand.getTenantId())
                     .filingNumber(task.getFilingNumber())
@@ -142,6 +142,15 @@ public class DemandService {
             log.error("Error creating treasury demand: ", e);
             throw new CustomException("Error creating treasury demand: ", e.getMessage());
         }
+    }
+
+
+    private static List<Calculation> getCalculations(List<Calculation> calculations) {
+        calculations.forEach(calculation -> {
+            calculation.setBreakDown(calculation.getBreakDown().stream().filter(breakDown -> breakDown.getCode().equals("COURT_FEE")).toList());
+            calculation.setTotalAmount(calculation.getBreakDown().stream().mapToDouble(BreakDown::getAmount).sum());
+        });
+        return calculations;
     }
 
     private String getPaymentGateway(JSONArray paymentModeMaster, String paymentTypeString) {

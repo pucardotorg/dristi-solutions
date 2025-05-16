@@ -109,7 +109,7 @@ export const DRISTIService = {
       url: Urls.dristi.caseSearch,
       useCache: false,
       userService: false,
-      data: { ...data, criteria: [...data?.criteria, { courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52" }] },
+      data: { ...data, criteria: [...data?.criteria] },
       params,
     }),
   caseDetailSearchService: (data, params) =>
