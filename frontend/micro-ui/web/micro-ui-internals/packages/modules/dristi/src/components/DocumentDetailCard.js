@@ -8,15 +8,16 @@ function DocumentDetailCard({ onClick, cardData, header }) {
         {header && <Header styles={{ fontSize: "24px" }}>{header}</Header>}
         {cardData.map((row) => (
           <div>
-            {row?.title || row?.content ? (
+            {row?.title || row?.content || row?.doc ? (
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <p className="documentDetails_title">{row?.title}</p>
-                <p onClick={onClick}>{row?.content}</p>
+                <p>{row?.content}</p>
+                {row?.doc && <div onClick={onClick}>{row?.doc}</div>}
               </div>
             ) : null}
-            <div onClick={onClick}>{row?.doc}</div>
-            {row?.image?.content}
-            {row?.icon}
+            {/* {row?.doc && <div onClick={onClick}>{row?.doc}</div>}
+            <div>{row?.image?.content}</div>
+            <div>{row?.icon}</div> */}
           </div>
         ))}
       </div>

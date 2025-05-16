@@ -74,12 +74,19 @@ public class BillingUtil {
 
         String cnrNumber = details.get(CNR_NUMBER_KEY);
         String filingNumber = details.get(FILING_NUMBER);
+        String caseNumber = filingNumber;
 
         // fetch case detail
         Object caseObject = caseUtil.getCase(request, tenantId, cnrNumber, filingNumber, null);
         String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
         String cmpNumber = JsonPath.read(caseObject.toString(), CASE_CMPNUMBER_PATH);
         String courtCaseNumber = JsonPath.read(caseObject.toString(), CASE_COURTCASENUMBER_PATH);
+
+        if(courtCaseNumber!=null && !courtCaseNumber.isEmpty()){
+            caseNumber = courtCaseNumber;
+        }else if(cmpNumber!=null && !cmpNumber.isEmpty()){
+            caseNumber = cmpNumber;
+        }
 
         String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
         String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
@@ -88,7 +95,7 @@ public class BillingUtil {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_BILLING_FORMAT,
-                config.getBillingIndex(), id, id, tenantId, paymentCreatedDate,paymentCompletedDate,caseTitle, filingNumber, cmpNumber,courtCaseNumber,caseStage, caseId, caseType, paymentType, totalAmount, status, consumerCode, businessService, auditJsonString
+                config.getBillingIndex(), id, id, tenantId, paymentCreatedDate,paymentCompletedDate,caseTitle, caseNumber,caseStage, caseId, caseType, paymentType, totalAmount, status, consumerCode, businessService, auditJsonString
         );
     }
 
