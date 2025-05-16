@@ -2,11 +2,15 @@ import { CloseSvg } from "@egovernments/digit-ui-components";
 import React, { useMemo } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import ApplicationInfoComponent from "./ApplicationInfoComponent";
+// import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
+// import downloadPdfFromFile from "@egovernments/digit-ui-module-dristi/src/Utils/downloadPdfFromFile";
 
 function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
+  // const [file, setFile] = React.useState([]);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const doc = rowData?.documents?.find((doc) => doc.documentType === "SIGNED_TASK_DOCUMENT");
+  const policeDoc = rowData?.documents?.find((doc) => doc.documentType === "POLICE_REPORT");
   const useDownloadCasePdf = Digit?.Hooks?.dristi?.useDownloadCasePdf;
   const { downloadPdf } = useDownloadCasePdf();
 
@@ -21,11 +25,27 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
       </div>
     );
   };
-  const handleDownload = (tenantId, filestoreId) => {
+  const handleDownload = async (tenantId, filestoreId, filestoreIdPolice) => {
+    // await downloadPdfFromFile(file?.[0]);
     if (filestoreId) {
       downloadPdf(tenantId, filestoreId);
     }
+    if(filestoreIdPolice) {
+      downloadPdf(tenantId, filestoreIdPolice, "Police Report");
+    }
   };
+
+  // use this to combine multiple files
+  // useEffect(() => {
+  //   const processFiles = async () => {
+  //     // filtering out the files that are not of type
+  //     const pdfFileArray = rowData?.documents?.filter((doc) => doc.documentType === "SIGNED_TASK_DOCUMENT");
+  //     const res = await combineMultipleFiles(pdfFileArray);
+  //     setFile(res);
+  //   };
+
+  //   processFiles();
+  // }, [rowData]);
 
   const showDocument = useMemo(() => {
     return (
@@ -47,6 +67,7 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
           docWidth={"calc(95vw * 62 / 100)"}
           docHeight={"unset"}
           fileStoreId={doc?.fileStore}
+          // selectedDocs={file}
           tenantId={tenantId}
           displayFilename={doc?.additionalDetails?.name}
           showDownloadOption={false}
@@ -55,7 +76,38 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
         />
       </div>
     );
-  }, [doc, tenantId]);
+  }, [doc?.additionalDetails?.name, doc?.fileStore, tenantId]);
+
+  const showDocumentPolice = useMemo(() => {
+    return (
+      <div
+        className="show-document-doc-container"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          width: "100%",
+          maxHeight: "60vh",
+          maxWidth: "100%",
+          overflowY: "auto",
+          overflowX: "hidden",
+        }}
+      >
+        <DocViewerWrapper
+          key={policeDoc?.fileStore}
+          docWidth={"calc(95vw * 62 / 100)"}
+          docHeight={"unset"}
+          fileStoreId={policeDoc?.fileStore}
+          // selectedDocs={file}
+          tenantId={tenantId}
+          displayFilename={policeDoc?.additionalDetails?.name}
+          showDownloadOption={false}
+          documentName={policeDoc?.additionalDetails?.name}
+          isLocalizationRequired={false}
+        />
+      </div>
+    );
+  }, [policeDoc?.additionalDetails?.name, policeDoc?.fileStore, tenantId]);
 
   return (
     <Modal
@@ -69,12 +121,13 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
       popupStyles={{ minWidth: "880px", width: "80%" }}
     >
       {infos && <ApplicationInfoComponent infos={infos} />}
+      {showDocumentPolice}
       {showDocument}
-
+      
       <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: "16px" }}>
         <div
           onClick={() => {
-            handleDownload(tenantId, doc?.fileStore);
+            handleDownload(tenantId, doc?.fileStore, policeDoc?.fileStore);
           }}
           style={{ fontWeight: 700, fontSize: "16px", lineHeight: "18.75px", color: "#007E7E", cursor: "pointer" }}
         >
