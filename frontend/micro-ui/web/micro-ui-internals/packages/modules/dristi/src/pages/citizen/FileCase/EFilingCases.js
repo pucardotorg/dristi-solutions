@@ -33,6 +33,8 @@ import { sideMenuConfig } from "./Config";
 import EditFieldsModal from "./EditFieldsModal";
 import axios from "axios";
 import {
+  accusedAddressValidation,
+  addressValidation,
   checkDuplicateMobileEmailValidation,
   checkIfscValidation,
   checkNameValidation,
@@ -213,6 +215,7 @@ function EFilingCases({ path }) {
   const [caseResubmitSuccess, setCaseResubmitSuccess] = useState(false);
   const [prevSelected, setPrevSelected] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
+  const [addressError, setAddressError] = useState({ show: false, message: "" });
   const homepagePath = `/${window?.contextPath}/citizen/dristi/home`;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoader, setIsLoader] = useState(false);
@@ -661,6 +664,7 @@ function EFilingCases({ path }) {
 
   const closeToast = () => {
     setShowErrorToast(false);
+    setAddressError({ show: false, message: "" });
     setErrorMsg("");
     setSuccessToast((prev) => ({
       ...prev,
@@ -671,13 +675,13 @@ function EFilingCases({ path }) {
 
   useEffect(() => {
     let timer;
-    if (showErrorToast || showSuccessToast) {
+    if (showErrorToast || showSuccessToast || addressError?.show) {
       timer = setTimeout(() => {
         closeToast();
       }, 2000);
     }
     return () => clearTimeout(timer);
-  }, [showErrorToast, showSuccessToast]);
+  }, [showErrorToast, showSuccessToast, addressError?.show]);
 
   useEffect(() => {
     if (isCaseReAssigned) {
@@ -1835,6 +1839,41 @@ function EFilingCases({ path }) {
         return;
       }
     }
+
+    if (selected === "complainantDetails") {
+      if (
+        formdata
+          ?.filter((data) => data.isenabled)
+          ?.some((data, index) =>
+            addressValidation({
+              formData: data?.data,
+              selected: selected === "complainantDetails" ? "complainantType" : "respondentType",
+              setAddressError,
+              config: modifiedFormConfig[index],
+            })
+          )
+      ) {
+        return;
+      }
+    }
+
+    if (selected === "respondentDetails") {
+      if (
+        formdata
+          ?.filter((data) => data.isenabled)
+          ?.some((data, index) =>
+            accusedAddressValidation({
+              formData: data?.data,
+              selected: selected === "complainantDetails" ? "complainantType" : "respondentType",
+              setAddressError,
+              config: modifiedFormConfig[index],
+            })
+          )
+      ) {
+        return;
+      }
+    }
+
     if (
       formdata
         .filter((data) => data.isenabled)
@@ -2975,6 +3014,7 @@ function EFilingCases({ path }) {
               onClose={closeToast}
             />
           )}
+          {addressError?.show && <Toast error={true} label={t(addressError?.message)} isDleteBtn={true} onClose={closeToast} />}
           {showSuccessToast && <Toast label={t(successMsg)} isDleteBtn={true} onClose={closeToast} />}
         </div>
       </div>

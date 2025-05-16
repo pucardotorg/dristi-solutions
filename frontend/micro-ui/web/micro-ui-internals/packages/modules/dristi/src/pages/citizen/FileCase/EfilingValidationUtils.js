@@ -1004,6 +1004,66 @@ export const signatureValidation = ({ formData, selected, setShowErrorToast, set
   }
 };
 
+export const accusedAddressValidation = ({ formData, selected, setAddressError, config }) => {
+  const addressKey = "addressDetails";
+  if (
+    config
+      ?.find((item) => item.body?.[0]?.key === addressKey)
+      ?.body?.[0]?.populators?.inputs?.filter((data) => !data?.showOptional)
+      ?.some((data) =>
+        formData?.[addressKey]?.some((address) => {
+          const isEmpty = /^\s*$/.test(address?.[addressKey]?.[data?.name]);
+          return (
+            isEmpty ||
+            !address?.[addressKey]?.[data?.name].match(window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern)
+          );
+        })
+      )
+  ) {
+    setAddressError({ show: true, message: "CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT" });
+    return true;
+  }
+};
+
+export const addressValidation = ({ formData, selected, setAddressError, config }) => {
+  if (
+    config
+      ?.find((item) =>
+        formData?.[selected]?.code === "INDIVIDUAL" ? item.body?.[0]?.key === "addressDetails" : item.body?.[0]?.key === "addressCompanyDetails"
+      )
+      ?.body?.[0]?.populators?.inputs?.filter((data) => !data?.showOptional)
+      ?.some((data) => {
+        const isEmpty = /^\s*$/.test(
+          formData?.[formData?.[selected]?.code === "INDIVIDUAL" ? "addressDetails" : "addressCompanyDetails"]?.[data?.name]
+        );
+        return (
+          isEmpty ||
+          !formData?.[formData?.[selected]?.code === "INDIVIDUAL" ? "addressDetails" : "addressCompanyDetails"]?.[data?.name].match(
+            window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
+          )
+        );
+      }) ||
+    (formData?.transferredPOA?.code === "YES" &&
+      config
+        ?.find((item) =>
+          formData?.[selected]?.code === "INDIVIDUAL" ? item.body?.[0]?.key === "addressDetails" : item.body?.[0]?.key === "addressCompanyDetails"
+        )
+        ?.body?.[0]?.populators?.inputs?.filter((data) => !data?.showOptional)
+        ?.some((data) => {
+          const isEmpty = /^\s*$/.test(formData?.poaAddressDetails?.[data?.name]);
+          return (
+            isEmpty ||
+            !formData?.poaAddressDetails?.[data?.name].match(
+              window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
+            )
+          );
+        }))
+  ) {
+    setAddressError({ show: true, message: "CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT" });
+    return true;
+  }
+};
+
 export const chequeDateValidation = ({ selected, formData, setError, clearErrors }) => {
   if (selected === "chequeDetails") {
     for (const key in formData) {
