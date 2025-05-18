@@ -31,7 +31,7 @@ public class CaseListSummaryRowMapper implements ResultSetExtractor<List<CaseSum
     public List<CaseSummaryList> extractData(ResultSet rs) throws SQLException, DataAccessException {
 
 
-        Map<String, CaseSummaryList> caseMap = new HashMap<>();
+        Map<String, CaseSummaryList> caseMap = new LinkedHashMap<>();
 
         while (rs.next()) {
             String caseId = rs.getString("id");
