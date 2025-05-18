@@ -9,6 +9,7 @@ import Button from "./Button";
 import Modal from "./Modal";
 import OTPInput from "./OTPInput";
 import { maskEmail } from "../Utils";
+import useNewFileStoreId from "../hooks/dristi/useNewFilestoreId";
 const TYPE_REGISTER = { type: "register" };
 const TYPE_LOGIN = { type: "login" };
 const DEFAULT_USER = "digit-user";
@@ -207,6 +208,8 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
     }
   };
 
+  const { newFilestore } = useNewFileStoreId();
+
   const searchIndividualUser = (info, tokens) => {
     DRISTIService.searchIndividualUser(
       {
@@ -216,13 +219,13 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
       },
       { tenantId: stateCode, limit: 10, offset: 0 }
     )
-      .then((individualData) => {
+      .then(async (individualData) => {
         if (Array.isArray(individualData?.Individual) && individualData?.Individual?.length > 0) {
           let permanentAddress;
           const addressArray = individualData?.Individual?.[0]?.address;
-          if(addressArray?.length > 1) {
+          if (addressArray?.length > 1) {
             permanentAddress = addressArray?.find((address) => address?.type === "PERMANENT");
-          }else{
+          } else {
             permanentAddress = addressArray?.[0];
           }
 
@@ -244,7 +247,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
           const givenName = individualData?.Individual?.[0]?.name?.givenName || "";
           const otherNames = individualData?.Individual?.[0]?.name?.otherNames || "";
           const familyName = individualData?.Individual?.[0]?.name?.familyName || "";
-
+          const newIndividualFilestoreId = await newFilestore(tenantId, identifierIdDetails?.fileStoreId || "", identifierIdDetails?.filename);
           const data = {
             "addressDetails-select": {
               pincode: pincode,
@@ -288,7 +291,13 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
                 individualId: individualData?.Individual?.[0]?.individualId,
                 userUuid: individualData?.Individual?.[0]?.userUuid,
                 document: identifierIdDetails?.fileStoreId
-                  ? [{ fileName: idType, fileStore: identifierIdDetails?.fileStoreId, documentName: identifierIdDetails?.filename }]
+                  ? [
+                      {
+                        fileName: idType,
+                        fileStore: newIndividualFilestoreId?.fileStoreId || identifierIdDetails?.fileStoreId,
+                        documentName: identifierIdDetails?.filename,
+                      },
+                    ]
                   : null,
                 ...(config?.key === "poaVerification"
                   ? {

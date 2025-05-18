@@ -401,6 +401,17 @@ const ComplainantSignature = ({ path }) => {
     setLoader(true);
     setEditCaseModal(false);
     try {
+      let tempDocs = caseDetails?.documents?.map((doc) =>
+        doc?.documentType === "case.complaint.signed" || doc?.documentType === "case.complaint.unsigned" ? { ...doc, isActive: false } : doc
+      );
+      const isSignedPresent = caseDetails?.documents?.some((doc) => doc?.fileStore === signatureDocumentId);
+      if (signatureDocumentId && !isSignedPresent) {
+        tempDocs.push({
+          documentType: "signedCaseDocument",
+          fileStore: signatureDocumentId,
+          isActive: false,
+        });
+      }
       await DRISTIService.caseUpdateService(
         {
           cases: {
@@ -409,9 +420,7 @@ const ComplainantSignature = ({ path }) => {
               ...caseDetails?.additionalDetails,
               signedCaseDocument: null,
             },
-            documents: caseDetails?.documents?.filter(
-              (doc) => doc?.documentType !== "case.complaint.signed" && doc?.documentType !== "case.complaint.unsigned"
-            ),
+            documents: tempDocs,
             workflow: {
               ...caseDetails?.workflow,
               action: complainantWorkflowACTION.EDIT_CASE,
