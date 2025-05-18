@@ -223,9 +223,9 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
         if (Array.isArray(individualData?.Individual) && individualData?.Individual?.length > 0) {
           let permanentAddress;
           const addressArray = individualData?.Individual?.[0]?.address;
-          if(addressArray?.length > 1) {
+          if (addressArray?.length > 1) {
             permanentAddress = addressArray?.find((address) => address?.type === "PERMANENT");
-          }else{
+          } else {
             permanentAddress = addressArray?.[0];
           }
 
@@ -294,7 +294,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
                   ? [
                       {
                         fileName: idType,
-                        fileStore: newIndividualFilestoreId?.fileStoreId || identifierIdDetails.fileStoreId,
+                        fileStore: newIndividualFilestoreId?.fileStoreId || identifierIdDetails?.fileStoreId,
                         documentName: identifierIdDetails?.filename,
                       },
                     ]
