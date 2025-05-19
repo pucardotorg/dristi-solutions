@@ -254,6 +254,15 @@
       padding: 16px !important;
       margin: 0px !important;
     }
+    .card {
+      max-width: none;
+    }
+    .popup-module-main {
+      .card {
+        max-width: none;
+        height: calc(100vh - 154px);
+      }
+    }
   }
 }
 
