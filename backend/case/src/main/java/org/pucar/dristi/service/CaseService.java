@@ -295,20 +295,19 @@ public class CaseService {
 
     public CourtCase createCase(CaseRequest body) {
         try {
-//            validator.validateCaseRegistration(body);
+            validator.validateCaseRegistration(body);
 
             enrichmentUtil.enrichCaseRegistrationOnCreate(body);
 
-//            workflowService.updateWorkflowStatus(body);
+            workflowService.updateWorkflowStatus(body);
 
-//            body.setCases(encryptionDecryptionUtil.encryptObject(body.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
+            body.setCases(encryptionDecryptionUtil.encryptObject(body.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
 
             cacheService.save(body.getCases().getTenantId() + ":" + body.getCases().getId().toString(), body.getCases());
 
             producer.push(config.getCaseCreateTopic(), body);
 
-            CourtCase cases = body.getCases();
-//            CourtCase cases = encryptionDecryptionUtil.decryptObject(body.getCases(), config.getCaseDecryptSelf(), CourtCase.class, body.getRequestInfo());
+            CourtCase cases = encryptionDecryptionUtil.decryptObject(body.getCases(), config.getCaseDecryptSelf(), CourtCase.class, body.getRequestInfo());
             cases.setAccessCode(null);
 
             return cases;
@@ -393,9 +392,9 @@ public class CaseService {
             List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(caseRequest.getCases().getFilingNumber()).caseId(String.valueOf(caseRequest.getCases().getId())).cnrNumber(caseRequest.getCases().getCnrNumber()).courtCaseNumber(caseRequest.getCases().getCourtCaseNumber()).build()), caseRequest.getRequestInfo());
 
 //            // Validate whether the application that is being requested for update indeed exists
-//            if (!validator.validateUpdateRequest(caseRequest, existingApplications.get(0).getResponseList())) {
-//                throw new CustomException(VALIDATION_ERR, "Case Application does not exist");
-//            }
+            if (!validator.validateUpdateRequest(caseRequest, existingApplications.get(0).getResponseList())) {
+                throw new CustomException(VALIDATION_ERR, "Case Application does not exist");
+            }
 
 
             List<Document> documentToDelete  = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
