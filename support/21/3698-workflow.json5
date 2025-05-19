@@ -342,6 +342,15 @@
                   "SYSTEM",
                   "SYSTEM_ADMIN"
                 ]
+              },
+              {
+                "action": "DELIVERED",
+                "nextState": "EXECUTED",
+                "roles": [
+                  "TASK_EDITOR",
+                  "SYSTEM",
+                  "SYSTEM_ADMIN"
+                ]
               }
             ]
           },
@@ -359,6 +368,15 @@
                 "nextState": "UNDELIVERED",
                 "roles": [
                   "TASK_CREATOR",
+                  "TASK_EDITOR",
+                  "SYSTEM",
+                  "SYSTEM_ADMIN"
+                ]
+              },
+              {
+                "action": "NOT_DELIVERED",
+                "nextState": "NOT_EXECUTED",
+                "roles": [
                   "TASK_EDITOR",
                   "SYSTEM",
                   "SYSTEM_ADMIN"
@@ -393,6 +411,15 @@
                   "SYSTEM",
                   "SYSTEM_ADMIN",
                   "AUTO_ESCALATE"
+                ]
+              },
+              {
+                "action": "OTHER",
+                "nextState": "OTHER",
+                "roles": [
+                  "TASK_EDITOR",
+                  "SYSTEM",
+                  "SYSTEM_ADMIN"
                 ]
               }
             ]
@@ -631,6 +658,15 @@
                   "SYSTEM",
                   "SYSTEM_ADMIN",
                   "AUTO_ESCALATE"
+                ]
+              },
+              {
+                "action": "OTHER",
+                "nextState": "OTHER",
+                "roles": [
+                  "TASK_EDITOR",
+                  "SYSTEM",
+                  "SYSTEM_ADMIN"
                 ]
               }
             ]
