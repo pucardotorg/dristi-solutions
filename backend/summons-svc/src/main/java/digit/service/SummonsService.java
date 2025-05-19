@@ -82,7 +82,7 @@ public class SummonsService {
     }
 
     private String getNoticeType(TaskDetails taskDetails) {
-        return taskDetails.getNoticeDetails()!=null ? taskDetails.getNoticeDetails().getNoticeType() : null;
+        return taskDetails.getNoticeDetails() != null ? taskDetails.getNoticeDetails().getNoticeType() : null;
     }
 
     private TaskResponse generateDocumentAndUpdateTask(TaskRequest taskRequest, String pdfTemplateKey, boolean qrCode) {
@@ -167,14 +167,23 @@ public class SummonsService {
         if (task.getTaskType().equalsIgnoreCase(SUMMON)) {
             if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED)) {
                 workflow = Workflow.builder().action("SERVED").build();
-            } else {
+            } else if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.IN_TRANSIT)) {
+                workflow = Workflow.builder().action("TRANSIT").build();
+            } else if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED_ICOPS)) {
+                workflow = Workflow.builder().action("DELIVERED").build();
+            } else if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.NOT_DELIVERED_ICOPS)) {
+                workflow = Workflow.builder().action("NOT_DELIVERED").build();
+            }else {
                 workflow = Workflow.builder().action("NOT_SERVED").build();
             }
         } else if (task.getTaskType().equalsIgnoreCase(WARRANT)) {
             if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED)) {
-                workflow = Workflow.builder().action("DELIVERED").build();
-            } else {
-                workflow = Workflow.builder().action("NOT_DELIVERED").build();
+            workflow = Workflow.builder().action("DELIVERED").build();
+            } else if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.IN_TRANSIT)) {
+                workflow = Workflow.builder().action("TRANSIT").build();
+            }
+            else {
+                workflow = Workflow.builder().action("NOT_SERVED").build();
             }
         } else if (task.getTaskType().equalsIgnoreCase(NOTICE)) {
             if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED)) {
@@ -196,7 +205,7 @@ public class SummonsService {
                 .orElse(Collections.emptyList())
                 .stream().filter(doc -> POLICE_REPORT.equals(doc.getDocumentType()))
                 .toList();
-        if(!documents.isEmpty()) {
+        if (!documents.isEmpty()) {
             createEvidenceForPoliceReport(taskRequest, documents.get(0));
         }
     }
@@ -228,7 +237,7 @@ public class SummonsService {
     }
 
     private String getFilingType(@Valid RequestInfo requestInfo, @Valid Task task) {
-        Map<String, Map<String, JSONArray>> mdmsData =  mdmsUtil.fetchMdmsData(requestInfo, task.getTenantId(), "common-masters", Collections.singletonList("FilingType"));
+        Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(requestInfo, task.getTenantId(), "common-masters", Collections.singletonList("FilingType"));
         JSONArray filingTypeArray = mdmsData.get("common-masters").get("FilingType");
         for (Object o : filingTypeArray) {
             Map<String, Object> filingType = (Map<String, Object>) o;
@@ -269,7 +278,7 @@ public class SummonsService {
     }
     private void enrichPoliceStationReport(Task task, @Valid SummonsDelivery summonsDelivery) {
         String fileStoreId = extractFileStoreId(summonsDelivery);
-        if(fileStoreId != null) {
+        if (fileStoreId != null) {
             Document document = Document.builder()
                     .fileStore(fileStoreId)
                     .documentType(POLICE_REPORT)
@@ -310,11 +319,12 @@ public class SummonsService {
                     return config.getNonBailableWarrantPdfTemplateKey();
                 } else {
                     throw new CustomException("INVALID_DOC_SUB_TYPE", "Document Sub-Type must be valid. Provided: " + docSubType);
-                }            }
+                }
+            }
             case NOTICE -> {
-                if(Objects.equals(noticeType, BNSS_NOTICE)){
+                if (Objects.equals(noticeType, BNSS_NOTICE)) {
                     return config.getTaskBnssNoticePdfTemplateKey();
-                } else if(Objects.equals(noticeType, DCA_NOTICE)) {
+                } else if (Objects.equals(noticeType, DCA_NOTICE)) {
                     return config.getTaskDcaNoticePdfTemplateKey();
                 } else {
                     return qrCode ? config.getTaskNoticeQrPdfTemplateKey() : config.getTaskNotificationTemplateKey();
@@ -330,9 +340,12 @@ public class SummonsService {
         }
 
         return switch (taskType) {
-            case SUMMON -> taskDetails.getSummonDetails() != null ? taskDetails.getSummonDetails().getDocSubType() : null;
-            case WARRANT -> taskDetails.getWarrantDetails() != null ? taskDetails.getWarrantDetails().getDocSubType() : null;
-            case NOTICE -> taskDetails.getNoticeDetails() != null ? taskDetails.getNoticeDetails().getDocSubType() : null;
+            case SUMMON ->
+                    taskDetails.getSummonDetails() != null ? taskDetails.getSummonDetails().getDocSubType() : null;
+            case WARRANT ->
+                    taskDetails.getWarrantDetails() != null ? taskDetails.getWarrantDetails().getDocSubType() : null;
+            case NOTICE ->
+                    taskDetails.getNoticeDetails() != null ? taskDetails.getNoticeDetails().getDocSubType() : null;
             default -> throw new CustomException("INVALID_TASK_TYPE", "Task Type must be valid. Provided: " + taskType);
         };
     }
