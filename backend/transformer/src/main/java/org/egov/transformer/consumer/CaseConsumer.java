@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.workflow.ProcessInstance;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.models.*;
 import org.egov.transformer.producer.TransformerProducer;
@@ -13,7 +14,6 @@ import org.egov.transformer.service.CaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
@@ -57,10 +57,12 @@ public class CaseConsumer {
         publishCase(payload, transformerProperties.getUpdateCaseTopic());
 
         try {
+            logger.info("Checking case status for enriching courtId");
             CourtCase courtCase = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseRequest>() {
             })).getCases();
+            logger.info("Current case status ::{}",courtCase.getStatus());
+
             if ("PENDING_REGISTRATION".equalsIgnoreCase(courtCase.getStatus())) {
-                logger.info("Enriching courtId :: {} for filingNumber: {} ", courtCase.getCourtId(), courtCase.getFilingNumber());
                 courtIdRepository.updateCourtIdForFilingNumber(courtCase.getCourtId(), courtCase.getFilingNumber());
             }
         } catch (Exception exception) {

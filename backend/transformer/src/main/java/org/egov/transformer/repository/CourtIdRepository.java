@@ -18,6 +18,15 @@ public class CourtIdRepository {
     
     @Transactional
     public void updateCourtIdForFilingNumber(String courtId, String filingNumber) {
+        String countQuery = "select count(*) from eg_wf_processinstance_v2 where businessid='"+filingNumber+"' AND action='VALIDATE'";
+        log.info("Final count query  :: {}", countQuery);
+        Integer count = jdbcTemplate.queryForObject(countQuery,Integer.class);
+        log.info("Instance with action VALIDATE count :: {}", count);
+        if(count>=2){
+            log.info("CourtId already updated for filingNumber {}",filingNumber);
+            return;
+        }
+        log.info("Enriching courtId :: {} for filingNumber: {} ", courtId, filingNumber);
         updateCourtIdInApplication(courtId, filingNumber);
         updateCourtIdInTask(courtId, filingNumber);
         updateCourtIdInOrders(courtId, filingNumber);
