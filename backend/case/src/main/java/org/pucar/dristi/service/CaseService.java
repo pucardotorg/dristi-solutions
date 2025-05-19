@@ -609,25 +609,29 @@ public class CaseService {
                 .orElse(null);
     }
 
-
     private List<Document> processDocumentDifferences(List<Document> updatedDocs, List<Document> existingDocs, List<Document> targetList) {
         if (existingDocs == null) {
             return Collections.emptyList();
         }
+
         Set<String> updatedFileStores = updatedDocs == null ? Collections.emptySet() :
                 updatedDocs.stream()
                         .map(Document::getFileStore)
                         .filter(Objects::nonNull)
                         .collect(Collectors.toSet());
-        return existingDocs.stream()
+
+        List<Document> removedDocuments = existingDocs.stream()
                 .filter(existingDoc -> !updatedFileStores.contains(existingDoc.getFileStore()))
-                .peek(existingDoc -> {
-                    existingDoc.setIsActive(false);
-                    if (targetList != null) {
-                        targetList.add(existingDoc);
-                    }
-                })
-                .collect(Collectors.toList());
+                .toList();
+
+        removedDocuments.forEach(doc -> {
+            doc.setIsActive(false);
+            if (targetList != null) {
+                targetList.add(doc);
+            }
+        });
+
+        return removedDocuments;
     }
 
     private <T> void filterDocuments(List<T> entities,
