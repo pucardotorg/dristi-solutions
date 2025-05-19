@@ -354,17 +354,17 @@ public class CaseService {
 
             casesList.addAll(caseCriteriaInRedis);
 
-//            casesList.forEach(caseCriteria -> {
-//                List<CourtCase> decryptedCourtCases = new ArrayList<>();
-//                caseCriteria.getResponseList().forEach(cases -> {
-//                    decryptedCourtCases.add(encryptionDecryptionUtil.decryptObject(cases, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo()));
-//                    decryptedCourtCases.forEach(
-//                            courtCase -> {
-//                                enrichAdvocateJoinedStatus(courtCase, caseCriteria.getAdvocateId());
-//                            });
-//                });
-//                caseCriteria.setResponseList(decryptedCourtCases);
-//            });
+            casesList.forEach(caseCriteria -> {
+                List<CourtCase> decryptedCourtCases = new ArrayList<>();
+                caseCriteria.getResponseList().forEach(cases -> {
+                    decryptedCourtCases.add(encryptionDecryptionUtil.decryptObject(cases, config.getCaseDecryptSelf(), CourtCase.class, caseSearchRequests.getRequestInfo()));
+                    decryptedCourtCases.forEach(
+                            courtCase -> {
+                                enrichAdvocateJoinedStatus(courtCase, caseCriteria.getAdvocateId());
+                            });
+                });
+                caseCriteria.setResponseList(decryptedCourtCases);
+            });
 
         } catch (CustomException e) {
             throw e;
