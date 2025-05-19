@@ -395,7 +395,7 @@
             "isStateUpdatable": true,
             "actions": [
               {
-                "action": "SERVED",
+                "action": "DELIVERED",
                 "nextState": "EXECUTED",
                 "roles": [
                   "TASK_EDITOR",
@@ -404,7 +404,7 @@
                 ]
               },
               {
-                "action": "NOT_SERVED",
+                "action": "NOT_DELIVERED",
                 "nextState": "NOT_EXECUTED",
                 "roles": [
                   "TASK_EDITOR",
