@@ -59,7 +59,7 @@ public class CaseConsumer {
         try {
             CourtCase courtCase = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseRequest>() {
             })).getCases();
-            if ("PENDING_ADMISSION_HEARING".equalsIgnoreCase(courtCase.getStatus())) {
+            if ("PENDING_REGISTRATION".equalsIgnoreCase(courtCase.getStatus())) {
                 logger.info("Enriching courtId :: {} for filingNumber: {} ", courtCase.getCourtId(), courtCase.getFilingNumber());
                 courtIdRepository.updateCourtIdForFilingNumber(courtCase.getCourtId(), courtCase.getFilingNumber());
             }
