@@ -268,6 +268,7 @@ const GenerateOrders = () => {
   const currentDiaryEntry = history.location?.state?.diaryEntry;
 
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
+  const courtId = localStorage.getItem("courtId");
 
   const setSelectedOrder = (orderIndex) => {
     _setSelectedOrder(orderIndex);
@@ -298,6 +299,7 @@ const GenerateOrders = () => {
       criteria: [
         {
           filingNumber: filingNumber,
+          ...(courtId && { courtId }),
         },
       ],
       tenantId,

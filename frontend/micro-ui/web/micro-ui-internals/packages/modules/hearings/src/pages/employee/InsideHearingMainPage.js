@@ -45,7 +45,7 @@ const InsideHearingMainPage = () => {
   const [witnessModalOpen, setWitnessModalOpen] = useState(false);
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState("");
   const [isItemPending, setIsItemPending] = useState(false);
-
+  const courtId = localStorage.getItem("courtId");
   const { t } = useTranslation();
 
   const onCancel = () => {
@@ -130,6 +130,7 @@ const InsideHearingMainPage = () => {
       criteria: [
         {
           filingNumber,
+          ...(courtId && userType === "employee" && { courtId }),
         },
       ],
       tenantId,

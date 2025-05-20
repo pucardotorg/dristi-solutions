@@ -19,6 +19,7 @@ import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/
 import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
+import { use } from "react";
 
 const defaultSearchValues = {
   caseSearchText: "",
@@ -58,6 +59,7 @@ const HomeView = () => {
     bulkSignOrderListLength: null,
   });
   const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles, [Digit.UserService]);
+  const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
   const isNyayMitra = roles.some((role) => role.code === "NYAY_MITRA_ROLE");
@@ -65,6 +67,7 @@ const HomeView = () => {
   const userInfo = Digit?.UserService?.getUser()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [toastMsg, setToastMsg] = useState(null);
+  const courtId = localStorage.getItem("courtId");
 
   const [config, setConfig] = useState(null);
   const { data: individualData, isLoading, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(
@@ -264,7 +267,7 @@ const HomeView = () => {
       criteria: [
         {
           ...(citizenId ? (advocateId ? { advocateId } : { litigantId: individualId }) : {}),
-          courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+          ...(courtId && userInfoType === "employee" && !isScrutiny && { courtId }),
           pagination: { offSet: 0, limit: 1 },
         },
       ],

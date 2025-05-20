@@ -28,6 +28,7 @@ function PublishedOrderModal({
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
   const judgeId = localStorage.getItem("judgeId");
+  const courtId = localStorage.getItem("courtId");
 
   const { documents, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments();
   const [loading, setLoading] = useState(false);
@@ -48,6 +49,7 @@ function PublishedOrderModal({
       criteria: [
         {
           filingNumber: order?.filingNumber,
+          ...(courtId && !isCitizen && { courtId }),
         },
       ],
       tenantId,

@@ -414,6 +414,7 @@ const TasksComponent = ({
           criteria: [
             {
               filingNumber: pendingTask?.filingNumber,
+              ...(pendingTask?.courtId && { courtId: pendingTask?.courtId }),
             },
           ],
           tenantId,

@@ -110,21 +110,6 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
   const [orderLoading, setOrderLoading] = useState(false);
   const userType = Digit.UserService.getType();
 
-  const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
-    {
-      criteria: [
-        {
-          filingNumber: filingNumber,
-        },
-      ],
-      tenantId,
-    },
-    {},
-    `dristi-${filingNumber}`,
-    filingNumber,
-    Boolean(filingNumber)
-  );
-
   const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
     {
       hearing: { tenantId },

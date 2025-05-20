@@ -40,12 +40,14 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
   const [isApiCalled, setIsApiCalled] = useState(false);
 
   const [{ modalType, isOpen }, setConfirmModal] = useState({ modalType: null, isOpen: false });
+  const courtId = localStorage.getItem("courtId");
 
   const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
     {
       criteria: [
         {
           filingNumber: filingNumber,
+          ...(courtId && !isCitizen && { courtId }),
         },
       ],
       tenantId,

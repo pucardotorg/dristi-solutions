@@ -698,6 +698,7 @@ const AdmittedCases = () => {
                 criteria: [
                   {
                     filingNumber: filingNumber,
+                    ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
                   },
                 ],
               },

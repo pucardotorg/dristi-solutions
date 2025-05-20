@@ -169,6 +169,7 @@ function ScheduleHearing({
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
+  const courtId = localStorage.getItem("courtId");
   const { t } = useTranslation();
   const history = useHistory();
   const shortCaseInfo = useMemo(() => {
@@ -190,6 +191,7 @@ function ScheduleHearing({
       criteria: [
         {
           filingNumber: filingNumber,
+          ...(courtId && userInfoType === "employee" && { courtId }),
         },
       ],
       tenantId,
