@@ -401,9 +401,7 @@ const ComplainantSignature = ({ path }) => {
     setLoader(true);
     setEditCaseModal(false);
     try {
-      let tempDocs = caseDetails?.documents?.map((doc) =>
-        doc?.documentType === "case.complaint.signed" || doc?.documentType === "case.complaint.unsigned" ? { ...doc, isActive: false } : doc
-      );
+      let tempDocs = caseDetails?.documents;
       const isSignedPresent = caseDetails?.documents?.some((doc) => doc?.fileStore === signatureDocumentId);
       if (signatureDocumentId && !isSignedPresent) {
         tempDocs.push({
