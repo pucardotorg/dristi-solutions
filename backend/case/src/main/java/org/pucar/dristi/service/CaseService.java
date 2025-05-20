@@ -539,14 +539,36 @@ public class CaseService {
             throw new IllegalArgumentException("Both updateCase and existingCase must not be null");
         }
 
-        Set<Document> documentsToDelete = new HashSet<>();
-        documentsToDelete.addAll(processDocumentDifferences(
-                updateCase.getDocuments(), existingCase.getDocuments(), updateCase.getDocuments()));
+        Map<String, Document> updatedDocumentsMap = toFileStoreMap(updateCase.getDocuments());
+        Map<String, Document> existingDocumentsMap = toFileStoreMap(existingCase.getDocuments());
+
+        // Collect documents from existingCase that are not present in updateCase
+        Set<String> updatedFileStoreIds = updatedDocumentsMap.keySet();
+        List<Document> documentsToDelete = existingDocumentsMap.entrySet().stream()
+                .filter(entry -> !updatedFileStoreIds.contains(entry.getKey()))
+                .map(Map.Entry::getValue)
+                .collect(Collectors.toList());
+
         documentsToDelete.addAll(extractLitigantDocuments(updateCase, existingCase));
         documentsToDelete.addAll(extractRepresentativeDocuments(updateCase, existingCase));
         documentsToDelete.addAll(extractLinkedCasesDocuments(updateCase, existingCase));
-        return new ArrayList<>(documentsToDelete);
+
+        // Remove duplicates using fileStoreId
+        Map<String, Document> uniqueByFileStore = documentsToDelete.stream()
+                .collect(Collectors.toMap(Document::getFileStore, doc -> doc, (d1, d2) -> d1));
+
+        return List.copyOf(uniqueByFileStore.values());
     }
+
+    private Map<String, Document> toFileStoreMap(List<Document> documents) {
+        if (documents == null) {
+            return Collections.emptyMap();
+        }
+        return documents.stream()
+                .filter(doc -> doc.getFileStore() != null)
+                .collect(Collectors.toMap(Document::getFileStore, doc -> doc, (d1, d2) -> d1));
+    }
+
 
 
     private List<Document> extractLitigantDocuments(CourtCase updateCase, CourtCase existingCase) {
@@ -574,7 +596,10 @@ public class CaseService {
 
                     if (existingRep.getRepresenting() != null) {
                         for (Party existingParty : existingRep.getRepresenting()) {
-                            Party updateParty = findById(updateRep.getRepresenting(), existingParty.getId(), Party::getId);
+                            Party updateParty = findById(
+                                    Optional.ofNullable(updateRep.getRepresenting()).orElse(Collections.emptyList()),
+                                    existingParty.getId(),
+                                    Party::getId);
                             if (updateParty != null) {
                                 documentsToDelete.addAll(processDocumentDifferences(
                                         updateParty.getDocuments(), existingParty.getDocuments(), updateParty.getDocuments()));
