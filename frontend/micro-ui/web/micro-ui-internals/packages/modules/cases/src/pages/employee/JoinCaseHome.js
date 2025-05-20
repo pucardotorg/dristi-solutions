@@ -47,7 +47,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
 
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+  const courtId = localStorage.getItem("courtId");
 
   const [show, setShow] = useState(false);
 
@@ -141,7 +141,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             {
               criteria: {
                 filingNumber: caseNumber,
-                courtId,
+                ...(courtId && { courtId }),
                 pagination: {
                   limit: 5,
                   offSet: 0,

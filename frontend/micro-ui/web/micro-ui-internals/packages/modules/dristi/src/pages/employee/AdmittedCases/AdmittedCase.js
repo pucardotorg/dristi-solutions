@@ -222,6 +222,7 @@ const AdmittedCases = () => {
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const historyCaseData = location?.state?.caseData;
   const historyOrderData = location?.state?.orderData;
+  const courtId = localStorage.getItem("courtId");
   const reqEvidenceUpdate = {
     url: Urls.dristi.evidenceUpdate,
     params: {},
@@ -237,7 +238,7 @@ const AdmittedCases = () => {
     {
       criteria: {
         caseId: caseId,
-        courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+        ...(courtId && { courtId }),
       },
       tenantId,
     },
