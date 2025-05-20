@@ -52,6 +52,6 @@
     //sql script to be exceuted
     //update dristi_cases set substage='ABC' where substage='COGNIZANCE';
     //update dristi_cases set substage='COGNIZANCE' where substage='REGISTRATION';
-    //update dristi_caxcsses set substage='REGISTRATION' where substage='ABC';
+    //update dristi_cases set substage='REGISTRATION' where substage='ABC';
   }
   
