@@ -68,6 +68,7 @@ function BulkESignView() {
   const { orderNumber, deleteOrder } = Digit.Hooks.useQueryParams();
   const [showBulkSignAllModal, setShowBulkSignAllModal] = useState(false);
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
+  const courtId = localStorage.getItem("courtId");
 
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
@@ -110,6 +111,7 @@ function BulkESignView() {
           entityType: "Order",
           tenantId: tenantId,
           status: OrderWorkflowState.PENDING_BULK_E_SIGN,
+          ...(courtId && { courtId }),
         },
       },
     },
@@ -165,7 +167,7 @@ function BulkESignView() {
     const setOrderFunc = async (order) => {
       if (order?.businessObject?.orderNotification?.entityType === "Order") {
         const orderResponse = await ordersService.searchOrder(
-          { criteria: { tenantId: tenantId, orderNumber: order?.businessObject?.orderNotification?.id } },
+          { criteria: { tenantId: tenantId, orderNumber: order?.businessObject?.orderNotification?.id, ...(courtId && { courtId }) } },
           { tenantId }
         );
         order = orderResponse?.list?.[0];

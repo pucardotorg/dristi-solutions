@@ -620,7 +620,14 @@ const AdmittedCases = () => {
       } else {
         if (order?.businessObject?.orderNotification?.entityType === "Order") {
           const orderResponse = await ordersService.searchOrder(
-            { criteria: { tenantId: tenantId, filingNumber: filingNumber, orderNumber: order?.businessObject?.orderNotification?.id } },
+            {
+              criteria: {
+                tenantId: tenantId,
+                filingNumber: filingNumber,
+                orderNumber: order?.businessObject?.orderNotification?.id,
+                ...(caseCourtId && { courtId: caseCourtId }),
+              },
+            },
             { tenantId }
           );
           order = orderResponse?.list?.[0];
@@ -2088,7 +2095,14 @@ const AdmittedCases = () => {
             list: [orderData],
           } = await Digit.ordersService.searchOrder({
             tenantId,
-            criteria: { filingNumber, applicationNumber: "", cnrNumber, status: OrderWorkflowState.DRAFT_IN_PROGRESS, hearingNumber: hearingNumber },
+            criteria: {
+              filingNumber,
+              applicationNumber: "",
+              cnrNumber,
+              status: OrderWorkflowState.DRAFT_IN_PROGRESS,
+              hearingNumber: hearingNumber,
+              ...(caseCourtId && { courtId: caseCourtId }),
+            },
             pagination: { limit: 1, offset: 0 },
           });
           if (

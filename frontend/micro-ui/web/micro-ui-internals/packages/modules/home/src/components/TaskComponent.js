@@ -154,14 +154,14 @@ const TasksComponent = ({
           filingNumber,
           tenantId,
           orderNumber,
-          courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52", //need to check
+          ...(courtId && { courtId }),
         },
         tenantId,
       });
       setSearchCaseLoading(false);
       return orderData?.list?.[0] || {};
     },
-    [filingNumber, tenantId]
+    [filingNumber, tenantId, courtId]
   );
 
   const handleReviewOrder = useCallback(
