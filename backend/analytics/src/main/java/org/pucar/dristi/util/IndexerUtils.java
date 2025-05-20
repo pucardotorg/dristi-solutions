@@ -71,9 +71,11 @@ public class IndexerUtils {
 
     private final Clock clock;
 
+    private final HrmsUtil hrmsUtil;
+
 
     @Autowired
-    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, Clock clock) {
+    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, Clock clock, HrmsUtil hrmsUtil) {
         this.restTemplate = restTemplate;
         this.config = config;
         this.caseUtil = caseUtil;
@@ -87,6 +89,7 @@ public class IndexerUtils {
         this.individualService = individualService;
         this.advocateUtil = advocateUtil;
         this.clock = clock;
+        this.hrmsUtil = hrmsUtil;
     }
 
     public static boolean isNullOrEmpty(String str) {
@@ -167,6 +170,7 @@ public class IndexerUtils {
         String caseTitle = pendingTask.getCaseTitle();
         String additionalDetails = "{}";
         String screenType = pendingTask.getScreenType();
+        String courtId = pendingTask.getCourtId();
         try {
             additionalDetails = mapper.writeValueAsString(pendingTask.getAdditionalDetails());
         } catch (Exception e) {
@@ -177,7 +181,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId
         );
     }
 
@@ -217,6 +221,7 @@ public class IndexerUtils {
         isCompleted = isNullOrEmpty(name);
         isGeneric = details.containsKey("isGeneric");
         String actors = details.get("actors");
+        String courtId = getCourtId(requestInfo);
 
         if (isGeneric) {
             log.info("creating pending task from generic task");
@@ -289,8 +294,19 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId
         );
+    }
+
+    private String getCourtId(JSONObject requestInfo) {
+        try {
+            RequestInfo requestInfoBody = mapper.convertValue(requestInfo.toString(), RequestInfo.class);
+            return hrmsUtil.getCourtId(requestInfoBody);
+        } catch (Exception e) {
+            log.error("Error occurred while getting court id: {}", e.toString());
+        }
+        return null;
+
     }
 
 	public static List<String> extractIndividualIds(JsonNode rootNode) {
