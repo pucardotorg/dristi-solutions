@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Modal, CloseSvg, Button, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import { useHistory } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -8,6 +8,7 @@ import { hearingService } from "../../hooks/services";
 import { Urls } from "../../hooks/services/Urls";
 import useSearchOrdersService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersService";
 import { summonsConfig } from "../../configs/SummonsNWarrantConfig";
+import ReviewNoticeModal from "@egovernments/digit-ui-module-orders/src/components/ReviewNoticeModal";
 
 const modalPopup = {
   height: "72%",
@@ -109,6 +110,8 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
   const [itemId, setItemId] = useState(null);
   const [orderLoading, setOrderLoading] = useState(false);
   const userType = Digit.UserService.getType();
+  const [showNoticeModal, setshowNoticeModal] = useState(false);
+  const [rowData, setRowData] = useState({});
 
   const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
     {
@@ -255,12 +258,25 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     return orderList?.find((item) => orderType === item?.orderType)?.orderDetails?.parties;
   };
 
-  const { respondentName, partyType } = useMemo(() => {
-    const partyData = getOrderPartyData(orderType, orderList);
-    const respondentName = partyData?.[0]?.partyName || "Unknown";
-    const partyType = partyData?.[0]?.partyType || "Respondent";
-    return { respondentName, partyType };
-  }, [orderList, orderType]);
+  const { data: tasksData, isLoading: isTaskLoading } = Digit.Hooks.hearings.useGetTaskList(
+    {
+      criteria: {
+        tenantId: tenantId,
+        cnrNumber: taskCnrNumber || cnrNumber,
+      },
+    },
+    {},
+    filingNumber,
+    Boolean(filingNumber)
+  );
+
+  const isButtonVisible = useMemo(() => {
+    if (!tasksData || !orderId) return false;
+
+    const filteredTasks = tasksData?.list?.filter((task) => task?.orderId === orderId);
+
+    return filteredTasks?.some((task) => task?.status === "UNDELIVERED" || task?.status === "NOT_EXECUTED");
+  }, [orderId, tasksData]);
 
   const CloseButton = (props) => {
     return (
@@ -269,6 +285,10 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
       </div>
     );
   };
+
+  const handleCloseNoticeModal = useCallback(() => {
+    setshowNoticeModal(false);
+  }, []);
 
   const caseInfo = useMemo(() => {
     return (
@@ -303,116 +323,135 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
   }
 
   return (
-    <Modal
-      isOpen={true}
-      headerBarEnd={<CloseButton onClick={handleCloseModal} />}
-      popupStyles={modalPopup}
-      popupModuleActionBarStyles={{
-        display: "none",
-      }}
-      formId="modal-action"
-      headerBarMain={<ModalHeading label={t("NOTICE_PROCESS_STATUS")} />}
-      popupModuleMianStyles={{
-        height: "calc(100% - 90px)",
-        overFlowY: "auto",
-        overflowX: "hidden",
-      }}
-    >
-      <div className="summon-modal" style={{ width: "100%" }}>
-        <div className="rounds-of-delivery" style={{ cursor: "pointer", marginLeft: "17px" }}>
-          {orderListFiltered.map((item, index) => (
-            <div
-              key={index}
-              onClick={() => {
-                setActiveIndex({ partyIndex: index, orderIndex: 0 });
-                setOrderLoading(true);
-                setOrderList(item?.ordersList);
-                setOrderNumber(item?.ordersList?.[0]?.orderNumber);
-                setOrderType(item?.ordersList?.[0]?.orderType);
-                setOrderId(item?.ordersList?.[0]?.id);
-                setItemId(item?.ordersList?.[0]?.itemId);
-                setTimeout(() => {
-                  setOrderLoading((prev) => !prev);
-                }, 0);
-              }}
-              className={`round-item ${index === activeIndex?.partyIndex ? "active" : ""}`}
-            >
-              <div style={{ display: "flex", flexDirection: "column" }}>
-                <span>{removeAccusedSuffix(item?.partyName)}</span>
-                <span style={{ fontWeight: "400" }}>{item?.partyType}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-        {caseInfo}
-        <h1 className="heading-m">{t("ROUND_OF_DELIEVERY")}</h1>
-        <div className="rounds-of-delivery" style={{ cursor: "pointer", marginLeft: "17px" }}>
-          {orderList.map((item, index) => (
-            <div
-              key={index}
-              onClick={() => {
-                setActiveIndex({ ...activeIndex, orderIndex: index });
-                setOrderLoading(true);
-                setOrderNumber(item?.orderNumber);
-                setOrderType(item?.orderType);
-                setOrderId(item?.id);
-                setItemId(item?.itemId);
-                setTimeout(() => {
-                  setOrderLoading((prev) => !prev);
-                }, 0);
-              }}
-              className={`round-item ${index === activeIndex?.orderIndex ? "active" : ""}`}
-            >
-              <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "auto", whiteSpace: "nowrap" }}>
-                <span>{item?.displayTitle || `${orderList?.length - index} (${item?.orderType})`}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {orderList?.[activeIndex?.orderIndex] && (
-          <div className="case-info" style={{ height: "auto" }}>
-            <div className="case-info-column" style={{ justifyContent: "flex-start", gap: "10px" }}>
-              <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
-                <span>{t("ORDER_ISSUED_ON")}</span>
-                <span>{formatDate(new Date(orderList[activeIndex.orderIndex]?.createdDate), "DD-MM-YYYY")}</span>
-              </div>
-              <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
-                <span style={{ minWidth: "50%" }}>{t("HEARING_DATE")}</span>
-                <span>{formatDate(new Date(orderList[activeIndex.orderIndex]?.orderDetails?.hearingDate), "DD-MM-YYYY")}</span>
-              </div>
-            </div>
-            <div style={{ marginLeft: "10px" }}>
-              <a
-                href={`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`}
-                className="case-info-link"
-                style={{ color: "black" }}
+    <React.Fragment>
+      <Modal
+        isOpen={true}
+        headerBarEnd={<CloseButton onClick={handleCloseModal} />}
+        popupStyles={modalPopup}
+        popupModuleActionBarStyles={{
+          display: "none",
+        }}
+        formId="modal-action"
+        headerBarMain={<ModalHeading label={t("NOTICE_PROCESS_STATUS")} />}
+        popupModuleMianStyles={{
+          height: "calc(100% - 90px)",
+          overFlowY: "auto",
+          overflowX: "hidden",
+        }}
+      >
+        <div className="summon-modal" style={{ width: "100%" }}>
+          <div className="rounds-of-delivery" style={{ cursor: "pointer", marginLeft: "17px" }}>
+            {orderListFiltered.map((item, index) => (
+              <div
+                key={index}
+                onClick={() => {
+                  setActiveIndex({ partyIndex: index, orderIndex: 0 });
+                  setOrderLoading(true);
+                  setOrderList(item?.ordersList);
+                  setOrderNumber(item?.ordersList?.[0]?.orderNumber);
+                  setOrderType(item?.ordersList?.[0]?.orderType);
+                  setOrderId(item?.ordersList?.[0]?.id);
+                  setItemId(item?.ordersList?.[0]?.itemId);
+                  setTimeout(() => {
+                    setOrderLoading((prev) => !prev);
+                  }, 0);
+                }}
+                className={`round-item ${index === activeIndex?.partyIndex ? "active" : ""}`}
               >
-                {t("View Order")}
-              </a>
-            </div>
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  <span>{removeAccusedSuffix(item?.partyName)}</span>
+                  <span style={{ fontWeight: "400" }}>{item?.partyType}</span>
+                </div>
+              </div>
+            ))}
           </div>
-        )}
+          {caseInfo}
+          <h1 className="heading-m">{t("ROUND_OF_DELIEVERY")}</h1>
+          <div className="rounds-of-delivery" style={{ cursor: "pointer", marginLeft: "17px" }}>
+            {orderList.map((item, index) => (
+              <div
+                key={index}
+                onClick={() => {
+                  setActiveIndex({ ...activeIndex, orderIndex: index });
+                  setOrderLoading(true);
+                  setOrderNumber(item?.orderNumber);
+                  setOrderType(item?.orderType);
+                  setOrderId(item?.id);
+                  setItemId(item?.itemId);
+                  setTimeout(() => {
+                    setOrderLoading((prev) => !prev);
+                  }, 0);
+                }}
+                className={`round-item ${index === activeIndex?.orderIndex ? "active" : ""}`}
+              >
+                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "auto", whiteSpace: "nowrap" }}>
+                  <span>{item?.displayTitle || `${orderList?.length - index} (${item?.orderType})`}</span>
+                </div>
+              </div>
+            ))}
+          </div>
 
-        {orderNumber && !orderLoading && config && <InboxSearchComposer configs={config} defaultValues={filingNumber}></InboxSearchComposer>}
-        {currentHearingId && userType === "employee" && (
-          <div className="action-buttons" style={actionButtonStyle}>
-            <Button
-              label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : orderType === "NOTICE" ? "Notice" : "Warrant"}`)}
-              onButtonClick={() => {
-                handleNavigate();
+          {orderList?.[activeIndex?.orderIndex] && (
+            <div className="case-info" style={{ height: "auto" }}>
+              <div className="case-info-column" style={{ justifyContent: "flex-start", gap: "10px" }}>
+                <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
+                  <span>{t("ORDER_ISSUED_ON")}</span>
+                  <span>{formatDate(new Date(orderList[activeIndex.orderIndex]?.createdDate), "DD-MM-YYYY")}</span>
+                </div>
+                <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
+                  <span style={{ minWidth: "50%" }}>{t("HEARING_DATE")}</span>
+                  <span>{formatDate(new Date(orderList[activeIndex.orderIndex]?.orderDetails?.hearingDate), "DD-MM-YYYY")}</span>
+                </div>
+              </div>
+              <div style={{ marginLeft: "10px" }}>
+                <a
+                  href={`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`}
+                  className="case-info-link"
+                  style={{ color: "black" }}
+                >
+                  {t("View Order")}
+                </a>
+              </div>
+            </div>
+          )}
+
+          {orderNumber && !orderLoading && config && (
+            <InboxSearchComposer
+              configs={config}
+              defaultValues={filingNumber}
+              additionalConfig={{
+                resultsTable: {
+                  onClickRow: (props) => {
+                    if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED"].includes(props?.original?.status)) {
+                      setRowData(props?.original);
+                      setshowNoticeModal(true);
+                      return;
+                    }
+                  },
+                },
               }}
-              className="action-button"
-              style={{
-                boxShadow: "none",
-                padding: "16px 24px",
-              }}
-              textStyles={headingStyle}
             />
-          </div>
-        )}
-      </div>
-    </Modal>
+          )}
+          {isButtonVisible && currentHearingId && userType === "employee" && (
+            <div className="action-buttons" style={actionButtonStyle}>
+              <Button
+                label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : orderType === "NOTICE" ? "Notice" : "Warrant"}`)}
+                onButtonClick={() => {
+                  handleNavigate();
+                }}
+                className="action-button"
+                style={{
+                  boxShadow: "none",
+                  padding: "16px 24px",
+                }}
+                textStyles={headingStyle}
+              />
+            </div>
+          )}
+        </div>
+      </Modal>
+      {showNoticeModal && <ReviewNoticeModal rowData={rowData} handleCloseNoticeModal={handleCloseNoticeModal} t={t} />}
+    </React.Fragment>
   );
 };
 
