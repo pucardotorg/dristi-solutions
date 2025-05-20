@@ -85,7 +85,7 @@ const TaskComponentCalander = ({ isLitigant, uuid, filingNumber, inCase = false 
       {
         tenantId,
         Criteria: {
-          courtId: window?.globalConfigs?.getConfig("COURT_ID"),
+          courtId: localStorage.getItem("courtId"),
         },
       },
       {},

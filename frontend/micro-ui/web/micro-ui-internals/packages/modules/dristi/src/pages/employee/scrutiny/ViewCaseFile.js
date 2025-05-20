@@ -17,7 +17,7 @@ import Button from "../../../components/Button";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
-const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID"; //need to change in global config
 const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
 const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
 

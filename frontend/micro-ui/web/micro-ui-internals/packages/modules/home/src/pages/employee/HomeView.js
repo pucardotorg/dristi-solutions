@@ -80,22 +80,20 @@ const HomeView = () => {
   //    - If these values exist, delete them from session storage to ensure they are not reused.
   // The `setBreadCrumbs` function is used to dynamically update the breadcrumb state.
   const { breadCrumbs, setBreadCrumbs } = useContext(BreadCrumbContext);
-    useEffect(() => {
-    const homeRoute = breadCrumbs?.routes.find(route => route.page === pages.HOMEPAGE);
+  useEffect(() => {
+    const homeRoute = breadCrumbs?.routes.find((route) => route.page === pages.HOMEPAGE);
     const newUrl = pathname + search + hash;
     if (homeRoute && homeRoute.url !== newUrl) {
       setBreadCrumbs((initial) => ({
         ...initial,
-        routes: initial.routes.map(route =>
-          route.page === pages.HOMEPAGE ? { ...route, url: newUrl } : route
-        )
+        routes: initial.routes.map((route) => (route.page === pages.HOMEPAGE ? { ...route, url: newUrl } : route)),
       }));
     }
-    if(window.Digit.SessionStorage.get("BreadCrumb.filingNumber")){
-      window.Digit.SessionStorage.del("BreadCrumb.filingNumber")
+    if (window.Digit.SessionStorage.get("BreadCrumb.filingNumber")) {
+      window.Digit.SessionStorage.del("BreadCrumb.filingNumber");
     }
-    if(window.Digit.SessionStorage.get("BreadCrumb.caseId")){
-      window.Digit.SessionStorage.del("BreadCrumb.caseId")
+    if (window.Digit.SessionStorage.get("BreadCrumb.caseId")) {
+      window.Digit.SessionStorage.del("BreadCrumb.caseId");
     }
   }, [pathname, search, hash]);
 

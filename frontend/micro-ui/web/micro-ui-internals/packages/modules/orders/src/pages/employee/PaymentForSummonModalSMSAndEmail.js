@@ -204,6 +204,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       criteria: {
         tenantId: tenantId,
         taskNumber: taskNumber,
+        ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
       },
     },
     {},

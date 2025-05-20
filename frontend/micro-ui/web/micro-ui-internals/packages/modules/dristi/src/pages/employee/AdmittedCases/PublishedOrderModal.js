@@ -27,7 +27,7 @@ function PublishedOrderModal({
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
-  const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+  const judgeId = localStorage.getItem("judgeId");
 
   const { documents, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments();
   const [loading, setLoading] = useState(false);

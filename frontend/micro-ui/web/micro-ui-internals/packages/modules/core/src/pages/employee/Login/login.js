@@ -4,6 +4,8 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useHistory } from "react-router-dom";
 import Background from "../../../components/Background";
 import Header from "../../../components/Header";
+import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
+import Axios from "axios";
 
 /* set employee details to enable backward compatiable */
 const setEmployeeDetail = (userObject, token) => {
@@ -85,11 +87,40 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
     try {
       const { UserRequest: info, ...tokens } = await Digit.UserService.authenticate(requestData);
       Digit.SessionStorage.set("Employee.tenantId", info?.tenantId);
+      const employee = await Axios.post(
+        Urls.dristi.searchEmployee,
+        {
+          RequestInfo: {
+            authToken: tokens?.access_token,
+            userInfo: info,
+            msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+            apiId: "Rainmaker",
+          },
+        },
+        {
+          params: {
+            tenantId: info?.tenantId,
+            uuids: info?.uuid,
+          },
+        }
+      );
+
+      const employeeData = employee?.data?.Employees;
+      if (!employeeData || employeeData?.length === 0) {
+        throw new Error(t("ES_ERROR_EMPLOYEE_NOT_FOUND"));
+      }
+      const assignments = employeeData?.[0]?.assignments?.find((assignment) => assignment?.courtroom === data?.courtroom?.code);
+      if (!assignments) {
+        throw new Error(t("ES_ERROR_COURTROOM_NOT_ASSIGNED"));
+      }
+      localStorage.setItem("courtId", assignments?.courtroom);
+      localStorage.setItem("judgeId", employee?.data?.Employees?.[0]?.code);
       setUser({ info, ...tokens });
     } catch (err) {
       setShowToast(
         err?.response?.data?.error_description ||
           (err?.message === "ES_ERROR_USER_NOT_PERMITTED" && t("ES_ERROR_USER_NOT_PERMITTED")) ||
+          err?.response?.data?.Errors[0]?.message ||
           t("INVALID_LOGIN_CREDENTIALS")
       );
       setTimeout(closeToast, 5000);

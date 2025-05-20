@@ -363,7 +363,7 @@ function ScheduleHearing({
         });
     } else if (status && status === "OPTOUT") {
       const individualId = await fetchBasicUserInfo();
-      const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+      const judgeId = localStorage.getItem("judgeId");
 
       setIsSubmitDisabled(true);
       HomeService.customApiService(

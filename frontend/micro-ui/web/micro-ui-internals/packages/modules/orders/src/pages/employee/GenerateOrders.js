@@ -285,29 +285,39 @@ const GenerateOrders = () => {
   const { breadCrumbs, setBreadCrumbs } = useContext(BreadCrumbContext);
   useEffect(() => {
     let constructViewCaseUrl;
-    const orderRoute = breadCrumbs?.routes.find(route => route.page === pages.ORDERS);
-    const viewCaseRoute = breadCrumbs?.routes.find(route => route.page === pages.VIEWCASE);
-    const homeRoute = breadCrumbs?.routes.find(route => route.page === pages.HOMEPAGE);
+    const orderRoute = breadCrumbs?.routes.find((route) => route.page === pages.ORDERS);
+    const viewCaseRoute = breadCrumbs?.routes.find((route) => route.page === pages.VIEWCASE);
+    const homeRoute = breadCrumbs?.routes.find((route) => route.page === pages.HOMEPAGE);
     if (!viewCaseRoute.url) {
       if (!(window.Digit.SessionStorage.get("BreadCrumb.filingNumber") && window.Digit.SessionStorage.get("BreadCrumb.caseId"))) {
-        window.location.href = homeRoute?.url || '/ui/employee/home/home-pending-task';
-      }
-      else {
-        constructViewCaseUrl = `/ui/employee/dristi/home/view-case?caseId=${window.Digit.SessionStorage.get("BreadCrumb.caseId")}&filingNumber=${window.Digit.SessionStorage.get("BreadCrumb.filingNumber")}&tab=Overview`
+        window.location.href = homeRoute?.url || "/ui/employee/home/home-pending-task";
+      } else {
+        constructViewCaseUrl = `/ui/employee/dristi/home/view-case?caseId=${window.Digit.SessionStorage.get(
+          "BreadCrumb.caseId"
+        )}&filingNumber=${window.Digit.SessionStorage.get("BreadCrumb.filingNumber")}&tab=Overview`;
       }
     }
     const newUrl = pathname + search + hash;
     if (orderRoute && orderRoute.url !== newUrl) {
       setBreadCrumbs((initial) => ({
         ...initial,
-        routes: initial.routes.map(route =>
-          route.page === pages.ORDERS ? { ...route, url: newUrl } : route.page === pages.VIEWCASE ? route.url ? route : { ...route, url: constructViewCaseUrl } : route.page === pages.HOMEPAGE ? homeRoute.url ? route : { ...route, url: '/ui/employee/home/home-pending-task' } : route
-        )
+        routes: initial.routes.map((route) =>
+          route.page === pages.ORDERS
+            ? { ...route, url: newUrl }
+            : route.page === pages.VIEWCASE
+            ? route.url
+              ? route
+              : { ...route, url: constructViewCaseUrl }
+            : route.page === pages.HOMEPAGE
+            ? homeRoute.url
+              ? route
+              : { ...route, url: "/ui/employee/home/home-pending-task" }
+            : route
+        ),
       }));
     }
-
   }, [pathname, search, hash]);
-  
+
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
 
   const setSelectedOrder = (orderIndex) => {
@@ -3454,6 +3464,7 @@ const GenerateOrders = () => {
             criteria: {
               tenantId: tenantId,
               taskNumber: additionalDetails?.taskNumber,
+              ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
             },
           });
           if (["APPROVED", "REJECTED"].includes(taskSearch?.list?.[0]?.status)) {

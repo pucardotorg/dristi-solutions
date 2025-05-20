@@ -279,7 +279,7 @@ function ScheduleHearing({
   const handleClose = () => {
     history.goBack();
   };
-  const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+  const judgeId = localStorage.getItem("judgeId");
 
   const handleSubmit = async (data) => {
     if (status !== "OPTOUT") {

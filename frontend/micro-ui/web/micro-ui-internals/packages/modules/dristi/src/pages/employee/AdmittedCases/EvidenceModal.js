@@ -555,7 +555,7 @@ const EvidenceModal = ({
         {}
       );
       const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
-      const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+      const judgeId = localStorage.getItem("judgeId");
       let evidenceReqBody = {};
       let evidence = {};
       evidenceReqBody = {

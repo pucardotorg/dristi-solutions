@@ -56,11 +56,19 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
     Boolean(filingNumber)
   );
 
+  const caseDetails = useMemo(
+    () => ({
+      ...caseData?.criteria?.[0]?.responseList?.[0],
+    }),
+    [caseData]
+  );
+
   const { data: tasksData } = Digit.Hooks.hearings.useGetTaskList(
     {
       criteria: {
         tenantId: tenantId,
         taskNumber: taskNumber,
+        ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
       },
     },
     {},
@@ -114,13 +122,6 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
       }
     },
     [task, tenantId, setPendingTaskActionModals, toast, t, refetch]
-  );
-
-  const caseDetails = useMemo(
-    () => ({
-      ...caseData?.criteria?.[0]?.responseList?.[0],
-    }),
-    [caseData]
   );
 
   const replaceAdvocateOrderCreate = async (type) => {

@@ -134,7 +134,7 @@ const TasksComponent = ({
           filingNumber,
           tenantId,
           applicationNumber,
-          courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52'
+          courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52", //need to check
         },
         tenantId,
       });
@@ -153,7 +153,7 @@ const TasksComponent = ({
           filingNumber,
           tenantId,
           orderNumber,
-          courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52'
+          courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52", //need to check
         },
         tenantId,
       });

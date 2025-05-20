@@ -146,6 +146,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     [caseData]
   );
 
+  const courtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const isCaseAdmitted = useMemo(() => caseDetails?.status === "CASE_ADMITTED", [caseDetails]);
 
   const { caseId, cnrNumber, caseTitle } = useMemo(
@@ -278,13 +279,14 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     setItemId(orderListFiltered?.[0]?.ordersList?.[0]?.itemId);
   }, [orderListFiltered]);
 
-  const config = useMemo(() => summonsConfig({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId }), [
+  const config = useMemo(() => summonsConfig({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId, courtId }), [
     taskCnrNumber,
     filingNumber,
     orderId,
     orderNumber,
     orderType,
     itemId,
+    courtId,
   ]);
 
   const getOrderPartyData = (orderType, orderList) => {

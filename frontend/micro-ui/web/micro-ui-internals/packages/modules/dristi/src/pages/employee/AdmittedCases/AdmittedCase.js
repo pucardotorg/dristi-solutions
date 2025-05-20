@@ -147,8 +147,6 @@ const formatDate = (date) => {
   return "";
 };
 
-const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
-
 const AdmittedCases = () => {
   const { t } = useTranslation();
   const location = useLocation();
@@ -248,8 +246,8 @@ const AdmittedCases = () => {
 
   const { breadCrumbs, setBreadCrumbs } = useContext(BreadCrumbContext);
   useEffect(() => {
-    const viewCaseRoute = breadCrumbs?.routes.find(route => route.page === pages.VIEWCASE);
-    const homeRoute = breadCrumbs?.routes.find(route => route.page === pages.HOMEPAGE);
+    const viewCaseRoute = breadCrumbs?.routes.find((route) => route.page === pages.VIEWCASE);
+    const homeRoute = breadCrumbs?.routes.find((route) => route.page === pages.HOMEPAGE);
     const newUrl = pathname + search + hash;
     if (window.Digit.SessionStorage.get("BreadCrumb.filingNumber") !== urlParams.get("filingNumber")) {
       window.Digit.SessionStorage.set("BreadCrumb.filingNumber", urlParams.get("filingNumber"));
@@ -261,13 +259,19 @@ const AdmittedCases = () => {
     if (viewCaseRoute && viewCaseRoute.url !== newUrl) {
       setBreadCrumbs((initial) => ({
         ...initial,
-        routes: initial.routes.map(route =>
-          route.page === pages.VIEWCASE ? { ...route, url: newUrl } : (route.page === pages.HOMEPAGE ? homeRoute.url ? route : { ...route, url: '/ui/employee/home/home-pending-task' }:route)
-        )
+        routes: initial.routes.map((route) =>
+          route.page === pages.VIEWCASE
+            ? { ...route, url: newUrl }
+            : route.page === pages.HOMEPAGE
+            ? homeRoute.url
+              ? route
+              : { ...route, url: "/ui/employee/home/home-pending-task" }
+            : route
+        ),
       }));
     }
   }, [pathname, search, hash]);
-  
+
   const evidenceUpdateMutation = Digit.Hooks.useCustomAPIMutationHook(reqEvidenceUpdate);
 
   const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useCaseDetailSearchService(
@@ -286,6 +290,7 @@ const AdmittedCases = () => {
 
   const caseData = historyCaseData || apiCaseData;
   const caseDetails = useMemo(() => caseData?.cases || {}, [caseData]);
+  const courtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber || "", [caseDetails]);
@@ -346,9 +351,9 @@ const AdmittedCases = () => {
 
     return section && subsection
       ? `${section
-        ?.split(" ")
-        ?.map((splitString) => splitString.charAt(0))
-        ?.join("")} S${subsection}`
+          ?.split(" ")
+          ?.map((splitString) => splitString.charAt(0))
+          ?.join("")} S${subsection}`
       : "";
   }, [caseDetails?.statutesAndSections]);
 
@@ -1052,7 +1057,7 @@ const AdmittedCases = () => {
         artifactList: selectedRow,
       },
     ];
-    const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+    const judgeId = localStorage.getItem("judgeId");
     try {
       const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
       await DRISTIService.addADiaryEntry(
@@ -1265,14 +1270,13 @@ const AdmittedCases = () => {
 
   const getEvidence = async () => {
     try {
-      // Add courtId to criteria if it exists
       const response = await DRISTIService.searchEvidence(
         {
           criteria: {
             filingNumber: filingNumber,
             artifactNumber: artifactNumber,
             tenantId: tenantId,
-            courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+            courtId: courtId,
           },
           tenantId,
         },
@@ -3135,7 +3139,8 @@ const AdmittedCases = () => {
           t={t}
           notification={currentNotification}
           handleDownload={handleDownload}
-          filingNumber={filingNumber}
+          cmpNumber={caseDetails?.cmpNumber}
+          stNumber={caseDetails?.courtCaseNumber}
           handleOrdersTab={handleOrdersTab}
         />
       )}

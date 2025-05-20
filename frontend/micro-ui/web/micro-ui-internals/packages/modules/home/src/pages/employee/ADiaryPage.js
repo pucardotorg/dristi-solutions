@@ -161,7 +161,7 @@ const ADiaryPage = ({ path }) => {
     }
     setStepper(parseInt(stepper) - 1);
   };
-  const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+  const judgeId = localStorage.getItem("judgeId");
 
   const onSubmit = async () => {
     if (parseInt(stepper) === 0) {

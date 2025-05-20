@@ -84,6 +84,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const dayInMillisecond = 24 * 3600 * 1000;
   const todayDate = new Date().getTime();
   const [updateStatusDate, setUpdateStatusDate] = useState("");
+  const courtId = localStorage.getItem("courtId");
 
   const [tabData, setTabData] = useState(
     isJudge
@@ -137,6 +138,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       criteria: {
         tenantId: tenantId,
         taskNumber: rowData?.taskNumber,
+        ...(courtId && { courtId }),
       },
     },
     {},
