@@ -247,7 +247,7 @@ const GenerateOrders = () => {
   const roles = Digit.UserService.getUser()?.info?.roles;
   const canESign = roles?.some((role) => role.code === "ORDER_ESIGN");
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
-  const judgeName = window?.globalConfigs?.getConfig("JUDGE_NAME");
+  const judgeName = localStorage.getItem("judgeName");
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
   const toast = useToast();
   const [currentPublishedOrder, setCurrentPublishedOrder] = useState(null);
@@ -327,6 +327,7 @@ const GenerateOrders = () => {
       criteria: {
         filingNumber: filingNumber,
         tenantId: tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },

@@ -36,7 +36,7 @@ const useGetAllOrderApplicationRelatedDocuments = ({ courtId }) => {
       const fetchApplicationDocuments = async (filingNumber, applicationNumber, tenantId) => {
         const applicationData = await DRISTIService.searchSubmissions(
           {
-            criteria: { filingNumber, applicationNumber, tenantId },
+            criteria: { filingNumber, applicationNumber, tenantId, ...(courtId && { courtId }) },
             tenantId,
           },
           {}

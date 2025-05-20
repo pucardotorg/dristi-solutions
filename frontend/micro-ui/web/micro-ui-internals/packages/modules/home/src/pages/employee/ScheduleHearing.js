@@ -204,21 +204,6 @@ function ScheduleHearing({
   const caseDetails = useMemo(() => caseData?.criteria[0]?.responseList[0], [caseData]);
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
 
-  const { data: applicationData } = Digit.Hooks.submissions.useSearchSubmissionService(
-    {
-      criteria: {
-        filingNumber: filingNumber,
-        tenantId: tenantId,
-        applicationType: "RE_SCHEDULE",
-        status: "COMPLETED",
-      },
-      tenantId,
-    },
-    {},
-    "",
-    true
-  );
-
   const { data: dateResponse } = Digit.Hooks.home.useSearchReschedule(
     {
       SearchCriteria: {

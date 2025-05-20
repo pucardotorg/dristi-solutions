@@ -60,7 +60,7 @@ function PublishedOrderModal({
     Boolean(order?.filingNumber)
   );
   const caseDetails = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0] || {}, [caseData]);
-
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const signedOrder = useMemo(() => order?.documents?.filter((item) => item?.documentType === "SIGNED")[0], [order]);
   const userInfo = Digit.UserService.getUser()?.info;
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
@@ -129,6 +129,7 @@ function PublishedOrderModal({
         filingNumber: order?.filingNumber,
         tenantId: tenantId,
         applicationNumber: applicationNumberSetTerms,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },

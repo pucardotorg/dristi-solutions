@@ -148,6 +148,7 @@ const InsideHearingMainPage = () => {
       criteria: {
         filingNumber,
         tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },

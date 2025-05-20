@@ -157,6 +157,7 @@ function ScheduleNextHearing({
     Boolean(filingNumber)
   );
   const caseDetails = useMemo(() => caseData?.criteria[0]?.responseList[0], [caseData]);
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
 
   const { data: applicationData } = Digit.Hooks.submissions.useSearchSubmissionService(
@@ -164,6 +165,7 @@ function ScheduleNextHearing({
       criteria: {
         filingNumber: filingNumber,
         tenantId: tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
         applicationType: "RE_SCHEDULE",
         status: "COMPLETED",
       },

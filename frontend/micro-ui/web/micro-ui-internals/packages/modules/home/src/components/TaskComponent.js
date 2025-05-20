@@ -59,6 +59,7 @@ const TasksComponent = ({
   const [responsePendingTask, setResponsePendingTask] = useState({});
   const [responseDoc, setResponseDoc] = useState({});
   const [isResponseApiCalled, setIsResponseApiCalled] = useState(false);
+  const courtId = localStorage.getItem("courtId");
   const [{ joinCaseConfirmModal, joinCasePaymentModal, data }, setPendingTaskActionModals] = useState({
     joinCaseConfirmModal: false,
     joinCasePaymentModal: false,
@@ -134,14 +135,14 @@ const TasksComponent = ({
           filingNumber,
           tenantId,
           applicationNumber,
-          courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52", //need to check
+          ...(courtId && { courtId }),
         },
         tenantId,
       });
       setSearchCaseLoading(false);
       return applicationData?.applicationList?.[0] || {};
     },
-    [filingNumber, tenantId]
+    [filingNumber, tenantId, courtId]
   );
 
   const getOrderDetail = useCallback(

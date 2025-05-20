@@ -174,6 +174,7 @@ function CaseFileAdmission({ t, path }) {
       criteria: {
         filingNumber,
         tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },

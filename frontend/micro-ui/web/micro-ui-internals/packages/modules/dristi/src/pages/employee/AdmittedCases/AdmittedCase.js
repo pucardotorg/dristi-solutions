@@ -354,6 +354,7 @@ const AdmittedCases = () => {
       criteria: {
         filingNumber,
         tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
@@ -915,6 +916,7 @@ const AdmittedCases = () => {
                 criteria: {
                   filingNumber: filingNumber,
                   tenantId: tenantId,
+                  ...(caseCourtId && { courtId: caseCourtId }),
                 },
               },
             },

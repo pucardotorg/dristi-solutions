@@ -115,6 +115,7 @@ const Login = ({ config: propsConfig, t, isDisabled, tenantsData, isTenantsDataL
       }
       localStorage.setItem("courtId", assignments?.courtroom);
       localStorage.setItem("judgeId", employee?.data?.Employees?.[0]?.code);
+      localStorage.setItem("judgeName", employee?.data?.Employees?.[0]?.user?.name);
       setUser({ info, ...tokens });
     } catch (err) {
       setShowToast(
