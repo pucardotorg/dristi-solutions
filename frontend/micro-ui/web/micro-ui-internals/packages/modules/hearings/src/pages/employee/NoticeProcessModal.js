@@ -113,12 +113,15 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
   const [showNoticeModal, setshowNoticeModal] = useState(false);
   const [rowData, setRowData] = useState({});
 
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
+
   const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
     {
       hearing: { tenantId },
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },

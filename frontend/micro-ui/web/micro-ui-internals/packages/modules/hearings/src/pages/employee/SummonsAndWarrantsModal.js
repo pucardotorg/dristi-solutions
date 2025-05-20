@@ -126,22 +126,6 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     Boolean(filingNumber)
   );
 
-  const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
-    {
-      hearing: { tenantId },
-      criteria: {
-        tenantID: tenantId,
-        filingNumber: filingNumber,
-        hearingId: hearingId,
-      },
-    },
-    { applicationNumber: "", cnrNumber: "" },
-    hearingId,
-    Boolean(hearingId)
-  );
-
-  const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
-
   const caseDetails = useMemo(
     () => ({
       ...caseData?.criteria?.[0]?.responseList?.[0],
@@ -156,6 +140,23 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     () => ({ cnrNumber: caseDetails.cnrNumber || "", caseId: caseDetails?.id, caseTitle: caseDetails?.caseTitle }),
     [caseDetails]
   );
+
+  const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
+    {
+      hearing: { tenantId },
+      criteria: {
+        tenantID: tenantId,
+        filingNumber: filingNumber,
+        hearingId: hearingId,
+        ...(caseCourtId && { courtId: caseCourtId }),
+      },
+    },
+    { applicationNumber: "", cnrNumber: "" },
+    hearingId,
+    Boolean(hearingId)
+  );
+
+  const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
 
   const handleCloseModal = () => {
     if (handleClose) {

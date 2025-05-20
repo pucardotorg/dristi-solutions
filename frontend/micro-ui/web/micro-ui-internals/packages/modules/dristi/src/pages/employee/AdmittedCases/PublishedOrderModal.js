@@ -30,7 +30,7 @@ function PublishedOrderModal({
   const judgeId = localStorage.getItem("judgeId");
   const courtId = localStorage.getItem("courtId");
 
-  const { documents, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments();
+  const { documents, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments({ ...(!isCitizen && { courtId }) });
   const [loading, setLoading] = useState(false);
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;

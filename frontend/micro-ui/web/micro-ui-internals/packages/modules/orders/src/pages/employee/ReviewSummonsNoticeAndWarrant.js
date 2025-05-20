@@ -85,6 +85,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const todayDate = new Date().getTime();
   const [updateStatusDate, setUpdateStatusDate] = useState("");
   const courtId = localStorage.getItem("courtId");
+  const userInfo = Digit.UserService.getUser()?.info;
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
 
   const [tabData, setTabData] = useState(
     isJudge
@@ -347,6 +349,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           criteria: {
             tenantId: Digit.ULBService.getCurrentTenantId(),
             filingNumber: rowData?.filingNumber,
+            ...(courtId && userType === "employee" && { courtId }),
           },
         },
         {}

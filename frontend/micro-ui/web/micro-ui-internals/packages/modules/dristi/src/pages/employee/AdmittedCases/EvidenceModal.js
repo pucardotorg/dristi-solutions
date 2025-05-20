@@ -49,6 +49,7 @@ const EvidenceModal = ({
   const history = useHistory();
   const filingNumber = useMemo(() => caseData?.filingNumber, [caseData]);
   const cnrNumber = useMemo(() => caseData?.cnrNumber, [caseData]);
+  const caseCourtId = useMemo(() => caseData?.case?.courtId, [caseData]);
   const allAdvocates = useMemo(() => getAdvocates(caseData?.case), [caseData]);
   const createdBy = useMemo(() => documentSubmission?.[0]?.details?.auditDetails?.createdBy, [documentSubmission]);
   const applicationStatus = useMemo(() => documentSubmission?.[0]?.status, [documentSubmission]);
@@ -66,7 +67,7 @@ const EvidenceModal = ({
   const [formData, setFormData] = useState({});
   const [showFileIcon, setShowFileIcon] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
-  const { documents: allCombineDocs, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments();
+  const { documents: allCombineDocs, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments({ caseCourtId });
   const [isDisabled, setIsDisabled] = useState();
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
@@ -532,6 +533,7 @@ const EvidenceModal = ({
         filingNumber,
         artifactNumber,
         tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
@@ -550,6 +552,7 @@ const EvidenceModal = ({
           criteria: {
             tenantId: Digit.ULBService.getCurrentTenantId(),
             filingNumber: filingNumber,
+            ...(caseCourtId && { courtId: caseCourtId }),
           },
         },
         {}

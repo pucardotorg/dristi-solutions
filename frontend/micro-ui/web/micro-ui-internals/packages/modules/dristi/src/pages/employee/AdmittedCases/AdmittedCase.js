@@ -249,7 +249,7 @@ const AdmittedCases = () => {
 
   const caseData = historyCaseData || apiCaseData;
   const caseDetails = useMemo(() => caseData?.cases || {}, [caseData]);
-  const courtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber || "", [caseDetails]);
@@ -550,14 +550,14 @@ const AdmittedCases = () => {
       },
       {
         key: "COURT_NAME",
-        value: t(`COMMON_MASTERS_COURT_R00M_${caseDetails?.courtId}`),
+        value: t(`COMMON_MASTERS_COURT_R00M_${caseCourtId}`),
       },
       {
         key: "SUBMITTED_ON",
         value: formatDate(new Date(caseDetails?.filingDate)),
       },
     ],
-    [caseDetails?.caseCategory, caseDetails?.courtId, caseDetails?.filingDate, caseDetails?.filingNumber, t]
+    [caseCourtId, caseDetails?.caseCategory, caseDetails?.filingDate, caseDetails?.filingNumber, t]
   );
 
   const configList = useMemo(() => {
@@ -606,7 +606,7 @@ const AdmittedCases = () => {
           criteria: {
             tenantId: tenantId,
             notificationNumber: order?.businessObject?.orderNotification?.id,
-            courtId: courtId,
+            courtId: caseCourtId,
           },
           pagination: {
             limit: 100,
@@ -847,6 +847,7 @@ const AdmittedCases = () => {
                   caseId: caseDetails?.id,
                   filingNumber: caseDetails?.filingNumber,
                   tenantId: tenantId,
+                  ...(caseCourtId && { courtId: caseCourtId }),
                 },
               },
             },
@@ -1233,10 +1234,10 @@ const AdmittedCases = () => {
       const response = await DRISTIService.searchEvidence(
         {
           criteria: {
-            filingNumber: filingNumber,
-            artifactNumber: artifactNumber,
-            tenantId: tenantId,
-            courtId: courtId,
+            filingNumber,
+            artifactNumber,
+            tenantId,
+            ...(caseCourtId && { courtId: caseCourtId }),
           },
           tenantId,
         },
@@ -1294,9 +1295,10 @@ const AdmittedCases = () => {
         const response = await DRISTIService.searchEvidence(
           {
             criteria: {
-              filingNumber: filingNumber,
-              artifactNumber: artifactNumber,
-              tenantId: tenantId,
+              filingNumber,
+              artifactNumber,
+              tenantId,
+              ...(caseCourtId && { courtId: caseCourtId }),
             },
             tenantId,
           },
@@ -1887,6 +1889,7 @@ const AdmittedCases = () => {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
@@ -2028,7 +2031,8 @@ const AdmittedCases = () => {
         hearing: { tenantId },
         criteria: {
           tenantID: tenantId,
-          filingNumber: filingNumber,
+          filingNumber,
+          ...(caseCourtId && { courtId: caseCourtId }),
         },
       });
       if (HearingList?.length >= 1) {
@@ -2178,7 +2182,7 @@ const AdmittedCases = () => {
           },
           {
             key: "COURT_NAME",
-            value: t(`COMMON_MASTERS_COURT_R00M_${caseDetails?.courtId}`),
+            value: t(`COMMON_MASTERS_COURT_R00M_${caseCourtId}`),
           },
           {
             key: "CASE_TYPE",

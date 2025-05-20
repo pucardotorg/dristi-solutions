@@ -165,6 +165,8 @@ const PaymentForSummonModal = ({ path }) => {
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
+
+  const caseCourtId = useMemo(() => caseDetails?.case?.courtId, [caseDetails]);
   const fetchCaseLockStatus = useCallback(async () => {
     try {
       const status = await DRISTIService.getCaseLockStatus(
@@ -244,6 +246,7 @@ const PaymentForSummonModal = ({ path }) => {
         tenantID: tenantId,
         filingNumber: filingNumber,
         hearingId: orderData?.list?.[0]?.hearingNumber,
+        ...(caseCourtId && { caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },

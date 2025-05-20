@@ -56,6 +56,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const [Loading, setLoader] = useState(false);
   const [toastMsg, setToastMsg] = useState(null);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const accessToken = window.localStorage.getItem("token");
 
   const name = "Signature";
@@ -134,6 +135,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         tenantId,
         fromDate: bulkFromDate ? bulkFromDate : null,
         toDate: bulkToDate ? bulkToDate + 24 * 60 * 60 * 1000 - 1 : null, //to get the end of the day
+        ...(courtId && userType === "employee" && { courtId }),
       },
     },
     {},

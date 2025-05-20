@@ -123,6 +123,7 @@ function CaseFileAdmission({ t, path }) {
     Boolean(caseId)
   );
   const caseDetails = useMemo(() => caseFetchResponse?.criteria?.[0]?.responseList?.[0] || null, [caseFetchResponse]);
+  const courtId = useMemo(() => caseDetails?.case?.courtId, [caseDetails]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
 
@@ -160,6 +161,7 @@ function CaseFileAdmission({ t, path }) {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
+        ...(courtId && { courtId }),
       },
     },
     {},
@@ -579,6 +581,7 @@ function CaseFileAdmission({ t, path }) {
         criteria: {
           tenantID: tenantId,
           filingNumber: caseDetails?.filingNumber,
+          ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
         },
       });
       const hearingData =

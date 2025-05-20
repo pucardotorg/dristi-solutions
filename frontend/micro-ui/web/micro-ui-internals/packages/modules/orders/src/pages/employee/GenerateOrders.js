@@ -320,6 +320,8 @@ const GenerateOrders = () => {
     [caseData]
   );
 
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
+
   const { data: applicationData, isLoading: isApplicationDetailsLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
@@ -616,6 +618,7 @@ const GenerateOrders = () => {
               filingNumber: filingNumber,
               orderNumber: orderNumber,
               status: "PUBLISHED",
+              ...(caseCourtId && { courtId: caseCourtId }),
             },
             tenantId,
           },
@@ -831,6 +834,7 @@ const GenerateOrders = () => {
         tenantID: tenantId,
         filingNumber: filingNumber,
         hearingId: hearingId || hearingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },

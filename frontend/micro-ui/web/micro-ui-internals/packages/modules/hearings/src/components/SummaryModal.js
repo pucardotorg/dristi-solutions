@@ -100,8 +100,14 @@ const SummaryModal = ({
       hearingId: hearingId,
     },
   };
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
-  const { data: latestText } = useGetHearings(reqBody, { applicationNumber: "", cnrNumber: "", hearingId }, hearingId, true);
+  const { data: latestText } = useGetHearings(
+    reqBody,
+    { applicationNumber: "", cnrNumber: "", hearingId, ...(caseCourtId && { courtId: caseCourtId }) },
+    hearingId,
+    true
+  );
 
   useEffect(() => {
     // await refetch();

@@ -156,6 +156,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
+
+  const caseCourtId = useMemo(() => caseDetails?.case?.courtId, [caseDetails]);
   const fetchCaseLockStatus = useCallback(async () => {
     try {
       const status = await DRISTIService.getCaseLockStatus(
@@ -204,7 +206,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       criteria: {
         tenantId: tenantId,
         taskNumber: taskNumber,
-        ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
@@ -241,6 +243,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         tenantID: tenantId,
         filingNumber: filingNumber,
         hearingId: orderDetails?.hearingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },

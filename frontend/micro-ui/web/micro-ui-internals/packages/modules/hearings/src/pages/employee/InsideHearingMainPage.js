@@ -63,6 +63,8 @@ const InsideHearingMainPage = () => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
 
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
+
   const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "FilingType" },
   ]);
@@ -98,7 +100,7 @@ const InsideHearingMainPage = () => {
   };
   const { data: hearingsData, refetch: refetchHearing = () => {} } = Digit.Hooks.hearings.useGetHearings(
     reqBody,
-    { applicationNumber: "", cnrNumber: "", hearingId },
+    { applicationNumber: "", cnrNumber: "", hearingId, ...(caseCourtId && { courtId: caseCourtId }) },
     "dristi",
     true,
     refetchTime

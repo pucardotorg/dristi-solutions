@@ -212,6 +212,8 @@ const SubmissionsCreate = ({ path }) => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
 
+  const caseCourtId = useMemo(() => caseDetails?.case?.courtId, [caseDetails]);
+
   // filtering out litigants which are part in person.
   const pipComplainants = useMemo(() => {
     return caseDetails?.litigants
@@ -453,6 +455,7 @@ const SubmissionsCreate = ({ path }) => {
         tenantID: tenantId,
         filingNumber: filingNumber,
         hearingId: hearingId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },

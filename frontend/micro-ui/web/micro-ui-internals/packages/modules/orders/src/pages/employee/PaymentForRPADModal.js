@@ -165,6 +165,8 @@ const PaymentForRPADModal = ({ path }) => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
 
+  const caseCourtId = useMemo(() => caseDetails?.case?.courtId, [caseDetails]);
+
   const fetchCaseLockStatus = useCallback(async () => {
     try {
       const status = await DRISTIService.getCaseLockStatus(
@@ -208,7 +210,7 @@ const PaymentForRPADModal = ({ path }) => {
       criteria: {
         tenantId: tenantId,
         taskNumber: taskNumber,
-        ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
@@ -243,6 +245,7 @@ const PaymentForRPADModal = ({ path }) => {
         tenantID: tenantId,
         filingNumber: filingNumber,
         hearingId: orderDetails?.hearingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },
