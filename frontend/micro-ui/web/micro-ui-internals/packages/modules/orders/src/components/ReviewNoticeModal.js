@@ -30,22 +30,14 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
     if (filestoreId) {
       downloadPdf(tenantId, filestoreId);
     }
-    if(filestoreIdPolice) {
+    if (filestoreIdPolice) {
       downloadPdf(tenantId, filestoreIdPolice, "Police Report");
     }
   };
 
-  // use this to combine multiple files
-  // useEffect(() => {
-  //   const processFiles = async () => {
-  //     // filtering out the files that are not of type
-  //     const pdfFileArray = rowData?.documents?.filter((doc) => doc.documentType === "SIGNED_TASK_DOCUMENT");
-  //     const res = await combineMultipleFiles(pdfFileArray);
-  //     setFile(res);
-  //   };
-
-  //   processFiles();
-  // }, [rowData]);
+  const combinedDoc = useMemo(() => {
+    return [policeDoc, doc];
+  }, [doc, policeDoc]);
 
   const showDocument = useMemo(() => {
     return (
@@ -62,56 +54,42 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
           overflowX: "hidden",
         }}
       >
-        <DocViewerWrapper
-          key={doc?.fileStore}
-          docWidth={"calc(95vw * 62 / 100)"}
-          docHeight={"unset"}
-          fileStoreId={doc?.fileStore}
-          // selectedDocs={file}
-          tenantId={tenantId}
-          displayFilename={doc?.additionalDetails?.name}
-          showDownloadOption={false}
-          documentName={doc?.additionalDetails?.name}
-          isLocalizationRequired={false}
-        />
+        {combinedDoc?.length > 0 ? (
+          combinedDoc.map((docs) => (
+            <DocViewerWrapper
+              key={docs?.fileStore}
+              docWidth={"calc(95vw * 62 / 100)"}
+              docHeight={"unset"}
+              fileStoreId={docs?.fileStore}
+              tenantId={tenantId}
+              displayFilename={docs?.additionalDetails?.name}
+              showDownloadOption={false}
+              documentName={docs?.additionalDetails?.name}
+              isLocalizationRequired={false}
+            />
+          ))
+        ) : (
+          <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
+        )}
       </div>
     );
-  }, [doc?.additionalDetails?.name, doc?.fileStore, tenantId]);
+  }, [combinedDoc, t, tenantId]);
 
-  const showDocumentPolice = useMemo(() => {
-    return (
-      <div
-        className="show-document-doc-container"
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          width: "100%",
-          maxHeight: "60vh",
-          maxWidth: "100%",
-          overflowY: "auto",
-          overflowX: "hidden",
-        }}
-      >
-        <DocViewerWrapper
-          key={policeDoc?.fileStore}
-          docWidth={"calc(95vw * 62 / 100)"}
-          docHeight={"unset"}
-          fileStoreId={policeDoc?.fileStore}
-          // selectedDocs={file}
-          tenantId={tenantId}
-          displayFilename={policeDoc?.additionalDetails?.name}
-          showDownloadOption={false}
-          documentName={policeDoc?.additionalDetails?.name}
-          isLocalizationRequired={false}
-        />
-      </div>
-    );
-  }, [policeDoc?.additionalDetails?.name, policeDoc?.fileStore, tenantId]);
+  // use this to combine multiple files
+  // useEffect(() => {
+  //   const processFiles = async () => {
+  //     // filtering out the files that are not of type
+  //     const pdfFileArray = rowData?.documents?.filter((doc) => doc.documentType === "SIGNED_TASK_DOCUMENT");
+  //     const res = await combineMultipleFiles(pdfFileArray);
+  //     setFile(res);
+  //   };
+
+  //   processFiles();
+  // }, [rowData]);
 
   return (
     <Modal
-      headerBarMain={<Heading label={`${t("VIEW_LINK")} ${rowData.orderType.charAt(0).toUpperCase() + rowData.orderType.slice(1).toLowerCase()}`} />}
+      headerBarMain={<Heading label={`${t("VIEW_LINK")} ${t(rowData?.taskType)}`} />}
       headerBarEnd={<CloseBtn onClick={handleCloseNoticeModal} />}
       actionCancelLabel={null}
       actionCancelOnSubmit={() => {}}
@@ -121,9 +99,7 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
       popupStyles={{ minWidth: "880px", width: "80%" }}
     >
       {infos && <ApplicationInfoComponent infos={infos} />}
-      {showDocumentPolice}
       {showDocument}
-      
       <div style={{ display: "flex", width: "100%", justifyContent: "space-between", alignItems: "center", marginTop: "16px" }}>
         <div
           onClick={() => {
@@ -131,7 +107,7 @@ function ReviewNoticeModal({ t, handleCloseNoticeModal, rowData, infos }) {
           }}
           style={{ fontWeight: 700, fontSize: "16px", lineHeight: "18.75px", color: "#007E7E", cursor: "pointer" }}
         >
-          {`${t("CS_COMMON_DOWNLOAD")} ${rowData.orderType.charAt(0).toUpperCase() + rowData.orderType.slice(1).toLowerCase()}`}
+          {`${t("CS_COMMON_DOWNLOAD")} ${t(rowData?.taskType)}`}
         </div>
       </div>
     </Modal>
