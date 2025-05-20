@@ -311,6 +311,8 @@ export const UICustomizations = {
                   status: data?.status,
                   remarks: taskDetail?.remarks?.remark,
                   statusChangeDate: taskDetail?.deliveryChannels?.statusChangeDate,
+                  taskType: data?.taskType,
+                  documents: data?.documents,
                 };
               });
             return { list: taskData };
