@@ -284,15 +284,16 @@ const GenerateOrders = () => {
   // A cleanup function is provided to clear the timeout if the component unmounts.
   const { breadCrumbs, setBreadCrumbs } = useContext(BreadCrumbContext);
   useEffect(() => {
-    let constructViewCaseUrl;
+    let timeout,constructViewCaseUrl;
     const orderRoute = breadCrumbs?.routes.find(route => route.page === pages.ORDERS);
     const viewCaseRoute = breadCrumbs?.routes.find(route => route.page === pages.VIEWCASE);
     const homeRoute = breadCrumbs?.routes.find(route => route.page === pages.HOMEPAGE);
-    if (!viewCaseRoute.url) {
-      if (!(window.Digit.SessionStorage.get("BreadCrumb.filingNumber") && window.Digit.SessionStorage.get("BreadCrumb.caseId"))) {
-        window.location.href = homeRoute?.url || '/ui/employee/home/home-pending-task';
+    if(!viewCaseRoute.url){ 
+      if(!(window.Digit.SessionStorage.get("BreadCrumb.filingNumber") && window.Digit.SessionStorage.get("BreadCrumb.caseId"))){
+        timeout = setTimeout(() => { Digit.UserService.logout(); window.localStorage.clear(); window.sessionStorage.clear(); }, 100);
+        return;
       }
-      else {
+      else{
         constructViewCaseUrl = `/ui/employee/dristi/home/view-case?caseId=${window.Digit.SessionStorage.get("BreadCrumb.caseId")}&filingNumber=${window.Digit.SessionStorage.get("BreadCrumb.filingNumber")}&tab=Overview`
       }
     }
@@ -301,11 +302,12 @@ const GenerateOrders = () => {
       setBreadCrumbs((initial) => ({
         ...initial,
         routes: initial.routes.map(route =>
-          route.page === pages.ORDERS ? { ...route, url: newUrl } : route.page === pages.VIEWCASE ? route.url ? route : { ...route, url: constructViewCaseUrl } : route.page === pages.HOMEPAGE ? homeRoute.url ? route : { ...route, url: '/ui/employee/home/home-pending-task' } : route
+          route.page === pages.ORDERS ? { ...route, url: newUrl } : route.page === pages.VIEWCASE ? route.url ? route: { ...route, url: constructViewCaseUrl } : route.page === pages.HOMEPAGE ? homeRoute.url ? route: { ...route, url: '/ui/employee/home/home-pending-task' } : route
         )
       }));
     }
 
+    return () => clearTimeout(timeout);
   }, [pathname, search, hash]);
   
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
