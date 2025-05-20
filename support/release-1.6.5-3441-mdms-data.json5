@@ -1,0 +1,57 @@
+{
+    "tenantId": "kl",
+    "masterName": "case",
+    "moduleName": "CaseOverallStatusType",
+    "mdmsPayload": [
+        {
+            "id": "f566e4e7-5fe9-4e25-b7e7-fcd904a0ceb1",
+            "tenantId": "kl",
+            "schemaCode": "case.CaseOverallStatusType",
+            "uniqueIdentifier": "11",
+            "data": {
+                "id": "11",
+                "stage": "Pre-Trial",
+                "state": "PENDING_ADMISSION_HEARING",
+                "action": "REGISTER",
+                "substage": "COGNIZANCE",
+                "typeIdentifier": "congnizance",
+                "workflowModule": "case-default"
+            },
+            "isActive": true,
+            "auditDetails": {
+                "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+                "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+                "createdTime": 1729064988029,
+                "lastModifiedTime": 1747725556536
+            }
+        },
+        {
+            "id": "ebd28948-deb7-45ec-9e47-c9a7ef888303",
+            "tenantId": "kl",
+            "schemaCode": "case.CaseOverallStatusType",
+            "uniqueIdentifier": "3",
+            "data": {
+                "id": "3",
+                "stage": "Pre-Trial",
+                "state": "PENDING_REGISTRATION",
+                "action": "validate",
+                "substage": "REGISTRATION",
+                "typeIdentifier": "",
+                "workflowModule": "case-default"
+            },
+            "isActive": true,
+            "auditDetails": {
+                "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+                "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+                "createdTime": 1724750367170,
+                "lastModifiedTime": 1747725358826
+            }
+        }
+    ],
+
+    //sql script to be exceuted
+    //update dristi_cases set substage='ABC' where substage='COGNIZANCE';
+    //update dristi_cases set substage='COGNIZANCE' where substage='REGISTRATION';
+    //update dristi_caxcsses set substage='REGISTRATION' where substage='ABC';
+  }
+  
