@@ -2195,9 +2195,10 @@ function EFilingCases({ path }) {
       setShouldShowConfirmDcaModal,
     })
       .then(() => {
-        refetchCaseData().then(() => {
-          const caseData = caseDetails?.additionalDetails?.[nextSelected]?.formdata ||
-            caseDetails?.caseDetails?.[nextSelected]?.formdata || [{ isenabled: true, data: {}, displayindex: 0 }];
+        refetchCaseData().then((updatedCaseData) => {
+          const caseData = updatedCaseData?.data?.criteria[0].responseList[0].additionalDetails?.[selected]?.formdata ||
+            caseDetails?.additionalDetails?.[selected]?.formdata ||
+            caseDetails?.caseDetails?.[selected]?.formdata || [{ isenabled: true, data: {}, displayindex: 0 }];
           setFormdata(caseData);
           setIsDisabled(false);
         });
