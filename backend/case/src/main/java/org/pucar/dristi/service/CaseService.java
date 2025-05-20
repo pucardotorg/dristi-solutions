@@ -391,7 +391,7 @@ public class CaseService {
             //Search and validate case Exist
             List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(caseRequest.getCases().getFilingNumber()).caseId(String.valueOf(caseRequest.getCases().getId())).cnrNumber(caseRequest.getCases().getCnrNumber()).courtCaseNumber(caseRequest.getCases().getCourtCaseNumber()).build()), caseRequest.getRequestInfo());
 
-//            // Validate whether the application that is being requested for update indeed exists
+            // Validate whether the application that is being requested for update indeed exists
             if (!validator.validateUpdateRequest(caseRequest, existingApplications.get(0).getResponseList())) {
                 throw new CustomException(VALIDATION_ERR, "Case Application does not exist");
             }
@@ -545,7 +545,8 @@ public class CaseService {
         // Collect documents from existingCase that are not present in updateCase
         Set<String> updatedFileStoreIds = updatedDocumentsMap.keySet();
         List<Document> documentsToDelete = existingDocumentsMap.entrySet().stream()
-                .filter(entry -> !updatedFileStoreIds.contains(entry.getKey()))
+                .filter(entry -> !updatedFileStoreIds.contains(entry.getKey())
+                        && !entry.getValue().getDocumentType().equals(COMPLAINANT_ID_PROOF))
                 .map(Map.Entry::getValue)
                 .collect(Collectors.toList());
 
