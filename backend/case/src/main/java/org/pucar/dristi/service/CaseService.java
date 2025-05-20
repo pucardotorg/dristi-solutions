@@ -541,13 +541,16 @@ public class CaseService {
 
         Map<String, Document> updatedDocumentsMap = toFileStoreMap(updateCase.getDocuments());
         Map<String, Document> existingDocumentsMap = toFileStoreMap(existingCase.getDocuments());
-
         // Collect documents from existingCase that are not present in updateCase
         Set<String> updatedFileStoreIds = updatedDocumentsMap.keySet();
         List<Document> documentsToDelete = existingDocumentsMap.entrySet().stream()
                 .filter(entry -> !updatedFileStoreIds.contains(entry.getKey())
                         && !entry.getValue().getDocumentType().equals(COMPLAINANT_ID_PROOF))
-                .map(Map.Entry::getValue)
+                .map(entry -> {
+                    Document doc = entry.getValue();
+                    doc.setIsActive(false);
+                    return doc;
+                })
                 .collect(Collectors.toList());
 
         documentsToDelete.addAll(extractLitigantDocuments(updateCase, existingCase));
