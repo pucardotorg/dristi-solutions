@@ -1,5 +1,5 @@
 import { Body, Loader } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, createContext } from "react";
+import React, { useMemo } from "react";
 import { getI18n } from "react-i18next";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { Provider } from "react-redux";
@@ -12,21 +12,6 @@ import { useState } from "react";
 import ErrorBoundary from "./components/ErrorBoundaries";
 import getStore from "./redux/store";
 import { useGetAccessToken } from "./hooks/useGetAccessToken";
-
-
-export const pages = { HOMEPAGE: 'home', VIEWCASE: 'view-case', ORDERS: 'orders' }
-const initialBreadCrumbsData = {
-  routes: [{ page: pages.HOMEPAGE, url: "", label: "Home" }, { page: pages.VIEWCASE, url: "", label: "View Case" }, { page: pages.ORDERS, url: "", label: "Generate Orders" }
-  ]
-}
-/**
- * Context to manage breadcrumb data across the application.
- * Provides a way to share and update breadcrumb information
- * within the component tree.
- *
- * @constant {React.Context} BreadCrumbContext
- */
-export const BreadCrumbContext = createContext(initialBreadCrumbsData);
 
 const DigitUIWrapper = ({ stateCode, enabledModules, moduleReducers, defaultLanding }) => {
   const { isLoading, data: initData } = Digit.Hooks.useInitStore(stateCode, enabledModules);
@@ -83,7 +68,6 @@ const DigitUIWrapper = ({ stateCode, enabledModules, moduleReducers, defaultLand
 
 export const DigitUI = ({ stateCode, registry, enabledModules, moduleReducers, defaultLanding }) => {
   const [privacy, setPrivacy] = useState(Digit.Utils.getPrivacyObject() || {});
-  const [breadCrumbs, setBreadCrumbs] = useState(initialBreadCrumbsData);
 
   const { isLoading: isGetAccessToken } = useGetAccessToken("refresh-token");
 
@@ -152,9 +136,7 @@ export const DigitUI = ({ stateCode, registry, enabledModules, moduleReducers, d
                 },
               }}
             >
-              <BreadCrumbContext.Provider value={{ breadCrumbs, setBreadCrumbs }}>
-                <DigitUIWrapper stateCode={stateCode} enabledModules={enabledModules} moduleReducers={moduleReducers} defaultLanding={defaultLanding} />
-              </BreadCrumbContext.Provider>
+              <DigitUIWrapper stateCode={stateCode} enabledModules={enabledModules} moduleReducers={moduleReducers} defaultLanding={defaultLanding} />
             </PrivacyProvider.Provider>
           </ComponentProvider.Provider>
         </QueryClientProvider>
