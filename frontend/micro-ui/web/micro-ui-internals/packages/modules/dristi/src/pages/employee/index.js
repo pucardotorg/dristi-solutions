@@ -1,6 +1,5 @@
 import { BackButton, HelpOutlineIcon, PrivateRoute, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useContext } from "react";
-import { BreadCrumbContext, pages } from "@egovernments/digit-ui-module-core";
+import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Switch } from "react-router-dom";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
@@ -17,12 +16,6 @@ import Home from "./home";
 import ViewCaseFile from "./scrutiny/ViewCaseFile";
 import ReviewLitigantDetails from "./AdmittedCases/ReviewLitigantDetails";
 import EmployeeProfileEdit from "../../components/EmployeeProfileEdit/EmployeeProfileEdit";
-import BreadCrumbNew from "../../components/BreadCrumbNew";
-
-const getBreadCrumbsForCasePage = (crumbs) => {
-  const index = (crumbs?.routes || []).findIndex((crumb) => crumb.page === pages.VIEWCASE);
-  return [...(crumbs?.routes || []).slice(0, index + 1)];
-}
 
 const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileStoreId }) => {
   const { t } = useTranslation();
@@ -95,9 +88,6 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
     history.push(`${retrievedObject?.path}${retrievedObject?.param}`);
     sessionStorage.removeItem("eSignWindowObject");
   }
-
-  const { breadCrumbs, setBreadCrumbs } = useContext(BreadCrumbContext);
-  
   return (
     <Switch>
       <React.Fragment>
@@ -118,8 +108,7 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
                 )}
               </div>
             )}
-          {/* {showBreadCrumbs && <Breadcrumb crumbs={employeeCrumbs} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>} */}
-          {showBreadCrumbs && <BreadCrumbNew crumbs={getBreadCrumbsForCasePage(breadCrumbs)} breadcrumbStyle={{ paddingLeft: 20 }}></BreadCrumbNew>}
+          {showBreadCrumbs && <Breadcrumb crumbs={employeeCrumbs} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>}
           <PrivateRoute exact path={`${path}/registration-requests`} component={Inbox} />
           <PrivateRoute exact path={`${path}/registration-requests/details`} component={(props) => <ApplicationDetails {...props} />} />
           <PrivateRoute exact path={`${path}/pending-payment-inbox`} component={PaymentInbox} />
