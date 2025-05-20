@@ -17,6 +17,7 @@ function normalizeData(input) {
 export const UICustomizations = {
   PreHearingsConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
+      const courtId = requestCriteria?.body?.courtId;
       const updatedCriteria = {
         processSearchCriteria: {
           businessService: ["hearing-default"],
@@ -27,6 +28,7 @@ export const UICustomizations = {
           fromDate: requestCriteria?.params.fromDate,
           toDate: requestCriteria?.params.toDate,
           tenantId: requestCriteria?.params?.tenantId,
+          ...(courtId && { courtId }),
         },
         tenantId: requestCriteria?.params?.tenantId,
         limit: requestCriteria?.state?.tableForm?.limit || 10,

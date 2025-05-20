@@ -184,6 +184,19 @@ function BulkESignView() {
 
     return {
       ...bulkESignOrderConfig,
+      apiDetails: {
+        ...bulkESignOrderConfig.apiDetails,
+        requestBody: {
+          ...bulkESignOrderConfig.apiDetails.requestBody,
+          inbox: {
+            ...bulkESignOrderConfig.apiDetails.requestBody.inbox,
+            moduleSearchCriteria: {
+              ...bulkESignOrderConfig.apiDetails.requestBody.inbox.moduleSearchCriteria,
+              ...(courtId && { courtId }),
+            },
+          },
+        },
+      },
       sections: {
         ...bulkESignOrderConfig.sections,
         searchResult: {
@@ -230,6 +243,7 @@ function BulkESignView() {
           startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
           endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
         }),
+        ...(courtId && { courtId }),
       };
       await HomeService.customApiService(bulkESignOrderConfig?.apiDetails?.serviceName, {
         inbox: {

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Header, InboxSearchComposer } from "@egovernments/digit-ui-react-components";
-import { defaultSearchValuesForJudgePending, SummonsTabsConfig, SummonsTabsConfigJudge } from "../../configs/SuumonsConfig";
+import { defaultSearchValuesForJudgePending, SummonsTabsConfig } from "../../configs/SuumonsConfig";
 import { useTranslation } from "react-i18next";
 import DocumentModal from "../../components/DocumentModal";
 import PrintAndSendDocumentComponent from "../../components/Print&SendDocuments";
@@ -37,10 +37,20 @@ const handleTaskDetails = (taskDetails) => {
   }
 };
 
-export const getJudgeDefaultConfig = () => {
+export const getJudgeDefaultConfig = (courtId) => {
   return SummonsTabsConfig?.SummonsTabsConfig?.map((item, index) => {
     return {
       ...item,
+      apiDetails: {
+        ...item?.apiDetails,
+        requestBody: {
+          ...item?.apiDetails?.requestBody,
+          criteria: {
+            ...item?.apiDetails?.requestBody?.criteria,
+            ...(courtId && { courtId }),
+          },
+        },
+      },
       sections: {
         ...item?.sections,
         search: {
@@ -61,7 +71,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isJudge = roles.some((role) => role.code === "JUDGE_ROLE");
-  const [config, setConfig] = useState(isJudge ? getJudgeDefaultConfig()?.[0] : SummonsTabsConfig?.SummonsTabsConfig?.[0]);
+  const courtId = localStorage.getItem("courtId");
+  const [config, setConfig] = useState(isJudge ? getJudgeDefaultConfig(courtId)?.[0] : SummonsTabsConfig?.SummonsTabsConfig?.[0]);
   const [showActionModal, setShowActionModal] = useState(false);
   const [showNoticeModal, setshowNoticeModal] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
@@ -84,13 +95,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const dayInMillisecond = 24 * 3600 * 1000;
   const todayDate = new Date().getTime();
   const [updateStatusDate, setUpdateStatusDate] = useState("");
-  const courtId = localStorage.getItem("courtId");
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
 
   const [tabData, setTabData] = useState(
     isJudge
-      ? getJudgeDefaultConfig()?.map((configItem, index) => ({ key: index, label: configItem.label, active: index === 0 ? true : false }))
+      ? getJudgeDefaultConfig(courtId)?.map((configItem, index) => ({ key: index, label: configItem.label, active: index === 0 ? true : false }))
       : SummonsTabsConfig?.SummonsTabsConfig?.map((configItem, index) => ({
           key: index,
           label: configItem.label,
@@ -154,6 +164,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         criteria: {
           searchText: taskNumber,
           tenantId,
+          ...(courtId && { courtId }),
         },
       });
       handleRowClick({ original: response?.list?.[0] });

@@ -127,6 +127,7 @@ const HomeView = () => {
           entityType: "Order",
           tenantId: tenantId,
           status: OrderWorkflowState.PENDING_BULK_E_SIGN,
+          ...(courtId && { courtId }),
         },
       },
     },

@@ -54,7 +54,6 @@ import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../utils/s
 import { getAdvocates, getuuidNameMap } from "../../utils/caseUtils";
 import { HearingWorkflowAction, HearingWorkflowState } from "../../utils/hearingWorkflow";
 import _ from "lodash";
-import { useGetPendingTask } from "../../hooks/orders/useGetPendingTask";
 import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName } from "../../utils";
@@ -754,47 +753,6 @@ const GenerateOrders = () => {
       setOrderTitles(orderTitlesInitial);
     }
   }, [ordersData, t]);
-  const { data: pendingTaskData = [], isLoading: pendingTasksLoading } = useGetPendingTask({
-    data: {
-      SearchCriteria: {
-        tenantId,
-        moduleName: "Pending Tasks Service",
-        moduleSearchCriteria: {
-          filingNumber,
-          isCompleted: false,
-        },
-        limit: 10000,
-        offset: 0,
-      },
-    },
-    params: { tenantId },
-    key: filingNumber,
-  });
-
-  const pendingTaskDetails = useMemo(() => pendingTaskData?.data || [], [pendingTaskData]);
-  const mandatorySubmissionTasks = useMemo(() => {
-    const pendingtask = pendingTaskDetails?.filter((obj) =>
-      obj.fields.some((field) => field.key === "referenceId" && field.value?.includes(currentOrder?.linkedOrderNumber))
-    );
-    if (pendingtask?.length > 0) {
-      return pendingtask?.map((item) =>
-        item?.fields.reduce((acc, field) => {
-          if (field.key.startsWith("assignedTo[")) {
-            const indexMatch = field.key.match(/assignedTo\[(\d+)\]\.uuid/);
-            if (indexMatch) {
-              const index = parseInt(indexMatch[1], 10);
-              acc.assignedTo = acc.assignedTo || [];
-              acc.assignedTo[index] = { uuid: field.value };
-            }
-          } else {
-            acc[field.key] = field.value;
-          }
-          return acc;
-        }, {})
-      );
-    }
-    return [];
-  }, [currentOrder?.linkedOrderNumber, pendingTaskDetails]);
 
   const applicationDetails = useMemo(
     () =>
@@ -3780,7 +3738,6 @@ const GenerateOrders = () => {
     isApplicationDetailsLoading ||
     !ordersData?.list ||
     isHearingLoading ||
-    pendingTasksLoading ||
     isCourtIdsLoading ||
     isPublishedOrdersLoading
   ) {

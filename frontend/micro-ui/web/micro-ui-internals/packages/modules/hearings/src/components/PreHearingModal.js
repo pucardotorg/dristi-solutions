@@ -17,6 +17,7 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
   const [purposeModalData, setPurposeModalData] = useState({});
   const [rescheduleAll, setRescheduleAll] = useState(false);
   const [stepper, setStepper] = useState(0);
+  const courtId = localStorage.getItem("courtId");
 
   const DateFormat = "DD-MM-YYYY";
 
@@ -45,6 +46,10 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
       toDate: hearingData.toDate,
       slot: hearingData.slot,
       tenantId: tenantId,
+    };
+    configCopy.apiDetails.requestBody = {
+      ...configCopy.apiDetails.requestBody,
+      courtId: courtId,
     };
     configCopy.additionalDetails = {
       attendeeIndividualId: userType === "citizen" && individualId,

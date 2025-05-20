@@ -608,7 +608,7 @@ const AdmittedCases = () => {
           criteria: {
             tenantId: tenantId,
             notificationNumber: order?.businessObject?.orderNotification?.id,
-            courtId: caseCourtId,
+            ...(caseCourtId && { courtId: caseCourtId }),
           },
           pagination: {
             limit: 100,
@@ -738,6 +738,7 @@ const AdmittedCases = () => {
                   moduleSearchCriteria: {
                     ...tabConfig.apiDetails.requestBody.inbox.moduleSearchCriteria,
                     caseNumbers: [filingNumber, caseDetails?.cmpNumber, caseDetails?.courtCaseNumber]?.filter(Boolean),
+                    ...(caseCourtId && { courtId: caseCourtId }),
                   },
                 },
               },
