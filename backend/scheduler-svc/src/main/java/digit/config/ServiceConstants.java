@@ -83,5 +83,7 @@ public class ServiceConstants {
     public static final String CAUSE_LIST_HEARING_MESSAGE = "CAUSE_LIST_HEARING_MESSAGE";
 
     public static final String SCREEN_TYPE = "home";
+    public static final String COMMON_MASTER_MODULE = "common-masters";
+    public static final String COURT_ROOM_MASTER = "Court_Rooms";
 
 }
