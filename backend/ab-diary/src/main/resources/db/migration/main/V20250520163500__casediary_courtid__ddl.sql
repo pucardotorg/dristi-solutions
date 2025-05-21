@@ -4,6 +4,13 @@ RENAME COLUMN judge_id TO court_id;
 ALTER TABLE dristi_diaryentries
 RENAME COLUMN judge_id TO court_id;
 
+UPDATE dristi_casediary
+SET court_id = 'KLKM52';
+
+UPDATE dristi_diaryentries
+SET court_id = 'KLKM52';
+
+
 DROP INDEX IF EXISTS idx_dristi_casediary_type_judge;
 DROP INDEX IF EXISTS idx_dristi_casediary_date;
 
