@@ -41,7 +41,7 @@ const paymentOptionConfig = {
   },
 };
 
-const handleTaskSearch = async (businessService, consumerCodeWithoutSuffix, tenantId) => {
+const handleTaskSearch = async (businessService, consumerCodeWithoutSuffix, tenantId, courtId) => {
   if (["task-summons", "task-notice", "task-warrant"].includes(businessService)) {
     const {
       list: [tasksData],
@@ -49,6 +49,7 @@ const handleTaskSearch = async (businessService, consumerCodeWithoutSuffix, tena
       criteria: {
         tenantId: tenantId,
         taskNumber: consumerCodeWithoutSuffix,
+        courtId: courtId,
       },
     });
     return { tasksData };
@@ -67,7 +68,17 @@ const ViewPaymentDetails = ({ location, match }) => {
   const [additionDetails, setAdditionalDetails] = useState("");
   const toast = useToast();
   const [isDisabled, setIsDisabled] = useState(false);
-  const { caseId, caseTitle, cmpNumber, courtCaseNumber, filingNumber, consumerCode, businessService, paymentType } = window?.Digit.Hooks.useQueryParams();
+  const {
+    caseId,
+    caseTitle,
+    cmpNumber,
+    courtCaseNumber,
+    filingNumber,
+    consumerCode,
+    businessService,
+    paymentType,
+    courtId,
+  } = window?.Digit.Hooks.useQueryParams();
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
 
   const consumerCodeWithoutSuffix = consumerCode.split("_")[0];
@@ -75,11 +86,11 @@ const ViewPaymentDetails = ({ location, match }) => {
 
   useEffect(() => {
     const fetchTaskData = async () => {
-      const { tasksData = {} } = await handleTaskSearch(businessService, consumerCodeWithoutSuffix, tenantId);
+      const { tasksData = {} } = await handleTaskSearch(businessService, consumerCodeWithoutSuffix, tenantId, courtId);
       setTasksData(tasksData);
     };
     fetchTaskData();
-  }, [businessService, consumerCode, consumerCodeWithoutSuffix, tenantId]);
+  }, [businessService, consumerCode, consumerCodeWithoutSuffix, tenantId, courtId]);
   const summonsPincode = useMemo(() => tasksData?.taskDetails?.respondentDetails?.address?.pincode, [tasksData]);
   const channelId = useMemo(() => extractFeeMedium(tasksData?.taskDetails?.deliveryChannels?.channelName || ""), [tasksData]);
 
@@ -208,6 +219,7 @@ const ViewPaymentDetails = ({ location, match }) => {
         criteria: {
           tenantId: tenantId,
           id: tasksData?.orderId,
+          courtId: tasksData?.courtId,
         },
       });
 
@@ -334,23 +346,14 @@ const ViewPaymentDetails = ({ location, match }) => {
     }
   };
 
-  const isValidValue = (value) =>
-    value !== null &&
-    value !== undefined &&
-    value !== "" &&
-    value !== "null" &&
-    value !== "undefined";
+  const isValidValue = (value) => value !== null && value !== undefined && value !== "" && value !== "null" && value !== "undefined";
 
   const orderModalInfo = useMemo(
     () => ({
       caseInfo: [
         {
           key: t("CASE_NUMBER"),
-          value: isValidValue(courtCaseNumber)
-            ? courtCaseNumber
-            : isValidValue(cmpNumber)
-              ? cmpNumber
-              : filingNumber,
+          value: isValidValue(courtCaseNumber) ? courtCaseNumber : isValidValue(cmpNumber) ? cmpNumber : filingNumber,
           copyData: false,
         },
         {

@@ -532,7 +532,7 @@ export const UICustomizations = {
       const status = requestCriteria?.state?.searchForm?.status;
       const startOfTheDay = requestCriteria?.state?.searchForm?.startOfTheDay;
       const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
-      debugger;
+
       const moduleSearchCriteria = {
         entityType,
         tenantId,

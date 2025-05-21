@@ -348,7 +348,6 @@ const HomeView = () => {
   };
 
   const handleScrutinyAndLock = async (filingNumber) => {
-    const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
     if (isScrutiny) {
       try {
         const response = await DRISTIService.getCaseLockStatus({}, { uniqueId: filingNumber, tenantId: tenantId });

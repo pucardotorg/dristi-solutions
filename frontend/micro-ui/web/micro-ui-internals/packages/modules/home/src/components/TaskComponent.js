@@ -45,6 +45,7 @@ const TasksComponent = ({
   const history = useHistory();
   const { t } = useTranslation();
   const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles?.map((role) => role?.code) || [], []);
+  const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
   const isCourtRoomManager = roles.includes("COURT_ROOM_MANAGER");
   const taskTypeCode = useMemo(() => taskType?.code, [taskType]);
   const [searchCaseLoading, setSearchCaseLoading] = useState(false);
@@ -86,7 +87,7 @@ const TasksComponent = ({
           ...(!isLitigant && { assignedRole: [...roles] }),
           ...(inCase && { filingNumber: filingNumber }),
           screenType: isDiary ? ["Adiary"] : isApplicationCompositeOrder ? ["applicationCompositeOrder"] : ["home", "applicationCompositeOrder"],
-          ...(!isLitigant && courtId && { courtId }),
+          ...(!isLitigant && courtId && !isScrutiny && { courtId }),
         },
         limit: 10000,
         offset: 0,

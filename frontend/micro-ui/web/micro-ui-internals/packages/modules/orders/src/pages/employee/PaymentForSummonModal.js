@@ -246,7 +246,7 @@ const PaymentForSummonModal = ({ path }) => {
         tenantID: tenantId,
         filingNumber: filingNumber,
         hearingId: orderData?.list?.[0]?.hearingNumber,
-        ...(caseCourtId && { caseCourtId }),
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },

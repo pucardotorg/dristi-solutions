@@ -793,6 +793,7 @@ const AdmittedCases = () => {
                 criteria: {
                   filingNumber: filingNumber,
                   tenantId: tenantId,
+                  ...(caseCourtId && { courtId: caseCourtId }),
                 },
               },
             },
@@ -1951,7 +1952,7 @@ const AdmittedCases = () => {
   );
 
   const { data: apiOrdersData } = useSearchOrdersService(
-    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(courtId && { courtId }) } },
+    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filingNumber + currentHearingId,
     Boolean(filingNumber && !historyOrderData),

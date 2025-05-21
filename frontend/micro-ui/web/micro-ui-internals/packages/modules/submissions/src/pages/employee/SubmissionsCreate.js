@@ -515,7 +515,13 @@ const SubmissionsCreate = ({ path }) => {
   const { data: orderData, isloading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
     {
       tenantId,
-      criteria: { filingNumber, applicationNumber: "", cnrNumber: caseDetails?.cnrNumber, orderNumber: orderNumber || orderRefNumber, caseCourtId },
+      criteria: {
+        filingNumber,
+        applicationNumber: "",
+        cnrNumber: caseDetails?.cnrNumber,
+        orderNumber: orderNumber || orderRefNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
+      },
     },
     { tenantId },
     filingNumber + caseDetails?.cnrNumber,
@@ -544,7 +550,7 @@ const SubmissionsCreate = ({ path }) => {
         applicationNumber: "",
         cnrNumber: caseDetails?.cnrNumber,
         orderType: "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE",
-        caseCourtId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { tenantId },

@@ -481,12 +481,13 @@ export const UICustomizations = {
       const service = row?.businessObject?.billDetails?.service;
       const billStatus = row?.businessObject?.billDetails?.billStatus;
       const paymentType = row?.businessObject?.billDetails?.paymentType;
+      const courtId = row?.businessObject?.billDetails?.courtId;
       switch (key) {
         case "CASE_NAME_ID":
           return billStatus === "ACTIVE" ? (
             <span className="link">
               <Link
-                to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&cmpNumber=${cmpNumber}&courtCaseNumber=${courtCaseNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}`}
+                to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&cmpNumber=${cmpNumber}&courtCaseNumber=${courtCaseNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}&courtId=${courtId}`}
               >
                 {String(`${caseTitle}, ${getCaseNumber(row?.businessObject?.billDetails)}` || t("ES_COMMON_NA"))}
               </Link>
@@ -501,7 +502,7 @@ export const UICustomizations = {
             <span className="action-link">
               <Link
                 style={{ display: "flex", alignItem: "center", color: "#9E400A" }}
-                to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&cmpNumber=${cmpNumber}&courtCaseNumber=${courtCaseNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}`}
+                to={`/${window?.contextPath}/employee/dristi/pending-payment-inbox/pending-payment-details?caseId=${caseId}&caseTitle=${caseTitle}&filingNumber=${filingNumber}&cmpNumber=${cmpNumber}&courtCaseNumber=${courtCaseNumber}&businessService=${service}&consumerCode=${consumerCode}&paymentType=${paymentType}&courtId=${courtId}`}
               >
                 {" "}
                 <span style={{ display: "flex", alignItem: "center", textDecoration: "underline", color: "#9E400A" }}>
