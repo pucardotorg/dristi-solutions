@@ -65,6 +65,22 @@ export const getJudgeDefaultConfig = (courtId) => {
   });
 };
 
+
+function getAction(selectedDelievery, orderType) {
+  const key = selectedDelievery?.key;
+
+  if (key === "OTHER") {
+    return "OTHER";
+  }
+
+  if (key === "DELIVERED") {
+    return orderType === "WARRANT" ? "DELIVERED" : "SERVED";
+  }
+
+  return orderType === "WARRANT" ? "NOT_DELIVERED" : "NOT_SERVED";
+}
+
+
 const ReviewSummonsNoticeAndWarrant = () => {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -262,14 +278,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
             },
             workflow: {
               ...tasksData?.list?.[0]?.workflow,
-              action:
-                selectedDelievery?.key === "DELIVERED"
-                  ? orderType === "WARRANT"
-                    ? "DELIVERED"
-                    : "SERVED"
-                  : orderType === "WARRANT"
-                  ? "NOT_DELIVERED"
-                  : "NOT_SERVED",
+              action: getAction(selectedDelievery, orderType),
               documents: [{}],
             },
           },
@@ -730,7 +739,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [rowData]);
 
   const handleRowClick = (props) => {
-    if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED"].includes(props?.original?.status)) {
+    if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED", "OTHER"].includes(props?.original?.status)) {
       setRowData(props?.original);
       setshowNoticeModal(true);
       return;
