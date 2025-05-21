@@ -179,7 +179,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [fetchedTasksData, tasksData]);
 
   const { data: orderData } = Digit.Hooks.orders.useSearchOrdersService(
-    { tenantId, criteria: { id: tasksData?.list[0]?.orderId } },
+    { tenantId, criteria: { id: tasksData?.list[0]?.orderId, ...(courtId && { courtId }) } },
     { tenantId },
     tasksData?.list[0]?.orderId,
     Boolean(tasksData)

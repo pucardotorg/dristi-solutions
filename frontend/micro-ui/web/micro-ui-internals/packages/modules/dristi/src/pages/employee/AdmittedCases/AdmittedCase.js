@@ -1951,7 +1951,7 @@ const AdmittedCases = () => {
   );
 
   const { data: apiOrdersData } = useSearchOrdersService(
-    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED" } },
+    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(courtId && { courtId }) } },
     { tenantId },
     filingNumber + currentHearingId,
     Boolean(filingNumber && !historyOrderData),

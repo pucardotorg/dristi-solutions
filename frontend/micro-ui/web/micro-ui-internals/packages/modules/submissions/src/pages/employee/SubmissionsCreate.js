@@ -513,7 +513,10 @@ const SubmissionsCreate = ({ path }) => {
   );
 
   const { data: orderData, isloading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
-    { tenantId, criteria: { filingNumber, applicationNumber: "", cnrNumber: caseDetails?.cnrNumber, orderNumber: orderNumber || orderRefNumber } },
+    {
+      tenantId,
+      criteria: { filingNumber, applicationNumber: "", cnrNumber: caseDetails?.cnrNumber, orderNumber: orderNumber || orderRefNumber, caseCourtId },
+    },
     { tenantId },
     filingNumber + caseDetails?.cnrNumber,
     Boolean(filingNumber && caseDetails?.cnrNumber && (orderNumber || orderRefNumber))
@@ -536,7 +539,13 @@ const SubmissionsCreate = ({ path }) => {
   const { data: allOrdersData, isloading: isAllOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
     {
       tenantId,
-      criteria: { filingNumber, applicationNumber: "", cnrNumber: caseDetails?.cnrNumber, orderType: "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" },
+      criteria: {
+        filingNumber,
+        applicationNumber: "",
+        cnrNumber: caseDetails?.cnrNumber,
+        orderType: "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE",
+        caseCourtId,
+      },
     },
     { tenantId },
     filingNumber + caseDetails?.cnrNumber + "allOrdersData",

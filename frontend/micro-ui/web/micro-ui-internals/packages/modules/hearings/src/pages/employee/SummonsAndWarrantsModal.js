@@ -234,7 +234,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
   };
 
   const { data: ordersData } = useSearchOrdersService(
-    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED" } },
+    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filingNumber,
     Boolean(filingNumber)

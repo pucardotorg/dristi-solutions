@@ -506,7 +506,13 @@ const GenerateOrders = () => {
   const { data: ordersData, refetch: refetchOrdersData, isLoading: isOrdersLoading, isFetching: isOrdersFetching } = useSearchOrdersService(
     {
       tenantId,
-      criteria: { filingNumber, applicationNumber: "", cnrNumber, status: OrderWorkflowState.DRAFT_IN_PROGRESS },
+      criteria: {
+        filingNumber,
+        applicationNumber: "",
+        cnrNumber,
+        status: OrderWorkflowState.DRAFT_IN_PROGRESS,
+        ...(caseCourtId && { courtId: caseCourtId }),
+      },
       pagination: { limit: 1000, offset: 0 },
     },
     { tenantId },
@@ -667,7 +673,14 @@ const GenerateOrders = () => {
   const { data: publishedNoticeOrdersData } = useSearchOrdersService(
     {
       tenantId,
-      criteria: { filingNumber, applicationNumber: "", cnrNumber, orderType: "NOTICE", status: "PUBLISHED" },
+      criteria: {
+        filingNumber,
+        applicationNumber: "",
+        cnrNumber,
+        orderType: "NOTICE",
+        status: "PUBLISHED",
+        ...(caseCourtId && { courtId: caseCourtId }),
+      },
       pagination: { limit: 1000, offset: 0 },
     },
     { tenantId },
@@ -707,6 +720,7 @@ const GenerateOrders = () => {
         cnrNumber,
         orderType: "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE",
         status: OrderWorkflowState.PUBLISHED,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       pagination: { limit: 1000, offset: 0 },
     },
@@ -733,7 +747,14 @@ const GenerateOrders = () => {
   const { data: publishedBailOrdersData, isLoading: isPublishedOrdersLoading } = useSearchOrdersService(
     {
       tenantId,
-      criteria: { filingNumber, applicationNumber: "", cnrNumber, status: OrderWorkflowState.PUBLISHED, orderType: "ACCEPT_BAIL" },
+      criteria: {
+        filingNumber,
+        applicationNumber: "",
+        cnrNumber,
+        status: OrderWorkflowState.PUBLISHED,
+        orderType: "ACCEPT_BAIL",
+        ...(caseCourtId && { courtId: caseCourtId }),
+      },
       pagination: { limit: 1000, offset: 0 },
     },
     { tenantId },

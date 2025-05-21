@@ -221,7 +221,7 @@ const PaymentForRPADModal = ({ path }) => {
   const filteredTasks = useMemo(() => tasksData?.list, [tasksData]);
 
   const { data: orderData, isloading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
-    { tenantId, criteria: { id: filteredTasks?.[0]?.orderId } },
+    { tenantId, criteria: { id: filteredTasks?.[0]?.orderId, ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filteredTasks?.[0]?.orderId,
     Boolean(filteredTasks?.[0]?.orderId)

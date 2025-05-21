@@ -160,7 +160,7 @@ const TasksComponent = ({
       setSearchCaseLoading(false);
       return orderData?.list?.[0] || {};
     },
-    [filingNumber, tenantId, courtId]
+    [courtId, filingNumber, tenantId]
   );
 
   const handleReviewOrder = useCallback(

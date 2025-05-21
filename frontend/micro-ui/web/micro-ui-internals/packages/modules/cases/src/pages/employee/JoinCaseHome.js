@@ -758,6 +758,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                   litigants: [individual?.individualId],
                 },
                 tenantId,
+                courtId: caseDetails?.courtId,
               },
             });
           } catch (err) {
@@ -777,6 +778,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   }, [
     caseDetails?.caseTitle,
     caseDetails?.cnrNumber,
+    caseDetails?.courtId,
     caseDetails?.filingNumber,
     caseDetails?.id,
     caseDetails?.litigants,
@@ -951,6 +953,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                         stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
                         additionalDetails: { individualId: individual?.individualId, caseId: caseDetails?.id, litigants: [individual?.individualId] },
                         tenantId,
+                        courtId: caseDetails?.courtId,
                       },
                     });
                   } catch (err) {
@@ -1162,6 +1165,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                           stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
                           additionalDetails: { individualId: user?.individualId, caseId: caseDetails?.id, litigants: [user?.individualId] },
                           tenantId,
+                          courtId: caseDetails?.courtId,
                         },
                       });
                     });

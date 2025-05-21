@@ -89,7 +89,7 @@ function BulkESignView() {
   const { data: ordersData } = useSearchOrdersService(
     {
       tenantId,
-      criteria: { orderNumber: orderNumber },
+      criteria: { orderNumber: orderNumber, ...(courtId && { courtId }) },
       pagination: { limit: 1000, offset: 0 },
     },
     { tenantId },

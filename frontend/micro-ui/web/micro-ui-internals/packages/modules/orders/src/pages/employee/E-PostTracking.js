@@ -150,7 +150,7 @@ const EpostTrackingPage = () => {
   };
 
   const { data: orderData } = Digit.Hooks.orders.useSearchOrdersService(
-    { tenantId, criteria: { id: taskData?.list[0]?.orderId } },
+    { tenantId, criteria: { id: taskData?.list[0]?.orderId, ...(courtId && { courtId }) } },
     { tenantId },
     taskData?.list[0]?.orderId,
     Boolean(taskData)
