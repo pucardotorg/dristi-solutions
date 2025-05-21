@@ -1477,6 +1477,7 @@ const SubmissionsCreate = ({ path }) => {
           handleBack={handleBack}
           documents={applicationDetails?.documents || []}
           setApplicationPdfFileStoreId={setApplicationPdfFileStoreId}
+          courtId={caseCourtId}
         />
       )}
       {showsignatureModal && (

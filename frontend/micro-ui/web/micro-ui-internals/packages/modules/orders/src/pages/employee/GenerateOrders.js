@@ -3976,6 +3976,7 @@ const GenerateOrders = () => {
           businessOfDay={businessOfTheDay}
           updateOrder={updateOrder}
           setShowBulkModal={setShowBulkModal}
+          courtId={caseCourtId}
         />
       )}
       {showsignatureModal && (
