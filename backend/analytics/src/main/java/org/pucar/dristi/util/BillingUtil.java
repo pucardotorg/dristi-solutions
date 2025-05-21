@@ -3,6 +3,7 @@ package org.pucar.dristi.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.jayway.jsonpath.JsonPath;
@@ -13,6 +14,8 @@ import org.egov.tracer.model.ServiceCallException;
 import org.json.JSONObject;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
+import org.pucar.dristi.web.models.CaseCriteria;
+import org.pucar.dristi.web.models.CaseSearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -31,17 +34,15 @@ public class BillingUtil {
     private final CaseUtil caseUtil;
     private final ObjectMapper objectMapper;
     private final MdmsUtil mdmsUtil;
-    private final HrmsUtil hrmsUtil;
 
     @Autowired
-    public BillingUtil(Configuration config, IndexerUtils indexerUtil, ServiceRequestRepository requestRepository, CaseUtil caseUtil, ObjectMapper objectMapper, MdmsUtil mdmsUtil, HrmsUtil hrmsUtil) {
+    public BillingUtil(Configuration config, IndexerUtils indexerUtil, ServiceRequestRepository requestRepository, CaseUtil caseUtil, ObjectMapper objectMapper, MdmsUtil mdmsUtil) {
         this.config = config;
         this.indexerUtil = indexerUtil;
         this.requestRepository = requestRepository;
         this.caseUtil = caseUtil;
         this.objectMapper = objectMapper;
         this.mdmsUtil = mdmsUtil;
-        this.hrmsUtil = hrmsUtil;
     }
 
 
@@ -79,7 +80,8 @@ public class BillingUtil {
         String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
         net.minidev.json.JSONArray statutesAndSections = JsonPath.read(caseObject.toString(), CASE_STATUTES_AND_SECTIONS);
         String caseType = getCaseType(statutesAndSections);
-        String courtId = getCourtId(requestInfo);
+        RequestInfo requestInfoObj = objectMapper.convertValue(requestInfo, RequestInfo.class);
+        String courtId = getCourtId(filingNumber, requestInfoObj);
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_BILLING_FORMAT,
@@ -87,14 +89,24 @@ public class BillingUtil {
         );
     }
 
-    private String getCourtId(JSONObject requestInfo) {
+    private String getCourtId(String filingNumber, RequestInfo request) {
         try {
-            RequestInfo requestInfoBody = objectMapper.convertValue(requestInfo.toString(), RequestInfo.class);
-            return hrmsUtil.getCourtId(requestInfoBody);
+            org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(request, filingNumber);
+            JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+            return caseDetails.get(0).get("courtId").textValue();
         } catch (Exception e) {
             log.error("Error occurred while getting court id: {}", e.toString());
         }
         return null;
+
+    }
+
+    public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String filingNumber) {
+        CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+        caseSearchRequest.setRequestInfo(requestInfo);
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build();
+        caseSearchRequest.addCriteriaItem(caseCriteria);
+        return caseSearchRequest;
     }
 
     public String buildString(JSONObject jsonObject) {

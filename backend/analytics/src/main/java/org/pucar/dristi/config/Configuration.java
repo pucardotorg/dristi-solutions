@@ -213,6 +213,20 @@ public class Configuration {
 	@Value("${egov.hrms.search.endpoint}")
 	private String hrmsEndPoint;
 
+	// User Config
+	@Value("${egov.user.host}")
+	private String userHost;
+
+	@Value("${egov.user.search.path}")
+	private String userSearchEndpoint;
+
+	@Value("${egov.user.create.path}")
+	private String userCreateEndpoint;
+
+	//Tenant Id
+	@Value("${egov-state-level-tenant-id}")
+	private String egovStateTenantId;
+
 	@PostConstruct
 	public void init() {
 		hearingBusinessServiceList = Arrays.asList(hearingBusinessServices.split(","));
