@@ -422,7 +422,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
               additionalConfig={{
                 resultsTable: {
                   onClickRow: (props) => {
-                    if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED"].includes(props?.original?.status)) {
+                    if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED", "OTHER"].includes(props?.original?.status)) {
                       setRowData(props?.original);
                       setshowNoticeModal(true);
                       return;
