@@ -401,15 +401,15 @@ const ComplainantSignature = ({ path }) => {
     setLoader(true);
     setEditCaseModal(false);
     try {
-      let tempDocs = caseDetails?.documents?.map((doc) =>
-        doc?.documentType === "case.complaint.signed" || doc?.documentType === "case.complaint.unsigned" ? { ...doc, isActive: false } : doc
+      const tempDocs = caseDetails?.documents?.map((doc) =>
+        doc?.documentType === "case.complaint.signed" && signatureDocumentId ? { ...doc, fileStore: signatureDocumentId } : doc
       );
-      const isSignedPresent = caseDetails?.documents?.some((doc) => doc?.fileStore === signatureDocumentId);
-      if (signatureDocumentId && !isSignedPresent) {
+
+      if (!tempDocs.some((doc) => doc?.documentType === "case.complaint.signed") && signatureDocumentId) {
         tempDocs.push({
-          documentType: "signedCaseDocument",
+          documentType: "case.complaint.signed",
           fileStore: signatureDocumentId,
-          isActive: false,
+          fileName: "case Complaint Signed Document",
         });
       }
       await DRISTIService.caseUpdateService(
