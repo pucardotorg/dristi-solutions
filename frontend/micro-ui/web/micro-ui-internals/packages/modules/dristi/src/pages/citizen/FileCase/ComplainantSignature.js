@@ -401,17 +401,18 @@ const ComplainantSignature = ({ path }) => {
     setLoader(true);
     setEditCaseModal(false);
     try {
-      const tempDocs = caseDetails?.documents?.map((doc) =>
-        doc?.documentType === "case.complaint.signed" && signatureDocumentId ? { ...doc, fileStore: signatureDocumentId } : doc
+      const tempDocs = (caseDetails?.documents || [])?.filter(
+        (doc) => doc?.documentType !== "case.complaint.signed" && doc?.documentType !== "case.complaint.unsigned"
       );
-
-      if (!tempDocs.some((doc) => doc?.documentType === "case.complaint.signed") && signatureDocumentId) {
+      if (signatureDocumentId) {
         tempDocs.push({
-          documentType: "case.complaint.signed",
+          documentType: "oldCaseSignedDocument",
           fileStore: signatureDocumentId,
           fileName: "case Complaint Signed Document",
+          isActive: false,
         });
       }
+
       await DRISTIService.caseUpdateService(
         {
           cases: {
@@ -727,8 +728,10 @@ const ComplainantSignature = ({ path }) => {
 
   const updateCase = async (state) => {
     setLoader(true);
-
     const caseDocList = updateSignedDocInCaseDoc();
+    let tempDocList = [...caseDocList];
+    const isSignedDocumentsPresent = tempDocList?.some((doc) => doc?.documentType === "case.complaint.signed");
+    if (isSignedDocumentsPresent) tempDocList = tempDocList?.filter((doc) => doc?.documentType !== "case.complaint.unsigned");
 
     try {
       await DRISTIService.caseUpdateService(
@@ -739,7 +742,7 @@ const ComplainantSignature = ({ path }) => {
               ...caseDetails?.additionalDetails,
               signedCaseDocument: signatureDocumentId ? signatureDocumentId : DocumentFileStoreId,
             },
-            documents: caseDocList,
+            documents: tempDocList,
             workflow: {
               ...caseDetails?.workflow,
               action: isSelectedUploadDoc ? complainantWorkflowACTION.UPLOAD_DOCUMENT : complainantWorkflowACTION.ESIGN,
