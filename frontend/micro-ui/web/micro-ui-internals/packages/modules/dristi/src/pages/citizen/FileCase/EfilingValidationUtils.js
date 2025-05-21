@@ -174,11 +174,17 @@ export const showToastForComplainant = ({ formData, setValue, selected, setSucce
     const formDataCopy = structuredClone(formData);
     const addressDet = formDataCopy?.complainantVerification?.individualDetails?.addressDetails;
     const addressDetSelect = formDataCopy?.complainantVerification?.individualDetails?.["addressDetails-select"];
+    const currAddressDet = formDataCopy?.complainantVerification?.individualDetails?.currentAddressDetails;
+    const currAddressDetSelect = formDataCopy?.complainantVerification?.individualDetails?.["currentAddressDetails-select"];
     const poaAddressDet = formDataCopy?.poaVerification?.individualDetails?.poaAddressDetails;
     const poaAddressDetSelect = formDataCopy?.poaVerification?.individualDetails?.["poaAddressDetails-select"];
     if (!!addressDet && !!addressDetSelect) {
-      setValue("addressDetails", { ...addressDet, typeOfAddress: formDataCopy?.addressDetails?.typeOfAddress });
+      setValue("addressDetails", addressDet);
       setValue("addressDetails-select", addressDetSelect);
+    }
+    if (!!currAddressDet && !!currAddressDetSelect) {
+      setValue("currentAddressDetails", { ...currAddressDet, isCurrAddrSame: formDataCopy?.complainantVerification?.individualDetails?.currentAddressDetails?.isCurrAddrSame });
+      setValue("currentAddressDetails-select", currAddressDetSelect);
     }
     if (!!poaAddressDet && !!poaAddressDetSelect) {
       setValue("poaAddressDetails", { ...poaAddressDet, typeOfAddress: formDataCopy?.addressDetails?.typeOfAddress });
@@ -1233,7 +1239,6 @@ export const createIndividualUser = async ({ data, documentData, tenantId, isCom
         {
           tenantId: tenantId,
           type: "PERMANENT",
-          // type: data?.addressDetails?.typeOfAddress,
           latitude: data?.addressDetails?.coordinates?.latitude,
           longitude: data?.addressDetails?.coordinates?.longitude,
           city: data?.addressDetails?.city,
@@ -1241,6 +1246,17 @@ export const createIndividualUser = async ({ data, documentData, tenantId, isCom
           addressLine1: data?.addressDetails?.state,
           addressLine2: data?.addressDetails?.district,
           street: data?.addressDetails?.locality,
+        },
+        {
+          tenantId: tenantId,
+          type: "CORRESPONDENCE",
+          latitude: data?.currentAddressDetails?.coordinates?.latitude,
+          longitude: data?.currentAddressDetails?.coordinates?.longitude,
+          city: data?.currentAddressDetails?.city,
+          pincode: data?.currentAddressDetails?.pincode || data?.["currentAddressDetails-select"]?.pincode,
+          addressLine1: data?.currentAddressDetails?.state,
+          addressLine2: data?.currentAddressDetails?.district,
+          street: data?.currentAddressDetails?.locality,
         },
       ],
       identifiers: [
@@ -1700,22 +1716,33 @@ export const updateCaseDetails = async ({
                         ],
                       },
                     });
-                  const Individual = await createIndividualUser({ data: data?.data, documentData: documentData, tenantId });
-                  const addressLine1 = Individual?.Individual?.address[0]?.addressLine1 || "Telangana";
-                  const addressLine2 = Individual?.Individual?.address[0]?.addressLine2 || "Rangareddy";
-                  const buildingName = Individual?.Individual?.address[0]?.buildingName || "";
-                  const street = Individual?.Individual?.address[0]?.street || "";
-                  const city = Individual?.Individual?.address[0]?.city || "";
-                  const pincode = Individual?.Individual?.address[0]?.pincode || "";
-                  const latitude = Individual?.Individual?.address[0]?.latitude || "";
-                  const longitude = Individual?.Individual?.address[0]?.longitude || "";
-                  const doorNo = Individual?.Individual?.address[0]?.doorNo || "";
+                  const Individual = await createIndividualUser({ data: data?.data, documentData, tenantId });
+
+                  let permanentAddress;
+                  let currentAddress;
+                  const addressArray = Individual?.Individual?.address;
+                  if (addressArray?.length > 1) {
+                    permanentAddress = addressArray?.find((address) => address?.type === "PERMANENT");
+                    currentAddress = addressArray?.find((address) => address?.type === "CORRESPONDENCE");
+                  } else {
+                    permanentAddress = addressArray?.[0];
+                    currentAddress = addressArray?.[0];
+                  }
+
+                  const buildingName = permanentAddress?.buildingName || "";
+                  const street = permanentAddress?.street || "";
+                  const doorNo = permanentAddress?.doorNo || "";
+                  const address = `${doorNo ? doorNo + "," : ""} ${buildingName ? buildingName + "," : ""} ${street}`.trim();
+
+                  const buildingName1 = currentAddress?.buildingName || "";
+                  const street1 = currentAddress?.street || "";
+                  const doorNo1 = currentAddress?.doorNo || "";
+                  const address1 = `${doorNo1 ? doorNo1 + "," : ""} ${buildingName1 ? buildingName1 + "," : ""} ${street1}`.trim();
+
                   const firstName = Individual?.Individual?.name?.givenName;
                   const lastName = Individual?.Individual?.name?.familyName;
                   const middleName = Individual?.Individual?.name?.otherNames;
                   const userUuid = Individual?.Individual?.userUuid;
-
-                  const address = `${doorNo ? doorNo + "," : ""} ${buildingName ? buildingName + "," : ""} ${street}`.trim();
 
                   complainantVerification[index] = {
                     individualDetails: {
@@ -1729,22 +1756,62 @@ export const updateCaseDetails = async ({
                       ],
                       individualId: Individual?.Individual?.individualId,
                       "addressDetails-select": {
-                        pincode: pincode,
-                        district: addressLine2,
-                        city: city,
-                        state: addressLine1,
-                        locality: address,
-                      },
-                      addressDetails: {
-                        pincode: pincode,
-                        district: addressLine2,
-                        city: city,
-                        state: addressLine1,
+                        pincode: permanentAddress?.pincode || "",
+                        district: permanentAddress?.addressLine2 || "Rangareddy",
+                        city: permanentAddress?.city || "",
+                        state: permanentAddress?.addressLine1 || "Telangana",
                         coordinates: {
-                          longitude: longitude,
-                          latitude: latitude,
+                          longitude: permanentAddress?.longitude || "",
+                          latitude: permanentAddress?.latitude || "",
                         },
                         locality: address,
+                      },
+                      "currentAddressDetails-select": {
+                        pincode: currentAddress?.pincode || "",
+                        district: currentAddress?.addressLine2 || "Rangareddy",
+                        city: currentAddress?.city || "",
+                        state: currentAddress?.addressLine1 || "Telangana",
+                        coordinates: {
+                          longitude: currentAddress?.longitude || "",
+                          latitude: currentAddress?.latitude || "",
+                        },
+                        locality: address1,
+                        isCurrAddrSame: addressArray?.length > 1 ? {
+                          code: "NO",
+                          name: "NO",
+                        } : {
+                          code: "YES",
+                          name: "YES",
+                        },
+                      },
+                      addressDetails: {
+                        pincode: permanentAddress?.pincode || "",
+                        district: permanentAddress?.addressLine2 || "Rangareddy",
+                        city: permanentAddress?.city || "",
+                        state: permanentAddress?.addressLine1 || "Telangana",
+                        coordinates: {
+                          longitude: permanentAddress?.longitude || "",
+                          latitude: permanentAddress?.latitude || "",
+                        },
+                        locality: address,
+                      },
+                      currentAddressDetails: {
+                        pincode: currentAddress?.pincode || "",
+                        district: currentAddress?.addressLine2 || "Rangareddy",
+                        city: currentAddress?.city || "",
+                        state: currentAddress?.addressLine1 || "Telangana",
+                        coordinates: {
+                          longitude: currentAddress?.longitude || "",
+                          latitude: currentAddress?.latitude || "",
+                        },
+                        locality: address1,
+                        isCurrAddrSame: addressArray?.length > 1 ? {
+                          code: "NO",
+                          name: "NO",
+                        } : {
+                          code: "YES",
+                          name: "YES",
+                        },
                       },
                     },
                     userDetails: null,
@@ -1763,41 +1830,93 @@ export const updateCaseDetails = async ({
                   };
                 } else {
                   const Individual = await createIndividualUser({ data: data?.data, tenantId });
-                  const addressLine1 = Individual?.Individual?.address[0]?.addressLine1 || "Telangana";
-                  const addressLine2 = Individual?.Individual?.address[0]?.addressLine2 || "Rangareddy";
-                  const buildingName = Individual?.Individual?.address[0]?.buildingName || "";
-                  const street = Individual?.Individual?.address[0]?.street || "";
-                  const city = Individual?.Individual?.address[0]?.city || "";
-                  const pincode = Individual?.Individual?.address[0]?.pincode || "";
-                  const latitude = Individual?.Individual?.address[0]?.latitude || "";
-                  const longitude = Individual?.Individual?.address[0]?.longitude || "";
-                  const doorNo = Individual?.Individual?.address[0]?.doorNo || "";
-                  const firstName = Individual?.Individual?.name?.givenName || "";
-                  const lastName = Individual?.Individual?.name?.familyName || "";
-                  const middleName = Individual?.Individual?.name?.otherNames || "";
-                  const userUuid = Individual?.Individual?.userUuid;
+                  let permanentAddress;
+                  let currentAddress;
+                  const addressArray = Individual?.Individual?.address;
+                  if (addressArray?.length > 1) {
+                    permanentAddress = addressArray?.find((address) => address?.type === "PERMANENT");
+                    currentAddress = addressArray?.find((address) => address?.type === "CORRESPONDENCE");
+                  } else {
+                    permanentAddress = addressArray?.[0];
+                    currentAddress = addressArray?.[0];
+                  }
+
+                  const buildingName = permanentAddress?.buildingName || "";
+                  const street = permanentAddress?.street || "";
+                  const doorNo = permanentAddress?.doorNo || "";
                   const address = `${doorNo ? doorNo + "," : ""} ${buildingName ? buildingName + "," : ""} ${street}`.trim();
+
+                  const buildingName1 = currentAddress?.buildingName || "";
+                  const street1 = currentAddress?.street || "";
+                  const doorNo1 = currentAddress?.doorNo || "";
+                  const address1 = `${doorNo1 ? doorNo1 + "," : ""} ${buildingName1 ? buildingName1 + "," : ""} ${street1}`.trim();
+
+                  const firstName = Individual?.Individual?.name?.givenName;
+                  const lastName = Individual?.Individual?.name?.familyName;
+                  const middleName = Individual?.Individual?.name?.otherNames;
+                  const userUuid = Individual?.Individual?.userUuid;
+
                   complainantVerification[index] = {
                     individualDetails: {
                       document: null,
                       individualId: Individual?.Individual?.individualId,
                       "addressDetails-select": {
-                        pincode: pincode,
-                        district: addressLine2,
-                        city: city,
-                        state: addressLine1,
-                        locality: address,
-                      },
-                      addressDetails: {
-                        pincode: pincode,
-                        district: addressLine2,
-                        city: city,
-                        state: addressLine1,
+                        pincode: permanentAddress?.pincode || "",
+                        district: permanentAddress?.addressLine2 || "Rangareddy",
+                        city: permanentAddress?.city || "",
+                        state: permanentAddress?.addressLine1 || "Telangana",
                         coordinates: {
-                          longitude: latitude,
-                          latitude: longitude,
+                          longitude: permanentAddress?.longitude || "",
+                          latitude: permanentAddress?.latitude || "",
                         },
                         locality: address,
+                      },
+                      "currentAddressDetails-select": {
+                        pincode: currentAddress?.pincode || "",
+                        district: currentAddress?.addressLine2 || "Rangareddy",
+                        city: currentAddress?.city || "",
+                        state: currentAddress?.addressLine1 || "Telangana",
+                        coordinates: {
+                          longitude: currentAddress?.longitude || "",
+                          latitude: currentAddress?.latitude || "",
+                        },
+                        locality: address1,
+                        isCurrAddrSame: addressArray?.length > 1 ? {
+                          code: "NO",
+                          name: "NO",
+                        } : {
+                          code: "YES",
+                          name: "YES",
+                        },
+                      },
+                      addressDetails: {
+                        pincode: permanentAddress?.pincode || "",
+                        district: permanentAddress?.addressLine2 || "Rangareddy",
+                        city: permanentAddress?.city || "",
+                        state: permanentAddress?.addressLine1 || "Telangana",
+                        coordinates: {
+                          longitude: permanentAddress?.longitude || "",
+                          latitude: permanentAddress?.latitude || "",
+                        },
+                        locality: address,
+                      },
+                      currentAddressDetails: {
+                        pincode: currentAddress?.pincode || "",
+                        district: currentAddress?.addressLine2 || "Rangareddy",
+                        city: currentAddress?.city || "",
+                        state: currentAddress?.addressLine1 || "Telangana",
+                        coordinates: {
+                          longitude: currentAddress?.longitude || "",
+                          latitude: currentAddress?.latitude || "",
+                        },
+                        locality: address1,
+                        isCurrAddrSame: addressArray?.length > 1 ? {
+                          code: "NO",
+                          name: "NO",
+                        } : {
+                          code: "YES",
+                          name: "YES",
+                        },
                       },
                     },
                     userDetails: null,
