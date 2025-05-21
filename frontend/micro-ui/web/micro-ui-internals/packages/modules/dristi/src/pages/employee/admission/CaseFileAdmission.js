@@ -344,11 +344,18 @@ function CaseFileAdmission({ t, path }) {
     const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
     let assignees = [];
     assignees.push(caseCreatedByUuid);
+    let filteredDocuments = caseDetails?.documents;
+    if (action === "SEND_BACK") {
+      filteredDocuments = caseDetails?.documents?.filter(
+        (doc) => doc?.documentType !== "case.complaint.signed" && doc?.documentType !== "case.complaint.unsigned"
+      );
+    }
 
     return await DRISTIService.caseUpdateService(
       {
         cases: {
           ...newcasedetails,
+          documents: filteredDocuments,
           linkedCases: caseDetails?.linkedCases ? caseDetails?.linkedCases : [],
           ...(action === "REGISTER" && { registrationDate: new Date().getTime() }),
           workflow: {
