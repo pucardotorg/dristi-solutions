@@ -219,27 +219,30 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
       .then((individualData) => {
         if (Array.isArray(individualData?.Individual) && individualData?.Individual?.length > 0) {
           let permanentAddress;
+          let currentAddress;
           const addressArray = individualData?.Individual?.[0]?.address;
-          if(addressArray?.length > 1) {
+          if (addressArray?.length > 1) {
             permanentAddress = addressArray?.find((address) => address?.type === "PERMANENT");
-          }else{
+            currentAddress = addressArray?.find((address) => address?.type === "CORRESPONDENCE");
+          } else {
             permanentAddress = addressArray?.[0];
+            currentAddress = addressArray?.[0];
           }
 
-          const addressLine1 = permanentAddress?.addressLine1 || "Telangana";
-          const addressLine2 = permanentAddress?.addressLine2 || "Rangareddy";
           const buildingName = permanentAddress?.buildingName || "";
           const street = permanentAddress?.street || "";
-          const city = permanentAddress?.city || "";
-          const pincode = permanentAddress?.pincode || "";
-          const latitude = permanentAddress?.latitude || "";
-          const longitude = permanentAddress?.longitude || "";
           const doorNo = permanentAddress?.doorNo || "";
+          const address = `${doorNo ? doorNo + "," : ""} ${buildingName ? buildingName + "," : ""} ${street}`.trim();
+
+          const buildingName1 = currentAddress?.buildingName || "";
+          const street1 = currentAddress?.street || "";
+          const doorNo1 = currentAddress?.doorNo || "";
+          const address1 = `${doorNo1 ? doorNo1 + "," : ""} ${buildingName1 ? buildingName1 + "," : ""} ${street1}`.trim();
+
           const idType = individualData?.Individual?.[0]?.identifiers[0]?.identifierType || "";
           const identifierIdDetails = JSON.parse(
             individualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "identifierIdDetails")?.value || "{}"
           );
-          const address = `${doorNo ? doorNo + "," : ""} ${buildingName ? buildingName + "," : ""} ${street}`.trim();
 
           const givenName = individualData?.Individual?.[0]?.name?.givenName || "";
           const otherNames = individualData?.Individual?.[0]?.name?.otherNames || "";
@@ -247,15 +250,33 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
 
           const data = {
             "addressDetails-select": {
-              pincode: pincode,
-              district: addressLine2,
-              city: city,
-              state: addressLine1,
+              pincode: permanentAddress?.pincode || "",
+              district: permanentAddress?.addressLine2 || "Rangareddy",
+              city: permanentAddress?.city || "",
+              state: permanentAddress?.addressLine1 || "Telangana",
               coordinates: {
-                longitude: longitude,
-                latitude: latitude,
+                longitude: permanentAddress?.longitude || "",
+                latitude: permanentAddress?.latitude || "",
               },
               locality: address,
+            },
+            "currentAddressDetails-select": {
+              pincode: currentAddress?.pincode || "",
+              district: currentAddress?.addressLine2 || "Rangareddy",
+              city: currentAddress?.city || "",
+              state: currentAddress?.addressLine1 || "Telangana",
+              coordinates: {
+                longitude: currentAddress?.longitude || "",
+                latitude: currentAddress?.latitude || "",
+              },
+              locality: address1,
+              isCurrAddrSame: addressArray?.length > 1 ? {
+                code: "NO",
+                name: "NO",
+              } : {
+                code: "YES",
+                name: "YES",
+              },
             },
             firstName: givenName,
             lastName: familyName,
@@ -264,7 +285,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
           };
 
           if (config?.key === "complainantVerification") {
-            ["addressDetails-select", "complainantId", "firstName", "lastName", "middleName"].forEach((key) => {
+            ["addressDetails-select", "currentAddressDetails-select", "complainantId", "firstName", "lastName", "middleName"].forEach((key) => {
               onSelect(
                 `${key}`,
                 typeof formData?.[key] === "object" && typeof key?.[key] === "object" ? { ...formData?.[key], ...data[key] } : data[key],
@@ -292,13 +313,15 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
                   : null,
                 ...(config?.key === "poaVerification"
                   ? {
-                      "poaAddressDetails-select": data["addressDetails-select"],
-                      poaAddressDetails: data["addressDetails-select"],
-                    }
+                    "poaAddressDetails-select": data["addressDetails-select"],
+                    poaAddressDetails: data["addressDetails-select"],
+                  }
                   : {
-                      "addressDetails-select": data["addressDetails-select"],
-                      addressDetails: data["addressDetails-select"],
-                    }),
+                    "addressDetails-select": data["addressDetails-select"],
+                    addressDetails: data["addressDetails-select"],
+                    "currentAddressDetails-select": data["currentAddressDetails-select"],
+                    currentAddressDetails: data["currentAddressDetails-select"],
+                  }),
               },
               isUserVerified: true,
             },
