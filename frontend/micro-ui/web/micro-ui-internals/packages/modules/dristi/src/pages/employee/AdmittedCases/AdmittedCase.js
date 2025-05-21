@@ -2928,7 +2928,10 @@ const AdmittedCases = () => {
           )}
         </div>
       )}
-      <div className={`inbox-search-wrapper orders-tab-inbox-wrapper`}>{inboxComposer}</div>
+      <div className={`inbox-search-wrapper orders-tab-inbox-wrapper`} style={showActionBar ? { paddingBottom: "60px" } : {}}>
+        {inboxComposer}
+      </div>
+
       {tabData?.filter((tab) => tab.label === "Overview")?.[0]?.active && (
         <div className="case-overview-wrapper">
           <CaseOverview
