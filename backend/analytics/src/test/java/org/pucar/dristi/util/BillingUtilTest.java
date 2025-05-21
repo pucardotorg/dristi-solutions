@@ -33,6 +33,8 @@ class BillingUtilTest {
     private MdmsUtil mdmsUtil;
     @Mock
     private ObjectMapper objectMapper;
+    @Mock
+    private HrmsUtil hrmsUtil;
 
 
     private BillingUtil billingUtil;
@@ -40,7 +42,7 @@ class BillingUtilTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        billingUtil = new BillingUtil(config, indexerUtil, requestRepository, caseUtil,objectMapper,mdmsUtil);
+        billingUtil = new BillingUtil(config, indexerUtil, requestRepository, caseUtil,objectMapper,mdmsUtil, hrmsUtil);
     }
 
     @Test

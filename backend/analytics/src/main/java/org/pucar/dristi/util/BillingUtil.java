@@ -13,9 +13,6 @@ import org.egov.tracer.model.ServiceCallException;
 import org.json.JSONObject;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
-import org.pucar.dristi.util.CaseUtil;
-import org.pucar.dristi.util.IndexerUtils;
-import org.pucar.dristi.util.MdmsUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -34,15 +31,17 @@ public class BillingUtil {
     private final CaseUtil caseUtil;
     private final ObjectMapper objectMapper;
     private final MdmsUtil mdmsUtil;
+    private final HrmsUtil hrmsUtil;
 
     @Autowired
-    public BillingUtil(Configuration config, IndexerUtils indexerUtil, ServiceRequestRepository requestRepository, CaseUtil caseUtil, ObjectMapper objectMapper, MdmsUtil mdmsUtil) {
+    public BillingUtil(Configuration config, IndexerUtils indexerUtil, ServiceRequestRepository requestRepository, CaseUtil caseUtil, ObjectMapper objectMapper, MdmsUtil mdmsUtil, HrmsUtil hrmsUtil) {
         this.config = config;
         this.indexerUtil = indexerUtil;
         this.requestRepository = requestRepository;
         this.caseUtil = caseUtil;
         this.objectMapper = objectMapper;
         this.mdmsUtil = mdmsUtil;
+        this.hrmsUtil = hrmsUtil;
     }
 
 
@@ -80,11 +79,22 @@ public class BillingUtil {
         String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
         net.minidev.json.JSONArray statutesAndSections = JsonPath.read(caseObject.toString(), CASE_STATUTES_AND_SECTIONS);
         String caseType = getCaseType(statutesAndSections);
+        String courtId = getCourtId(requestInfo);
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_BILLING_FORMAT,
-                config.getBillingIndex(), id, id, tenantId, caseTitle, filingNumber, caseStage, caseId, caseType, paymentType, totalAmount, status, consumerCode, businessService, auditJsonString
+                config.getBillingIndex(), id, id, tenantId, caseTitle, filingNumber, caseStage, caseId, caseType, paymentType, totalAmount, status, consumerCode, businessService, courtId, auditJsonString
         );
+    }
+
+    private String getCourtId(JSONObject requestInfo) {
+        try {
+            RequestInfo requestInfoBody = objectMapper.convertValue(requestInfo.toString(), RequestInfo.class);
+            return hrmsUtil.getCourtId(requestInfoBody);
+        } catch (Exception e) {
+            log.error("Error occurred while getting court id: {}", e.toString());
+        }
+        return null;
     }
 
     public String buildString(JSONObject jsonObject) {

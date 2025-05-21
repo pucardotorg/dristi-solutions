@@ -31,7 +31,8 @@ public class ServiceConstants {
                     + "\"amount\": %f,"
                     + "\"billStatus\": \"%s\","
                     + "\"consumerCode\": \"%s\","
-                    + "\"service\": \"%s\""
+                    + "\"service\": \"%s\","
+                    + "\"courtId\": \"%s\""
                     + "},"
                     + "\"auditDetails\": %s"  // auditDetails as a JSON string
                     + "}}\n";
