@@ -401,16 +401,17 @@ const ComplainantSignature = ({ path }) => {
     setLoader(true);
     setEditCaseModal(false);
     try {
-      const tempDocs = caseDetails?.documents?.filter(
+      const tempDocs = (caseDetails?.documents || [])?.filter(
         (doc) => doc?.documentType !== "case.complaint.signed" && doc?.documentType !== "case.complaint.unsigned"
       );
-
-      tempDocs.push({
-        documentType: "oldCaseSignedDocument",
-        fileStore: signatureDocumentId,
-        fileName: "case Complaint Signed Document",
-        isActive: false,
-      });
+      if (signatureDocumentId) {
+        tempDocs.push({
+          documentType: "oldCaseSignedDocument",
+          fileStore: signatureDocumentId,
+          fileName: "case Complaint Signed Document",
+          isActive: false,
+        });
+      }
 
       await DRISTIService.caseUpdateService(
         {
@@ -728,7 +729,7 @@ const ComplainantSignature = ({ path }) => {
   const updateCase = async (state) => {
     setLoader(true);
     const caseDocList = updateSignedDocInCaseDoc();
-    let tempDocList = structuredClone(caseDocList);
+    let tempDocList = [...caseDocList];
     const isSignedDocumentsPresent = tempDocList?.some((doc) => doc?.documentType === "case.complaint.signed");
     if (isSignedDocumentsPresent) tempDocList = tempDocList?.filter((doc) => doc?.documentType !== "case.complaint.unsigned");
 

@@ -344,9 +344,9 @@ function CaseFileAdmission({ t, path }) {
     const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
     let assignees = [];
     assignees.push(caseCreatedByUuid);
-    let filteredDocuments = caseDetails?.documents;
+    let filteredDocuments = caseDetails?.documents || [];
     if (action === "SEND_BACK") {
-      filteredDocuments = caseDetails?.documents?.filter(
+      filteredDocuments = filteredDocuments?.filter(
         (doc) => doc?.documentType !== "case.complaint.signed" && doc?.documentType !== "case.complaint.unsigned"
       );
     }
