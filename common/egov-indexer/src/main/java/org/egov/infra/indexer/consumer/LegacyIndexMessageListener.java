@@ -69,12 +69,14 @@ public class LegacyIndexMessageListener implements MessageListener<String, Strin
 	 */
 	public void onMessage(ConsumerRecord<String, String> data) {
 		log.info("Topic: " + data.topic());
+		log.info("Topic from LegacyIndexMessageListener: with value: " + data.topic(), data.value());
 		// Adding in MDC so that tracer can add it in header
 		MDC.put(TENANTID_MDC_STRING, stateLevelTenantId );
 		ObjectMapper mapper = indexerUtils.getObjectMapper();
 		if(data.topic().equals(legacyIndexTopic)) {
 			try {
 				LegacyIndexRequest legacyIndexRequest = mapper.readValue(data.value(), LegacyIndexRequest.class);
+				log.info("Topic from LegacyIndexMessageListener: with value: if " + data.topic(), data.value());
 				legacyIndexService.beginLegacyIndex(legacyIndexRequest);
 			}catch(Exception e) {
 				log.error("Couldn't parse legacyindex request: ", e);
@@ -84,6 +86,7 @@ public class LegacyIndexMessageListener implements MessageListener<String, Strin
 				if (data.topic().equalsIgnoreCase("application-legacy-topic") || data.topic().equalsIgnoreCase("case-legacy-topic") || data.topic().equalsIgnoreCase("hearing-legacy-topic") || data.topic().equalsIgnoreCase("billing-legacy-topic")) {
 					data = transformData(data);
 				}
+				log.info("Topic from LegacyIndexMessageListener: with value: else " + data.topic(), data.value());
 				indexerService.esIndexer(data.topic(), data.value());
 			} catch (Exception e) {
 				log.error("error while indexing: ", e);
