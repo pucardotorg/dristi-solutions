@@ -29,6 +29,9 @@ public class RepresentativeV2 {
     @JsonProperty("advocateId")
     private String advocateId = null;
 
+    @JsonProperty("additionalDetails")
+    private Object additionalDetails = null;
+
     @JsonProperty("representing")
     @Valid
     private List<RepresentingV2> representing = null;

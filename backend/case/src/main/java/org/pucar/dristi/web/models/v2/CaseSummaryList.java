@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.pucar.dristi.web.models.PendingAdvocateRequest;
+
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -18,14 +21,14 @@ public class CaseSummaryList {
     @JsonProperty("tenantId")
     private String tenantId;
 
+    @JsonProperty("createdTime")
+    private Long createdTime;
+
     @JsonProperty("caseTitle")
     private String caseTitle;
 
     @JsonProperty("filingDate")
     private Long filingDate;
-
-    @JsonProperty("stage")
-    private String stage;
 
     @JsonProperty("caseType")
     private String caseType;
@@ -48,9 +51,6 @@ public class CaseSummaryList {
     @JsonProperty("courtId")
     private String courtId;
 
-    @JsonProperty("advocateCount")
-    private Integer advocateCount;
-
     @JsonProperty("status")
     private String status;
 
@@ -62,4 +62,10 @@ public class CaseSummaryList {
 
     @JsonProperty("lastModifiedTime")
     private Long lastModifiedTime;
+
+    @JsonProperty("pendingAdvocateRequests")
+    private List<PendingAdvocateRequest> pendingAdvocateRequests;
+
+    @JsonProperty("advocateStatus")
+    private String advocateStatus;
 }

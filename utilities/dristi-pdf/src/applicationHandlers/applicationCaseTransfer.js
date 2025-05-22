@@ -161,6 +161,7 @@ const applicationCaseTransfer = async (
 
     const ordinalSuffix = getOrdinalSuffix(day);
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const prayer = application?.applicationDetails?.prayer || "";
     const data = {
       Data: [
         {
@@ -177,9 +178,9 @@ const applicationCaseTransfer = async (
           addressOfTheCourt: mdmsCourtRoom.state, //FIXME: mdmsCourtRoom.address,
           date: formattedToday,
           partyName: partyName,
+          prayer,
           additionalComments,
           grounds,
-          reliefSought: "",
           day: day + ordinalSuffix,
           month: month,
           year: year,

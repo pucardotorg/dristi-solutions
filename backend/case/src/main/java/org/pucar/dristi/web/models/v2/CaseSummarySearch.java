@@ -19,8 +19,8 @@ import java.util.UUID;
 @Builder
 public class CaseSummarySearch {
 
-    @JsonProperty("caseId")
-    private UUID caseId = null;
+    @JsonProperty("id")
+    private UUID id = null;
 
     @JsonProperty("tenantId")
     private String tenantId = null;
@@ -30,6 +30,9 @@ public class CaseSummarySearch {
 
     @JsonProperty("caseTitle")
     private String caseTitle = null;
+
+    @JsonProperty("createdTime")
+    private Long createdTime;
 
     @JsonProperty("caseDescription")
     private String caseDescription = null;

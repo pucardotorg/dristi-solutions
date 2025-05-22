@@ -3,6 +3,7 @@ package org.pucar.dristi.repository.rowmapper.v2;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
+import org.postgresql.util.PGobject;
 import org.pucar.dristi.web.models.v2.RepresentativeV2;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
@@ -17,12 +18,17 @@ public class RepresentativeRowMapperV2 implements ResultSetExtractor<Map<UUID, L
         Map<UUID, List<RepresentativeV2>> advocateMap = new LinkedHashMap<>();
 
         try {
+            ObjectMapper objectMapper = new ObjectMapper();
             while (rs.next()) {
                 UUID id = UUID.fromString(rs.getString("case_id"));
                 RepresentativeV2 representativeV2 = RepresentativeV2.builder()
                         .advocateId(rs.getString("advocateid"))
                         .id(rs.getString("id"))
                         .build();
+
+                PGobject pgObject = (PGobject) rs.getObject("additionaldetails");
+                if (pgObject != null)
+                    representativeV2.setAdditionalDetails(objectMapper.readTree(pgObject.getValue()));
 
                 if (advocateMap.containsKey(id)) {
                     advocateMap.get(id).add(representativeV2);
