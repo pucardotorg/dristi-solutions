@@ -31,8 +31,8 @@ public class CourtIdRepository {
 
         log.info("Enriching courtId :: {} for filingNumber: {} ", courtId, filingNumber);
         updateCourtIdInApplication(courtId, filingNumber);
-        updateCourtIdInTask(courtId, filingNumber);
-        updateCourtIdInOrders(courtId, filingNumber);
+       // updateCourtIdInTask(courtId, filingNumber);
+        //updateCourtIdInOrders(courtId, filingNumber);
         updateCourtIdInEvidence(courtId, filingNumber);
     }
 
