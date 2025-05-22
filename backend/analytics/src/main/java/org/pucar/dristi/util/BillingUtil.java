@@ -3,6 +3,7 @@ package org.pucar.dristi.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.jayway.jsonpath.JsonPath;
@@ -13,9 +14,8 @@ import org.egov.tracer.model.ServiceCallException;
 import org.json.JSONObject;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
-import org.pucar.dristi.util.CaseUtil;
-import org.pucar.dristi.util.IndexerUtils;
-import org.pucar.dristi.util.MdmsUtil;
+import org.pucar.dristi.web.models.CaseCriteria;
+import org.pucar.dristi.web.models.CaseSearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -92,11 +92,33 @@ public class BillingUtil {
         String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
         net.minidev.json.JSONArray statutesAndSections = JsonPath.read(caseObject.toString(), CASE_STATUTES_AND_SECTIONS);
         String caseType = getCaseType(statutesAndSections);
+        RequestInfo requestInfoObj = objectMapper.convertValue(requestInfo, RequestInfo.class);
+        String courtId = getCourtId(filingNumber, requestInfoObj);
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_BILLING_FORMAT,
-                config.getBillingIndex(), id, id, tenantId, paymentCreatedDate,paymentCompletedDate,caseTitle, caseNumber,caseStage, caseId, caseType, paymentType, totalAmount, status, consumerCode, businessService, auditJsonString
+                config.getBillingIndex(), id, id, tenantId, paymentCreatedDate,paymentCompletedDate,caseTitle, caseNumber,caseStage, caseId, caseType, paymentType, totalAmount, status, consumerCode, businessService, courtId, auditJsonString
         );
+    }
+
+    private String getCourtId(String filingNumber, RequestInfo request) {
+        try {
+            org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(request, filingNumber);
+            JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+            return caseDetails.get(0).get("courtId").textValue();
+        } catch (Exception e) {
+            log.error("Error occurred while getting court id: {}", e.toString());
+        }
+        return null;
+
+    }
+
+    public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String filingNumber) {
+        CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+        caseSearchRequest.setRequestInfo(requestInfo);
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build();
+        caseSearchRequest.addCriteriaItem(caseCriteria);
+        return caseSearchRequest;
     }
 
     public String buildString(JSONObject jsonObject) {

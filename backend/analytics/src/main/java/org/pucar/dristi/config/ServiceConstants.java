@@ -14,7 +14,7 @@ public class ServiceConstants {
 
     //Consumer
     public static final String ES_INDEX_HEADER_FORMAT = "{\"index\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
-    public static final String ES_INDEX_DOCUMENT_FORMAT = "{\"Data\": {\"id\":\"%s\",\"name\":\"%s\",\"entityType\":\"%s\",\"referenceId\":\"%s\",\"status\":\"%s\",\"assignedTo\":%s,\"assignedRole\":%s,\"cnrNumber\":\"%s\",\"filingNumber\":\"%s\",\"caseId\":\"%s\",\"caseTitle\":\"%s\",\"isCompleted\":%b,\"stateSla\":%d,\"businessServiceSla\":%d,\"additionalDetails\":%s,\"screenType\":\"%s\"}}\n";
+    public static final String ES_INDEX_DOCUMENT_FORMAT = "{\"Data\": {\"id\":\"%s\",\"name\":\"%s\",\"entityType\":\"%s\",\"referenceId\":\"%s\",\"status\":\"%s\",\"assignedTo\":%s,\"assignedRole\":%s,\"cnrNumber\":\"%s\",\"filingNumber\":\"%s\",\"caseId\":\"%s\",\"caseTitle\":\"%s\",\"isCompleted\":%b,\"stateSla\":%d,\"businessServiceSla\":%d,\"additionalDetails\":%s,\"screenType\":\"%s,\"courtId\":\"%s\"}}\n";
     public static final String TENANTID_MDC_STRING = "TENANTID";
 
 
@@ -33,7 +33,8 @@ public class ServiceConstants {
                     + "\"amount\": %f,"
                     + "\"billStatus\": \"%s\","
                     + "\"consumerCode\": \"%s\","
-                    + "\"service\": \"%s\""
+                    + "\"service\": \"%s\","
+                    + "\"courtId\": \"%s\""
                     + "},"
                     + "\"auditDetails\": %s"  // auditDetails as a JSON string
                     + "}}\n";
@@ -242,5 +243,19 @@ public class ServiceConstants {
     public static final String LITIGANT = "litigant";
 
     public static final String FLOW_JAC = "flow_jac";
+
+    public static final String INTERNALMICROSERVICEROLE_NAME = "Internal Microservice Role";
+
+    public static final String INTERNALMICROSERVICEROLE_CODE = "INTERNAL_MICROSERVICE_ROLE";
+
+    public static final String INTERNALMICROSERVICEUSER_NAME = "Internal Microservice User";
+
+    public static final String INTERNALMICROSERVICEUSER_USERNAME = "INTERNAL_USER";
+
+    public static final String INTERNALMICROSERVICEUSER_MOBILENO = "9999999999";
+
+    public static final String INTERNALMICROSERVICEUSER_TYPE = "SYSTEM";
+
+    public static final String msgId = "1730882648558|en_IN";
 
 }

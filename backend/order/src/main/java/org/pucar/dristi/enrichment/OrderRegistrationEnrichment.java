@@ -1,14 +1,20 @@
 package org.pucar.dristi.enrichment;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.IdgenUtil;
+import org.pucar.dristi.web.models.CaseCriteria;
+import org.pucar.dristi.web.models.CaseSearchRequest;
+import org.pucar.dristi.web.models.Order;
 import org.pucar.dristi.web.models.OrderRequest;
 import org.springframework.stereotype.Component;
 
@@ -24,11 +30,13 @@ public class OrderRegistrationEnrichment {
     private IdgenUtil idgenUtil;
     private Configuration configuration;
     private ObjectMapper objectMapper;
+    private CaseUtil caseUtil;
 
-    public OrderRegistrationEnrichment(IdgenUtil idgenUtil, Configuration configuration, ObjectMapper objectMapper) {
+    public OrderRegistrationEnrichment(IdgenUtil idgenUtil, Configuration configuration, ObjectMapper objectMapper, CaseUtil caseUtil) {
         this.idgenUtil = idgenUtil;
         this.configuration = configuration;
         this.objectMapper = objectMapper;
+        this.caseUtil = caseUtil;
     }
 
     public void enrichOrderRegistration(OrderRequest orderRequest) {
@@ -56,7 +64,7 @@ public class OrderRegistrationEnrichment {
 
                 String orderNumber = orderRequest.getOrder().getFilingNumber() + "-" + orderRegistrationIdList.get(0);
                 orderRequest.getOrder().setOrderNumber(orderNumber);
-                orderRequest.getOrder().setCourtId(configuration.getCourtId());
+                orderRequest.getOrder().setCourtId(getCourtId(orderRequest));
             }
 
         } catch (CustomException e) {
@@ -66,6 +74,34 @@ public class OrderRegistrationEnrichment {
             log.error("Exception occurred while enriching order :: {}", e.toString());
             throw e;
         }
+    }
+
+    private String getCourtId(OrderRequest orderRequest) {
+        CaseSearchRequest caseSearchRequest = createCaseSearchRequest(
+                orderRequest.getRequestInfo(), orderRequest.getOrder()
+        );
+
+        JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+
+        if (caseDetails == null || caseDetails.isEmpty()) {
+            throw new CustomException("COURT_ID_NOT_FOUND", "Court ID not found in case details");
+        }
+
+        JsonNode courtIdNode = caseDetails.get(0).get("courtId");
+        if (courtIdNode == null || courtIdNode.isNull()) {
+            throw new CustomException("COURT_ID_NOT_FOUND", "Court ID not found in case details");
+        }
+
+        return courtIdNode.textValue();
+    }
+
+
+    public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, Order order) {
+        CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+        caseSearchRequest.setRequestInfo(requestInfo);
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(order.getFilingNumber()).defaultFields(false).build();
+        caseSearchRequest.addCriteriaItem(caseCriteria);
+        return caseSearchRequest;
     }
 
     public void enrichOrderRegistrationUponUpdate(OrderRequest orderRequest) {

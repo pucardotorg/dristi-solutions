@@ -221,8 +221,8 @@ public class HearingUtil {
                 .applicationNumbers(new ArrayList<>())
                 .presidedBy(PresidedBy.builder()  // todo:this is hardcoded but needs to come from order
                         .benchID("BENCH_ID")
-                        .judgeID(Collections.singletonList("JUDGE_ID"))
-                        .courtID("KLKM52").build())
+                        .judgeID(Collections.singletonList(courtCase.getJudgeId()))
+                        .courtID(courtCase.getCourtId()).build())
 
                 .build();
 

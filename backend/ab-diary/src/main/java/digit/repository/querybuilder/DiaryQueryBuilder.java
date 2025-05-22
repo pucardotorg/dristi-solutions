@@ -14,7 +14,7 @@ import java.util.List;
 public class DiaryQueryBuilder {
 
     private static final String BASE_DIARY_QUERY = "SELECT dcd.id as id, dcd.tenant_id as tenantId,dcd.case_number as caseNumber," +
-            "dcd.diary_date as diaryDate, dcd.diary_type as diaryType,dcd.judge_id as judgeId,dcd.additional_details as additionalDetails," +
+            "dcd.diary_date as diaryDate, dcd.diary_type as diaryType,dcd.court_id as courtId,dcd.additional_details as additionalDetails," +
             "dcd.created_by as diaryCreateBy,dcd.last_modified_by as diaryLastModifiedBy,dcd.created_time as diaryCreatedTime," +
             "dcd.last_modified_time as diaryLastModifiedTime, dcdd.filestore_id as fileStoreId , dcdd.id as documentId," +
             "dcdd.document_uid as documentUid,dcdd.document_name as documentName,dcdd.document_type as documentType," +
@@ -60,10 +60,10 @@ public class DiaryQueryBuilder {
                 firstCriteria = false;
             }
 
-            if (searchCriteria.getJudgeId() != null) {
+            if (searchCriteria.getCourtId() != null) {
                 addWhereClause(query, firstCriteria);
-                query.append("dcd.judge_id = ?");
-                preparedStatementValues.add(searchCriteria.getJudgeId());
+                query.append("dcd.court_id = ?");
+                preparedStatementValues.add(searchCriteria.getCourtId());
                 preparedStatementTypeValues.add(Types.VARCHAR);
                 firstCriteria =false;
             }
@@ -142,9 +142,9 @@ public class DiaryQueryBuilder {
                 preparedStatementTypeValues.add(Types.VARCHAR);
             }
 
-            if (searchCriteria.getJudgeId() != null) {
-                query.append(" and dcd.judge_id = ?");
-                preparedStatementValues.add(searchCriteria.getJudgeId());
+            if (searchCriteria.getCourtId() != null) {
+                query.append(" and dcd.court_id = ?");
+                preparedStatementValues.add(searchCriteria.getCourtId());
                 preparedStatementTypeValues.add(Types.VARCHAR);
             }
 

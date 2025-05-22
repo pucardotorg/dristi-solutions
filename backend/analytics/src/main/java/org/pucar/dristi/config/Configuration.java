@@ -206,6 +206,26 @@ public class Configuration {
 	@Value("${elastic.pending.task.search}")
 	private String pendingTaskSearchPath;
 
+	//HRMS
+	@Value("${egov.hrms.host}")
+	private String hrmsHost;
+
+	@Value("${egov.hrms.search.endpoint}")
+	private String hrmsEndPoint;
+
+	// User Config
+	@Value("${egov.user.host}")
+	private String userHost;
+
+	@Value("${egov.user.search.path}")
+	private String userSearchEndpoint;
+
+	@Value("${egov.user.create.path}")
+	private String userCreateEndpoint;
+
+	//Tenant Id
+	@Value("${egov-state-level-tenant-id}")
+	private String egovStateTenantId;
 
 	@PostConstruct
 	public void init() {

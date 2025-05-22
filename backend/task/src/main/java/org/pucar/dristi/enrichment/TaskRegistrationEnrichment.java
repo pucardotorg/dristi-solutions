@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.util.HrmsUtil;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.web.models.Task;
 import org.pucar.dristi.web.models.TaskRequest;
@@ -28,11 +29,14 @@ public class TaskRegistrationEnrichment {
     private final Configuration config;
     private final ObjectMapper objectMapper;
 
+    private final HrmsUtil hrmsUtil;
+
     @Autowired
-    public TaskRegistrationEnrichment(IdgenUtil idgenUtil, Configuration config, ObjectMapper objectMapper) {
+    public TaskRegistrationEnrichment(IdgenUtil idgenUtil, Configuration config, ObjectMapper objectMapper, HrmsUtil hrmsUtil) {
         this.idgenUtil = idgenUtil;
         this.config = config;
         this.objectMapper = objectMapper;
+        this.hrmsUtil = hrmsUtil;
     }
 
     public void enrichTaskRegistration(TaskRequest taskRequest) {
@@ -50,7 +54,7 @@ public class TaskRegistrationEnrichment {
             task.setAuditDetails(auditDetails);
 
             task.setId(UUID.randomUUID());
-            task.setCourtId(config.getCourtId());
+            enrichCourtId(taskRequest);
 
             if (task.getDocuments() != null) {
                 task.getDocuments().forEach(document -> {
@@ -71,6 +75,13 @@ public class TaskRegistrationEnrichment {
             log.error("Error enriching task application :: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, e.getMessage());
         }
+    }
+
+    private void enrichCourtId(TaskRequest taskRequest) {
+
+        String courtId = hrmsUtil.getCourtId(taskRequest.getRequestInfo());
+        taskRequest.getTask().setCourtId(courtId);
+
     }
 
     private void enrichConsumerCodeInTaskDetails(Task task) {
