@@ -376,8 +376,8 @@ const SubmissionsCreate = ({ path }) => {
       WITHDRAWAL: configsCaseWithdrawal,
       TRANSFER: configsCaseTransfer,
       SETTLEMENT: configsSettlement,
-      BAIL_BOND: configsBailBond,
-      SURETY: configsSurety,
+      // BAIL_BOND: configsBailBond,
+      // SURETY: configsSurety,
       CHECKOUT_REQUEST: configsCheckoutRequest,
       REQUEST_FOR_BAIL: requestForBail,
       SUBMIT_BAIL_DOCUMENTS: submitDocsForBail,
@@ -1217,7 +1217,7 @@ const SubmissionsCreate = ({ path }) => {
       ["SUBMIT_BAIL_DOCUMENTS"].includes(applicationType) &&
         (orderNumber || orderRefNumber) &&
         createPendingTask({
-          refId: `${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
+          refId: `${itemId ? `${itemId}_` : ""}${userInfo?.uuid}_${orderNumber || orderRefNumber}`,
           isCompleted: true,
           status: "Completed",
           ...(applicationType === "SUBMIT_BAIL_DOCUMENTS" && { name: t("SUBMIT_BAIL_DOCUMENTS") }),
@@ -1432,7 +1432,7 @@ const SubmissionsCreate = ({ path }) => {
   }
   return (
     <div className="citizen create-submission" style={{ width: "50%", ...(!isCitizen && { padding: "0 8px 24px 16px" }) }}>
-      <Header> {t("CREATE_SUBMISSION")}</Header>
+      <Header styles={{ margin: "25px 0px 0px 25px" }}> {t("CREATE_SUBMISSION")}</Header>
       <div style={{ minHeight: "550px", overflowY: "auto" }}>
         <FormComposerV2
           label={t("REVIEW_SUBMISSION")}

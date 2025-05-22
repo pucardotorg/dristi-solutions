@@ -1,6 +1,7 @@
 package pucar.strategy.ordertype;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -129,29 +130,39 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
             log.info("taskDetailsArray:{}", taskDetailsArray.size());
 
             for (JsonNode taskDetail : taskDetailsArray) {
-                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase);
+
+
+                String taskDetailString = objectMapper.writeValueAsString(taskDetail);
+                Map<String, Object> jsonMap = objectMapper.readValue(taskDetailString, new TypeReference<>() {
+                });
+                String channel = jsonUtil.getNestedValue(jsonMap, Arrays.asList("deliveryChannels", "channelCode"), String.class);
+
+                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase,channel);
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
 
                 // create pending task
 
-                PendingTask pendingTask = PendingTask.builder()
-                        .name(PAYMENT_PENDING_FOR_WARRANT)
-                        .referenceId(MANUAL + taskResponse.getTask().getTaskNumber())
-                        .entityType("order-default")
-                        .status("PAYMENT_PENDING_POLICE")
-                        .assignedTo(uniqueAssignee)
-                        .cnrNumber(courtCase.getCnrNumber())
-                        .filingNumber(courtCase.getFilingNumber())
-                        .caseId(courtCase.getId().toString())
-                        .caseTitle(courtCase.getCaseTitle())
-                        .isCompleted(false)
-                        .stateSla(sla)
-                        .additionalDetails(additionalDetails)
-                        .screenType("home")
-                        .build();
+                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))) {
 
-                pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
-                ).pendingTask(pendingTask).build());
+                    PendingTask pendingTask = PendingTask.builder()
+                            .name(PAYMENT_PENDING_FOR_WARRANT)
+                            .referenceId(MANUAL + taskResponse.getTask().getTaskNumber())
+                            .entityType("order-default")
+                            .status("PAYMENT_PENDING_POLICE")
+                            .assignedTo(uniqueAssignee)
+                            .cnrNumber(courtCase.getCnrNumber())
+                            .filingNumber(courtCase.getFilingNumber())
+                            .caseId(courtCase.getId().toString())
+                            .caseTitle(courtCase.getCaseTitle())
+                            .isCompleted(false)
+                            .stateSla(sla)
+                            .additionalDetails(additionalDetails)
+                            .screenType("home")
+                            .build();
+
+                    pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
+                    ).pendingTask(pendingTask).build());
+                }
 
 
             }

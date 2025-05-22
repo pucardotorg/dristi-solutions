@@ -318,6 +318,49 @@ const GenerateOrders = () => {
     [caseData]
   );
 
+  const { data: applicationData, isLoading: isApplicationDetailsLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        filingNumber: filingNumber,
+        tenantId: tenantId,
+      },
+      tenantId,
+    },
+    {},
+    filingNumber,
+    Boolean(filingNumber)
+  );
+
+  const isDelayApplicationPending = useMemo(() => {
+    return Boolean(
+      applicationData?.applicationList?.some(
+        (item) =>
+          item?.applicationType === "DELAY_CONDONATION" &&
+          [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(item?.status)
+      )
+    );
+  }, [applicationData]);
+
+  const applicationTypeConfigUpdated = useMemo(() => {
+    const updatedConfig = structuredClone(applicationTypeConfig);
+    // Showing admit case/Dismiss case order type in the dropdown list depending on the case status.
+    if (["PENDING_NOTICE"].includes(caseDetails?.status)) {
+      updatedConfig[0].body[0].populators.mdmsConfig.select =
+        "(data) => {return data['Order'].OrderType?.filter((item)=>[`DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+    } else if (["PENDING_RESPONSE", "PENDING_ADMISSION"].includes(caseDetails?.status)) {
+      // case admit can not be allowed if there are pending review/approval of some Delay condonation application.
+
+      if (isDelayApplicationPending) {
+        updatedConfig[0].body[0].populators.mdmsConfig.select =
+          "(data) => {return data['Order'].OrderType?.filter((item)=>[`DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+      } else {
+        updatedConfig[0].body[0].populators.mdmsConfig.select =
+          "(data) => {return data['Order'].OrderType?.filter((item)=>[`ADMIT_CASE`, `DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+      }
+    }
+    return updatedConfig;
+  }, [caseDetails, isDelayApplicationPending]);
+
   const { data: courtRoomData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "common-masters", [{ name: "Court_Rooms" }], {
     select: (data) => {
       let newData = {};
@@ -467,77 +510,6 @@ const GenerateOrders = () => {
     Boolean(filingNumber)
   );
 
-  const { data: noticeOrdersData } = useSearchOrdersService(
-    {
-      tenantId,
-      criteria: { filingNumber, applicationNumber: "", cnrNumber, orderType: "NOTICE", status: "PUBLISHED" },
-      pagination: { limit: 1000, offset: 0 },
-    },
-    { tenantId },
-    filingNumber,
-    Boolean(filingNumber)
-  );
-
-  // Get all the published orders corresponding to approval/rejection of litigants profile change request.
-  const { data: approveRejectLitigantDetailsChangeOrderData } = useSearchOrdersService(
-    {
-      tenantId,
-      criteria: {
-        filingNumber,
-        applicationNumber: "",
-        cnrNumber,
-        orderType: "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE",
-        status: OrderWorkflowState.PUBLISHED,
-      },
-      pagination: { limit: 1000, offset: 0 },
-    },
-    { tenantId },
-    filingNumber + OrderWorkflowState.PUBLISHED,
-    Boolean(filingNumber && cnrNumber)
-  );
-
-  const publishedLitigantDetailsChangeOrders = useMemo(() => approveRejectLitigantDetailsChangeOrderData?.list || [], [
-    approveRejectLitigantDetailsChangeOrderData,
-  ]);
-
-  const isDCANoticeGenerated = useMemo(
-    () =>
-      noticeOrdersData?.list?.some((notice) => {
-        if (notice?.orderCategory === "COMPOSITE") {
-          return notice?.compositeItems?.some((item) => item?.orderSchema?.additionalDetails?.formdata?.noticeType?.code === "DCA Notice");
-        }
-        return notice?.additionalDetails?.formdata?.noticeType?.code === "DCA Notice";
-      }),
-    [noticeOrdersData]
-  );
-
-  const { data: publishedOrdersData, isLoading: isPublishedOrdersLoading } = useSearchOrdersService(
-    {
-      tenantId,
-      criteria: { filingNumber, applicationNumber: "", cnrNumber, status: OrderWorkflowState.PUBLISHED, orderType: "ACCEPT_BAIL" },
-      pagination: { limit: 1000, offset: 0 },
-    },
-    { tenantId },
-    filingNumber + OrderWorkflowState.PUBLISHED,
-    Boolean(filingNumber && cnrNumber)
-  );
-  const publishedBailOrder = useMemo(() => publishedOrdersData?.list?.[0] || {}, [publishedOrdersData]);
-  const advocateIds = caseDetails.representatives?.map((representative) => {
-    return {
-      id: representative.advocateId,
-    };
-  });
-
-  const { data: advocateDetails } = Digit.Hooks.dristi.useGetIndividualAdvocate(
-    {
-      criteria: advocateIds,
-    },
-    { tenantId: tenantId },
-    "DRISTI",
-    cnrNumber + filingNumber,
-    true
-  );
-
   const defaultIndex = useMemo(() => {
     return formList.findIndex((order) => order?.orderNumber === orderNumber);
   }, [formList, orderNumber]);
@@ -675,6 +647,96 @@ const GenerateOrders = () => {
   }, [orderPdfFileStoreID, signedDoucumentUploadedID]);
 
   const currentOrder = useMemo(() => formList?.[selectedOrder], [formList, selectedOrder]);
+
+  // Checking if the current order type is NOTICE.
+  const isNoticeOrder = useMemo(() => {
+    if (currentOrder?.orderCategory === "COMPOSITE") {
+      if (currentOrder?.compositeItems?.find((item) => item?.orderType === "NOTICE")) {
+        return true;
+      } else return false;
+    } else if (currentOrder?.orderType === "NOTICE") {
+      return true;
+    } else return false;
+  }, [currentOrder]);
+
+  const { data: publishedNoticeOrdersData } = useSearchOrdersService(
+    {
+      tenantId,
+      criteria: { filingNumber, applicationNumber: "", cnrNumber, orderType: "NOTICE", status: "PUBLISHED" },
+      pagination: { limit: 1000, offset: 0 },
+    },
+    { tenantId },
+    filingNumber + OrderWorkflowState.PUBLISHED + "NOTICE",
+    Boolean(filingNumber && isNoticeOrder)
+  );
+
+  const isDCANoticeGenerated = useMemo(
+    () =>
+      publishedNoticeOrdersData?.list?.some((notice) => {
+        if (notice?.orderCategory === "COMPOSITE") {
+          return notice?.compositeItems?.some((item) => item?.orderSchema?.additionalDetails?.formdata?.noticeType?.code === "DCA Notice");
+        }
+        return notice?.additionalDetails?.formdata?.noticeType?.code === "DCA Notice";
+      }),
+    [publishedNoticeOrdersData]
+  );
+
+  // Checking if the current order is for approving/rejecting the litigant's profile edit request.
+  const isApproveRejectLitigantDetailsChange = useMemo(() => {
+    if (currentOrder?.orderCategory === "COMPOSITE") {
+      if (currentOrder?.compositeItems?.find((item) => item?.orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE")) {
+        return true;
+      } else return false;
+    } else if (currentOrder?.orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE") {
+      return true;
+    } else return false;
+  }, [currentOrder]);
+
+  // Get all the published orders corresponding to approval/rejection of litigants profile change request.
+  const { data: approveRejectLitigantDetailsChangeOrderData } = useSearchOrdersService(
+    {
+      tenantId,
+      criteria: {
+        filingNumber,
+        applicationNumber: "",
+        cnrNumber,
+        orderType: "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE",
+        status: OrderWorkflowState.PUBLISHED,
+      },
+      pagination: { limit: 1000, offset: 0 },
+    },
+    { tenantId },
+    filingNumber + OrderWorkflowState.PUBLISHED + "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE",
+    Boolean(filingNumber && cnrNumber && isApproveRejectLitigantDetailsChange)
+  );
+
+  const publishedLitigantDetailsChangeOrders = useMemo(() => approveRejectLitigantDetailsChangeOrderData?.list || [], [
+    approveRejectLitigantDetailsChangeOrderData,
+  ]);
+
+  // If current order is Judgement type, then we require published bail orders list.
+  const isJudgementOrder = useMemo(() => {
+    if (currentOrder?.orderCategory === "COMPOSITE") {
+      if (currentOrder?.compositeItems?.find((item) => item?.orderType === "JUDGEMENT")) {
+        return true;
+      } else return false;
+    } else if (currentOrder?.orderType === "JUDGEMENT") {
+      return true;
+    } else return false;
+  }, [currentOrder]);
+
+  const { data: publishedBailOrdersData, isLoading: isPublishedOrdersLoading } = useSearchOrdersService(
+    {
+      tenantId,
+      criteria: { filingNumber, applicationNumber: "", cnrNumber, status: OrderWorkflowState.PUBLISHED, orderType: "ACCEPT_BAIL" },
+      pagination: { limit: 1000, offset: 0 },
+    },
+    { tenantId },
+    filingNumber + OrderWorkflowState.PUBLISHED + "ACCEPT_BAIL",
+    Boolean(filingNumber && cnrNumber && isJudgementOrder)
+  );
+  const publishedBailOrder = useMemo(() => publishedBailOrdersData?.list?.[0] || {}, [publishedBailOrdersData]);
+
   const hearingNumber = useMemo(() => currentOrder?.hearingNumber || currentOrder?.additionalDetails?.hearingId || "", [currentOrder]);
   useEffect(() => {
     const formListNew = structuredClone([...(ordersData?.list || [])].reverse());
@@ -728,18 +790,6 @@ const GenerateOrders = () => {
     return [];
   }, [currentOrder?.linkedOrderNumber, pendingTaskDetails]);
 
-  const { data: applicationData, isLoading: isApplicationDetailsLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
-    {
-      criteria: {
-        filingNumber: filingNumber,
-        tenantId: tenantId,
-      },
-      tenantId,
-    },
-    {},
-    filingNumber,
-    Boolean(filingNumber)
-  );
   const applicationDetails = useMemo(
     () =>
       applicationData?.applicationList?.find(
@@ -854,8 +904,8 @@ const GenerateOrders = () => {
         // so values are setting in keys of other order type form fields.
         const orderType = item?.orderType;
         let newConfig = orderType
-          ? applicationTypeConfig?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
-          : structuredClone(applicationTypeConfig);
+          ? applicationTypeConfigUpdated?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
+          : structuredClone(applicationTypeConfigUpdated);
 
         if (orderType && configKeys.hasOwnProperty(orderType)) {
           let orderTypeForm = configKeys[orderType];
@@ -1083,8 +1133,8 @@ const GenerateOrders = () => {
       });
     } else {
       let newConfig = currentOrder?.orderNumber
-        ? applicationTypeConfig?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
-        : structuredClone(applicationTypeConfig);
+        ? applicationTypeConfigUpdated?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
+        : structuredClone(applicationTypeConfigUpdated);
       const orderType = currentOrder?.orderType;
       if (orderType && configKeys.hasOwnProperty(orderType)) {
         let orderTypeForm = configKeys[orderType];
@@ -1311,7 +1361,7 @@ const GenerateOrders = () => {
       });
       return [updatedConfig];
     }
-  }, [caseDetails, complainants, currentOrder, respondents, t, unJoinedLitigant, witnesses, selectedOrder]);
+  }, [caseDetails, applicationTypeConfigUpdated, complainants, currentOrder, respondents, t, unJoinedLitigant, witnesses, selectedOrder]);
 
   const multiSelectDropdownKeys = useMemo(() => {
     const foundKeys = [];
@@ -2182,8 +2232,8 @@ const GenerateOrders = () => {
       let orderSchema = {};
       try {
         let orderTypeDropDownConfig = order?.orderNumber
-          ? applicationTypeConfig?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
-          : structuredClone(applicationTypeConfig);
+          ? applicationTypeConfigUpdated?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
+          : structuredClone(applicationTypeConfigUpdated);
         let orderFormConfig = configKeys.hasOwnProperty(order?.orderType) ? configKeys[order?.orderType] : [];
         const modifiedPlainFormConfig = [...orderTypeDropDownConfig, ...orderFormConfig];
         orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(order.additionalDetails.formdata, modifiedPlainFormConfig);
@@ -2225,6 +2275,9 @@ const GenerateOrders = () => {
             sessionStorage.removeItem("businessOfTheDay");
             setShowSuccessModal(true);
           }
+          if (action === OrderWorkflowAction.SUBMIT_BULK_E_SIGN) {
+            setPrevOrder(response?.order);
+          }
         });
     } catch (error) {
       setShowErrorToast({ label: action === OrderWorkflowAction.ESIGN ? t("ERROR_PUBLISHING_THE_ORDER") : t("SOMETHING_WENT_WRONG"), error: true });
@@ -2237,8 +2290,8 @@ const GenerateOrders = () => {
       let orderSchema = {};
       try {
         let orderTypeDropDownConfig = item?.id
-          ? applicationTypeConfig?.map((obj) => ({ body: obj.body.map((input) => ({ ...input, disable: true })) }))
-          : structuredClone(applicationTypeConfig);
+          ? applicationTypeConfigUpdated?.map((obj) => ({ body: obj.body.map((input) => ({ ...input, disable: true })) }))
+          : structuredClone(applicationTypeConfigUpdated);
         let orderFormConfig = configKeys.hasOwnProperty(item?.orderSchema?.additionalDetails?.formdata?.orderType?.code)
           ? configKeys[item?.orderSchema?.additionalDetails?.formdata?.orderType?.code]
           : [];
@@ -2308,8 +2361,8 @@ const GenerateOrders = () => {
       let orderSchema = {};
       try {
         let orderTypeDropDownConfig = order?.orderNumber
-          ? applicationTypeConfig?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
-          : structuredClone(applicationTypeConfig);
+          ? applicationTypeConfigUpdated?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
+          : structuredClone(applicationTypeConfigUpdated);
         let orderFormConfig = configKeys.hasOwnProperty(order?.orderType) ? configKeys[order?.orderType] : [];
         const modifiedPlainFormConfig = [...orderTypeDropDownConfig, ...orderFormConfig];
         orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(order.additionalDetails.formdata, modifiedPlainFormConfig);
@@ -3937,7 +3990,6 @@ const GenerateOrders = () => {
           businessOfDay={businessOfTheDay}
           updateOrder={updateOrder}
           setShowBulkModal={setShowBulkModal}
-          setPrevOrder={setPrevOrder}
         />
       )}
       {showsignatureModal && (

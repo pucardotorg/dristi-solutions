@@ -45,8 +45,7 @@ export const UICustomizations = {
       const userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
       const searchParams = new URLSearchParams();
       const showAction =
-        (userInfo?.roles.map((role) => role.code).includes("HEARING_EDITOR")) ||
-        row.hearing.status === HearingWorkflowState?.INPROGRESS;
+        userInfo?.roles.map((role) => role.code).includes("HEARING_EDITOR") || row.hearing.status === HearingWorkflowState?.INPROGRESS;
       searchParams.set("hearingId", row.hearingId);
       switch (key) {
         case "Actions":
@@ -142,7 +141,7 @@ export const UICustomizations = {
               action: (history) => {
                 searchParams.set("caseId", row.caseId);
                 searchParams.set("filingNumber", row.filingNumber);
-                window.open(`/${window.contextPath}/${userType}/dristi/home/view-case?${searchParams.toString()}`, '_blank');
+                window.open(`/${window.contextPath}/${userType}/dristi/home/view-case?${searchParams.toString()}`, "_blank");
               },
             },
             {
@@ -161,7 +160,7 @@ export const UICustomizations = {
             action: (history) => {
               searchParams.set("caseId", row.caseId);
               searchParams.set("filingNumber", row.filingNumber);
-              window.open(`/${window.contextPath}/${userType}/dristi/home/view-case?${searchParams.toString()}`, '_blank');
+              window.open(`/${window.contextPath}/${userType}/dristi/home/view-case?${searchParams.toString()}`, "_blank");
             },
           },
           {
@@ -284,7 +283,7 @@ export const UICustomizations = {
               if (address && typeof address === "string") {
                 return address;
               } else if (address && typeof address === "object") {
-                const { pincode = "", district = "", city = "", state = "", locality } = address;
+                const { pincode = "", district = "", city = "", state = "", locality = "" } = address;
                 return `${locality} ${district} ${city} ${state} ${pincode ? ` - ${pincode}` : ""}`.trim();
               } else return `${locality} ${district} ${city} ${state} ${pincode ? ` - ${pincode}` : ""}`.trim();
             };
@@ -312,6 +311,8 @@ export const UICustomizations = {
                   status: data?.status,
                   remarks: taskDetail?.remarks?.remark,
                   statusChangeDate: taskDetail?.deliveryChannels?.statusChangeDate,
+                  taskType: data?.taskType,
+                  documents: data?.documents,
                 };
               });
             return { list: taskData };

@@ -16,6 +16,7 @@ import { reviewCaseFileFormConfig } from "../../citizen/FileCase/Config/reviewca
 import Button from "../../../components/Button";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
+import WorkflowTimeline from "../../../components/WorkflowTimeline";
 const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
 const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
 const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
@@ -264,8 +265,39 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const state = useMemo(() => caseDetails?.status, [caseDetails]);
   const formConfig = useMemo(() => {
     if (!caseDetails) return null;
+
+    const reviewFileConfig = structuredClone(reviewCaseFileFormConfig);
+    if (!inViewCase) {
+      reviewFileConfig?.[0]?.body?.push({
+        type: "component",
+        component: "SelectReviewAccordion",
+        key: "paymentDetails",
+        label: "CS_PAYMENT_DETAILS",
+        number: 4,
+        withoutLabel: true,
+        populators: {
+          inputs: [
+            {
+              key: "paymentReceipt",
+              name: "paymentReceipt",
+              label: "CS_PAYMENT_RECEIPT",
+              icon: "PaymentDetailsIcon",
+              disableScrutiny: true,
+              config: [
+                {
+                  type: "image",
+                  label: "",
+                  value: ["document"],
+                },
+              ],
+              data: {},
+            },
+          ],
+        },
+      });
+    }
     return [
-      ...reviewCaseFileFormConfig.map((form) => {
+      ...reviewFileConfig.map((form) => {
         return {
           ...form,
           body: form.body
@@ -356,6 +388,23 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
                         prevErrors: defaultScrutinyErrors?.data?.[section.key]?.[input.key] || {},
                       };
                       return returnData;
+                    } else if (input?.key === "paymentReceipt") {
+                      return {
+                        ...input,
+                        data: [
+                          {
+                            data: {
+                              document:
+                                caseDetails?.documents
+                                  ?.filter((doc) => doc?.documentType === "PAYMENT_RECEIPT")
+                                  ?.map((doc) => ({
+                                    ...doc,
+                                    fileName: doc?.documentType,
+                                  })) || [],
+                            },
+                          },
+                        ],
+                      };
                     } else
                       return {
                         ...input,
@@ -383,7 +432,13 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     }
   }, [isScrutiny]);
 
-  const updateCaseDetails = async (action) => {
+  const updateCaseDetails = async (action, filterSigned = false) => {
+    let filteredDocuments = caseDetails?.documents;
+    if (filterSigned) {
+      filteredDocuments = caseDetails?.documents?.filter(
+        (doc) => doc?.documentType !== "case.complaint.signed" && doc?.documentType !== "case.complaint.unsigned"
+      );
+    }
     const scrutinyObj = action === CaseWorkflowAction.VALIDATE ? {} : CaseWorkflowAction.SEND_BACK && isPrevScrutiny ? newScrutinyData : formdata;
     const newAdditionalDetails = {
       ...caseDetails.additionalDetails,
@@ -399,6 +454,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
 
     const newcasedetails = {
       ...caseDetails,
+      documents: filteredDocuments,
       additionalDetails: newAdditionalDetails,
       caseTitle: newCaseName !== "" ? newCaseName : caseDetails?.caseTitle,
     };
@@ -414,7 +470,8 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
           workflow: {
             ...caseDetails?.workflow,
             action,
-            ...(action === CaseWorkflowAction.SEND_BACK && { assignes: assignees }),
+            ...(action === CaseWorkflowAction.SEND_BACK && { assignes: assignees, comments: commentSendBack }),
+            ...(action === CaseWorkflowAction.VALIDATE && { comments: comment }),
           },
           ...(action === CaseWorkflowAction.VALIDATE && { judgeId, courtId, benchId }),
         },
@@ -532,12 +589,12 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     history.push(`/${window?.contextPath}/employee/dristi/cases`);
   };
   const handleRegisterCase = () => {
-    updateCaseDetails(CaseWorkflowAction.VALIDATE).then((res) => {
+    updateCaseDetails(CaseWorkflowAction.VALIDATE, false).then((res) => {
       setActionModal("caseRegisterSuccess");
     });
   };
   const handleSendCaseBack = () => {
-    updateCaseDetails(CaseWorkflowAction.SEND_BACK).then((res) => {
+    updateCaseDetails(CaseWorkflowAction.SEND_BACK, true).then((res) => {
       setActionModal("caseSendBackSuccess");
     });
   };
@@ -552,13 +609,17 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     }, 2000);
   };
 
-  const sidebar = useMemo(
-    () =>
-      ["litigentDetails", "caseSpecificDetails", "additionalDetails", "submissionFromAccused"].filter(
-        (sidebar) => !(sidebar === "submissionFromAccused" && isScrutiny)
-      ),
-    [isScrutiny]
-  );
+  const sidebar = useMemo(() => {
+    const baseSidebar = ["litigentDetails", "caseSpecificDetails", "additionalDetails", "submissionFromAccused"].filter(
+      (sidebar) => !(sidebar === "submissionFromAccused" && isScrutiny)
+    );
+
+    if (isScrutiny && !inViewCase) {
+      baseSidebar.push("paymentDetails");
+    }
+
+    return baseSidebar;
+  }, [inViewCase, isScrutiny]);
 
   if (!caseId) {
     return <Redirect to="cases" />;
@@ -574,6 +635,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     litigentDetails: "CS_LITIGENT_DETAILS",
     caseSpecificDetails: "CS_CASE_SPECIFIC_DETAILS",
     additionalDetails: "CS_ADDITIONAL_DETAILS",
+    paymentDetails: "CS_PAYMENT_DETAILS",
     submissionFromAccused: "CS_SUBMISSSIONS_FROM_ACCUSED",
   };
   const checkList = [
@@ -633,7 +695,9 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
                 <div className="accordion-wrapper">
                   <div key={index} className="accordion-title" onClick={() => scrollToHeading(`${index + 1}. ${t(labels[key])}`)}>
                     <div>{`${index + 1}. ${t(labels[key])}`}</div>
-                    {!inViewCase && <div>{scrutinyErrors[key]?.total ? `${scrutinyErrors[key].total} ${t("CS_ERRORS")}` : t("CS_NO_ERRORS")}</div>}
+                    {!inViewCase && key !== "paymentDetails" && (
+                      <div>{scrutinyErrors[key]?.total ? `${scrutinyErrors[key].total} ${t("CS_ERRORS")}` : t("CS_NO_ERRORS")}</div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -754,6 +818,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
                   </h3>
                 </div>
               </div>
+              <WorkflowTimeline t={t} applicationNo={caseDetails?.filingNumber} tenantId={tenantId} businessService="case-default" />
             </div>
           )}
 
@@ -781,7 +846,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
               <TextInput defaultValue={newCaseName || caseDetails?.caseTitle} type="text" onChange={(e) => setModalCaseName(e.target.value)} />
             </Modal>
           )}
-          {actionModal == "sendCaseBack" && (
+          {actionModal === "sendCaseBack" && (
             <SendCaseBackModal
               comment={commentSendBack}
               setComment={setCommentSendBack}
@@ -795,7 +860,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
               type="sendCaseBack"
             />
           )}
-          {actionModal == "registerCase" && (
+          {actionModal === "registerCase" && (
             <SendCaseBackModal
               comment={comment}
               setComment={setComment}
@@ -810,7 +875,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
             />
           )}
 
-          {actionModal == "sendCaseBackPotential" && (
+          {actionModal === "sendCaseBackPotential" && (
             <SendCaseBackModal
               actionCancelLabel={"CS_NO_REGISTER_CASE"}
               actionSaveLabel={"CS_COMMON_CONFIRM"}
@@ -823,7 +888,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
               type="sendCaseBackPotential"
             />
           )}
-          {actionModal == "caseRegisterPotential" && (
+          {actionModal === "caseRegisterPotential" && (
             <SendCaseBackModal
               actionCancelLabel={"CS_SEE_POTENTIAL_ERRORS"}
               actionSaveLabel={"CS_DELETE_ERRORS_REGISTER"}

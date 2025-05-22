@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CardLabel, TextInput, CardLabelError, CustomDropdown } from "@egovernments/digit-ui-react-components";
 import MultiUploadWrapper from "../../../dristi/src/components/MultiUploadWrapper";
 import isEqual from "lodash/isEqual";
+import { max } from "lodash";
 
 const CloseBtn = () => {
   return (
@@ -19,6 +20,9 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const Digit = window.Digit || {};
   const disable = config?.disable;
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [imageInfo, setImageInfo] = useState(null);
+  const ImageModal = window?.Digit?.ComponentRegistryService?.getComponent("ImageModal");
   const inputs = useMemo(
     () =>
       config?.populators?.inputs || [
@@ -107,12 +111,27 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
     }
   };
 
+  const handleImageModalOpen = (fileStoreId, fileName) => {
+    setIsImageModalOpen(true);
+    setImageInfo({ data: { fileStore: fileStoreId, fileName: fileName } });
+  };
+
+  const handleImageModalClose = () => {
+    setIsImageModalOpen(false);
+  };
+
   const showDocument = useCallback(
     (doc) => {
       return (
         <div>
           <div className="documentDetails_row_items" style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <DocViewerWrapper fileStoreId={doc?.fileStore} tenantId={tenantId} displayFilename={doc?.additionalDetails?.name} />
+            <DocViewerWrapper
+              handleImageModalOpen={handleImageModalOpen}
+              fileStoreId={doc?.fileStore}
+              tenantId={tenantId}
+              displayFilename={doc?.additionalDetails?.name}
+              showDownloadOption={false}
+            />
           </div>
         </div>
       );
@@ -125,6 +144,7 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
       return formInstance.submissionDocuments?.document && showDocument(formInstance.submissionDocuments.document);
     });
   }, [formInstances, showDocument]);
+
   return (
     <React.Fragment>
       {formInstances.map((formInstance, index) => (
@@ -164,6 +184,7 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
                         containerStyles={{ ...input?.containerStyles }}
                         displayName={docObj?.document?.additionalDetails?.name || ""}
                         disable={disable}
+                        uploadDivStyle={input?.uploadDivStyle}
                       />
                     )}
                     {input?.type === "text" && (
@@ -182,6 +203,7 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
                         maxlength={input.validation.maxlength}
                         minlength={input.validation.minlength}
                         style={{ minWidth: "500px" }}
+                        textInputStyle={input?.textInputStyle}
                       />
                     )}
                     {input?.type === "dropdown" && (
@@ -221,6 +243,19 @@ const AddSubmissionDocument = ({ t, config, onSelect, formData = {}, errors, cle
           {formInstances.length > 0 && memoizedDocuments[index]}
         </div>
       ))}
+      {isImageModalOpen && (
+        <ImageModal
+          t={t}
+          handleCloseModal={handleImageModalClose}
+          imageInfo={imageInfo}
+          headerBarMainStyle={{
+            position: "sticky",
+            top: "0",
+            zIndex: 1000,
+            backgroundColor: "grey",
+          }}
+        />
+      )}
       {!disable && (
         <button type="button" onClick={addAnotherForm} style={{ background: "none", fontSize: "16px", fontWeight: 700, color: "#007E7E" }}>
           {formInstances.length < 1 ? `+ ${t("ADD_SUBMISSION_DOCUMENTS")}` : `+ ${t("ADD_ANOTHER")}`}

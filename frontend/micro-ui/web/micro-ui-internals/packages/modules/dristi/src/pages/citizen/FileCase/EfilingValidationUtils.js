@@ -1004,6 +1004,66 @@ export const signatureValidation = ({ formData, selected, setShowErrorToast, set
   }
 };
 
+export const accusedAddressValidation = ({ formData, selected, setAddressError, config }) => {
+  const addressKey = "addressDetails";
+  if (
+    config
+      ?.find((item) => item.body?.[0]?.key === addressKey)
+      ?.body?.[0]?.populators?.inputs?.filter((data) => !data?.showOptional)
+      ?.some((data) =>
+        formData?.[addressKey]?.some((address) => {
+          const isEmpty = /^\s*$/.test(address?.[addressKey]?.[data?.name]);
+          return (
+            isEmpty ||
+            !address?.[addressKey]?.[data?.name].match(window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern)
+          );
+        })
+      )
+  ) {
+    setAddressError({ show: true, message: "CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT" });
+    return true;
+  }
+};
+
+export const addressValidation = ({ formData, selected, setAddressError, config }) => {
+  if (
+    config
+      ?.find((item) =>
+        formData?.[selected]?.code === "INDIVIDUAL" ? item.body?.[0]?.key === "addressDetails" : item.body?.[0]?.key === "addressCompanyDetails"
+      )
+      ?.body?.[0]?.populators?.inputs?.filter((data) => !data?.showOptional)
+      ?.some((data) => {
+        const isEmpty = /^\s*$/.test(
+          formData?.[formData?.[selected]?.code === "INDIVIDUAL" ? "addressDetails" : "addressCompanyDetails"]?.[data?.name]
+        );
+        return (
+          isEmpty ||
+          !formData?.[formData?.[selected]?.code === "INDIVIDUAL" ? "addressDetails" : "addressCompanyDetails"]?.[data?.name].match(
+            window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
+          )
+        );
+      }) ||
+    (formData?.transferredPOA?.code === "YES" &&
+      config
+        ?.find((item) =>
+          formData?.[selected]?.code === "INDIVIDUAL" ? item.body?.[0]?.key === "addressDetails" : item.body?.[0]?.key === "addressCompanyDetails"
+        )
+        ?.body?.[0]?.populators?.inputs?.filter((data) => !data?.showOptional)
+        ?.some((data) => {
+          const isEmpty = /^\s*$/.test(formData?.poaAddressDetails?.[data?.name]);
+          return (
+            isEmpty ||
+            !formData?.poaAddressDetails?.[data?.name].match(
+              window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
+            )
+          );
+        }))
+  ) {
+    setAddressError({ show: true, message: "CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT" });
+    return true;
+  }
+};
+
 export const chequeDateValidation = ({ selected, formData, setError, clearErrors }) => {
   if (selected === "chequeDetails") {
     for (const key in formData) {
@@ -1117,7 +1177,7 @@ export const createIndividualUser = async ({ data, documentData, tenantId, isCom
       }
     : {};
   const identifierType = documentData
-    ? data?.complainantId?.complainantId
+    ? isComplainant
       ? data?.complainantId?.complainantId?.selectIdTypeType?.type
       : data?.poaComplainantId?.poaComplainantId?.selectIdTypeType?.type
     : "AADHAR";
@@ -1540,6 +1600,8 @@ export const updateCaseDetails = async ({
     let poaHolders = [];
     const complainantVerification = {};
     const poaVerification = {};
+    const litigantFilestoreIds = {};
+    const poaFilestoreIds = {};
     // check -in new flow, mltiple complainant forms are possible, so iscompleted logic has to be updated
     // and logic to update litigants also has to be changed.
     if (isCompleted === true) {
@@ -1624,6 +1686,7 @@ export const updateCaseDetails = async ({
                     data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
                     tenantId
                   );
+                  litigantFilestoreIds[index] = documentData;
                   !!setFormDataValue &&
                     setFormDataValue("complainantVerification", {
                       individualDetails: {
@@ -1637,7 +1700,7 @@ export const updateCaseDetails = async ({
                         ],
                       },
                     });
-                  const Individual = await createIndividualUser({ data: data?.data, documentData, tenantId });
+                  const Individual = await createIndividualUser({ data: data?.data, documentData: documentData, tenantId });
                   const addressLine1 = Individual?.Individual?.address[0]?.addressLine1 || "Telangana";
                   const addressLine2 = Individual?.Individual?.address[0]?.addressLine2 || "Rangareddy";
                   const buildingName = Individual?.Individual?.address[0]?.buildingName || "";
@@ -1844,6 +1907,7 @@ export const updateCaseDetails = async ({
                     data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[0],
                     tenantId
                   );
+                  poaFilestoreIds[index] = documentData;
                   !!setFormDataValue &&
                     setFormDataValue("poaVerification", {
                       individualDetails: {
@@ -1857,7 +1921,12 @@ export const updateCaseDetails = async ({
                         ],
                       },
                     });
-                  const Individual = await createIndividualUser({ data: data?.data, documentData, tenantId, isComplainant: false });
+                  const Individual = await createIndividualUser({
+                    data: data?.data,
+                    documentData: documentData,
+                    tenantId,
+                    isComplainant: false,
+                  });
                   const addressLine1 = Individual?.Individual?.address[0]?.addressLine1 || "Telangana";
                   const addressLine2 = Individual?.Individual?.address[0]?.addressLine2 || "Rangareddy";
                   const buildingName = Individual?.Individual?.address[0]?.buildingName || "";
@@ -1952,12 +2021,17 @@ export const updateCaseDetails = async ({
           const poaIndividualDetails = {};
           if (data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file) {
             const documentType = documentsTypeMapping["complainantId"];
-            const uploadedData = await onDocumentUpload(
-              documentType,
-              data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
-              data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
-              tenantId
-            );
+            let uploadedData = null;
+            if (litigantFilestoreIds?.[index]) {
+              uploadedData = litigantFilestoreIds?.[index];
+            } else {
+              uploadedData = await onDocumentUpload(
+                documentType,
+                data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
+                data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
+                tenantId
+              );
+            }
             const doc = {
               documentType,
               fileStore: uploadedData.file?.files?.[0]?.fileStoreId || uploadedData?.fileStore,
@@ -2034,18 +2108,27 @@ export const updateCaseDetails = async ({
             );
             setFormDataValue("poaAuthorizationDocument", documentData?.poaAuthorizationDocument);
           }
-          const complainantDocTypes = [documentsTypeMapping["complainantId"], documentsTypeMapping["complainantCompanyDetailsUpload"]];
+          const complainantDocTypes = [
+            documentsTypeMapping["complainantId"],
+            documentsTypeMapping["complainantCompanyDetailsUpload"],
+            documentsTypeMapping["poaAuthorizationDocument"],
+          ];
           updateTempDocListMultiForm(docList, complainantDocTypes);
 
           //// updating information for POA
           if (data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file) {
             const documentType = documentsTypeMapping["poaComplainantId"];
-            const uploadedData = await onDocumentUpload(
-              documentType,
-              data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file,
-              data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[0],
-              tenantId
-            );
+            let uploadedData = null;
+            if (poaFilestoreIds?.[index]) {
+              uploadedData = poaFilestoreIds?.[index];
+            } else {
+              uploadedData = await onDocumentUpload(
+                documentType,
+                data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file,
+                data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[0],
+                tenantId
+              );
+            }
             const doc = {
               documentType,
               fileStore: uploadedData.file?.files?.[0]?.fileStoreId || uploadedData?.fileStore,
@@ -3043,6 +3126,9 @@ export const updateCaseDetails = async ({
   if (isCaseSignedState && action === "SUBMIT_CASE") {
     return null;
   }
+
+  const isSignedDocumentsPresent = tempDocList?.some((doc) => doc?.documentType === "case.complaint.signed");
+  if (isSignedDocumentsPresent) tempDocList = tempDocList?.filter((doc) => doc?.documentType !== "case.complaint.unsigned");
   const updatedTempDocList = tempDocList?.map((doc) => {
     const existingDoc = caseDetails?.documents?.find((existingDoc) => existingDoc?.fileStore === doc?.fileStore);
     if (existingDoc) {
