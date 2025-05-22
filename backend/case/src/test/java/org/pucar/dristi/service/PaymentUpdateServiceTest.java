@@ -97,12 +97,12 @@ public class PaymentUpdateServiceTest {
         when(mapper.convertValue(record, PaymentRequest.class)).thenReturn(paymentRequest);
         doNothing().when(caseRegistrationEnrichment).enrichAccessCode(any());
         when(repository.getCases(any(), any())).thenReturn(Collections.singletonList(caseCriteria));
-        when(configuration.getCaseUpdateStatusTopic()).thenReturn("kafkaUpdateTopic");
+//        when(configuration.getCaseUpdateStatusTopic()).thenReturn("kafkaUpdateTopic");
 
         when(workflowService.callWorkFlow(any())).thenReturn(new State());
-        when(encryptionDecryptionUtil.encryptObject(any(), any(),any())).thenReturn(new CourtCase());
+//        when(encryptionDecryptionUtil.encryptObject(any(), any(),any())).thenReturn(new CourtCase());
         when(encryptionDecryptionUtil.decryptObject(any(), any(),any(),any())).thenReturn(new CourtCase());
-        doNothing().when(producer).push(any(), any());
+//        doNothing().when(producer).push(any(), any());
 
         paymentUpdateService.process(record);
 

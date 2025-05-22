@@ -316,12 +316,12 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     }
   }, [channelId]);
 
-  const { data: billResponse, isLoading: isBillLoading, refetch: refetchBill } = Digit.Hooks.dristi.useFetchBill(
+  const { data: billResponse, isLoading: isBillLoading, refetch: refetchBill } = Digit.Hooks.dristi.useBillSearch(
     {},
     {
       tenantId,
       consumerCode: `${taskNumber}_${suffix}`,
-      businessService: businessService,
+      service: businessService,
     },
     `billResponse-${businessService}${taskNumber}`,
     Boolean(taskNumber && businessService)
@@ -333,23 +333,23 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
 
   const service = useMemo(() => (orderType === "WARRANT" ? paymentType.TASK_WARRANT : paymentType.TASK_NOTICE), [orderType]);
 
-  const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchCourtBill } = Digit.Hooks.dristi.useFetchBill(
+  const { data: courtBillResponse, isLoading: isCourtBillLoading, refetch: refetchCourtBill } = Digit.Hooks.dristi.useBillSearch(
     {},
     {
       tenantId,
       consumerCode: `${taskNumber}_POST_COURT`,
-      businessService: service,
+      service: service,
     },
     `${taskNumber}_POST_COURT_${service}`,
     Boolean(taskNumber && orderType)
   );
 
-  const { data: ePostBillResponse, isLoading: isEPOSTBillLoading } = Digit.Hooks.dristi.useFetchBill(
+  const { data: ePostBillResponse, isLoading: isEPOSTBillLoading } = Digit.Hooks.dristi.useBillSearch(
     {},
     {
       tenantId,
       consumerCode: `${taskNumber}_POST_PROCESS`,
-      businessService: service,
+      service: service,
     },
     `${taskNumber}_POST_PROCESS_${service}`,
     Boolean(taskNumber && orderType)

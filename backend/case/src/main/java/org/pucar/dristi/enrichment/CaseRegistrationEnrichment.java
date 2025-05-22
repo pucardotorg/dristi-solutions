@@ -2,6 +2,8 @@ package org.pucar.dristi.enrichment;
 
 
 import lombok.extern.slf4j.Slf4j;
+import com.fasterxml.jackson.databind.JsonNode;
+
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
@@ -12,6 +14,7 @@ import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.CaseUtil;
+import org.pucar.dristi.util.EtreasuryUtil;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.v2.CaseSearchCriteriaV2;
@@ -35,14 +38,16 @@ public class CaseRegistrationEnrichment {
     private IdgenUtil idgenUtil;
     private CaseUtil caseUtil;
     private Configuration config;
+    private final EtreasuryUtil etreasuryUtil;
 
     @Autowired
-    public CaseRegistrationEnrichment(IndividualService individualService, AdvocateUtil advocateUtil, IdgenUtil idgenUtil, CaseUtil caseUtil, Configuration config) {
+    public CaseRegistrationEnrichment(IndividualService individualService, AdvocateUtil advocateUtil, IdgenUtil idgenUtil, CaseUtil caseUtil, Configuration config, EtreasuryUtil etreasuryUtil) {
         this.individualService = individualService;
         this.advocateUtil = advocateUtil;
         this.idgenUtil = idgenUtil;
         this.caseUtil = caseUtil;
         this.config = config;
+        this.etreasuryUtil = etreasuryUtil;
     }
 
     private static void enrichDocumentsOnCreate(Document document) {
@@ -545,4 +550,21 @@ public class CaseRegistrationEnrichment {
 
     }
 
+    public Document enrichCasePaymentReceipt(CaseRequest caseRequest, String id){
+        try {
+            log.info("Enriching payment receipt for case with id: {}", id);
+            JsonNode paymentReceipt = etreasuryUtil.getPaymentReceipt(caseRequest.getRequestInfo(), id);
+            Document paymentReceiptDocument = Document.builder()
+                    .fileStore(paymentReceipt.get("Document").get("fileStore").textValue())
+                    .documentType(PAYMENT_RECEIPT)
+                    .isActive(true)
+                    .build();
+            enrichDocumentsOnCreate(paymentReceiptDocument);
+            caseRequest.getCases().getDocuments().add(paymentReceiptDocument);
+            return paymentReceiptDocument;
+        } catch (Exception e) {
+            log.error("Error enriching payment receipt: {}", e.toString());
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching payment receipt: " + e.getMessage());
+        }
+    }
 }
