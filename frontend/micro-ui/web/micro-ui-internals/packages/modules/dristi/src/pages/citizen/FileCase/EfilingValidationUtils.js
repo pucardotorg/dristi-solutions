@@ -2108,7 +2108,11 @@ export const updateCaseDetails = async ({
             );
             setFormDataValue("poaAuthorizationDocument", documentData?.poaAuthorizationDocument);
           }
-          const complainantDocTypes = [documentsTypeMapping["complainantId"], documentsTypeMapping["complainantCompanyDetailsUpload"]];
+          const complainantDocTypes = [
+            documentsTypeMapping["complainantId"],
+            documentsTypeMapping["complainantCompanyDetailsUpload"],
+            documentsTypeMapping["poaAuthorizationDocument"],
+          ];
           updateTempDocListMultiForm(docList, complainantDocTypes);
 
           //// updating information for POA

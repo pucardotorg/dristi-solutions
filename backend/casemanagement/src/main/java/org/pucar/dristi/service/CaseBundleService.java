@@ -3,6 +3,7 @@ package org.pucar.dristi.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
@@ -95,7 +96,7 @@ public class CaseBundleService {
             log.error("Error while fetching case data from service request repository", e);
             throw new CustomException("FETCH_RESULT_ERROR", "Error while fetching case data from service request repository");
         }
-
+        updateCaseDocuments(response);
         caseNumberResponse.setCaseResponse(response);
 
         try {
@@ -138,6 +139,30 @@ public class CaseBundleService {
 
         return caseNumberResponse;
     }
+
+    private void updateCaseDocuments(Object response) {
+        Map<String, Object> responseMap = (Map<String, Object>) response;
+        List<Map<String, Object>> criteriaList = (List<Map<String, Object>>) responseMap.get("criteria");
+
+        Map<String, Object> criteria = criteriaList.get(0);
+        List<Map<String, Object>> responseList = (List<Map<String, Object>>) criteria.get("responseList");
+
+        Map<String, Object> caseData = responseList.get(0);
+
+        JsonNode documentsNode = objectMapper.convertValue(caseData.get("documents"), JsonNode.class);
+
+        if (documentsNode.isArray()) {
+            ArrayNode filteredDocuments = objectMapper.createArrayNode();
+
+            for (JsonNode document : documentsNode) {
+                if (document.has("isActive") && document.get("isActive").asBoolean()) {
+                    filteredDocuments.add(document);
+                }
+            }
+            caseData.put("documents", objectMapper.convertValue(filteredDocuments, Object.class));
+        }
+    }
+
 
     public String getCaseStatus(RequestInfo requestInfo, String caseId, String tenantId) {
         String caseStatus;
