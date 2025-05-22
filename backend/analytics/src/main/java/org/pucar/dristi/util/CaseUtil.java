@@ -170,15 +170,14 @@ public class CaseUtil {
 				.append(config.getCaseSearchPath());
 	}
 
-public String getCourtCaseNumber(JsonNode caseList) {
-    if (caseList != null && caseList.isArray() && !caseList.isEmpty()) {
-        JsonNode courtCaseNode = caseList.get(0).get("courtCaseNumber");
-        if (courtCaseNode != null && !courtCaseNode.isNull()) {
-            return courtCaseNode.textValue();
-        }
-        throw new CustomException("DK_RR_CASE_ERR", "court case number not found");
-    } else {
-        throw new CustomException("DK_RR_CASE_ERR", "case not found");
-    }
-}
+	public String getCourtCaseNumber(JsonNode caseList) {
+		if (caseList != null && caseList.isArray() && !caseList.isEmpty()) {
+			JsonNode courtCaseNode = caseList.get(0).get("courtCaseNumber");
+			if (courtCaseNode != null && !courtCaseNode.isNull()) {
+				return courtCaseNode.textValue();
+			}
+		}
+		log.error("court case number not found");
+		return null;
+	}
 }
