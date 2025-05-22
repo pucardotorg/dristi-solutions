@@ -188,6 +188,9 @@ public class Configuration {
     @Value("${dristi.scheduler.host}")
     private String schedulerHost;
 
+    @Value("${dristi.scheduler.create.endpoint}")
+    private String schedulerCreateEndPoint;
+
     @Value("${dristi.scheduler.bulk.reschedule.endpoint}")
     private String bulkRescheduleEndPoint;
 
