@@ -187,10 +187,6 @@ export const showToastForComplainant = ({ formData, setValue, selected, setSucce
         ...currAddressDet,
         isCurrAddrSame: formDataCopy?.complainantVerification?.individualDetails?.currentAddressDetails?.isCurrAddrSame,
       });
-      setValue("currentAddressDetails", {
-        ...currAddressDet,
-        isCurrAddrSame: formDataCopy?.complainantVerification?.individualDetails?.currentAddressDetails?.isCurrAddrSame,
-      });
       setValue("currentAddressDetails-select", currAddressDetSelect);
     }
     if (!!poaAddressDet && !!poaAddressDetSelect) {
@@ -2060,12 +2056,6 @@ export const updateCaseDetails = async ({
                       },
                     });
                   const Individual = await createIndividualUser({ data: data?.data, documentData, tenantId, isComplainant: false });
-                  const Individual = await createIndividualUser({
-                    data: data?.data,
-                    documentData: documentData,
-                    tenantId,
-                    isComplainant: false,
-                  });
                   const addressLine1 = Individual?.Individual?.address[0]?.addressLine1 || "Telangana";
                   const addressLine2 = Individual?.Individual?.address[0]?.addressLine2 || "Rangareddy";
                   const buildingName = Individual?.Individual?.address[0]?.buildingName || "";
