@@ -113,7 +113,7 @@ public class DiaryEntryServiceTest {
     void searchDiaryEntriesSuccess() {
         CaseDiarySearchRequest searchRequest = new CaseDiarySearchRequest();
         searchRequest.setCriteria(CaseDiarySearchCriteria.builder()
-                .judgeId("judge1")
+                .courtId("judge1")
                 .build());
         when(diaryEntryRepository.getCaseDiaryEntries(searchRequest))
                 .thenReturn(Collections.singletonList(diaryEntry));
