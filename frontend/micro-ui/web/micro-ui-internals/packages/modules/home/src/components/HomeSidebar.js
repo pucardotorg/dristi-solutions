@@ -5,7 +5,7 @@ import CustomAccordion from "./HomeAccordian";
 
 const HomeSidebar = () => {
   return (
-    <div style={{ width: 260, background: "#fafbfc", borderRight: "1px solid #eee", minHeight: "100vh" }}>
+    <div style={{ width: 280, background: "#fafbfc", borderRight: "1px solid #eee", minHeight: "100vh" }}>
       <div style={{ padding: "16px 16px 0 16px", fontWeight: 600, fontSize: 16, display: "flex", alignItems: "center" }}>
         Hearings
         <span
