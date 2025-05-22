@@ -397,6 +397,7 @@ public class CaseService {
             }
 
 
+            List<Document> documentToDelete  = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
             // Enrich application upon update
             enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest, existingApplications.get(0).getResponseList());
 
@@ -439,7 +440,7 @@ public class CaseService {
                 caseRequest.getCases().setCaseType(CMP);
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
-            removeInactiveDocuments(caseRequest);
+            removeInactiveDocuments(documentToDelete);
             log.info("Encrypting case: {}", caseRequest.getCases().getId());
 
             //to prevent from double encryption
@@ -533,6 +534,141 @@ public class CaseService {
 
     }
 
+    private List<Document> extractDocumentsToDelete(@Valid CourtCase updateCase, @Valid CourtCase existingCase) {
+        if (updateCase == null || existingCase == null) {
+            throw new IllegalArgumentException("Both updateCase and existingCase must not be null");
+        }
+
+        Map<String, Document> updatedDocumentsMap = toFileStoreMap(updateCase.getDocuments());
+        Map<String, Document> existingDocumentsMap = toFileStoreMap(existingCase.getDocuments());
+        // Collect documents from existingCase that are not present in updateCase
+        Set<String> updatedFileStoreIds = updatedDocumentsMap.keySet();
+        List<Document> documentsToDelete = existingDocumentsMap.entrySet().stream()
+                .filter(entry -> {
+                    if (COMPLAINANT_ID_PROOF.equals(entry.getValue().getDocumentType())
+                            && !updatedFileStoreIds.contains(entry.getKey())) {
+                        entry.getValue().setIsActive(false);
+                        return false;
+                    }
+                    return !updatedFileStoreIds.contains(entry.getKey());
+                })
+                .map(entry -> {
+                    Document doc = entry.getValue();
+                    doc.setIsActive(false);
+                    return doc;
+                })
+                .collect(Collectors.toList());
+
+        documentsToDelete.addAll(extractLitigantDocuments(updateCase, existingCase));
+        documentsToDelete.addAll(extractRepresentativeDocuments(updateCase, existingCase));
+        documentsToDelete.addAll(extractLinkedCasesDocuments(updateCase, existingCase));
+
+        // Remove duplicates using fileStoreId
+        Map<String, Document> uniqueByFileStore = documentsToDelete.stream()
+                .collect(Collectors.toMap(Document::getFileStore, doc -> doc, (d1, d2) -> d1));
+
+        return List.copyOf(uniqueByFileStore.values());
+    }
+
+    private Map<String, Document> toFileStoreMap(List<Document> documents) {
+        if (documents == null) {
+            return Collections.emptyMap();
+        }
+        return documents.stream()
+                .filter(doc -> doc.getFileStore() != null)
+                .collect(Collectors.toMap(Document::getFileStore, doc -> doc, (d1, d2) -> d1));
+    }
+
+
+
+    private List<Document> extractLitigantDocuments(CourtCase updateCase, CourtCase existingCase) {
+        List<Document> documentsToDelete = new ArrayList<>();
+        if (existingCase.getLitigants() != null) {
+            for (Party existingLit : existingCase.getLitigants()) {
+                Party updateLit = findById(updateCase.getLitigants(), existingLit.getId(), Party::getId);
+                if (updateLit != null) {
+                    documentsToDelete.addAll(processDocumentDifferences(
+                            updateLit.getDocuments(), existingLit.getDocuments(), updateLit.getDocuments()));
+                }
+            }
+        }
+        return documentsToDelete;
+    }
+
+    private List<Document> extractRepresentativeDocuments(CourtCase updateCase, CourtCase existingCase) {
+        List<Document> documentsToDelete = new ArrayList<>();
+        if (existingCase.getRepresentatives() != null) {
+            for (AdvocateMapping existingRep : existingCase.getRepresentatives()) {
+                AdvocateMapping updateRep = findById(updateCase.getRepresentatives(), existingRep.getId(), AdvocateMapping::getId);
+                if (updateRep != null) {
+                    documentsToDelete.addAll(processDocumentDifferences(
+                            updateRep.getDocuments(), existingRep.getDocuments(), updateRep.getDocuments()));
+
+                    if (existingRep.getRepresenting() != null) {
+                        for (Party existingParty : existingRep.getRepresenting()) {
+                            Party updateParty = findById(
+                                    Optional.ofNullable(updateRep.getRepresenting()).orElse(Collections.emptyList()),
+                                    existingParty.getId(),
+                                    Party::getId);
+                            if (updateParty != null) {
+                                documentsToDelete.addAll(processDocumentDifferences(
+                                        updateParty.getDocuments(), existingParty.getDocuments(), updateParty.getDocuments()));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return documentsToDelete;
+    }
+
+    private List<Document> extractLinkedCasesDocuments(CourtCase updateCase, CourtCase existingCase) {
+        List<Document> documentsToDelete = new ArrayList<>();
+        if (existingCase.getLinkedCases() != null) {
+            for (LinkedCase existingLinked : existingCase.getLinkedCases()) {
+                LinkedCase updateLinked = findById(updateCase.getLinkedCases(), existingLinked.getId(), LinkedCase::getId);
+                if (updateLinked != null) {
+                    documentsToDelete.addAll(processDocumentDifferences(
+                            updateLinked.getDocuments(), existingLinked.getDocuments(), updateLinked.getDocuments()));
+                }
+            }
+        }
+        return documentsToDelete;
+    }
+
+    private <T, ID> T findById(List<T> list, ID id, Function<T, ID> idExtractor) {
+        if (list == null || id == null) return null;
+        return list.stream()
+                .filter(item -> id.equals(idExtractor.apply(item)))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private List<Document> processDocumentDifferences(List<Document> updatedDocs, List<Document> existingDocs, List<Document> targetList) {
+        if (existingDocs == null) {
+            return Collections.emptyList();
+        }
+
+        Set<String> updatedFileStores = updatedDocs == null ? Collections.emptySet() :
+                updatedDocs.stream()
+                        .map(Document::getFileStore)
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toSet());
+
+        List<Document> removedDocuments = existingDocs.stream()
+                .filter(existingDoc -> !updatedFileStores.contains(existingDoc.getFileStore()))
+                .toList();
+
+        removedDocuments.forEach(doc -> {
+            doc.setIsActive(false);
+            if (targetList != null) {
+                targetList.add(doc);
+            }
+        });
+
+        return removedDocuments;
+    }
+
     private <T> void filterDocuments(List<T> entities,
                                      Function<T, List<Document>> getDocs,
                                      BiConsumer<T, List<Document>> setDocs) {
@@ -549,66 +685,21 @@ public class CaseService {
         }
     }
 
-    private void removeInactiveDocuments(CaseRequest caseRequest) {
+    private void removeInactiveDocuments(List<Document> documentsToDelete) {
         try {
             List<String> fileStoreIds = new ArrayList<>();
-            List<Document> documentList = buildDocumentList(caseRequest.getCases());
-            for(Document document : documentList) {
+            for(Document document : documentsToDelete) {
                 if(!document.getIsActive()) {
                     fileStoreIds.add(document.getFileStore());
                 }
             }
             if(!fileStoreIds.isEmpty()){
-                fileStoreUtil.deleteFilesByFileStore(fileStoreIds, caseRequest.getCases().getTenantId());
+                fileStoreUtil.deleteFilesByFileStore(fileStoreIds, config.getTenantId());
                 log.info("Deleted files for case with ids: {}", fileStoreIds);
             }
         } catch (Exception e) {
             log.error("Error occurred while deleting inactive documents: {}", e.getMessage());
         }
-    }
-
-    private List<Document> buildDocumentList(@Valid CourtCase cases) {
-        Set<Document> documentSet = new LinkedHashSet<>();
-
-        if (cases.getDocuments() != null) {
-            documentSet.addAll(cases.getDocuments());
-        }
-        if (cases.getRepresentatives() != null) {
-            for (AdvocateMapping advocateMapping : cases.getRepresentatives()) {
-                if (advocateMapping.getDocuments() != null) {
-                    documentSet.addAll(advocateMapping.getDocuments());
-                }
-                if (advocateMapping.getRepresenting() != null){
-                    for (Party party : advocateMapping.getRepresenting()) {
-                        if (party.getDocuments() != null) {
-                            documentSet.addAll(party.getDocuments());
-                        }
-                    }
-                }
-            }
-        }
-        if (cases.getLitigants() != null) {
-            for (Party party : cases.getLitigants()) {
-                if (party.getDocuments() != null) {
-                    documentSet.addAll(party.getDocuments());
-                }
-            }
-        }
-        if (cases.getPoaHolders() != null) {
-            for (POAHolder poaHolder : cases.getPoaHolders()) {
-                if (poaHolder.getDocuments() != null) {
-                    documentSet.addAll(poaHolder.getDocuments());
-                }
-            }
-        }
-        if (cases.getLinkedCases() != null) {
-            for (LinkedCase linkedCase : cases.getLinkedCases()) {
-                if (linkedCase.getDocuments() != null) {
-                    documentSet.addAll(linkedCase.getDocuments());
-                }
-            }
-        }
-        return new ArrayList<>(documentSet);
     }
 
     private Object createHearingUpdateRequest(CaseRequest caseRequest) {

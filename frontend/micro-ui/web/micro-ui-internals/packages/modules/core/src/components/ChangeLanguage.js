@@ -19,9 +19,7 @@ const ChangeLanguage = ({ isProfileComponent, ...prop }) => {
     setselected(language.value);
     Digit.LocalizationService.changeLanguage(language.value, stateInfo.code);
   };
-  // Added "languages" to the dependency list of useMemo for `selectedLanguageLabel` to ensure that the label updates dynamically
-  // whenever the list of available languages changes. This prevents stale data from being displayed if the languages array is updated.
-  const selectedLanguageLabel = useMemo(() => languages?.find((language) => language?.value === selected)?.label || "", [selected, languages]);
+  const selectedLanguageLabel = useMemo(() => languages?.find((language) => language?.value === selected)?.label, [selected]);
 
   if (isLoading) return null;
 
@@ -45,10 +43,10 @@ const ChangeLanguage = ({ isProfileComponent, ...prop }) => {
                 </span>
               )}
               {isProfileComponent ? (
-                <span>{selectedLanguageLabel ? `${selectedLanguageLabel?.[0]?.toUpperCase()}${selectedLanguageLabel?.slice(1)?.toLowerCase()}` : ""}</span>
+                <span>{`${selectedLanguageLabel[0]?.toUpperCase()}${selectedLanguageLabel?.slice(1)?.toLowerCase()}`}</span>
               ) : (
                 <span>
-                  {(languages || [])
+                  {languages
                     .find((language) => language.value === selected)
                     .label?.substring(0, 2)
                     ?.toUpperCase()}
