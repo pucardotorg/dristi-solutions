@@ -21,7 +21,9 @@ const DRISTICard = () => {
     return res;
   }, true);
 
-  if (isScrutiny || isJudge || isCourtOfficer || isBenchClerk) {
+  if (isJudge || isCourtOfficer || isBenchClerk) {
+    history.push(`/${window?.contextPath}/employee/home/home-screen`);
+  } else if (isScrutiny) {
     history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
   } else if (isCitizen) {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
