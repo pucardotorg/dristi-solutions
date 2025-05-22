@@ -257,6 +257,9 @@ const ADiaryPage = ({ path }) => {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const newFilestore = signedDocumentUploadID || localStorageID;
       fileStoreIds.delete(newFilestore);
+      if (ADiarypdf) {
+        fileStoreIds.delete(ADiarypdf);
+      }
       await HomeService.updateADiaryPDF({
         diary: {
           tenantId: tenantId,
@@ -268,6 +271,11 @@ const ADiaryPage = ({ path }) => {
               tenantId: tenantId,
               fileStoreId: signedDocumentUploadID || localStorageID,
               isActive: true,
+            },
+            {
+              tenantId: tenantId,
+              fileStoreId: ADiarypdf,
+              isActive: false,
             },
             ...Array.from(fileStoreIds).map((fileStoreId) => ({
               fileStoreId: fileStoreId,
