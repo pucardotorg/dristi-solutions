@@ -99,17 +99,17 @@ public class CaseDiaryApiController {
         return new ResponseEntity<>(caseDiaryFile, HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/case/diary/v1/{tenantId}/{judgeId}/{diaryType}", method = RequestMethod.GET)
-    public ResponseEntity<CaseDiaryResponse> getDiaryStoreId(@Pattern(regexp = "^[a-zA-Z]{2}$") @Size(min = 2, max = 2) @Parameter(in = ParameterIn.PATH, description = "tenant Id", required = true, schema = @Schema()) @PathVariable("tenantId") String tenantId, @Parameter(in = ParameterIn.PATH, description = "the Id of the Judge, whose diary is being queried", required = true, schema = @Schema()) @PathVariable("judgeId") String judgeId, @Parameter(in = ParameterIn.PATH, description = "the type of the diary i.e. A diary or B diary", required = true, schema = @Schema(allowableValues = "")) @PathVariable("diaryType") String diaryType, @Parameter(in = ParameterIn.QUERY, description = "the date for which we want the diary in EPOCH format, but with time component set to 0. This will be used in case we are searching A diary", schema = @Schema()) @Valid @RequestParam(value = "date", required = false) Long date, @Parameter(in = ParameterIn.QUERY, description = "the caseId for which we want the diary. This will be used in case we are searching for B diary", schema = @Schema()) @Valid @RequestParam(value = "caseId", required = false) UUID caseId) {
-        log.info("api = /case/diary/v1/{tenantId}/{judgeId}/{diaryType} , result = IN_PROGRESS");
+    @RequestMapping(value = "/case/diary/v1/{tenantId}/{courtId}/{diaryType}", method = RequestMethod.GET)
+    public ResponseEntity<CaseDiaryResponse> getDiaryStoreId(@Pattern(regexp = "^[a-zA-Z]{2}$") @Size(min = 2, max = 2) @Parameter(in = ParameterIn.PATH, description = "tenant Id", required = true, schema = @Schema()) @PathVariable("tenantId") String tenantId, @Parameter(in = ParameterIn.PATH, description = "the Id of the court, whose diary is being queried", required = true, schema = @Schema()) @PathVariable("courtId") String courtId, @Parameter(in = ParameterIn.PATH, description = "the type of the diary i.e. A diary or B diary", required = true, schema = @Schema(allowableValues = "")) @PathVariable("diaryType") String diaryType, @Parameter(in = ParameterIn.QUERY, description = "the date for which we want the diary in EPOCH format, but with time component set to 0. This will be used in case we are searching A diary", schema = @Schema()) @Valid @RequestParam(value = "date", required = false) Long date, @Parameter(in = ParameterIn.QUERY, description = "the caseId for which we want the diary. This will be used in case we are searching for B diary", schema = @Schema()) @Valid @RequestParam(value = "caseId", required = false) UUID caseId) {
+        log.info("api = /case/diary/v1/{tenantId}/{courtId}/{diaryType} , result = IN_PROGRESS");
 
-        CaseDiary caseDiary = diaryService.searchCaseDiaryForJudge(tenantId,judgeId,diaryType,date,caseId);
+        CaseDiary caseDiary = diaryService.searchCaseDiaryForCourt(tenantId,courtId,diaryType,date,caseId);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(RequestInfo.builder().build(),true);
         CaseDiaryResponse caseDiaryResponse = CaseDiaryResponse.builder()
                 .diaryEntry(caseDiary)
                 .responseInfo(responseInfo)
                 .build();
-        log.info("api = /case/diary/v1/{tenantId}/{judgeId}/{diaryType} , result = SUCCESS");
+        log.info("api = /case/diary/v1/{tenantId}/{courtId}/{diaryType} , result = SUCCESS");
         return new ResponseEntity<>(caseDiaryResponse,HttpStatus.OK);
     }
 

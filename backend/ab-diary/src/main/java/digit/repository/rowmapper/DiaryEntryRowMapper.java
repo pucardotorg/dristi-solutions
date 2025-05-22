@@ -38,7 +38,7 @@ public class DiaryEntryRowMapper implements ResultSetExtractor<List<CaseDiaryEnt
                         .tenantId(rs.getString("tenantId"))
                         .entryDate(rs.getLong("entryDate"))
                         .caseNumber(rs.getString("caseNumber"))
-                        .judgeId(rs.getString("judgeId"))
+                        .courtId(rs.getString("courtId"))
                         .businessOfDay(rs.getString("businessOfDay"))
                         .referenceId(rs.getString("referenceId"))
                         .referenceType(rs.getString("referenceType"))
