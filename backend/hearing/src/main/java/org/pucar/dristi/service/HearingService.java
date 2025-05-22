@@ -512,7 +512,7 @@ public class HearingService {
             List<ScheduleHearing> scheduleHearings = getScheduledHearings(updatedBulkHearings, request.getRequestInfo());
 
             Map<String, Hearing> hearingMap = updatedBulkHearings.stream()
-                    .collect(Collectors.toMap(h -> h.getId().toString(), h -> h));
+                    .collect(Collectors.toMap(Hearing::getHearingId, hearing -> hearing));
 
             List<ScheduleHearing> manualUpdateDateHearings = new ArrayList<>();
             Iterator<ScheduleHearing> iterator = scheduleHearings.iterator();
