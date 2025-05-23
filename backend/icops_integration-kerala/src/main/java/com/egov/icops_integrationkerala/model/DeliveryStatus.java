@@ -4,6 +4,9 @@ public enum DeliveryStatus {
 
 
     DELIVERED,
+    DELIVERED_ICOPS,
+
+    NOT_DELIVERED_ICOPS,
 
     NOT_DELIVERED,
 
