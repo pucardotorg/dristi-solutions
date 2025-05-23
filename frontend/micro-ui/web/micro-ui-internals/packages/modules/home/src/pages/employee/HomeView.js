@@ -18,7 +18,7 @@ import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/uti
 import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
 import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
+import useSearchCaseListService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseListService";
 
 const defaultSearchValues = {
   caseSearchText: "",
@@ -254,16 +254,14 @@ const HomeView = () => {
     } else return null;
   }, [userInfoType, advocateId, individualId, isSearchLoading]);
 
-  const { data: citizenCaseData, isLoading: isCitizenCaseDataLoading } = useSearchCaseService(
+  const { data: citizenCaseData, isLoading: isCitizenCaseDataLoading } = useSearchCaseListService(
     {
-      criteria: [
-        {
-          ...(citizenId ? (advocateId ? { advocateId } : { litigantId: individualId }) : {}),
-          courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
-          pagination: { offSet: 0, limit: 1 },
-        },
-      ],
-      tenantId,
+      criteria: {
+        ...(citizenId ? (advocateId ? { advocateId } : { litigantId: individualId }) : {}),
+        courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+        pagination: { offSet: 0, limit: 1 },
+        tenantId,
+      },
     },
     {},
     `dristi-${citizenId}`,
@@ -275,7 +273,7 @@ const HomeView = () => {
 
   // This is to check if the citizen has been associated with a case yet.
   const isCitizenReferredInAnyCase = useMemo(() => {
-    return citizenCaseData?.criteria?.[0]?.responseList?.[0];
+    return citizenCaseData?.caseList?.[0];
   }, [citizenCaseData]);
 
   useEffect(() => {
