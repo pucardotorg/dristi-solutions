@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState, useContext } from "react"; // Added useContext for breadcrumb implementation
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import ReactTooltip from "react-tooltip";
 import { Header, FormComposerV2, Toast, Button, EditIcon, Modal, CloseButton, TextInput, CloseSvg } from "@egovernments/digit-ui-react-components";
+import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core"; // Import breadcrumb context from core module
 import {
   applicationTypeConfig,
   configCheckout,
@@ -267,6 +268,10 @@ const GenerateOrders = () => {
   const [profileEditorName, setProfileEditorName] = useState("");
   const currentDiaryEntry = history.location?.state?.diaryEntry;
 
+    // Access breadcrumb context to get and set case navigation data
+  const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
+  const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
+
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
 
   const setSelectedOrder = (orderIndex) => {
@@ -293,20 +298,72 @@ const GenerateOrders = () => {
   );
   const summonsCourtFee = useMemo(() => courtFeeAmount?.find((p) => p?.paymentCode === "SUMMONS_COURT_FEE")?.amount || 0, [courtFeeAmount]);
 
-  const { data: caseData, isLoading: isCaseDetailsLoading, refetch: refetchCaseData } = Digit.Hooks.dristi.useSearchCaseService(
-    {
-      criteria: [
+  // Replaced React Query implementation with direct API call for better control over breadcrumb data
+  // const { data: caseData, isLoading: isCaseDetailsLoading, refetch: refetchCaseData } = Digit.Hooks.dristi.useSearchCaseService(
+  //   {
+  //     criteria: [
+  //       {
+  //         filingNumber: filingNumber,
+  //       },
+  //     ],
+  //     tenantId,
+  //   },
+  //   {},
+  //   `case-details-${filingNumber}`,
+  //   filingNumber,
+  //   Boolean(filingNumber)
+  // );
+
+  // Manual state management for case data instead of using React Query
+  const [caseData, setCaseData] = useState(undefined);
+  const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
+  const [caseApiError, setCaseApiError] = useState(undefined);
+  // Flag to prevent multiple breadcrumb updates
+  const isBreadCrumbsParamsDataSet = useRef(false);
+
+  /**
+   * Fetch case details and update breadcrumb data
+   * This function replaces the previous React Query implementation for better control
+   * over when and how the breadcrumb context is updated
+   */
+  const fetchCaseDetails = async () => {
+    try {
+      setIsCaseDetailsLoading(true);
+      const caseData = await DRISTIService.searchCaseService(
         {
-          filingNumber: filingNumber,
+          criteria: [
+            {
+              filingNumber: filingNumber,
+            },
+          ],
+          tenantId,
         },
-      ],
-      tenantId,
-    },
-    {},
-    `case-details-${filingNumber}`,
-    filingNumber,
-    Boolean(filingNumber)
-  );
+        {},
+      );
+      const caseId = caseData?.criteria?.[0]?.responseList?.[0]?.id;
+      setCaseData(caseData);
+      // Only update breadcrumb data if it's different from current and hasn't been set yet
+      if (!(caseIdFromBreadCrumbs === caseId && filingNumberFromBreadCrumbs === filingNumber) && !isBreadCrumbsParamsDataSet.current) {
+        setBreadCrumbsParamsData({
+          caseId,
+          filingNumber,
+        })
+        isBreadCrumbsParamsDataSet.current = true;
+      }
+    }
+    catch (err) {
+      setCaseApiError(err);
+    }
+    finally {
+      setIsCaseDetailsLoading(false);
+    }
+  }
+
+  // Fetch case details on component mount
+  useEffect(() => {
+    fetchCaseDetails();
+  }, []);
+
   const userInfo = Digit.UserService.getUser()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [taskType, setTaskType] = useState({});
