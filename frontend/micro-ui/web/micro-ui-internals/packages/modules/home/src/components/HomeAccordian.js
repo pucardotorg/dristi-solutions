@@ -1,3 +1,4 @@
+import { CustomArrowDownIcon, CustomArrowUpIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import React, { useState } from "react";
 
 const HomeAccordian = ({ title, count, children, defaultOpen = false }) => {
@@ -11,7 +12,8 @@ const HomeAccordian = ({ title, count, children, defaultOpen = false }) => {
           alignItems: "center",
           cursor: "pointer",
           padding: "10px 16px",
-          background: open ? "#f7f7f7" : "#fff",
+          background: "#fafbfc",
+          // background: open ? "#f7f7f7" : "#fff",
           fontWeight: 600,
         }}
         onClick={() => setOpen((prev) => !prev)}
@@ -31,9 +33,9 @@ const HomeAccordian = ({ title, count, children, defaultOpen = false }) => {
             {count}
           </span>
         )}
-        <span style={{ marginLeft: 8 }}>{open ? "▲" : "▼"}</span>
+        {open ? <CustomArrowUpIcon /> : <CustomArrowDownIcon />}
       </div>
-      {open && <div style={{ paddingLeft: 24 }}>{children}</div>}
+      {open && <div style={{ paddingLeft: 16, paddingRight: 16 }}>{children}</div>}
     </div>
   );
 };

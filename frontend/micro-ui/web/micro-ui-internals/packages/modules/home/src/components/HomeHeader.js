@@ -15,8 +15,7 @@ const linkStyle = {
 };
 
 const HomeHeader = ({ t }) => {
-  const userName = Digit.SessionStorage.get("User");
-  const userInfo = userName?.info;
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const name = userInfo?.name;
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 

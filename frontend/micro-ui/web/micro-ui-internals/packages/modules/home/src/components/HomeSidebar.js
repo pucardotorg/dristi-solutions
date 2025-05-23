@@ -1,72 +1,53 @@
-// frontend/micro-ui/web/micro-ui-internals/packages/modules/home/src/components/Sidebar.js
-
 import React from "react";
 import CustomAccordion from "./HomeAccordian";
+import SideBarTitle from "./SideBarTitle";
+import SidebarItem from "./SideBarItem";
 
-const HomeSidebar = () => {
+const HomeSidebar = ({ t, onTabChange, activeTab }) => {
+  const { data: options, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "case",
+    [{ name: "pendingTaskFilterText" }],
+    {
+      select: (data) => {
+        return data?.case?.pendingTaskFilterText || [];
+      },
+    }
+  );
+
   return (
     <div style={{ width: 280, background: "#fafbfc", borderRight: "1px solid #eee", minHeight: "100vh" }}>
-      <div style={{ padding: "16px 16px 0 16px", fontWeight: 600, fontSize: 16, display: "flex", alignItems: "center" }}>
-        Hearings
-        <span
-          style={{
-            background: "#ffe6cc",
-            color: "#ff9900",
-            borderRadius: "12px",
-            padding: "2px 8px",
-            fontSize: "12px",
-            marginLeft: "8px",
-          }}
-        >
-          35
-        </span>
-      </div>
+      <SideBarTitle
+        t={t}
+        title="HEARINGS_TAB"
+        count={options?.length || 0}
+        onClick={() => onTabChange("HEARINGS_TAB")}
+        active={activeTab === "HEARINGS_TAB"}
+      />
 
-      <CustomAccordion title="Actions" count={35} defaultOpen>
-        <SidebarItem label="Register Cases" count={5} />
-        <SidebarItem label="Review Process" count={5} />
-        <SidebarItem label="View Applications" count={5} />
-        <SidebarItem label="Schedule Hearing" count={5} />
+      <CustomAccordion title={t("PENDING_TASKS_TAB")} count={options?.length || 0}>
+        {!isOptionsLoading &&
+          options?.map((option, index) => (
+            <SidebarItem
+              t={t}
+              key={index}
+              label={option.name}
+              count={option.count || 0}
+              active={activeTab === option.name}
+              onClick={() => onTabChange("PENDING_TASKS_TAB", option.name)}
+            />
+          ))}
       </CustomAccordion>
 
       <CustomAccordion title="Sign">
-        <SidebarItem label="Orders" />
-        <SidebarItem label="Process" />
-        <SidebarItem label="A-Dairy" />
+        <SidebarItem t={t} label="Orders" />
+        <SidebarItem t={t} label="Process" />
+        <SidebarItem t={t} label="A-Dairy" />
       </CustomAccordion>
 
-      <div style={{ padding: "10px 16px", fontWeight: 600 }}>Bulk Reschedule</div>
+      <SideBarTitle t={t} title="BULK_RESCHEDULE" onClick={() => onTabChange("BULK_RESCHEDULE")} />
     </div>
   );
 };
-
-const SidebarItem = ({ label, count }) => (
-  <div
-    style={{
-      display: "flex",
-      alignItems: "center",
-      padding: "8px 0",
-      fontSize: 15,
-      color: "#333",
-      cursor: "pointer",
-    }}
-  >
-    <span style={{ flex: 1 }}>{label}</span>
-    {typeof count === "number" && (
-      <span
-        style={{
-          background: "#ffe6cc",
-          color: "#ff6666",
-          borderRadius: "12px",
-          padding: "2px 8px",
-          fontSize: "12px",
-          marginLeft: "8px",
-        }}
-      >
-        {count}
-      </span>
-    )}
-  </div>
-);
 
 export default HomeSidebar;
