@@ -5,29 +5,27 @@ const SideBarTitle = ({ t, title, count, active, onClick }) => {
     <div
       onClick={onClick}
       style={{
-        padding: "16px 16px 8px 16px",
-        fontSize: 16,
+        fontSize: 20,
+        fontWeight: 700,
+        padding: 16,
         display: "flex",
+        justifyContent: "space-between",
         alignItems: "center",
         cursor: "pointer",
-        color: "#0B0C0C",
-        fontWeight: 600,
-        // color: active ? "#0B0C0C" : "#505A5F",
-        // borderLeft: active ? "4px solid #f47738" : "none",
-        // paddingLeft: active ? "12px" : "16px",
-        // fontWeight: active ? 600 : 400,
+        color: "#0A0A0A",
+        borderBottom: "1px solid #E6E6E6",
       }}
     >
       {t(title)}
       {count && (
         <span
           style={{
-            background: "#ffe6cc",
-            color: "#ff9900",
-            borderRadius: "12px",
+            fontSize: 14,
+            fontWeight: 400,
+            background: "#FFF6E8",
+            color: "#9E400A",
+            borderRadius: 12,
             padding: "2px 8px",
-            fontSize: "12px",
-            marginLeft: "8px",
           }}
         >
           {count}

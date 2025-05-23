@@ -1,5 +1,5 @@
 import React from "react";
-import CustomAccordion from "./HomeAccordian";
+import HomeAccordian from "./HomeAccordian";
 import SideBarTitle from "./SideBarTitle";
 import SidebarItem from "./SideBarItem";
 
@@ -25,27 +25,27 @@ const HomeSidebar = ({ t, onTabChange, activeTab }) => {
         active={activeTab === "HEARINGS_TAB"}
       />
 
-      <CustomAccordion title={t("PENDING_TASKS_TAB")} count={options?.length || 0}>
+      <HomeAccordian title={t("PENDING_TASKS_TAB")} count={options?.length || 0}>
         {!isOptionsLoading &&
           options?.map((option, index) => (
             <SidebarItem
               t={t}
               key={index}
               label={option.name}
-              count={option.count || 0}
+              count={option.count || 13}
               active={activeTab === option.name}
               onClick={() => onTabChange("PENDING_TASKS_TAB", option.name)}
             />
           ))}
-      </CustomAccordion>
+      </HomeAccordian>
 
-      <CustomAccordion title="Sign">
-        <SidebarItem t={t} label="Orders" />
-        <SidebarItem t={t} label="Process" />
-        <SidebarItem t={t} label="A-Dairy" />
-      </CustomAccordion>
+      <HomeAccordian title={t("CS_HOME_SIGN")}>
+        <SidebarItem t={t} label="CS_HOME_ORDERS" />
+        <SidebarItem t={t} label="CS_HOME_PROCESS" />
+        <SidebarItem t={t} label="CS_HOME_A_DAIRY" />
+      </HomeAccordian>
 
-      <SideBarTitle t={t} title="BULK_RESCHEDULE" onClick={() => onTabChange("BULK_RESCHEDULE")} />
+      <SideBarTitle t={t} title="CS_HOME_BULK_RESCHEDULE" onClick={() => onTabChange("BULK_RESCHEDULE")} />
     </div>
   );
 };

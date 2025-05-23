@@ -32,7 +32,6 @@ const MainHomeScreen = () => {
 
   const handleTabChange = (title, label) => {
     let updatedConfig = labelToConfigMapping?.find((config) => config?.label === title)?.config;
-    debugger;
     if (label) {
       setActiveTab(label);
       updatedConfig = {
