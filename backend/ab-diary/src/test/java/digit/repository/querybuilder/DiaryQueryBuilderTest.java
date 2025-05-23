@@ -71,7 +71,7 @@ class DiaryQueryBuilderTest {
         assertTrue(query.contains("dcd.tenant_id = ?"));
         assertTrue(query.contains("dcd.diary_date = ?"));
         assertTrue(query.contains("dcd.case_number = ?"));
-        assertTrue(query.contains("dcd.judge_id = ?"));
+        assertTrue(query.contains("dcd.court_id = ?"));
         assertTrue(query.contains("dcd.diary_type = ?"));
         assertEquals(5, preparedStatementValues.size());
     }
@@ -141,7 +141,7 @@ class DiaryQueryBuilderTest {
         assertTrue(query.contains("dcd.tenant_id = ?"));
         assertTrue(query.contains("dcd.diary_date = ?"));
         assertTrue(query.contains("dcd.case_number = ?"));
-        assertTrue(query.contains("dcd.judge_id = ?"));
+        assertTrue(query.contains("dcd.court_id = ?"));
         assertTrue(query.contains("dcd.diary_type = ?"));
         assertEquals(5, preparedStatementValues.size());
     }
