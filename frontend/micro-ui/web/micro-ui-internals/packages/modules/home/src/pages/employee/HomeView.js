@@ -18,7 +18,7 @@ import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/uti
 import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
 import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
+import useSearchCaseListService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseListService";
 
 const defaultSearchValues = {
   caseSearchText: "",
@@ -224,26 +224,19 @@ const HomeView = () => {
     async function (tabConfig) {
       const updatedTabData = await Promise.all(
         tabConfig?.TabSearchConfig?.map(async (configItem, index) => {
-          let totalCount = null;
-          try {
-            const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {
-              tenantId,
-              criteria: [
-                {
-                  ...configItem?.apiDetails?.requestBody?.criteria?.[0],
-                  ...defaultSearchValues,
-                  ...additionalDetails,
-                  ...(configItem?.apiDetails?.requestBody?.criteria[0]["outcome"] && {
-                    outcome: outcomeTypeData,
-                  }),
-                  pagination: { offSet: 0, limit: 1 },
-                },
-              ],
-            });
-            totalCount = response?.criteria?.[0]?.pagination?.totalCount;
-          } catch (error) {
-            console.error("error in fetching count.", error);
-          }
+          const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {
+            tenantId,
+            criteria: {
+              ...configItem?.apiDetails?.requestBody?.criteria,
+              ...defaultSearchValues,
+              ...additionalDetails,
+              ...(configItem?.apiDetails?.requestBody?.criteria?.outcome && {
+                outcome: outcomeTypeData,
+              }),
+              pagination: { offSet: 0, limit: 1 },
+            },
+          });
+          const totalCount = response?.pagination?.totalCount;
           return {
             key: index,
             label: totalCount ? `${t(configItem.label)} (${totalCount})` : `${t(configItem.label)} (0)`,
@@ -253,7 +246,7 @@ const HomeView = () => {
       );
       setTabData(updatedTabData);
     },
-    [additionalDetails, outcomeTypeData, tenantId, t, defaultSearchValues]
+    [additionalDetails, outcomeTypeData, tenantId, t]
   );
 
   const citizenId = useMemo(() => {
@@ -262,16 +255,14 @@ const HomeView = () => {
     } else return null;
   }, [userInfoType, advocateId, individualId, isSearchLoading]);
 
-  const { data: citizenCaseData, isLoading: isCitizenCaseDataLoading } = useSearchCaseService(
+  const { data: citizenCaseData, isLoading: isCitizenCaseDataLoading } = useSearchCaseListService(
     {
-      criteria: [
-        {
-          ...(citizenId ? (advocateId ? { advocateId } : { litigantId: individualId }) : {}),
-          courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
-          pagination: { offSet: 0, limit: 1 },
-        },
-      ],
-      tenantId,
+      criteria: {
+        ...(citizenId ? (advocateId ? { advocateId } : { litigantId: individualId }) : {}),
+        courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+        pagination: { offSet: 0, limit: 1 },
+        tenantId,
+      },
     },
     {},
     `dristi-${citizenId}`,
@@ -283,7 +274,7 @@ const HomeView = () => {
 
   // This is to check if the citizen has been associated with a case yet.
   const isCitizenReferredInAnyCase = useMemo(() => {
-    return citizenCaseData?.criteria?.[0]?.responseList?.[0];
+    return citizenCaseData?.caseList?.[0];
   }, [citizenCaseData]);
 
   useEffect(() => {

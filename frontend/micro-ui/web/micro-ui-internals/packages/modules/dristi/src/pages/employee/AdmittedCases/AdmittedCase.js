@@ -1,10 +1,10 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
+import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { ActionBar, SubmitBar, Button, Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
-import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
-import { CustomThreeDots, InfoIconRed } from "../../../icons/svgIndex";
+import { CustomThreeDots } from "../../../icons/svgIndex";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import ViewCaseFile from "../scrutiny/ViewCaseFile";
 import { TabSearchconfig } from "./AdmittedCasesConfig";
@@ -42,6 +42,7 @@ import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import PublishedNotificationModal from "./publishedNotificationModal";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import NoticeAccordion from "../../../components/NoticeAccordion";
+import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -151,6 +152,7 @@ const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
 const AdmittedCases = () => {
   const { t } = useTranslation();
   const location = useLocation();
+  const { pathname, search, hash } = location;
   const { path } = useRouteMatch();
   const urlParams = new URLSearchParams(location.search);
   const { hearingId, taskOrderType, artifactNumber } = Digit.Hooks.useQueryParams();
@@ -232,18 +234,19 @@ const AdmittedCases = () => {
       enable: false,
     },
   };
-
+  
+  const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
+    
   const evidenceUpdateMutation = Digit.Hooks.useCustomAPIMutationHook(reqEvidenceUpdate);
 
-  const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useSearchCaseService(
+  const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useCaseDetailSearchService(
     {
-      criteria: [
-        {
-          caseId: caseId,
-        },
-      ],
+      criteria: {
+        caseId: caseId,
+        courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+      },
       tenantId,
-    },
+    },  
     {},
     `dristi-admitted-${caseId}`,
     caseId,
@@ -251,7 +254,7 @@ const AdmittedCases = () => {
   );
 
   const caseData = historyCaseData || apiCaseData;
-  const caseDetails = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0] || {}, [caseData]);
+  const caseDetails = useMemo(() => caseData?.cases || {}, [caseData]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber || "", [caseDetails]);
@@ -318,21 +321,29 @@ const AdmittedCases = () => {
       : "";
   }, [caseDetails?.statutesAndSections]);
 
-  const litigants = caseDetails?.litigants?.length > 0 ? caseDetails?.litigants : [];
-  const finalLitigantsData = litigants?.map((litigant) => {
-    return {
-      ...litigant,
-      name: removeInvalidNameParts(litigant.additionalDetails?.fullName),
-    };
-  });
-  const reps = caseDetails?.representatives?.length > 0 ? caseDetails?.representatives : [];
-  const finalRepresentativesData = reps.map((rep) => {
-    return {
-      ...rep,
-      name: removeInvalidNameParts(rep.additionalDetails?.advocateName),
-      partyType: `Advocate (for ${rep.representing?.map((client) => removeInvalidNameParts(client?.additionalDetails?.fullName))?.join(", ")})`,
-    };
-  });
+  const litigants = useMemo(() => (caseDetails?.litigants?.length > 0 ? caseDetails?.litigants : []), [caseDetails]);
+  const finalLitigantsData = useMemo(
+    () =>
+      litigants?.map((litigant) => {
+        return {
+          ...litigant,
+          name: removeInvalidNameParts(litigant.additionalDetails?.fullName),
+        };
+      }),
+    [litigants]
+  );
+  const reps = useMemo(() => (caseDetails?.representatives?.length > 0 ? caseDetails?.representatives : []), [caseDetails]);
+  const finalRepresentativesData = useMemo(
+    () =>
+      reps.map((rep) => {
+        return {
+          ...rep,
+          name: removeInvalidNameParts(rep.additionalDetails?.advocateName),
+          partyType: `Advocate (for ${rep.representing?.map((client) => removeInvalidNameParts(client?.additionalDetails?.fullName))?.join(", ")})`,
+        };
+      }),
+    [reps]
+  );
 
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
   const listAllAdvocates = useMemo(() => Object.values(allAdvocates || {}).flat(), [allAdvocates]);
@@ -435,7 +446,7 @@ const AdmittedCases = () => {
       case: caseDetails,
       statue: statue,
     }),
-    [caseDetails, caseId, cnrNumber, filingNumber, statue]
+    [caseDetails, caseId, cnrNumber, filingNumber, finalLitigantsData, finalRepresentativesData, statue]
   );
 
   const caseStatus = useMemo(() => caseDetails?.status || "", [caseDetails]);
@@ -1419,6 +1430,30 @@ const AdmittedCases = () => {
       setShow(true);
     }
   }, []);
+  
+
+  /**
+ * Update breadcrumb navigation context when URL parameters change
+ * 
+ * This effect synchronizes the breadcrumb navigation state with the current URL parameters.
+ * It runs whenever the URL path, search parameters, or hash fragment changes.
+ * 
+ * The effect:
+ * 1. Extracts current case data from the breadcrumb context
+ * 2. Gets the case ID and filing number from URL parameters
+ * 3. Updates the breadcrumb context only if the values differ from current context
+ * 
+ * This ensures consistent navigation context across the application when users
+ * navigate directly to this page via URL rather than through the application flow.
+ */
+  useEffect(() => {
+    const { caseId: caseIdFromBreadCrumb, filingNumber: filingNumberFromBreadCrumb } = BreadCrumbsParamsData;
+    const caseId = urlParams.get("caseId");
+    const filingNumber = urlParams.get("filingNumber");
+    if(!(caseIdFromBreadCrumb === caseId && filingNumberFromBreadCrumb === filingNumber)){
+      setBreadCrumbsParamsData({caseId, filingNumber})
+    }
+  }, [pathname, search, hash]);
 
   const handleIssueNotice = useCallback(
     async (hearingDate, hearingNumber) => {
@@ -1943,7 +1978,7 @@ const AdmittedCases = () => {
   const onTabChange = useCallback(
     (_, i) => {
       history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${i?.label}`, {
-        caseData: caseData,
+        caseData,
         orderData: ordersData,
       });
     },
@@ -2582,7 +2617,8 @@ const AdmittedCases = () => {
   }
   if (
     (userRoles?.includes("JUDGE_ROLE") || userRoles?.includes("BENCH_CLERK") || userRoles?.includes("COURT_ROOM_MANAGER")) &&
-    !judgeReviewStages.includes(caseData?.criteria?.[0]?.responseList?.[0]?.status)
+    caseData?.cases?.status &&
+    !judgeReviewStages.includes(caseData.cases.status)
   ) {
     history.push(`/${window.contextPath}/employee/home/home-pending-task`);
   }
@@ -2885,7 +2921,10 @@ const AdmittedCases = () => {
           )}
         </div>
       )}
-      <div className={`inbox-search-wrapper orders-tab-inbox-wrapper`}>{inboxComposer}</div>
+      <div className={`inbox-search-wrapper orders-tab-inbox-wrapper`} style={showActionBar ? { paddingBottom: "60px" } : {}}>
+        {inboxComposer}
+      </div>
+
       {tabData?.filter((tab) => tab.label === "Overview")?.[0]?.active && (
         <div className="case-overview-wrapper">
           <CaseOverview

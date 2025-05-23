@@ -8,6 +8,7 @@ import org.egov.common.contract.models.AuditDetails;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.models.*;
 import org.egov.transformer.producer.TransformerProducer;
+import org.egov.transformer.repository.CourtIdRepository;
 import org.egov.transformer.service.CaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +17,9 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @Slf4j
@@ -27,15 +31,17 @@ public class CaseConsumer {
     private final TransformerProducer producer;
     private final TransformerProperties transformerProperties;
     private final CaseService caseService;
+    private final CourtIdRepository courtIdRepository;
 
     @Autowired
     public CaseConsumer(ObjectMapper objectMapper,
                         TransformerProducer producer,
-                        TransformerProperties transformerProperties, CaseService caseService) {
+                        TransformerProperties transformerProperties, CaseService caseService, CourtIdRepository courtIdRepository) {
         this.objectMapper = objectMapper;
         this.producer = producer;
         this.transformerProperties = transformerProperties;
         this.caseService = caseService;
+        this.courtIdRepository = courtIdRepository;
     }
 
     @KafkaListener(topics = {"${transformer.consumer.create.case.topic}"})
@@ -48,6 +54,19 @@ public class CaseConsumer {
     public void updateCase(ConsumerRecord<String, Object> payload,
                            @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         publishCase(payload, transformerProperties.getUpdateCaseTopic());
+
+        try {
+            logger.info("Checking case status for enriching courtId");
+            CourtCase courtCase = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseRequest>() {
+            })).getCases();
+            logger.info("Current case status ::{}",courtCase.getStatus());
+
+            if ("PENDING_REGISTRATION".equalsIgnoreCase(courtCase.getStatus())) {
+                courtIdRepository.updateCourtIdForFilingNumber(courtCase.getCourtId(), courtCase.getFilingNumber());
+            }
+        } catch (Exception exception) {
+            log.error("error in saving case", exception);
+        }
     }
 
     @KafkaListener(topics = {"${transformer.consumer.case.status.update.topic}"})
@@ -98,7 +117,9 @@ public class CaseConsumer {
             CaseRequest caseRequest = new CaseRequest();
             caseRequest.setCases(courtCase);
             logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCase));
+            // TODO : currently some topics are missing in indexer files
             producer.push(topic, caseRequest);
+            pushToLegacyTopic(courtCase);
         } catch (Exception exception) {
             log.error("error in saving case", exception);
         }
@@ -117,6 +138,7 @@ public class CaseConsumer {
             caseRequest.setCases(courtCase);
             logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCase));
             producer.push(updateCaseTopic, caseRequest);
+            pushToLegacyTopic(courtCase);
         } catch (Exception exception) {
             log.error("error in saving case", exception);
         }
@@ -139,6 +161,7 @@ public class CaseConsumer {
             updatedElasticSearchCaseRequest.setCases(courtCaseElasticSearch);
             logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCaseElasticSearch));
             producer.push(updateCaseTopic, updatedElasticSearchCaseRequest);
+            pushToLegacyTopic(courtCaseElasticSearch);
         } catch (Exception exception) {
             log.error("error in saving case", exception);
         }
@@ -156,8 +179,22 @@ public class CaseConsumer {
             caseRequest.setCases(courtCase);
             logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCase));
             producer.push(updateCaseTopic, caseRequest);
+            pushToLegacyTopic(courtCase);
         } catch (Exception exception) {
             log.error("error in saving case", exception);
         }
+    }
+
+    private void pushToLegacyTopic(CourtCase courtCase) {
+        CaseResponse caseResponse = new CaseResponse();
+        List<CaseCriteria> caseCriteriaList = new ArrayList<>();
+        CaseCriteria caseCriteria = new CaseCriteria();
+        List<CourtCase> courtCaseList = new ArrayList<>();
+        courtCaseList.add(courtCase);
+        caseCriteria.setResponseList(courtCaseList);
+        caseCriteria.setCaseId(String.valueOf(courtCase.getId()));
+        caseCriteriaList.add(caseCriteria);
+        caseResponse.setCriteria(caseCriteriaList);
+        producer.push("case-legacy-topic", caseResponse);
     }
 }

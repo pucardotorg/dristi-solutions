@@ -2,22 +2,20 @@ export const judgeInboxConfig = {
   label: "ES_COMMON_INBOX",
   type: "inbox",
   apiDetails: {
-    serviceName: "/case/v1/_search",
+    serviceName: "/case/v2/search/list",
     requestParam: {},
     requestBody: {
       tenantId: "pg",
-      criteria: [
-        {
-          defaultValues: true,
-          status: [],
-          filingNumber: "",
-        },
-      ],
+      criteria: {
+        defaultValues: true,
+        status: [],
+        filingNumber: "",
+      },
     },
     minParametersForSearchForm: 1,
     masterName: "commonUiConfig",
     moduleName: "judgeInboxConfig",
-    searchFormJsonPath: "requestBody.criteria[0]",
+    searchFormJsonPath: "requestBody.criteria",
     tableFormJsonPath: "requestBody.inbox",
   },
   sections: {
@@ -82,7 +80,7 @@ export const judgeInboxConfig = {
         ],
         enableGlobalSearch: false,
         enableColumnSort: true,
-        resultsJsonPath: "criteria[0].responseList",
+        resultsJsonPath: "caseList",
       },
       children: {},
       show: true,
