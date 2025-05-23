@@ -137,6 +137,9 @@ public class Configuration {
     @Value("${egov.filestore.path}")
     private String fileStorePath;
 
+    @Value("${egov.file.store.delete.endpoint}")
+    private String fileStoreDeleteEndPoint;
+
     //Idgen
     @Value("${egov.idgen.orderConfig}")
     private String orderConfig;

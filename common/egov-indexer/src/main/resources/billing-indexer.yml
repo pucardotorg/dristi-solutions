@@ -1,0 +1,63 @@
+ServiceMaps:
+  serviceName: billing-service
+  version: 1.0.0
+  mappings:
+    - topic: billing-legacy-topic
+      configKey: LEGACYINDEX
+      indexes:
+        - name: billing-index-v1
+          type: billing
+          id: $.id
+          isBulk: true
+          jsonPath: $.Bill
+          timeStampField: $.auditDetails.createdTime
+          customJsonMapping:
+            indexMapping:
+              { 
+                "billNumber": "",
+                "billDateTime": "",
+                "totalAmount": "",
+                "billDetails": {},
+                "judgeId": "",
+                "caseNumber": ""
+              }
+
+            fieldMapping:
+              - inJsonPath: $.billNumber
+                outJsonPath: $.billNumber
+              - inJsonPath: $.billDateTime
+                outJsonPath: $.billDateTime
+              - inJsonPath: $.totalAmount
+                outJsonPath: $.totalAmount
+              - inJsonPath: $.billDetails
+                outJsonPath: $.billDetails
+            externalUriMapping:
+              - path: http://localhost:8070/case/v1/_search
+                apiRequest: {
+                  "criteria": [
+                    # need to check
+                    {"filingNumber": "$.billDetails[0].additionalDetails.filingNumber"}
+                  ],
+                  "RequestInfo": {
+                    "apiId": "Rainmaker",
+                    "authToken": "9e737b13-14d2-45e7-8b96-09de66952e81",
+                    "msgId": "1730970507148|en_IN",
+                    "plainAccessRequest": {},
+                    "userInfo": {
+                      "userName": "newUser",
+                      "uuid": "r456t5tt4fr454tt5tt",
+                      "type": "EMPLOYEE",
+                      "roles": [
+                        {
+                          "name": "TASK_CREATOR",
+                          "code": "TASK_CREATOR"
+                        }
+                      ]
+                    }
+                  }
+                }
+                uriResponseMapping:
+                  - inJsonPath: $.criteria[0].responseList[0].judgeId
+                    outJsonPath: $.judgeId
+                  - inJsonPath: $.criteria[0].responseList[0].caseNumber
+                    outJsonPath: $.caseNumber

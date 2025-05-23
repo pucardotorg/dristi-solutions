@@ -112,6 +112,7 @@ function CustomCalendar({ config, t, handleSelect, onCalendarConfirm, selectedCu
               whiteSpace: "nowrap",
               overflow: "hidden",
               textOverflow: "ellipsis",
+              zIndex: 3,
             }}
           >
             {hearingCount} {t("HEARINGS")}

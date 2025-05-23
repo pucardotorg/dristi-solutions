@@ -14,10 +14,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.HearingRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.HearingRepository;
-import org.pucar.dristi.util.CaseUtil;
-import org.pucar.dristi.util.DateUtil;
-import org.pucar.dristi.util.MdmsUtil;
-import org.pucar.dristi.util.SchedulerUtil;
+import org.pucar.dristi.util.*;
 import org.pucar.dristi.validator.HearingRegistrationValidator;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +47,7 @@ public class HearingService {
     private final MdmsUtil mdmsUtil;
     private final DateUtil dateUtil;
     private final SchedulerUtil schedulerUtil;
+    private final FileStoreUtil fileStoreUtil;
 
     @Autowired
     public HearingService(
@@ -58,7 +56,7 @@ public class HearingService {
             WorkflowService workflowService,
             HearingRepository hearingRepository,
             Producer producer,
-            Configuration config, CaseUtil caseUtil, ObjectMapper objectMapper, IndividualService individualService, SmsNotificationService notificationService, MdmsUtil mdmsUtil, DateUtil dateUtil, SchedulerUtil schedulerUtil) {
+            Configuration config, CaseUtil caseUtil, ObjectMapper objectMapper, IndividualService individualService, SmsNotificationService notificationService, MdmsUtil mdmsUtil, DateUtil dateUtil, SchedulerUtil schedulerUtil, FileStoreUtil fileStoreUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.workflowService = workflowService;
@@ -72,6 +70,7 @@ public class HearingService {
         this.mdmsUtil = mdmsUtil;
         this.dateUtil = dateUtil;
         this.schedulerUtil = schedulerUtil;
+        this.fileStoreUtil = fileStoreUtil;
     }
 
     public Hearing createHearing(HearingRequest body) {
@@ -144,6 +143,16 @@ public class HearingService {
             // Enrich application upon update
             enrichmentUtil.enrichHearingApplicationUponUpdate(hearingRequest);
 
+            List<String> fileStoreIds = new ArrayList<>();
+            for(Document document: hearingRequest.getHearing().getDocuments()) {
+                if(!document.getIsActive()){
+                    fileStoreIds.add(document.getFileStore());
+                }
+            }
+            if(!fileStoreIds.isEmpty()){
+                fileStoreUtil.deleteFilesByFileStore(fileStoreIds, hearingRequest.getHearing().getTenantId());
+                log.info("Deleted files from file store with ids: {}", fileStoreIds);
+            }
             String updatedState = hearingRequest.getHearing().getStatus();
             producer.push(config.getHearingUpdateTopic(), hearingRequest);
 
