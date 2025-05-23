@@ -111,6 +111,14 @@ export const DRISTIService = {
       data: { ...data, criteria: [...data?.criteria] },
       params,
     }),
+  caseListSearchService: (data, params) =>
+    Request({
+      url: Urls.dristi.caseListSearch,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
   caseDetailSearchService: (data, params) =>
     Request({
       url: Urls.dristi.caseDetailSearch,
