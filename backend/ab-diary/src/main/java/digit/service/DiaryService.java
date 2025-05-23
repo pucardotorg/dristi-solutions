@@ -84,6 +84,10 @@ public class DiaryService {
         try {
             validator.validateUpdateDiary(caseDiaryRequest);
 
+            List<String> inactiveFileStore = caseDiaryRequest.getDiary().getDocuments().stream()
+                    .filter(caseDiaryDocument -> !caseDiaryDocument.isActive())
+                    .map(CaseDiaryDocument::getFileStoreId)
+                    .toList();
             enrichment.enrichUpdateCaseDiary(caseDiaryRequest);
 
             Workflow workflowWithSignAction = Workflow.builder().action(SIGN_ACTION).build();
@@ -91,6 +95,10 @@ public class DiaryService {
 
             workflowService.updateWorkflowStatus(caseDiaryRequest);
 
+            if(!inactiveFileStore.isEmpty()) {
+                fileStoreUtil.deleteFilesByFileStore(inactiveFileStore, caseDiaryRequest.getDiary().getTenantId());
+                log.info("Deleted files from file store with ids: {}", inactiveFileStore);
+            }
             producer.push(configuration.getDiaryUpdateTopic(), caseDiaryRequest);
 
         } catch (CustomException e) {
