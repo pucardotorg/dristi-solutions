@@ -467,14 +467,14 @@ const HomeView = () => {
               {(isJudge || isClerk) && (
                 <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start" }}>
                   {isJudge && (
-                    <>
+                    <React.Fragment>
                       <Link to={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle}>
                         {t("OPEN_DASHBOARD")}
                       </Link>
                       <Link to={`/${window.contextPath}/employee/home/dashboard?select=2`} style={linkStyle}>
                         {t("OPEN_REPORTS")}
                       </Link>
-                    </>
+                    </React.Fragment>
                   )}
                   <Link to={`/${window.contextPath}/employee/home/dashboard/adiary`} style={linkStyle}>
                     {t("OPEN_A_DIARY")}
