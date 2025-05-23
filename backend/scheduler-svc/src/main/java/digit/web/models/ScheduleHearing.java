@@ -37,6 +37,9 @@ public class ScheduleHearing {
     @JsonProperty("title")
     private String title;
 
+    @JsonProperty("caseStage")
+    private String caseStage;
+
     @JsonProperty("description")
     private String description;
 
@@ -89,6 +92,7 @@ public class ScheduleHearing {
         this.errors = hearingObject.errors;
         this.rescheduleRequestId = hearingObject.rescheduleRequestId;
         this.hearingTimeInMinutes = hearingObject.hearingTimeInMinutes;
+        this.caseStage = hearingObject.caseStage;
     }
 
     public boolean overlapsWith(ScheduleHearing other) {

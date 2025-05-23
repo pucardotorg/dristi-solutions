@@ -1,0 +1,1 @@
+ALTER TABLE hearing_booking ADD COLUMN case_stage varchar(64);
