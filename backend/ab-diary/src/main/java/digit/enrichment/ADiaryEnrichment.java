@@ -92,7 +92,7 @@ public class ADiaryEnrichment {
             // TODO works for A-diary need to enrich for B-diary
             CaseDiarySearchRequest caseDiaryRequest = CaseDiarySearchRequest.builder()
                     .criteria(CaseDiarySearchCriteria.builder()
-                            .judgeId(caseDiary.getJudgeId())
+                            .courtId(caseDiary.getCourtId())
                             .date(caseDiary.getDiaryDate())
                             .diaryType(caseDiary.getDiaryType())
                             .tenantId(caseDiary.getTenantId())

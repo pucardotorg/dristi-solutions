@@ -126,9 +126,6 @@ public class Configuration {
     @Value("${judge.designation}")
     private String judgeDesignation;
 
-    @Value("${judge.id}")
-    private String judgeId;
-
     //Pdf Services
     @Value("${egov.pdf.service.host}")
     private String pdfServiceHost;

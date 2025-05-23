@@ -185,7 +185,7 @@ public class DiaryService {
                         .tenantId(generateRequest.getDiary().getTenantId())
                         .diaryType(generateRequest.getDiary().getDiaryType())
                         .date(generateRequest.getDiary().getDiaryDate())
-                        .judgeId(generateRequest.getDiary().getJudgeId())
+                        .courtId(generateRequest.getDiary().getCourtId())
                         .build())
                 .build();
     }
@@ -230,7 +230,7 @@ public class DiaryService {
         return byteArrayResource;
     }
 
-    public CaseDiary searchCaseDiaryForJudge(String tenantId,String judgeId,String diaryType,Long date,UUID caseId) {
+    public CaseDiary searchCaseDiaryForJudge(String tenantId,String courtId,String diaryType,Long date,UUID caseId) {
 
         try {
 
@@ -244,7 +244,7 @@ public class DiaryService {
                             .date(date)
                             .caseId(caseId != null ? caseId.toString() : null)
                             .diaryType(diaryType)
-                            .judgeId(judgeId)
+                            .courtId(courtId)
                             .build())
                     .build();
 

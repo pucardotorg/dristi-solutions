@@ -65,7 +65,7 @@ class DiaryEntryRowMapperTest {
         assertEquals(TENANT_ID, entry.getTenantId());
         assertEquals(ENTRY_DATE, entry.getEntryDate());
         assertEquals(CASE_NUMBER, entry.getCaseNumber());
-        assertEquals(JUDGE_ID, entry.getJudgeId());
+        assertEquals(JUDGE_ID, entry.getCourtId());
         assertEquals(BUSINESS_OF_DAY, entry.getBusinessOfDay());
         assertEquals(REFERENCE_ID, entry.getReferenceId());
         assertEquals(REFERENCE_TYPE, entry.getReferenceType());
@@ -100,7 +100,7 @@ class DiaryEntryRowMapperTest {
         assertEquals(TENANT_ID, entry.getTenantId());
         assertEquals(ENTRY_DATE, entry.getEntryDate());
         assertEquals(CASE_NUMBER, entry.getCaseNumber());
-        assertEquals(JUDGE_ID, entry.getJudgeId());
+        assertEquals(JUDGE_ID, entry.getCourtId());
         assertEquals(BUSINESS_OF_DAY, entry.getBusinessOfDay());
         assertEquals(REFERENCE_ID, entry.getReferenceId());
         assertEquals(REFERENCE_TYPE, entry.getReferenceType());
