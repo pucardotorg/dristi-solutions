@@ -108,6 +108,22 @@ export const DRISTIService = {
       url: Urls.dristi.caseSearch,
       useCache: false,
       userService: false,
+      data: { ...data, criteria: [...data?.criteria, { courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52" }] },
+      params,
+    }),
+  caseDetailSearchService: (data, params) =>
+    Request({
+      url: Urls.dristi.caseDetailSearch,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  summaryCaseSearchService: (data, params) =>
+    Request({
+      url: Urls.dristi.summaryCaseSearch,
+      useCache: false,
+      userService: false,
       data,
       params,
     }),
@@ -141,7 +157,7 @@ export const DRISTIService = {
       url: Urls.dristi.evidenceSearch,
       useCache: false,
       userService: false,
-      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52' } },
+      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52" } },
     });
   },
   searchHearings: (data, params) => {
@@ -149,7 +165,7 @@ export const DRISTIService = {
       url: Urls.dristi.searchHearings,
       useCache: false,
       userService: false,
-      data:{...data,criteria: {...data?.criteria,courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52'}},
+      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52" } },
       params,
     });
   },
@@ -185,7 +201,7 @@ export const DRISTIService = {
       url: Urls.dristi.ordersSearch,
       useCache: false,
       userService: false,
-      data: {...data,criteria: {...data?.criteria,courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52'}},
+      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52" } },
       params,
     });
   },
@@ -195,7 +211,7 @@ export const DRISTIService = {
       url: Urls.dristi.submissionsSearch,
       useCache: false,
       userService: false,
-      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52' } },
+      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52" } },
       params,
     });
   },
