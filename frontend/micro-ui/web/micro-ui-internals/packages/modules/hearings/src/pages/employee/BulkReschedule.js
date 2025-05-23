@@ -268,7 +268,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       });
       const diaryEntries = newHearingData?.map((hearing) => {
         return {
-          judgeId: judgeId,
+          courtId: courtId,
           businessOfDay: `No sitting notified on ${formatDate(hearing?.originalHearingDate)}. Case posted to ${formatDate(hearing?.hearingDate)}`,
           tenantId: tenantId,
           entryDate: new Date().setHours(0, 0, 0, 0),
