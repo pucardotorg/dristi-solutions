@@ -96,7 +96,7 @@ class DiaryEntryQueryBuilderTest {
 
         String query = queryBuilder.getDiaryEntryQuery(criteria, preparedStatementValues, preparedStatementTypeValues);
 
-        assertEquals(BASE_QUERY + " WHERE dde.judge_id = ?", query);
+        assertEquals(BASE_QUERY + " WHERE dde.court_id = ?", query);
         assertEquals(1, preparedStatementValues.size());
         assertEquals("JUDGE-123", preparedStatementValues.get(0));
         assertEquals(Types.VARCHAR, preparedStatementTypeValues.get(0).intValue());
