@@ -95,6 +95,9 @@ public class Configuration {
 	@Value("${dristi.dev.file.search.path}")
 	private String fileStorePath;
 
+	@Value("${dristi.dev.file.delete.path}")
+	private String fileStoreDeleteEndPoint;
+
 	@Value("${dristi.dev.order.search.host}")
 	private String orderSearchHost;
 
