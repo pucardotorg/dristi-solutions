@@ -8,6 +8,7 @@ import org.egov.common.contract.models.AuditDetails;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.models.*;
 import org.egov.transformer.producer.TransformerProducer;
+import org.egov.transformer.repository.CourtIdRepository;
 import org.egov.transformer.service.CaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,15 +31,17 @@ public class CaseConsumer {
     private final TransformerProducer producer;
     private final TransformerProperties transformerProperties;
     private final CaseService caseService;
+    private final CourtIdRepository courtIdRepository;
 
     @Autowired
     public CaseConsumer(ObjectMapper objectMapper,
                         TransformerProducer producer,
-                        TransformerProperties transformerProperties, CaseService caseService) {
+                        TransformerProperties transformerProperties, CaseService caseService, CourtIdRepository courtIdRepository) {
         this.objectMapper = objectMapper;
         this.producer = producer;
         this.transformerProperties = transformerProperties;
         this.caseService = caseService;
+        this.courtIdRepository = courtIdRepository;
     }
 
     @KafkaListener(topics = {"${transformer.consumer.create.case.topic}"})
@@ -51,6 +54,19 @@ public class CaseConsumer {
     public void updateCase(ConsumerRecord<String, Object> payload,
                            @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         publishCase(payload, transformerProperties.getUpdateCaseTopic());
+
+        try {
+            logger.info("Checking case status for enriching courtId");
+            CourtCase courtCase = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseRequest>() {
+            })).getCases();
+            logger.info("Current case status ::{}",courtCase.getStatus());
+
+            if ("PENDING_REGISTRATION".equalsIgnoreCase(courtCase.getStatus())) {
+                courtIdRepository.updateCourtIdForFilingNumber(courtCase.getCourtId(), courtCase.getFilingNumber());
+            }
+        } catch (Exception exception) {
+            log.error("error in saving case", exception);
+        }
     }
 
     @KafkaListener(topics = {"${transformer.consumer.case.status.update.topic}"})
