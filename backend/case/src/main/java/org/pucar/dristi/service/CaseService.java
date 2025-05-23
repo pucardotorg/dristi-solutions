@@ -480,29 +480,29 @@ public class CaseService {
                 poaHolder.setRepresentingLitigants(activeLitigants);
             });
 
-            filterDocuments(activeAdvocateMapping,
-                    AdvocateMapping::getDocuments,
-                    AdvocateMapping::setDocuments);
-
-            activeAdvocateMapping.forEach(advocate ->
-                    filterDocuments(advocate.getRepresenting(),
-                            Party::getDocuments,
-                            Party::setDocuments)
-            );
-
-            filterDocuments(activeParty,
-                    Party::getDocuments,
-                    Party::setDocuments);
-
-            filterDocuments(activePOAHolder,
-                    POAHolder::getDocuments,
-                    POAHolder::setDocuments);
-
-            activePOAHolder.forEach(poaHolder ->
-                    filterDocuments(poaHolder.getRepresentingLitigants(),
-                            PoaParty::getDocuments,
-                            PoaParty::setDocuments)
-            );
+//            filterDocuments(activeAdvocateMapping,
+//                    AdvocateMapping::getDocuments,
+//                    AdvocateMapping::setDocuments);
+//
+//            activeAdvocateMapping.forEach(advocate ->
+//                    filterDocuments(advocate.getRepresenting(),
+//                            Party::getDocuments,
+//                            Party::setDocuments)
+//            );
+//
+//            filterDocuments(activeParty,
+//                    Party::getDocuments,
+//                    Party::setDocuments);
+//
+//            filterDocuments(activePOAHolder,
+//                    POAHolder::getDocuments,
+//                    POAHolder::setDocuments);
+//
+//            activePOAHolder.forEach(poaHolder ->
+//                    filterDocuments(poaHolder.getRepresentingLitigants(),
+//                            PoaParty::getDocuments,
+//                            PoaParty::setDocuments)
+//            );
 
             caseRequest.getCases().setPoaHolders(activePOAHolder);
             caseRequest.getCases().setDocuments(isActiveTrueDocuments);
