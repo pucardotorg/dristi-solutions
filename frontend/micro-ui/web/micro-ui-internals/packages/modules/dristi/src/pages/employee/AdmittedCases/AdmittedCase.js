@@ -1010,13 +1010,13 @@ const AdmittedCases = () => {
         artifactList: selectedRow,
       },
     ];
-    const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+    const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
     try {
       const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
       await DRISTIService.addADiaryEntry(
         {
           diaryEntry: {
-            judgeId: judgeId,
+            courtId: courtId,
             businessOfDay: `${selectedRow?.artifactNumber} ${selectedRow?.isEvidence ? "unmarked" : "marked"} as evidence`,
             tenantId: tenantId,
             entryDate: new Date().setHours(0, 0, 0, 0),
