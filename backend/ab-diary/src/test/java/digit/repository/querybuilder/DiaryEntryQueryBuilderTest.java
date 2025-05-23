@@ -25,7 +25,7 @@ class DiaryEntryQueryBuilderTest {
 
     private List<Object> preparedStatementValues;
     private List<Integer> preparedStatementTypeValues;
-    private static final String BASE_QUERY = "SELECT dde.id as id,dde.tenant_id as tenantId,dde.case_number as caseNumber,dde.judge_id as judgeId, " +
+    private static final String BASE_QUERY = "SELECT dde.id as id,dde.tenant_id as tenantId,dde.case_number as caseNumber,dde.court_id as courtId, " +
             "dde.entry_date as entryDate,dde.businessOfDay as businessOfDay,dde.reference_id as referenceId,dde.reference_type as referenceType,dde.case_id as caseId, " +
             "dde.hearingDate as hearingDate,dde.additional_details as additionalDetails,dde.created_by as createdBy,dde.last_modified_by as lastModifiedBy," +
             "dde.created_time as createdTime,dde.last_modified_time as lastModifiedTime FROM dristi_diaryentries dde";
@@ -91,7 +91,7 @@ class DiaryEntryQueryBuilderTest {
     @Test
     void getDiaryEntryQuery_WithJudgeId_ReturnsQueryWithJudgeFilter() {
         CaseDiarySearchCriteria criteria = CaseDiarySearchCriteria.builder()
-                .judgeId("JUDGE-123")
+                .courtId("JUDGE-123")
                 .build();
 
         String query = queryBuilder.getDiaryEntryQuery(criteria, preparedStatementValues, preparedStatementTypeValues);
@@ -109,7 +109,7 @@ class DiaryEntryQueryBuilderTest {
                 .tenantId("default-tenant")
                 .date(now)
                 .caseId("CASE-123")
-                .judgeId("JUDGE-123")
+                .courtId("JUDGE-123")
                 .build();
 
         String query = queryBuilder.getDiaryEntryQuery(criteria, preparedStatementValues, preparedStatementTypeValues);
