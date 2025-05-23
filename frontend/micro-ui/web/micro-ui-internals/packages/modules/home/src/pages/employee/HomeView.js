@@ -62,6 +62,7 @@ const HomeView = () => {
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
   const isNyayMitra = roles.some((role) => role.code === "NYAY_MITRA_ROLE");
+  const isClerk = roles.some((role) => role.code === "BENCH_CLERK");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [toastMsg, setToastMsg] = useState(null);
@@ -454,14 +455,18 @@ const HomeView = () => {
                 advocateId={advocateId}
                 t={t}
               />
-              {isJudge && (
+              {(isJudge || isClerk) && (
                 <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start" }}>
-                  <Link to={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle}>
-                    {t("OPEN_DASHBOARD")}
-                  </Link>
-                  <Link to={`/${window.contextPath}/employee/home/dashboard?select=2`} style={linkStyle}>
-                    {t("OPEN_REPORTS")}
-                  </Link>
+                  {isJudge && (
+                    <React.Fragment>
+                      <Link to={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle}>
+                        {t("OPEN_DASHBOARD")}
+                      </Link>
+                      <Link to={`/${window.contextPath}/employee/home/dashboard?select=2`} style={linkStyle}>
+                        {t("OPEN_REPORTS")}
+                      </Link>
+                    </React.Fragment>
+                  )}
                   <Link to={`/${window.contextPath}/employee/home/dashboard/adiary`} style={linkStyle}>
                     {t("OPEN_A_DIARY")}
                   </Link>
