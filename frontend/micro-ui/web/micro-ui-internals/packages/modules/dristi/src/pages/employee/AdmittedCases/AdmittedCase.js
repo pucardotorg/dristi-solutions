@@ -1430,7 +1430,22 @@ const AdmittedCases = () => {
       setShow(true);
     }
   }, []);
+  
 
+  /**
+ * Update breadcrumb navigation context when URL parameters change
+ * 
+ * This effect synchronizes the breadcrumb navigation state with the current URL parameters.
+ * It runs whenever the URL path, search parameters, or hash fragment changes.
+ * 
+ * The effect:
+ * 1. Extracts current case data from the breadcrumb context
+ * 2. Gets the case ID and filing number from URL parameters
+ * 3. Updates the breadcrumb context only if the values differ from current context
+ * 
+ * This ensures consistent navigation context across the application when users
+ * navigate directly to this page via URL rather than through the application flow.
+ */
   useEffect(() => {
     const { caseId: caseIdFromBreadCrumb, filingNumber: filingNumberFromBreadCrumb } = BreadCrumbsParamsData;
     const caseId = urlParams.get("caseId");
