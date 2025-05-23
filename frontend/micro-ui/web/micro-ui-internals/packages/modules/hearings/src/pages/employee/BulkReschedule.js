@@ -11,6 +11,7 @@ import Axios from "axios";
 import { useHistory } from "react-router-dom";
 import { FileDownloadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
+import BulkRescheduleModal from "../../components/BulkRescheduleModal";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 const CloseBtn = ({ onClick }) => {
@@ -101,7 +102,6 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const defaultValues = {
     toDate: bulkFormData?.toDate || selectedDate,
     fromDate: bulkFormData?.fromDate || selectedDate,
-    slotIds: bulkFormData?.slotIds || (Array.isArray(selectedSlot) ? selectedSlot : []),
     reason: bulkFormData?.reason || "",
   };
 
@@ -337,6 +337,8 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const onCancel = () => {
     if (stepper === 1) {
       clearLocalStorage();
+      setBulkFormData({});
+      setNewHearingData([]);
     }
     setStepper((prev) => prev - 1);
   };
@@ -370,6 +372,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
             key: "fromDate",
             label: "BULK_FROM_DATE",
             isMandatory: true,
+            customStyleLabelField: { display: "flex", justifyContent: "space-between" },
             populators: {
               name: "fromDate",
               // error: "Required",
@@ -381,30 +384,31 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
             key: "toDate",
             type: "component",
             component: "CustomDatePicker",
+            customStyleLabelField: { display: "flex", justifyContent: "space-between" },
             disable: currentDiaryEntry ? true : false,
             populators: {},
           },
-          {
-            label: "BULK_SLOT",
-            isMandatory: true,
-            key: "slotIds",
-            type: "dropdown",
-            disable: currentDiaryEntry ? true : false,
-            // disable: true,//dynamic based on dates court.slots
-            populators: {
-              name: "slotIds",
-              optionsKey: "slotName",
-              allowMultiSelect: true,
-              isMandatory: true,
-              // defaultText: "select slot",
-              selectedText: "Slot(s)",
-              mdmsConfig: {
-                masterName: "slots",
-                moduleName: "court",
-                select: "(data) => {return data['court'].slots?.map((item) => {return item;});}",
-              },
-            },
-          },
+          // {
+          //   label: "BULK_SLOT",
+          //   isMandatory: true,
+          //   key: "slotIds",
+          //   type: "dropdown",
+          //   disable: currentDiaryEntry ? true : false,
+          //   // disable: true,//dynamic based on dates court.slots
+          //   populators: {
+          //     name: "slotIds",
+          //     optionsKey: "slotName",
+          //     allowMultiSelect: true,
+          //     isMandatory: true,
+          //     // defaultText: "select slot",
+          //     selectedText: "Slot(s)",
+          //     mdmsConfig: {
+          //       masterName: "slots",
+          //       moduleName: "court",
+          //       select: "(data) => {return data['court'].slots?.map((item) => {return item;});}",
+          //     },
+          //   },
+          // },
         ],
       },
     ],
@@ -422,7 +426,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     if (bulkToDate && bulkToDate && !compareDates(bulkFromDate, bulkToDate)) {
       let updatedConfig = [{}];
       updatedConfig[0].body = config[0].body.map((item) => {
-        return item.key === "slotIds" ? { ...item, disable: true, isMandatory: false } : item;
+        return item;
       });
       return updatedConfig;
     }
@@ -451,11 +455,8 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
       setBulkToDate(newToDate);
     }
 
-    if (newFromDate && newToDate && !compareDates(newFromDate, newToDate)) {
-      if (formData?.["slotIds"]?.length > 0) setValue("slotIds", []);
-      if (Boolean(formData?.reason && formData?.toDate && formData?.fromDate && Object.keys(formState?.errors))) {
-        setIsBulkRescheduleDisabled(false);
-      }
+    if (newFromDate && newToDate && Boolean(formData?.reason && formData?.toDate && formData?.fromDate && Object.keys(formState?.errors))) {
+      setIsBulkRescheduleDisabled(false);
     } else if (
       Boolean(formData?.slotIds?.length > 0 && formData?.reason && formData?.toDate && formData?.fromDate && Object.keys(formState?.errors))
     ) {
@@ -479,25 +480,6 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const onSumbitReschedule = async () => {
     try {
       setLoader(true);
-      const tentativeDates = await hearingService?.bulkReschedule({
-        BulkReschedule: {
-          judgeId,
-          courtId,
-          scheduleAfter: bulkFormData?.toDate + 24 * 60 * 60 * 1000 + 1, //we are sending next day
-          tenantId,
-          startTime: bulkFormData?.fromDate,
-          endTime: bulkFormData?.toDate + 24 * 60 * 60 * 1000 - 1, // End of the day
-          slotIds: bulkFormData?.slotIds?.map((slot) => slot?.id) || [],
-          reason: bulkFormData?.reason,
-        },
-      });
-      if (tentativeDates?.Hearings?.length === 0) {
-        showToast("error", t("NO_NEW_HEARINGS_AVAILABLE"), 5000);
-        setLoader(false);
-        return;
-      }
-
-      setNewHearingData(tentativeDates?.Hearings);
 
       const response = await Axios.post(
         Urls.hearing.createNotificationPdf,
@@ -513,7 +495,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
             reason: bulkFormData?.reason,
             courtId: courtId,
             hearings:
-              tentativeDates?.Hearings?.map(({ filingNumber, startTime, originalHearingDate, hearingType }) => ({
+              newHearingData?.map(({ filingNumber, startTime, originalHearingDate, hearingType }) => ({
                 filingNumber,
                 startTime,
                 originalHearingDate,
@@ -613,108 +595,27 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   return (
     <React.Fragment>
       {stepper === 1 && (
-        <Modal
-          headerBarEnd={<CloseBtn onClick={() => (currentDiaryEntry ? history.goBack() : onCancel())} />}
-          formId="modal-action"
-          headerBarMain={
-            <Heading
-              label={`${t("BULK_RESCHEDULE")}${
-                currentDiaryEntry?.additionalDetails?.caseId ? " - " + currentDiaryEntry?.additionalDetails?.caseId : ""
-              }`}
-            />
-          }
-          actionCancelLabel={t("CS_COMMON_BACK")}
-          actionCancelOnSubmit={onCancel}
-          actionSaveOnSubmit={onSumbitReschedule}
-          actionSaveLabel={t("RESHEDULE_BTN")}
-          style={{ margin: "10px 0px" }}
-          isDisabled={isBulkRescheduleDisabled || bulkHearingsCount === 0}
-          actionCancelStyle={{ margin: "10px 0px" }}
-          hideModalActionbar={currentDiaryEntry ? true : false}
-        >
-          {Loading ? (
-            <Loader />
-          ) : (
-            <div>
-              <FormComposerV2
-                key="bulk-reschedule"
-                config={modifiedConfig}
-                style={{ width: "100%", margin: "0px", padding: "0px !important" }}
-                onFormValueChange={onFormValueChange}
-                t={t}
-                noBoxShadow
-                inline={true}
-                className={"bulk-reschedule"}
-                fieldStyle={{ margin: 0, Background: "black" }}
-                cardStyle={{ minWidth: "100%", Background: "blue" }}
-                cardClassName={"card-shec"}
-                headingStyle={{ textAlign: "center" }}
-                defaultValues={defaultValues}
-              />
-
-              {currentDiaryEntry && (
-                <div style={{ padding: "10px" }}>
-                  <h3 style={{ marginTop: 0, marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
-                  <div style={{ display: "flex", gap: "10px" }}>
-                    <TextInput
-                      className="field desktop-w-full"
-                      onChange={(e) => {
-                        setBusinessOfTheDay(e.target.value);
-                      }}
-                      defaultValue={currentDiaryEntry?.businessOfDay}
-                      style={{}}
-                      textInputStyle={{ maxWidth: "100%" }}
-                    />
-                    {currentDiaryEntry && (
-                      <Button
-                        label={t("SAVE")}
-                        variation={"primary"}
-                        style={{ padding: 15, boxShadow: "none" }}
-                        onButtonClick={() => {
-                          handleUpdateBusinessOfDayEntry();
-                        }}
-                      />
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {!isBulkRescheduleDisabled && !currentDiaryEntry && bulkHearingsCount !== 0 && (
-                <InfoCard
-                  variant={"default"}
-                  label={t("PLEASE_NOTE")}
-                  additionalElements={{}}
-                  inline
-                  text={t(`${t("BULK_INFO1")} ${bulkHearingsCount} ${t("BULK_INFO2")} ${formatDate(bulkFromDate)} and ${formatDate(bulkToDate)}`)}
-                  textStyle={{}}
-                  className={`custom-info-card`}
-                  style={{ margin: "15px" }}
-                />
-              )}
-              {!isBulkRescheduleDisabled && !currentDiaryEntry && bulkHearingsCount === 0 && (
-                <InfoCard
-                  variant={"default"}
-                  label={t("PLEASE_NOTE")}
-                  additionalElements={{}}
-                  inline
-                  text={t("BULK_NO_HEARINGS_SELECTED")}
-                  textStyle={{}}
-                  className={`custom-info-card`}
-                  style={{ margin: "15px" }}
-                />
-              )}
-              {toastMsg && (
-                <Toast
-                  error={toastMsg.key === "error"}
-                  label={t(toastMsg.action)}
-                  onClose={() => setToastMsg(null)}
-                  isDleteBtn={true}
-                  style={{ maxWidth: "500px" }}
-                />
-              )}
-            </div>
-          )}
-        </Modal>
+        <BulkRescheduleModal
+          t={t}
+          Loading={Loading}
+          modifiedConfig={modifiedConfig}
+          onFormValueChange={onFormValueChange}
+          defaultValues={defaultValues}
+          currentDiaryEntry={currentDiaryEntry}
+          onCancel={onCancel}
+          onSumbitReschedule={onSumbitReschedule}
+          isBulkRescheduleDisabled={isBulkRescheduleDisabled}
+          bulkHearingsCount={bulkHearingsCount}
+          setBusinessOfTheDay={setBusinessOfTheDay}
+          handleUpdateBusinessOfDayEntry={handleUpdateBusinessOfDayEntry}
+          bulkFromDate={bulkFromDate}
+          bulkToDate={bulkToDate}
+          toastMsg={toastMsg}
+          setToastMsg={setToastMsg}
+          setNewHearingData={setNewHearingData}
+          newHearingData={newHearingData}
+          bulkFormData={bulkFormData}
+        />
       )}
       {stepper === 2 && (
         <Modal
