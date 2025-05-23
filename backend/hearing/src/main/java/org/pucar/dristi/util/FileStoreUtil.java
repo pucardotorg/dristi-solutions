@@ -59,7 +59,7 @@ public class FileStoreUtil {
         String url = configs.getFileStoreHost() + configs.getFileStoreDeleteEndPoint() + "?tenantId=" + tenantId;
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("fileStoreIds", fileStoreIds);
+        body.add("fileStoreIds", String.join(",", fileStoreIds));
         body.add("isSoftDelete", false);
 
         HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, new HttpHeaders());
