@@ -1,6 +1,7 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
+import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { ActionBar, SubmitBar, Button, Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
 import { CustomThreeDots } from "../../../icons/svgIndex";
@@ -151,6 +152,7 @@ const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
 const AdmittedCases = () => {
   const { t } = useTranslation();
   const location = useLocation();
+  const { pathname, search, hash } = location;
   const { path } = useRouteMatch();
   const urlParams = new URLSearchParams(location.search);
   const { hearingId, taskOrderType, artifactNumber } = Digit.Hooks.useQueryParams();
@@ -232,7 +234,9 @@ const AdmittedCases = () => {
       enable: false,
     },
   };
-
+  
+  const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
+    
   const evidenceUpdateMutation = Digit.Hooks.useCustomAPIMutationHook(reqEvidenceUpdate);
 
   const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useCaseDetailSearchService(
@@ -242,7 +246,7 @@ const AdmittedCases = () => {
         courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
       },
       tenantId,
-    },
+    },  
     {},
     `dristi-admitted-${caseId}`,
     caseId,
@@ -1426,6 +1430,15 @@ const AdmittedCases = () => {
       setShow(true);
     }
   }, []);
+
+  useEffect(() => {
+    const { caseId: caseIdFromBreadCrumb, filingNumber: filingNumberFromBreadCrumb } = BreadCrumbsParamsData;
+    const caseId = urlParams.get("caseId");
+    const filingNumber = urlParams.get("filingNumber");
+    if(!(caseIdFromBreadCrumb === caseId && filingNumberFromBreadCrumb === filingNumber)){
+      setBreadCrumbsParamsData({caseId, filingNumber})
+    }
+  }, [pathname, search, hash]);
 
   const handleIssueNotice = useCallback(
     async (hearingDate, hearingNumber) => {
