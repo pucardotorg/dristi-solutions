@@ -397,8 +397,8 @@ public class CaseService {
                 throw new CustomException(VALIDATION_ERR, "Case Application does not exist");
             }
 
-            //todo: filestore delete
-//            List<Document> documentToDelete  = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
+            //todo: enhance for files delete
+            List<Document> documentToDelete  = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
             // Enrich application upon update
             enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest, existingApplications.get(0).getResponseList());
 
@@ -441,7 +441,7 @@ public class CaseService {
                 caseRequest.getCases().setCaseType(CMP);
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
-            //todo: filestore delete
+            //todo: enhance for files delete
 //            removeInactiveDocuments(documentToDelete);
             log.info("Encrypting case: {}", caseRequest.getCases().getId());
 
