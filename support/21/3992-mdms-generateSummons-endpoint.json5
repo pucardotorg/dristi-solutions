@@ -1,43 +1,56 @@
 [
   {
-    "id": "b464f610-ac9e-43c8-9ab0-b75259d83d1b",
     "tenantId": "kl",
-    "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
-    "uniqueIdentifier": "2742",
-    "data": {
-      "id": 2742,
-      "url": "/summons-svc/summons/v1/_generateSummons",
-      "code": "2742",
-      "name": "Generate Summons Document",
-      "displayName": "Generate Summons Document",
-      "serviceCode": "Summons-svc"
-    },
-    "isActive": true,
-    "auditDetails": {
-      "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
-      "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
-      "createdTime": 1747999137883,
-      "lastModifiedTime": 1747999137883
-    }
+    "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+    "masterName": "actions-test",
+    "mdmsPayload": [
+      {
+        "id": "b464f610-ac9e-43c8-9ab0-b75259d83d1b",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": "2742",
+        "data": {
+          "id": 2742,
+          "url": "/summons-svc/summons/v1/_generateSummons",
+          "code": "2742",
+          "name": "Generate Summons Document",
+          "displayName": "Generate Summons Document",
+          "serviceCode": "Summons-svc"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1747999137883,
+          "lastModifiedTime": 1747999137883
+        }
+      }
+    ]
   },
   {
-    "id": "36a80e50-5c0c-49a2-b715-4ae6bc338f2b",
-    "tenantId": "kl",
-    "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
-    "uniqueIdentifier": "477",
-    "data": {
-      "id": 477,
-      "actionid": 2742,
-      "rolecode": "JUDGE_ROLE",
-      "tenantid": "kl",
-      "actioncode": "2742"
-    },
-    "isActive": true,
-    "auditDetails": {
-      "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
-      "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
-      "createdTime": 1747999225359,
-      "lastModifiedTime": 1748004455464
-    }
+    "moduleName":"ACCESSCONTROL-ROLEACTIONS",
+    "masterName":"roleactions",
+    "mdmsPayload": [
+      {
+        "id": "36a80e50-5c0c-49a2-b715-4ae6bc338f2b",
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": "477",
+        "data": {
+          "id": 477,
+          "actionid": 2742,
+          "rolecode": "JUDGE_ROLE",
+          "tenantid": "kl",
+          "actioncode": "2742"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1747999225359,
+          "lastModifiedTime": 1748004455464
+        }
+      }
+    ]
   }
 ]
