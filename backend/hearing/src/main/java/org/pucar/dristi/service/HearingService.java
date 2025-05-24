@@ -139,7 +139,7 @@ public class HearingService {
             // Enrich application upon update
             enrichmentUtil.enrichHearingApplicationUponUpdate(hearingRequest);
 
-            deleteFileStoreDocumentsIfInactive(hearingRequest.getHearing())
+            deleteFileStoreDocumentsIfInactive(hearingRequest.getHearing());
 
            
             if (hearing.getWorkflow() != null) {
@@ -177,7 +177,7 @@ public class HearingService {
                 }
             }
         if (!fileStoreIds.isEmpty()) {
-                fileStoreUtil.deleteFilesByFileStore(fileStoreIds, hearingRequest.getHearing().getTenantId());
+                fileStoreUtil.deleteFilesByFileStore(fileStoreIds, hearing.getTenantId());
                 log.info("Deleted files from file store with ids: {}", fileStoreIds);
         }
         }
