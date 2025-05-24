@@ -150,6 +150,9 @@ public class Configuration {
     @Value("${egov.filestore.path}")
     private String fileStorePath;
 
+    @Value("${egov.file.store.delete.endpoint}")
+    private String fileStoreDeleteEndPoint;
+
     @Value("${app.zone.id}")
     private String zoneId;
 

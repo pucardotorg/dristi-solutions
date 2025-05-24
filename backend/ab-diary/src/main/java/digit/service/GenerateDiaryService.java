@@ -44,7 +44,7 @@ public class GenerateDiaryService {
             CaseDiary diary = new CaseDiary();
             diary.setDiaryDate(generateDiaryDate());
             diary.setDiaryType(DIARY_TYPE);
-            diary.setJudgeId(configuration.getJudgeId());
+            diary.setCourtId(configuration.getCourtId());
             diary.setTenantId(configuration.getTenantId());
 
             generateRequest.setDiary(diary);

@@ -213,6 +213,9 @@ public class Configuration {
 	@Value("${egov.file.store.save.endpoint}")
 	private String fileStoreSaveEndPoint;
 
+	@Value("${egov.file.store.delete.endpoint}")
+	private String fileStoreDeleteEndPoint;
+
 	@Value("${egov.filestore.case.module}")
 	private String fileStoreCaseModule;
 

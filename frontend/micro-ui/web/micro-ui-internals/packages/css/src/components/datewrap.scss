@@ -79,6 +79,10 @@
   color: #333;
 }
 
+.nonWorkingDay {
+  background-color: #ffcccc;
+}
+
 .rdrSelected {
   background: #007e7e !important;
   color: #fff !important;
@@ -94,7 +98,7 @@
   width: 40px;
   height: 40px;
   position: relative;
-  border: 1px solid;
+  border: 1px solid blue;
   border-radius: 50%;
 }
 .rdrDayStartPreview.rdrDayHovered span:after,
@@ -168,8 +172,5 @@
 }
 
 .rdrDayEndPreview {
-  margin: auto;
-  height: 40px;
-  width: 40px;
-  border-radius: 50%;
+  border: none !important;
 }

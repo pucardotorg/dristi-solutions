@@ -32,7 +32,7 @@ public class ApplicationQueryBuilder {
     private  static  final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
 
     private static final String DOCUMENT_SELECT_QUERY_APP = "SELECT doc.id as id, doc.documenttype as documenttype, doc.filestore as filestore," +
-            "doc.documentuid as documentuid, doc.additionaldetails as additionaldetails, doc.application_id as application_id, doc.documentorder as documentorder";
+            "doc.documentuid as documentuid, doc.additionaldetails as additionaldetails, doc.application_id as application_id, doc.documentorder as documentorder, doc.isactive as isactive";
 
     private static final String FROM_DOCUMENTS_TABLE = " FROM dristi_application_document doc";
 
@@ -160,7 +160,7 @@ public class ApplicationQueryBuilder {
             StringBuilder query = new StringBuilder(DOCUMENT_SELECT_QUERY_APP);
             query.append(FROM_DOCUMENTS_TABLE);
             if (!ids.isEmpty()) {
-                query.append(" WHERE doc.application_id IN (")
+                query.append(" WHERE doc.isactive = true AND doc.application_id IN (")
                         .append(ids.stream().map(id -> "?").collect(Collectors.joining(",")))
                         .append(")");
                 preparedStmtList.addAll(ids);

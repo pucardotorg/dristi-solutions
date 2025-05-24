@@ -21,7 +21,7 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 public class HearingQueryBuilder {
     private static final String BASE_ATR_QUERY = " SELECT * FROM dristi_hearing WHERE 1=1 ";
 
-    private static final String DOCUMENT_SELECT_QUERY = "Select doc.id as id, doc.documenttype as documenttype, doc.filestore as filestore, doc.documentuid as documentuid, doc.additionaldetails as additionaldetails, doc.hearingid as hearingid ";
+    private static final String DOCUMENT_SELECT_QUERY = "Select doc.id as id, doc.documenttype as documenttype, doc.filestore as filestore, doc.documentuid as documentuid, doc.additionaldetails as additionaldetails, doc.hearingid as hearingid, doc.isactive as isactive ";
     private static final String FROM_DOCUMENTS_TABLE = " FROM dristi_hearing_document doc";
     private  static  final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY createdtime DESC ";
@@ -99,7 +99,7 @@ public class HearingQueryBuilder {
             StringBuilder query = new StringBuilder(DOCUMENT_SELECT_QUERY);
             query.append(FROM_DOCUMENTS_TABLE);
             if (!ids.isEmpty()) {
-                query.append(" WHERE doc.hearingid IN (")
+                query.append(" WHERE doc.isactive = true AND doc.hearingid IN (")
                         .append(ids.stream().map(id -> "?").collect(Collectors.joining(",")))
                         .append(")");
                 preparedStmtList.addAll(ids);

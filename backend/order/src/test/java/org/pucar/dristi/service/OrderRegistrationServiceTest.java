@@ -128,6 +128,7 @@ import static org.mockito.Mockito.*;
         order.setWorkflow(new WorkflowObject());
         order.setOrderCategory("other");
         order.setOrderType("other");
+        order.setDocuments(List.of(new Document()));
         orderRequest.setOrder(order);
 
         Order existingOrder = new Order();

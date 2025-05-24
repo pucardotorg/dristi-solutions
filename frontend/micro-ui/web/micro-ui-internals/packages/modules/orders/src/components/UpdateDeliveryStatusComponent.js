@@ -35,6 +35,10 @@ const UpdateDeliveryStatusComponent = ({
       key: "NOT_DELIVERED",
       value: "Not Delivered",
     },
+    {
+      key: "OTHER",
+      value: "Other",
+    },
   ];
 
   useEffect(() => {

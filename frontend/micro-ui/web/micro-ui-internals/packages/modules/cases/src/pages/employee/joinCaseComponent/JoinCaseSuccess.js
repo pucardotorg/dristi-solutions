@@ -42,9 +42,7 @@ const JoinCaseSuccess = ({ success, messageHeader, type, caseDetails, closeModal
         },
         {
           key: "CASE_TYPE",
-          value: `${createShorthand(caseDetails?.statutesAndSections?.[0]?.sections?.[0])} S${
-            caseDetails?.statutesAndSections?.[0]?.subsections?.[0]
-          }`,
+          value: `${createShorthand(caseDetails?.statutesAndSection?.section)} S${caseDetails?.statutesAndSection?.subsection}`,
         },
         {
           key: "CS_FILING_DATE",

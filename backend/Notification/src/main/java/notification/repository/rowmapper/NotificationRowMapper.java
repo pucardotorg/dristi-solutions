@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.type.TypeFactory;
 import lombok.extern.slf4j.Slf4j;
 import notification.web.models.Notification;
 import org.egov.common.contract.models.AuditDetails;
-import org.egov.common.contract.models.Document;
+import notification.web.models.Document;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
@@ -77,7 +77,8 @@ public class NotificationRowMapper implements ResultSetExtractor<List<Notificati
                         .additionalDetails(getObjectFromJson(rs.getString("additionaldetails"), new TypeReference<Map<String, Object>>() {}))
                         .documentType(rs.getString("documenttype"))
                         .documentUid(rs.getString("documentuid"))
-                        .fileStore(rs.getString("filestore")).build();
+                        .fileStore(rs.getString("filestore"))
+                        .isActive(rs.getBoolean("isActive")).build();
                 notification.getDocuments().add(document);
             }
         }

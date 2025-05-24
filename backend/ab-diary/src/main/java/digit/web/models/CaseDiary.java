@@ -47,9 +47,9 @@ public class CaseDiary {
     @NotNull(message = "Diary type cannot be null")
     private String diaryType = null;
 
-    @JsonProperty("judgeId")
-    @NotNull(message = "JudgeId cannot be null")
-    private String judgeId = null;
+    @JsonProperty("courtId")
+    @NotNull(message = "courtId cannot be null")
+    private String courtId = null;
 
     @JsonProperty("documents")
     @Valid

@@ -160,6 +160,12 @@
       }
     }
   }
+  .popup-module-main {
+    .card {
+      max-width: none;
+      height: calc(100vh - 154px);;
+    }
+  }
 }
 
 .add-party {

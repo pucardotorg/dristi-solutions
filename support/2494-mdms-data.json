@@ -1,0 +1,135 @@
+[{
+    "tenantId": "kl",
+    "masterName": "ACCESSCONTROL-ACTIONS-TEST",
+    "moduleName": "actions-test",
+    "mdmsPayload": [
+        {
+            "tenantId": "kl",
+            "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+            "uniqueIdentifier": "2739",
+            "data": {
+                "id": 2739,
+                "url": "/case/v2/search/summary",
+                "code": "2739",
+                "name": "Case summary search",
+                "displayName": "Case summary search",
+                "serviceCode": "case"
+            },
+            "isActive": true,
+            "auditDetails": {
+                "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+                "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+                "createdTime": 1746529315636,
+                "lastModifiedTime": 1746529315636
+            }
+        },
+        {
+            "tenantId": "kl",
+            "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+            "uniqueIdentifier": "2738",
+            "data": {
+                "id": 2738,
+                "url": "/case/v2/search/list",
+                "code": "2738",
+                "name": "Case list search",
+                "displayName": "Case list search",
+                "serviceCode": "case"
+            },
+            "isActive": true,
+            "auditDetails": {
+                "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+                "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+                "createdTime": 1746529315636,
+                "lastModifiedTime": 1746529315636
+            }
+        },
+        {
+            "tenantId": "kl",
+            "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+            "uniqueIdentifier": "2737",
+            "data": {
+                "id": 2737,
+                "url": "/case/v2/search/details",
+                "code": "2737",
+                "name": "Case details search",
+                "displayName": "Case details search",
+                "serviceCode": "case"
+            },
+            "isActive": true,
+            "auditDetails": {
+                "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+                "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+                "createdTime": 1746529315636,
+                "lastModifiedTime": 1746529315636
+            }
+        }
+    ]
+}
+,
+    {
+        "tenantId": "kl",
+        "masterName": "ACCESSCONTROL-ROLEACTIONS",
+        "moduleName": "roleactions",
+        "mdmsPayload": [
+            {
+                "tenantId": "kl",
+                "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+                "uniqueIdentifier": "470",
+                "data": {
+                    "id": 470,
+                    "actionid": 2738,
+                    "rolecode": "CASE_VIEWER",
+                    "tenantid": "kl",
+                    "actioncode": "2738"
+                },
+                "isActive": true,
+                "auditDetails": {
+                    "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+                    "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+                    "createdTime": 1721808021980,
+                    "lastModifiedTime": 1723153139765
+                }
+            },
+
+            {
+                "tenantId": "kl",
+                "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+                "uniqueIdentifier": "467",
+                "data": {
+                    "id": 467,
+                    "actionid": 2737,
+                    "rolecode": "CASE_VIEWER",
+                    "tenantid": "kl",
+                    "actioncode": "2737"
+                },
+                "isActive": true,
+                "auditDetails": {
+                    "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+                    "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+                    "createdTime": 1721808021980,
+                    "lastModifiedTime": 1723153139765
+                }
+            },
+            {
+                "tenantId": "kl",
+                "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+                "uniqueIdentifier": "468",
+                "data": {
+                    "id": 468,
+                    "actionid": 2739,
+                    "rolecode": "CASE_VIEWER",
+                    "tenantid": "kl",
+                    "actioncode": "2739"
+                },
+                "isActive": true,
+                "auditDetails": {
+                    "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+                    "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+                    "createdTime": 1721808021980,
+                    "lastModifiedTime": 1723153139765
+                }
+            }
+        ]
+    }
+]
+

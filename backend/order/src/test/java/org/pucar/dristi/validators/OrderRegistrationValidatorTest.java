@@ -1,7 +1,6 @@
 package org.pucar.dristi.validators;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.BeforeEach;

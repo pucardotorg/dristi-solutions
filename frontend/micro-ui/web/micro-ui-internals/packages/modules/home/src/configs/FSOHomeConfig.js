@@ -110,15 +110,13 @@ export const TabFSOSearchConfig = {
       label: "CS_ALL",
       type: "search",
       apiDetails: {
-        serviceName: "/case/v1/_search",
+        serviceName: "/case/v2/search/list",
         requestParam: {},
         requestBody: {
           tenantId: "pg",
-          criteria: [
-            {
-              status: ["UNDER_SCRUTINY"],
-            },
-          ],
+          criteria: {
+            status: ["UNDER_SCRUTINY"],
+          },
         },
         masterName: "commonUiConfig",
         moduleName: "homeFSOUiConfig",
@@ -247,7 +245,7 @@ export const TabFSOSearchConfig = {
             ],
 
             enableColumnSort: true,
-            resultsJsonPath: "criteria[0].responseList",
+            resultsJsonPath: "caseList",
           },
           show: true,
         },
@@ -260,15 +258,13 @@ export const TabFSOSearchConfig = {
       label: "CS_SCRUTINY_DUE",
       type: "search",
       apiDetails: {
-        serviceName: "/case/v1/_search",
+        serviceName: "/case/v2/search/list",
         requestParam: {},
         requestBody: {
           tenantId: "pg",
-          criteria: [
-            {
-              status: ["UNDER_SCRUTINY"],
-            },
-          ],
+          criteria: {
+            status: ["UNDER_SCRUTINY"],
+          },
         },
         masterName: "commonUiConfig",
         moduleName: "homeFSOUiConfig",
@@ -398,7 +394,7 @@ export const TabFSOSearchConfig = {
             ],
 
             enableColumnSort: true,
-            resultsJsonPath: "criteria[0].responseList",
+            resultsJsonPath: "caseList",
           },
           show: true,
         },

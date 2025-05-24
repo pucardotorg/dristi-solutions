@@ -104,7 +104,7 @@ const SubmissionsCreate = ({ path }) => {
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
-
+  const [fileStoreIds, setFileStoreIds] = useState(new Set());
   const setFormErrors = useRef(null);
   const setFormState = useRef(null);
   const resetFormData = useRef(null);
@@ -484,6 +484,14 @@ const SubmissionsCreate = ({ path }) => {
       }
     }
   }, [applicationDetails]);
+
+  useEffect(() => {
+    if (signedDoucumentUploadedID && !fileStoreIds?.has(signedDoucumentUploadedID)) {
+      setFileStoreIds((fileStoreIds) => new Set([...fileStoreIds, signedDoucumentUploadedID]));
+    }
+    if (applicationData && !fileStoreIds?.has(applicationPdfFileStoreId))
+      setFileStoreIds((fileStoreIds) => new Set([...fileStoreIds, applicationPdfFileStoreId]));
+  }, [applicationPdfFileStoreId, signedDoucumentUploadedID]);
 
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
   const onBehalfOfuuid = useMemo(() => Object.keys(allAdvocates)?.find((key) => allAdvocates[key].includes(userInfo?.uuid)), [
@@ -1045,21 +1053,32 @@ const SubmissionsCreate = ({ path }) => {
     try {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const documents = Array.isArray(applicationDetails?.documents) ? applicationDetails.documents : [];
+      const newFileStoreId = localStorageID || signedDoucumentUploadedID;
+      fileStoreIds.delete(newFileStoreId);
+
       const documentsFile =
         signedDoucumentUploadedID !== "" || localStorageID
-          ? {
-              documentType: "SIGNED",
-              fileStore: signedDoucumentUploadedID || localStorageID,
-              documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
-              additionalDetails: { name: `Application: ${t(applicationType)}.pdf` },
-            }
+          ? [
+              {
+                documentType: "SIGNED",
+                fileStore: signedDoucumentUploadedID || localStorageID,
+                documentOrder: documents?.length > 0 ? documents.length + 1 : 1,
+                additionalDetails: { name: `Application: ${t(applicationType)}.pdf` },
+              },
+              ...Array.from(fileStoreIds).map((fileStoreId, index) => ({
+                fileStore: fileStoreId,
+                isActive: false,
+                documentOrder: documents?.length > 0 ? documents.length + index + 1 : 2,
+                additionalDetails: { name: `Application : ${t(applicationType)}.pdf` },
+              })),
+            ]
           : null;
 
       sessionStorage.removeItem("fileStoreId");
       const reqBody = {
         application: {
           ...applicationDetails,
-          documents: documentsFile ? [...documents, documentsFile] : documents,
+          documents: documentsFile ? [...documents, ...documentsFile] : documents,
           workflow: { ...applicationDetails?.workflow, documents: [{}], action },
           tenantId,
         },

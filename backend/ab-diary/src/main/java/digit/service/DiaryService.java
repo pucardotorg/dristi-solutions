@@ -84,6 +84,10 @@ public class DiaryService {
         try {
             validator.validateUpdateDiary(caseDiaryRequest);
 
+            List<String> inactiveFileStore = caseDiaryRequest.getDiary().getDocuments().stream()
+                    .filter(caseDiaryDocument -> !caseDiaryDocument.isActive())
+                    .map(CaseDiaryDocument::getFileStoreId)
+                    .toList();
             enrichment.enrichUpdateCaseDiary(caseDiaryRequest);
 
             Workflow workflowWithSignAction = Workflow.builder().action(SIGN_ACTION).build();
@@ -91,6 +95,10 @@ public class DiaryService {
 
             workflowService.updateWorkflowStatus(caseDiaryRequest);
 
+            if(!inactiveFileStore.isEmpty()) {
+                fileStoreUtil.deleteFilesByFileStore(inactiveFileStore, caseDiaryRequest.getDiary().getTenantId());
+                log.info("Deleted files from file store with ids: {}", inactiveFileStore);
+            }
             producer.push(configuration.getDiaryUpdateTopic(), caseDiaryRequest);
 
         } catch (CustomException e) {
@@ -185,7 +193,7 @@ public class DiaryService {
                         .tenantId(generateRequest.getDiary().getTenantId())
                         .diaryType(generateRequest.getDiary().getDiaryType())
                         .date(generateRequest.getDiary().getDiaryDate())
-                        .judgeId(generateRequest.getDiary().getJudgeId())
+                        .courtId(generateRequest.getDiary().getCourtId())
                         .build())
                 .build();
     }
@@ -230,7 +238,7 @@ public class DiaryService {
         return byteArrayResource;
     }
 
-    public CaseDiary searchCaseDiaryForJudge(String tenantId,String judgeId,String diaryType,Long date,UUID caseId) {
+    public CaseDiary searchCaseDiaryForJudge(String tenantId,String courtId,String diaryType,Long date,UUID caseId) {
 
         try {
 
@@ -244,7 +252,7 @@ public class DiaryService {
                             .date(date)
                             .caseId(caseId != null ? caseId.toString() : null)
                             .diaryType(diaryType)
-                            .judgeId(judgeId)
+                            .courtId(courtId)
                             .build())
                     .build();
 

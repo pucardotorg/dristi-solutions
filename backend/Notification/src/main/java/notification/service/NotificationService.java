@@ -5,11 +5,13 @@ import notification.config.Configuration;
 import notification.enrichment.NotificationEnrichment;
 import notification.kafka.Producer;
 import notification.repository.NotificationRepository;
+import notification.util.FileStoreUtil;
 import notification.validator.NotificationValidator;
 import notification.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -22,15 +24,17 @@ public class NotificationService {
     private final WorkflowService workflowService;
     private final Producer producer;
     private final Configuration config;
+    private final FileStoreUtil fileStoreUtil;
 
     @Autowired
-    public NotificationService(NotificationRepository notificationRepository, NotificationValidator validator, NotificationEnrichment enrichment, WorkflowService workflowService, Producer producer, Configuration config) {
+    public NotificationService(NotificationRepository notificationRepository, NotificationValidator validator, NotificationEnrichment enrichment, WorkflowService workflowService, Producer producer, Configuration config, FileStoreUtil fileStoreUtil) {
         this.notificationRepository = notificationRepository;
         this.validator = validator;
         this.enrichment = enrichment;
         this.workflowService = workflowService;
         this.producer = producer;
         this.config = config;
+        this.fileStoreUtil = fileStoreUtil;
     }
 
 
@@ -72,6 +76,18 @@ public class NotificationService {
         enrichment.enrichUpdateNotificationRequest(request, dbNotification);
         // workflow update
         workflowService.updateWorkflowStatus(request);
+
+        //delete inactive documents
+        List<String> fileStoreIds = new ArrayList<>();
+        for(Document document : request.getNotification().getDocuments()) {
+            if(!document.getIsActive()) {
+                fileStoreIds.add(document.getFileStore());
+            }
+        }
+        if(!fileStoreIds.isEmpty()) {
+            fileStoreUtil.deleteFilesByFileStore(fileStoreIds, request.getNotification().getTenantId());
+            log.info("Deleted files with file store ids: {}", fileStoreIds);
+        }
         // push into producer, this topic will consume in persister service
         producer.push(config.getUpdateNotificationTopic(), request);
 

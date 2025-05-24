@@ -60,7 +60,7 @@ class ADiaryValidatorTest {
         validDiary = CaseDiary.builder()
                 .tenantId("default")
                 .diaryDate(1L)
-                .judgeId("JUDGE123")
+                .courtId("JUDGE123")
                 .build();
 
         validDiaryRequest = CaseDiaryRequest.builder()

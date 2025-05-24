@@ -60,7 +60,10 @@ public class ADiaryEnrichment {
     public void enrichDiaryDocument(CaseDiaryRequest caseDiaryRequest) {
 
 
-        CaseDiaryDocument caseDiaryDocument = caseDiaryRequest.getDiary().getDocuments().get(0);
+        CaseDiaryDocument caseDiaryDocument = caseDiaryRequest.getDiary().getDocuments().stream()
+                .filter(CaseDiaryDocument::isActive)
+                .findFirst()
+                .orElse(null);
 
         RequestInfo requestInfo = caseDiaryRequest.getRequestInfo();
         User user = requestInfo.getUserInfo();
@@ -92,7 +95,7 @@ public class ADiaryEnrichment {
             // TODO works for A-diary need to enrich for B-diary
             CaseDiarySearchRequest caseDiaryRequest = CaseDiarySearchRequest.builder()
                     .criteria(CaseDiarySearchCriteria.builder()
-                            .judgeId(caseDiary.getJudgeId())
+                            .courtId(caseDiary.getCourtId())
                             .date(caseDiary.getDiaryDate())
                             .diaryType(caseDiary.getDiaryType())
                             .tenantId(caseDiary.getTenantId())

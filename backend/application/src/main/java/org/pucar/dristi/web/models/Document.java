@@ -25,4 +25,7 @@ public class Document {
     private Long documentOrder = null;
     @JsonProperty("additionalDetails")
     private Object additionalDetails = null;
+
+    @JsonProperty("isActive")
+    private Boolean isActive = true;
 }

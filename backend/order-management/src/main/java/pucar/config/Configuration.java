@@ -33,6 +33,9 @@ public class Configuration {
     @Value("${dristi.order.host}")
     private String orderHost;
 
+    @Value("${court.id}")
+    private String courtId;
+
 
     @Value("${dristi.order.add.item.endpoint}")
     private String addOrderItemEndPoint;

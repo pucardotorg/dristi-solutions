@@ -19,18 +19,6 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
   // const configKey = config.key;
   const [coordinateData, setCoordinateData] = useState({ callbackFunc: () => {} });
 
-  const { isLoading: isTypeOfAddressData, data: typeOfAddressData } = Digit.Hooks.useCustomMDMS(
-    Digit.ULBService.getStateId(),
-    "case",
-    [{ name: "TypeOfAddress" }],
-    {
-      cacheTime: 0,
-      select: (data) => {
-        return data?.case?.TypeOfAddress || [];
-      },
-    }
-  );
-
   const { inputs, uuid } = useMemo(() => {
     const defaultInputs = [
       {
@@ -40,16 +28,25 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
       },
     ];
     const finalInputs = config?.populators?.inputs ? [...config.populators.inputs] : defaultInputs;
-    const typeOfAddressField = finalInputs.find((input) => input.name === "typeOfAddress");
-    if (typeOfAddressField) {
-      typeOfAddressField.options = typeOfAddressData;
+
+    if (config?.key === "currentAddressDetails") {
+      const isAddressSame = formData?.["currentAddressDetails"]?.isCurrAddrSame?.code;
+      if (isAddressSame === "YES") {
+        finalInputs.forEach((input) => {
+          if (input.name !== "isCurrAddrSame") input.isDisabled = true;
+        });
+      } else {
+        finalInputs.forEach((input) => {
+          if (input.name !== "isCurrAddrSame") input.isDisabled = false;
+        });
+      }
     }
 
     return {
       inputs: finalInputs,
       uuid: generateUUID(),
     };
-  }, [config?.populators?.inputs, typeOfAddressData]);
+  }, [config?.key, config.populators.inputs, formData]);
 
   const getLatLngByPincode = async (pincode) => {
     const key = window?.globalConfigs?.getConfig("GMAPS_API_KEY");
@@ -143,6 +140,51 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
       onSelect(`${configKey}.${"pincode"}`, value);
       return;
     }
+
+    if (input === "isCurrAddrSame") {
+      if (value.code === "NO") {
+        const defaultEmptyAddress = {
+          pincode: "",
+          state: "",
+          district: "",
+          city: "",
+          locality: "",
+          coordinates: { longitude: "", latitude: "" },
+        };
+
+        onSelect(`${configKey}`, { ...defaultEmptyAddress, [input]: value }, { shouldValidate: true });
+        onSelect(config.key, { ...defaultEmptyAddress, [input]: value }, { shouldValidate: true });
+
+        onSelect("complainantVerification", {
+          ...formData?.["complainantVerification"],
+          individualDetails: {
+            ...formData?.["complainantVerification"]?.individualDetails,
+            "currentAddressDetails-select": { ...defaultEmptyAddress, [input]: value },
+            currentAddressDetails: {
+              ...defaultEmptyAddress,
+              [input]: value,
+            },
+          },
+        });
+      } else {
+        onSelect(`${configKey}`, { ...formData?.["addressDetails-select"], [input]: value }, { shouldValidate: true });
+        onSelect(config.key, { ...formData?.["addressDetails"], [input]: value }, { shouldValidate: true });
+
+        onSelect("complainantVerification", {
+          ...formData?.["complainantVerification"],
+          individualDetails: {
+            ...formData?.["complainantVerification"]?.individualDetails,
+            "currentAddressDetails-select": { ...formData?.["addressDetails-select"], [input]: value },
+            currentAddressDetails: {
+              ...formData?.["addressDetails"],
+              [input]: value,
+            },
+          },
+        });
+      }
+      return;
+    }
+
     if (Array.isArray(input)) {
       if (!config?.isUserVerified) {
         onSelect(
@@ -186,7 +228,11 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
             },
           },
         });
-      } else {
+      } else if (config?.key === "addressDetails") {
+        onSelect("currentAddressDetails", {
+          ...formData?.["currentAddressDetails"],
+          isCurrAddrSame: { "code": "NO", "name": "NO" }
+        });
         onSelect("complainantVerification", {
           ...formData?.["complainantVerification"],
           individualDetails: {
@@ -196,6 +242,20 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
               ...formData?.["addressDetails"],
               [input]: value,
               coordinates: formData?.["addressDetails"]?.coordinates ? formData["addressDetails"].coordinates : { longitude: "", latitude: "" },
+            },
+            "currentAddressDetails": {...formData?.["currentAddressDetails"], isCurrAddrSame: { "code": "NO", "name": "NO" } },
+          },
+        });
+      } else if (config?.key === "currentAddressDetails") {
+        onSelect("complainantVerification", {
+          ...formData?.["complainantVerification"],
+          individualDetails: {
+            ...formData?.["complainantVerification"]?.individualDetails,
+            "currentAddressDetails-select": { ...formData?.["currentAddressDetails-select"], [input]: value },
+            currentAddressDetails: {
+              ...formData?.["currentAddressDetails"],
+              [input]: value,
+              coordinates: formData?.["currentAddressDetails"]?.coordinates ? formData["currentAddressDetails"].coordinates : { longitude: "", latitude: "" },
             },
           },
         });
@@ -209,7 +269,9 @@ const SelectComponents = ({ t, config, onSelect, formData = {}, errors, formStat
   };
   return (
     <div>
+      {config?.withoutLabel && <CardLabel className="card-label-smaller" style={{paddingBottom: "10px"}}>{t(config?.label)}</CardLabel>}
       {config?.notes && <SelectCustomNote t={t} config={config?.notes} onClick={() => {}} />}
+        
       {inputs?.map((input, index) => {
         let currentValue = (formData && formData[configKey] && formData[configKey][input.name]) || "";
         let isFirstRender = true;
