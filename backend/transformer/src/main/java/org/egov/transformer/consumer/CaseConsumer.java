@@ -142,6 +142,7 @@ public class CaseConsumer {
             })).getCaseOverallStatus();
             logger.info("Received Object: {} ", objectMapper.writeValueAsString(caseOverallStatus));
 //            CourtCase courtCase = caseService.fetchCase(caseOverallStatus.getFilingNumber());
+            //TODO : need to get from indexer once indexer is fixed
             CourtCase courtCase = caseService.getCases(createCaseSearchRequest(caseOverallStatus.getFilingNumber(), caseOverallStatus.getTenantId(), createInternalRequestInfo()));
             courtCase.setDates();
             courtCase.setStage(caseOverallStatus.getStage());
@@ -161,6 +162,7 @@ public class CaseConsumer {
             CaseRequest caseRequest = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseRequest>() {}));
             logger.info("Received Object: {} ", objectMapper.writeValueAsString(caseRequest.getCases()));
 //            CourtCase courtCaseElasticSearch = caseService.fetchCase(caseRequest.getCases().getFilingNumber());
+            //TODO : need to get from indexer once indexer is fixed
             CourtCase courtCaseElasticSearch = caseService.getCase(caseRequest.getCases().getFilingNumber(), caseRequest.getCases().getTenantId(), caseRequest.getRequestInfo());
             courtCaseElasticSearch.setAdditionalDetails(caseRequest.getCases().getAdditionalDetails());
             courtCaseElasticSearch.setCaseTitle(caseRequest.getCases().getCaseTitle());
@@ -186,6 +188,7 @@ public class CaseConsumer {
             })).getOutcome();
             logger.info("Received Object: {} ", objectMapper.writeValueAsString(outcome));
 //            CourtCase courtCase = caseService.fetchCase(outcome.getFilingNumber());
+            //TODO : need to get from indexer once indexer is fixed
             CourtCase courtCase = caseService.getCases(createCaseSearchRequest(outcome.getFilingNumber(), outcome.getTenantId(), createInternalRequestInfo()));
             courtCase.setDates();
             courtCase.setOutcome(outcome.getOutcome());
