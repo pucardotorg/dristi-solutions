@@ -3614,7 +3614,7 @@ const GenerateOrders = () => {
   };
 
   if (!filingNumber) {
-    history.push("/employee/home/home-pending-task");
+    history.push("/employee/home/home-screen");
   }
 
   const handleAddForm = () => {

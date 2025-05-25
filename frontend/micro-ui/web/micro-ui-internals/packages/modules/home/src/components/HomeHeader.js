@@ -30,15 +30,15 @@ const HomeHeader = ({ t }) => {
         {t("CS_HOME_HELLO")}, <span style={{ color: "#77787B" }}>{name}</span>
         {isJudge && (
           <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start", padding: "32px 0px 0px" }}>
-            <Link to={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle}>
+            <a href={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle} target="_blank" rel="noopener noreferrer">
               {t("OPEN_DASHBOARD")}
-            </Link>
-            <Link to={`/${window.contextPath}/employee/home/dashboard?select=2`} style={linkStyle}>
+            </a>
+            <a href={`/${window.contextPath}/employee/home/dashboard?select=2`} style={linkStyle} target="_blank" rel="noopener noreferrer">
               {t("OPEN_REGISTERS")}
-            </Link>
-            <Link to={`/${window.contextPath}/employee/home/dashboard/adiary`} style={linkStyle}>
+            </a>
+            <a href={`/${window.contextPath}/employee/home/home-pending-task`} style={linkStyle} target="_blank" rel="noopener noreferrer">
               {t("OPEN_ALL_CASES")}
-            </Link>
+            </a>
           </div>
         )}
       </div>

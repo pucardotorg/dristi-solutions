@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState } from "react";
 import HomeAccordian from "./HomeAccordian";
 import SideBarTitle from "./SideBarTitle";
 import SidebarItem from "./SideBarItem";
+import BulkReschedule from "../../../hearings/src/pages/employee/BulkReschedule";
 
 const HomeSidebar = ({ t, onTabChange, activeTab }) => {
   const { data: options, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(
@@ -14,6 +15,8 @@ const HomeSidebar = ({ t, onTabChange, activeTab }) => {
       },
     }
   );
+
+  const [stepper, setStepper] = useState(0);
 
   return (
     <div style={{ width: 280, background: "#fafbfc", borderRight: "1px solid #eee", minHeight: "100vh" }}>
@@ -40,12 +43,14 @@ const HomeSidebar = ({ t, onTabChange, activeTab }) => {
       </HomeAccordian>
 
       <HomeAccordian title={t("CS_HOME_SIGN")}>
-        <SidebarItem t={t} label="CS_HOME_ORDERS" />
-        <SidebarItem t={t} label="CS_HOME_PROCESS" />
-        <SidebarItem t={t} label="CS_HOME_A_DAIRY" />
+        <SidebarItem t={t} label="CS_HOME_ORDERS" onClick={() => window.open(`/${window.contextPath}/employee/home/bulk-esign-order`, "_blank")} />
+        <SidebarItem t={t} label="CS_HOME_PROCESS" onClick={() => window.open(`/${window.contextPath}/employee/orders/Summons&Notice`, "_blank")} />
+        <SidebarItem t={t} label="CS_HOME_A_DAIRY" onClick={() => window.open(`/${window.contextPath}/employee/home/dashboard/adiary`, "_blank")} />
       </HomeAccordian>
 
-      <SideBarTitle t={t} title="CS_HOME_BULK_RESCHEDULE" onClick={() => onTabChange("BULK_RESCHEDULE")} />
+      <SideBarTitle t={t} title="CS_HOME_BULK_RESCHEDULE" onClick={() => setStepper((prev) => prev + 1)} />
+
+      <BulkReschedule stepper={stepper} setStepper={setStepper} selectedSlot={[]} />
     </div>
   );
 };
