@@ -22,8 +22,10 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
+import static org.egov.transformer.config.ServiceConstants.FLOW_JAC;
 import static org.egov.transformer.config.ServiceConstants.msgId;
 
 @Component
@@ -140,7 +142,7 @@ public class CaseConsumer {
             })).getCaseOverallStatus();
             logger.info("Received Object: {} ", objectMapper.writeValueAsString(caseOverallStatus));
 //            CourtCase courtCase = caseService.fetchCase(caseOverallStatus.getFilingNumber());
-            CourtCase courtCase = caseService.getCase(caseOverallStatus.getFilingNumber(), caseOverallStatus.getTenantId(), createInternalRequestInfo());
+            CourtCase courtCase = caseService.getCases(createCaseSearchRequest(caseOverallStatus.getFilingNumber(), caseOverallStatus.getTenantId(), createInternalRequestInfo()));
             courtCase.setDates();
             courtCase.setStage(caseOverallStatus.getStage());
             courtCase.setSubstage(caseOverallStatus.getSubstage());
@@ -184,7 +186,7 @@ public class CaseConsumer {
             })).getOutcome();
             logger.info("Received Object: {} ", objectMapper.writeValueAsString(outcome));
 //            CourtCase courtCase = caseService.fetchCase(outcome.getFilingNumber());
-            CourtCase courtCase = caseService.getCase(outcome.getFilingNumber(), outcome.getTenantId(), createInternalRequestInfo());
+            CourtCase courtCase = caseService.getCases(createCaseSearchRequest(outcome.getFilingNumber(), outcome.getTenantId(), createInternalRequestInfo()));
             courtCase.setDates();
             courtCase.setOutcome(outcome.getOutcome());
             CaseRequest caseRequest = new CaseRequest();
@@ -216,5 +218,15 @@ public class CaseConsumer {
         userInfo.setRoles(userService.internalMicroserviceRoles);
         userInfo.setTenantId(transformerProperties.getEgovStateTenantId());
         return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
+    }
+
+    private CaseSearchRequest createCaseSearchRequest(String filingNumber, String tenantId, RequestInfo requestInfo) {
+        CaseCriteria criteria = CaseCriteria.builder().filingNumber(filingNumber).build();
+        return  CaseSearchRequest.builder()
+                .requestInfo(requestInfo)
+                .tenantId(tenantId)
+                .criteria(Collections.singletonList(criteria))
+                .flow(FLOW_JAC)
+                .build();
     }
 }
