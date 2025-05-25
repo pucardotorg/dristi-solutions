@@ -183,7 +183,10 @@ export const showToastForComplainant = ({ formData, setValue, selected, setSucce
       setValue("addressDetails-select", addressDetSelect);
     }
     if (!!currAddressDet && !!currAddressDetSelect) {
-      setValue("currentAddressDetails", { ...currAddressDet, isCurrAddrSame: formDataCopy?.complainantVerification?.individualDetails?.currentAddressDetails?.isCurrAddrSame });
+      setValue("currentAddressDetails", {
+        ...currAddressDet,
+        isCurrAddrSame: formDataCopy?.complainantVerification?.individualDetails?.currentAddressDetails?.isCurrAddrSame,
+      });
       setValue("currentAddressDetails-select", currAddressDetSelect);
     }
     if (!!poaAddressDet && !!poaAddressDetSelect) {
@@ -1616,6 +1619,8 @@ export const updateCaseDetails = async ({
     let poaHolders = [];
     const complainantVerification = {};
     const poaVerification = {};
+    const litigantFilestoreIds = {};
+    const poaFilestoreIds = {};
     // check -in new flow, mltiple complainant forms are possible, so iscompleted logic has to be updated
     // and logic to update litigants also has to be changed.
     if (isCompleted === true) {
@@ -1700,6 +1705,7 @@ export const updateCaseDetails = async ({
                     data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
                     tenantId
                   );
+                  litigantFilestoreIds[index] = documentData;
                   !!setFormDataValue &&
                     setFormDataValue("complainantVerification", {
                       individualDetails: {
@@ -1773,13 +1779,16 @@ export const updateCaseDetails = async ({
                           latitude: currentAddress?.latitude || "",
                         },
                         locality: address1,
-                        isCurrAddrSame: addressArray?.length > 1 ? {
-                          code: "NO",
-                          name: "NO",
-                        } : {
-                          code: "YES",
-                          name: "YES",
-                        },
+                        isCurrAddrSame:
+                          addressArray?.length > 1
+                            ? {
+                                code: "NO",
+                                name: "NO",
+                              }
+                            : {
+                                code: "YES",
+                                name: "YES",
+                              },
                       },
                       addressDetails: {
                         pincode: permanentAddress?.pincode || "",
@@ -1802,13 +1811,16 @@ export const updateCaseDetails = async ({
                           latitude: currentAddress?.latitude || "",
                         },
                         locality: address1,
-                        isCurrAddrSame: addressArray?.length > 1 ? {
-                          code: "NO",
-                          name: "NO",
-                        } : {
-                          code: "YES",
-                          name: "YES",
-                        },
+                        isCurrAddrSame:
+                          addressArray?.length > 1
+                            ? {
+                                code: "NO",
+                                name: "NO",
+                              }
+                            : {
+                                code: "YES",
+                                name: "YES",
+                              },
                       },
                     },
                     userDetails: null,
@@ -1878,13 +1890,16 @@ export const updateCaseDetails = async ({
                           latitude: currentAddress?.latitude || "",
                         },
                         locality: address1,
-                        isCurrAddrSame: addressArray?.length > 1 ? {
-                          code: "NO",
-                          name: "NO",
-                        } : {
-                          code: "YES",
-                          name: "YES",
-                        },
+                        isCurrAddrSame:
+                          addressArray?.length > 1
+                            ? {
+                                code: "NO",
+                                name: "NO",
+                              }
+                            : {
+                                code: "YES",
+                                name: "YES",
+                              },
                       },
                       addressDetails: {
                         pincode: permanentAddress?.pincode || "",
@@ -1907,13 +1922,16 @@ export const updateCaseDetails = async ({
                           latitude: currentAddress?.latitude || "",
                         },
                         locality: address1,
-                        isCurrAddrSame: addressArray?.length > 1 ? {
-                          code: "NO",
-                          name: "NO",
-                        } : {
-                          code: "YES",
-                          name: "YES",
-                        },
+                        isCurrAddrSame:
+                          addressArray?.length > 1
+                            ? {
+                                code: "NO",
+                                name: "NO",
+                              }
+                            : {
+                                code: "YES",
+                                name: "YES",
+                              },
                       },
                     },
                     userDetails: null,
@@ -2023,6 +2041,7 @@ export const updateCaseDetails = async ({
                     data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[0],
                     tenantId
                   );
+                  poaFilestoreIds[index] = documentData;
                   !!setFormDataValue &&
                     setFormDataValue("poaVerification", {
                       individualDetails: {
@@ -2131,12 +2150,17 @@ export const updateCaseDetails = async ({
           const poaIndividualDetails = {};
           if (data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file) {
             const documentType = documentsTypeMapping["complainantId"];
-            const uploadedData = await onDocumentUpload(
-              documentType,
-              data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
-              data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
-              tenantId
-            );
+            let uploadedData = null;
+            if (litigantFilestoreIds?.[index]) {
+              uploadedData = litigantFilestoreIds?.[index];
+            } else {
+              uploadedData = await onDocumentUpload(
+                documentType,
+                data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
+                data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
+                tenantId
+              );
+            }
             const doc = {
               documentType,
               fileStore: uploadedData.file?.files?.[0]?.fileStoreId || uploadedData?.fileStore,
@@ -2213,18 +2237,27 @@ export const updateCaseDetails = async ({
             );
             setFormDataValue("poaAuthorizationDocument", documentData?.poaAuthorizationDocument);
           }
-          const complainantDocTypes = [documentsTypeMapping["complainantId"], documentsTypeMapping["complainantCompanyDetailsUpload"]];
+          const complainantDocTypes = [
+            documentsTypeMapping["complainantId"],
+            documentsTypeMapping["complainantCompanyDetailsUpload"],
+            documentsTypeMapping["poaAuthorizationDocument"],
+          ];
           updateTempDocListMultiForm(docList, complainantDocTypes);
 
           //// updating information for POA
           if (data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file) {
             const documentType = documentsTypeMapping["poaComplainantId"];
-            const uploadedData = await onDocumentUpload(
-              documentType,
-              data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file,
-              data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[0],
-              tenantId
-            );
+            let uploadedData = null;
+            if (poaFilestoreIds?.[index]) {
+              uploadedData = poaFilestoreIds?.[index];
+            } else {
+              uploadedData = await onDocumentUpload(
+                documentType,
+                data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[1]?.file,
+                data?.data?.poaComplainantId?.poaComplainantId?.ID_Proof?.[0]?.[0],
+                tenantId
+              );
+            }
             const doc = {
               documentType,
               fileStore: uploadedData.file?.files?.[0]?.fileStoreId || uploadedData?.fileStore,
@@ -3223,6 +3256,16 @@ export const updateCaseDetails = async ({
     return null;
   }
 
+  const isSignedDocumentsPresent = tempDocList?.some((doc) => doc?.documentType === "case.complaint.signed");
+  if (isSignedDocumentsPresent) tempDocList = tempDocList?.filter((doc) => doc?.documentType !== "case.complaint.unsigned");
+  const updatedTempDocList = tempDocList?.map((doc) => {
+    const existingDoc = caseDetails?.documents?.find((existingDoc) => existingDoc?.fileStore === doc?.fileStore);
+    if (existingDoc) {
+      return { ...doc, id: existingDoc?.id };
+    }
+    return doc;
+  });
+
   return await DRISTIService.caseUpdateService(
     {
       cases: {
@@ -3230,7 +3273,7 @@ export const updateCaseDetails = async ({
         caseTitle,
         litigants: !caseDetails?.litigants ? [] : caseDetails?.litigants,
         ...data,
-        documents: tempDocList,
+        documents: updatedTempDocList,
         advocateCount:
           formdata?.[0]?.data?.numberOfAdvocate || caseDetails?.additionalDetails?.advocateDetails?.formdata[0]?.data?.numberOfAdvocate || 0,
         linkedCases: caseDetails?.linkedCases ? caseDetails?.linkedCases : [],

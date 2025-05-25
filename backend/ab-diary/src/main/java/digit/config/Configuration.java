@@ -110,6 +110,9 @@ public class Configuration {
     @Value("${caseDiary.create.topic}")
     private String caseDiaryTopic;
 
+    @Value("${egov.file.store.delete.endpoint}")
+    private String fileStoreDeleteEndPoint;
+
     //court details
     @Value("${court.id}")
     private String courtId;
@@ -125,9 +128,6 @@ public class Configuration {
 
     @Value("${judge.designation}")
     private String judgeDesignation;
-
-    @Value("${judge.id}")
-    private String judgeId;
 
     //Pdf Services
     @Value("${egov.pdf.service.host}")

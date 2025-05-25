@@ -1,5 +1,6 @@
 package org.egov.infra.indexer.consumer;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.egov.infra.indexer.custom.application.ApplicationCustomDecorator;
 import org.egov.infra.indexer.custom.application.ApplicationResponse;
@@ -94,6 +95,7 @@ public class LegacyIndexMessageListener implements MessageListener<String, Strin
 	private ConsumerRecord<String, String> transformData(ConsumerRecord<String, String> data) {
 		try {
 			ObjectMapper mapper = indexerUtils.getObjectMapper();
+			mapper.setSerializationInclusion(JsonInclude.Include.ALWAYS);
 			String topic = data.topic();
 			String value = data.value();
 			String newValue = value;

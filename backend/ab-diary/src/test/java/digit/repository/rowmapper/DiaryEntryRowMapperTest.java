@@ -65,7 +65,7 @@ class DiaryEntryRowMapperTest {
         assertEquals(TENANT_ID, entry.getTenantId());
         assertEquals(ENTRY_DATE, entry.getEntryDate());
         assertEquals(CASE_NUMBER, entry.getCaseNumber());
-        assertEquals(JUDGE_ID, entry.getJudgeId());
+        assertEquals(JUDGE_ID, entry.getCourtId());
         assertEquals(BUSINESS_OF_DAY, entry.getBusinessOfDay());
         assertEquals(REFERENCE_ID, entry.getReferenceId());
         assertEquals(REFERENCE_TYPE, entry.getReferenceType());
@@ -100,7 +100,7 @@ class DiaryEntryRowMapperTest {
         assertEquals(TENANT_ID, entry.getTenantId());
         assertEquals(ENTRY_DATE, entry.getEntryDate());
         assertEquals(CASE_NUMBER, entry.getCaseNumber());
-        assertEquals(JUDGE_ID, entry.getJudgeId());
+        assertEquals(JUDGE_ID, entry.getCourtId());
         assertEquals(BUSINESS_OF_DAY, entry.getBusinessOfDay());
         assertEquals(REFERENCE_ID, entry.getReferenceId());
         assertEquals(REFERENCE_TYPE, entry.getReferenceType());
@@ -170,7 +170,7 @@ class DiaryEntryRowMapperTest {
         when(resultSet.getString("tenantId")).thenReturn(TENANT_ID);
         when(resultSet.getLong("entryDate")).thenReturn(ENTRY_DATE);
         when(resultSet.getString("caseNumber")).thenReturn(CASE_NUMBER);
-        when(resultSet.getString("judgeId")).thenReturn(JUDGE_ID);
+        when(resultSet.getString("courtId")).thenReturn(JUDGE_ID);
         when(resultSet.getString("businessOfDay")).thenReturn(BUSINESS_OF_DAY);
         when(resultSet.getString("referenceId")).thenReturn(REFERENCE_ID);
         when(resultSet.getString("referenceType")).thenReturn(REFERENCE_TYPE);
@@ -187,7 +187,7 @@ class DiaryEntryRowMapperTest {
         verify(resultSet).getString("tenantId");
         verify(resultSet).getLong("entryDate");
         verify(resultSet).getString("caseNumber");
-        verify(resultSet).getString("judgeId");
+        verify(resultSet).getString("courtId");
         verify(resultSet).getString("businessOfDay");
         verify(resultSet).getString("referenceId");
         verify(resultSet).getString("referenceType");
