@@ -221,7 +221,7 @@ public class CaseConsumer {
     }
 
     private CaseSearchRequest createCaseSearchRequest(String filingNumber, String tenantId, RequestInfo requestInfo) {
-        CaseCriteria criteria = CaseCriteria.builder().filingNumber(filingNumber).build();
+        CaseCriteria criteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build();
         return  CaseSearchRequest.builder()
                 .requestInfo(requestInfo)
                 .tenantId(tenantId)
