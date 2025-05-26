@@ -117,6 +117,9 @@ public class Task {
     @JsonProperty("duedate")
     private Long duedate;
 
+    @JsonProperty("assignedRole")
+    private List<String> assignedRole = null;
+
 
     public Task addDocumentsItem(Document documentsItem) {
         this.documents.add(documentsItem);

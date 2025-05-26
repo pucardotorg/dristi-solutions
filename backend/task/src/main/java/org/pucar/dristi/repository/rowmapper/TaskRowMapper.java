@@ -71,6 +71,7 @@ public class TaskRowMapper implements ResultSetExtractor<List<Task>> {
                             .state(rs.getString("state"))
                             .duedate(parseDateToLong(rs.getString("duedate")))
                             .assignedTo(getListFromJson(rs.getString("assignedto"), new TypeReference<List<AssignedTo>>(){}))
+                            .assignedRole(getListFromJson(rs.getString("assignedrole"), new TypeReference<List<String>>(){}))
                             .isActive(Boolean.valueOf(rs.getString("isactive")))
                             .auditDetails(auditdetails)
                             .build();

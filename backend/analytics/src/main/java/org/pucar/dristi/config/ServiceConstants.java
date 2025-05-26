@@ -205,6 +205,8 @@ public class ServiceConstants {
 
     public static final String ASSIGN_TO_PATH="$.assignedTo";
 
+    public static final String ASSIGN_ROLE_PATH="$.assignedRole";
+
 
     public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
 

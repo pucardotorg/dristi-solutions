@@ -74,6 +74,7 @@ public class TaskCaseRowMapper implements ResultSetExtractor<List<TaskCase>> {
                             .documentStatus(rs.getString("documentStatus"))
                             .assignedTo(getObjectFromJson(rs.getString("assignedto"), new TypeReference<AssignedTo>() {
                             }))
+                            .assignedRole(getListFromJson(rs.getString("assignedrole"), new TypeReference<List<String>>(){}))
                             .isActive(Boolean.valueOf(rs.getString("isactive")))
                             .auditDetails(auditdetails)
                             .caseName(rs.getString("casename"))
@@ -122,6 +123,18 @@ public class TaskCaseRowMapper implements ResultSetExtractor<List<TaskCase>> {
             return objectMapper.readValue(json, typeRef);
         } catch (Exception e) {
             throw new CustomException("Failed to convert JSON to " + typeRef.getType(), e.getMessage());
+        }
+    }
+
+    public <T> List<T> getListFromJson(String jsonString, TypeReference<List<T>> typeReference) {
+
+        if (jsonString == null || jsonString.trim().isEmpty()) {
+            return Collections.emptyList(); // Return an empty list if the input is null or empty
+        }
+        try {
+            return objectMapper.readValue(jsonString, typeReference);
+        } catch (Exception e) {
+            throw new CustomException("Failed to convert JSON to " + typeReference.getType(), e.getMessage());
         }
     }
 

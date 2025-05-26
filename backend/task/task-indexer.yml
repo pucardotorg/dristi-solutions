@@ -54,6 +54,8 @@ ServiceMaps:
                 outJsonPath: $.Data.taskDetails.lastModifiedTime
               - inJsonPath: $.additionalDetails
                 outJsonPath: $.Data.taskDetails.additionalDetails
+              - inJsonPath: $.assignedRole
+                outJsonPath: $.Data.taskDetails.assignedRole
             externalUriMapping:
               - path: http://egov-workflow-v2.egov:8080/egov-workflow-v2/egov-wf/process/_search
                 queryParam: businessIds=$.taskNumber,tenantId=$.tenantId,history=true

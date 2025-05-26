@@ -123,6 +123,9 @@ public class TaskCase {
     @Valid
     private Workflow workflow = null;
 
+    @JsonProperty("assignedRole")
+    private List<String> assignedRole = null;
+
 
     public org.pucar.dristi.web.models.TaskCase addDocumentsItem(Document documentsItem) {
         this.documents.add(documentsItem);

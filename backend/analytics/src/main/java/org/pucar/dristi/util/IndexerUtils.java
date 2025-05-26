@@ -221,11 +221,23 @@ public class IndexerUtils {
         if (isGeneric) {
             log.info("creating pending task from generic task");
             Object task = taskUtil.getTask(requestInfo, tenantId, null, referenceId, status);
-            net.minidev.json.JSONArray assignToList = JsonPath.read(task.toString(), ASSIGN_TO_PATH);
-            assignedTo = assignToList.toString();
-            Object dueDate = JsonPath.read(task.toString(), DUE_DATE_PATH);
-            stateSla = dueDate != null ? ((Number) dueDate).longValue() : null;
-            assignedRole =  new JSONArray().toString();
+            if (task != null) {
+                net.minidev.json.JSONArray assignToList = JsonPath.read(task.toString(), ASSIGN_TO_PATH);
+                net.minidev.json.JSONArray assignRoleList = JsonPath.read(task.toString(), ASSIGN_ROLE_PATH);
+                assignedTo = assignToList.toString();
+                assignedRole = assignRoleList.toString();
+
+                Object dueDate = JsonPath.read(task.toString(), DUE_DATE_PATH);
+                stateSla = dueDate != null ? ((Number) dueDate).longValue() : null;
+            } else {
+                isCompleted = Boolean.TRUE;
+
+                // Safe defaults to avoid null exceptions later
+                assignedTo = new JSONArray().toString();    // "[]"
+                assignedRole = new JSONArray().toString();  // "[]"
+                stateSla = null;
+            }
+
         }
         if(!isCompleted) {
             try {
