@@ -4,9 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.micrometer.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -22,7 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -30,25 +31,17 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 @Slf4j
 public class OrderRegistrationService {
 
-    private OrderRegistrationValidator validator;
-
-    private OrderRegistrationEnrichment enrichmentUtil;
-
-    private OrderRepository orderRepository;
-
-    private WorkflowUtil workflowUtil;
-
-    private Configuration config;
-
-    private Producer producer;
-    private ObjectMapper objectMapper;
-
-    private CaseUtil caseUtil;
-
-    private SmsNotificationService notificationService;
-
-    private IndividualService individualService;
     private final FileStoreUtil fileStoreUtil;
+    private final OrderRegistrationValidator validator;
+    private final OrderRegistrationEnrichment enrichmentUtil;
+    private final OrderRepository orderRepository;
+    private final WorkflowUtil workflowUtil;
+    private final Configuration config;
+    private final Producer producer;
+    private final ObjectMapper objectMapper;
+    private final CaseUtil caseUtil;
+    private final SmsNotificationService notificationService;
+    private final IndividualService individualService;
 
     @Autowired
     public OrderRegistrationService(OrderRegistrationValidator validator, Producer producer, Configuration config, WorkflowUtil workflowUtil, OrderRepository orderRepository, OrderRegistrationEnrichment enrichmentUtil, ObjectMapper objectMapper, CaseUtil caseUtil, SmsNotificationService notificationService, IndividualService individualService, FileStoreUtil fileStoreUtil) {
@@ -63,6 +56,13 @@ public class OrderRegistrationService {
         this.notificationService = notificationService;
         this.individualService = individualService;
         this.fileStoreUtil = fileStoreUtil;
+    }
+
+    private static String getReceiverParty(String messageCode) {
+        if (messageCode.equalsIgnoreCase(NOTICE_ISSUED) || messageCode.equalsIgnoreCase(WARRANT_ISSUED) || messageCode.equalsIgnoreCase(SUMMONS_ISSUED)) {
+            return RESPONDENT;
+        }
+        return null;
     }
 
     public Order createOrder(OrderRequest body) {
@@ -118,7 +118,7 @@ public class OrderRegistrationService {
             workflowUpdate(body);
 
             deleteFileStoreDocumentsIfInactive(body.getOrder());
-            
+
             String updatedState = body.getOrder().getStatus();
             String orderType = body.getOrder().getOrderType();
             producer.push(config.getUpdateOrderKafkaTopic(), body);
@@ -137,25 +137,20 @@ public class OrderRegistrationService {
 
     }
 
-      private void deleteFileStoreDocumentsIfInactive(Order order){
+    private void deleteFileStoreDocumentsIfInactive(Order order) {
 
-
-        if (order.getDocuments() != null){
-
-         List<String> fileStoreIds = new ArrayList<>();
-
-
-        for (Document document : order.getDocuments()) {
+        if (order.getDocuments() != null) {
+            List<String> fileStoreIds = new ArrayList<>();
+            for (Document document : order.getDocuments()) {
                 if (!document.getIsActive()) {
                     fileStoreIds.add(document.getFileStore());
                 }
             }
-        if(!fileStoreIds.isEmpty()){
+            if (!fileStoreIds.isEmpty()) {
                 fileStoreUtil.deleteFilesByFileStore(fileStoreIds, order.getTenantId());
                 log.info("Deleted files from filestore: {}", fileStoreIds);
             }
         }
-
 
     }
 
@@ -370,14 +365,6 @@ public class OrderRegistrationService {
             log.error("Error occurred while sending notification: {}", e.toString());
         }
     }
-
-    private static String getReceiverParty(String messageCode) {
-        if (messageCode.equalsIgnoreCase(NOTICE_ISSUED) || messageCode.equalsIgnoreCase(WARRANT_ISSUED) || messageCode.equalsIgnoreCase(SUMMONS_ISSUED)) {
-            return RESPONDENT;
-        }
-        return null;
-    }
-
 
     public List<OrderExists> existsOrder(OrderExistsRequest orderExistsRequest) {
         try {
