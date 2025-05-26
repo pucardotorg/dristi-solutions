@@ -230,7 +230,7 @@ public class TaskUtil {
 
         Object orderFormData = getOrderFormDataByOrderType(order.getAdditionalDetails(), order.getOrderType());
         Object deliveryChannels = jsonUtil.getNestedValue(orderFormData, List.of("selectedChannels"), Object.class);
-        JSONArray deliveryChannelArray = objectMapper.convertValue(objectMapper.writeValueAsBytes(deliveryChannels), JSONArray.class);
+        JSONArray deliveryChannelArray = objectMapper.convertValue(deliveryChannels, JSONArray.class);
         List<Map<String, Object>> channelMap = extractDeliveryChannels(deliveryChannelArray);
 
         TaskPaymentCriteria taskPaymentCriteria = TaskPaymentCriteria.builder()
