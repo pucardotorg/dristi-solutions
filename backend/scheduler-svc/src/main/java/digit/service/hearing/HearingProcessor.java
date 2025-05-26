@@ -1,19 +1,24 @@
 package digit.service.hearing;
 
 
+import com.fasterxml.jackson.databind.JsonNode;
 import digit.config.Configuration;
 import digit.kafka.producer.Producer;
 import digit.mapper.CustomMapper;
 import digit.service.HearingService;
+import digit.util.CaseUtil;
 import digit.util.DateUtil;
 import digit.util.HearingUtil;
 import digit.web.models.Pair;
 import digit.web.models.ScheduleHearing;
 import digit.web.models.ScheduleHearingRequest;
+import digit.web.models.cases.CaseCriteria;
+import digit.web.models.cases.SearchCaseRequest;
 import digit.web.models.hearing.Hearing;
 import digit.web.models.hearing.HearingRequest;
 import digit.web.models.hearing.HearingUpdateBulkRequest;
 import digit.web.models.hearing.PresidedBy;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,16 +38,18 @@ public class HearingProcessor {
     private final HearingUtil hearingUtil;
     private final Producer producer;
     private final Configuration config;
+    private final CaseUtil caseUtil;
 
 
     @Autowired
-    public HearingProcessor(CustomMapper customMapper, HearingService hearingService, Producer producer, DateUtil dateUtil, HearingUtil hearingUtil, Configuration config) {
+    public HearingProcessor(CustomMapper customMapper, HearingService hearingService, Producer producer, DateUtil dateUtil, HearingUtil hearingUtil, Configuration config, CaseUtil caseUtil) {
         this.customMapper = customMapper;
         this.hearingService = hearingService;
         this.dateUtil = dateUtil;
         this.hearingUtil = hearingUtil;
         this.producer = producer;
         this.config = config;
+        this.caseUtil = caseUtil;
     }
 
 
@@ -59,13 +66,13 @@ public class HearingProcessor {
             Hearing hearing = hearingRequest.getHearing();
             RequestInfo requestInfo = hearingRequest.getRequestInfo();
             PresidedBy presidedBy = hearing.getPresidedBy();
-            List<String> filling = hearing.getFilingNumber();
+            List<String> fillingNumbers = hearing.getFilingNumber();
 
             log.debug("calculating start time and end time for hearing");
             Pair<Long, Long> startTimeAndEndTime = getStartTimeAndEndTime(hearing.getStartTime());
 
             ScheduleHearing scheduleHearing = customMapper.hearingToScheduleHearingConversion(hearing);
-            scheduleHearing.setCaseId(filling.get(0));
+            enrichCaseDetails(hearingRequest.getRequestInfo(), scheduleHearing, fillingNumbers);
             scheduleHearing.setStartTime(startTimeAndEndTime.getKey());
             scheduleHearing.setEndTime(startTimeAndEndTime.getValue());
             scheduleHearing.setHearingDate(startTimeAndEndTime.getKey());
@@ -103,6 +110,29 @@ public class HearingProcessor {
         }
 
     }
+
+    private void enrichCaseDetails(@Valid RequestInfo requestInfo, ScheduleHearing scheduleHearing, List<String> fillingNumbers) {
+        log.info("operation = enrichCaseDetails, result = IN_PROGRESS, fillingNumber={}", fillingNumbers.get(0));
+        SearchCaseRequest caseRequest = SearchCaseRequest.builder().RequestInfo(requestInfo).flow("FLOW_JAC")
+                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(fillingNumbers.get(0)).build())).build();
+
+        JsonNode cases = caseUtil.getCases(caseRequest);
+        if (cases != null && cases.isArray() && !cases.isEmpty()) {
+            scheduleHearing.setTitle(cases.get(0).get("caseTitle").isNull() ? null : cases.get(0).get("caseTitle").asText());
+            scheduleHearing.setCaseId(getCaseId(cases));
+            scheduleHearing.setCaseStage(cases.get(0).get("stage").isNull() ? null : cases.get(0).get("stage").asText());
+        }
+        log.info("operation = enrichCaseDetails, result = SUCCESS");
+    }
+
+    private String getCaseId(JsonNode cases) {
+        JsonNode caseDetails = cases.get(0);
+        String stNumber = caseDetails.get("courtCaseNumber").isNull() ? null : caseDetails.get("courtCaseNumber").asText();
+        String cmpNumber = caseDetails.get("cmpNumber").isNull() ? null : caseDetails.get("cmpNumber").asText();
+        String filingNumber = caseDetails.get("filingNumber").isNull() ? null : caseDetails.get("filingNumber").asText();
+        return (stNumber != null) ? stNumber : (cmpNumber != null) ? cmpNumber : filingNumber;
+    }
+
 
     /**
      * Returns a pair of start and end times for a given epoch time.

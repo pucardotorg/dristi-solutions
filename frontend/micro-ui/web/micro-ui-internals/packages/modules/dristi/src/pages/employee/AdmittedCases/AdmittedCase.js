@@ -234,9 +234,9 @@ const AdmittedCases = () => {
       enable: false,
     },
   };
-  
+
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
-    
+
   const evidenceUpdateMutation = Digit.Hooks.useCustomAPIMutationHook(reqEvidenceUpdate);
 
   const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useCaseDetailSearchService(
@@ -246,7 +246,7 @@ const AdmittedCases = () => {
         courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
       },
       tenantId,
-    },  
+    },
     {},
     `dristi-admitted-${caseId}`,
     caseId,
@@ -1021,13 +1021,13 @@ const AdmittedCases = () => {
         artifactList: selectedRow,
       },
     ];
-    const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+    const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
     try {
       const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
       await DRISTIService.addADiaryEntry(
         {
           diaryEntry: {
-            judgeId: judgeId,
+            courtId: courtId,
             businessOfDay: `${selectedRow?.artifactNumber} ${selectedRow?.isEvidence ? "unmarked" : "marked"} as evidence`,
             tenantId: tenantId,
             entryDate: new Date().setHours(0, 0, 0, 0),
@@ -1430,28 +1430,27 @@ const AdmittedCases = () => {
       setShow(true);
     }
   }, []);
-  
 
   /**
- * Update breadcrumb navigation context when URL parameters change
- * 
- * This effect synchronizes the breadcrumb navigation state with the current URL parameters.
- * It runs whenever the URL path, search parameters, or hash fragment changes.
- * 
- * The effect:
- * 1. Extracts current case data from the breadcrumb context
- * 2. Gets the case ID and filing number from URL parameters
- * 3. Updates the breadcrumb context only if the values differ from current context
- * 
- * This ensures consistent navigation context across the application when users
- * navigate directly to this page via URL rather than through the application flow.
- */
+   * Update breadcrumb navigation context when URL parameters change
+   *
+   * This effect synchronizes the breadcrumb navigation state with the current URL parameters.
+   * It runs whenever the URL path, search parameters, or hash fragment changes.
+   *
+   * The effect:
+   * 1. Extracts current case data from the breadcrumb context
+   * 2. Gets the case ID and filing number from URL parameters
+   * 3. Updates the breadcrumb context only if the values differ from current context
+   *
+   * This ensures consistent navigation context across the application when users
+   * navigate directly to this page via URL rather than through the application flow.
+   */
   useEffect(() => {
     const { caseId: caseIdFromBreadCrumb, filingNumber: filingNumberFromBreadCrumb } = BreadCrumbsParamsData;
     const caseId = urlParams.get("caseId");
     const filingNumber = urlParams.get("filingNumber");
-    if(!(caseIdFromBreadCrumb === caseId && filingNumberFromBreadCrumb === filingNumber)){
-      setBreadCrumbsParamsData({caseId, filingNumber})
+    if (!(caseIdFromBreadCrumb === caseId && filingNumberFromBreadCrumb === filingNumber)) {
+      setBreadCrumbsParamsData({ caseId, filingNumber });
     }
   }, [pathname, search, hash]);
 
