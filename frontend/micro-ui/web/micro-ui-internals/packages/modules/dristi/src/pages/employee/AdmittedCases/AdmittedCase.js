@@ -43,6 +43,7 @@ import PublishedNotificationModal from "./publishedNotificationModal";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import NoticeAccordion from "../../../components/NoticeAccordion";
 import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
+import Breadcrumb from "../../../components/BreadCrumb";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -2520,6 +2521,53 @@ const AdmittedCases = () => {
     [t, userRoles]
   );
 
+  const employeeCrumbs = useMemo(
+    () => [
+      {
+        path: `/${window?.contextPath}/employee`,
+        content: t("ES_COMMON_HOME"),
+        show: true,
+        isLast: false,
+      },
+      {
+        path: `${path}/home/view-case`,
+        content: caseDetails?.cmpNumber || caseDetails?.filingNumber,
+        show: true,
+        isLast: true,
+      },
+    ],
+    [caseDetails?.cmpNumber, caseDetails?.filingNumber, path, t]
+  );
+
+  const advocateName = useMemo(() => {
+    if (!caseDetails?.representatives?.length) return "";
+    const complainantAdvocates = caseDetails?.representatives?.filter((rep) =>
+      rep?.representing?.some((lit) => lit?.partyType?.includes("complainant"))
+    );
+    const accusedAdvocates = caseDetails?.representatives?.filter((rep) => rep?.representing?.some((lit) => lit?.partyType?.includes("respondent")));
+    const complainantAdvocateName =
+      complainantAdvocates?.length > 0
+        ? `${complainantAdvocates?.[0]?.additionalDetails?.advocateName} (C)${
+            complainantAdvocates?.length > 1
+              ? ` ${t("CS_COMMON_AND")} ${complainantAdvocates?.length - 1} ${
+                  complainantAdvocates?.length === 2 ? t("CS_COMMON_OTHER") : t("CS_COMMON_OTHERS")
+                }`
+              : ""
+          }`
+        : "";
+    const accusedAdvocateName =
+      accusedAdvocates?.length > 0
+        ? `${accusedAdvocates?.[0]?.additionalDetails?.advocateName} (A)${
+            accusedAdvocates?.length > 1
+              ? ` ${t("CS_COMMON_AND")} ${accusedAdvocates?.length - 1} ${
+                  accusedAdvocates?.length === 2 ? t("CS_COMMON_OTHER") : t("CS_COMMON_OTHERS")
+                }`
+              : ""
+          }`
+        : "";
+    return `${t("CS_COMMON_ADVOCATES")}: ${complainantAdvocateName} ${accusedAdvocateName ? ", " + accusedAdvocateName : ""}`;
+  }, [caseDetails?.representatives, t]);
+
   // outcome always null unless case went on final stage
   const showActionBar = useMemo(
     () =>
@@ -2624,6 +2672,7 @@ const AdmittedCases = () => {
 
   return (
     <div className="admitted-case" style={{ position: "absolute", width: "100%" }}>
+      <Breadcrumb crumbs={employeeCrumbs} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>
       {downloadCasePdfLoading && (
         <div
           style={{
@@ -2659,14 +2708,16 @@ const AdmittedCases = () => {
             <div className="sub-details-text">{t(caseDetails?.stage)}</div>
             <hr className="vertical-line" />
             <div className="sub-details-text">{t(caseDetails?.substage)}</div>
-            <hr className="vertical-line" />
             {caseDetails?.outcome && (
               <React.Fragment>
-                <div className="sub-details-text">{t(caseDetails?.outcome)}</div>
                 <hr className="vertical-line" />
+                <div className="sub-details-text">{t(caseDetails?.outcome)}</div>
               </React.Fragment>
             )}
+            <hr className="vertical-line" />
             <div className="sub-details-text">Code: {caseDetails?.accessCode}</div>
+            <hr className="vertical-line" />
+            {advocateName && <div className="sub-details-text">{advocateName}</div>}
             {delayCondonationData?.delayCondonationType?.code === "NO" && (
               <div className="delay-condonation-chip" style={delayCondonationStylsMain}>
                 <p style={delayCondonationTextStyle}>
@@ -2679,75 +2730,77 @@ const AdmittedCases = () => {
               </div>
             )}
           </div>
-          <div className="make-submission-action" style={{ display: "flex", gap: 20, justifyContent: "space-between", alignItems: "center" }}>
-            {(isCitizen || isCourtStaff) && (
-              <Button
-                variation={"outlined"}
-                label={t("DOWNLOAD_CASE_FILE")}
-                isDisabled={!caseDetails?.additionalDetails?.signedCaseDocument}
-                onButtonClick={handleDownloadPDF}
-              />
-            )}
-            {(showMakeSubmission || isCitizen) && (
-              <div className="evidence-header-wrapper">
-                <div className="evidence-hearing-header" style={{ background: "transparent" }}>
-                  <div className="evidence-actions" style={{ ...(isTabDisabled ? { pointerEvents: "none" } : {}) }}>
-                    {showMakeSubmission && (
-                      <React.Fragment>
-                        <ActionButton
-                          variation={"primary"}
-                          label={t("CS_CASE_MAKE_FILINGS")}
-                          icon={showMenu ? "ExpandLess" : "ExpandMore"}
-                          isSuffix={true}
-                          onClick={handleTakeAction}
-                          className={"take-action-btn-class"}
-                        ></ActionButton>
-                        {showMenu && (
+          {isCitizen && (
+            <div className="make-submission-action" style={{ display: "flex", gap: 20, justifyContent: "space-between", alignItems: "center" }}>
+              {(isCitizen || isCourtStaff) && (
+                <Button
+                  variation={"outlined"}
+                  label={t("DOWNLOAD_CASE_FILE")}
+                  isDisabled={!caseDetails?.additionalDetails?.signedCaseDocument}
+                  onButtonClick={handleDownloadPDF}
+                />
+              )}
+              {(showMakeSubmission || isCitizen) && (
+                <div className="evidence-header-wrapper">
+                  <div className="evidence-hearing-header" style={{ background: "transparent" }}>
+                    <div className="evidence-actions" style={{ ...(isTabDisabled ? { pointerEvents: "none" } : {}) }}>
+                      {showMakeSubmission && (
+                        <React.Fragment>
+                          <ActionButton
+                            variation={"primary"}
+                            label={t("CS_CASE_MAKE_FILINGS")}
+                            icon={showMenu ? "ExpandLess" : "ExpandMore"}
+                            isSuffix={true}
+                            onClick={handleTakeAction}
+                            className={"take-action-btn-class"}
+                          ></ActionButton>
+                          {showMenu && (
+                            <Menu
+                              t={t}
+                              optionKey={"label"}
+                              localeKeyPrefix={"CS_CASE"}
+                              options={citizenActionOptions}
+                              onSelect={(option) => handleCitizenAction(option)}
+                            ></Menu>
+                          )}
+                        </React.Fragment>
+                      )}
+
+                      <div
+                        onClick={() => {
+                          setShowCitizenMenu((prev) => !prev);
+                          if (showMenu) {
+                            setShowMenu(false);
+                          }
+                        }}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <CustomThreeDots />
+                        {showCitizenMenu && (
                           <Menu
+                            options={["MANAGE_CASE_ACCESS"]}
                             t={t}
-                            optionKey={"label"}
-                            localeKeyPrefix={"CS_CASE"}
-                            options={citizenActionOptions}
-                            onSelect={(option) => handleCitizenAction(option)}
+                            onSelect={(option) => {
+                              if (option === "MANAGE_CASE_ACCESS") {
+                                setShowJoinCase(true);
+                                setShowCitizenMenu(false);
+                              }
+                            }}
                           ></Menu>
                         )}
-                      </React.Fragment>
-                    )}
-
-                    <div
-                      onClick={() => {
-                        setShowCitizenMenu((prev) => !prev);
-                        if (showMenu) {
-                          setShowMenu(false);
-                        }
-                      }}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <CustomThreeDots />
-                      {showCitizenMenu && (
-                        <Menu
-                          options={["MANAGE_CASE_ACCESS"]}
-                          t={t}
-                          onSelect={(option) => {
-                            if (option === "MANAGE_CASE_ACCESS") {
-                              setShowJoinCase(true);
-                              setShowCitizenMenu(false);
-                            }
-                          }}
-                        ></Menu>
-                      )}
-                      <JoinCaseHome
-                        setShowJoinCase={setShowJoinCase}
-                        showJoinCase={showJoinCase}
-                        type={"external"}
-                        data={{ caseDetails: caseDetails }}
-                      />
+                        <JoinCaseHome
+                          setShowJoinCase={setShowJoinCase}
+                          showJoinCase={showJoinCase}
+                          type={"external"}
+                          data={{ caseDetails: caseDetails }}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
           {showTakeAction && (
             <div className="judge-action-block" style={{ display: "flex" }}>
               {!isCourtRoomManager && (
@@ -2923,7 +2976,6 @@ const AdmittedCases = () => {
       <div className={`inbox-search-wrapper orders-tab-inbox-wrapper`} style={showActionBar ? { paddingBottom: "60px" } : {}}>
         {inboxComposer}
       </div>
-
       {tabData?.filter((tab) => tab.label === "Overview")?.[0]?.active && (
         <div className="case-overview-wrapper">
           <CaseOverview
@@ -3046,7 +3098,6 @@ const AdmittedCases = () => {
           </ActionBar>
         )}
       {isOpenDCA && <DocumentModal config={dcaConfirmModalConfig} />}
-
       {showModal && (
         <AdmissionActionModal
           t={t}

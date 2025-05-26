@@ -75,9 +75,13 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
       isLast: true,
     },
   ];
-  const showBreadCrumbs = useMemo(() => location.pathname.includes("/pending-payment-inbox") || location.pathname.includes("/view-case") || true, [
-    location.pathname,
-  ]);
+  const showBreadCrumbs = useMemo(
+    () =>
+      location.pathname.includes("/view-case")
+        ? false
+        : location.pathname.includes("/pending-payment-inbox") || location.pathname.includes("/view-case") || true,
+    [location.pathname]
+  );
   if (result) {
     sessionStorage.setItem("isSignSuccess", result);
   }
