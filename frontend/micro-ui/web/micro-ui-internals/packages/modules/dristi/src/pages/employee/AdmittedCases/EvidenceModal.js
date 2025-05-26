@@ -558,7 +558,7 @@ const EvidenceModal = ({
         {}
       );
       const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
-      const judgeId = localStorage.getItem("judgeId");
+      const courtId = localStorage.getItem("courtId");
       let evidenceReqBody = {};
       let evidence = {};
       evidenceReqBody = {
@@ -571,7 +571,7 @@ const EvidenceModal = ({
       await DRISTIService.addADiaryEntry(
         {
           diaryEntry: {
-            judgeId: judgeId,
+            courtId: courtId,
             businessOfDay: businessOfTheDay,
             tenantId: tenantId,
             entryDate: new Date().setHours(0, 0, 0, 0),
@@ -1343,6 +1343,16 @@ const EvidenceModal = ({
                       <h3>N/A</h3>
                     </div>
                   </div>
+                  {documentSubmission?.[0]?.artifactList?.additionalDetails?.formdata?.reasonForFiling && (
+                    <div className="info-row">
+                      <div className="info-key">
+                        <h3>{t("REASON_FOR_FILING")}</h3>
+                      </div>
+                      <div className="info-value">
+                        <h3>{documentSubmission?.[0]?.artifactList?.additionalDetails?.formdata?.reasonForFiling?.text}</h3>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column" }}>{showDocument}</div>
               </div>

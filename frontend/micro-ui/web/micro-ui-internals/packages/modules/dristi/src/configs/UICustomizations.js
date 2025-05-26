@@ -435,7 +435,12 @@ export const UICustomizations = {
       const tenantId = window?.Digit.ULBService.getStateId();
       const moduleSearchCriteria = {
         billStatus: requestCriteria?.body?.inbox?.moduleSearchCriteria?.billStatus,
-        ...requestCriteria?.state?.searchForm,
+        ...(requestCriteria?.state?.searchForm?.caseTitleFilingNumber && {
+          caseTitleFilingNumber: requestCriteria?.state?.searchForm?.caseTitleFilingNumber,
+        }),
+        ...(requestCriteria?.state?.searchForm?.sortOrder && { sortOrder: requestCriteria?.state?.searchForm?.sortOrder }),
+        ...(requestCriteria?.state?.searchForm?.caseType && { caseType: requestCriteria?.state?.searchForm?.caseType }),
+        ...(requestCriteria?.state?.searchForm?.paymentType && { paymentType: requestCriteria?.state?.searchForm?.paymentType }),
         tenantId: tenantId,
       };
 

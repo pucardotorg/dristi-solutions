@@ -436,7 +436,13 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     }
   }, [isScrutiny]);
 
-  const updateCaseDetails = async (action) => {
+  const updateCaseDetails = async (action, filterSigned = false) => {
+    let filteredDocuments = caseDetails?.documents;
+    if (filterSigned) {
+      filteredDocuments = caseDetails?.documents?.filter(
+        (doc) => doc?.documentType !== "case.complaint.signed" && doc?.documentType !== "case.complaint.unsigned"
+      );
+    }
     const scrutinyObj = action === CaseWorkflowAction.VALIDATE ? {} : CaseWorkflowAction.SEND_BACK && isPrevScrutiny ? newScrutinyData : formdata;
     const newAdditionalDetails = {
       ...caseDetails.additionalDetails,
@@ -452,6 +458,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
 
     const newcasedetails = {
       ...caseDetails,
+      documents: filteredDocuments,
       additionalDetails: newAdditionalDetails,
       caseTitle: newCaseName !== "" ? newCaseName : caseDetails?.caseTitle,
     };
@@ -586,12 +593,12 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
     history.push(`/${window?.contextPath}/employee/dristi/cases`);
   };
   const handleRegisterCase = () => {
-    updateCaseDetails(CaseWorkflowAction.VALIDATE).then((res) => {
+    updateCaseDetails(CaseWorkflowAction.VALIDATE, false).then((res) => {
       setActionModal("caseRegisterSuccess");
     });
   };
   const handleSendCaseBack = () => {
-    updateCaseDetails(CaseWorkflowAction.SEND_BACK).then((res) => {
+    updateCaseDetails(CaseWorkflowAction.SEND_BACK, true).then((res) => {
       setActionModal("caseSendBackSuccess");
     });
   };

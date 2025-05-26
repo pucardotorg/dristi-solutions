@@ -39,10 +39,10 @@ public class CaseDiaryEntry {
     @JsonProperty("caseId")
     private String caseId = null;
 
-    @JsonProperty("judgeId")
+    @JsonProperty("courtId")
     @NotNull
 
-    private String judgeId = null;
+    private String courtId = null;
 
     @JsonProperty("businessOfDay")
     @NotNull
