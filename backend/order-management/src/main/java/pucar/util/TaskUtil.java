@@ -398,7 +398,7 @@ public class TaskUtil {
         // 3. Try to get respondentNameData address
         Object respondentNameData = null;
         if (orderFormData != null) {
-            respondentNameData = jsonUtil.getNestedValue(additionalDetails, Arrays.asList("party", "data"), Object.class);
+            respondentNameData = jsonUtil.getNestedValue(orderFormData, Arrays.asList("party", "data"), Object.class);
         }
         if (respondentNameData instanceof Map) {
             Object addressObj = ((Map<?, ?>) respondentNameData).get("address");
