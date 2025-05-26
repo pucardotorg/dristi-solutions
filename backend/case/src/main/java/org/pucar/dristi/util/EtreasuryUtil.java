@@ -33,8 +33,8 @@ public class EtreasuryUtil {
 	public EtreasuryUtil(RestTemplate restTemplate, Configuration configs, ObjectMapper mapper) {
 		this.restTemplate = restTemplate;
 		this.configs = configs;
-        this.mapper = mapper;
-    }
+		this.mapper = mapper;
+	}
 
 	public void createDemand(JoinCaseV2Request joinCaseRequest, String consumerCode,List<Calculation> calculationList) {
 		StringBuilder uri = new StringBuilder();
@@ -59,7 +59,7 @@ public class EtreasuryUtil {
 		}
 	}
 
-    public JsonNode getPaymentReceipt(@Valid RequestInfo requestInfo, String id) {
+	public JsonNode getPaymentReceipt(@Valid RequestInfo requestInfo, String id) {
 		StringBuilder uri = new StringBuilder();
 		uri.append(configs.getEtreasuryHost()).append(configs.getTreasuryPaymentReceiptEndPoint())
 				.append("?billId=").append(id);

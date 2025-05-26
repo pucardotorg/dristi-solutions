@@ -4,11 +4,11 @@ import Modal from "../../../components/Modal";
 import useGetDiaryEntry from "../../../hooks/dristi/useGetDiaryEntry";
 import { TextInput } from "@egovernments/digit-ui-react-components";
 
-function PublishedNotificationModal({ t, notification, handleDownload, cmpNumber, stNumber, handleOrdersTab }) {
+function PublishedNotificationModal({ t, notification, handleDownload, filingNumber, handleOrdersTab }) {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
-  const judgeId = localStorage.getItem("judgeId");
+  const courtId = localStorage.getItem("courtId");
 
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
@@ -27,13 +27,13 @@ function PublishedNotificationModal({ t, notification, handleDownload, cmpNumber
       criteria: {
         referenceId: notification?.notificationNumber,
         tenantId,
-        judgeId: judgeId,
-        caseId: cmpNumber || stNumber,
+        courtId: courtId,
+        caseId: filingNumber,
       },
     },
     {},
-    notification?.notificationNumber + (cmpNumber || stNumber),
-    Boolean(notification?.notificationNumber) && !Boolean(isCitizen) && Boolean(cmpNumber || stNumber)
+    notification?.notificationNumber + filingNumber,
+    Boolean(notification?.notificationNumber) && !Boolean(isCitizen) && Boolean(filingNumber)
   );
   const document = useMemo(() => {
     return notification?.documents?.length > 0 ? notification?.documents[notification?.documents?.length - 1] : null;

@@ -18,8 +18,7 @@ import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/uti
 import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
 import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
-import { use } from "react";
+import useSearchCaseListService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseListService";
 
 const defaultSearchValues = {
   caseSearchText: "",
@@ -58,14 +57,14 @@ const HomeView = () => {
     show: false,
     bulkSignOrderListLength: null,
   });
-  const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles, [Digit.UserService]);
+  const userInfo = useMemo(() => Digit?.UserService?.getUser()?.info, [Digit.UserService]);
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
   const isNyayMitra = roles.some((role) => role.code === "NYAY_MITRA_ROLE");
   const isClerk = roles.some((role) => role.code === "BENCH_CLERK");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
-  const userInfo = Digit?.UserService?.getUser()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [toastMsg, setToastMsg] = useState(null);
   const courtId = localStorage.getItem("courtId");
@@ -230,24 +229,19 @@ const HomeView = () => {
     async function (tabConfig) {
       const updatedTabData = await Promise.all(
         tabConfig?.TabSearchConfig?.map(async (configItem, index) => {
-          let totalCount = null;
-          try {
-            const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {
-              tenantId,
-              criteria: {
-                ...configItem?.apiDetails?.requestBody?.criteria,
-                ...defaultSearchValues,
-                ...additionalDetails,
-                ...(configItem?.apiDetails?.requestBody?.criteria?.outcome && {
-                  outcome: outcomeTypeData,
-                }),
-                pagination: { offSet: 0, limit: 1 },
-              },
-            });
-            totalCount = response?.pagination?.totalCount;
-          } catch (error) {
-            console.error("error in fetching count.", error);
-          }
+          const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {
+            tenantId,
+            criteria: {
+              ...configItem?.apiDetails?.requestBody?.criteria,
+              ...defaultSearchValues,
+              ...additionalDetails,
+              ...(configItem?.apiDetails?.requestBody?.criteria?.outcome && {
+                outcome: outcomeTypeData,
+              }),
+              pagination: { offSet: 0, limit: 1 },
+            },
+          });
+          const totalCount = response?.pagination?.totalCount;
           return {
             key: index,
             label: totalCount ? `${t(configItem.label)} (${totalCount})` : `${t(configItem.label)} (0)`,
@@ -266,7 +260,7 @@ const HomeView = () => {
     } else return null;
   }, [userInfoType, advocateId, individualId, isSearchLoading]);
 
-  const { data: citizenCaseData, isLoading: isCitizenCaseDataLoading } = useSearchCaseService(
+  const { data: citizenCaseData, isLoading: isCitizenCaseDataLoading } = useSearchCaseListService(
     {
       criteria: [
         {
@@ -287,7 +281,7 @@ const HomeView = () => {
 
   // This is to check if the citizen has been associated with a case yet.
   const isCitizenReferredInAnyCase = useMemo(() => {
-    return citizenCaseData?.criteria?.[0]?.responseList?.[0];
+    return citizenCaseData?.caseList?.[0];
   }, [citizenCaseData]);
 
   useEffect(() => {

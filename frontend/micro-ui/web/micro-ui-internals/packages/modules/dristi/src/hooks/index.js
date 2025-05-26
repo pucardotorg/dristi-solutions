@@ -51,6 +51,7 @@ export const Urls = {
     caseSearch: "/case/v1/_search",
     caseDetailSearch: "/case/v2/search/details",
     summaryCaseSearch: "/case/v2/search/summary",
+    caseListSearch: "/case/v2/search/list",
     casePfGeneration: "/case/v1/_generatePdf",
     evidenceSearch: "/evidence/v1/_search",
     evidenceCreate: "/evidence/v1/_create",

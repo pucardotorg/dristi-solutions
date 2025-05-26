@@ -104,12 +104,19 @@ export const DRISTIService = {
     });
   },
   searchCaseService: (data, params) =>
-    // Add courtId to criteria if it exists
     Request({
       url: Urls.dristi.caseSearch,
       useCache: false,
       userService: false,
       data: { ...data, criteria: [...data?.criteria] },
+      params,
+    }),
+  caseListSearchService: (data, params) =>
+    Request({
+      url: Urls.dristi.caseListSearch,
+      useCache: false,
+      userService: false,
+      data,
       params,
     }),
   caseDetailSearchService: (data, params) =>

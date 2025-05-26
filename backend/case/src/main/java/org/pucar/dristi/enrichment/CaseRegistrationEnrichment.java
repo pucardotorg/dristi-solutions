@@ -1,14 +1,16 @@
 package org.pucar.dristi.enrichment;
 
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
+import com.fasterxml.jackson.databind.JsonNode;
+
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.CaseUtil;
@@ -20,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -177,9 +180,8 @@ public class CaseRegistrationEnrichment {
 
             courtCase.setId(UUID.randomUUID());
             enrichCaseRegistrationUponCreateAndUpdate(courtCase, auditDetails);
-
-            courtCase.setFilingNumber(courtCaseRegistrationFillingNumberIdList.get(0));
             courtCase.setCourtId(config.getCourtId());
+            courtCase.setFilingNumber(courtCaseRegistrationFillingNumberIdList.get(0));
 
 
         } catch (Exception e) {

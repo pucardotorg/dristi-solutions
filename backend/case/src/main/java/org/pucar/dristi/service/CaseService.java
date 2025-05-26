@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.servlet.http.Part;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -396,8 +397,8 @@ public class CaseService {
                 throw new CustomException(VALIDATION_ERR, "Case Application does not exist");
             }
 
-
-            List<Document> documentToDelete  = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
+            //todo: enhance for files delete
+//            List<Document> documentToDelete  = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
             // Enrich application upon update
             enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest, existingApplications.get(0).getResponseList());
 
@@ -440,7 +441,8 @@ public class CaseService {
                 caseRequest.getCases().setCaseType(CMP);
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
             }
-            removeInactiveDocuments(documentToDelete);
+            //todo: enhance for files delete
+//            removeInactiveDocuments(documentToDelete);
             log.info("Encrypting case: {}", caseRequest.getCases().getId());
 
             //to prevent from double encryption
@@ -686,19 +688,15 @@ public class CaseService {
     }
 
     private void removeInactiveDocuments(List<Document> documentsToDelete) {
-        try {
-            List<String> fileStoreIds = new ArrayList<>();
-            for(Document document : documentsToDelete) {
-                if(!document.getIsActive()) {
-                    fileStoreIds.add(document.getFileStore());
-                }
+        List<String> fileStoreIds = new ArrayList<>();
+        for(Document document : documentsToDelete) {
+            if(!document.getIsActive()) {
+                fileStoreIds.add(document.getFileStore());
             }
-            if(!fileStoreIds.isEmpty()){
-                fileStoreUtil.deleteFilesByFileStore(fileStoreIds, config.getTenantId());
-                log.info("Deleted files for case with ids: {}", fileStoreIds);
-            }
-        } catch (Exception e) {
-            log.error("Error occurred while deleting inactive documents: {}", e.getMessage());
+        }
+        if(!fileStoreIds.isEmpty()){
+            fileStoreUtil.deleteFilesByFileStore(fileStoreIds, config.getTenantId());
+            log.info("Deleted files for case with ids: {}", fileStoreIds);
         }
     }
 

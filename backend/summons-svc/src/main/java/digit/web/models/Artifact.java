@@ -26,129 +26,130 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 public class Artifact {
-	@JsonProperty("id")
+    @JsonProperty("id")
 
-	@Valid
-	private UUID id = null;
+    @Valid
+    private UUID id = null;
 
-	@JsonProperty("tenantId")
-	@NotNull
+    @JsonProperty("tenantId")
+    @NotNull
 
-	private String tenantId = null;
+    private String tenantId = null;
 
-	@JsonProperty("artifactNumber")
+    @JsonProperty("artifactNumber")
 
-	@Size(min = 2, max = 64)
-	private String artifactNumber = null;
+    @Size(min = 2, max = 64)
+    private String artifactNumber = null;
 
-	@JsonProperty("evidenceNumber")
+    @JsonProperty("evidenceNumber")
 
-	@Size(min = 2, max = 64)
-	private String evidenceNumber = null;
-	@JsonProperty("filingNumber")
-	@NotNull
+    @Size(min = 2, max = 64)
+    private String evidenceNumber = null;
+    @JsonProperty("filingNumber")
+    @NotNull
 
-	private String filingNumber = null;
-	@JsonProperty("externalRefNumber")
+    private String filingNumber = null;
+    @JsonProperty("externalRefNumber")
 
-	@Size(min = 2, max = 128)
-	private String externalRefNumber = null;
+    @Size(min = 2, max = 128)
+    private String externalRefNumber = null;
 
-	@JsonProperty("courtId")
-	private String courtId = null;
+    @JsonProperty("courtId")
+    private String courtId = null;
 
-	@JsonProperty("caseId")
-	@NotNull
+    @JsonProperty("caseId")
+    @NotNull
 
-	private String caseId = null;
+    private String caseId = null;
 
-	@JsonProperty("application")
+    @JsonProperty("application")
 
-	private String application = null;
+    private String application = null;
 
-	@JsonProperty("hearing")
+    @JsonProperty("hearing")
 
-	private String hearing = null;
+    private String hearing = null;
 
-	@JsonProperty("order")
+    @JsonProperty("order")
 
-	private String order = null;
+    private String order = null;
 
-	@JsonProperty("cnrNumber")
+    @JsonProperty("cnrNumber")
 
-	private String cnrNumber = null;
+    private String cnrNumber = null;
 
-	@JsonProperty("mediaType")
+    @JsonProperty("mediaType")
 
-	private String mediaType = null;
+    private String mediaType = null;
 
-	@JsonProperty("artifactType")
+    @JsonProperty("artifactType")
 
-	private String artifactType = null;
+    private String artifactType = null;
 
-	@JsonProperty("sourceType")
+    @JsonProperty("sourceType")
 
-	private String sourceType = null;
+    private String sourceType = null;
 
-	@JsonProperty("sourceID")
+    @JsonProperty("sourceID")
 
-	private String sourceID = null;
+    private String sourceID = null;
 
-	@JsonProperty("sourceName")
+    @JsonProperty("sourceName")
 
-	private String sourceName = null;
+    private String sourceName = null;
 
-	@JsonProperty("applicableTo")
+    @JsonProperty("applicableTo")
 
-	private List<String> applicableTo = null;
+    private List<String> applicableTo = null;
 
-	@JsonProperty("createdDate")
+    @JsonProperty("createdDate")
 
-	private Long createdDate = null;
+    private Long createdDate = null;
 
-	@JsonProperty("publishedDate")
-	private Long publishedDate = null;
+    @JsonProperty("publishedDate")
+    private Long publishedDate = null;
 
-	@JsonProperty("isActive")
+    @JsonProperty("isActive")
 
-	private Boolean isActive = true;
+    private Boolean isActive = true;
 
-	@JsonProperty("isEvidence")
+    @JsonProperty("isEvidence")
 
-	private Boolean isEvidence = false;
+    private Boolean isEvidence = false;
 
-	@JsonProperty("status")
+    @JsonProperty("status")
 
-	private String status = null;
+    private String status = null;
 
-	@JsonProperty("filingType")
-	private String filingType = null;
+    @JsonProperty("filingType")
+    private String filingType = null;
 
-	@JsonProperty("isVoid")
-	private Boolean isVoid = false;
+    @JsonProperty("isVoid")
+    private Boolean isVoid = false;
 
-	@JsonProperty("reason")
-	private String reason = null;
+    @JsonProperty("reason")
+    private String reason = null;
 
-	@JsonProperty("file")
+    @JsonProperty("file")
 
-	@Valid
-	private Document file = null;
+    @Valid
+    private Document file = null;
 
-	@JsonProperty("description")
+    @JsonProperty("description")
 
-	private String description = null;
+    private String description = null;
 
-	@JsonProperty("artifactDetails")
+    @JsonProperty("artifactDetails")
 
-	private Object artifactDetails = null;
+    private Object artifactDetails = null;
 
-	@JsonProperty("comments")
-	@Valid
-	private List<Comment> comments = null;
+    @JsonProperty("comments")
+    @Valid
+    private List<Comment> comments = null;
 
-	@JsonProperty("additionalDetails")
+    @JsonProperty("additionalDetails")
 
-	private Object additionalDetails = null;
+    private Object additionalDetails = null;
 
 }
+
