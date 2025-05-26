@@ -1,6 +1,7 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
+import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { ActionBar, SubmitBar, Button, Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
 import { CustomThreeDots } from "../../../icons/svgIndex";
@@ -151,6 +152,7 @@ const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
 const AdmittedCases = () => {
   const { t } = useTranslation();
   const location = useLocation();
+  const { pathname, search, hash } = location;
   const { path } = useRouteMatch();
   const urlParams = new URLSearchParams(location.search);
   const { hearingId, taskOrderType, artifactNumber } = Digit.Hooks.useQueryParams();
@@ -232,6 +234,8 @@ const AdmittedCases = () => {
       enable: false,
     },
   };
+
+  const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
 
   const evidenceUpdateMutation = Digit.Hooks.useCustomAPIMutationHook(reqEvidenceUpdate);
 
@@ -1017,13 +1021,13 @@ const AdmittedCases = () => {
         artifactList: selectedRow,
       },
     ];
-    const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+    const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
     try {
       const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
       await DRISTIService.addADiaryEntry(
         {
           diaryEntry: {
-            judgeId: judgeId,
+            courtId: courtId,
             businessOfDay: `${selectedRow?.artifactNumber} ${selectedRow?.isEvidence ? "unmarked" : "marked"} as evidence`,
             tenantId: tenantId,
             entryDate: new Date().setHours(0, 0, 0, 0),
@@ -1426,6 +1430,29 @@ const AdmittedCases = () => {
       setShow(true);
     }
   }, []);
+
+  /**
+   * Update breadcrumb navigation context when URL parameters change
+   *
+   * This effect synchronizes the breadcrumb navigation state with the current URL parameters.
+   * It runs whenever the URL path, search parameters, or hash fragment changes.
+   *
+   * The effect:
+   * 1. Extracts current case data from the breadcrumb context
+   * 2. Gets the case ID and filing number from URL parameters
+   * 3. Updates the breadcrumb context only if the values differ from current context
+   *
+   * This ensures consistent navigation context across the application when users
+   * navigate directly to this page via URL rather than through the application flow.
+   */
+  useEffect(() => {
+    const { caseId: caseIdFromBreadCrumb, filingNumber: filingNumberFromBreadCrumb } = BreadCrumbsParamsData;
+    const caseId = urlParams.get("caseId");
+    const filingNumber = urlParams.get("filingNumber");
+    if (!(caseIdFromBreadCrumb === caseId && filingNumberFromBreadCrumb === filingNumber)) {
+      setBreadCrumbsParamsData({ caseId, filingNumber });
+    }
+  }, [pathname, search, hash]);
 
   const handleIssueNotice = useCallback(
     async (hearingDate, hearingNumber) => {

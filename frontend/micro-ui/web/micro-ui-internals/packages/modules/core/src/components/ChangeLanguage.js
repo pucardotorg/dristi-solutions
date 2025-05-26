@@ -43,12 +43,14 @@ const ChangeLanguage = ({ isProfileComponent, ...prop }) => {
                 </span>
               )}
               {isProfileComponent ? (
-                <span>{`${selectedLanguageLabel[0]?.toUpperCase()}${selectedLanguageLabel?.slice(1)?.toLowerCase()}`}</span>
+                <span>
+                  {selectedLanguageLabel ? `${selectedLanguageLabel[0]?.toUpperCase()}${selectedLanguageLabel?.slice(1)?.toLowerCase()}` : ""}
+                </span>
               ) : (
                 <span>
                   {languages
                     .find((language) => language.value === selected)
-                    .label?.substring(0, 2)
+                    ?.label?.substring(0, 2)
                     ?.toUpperCase()}
                 </span>
               )}
