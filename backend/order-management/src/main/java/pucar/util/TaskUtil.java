@@ -332,12 +332,16 @@ public class TaskUtil {
         Object orderFormData = getOrderFormDataByOrderType(order.getAdditionalDetails(), order.getOrderType());
         String docSubType = jsonUtil.getNestedValue(orderFormData, Arrays.asList("party", "data", "partyType"), String.class);
         RespondentDetails respondentDetails = null;
-
+        WitnessDetails witnessDetails = null;
         if (docSubType != null) {
             respondentDetails = docSubType.equals("Witness") ? getRespondentAccused(order, courtCase) : null;
         }
-
-        taskDetails.setRespondentDetails(respondentDetails);
+        try {
+            witnessDetails = objectMapper.convertValue(objectMapper.writeValueAsString(respondentDetails), WitnessDetails.class);
+        } catch (Exception e) {
+          log.error("Exception in witnessDetails", e);
+        }
+        taskDetails.setWitnessDetails(witnessDetails);
     }
 
     private void getRespondentDetails(Order order, TaskDetails taskDetails, CourtCase courtCase) {
