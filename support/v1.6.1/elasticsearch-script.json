@@ -1,0 +1,24 @@
+POST order-notification-view/_update_by_query
+{
+  "script": {
+    "lang": "painless",
+    "source": """
+      if (ctx._source?.Data?.orderNotification?.entityType == 'Order') {
+        def caseTitle = ctx._source.Data.orderNotification.caseTitle;
+        if (caseTitle != null && caseTitle.contains(',')) {
+          def parts = caseTitle.splitOnToken(',');
+          if (parts.length > 1) {
+            ctx._source.Data.orderNotification.caseSTNumber = parts[1].trim();
+          }
+        }
+      }
+    """
+  },
+  "query": {
+    "bool": {
+      "must": [
+        { "term": { "Data.orderNotification.entityType.keyword": "Order" }}
+      ]
+    }
+  }
+}
