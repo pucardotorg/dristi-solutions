@@ -242,8 +242,7 @@ public class TaskUtil {
 
         for (Map<String, Object> channel : channelMap) {
 
-            TaskDetails taskDetailsClone = objectMapper.convertValue(objectMapper.writeValueAsBytes(taskDetails), TaskDetails.class);
-
+            TaskDetails taskDetailsClone = objectMapper.convertValue(taskDetails, TaskDetails.class);
             String channelType = channel.get("type").toString();
             String channelValue = channel.get("code").toString();
 
