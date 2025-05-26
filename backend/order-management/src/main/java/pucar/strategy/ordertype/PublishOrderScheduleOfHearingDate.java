@@ -91,7 +91,7 @@ public class PublishOrderScheduleOfHearingDate implements OrderUpdateStrategy {
 
         // case update
         List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
-                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).build()))
+                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
                 .requestInfo(requestInfo).build());
 
         // add validation here
@@ -99,7 +99,9 @@ public class PublishOrderScheduleOfHearingDate implements OrderUpdateStrategy {
         String status = courtCase.getStatus();
 
         log.info("case status:{}", status);
-        if (!CASE_ADMITTED.equalsIgnoreCase(status)) {
+
+        // PENDING_ADMISSION_HEARING
+        if (PENDING_ADMISSION_HEARING.equalsIgnoreCase(status)) {
 
             WorkflowObject workflow = new WorkflowObject();
             workflow.setAction(SCHEDULE_ADMISSION_HEARING);
@@ -113,7 +115,7 @@ public class PublishOrderScheduleOfHearingDate implements OrderUpdateStrategy {
 
         // close manual pending task for filing number
         log.info("close manual pending task for hearing number:{}", order.getHearingNumber());
-        pendingTaskUtil.closeManualPendingTask(order.getHearingNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(), courtCase.getId().toString(),courtCase.getCaseTitle());
+        pendingTaskUtil.closeManualPendingTask(order.getHearingNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(), courtCase.getId().toString(), courtCase.getCaseTitle());
 
         log.info("post processing, result= SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
 

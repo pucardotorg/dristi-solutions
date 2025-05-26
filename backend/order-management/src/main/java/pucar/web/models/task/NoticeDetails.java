@@ -31,5 +31,4 @@ public class NoticeDetails {
     private String noticeType;
 
 
-
 }

@@ -14,6 +14,7 @@ import pucar.web.models.application.Application;
 import pucar.web.models.application.ApplicationCriteria;
 import pucar.web.models.application.ApplicationSearchRequest;
 import pucar.web.models.courtCase.*;
+import pucar.web.models.individual.IndividualSearch;
 import pucar.web.models.individual.IndividualSearchRequest;
 import pucar.web.models.pendingtask.PendingTask;
 import pucar.web.models.pendingtask.PendingTaskRequest;
@@ -81,7 +82,9 @@ public class PublishOrderSetBailTerms implements OrderUpdateStrategy {
         String assigneeUUID = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "partyId"), String.class);
 
         log.info("fetching individual id for uuid :{}", assigneeUUID);
-        String individualId = individualUtil.getIndividualId(IndividualSearchRequest.builder().build(), order.getTenantId(), 1);
+
+        IndividualSearchRequest individualSearchRequest = IndividualSearchRequest.builder().individual(IndividualSearch.builder().userUuid(Collections.singletonList(assigneeUUID)).build()).requestInfo(requestInfo).build();
+        String individualId = individualUtil.getIndividualId(individualSearchRequest, order.getTenantId(), 1);
         Map<String, List<POAHolder>> litigantPoaMapping = caseUtil.getLitigantPoaMapping(courtCase);
         List<User> assignee = new ArrayList<>();
         assignee.add(User.builder().uuid(assigneeUUID).build());
@@ -144,18 +147,18 @@ public class PublishOrderSetBailTerms implements OrderUpdateStrategy {
     private Object getAdditionalDetails(CourtCase courtCase, Application application) {
         Map<String, Object> additionalDetails = new HashMap<>();
 
-        additionalDetails.put("litigants", Arrays.asList(
+        additionalDetails.put("litigants", Collections.singletonList(
                 courtCase.getLitigants().stream()
-                        .filter(litigant -> jsonUtil.getNestedValue(litigant.getAdditionalDetails(), Arrays.asList("uuid"), String.class).equals(jsonUtil.getNestedValue(application.getAdditionalDetails(), Arrays.asList("formdata", "selectComplainant", "uuid"), String.class)))
+                        .filter(litigant -> jsonUtil.getNestedValue(litigant.getAdditionalDetails(), List.of("uuid"), String.class).equals(jsonUtil.getNestedValue(application.getAdditionalDetails(), Arrays.asList("formdata", "selectComplainant", "uuid"), String.class)))
                         .map(Party::getIndividualId)
                         .findFirst()
                         .orElse(null)
 
         ));
-        additionalDetails.put("litigantUuid", Arrays.asList(
+        additionalDetails.put("litigantUuid", Collections.singletonList(
                 courtCase.getLitigants().stream()
-                        .filter(litigant -> jsonUtil.getNestedValue(litigant.getAdditionalDetails(), Arrays.asList("uuid"), String.class).equals(jsonUtil.getNestedValue(application.getAdditionalDetails(), Arrays.asList("formdata", "selectComplainant", "uuid"), String.class)))
-                        .map(litigant -> jsonUtil.getNestedValue(litigant.getAdditionalDetails(), Arrays.asList("uuid"), String.class))
+                        .filter(litigant -> jsonUtil.getNestedValue(litigant.getAdditionalDetails(), List.of("uuid"), String.class).equals(jsonUtil.getNestedValue(application.getAdditionalDetails(), Arrays.asList("formdata", "selectComplainant", "uuid"), String.class)))
+                        .map(litigant -> jsonUtil.getNestedValue(litigant.getAdditionalDetails(), List.of("uuid"), String.class))
                         .findFirst()
                         .orElse(null)
         ));

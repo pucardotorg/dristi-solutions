@@ -14,7 +14,7 @@ public class GeoLocationDetails {
     private PoliceStationDetails policeStationDetails;
 
     @JsonProperty("latitude")
-    private  String latitude;
+    private String latitude;
 
     @JsonProperty("longitude")
     private String longitude;

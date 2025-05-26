@@ -15,8 +15,8 @@ import java.util.Map;
 public class Inbox {
 
     @JsonProperty("businessObject")
-    private Map<String,Object> businessObject;
+    private Map<String, Object> businessObject;
 
     @JsonProperty("serviceObject")
-    private Map<String,Object>	serviceObject;
+    private Map<String, Object> serviceObject;
 }

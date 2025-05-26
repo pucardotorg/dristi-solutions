@@ -63,14 +63,13 @@ public class TaskUtil {
 
     public TaskResponse callCreateTask(TaskRequest taskRequest) {
         try {
-            StringBuilder uri = new StringBuilder();
-            uri.append(config.getTaskServiceHost()).append(config.getTaskServiceCreateEndpoint());
+            String uri = config.getTaskServiceHost() + config.getTaskServiceCreateEndpoint();
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<TaskRequest> requestEntity = new HttpEntity<>(taskRequest, headers);
 
-            ResponseEntity<TaskResponse> responseEntity = restTemplate.postForEntity(uri.toString(),
+            ResponseEntity<TaskResponse> responseEntity = restTemplate.postForEntity(uri,
                     requestEntity, TaskResponse.class);
             log.info("Response of create task :: {}", requestEntity.getBody());
 
@@ -120,7 +119,7 @@ public class TaskUtil {
     }
 
 
-    public List<TaskRequest> createTaskRequestForSummonWarrantAndNotice(RequestInfo requestInfo, Order order, CourtCase courtCase) {
+    public List<TaskRequest> createTaskRequestForSummonWarrantAndNotice(RequestInfo requestInfo, Order order, CourtCase courtCase, String channel) {
 
         Map<String, Map<String, JSONArray>> courtRooms = mdmsUtil.fetchMdmsData(requestInfo, order.getTenantId(), "common-masters", List.of("Court_Rooms"));
 
@@ -135,7 +134,11 @@ public class TaskUtil {
         }
 
         WorkflowObject workflowObject = new WorkflowObject();
-        workflowObject.setAction("CREATE");
+        if (EMAIL.equalsIgnoreCase(channel) || SMS.equalsIgnoreCase(channel)) {
+            workflowObject.setAction("CREATE_WITH_OUT_PAYMENT");
+        } else {
+            workflowObject.setAction("CREATE");
+        }
         workflowObject.setComments(order.getOrderType());
         workflowObject.setDocuments(Collections.singletonList(Document.builder().build()));
 
@@ -169,8 +172,7 @@ public class TaskUtil {
     private Map<String, Object> getCourtDetails(JSONArray courtRoomsArray, CourtCase courtCase) {
         Map<String, Object> courtDetails = (Map<String, Object>) courtRoomsArray.stream()
                 .filter(obj -> {
-                    if (courtCase == null || !(obj instanceof Map)) return false;
-                    Map data = (Map) obj;
+                    if (courtCase == null || !(obj instanceof Map data)) return false;
                     return courtCase.getCourtId() != null && courtCase.getCourtId().equals(data.get("code"));
                 })
                 .findFirst()
@@ -376,8 +378,7 @@ public class TaskUtil {
         // 2. Try to get addressDetails from orderFormData
         if (orderFormData instanceof Map) {
             Object addressDetailsObj = ((Map<?, ?>) orderFormData).get("addressDetails");
-            if (addressDetailsObj instanceof List) {
-                List<?> detailsList = (List<?>) addressDetailsObj;
+            if (addressDetailsObj instanceof List<?> detailsList) {
                 List<Address> addresses = new ArrayList<>();
                 for (Object data : detailsList) {
                     if (data instanceof Map) {
@@ -401,8 +402,7 @@ public class TaskUtil {
         }
         if (respondentNameData instanceof Map) {
             Object addressObj = ((Map<?, ?>) respondentNameData).get("address");
-            if (addressObj instanceof List) {
-                List<?> addressList = (List<?>) addressObj;
+            if (addressObj instanceof List<?> addressList) {
                 List<Address> addresses = new ArrayList<>();
                 for (Object addr : addressList) {
                     if (addr instanceof Map) {
@@ -428,14 +428,12 @@ public class TaskUtil {
                 Object respondentDetails = ((Map<?, ?>) additional).get("respondentDetails");
                 if (respondentDetails instanceof Map) {
                     Object formdata = ((Map<?, ?>) respondentDetails).get("formdata");
-                    if (formdata instanceof List) {
-                        List<?> formdataList = (List<?>) formdata;
+                    if (formdata instanceof List<?> formdataList) {
                         if (!formdataList.isEmpty()) {
                             Object dataObj = ((Map<?, ?>) formdataList.get(0)).get("data");
                             if (dataObj instanceof Map) {
                                 Object addressDetailsObj = ((Map<?, ?>) dataObj).get("addressDetails");
-                                if (addressDetailsObj instanceof List) {
-                                    List<?> detailsList = (List<?>) addressDetailsObj;
+                                if (addressDetailsObj instanceof List<?> detailsList) {
                                     List<Address> addresses = new ArrayList<>();
                                     for (Object data : detailsList) {
                                         if (data instanceof Map) {
@@ -493,7 +491,7 @@ public class TaskUtil {
 
         String orderType = order.getOrderType();
 
-        Object orderFormValue = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata"), Object.class);
+        Object orderFormValue = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("formdata"), Object.class);
         Object orderFormData = getOrderFormDataByOrderType(order.getAdditionalDetails(), orderType);
 
 
@@ -626,7 +624,7 @@ public class TaskUtil {
         Map<?, ?> complainantDetailsObj = jsonUtil.getNestedValue(additional, List.of("complainantDetails"), Map.class);
         List<?> formdataList = jsonUtil.getNestedValue(complainantDetailsObj, List.of("formdata"), List.class);
         if (formdataList == null || formdataList.isEmpty()) return "";
-        Map<String, Object> complainantDetails = jsonUtil.getNestedValue((Map<?, ?>) formdataList.get(0), List.of("data"), Map.class);
+        Map<String, Object> complainantDetails = jsonUtil.getNestedValue(formdataList.get(0), List.of("data"), Map.class);
         return getComplainantName(complainantDetails);
     }
 
@@ -684,7 +682,7 @@ public class TaskUtil {
         if (respondentDetails == null) return null;
         List<?> formdataList = jsonUtil.getNestedValue(respondentDetails, List.of("formdata"), List.class);
         if (formdataList == null || formdataList.isEmpty()) return null;
-        Map<?, ?> data = jsonUtil.getNestedValue((Map<?, ?>) formdataList.get(0), List.of("data"), Map.class);
+        Map<?, ?> data = jsonUtil.getNestedValue(formdataList.get(0), List.of("data"), Map.class);
         if (data == null) return null;
 
         // name
@@ -694,7 +692,7 @@ public class TaskUtil {
         Address address = null;
         List<?> addressDetailsList = jsonUtil.getNestedValue(data, List.of("addressDetails"), List.class);
         if (addressDetailsList != null && !addressDetailsList.isEmpty()) {
-            Map<?, ?> addressMap = jsonUtil.getNestedValue((Map<?, ?>) addressDetailsList.get(0), List.of("addressDetails"), Map.class);
+            Map<?, ?> addressMap = jsonUtil.getNestedValue(addressDetailsList.get(0), List.of("addressDetails"), Map.class);
             if (addressMap != null) {
                 address = Address.builder()
                         .locality((String) addressMap.getOrDefault("locality", null))
@@ -762,8 +760,7 @@ public class TaskUtil {
         List<Map<String, Object>> result = new ArrayList<>();
         if (deliveryChannelArray == null) return result;
         for (Object obj : deliveryChannelArray) {
-            if (!(obj instanceof Map)) continue;
-            Map<?, ?> channel = (Map<?, ?>) obj;
+            if (!(obj instanceof Map<?, ?> channel)) continue;
             Map<String, Object> entry = new HashMap<>();
             entry.put("code", channel.get("code"));
             entry.put("type", channel.get("type"));

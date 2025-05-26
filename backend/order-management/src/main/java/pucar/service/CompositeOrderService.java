@@ -40,14 +40,15 @@ public class CompositeOrderService implements OrderProcessor {
         RequestInfo requestInfo = orderRequest.getRequestInfo();
         log.info("pre processing composite order, result= IN_PROGRESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
 
+        String oldHearingNumber = order.getHearingNumber();
         List<Order> itemListFormCompositeItem = getItemListFormCompositeItem(order);
         for (Order compositeOrderItem : itemListFormCompositeItem) {
 
             orderStrategyExecutor.beforePublish(OrderRequest.builder()
                     .order(compositeOrderItem)
                     .requestInfo(requestInfo).build());
-
-            if (compositeOrderItem.getHearingNumber() != null)
+            // todo : need to find permanent solution for this
+            if (compositeOrderItem.getHearingNumber() != null && !compositeOrderItem.getHearingNumber().equals(oldHearingNumber))
                 order.setHearingNumber(compositeOrderItem.getHearingNumber());
 
         }

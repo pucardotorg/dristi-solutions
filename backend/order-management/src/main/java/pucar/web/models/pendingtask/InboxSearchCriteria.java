@@ -27,7 +27,7 @@ public class InboxSearchCriteria {
     private ProcessInstanceSearchCriteria processSearchCriteria;
 
     @JsonProperty("moduleSearchCriteria")
-    private HashMap<String,Object> moduleSearchCriteria;
+    private HashMap<String, Object> moduleSearchCriteria;
 
     @JsonProperty("offset")
     private Integer offset;

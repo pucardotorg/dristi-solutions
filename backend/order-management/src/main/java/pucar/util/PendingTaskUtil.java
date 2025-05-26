@@ -116,8 +116,7 @@ public class PendingTaskUtil {
                     ParameterizedType listType = (ParameterizedType) field.getGenericType();
                     Class<?> listGenericType = (Class<?>) listType.getActualTypeArguments()[0];
 
-                    if (value instanceof List<?>) {
-                        List<?> listValue = (List<?>) value;
+                    if (value instanceof List<?> listValue) {
                         List<Object> convertedList = new ArrayList<>();
                         for (Object v : listValue) {
                             convertedList.add(convertValue(v, listGenericType));

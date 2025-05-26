@@ -45,7 +45,7 @@ public class PublishOrderAssigningDateRescheduledHearing implements OrderUpdateS
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-       return false;
+        return false;
     }
 
     @Override
@@ -103,8 +103,9 @@ public class PublishOrderAssigningDateRescheduledHearing implements OrderUpdateS
             hearing.setEndTime(time);
         }
         WorkflowObject workflow = new WorkflowObject();
-        workflow.setAction(SETDATE);
+        workflow.setAction(SET_DATE);
         workflow.setComments("Update Hearing");
+        hearing.setWorkflow(workflow);
 
         StringBuilder updateUri = new StringBuilder(config.getHearingHost()).append(config.getHearingUpdateEndPoint());
         hearingUtil.createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(requestInfo).build(), updateUri);

@@ -11,14 +11,13 @@ import javax.validation.Valid;
 @NoArgsConstructor
 @Getter
 @Setter
-public class InboxRequest   {
+public class InboxRequest {
     @JsonProperty("RequestInfo")
     private RequestInfo RequestInfo;
 
     @Valid
     @JsonProperty("inbox")
-    private InboxSearchCriteria inbox ;
-
+    private InboxSearchCriteria inbox;
 
 
 }

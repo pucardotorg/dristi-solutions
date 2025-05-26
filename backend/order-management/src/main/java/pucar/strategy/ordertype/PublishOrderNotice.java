@@ -2,7 +2,6 @@ package pucar.strategy.ordertype;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
@@ -222,7 +221,7 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
         additionalDetails.put("litigants", complainantIndividualId);
 
         try {
-            List<TaskRequest> taskRequests = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, courtCase);
+            List<TaskRequest> taskRequests = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, courtCase,EMAIL);
             for (TaskRequest taskRequest : taskRequests) {
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
 

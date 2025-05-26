@@ -67,10 +67,11 @@ public class ServiceConstants {
     public static final String SCHEDULE_ADMISSION_HEARING = "SCHEDULE_ADMISSION_HEARING";
 
     public static final String BULK_RESCHEDULE = "BULK_RESCHEDULE";
-    public static final String SETDATE = "SETDATE";
+    public static final String SET_DATE = "SET_DATE";
     public static final String ADMIT = "ADMIT";
     public static final String ADMISSION = "ADMISSION";
     public static final String ABANDON = "ABANDON";
+    public static final String CLOSE = "CLOSE";
     public static final String COMPLETED = "COMPLETED";
     public static final String ABATED = "ABATED";
     public static final String MANUAL = "MANUAL_";
@@ -99,6 +100,7 @@ public class ServiceConstants {
     public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
     public static final String ERROR_WHILE_FETCHING_FROM_MDMS = "ERROR_WHILE_FETCHING_FROM_MDMS";
 
+    public static final String PENDING_ADMISSION_HEARING = "PENDING_ADMISSION_HEARING";
 
     // order type
     public static final String ACCEPTANCE_REJECTION_DCA = "ACCEPTANCE_REJECTION_DCA";
@@ -133,5 +135,8 @@ public class ServiceConstants {
     public static final String WARRANT = "WARRANT";
     public static final String WITHDRAWAL = "WITHDRAWAL";
 
+    public static final String SMS = "SMS";
+
+    public static final String EMAIL = "EMAIL";
 
 }

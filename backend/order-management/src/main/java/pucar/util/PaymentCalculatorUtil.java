@@ -26,16 +26,15 @@ public class PaymentCalculatorUtil {
 
     public CalculationRes callPaymentCalculator(TaskPaymentRequest request) {
         try {
-            StringBuilder uri = new StringBuilder();
-            uri.append(config.getPaymentCalculatorHost()).append(config.getPaymentCalculatorEndpoint());
+            String uri = config.getPaymentCalculatorHost() + config.getPaymentCalculatorEndpoint();
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<TaskPaymentRequest> requestEntity = new HttpEntity<>(request, headers);
 
-            ResponseEntity<CalculationRes> responseEntity = restTemplate.postForEntity(uri.toString(),
+            ResponseEntity<CalculationRes> responseEntity = restTemplate.postForEntity(uri,
                     requestEntity, CalculationRes.class);
-            log.info("Response of payment calculator :: {}",requestEntity.getBody());
+            log.info("Response of payment calculator :: {}", requestEntity.getBody());
 
             return responseEntity.getBody();
         } catch (Exception e) {

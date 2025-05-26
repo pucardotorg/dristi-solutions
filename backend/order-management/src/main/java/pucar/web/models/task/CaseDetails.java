@@ -3,7 +3,6 @@ package pucar.web.models.task;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
-import org.egov.common.contract.models.Address;
 import org.springframework.validation.annotation.Validated;
 
 @Validated

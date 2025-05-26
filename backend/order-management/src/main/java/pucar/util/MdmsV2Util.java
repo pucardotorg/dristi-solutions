@@ -43,7 +43,7 @@ public class MdmsV2Util {
     public List<Mdms> fetchMdmsV2Data(RequestInfo requestInfo, String tenantId, Set<String> ids, Set<String> uniqueIdentifiers, String schemaCode, Boolean isActive, Map<String, String> filters) {
         StringBuilder uri = new StringBuilder();
         uri.append(configs.getMdmsHost()).append(configs.getMdmsEndPoint());
-        MdmsCriteriaReqV2 mdmsCriteriaReqV2 = getMdmsV2Request(requestInfo, tenantId, ids, uniqueIdentifiers, schemaCode, isActive,filters);
+        MdmsCriteriaReqV2 mdmsCriteriaReqV2 = getMdmsV2Request(requestInfo, tenantId, ids, uniqueIdentifiers, schemaCode, isActive, filters);
         Object response = new HashMap<>();
         MdmsResponseV2 mdmsResponseV2 = new MdmsResponseV2();
         try {
@@ -59,12 +59,12 @@ public class MdmsV2Util {
     public JsonNode fetchMdmsV2Schema(RequestInfo requestInfo, String tenantId, Set<String> ids, Set<String> uniqueIdentifiers, String schemaCode, Boolean isActive) {
         StringBuilder uri = new StringBuilder();
         uri.append(configs.getMdmsHost()).append(configs.getMdmsSchemaEndPoint());
-        SchemaDefCriteria schemaDefinitionSearch= SchemaDefCriteria.builder().
+        SchemaDefCriteria schemaDefinitionSearch = SchemaDefCriteria.builder().
                 tenantId(tenantId)
                 .codes(uniqueIdentifiers)
                 .build();
 
-        MdmsSearch mdmsSearchObject= MdmsSearch.builder()
+        MdmsSearch mdmsSearchObject = MdmsSearch.builder()
                 .requestInfo(requestInfo)
                 .schemaDefCriteria(schemaDefinitionSearch)
                 .build();
@@ -83,7 +83,7 @@ public class MdmsV2Util {
         return jsonNode;
     }
 
-    public MdmsCriteriaReqV2 getMdmsV2Request(RequestInfo requestInfo, String tenantId, Set<String> ids, Set<String> uniqueIdentifiers, String schemaCode, Boolean isActive,Map<String, String> filters) {
+    public MdmsCriteriaReqV2 getMdmsV2Request(RequestInfo requestInfo, String tenantId, Set<String> ids, Set<String> uniqueIdentifiers, String schemaCode, Boolean isActive, Map<String, String> filters) {
         MdmsCriteriaV2 mdmsCriteriaV2 = new MdmsCriteriaV2();
 
         if (tenantId != null) mdmsCriteriaV2.setTenantId(tenantId);
@@ -92,7 +92,7 @@ public class MdmsV2Util {
             mdmsCriteriaV2.setUniqueIdentifiers(uniqueIdentifiers);
         if (schemaCode != null) mdmsCriteriaV2.setSchemaCode(schemaCode);
         if (isActive != null) mdmsCriteriaV2.setIsActive(isActive);
-        if (filters!=null) mdmsCriteriaV2.setFilterMap(filters);
+        if (filters != null) mdmsCriteriaV2.setFilterMap(filters);
 
         return MdmsCriteriaReqV2.builder().requestInfo(requestInfo).mdmsCriteria(mdmsCriteriaV2).build();
     }

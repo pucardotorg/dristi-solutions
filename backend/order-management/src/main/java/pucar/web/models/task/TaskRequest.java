@@ -14,7 +14,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class TaskRequest   {
+public class TaskRequest {
 
     @JsonProperty("orderId")
     @Valid
