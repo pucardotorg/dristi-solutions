@@ -134,20 +134,26 @@ public class HearingService {
             hearing.setCourtCaseNumber(hearingRequest.getHearing().getCourtCaseNumber() != null ? hearingRequest.getHearing().getCourtCaseNumber() : hearing.getCourtCaseNumber());
             hearing.setCaseReferenceNumber(hearingRequest.getHearing().getCaseReferenceNumber() != null ? hearingRequest.getHearing().getCaseReferenceNumber() : hearing.getCaseReferenceNumber());
             hearingRequest.setHearing(hearing);
-
-            // Enrich application upon update
-            enrichmentUtil.enrichHearingApplicationUponUpdate(hearingRequest);
-
-            deleteFileStoreDocumentsIfInactive(hearingRequest.getHearing());
-
-
             if (hearing.getWorkflow() != null) {
                 workflowService.updateWorkflowStatus(hearingRequest);
             }
 
+            // Enrich application upon update
+            enrichmentUtil.enrichHearingApplicationUponUpdate(hearingRequest);
+
+            List<String> fileStoreIds = new ArrayList<>();
+            for (Document document : hearingRequest.getHearing().getDocuments()) {
+                if (!document.getIsActive()) {
+                    fileStoreIds.add(document.getFileStore());
+                }
+            }
+            if (!fileStoreIds.isEmpty()) {
+                fileStoreUtil.deleteFilesByFileStore(fileStoreIds, hearingRequest.getHearing().getTenantId());
+                log.info("Deleted files from file store with ids: {}", fileStoreIds);
+            }
+            String updatedState = hearingRequest.getHearing().getStatus();
             producer.push(config.getHearingUpdateTopic(), hearingRequest);
 
-            String updatedState = hearingRequest.getHearing().getStatus();
             callNotificationService(hearingRequest, updatedState);
 
             return hearingRequest.getHearing();
@@ -159,28 +165,6 @@ public class HearingService {
             log.error("Error occurred while updating hearing");
             throw new CustomException(HEARING_UPDATE_EXCEPTION, "Error occurred while updating hearing: " + e.getMessage());
         }
-
-    }
-
-    private void deleteFileStoreDocumentsIfInactive(Hearing hearing){
-
-
-        if (hearing.getDocuments() != null){
-
-         List<String> fileStoreIds = new ArrayList<>();
-
-
-        for (Document document : hearing.getDocuments()) {
-                if (!document.getIsActive()) {
-                    fileStoreIds.add(document.getFileStore());
-                }
-            }
-        if (!fileStoreIds.isEmpty()) {
-                fileStoreUtil.deleteFilesByFileStore(fileStoreIds, hearing.getTenantId());
-                log.info("Deleted files from file store with ids: {}", fileStoreIds);
-        }
-        }
-
 
     }
 
@@ -409,11 +393,6 @@ public class HearingService {
         }
 
         List<String> hearingIds = hearingsToReschedule.stream().filter((hearing) -> !Objects.equals(hearing.getStatus(), COMPLETED)).map(Hearing::getHearingId).toList();
-
-        if (hearingIds.isEmpty()) {
-            log.info("all hearings are completed");
-            return new ArrayList<>();
-        }
         bulkReschedule.setHearingIds(hearingIds);
         request.setBulkReschedule(bulkReschedule);
         log.info("no of hearings to reschedule: {}", hearingIds.size());

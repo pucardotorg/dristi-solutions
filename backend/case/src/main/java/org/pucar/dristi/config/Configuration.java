@@ -192,6 +192,9 @@ public class Configuration {
 	@Value("${egov.update.additional.join.case.kafka.topic}")
 	private String updateAdditionalJoinCaseTopic;
 
+	@Value("${egov.courtId}")
+	private String courtId;
+
 	//Mdms
 
 	@Value("${mdms.case.module.name}")
@@ -362,9 +365,6 @@ public class Configuration {
 
 	@Value("${egov.payment.calculator.host}")
 	private String paymentCalculatorHost;
-
-	@Value("${egov.courtId}")
-	private String courtId;
 
 	@Value("${egov.payment.calculator.endpoint}")
 	private String paymentCalculatorEndpoint;

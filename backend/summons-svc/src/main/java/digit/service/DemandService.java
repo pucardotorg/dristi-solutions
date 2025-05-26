@@ -144,6 +144,7 @@ public class DemandService {
         }
     }
 
+
     private static List<Calculation> getCalculations(List<Calculation> calculations) {
         calculations.forEach(calculation -> {
             calculation.setBreakDown(calculation.getBreakDown().stream().filter(breakDown -> breakDown.getCode().equals("COURT_FEE")).toList());

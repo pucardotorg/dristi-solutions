@@ -59,7 +59,7 @@ public class SchedulerUtil {
         try {
             ScheduleHearingSearchResponse searchResponse = mapper.convertValue(response, ScheduleHearingSearchResponse.class);
             scheduleHearings = searchResponse.getHearings();
-        } catch (Exception e){
+        } catch (Exception e) {
             log.error("Error occurred while getting scheduled hearings.");
             throw new CustomException("ERR_SCHEDULER_EXCEPTION", "Error occurred while getting scheduled hearings.");
         }

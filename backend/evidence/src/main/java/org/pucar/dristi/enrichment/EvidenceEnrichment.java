@@ -57,11 +57,12 @@ public class EvidenceEnrichment {
 
             evidenceRequest.getArtifact().setAuditdetails(auditDetails);
             evidenceRequest.getArtifact().setId(UUID.randomUUID());
-            evidenceRequest.getArtifact().setCourtId(configuration.getCourtId());
+
             for (Comment comment : evidenceRequest.getArtifact().getComments()) {
                 comment.setId(UUID.randomUUID());
             }
 
+            evidenceRequest.getArtifact().setCourtId(configuration.getCourtId());
             evidenceRequest.getArtifact().setIsActive(true);
             evidenceRequest.getArtifact().setCreatedDate(System.currentTimeMillis());
 
@@ -114,9 +115,6 @@ public class EvidenceEnrichment {
                     idName=configuration.getCourtConfig();
                     idFormat=configuration.getCourtFormat();
                 }
-            } else if(ICOPS.equalsIgnoreCase(sourceType)) {
-                idName = configuration.getCourtConfig();
-                idFormat = configuration.getIcopsFormat();
             }
             String tenantId = getTenantId(evidenceRequest.getArtifact().getFilingNumber());
 

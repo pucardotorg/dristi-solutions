@@ -10,12 +10,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class CourtIdRepository {
     private final JdbcTemplate jdbcTemplate;
-
+    
     @Autowired
     public CourtIdRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
-
+    
     @Transactional
     public void updateCourtIdForFilingNumber(String courtId, String filingNumber) {
         String countQuery = "SELECT COUNT(*) FROM eg_wf_processinstance_v2 WHERE businessid = ? AND action = 'VALIDATE'";
@@ -59,5 +59,5 @@ public class CourtIdRepository {
         int rowsUpdated = jdbcTemplate.update(queryForApplication, courtId, filingNumber);
         log.warn("Number of application rows updated :: {} for filingNumber {}",rowsUpdated, filingNumber);
     }
-
+    
 }

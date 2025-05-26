@@ -59,7 +59,7 @@ public class DemandUtil {
         requestInfoWrapper.setRequestInfo(requestInfo);
         Object response = null;
         try {
-            response = restTemplate.postForEntity(
+             response = restTemplate.postForEntity(
                     builder.toUriString(),
                     requestInfoWrapper,
                     Object.class

@@ -29,6 +29,7 @@ public class EvidenceUtil {
         try {
             StringBuilder uri = new StringBuilder();
             uri.append(configuration.getEvidenceHost()).append(configuration.getEvidenceCreateEndpoint());
+
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<EvidenceRequest> requestBody = new HttpEntity<>(request, headers);

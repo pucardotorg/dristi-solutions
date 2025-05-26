@@ -30,8 +30,6 @@ public class Configuration {
     @Value("${egov.user.update.path}")
     private String userUpdateEndpoint;
 
-    @Value("${egov.courtId}")
-    private String courtId;
 
     //Idgen Config
     @Value("${egov.idgen.host}")
@@ -139,6 +137,9 @@ public class Configuration {
 
     @Value("${egov.file.store.delete.endpoint}")
     private String fileStoreDeleteEndPoint;
+
+    @Value("${egov.courtId}")
+    private String courtId;
 
     //Idgen
     @Value("${egov.idgen.orderConfig}")

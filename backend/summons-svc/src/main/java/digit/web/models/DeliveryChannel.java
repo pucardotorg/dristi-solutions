@@ -16,21 +16,6 @@ import java.util.Map;
 @Builder
 public class DeliveryChannel {
 
-    @JsonProperty("fees")
-    private String fees;
-
-    @JsonProperty("status")
-    private String status;
-
-    @JsonProperty("channelCode")
-    private String channelCode;
-
-    @JsonProperty("feePaidDate")
-    private String feePaidDate;
-
-    @JsonProperty("statusChangeDate")
-    private String statusChangeDate;
-
     @JsonProperty("channelName")
     private String channelName;
 

@@ -10,7 +10,7 @@
           "data": {
             "id": 463,
             "actionid": 2706,
-            "rolecode": "CASE_REVIEWER",
+            "rolecode": "FSO_ROLE",
             "tenantid": "kl",
             "actioncode": "2706"
           },
@@ -30,7 +30,7 @@
           "data": {
             "id": 462,
             "actionid": 2705,
-            "rolecode": "CASE_REVIEWER",
+            "rolecode": "FSO_ROLE",
             "tenantid": "kl",
             "actioncode": "2705"
           },
@@ -50,7 +50,7 @@
           "data": {
             "id": 461,
             "actionid": 2704,
-            "rolecode": "CASE_REVIEWER",
+            "rolecode": "FSO_ROLE",
             "tenantid": "kl",
             "actioncode": "2704"
           },

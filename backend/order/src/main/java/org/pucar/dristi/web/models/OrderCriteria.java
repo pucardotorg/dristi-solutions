@@ -29,14 +29,14 @@ public class OrderCriteria {
     @JsonProperty("orderType")
     private String orderType = null;
 
-    @JsonProperty("courtId")
-    private String courtId = null;
-
     @JsonProperty("orderNumber")
     private String orderNumber = null;
 
     @JsonProperty("orderCategory")
     private String orderCategory = null;
+
+    @JsonProperty("courtId")
+    private String courtId = null;
 
     @JsonProperty("status")
     private String status = null;

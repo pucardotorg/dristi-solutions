@@ -48,8 +48,9 @@ public class TaskRegistrationEnrichment {
 
             AuditDetails auditDetails = AuditDetails.builder().createdBy(taskRequest.getRequestInfo().getUserInfo().getUuid()).createdTime(System.currentTimeMillis()).lastModifiedBy(taskRequest.getRequestInfo().getUserInfo().getUuid()).lastModifiedTime(System.currentTimeMillis()).build();
             task.setAuditDetails(auditDetails);
-            task.setCourtId(config.getCourtId());
+
             task.setId(UUID.randomUUID());
+            task.setCourtId(config.getCourtId());
 
             if (task.getDocuments() != null) {
                 task.getDocuments().forEach(document -> {

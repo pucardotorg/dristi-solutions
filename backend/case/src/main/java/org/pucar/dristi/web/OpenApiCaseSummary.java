@@ -98,7 +98,7 @@ public class OpenApiCaseSummary {
     public enum CaseTypeEnum {
         CMP("Criminal Miscellaneous Petition"),
 
-        ST("Summary Trial");
+        ST("Summary Trail");
 
         private String value;
 

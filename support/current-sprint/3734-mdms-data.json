@@ -17,21 +17,5 @@
         "isActive": true
       }
     ]
-  },
-  {
-    "moduleName": "common-masters",
-    "masterName": "IdFormat",
-    "mdmsPayload": [
-      {
-        "tenantId": "kl",
-        "schemaCode": "common-masters.IdFormat",
-        "uniqueIdentifier": "case.evidence.icops.[TENANT_ID]",
-        "data": {
-          "format": "E[SEQ_ICOPS_[TENANT_ID]]",
-          "idname": "case.evidence.icops.[TENANT_ID]"
-        },
-        "isActive": true
-      }
-    ]
   }
 ]

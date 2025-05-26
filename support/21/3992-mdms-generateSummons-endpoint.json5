@@ -5,50 +5,50 @@
     "masterName": "actions-test",
     "mdmsPayload": [
       {
-        "id": "b464f610-ac9e-43c8-9ab0-b75259d83d1b",
+        "id": "aeaa8649-4ec2-4f01-9fe1-dfec1589d094",
         "tenantId": "kl",
         "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
-        "uniqueIdentifier": "2742",
+        "uniqueIdentifier": "2741",
         "data": {
-          "id": 2742,
+          "id": 2741,
           "url": "/summons-svc/summons/v1/_generateSummons",
-          "code": "2742",
+          "code": "2741",
           "name": "Generate Summons Document",
           "displayName": "Generate Summons Document",
-          "serviceCode": "Summons-svc"
+          "serviceCode": "summons-svc"
         },
         "isActive": true,
         "auditDetails": {
-          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
-          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
-          "createdTime": 1747999137883,
-          "lastModifiedTime": 1747999137883
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1747987684463,
+          "lastModifiedTime": 1747987684463
         }
       }
     ]
   },
   {
-    "moduleName":"ACCESSCONTROL-ROLEACTIONS",
-    "masterName":"roleactions",
+    "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+    "masterName": "roleactions",
     "mdmsPayload": [
       {
-        "id": "36a80e50-5c0c-49a2-b715-4ae6bc338f2b",
+        "id": "f3f9d8a8-9046-4160-ba86-8e13faefc30e",
         "tenantId": "kl",
         "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
-        "uniqueIdentifier": "477",
+        "uniqueIdentifier": "480",
         "data": {
-          "id": 477,
-          "actionid": 2742,
+          "id": 480,
+          "actionid": 2741,
           "rolecode": "JUDGE_ROLE",
           "tenantid": "kl",
-          "actioncode": "2742"
+          "actioncode": "2741"
         },
         "isActive": true,
         "auditDetails": {
-          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
-          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
-          "createdTime": 1747999225359,
-          "lastModifiedTime": 1748004455464
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1747992357870,
+          "lastModifiedTime": 1748004472803
         }
       }
     ]

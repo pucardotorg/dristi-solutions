@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Set;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
-import static org.pucar.dristi.config.ServiceConstants.PAYMENT_TRANSACTION_DATE_PATH;
 
 @Service
 @Slf4j
@@ -64,6 +63,7 @@ public class BillingService {
         try {
             JSONArray paymentDetailsArray = util.constructArray(payment, PAYMENT_PAYMENT_DETAILS_PATH);
             Long paymentCompletedDate =  ((Number) JsonPath.read(payment, PAYMENT_TRANSACTION_DATE_PATH)).longValue();
+
             LinkedHashMap<String, Object> requestInfoMap = JsonPath.read(payment, REQUEST_INFO_PATH);
             JSONObject requestInfo = new JSONObject();
             requestInfo.put(REQUEST_INFO, requestInfoMap);

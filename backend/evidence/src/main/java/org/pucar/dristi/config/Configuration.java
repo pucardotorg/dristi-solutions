@@ -30,6 +30,9 @@ public class Configuration {
 	@Value("${egov.user.update.path}")
 	private String userUpdateEndpoint;
 
+	@Value("${egov.courtId}")
+	private String courtId;
+
 	// Idgen Config
 	@Value("${egov.idgen.host}")
 	private String idGenHost;
@@ -131,9 +134,6 @@ public class Configuration {
 	@Value("${egov.order.path}")
 	private String orderExistsPath;
 
-	@Value("${egov.courtId}")
-	private String courtId;
-
 	// Hearing Config
 	@Value("${egov.hearing.host}")
 	private String hearingHost;
@@ -191,12 +191,6 @@ public class Configuration {
 
 	@Value("${egov.idgen.artifactConfig}")
 	private String artifactConfig;
-
-	@Value("${egov.idgen.icopsFormat}")
-	private String icopsFormat;
-
-	@Value("${egov.idgen.icopsConfig}")
-	private String icopsConfig;
 
 	//Localization
 	@Value("${egov.localization.host}")

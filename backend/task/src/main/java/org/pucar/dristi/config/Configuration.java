@@ -98,9 +98,6 @@ public class Configuration {
     @Value("${task.kafka.summon.topic}")
     private String taskIssueSummonTopic;
 
-    @Value("${egov.courtId}")
-    private String courtId;
-
     @Value("${egov.workflow.task.join.case.business.name}")
     private String taskjoinCaseBusinessName;
 
@@ -187,6 +184,9 @@ public class Configuration {
 
     @Value(("${task.business.service}"))
     private String taskBusinessService;
+
+    @Value("${egov.courtId}")
+    private String courtId;
 
     //Idgen
     @Value("${egov.idgen.taskConfig}")

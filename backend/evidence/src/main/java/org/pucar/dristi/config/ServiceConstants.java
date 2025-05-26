@@ -99,7 +99,5 @@ public class ServiceConstants {
 	public static final String DIRECT = "DIRECT";
 	public static final String APPLICATION = "APPLICATION";
 	public static final String BENCH_CLERK = "BENCH_CLERK";
-	public static final String ICOPS ="ICOPS";
-
 
 }

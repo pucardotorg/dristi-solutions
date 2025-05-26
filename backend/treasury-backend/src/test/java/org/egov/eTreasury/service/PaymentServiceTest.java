@@ -59,6 +59,7 @@ class PaymentServiceTest {
     private ObjectMapper objectMapper;
     @Mock
     private TransactionDetails transactionDetails;
+
     @Mock
     private TreasuryEnrichment enrichment;
 

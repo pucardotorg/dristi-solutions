@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.micrometer.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
@@ -22,7 +21,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -117,8 +119,16 @@ public class OrderRegistrationService {
 
             workflowUpdate(body);
 
-            deleteFileStoreDocumentsIfInactive(body.getOrder());
-
+            List<String> fileStoreIds = new ArrayList<>();
+            for(Document document : body.getOrder().getDocuments()) {
+                if(!document.getIsActive()){
+                    fileStoreIds.add(document.getFileStore());
+                }
+            }
+            if(!fileStoreIds.isEmpty()){
+                fileStoreUtil.deleteFilesByFileStore(fileStoreIds, body.getOrder().getTenantId());
+                log.info("Deleted files from filestore: {}", fileStoreIds);
+            }
             String updatedState = body.getOrder().getStatus();
             String orderType = body.getOrder().getOrderType();
             producer.push(config.getUpdateOrderKafkaTopic(), body);
@@ -134,28 +144,6 @@ public class OrderRegistrationService {
             log.error("Error occurred while updating order");
             throw new CustomException(ORDER_UPDATE_EXCEPTION, "Error occurred while updating order: " + e.getMessage());
         }
-
-    }
-
-      private void deleteFileStoreDocumentsIfInactive(Order order){
-
-
-        if (order.getDocuments() != null){
-
-         List<String> fileStoreIds = new ArrayList<>();
-
-
-        for (Document document : order.getDocuments()) {
-                if (!document.getIsActive()) {
-                    fileStoreIds.add(document.getFileStore());
-                }
-            }
-        if(!fileStoreIds.isEmpty()){
-                fileStoreUtil.deleteFilesByFileStore(fileStoreIds, order.getTenantId());
-                log.info("Deleted files from filestore: {}", fileStoreIds);
-            }
-        }
-
 
     }
 

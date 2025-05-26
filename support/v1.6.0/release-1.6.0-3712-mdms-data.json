@@ -50,6 +50,7 @@
             }
           },
           "legalBasicFund": 13,
+          "vakalathnamaFee": 6,
           "noOfAdvocateFees": {
             "1": {
               "max": 1,
@@ -74,9 +75,9 @@
         "isActive": true,
         "auditDetails": {
           "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
-          "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "cf0b78ba-c58d-4314-ab02-aa69111f48e6",
           "createdTime": 1726562380558,
-          "lastModifiedTime": 1744813206973
+          "lastModifiedTime": 1745066985172
         }
       }
     ]
