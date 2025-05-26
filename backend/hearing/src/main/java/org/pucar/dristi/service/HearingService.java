@@ -162,26 +162,20 @@ public class HearingService {
 
     }
 
-    private void deleteFileStoreDocumentsIfInactive(Hearing hearing){
+    private void deleteFileStoreDocumentsIfInactive(Hearing hearing) {
 
-
-        if (hearing.getDocuments() != null){
-
-         List<String> fileStoreIds = new ArrayList<>();
-
-
-        for (Document document : hearing.getDocuments()) {
+        if (hearing.getDocuments() != null) {
+            List<String> fileStoreIds = new ArrayList<>();
+            for (Document document : hearing.getDocuments()) {
                 if (!document.getIsActive()) {
                     fileStoreIds.add(document.getFileStore());
                 }
             }
-        if (!fileStoreIds.isEmpty()) {
+            if (!fileStoreIds.isEmpty()) {
                 fileStoreUtil.deleteFilesByFileStore(fileStoreIds, hearing.getTenantId());
                 log.info("Deleted files from file store with ids: {}", fileStoreIds);
+            }
         }
-        }
-
-
     }
 
     public HearingExists isHearingExist(HearingExistsRequest body) {
@@ -558,7 +552,7 @@ public class HearingService {
             }
             // If manualUpdateDateHearings is not empty,
             if (!manualUpdateDateHearings.isEmpty()) {
-                List<ScheduleHearing> manualHearingDateUpdate = schedulerUtil.createScheduleHearing(manualUpdateDateHearings,request.getRequestInfo());
+                List<ScheduleHearing> manualHearingDateUpdate = schedulerUtil.createScheduleHearing(manualUpdateDateHearings, request.getRequestInfo());
                 for (ScheduleHearing scheduleHearing : manualHearingDateUpdate) {
                     Hearing hearing = hearingMap.get(scheduleHearing.getHearingBookingId());
                     if (hearing != null) {
