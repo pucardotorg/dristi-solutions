@@ -116,9 +116,19 @@ const DashboardPage = () => {
   }, [select]);
 
   const handleSubmit = () => {
+    const startDate = new Date(dateRange[0].startDate);
+    const endDate = new Date(dateRange[0].endDate);
+
+    startDate.setHours(0, 0, 0, 0);
+
+    endDate.setHours(23, 59, 59, 999);
+
+    const utcStartDate = new Date(startDate.toUTCString());
+    const utcEndDate = new Date(endDate.toUTCString());
+
     setSelectedRange({
-      startDate: new Date(dateRange[0].startDate).toISOString().split("T")[0],
-      endDate: new Date(dateRange[0].endDate).toISOString().split("T")[0],
+      startDate: utcStartDate.toISOString(),
+      endDate: utcEndDate.toISOString(),
     });
   };
 
