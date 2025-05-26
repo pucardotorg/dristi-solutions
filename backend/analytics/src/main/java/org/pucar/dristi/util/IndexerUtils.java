@@ -167,6 +167,10 @@ public class IndexerUtils {
         String caseTitle = pendingTask.getCaseTitle();
         String additionalDetails = "{}";
         String screenType = pendingTask.getScreenType();
+        String caseNumber = pendingTask.getCaseNumber();
+        String caseStage = pendingTask.getStage();
+        String advocateDetails = pendingTask.getAdvocateDetails();
+        String actionCategory = pendingTask.getActionCategory();
         try {
             additionalDetails = mapper.writeValueAsString(pendingTask.getAdditionalDetails());
         } catch (Exception e) {
@@ -177,7 +181,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status,caseNumber,caseStage,advocateDetails,actionCategory, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
         );
     }
 
@@ -217,6 +221,7 @@ public class IndexerUtils {
         isCompleted = isNullOrEmpty(name);
         isGeneric = details.containsKey("isGeneric");
         String actors = details.get("actors");
+        String actionCategory = details.get("actionCategory");
 
         if (isGeneric) {
             log.info("creating pending task from generic task");
@@ -232,7 +237,7 @@ public class IndexerUtils {
                 if (actors.toLowerCase().contains(ADVOCATE) || actors.toLowerCase().contains(LITIGANT)) {
                     String jsonString = requestInfo.toString();
                     RequestInfo request = mapper.readValue(jsonString, RequestInfo.class);
-                    org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(request, filingNumber);
+                    CaseSearchRequest caseSearchRequest = createCaseSearchRequest(request, filingNumber);
                     JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
                     JsonNode litigants = caseUtil.getLitigants(caseDetails);
                     Set<String> individualIds = caseUtil.getIndividualIds(litigants);
@@ -247,7 +252,7 @@ public class IndexerUtils {
                         representativeIds = advocateUtil.getAdvocate(request, representativeIds.stream().toList());
                     }
                     individualIds.addAll(representativeIds);
-                    org.pucar.dristi.web.models.SmsTemplateData smsTemplateData = enrichSmsTemplateData(details, tenantId);
+                    SmsTemplateData smsTemplateData = enrichSmsTemplateData(details, tenantId);
                     List<String> phonenumbers = callIndividualService(request, new ArrayList<>(individualIds));
                     for (String number : phonenumbers) {
                         notificationService.sendNotification(request, smsTemplateData, PENDING_TASK_CREATED, number);
@@ -287,13 +292,65 @@ public class IndexerUtils {
             throw new CustomException(Pending_Task_Exception, "Error occurred while preparing pending task: " + e);
         }
 
+        String caseNumber = filingNumber;
+
+        JSONObject request = new JSONObject();
+        request.put(REQUEST_INFO, requestInfo);
+        
+        // fetch case detail
+        Object caseObject = caseUtil.getCase(request, tenantId, cnrNumber, filingNumber, null);
+        String cmpNumber = JsonPath.read(caseObject.toString(), CASE_CMPNUMBER_PATH);
+        String courtCaseNumber = JsonPath.read(caseObject.toString(), CASE_COURTCASENUMBER_PATH);
+
+        if(courtCaseNumber!=null && !courtCaseNumber.isEmpty()){
+            caseNumber = courtCaseNumber;
+        }else if(cmpNumber!=null && !cmpNumber.isEmpty()){
+            caseNumber = cmpNumber;
+        }
+        String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
+        String advocateDetails = extractAdvocateDetails(JsonPath.read(caseObject.toString(), CASE_REPRESENTATIVES));
+
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber,caseStage,advocateDetails,actionCategory,assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
         );
     }
 
-	public static List<String> extractIndividualIds(JsonNode rootNode) {
+    public String extractAdvocateDetails(List<Map<String, Object>> representatives) {
+        if (representatives == null || representatives.isEmpty()) {
+            return "";
+        }
+
+        List<String> details = new ArrayList<>();
+
+        for (Map<String, Object> representative : representatives) {
+            Map<String, Object> additionalDetails = (Map<String, Object>) representative.get("additionalDetails");
+            String advocateName = additionalDetails != null ? (String) additionalDetails.get("advocateName") : "";
+
+            List<Map<String, Object>> representingList = (List<Map<String, Object>>) representative.get("representing");
+
+            if (representingList != null) {
+                for (Map<String, Object> representing : representingList) {
+                    String partyType = (String) representing.get("partyType");
+                    String label = "";
+
+                    if (partyType != null && partyType.startsWith("complainant")) {
+                        label = "C";
+                    } else if (partyType != null && partyType.startsWith("accused")) {
+                        label = "A";
+                    }
+
+                    details.add(advocateName + "(" + label + ")");
+                    break;
+                }
+            }
+        }
+
+        return String.join(", ", details);
+    }
+
+
+    public static List<String> extractIndividualIds(JsonNode rootNode) {
 		List<String> individualIds = new ArrayList<>();
 
 		JsonNode complainantDetailsNode = rootNode.path("complainantDetails")
@@ -368,8 +425,9 @@ public class IndexerUtils {
         boolean isCompleted = true;
         boolean isGeneric = false;
         String actors = null;
+        String actionCategory = null;
 
-        List<org.pucar.dristi.web.models.PendingTaskType> pendingTaskTypeList = mdmsDataConfig.getPendingTaskTypeMap().get(entityType);
+        List<PendingTaskType> pendingTaskTypeList = mdmsDataConfig.getPendingTaskTypeMap().get(entityType);
         if (pendingTaskTypeList == null) return caseDetails;
 
         // Determine name and isCompleted based on status and action
@@ -377,6 +435,7 @@ public class IndexerUtils {
             if (pendingTaskType.getState().equals(status) && pendingTaskType.getTriggerAction().contains(action)) {
                 name = pendingTaskType.getPendingTask();
                 screenType = pendingTaskType.getScreenType();
+                actionCategory = pendingTaskType.getActionCategory();
                 isCompleted = false;
                 isGeneric = pendingTaskType.getIsgeneric();
                 actors = pendingTaskType.getActor();
@@ -398,6 +457,7 @@ public class IndexerUtils {
         caseDetails.putAll(entityDetails);
         caseDetails.put("name", name);
         caseDetails.put("screenType", screenType);
+        caseDetails.put("actionCategory", actionCategory);
         caseDetails.put("actors",actors);
         if (isGeneric) caseDetails.put("isGeneric", "Generic");
 

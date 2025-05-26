@@ -63,6 +63,18 @@ public class PendingTask {
     @NotNull
     private String filingNumber = null;
 
+    @JsonProperty("caseNumber")
+    private String caseNumber = null;
+
+    @JsonProperty("stage")
+    private String stage = null;
+
+    @JsonProperty("advocateDetails")
+    private String advocateDetails = null;
+
+    @JsonProperty("actionCategory")
+    private String actionCategory = null;
+
     @JsonProperty("caseId")
     @NotNull
     private String caseId = null;

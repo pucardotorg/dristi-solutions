@@ -32,7 +32,7 @@ class PendingTaskTypeTest {
         String workflowModule = "module1";
         List<String> closerAction = Arrays.asList("close1", "close2");
 
-        PendingTaskType pendingTaskType = new PendingTaskType(id, pendingTask, actor,false, triggerAction, state, workflowModule, "home",closerAction);
+        PendingTaskType pendingTaskType = new PendingTaskType(id, pendingTask, actor,false, triggerAction, state, workflowModule, "home","actionCategory",closerAction);
 
         assertEquals(id, pendingTaskType.getId());
         assertEquals(pendingTask, pendingTaskType.getPendingTask());
@@ -119,7 +119,7 @@ class PendingTaskTypeTest {
                 .workflowModule(workflowModule)
                 .closerAction(closerAction)
                 .build();
-        String expected = "PendingTaskType(id=123, pendingTask=task1, actor=actor1, isgeneric=null, triggerAction=[action1, action2], state=state1, workflowModule=module1, screenType=null, closerAction=[close1, close2])";
+        String expected ="PendingTaskType(id=123, pendingTask=task1, actor=actor1, isgeneric=null, triggerAction=[action1, action2], state=state1, workflowModule=module1, screenType=null, actionCategory=null, closerAction=[close1, close2])";
         assertEquals(expected, pendingTaskType.toString());
     }
 
