@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import pucar.config.Configuration;
 import pucar.strategy.OrderUpdateStrategy;
 import pucar.util.*;
 import pucar.web.models.Order;
@@ -41,17 +40,15 @@ public class PublishOrder implements OrderUpdateStrategy {
     private final CaseUtil caseUtil;
     private final HearingUtil hearingUtil;
     private final DateUtil dateUtil;
-    private final HrmsUtil hrmsUtil;
 
     @Autowired
-    public PublishOrder(ApplicationUtil applicationUtil, PendingTaskUtil pendingTaskUtil, OrderUtil orderUtil, CaseUtil caseUtil, HearingUtil hearingUtil, DateUtil dateUtil, HrmsUtil hrmsUtil) {
+    public PublishOrder(ApplicationUtil applicationUtil, PendingTaskUtil pendingTaskUtil, OrderUtil orderUtil, CaseUtil caseUtil, HearingUtil hearingUtil, DateUtil dateUtil) {
         this.applicationUtil = applicationUtil;
         this.pendingTaskUtil = pendingTaskUtil;
         this.orderUtil = orderUtil;
         this.caseUtil = caseUtil;
         this.hearingUtil = hearingUtil;
         this.dateUtil = dateUtil;
-        this.hrmsUtil = hrmsUtil;
     }
 
     @Override
@@ -141,7 +138,7 @@ public class PublishOrder implements OrderUpdateStrategy {
                 .entryDate(dateUtil.getStartOfTheDayForEpoch(dateUtil.getCurrentTimeInMilis()))
                 .caseNumber(courtCase.getCmpNumber())
                 .caseId(courtCase.getId().toString())
-                .courtId(hrmsUtil.getCourtId(requestInfo))  // take confirmation
+                .courtId(courtCase.getCourtId())
                 .businessOfDay(orderUtil.getBusinessOfTheDay(order.getAdditionalDetails()))
                 .referenceId(order.getOrderNumber())
                 .referenceType("Order")
