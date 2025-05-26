@@ -35,7 +35,7 @@ public class HearingRowMapperTest {
         when(resultSet.getString("judge_id")).thenReturn("J001");
         when(resultSet.getString("case_id")).thenReturn("CASE001");
         when(resultSet.getString("hearing_type")).thenReturn("ADMISSION");
-        when(resultSet.getLong("hearing_date")).thenReturn(System.currentTimeMillis());
+        when(resultSet.getString("hearing_date")).thenReturn(String.valueOf(System.currentTimeMillis()));
         when(resultSet.getString("title")).thenReturn("Hearing Title");
         when(resultSet.getString("status")).thenReturn("SCHEDULED");
         when(resultSet.getString("start_time")).thenReturn("1");
