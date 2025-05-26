@@ -1,6 +1,5 @@
 package digit.web.models;
 
-
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.validation.annotation.Validated;
 
@@ -35,5 +34,4 @@ public class EvidenceRequest {
         this.artifact = artifact;
         return this;
     }
-
 }

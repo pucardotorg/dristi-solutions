@@ -26,6 +26,9 @@ public class TaskCriteria {
     @JsonProperty("tenantId")
     private String tenantId = null;
 
+    @JsonProperty("courtId")
+    private String courtId;
+
     @JsonProperty("orderId")
     private UUID orderId = null;
 
@@ -50,6 +53,4 @@ public class TaskCriteria {
     @JsonProperty("userUuid")
     private String userUuid;
 
-    @JsonProperty("courtId")
-    private String courtId;
 }
