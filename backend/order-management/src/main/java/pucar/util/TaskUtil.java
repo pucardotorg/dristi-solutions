@@ -336,11 +336,16 @@ public class TaskUtil {
         if (docSubType != null) {
             respondentDetails = docSubType.equals("Witness") ? getRespondentAccused(order, courtCase) : null;
         }
-        try {
-            witnessDetails = objectMapper.convertValue(objectMapper.writeValueAsString(respondentDetails), WitnessDetails.class);
-        } catch (Exception e) {
-          log.error("Exception in witnessDetails", e);
-        }
+
+            if (respondentDetails != null){
+                witnessDetails = WitnessDetails.builder()
+                        .name(respondentDetails.getName())
+                        .phone(respondentDetails.getPhone())
+                        .email(respondentDetails.getEmail())
+                        .address(respondentDetails.getAddress())
+                        .build();
+            }
+
         taskDetails.setWitnessDetails(witnessDetails);
     }
 
