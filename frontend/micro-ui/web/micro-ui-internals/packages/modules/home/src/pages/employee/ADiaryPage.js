@@ -115,7 +115,6 @@ const ADiaryPage = ({ path }) => {
 
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
   const [formData, setFormData] = useState({});
-  const [fileStoreIds, setFileStoreIds] = useState(new Set());
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState("");
   const [generateAdiaryLoader, setGenerateAdiaryLoader] = useState(false);
   const [noAdiaryModal, setNoAdiaryModal] = useState(false);
@@ -158,14 +157,11 @@ const ADiaryPage = ({ path }) => {
       sessionStorage.removeItem("adiaryStepper");
       sessionStorage.removeItem("selectedADiaryDate");
     } else if (parseInt(stepper) === 2) {
-      setIsSigned(false);
-      setSignedDocumentUploadID("");
-      setFormData({});
       sessionStorage.removeItem("fileStoreId");
     }
     setStepper(parseInt(stepper) - 1);
   };
-  const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+  const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
 
   const onSubmit = async () => {
     if (parseInt(stepper) === 0) {
@@ -176,12 +172,11 @@ const ADiaryPage = ({ path }) => {
             tenantId: tenantId,
             diaryDate: entryDate,
             diaryType: "ADiary",
-            courtId: courtId,
+            judgeId: judgeId,
           },
         });
         setGenerateAdiaryLoader(false);
         setADiarypdf(generateADiaryPDF?.fileStoreID);
-        setFileStoreIds((prevFileStoreIds) => new Set([...prevFileStoreIds, generateADiaryPDF?.fileStoreID]));
         sessionStorage.setItem("adiaryStepper", parseInt(stepper) + 1);
         setStepper(parseInt(stepper) + 1);
       } catch (error) {
@@ -212,7 +207,6 @@ const ADiaryPage = ({ path }) => {
       try {
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
-        setFileStoreIds((prevFileStoreIds) => new Set([...prevFileStoreIds, uploadedFileId?.[0]?.fileStoreId]));
         setIsSigned(true);
         setOpenUploadSignatureModal(false);
       } catch (error) {
@@ -233,7 +227,7 @@ const ADiaryPage = ({ path }) => {
         const diary = await HomeService.getADiarySearch({
           criteria: {
             tenantId: tenantId,
-            courtId: courtId,
+            judgeId: judgeId,
             date: entryDate,
           },
         });
@@ -241,7 +235,6 @@ const ADiaryPage = ({ path }) => {
         if (Array.isArray(diaries) && diaries?.length > 0) {
           setIsSelectedDataSigned(true);
           setADiarypdf(diaries[0]?.fileStoreID);
-          setFileStoreIds((prevFileStoreIds) => new Set([...prevFileStoreIds, diaries[0]?.fileStoreID]));
         } else {
           setIsSelectedDataSigned(false);
         }
@@ -255,33 +248,17 @@ const ADiaryPage = ({ path }) => {
   const uploadSignedPdf = async () => {
     try {
       const localStorageID = sessionStorage.getItem("fileStoreId");
-      const newFilestore = signedDocumentUploadID || localStorageID;
-      fileStoreIds.delete(newFilestore);
-      if (ADiarypdf) {
-        fileStoreIds.delete(ADiarypdf);
-      }
       await HomeService.updateADiaryPDF({
         diary: {
           tenantId: tenantId,
           diaryDate: entryDate,
           diaryType: "ADiary",
-          courtId: courtId,
+          judgeId: judgeId,
           documents: [
             {
               tenantId: tenantId,
               fileStoreId: signedDocumentUploadID || localStorageID,
-              isActive: true,
             },
-            {
-              tenantId: tenantId,
-              fileStoreId: ADiarypdf,
-              isActive: false,
-            },
-            ...Array.from(fileStoreIds).map((fileStoreId) => ({
-              fileStoreId: fileStoreId,
-              tenantId: tenantId,
-              isActive: false,
-            })),
           ],
         },
       });
@@ -304,7 +281,7 @@ const ADiaryPage = ({ path }) => {
     {
       criteria: {
         tenantId: tenantId,
-        courtId: courtId,
+        judgeId: judgeId,
         date: entryDate,
       },
       pagination: {

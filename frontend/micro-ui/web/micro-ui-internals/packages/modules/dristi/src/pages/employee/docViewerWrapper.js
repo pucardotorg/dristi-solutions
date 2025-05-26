@@ -40,7 +40,6 @@ const DocViewerWrapper = ({
   preview,
   pdfZoom = 1.1,
   isLocalizationRequired = true,
-  handleImageModalOpen,
 }) => {
   const Digit = window?.Digit || {};
   const { t } = useTranslation();
@@ -60,11 +59,7 @@ const DocViewerWrapper = ({
 
   return (
     <div className="docviewer-wrapper" id="docviewer-id">
-      <Card
-        className={docViewerCardClassName}
-        style={docViewerStyle}
-        onClick={handleImageModalOpen ? () => handleImageModalOpen(fileStoreId, displayFilename) : undefined}
-      >
+      <Card className={docViewerCardClassName} style={docViewerStyle}>
         {documents?.length != 0 && (
           <>
             <DocViewer

@@ -104,25 +104,8 @@ export const DRISTIService = {
     });
   },
   searchCaseService: (data, params) =>
-    // Add courtId to criteria if it exists
     Request({
       url: Urls.dristi.caseSearch,
-      useCache: false,
-      userService: false,
-      data: { ...data, criteria: [...data?.criteria] },
-      params,
-    }),
-  caseDetailSearchService: (data, params) =>
-    Request({
-      url: Urls.dristi.caseDetailSearch,
-      useCache: false,
-      userService: false,
-      data,
-      params,
-    }),
-  summaryCaseSearchService: (data, params) =>
-    Request({
-      url: Urls.dristi.summaryCaseSearch,
       useCache: false,
       userService: false,
       data,
@@ -153,12 +136,11 @@ export const DRISTIService = {
       params,
     }),
   searchEvidence: (data) => {
-    // Add courtId to criteria if it exists
     return Request({
       url: Urls.dristi.evidenceSearch,
       useCache: false,
       userService: false,
-      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52" } },
+      data,
     });
   },
   searchHearings: (data, params) => {
@@ -166,7 +148,7 @@ export const DRISTIService = {
       url: Urls.dristi.searchHearings,
       useCache: false,
       userService: false,
-      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52" } },
+      data,
       params,
     });
   },
@@ -197,22 +179,20 @@ export const DRISTIService = {
     });
   },
   searchOrders: (data, params) => {
-    // Add courtId to criteria if it exists
     return Request({
       url: Urls.dristi.ordersSearch,
       useCache: false,
       userService: false,
-      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52" } },
+      data,
       params,
     });
   },
   searchSubmissions: (data, params) => {
-    // Add courtId to criteria if it exists
     return Request({
       url: Urls.dristi.submissionsSearch,
       useCache: false,
       userService: false,
-      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52" } },
+      data,
       params,
     });
   },

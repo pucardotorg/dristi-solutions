@@ -25,7 +25,10 @@ class DiaryEntryQueryBuilderTest {
 
     private List<Object> preparedStatementValues;
     private List<Integer> preparedStatementTypeValues;
-    private static final String BASE_QUERY = "SELECT dde.id as id,dde.tenant_id as tenantId,dde.case_number as caseNumber,dde.court_id as courtId, dde.entry_date as entryDate,dde.businessOfDay as businessOfDay,dde.reference_id as referenceId,dde.reference_type as referenceType,dde.case_id as caseId, dde.hearingDate as hearingDate,dde.additional_details as additionalDetails,dde.created_by as createdBy,dde.last_modified_by as lastModifiedBy,dde.created_time as createdTime,dde.last_modified_time as lastModifiedTime FROM dristi_diaryentries dde";
+    private static final String BASE_QUERY = "SELECT dde.id as id,dde.tenant_id as tenantId,dde.case_number as caseNumber,dde.judge_id as judgeId, " +
+            "dde.entry_date as entryDate,dde.businessOfDay as businessOfDay,dde.reference_id as referenceId,dde.reference_type as referenceType,dde.case_id as caseId, " +
+            "dde.hearingDate as hearingDate,dde.additional_details as additionalDetails,dde.created_by as createdBy,dde.last_modified_by as lastModifiedBy," +
+            "dde.created_time as createdTime,dde.last_modified_time as lastModifiedTime FROM dristi_diaryentries dde";
 
     @BeforeEach
     void setUp() {
@@ -88,14 +91,14 @@ class DiaryEntryQueryBuilderTest {
     @Test
     void getDiaryEntryQuery_WithJudgeId_ReturnsQueryWithJudgeFilter() {
         CaseDiarySearchCriteria criteria = CaseDiarySearchCriteria.builder()
-                .courtId("COURT-123")
+                .judgeId("JUDGE-123")
                 .build();
 
         String query = queryBuilder.getDiaryEntryQuery(criteria, preparedStatementValues, preparedStatementTypeValues);
 
-        assertEquals(BASE_QUERY + " WHERE dde.court_id = ?", query);
+        assertEquals(BASE_QUERY + " WHERE dde.judge_id = ?", query);
         assertEquals(1, preparedStatementValues.size());
-        assertEquals("COURT-123", preparedStatementValues.get(0));
+        assertEquals("JUDGE-123", preparedStatementValues.get(0));
         assertEquals(Types.VARCHAR, preparedStatementTypeValues.get(0).intValue());
     }
 
@@ -106,7 +109,7 @@ class DiaryEntryQueryBuilderTest {
                 .tenantId("default-tenant")
                 .date(now)
                 .caseId("CASE-123")
-                .courtId("COURT-123")
+                .judgeId("JUDGE-123")
                 .build();
 
         String query = queryBuilder.getDiaryEntryQuery(criteria, preparedStatementValues, preparedStatementTypeValues);

@@ -165,7 +165,6 @@ public class CaseOverallStatusUtil {
 	private void sendSmsForCaseStatusChange(String filingNumber,RequestInfo requestInfo) {
 		org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, filingNumber);
 		JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
-		String courtCaseNumber = caseUtil.getCourtCaseNumber(caseDetails);
 		JsonNode litigants = caseUtil.getLitigants(caseDetails);
 		Set<String> individualIds = caseUtil.getIndividualIds(litigants);
 		JsonNode representatives = caseUtil.getRepresentatives(caseDetails);
@@ -179,17 +178,16 @@ public class CaseOverallStatusUtil {
 			representativeIds = advocateUtil.getAdvocate(requestInfo,representativeIds.stream().toList());
 		}
 		individualIds.addAll(representativeIds);
-		org.pucar.dristi.web.models.SmsTemplateData smsTemplateData = enrichSmsTemplateData(filingNumber, courtCaseNumber, requestInfo);
+		org.pucar.dristi.web.models.SmsTemplateData smsTemplateData = enrichSmsTemplateData(filingNumber,requestInfo);
 		List<String> phoneNumbers = callIndividualService(requestInfo, new ArrayList<>(individualIds));
 		for (String number : phoneNumbers) {
 			notificationService.sendNotification(requestInfo, smsTemplateData, CASE_STATUS_CHANGED_MESSAGE, number);
 		}
 	}
 
-	private SmsTemplateData enrichSmsTemplateData(String filingNumber, String courtCaseNumber, RequestInfo requestInfo) {
+	private SmsTemplateData enrichSmsTemplateData(String filingNumber,RequestInfo requestInfo) {
 		return SmsTemplateData.builder()
 				.efilingNumber(filingNumber)
-				.courtCaseNumber(courtCaseNumber)
 				.tenantId(requestInfo.getUserInfo().getTenantId())
 				.build();
 	}

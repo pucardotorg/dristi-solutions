@@ -260,11 +260,4 @@ public class Configuration {
 
     @Value("${dristi.summon.send.summon.path}")
     private String summonSendSummonPath;
-
-    //FileStore Service
-    @Value("${egov.filestore.host}")
-    private String fileStoreHost;
-
-    @Value("${egov.file.store.delete.endpoint}")
-    private String fileStoreDeleteEndPoint;
 }

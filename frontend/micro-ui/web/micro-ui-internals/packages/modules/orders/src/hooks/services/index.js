@@ -44,12 +44,11 @@ export const ordersService = {
       params,
     }),
   searchOrder: (data, params) =>
-    // Add courtId to criteria if it exists
     Request({
       url: Urls.orders.orderSearch,
       useCache: true,
       userService: true,
-      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52' } },
+      data,
       params,
     }),
   searchOrderNotifications: (data, params) =>
@@ -178,7 +177,7 @@ export const taskService = {
       url: Urls.Task.search,
       useCache: true,
       userService: true,
-      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52' } },
+      data,
       params,
     }),
 };

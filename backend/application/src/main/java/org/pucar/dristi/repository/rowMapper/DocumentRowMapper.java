@@ -31,7 +31,6 @@ public class DocumentRowMapper implements ResultSetExtractor<Map<UUID,List<Docum
                         .fileStore(rs.getString("filestore"))
                         .documentUid(rs.getString("documentuid"))
                         .documentOrder(rs.getLong("documentorder"))
-                        .isActive(rs.getBoolean("isactive"))
                         .build();
 
                 PGobject pgObject = (PGobject) rs.getObject("additionaldetails");

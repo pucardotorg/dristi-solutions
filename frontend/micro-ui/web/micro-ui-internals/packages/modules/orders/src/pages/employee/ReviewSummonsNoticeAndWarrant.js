@@ -55,22 +55,6 @@ export const getJudgeDefaultConfig = () => {
   });
 };
 
-
-function getAction(selectedDelievery, orderType) {
-  const key = selectedDelievery?.key;
-
-  if (key === "OTHER") {
-    return "OTHER";
-  }
-
-  if (key === "DELIVERED") {
-    return orderType === "WARRANT" ? "DELIVERED" : "SERVED";
-  }
-
-  return orderType === "WARRANT" ? "NOT_DELIVERED" : "NOT_SERVED";
-}
-
-
 const ReviewSummonsNoticeAndWarrant = () => {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -263,7 +247,14 @@ const ReviewSummonsNoticeAndWarrant = () => {
             },
             workflow: {
               ...tasksData?.list?.[0]?.workflow,
-              action: getAction(selectedDelievery, orderType),
+              action:
+                selectedDelievery?.key === "DELIVERED"
+                  ? orderType === "WARRANT"
+                    ? "DELIVERED"
+                    : "SERVED"
+                  : orderType === "WARRANT"
+                  ? "NOT_DELIVERED"
+                  : "NOT_SERVED",
               documents: [{}],
             },
           },
@@ -373,8 +364,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
           key: "NEXT_HEARING_DATE",
           value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
         },
+        // process fee paid on
         // { key: "AMOUNT_PAID_TEXT", value: `Rs. ${caseDetails?.deliveryChannels?.fees || 100}` },
-        { key: "PROCESS_FEE_PAID_ON", value: caseDetails?.deliveryChannels?.feePaidDate || "N/A" },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
         { key: "E_PROCESS_ID", value: rowData?.taskNumber },
       ];
@@ -402,7 +393,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
       return [
         { key: "ISSUE_TO", value: caseDetails?.respondentDetails?.name },
         { key: "ISSUE_DATE", value: convertToDateInputFormat(rowData?.createdDate) },
-        { key: "PROCESS_FEE_PAID_ON", value: caseDetails?.deliveryChannels?.feePaidDate || "N/A" },
         { key: "SENT_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
         { key: "CHANNEL_DETAILS_TEXT", value: caseDetails?.deliveryChannels?.channelName },
         {
@@ -423,8 +413,6 @@ const ReviewSummonsNoticeAndWarrant = () => {
           key: "NEXT_HEARING_DATE",
           value: caseDetails?.caseDetails?.hearingDate ? formatDate(new Date(caseDetails?.caseDetails?.hearingDate)) : "N/A",
         },
-        { key: "PROCESS_FEE_PAID_ON", value: caseDetails?.deliveryChannels?.feePaidDate || "N/A" },
-        { key: "SENT_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
         { key: "STATUS", value: rowData?.status },
         { key: "STATUS_UPDATED_ON", value: reverseToDDMMYYYY(caseDetails?.deliveryChannels?.statusChangeDate) || "N/A" },
         { key: "REMARKS", value: caseDetails?.remarks?.remark ? caseDetails?.remarks?.remark : "N/A" },
@@ -723,7 +711,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [rowData]);
 
   const handleRowClick = (props) => {
-    if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED", "OTHER"].includes(props?.original?.status)) {
+    if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED"].includes(props?.original?.status)) {
       setRowData(props?.original);
       setshowNoticeModal(true);
       return;

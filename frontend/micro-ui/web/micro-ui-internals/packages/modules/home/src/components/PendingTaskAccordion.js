@@ -114,7 +114,7 @@ function PendingTaskAccordion({
           {pendingTasks?.map((item) => (
             <div
               className={`task-item ${item?.due === "Due today" && "due-today"}`}
-              key={`${item?.filingNumber}-${item?.referenceId}`}
+              key={item?.filingNumber}
               style={{ cursor: "pointer" }}
               onClick={() => {
                 if (item?.actionName === "Pay Vakalatnama Fees") {

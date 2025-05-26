@@ -68,5 +68,4 @@ public class SummonsApiController {
         UpdateSummonsResponse response = UpdateSummonsResponse.builder().channelMessage(channelMessage).responseInfo(responseInfo).build();
         return new ResponseEntity<>(response, HttpStatus.ACCEPTED);
     }
-
 }

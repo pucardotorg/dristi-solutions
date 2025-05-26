@@ -5,6 +5,7 @@ const CustomDatePicker = ({ t, config, formData, onSelect, errors }) => {
   const [showModal, setShowModal] = useState(false);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const CustomCalendar = Digit.ComponentRegistryService.getComponent("CustomCalendar");
+
   const handleSelect = (date) => {
     onSelect(config.key, new Date(date).setHours(0, 0, 0, 0));
     setShowModal(false);
@@ -17,11 +18,7 @@ const CustomDatePicker = ({ t, config, formData, onSelect, errors }) => {
   return (
     <div style={{ marginBottom: "24px" }}>
       <LabelFieldPair
-        style={{
-          border: config?.disable ? "1px solid #9e9e9e" : "1px solid black",
-          background: config?.disable ? "#D9D9D9" : "transparent",
-          ...(config?.customStyleLabelField && config?.customStyleLabelField),
-        }}
+        style={{ border: config?.disable ? "1px solid #9e9e9e" : "1px solid black", background: config?.disable ? "#D9D9D9" : "transparent" }}
       >
         <TextInput
           type="text"

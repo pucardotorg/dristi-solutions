@@ -95,11 +95,4 @@ public class Configuration {
 
     @Value("${egov.idgen.notification.format}")
     private String notificationIdFormat;
-
-    //FileStore
-    @Value("${egov.filestore.host}")
-    private String fileStoreHost;
-
-    @Value("${egov.file.store.delete.endpoint}")
-    private String fileStoreDeleteEndPoint;
 }

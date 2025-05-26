@@ -1,16 +1,12 @@
 package digit.service;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import digit.config.Configuration;
 import digit.enrichment.SummonsDeliveryEnrichment;
 import digit.kafka.Producer;
 import digit.repository.SummonsRepository;
 import digit.util.*;
 import digit.web.models.*;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
-import net.minidev.json.JSONArray;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
@@ -20,7 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import static digit.config.ServiceConstants.*;
 
@@ -47,17 +46,11 @@ public class SummonsService {
 
     private final CaseManagementUtil caseManagementUtil;
 
-    private final MdmsUtil mdmsUtil;
-
-    private final CaseUtil caseUtil;
-
-    private final EvidenceUtil evidenceUtil;
-
     @Autowired
     public SummonsService(PdfServiceUtil pdfServiceUtil, Configuration config, Producer producer,
                           FileStorageUtil fileStorageUtil, SummonsRepository summonsRepository,
                           SummonsDeliveryEnrichment summonsDeliveryEnrichment, ExternalChannelUtil externalChannelUtil,
-                          TaskUtil taskUtil, CaseManagementUtil caseManagementUtil, MdmsUtil mdmsUtil, CaseUtil caseUtil, EvidenceUtil evidenceUtil) {
+                          TaskUtil taskUtil, CaseManagementUtil caseManagementUtil) {
         this.pdfServiceUtil = pdfServiceUtil;
         this.config = config;
         this.producer = producer;
@@ -67,9 +60,6 @@ public class SummonsService {
         this.externalChannelUtil = externalChannelUtil;
         this.taskUtil = taskUtil;
         this.caseManagementUtil = caseManagementUtil;
-        this.mdmsUtil = mdmsUtil;
-        this.caseUtil = caseUtil;
-        this.evidenceUtil = evidenceUtil;
     }
 
     public TaskResponse generateSummonsDocument(TaskRequest taskRequest) {
@@ -82,7 +72,7 @@ public class SummonsService {
     }
 
     private String getNoticeType(TaskDetails taskDetails) {
-        return taskDetails.getNoticeDetails() != null ? taskDetails.getNoticeDetails().getNoticeType() : null;
+        return taskDetails.getNoticeDetails()!=null ? taskDetails.getNoticeDetails().getNoticeType() : null;
     }
 
     private TaskResponse generateDocumentAndUpdateTask(TaskRequest taskRequest, String pdfTemplateKey, boolean qrCode) {
@@ -167,23 +157,14 @@ public class SummonsService {
         if (task.getTaskType().equalsIgnoreCase(SUMMON)) {
             if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED)) {
                 workflow = Workflow.builder().action("SERVED").build();
-            } else if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.IN_TRANSIT)) {
-                workflow = Workflow.builder().action("TRANSIT").build();
-            } else if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED_ICOPS)) {
-                workflow = Workflow.builder().action("DELIVERED").build();
-            } else if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.NOT_DELIVERED_ICOPS)) {
-                workflow = Workflow.builder().action("NOT_DELIVERED").build();
-            }else {
+            } else {
                 workflow = Workflow.builder().action("NOT_SERVED").build();
             }
         } else if (task.getTaskType().equalsIgnoreCase(WARRANT)) {
             if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED)) {
-            workflow = Workflow.builder().action("DELIVERED").build();
-            } else if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.IN_TRANSIT)) {
-                workflow = Workflow.builder().action("TRANSIT").build();
-            }
-            else {
-                workflow = Workflow.builder().action("NOT_SERVED").build();
+                workflow = Workflow.builder().action("DELIVERED").build();
+            } else {
+                workflow = Workflow.builder().action("NOT_DELIVERED").build();
             }
         } else if (task.getTaskType().equalsIgnoreCase(NOTICE)) {
             if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED)) {
@@ -193,112 +174,12 @@ public class SummonsService {
             }
         }
         task.setWorkflow(workflow);
-        enrichPoliceStationReport(task, request.getSummonsDelivery());
+
         Role role = Role.builder().code(config.getSystemAdmin()).tenantId(config.getEgovStateTenantId()).build();
         request.getRequestInfo().getUserInfo().getRoles().add(role);
         TaskRequest taskRequest = TaskRequest.builder()
                 .requestInfo(request.getRequestInfo()).task(task).build();
         taskUtil.callUpdateTask(taskRequest);
-
-        List<Document> documents = Optional.ofNullable(task.getDocuments())
-                .orElse(Collections.emptyList())
-                .stream().filter(doc -> POLICE_REPORT.equals(doc.getDocumentType()))
-                .toList();
-        if (!documents.isEmpty()) {
-            createEvidenceForPoliceReport(taskRequest, documents.get(0));
-        }
-    }
-
-    public void createEvidenceForPoliceReport(TaskRequest taskRequest, Document document) {
-        try {
-            Artifact artifact = Artifact.builder()
-                    .artifactType(getArtifactType(taskRequest.getRequestInfo(), taskRequest.getTask()))
-                    .caseId(getCaseId(taskRequest))
-                    .filingNumber(taskRequest.getTask().getFilingNumber())
-                    .tenantId(taskRequest.getTask().getTenantId())
-                    .comments(new ArrayList<>())
-                    .file(document)
-                    .sourceType(COURT) //todo: need to configure if changes
-                    .sourceID(taskRequest.getRequestInfo().getUserInfo().getUuid())
-                    .filingType(getFilingType(taskRequest.getRequestInfo(), taskRequest.getTask()))
-                    .isEvidence(false)
-                    .additionalDetails(getAdditionalDetails(taskRequest.getRequestInfo()))
-                    .build();
-
-            EvidenceRequest evidenceRequest = EvidenceRequest.builder()
-                    .requestInfo(taskRequest.getRequestInfo())
-                    .artifact(artifact)
-                    .build();
-            evidenceUtil.createEvidence(evidenceRequest);
-        } catch (Exception e) {
-            log.error("Error while creating evidence for police report: {}", document);
-        }
-    }
-
-    private String getFilingType(@Valid RequestInfo requestInfo, @Valid Task task) {
-        Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(requestInfo, task.getTenantId(), "common-masters", Collections.singletonList("FilingType"));
-        JSONArray filingTypeArray = mdmsData.get("common-masters").get("FilingType");
-        for (Object o : filingTypeArray) {
-            Map<String, Object> filingType = (Map<String, Object>) o;
-            //todo : check for filing type if changed
-            if (filingType.get("code").toString().equalsIgnoreCase(DIRECT)) {
-                return (String) filingType.get("code");
-            }
-        }
-        return null;
-    }
-
-    private @NotNull String getCaseId(TaskRequest taskRequest) {
-        CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
-                .requestInfo(taskRequest.getRequestInfo())
-                .criteria(List.of(CaseCriteria.builder()
-                        .filingNumber(taskRequest.getTask().getFilingNumber())
-                        .defaultFields(false)
-                        .build()))
-                .build();
-        JsonNode courtCase = caseUtil.searchCaseDetails(caseSearchRequest);
-        return courtCase.get("id").textValue();
-    }
-
-    private Object getAdditionalDetails(@Valid RequestInfo requestInfo) {
-        return Map.of("uuid", requestInfo.getUserInfo().getUuid());
-    }
-
-    private String getArtifactType(@Valid RequestInfo requestInfo, @Valid Task task) {
-        Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(requestInfo, task.getTenantId(), "Evidence", Collections.singletonList("EvidenceType"));
-        JSONArray evidenceTypeArray = mdmsData.get("Evidence").get("EvidenceType");
-        for (Object o : evidenceTypeArray) {
-            Map<String, Object> evidenceType = (Map<String, Object>) o;
-            if (evidenceType.get("type").toString().equalsIgnoreCase(POLICE_REPORT)) {
-                return (String) evidenceType.get("type");
-            }
-        }
-        return null;
-    }
-
-    private void enrichPoliceStationReport(Task task, @Valid SummonsDelivery summonsDelivery) {
-        String fileStoreId = extractFileStoreId(summonsDelivery);
-        if (fileStoreId != null) {
-            Document document = Document.builder()
-                    .fileStore(fileStoreId)
-                    .documentType(POLICE_REPORT)
-                    .additionalDetails(AdditionalFields.builder().fields(Collections.emptyList()).build())
-                    .build();
-            task.addDocumentsItem(document);
-        } else {
-            log.error("Police Report not found for the task of type : {} and number : {}", task.getTaskType(), task.getTaskNumber());
-        }
-    }
-
-    private String extractFileStoreId(@Valid SummonsDelivery summonsDelivery) {
-        AdditionalFields additionalFields = summonsDelivery.getAdditionalFields();
-        return Optional.ofNullable(additionalFields)
-                .map(AdditionalFields::getFields)
-                .flatMap(fields -> fields.stream()
-                        .filter(field -> field.getKey().equalsIgnoreCase("policeReportFileStoreId"))
-                        .map(Field::getValue)
-                        .findFirst())
-                .orElse(null);
     }
 
     private String getPdfTemplateKey(String taskType, String docSubType, boolean qrCode, String noticeType) {
@@ -319,12 +200,11 @@ public class SummonsService {
                     return config.getNonBailableWarrantPdfTemplateKey();
                 } else {
                     throw new CustomException("INVALID_DOC_SUB_TYPE", "Document Sub-Type must be valid. Provided: " + docSubType);
-                }
-            }
+                }            }
             case NOTICE -> {
-                if (Objects.equals(noticeType, BNSS_NOTICE)) {
+                if(Objects.equals(noticeType, BNSS_NOTICE)){
                     return config.getTaskBnssNoticePdfTemplateKey();
-                } else if (Objects.equals(noticeType, DCA_NOTICE)) {
+                } else if(Objects.equals(noticeType, DCA_NOTICE)) {
                     return config.getTaskDcaNoticePdfTemplateKey();
                 } else {
                     return qrCode ? config.getTaskNoticeQrPdfTemplateKey() : config.getTaskNotificationTemplateKey();
@@ -340,12 +220,9 @@ public class SummonsService {
         }
 
         return switch (taskType) {
-            case SUMMON ->
-                    taskDetails.getSummonDetails() != null ? taskDetails.getSummonDetails().getDocSubType() : null;
-            case WARRANT ->
-                    taskDetails.getWarrantDetails() != null ? taskDetails.getWarrantDetails().getDocSubType() : null;
-            case NOTICE ->
-                    taskDetails.getNoticeDetails() != null ? taskDetails.getNoticeDetails().getDocSubType() : null;
+            case SUMMON -> taskDetails.getSummonDetails() != null ? taskDetails.getSummonDetails().getDocSubType() : null;
+            case WARRANT -> taskDetails.getWarrantDetails() != null ? taskDetails.getWarrantDetails().getDocSubType() : null;
+            case NOTICE -> taskDetails.getNoticeDetails() != null ? taskDetails.getNoticeDetails().getDocSubType() : null;
             default -> throw new CustomException("INVALID_TASK_TYPE", "Task Type must be valid. Provided: " + taskType);
         };
     }

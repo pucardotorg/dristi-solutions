@@ -6,6 +6,7 @@ const applicationSubmissionExtension = require("../applicationHandlers/applicati
 
 const asyncMiddleware = require("../utils/asyncMiddleware");
 const { logger } = require("../logger");
+const { clear } = require("winston");
 const applicationGeneric = require("../applicationHandlers/applicationGeneric");
 const applicationProductionOfDocuments = require("../applicationHandlers/applicationProductionOfDocuments");
 const applicationBailBond = require("../applicationHandlers/applicationBailBond");
@@ -16,9 +17,6 @@ const applicationCheckout = require("../applicationHandlers/applicationCheckout"
 const caseSettlementApplication = require("../applicationHandlers/caseSettlementApplication");
 const applicationDelayCondonation = require("../applicationHandlers/applicationDelayCondonation");
 const applicationSubmitBailDocuments = require("../applicationHandlers/applicationSubmitBailDocuments");
-const { handleApiCall } = require("../utils/handleApiCall");
-const { search_application } = require("../api");
-const { getCourtAndJudgeDetails } = require("../utils/commonUtils");
 
 function renderError(res, errorMessage, errorCode, errorObject) {
   if (errorCode == undefined) errorCode = 500;
@@ -32,9 +30,6 @@ router.post(
   "",
   asyncMiddleware(async function (req, res, next) {
     const applicationType = req.query.applicationType;
-    const applicationNumber = req.query.applicationNumber;
-    const tenantId = req.query.tenantId;
-    const requestInfo = req.body.RequestInfo;
     let qrCode = req.query.qrCode;
 
     // Set qrCode to false if it is undefined, null, or empty
@@ -53,133 +48,43 @@ router.post(
       );
     }
 
-    const resApplication = await handleApiCall(
-      res,
-      () => search_application(tenantId, applicationNumber, requestInfo),
-      "Failed to query application service"
-    );
-    const application = resApplication?.data?.applicationList[0];
-    if (!application) {
-      renderError(res, "Application not found", 404);
-    }
-
-    const courtCaseJudgeDetails = await getCourtAndJudgeDetails(
-      res,
-      tenantId,
-      "Judge",
-      application?.courtId,
-      requestInfo
-    );
-
     try {
       switch (applicationType.toLowerCase()) {
         case "application-submission-extension":
-          await applicationSubmissionExtension(
-            req,
-            res,
-            qrCode,
-            application,
-            courtCaseJudgeDetails
-          );
+          await applicationSubmissionExtension(req, res, qrCode);
           break;
         case "application-generic":
-          await applicationGeneric(
-            req,
-            res,
-            qrCode,
-            application,
-            courtCaseJudgeDetails
-          );
+          await applicationGeneric(req, res, qrCode);
           break;
         case "application-production-of-documents":
-          await applicationProductionOfDocuments(
-            req,
-            res,
-            qrCode,
-            application,
-            courtCaseJudgeDetails
-          );
+          await applicationProductionOfDocuments(req, res, qrCode);
           break;
         case "application-reschedule-request":
-          await applicationRescheduleRequest(
-            req,
-            res,
-            qrCode,
-            application,
-            courtCaseJudgeDetails
-          );
+          await applicationRescheduleRequest(req, res, qrCode);
           break;
         case "application-bail-bond":
-          await applicationBailBond(
-            req,
-            res,
-            qrCode,
-            application,
-            courtCaseJudgeDetails
-          );
+          await applicationBailBond(req, res, qrCode);
           break;
         case "application-case-transfer":
-          await applicationCaseTransfer(
-            req,
-            res,
-            qrCode,
-            application,
-            courtCaseJudgeDetails
-          );
+          await applicationCaseTransfer(req, res, qrCode);
           break;
         case "application-case-withdrawal":
-          await applicationCaseWithdrawal(
-            req,
-            res,
-            qrCode,
-            application,
-            courtCaseJudgeDetails
-          );
+          await applicationCaseWithdrawal(req, res, qrCode);
           break;
         case "application-for-checkout-request":
-          await applicationCheckout(
-            req,
-            res,
-            qrCode,
-            application,
-            courtCaseJudgeDetails
-          );
+          await applicationCheckout(req, res, qrCode);
           break;
         case "application-case-settlement":
-          await caseSettlementApplication(
-            req,
-            res,
-            qrCode,
-            application,
-            courtCaseJudgeDetails
-          );
+          await caseSettlementApplication(req, res, qrCode);
           break;
         case "application-delay-condonation":
-          await applicationDelayCondonation(
-            req,
-            res,
-            qrCode,
-            application,
-            courtCaseJudgeDetails
-          );
+          await applicationDelayCondonation(req, res, qrCode);
           break;
         case "application-submit-bail-documents":
-          await applicationSubmitBailDocuments(
-            req,
-            res,
-            qrCode,
-            application,
-            courtCaseJudgeDetails
-          );
+          await applicationSubmitBailDocuments(req, res, qrCode);
           break;
         default:
-          await applicationGeneric(
-            req,
-            res,
-            qrCode,
-            application,
-            courtCaseJudgeDetails
-          );
+          await applicationGeneric(req, res, qrCode);
           break;
       }
     } catch (error) {

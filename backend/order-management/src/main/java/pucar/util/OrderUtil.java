@@ -2,8 +2,6 @@ package pucar.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -139,7 +137,7 @@ public class OrderUtil {
                 .map(map -> (Map<?, ?>) map)
                 .map(map -> map.get("applicationStatus"))
                 .filter(String.class::isInstance)
-                .map(String.class::cast).orElseThrow(()->new CustomException("",""));
+                .map(String.class::cast).orElseThrow(() -> new CustomException("", ""));
 
         return applicationStatusType(applicationStatus);
 
@@ -155,7 +153,7 @@ public class OrderUtil {
         };
     }
 
-    public  String getBusinessOfTheDay(Object additionalDetails) {
+    public String getBusinessOfTheDay(Object additionalDetails) {
 
         return Optional.ofNullable(additionalDetails)
                 .filter(Map.class::isInstance)
@@ -165,7 +163,7 @@ public class OrderUtil {
                 .map(String.class::cast).orElse(null);
     }
 
-    public OrderResponse  removeOrderItem(@Valid OrderRequest request) {
+    public OrderResponse removeOrderItem(@Valid OrderRequest request) {
 
         StringBuilder uri = new StringBuilder();
         uri.append(configuration.getOrderHost()).append(configuration.getRemoveOrderItemEndPoint());

@@ -2,11 +2,15 @@ package org.pucar.dristi.repository;
 
 import lombok.extern.slf4j.Slf4j;
 
+import org.egov.common.contract.models.Document;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.repository.querybuilder.HearingQueryBuilder;
 import org.pucar.dristi.repository.rowmapper.HearingDocumentRowMapper;
 import org.pucar.dristi.repository.rowmapper.HearingRowMapper;
-import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.Hearing;
+import org.pucar.dristi.web.models.HearingCriteria;
+import org.pucar.dristi.web.models.HearingSearchRequest;
+import org.pucar.dristi.web.models.Pagination;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;

@@ -1,10 +1,3 @@
-const defaultSearchValues = {
-  caseTitleFilingNumber: "",
-  sortOrder: "DESC",
-  caseType: "",
-  paymentType: "",
-};
-
 export const paymentTabInboxConfig = {
   tenantId: "pg",
   moduleName: "paymentInboxConfig",
@@ -41,7 +34,10 @@ export const paymentTabInboxConfig = {
             primaryLabel: "ES_COMMON_SEARCH",
             secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
             minReqFields: 0,
-            defaultValues: defaultSearchValues,
+            defaultValues: {
+              caseTitleFilingNumber: "",
+              sortOrder: "DESC",
+            },
             fields: [
               {
                 type: "component",
@@ -130,26 +126,21 @@ export const paymentTabInboxConfig = {
                 additionalCustomization: true,
               },
               {
-                label: "CS_STAGE",
-                jsonPath: "businessObject.billDetails.stage",
-              },
-              {
-                label: "NYAY_PAYMENT_TYPE",
-                jsonPath: "businessObject.billDetails.paymentType",
-              },
-              {
                 label: "AMOUNT_DUE",
                 jsonPath: "businessObject.billDetails.amount",
                 additionalCustomization: true,
               },
-              // {
-              //   label: "CASE_TYPE",
-              //   jsonPath: "businessObject.billDetails.caseType",
-              // },
               {
-                label: "PAYMENT_GENERATED_DATE",
-                jsonPath: "businessObject.billDetails.paymentCreatedDate",
-                additionalCustomization: true,
+                label: "CS_STAGE",
+                jsonPath: "businessObject.billDetails.stage",
+              },
+              {
+                label: "CASE_TYPE",
+                jsonPath: "businessObject.billDetails.caseType",
+              },
+              {
+                label: "NYAY_PAYMENT_TYPE",
+                jsonPath: "businessObject.billDetails.paymentType",
               },
               {
                 label: "ACTION",
@@ -165,7 +156,7 @@ export const paymentTabInboxConfig = {
       },
     },
     {
-      label: "PAID",
+      label: "COMPLETED",
       type: "search",
       apiDetails: {
         serviceName: "/inbox/v2/index/_search",
@@ -286,31 +277,21 @@ export const paymentTabInboxConfig = {
                 additionalCustomization: true,
               },
               {
-                label: "CS_STAGE",
-                jsonPath: "businessObject.billDetails.stage",
-              },
-              {
-                label: "NYAY_PAYMENT_TYPE",
-                jsonPath: "businessObject.billDetails.paymentType",
-              },
-              {
                 label: "AMOUNT_DUE",
                 jsonPath: "businessObject.billDetails.amount",
                 additionalCustomization: true,
               },
-              // {
-              //   label: "CASE_TYPE",
-              //   jsonPath: "businessObject.billDetails.caseType",
-              // },
               {
-                label: "PAYMENT_GENERATED_DATE",
-                jsonPath: "businessObject.billDetails.paymentCreatedDate",
-                additionalCustomization: true,
+                label: "CS_STAGE",
+                jsonPath: "businessObject.billDetails.stage",
               },
               {
-                label: "PAYMENT_COMPLETED_DATE",
-                jsonPath: "businessObject.billDetails.paymentCompletedDate",
-                additionalCustomization: true,
+                label: "CASE_TYPE",
+                jsonPath: "businessObject.billDetails.caseType",
+              },
+              {
+                label: "NYAY_PAYMENT_TYPE",
+                jsonPath: "businessObject.billDetails.paymentType",
               },
               {
                 label: "ACTION",

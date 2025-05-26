@@ -33,8 +33,6 @@ import { sideMenuConfig } from "./Config";
 import EditFieldsModal from "./EditFieldsModal";
 import axios from "axios";
 import {
-  accusedAddressValidation,
-  addressValidation,
   checkDuplicateMobileEmailValidation,
   checkIfscValidation,
   checkNameValidation,
@@ -197,7 +195,7 @@ function EFilingCases({ path }) {
 
   const [openConfigurationModal, setOpenConfigurationModal] = useState(false);
   const [openConfirmCourtModal, setOpenConfirmCourtModal] = useState(false);
-  const [serviceOfDemandNoticeModal, setServiceOfDemandNoticeModal] = useState({ show: false, index: 0 });
+  const [serviceOfDemandNoticeModal, setServiceOfDemandNoticeModal] = useState(false);
   const [confirmDeleteModal, setConfirmDeleteModal] = useState(false);
   const [showConfirmMandatoryModal, setShowConfirmMandatoryModal] = useState(false);
   const [optionalFieldModalAlreadyViewed, setOptionalFieldModalAlreadyViewed] = useState(false);
@@ -215,7 +213,6 @@ function EFilingCases({ path }) {
   const [caseResubmitSuccess, setCaseResubmitSuccess] = useState(false);
   const [prevSelected, setPrevSelected] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
-  const [addressError, setAddressError] = useState({ show: false, message: "" });
   const homepagePath = `/${window?.contextPath}/citizen/dristi/home`;
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoader, setIsLoader] = useState(false);
@@ -664,7 +661,6 @@ function EFilingCases({ path }) {
 
   const closeToast = () => {
     setShowErrorToast(false);
-    setAddressError({ show: false, message: "" });
     setErrorMsg("");
     setSuccessToast((prev) => ({
       ...prev,
@@ -675,13 +671,13 @@ function EFilingCases({ path }) {
 
   useEffect(() => {
     let timer;
-    if (showErrorToast || showSuccessToast || addressError?.show) {
+    if (showErrorToast || showSuccessToast) {
       timer = setTimeout(() => {
         closeToast();
       }, 2000);
     }
     return () => clearTimeout(timer);
-  }, [showErrorToast, showSuccessToast, addressError?.show]);
+  }, [showErrorToast, showSuccessToast]);
 
   useEffect(() => {
     if (isCaseReAssigned) {
@@ -954,7 +950,7 @@ function EFilingCases({ path }) {
                 body.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
               }
 
-              if (body?.labelChildren === "OutlinedInfoIcon") {
+              if (body?.labelChildren === "OutlinedInfoIcon" && Object.keys(caseDetails?.additionalDetails?.scrutiny?.data || {}).length === 0) {
                 body.labelChildren = (
                   <React.Fragment>
                     <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`${body.label}-tooltip`}>
@@ -1134,7 +1130,7 @@ function EFilingCases({ path }) {
                 body.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
               }
 
-              if (body?.labelChildren === "OutlinedInfoIcon") {
+              if (body?.labelChildren === "OutlinedInfoIcon" && Object.keys(caseDetails?.additionalDetails?.scrutiny?.data || {}).length === 0) {
                 body.labelChildren = (
                   <React.Fragment>
                     <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`${body.label}-tooltip`}>
@@ -1364,7 +1360,10 @@ function EFilingCases({ path }) {
                   modifiedFormComponent.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
                 }
                 modifiedFormComponent.state = state;
-                if (modifiedFormComponent?.labelChildren === "OutlinedInfoIcon") {
+                if (
+                  modifiedFormComponent?.labelChildren === "OutlinedInfoIcon" &&
+                  Object.keys(caseDetails?.additionalDetails?.scrutiny?.data || {}).length === 0
+                ) {
                   modifiedFormComponent.labelChildren = (
                     <React.Fragment>
                       <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`${modifiedFormComponent.label}-tooltip`}>
@@ -1839,41 +1838,6 @@ function EFilingCases({ path }) {
         return;
       }
     }
-
-    if (selected === "complainantDetails") {
-      if (
-        formdata
-          ?.filter((data) => data.isenabled)
-          ?.some((data, index) =>
-            addressValidation({
-              formData: data?.data,
-              selected: selected === "complainantDetails" ? "complainantType" : "respondentType",
-              setAddressError,
-              config: modifiedFormConfig[index],
-            })
-          )
-      ) {
-        return;
-      }
-    }
-
-    if (selected === "respondentDetails") {
-      if (
-        formdata
-          ?.filter((data) => data.isenabled)
-          ?.some((data, index) =>
-            accusedAddressValidation({
-              formData: data?.data,
-              selected: selected === "complainantDetails" ? "complainantType" : "respondentType",
-              setAddressError,
-              config: modifiedFormConfig[index],
-            })
-          )
-      ) {
-        return;
-      }
-    }
-
     if (
       formdata
         .filter((data) => data.isenabled)
@@ -2154,23 +2118,8 @@ function EFilingCases({ path }) {
     }
   };
 
-  const onSaveDraft = (removeDateOfService = false) => {
-    let newFormData = structuredClone(formdata);
-    if (removeDateOfService) {
-      newFormData = formdata.map((item, index) =>
-        index === serviceOfDemandNoticeModal?.index
-          ? {
-              ...item,
-              data: {
-                ...item.data,
-                dateOfService: "",
-              },
-            }
-          : item
-      );
-    }
-    setParmas({ ...params, [pageConfig.key]: newFormData });
-
+  const onSaveDraft = (props) => {
+    setParmas({ ...params, [pageConfig.key]: formdata });
     const newCaseDetails = {
       ...caseDetails,
       additionalDetails: {
@@ -2182,7 +2131,7 @@ function EFilingCases({ path }) {
       t,
       caseDetails: newCaseDetails,
       prevCaseDetails: prevCaseDetails,
-      formdata: newFormData,
+      formdata,
       setFormDataValue: setFormDataValue.current,
       pageConfig,
       selected,
@@ -2195,9 +2144,8 @@ function EFilingCases({ path }) {
       setShouldShowConfirmDcaModal,
     })
       .then(() => {
-        refetchCaseData().then((updatedCaseData) => {
-          const caseData = updatedCaseData?.data?.criteria[0].responseList[0].additionalDetails?.[selected]?.formdata ||
-            caseDetails?.additionalDetails?.[nextSelected]?.formdata ||
+        refetchCaseData().then(() => {
+          const caseData = caseDetails?.additionalDetails?.[nextSelected]?.formdata ||
             caseDetails?.caseDetails?.[nextSelected]?.formdata || [{ isenabled: true, data: {}, displayindex: 0 }];
           setFormdata(caseData);
           setIsDisabled(false);
@@ -2896,7 +2844,7 @@ function EFilingCases({ path }) {
               className={"confirm-delete-modal"}
             ></Modal>
           )}
-          {serviceOfDemandNoticeModal?.show && (
+          {serviceOfDemandNoticeModal && (
             <Modal
               headerBarMain={<Heading label={t("CS_IMPORTANT_NOTICE")} />}
               headerBarEnd={
@@ -2904,34 +2852,33 @@ function EFilingCases({ path }) {
                   onClick={() => {
                     setFormDataValue.current?.("dateOfService", "");
                     clearFormDataErrors.current?.("dateOfService");
-                    setServiceOfDemandNoticeModal((prev) => {
-                      return { ...prev, show: false };
-                    });
+                    setServiceOfDemandNoticeModal(false);
                   }}
                 />
               }
               actionCancelOnSubmit={() => {
                 setFormDataValue.current?.("dateOfService", "");
                 clearFormDataErrors.current?.("dateOfService");
-                setServiceOfDemandNoticeModal((prev) => {
-                  return { ...prev, show: false };
-                });
+                setServiceOfDemandNoticeModal(false);
               }}
               actionSaveLabel={t("CS_SAVE_DRAFT")}
               children={<div style={{ padding: "16px 0" }}>{t("CS_SAVE_AS_DRAFT_TEXT")}</div>}
               actionSaveOnSubmit={async () => {
-                try {
-                  setFormDataValue.current?.("dateOfService", "");
-                  clearFormDataErrors.current?.("dateOfService");
-                  setServiceOfDemandNoticeModal((prev) => {
-                    return { ...prev, show: false };
-                  });
-                  onSaveDraft(true);
-                } catch (error) {
-                  console.log(error);
-                }
-
-                history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
+                await DRISTIService.caseUpdateService(
+                  {
+                    cases: {
+                      ...caseDetails,
+                      litigants: !caseDetails?.litigants ? [] : caseDetails?.litigants,
+                      workflow: {
+                        ...caseDetails?.workflow,
+                        action: "SAVE_DRAFT",
+                      },
+                    },
+                    tenantId,
+                  },
+                  tenantId
+                );
+                history.push(`/${window?.contextPath}/citizen/dristi/home`);
               }}
             ></Modal>
           )}
@@ -3015,7 +2962,6 @@ function EFilingCases({ path }) {
               onClose={closeToast}
             />
           )}
-          {addressError?.show && <Toast error={true} label={t(addressError?.message)} isDleteBtn={true} onClose={closeToast} />}
           {showSuccessToast && <Toast label={t(successMsg)} isDleteBtn={true} onClose={closeToast} />}
         </div>
       </div>

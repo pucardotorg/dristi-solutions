@@ -44,7 +44,7 @@ public class HearingApiController {
     @RequestMapping(value = "/hearing/v1/_schedule", method = RequestMethod.POST)
     public ResponseEntity<HearingResponse> scheduleHearing(@Parameter(in = ParameterIn.DEFAULT, description = "Hearing Details and Request Info", required = true, schema = @Schema()) @Valid @RequestBody ScheduleHearingRequest request) {
         log.info("api=/hearing/v1/_schedule, result = IN_PROGRESS");
-        List<ScheduleHearing> scheduledHearings = hearingService.scheduleHearingInScheduler(request);
+        List<ScheduleHearing> scheduledHearings = hearingService.schedule(request);
         HearingResponse response = HearingResponse.builder().hearings(scheduledHearings).responseInfo(ResponseInfoFactory.createResponseInfo(request.getRequestInfo(), true)).build();
         log.info("api=/hearing/v1/_schedule, result = SUCCESS");
         return ResponseEntity.accepted().body(response);

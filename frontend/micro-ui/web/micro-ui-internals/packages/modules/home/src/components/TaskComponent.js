@@ -128,13 +128,11 @@ const TasksComponent = ({
   const getApplicationDetail = useCallback(
     async (applicationNumber) => {
       setSearchCaseLoading(true);
-      // Add courtId to criteria if it exists
       const applicationData = await HomeService.customApiService(Urls.applicationSearch, {
         criteria: {
           filingNumber,
           tenantId,
           applicationNumber,
-          courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52'
         },
         tenantId,
       });
@@ -147,13 +145,11 @@ const TasksComponent = ({
   const getOrderDetail = useCallback(
     async (orderNumber) => {
       setSearchCaseLoading(true);
-      // Add courtId to criteria if it exists
       const orderData = await HomeService.customApiService(Urls.orderSearch, {
         criteria: {
           filingNumber,
           tenantId,
           orderNumber,
-          courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52'
         },
         tenantId,
       });

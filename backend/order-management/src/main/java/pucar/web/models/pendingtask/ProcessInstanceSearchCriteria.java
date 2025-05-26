@@ -26,7 +26,7 @@ public class ProcessInstanceSearchCriteria {
     private List<String> businessIds;
 
     @JsonProperty("assignee")
-    private String  assignee;
+    private String assignee;
 
     @JsonProperty("ids")
     private List<String> ids;

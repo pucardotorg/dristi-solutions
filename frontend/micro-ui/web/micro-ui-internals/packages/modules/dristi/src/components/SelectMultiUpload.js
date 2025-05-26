@@ -4,7 +4,6 @@ import { UploadIcon } from "../icons/svgIndex";
 import DocViewerWrapper from "../pages/employee/docViewerWrapper";
 import { CardLabelError, TextInput, CloseSvg, Toast } from "@egovernments/digit-ui-react-components";
 import Button from "./Button";
-import ImageModal from "./ImageModal";
 
 const CloseBtn = (props) => {
   return (
@@ -57,9 +56,6 @@ const DragDropComponent = ({ config, label }) => {
 const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) => {
   const [showErrorToast, setShowErrorToast] = useState(null);
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
-  const [imageInfo, setImageInfo] = useState(null);
-  const [selectedDocs, setSelectedDocs] = useState([]);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -121,16 +117,6 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
   const handleRemoveFile = (file, index, currentValue, input) => {
     const updatedValue = currentValue.filter((item, idx) => idx !== index);
     setValue(updatedValue, input?.name);
-  };
-
-  const handleImageModalOpen = (fileStoreId, fileName, fileData) => {
-    setIsImageModalOpen(true);
-    setImageInfo({ data: { fileStore: fileStoreId, fileName: fileName } });
-    setSelectedDocs([fileData]);
-  };
-
-  const handleImageModalClose = () => {
-    setIsImageModalOpen(false);
   };
 
   return inputs?.map((input) => {
@@ -218,65 +204,47 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
               position: "relative",
             }}
           >
-            {currentValue?.map((file, index) => {
-              return (
-                <div key={(file?.additionalDetails?.name || file?.name) + index} style={{ position: "relative", display: "inline-block" }}>
-                  <div onClick={() => handleImageModalOpen(file?.fileStore, file?.additionalDetails?.name || file?.name, file)}>
-                    <DocViewerWrapper
-                      fileStoreId={file?.fileStore}
-                      selectedDocs={[file]}
-                      showDownloadOption={false}
-                      docViewerCardClassName="doc-viewer-card-style"
-                      style={{ flexShrink: 0 }}
-                      tenantId={tenantId}
-                    />
-                  </div>
-                  <p style={{ marginTop: "10px", fontSize: "14px", color: "#888" }}>{file?.additionalDetails?.name || file?.name}</p>
+            {currentValue?.map((file, index) => (
+              <div key={(file?.additionalDetails?.name || file?.name) + index} style={{ position: "relative", display: "inline-block" }}>
+                <DocViewerWrapper
+                  fileStoreId={file?.fileStore}
+                  selectedDocs={[file]}
+                  showDownloadOption={false}
+                  docViewerCardClassName="doc-viewer-card-style"
+                  style={{ flexShrink: 0 }}
+                  tenantId={tenantId}
+                />
+                <p style={{ marginTop: "10px", fontSize: "14px", color: "#888" }}>{file?.additionalDetails?.name || file?.name}</p>
 
-                  {!config?.disable && (
-                    <Button
-                      key={(file?.additionalDetails?.name || file?.name) + index}
-                      onButtonClick={() => {
-                        handleRemoveFile(file, index, currentValue, input);
-                      }}
-                      children={<CloseBtn />}
-                      label=""
-                      style={{
-                        position: "absolute",
-                        top: "5px",
-                        right: "5px",
-                        background: "none",
-                        color: "#FF0000",
-                        fontSize: "16px",
-                        width: "20px",
-                        height: "20px",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        cursor: "pointer",
-                        padding: "0",
-                        border: "none",
-                        boxShadow: "none",
-                      }}
-                    />
-                  )}
-                </div>
-              );
-            })}
-            {isImageModalOpen && (
-              <ImageModal
-                t={t}
-                handleCloseModal={handleImageModalClose}
-                imageInfo={imageInfo}
-                selectedDocs={selectedDocs}
-                headerBarMainStyle={{
-                  position: "sticky",
-                  top: "0",
-                  zIndex: 1000,
-                  backgroundColor: "grey",
-                }}
-              />
-            )}
+                {!config?.disable && (
+                  <Button
+                    key={(file?.additionalDetails?.name || file?.name) + index}
+                    onButtonClick={() => {
+                      handleRemoveFile(file, index, currentValue, input);
+                    }}
+                    children={<CloseBtn />}
+                    label=""
+                    style={{
+                      position: "absolute",
+                      top: "5px",
+                      right: "5px",
+                      background: "none",
+                      color: "#FF0000",
+                      fontSize: "16px",
+                      width: "20px",
+                      height: "20px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      padding: "0",
+                      border: "none",
+                      boxShadow: "none",
+                    }}
+                  />
+                )}
+              </div>
+            ))}
           </div>
           {errors[input?.name] && (
             <CardLabelError style={{ width: "70%", marginLeft: "30%", fontSize: "12px" }}>

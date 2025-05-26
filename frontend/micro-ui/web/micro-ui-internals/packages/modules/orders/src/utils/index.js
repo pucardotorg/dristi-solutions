@@ -196,8 +196,3 @@ export const numberToWords = (num) => {
 
   return words.trim();
 };
-
-export const formatAddress = (value) => {
-  const parts = [value.locality, value.city, value.district, value.pincode];
-  return parts.filter((part) => part !== undefined && part !== null && part !== "").join(", ");
-};

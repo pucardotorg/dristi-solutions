@@ -63,7 +63,7 @@ class DiaryQueryBuilderTest {
         searchCriteria.setTenantId("tenant-1");
         searchCriteria.setDate(1627987200000L);
         searchCriteria.setCaseId("CASE123");
-        searchCriteria.setCourtId("COURT123");
+        searchCriteria.setJudgeId("JUDGE123");
         searchCriteria.setDiaryType("TYPE1");
 
         String query = queryBuilder.getCaseDiaryQuery(searchCriteria, preparedStatementValues, preparedStatementTypeValues);
@@ -71,7 +71,7 @@ class DiaryQueryBuilderTest {
         assertTrue(query.contains("dcd.tenant_id = ?"));
         assertTrue(query.contains("dcd.diary_date = ?"));
         assertTrue(query.contains("dcd.case_number = ?"));
-        assertTrue(query.contains("dcd.court_id = ?"));
+        assertTrue(query.contains("dcd.judge_id = ?"));
         assertTrue(query.contains("dcd.diary_type = ?"));
         assertEquals(5, preparedStatementValues.size());
     }
@@ -133,7 +133,7 @@ class DiaryQueryBuilderTest {
         searchCriteria.setTenantId("tenant-1");
         searchCriteria.setDate(1627987200000L);
         searchCriteria.setCaseId("CASE123");
-        searchCriteria.setCourtId("JUDGE123");
+        searchCriteria.setJudgeId("JUDGE123");
         searchCriteria.setDiaryType("TYPE1");
 
         String query = queryBuilder.getSearchDiaryQuery(searchCriteria, preparedStatementValues, preparedStatementTypeValues);
@@ -141,7 +141,7 @@ class DiaryQueryBuilderTest {
         assertTrue(query.contains("dcd.tenant_id = ?"));
         assertTrue(query.contains("dcd.diary_date = ?"));
         assertTrue(query.contains("dcd.case_number = ?"));
-        assertTrue(query.contains("dcd.court_id = ?"));
+        assertTrue(query.contains("dcd.judge_id = ?"));
         assertTrue(query.contains("dcd.diary_type = ?"));
         assertEquals(5, preparedStatementValues.size());
     }

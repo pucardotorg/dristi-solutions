@@ -2,12 +2,13 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/";
 import PreHearingModal from "../../components/PreHearingModal";
 import TasksComponent from "../../components/TaskComponentCalander";
-import { Button, Loader } from "@egovernments/digit-ui-react-components";
+import useGetHearings from "../../hooks/hearings/useGetHearings";
+import { Button } from "@egovernments/digit-ui-react-components";
 import BulkReschedule from "./BulkReschedule";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
@@ -45,7 +46,7 @@ const MonthlyCalendar = () => {
   const [taskType, setTaskType] = useState({});
   const [caseType, setCaseType] = useState({});
   const [stepper, setStepper] = useState(0);
-  const initial = "dayGridMonth";
+  const initial = userInfoType === "citizen" ? "timeGridDay" : "dayGridMonth";
 
   const search = window.location.search;
   const { fromDate, toDate, slot, slotId, initialView, count } = useMemo(() => {
@@ -64,31 +65,20 @@ const MonthlyCalendar = () => {
       tenantId,
       fromDate: dateRange.start ? dateRange.start.getTime() : null,
       toDate: dateRange.end ? dateRange.end.getTime() : null,
-      attendeeIndividualId: individualId,
     },
   };
 
-  // const { data: hearingResponse, refetch } = useGetHearings(
-  //   reqBody,
-  //   { applicationNumber: "", cnrNumber: "", tenantId },
-  //   `${dateRange.start?.toISOString()}-${dateRange.end?.toISOString()}`,
-  //   Boolean(dateRange.start && dateRange.end && (userInfoType === "citizen" ? individualId : true)),
-  //   false,
-  //   userInfoType === "citizen" && individualId,
-  //   6 * 1000
-  // );
-
-  const { data: hearingResponse } = Digit.Hooks.hearings.useGetHearingsCounts(
+  const { data: hearingResponse, refetch } = useGetHearings(
     reqBody,
     { applicationNumber: "", cnrNumber: "", tenantId },
     `${dateRange.start?.toISOString()}-${dateRange.end?.toISOString()}`,
     Boolean(dateRange.start && dateRange.end && (userInfoType === "citizen" ? individualId : true)),
     false,
     userInfoType === "citizen" && individualId,
-    10 * 1000
+    6 * 1000
   );
 
-  const hearingCountsResponse = useMemo(() => hearingResponse?.HearingList || [], [hearingResponse]);
+  const hearingDetails = useMemo(() => hearingResponse?.HearingList || [], [hearingResponse]);
 
   const mdmsEvents = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "court", [{ name: "slots" }], {
     cacheTime: 0,
@@ -96,127 +86,81 @@ const MonthlyCalendar = () => {
       return data?.court?.slots || [];
     },
   });
-  const events = useMemo(() => mdmsEvents?.data, [mdmsEvents]); //mdmsEvents?.data;
+  const events = mdmsEvents?.data;
 
-  // function epochToDateTimeObject(epochTime) {
-  //   if (!epochTime || typeof epochTime !== "number") {
-  //     return null;
-  //   }
+  function epochToDateTimeObject(epochTime) {
+    if (!epochTime || typeof epochTime !== "number") {
+      return null;
+    }
 
-  //   const date = new Date(epochTime);
-  //   const year = date.getFullYear();
-  //   const month = String(date.getMonth() + 1).padStart(2, "0");
-  //   const day = String(date.getDate()).padStart(2, "0");
-  //   const hours = String(date.getHours()).padStart(2, "0");
-  //   const minutes = String(date.getMinutes()).padStart(2, "0");
-  //   const seconds = String(date.getSeconds()).padStart(2, "0");
-  //   const dateTimeObject = {
-  //     date: `${year}-${month}-${day}`,
-  //     time: `${hours}:${minutes}:${seconds}`,
-  //   };
+    const date = new Date(epochTime);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+    const dateTimeObject = {
+      date: `${year}-${month}-${day}`,
+      time: `${hours}:${minutes}:${seconds}`,
+    };
 
-  //   return dateTimeObject;
-  // }
+    return dateTimeObject;
+  }
 
-  // const Calendar_events = useMemo(() => {
-  //   const calendarEvents = {};
-
-  //   hearingDetails.forEach((hearing) => {
-  //     const dateTimeObj = epochToDateTimeObject(hearing.startTime);
-  //     if (dateTimeObj) {
-  //       const dateString = dateTimeObj.date;
-  //       events?.forEach((slot) => {
-  //         // if (dateTimeObj.time >= slot.slotStartTime && dateTimeObj.time < slot.slotEndTime) {
-  //         const eventKey = `${dateString}-${slot.slotName}`;
-
-  //         if (!calendarEvents[eventKey]) {
-  //           calendarEvents[eventKey] = {
-  //             title: `${slot.slotName} Hearing`,
-  //             // start: `${dateString}T${slot.slotStartTime}`,
-  //             // end: `${dateString}T${slot.slotEndTime}`,
-  //             // please refer to ticket #3129 for all modifications done related to changing slots to one.
-  //             start: `${dateString}T00:00:00`,
-  //             end: `${dateString}T23:59:59`,
-  //             extendedProps: {
-  //               // hearings: [hearing],
-  //               count: 1,
-  //               date: new Date(dateString),
-  //               slot: slot.slotName,
-  //               slotId: slot.id,
-  //             },
-  //           };
-  //         } else {
-  //           calendarEvents[eventKey].extendedProps.count += 1;
-  //           // calendarEvents[eventKey].extendedProps.hearings.push(hearing);
-  //         }
-  //         // }
-  //       });
-  //     }
-  //   });
-
-  //   const eventsArray = Object.values(calendarEvents);
-  //   return eventsArray;
-  // }, [hearingDetails, events]);
-
-  const getSlot = useCallback(
-    (hearingTime) => {
-      return events?.find((slot) => hearingTime >= slot.slotStartTime && hearingTime <= slot.slotEndTime) || events?.[0];
-    },
-    [events]
-  );
   const Calendar_events = useMemo(() => {
     const calendarEvents = {};
-    hearingCountsResponse?.forEach((hearing) => {
-      const dateStr = hearing.hearingDate;
-      hearing.hearingList.forEach((hearingType) => {
-        const slotDetails = getSlot(hearingType?.hearingStartTime);
-        const eventKey = `${dateStr}-${slotDetails?.slotName}`;
-        const hearingTypeKey = `${hearingType?.hearingType}`;
 
-        if (!calendarEvents[eventKey]) {
-          calendarEvents[eventKey] = {
-            title: `${slotDetails?.slotName} Hearing`,
-            start: `${dateStr}T00:00:00`,
-            end: `${dateStr}T23:59:59`,
+    hearingDetails.forEach((hearing) => {
+      const dateTimeObj = epochToDateTimeObject(hearing.startTime);
+      if (dateTimeObj) {
+        const dateString = dateTimeObj.date;
+        events?.forEach((slot) => {
+          // if (dateTimeObj.time >= slot.slotStartTime && dateTimeObj.time < slot.slotEndTime) {
+          const eventKey = `${dateString}-${slot.slotName}`;
 
-            extendedProps: {
-              count: 1,
-              date: new Date(dateStr),
-              slot: slotDetails?.slotName,
-              slotId: slotDetails?.id,
-              hearings: [hearingType],
-              hearingTypeCounts: {},
-              totalCount: 1,
-            },
-          };
-        } else {
-          calendarEvents[eventKey].extendedProps.count += 1;
-          calendarEvents[eventKey].extendedProps.hearings.push(hearingType);
-          calendarEvents[eventKey].extendedProps.totalCount += 1;
-        }
-
-        let prophearingTypeCounts = calendarEvents[eventKey].extendedProps.hearingTypeCounts || {};
-        prophearingTypeCounts[hearingTypeKey] = (prophearingTypeCounts?.hearingType || 0) + 1;
-        calendarEvents[eventKey].extendedProps.hearingTypeCounts = prophearingTypeCounts;
-      });
+          if (!calendarEvents[eventKey]) {
+            calendarEvents[eventKey] = {
+              title: `${slot.slotName} Hearing`,
+              // start: `${dateString}T${slot.slotStartTime}`,
+              // end: `${dateString}T${slot.slotEndTime}`,
+              // please refer to ticket #3129 for all modifications done related to changing slots to one.
+              start: `${dateString}T00:00:00`,
+              end: `${dateString}T23:59:59`,
+              extendedProps: {
+                hearings: [hearing],
+                count: 1,
+                date: new Date(dateString),
+                slot: slot.slotName,
+                slotId: slot.id,
+              },
+            };
+          } else {
+            calendarEvents[eventKey].extendedProps.count += 1;
+            calendarEvents[eventKey].extendedProps.hearings.push(hearing);
+          }
+          // }
+        });
+      }
     });
 
     const eventsArray = Object.values(calendarEvents);
     return eventsArray;
-  }, [getSlot, hearingCountsResponse]);
-  // const getEachHearingType = (hearingList) => {
-  //   return [...new Set(hearingList.map((hearing) => hearing.hearingType))];
-  // };
+  }, [hearingDetails, events]);
 
-  // const hearingCount = (hearingList) => {
-  //   const hearingTypeList = getEachHearingType(hearingList);
-  //   return hearingTypeList.map((type) => {
-  //     return {
-  //       type: type,
-  //       frequency: hearingList?.filter((hearing) => hearing?.hearingType === type).length,
-  //     };
-  //   });
-  // };
+  const getEachHearingType = (hearingList) => {
+    return [...new Set(hearingList.map((hearing) => hearing.hearingType))];
+  };
+
+  const hearingCount = (hearingList) => {
+    const hearingTypeList = getEachHearingType(hearingList);
+    return hearingTypeList.map((type) => {
+      return {
+        type: type,
+        frequency: hearingList.filter((hearing) => hearing.hearingType === type).length,
+      };
+    });
+  };
 
   const handleEventClick = (arg, ...rest) => {
     console.log(arg, ...rest);
@@ -249,10 +193,6 @@ const MonthlyCalendar = () => {
   };
 
   const maxHearingCount = 5;
-
-  // if (isLoading) {
-  //   return <Loader />;
-  // }
   return (
     <React.Fragment>
       {Digit.UserService.getType() === "employee" && (
@@ -274,52 +214,29 @@ const MonthlyCalendar = () => {
               height={"85vh"}
               events={Calendar_events}
               eventContent={(arg) => {
+                const hearings = hearingCount(arg.event.extendedProps.hearings) || [];
                 return (
                   <div>
                     <div>{`${arg.event.extendedProps.slot} :`}</div>
                     <div>{`${arg.event.extendedProps.count}-${t("HEARINGS")}`}</div>
 
-                    {Object.keys(arg.event.extendedProps.hearingTypeCounts).length <= maxHearingCount ? (
-                      Object.keys(arg.event.extendedProps.hearingTypeCounts).map((hearingType, index) => (
+                    {hearings.length <= maxHearingCount ? (
+                      hearings.map((hearingFrequency, index) => (
                         <div key={index} style={{ whiteSpace: "normal" }}>
-                          {arg.event.extendedProps.hearingTypeCounts[hearingType]} - {t(hearingType)}
+                          {hearingFrequency.frequency} - {t(hearingFrequency.type)}
                         </div>
                       ))
                     ) : (
                       <div>
-                        {Object.keys(arg.event.extendedProps.hearingTypeCounts)
-                          .slice(0, maxHearingCount)
-                          .map((hearingType, index) => (
-                            <div key={index} style={{ whiteSpace: "normal" }}>
-                              {arg.event.extendedProps.hearingTypeCounts[hearingType]} - {t(hearingType)}
-                            </div>
-                          ))}
+                        {hearings.slice(0, maxHearingCount).map((hearingFrequency, index) => (
+                          <div key={index} style={{ whiteSpace: "normal" }}>
+                            {hearingFrequency.frequency} - {t(hearingFrequency.type)}
+                          </div>
+                        ))}
                         <div style={{ color: "green" }}>{`${t("CALENDER_MORE")}`}</div>
                       </div>
                     )}
                   </div>
-
-                  // <div>
-                  //   <div>{`${arg.event.extendedProps.slot} :`}</div>
-                  //   <div>{`${arg.event.extendedProps.count}-${t("HEARINGS")}`}</div>
-
-                  //   {hearings.length <= maxHearingCount ? (
-                  //     hearings.map((hearingFrequency, index) => (
-                  //       <div key={index} style={{ whiteSpace: "normal" }}>
-                  //         {hearingFrequency.frequency} - {t(hearingFrequency.type)}
-                  //       </div>
-                  //     ))
-                  //   ) : (
-                  //     <div>
-                  //       {hearings.slice(0, maxHearingCount).map((hearingFrequency, index) => (
-                  //         <div key={index} style={{ whiteSpace: "normal" }}>
-                  //           {hearingFrequency.frequency} - {t(hearingFrequency.type)}
-                  //         </div>
-                  //       ))}
-                  //       <div style={{ color: "green" }}>{`${t("CALENDER_MORE")}`}</div>
-                  //     </div>
-                  //   )}
-                  // </div>
                 );
               }}
               eventClick={handleEventClick}

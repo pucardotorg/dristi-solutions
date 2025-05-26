@@ -19,8 +19,7 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
         apiOperation: "SEARCH",
         criteria: {
           tenantId: Digit.ULBService.getCurrentTenantId(),
-          // cnrNumber: taskCnrNumber,
-          orderId: orderId,
+          cnrNumber: taskCnrNumber,
         },
       },
       masterName: "commonUiConfig",

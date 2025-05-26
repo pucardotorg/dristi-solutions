@@ -9,16 +9,10 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum OrderPagination {
     ASC("asc"), DESC("desc");
 
-    private String value;
+    private final String value;
 
     OrderPagination(String value) {
         this.value = value;
-    }
-
-    @Override
-    @JsonValue
-    public String toString() {
-        return String.valueOf(value);
     }
 
     @JsonCreator
@@ -29,5 +23,11 @@ public enum OrderPagination {
             }
         }
         return null;
+    }
+
+    @Override
+    @JsonValue
+    public String toString() {
+        return String.valueOf(value);
     }
 }

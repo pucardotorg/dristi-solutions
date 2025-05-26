@@ -310,19 +310,19 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       setPoliceStationIdMapping(policeStationIdMapping);
       setDeliveryChannels(
         [
-          // {
-          //   label: "EPOST",
-          //   type: "e-Post",
-          //   code: "EPOST",
-          //   values: ePostAddresses,
-          // },
           {
-            label: "SEND_VIA_POST",
+            label: "EPOST",
+            type: "e-Post",
+            code: "EPOST",
+            values: ePostAddresses,
+          },
+          {
+            label: "REGISTERED_POST",
             type: "Registered Post",
             code: "RPAD",
             values: address || [],
           },
-          orderType === "WARRANT" && { label: "SEND_ICOPS", type: "Via Police", code: "POLICE", values: address || [] },
+          orderType === "WARRANT" && { label: "VIA_POLICE", type: "Via Police", code: "POLICE", values: address || [] },
         ]
           .filter((item) => Boolean(item))
           .map((item) => item)
@@ -377,10 +377,6 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
           )}
           {input.type !== "dropdown" && selectedParty && (
             <WarrantRenderDeliveryChannels
-              config={config}
-              onSelect={onSelect}
-              setSelectedChannels={setSelectedChannels}
-              formData={formData}
               deliveryChannels={deliveryChannels}
               handleCheckboxChange={handleCheckboxChange}
               partyDetails={partyDetails}

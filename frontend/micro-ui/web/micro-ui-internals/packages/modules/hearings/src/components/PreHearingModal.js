@@ -1,18 +1,19 @@
 import { Button, CloseSvg, InboxSearchComposer, Loader } from "@egovernments/digit-ui-react-components";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import Modal from "../../../dristi/src/components/Modal";
 import { preHearingConfig } from "../configs/PreHearingConfig";
+import { hearingService } from "../hooks/services";
 import { ReschedulingPurpose } from "../pages/employee/ReschedulingPurpose";
 import { formatDate } from "../utils";
 import BulkReschedule from "../pages/employee/BulkReschedule";
 
 function PreHearingModal({ onCancel, hearingData, courtData, individualId, userType, events }) {
   const { t } = useTranslation();
-  // const roles = Digit.UserService.getUser()?.info?.roles;
-  // const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
+  const roles = Digit.UserService.getUser()?.info?.roles;
+  const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
-  // const [totalCount, setTotalCount] = useState(count);
+  const [totalCount, setTotalCount] = useState(null);
   const [purposeModalOpen, setPurposeModalOpen] = useState(false);
   const [purposeModalData, setPurposeModalData] = useState({});
   const [rescheduleAll, setRescheduleAll] = useState(false);
@@ -60,65 +61,64 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
       }),
     ];
     return configCopy;
-  }, [hearingData.fromDate, hearingData.toDate, hearingData.slot, tenantId, userType, individualId]);
+  }, [hearingData.fromDate, hearingData.toDate, hearingData.slot, userType, individualId]);
 
-  // const getTotalCount = useCallback(
-  //   async function () {
-  //     const response = await hearingService
-  //       .searchHearings(
-  //         {
-  //           criteria: {
-  //             ...updatedConfig?.apiDetails?.requestBody?.criteria?.[0],
-  //             tenantId,
-  //             fromDate: hearingData.fromDate,
-  //             toDate: hearingData.toDate,
-  //             slot: hearingData.slot,
-  //             attendeeIndividualId: individualId,
-  //           },
-  //         },
-  //         {
-  //           tenantId: tenantId,
-  //         }
-  //       )
-  //       .catch(() => {
-  //         return {};
-  //       });
-  //     setTotalCount(response?.TotalCount);
-  //   },
-  //   [updatedConfig, tenantId]
-  // );
+  const getTotalCount = useCallback(
+    async function () {
+      const response = await hearingService
+        .searchHearings(
+          {
+            criteria: {
+              ...updatedConfig?.apiDetails?.requestBody?.criteria?.[0],
+              tenantId,
+              fromDate: hearingData.fromDate,
+              toDate: hearingData.toDate,
+              slot: hearingData.slot,
+              attendeeIndividualId: individualId,
+            },
+          },
+          {
+            tenantId: tenantId,
+          }
+        )
+        .catch(() => {
+          return {};
+        });
+      setTotalCount(response?.TotalCount);
+    },
+    [updatedConfig, tenantId]
+  );
 
-  // useEffect(() => {
-  //   getTotalCount();
-  // }, [updatedConfig, tenantId]);
+  useEffect(() => {
+    getTotalCount();
+  }, [updatedConfig, tenantId]);
 
   useEffect(() => {
     if (stepper === 4) {
       onCancel();
     }
-  }, [onCancel, stepper]);
+  }, [stepper]);
+
   const popUpStyle = {
     width: "70%",
     height: "fit-content",
     borderRadius: "0.3rem",
   };
 
-  // const onRescheduleAllClick = () => {
-  //   setRescheduleAll(true);
-  //   openRescheduleModal(hearingData);
-  // };
+  const onRescheduleAllClick = () => {
+    setRescheduleAll(true);
+    openRescheduleModal(hearingData);
+  };
 
   const closeFunc = () => {
     setPurposeModalOpen(false);
     setPurposeModalData({});
   };
 
-  // if (!totalCount && totalCount !== 0) {
-  //   return null;
-  // }
-  if (!hearingData?.count || hearingData?.count === 0) {
+  if (!totalCount && totalCount !== 0) {
     return null;
   }
+
   if (userType === "citizen" && !individualId) {
     return <Loader />;
   }

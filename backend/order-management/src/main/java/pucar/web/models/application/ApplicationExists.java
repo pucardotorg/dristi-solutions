@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ApplicationExists   {
+public class ApplicationExists {
     @JsonProperty("filingNumber")
     private String filingNumber = null;
 

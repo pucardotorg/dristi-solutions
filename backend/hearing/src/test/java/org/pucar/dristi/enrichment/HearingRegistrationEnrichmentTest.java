@@ -1,6 +1,7 @@
 package org.pucar.dristi.enrichment;
 
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
@@ -11,7 +12,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.IdgenUtil;
-import org.pucar.dristi.web.models.Document;
 import org.pucar.dristi.web.models.Hearing;
 import org.pucar.dristi.web.models.HearingRequest;
 

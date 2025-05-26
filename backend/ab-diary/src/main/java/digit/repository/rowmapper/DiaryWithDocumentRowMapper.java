@@ -42,7 +42,7 @@ public class DiaryWithDocumentRowMapper implements ResultSetExtractor<List<CaseD
                                 .caseNumber(rs.getString("caseNumber"))
                                 .diaryDate(rs.getLong("diaryDate"))
                                 .diaryType(rs.getString("diaryType"))
-                                .courtId(rs.getString("courtId"))
+                                .judgeId(rs.getString("judgeId"))
                                 .documents(new ArrayList<>())
                                 .auditDetails(AuditDetails.builder()
                                         .createdBy(rs.getString("diaryCreateBy"))

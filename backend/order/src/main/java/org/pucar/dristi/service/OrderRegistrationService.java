@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -12,7 +13,6 @@ import org.pucar.dristi.enrichment.OrderRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.OrderRepository;
 import org.pucar.dristi.util.CaseUtil;
-import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.WorkflowUtil;
 import org.pucar.dristi.validators.OrderRegistrationValidator;
 import org.pucar.dristi.web.models.*;
@@ -49,10 +49,9 @@ public class OrderRegistrationService {
     private SmsNotificationService notificationService;
 
     private IndividualService individualService;
-    private final FileStoreUtil fileStoreUtil;
 
     @Autowired
-    public OrderRegistrationService(OrderRegistrationValidator validator, Producer producer, Configuration config, WorkflowUtil workflowUtil, OrderRepository orderRepository, OrderRegistrationEnrichment enrichmentUtil, ObjectMapper objectMapper, CaseUtil caseUtil, SmsNotificationService notificationService, IndividualService individualService, FileStoreUtil fileStoreUtil) {
+    public OrderRegistrationService(OrderRegistrationValidator validator, Producer producer, Configuration config, WorkflowUtil workflowUtil, OrderRepository orderRepository, OrderRegistrationEnrichment enrichmentUtil, ObjectMapper objectMapper, CaseUtil caseUtil, SmsNotificationService notificationService, IndividualService individualService) {
         this.validator = validator;
         this.producer = producer;
         this.config = config;
@@ -63,7 +62,6 @@ public class OrderRegistrationService {
         this.caseUtil = caseUtil;
         this.notificationService = notificationService;
         this.individualService = individualService;
-        this.fileStoreUtil = fileStoreUtil;
     }
 
     public Order createOrder(OrderRequest body) {
@@ -117,9 +115,6 @@ public class OrderRegistrationService {
 
 
             workflowUpdate(body);
-
-            deleteFileStoreDocumentsIfInactive(body.getOrder());
-
             String updatedState = body.getOrder().getStatus();
             String orderType = body.getOrder().getOrderType();
             producer.push(config.getUpdateOrderKafkaTopic(), body);
@@ -136,23 +131,6 @@ public class OrderRegistrationService {
             throw new CustomException(ORDER_UPDATE_EXCEPTION, "Error occurred while updating order: " + e.getMessage());
         }
 
-    }
-
-    private void deleteFileStoreDocumentsIfInactive(Order order) {
-
-        if (order.getDocuments() != null) {
-            List<String> fileStoreIds = new ArrayList<>();
-
-            for (Document document : order.getDocuments()) {
-                if (!document.getIsActive()) {
-                    fileStoreIds.add(document.getFileStore());
-                }
-            }
-            if (!fileStoreIds.isEmpty()) {
-                fileStoreUtil.deleteFilesByFileStore(fileStoreIds, order.getTenantId());
-                log.info("Deleted files from filestore: {}", fileStoreIds);
-            }
-        }
     }
 
     public Order addItem(OrderRequest body) {

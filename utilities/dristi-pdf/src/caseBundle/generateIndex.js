@@ -8,6 +8,7 @@ const {
 const fs = require("fs");
 const path = require("path");
 const { PDFDocument } = require("pdf-lib");
+const config = require("../config");
 const cloneDeep = require("lodash.clonedeep");
 const sharp = require("sharp");
 const { logger } = require("../logger");
@@ -170,20 +171,11 @@ async function applyDocketToDocument(
     .filter(Boolean)
     .join(", ");
 
-  const response = await search_mdms(
-    courtCase.courtId,
-    "common-masters.Court_Rooms",
-    tenantId,
-    requestInfo
-  ).then((mdmsRes) => {
-    return mdmsRes.data.mdms.filter((x) => x.isActive).map((x) => x.data);
-  });
-
   const data = {
     Data: [
       {
         docketDateOfSubmission: docketDateOfSubmission,
-        docketCourtName: "Before The " + response[0].name,
+        docketCourtName: config.constants.mdmsCourtRoom.orderHeading,
         docketComplainantName,
         docketAccusedName,
         docketApplicationType,
@@ -444,9 +436,7 @@ async function processPendingAdmissionCase({
         const mergedFilingDocumentFileStoreId = await applyDocketToDocument(
           documentFileStoreId,
           {
-            docketApplicationType: `${section.name.toUpperCase()} - ${
-              section.Items
-            }`,
+            docketApplicationType: `${section.name.toUpperCase()} - ${section.Items}`,
             docketCounselFor: "COMPLAINANT",
             docketNameOfFiling: docketComplainantName,
             docketNameOfAdvocate: docketNameOfAdvocate || docketComplainantName,
@@ -521,9 +511,7 @@ async function processPendingAdmissionCase({
         const mergedFilingDocumentFileStoreId = await applyDocketToDocument(
           documentFileStoreId,
           {
-            docketApplicationType: `${section.name.toUpperCase()} - ${
-              section.Items
-            }`,
+            docketApplicationType: `${section.name.toUpperCase()} - ${section.Items}`,
             docketCounselFor: "COMPLAINANT",
             docketNameOfFiling: docketComplainantName,
             docketNameOfAdvocate: docketNameOfAdvocate || docketComplainantName,
@@ -606,9 +594,7 @@ async function processPendingAdmissionCase({
           const mergedVakalatDocumentFileStoreId = await applyDocketToDocument(
             vakalat.fileStoreId,
             {
-              docketApplicationType: `${section.name.toUpperCase()} - ${
-                section.Items
-              }`,
+              docketApplicationType: `${section.name.toUpperCase()} - ${section.Items}`,
               docketCounselFor: vakalat.partyType.includes("complainant")
                 ? "COMPLAINANT"
                 : "RESPONDENT",
@@ -656,21 +642,14 @@ async function processPendingAdmissionCase({
 }
 
 // Main Function
-async function processCaseBundle(
-  tenantId,
-  caseId,
-  index,
-  state,
-  requestInfo,
-  isRebuild
-) {
+async function processCaseBundle(tenantId, caseId, index, state, requestInfo, isRebuild) {
   logger.info(`Processing caseId: ${caseId}, state: ${state}`);
 
   // let fileStoreIds = [];
 
   let updatedIndex;
 
-  if (isRebuild) {
+  if(isRebuild){
     updatedIndex = await processPendingAdmissionCase({
       tenantId,
       caseId,
@@ -678,7 +657,9 @@ async function processCaseBundle(
       requestInfo,
       state,
     });
-  } else {
+  }
+  
+  else{
     switch (state.toUpperCase()) {
       case "PENDING_ADMISSION_HEARING": {
         updatedIndex = await processPendingAdmissionCase({

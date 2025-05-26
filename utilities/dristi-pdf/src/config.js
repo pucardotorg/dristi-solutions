@@ -321,10 +321,24 @@ module.exports = {
   },
 
   constants: {
+    mdmsCourtRoom: {
+      name: process.env.ORDER_HEADING || "Court Centre, Kollam",
+      place: "Kollam",
+      state: "Kerala",
+      orderHeading: process.env.ORDER_HEADING || "Order Heading",
+    },
     caseDetails: {
       offence:
         process.env.OFFENCE || "dishonour of cheque due to inadiquacy of funds",
       statuteAndAct: process.env.STATUE_AND_ACT || "NIA 138",
+    },
+    judgeDetails: {
+      name: process.env.JUDGE_NAME || "Judge Name",
+      judgeSignature: "Signature",
+      courtSeal: "Court Seal",
+      designation: process.env.JUDGE_DESIGNATION || "Judge Designation",
+      judgeDesignation:
+        process.env.JUDGE_DESIGNATION_HEADER || "Judge Designation Header",
     },
   },
   workFlowState: {

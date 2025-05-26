@@ -2,7 +2,6 @@ package org.pucar.dristi.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
@@ -23,7 +22,6 @@ public class SchedulerUtil {
     private final Configuration configuration;
     private final ObjectMapper mapper;
     private final RestTemplate restTemplate;
-
     @Autowired
     public SchedulerUtil(ServiceRequestRepository repository, Configuration configuration, ObjectMapper mapper, RestTemplate restTemplate) {
         this.repository = repository;
@@ -59,7 +57,7 @@ public class SchedulerUtil {
         try {
             ScheduleHearingSearchResponse searchResponse = mapper.convertValue(response, ScheduleHearingSearchResponse.class);
             scheduleHearings = searchResponse.getHearings();
-        } catch (Exception e) {
+        } catch (Exception e){
             log.error("Error occurred while getting scheduled hearings.");
             throw new CustomException("ERR_SCHEDULER_EXCEPTION", "Error occurred while getting scheduled hearings.");
         }
@@ -76,23 +74,5 @@ public class SchedulerUtil {
             log.error("Error updating time for hearing in Scheduler :: {}", e.getMessage());
             throw new CustomException("Error updating time for hearing in Scheduler.", e.getMessage());
         }
-    }
-
-    public List<ScheduleHearing> createScheduleHearing(List<ScheduleHearing> manualUpdateDateHearings, RequestInfo requestInfo) {
-
-        StringBuilder uri = new StringBuilder();
-        uri.append(configuration.getSchedulerHost()).append(configuration.getSchedulerCreateEndPoint());
-        ScheduleHearingUpdateRequest request = ScheduleHearingUpdateRequest.builder().requestInfo(requestInfo).scheduleHearings(manualUpdateDateHearings).build();
-
-        Object response = repository.fetchResult(uri, request);
-        List<ScheduleHearing> scheduleHearings;
-        try {
-            ScheduleHearingSearchResponse searchResponse = mapper.convertValue(response, ScheduleHearingSearchResponse.class);
-            scheduleHearings = searchResponse.getHearings();
-        } catch (Exception e) {
-            log.error("Error occurred while creating scheduled hearings.");
-            throw new CustomException("ERR_SCHEDULER_EXCEPTION", "Error occurred while creating scheduled hearings.");
-        }
-        return scheduleHearings;
     }
 }

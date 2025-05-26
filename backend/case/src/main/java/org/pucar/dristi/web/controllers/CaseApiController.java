@@ -8,12 +8,10 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.response.ResponseInfo;
 import org.pucar.dristi.service.CasePdfService;
 import org.pucar.dristi.service.CaseService;
-import org.pucar.dristi.service.CaseServiceV2;
 import org.pucar.dristi.service.WitnessService;
 import org.pucar.dristi.util.ResponseInfoFactory;
 import org.pucar.dristi.web.OpenApiCaseSummary;
 import org.pucar.dristi.web.models.*;
-import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,8 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-04-15T11:31:40.281899+05:30[Asia/Kolkata]")
 @RestController
@@ -33,8 +29,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class CaseApiController {
 
     private final CaseService caseService;
-
-    private final CaseServiceV2 caseServiceV2;
 
     private final WitnessService witnessService;
 
@@ -44,9 +38,8 @@ public class CaseApiController {
 
 
     @Autowired
-    public CaseApiController(CaseService caseService, CaseServiceV2 caseServiceV2, WitnessService witnessService, ResponseInfoFactory responseInfoFactory, CasePdfService casePdfService) {
+    public CaseApiController(CaseService caseService, WitnessService witnessService, ResponseInfoFactory responseInfoFactory, CasePdfService casePdfService) {
         this.caseService = caseService;
-        this.caseServiceV2 = caseServiceV2;
         this.witnessService = witnessService;
         this.responseInfoFactory = responseInfoFactory;
         this.casePdfService = casePdfService;
@@ -79,36 +72,6 @@ public class CaseApiController {
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
         CaseListResponse caseResponse = CaseListResponse.builder().criteria(body.getCriteria()).responseInfo(responseInfo).build();
         return new ResponseEntity<>(caseResponse, HttpStatus.OK);
-    }
-
-    @PostMapping(value = "/v2/search/details")
-    public ResponseEntity<CaseSearchResponse> caseV2SearchDetails(
-            @Parameter(in = ParameterIn.DEFAULT, description = "Search criteria + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseSearchRequestV2 body) {
-
-        CourtCase courtCase = caseServiceV2.searchCases(body);
-        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
-        CaseSearchResponse caseResponse = CaseSearchResponse.builder().cases(courtCase).responseInfo(responseInfo).build();
-        return new ResponseEntity<>(caseResponse, HttpStatus.OK);
-    }
-
-    @PostMapping(value = "/v2/search/list")
-    public ResponseEntity<CaseSummaryListResponse> caseV2SearchList(
-            @Parameter(in = ParameterIn.DEFAULT, description = "Search criteria + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseSummaryListRequest body) {
-
-        List<CaseSummaryList> caseSummaryLists = caseServiceV2.searchCasesList(body);
-        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
-        CaseSummaryListResponse caseSummaryListResponse = CaseSummaryListResponse.builder().caseList(caseSummaryLists).pagination(body.getCriteria().getPagination()).responseInfo(responseInfo).build();
-        return new ResponseEntity<>(caseSummaryListResponse, HttpStatus.OK);
-    }
-
-    @PostMapping(value = "/v2/search/summary")
-    public ResponseEntity<CaseSummarySearchResponse> caseV2SearchSummary(
-            @Parameter(in = ParameterIn.DEFAULT, description = "Search criteria + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseSummarySearchRequest body) {
-
-        List<CaseSummarySearch> caseSummarySearchList = caseServiceV2.searchCasesSummary(body);
-        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
-        CaseSummarySearchResponse caseSummarySearchResponse = CaseSummarySearchResponse.builder().caseSummaries(caseSummarySearchList).responseInfo(responseInfo).build();
-        return new ResponseEntity<>(caseSummarySearchResponse, HttpStatus.OK);
     }
 
     @PostMapping(value = "/v1/_verify")
@@ -260,11 +223,5 @@ public class CaseApiController {
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
         caseCodeResponse.setResponseInfo(responseInfo);
         return new ResponseEntity<>(caseCodeResponse, HttpStatus.OK);
-    }
-
-    @PostMapping(value = "/enrich/access-code")
-    public ResponseEntity<Map<String, AtomicBoolean>> enrichAccessCode(@Parameter(in = ParameterIn.DEFAULT, description = "enrich access code", required = true, schema = @Schema()) @Valid @RequestBody AccessCodeGenerateRequest body) {
-        Map<String,AtomicBoolean> response = caseService.enrichAccessCode(body);
-        return new ResponseEntity<>(response,HttpStatus.OK);
     }
 }

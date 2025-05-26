@@ -47,7 +47,7 @@ public class PublishOrderExtensionOfDocumentSubmissionDate implements OrderUpdat
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
         String action = order.getWorkflow().getAction();
-        return order.getOrderType() != null  && E_SIGN.equalsIgnoreCase(action) &&  EXTENSION_OF_DOCUMENT_SUBMISSION_DATE.equalsIgnoreCase(order.getOrderType());
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && EXTENSION_OF_DOCUMENT_SUBMISSION_DATE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override

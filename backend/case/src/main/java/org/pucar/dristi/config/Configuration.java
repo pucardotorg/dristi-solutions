@@ -173,9 +173,6 @@ public class Configuration {
 	@Value("${egov.etreasury.demand.create.endpoint}")
 	private String etreasuryDemandCreateEndPoint;
 
-	@Value("${etreasury.payment.receipt.endpoint}")
-	private String treasuryPaymentReceiptEndPoint;
-
 	//Join a Case
 	@Value("${egov.litigant.join.case.kafka.topic}")
 	private String litigantJoinCaseTopic;
@@ -215,9 +212,6 @@ public class Configuration {
 
 	@Value("${egov.file.store.save.endpoint}")
 	private String fileStoreSaveEndPoint;
-
-	@Value("${egov.file.store.delete.endpoint}")
-	private String fileStoreDeleteEndPoint;
 
 	@Value("${egov.filestore.case.module}")
 	private String fileStoreCaseModule;

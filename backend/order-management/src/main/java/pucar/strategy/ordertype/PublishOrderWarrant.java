@@ -1,12 +1,10 @@
 package pucar.strategy.ordertype;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pucar.strategy.OrderUpdateStrategy;
@@ -123,52 +121,36 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
         additionalDetails.put("applicationNumber", applicationNumber);
         additionalDetails.put("litigants", complainantIndividualId);
 
-
-        String taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), String.class);
         try {
-            JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
-            log.info("taskDetailsArray:{}", taskDetailsArray.size());
-
-            for (JsonNode taskDetail : taskDetailsArray) {
-
-
-                String taskDetailString = objectMapper.writeValueAsString(taskDetail);
-                Map<String, Object> jsonMap = objectMapper.readValue(taskDetailString, new TypeReference<>() {
-                });
-                String channel = jsonUtil.getNestedValue(jsonMap, Arrays.asList("deliveryChannels", "channelCode"), String.class);
-
-                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase,channel);
+            List<TaskRequest> taskRequests = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, courtCase,EMAIL);
+            for (TaskRequest taskRequest : taskRequests) {
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
 
                 // create pending task
 
-                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))) {
+                PendingTask pendingTask = PendingTask.builder()
+                        .name(PAYMENT_PENDING_FOR_WARRANT)
+                        .referenceId(MANUAL + taskResponse.getTask().getTaskNumber())
+                        .entityType("order-default")
+                        .status("PAYMENT_PENDING_POLICE")
+                        .assignedTo(uniqueAssignee)
+                        .cnrNumber(courtCase.getCnrNumber())
+                        .filingNumber(courtCase.getFilingNumber())
+                        .caseId(courtCase.getId().toString())
+                        .caseTitle(courtCase.getCaseTitle())
+                        .isCompleted(false)
+                        .stateSla(sla)
+                        .additionalDetails(additionalDetails)
+                        .screenType("home")
+                        .build();
 
-                    PendingTask pendingTask = PendingTask.builder()
-                            .name(PAYMENT_PENDING_FOR_WARRANT)
-                            .referenceId(MANUAL + taskResponse.getTask().getTaskNumber())
-                            .entityType("order-default")
-                            .status("PAYMENT_PENDING_POLICE")
-                            .assignedTo(uniqueAssignee)
-                            .cnrNumber(courtCase.getCnrNumber())
-                            .filingNumber(courtCase.getFilingNumber())
-                            .caseId(courtCase.getId().toString())
-                            .caseTitle(courtCase.getCaseTitle())
-                            .isCompleted(false)
-                            .stateSla(sla)
-                            .additionalDetails(additionalDetails)
-                            .screenType("home")
-                            .build();
-
-                    pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
-                    ).pendingTask(pendingTask).build());
-                }
-
+                pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
+                ).pendingTask(pendingTask).build());
 
             }
 
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+        } catch (Exception e) {
+            throw new CustomException();
         }
 
         return null;

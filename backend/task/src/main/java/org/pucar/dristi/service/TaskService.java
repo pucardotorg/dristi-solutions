@@ -13,7 +13,6 @@ import org.pucar.dristi.enrichment.TopicBasedOnStatus;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.TaskRepository;
 import org.pucar.dristi.util.CaseUtil;
-import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.SummonUtil;
 import org.pucar.dristi.util.WorkflowUtil;
 import org.pucar.dristi.validators.TaskRegistrationValidator;
@@ -42,7 +41,6 @@ public class TaskService {
     private final IndividualService individualService;
     private final TopicBasedOnStatus topicBasedOnStatus;
     private final SummonUtil summonUtil;
-    private final FileStoreUtil fileStoreUtil;
 
     @Autowired
     public TaskService(TaskRegistrationValidator validator,
@@ -50,7 +48,7 @@ public class TaskService {
                        TaskRepository taskRepository,
                        WorkflowUtil workflowUtil,
                        Configuration config,
-                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus, SummonUtil summonUtil, FileStoreUtil fileStoreUtil) {
+                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus, SummonUtil summonUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.taskRepository = taskRepository;
@@ -63,7 +61,6 @@ public class TaskService {
         this.individualService = individualService;
         this.topicBasedOnStatus = topicBasedOnStatus;
         this.summonUtil = summonUtil;
-        this.fileStoreUtil = fileStoreUtil;
     }
 
     @Autowired
@@ -149,18 +146,7 @@ public class TaskService {
                 String acknowledgementId = summonUtil.sendSummons(body);
                 updateAcknowledgementId(body, acknowledgementId);
             }
-            List<String> fileStoreIds = new ArrayList<>();
-            if(body.getTask().getDocuments() != null){
-                for (Document document : body.getTask().getDocuments()) {
-                    if (!document.getIsActive()) {
-                        fileStoreIds.add(document.getFileStore());
-                    }
-                }
-            }
-            if(!fileStoreIds.isEmpty()){
-                fileStoreUtil.deleteFilesByFileStore(fileStoreIds, body.getTask().getTenantId());
-                log.info("Deleted files from file store: {}", fileStoreIds);
-            }
+
             // push to join case topic based on status
             if (taskType.equalsIgnoreCase(JOIN_CASE)) {
                 topicBasedOnStatus.pushToTopicBasedOnStatus(status, body);

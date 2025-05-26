@@ -13,14 +13,7 @@ const { getAdvocates } = require("../applicationHandlers/getAdvocates");
 const { formatDate } = require("./formatDate");
 const { handleApiCall } = require("../utils/handleApiCall");
 
-const orderBailRejection = async (
-  req,
-  res,
-  qrCode,
-  order,
-  compositeOrder,
-  courtCaseJudgeDetails
-) => {
+const orderBailRejection = async (req, res, qrCode, order, compositeOrder) => {
   const cnrNumber = req.query.cnrNumber;
   const tenantId = req.query.tenantId;
   const entityId = req.query.entityId;
@@ -106,8 +99,23 @@ const orderBailRejection = async (
       "DD-MM-YYYY"
     );
 
-    const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
-    const judgeDetails = courtCaseJudgeDetails.judgeDetails;
+    // Search for MDMS court room details
+    // const resMdms = await handleApiCall(
+    //   () =>
+    //     search_mdms(
+    //       courtCase.courtId,
+    //       "common-masters.Court_Rooms",
+    //       tenantId,
+    //       requestInfo
+    //     ),
+    //   "Failed to query MDMS service for court room"
+    // );
+    // const mdmsCourtRoom = resMdms?.data?.mdms[0]?.data;
+    // if (!mdmsCourtRoom) {
+    //   return renderError(res, "Court room MDMS master not found", 404);
+    // }
+    const mdmsCourtRoom = config.constants.mdmsCourtRoom;
+    const judgeDetails = config.constants.judgeDetails;
 
     // Handle QR code if enabled
     let base64Url = "";

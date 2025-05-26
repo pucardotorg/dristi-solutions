@@ -53,7 +53,7 @@ public class WorkflowServiceTest {
         caseDiary = new CaseDiary();
         caseDiary.setDiaryType("ADiary");
         caseDiary.setTenantId("tenant1");
-        caseDiary.setCourtId("court1");
+        caseDiary.setJudgeId("judge1");
         caseDiary.setDiaryDate(System.currentTimeMillis());
 
         Workflow workflow = Workflow.builder()

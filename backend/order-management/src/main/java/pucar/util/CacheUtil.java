@@ -14,6 +14,7 @@ public class CacheUtil {
     private final RedisTemplate<String, Object> redisTemplate;
 
     private final Configuration config;
+
     public CacheUtil(RedisTemplate<String, Object> redisTemplate, Configuration config) {
         this.redisTemplate = redisTemplate;
         this.config = config;

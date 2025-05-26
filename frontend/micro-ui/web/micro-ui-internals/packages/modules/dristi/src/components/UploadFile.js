@@ -135,7 +135,7 @@ const UploadFile = (props) => {
       {showHint && <p className="cell-text">{t(props?.hintText)}</p>}
       <div
         className="upload-file-div-main"
-        style={{ display: "flex", maxWidth: "540px", gap: "2%", alignItems: "center", justifyContent: "space-between", ...props?.uploadDivStyle }}
+        style={{ display: "flex", maxWidth: "540px", gap: "2%", alignItems: "center", justifyContent: "space-between" }}
       >
         <div className="upload-file-div-sub" style={{ minWidth: "73%" }}>
           <div

@@ -5,7 +5,7 @@ import notification.util.IdgenUtil;
 import notification.web.models.Notification;
 import notification.web.models.NotificationRequest;
 import org.egov.common.contract.models.AuditDetails;
-import notification.web.models.Document;
+import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;

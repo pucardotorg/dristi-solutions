@@ -73,7 +73,6 @@ public class ServiceConstants {
     public static final String GENERATE_TASK_DOCUMENT = "GENERATE_TASK_DOCUMENT";
     public static final String SEND_TASK_DOCUMENT = "SEND_TASK_DOCUMENT";
     public static final String SIGNED_TASK_DOCUMENT = "SIGNED_TASK_DOCUMENT";
-    public static final String CREATE_WITH_OUT_PAYMENT = "CREATE_WITH_OUT_PAYMENT";
 
     public static final String COORDINATE_NOT_FOUND = "COORDINATE_NOT_FOUND";
 
@@ -82,7 +81,5 @@ public class ServiceConstants {
     public static final String SUMMON_TO_ACCUSED="Summons to an accused 138";
     public static final String SUMMON_TO_WITNESS="Summons to witness";
     public static final String WARRANT_TO_ACCUSED="Warrant of arrest of accused 138";
-    public static final String POLICE_REPORT = "POLICE_REPORT";
-    public static final String DIRECT = "DIRECT";
-    public static final String COURT ="COURT";
+
 }

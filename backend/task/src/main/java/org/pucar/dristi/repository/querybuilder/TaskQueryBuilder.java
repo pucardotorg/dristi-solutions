@@ -24,7 +24,7 @@ public class TaskQueryBuilder {
     private static final String FROM_TASK_TABLE = " FROM dristi_task task";
 
     private static final String DOCUMENT_SELECT_QUERY_CASE = "SELECT doc.id as id, doc.documenttype as documenttype, doc.filestore as filestore," +
-            " doc.documentuid as documentuid, doc.additionaldetails as additionaldetails, doc.task_id as task_id, doc.isactive as isactive";
+            " doc.documentuid as documentuid, doc.additionaldetails as additionaldetails, doc.task_id as task_id";
     private static final String FROM_DOCUMENTS_TABLE = " FROM dristi_task_document doc";
 
     private static final String AMOUNT_SELECT_QUERY_CASE = "SELECT amount.id as id, amount.type as type, amount.amount as amount," +
@@ -161,7 +161,7 @@ public class TaskQueryBuilder {
             StringBuilder query = new StringBuilder(DOCUMENT_SELECT_QUERY_CASE);
             query.append(FROM_DOCUMENTS_TABLE);
             if (!ids.isEmpty()) {
-                query.append(" WHERE doc.isactive = true AND doc.task_id IN (")
+                query.append(" WHERE doc.task_id IN (")
                         .append(ids.stream().map(id -> "?").collect(Collectors.joining(",")))
                         .append(")");
                 preparedStmtList.addAll(ids);

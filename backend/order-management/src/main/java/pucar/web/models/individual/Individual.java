@@ -13,10 +13,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.models.individual.*;
-import org.egov.common.models.individual.BloodGroup;
-import org.egov.common.models.individual.Gender;
-import org.egov.common.models.individual.Identifier;
-
 
 import java.util.ArrayList;
 import java.util.Date;

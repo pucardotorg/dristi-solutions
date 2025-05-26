@@ -153,11 +153,11 @@ public class IcopsService {
 
         icopsTracker.setRowVersion(icopsTracker.getRowVersion() + 1);
         if(icopsProcessReport.getProcessActionStatus().equalsIgnoreCase("Executed")){
-            icopsTracker.setDeliveryStatus(DeliveryStatus.DELIVERED_ICOPS);
+            icopsTracker.setDeliveryStatus(DeliveryStatus.DELIVERED);
             icopsTracker.setRemarks(icopsProcessReport.getProcessActionRemarks());
         }
         else if(icopsProcessReport.getProcessActionStatus().equalsIgnoreCase("Not Executed")) {
-            icopsTracker.setDeliveryStatus(DeliveryStatus.NOT_DELIVERED_ICOPS);
+            icopsTracker.setDeliveryStatus(DeliveryStatus.NOT_DELIVERED);
             icopsTracker.setRemarks(icopsProcessReport.getProcessFailureReason());
         }
         else{

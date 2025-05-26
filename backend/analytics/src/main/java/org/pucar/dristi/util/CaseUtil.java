@@ -153,7 +153,7 @@ public class CaseUtil {
 	}
 
 	public Set<String> extractPowerOfAttorneyIds(JsonNode caseDetails, Set<String> individualIds) {
-		JsonNode poaHolders = caseDetails.get(0).get("poaHolders");
+		JsonNode poaHolders = caseDetails.get("poaHolders");
 		if (poaHolders != null && poaHolders.isArray()) {
 			for (JsonNode poaHolder : poaHolders) {
 				String individualId = poaHolder.path("individualId").textValue();
@@ -168,16 +168,5 @@ public class CaseUtil {
 	private StringBuilder getSearchURLWithParams() {
 		return new StringBuilder(config.getCaseHost())
 				.append(config.getCaseSearchPath());
-	}
-
-	public String getCourtCaseNumber(JsonNode caseList) {
-		if (caseList != null && caseList.isArray() && !caseList.isEmpty()) {
-			JsonNode courtCaseNode = caseList.get(0).get("courtCaseNumber");
-			if (courtCaseNode != null && !courtCaseNode.isNull()) {
-				return courtCaseNode.textValue();
-			}
-		}
-		log.error("court case number not found");
-		return null;
 	}
 }

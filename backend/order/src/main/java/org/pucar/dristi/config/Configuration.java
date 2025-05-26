@@ -135,9 +135,6 @@ public class Configuration {
     @Value("${egov.filestore.path}")
     private String fileStorePath;
 
-    @Value("${egov.file.store.delete.endpoint}")
-    private String fileStoreDeleteEndPoint;
-
     @Value("${egov.courtId}")
     private String courtId;
 

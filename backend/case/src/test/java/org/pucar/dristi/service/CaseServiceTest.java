@@ -108,9 +108,6 @@ public class CaseServiceTest {
     @Mock
     private CaseUtil caseUtil;
 
-    @Mock
-    private FileStoreUtil fileStoreUtil;
-
     private CaseRequest caseRequest;
     private RequestInfo requestInfo;
     private User userInfo;
@@ -172,7 +169,7 @@ public class CaseServiceTest {
         courtCase = new CourtCase();
         objectMapper = new ObjectMapper();
         enrichmentService = new EnrichmentService(new ArrayList<>());
-        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,etreasuryUtil,encryptionDecryptionUtil, hearingUtil,userService,paymentCalculaterUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator,caseUtil,fileStoreUtil);
+        caseService = new CaseService(validator,enrichmentUtil,caseRepository,workflowService,config,producer,taskUtil,etreasuryUtil,encryptionDecryptionUtil, hearingUtil,userService,paymentCalculaterUtil,objectMapper,cacheService,enrichmentService, notificationService, individualService, advocateUtil, evidenceUtil, evidenceValidator,caseUtil);
 
         requestInfo = RequestInfo.builder()
                 .userInfo(User.builder().uuid("ba8767a6-7cb1-416b-803e-19cf9dca06bc").tenantId(TENANT_ID).build())

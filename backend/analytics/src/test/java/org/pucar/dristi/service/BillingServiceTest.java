@@ -93,7 +93,7 @@ class BillingServiceTest {
         JSONArray jsonArray = new JSONArray("[{\"consumerCode\": \"CC_001\"}]");
         JSONObject requestInfo = new JSONObject("{\"userInfo\": {\"consumerCode\": \"CC_001\"}}");
         when(billingUtil.buildString(any())).thenReturn("{\"consumerCode\": \"CC_001\"}}");
-        when(billingUtil.buildPayload(anyString(),any(),any())).thenReturn("payload");
+        when(billingUtil.buildPayload(anyString(),any())).thenReturn("payload");
         Map<String, Object> paymentType1 = new LinkedHashMap<>();
         paymentType1.put("id", 13);
         paymentType1.put("suffix", "001");
@@ -110,7 +110,7 @@ class BillingServiceTest {
         when(mdmsUtil.fetchMdmsData(requestInfo1,"kl","payment", List.of("paymentMode"))).thenReturn(outerMap);
 
 
-        StringBuilder result = billingService.buildBulkRequest(jsonArray, requestInfo,12345l);
+        StringBuilder result = billingService.buildBulkRequest(jsonArray, requestInfo);
 
         assertEquals("payload", result.toString());
     }
@@ -126,7 +126,7 @@ class BillingServiceTest {
         net.minidev.json.JSONArray list = new net.minidev.json.JSONArray();
         Map<String,Map<String,net.minidev.json.JSONArray>> map = Map.of("payment",Map.of("paymentMode",list));
         when(mdmsUtil.fetchMdmsData(requestInfo1,"kl","payment", List.of("paymentMode"))).thenReturn(map);
-        billingService.processJsonObject(jsonObject, bulkRequest, requestInfo,123456l);
+        billingService.processJsonObject(jsonObject, bulkRequest, requestInfo);
 
         assertEquals("", bulkRequest.toString());
     }
@@ -138,7 +138,7 @@ class BillingServiceTest {
         StringBuilder bulkRequest = new StringBuilder();
         when(billingUtil.buildString(any())).thenReturn("{\"id\": \"1\"}");
 
-        billingService.processJsonObject(jsonObject, bulkRequest, requestInfo,123456l);
+        billingService.processJsonObject(jsonObject, bulkRequest, requestInfo);
 
         assertEquals("", bulkRequest.toString());
     }
@@ -151,11 +151,11 @@ class BillingServiceTest {
 
         when(billingUtil.buildString(any(JSONObject.class))).thenThrow(new RuntimeException("Test exception"));
 
-        billingService.processJsonObject(jsonObject, bulkRequest, requestInfo,123456l);
+        billingService.processJsonObject(jsonObject, bulkRequest, requestInfo);
 
         assertEquals("", bulkRequest.toString());
 
-        verify(billingUtil, never()).buildPayload(anyString(), any(JSONObject.class),any());
+        verify(billingUtil, never()).buildPayload(anyString(), any(JSONObject.class));
     }
 
 }

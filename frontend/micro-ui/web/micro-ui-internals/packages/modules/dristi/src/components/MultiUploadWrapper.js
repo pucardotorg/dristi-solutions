@@ -81,7 +81,6 @@ const MultiUploadWrapper = ({
   maxFileErrorMessage,
   displayName,
   disable,
-  uploadDivStyle,
   multiple = true,
 }) => {
   const FILES_UPLOADED = "FILES_UPLOADED";
@@ -113,8 +112,8 @@ const MultiUploadWrapper = ({
   };
 
   const removeFile = (state, payload) => {
-    const __indexOfItemToDelete = state?.findIndex((e) => e[1]?.fileStore === payload?.fileStore);
-    const mutatedState = state?.filter((e, index) => index !== __indexOfItemToDelete);
+    const __indexOfItemToDelete = state.findIndex((e) => e[1].fileStoreId.fileStoreId === payload.fileStoreId.fileStoreId);
+    const mutatedState = state.filter((e, index) => index !== __indexOfItemToDelete);
     setFileErrors([]);
     return [...mutatedState];
   };
@@ -199,7 +198,6 @@ const MultiUploadWrapper = ({
         enableButton={enableButton || !disable}
         disabled={!enableButton || disable}
         displayName={displayName}
-        uploadDivStyle={uploadDivStyle}
       />
       <span className="error-msg" style={{ display: "flex" }}>
         {fileErrors.length ? (

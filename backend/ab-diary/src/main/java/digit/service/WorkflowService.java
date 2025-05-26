@@ -48,7 +48,7 @@ public class WorkflowService {
                 log.info("ProcessInstance Request :: {}", workflowRequest);
                 String state=callWorkFlow(workflowRequest).getState();
                 log.info("Workflow State for diary for Judge :: {} for date :: {} and state :: {}",
-                        caseDiaryRequest.getDiary().getCourtId(), caseDiaryRequest.getDiary().getDate(), state);
+                        caseDiaryRequest.getDiary().getJudgeId(), caseDiaryRequest.getDiary().getDate(), state);
                 caseDiaryRequest.getDiary().setStatus(state);
             } catch(CustomException e){
                 throw e;
@@ -77,7 +77,7 @@ public class WorkflowService {
             Workflow workflow = diary.getWorkflow();
             ProcessInstance processInstance = new ProcessInstance();
             if (StringUtils.equals(diary.getDiaryType().toLowerCase(), "adiary")) {
-                processInstance.setBusinessId(diary.getCourtId() + "-" + diary.getDiaryDate());
+                processInstance.setBusinessId(diary.getJudgeId() + "-" + diary.getDiaryDate());
             } else if (StringUtils.equals(diary.getDiaryType().toLowerCase(), "bdiary")) {
                 // TODO check with atul about courtRoom issue
                 processInstance.setBusinessId(String.valueOf(diary.getCaseNumber()));

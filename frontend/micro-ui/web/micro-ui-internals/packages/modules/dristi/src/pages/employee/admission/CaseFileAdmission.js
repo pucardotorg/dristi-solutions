@@ -25,7 +25,6 @@ import { documentTypeMapping } from "../../citizen/FileCase/Config";
 import ScheduleHearing from "../AdmittedCases/ScheduleHearing";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
-import WorkflowTimeline from "../../../components/WorkflowTimeline";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -344,24 +343,17 @@ function CaseFileAdmission({ t, path }) {
     const caseCreatedByUuid = caseDetails?.auditDetails?.createdBy;
     let assignees = [];
     assignees.push(caseCreatedByUuid);
-    let filteredDocuments = caseDetails?.documents || [];
-    if (action === "SEND_BACK") {
-      filteredDocuments = filteredDocuments?.filter(
-        (doc) => doc?.documentType !== "case.complaint.signed" && doc?.documentType !== "case.complaint.unsigned"
-      );
-    }
 
     return await DRISTIService.caseUpdateService(
       {
         cases: {
           ...newcasedetails,
-          documents: filteredDocuments,
           linkedCases: caseDetails?.linkedCases ? caseDetails?.linkedCases : [],
           ...(action === "REGISTER" && { registrationDate: new Date().getTime() }),
           workflow: {
             ...caseDetails?.workflow,
             action,
-            ...(action === "SEND_BACK" && { assignes: assignees || [], comments: data?.comment }),
+            ...(action === "SEND_BACK" && { assignes: assignees || [] }),
           },
         },
         tenantId,
@@ -1214,9 +1206,6 @@ function CaseFileAdmission({ t, path }) {
                 ></AdmissionActionModal>
               )}
             </div>
-          </div>
-          <div className={"file-case-checklist"}>
-            <WorkflowTimeline t={t} applicationNo={caseDetails?.filingNumber} tenantId={tenantId} businessService="case-default" />
           </div>
         </div>
       </div>

@@ -50,11 +50,11 @@ public class ServiceRequestRepository {
     }
 
     public ResponseEntity<Resource> fetchResultGetForEntity(StringBuilder uri) {
-        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS,false);
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         ResponseEntity<Resource> response = null;
         try {
             String uriString = uri.toString();
-            response = restTemplate.getForEntity(uriString,Resource.class);
+            response = restTemplate.getForEntity(uriString, Resource.class);
         } catch (HttpClientErrorException e) {
             log.error(EXTERNAL_SERVICE_EXCEPTION, e);
             throw new ServiceCallException(e.getResponseBodyAsString());
@@ -65,12 +65,12 @@ public class ServiceRequestRepository {
     }
 
     public ResponseEntity<Object> fetchResultPostForEntity(String uri,
-                                                             HttpEntity<MultiValueMap<String, Object>> responseEntity
-                                                             ) {
-        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS,false);
+                                                           HttpEntity<MultiValueMap<String, Object>> responseEntity
+    ) {
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         ResponseEntity<Object> response = null;
         try {
-            response = restTemplate.postForEntity(uri,responseEntity,Object.class);
+            response = restTemplate.postForEntity(uri, responseEntity, Object.class);
         } catch (HttpClientErrorException e) {
             log.error(EXTERNAL_SERVICE_EXCEPTION, e);
             throw new ServiceCallException(e.getResponseBodyAsString());

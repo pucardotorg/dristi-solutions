@@ -2,7 +2,10 @@ package pucar.web.models.application;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.egov.common.contract.request.RequestInfo;
 import pucar.web.models.Pagination;
 

@@ -4,6 +4,7 @@ const {
   search_case,
   search_order,
   search_sunbirdrc_credential_service,
+  search_application,
   create_pdf,
   search_advocate,
 } = require("../api");
@@ -26,13 +27,7 @@ function getOrdinalSuffix(day) {
   }
 }
 
-async function applicationSubmissionExtension(
-  req,
-  res,
-  qrCode,
-  application,
-  courtCaseJudgeDetails
-) {
+async function applicationSubmissionExtension(req, res, qrCode) {
   const cnrNumber = req.query.cnrNumber;
   const applicationNumber = req.query.applicationNumber;
   const tenantId = req.query.tenantId;
@@ -77,8 +72,60 @@ async function applicationSubmissionExtension(
       renderError(res, "Court case not found", 404);
     }
 
-    const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
-    const judgeDetails = courtCaseJudgeDetails.judgeDetails;
+    // Search for HRMS details
+    // const resHrms = await handleApiCall(
+    //   () => search_hrms(tenantId, "JUDGE", courtCase.courtId, requestInfo),
+    //   "Failed to query HRMS service"
+    // );
+    // const employee = resHrms?.data?.Employees[0];
+    // if (!employee) {
+    //   renderError(res, "Employee not found", 404);
+    // }
+
+    // Search for MDMS court room details
+    // const resMdms = await handleApiCall(
+    //   () =>
+    //     search_mdms(
+    //       courtCase.courtId,
+    //       "common-masters.Court_Rooms",
+    //       tenantId,
+    //       requestInfo
+    //     ),
+    //   "Failed to query MDMS service for court room"
+    // );
+    // const mdmsCourtRoom = resMdms?.data?.mdms[0]?.data;
+    // if (!mdmsCourtRoom) {
+    //   renderError(res, "Court room MDMS master not found", 404);
+    // }
+
+    const mdmsCourtRoom = config.constants.mdmsCourtRoom;
+    const judgeDetails = config.constants.judgeDetails;
+
+    // Search for MDMS designation details
+    // const resMdms1 = await handleApiCall(
+    //   () =>
+    //     search_mdms(
+    //       employee.assignments[0].designation,
+    //       "common-masters.Designation",
+    //       tenantId,
+    //       requestInfo
+    //     ),
+    //   "Failed to query MDMS service for court room"
+    // );
+    // const mdmsDesignation = resMdms1?.data?.mdms[0]?.data;
+    // if (!mdmsDesignation) {
+    //   renderError(res, "Court room MDMS master not found", 404);
+    // }
+
+    // Search for application details
+    const resApplication = await handleApiCall(
+      () => search_application(tenantId, applicationNumber, requestInfo),
+      "Failed to query application service"
+    );
+    const application = resApplication?.data?.applicationList[0];
+    if (!application) {
+      renderError(res, "Application not found", 404);
+    }
 
     const refOrderNumber = extractOrderNumber(
       application?.additionalDetails?.formdata?.refOrderId
@@ -209,8 +256,6 @@ async function applicationSubmissionExtension(
       : "";
     const benefitOfExtension = application?.benefitOfExtension;
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
-    const prayer = application?.applicationDetails?.prayer;
-
     const data = {
       Data: [
         {
@@ -233,7 +278,6 @@ async function applicationSubmissionExtension(
           day: day + ordinalSuffix,
           month: month,
           year: year,
-          prayer,
           additionalComments: benefitOfExtension || additionalComments,
           advocateSignature: "Advocate Signature",
           barRegistrationNumber,

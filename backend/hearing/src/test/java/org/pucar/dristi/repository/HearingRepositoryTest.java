@@ -5,6 +5,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.egov.common.contract.models.Document;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,10 @@ import org.mockito.MockitoAnnotations;
 import org.pucar.dristi.repository.querybuilder.HearingQueryBuilder;
 import org.pucar.dristi.repository.rowmapper.HearingDocumentRowMapper;
 import org.pucar.dristi.repository.rowmapper.HearingRowMapper;
-import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.Hearing;
+import org.pucar.dristi.web.models.HearingCriteria;
+import org.pucar.dristi.web.models.HearingSearchRequest;
+import org.pucar.dristi.web.models.Pagination;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.*;

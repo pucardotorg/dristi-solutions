@@ -5,11 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.egov.common.contract.models.AuditDetails;
-import org.egov.common.contract.workflow.ProcessInstance;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.models.*;
 import org.egov.transformer.producer.TransformerProducer;
-import org.egov.transformer.repository.CourtIdRepository;
 import org.egov.transformer.service.CaseService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,17 +30,15 @@ public class CaseConsumer {
     private final TransformerProducer producer;
     private final TransformerProperties transformerProperties;
     private final CaseService caseService;
-    private final CourtIdRepository courtIdRepository;
 
     @Autowired
     public CaseConsumer(ObjectMapper objectMapper,
                         TransformerProducer producer,
-                        TransformerProperties transformerProperties, CaseService caseService, CourtIdRepository courtIdRepository) {
+                        TransformerProperties transformerProperties, CaseService caseService) {
         this.objectMapper = objectMapper;
         this.producer = producer;
         this.transformerProperties = transformerProperties;
         this.caseService = caseService;
-        this.courtIdRepository = courtIdRepository;
     }
 
     @KafkaListener(topics = {"${transformer.consumer.create.case.topic}"})
@@ -55,30 +51,17 @@ public class CaseConsumer {
     public void updateCase(ConsumerRecord<String, Object> payload,
                            @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         publishCase(payload, transformerProperties.getUpdateCaseTopic());
-
-        try {
-            logger.info("Checking case status for enriching courtId");
-            CourtCase courtCase = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseRequest>() {
-            })).getCases();
-            logger.info("Current case status ::{}",courtCase.getStatus());
-
-            if ("PENDING_REGISTRATION".equalsIgnoreCase(courtCase.getStatus())) {
-                courtIdRepository.updateCourtIdForFilingNumber(courtCase.getCourtId(), courtCase.getFilingNumber());
-            }
-        } catch (Exception exception) {
-            log.error("error in saving case", exception);
-        }
     }
 
     @KafkaListener(topics = {"${transformer.consumer.case.status.update.topic}"})
     public void updateCaseStatus(ConsumerRecord<String, Object> payload,
-                                 @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+                           @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         publishCase(payload, transformerProperties.getUpdateCaseTopic());
     }
 
     @KafkaListener(topics = {"${transformer.consumer.join.case.kafka.topic}"})
     public void updateJoinCase(ConsumerRecord<String, Object> payload,
-                               @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+                           @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         publishCase(payload, transformerProperties.getUpdateCaseTopic());
     }
 
@@ -107,11 +90,11 @@ public class CaseConsumer {
             logger.info("Received Object: {} ", objectMapper.writeValueAsString(courtCase));
             CourtCase existingCourtCase = caseService.fetchCase(courtCase.getFilingNumber());
             courtCase.setDates();
-            if (null != existingCourtCase) {
-                if (null != existingCourtCase.getBailOrderDetails()) {
+            if(null != existingCourtCase) {
+                if(null != existingCourtCase.getBailOrderDetails()) {
                     courtCase.setBailOrderDetails(existingCourtCase.getBailOrderDetails());
                 }
-                if (null != existingCourtCase.getJudgementOrderDetails()) {
+                if(null != existingCourtCase.getJudgementOrderDetails()) {
                     courtCase.setJudgementOrderDetails(existingCourtCase.getJudgementOrderDetails());
                 }
             }
@@ -147,8 +130,7 @@ public class CaseConsumer {
 
     private void fetchAndPublishEditCase(ConsumerRecord<String, Object> payload, String updateCaseTopic) {
         try {
-            CaseRequest caseRequest = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseRequest>() {
-            }));
+            CaseRequest caseRequest = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseRequest>() {}));
             logger.info("Received Object: {} ", objectMapper.writeValueAsString(caseRequest.getCases()));
             CourtCase courtCaseElasticSearch = caseService.fetchCase(caseRequest.getCases().getFilingNumber());
             courtCaseElasticSearch.setAdditionalDetails(caseRequest.getCases().getAdditionalDetails());

@@ -30,8 +30,7 @@ async function newHearingDateAfterReschedule(
   res,
   qrCode,
   order,
-  compositeOrder,
-  courtCaseJudgeDetails
+  compositeOrder
 ) {
   const cnrNumber = req.query.cnrNumber;
   const tenantId = req.query.tenantId;
@@ -104,8 +103,8 @@ async function newHearingDateAfterReschedule(
     // if (!mdmsCourtRoom) {
     //   renderError(res, "Court room MDMS master not found", 404);
     // }
-    const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
-    const judgeDetails = courtCaseJudgeDetails.judgeDetails;
+    const mdmsCourtRoom = config?.constants.mdmsCourtRoom;
+    const judgeDetails = config.constants.judgeDetails;
 
     // Handle QR code if enabled
     let base64Url = "";
@@ -153,7 +152,7 @@ async function newHearingDateAfterReschedule(
           newHearingDate,
           additionalComments:
             order?.additionalDetails?.formdata?.comments?.text || "",
-          judgeSignature: judgeDetails.judgeSignature,
+          judgeSignature: judgeDetails.name,
           judgeName: judgeDetails.name,
           courtSeal: judgeDetails.courtSeal,
           qrCodeUrl: base64Url,

@@ -14,7 +14,6 @@ import pucar.repository.ServiceRequestRepository;
 import pucar.web.models.adiary.BulkDiaryEntryRequest;
 import pucar.web.models.adiary.BulkDiaryEntryResponse;
 
-
 import static pucar.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
 import static pucar.config.ServiceConstants.SEARCHER_SERVICE_EXCEPTION;
 

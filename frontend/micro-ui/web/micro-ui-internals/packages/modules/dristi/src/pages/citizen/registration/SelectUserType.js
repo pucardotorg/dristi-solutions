@@ -156,23 +156,6 @@ const SelectUserType = ({ config, t, params = {}, setParams = () => {}, pathOnRe
             doorNo: data?.address?.addressDetails?.doorNo,
             buildingName: data?.address?.addressDetails?.buildingName,
           },
-          ...(data?.address?.isBothAddressSame?.code === "NO"
-            ? [
-                {
-                  tenantId: tenantId,
-                  type: "CORRESPONDENCE",
-                  latitude: data?.address?.currentAddress?.coordinates?.latitude || null,
-                  longitude: data?.address?.currentAddress?.coordinates?.longitude || null,
-                  city: data?.address?.currentAddress?.city || "",
-                  pincode: data?.address?.currentAddress?.pincode || "",
-                  addressLine1: data?.address?.currentAddress?.state || "",
-                  addressLine2: data?.address?.currentAddress?.district || "",
-                  street: data?.address?.currentAddress?.locality || "",
-                  doorNo: data?.address?.currentAddress?.doorNo || "",
-                  buildingName: data?.address?.currentAddress?.buildingName || "",
-                },
-              ]
-            : []),
         ],
         identifiers: [
           {

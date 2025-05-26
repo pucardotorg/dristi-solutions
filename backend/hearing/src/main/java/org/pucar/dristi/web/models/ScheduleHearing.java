@@ -68,7 +68,4 @@ public class ScheduleHearing {
 
     @JsonProperty("rowVersion")
     private Integer rowVersion = null;
-
-    @JsonProperty("caseStage")
-    private String caseStage;
 }

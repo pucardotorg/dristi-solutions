@@ -2,9 +2,9 @@ package org.pucar.dristi.repository.rowmapper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.models.Document;
 import org.egov.tracer.model.CustomException;
 import org.postgresql.util.PGobject;
-import org.pucar.dristi.web.models.Document;
 import org.springframework.jdbc.core.ResultSetExtractor;
 import org.springframework.stereotype.Component;
 
@@ -32,7 +32,6 @@ public class HearingDocumentRowMapper implements ResultSetExtractor<Map<UUID,Lis
                         .documentType(rs.getString("documenttype"))
                         .fileStore(rs.getString("filestore"))
                         .documentUid(rs.getString("documentuid"))
-                        .isActive(rs.getBoolean("isactive"))
                         .build();
 
                 PGobject pgObject = (PGobject) rs.getObject("additionaldetails");

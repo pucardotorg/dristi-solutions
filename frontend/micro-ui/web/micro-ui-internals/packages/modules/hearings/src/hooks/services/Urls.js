@@ -17,7 +17,6 @@ export const Urls = {
     updateNotification: "/notification/v1/_update",
     searchNotification: "/notification/v1/_search",
     aDiaryEntryUpdate: "/ab-diary/case/diary/entry/v1/update",
-    searchHearingCount: "/hearing-management/hearing/v1/search",
   },
   order: {
     createOrder: "/order/v1/create",

@@ -3,7 +3,7 @@ import { Urls } from "../index";
 import axios from "axios";
 
 const useDownloadCasePdf = () => {
-  const downloadPdf = useCallback(async (tenantId, fileStoreId, fileName = "downloadedFile") => {
+  const downloadPdf = useCallback(async (tenantId, fileStoreId) => {
     if (!fileStoreId) {
       return;
     }
@@ -25,7 +25,7 @@ const useDownloadCasePdf = () => {
 
       const link = document.createElement("a");
       link.href = blobUrl;
-      link.download = `${fileName}.${extension}`;
+      link.download = `downloadedFile.${extension}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

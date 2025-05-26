@@ -150,9 +150,6 @@ public class Configuration {
     @Value("${egov.filestore.path}")
     private String fileStorePath;
 
-    @Value("${egov.file.store.delete.endpoint}")
-    private String fileStoreDeleteEndPoint;
-
     @Value("${app.zone.id}")
     private String zoneId;
 
@@ -187,9 +184,6 @@ public class Configuration {
 
     @Value("${dristi.scheduler.host}")
     private String schedulerHost;
-
-    @Value("${dristi.scheduler.create.endpoint}")
-    private String schedulerCreateEndPoint;
 
     @Value("${dristi.scheduler.bulk.reschedule.endpoint}")
     private String bulkRescheduleEndPoint;

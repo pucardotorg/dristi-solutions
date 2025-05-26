@@ -127,7 +127,7 @@ class HearingQueryBuilderTest {
         // Assert
         assertNotNull(query);
         assertTrue(query.contains("FROM dristi_hearing_document doc"));
-        assertTrue(query.contains("WHERE doc.isactive = true AND doc.hearingid IN (?,?)"));
+        assertTrue(query.contains("WHERE doc.hearingid IN (?,?)"));
         assertEquals(2, preparedStmtList.size());
         assertEquals("doc1", preparedStmtList.get(0));
         assertEquals("doc2", preparedStmtList.get(1));

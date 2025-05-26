@@ -298,11 +298,4 @@ public class Configuration {
 
     @Value("${treasury.demand.create.endpoint}")
     private String treasuryDemandCreateEndpoint;
-
-    //evidence
-    @Value("${dristi.evidence.host}")
-    private String evidenceHost;
-
-    @Value("${dristi.evidence.create.endpoint}")
-    private String evidenceCreateEndpoint;
 }

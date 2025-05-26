@@ -32,6 +32,7 @@ function OrderReviewModal({
   businessOfDay,
   updateOrder,
   setShowBulkModal,
+  setPrevOrder,
 }) {
   const [fileStoreId, setFileStoreID] = useState(null);
   const [fileName, setFileName] = useState();
@@ -197,6 +198,7 @@ function OrderReviewModal({
             setShowReviewModal(false);
             setShowBulkModal(true);
             setUpdateLoading(false);
+            setPrevOrder(response?.order);
           })
           .catch((e) => {
             setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });

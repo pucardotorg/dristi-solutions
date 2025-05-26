@@ -23,7 +23,7 @@ public class NotificationQueryBuilder {
     private static final String FROM_NOTIFICATION = " FROM dristi_notification ";
     private static final String WHERE = " WHERE ";
     private static final String AND = " AND ";
-    private static final String BASE_QUERY_NOTIFICATION_DOCUMENT = " ,nd.id as documentid, nd.fileStore as filestore, nd.documentUid as documentuid, nd.documentType as documenttype, nd.notification_id as notificationid, nd.additionalDetails as documentadditionaldetails, nd.isActive as isActive";
+    private static final String BASE_QUERY_NOTIFICATION_DOCUMENT = " ,nd.id as documentid, nd.fileStore as filestore, nd.documentUid as documentuid, nd.documentType as documenttype, nd.notification_id as notificationid, nd.additionalDetails as documentadditionaldetails";
 
     private static final String FROM_CTE_TABLE = " FROM paginated_notification pn";
     private static final String CTE_QUERY_NOTIFICATION = " pn.id as id, pn.tenantId as tenantid, pn.notificationType as notificationtype, pn.caseNumber as casenumber, pn.courtId as courtid, pn.notificationNumber as notificationnumber, pn.createdDate as createddate, pn.issuedBy as issuedby, pn.status as status, pn.comment as comment, pn.isActive as isactive, pn.notificationDetails as notificationdetails, pn.additionalDetails as additionaldetails, pn.createdBy as createdby, pn.lastModifiedBy as lastmodifiedby, pn.createdTime as createdtime, pn.lastModifiedTime as lastmodifiedtime ";
@@ -58,7 +58,7 @@ public class NotificationQueryBuilder {
                 BASE_QUERY_NOTIFICATION_DOCUMENT +
                 FROM_CTE_TABLE +
                 LEFT_JOIN + NOTIFICATION_DOCUMENT_TABLE + ON +
-                " pn.id = nd.notification_id WHERE nd.isActive = true";
+                " pn.id = nd.notification_id ";
 
         String paginatedQuery = addPaginationQuery(baseQuery, preparedStmtList, pagination, preparedStmtArgList);
 

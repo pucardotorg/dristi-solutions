@@ -12,7 +12,6 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.ApplicationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ApplicationRepository;
-import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.SmsNotificationUtil;
 import org.pucar.dristi.validator.ApplicationValidator;
 import org.pucar.dristi.web.models.*;
@@ -36,7 +35,6 @@ public class ApplicationService {
     private final Producer producer;
     private final SmsNotificationUtil smsNotificationUtil;
     private final ObjectMapper objectMapper;
-    private final FileStoreUtil fileStoreUtil;
 
     @Autowired
     public ApplicationService(
@@ -45,7 +43,7 @@ public class ApplicationService {
             ApplicationRepository applicationRepository,
             WorkflowService workflowService,
             Configuration config,
-            Producer producer, SmsNotificationUtil smsNotificationUtil, ObjectMapper objectMapper, FileStoreUtil fileStoreUtil) {
+            Producer producer, SmsNotificationUtil smsNotificationUtil, ObjectMapper objectMapper) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.applicationRepository = applicationRepository;
@@ -54,7 +52,6 @@ public class ApplicationService {
         this.producer = producer;
         this.smsNotificationUtil = smsNotificationUtil;
         this.objectMapper = objectMapper;
-        this.fileStoreUtil = fileStoreUtil;
     }
 
     public Application createApplication(ApplicationRequest body) {
@@ -101,16 +98,7 @@ public class ApplicationService {
                 updateRelatedApplication(application, applicationRequest.getRequestInfo());
 
             }
-            List<String> fileStoreIds = new ArrayList<>();
-            for(Document document : applicationRequest.getApplication().getDocuments()) {
-                if(!document.getIsActive()) {
-                    fileStoreIds.add(document.getFileStore());
-                }
-            }
-            if(!fileStoreIds.isEmpty()){
-                fileStoreUtil.deleteFilesByFileStore(fileStoreIds, applicationRequest.getApplication().getTenantId());
-                log.info("Deleted files for application with ids: {}", fileStoreIds);
-            }
+
             smsNotificationUtil.callNotificationService(applicationRequest, application.getStatus(), application.getApplicationType());
             producer.push(config.getApplicationUpdateTopic(), applicationRequest);
 

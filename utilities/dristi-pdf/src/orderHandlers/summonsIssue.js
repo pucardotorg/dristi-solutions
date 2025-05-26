@@ -2,6 +2,7 @@ const cheerio = require("cheerio");
 const config = require("../config");
 const {
   search_case,
+  search_hearing,
   search_sunbirdrc_credential_service,
   create_pdf,
   create_pdf_v2,
@@ -10,14 +11,7 @@ const { renderError } = require("../utils/renderError");
 const { handleApiCall } = require("../utils/handleApiCall");
 const { formatDate } = require("./formatDate");
 
-async function summonsIssue(
-  req,
-  res,
-  qrCode,
-  order,
-  compositeOrder,
-  courtCaseJudgeDetails
-) {
+async function summonsIssue(req, res, qrCode, order, compositeOrder) {
   const cnrNumber = req.query.cnrNumber;
   const entityId = req.query.entityId;
   const code = req.query.code;
@@ -51,8 +45,45 @@ async function summonsIssue(
       renderError(res, "Court case not found", 404);
     }
 
-    const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
-    const judgeDetails = courtCaseJudgeDetails.judgeDetails;
+    // FIXME: Commenting out HRMS calls is it not impl in solution
+    // Search for HRMS details
+    // const resHrms = await handleApiCall(
+    //     () => search_hrms(tenantId, "JUDGE", courtCase.courtId, requestInfo),
+    //     "Failed to query HRMS service"
+    // );
+    // const employee = resHrms?.data?.Employees[0];
+    // if (!employee) {
+    //     renderError(res, "Employee not found", 404);
+    // }
+
+    // Search for MDMS court room details
+    // const resMdms = await handleApiCall(
+    //   () =>
+    //     search_mdms(
+    //       courtCase.courtId,
+    //       "common-masters.Court_Rooms",
+    //       tenantId,
+    //       requestInfo
+    //     ),
+    //   "Failed to query MDMS service for court room"
+    // );
+    // const mdmsCourtRoom = resMdms?.data?.mdms[0]?.data;
+    // if (!mdmsCourtRoom) {
+    //   renderError(res, "Court room MDMS master not found", 404);
+    // }
+    const mdmsCourtRoom = config.constants.mdmsCourtRoom;
+    const judgeDetails = config.constants.judgeDetails;
+
+    // FIXME: Commenting out MDMS calls is it not impl in solution
+    // Search for MDMS court establishment details
+    // const resMdms1 = await handleApiCall(
+    //     () => search_mdms(mdmsCourtRoom.courtEstablishmentId, "case.CourtEstablishment", tenantId, requestInfo),
+    //     "Failed to query MDMS service for court establishment"
+    // );
+    // const mdmsCourtEstablishment = resMdms1?.data?.mdms[0]?.data;
+    // if (!mdmsCourtEstablishment) {
+    //     renderError(res, "Court establishment MDMS master not found", 404);
+    // }
 
     const hearingDate = order?.orderDetails?.hearingDate
       ? formatDate(new Date(order?.orderDetails?.hearingDate))

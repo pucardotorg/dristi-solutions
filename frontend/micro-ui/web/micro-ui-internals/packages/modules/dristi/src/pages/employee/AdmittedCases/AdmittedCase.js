@@ -1,10 +1,10 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
-import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { ActionBar, SubmitBar, Button, Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useState, useContext } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
-import { CustomThreeDots } from "../../../icons/svgIndex";
+import useSearchCaseService from "../../../hooks/dristi/useSearchCaseService";
+import { CustomThreeDots, InfoIconRed } from "../../../icons/svgIndex";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import ViewCaseFile from "../scrutiny/ViewCaseFile";
 import { TabSearchconfig } from "./AdmittedCasesConfig";
@@ -42,7 +42,6 @@ import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import PublishedNotificationModal from "./publishedNotificationModal";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import NoticeAccordion from "../../../components/NoticeAccordion";
-import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -152,7 +151,6 @@ const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
 const AdmittedCases = () => {
   const { t } = useTranslation();
   const location = useLocation();
-  const { pathname, search, hash } = location;
   const { path } = useRouteMatch();
   const urlParams = new URLSearchParams(location.search);
   const { hearingId, taskOrderType, artifactNumber } = Digit.Hooks.useQueryParams();
@@ -214,15 +212,14 @@ const AdmittedCases = () => {
   const OrderWorkflowAction = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {}, []);
   const ordersService = useMemo(() => Digit.ComponentRegistryService.getComponent("OrdersService") || {}, []);
   const OrderReviewModal = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderReviewModal") || {}, []);
-  const NoticeProcessModal = useMemo(
-    () => Digit.ComponentRegistryService.getComponent("NoticeProcessModal") || <React.Fragment></React.Fragment>,
+  const SummonsAndWarrantsModal = useMemo(
+    () => Digit.ComponentRegistryService.getComponent("SummonsAndWarrantsModal") || <React.Fragment></React.Fragment>,
     []
   );
   const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const todayDate = new Date().getTime();
   const { downloadPdf } = useDownloadCasePdf();
-  const [isShow, setIsShow] = useState(false);
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const historyCaseData = location?.state?.caseData;
   const historyOrderData = location?.state?.orderData;
@@ -235,16 +232,15 @@ const AdmittedCases = () => {
     },
   };
 
-  const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
-
   const evidenceUpdateMutation = Digit.Hooks.useCustomAPIMutationHook(reqEvidenceUpdate);
 
-  const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useCaseDetailSearchService(
+  const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useSearchCaseService(
     {
-      criteria: {
-        caseId: caseId,
-        courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
-      },
+      criteria: [
+        {
+          caseId: caseId,
+        },
+      ],
       tenantId,
     },
     {},
@@ -254,7 +250,7 @@ const AdmittedCases = () => {
   );
 
   const caseData = historyCaseData || apiCaseData;
-  const caseDetails = useMemo(() => caseData?.cases || {}, [caseData]);
+  const caseDetails = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0] || {}, [caseData]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber || "", [caseDetails]);
@@ -276,7 +272,8 @@ const AdmittedCases = () => {
     moduleCode: "case-default",
     config: {
       enabled: Boolean(caseDetails?.filingNumber && tenantId),
-      cacheTime: 10000,
+      staleTime: 30000,
+      cacheTime: 60000,
       retry: 1,
     },
   });
@@ -321,29 +318,21 @@ const AdmittedCases = () => {
       : "";
   }, [caseDetails?.statutesAndSections]);
 
-  const litigants = useMemo(() => (caseDetails?.litigants?.length > 0 ? caseDetails?.litigants : []), [caseDetails]);
-  const finalLitigantsData = useMemo(
-    () =>
-      litigants?.map((litigant) => {
-        return {
-          ...litigant,
-          name: removeInvalidNameParts(litigant.additionalDetails?.fullName),
-        };
-      }),
-    [litigants]
-  );
-  const reps = useMemo(() => (caseDetails?.representatives?.length > 0 ? caseDetails?.representatives : []), [caseDetails]);
-  const finalRepresentativesData = useMemo(
-    () =>
-      reps.map((rep) => {
-        return {
-          ...rep,
-          name: removeInvalidNameParts(rep.additionalDetails?.advocateName),
-          partyType: `Advocate (for ${rep.representing?.map((client) => removeInvalidNameParts(client?.additionalDetails?.fullName))?.join(", ")})`,
-        };
-      }),
-    [reps]
-  );
+  const litigants = caseDetails?.litigants?.length > 0 ? caseDetails?.litigants : [];
+  const finalLitigantsData = litigants?.map((litigant) => {
+    return {
+      ...litigant,
+      name: removeInvalidNameParts(litigant.additionalDetails?.fullName),
+    };
+  });
+  const reps = caseDetails?.representatives?.length > 0 ? caseDetails?.representatives : [];
+  const finalRepresentativesData = reps.map((rep) => {
+    return {
+      ...rep,
+      name: removeInvalidNameParts(rep.additionalDetails?.advocateName),
+      partyType: `Advocate (for ${rep.representing?.map((client) => removeInvalidNameParts(client?.additionalDetails?.fullName))?.join(", ")})`,
+    };
+  });
 
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
   const listAllAdvocates = useMemo(() => Object.values(allAdvocates || {}).flat(), [allAdvocates]);
@@ -446,7 +435,7 @@ const AdmittedCases = () => {
       case: caseDetails,
       statue: statue,
     }),
-    [caseDetails, caseId, cnrNumber, filingNumber, finalLitigantsData, finalRepresentativesData, statue]
+    [caseDetails, caseId, cnrNumber, filingNumber, statue]
   );
 
   const caseStatus = useMemo(() => caseDetails?.status || "", [caseDetails]);
@@ -861,28 +850,28 @@ const AdmittedCases = () => {
                 uiConfig: {
                   ...tabConfig.sections.search.uiConfig,
                   fields: [
-                    // {
-                    //   label: "OWNER",
-                    //   isMandatory: false,
-                    //   key: "owner",
-                    //   type: "dropdown",
-                    //   populators: {
-                    //     name: "owner",
-                    //     optionsKey: "name",
-                    //     options: Array.from(
-                    //       new Map(
-                    //         artifacts?.map((artifact) => [
-                    //           removeInvalidNameParts(artifact.owner), // Key for uniqueness
-                    //           {
-                    //             code: removeInvalidNameParts(artifact.owner),
-                    //             name: removeInvalidNameParts(artifact.owner),
-                    //             value: artifact.sourceID,
-                    //           },
-                    //         ])
-                    //       ).values()
-                    //     ),
-                    //   },
-                    // },
+                    {
+                      label: "OWNER",
+                      isMandatory: false,
+                      key: "owner",
+                      type: "dropdown",
+                      populators: {
+                        name: "owner",
+                        optionsKey: "name",
+                        options: Array.from(
+                          new Map(
+                            artifacts?.map((artifact) => [
+                              removeInvalidNameParts(artifact.owner), // Key for uniqueness
+                              {
+                                code: removeInvalidNameParts(artifact.owner),
+                                name: removeInvalidNameParts(artifact.owner),
+                                value: artifact.sourceID,
+                              },
+                            ])
+                          ).values()
+                        ),
+                      },
+                    },
                     ...tabConfig.sections.search.uiConfig.fields,
                   ],
                 },
@@ -1021,13 +1010,13 @@ const AdmittedCases = () => {
         artifactList: selectedRow,
       },
     ];
-    const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+    const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
     try {
       const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
       await DRISTIService.addADiaryEntry(
         {
           diaryEntry: {
-            courtId: courtId,
+            judgeId: judgeId,
             businessOfDay: `${selectedRow?.artifactNumber} ${selectedRow?.isEvidence ? "unmarked" : "marked"} as evidence`,
             tenantId: tenantId,
             entryDate: new Date().setHours(0, 0, 0, 0),
@@ -1234,14 +1223,12 @@ const AdmittedCases = () => {
 
   const getEvidence = async () => {
     try {
-      // Add courtId to criteria if it exists
       const response = await DRISTIService.searchEvidence(
         {
           criteria: {
             filingNumber: filingNumber,
             artifactNumber: artifactNumber,
             tenantId: tenantId,
-            courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
           },
           tenantId,
         },
@@ -1276,9 +1263,13 @@ const AdmittedCases = () => {
         if (artifact.sourceID === undefined) {
           return "NA";
         }
-        const owner = await Digit.UserService.userSearch(tenantId, { uuid: [artifact?.sourceID] }, {});
-        if (owner?.user?.length > 1) return "";
-        return `${owner?.user?.[0]?.name}`.trim();
+        const owner = await DRISTIService.searchEmployeeUser(
+          {
+            authToken: localStorage.getItem("token"),
+          },
+          { tenantId, uuids: artifact?.sourceID, limit: 1000, offset: 0 }
+        );
+        return `${owner?.Employees?.[0]?.user?.name}`.trim();
       } else {
         if (artifact?.sourceID === undefined) {
           return "NA";
@@ -1332,8 +1323,7 @@ const AdmittedCases = () => {
       }
     };
     if (activeTab === "Documents") {
-      // There is no need to set Artifacts now, so commenting the fetchEvidence function call but keeping the code.
-      // fetchEvidence();
+      fetchEvidence();
     }
   }, [filingNumber, artifactNumber, tenantId, activeTab]);
 
@@ -1430,29 +1420,6 @@ const AdmittedCases = () => {
       setShow(true);
     }
   }, []);
-
-  /**
-   * Update breadcrumb navigation context when URL parameters change
-   *
-   * This effect synchronizes the breadcrumb navigation state with the current URL parameters.
-   * It runs whenever the URL path, search parameters, or hash fragment changes.
-   *
-   * The effect:
-   * 1. Extracts current case data from the breadcrumb context
-   * 2. Gets the case ID and filing number from URL parameters
-   * 3. Updates the breadcrumb context only if the values differ from current context
-   *
-   * This ensures consistent navigation context across the application when users
-   * navigate directly to this page via URL rather than through the application flow.
-   */
-  useEffect(() => {
-    const { caseId: caseIdFromBreadCrumb, filingNumber: filingNumberFromBreadCrumb } = BreadCrumbsParamsData;
-    const caseId = urlParams.get("caseId");
-    const filingNumber = urlParams.get("filingNumber");
-    if (!(caseIdFromBreadCrumb === caseId && filingNumberFromBreadCrumb === filingNumber)) {
-      setBreadCrumbsParamsData({ caseId, filingNumber });
-    }
-  }, [pathname, search, hash]);
 
   const handleIssueNotice = useCallback(
     async (hearingDate, hearingNumber) => {
@@ -1977,25 +1944,62 @@ const AdmittedCases = () => {
   const onTabChange = useCallback(
     (_, i) => {
       history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${i?.label}`, {
-        caseData,
+        caseData: caseData,
         orderData: ordersData,
       });
     },
     [caseData, caseId, filingNumber, history, ordersData, path]
   );
 
-  const hasAnyRelevantOrderType = useMemo(() => {
-    if (!ordersData?.list) return false;
+  const groupByHearingNumberDescending = (list) => {
+    const grouped = new Map();
 
-    const validTypes = ["NOTICE", "SUMMONS", "WARRANT"];
+    list.forEach((item) => {
+      const match = item.hearingNumber.match(/^(.*HR)(\d+)$/);
+      if (!match) return;
 
-    return ordersData.list.some((item) => {
+      const prefix = match[1];
+      const number = parseInt(match[2], 10);
+
+      if (!grouped.has(number)) {
+        grouped.set(number, { hearingNumber: `${prefix}${number}`, cases: [] });
+      }
+      grouped.get(number).cases.push(item);
+    });
+
+    return Array.from(grouped.values()).sort((a, b) => b.hearingNumber.match(/\d+$/) - a.hearingNumber.match(/\d+$/));
+  };
+
+  const groupNoticeOrderByHearingNumber = useMemo(() => {
+    if (!ordersData?.list) return [];
+
+    const noticeOrder = ordersData?.list?.filter((item) => {
       if (item?.orderCategory === "COMPOSITE") {
-        return item?.compositeItems?.some((subItem) => validTypes.includes(subItem?.orderType));
+        const compositeItems = item?.compositeItems?.filter((item) => item?.orderType === "NOTICE");
+        return compositeItems.length > 0 && item?.hearingNumber;
       } else {
-        return validTypes.includes(item?.orderType);
+        return item?.orderType === "NOTICE" && item?.hearingNumber;
       }
     });
+
+    const groupedByhearingNumber = groupByHearingNumberDescending(noticeOrder);
+    return groupedByhearingNumber;
+  }, [ordersData?.list]);
+
+  const groupSummonWarrantOrderByHearingNumber = useMemo(() => {
+    if (!ordersData?.list) return [];
+
+    const noticeOrder = ordersData?.list?.filter((item) => {
+      if (item?.orderCategory === "COMPOSITE") {
+        const compositeItems = item?.compositeItems?.filter((item) => ["SUMMONS", "WARRANT"].includes(item?.orderType));
+        return compositeItems.length > 0 && item?.hearingNumber;
+      } else {
+        return ["SUMMONS", "WARRANT"].includes(item?.orderType) && item?.hearingNumber;
+      }
+    });
+
+    const groupedByhearingNumber = groupByHearingNumberDescending(noticeOrder);
+    return groupedByhearingNumber;
   }, [ordersData?.list]);
 
   // const orderListFiltered = useMemo(() => {
@@ -2545,8 +2549,10 @@ const AdmittedCases = () => {
   //   }
   // };
 
-  const handleAllNoticeGeneratedForHearing = (hearingNumber) => {
-    setIsShow(!isShow);
+  const handleAllNoticeGeneratedForHearing = async (hearingNumber) => {
+    if (hearingNumber) {
+      history.push(`${path}?filingNumber=${filingNumber}&caseId=${caseId}&taskOrderType=NOTICE&hearingId=${hearingNumber}&tab=${config?.label}`);
+    }
   };
 
   const handleAllSummonWarrantGeneratedForHearing = useCallback(
@@ -2616,8 +2622,7 @@ const AdmittedCases = () => {
   }
   if (
     (userRoles?.includes("JUDGE_ROLE") || userRoles?.includes("BENCH_CLERK") || userRoles?.includes("COURT_ROOM_MANAGER")) &&
-    caseData?.cases?.status &&
-    !judgeReviewStages.includes(caseData.cases.status)
+    !judgeReviewStages.includes(caseData?.criteria?.[0]?.responseList?.[0]?.status)
   ) {
     history.push(`/${window.contextPath}/employee/home/home-pending-task`);
   }
@@ -2645,7 +2650,7 @@ const AdmittedCases = () => {
       )}
       <div
         className="admitted-case-header"
-        style={{ position: showJoinCase ? "" : "", top: "72px", width: "100%", zIndex: 150, background: "white" }}
+        style={{ position: showJoinCase ? "" : "sticky", top: "72px", width: "100%", height: "100%", zIndex: 150, background: "white" }}
       >
         {caseDetails?.caseTitle && <Header styles={{ marginBottom: "-30px" }}>{caseDetails?.caseTitle}</Header>}
         <div className="admitted-case-details" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px" }}>
@@ -2807,30 +2812,58 @@ const AdmittedCases = () => {
             </div>
           )}
         </div>
-        {hasAnyRelevantOrderType && (
-          <div
-            style={{
-              backgroundColor: "#FFF6EA",
-              padding: "8px 12px",
-              borderRadius: "4px",
-              display: "inline-block",
-              fontSize: "14px",
-              color: "#333",
-            }}
-          >
-            {t("VIEW_NOTICE_SUMMONS")}{" "}
-            <span
-              style={{
-                color: "#007F80",
-                fontWeight: "600",
-                cursor: "pointer",
-              }}
-              className="click-here"
-              onClick={handleAllNoticeGeneratedForHearing}
-            >
-              {t("NOTICE_CLICK_HERE")}
-            </span>
-          </div>
+        {(groupSummonWarrantOrderByHearingNumber?.length > 0 || groupNoticeOrderByHearingNumber?.length > 0) && userType === "employee" && (
+          <NoticeAccordion title={t("PROCESS_STATUS")}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {groupSummonWarrantOrderByHearingNumber?.map((orders, index) => (
+                <React.Fragment>
+                  {userType === "employee" && orders?.cases?.length > 0 && (
+                    <div key={orders?.hearingNumber} className="notice-failed-notification" style={styles.container}>
+                      <div className="notice-failed-icon" style={styles.icon}>
+                        <InfoIconRed style={styles.icon} />
+                      </div>
+                      <p className="notice-failed-text" style={styles.text}>
+                        {`${t("SUMMON_WARRANT_FOR")} ${
+                          currentHearingId === orders?.hearingNumber
+                            ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
+                            : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
+                        }, `}
+                        <span
+                          onClick={() => handleAllSummonWarrantGeneratedForHearing(orders?.hearingNumber)}
+                          className="click-here"
+                          style={styles.link}
+                        >
+                          {t("NOTICE_CLICK_HERE")}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                </React.Fragment>
+              ))}
+
+              {groupNoticeOrderByHearingNumber?.map((orders, index) => (
+                <React.Fragment>
+                  {userType === "employee" && orders?.cases?.length > 0 && (
+                    <div key={orders?.hearingNumber} className="notice-failed-notification" style={styles.container}>
+                      <div className="notice-failed-icon" style={styles.icon}>
+                        <InfoIconRed style={styles.icon} />
+                      </div>
+                      <p className="notice-failed-text" style={styles.text}>
+                        {`${t("NOTICE_GENERATED_FOR")} ${
+                          currentHearingId === orders?.hearingNumber
+                            ? t("CURRENT_HEARING") + " (" + orders?.hearingNumber + ")"
+                            : t("PREVIOUS_HEARING") + " (" + orders?.hearingNumber + ")"
+                        }, `}
+                        <span onClick={() => handleAllNoticeGeneratedForHearing(orders?.hearingNumber)} className="click-here" style={styles.link}>
+                          {t("NOTICE_CLICK_HERE")}
+                        </span>
+                      </p>
+                    </div>
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+          </NoticeAccordion>
         )}
 
         <CustomCaseInfoDiv t={t} data={caseBasicDetails} column={6} />
@@ -2920,10 +2953,7 @@ const AdmittedCases = () => {
           )}
         </div>
       )}
-      <div className={`inbox-search-wrapper orders-tab-inbox-wrapper`} style={showActionBar ? { paddingBottom: "60px" } : {}}>
-        {inboxComposer}
-      </div>
-
+      <div className={`inbox-search-wrapper orders-tab-inbox-wrapper`}>{inboxComposer}</div>
       {tabData?.filter((tab) => tab.label === "Overview")?.[0]?.active && (
         <div className="case-overview-wrapper">
           <CaseOverview
@@ -3114,14 +3144,11 @@ const AdmittedCases = () => {
           }}
         ></Modal>
       )}
-      {isShow && (
-        <NoticeProcessModal
+      {taskOrderType && hearingId && (
+        <SummonsAndWarrantsModal
           handleClose={() => {
-            setIsShow(false);
+            history.push(`${path}?filingNumber=${filingNumber}&caseId=${caseId}&tab=${config?.label}`);
           }}
-          filingNumber={filingNumber}
-          currentHearingId={currentHearingId}
-          caseDetails={caseDetails}
         />
       )}
       {showVoidModal && <DocumentModal config={voidModalConfig} />}

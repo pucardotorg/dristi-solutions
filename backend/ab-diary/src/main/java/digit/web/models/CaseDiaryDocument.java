@@ -44,7 +44,7 @@ public class CaseDiaryDocument {
     private String caseDiaryId;
 
     @JsonProperty("isActive")
-    private boolean isActive = true;
+    private boolean isActive;
 
     @JsonProperty("additionalDetails")
     private Object additionalDetails;

@@ -67,7 +67,7 @@ const ViewPaymentDetails = ({ location, match }) => {
   const [additionDetails, setAdditionalDetails] = useState("");
   const toast = useToast();
   const [isDisabled, setIsDisabled] = useState(false);
-  const { caseId, caseTitle, cmpNumber, courtCaseNumber, filingNumber, consumerCode, businessService, paymentType } = window?.Digit.Hooks.useQueryParams();
+  const { caseId, caseTitle, filingNumber, consumerCode, businessService, paymentType } = window?.Digit.Hooks.useQueryParams();
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
 
   const consumerCodeWithoutSuffix = consumerCode.split("_")[0];
@@ -334,28 +334,12 @@ const ViewPaymentDetails = ({ location, match }) => {
     }
   };
 
-  const isValidValue = (value) =>
-    value !== null &&
-    value !== undefined &&
-    value !== "" &&
-    value !== "null" &&
-    value !== "undefined";
-
   const orderModalInfo = useMemo(
     () => ({
       caseInfo: [
         {
-          key: t("CASE_NUMBER"),
-          value: isValidValue(courtCaseNumber)
-            ? courtCaseNumber
-            : isValidValue(cmpNumber)
-              ? cmpNumber
-              : filingNumber,
-          copyData: false,
-        },
-        {
-          key: t("CASE_TITLE_PAYMENT"),
-          value: caseTitle,
+          key: t("CS_CASE_ID"),
+          value: demandBill?.additionalDetails?.filingNumber,
           copyData: false,
         },
         {
@@ -365,7 +349,7 @@ const ViewPaymentDetails = ({ location, match }) => {
         },
       ],
     }),
-    [caseTitle, cmpNumber, courtCaseNumber, filingNumber, paymentType, t]
+    [demandBill?.additionalDetails?.filingNumber, paymentType, t]
   );
 
   if (isFetchBillLoading || isPaymentLoading || isBillLoading || isEPOSTBillLoading || isSummonsBreakUpLoading) {

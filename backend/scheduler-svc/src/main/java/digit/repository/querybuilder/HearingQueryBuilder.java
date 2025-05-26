@@ -17,7 +17,7 @@ import java.util.List;
 public class HearingQueryBuilder {
 
     private static final String FROM_TABLES = " FROM hearing_booking hb ";
-    private static final String BASE_APPLICATION_QUERY = "SELECT  hb.hearing_booking_id, hb.tenant_id, hb.court_id,hb.hearing_date, hb.judge_id, hb.case_id, hb.hearing_type, hb.title, hb.description, hb.status, hb.start_time, hb.end_time, hb.created_by,hb.last_modified_by,hb.created_time,hb.last_modified_time, hb.row_version ,hb.reschedule_request_id ,hb.case_stage";
+    private static final String BASE_APPLICATION_QUERY = "SELECT  hb.hearing_booking_id, hb.tenant_id, hb.court_id,hb.hearing_date, hb.judge_id, hb.case_id, hb.hearing_type, hb.title, hb.description, hb.status, hb.start_time, hb.end_time, hb.created_by,hb.last_modified_by,hb.created_time,hb.last_modified_time, hb.row_version ,hb.reschedule_request_id";
     private static final String LIMIT_OFFSET = " LIMIT ? OFFSET ?";
 
     private final QueryBuilderHelper queryBuilderHelper;

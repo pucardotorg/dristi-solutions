@@ -99,7 +99,7 @@ public class ADiaryValidator {
     private void validateExistingDiary(CaseDiary diary) {
 
         CaseDiarySearchCriteria searchCriteria = CaseDiarySearchCriteria.builder().tenantId(diary.getTenantId())
-                .date(diary.getDiaryDate()).courtId(diary.getCourtId())
+                .date(diary.getDiaryDate()).judgeId(diary.getJudgeId())
                 .build();
 
         CaseDiarySearchRequest caseDiarySearchRequest = CaseDiarySearchRequest.builder().criteria(searchCriteria).build();

@@ -1,11 +1,9 @@
 package digit.service.hearing;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import digit.config.Configuration;
 import digit.kafka.producer.Producer;
 import digit.mapper.CustomMapper;
 import digit.service.HearingService;
-import digit.util.CaseUtil;
 import digit.util.DateUtil;
 import digit.util.HearingUtil;
 import digit.web.models.Pair;
@@ -46,9 +44,6 @@ class HearingProcessorTest {
     private HearingUtil hearingUtil;
 
     @Mock
-    private CaseUtil caseUtil;
-
-    @Mock
     private Producer producer;
 
     @Mock
@@ -79,7 +74,8 @@ class HearingProcessorTest {
         when(dateUtil.getLocalDateFromEpoch(anyLong())).thenReturn(LocalDate.now());
         when(dateUtil.getEPochFromLocalDate(any())).thenReturn(12345L, 67890L);
         when(hearingService.schedule(any())).thenReturn(Collections.singletonList(new ScheduleHearing()));
-        when(caseUtil.getCases(any())).thenReturn(null);
+
+        // Act
         hearingProcessor.processCreateHearingRequest(hearingRequest);
 
         // Assert
@@ -90,6 +86,7 @@ class HearingProcessorTest {
         ArgumentCaptor<ScheduleHearingRequest> requestCaptor = ArgumentCaptor.forClass(ScheduleHearingRequest.class);
         verify(hearingService).schedule(requestCaptor.capture());
         ScheduleHearingRequest capturedRequest = requestCaptor.getValue();
+        assertEquals("case1", capturedRequest.getHearing().get(0).getCaseId());
         assertEquals("judge1", capturedRequest.getHearing().get(0).getJudgeId());
         assertEquals("court1", capturedRequest.getHearing().get(0).getCourtId());
     }

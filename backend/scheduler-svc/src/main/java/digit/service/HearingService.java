@@ -51,16 +51,6 @@ public class HearingService {
     }
 
 
-    public List<ScheduleHearing> scheduleHearingInScheduler(ScheduleHearingRequest schedulingRequests) {
-        log.info("operation = schedule, result = IN_PROGRESS");
-        List<ScheduleHearing> schedule = schedule(schedulingRequests);
-        producer.push(config.getScheduleHearingTopic(), schedule);
-        log.info("operation = schedule, result = SUCCESS");
-
-        return schedule;
-    }
-
-
     /**
      * Schedules hearings based on the provided request.
      * <p>

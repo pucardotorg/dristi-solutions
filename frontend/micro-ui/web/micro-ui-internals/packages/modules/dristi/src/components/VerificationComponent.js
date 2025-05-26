@@ -198,7 +198,7 @@ function VerificationComponent({ t, config, onSelect, formData = {}, errors, set
                   </React.Fragment>
                 )}
 
-                {isUserVerified && currentValue && (
+                {(isUserVerified && currentValue) && (
                   <InfoCard
                     variant={isUserVerified ? "success" : "default"}
                     label={isUserVerified ? t("CS_AADHAR_VERIFIED") : t("CS_COMMON_NOTE")}

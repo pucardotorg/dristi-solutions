@@ -14,7 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ApplicationExistsResponse   {
+public class ApplicationExistsResponse {
     @JsonProperty("ResponseInfo")
 
     @Valid

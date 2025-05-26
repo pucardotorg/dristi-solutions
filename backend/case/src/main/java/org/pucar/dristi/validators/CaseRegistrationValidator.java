@@ -188,15 +188,6 @@ public class CaseRegistrationValidator {
         caseRequest.getCases().setCnrNumber(courtCase.getCnrNumber());
         caseRequest.getCases().setRegistrationDate(courtCase.getRegistrationDate());
         caseRequest.getCases().setTenantId(courtCase.getTenantId());
-
-        caseRequest.getCases().setCourtId(courtCase.getCourtId());
-        caseRequest.getCases().setCaseType(courtCase.getCaseType());
-        caseRequest.getCases().setSubstage(courtCase.getSubstage());
-        caseRequest.getCases().setStage(courtCase.getStage());
-        caseRequest.getCases().setStatus(courtCase.getStatus());
-        caseRequest.getCases().setOutcome(courtCase.getOutcome());
-        caseRequest.getCases().setAccessCode(courtCase.getAccessCode());
-        caseRequest.getCases().setJudgementDate(courtCase.getJudgementDate());
     }
 
     public boolean canLitigantJoinCase(JoinCaseRequest joinCaseRequest) {

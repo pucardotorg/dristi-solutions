@@ -49,7 +49,7 @@ public class FileStoreUtil {
     public Document saveDocumentToFileStore(ByteArrayResource byteArrayResource, String tenantId) {
 
         try {
-            String uri = new String();
+            String uri = "";
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
@@ -117,8 +117,7 @@ public class FileStoreUtil {
             throw new IllegalArgumentException("Invalid file type");
         }
         String module = "signed";  // fixme: take me from constant file
-        StringBuilder uri = new StringBuilder();
-        uri.append(configs.getFileStoreHost()).append(configs.getFileStoreSaveEndPoint());
+        String uri = configs.getFileStoreHost() + configs.getFileStoreSaveEndPoint();
 
         List<MultipartFile> files = new ArrayList<>();
         files.add(file);
@@ -133,7 +132,7 @@ public class FileStoreUtil {
         HttpEntity<MultiValueMap<String, Object>> entity = new HttpEntity<>(request, headers);
 
 
-        ResponseEntity<String> response = restTemplate.exchange(uri.toString(), HttpMethod.POST, entity, String.class);
+        ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.POST, entity, String.class);
         String body = response.getBody();
         JSONObject jsonObject = new JSONObject(body);
         JSONObject fileObject = jsonObject.getJSONArray("files").getJSONObject(0);

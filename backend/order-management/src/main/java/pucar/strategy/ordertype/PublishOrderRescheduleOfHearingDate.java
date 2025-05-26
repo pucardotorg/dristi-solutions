@@ -52,7 +52,7 @@ public class PublishOrderRescheduleOfHearingDate implements OrderUpdateStrategy 
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
         String action = order.getWorkflow().getAction();
-        return order.getOrderType() != null  && E_SIGN.equalsIgnoreCase(action) && RESCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && RESCHEDULE_OF_HEARING_DATE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override

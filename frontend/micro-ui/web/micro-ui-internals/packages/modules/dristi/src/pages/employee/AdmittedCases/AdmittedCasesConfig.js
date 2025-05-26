@@ -561,8 +561,8 @@ export const TabSearchconfig = {
                 additionalCustomization: true,
               },
               {
-                label: "REPRESENTATIVES",
-                jsonPath: "sourceType",
+                label: "OWNER",
+                jsonPath: "owner",
                 additionalCustomization: true,
               },
               // {

@@ -14,7 +14,7 @@ import java.util.List;
 @Slf4j
 public class DiaryEntryQueryBuilder {
 
-    private static final String BASE_DIARY_ENTRY_QUERY = "SELECT dde.id as id,dde.tenant_id as tenantId,dde.case_number as caseNumber,dde.court_id as courtId, " +
+    private static final String BASE_DIARY_ENTRY_QUERY = "SELECT dde.id as id,dde.tenant_id as tenantId,dde.case_number as caseNumber,dde.judge_id as judgeId, " +
             "dde.entry_date as entryDate,dde.businessOfDay as businessOfDay,dde.reference_id as referenceId,dde.reference_type as referenceType,dde.case_id as caseId, " +
             "dde.hearingDate as hearingDate,dde.additional_details as additionalDetails,dde.created_by as createdBy,dde.last_modified_by as lastModifiedBy," +
             "dde.created_time as createdTime,dde.last_modified_time as lastModifiedTime ";
@@ -57,10 +57,10 @@ public class DiaryEntryQueryBuilder {
                 firstCriteria = false;
             }
 
-            if (searchCriteria.getCourtId() != null) {
+            if (searchCriteria.getJudgeId() != null) {
                 addWhereClause(query, firstCriteria);
-                query.append("dde.court_id = ?");
-                preparedStatementValues.add(searchCriteria.getCourtId());
+                query.append("dde.judge_id = ?");
+                preparedStatementValues.add(searchCriteria.getJudgeId());
                 preparedStatementTypeValues.add(Types.VARCHAR);
                 firstCriteria = false;
             }

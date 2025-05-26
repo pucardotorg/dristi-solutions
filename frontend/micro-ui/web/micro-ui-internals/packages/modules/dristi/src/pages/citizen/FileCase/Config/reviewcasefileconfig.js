@@ -58,14 +58,6 @@ export const reviewCaseFileFormConfig = [
                   enableScrutinyField: true,
                 },
                 {
-                  type: "address",
-                  label: "CURRENT_ADDRESS",
-                  value: "currentAddressDetails",
-                  dependentOn: "complainantType.code",
-                  dependentValue: "INDIVIDUAL",
-                  enableScrutinyField: true
-                },
-                {
                   type: "text",
                   label: "TYPE_OF_ENTITY",
                   dependentOn: "complainantType.code",

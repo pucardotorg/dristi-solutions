@@ -18,7 +18,6 @@ import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/uti
 import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
 import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
 
 const defaultSearchValues = {
   caseSearchText: "",
@@ -45,9 +44,17 @@ const HomeView = () => {
   const isUserLoggedIn = Boolean(token);
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
 
-  const [tabData, setTabData] = useState(null);
+  const [caseDetails, setCaseDetails] = useState(null);
+  const [isFetchCaseLoading, setIsFetchCaseLoading] = useState(false);
+  const [tabData, setTabData] = useState(
+    TabLitigantSearchConfig?.TabSearchConfig?.map((configItem, index) => ({
+      key: index,
+      label: configItem.label,
+      active: index === 0 ? true : false,
+    }))
+  );
   const [callRefetch, setCallRefetch] = useState(false);
-  const [tabConfig, setTabConfig] = useState(null);
+  const [tabConfig, setTabConfig] = useState(TabLitigantSearchConfig);
   const [onRowClickData, setOnRowClickData] = useState({ url: "", params: [] });
   const [taskType, setTaskType] = useState(state?.taskType || {});
   const [caseType, setCaseType] = useState(state?.caseType || {});
@@ -61,13 +68,16 @@ const HomeView = () => {
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
   const isNyayMitra = roles.some((role) => role.code === "NYAY_MITRA_ROLE");
-  const isClerk = roles.some((role) => role.code === "BENCH_CLERK");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   const userInfo = Digit?.UserService?.getUser()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [toastMsg, setToastMsg] = useState(null);
 
-  const [config, setConfig] = useState(null);
+  const setInitialConfig = () => {
+    if (userInfoType !== "employee") return TabLitigantSearchConfig?.TabSearchConfig?.[0];
+    else return null;
+  };
+  const [config, setConfig] = useState(() => setInitialConfig());
   const { data: individualData, isLoading, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(
     {
       Individual: {
@@ -212,10 +222,10 @@ const HomeView = () => {
             res = roles.some((role) => role.code === curr);
             return res;
           }, true)
-        ) || (userInfoType === "citizen" ? TabLitigantSearchConfig : null)
+        ) || TabLitigantSearchConfig
       );
     }
-  }, [state?.role, roles, userInfoType]);
+  }, [state?.role, roles]);
 
   const tabConfigs = useMemo(() => rolesToConfigMappingData.config, [rolesToConfigMappingData]);
   const rowClickData = useMemo(() => rolesToConfigMappingData.onRowClickRoute, [rolesToConfigMappingData]);
@@ -224,24 +234,21 @@ const HomeView = () => {
     async function (tabConfig) {
       const updatedTabData = await Promise.all(
         tabConfig?.TabSearchConfig?.map(async (configItem, index) => {
-          let totalCount = null;
-          try {
-            const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {
-              tenantId,
-              criteria: {
-                ...configItem?.apiDetails?.requestBody?.criteria,
+          const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {
+            tenantId,
+            criteria: [
+              {
+                ...configItem?.apiDetails?.requestBody?.criteria?.[0],
                 ...defaultSearchValues,
                 ...additionalDetails,
-                ...(configItem?.apiDetails?.requestBody?.criteria?.outcome && {
+                ...(configItem?.apiDetails?.requestBody?.criteria[0]["outcome"] && {
                   outcome: outcomeTypeData,
                 }),
                 pagination: { offSet: 0, limit: 1 },
               },
-            });
-            totalCount = response?.pagination?.totalCount;
-          } catch (error) {
-            console.error("error in fetching count.", error);
-          }
+            ],
+          });
+          const totalCount = response?.criteria?.[0]?.pagination?.totalCount;
           return {
             key: index,
             label: totalCount ? `${t(configItem.label)} (${totalCount})` : `${t(configItem.label)} (0)`,
@@ -251,44 +258,20 @@ const HomeView = () => {
       );
       setTabData(updatedTabData);
     },
-    [additionalDetails, outcomeTypeData, tenantId, t]
+    [additionalDetails, outcomeTypeData, tenantId, t, defaultSearchValues]
   );
-
-  const citizenId = useMemo(() => {
-    if (userInfoType === "citizen" && !isSearchLoading) {
-      return advocateId ? advocateId : individualId;
-    } else return null;
-  }, [userInfoType, advocateId, individualId, isSearchLoading]);
-
-  const { data: citizenCaseData, isLoading: isCitizenCaseDataLoading } = useSearchCaseService(
-    {
-      criteria: [
-        {
-          ...(citizenId ? (advocateId ? { advocateId } : { litigantId: individualId }) : {}),
-          courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
-          pagination: { offSet: 0, limit: 1 },
-        },
-      ],
-      tenantId,
-    },
-    {},
-    `dristi-${citizenId}`,
-    "",
-    Boolean(citizenId),
-    true,
-    6 * 1000
-  );
-
-  // This is to check if the citizen has been associated with a case yet.
-  const isCitizenReferredInAnyCase = useMemo(() => {
-    return citizenCaseData?.criteria?.[0]?.responseList?.[0];
-  }, [citizenCaseData]);
 
   useEffect(() => {
-    const isAnyLoading = isLoading || isFetching || isSearchLoading || isOutcomeLoading || isCitizenCaseDataLoading;
-    if (!isAnyLoading && tabConfigs && rowClickData && rolesToConfigMappingData && userInfoType) {
+    const isAnyLoading = isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOutcomeLoading;
+    if (!isAnyLoading || (rolesToConfigMappingData && rowClickData && tabConfigs)) {
       setOnRowClickData(rowClickData);
-      if (tabConfigs && !isEqual(tabConfigs, tabConfig)) {
+      if (userInfoType === "employee") {
+        if (tabConfigs && !isEqual(tabConfigs, tabConfig)) {
+          setConfig(tabConfigs?.TabSearchConfig?.[0]);
+          setTabConfig(tabConfigs);
+          getTotalCountForTab(tabConfigs);
+        }
+      } else {
         setConfig(tabConfigs?.TabSearchConfig?.[0]);
         setTabConfig(tabConfigs);
         getTotalCountForTab(tabConfigs);
@@ -298,15 +281,34 @@ const HomeView = () => {
     isLoading,
     isFetching,
     isSearchLoading,
+    isFetchCaseLoading,
     isOutcomeLoading,
     rowClickData,
     tabConfig,
     tabConfigs,
     getTotalCountForTab,
     rolesToConfigMappingData,
-    isCitizenCaseDataLoading,
-    userInfoType,
   ]);
+  // calling case api for tab's count
+  useEffect(() => {
+    (async function () {
+      if (userType) {
+        setIsFetchCaseLoading(true);
+        const caseData = await HomeService.customApiService(Urls.caseSearch, {
+          tenantId,
+          criteria: [
+            {
+              ...(advocateId ? { advocateId } : { litigantId: individualId }),
+
+              pagination: { offSet: 0, limit: 1 },
+            },
+          ],
+        });
+        setCaseDetails(caseData?.criteria?.[0]?.responseList?.[0]);
+        setIsFetchCaseLoading(false);
+      }
+    })();
+  }, [advocateId, individualId, tenantId, userType]);
 
   const onTabChange = (n) => {
     setTabData((prev) => prev.map((i, c) => ({ ...i, active: c === n ? true : false })));
@@ -427,14 +429,14 @@ const HomeView = () => {
       title: t("REVIEW_SUMMON_NOTICE_WARRANTS_TEXT"),
       actionLink: "orders/Summons&Notice",
     },
-    // {
-    //   logo: <DocumentIcon />,
-    //   title: t("VIEW_ISSUED_ORDERS"),
-    //   actionLink: "",
-    // },
+    {
+      logo: <DocumentIcon />,
+      title: t("VIEW_ISSUED_ORDERS"),
+      actionLink: "",
+    },
   ];
 
-  if (isLoading || isFetching || isSearchLoading || isOrdersLoading || isOutcomeLoading || isCitizenCaseDataLoading) {
+  if (isLoading || isFetching || isSearchLoading || isFetchCaseLoading || isOrdersLoading || isOutcomeLoading) {
     return <Loader />;
   }
   const showToast = (type, message, duration = 5000) => {
@@ -445,14 +447,11 @@ const HomeView = () => {
   };
   return (
     <div className="home-view-hearing-container">
-      {individualId && userType && userInfoType === "citizen" && !isCitizenReferredInAnyCase ? (
+      {individualId && userType && userInfoType === "citizen" && !caseDetails ? (
         <LitigantHomePage isApprovalPending={isApprovalPending} />
       ) : (
         <React.Fragment>
-          <div
-            className="left-side"
-            style={{ width: individualId && userType && userInfoType === "citizen" && !isCitizenReferredInAnyCase ? "100vw" : "70vw" }}
-          >
+          <div className="left-side" style={{ width: individualId && userType && userInfoType === "citizen" && !caseDetails ? "100vw" : "70vw" }}>
             <div className="home-header-wrapper">
               <UpcomingHearings
                 handleNavigate={handleNavigate}
@@ -462,18 +461,14 @@ const HomeView = () => {
                 advocateId={advocateId}
                 t={t}
               />
-              {(isJudge || isClerk) && (
+              {isJudge && (
                 <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start" }}>
-                  {isJudge && (
-                    <React.Fragment>
-                      <Link to={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle}>
-                        {t("OPEN_DASHBOARD")}
-                      </Link>
-                      <Link to={`/${window.contextPath}/employee/home/dashboard?select=2`} style={linkStyle}>
-                        {t("OPEN_REPORTS")}
-                      </Link>
-                    </React.Fragment>
-                  )}
+                  <Link to={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle}>
+                    {t("OPEN_DASHBOARD")}
+                  </Link>
+                  <Link to={`/${window.contextPath}/employee/home/dashboard?select=2`} style={linkStyle}>
+                    {t("OPEN_REPORTS")}
+                  </Link>
                   <Link to={`/${window.contextPath}/employee/home/dashboard/adiary`} style={linkStyle}>
                     {t("OPEN_A_DIARY")}
                   </Link>
@@ -531,7 +526,7 @@ const HomeView = () => {
           </div>
         </React.Fragment>
       )}
-      {((individualId && userType && userInfoType === "citizen" && isCitizenReferredInAnyCase) || userInfoType === "employee") && (
+      {((individualId && userType && userInfoType === "citizen" && caseDetails) || userInfoType === "employee") && (
         <div className="right-side" style={{ width: "30vw" }}>
           <TasksComponent
             taskType={taskType}

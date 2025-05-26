@@ -46,7 +46,6 @@ public class HearingRowMapperTest {
         when(resultSet.getString("last_modified_by")).thenReturn("admin");
         when(resultSet.getLong("last_modified_time")).thenReturn(System.currentTimeMillis());
         when(resultSet.getInt("row_version")).thenReturn(1);
-        when(resultSet.getString("case_stage")).thenReturn("case_stage");
 
         // Call mapRow and validate
         ScheduleHearing hearing = mapper.mapRow(resultSet, 1);

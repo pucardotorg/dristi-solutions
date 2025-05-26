@@ -188,8 +188,6 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
         return <RespondentDetailsIcon />;
       case "AdvocateDetailsIcon":
         return <DemandDetailsNoticeIcon />;
-      case "PaymentDetailsIcon":
-        return <DemandDetailsNoticeIcon />;
       default:
         return <RespondentDetailsIcon />;
     }

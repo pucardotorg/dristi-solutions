@@ -72,7 +72,6 @@ export const configsRescheduleRequest = [
         key: "selectComplainant",
         populators: {
           optionsKey: "name",
-          styles: { maxWidth: "100%" },
           options: [
             {
               code: "complainantOne",
@@ -223,38 +222,6 @@ export const configsRescheduleRequest = [
           },
         },
       },
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "prayer",
-        schemaKeyPath: "applicationDetails.prayer",
-        transformer: "customTextArea",
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "PRAYER",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: 0,
-              },
-            },
-          ],
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiSubmissions",
-              masterName: "alphaNumericValidation",
-            },
-          },
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-        },
-      },
     ],
   },
   {
@@ -295,7 +262,6 @@ export const configsCheckoutRequest = [
         key: "selectComplainant",
         populators: {
           optionsKey: "name",
-          styles: { maxWidth: "100%" },
           options: [
             {
               code: "complainantOne",
@@ -451,38 +417,6 @@ export const configsCheckoutRequest = [
   {
     body: [
       {
-        inline: true,
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "prayer",
-        schemaKeyPath: "applicationDetails.prayer",
-        transformer: "customTextArea",
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "PRAYER",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: 0,
-              },
-            },
-          ],
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiSubmissions",
-              masterName: "alphaNumericValidation",
-            },
-          },
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-        },
-      },
-      {
         type: "component",
         component: "SelectCustomTextArea",
         schemaKeyPath: "applicationDetails.additionalComments",
@@ -517,7 +451,6 @@ export const configsExtensionSubmissionDeadline = [
         key: "selectComplainant",
         populators: {
           optionsKey: "name",
-          styles: { maxWidth: "100%" },
           options: [
             {
               code: "complainantOne",
@@ -681,38 +614,6 @@ export const configsExtensionSubmissionDeadline = [
             masterName: "ExtensionReason",
             select: "(data) => {return data['Application'].ExtensionReason?.map((item) => {return item;});}",
           },
-        },
-      },
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "prayer",
-        schemaKeyPath: "applicationDetails.prayer",
-        transformer: "customTextArea",
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "PRAYER",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: 0,
-              },
-            },
-          ],
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiSubmissions",
-              masterName: "alphaNumericValidation",
-            },
-          },
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
       },
     ],
@@ -890,7 +791,6 @@ export const configsProductionOfDocuments = [
         key: "selectComplainant",
         populators: {
           optionsKey: "name",
-          styles: { maxWidth: "100%" },
           options: [
             {
               code: "complainantOne",
@@ -1006,7 +906,6 @@ export const configsProductionOfDocuments = [
               disable: false,
               populators: {
                 name: "documentType",
-                styles: { maxWidth: "100%" },
                 optionsKey: "name",
                 required: true,
                 mdmsConfig: {
@@ -1021,7 +920,6 @@ export const configsProductionOfDocuments = [
               type: "text",
               key: "documentTitle",
               name: "documentTitle",
-              textInputStyle: { maxWidth: "100%" },
               validation: {
                 isRequired: true,
                 pattern: /^[0-9A-Z/]{0,20}$/,
@@ -1034,7 +932,6 @@ export const configsProductionOfDocuments = [
               label: "DOCUMENT_ATTACHMENT",
               type: "documentUpload",
               name: "document",
-              uploadDivStyle: { maxWidth: "100%" },
               validation: {
                 isRequired: true,
               },
@@ -1042,38 +939,6 @@ export const configsProductionOfDocuments = [
               allowedFileTypes: /(.*?)(png|jpeg|jpg|pdf)$/i,
             },
           ],
-        },
-      },
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "prayer",
-        schemaKeyPath: "applicationDetails.prayer",
-        transformer: "customTextArea",
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "PRAYER",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: 0,
-              },
-            },
-          ],
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiSubmissions",
-              masterName: "alphaNumericValidation",
-            },
-          },
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
       },
       {
@@ -1137,7 +1002,6 @@ export const configsCaseWithdrawal = [
         key: "selectComplainant",
         populators: {
           optionsKey: "name",
-          styles: { maxWidth: "100%" },
           options: [
             {
               code: "complainantOne",
@@ -1257,38 +1121,6 @@ export const configsCaseWithdrawal = [
           },
         },
       },
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "prayer",
-        schemaKeyPath: "applicationDetails.prayer",
-        transformer: "customTextArea",
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "PRAYER",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: 0,
-              },
-            },
-          ],
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiSubmissions",
-              masterName: "alphaNumericValidation",
-            },
-          },
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-        },
-      },
     ],
   },
   {
@@ -1329,7 +1161,6 @@ export const configsCaseTransfer = [
         key: "selectComplainant",
         populators: {
           optionsKey: "name",
-          styles: { maxWidth: "100%" },
           options: [
             {
               code: "complainantOne",
@@ -1455,38 +1286,6 @@ export const configsCaseTransfer = [
           },
         },
       },
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "prayer",
-        schemaKeyPath: "applicationDetails.prayer",
-        transformer: "customTextArea",
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "PRAYER",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: 0,
-              },
-            },
-          ],
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiSubmissions",
-              masterName: "alphaNumericValidation",
-            },
-          },
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-        },
-      },
     ],
   },
   {
@@ -1527,7 +1326,6 @@ export const configsSettlement = [
         key: "selectComplainant",
         populators: {
           optionsKey: "name",
-          styles: { maxWidth: "100%" },
           options: [
             {
               code: "complainantOne",
@@ -1629,38 +1427,6 @@ export const configsSettlement = [
   },
   {
     body: [
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "prayer",
-        schemaKeyPath: "applicationDetails.prayer",
-        transformer: "customTextArea",
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "PRAYER",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: 0,
-              },
-            },
-          ],
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiSubmissions",
-              masterName: "alphaNumericValidation",
-            },
-          },
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-        },
-      },
       {
         inline: true,
         type: "component",
@@ -1944,7 +1710,6 @@ export const configsOthers = [
         key: "selectComplainant",
         populators: {
           optionsKey: "name",
-          styles: { maxWidth: "100%" },
           options: [
             {
               code: "complainantOne",
@@ -1998,38 +1763,6 @@ export const configsOthers = [
         },
       },
       {
-        inline: true,
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "prayer",
-        schemaKeyPath: "applicationDetails.prayer",
-        transformer: "customTextArea",
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "PRAYER",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: 0,
-              },
-            },
-          ],
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiSubmissions",
-              masterName: "alphaNumericValidation",
-            },
-          },
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-        },
-      },
-      {
         type: "component",
         component: "SelectCustomTextArea",
         schemaKeyPath: "applicationDetails.reasonForApplication",
@@ -2063,7 +1796,6 @@ export const requestForBail = [
         key: "selectComplainant",
         populators: {
           optionsKey: "name",
-          styles: { maxWidth: "100%" },
           options: [
             {
               code: "complainantOne",
@@ -2092,7 +1824,6 @@ export const requestForBail = [
             {
               name: "text",
               textAreaSubHeader: "GROUND_REASON_BAIL",
-              subHeaderClassName: "dristi-font-big-bold",
               placeholder: "TYPE_HERE_PLACEHOLDER",
               type: "TextAreaComponent",
               textAreaStyle: {
@@ -2124,7 +1855,6 @@ export const requestForBail = [
             {
               name: "text",
               textAreaSubHeader: "PRAYER",
-              subHeaderClassName: "dristi-font-big-bold",
               placeholder: "TYPE_HERE_PLACEHOLDER",
               type: "TextAreaComponent",
               textAreaStyle: {
@@ -2157,7 +1887,6 @@ export const requestForBail = [
               name: "text",
               textAreaSubHeader: "ADDITIONAL_INFO",
               isOptional: true,
-              subHeaderClassName: "dristi-font-big-bold",
               placeholder: "TYPE_HERE_PLACEHOLDER",
               type: "TextAreaComponent",
               textAreaStyle: {
@@ -2283,7 +2012,6 @@ export const submitDocsForBail = [
         key: "selectComplainant",
         populators: {
           optionsKey: "name",
-          styles: { maxWidth: "100%" },
           options: [
             {
               code: "complainantOne",
@@ -2303,38 +2031,6 @@ export const submitDocsForBail = [
         inline: true,
         type: "component",
         component: "SelectCustomTextArea",
-        key: "prayer",
-        schemaKeyPath: "applicationDetails.prayer",
-        transformer: "customTextArea",
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "PRAYER",
-              subHeaderClassName: "dristi-font-big-bold",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: 0,
-              },
-            },
-          ],
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiSubmissions",
-              masterName: "alphaNumericValidation",
-            },
-          },
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-        },
-      },
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomTextArea",
         key: "additionalInformation",
         schemaKeyPath: "applicationDetails.additionalInformation",
         transformer: "customTextArea",
@@ -2345,7 +2041,6 @@ export const submitDocsForBail = [
               name: "text",
               textAreaSubHeader: "ADDITIONAL_INFO",
               isOptional: true,
-              subHeaderClassName: "dristi-font-big-bold",
               placeholder: "TYPE_HERE_PLACEHOLDER",
               type: "TextAreaComponent",
               textAreaStyle: {
@@ -2471,7 +2166,6 @@ export const submitDelayCondonation = [
         key: "selectComplainant",
         populators: {
           optionsKey: "name",
-          styles: { maxWidth: "100%" },
           options: [
             {
               code: "complainantOne",
@@ -2510,37 +2204,6 @@ export const submitDelayCondonation = [
               },
             },
           ],
-          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
-        },
-      },
-      {
-        inline: true,
-        type: "component",
-        component: "SelectCustomTextArea",
-        key: "prayer",
-        schemaKeyPath: "applicationDetails.prayer",
-        transformer: "customTextArea",
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "text",
-              textAreaSubHeader: "PRAYER",
-              placeholder: "TYPE_HERE_PLACEHOLDER",
-              type: "TextAreaComponent",
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: 0,
-              },
-            },
-          ],
-          validation: {
-            customValidationFn: {
-              moduleName: "dristiSubmissions",
-              masterName: "alphaNumericValidation",
-            },
-          },
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
       },

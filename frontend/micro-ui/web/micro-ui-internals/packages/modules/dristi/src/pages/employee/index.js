@@ -15,7 +15,6 @@ import CaseFileAdmission from "./admission/CaseFileAdmission";
 import Home from "./home";
 import ViewCaseFile from "./scrutiny/ViewCaseFile";
 import ReviewLitigantDetails from "./AdmittedCases/ReviewLitigantDetails";
-import EmployeeProfileEdit from "../../components/EmployeeProfileEdit/EmployeeProfileEdit";
 
 const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileStoreId }) => {
   const { t } = useTranslation();
@@ -120,9 +119,6 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
           <PrivateRoute exact path={`${path}/home/view-case`} component={(props) => <AdmittedCases />} />
           <PrivateRoute exact path={`${path}/home/view-case/review-litigant-details`} component={(props) => <ReviewLitigantDetails />} />
           <PrivateRoute exact path={`${path}/case`} component={(props) => <ViewCaseFile {...props} t={t} />} />
-          <PrivateRoute exact path={`${path}/home/edit-profile`}>
-            <EmployeeProfileEdit />
-          </PrivateRoute>
         </div>
         {toastMessage && (
           <Toast

@@ -1,9 +1,5 @@
-import { AppContainer, PrivateRoute } from "@egovernments/digit-ui-react-components";
-// Import the breadcrumb context from core module
-import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
-// Import the custom breadcrumb component that supports dynamic navigation
-import BreadCrumb from "../../components/BreadCrumbsNew";
-import React, { useMemo, useContext, useEffect } from "react";
+import { AppContainer, BreadCrumb, PrivateRoute } from "@egovernments/digit-ui-react-components";
+import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Switch } from "react-router-dom";
 import OrdersResponse from "./OrdersResponse";
@@ -17,15 +13,8 @@ import ReviewSummonsNoticeAndWarrant from "./ReviewSummonsNoticeAndWarrant";
 import { useHistory, useLocation } from "react-router-dom/cjs/react-router-dom.min";
 const bredCrumbStyle = { maxWidth: "min-content" };
 
-/**
- * Custom breadcrumb component for the Orders module
- * Displays navigation path based on current location and case context
- */
 const ProjectBreadCrumb = ({ location }) => {
   const { pathname } = useLocation();
-  // Access the breadcrumb context to get case navigation data
-  const { BreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
-  const { caseId, filingNumber } = BreadCrumbsParamsData;
 
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isEpostUser = useMemo(() => roles?.some((role) => role?.code === "POST_MANAGER"), [roles]);
@@ -42,22 +31,13 @@ const ProjectBreadCrumb = ({ location }) => {
         content: t("ES_COMMON_HOME"),
         show: true,
       },
-      
-      // Conditionally add the View Case breadcrumb if case data is available in context
-      ...(caseId && filingNumber?
-        [{
-        path: `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`,
-        content: t("VIEW_CASE"),
-        show: true,
-      }]:[]),
       {
         path: `/${window?.contextPath}/${userType}`,
         content: t(location.pathname.split("/").pop()),
         show: true,
       },
     ],
-    // Added caseId and filingNumber as dependencies to update breadcrumbs when they change
-    [isEpostUser, location.pathname, pathname, t, userType, caseId, filingNumber]
+    [isEpostUser, location.pathname, pathname, t, userType]
   );
   return <BreadCrumb crumbs={crumbs} spanStyle={bredCrumbStyle} style={{ color: "rgb(0, 126, 126)" }} />;
 };

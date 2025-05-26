@@ -6,7 +6,7 @@ import DocViewerWrapper from "../pages/employee/docViewerWrapper";
 import { ZoomInIcon, ZoomOutIcon, RotateIcon, DownloadIcon } from "../icons/svgIndex";
 import useDownloadCasePdf from "../hooks/dristi/useDownloadCasePdf";
 
-export const ImageModal =({ imageInfo, handleCloseModal, handleOpenPopup, t, anchorRef, showFlag, isPrevScrutiny, selectedDocs, headerBarMainStyle }) =>{
+function ImageModal({ imageInfo, handleCloseModal, handleOpenPopup, t, anchorRef, showFlag, isPrevScrutiny, selectedDocs, headerBarMainStyle }) {
   let showFlagNew = (!imageInfo?.disableScrutiny || imageInfo?.enableScrutinyField) && showFlag;
   const [zoom, setZoom] = useState(1);
   const [rotation, setRotation] = useState(0);

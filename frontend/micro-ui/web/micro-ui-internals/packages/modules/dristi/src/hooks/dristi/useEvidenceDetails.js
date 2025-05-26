@@ -32,36 +32,26 @@ const useEvidenceDetails = ({ url, params, body, config = {}, plainAccessRequest
         plainAccessRequest,
         true
       );
-      if (owner?.Employees?.length > 1) return "";
-      return `${owner?.Individual?.[0]?.name?.givenName} ${owner?.Individual?.[0]?.name?.familyName || ""}`.trim();
+      if(owner?.Employees?.length > 1) return ""; 
+      return `${owner?.Individual[0]?.name?.givenName} ${owner[0]?.Individual[0]?.name?.familyName || ""}`.trim();
     }
   };
 
   const fetchCombinedData = async () => {
     //need to filter this hearing list response based on slot
     const res = await DRISTIService.searchEvidence(body, params, plainAccessRequest, true);
-    const uniqueArtifactsMap = new Map();
-    res?.artifacts?.forEach((artifact) => {
-      if (!uniqueArtifactsMap.has(artifact.sourceID)) {
-        uniqueArtifactsMap.set(artifact.sourceID, artifact);
-      }
-    });
-    const uniqueArtifacts = Array.from(uniqueArtifactsMap.values());
-
-    const ownerNames = await Promise.all(
-      uniqueArtifacts?.map(async (artifact) => {
-        const ownerName = await getOwnerName(artifact);
-        return { owner: ownerName, sourceID: artifact.sourceID };
-      })
-    );
-    const artifacts = res?.artifacts?.map((artifact) => {
-      const ownerName = ownerNames?.find((item) => item.sourceID === artifact.sourceID)?.owner;
-      return { ...artifact, owner: ownerName };
-    });
-
     return {
       ...res,
-      artifacts,
+      artifacts: await Promise.all(
+        res.artifacts.map(async (artifact) => {
+          const owner = await getOwnerName(artifact);
+
+          return {
+            ...artifact,
+            owner: owner,
+          };
+        })
+      ),
     };
   };
 

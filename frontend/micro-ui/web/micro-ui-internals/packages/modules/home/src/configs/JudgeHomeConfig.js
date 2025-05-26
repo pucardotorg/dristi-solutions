@@ -118,14 +118,23 @@ export const TabJudgeSearchConfig = {
       label: "CS_ALL",
       type: "search",
       apiDetails: {
-        serviceName: "/case/v2/search/list",
+        serviceName: "/case/v1/_search",
         requestParam: {},
         requestBody: {
           tenantId: "pg",
-          criteria: {
-            stage: ["Pre-Trial", "Trial", "Post-Trial"],
-            status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
-          },
+          criteria: [
+            {
+              stage: ["Pre-Trial", "Trial", "Post-Trial"],
+              status: [
+                "PENDING_REGISTRATION",
+                "PENDING_ADMISSION",
+                "CASE_ADMITTED",
+                "PENDING_ADMISSION_HEARING",
+                "PENDING_NOTICE",
+                "PENDING_RESPONSE",
+              ],
+            },
+          ],
         },
         masterName: "commonUiConfig",
         moduleName: "homeJudgeUIConfig",
@@ -234,7 +243,7 @@ export const TabJudgeSearchConfig = {
             ],
 
             enableColumnSort: true,
-            resultsJsonPath: "caseList",
+            resultsJsonPath: "criteria[0].responseList",
           },
           show: true,
         },
@@ -244,14 +253,23 @@ export const TabJudgeSearchConfig = {
       label: "CD_ONGOING",
       type: "search",
       apiDetails: {
-        serviceName: "/case/v2/search/list",
+        serviceName: "/case/v1/_search",
         requestParam: {},
         requestBody: {
           tenantId: "pg",
-          criteria: {
-            stage: ["Trial"],
-            status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "CASE_ADMITTED", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
-          },
+          criteria: [
+            {
+              stage: ["Trial"],
+              status: [
+                "PENDING_REGISTRATION",
+                "PENDING_ADMISSION",
+                "CASE_ADMITTED",
+                "PENDING_ADMISSION_HEARING",
+                "PENDING_NOTICE",
+                "PENDING_RESPONSE",
+              ],
+            },
+          ],
         },
         masterName: "commonUiConfig",
         moduleName: "homeJudgeUIConfig",
@@ -360,7 +378,7 @@ export const TabJudgeSearchConfig = {
             ],
 
             enableColumnSort: true,
-            resultsJsonPath: "caseList",
+            resultsJsonPath: "criteria[0].responseList",
           },
           show: true,
         },
@@ -370,14 +388,16 @@ export const TabJudgeSearchConfig = {
       label: "CS_REGISTERED",
       type: "search",
       apiDetails: {
-        serviceName: "/case/v2/search/list",
+        serviceName: "/case/v1/_search",
         requestParam: {},
         requestBody: {
           tenantId: "pg",
-          criteria: {
-            stage: ["Pre-Trial"],
-            status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
-          },
+          criteria: [
+            {
+              stage: ["Pre-Trial"],
+              status: ["PENDING_REGISTRATION", "PENDING_ADMISSION", "PENDING_ADMISSION_HEARING", "PENDING_NOTICE", "PENDING_RESPONSE"],
+            },
+          ],
         },
         masterName: "commonUiConfig",
         moduleName: "homeJudgeUIConfig",
@@ -502,7 +522,7 @@ export const TabJudgeSearchConfig = {
             ],
 
             enableColumnSort: true,
-            resultsJsonPath: "caseList",
+            resultsJsonPath: "criteria[0].responseList",
           },
           show: true,
         },
@@ -515,13 +535,15 @@ export const TabJudgeSearchConfig = {
       label: "CD_CLOSED",
       type: "search",
       apiDetails: {
-        serviceName: "/case/v2/search/list",
+        serviceName: "/case/v1/_search",
         requestParam: {},
         requestBody: {
           tenantId: "pg",
-          criteria: {
-            outcome: [],
-          },
+          criteria: [
+            {
+              outcome: [],
+            },
+          ],
         },
         masterName: "commonUiConfig",
         moduleName: "homeJudgeUIConfig",
@@ -646,7 +668,7 @@ export const TabJudgeSearchConfig = {
             ],
 
             enableColumnSort: true,
-            resultsJsonPath: "caseList",
+            resultsJsonPath: "criteria[0].responseList",
           },
           show: true,
         },

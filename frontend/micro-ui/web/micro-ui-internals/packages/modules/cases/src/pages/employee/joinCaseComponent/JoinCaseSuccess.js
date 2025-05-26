@@ -33,7 +33,7 @@ const JoinCaseSuccess = ({ success, messageHeader, type, caseDetails, closeModal
         },
         {
           key: "CASE_NUMBER",
-          value: caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber,
+          value: caseDetails?.cmpNumber,
         },
         {
           key: "CASE_CATEGORY",
@@ -42,7 +42,9 @@ const JoinCaseSuccess = ({ success, messageHeader, type, caseDetails, closeModal
         },
         {
           key: "CASE_TYPE",
-          value: `${createShorthand(caseDetails?.statutesAndSection?.section)} S${caseDetails?.statutesAndSection?.subsection}`,
+          value: `${createShorthand(caseDetails?.statutesAndSections?.[0]?.sections?.[0])} S${
+            caseDetails?.statutesAndSections?.[0]?.subsections?.[0]
+          }`,
         },
         {
           key: "CS_FILING_DATE",

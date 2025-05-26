@@ -37,7 +37,7 @@ public class Advocate {
     private String applicationNumber = null;
 
     @JsonProperty("status")
-    private String status=null;
+    private String status = null;
 
     @JsonProperty("barRegistrationNumber")
     @Size(min = 2, max = 64)

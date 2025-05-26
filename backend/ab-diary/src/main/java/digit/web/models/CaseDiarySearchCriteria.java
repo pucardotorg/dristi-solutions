@@ -45,10 +45,10 @@ public class CaseDiarySearchCriteria {
 
     private String diaryType = null;
 
-    @JsonProperty("courtId")
+    @JsonProperty("judgeId")
     @NotNull
 
-    private String courtId = null;
+    private String judgeId = null;
 
     @JsonProperty("referenceId")
     private String referenceId = null;

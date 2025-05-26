@@ -210,7 +210,7 @@ public class PaymentService {
 
             TransactionDetails transactionDetails = objectMapper.readValue(decryptedData, TransactionDetails.class);
             TreasuryPaymentData data = createTreasuryPaymentData(transactionDetails, authSek);
-            treasuryEnrichment.enrichTreasuryPaymentData(data, requestInfo);
+
             requestInfo.getUserInfo().setTenantId(config.getEgovStateTenantId());
 
             log.info("Request info: {}", requestInfo);
@@ -425,19 +425,11 @@ public class PaymentService {
                 .businessService(demandRequest.getEntityType())
                 .taxPeriodFrom((taxPeriodData != null) ? taxPeriodData.get("fromDate").asLong() : System.currentTimeMillis())
                 .taxPeriodTo((taxPeriodData != null) ? taxPeriodData.get("toDate").asLong() : System.currentTimeMillis())
-                .billExpiryTime(getBillExpiryTime(demandRequest.getEntityType()))
                 .demandDetails(isSummonDemand(demandRequest.getEntityType())
                         ? getDemandDetailSummons(demandRequest.getCalculation(), demandRequest.getEntityType(), demandRequest.getDeliveryChannel(), paymentMasterData)
                         : List.of(getDemandDetails(demandRequest.getCalculation().get(0).getTotalAmount(), demandRequest.getEntityType(), taxHeadMaster)))
                 .additionalDetails(getAdditionalDetails(courtCase, demandRequest.getEntityType(), demandRequest.getCalculation().get(0)))
                 .build();
-    }
-
-    private Long getBillExpiryTime(String entityType) {
-        if(entityType.equalsIgnoreCase("task-summons") || entityType.equalsIgnoreCase("task-notice") || entityType.equalsIgnoreCase("task-warrant")) {
-            return TWO_YEARS_IN_MILLISECOND;
-        }
-        return null;
     }
 
     private boolean isSummonDemand(String entityType) {

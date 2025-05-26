@@ -173,32 +173,34 @@ export const UICustomizations = {
           });
         },
       });
-      const criteria = {
-        ...requestCriteria?.body?.criteria,
-        ...requestCriteria?.state?.searchForm,
-        tenantId,
-        ...additionalDetails,
-        ...("sortBy" in additionalDetails && {
-          [additionalDetails.sortBy]: undefined,
-          sortBy: undefined,
-        }),
-        ...(requestCriteria?.body?.criteria?.outcome && {
-          outcome: outcomeTypeData,
-        }),
-        ...(requestCriteria?.state?.searchForm?.outcome && {
-          outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
-        }),
-        ...(requestCriteria?.state?.searchForm?.substage && {
-          substage: requestCriteria?.state?.searchForm?.substage?.code,
-        }),
-        pagination: {
-          limit: requestCriteria?.state?.tableForm?.limit,
-          offSet: requestCriteria?.state?.tableForm?.offset,
+      const criteria = [
+        {
+          ...requestCriteria?.body?.criteria[0],
+          ...requestCriteria?.state?.searchForm,
+          tenantId,
+          ...additionalDetails,
           ...("sortBy" in additionalDetails && {
-            ...requestCriteria?.state?.searchForm[additionalDetails.sortBy],
+            [additionalDetails.sortBy]: undefined,
+            sortBy: undefined,
           }),
+          ...(requestCriteria?.body?.criteria[0]["outcome"] && {
+            outcome: outcomeTypeData,
+          }),
+          ...(requestCriteria?.state?.searchForm?.outcome && {
+            outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
+          }),
+          ...(requestCriteria?.state?.searchForm?.substage && {
+            substage: requestCriteria?.state?.searchForm?.substage?.code,
+          }),
+          pagination: {
+            limit: requestCriteria?.state?.tableForm?.limit,
+            offSet: requestCriteria?.state?.tableForm?.offset,
+            ...("sortBy" in additionalDetails && {
+              ...requestCriteria?.state?.searchForm[additionalDetails.sortBy],
+            }),
+          },
         },
-      };
+      ];
       return {
         ...requestCriteria,
         body: {
@@ -212,7 +214,7 @@ export const UICustomizations = {
         config: {
           ...requestCriteria?.config,
           select: (data) => {
-            return { ...data, totalCount: data?.pagination?.totalCount };
+            return { ...data, totalCount: data?.criteria?.[0]?.pagination?.totalCount };
           },
         },
       };
@@ -274,26 +276,28 @@ export const UICustomizations = {
     preProcess: (requestCriteria, additionalDetails) => {
       // We need to change tenantId "processSearchCriteria" here
       const tenantId = window?.Digit.ULBService.getStateId();
-      const criteria = {
-        ...requestCriteria?.body?.criteria,
-        ...requestCriteria?.state?.searchForm,
-        ...(requestCriteria?.state?.searchForm?.substage && {
-          substage: requestCriteria?.state?.searchForm?.substage?.code,
-        }),
-        tenantId,
-        ...additionalDetails,
-        ...("sortBy" in additionalDetails && {
-          [additionalDetails.sortBy]: undefined,
-          sortBy: undefined,
-        }),
-        pagination: {
-          limit: requestCriteria?.state?.tableForm?.limit,
-          offSet: requestCriteria?.state?.tableForm?.offset,
-          ...("sortBy" in additionalDetails && {
-            ...requestCriteria?.state?.searchForm[additionalDetails.sortBy],
+      const criteria = [
+        {
+          ...requestCriteria?.body?.criteria[0],
+          ...requestCriteria?.state?.searchForm,
+          ...(requestCriteria?.state?.searchForm?.substage && {
+            substage: requestCriteria?.state?.searchForm?.substage?.code,
           }),
+          tenantId,
+          ...additionalDetails,
+          ...("sortBy" in additionalDetails && {
+            [additionalDetails.sortBy]: undefined,
+            sortBy: undefined,
+          }),
+          pagination: {
+            limit: requestCriteria?.state?.tableForm?.limit,
+            offSet: requestCriteria?.state?.tableForm?.offset,
+            ...("sortBy" in additionalDetails && {
+              ...requestCriteria?.state?.searchForm[additionalDetails.sortBy],
+            }),
+          },
         },
-      };
+      ];
       return {
         ...requestCriteria,
         body: {
@@ -307,7 +311,7 @@ export const UICustomizations = {
         config: {
           ...requestCriteria?.config,
           select: (data) => {
-            return { ...data, totalCount: data?.pagination?.totalCount };
+            return { ...data, totalCount: data?.criteria?.[0]?.pagination?.totalCount };
           },
         },
       };
@@ -366,32 +370,34 @@ export const UICustomizations = {
           });
         },
       });
-      const criteria = {
-        ...requestCriteria?.body?.criteria,
-        ...requestCriteria?.state?.searchForm,
-        tenantId,
-        ...additionalDetails,
-        ...("sortBy" in additionalDetails && {
-          [additionalDetails.sortBy]: undefined,
-          sortBy: undefined,
-        }),
-        ...(requestCriteria?.body?.criteria?.outcome && {
-          outcome: outcomeTypeData,
-        }),
-        ...(requestCriteria?.state?.searchForm?.outcome && {
-          outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
-        }),
-        ...(requestCriteria?.state?.searchForm?.substage && {
-          substage: requestCriteria?.state?.searchForm?.substage?.code,
-        }),
-        pagination: {
-          limit: requestCriteria?.state?.tableForm?.limit,
-          offSet: requestCriteria?.state?.tableForm?.offset,
+      const criteria = [
+        {
+          ...requestCriteria?.body?.criteria[0],
+          ...requestCriteria?.state?.searchForm,
+          tenantId,
+          ...additionalDetails,
           ...("sortBy" in additionalDetails && {
-            ...requestCriteria?.state?.searchForm[additionalDetails.sortBy],
+            [additionalDetails.sortBy]: undefined,
+            sortBy: undefined,
           }),
+          ...(requestCriteria?.body?.criteria[0]["outcome"] && {
+            outcome: outcomeTypeData,
+          }),
+          ...(requestCriteria?.state?.searchForm?.outcome && {
+            outcome: [requestCriteria?.state?.searchForm?.outcome?.outcome],
+          }),
+          ...(requestCriteria?.state?.searchForm?.substage && {
+            substage: requestCriteria?.state?.searchForm?.substage?.code,
+          }),
+          pagination: {
+            limit: requestCriteria?.state?.tableForm?.limit,
+            offSet: requestCriteria?.state?.tableForm?.offset,
+            ...("sortBy" in additionalDetails && {
+              ...requestCriteria?.state?.searchForm[additionalDetails.sortBy],
+            }),
+          },
         },
-      };
+      ];
       return {
         ...requestCriteria,
         body: {
@@ -405,7 +411,7 @@ export const UICustomizations = {
         config: {
           ...requestCriteria?.config,
           select: (data) => {
-            return { ...data, totalCount: data?.pagination?.totalCount };
+            return { ...data, totalCount: data?.criteria?.[0]?.pagination?.totalCount };
           },
         },
       };
