@@ -461,7 +461,7 @@ public class TaskUtil {
 
         Object orderFormData = getOrderFormDataByOrderType(additionalDetails, orderType);
         if (orderFormData != null) {
-            respondentNameData = jsonUtil.getNestedValue(additionalDetails, Arrays.asList("party", "data"), Object.class);
+            respondentNameData = jsonUtil.getNestedValue(orderFormData, Arrays.asList("party", "data"), Object.class);
         }
 
         if (respondentNameData == null) {
