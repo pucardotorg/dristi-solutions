@@ -54,6 +54,7 @@ public class CaseListSummaryRowMapper implements ResultSetExtractor<List<CaseSum
                         .courtId(rs.getString("courtid"))
                         .filingNumber(rs.getString("filingnumber"))
                         .lastModifiedTime(rs.getLong("lastmodifiedtime"))
+                        .createdTime(rs.getLong("createdtime"))
                         .build();
 
                 caseMap.put(caseId, caseSummary);
