@@ -233,25 +233,17 @@ public class TaskUtil {
     private void getComplainantDetails(Order order, TaskDetails taskDetails, CourtCase courtCase) {
 
         ComplainantDetails complainantDetails = new ComplainantDetails();
-
-        String complainantName = getComplainantNameFromCase(courtCase);
-        String individualId;
         Optional<Party> primaryComplainant = courtCase.getLitigants().stream().filter(item -> COMPLAINANT_PRIMARY.equalsIgnoreCase(item.getPartyType())).findFirst(); // TODO: check
         if (primaryComplainant.isPresent()) {
+            String individualId;
             individualId = primaryComplainant.get().getIndividualId();
+            Map<String, Object> complainantDetailsFromCourtCase = getComplainantDetailsFromCourtCase(courtCase, individualId);
 
-            IndividualSearchRequest individualSearchRequest = IndividualSearchRequest.builder()
-                    .individual(IndividualSearch.builder().individualId(individualId).build())
-                    .requestInfo(RequestInfo.builder().build()).build();  // empty request info , if not working pass request info here
-
-            List<Individual> individual = individualUtil.getIndividualByIndividualId(individualSearchRequest, order.getTenantId(), 1);
-
-            Map<String, Object> complainantAddressFromIndividualDetail = getComplainantAddressFromIndividualDetail(individual.get(0));
-
+            Map<String, Object> complainantAddressFromIndividualDetail = getComplainantAddressFromComplainantDetails(complainantDetailsFromCourtCase);
+            String complainantName = getComplainantName(complainantDetailsFromCourtCase);
             complainantDetails.setAddress(complainantAddressFromIndividualDetail);
-
+            complainantDetails.setName(complainantName);
         }
-        complainantDetails.setName(complainantName);
         taskDetails.setComplainantDetails(complainantDetails);
 
     }
@@ -667,37 +659,40 @@ public class TaskUtil {
         return "";
     }
 
-    // Equivalent of: getComplainantName(caseDetails?.additionalDetails?.complainantDetails?.formdata[0]?.data)
-    public String getComplainantNameFromCase(CourtCase courtCase) {
-        if (courtCase == null) return "";
-        Object caseDetailsObj = courtCase.getCaseDetails();
-        Map<?, ?> additional = jsonUtil.getNestedValue(caseDetailsObj, List.of("additionalDetails"), Map.class);
+    public Map<String, Object> getComplainantDetailsFromCourtCase(CourtCase courtCase, String complainantIndividualId) {
+        if (courtCase == null) return Collections.emptyMap();
+        Object additional = courtCase.getAdditionalDetails();
         Map<?, ?> complainantDetailsObj = jsonUtil.getNestedValue(additional, List.of("complainantDetails"), Map.class);
         List<?> formdataList = jsonUtil.getNestedValue(complainantDetailsObj, List.of("formdata"), List.class);
-        if (formdataList == null || formdataList.isEmpty()) return "";
-        Map<String, Object> complainantDetails = jsonUtil.getNestedValue(formdataList.get(0), List.of("data"), Map.class);
-        return getComplainantName(complainantDetails);
+        if (formdataList == null || formdataList.isEmpty()) return Collections.emptyMap();
+        Map complainantDetails = formdataList.stream()
+                .filter(d -> {
+                    Map<?, ?> data = jsonUtil.getNestedValue(d, List.of("data"), Map.class);
+                    Map<?, ?> individualDetails = jsonUtil.getNestedValue(data, List.of("complainantVerification", "individualDetails"), Map.class);
+                    return individualDetails != null && complainantIndividualId.equals(individualDetails.get("individualId"));
+                })
+                .findFirst()
+                .map(d -> jsonUtil.getNestedValue(d, List.of("data"), Map.class))
+                .orElse(Collections.emptyMap());
+
+        return complainantDetails;
+
     }
 
     /**
      * Extracts complainant address fields from individualDetail JsonObject structure, returns as Map<String, Object>.
      * Mirrors the JS logic for complainantAddress.
      */
-    public Map<String, Object> getComplainantAddressFromIndividualDetail(Individual individual) {
+    public Map<String, Object> getComplainantAddressFromComplainantDetails(Map<String, Object> complainantDetails) {
+        if (complainantDetails == null) return Collections.emptyMap();
 
-        if (individual == null) return Collections.emptyMap();
-        List<org.egov.common.models.individual.Address> addresses = individual.getAddress();
-        org.egov.common.models.individual.Address address = addresses != null && !addresses.isEmpty() ? addresses.get(0) : null;
-
-        if (address == null) return Collections.emptyMap();
-
-        String pincode = address.getPincode();
-        String addressLine2 = address.getAddressLine2();
-        String city = address.getCity();
-        String addressLine1 = address.getAddressLine1();
-        Boundary locality = address.getLocality();
-        Double longitude = address.getLongitude();
-        Double latitude = address.getLatitude();
+        String district = jsonUtil.getNestedValue(complainantDetails, List.of("addressDetails", "district"), String.class);
+        String city = jsonUtil.getNestedValue(complainantDetails, List.of("addressDetails", "city"), String.class);
+        String pincode = jsonUtil.getNestedValue(complainantDetails, List.of("addressDetails", "pincode"), String.class);
+        String latitude = jsonUtil.getNestedValue(complainantDetails, List.of("addressDetails", "pincode", "latitude"), String.class);
+        String longitude = jsonUtil.getNestedValue(complainantDetails, List.of("addressDetails", "pincode", "longitude"), String.class);
+        String locality = jsonUtil.getNestedValue(complainantDetails, List.of("addressDetails", "locality"), String.class);
+        String state = jsonUtil.getNestedValue(complainantDetails, List.of("addressDetails", "state"), String.class);
 
         Map<String, Object> coordinate = new HashMap<>();
         coordinate.put("longitude", longitude);
@@ -705,9 +700,9 @@ public class TaskUtil {
 
         Map<String, Object> complainantAddress = new HashMap<>();
         complainantAddress.put("pincode", pincode);
-        complainantAddress.put("district", addressLine2);
+        complainantAddress.put("district", district);
         complainantAddress.put("city", city);
-        complainantAddress.put("state", addressLine1);
+        complainantAddress.put("state", state);
         complainantAddress.put("coordinate", coordinate);
         complainantAddress.put("locality", locality);
         return complainantAddress;
