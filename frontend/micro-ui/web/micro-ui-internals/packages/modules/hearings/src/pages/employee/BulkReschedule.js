@@ -96,6 +96,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const [notificationFileStoreId, setNotificationFileStoreId] = useState(bulkNotificationFileStoreId);
   const [notificationReviewBlob, setNotificationReviewBlob] = useState({});
   const [notificationReviewFilename, setNotificationReviewFilename] = useState("");
+  const [issignLoader, setSignLoader] = useState(false);
 
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
 
@@ -580,6 +581,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
   const onUploadSubmit = async () => {
     if (signFormData?.uploadSignature?.Signature?.length > 0) {
       try {
+        setSignLoader(true);
         const uploadedFileId = await uploadDocuments(signFormData?.uploadSignature?.Signature, tenantId);
         const newFileStoreId = uploadedFileId?.[0]?.fileStoreId;
         setSignedDocumentUploadID(newFileStoreId);
@@ -588,9 +590,11 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);
+        setSignLoader(false);
         setSignFormData({});
         setIsSigned(false);
       }
+      setSignLoader(false);
     }
   };
 
@@ -724,6 +728,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
           config={uploadModalConfig}
           formData={signFormData}
           onSubmit={onUploadSubmit}
+          isDisabled={issignLoader}
         />
       )}
 
