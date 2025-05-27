@@ -17,11 +17,8 @@ import org.pucar.dristi.config.MdmsDataConfig;
 import org.pucar.dristi.kafka.consumer.EventConsumerConfig;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.service.SmsNotificationService;
-import org.pucar.dristi.web.models.CaseCriteria;
-import org.pucar.dristi.web.models.CaseSearchRequest;
-import org.pucar.dristi.web.models.PendingTask;
-import org.pucar.dristi.web.models.PendingTaskType;
-import org.pucar.dristi.web.models.SmsTemplateData;
+import org.pucar.dristi.service.UserService;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -71,9 +68,11 @@ public class IndexerUtils {
 
     private final Clock clock;
 
+    private final UserService userService;
+
 
     @Autowired
-    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, Clock clock) {
+    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, Clock clock, UserService userService) {
         this.restTemplate = restTemplate;
         this.config = config;
         this.caseUtil = caseUtil;
@@ -87,6 +86,7 @@ public class IndexerUtils {
         this.individualService = individualService;
         this.advocateUtil = advocateUtil;
         this.clock = clock;
+        this.userService = userService;
     }
 
     public static boolean isNullOrEmpty(String str) {
@@ -167,6 +167,7 @@ public class IndexerUtils {
         String caseTitle = pendingTask.getCaseTitle();
         String additionalDetails = "{}";
         String screenType = pendingTask.getScreenType();
+        String courtId = getCourtId(filingNumber, createInternalRequestInfo());
         try {
             additionalDetails = mapper.writeValueAsString(pendingTask.getAdditionalDetails());
         } catch (Exception e) {
@@ -177,8 +178,16 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId
         );
+    }
+
+    private RequestInfo createInternalRequestInfo() {
+        User userInfo = new User();
+        userInfo.setUuid(userService.internalMicroserviceRoleUuid);
+        userInfo.setRoles(userService.internalMicroserviceRoles);
+        userInfo.setTenantId(config.getEgovStateTenantId());
+        return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
     }
 
     public String buildPayload(String jsonItem, JSONObject requestInfo) throws JsonProcessingException {
@@ -217,6 +226,8 @@ public class IndexerUtils {
         isCompleted = isNullOrEmpty(name);
         isGeneric = details.containsKey("isGeneric");
         String actors = details.get("actors");
+        RequestInfo requestInfo1 = mapper.readValue(requestInfo.toString(), RequestInfo.class);
+        String courtId = getCourtId(filingNumber, requestInfo1);
 
         if (isGeneric) {
             log.info("creating pending task from generic task");
@@ -289,8 +300,20 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId
         );
+    }
+
+    private String getCourtId(String filingNumber, RequestInfo request) {
+        try {
+            org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(request, filingNumber);
+            JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+            return caseDetails.get(0).path("courtId").textValue();
+        } catch (Exception e) {
+            log.error("Error occurred while getting court id: {}", e.toString());
+        }
+        return null;
+
     }
 
 	public static List<String> extractIndividualIds(JsonNode rootNode) {
@@ -396,27 +419,8 @@ public class IndexerUtils {
         request.put("RequestInfo", requestInfo);
         Map<String, String> entityDetails = processEntityByType(entityType, request, referenceId, object);
 
-        // Check if entityDetails contains applicationType and update name accordingly
-        if (entityDetails.containsKey("applicationType") &&
-                entityDetails.get("applicationType") != null &&
-                matchedPendingTaskType != null) {
-
-            String applicationType = entityDetails.get("applicationType");
-
-            // Check if the pending task type has referenceEntityTypeNameMapping
-            List<Map<String, Object>> referenceEntityTypeMappings =
-                    matchedPendingTaskType.getReferenceEntityTypeNameMapping();
-
-            if (!referenceEntityTypeMappings.isEmpty() && referenceEntityTypeMappings != null) {
-                for (Map<String, Object> mapping : referenceEntityTypeMappings) {
-                    String referenceEntityType = (String) mapping.get("referenceEntityType");
-                    if (applicationType.equalsIgnoreCase(referenceEntityType)) {
-                        name = (String) mapping.get("pendingTaskName");
-                        break;
-                    }
-                }
-            }
-        }
+        // Update name based on referenceEntityType and referenceEntityTypeNameMapping
+        name = getUpdatedTaskName(entityDetails, matchedPendingTaskType, name);
 
         // Add additional details to the caseDetails map
         caseDetails.putAll(entityDetails);
@@ -574,7 +578,7 @@ public class IndexerUtils {
         caseDetails.put("filingNumber", filingNumber);
         caseDetails.put("caseId", caseId);
         caseDetails.put("caseTitle", caseTitle);
-        caseDetails.put("applicationType", applicationType);
+        caseDetails.put("referenceEntityType", applicationType);
 
         return caseDetails;
     }
@@ -647,6 +651,35 @@ public class IndexerUtils {
             stateSla += currentTime;
         }
         return stateSla;
+    }
+
+    private String getUpdatedTaskName(Map<String, String> entityDetails,
+                                      PendingTaskType matchedPendingTaskType,
+                                      String currentName) {
+
+        // Check conditions in proper order: empty -> null -> containsKey -> matchedPendingTaskType
+        if (entityDetails.isEmpty() ||
+                entityDetails.get("referenceEntityType") == null ||
+                !entityDetails.containsKey("referenceEntityType") ||
+                matchedPendingTaskType == null) {
+            return currentName;
+        }
+
+        String referenceEntityType = entityDetails.get("referenceEntityType");
+
+        // Check if the pending task type has referenceEntityTypeNameMapping
+        List<ReferenceEntityTypeNameMapping> referenceEntityTypeMappings =
+                matchedPendingTaskType.getReferenceEntityTypeNameMapping();
+
+        if (referenceEntityTypeMappings != null) {
+            for (ReferenceEntityTypeNameMapping mapping : referenceEntityTypeMappings) {
+                if (referenceEntityType.equalsIgnoreCase(mapping.getReferenceEntityType())) {
+                    return mapping.getPendingTaskName();
+                }
+            }
+        }
+
+        return currentName;
     }
 
 }

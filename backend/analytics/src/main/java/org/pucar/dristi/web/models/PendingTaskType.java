@@ -53,10 +53,10 @@ public class PendingTaskType {
     @JsonProperty("screenType")
     private String screenType = null;
 
-    @JsonProperty("referenceEntityTypeNameMapping")
-    private List<Map<String, Object>> referenceEntityTypeNameMapping = null;
-
     @JsonProperty("closerAction")
     @Valid
     private List<String> closerAction = new ArrayList<>();
+
+    @JsonProperty("referenceEntityTypeNameMapping")
+    private List<ReferenceEntityTypeNameMapping> referenceEntityTypeNameMapping = null;
 }
