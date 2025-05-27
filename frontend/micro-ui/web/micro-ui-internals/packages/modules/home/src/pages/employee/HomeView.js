@@ -262,13 +262,12 @@ const HomeView = () => {
 
   const { data: citizenCaseData, isLoading: isCitizenCaseDataLoading } = useSearchCaseListService(
     {
-      criteria: [
-        {
-          ...(citizenId ? (advocateId ? { advocateId } : { litigantId: individualId }) : {}),
-          ...(courtId && userInfoType === "employee" && !isScrutiny && { courtId }),
-          pagination: { offSet: 0, limit: 1 },
-        },
-      ],
+      criteria: {
+        ...(citizenId ? (advocateId ? { advocateId } : { litigantId: individualId }) : {}),
+        ...(courtId && userInfoType === "employee" && !isScrutiny && { courtId }),
+        pagination: { offSet: 0, limit: 1 },
+        tenantId,
+      },
       tenantId,
     },
     {},
