@@ -11,7 +11,7 @@ import { Button, Loader } from "@egovernments/digit-ui-react-components";
 import BulkReschedule from "./BulkReschedule";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-const MonthlyCalendar = () => {
+const MonthlyCalendar = ({ hideRight }) => {
   const history = useHistory();
   const { t } = useTranslation();
   const calendarRef = useRef(null);
@@ -255,13 +255,13 @@ const MonthlyCalendar = () => {
   // }
   return (
     <React.Fragment>
-      {Digit.UserService.getType() === "employee" && (
+      {Digit.UserService.getType() === "employee" && !hideRight && (
         <div style={{ display: "flex", justifyContent: "end", paddingRight: "24px", marginTop: "5px" }}>
           <Button label={t("BULK_RESCHEDULE")} onButtonClick={onSubmit}></Button>
         </div>
       )}
       <div style={{ display: "flex" }}>
-        <div style={{ width: "70%" }}>
+        <div style={{ width: hideRight ? "100%" : "70%" }}>
           <div>
             <FullCalendar
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -271,7 +271,7 @@ const MonthlyCalendar = () => {
                 center: "title",
                 end: "next,dayGridMonth,timeGridWeek,timeGridDay",
               }}
-              height={"85vh"}
+              height={hideRight ? "75vh" : "85vh"}
               events={Calendar_events}
               eventContent={(arg) => {
                 return (
@@ -340,17 +340,19 @@ const MonthlyCalendar = () => {
             )}
           </div>
         </div>
-        <div className="right-side">
-          <TasksComponent
-            taskType={taskType}
-            setTaskType={setTaskType}
-            caseType={caseType}
-            setCaseType={setCaseType}
-            isLitigant={Boolean(userInfoType === "citizen")}
-            uuid={userInfo?.uuid}
-            userInfoType={userInfoType}
-          />
-        </div>
+        {hideRight ? null : (
+          <div className="right-side">
+            <TasksComponent
+              taskType={taskType}
+              setTaskType={setTaskType}
+              caseType={caseType}
+              setCaseType={setCaseType}
+              isLitigant={Boolean(userInfoType === "citizen")}
+              uuid={userInfo?.uuid}
+              userInfoType={userInfoType}
+            />
+          </div>
+        )}
       </div>
       <BulkReschedule stepper={stepper} setStepper={setStepper} selectedSlot={[]} />
     </React.Fragment>

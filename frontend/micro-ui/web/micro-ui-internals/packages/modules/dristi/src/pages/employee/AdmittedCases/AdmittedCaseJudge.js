@@ -1,10 +1,10 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
-import { ActionBar, SubmitBar, Button, Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg } from "@egovernments/digit-ui-react-components";
+import { ActionBar, SubmitBar, Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
-import { CustomThreeDots } from "../../../icons/svgIndex";
+import { CustomThreeDots, RightArrow } from "../../../icons/svgIndex";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import ViewCaseFile from "../scrutiny/ViewCaseFile";
 import { TabSearchconfig } from "./AdmittedCasesConfig";
@@ -44,6 +44,8 @@ import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import NoticeAccordion from "../../../components/NoticeAccordion";
 import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
 import Breadcrumb from "../../../components/BreadCrumb";
+import Button from "../../../components/Button";
+import MonthlyCalendar from "../../../../../hearings/src/pages/employee/CalendarView";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -168,6 +170,7 @@ const AdmittedCaseJudge = () => {
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [show, setShow] = useState(false);
   const [openAdmitCaseModal, setOpenAdmitCaseModal] = useState(true);
   const [documentSubmission, setDocumentSubmission] = useState();
@@ -211,6 +214,7 @@ const AdmittedCaseJudge = () => {
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
   const isCitizen = userRoles.includes("CITIZEN");
+  const isJudge = userRoles.includes("JUDGE_ROLE");
   const isCourtStaff = userRoles.includes("COURT_ROOM_MANAGER");
   const OrderWorkflowAction = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {}, []);
   const ordersService = useMemo(() => Digit.ComponentRegistryService.getComponent("OrdersService") || {}, []);
@@ -2227,6 +2231,48 @@ const AdmittedCaseJudge = () => {
     history.push(`/${window?.contextPath}/citizen/submissions/submit-document?filingNumber=${filingNumber}`);
   }, [filingNumber, history]);
 
+  const handleDownloadPDF = useCallback(async () => {
+    const caseId = caseDetails?.id;
+    const caseStatus = caseDetails?.status;
+
+    if (["PENDING_PAYMENT", "UNDER_SCRUTINY", "PENDING_REGISTRATION"].includes(caseStatus)) {
+      const fileStoreId =
+        caseDetails?.documents?.find((doc) => doc?.key === "case.complaint.signed")?.fileStore || caseDetails?.additionalDetails?.signedCaseDocument;
+      if (fileStoreId) {
+        downloadPdf(tenantId, fileStoreId);
+        return;
+      } else {
+        console.error("No fileStoreId available for download.");
+        return;
+      }
+    }
+
+    try {
+      setDownloadCasePdfLoading(true);
+
+      if (!caseId) {
+        throw new Error("Case ID is not available.");
+      }
+
+      const response = await DRISTIService.downloadCaseBundle({ tenantId, caseId }, { tenantId });
+      const responseFileStoreId = response?.fileStoreId?.toLowerCase();
+
+      if (!responseFileStoreId || ["null", "undefined"].includes(responseFileStoreId)) {
+        throw new Error("Invalid fileStoreId received in the response.");
+      }
+
+      downloadPdf(tenantId, responseFileStoreId);
+    } catch (error) {
+      console.error("Error downloading PDF: ", error.message || error);
+      showToast({
+        isError: true,
+        message: "UNABLE_CASE_PDF",
+      });
+    } finally {
+      setDownloadCasePdfLoading(false);
+    }
+  }, [caseDetails, downloadPdf, tenantId, showToast]);
+
   const handleCitizenAction = useCallback(
     (option) => {
       if (option.value === "RAISE_APPLICATION") {
@@ -2236,6 +2282,29 @@ const AdmittedCaseJudge = () => {
       }
     },
     [filingNumber, history]
+  );
+
+  const handleEmployeeAction = useCallback(
+    (option) => {
+      if (option.value === "DOWNLOAD_CASE_FILE") {
+        handleDownloadPDF();
+      } else if (option.value === "NEXT_HEARING") {
+        console.log("NEXT_HEARING");
+        // openHearingModule();
+      } else if (option.value === "VIEW_CALENDAR") {
+        console.log("VIEW_CALENDAR");
+        setShowCalendarModal(true);
+      } else if (option.value === "GENERATE_ORDER") {
+        console.log("GENERATE_ORDER");
+      } else if (option.value === "END_HEARING") {
+        console.log("END_HEARING");
+      } else if (option.value === "TAKE_WITNESS_DEPOSITION") {
+        console.log("TAKE_WITNESS_DEPOSITION");
+      } else if (option.value === "SUBMIT_DOCUMENTS") {
+        console.log("SUBMIT_DOCUMENTS");
+      }
+    },
+    [handleDownloadPDF]
   );
 
   const handleCourtAction = useCallback(() => {
@@ -2501,6 +2570,55 @@ const AdmittedCaseJudge = () => {
     []
   );
 
+  const employeeActionOptions = useMemo(() => {
+    if (isJudge)
+      return [
+        {
+          value: "END_HEARING",
+          label: "END_HEARING",
+        },
+        {
+          value: "TAKE_WITNESS_DEPOSITION",
+          label: "TAKE_WITNESS_DEPOSITION",
+        },
+        {
+          value: "GENERATE_ORDER",
+          label: "GENERATE_ORDER",
+        },
+        {
+          value: "SUBMIT_DOCUMENTS",
+          label: "SUBMIT_DOCUMENTS",
+        },
+        {
+          value: "DOWNLOAD_CASE_FILE",
+          label: "DOWNLOAD_CASE_FILE",
+        },
+      ];
+    else if (isBenchClerk)
+      return [
+        {
+          value: "END_HEARING",
+          label: "END_HEARING",
+        },
+        {
+          value: "TAKE_WITNESS_DEPOSITION",
+          label: "TAKE_WITNESS_DEPOSITION",
+        },
+        {
+          value: "GENERATE_ORDER",
+          label: "GENERATE_ORDER",
+        },
+        {
+          value: "SUBMIT_DOCUMENTS",
+          label: "SUBMIT_DOCUMENTS",
+        },
+        {
+          value: "DOWNLOAD_CASE_FILE",
+          label: "DOWNLOAD_CASE_FILE",
+        },
+      ];
+  }, [isJudge, isBenchClerk]);
+
   const courtActionOptions = useMemo(
     () => [
       {
@@ -2605,48 +2723,6 @@ const AdmittedCaseJudge = () => {
     },
     [history, path, filingNumber, caseId, config]
   );
-
-  const handleDownloadPDF = useCallback(async () => {
-    const caseId = caseDetails?.id;
-    const caseStatus = caseDetails?.status;
-
-    if (["PENDING_PAYMENT", "UNDER_SCRUTINY", "PENDING_REGISTRATION"].includes(caseStatus)) {
-      const fileStoreId =
-        caseDetails?.documents?.find((doc) => doc?.key === "case.complaint.signed")?.fileStore || caseDetails?.additionalDetails?.signedCaseDocument;
-      if (fileStoreId) {
-        downloadPdf(tenantId, fileStoreId);
-        return;
-      } else {
-        console.error("No fileStoreId available for download.");
-        return;
-      }
-    }
-
-    try {
-      setDownloadCasePdfLoading(true);
-
-      if (!caseId) {
-        throw new Error("Case ID is not available.");
-      }
-
-      const response = await DRISTIService.downloadCaseBundle({ tenantId, caseId }, { tenantId });
-      const responseFileStoreId = response?.fileStoreId?.toLowerCase();
-
-      if (!responseFileStoreId || ["null", "undefined"].includes(responseFileStoreId)) {
-        throw new Error("Invalid fileStoreId received in the response.");
-      }
-
-      downloadPdf(tenantId, responseFileStoreId);
-    } catch (error) {
-      console.error("Error downloading PDF: ", error.message || error);
-      showToast({
-        isError: true,
-        message: "UNABLE_CASE_PDF",
-      });
-    } finally {
-      setDownloadCasePdfLoading(false);
-    }
-  }, [caseDetails, downloadPdf, tenantId, showToast]);
 
   const inboxComposer = useMemo(() => {
     if (
@@ -2807,15 +2883,20 @@ const AdmittedCaseJudge = () => {
                 <div className="evidence-header-wrapper">
                   <div className="evidence-hearing-header" style={{ background: "transparent" }}>
                     <div className="evidence-actions" style={{ ...(isTabDisabled ? { pointerEvents: "none" } : {}) }}>
-                      <ActionButton
+                      <Button
+                        variation={"outlined"}
+                        label={t("CS_CASE_VIEW_CALENDAR")}
+                        onButtonClick={() => handleEmployeeAction({ value: "VIEW_CALENDAR" })}
+                        style={{ boxShadow: "none" }}
+                      ></Button>
+                      <Button
                         variation={"primary"}
-                        label={t("TAKE_ACTION_LABEL")}
-                        icon={showMenu ? "ExpandLess" : "ExpandMore"}
+                        label={t("CS_CASE_NEXT_HEARING")}
+                        children={<RightArrow />}
                         isSuffix={true}
-                        onClick={handleTakeAction}
-                        className={"take-action-btn-class"}
-                      ></ActionButton>
-                      {showMenu && <Menu options={takeActionOptions} onSelect={(option) => handleSelect(option)}></Menu>}
+                        onButtonClick={() => handleEmployeeAction({ value: "NEXT_HEARING" })}
+                        style={{ boxShadow: "none" }}
+                      ></Button>
                     </div>
                   </div>
                 </div>
@@ -2852,7 +2933,15 @@ const AdmittedCaseJudge = () => {
                       }}
                     >
                       <CustomThreeDots />
-                      {showOtherMenu && <Menu options={[t("DOWNLOAD_CASE_FILE")]} onSelect={handleDownloadPDF}></Menu>}
+                      {showOtherMenu && (
+                        <Menu
+                          t={t}
+                          localeKeyPrefix={"CS_CASE"}
+                          options={employeeActionOptions}
+                          optionKey={"label"}
+                          onSelect={handleEmployeeAction}
+                        ></Menu>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -3196,6 +3285,27 @@ const AdmittedCaseJudge = () => {
           isEvidence={documentSubmission?.[0]?.artifactList?.isEvidence}
           isFromActions={true}
         />
+      )}
+      {showCalendarModal && (
+        <Modal
+          headerBarMain={<Heading label={t("CS_CASE_VIEW_CALENDAR")} />}
+          headerBarEnd={
+            <CloseBtn
+              onClick={() => {
+                setShowCalendarModal(false);
+              }}
+            />
+          }
+          actionSaveLabel={t("CS_CLOSE")}
+          actionSaveOnSubmit={() => {
+            setShowCalendarModal(false);
+          }}
+          popupStyles={{ width: "75vw" }}
+        >
+          <div style={{ margin: "16px 0px" }}>
+            <MonthlyCalendar hideRight={true} />
+          </div>
+        </Modal>
       )}
     </div>
   );
