@@ -1845,6 +1845,12 @@
         padding-bottom: 20px !important;
       }
     }
+    .view-image-modal {
+      .card {
+        max-width: none;
+        height: calc(100vh - 154px);
+      }
+    }
   }
 }
 

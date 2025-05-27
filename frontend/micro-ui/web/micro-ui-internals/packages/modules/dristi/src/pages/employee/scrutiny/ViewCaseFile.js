@@ -17,8 +17,9 @@ import Button from "../../../components/Button";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
-const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
-const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "COURT_ID";
+import { use } from "react";
+const judgeId = localStorage.getItem("judgeId");
+const courtId = localStorage.getItem("courtId");
 const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
 
 const downloadButtonStyle = {
@@ -71,7 +72,9 @@ const delayCondonationTextStyle = {
 
 function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const history = useHistory();
-  const roles = Digit.UserService.getUser()?.info?.roles;
+  const userInfo = Digit?.UserService?.getUser()?.info;
+  const roles = userInfo?.roles;
+  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -135,6 +138,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
       criteria: [
         {
           caseId: caseId,
+          ...(inViewCase && userInfoType === "employee" && courtId && { courtId }),
         },
       ],
       tenantId,

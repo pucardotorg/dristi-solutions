@@ -89,4 +89,7 @@ public class PendingTask {
     @JsonProperty("screenType")
     private String screenType = null;
 
+    @JsonProperty("courtId")
+    private String courtId = null;
+
 }

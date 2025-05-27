@@ -27,6 +27,7 @@ const CaseOverview = ({
 }) => {
   const { t } = useTranslation();
   const filingNumber = caseData.filingNumber;
+  const caseCourtId = useMemo(() => caseData?.case?.courtId, [caseData]);
   const history = useHistory();
   const cnrNumber = caseData.cnrNumber;
   const caseId = caseData.caseId;
@@ -80,6 +81,7 @@ const CaseOverview = ({
       criteria: {
         filingNumber: filingNumber,
         tenantId: tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
@@ -92,6 +94,7 @@ const CaseOverview = ({
       criteria: {
         filingNumber: filingNumber,
         tenantId: tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},

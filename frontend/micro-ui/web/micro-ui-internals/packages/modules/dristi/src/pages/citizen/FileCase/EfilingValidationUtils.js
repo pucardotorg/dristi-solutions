@@ -183,7 +183,10 @@ export const showToastForComplainant = ({ formData, setValue, selected, setSucce
       setValue("addressDetails-select", addressDetSelect);
     }
     if (!!currAddressDet && !!currAddressDetSelect) {
-      setValue("currentAddressDetails", { ...currAddressDet, isCurrAddrSame: formDataCopy?.complainantVerification?.individualDetails?.currentAddressDetails?.isCurrAddrSame });
+      setValue("currentAddressDetails", {
+        ...currAddressDet,
+        isCurrAddrSame: formDataCopy?.complainantVerification?.individualDetails?.currentAddressDetails?.isCurrAddrSame,
+      });
       setValue("currentAddressDetails-select", currAddressDetSelect);
     }
     if (!!poaAddressDet && !!poaAddressDetSelect) {
@@ -1776,13 +1779,16 @@ export const updateCaseDetails = async ({
                           latitude: currentAddress?.latitude || "",
                         },
                         locality: address1,
-                        isCurrAddrSame: addressArray?.length > 1 ? {
-                          code: "NO",
-                          name: "NO",
-                        } : {
-                          code: "YES",
-                          name: "YES",
-                        },
+                        isCurrAddrSame:
+                          addressArray?.length > 1
+                            ? {
+                                code: "NO",
+                                name: "NO",
+                              }
+                            : {
+                                code: "YES",
+                                name: "YES",
+                              },
                       },
                       addressDetails: {
                         pincode: permanentAddress?.pincode || "",
@@ -1805,13 +1811,16 @@ export const updateCaseDetails = async ({
                           latitude: currentAddress?.latitude || "",
                         },
                         locality: address1,
-                        isCurrAddrSame: addressArray?.length > 1 ? {
-                          code: "NO",
-                          name: "NO",
-                        } : {
-                          code: "YES",
-                          name: "YES",
-                        },
+                        isCurrAddrSame:
+                          addressArray?.length > 1
+                            ? {
+                                code: "NO",
+                                name: "NO",
+                              }
+                            : {
+                                code: "YES",
+                                name: "YES",
+                              },
                       },
                     },
                     userDetails: null,
@@ -1881,13 +1890,16 @@ export const updateCaseDetails = async ({
                           latitude: currentAddress?.latitude || "",
                         },
                         locality: address1,
-                        isCurrAddrSame: addressArray?.length > 1 ? {
-                          code: "NO",
-                          name: "NO",
-                        } : {
-                          code: "YES",
-                          name: "YES",
-                        },
+                        isCurrAddrSame:
+                          addressArray?.length > 1
+                            ? {
+                                code: "NO",
+                                name: "NO",
+                              }
+                            : {
+                                code: "YES",
+                                name: "YES",
+                              },
                       },
                       addressDetails: {
                         pincode: permanentAddress?.pincode || "",
@@ -1910,13 +1922,16 @@ export const updateCaseDetails = async ({
                           latitude: currentAddress?.latitude || "",
                         },
                         locality: address1,
-                        isCurrAddrSame: addressArray?.length > 1 ? {
-                          code: "NO",
-                          name: "NO",
-                        } : {
-                          code: "YES",
-                          name: "YES",
-                        },
+                        isCurrAddrSame:
+                          addressArray?.length > 1
+                            ? {
+                                code: "NO",
+                                name: "NO",
+                              }
+                            : {
+                                code: "YES",
+                                name: "YES",
+                              },
                       },
                     },
                     userDetails: null,
@@ -2040,12 +2055,7 @@ export const updateCaseDetails = async ({
                         ],
                       },
                     });
-                  const Individual = await createIndividualUser({
-                    data: data?.data,
-                    documentData: documentData,
-                    tenantId,
-                    isComplainant: false,
-                  });
+                  const Individual = await createIndividualUser({ data: data?.data, documentData, tenantId, isComplainant: false });
                   const addressLine1 = Individual?.Individual?.address[0]?.addressLine1 || "Telangana";
                   const addressLine2 = Individual?.Individual?.address[0]?.addressLine2 || "Rangareddy";
                   const buildingName = Individual?.Individual?.address[0]?.buildingName || "";

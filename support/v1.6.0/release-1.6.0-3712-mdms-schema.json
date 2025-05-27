@@ -5,7 +5,7 @@
     "moduleName": "e-filling",
     "mdmsPayload": [
       {
-        "id": "9a7acba6-2d45-40c3-a5de-e2576b17e10e",
+        "id": "2ea24f2c-68cc-4cb3-8ec7-8978da8ff83e",
         "tenantId": "kl",
         "code": "case.e-filling",
         "description": null,
@@ -14,9 +14,7 @@
           "$schema": "http://json-schema.org/draft-07/schema#",
           "required": [
             "id",
-            "legalBasicFund",
             "courtFee",
-            "vakalathnamaFee",
             "advocateClerkWelfareFund",
             "noOfAdvocateFees"
           ],
@@ -36,16 +34,13 @@
             "legalBasicFund": {
               "type": "number"
             },
-            "vakalathnamaFee": {
-              "type": "integer"
-            },
             "noOfAdvocateFees": {
               "type": "object"
             },
-            "advocateWelfareFund": {
+            "defaultComplaintFee": {
               "type": "integer"
             },
-            "defaultComplaintFee": {
+            "advocateWelfareFund": {
               "type": "integer"
             },
             "delayCondonationFee": {
@@ -64,8 +59,8 @@
         "auditDetails": {
           "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
           "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
-          "createdTime": 1745066877686,
-          "lastModifiedTime": 1745066877686
+          "createdTime": 1745069797079,
+          "lastModifiedTime": 1745069797079
         }
       }
     ]

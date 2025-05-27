@@ -18,7 +18,7 @@ import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/uti
 import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/pageComponents/OrderIssueBulkSuccesModal";
 import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import useSearchCaseService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseService";
+import useSearchCaseListService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseListService";
 
 const defaultSearchValues = {
   caseSearchText: "",
@@ -57,15 +57,17 @@ const HomeView = () => {
     show: false,
     bulkSignOrderListLength: null,
   });
-  const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles, [Digit.UserService]);
+  const userInfo = useMemo(() => Digit?.UserService?.getUser()?.info, [Digit.UserService]);
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
   const isNyayMitra = roles.some((role) => role.code === "NYAY_MITRA_ROLE");
   const isClerk = roles.some((role) => role.code === "BENCH_CLERK");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
-  const userInfo = Digit?.UserService?.getUser()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [toastMsg, setToastMsg] = useState(null);
+  const courtId = localStorage.getItem("courtId");
 
   const [config, setConfig] = useState(null);
   const { data: individualData, isLoading, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(
@@ -125,6 +127,7 @@ const HomeView = () => {
           entityType: "Order",
           tenantId: tenantId,
           status: OrderWorkflowState.PENDING_BULK_E_SIGN,
+          ...(courtId && { courtId }),
         },
       },
     },
@@ -166,16 +169,18 @@ const HomeView = () => {
             searchKey: "filingNumber",
             defaultFields: true,
             advocateId: advocateId,
+            ...(courtId && { courtId }),
           }
         : individualId
         ? {
             searchKey: "filingNumber",
             defaultFields: true,
             litigantId: individualId,
+            ...(courtId && { courtId }),
           }
-        : {}),
+        : { ...(courtId && { courtId }) }),
     };
-  }, [advocateId, individualId]);
+  }, [advocateId, individualId, courtId]);
 
   useEffect(() => {
     setDefaultValues(defaultSearchValues);
@@ -224,24 +229,19 @@ const HomeView = () => {
     async function (tabConfig) {
       const updatedTabData = await Promise.all(
         tabConfig?.TabSearchConfig?.map(async (configItem, index) => {
-          let totalCount = null;
-          try {
-            const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {
-              tenantId,
-              criteria: {
-                ...configItem?.apiDetails?.requestBody?.criteria,
-                ...defaultSearchValues,
-                ...additionalDetails,
-                ...(configItem?.apiDetails?.requestBody?.criteria?.outcome && {
-                  outcome: outcomeTypeData,
-                }),
-                pagination: { offSet: 0, limit: 1 },
-              },
-            });
-            totalCount = response?.pagination?.totalCount;
-          } catch (error) {
-            console.error("error in fetching count.", error);
-          }
+          const response = await HomeService.customApiService(configItem?.apiDetails?.serviceName, {
+            tenantId,
+            criteria: {
+              ...configItem?.apiDetails?.requestBody?.criteria,
+              ...defaultSearchValues,
+              ...additionalDetails,
+              ...(configItem?.apiDetails?.requestBody?.criteria?.outcome && {
+                outcome: outcomeTypeData,
+              }),
+              pagination: { offSet: 0, limit: 1 },
+            },
+          });
+          const totalCount = response?.pagination?.totalCount;
           return {
             key: index,
             label: totalCount ? `${t(configItem.label)} (${totalCount})` : `${t(configItem.label)} (0)`,
@@ -260,12 +260,12 @@ const HomeView = () => {
     } else return null;
   }, [userInfoType, advocateId, individualId, isSearchLoading]);
 
-  const { data: citizenCaseData, isLoading: isCitizenCaseDataLoading } = useSearchCaseService(
+  const { data: citizenCaseData, isLoading: isCitizenCaseDataLoading } = useSearchCaseListService(
     {
       criteria: [
         {
           ...(citizenId ? (advocateId ? { advocateId } : { litigantId: individualId }) : {}),
-          courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+          ...(courtId && userInfoType === "employee" && !isScrutiny && { courtId }),
           pagination: { offSet: 0, limit: 1 },
         },
       ],
@@ -281,7 +281,7 @@ const HomeView = () => {
 
   // This is to check if the citizen has been associated with a case yet.
   const isCitizenReferredInAnyCase = useMemo(() => {
-    return citizenCaseData?.criteria?.[0]?.responseList?.[0];
+    return citizenCaseData?.caseList?.[0];
   }, [citizenCaseData]);
 
   useEffect(() => {
@@ -343,7 +343,6 @@ const HomeView = () => {
   };
 
   const handleScrutinyAndLock = async (filingNumber) => {
-    const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
     if (isScrutiny) {
       try {
         const response = await DRISTIService.getCaseLockStatus({}, { uniqueId: filingNumber, tenantId: tenantId });

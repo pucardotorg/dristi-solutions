@@ -1,9 +1,9 @@
 import { Request } from "@egovernments/digit-ui-libraries";
 import { Urls } from "../hooks";
 
-const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+const judgeId = localStorage.getItem("judgeId");
 const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
-const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+const courtId = localStorage.getItem("courtId");
 const presidedBy = {
   judgeID: [judgeId],
   benchID: benchId,
@@ -104,12 +104,19 @@ export const DRISTIService = {
     });
   },
   searchCaseService: (data, params) =>
-    // Add courtId to criteria if it exists
     Request({
       url: Urls.dristi.caseSearch,
       useCache: false,
       userService: false,
       data: { ...data, criteria: [...data?.criteria] },
+      params,
+    }),
+  caseListSearchService: (data, params) =>
+    Request({
+      url: Urls.dristi.caseListSearch,
+      useCache: false,
+      userService: false,
+      data,
       params,
     }),
   caseDetailSearchService: (data, params) =>
@@ -153,12 +160,11 @@ export const DRISTIService = {
       params,
     }),
   searchEvidence: (data) => {
-    // Add courtId to criteria if it exists
     return Request({
       url: Urls.dristi.evidenceSearch,
       useCache: false,
       userService: false,
-      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52" } },
+      data,
     });
   },
   searchHearings: (data, params) => {
@@ -166,7 +172,7 @@ export const DRISTIService = {
       url: Urls.dristi.searchHearings,
       useCache: false,
       userService: false,
-      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52" } },
+      data,
       params,
     });
   },
@@ -197,22 +203,20 @@ export const DRISTIService = {
     });
   },
   searchOrders: (data, params) => {
-    // Add courtId to criteria if it exists
     return Request({
       url: Urls.dristi.ordersSearch,
       useCache: false,
       userService: false,
-      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52" } },
+      data,
       params,
     });
   },
   searchSubmissions: (data, params) => {
-    // Add courtId to criteria if it exists
     return Request({
       url: Urls.dristi.submissionsSearch,
       useCache: false,
       userService: false,
-      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52" } },
+      data,
       params,
     });
   },

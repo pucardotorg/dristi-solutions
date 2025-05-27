@@ -36,12 +36,12 @@ public class Application {
     @NotNull
     private String tenantId = null;
 
-    @JsonProperty("courtId")
-    private String courtId = null;
-
     @JsonProperty("caseId")
     @NotNull
     private String caseId = null;
+
+    @JsonProperty("courtId")
+    private String courtId = null;
 
     @JsonProperty("filingNumber")
     private String filingNumber = null;
