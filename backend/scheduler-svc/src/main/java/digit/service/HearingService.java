@@ -6,6 +6,7 @@ import digit.config.ServiceConstants;
 import digit.enrichment.HearingEnrichment;
 import digit.kafka.producer.Producer;
 import digit.repository.HearingRepository;
+import digit.util.DateUtil;
 import digit.util.HearingUtil;
 import digit.util.MasterDataUtil;
 import digit.web.models.*;
@@ -15,9 +16,13 @@ import digit.web.models.hearing.HearingSearchCriteria;
 import digit.web.models.hearing.HearingUpdateBulkRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -38,9 +43,10 @@ public class HearingService {
     private final ServiceConstants serviceConstants;
     private final MasterDataUtil helper;
     private final HearingUtil hearingUtil;
+    private final DateUtil dateUtil;
 
     @Autowired
-    public HearingService(HearingEnrichment hearingEnrichment, Producer producer, Configuration config, HearingRepository hearingRepository, ServiceConstants serviceConstants, MasterDataUtil helper, HearingUtil hearingUtil) {
+    public HearingService(HearingEnrichment hearingEnrichment, Producer producer, Configuration config, HearingRepository hearingRepository, ServiceConstants serviceConstants, MasterDataUtil helper, HearingUtil hearingUtil, DateUtil dateUtil) {
         this.hearingEnrichment = hearingEnrichment;
         this.producer = producer;
         this.config = config;
@@ -48,6 +54,7 @@ public class HearingService {
         this.serviceConstants = serviceConstants;
         this.helper = helper;
         this.hearingUtil = hearingUtil;
+        this.dateUtil = dateUtil;
     }
 
 
@@ -225,4 +232,73 @@ public class HearingService {
 
         return scheduleHearing;
     }
+
+    public void abatHearings() {
+
+        try {
+            log.info("operation = abating, result = IN_PROGRESS");
+            HearingSearchCriteria hearingSearchCriteria = HearingSearchCriteria.builder()
+                    .fromDate(getFromDate())
+                    .toDate(getToDate())
+                    .courtId("KLKM52")
+                    .build();
+            RequestInfo requestInfo = new RequestInfo();
+            HearingListSearchRequest hearingListSearchRequest = HearingListSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .criteria(hearingSearchCriteria)
+                    .build();
+            List<Hearing> hearings = hearingUtil.fetchHearing(hearingListSearchRequest);
+
+            hearings = hearings.stream().filter(hearing -> hearing.getStatus().equals("PASSED_OVER") || hearing.getStatus().equals("SCHEDULED"))
+                    .toList();
+
+            if (hearings.isEmpty()) {
+                log.info("No hearings found for abatement");
+                return;
+            }
+
+            updateAbatedHearings(hearings);
+
+            log.info("operation = hearingAbating, result = SUCCESS");
+        } catch (Exception e) {
+            log.error("Error while abating hearings: {}", e.getMessage());
+            throw new CustomException("ABATING_HEARING_ERROR", "Error while abating hearing for tomorrow");
+        }
+
+    }
+
+    private Long getFromDate() {
+        return dateUtil.getEpochFromLocalDateTime(LocalDate.now().minusDays(1).atStartOfDay());
+    }
+
+    private Long getToDate() {
+        return dateUtil.getEpochFromLocalDateTime(LocalDate.now().minusDays(1).atTime(LocalTime.MAX));
+    }
+
+    public void updateAbatedHearings(List<Hearing> hearings) {
+        try {
+            log.info("operation = updateAbatedHearings, result = IN_PROGRESS");
+            hearings.forEach(hearing -> {
+                        Workflow workflow = Workflow.builder()
+                                .action("ABATED")
+
+                        hearing.setWorkflow(workflow);
+                        HearinRequest hearingRequest = HearingRequest.builder()
+                                .requestInfo(new RequestInfo())
+                                .hearing(hearing)
+                                .build();
+
+                        hearingUtil.updateHearings(HearingUpdateBulkRequest.builder().requestInfo(new RequestInfo()).hearings(Collections.singletonList(hearing)).build());
+                    }
+                    log.info("operation = updateAbatedHearings, result = SUCCESS");
+        } catch (Exception e) {
+            log.error("Error while updating hearings: {}", e.getMessage());
+            throw new CustomException("UPDATE_HEARING_ERROR", "Error while updating hearings");
+        }
+    }
+
+
+
+
+
 }
