@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.common.models.individual.Boundary;
 import org.egov.tracer.model.CustomException;
 import org.egov.tracer.model.ServiceCallException;
 import org.springframework.http.HttpEntity;
@@ -31,9 +30,6 @@ import pucar.web.models.calculator.TaskPaymentCriteria;
 import pucar.web.models.calculator.TaskPaymentRequest;
 import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.courtCase.Party;
-import pucar.web.models.individual.Individual;
-import pucar.web.models.individual.IndividualSearch;
-import pucar.web.models.individual.IndividualSearchRequest;
 import pucar.web.models.task.*;
 
 import java.util.*;
@@ -126,7 +122,7 @@ public class TaskUtil {
     }
 
 
-    public List<TaskRequest> createTaskRequestForSummonWarrantAndNotice(RequestInfo requestInfo, Order order, CourtCase courtCase, String channel) {
+    public List<TaskRequest> createTaskRequestForSummonWarrantAndNotice(RequestInfo requestInfo, Order order, CourtCase courtCase) {
 
         Map<String, Map<String, JSONArray>> courtRooms = mdmsUtil.fetchMdmsData(requestInfo, order.getTenantId(), "common-masters", List.of("Court_Rooms"));
 
@@ -139,16 +135,6 @@ public class TaskUtil {
         if (itemId != null) {
             additionalDetails.put("itemId", itemId);
         }
-
-        WorkflowObject workflowObject = new WorkflowObject();
-        if (EMAIL.equalsIgnoreCase(channel) || SMS.equalsIgnoreCase(channel)) {
-            workflowObject.setAction("CREATE_WITH_OUT_PAYMENT");
-        } else {
-            workflowObject.setAction("CREATE");
-        }
-        workflowObject.setComments(order.getOrderType());
-        workflowObject.setDocuments(Collections.singletonList(Document.builder().build()));
-
         List<TaskDetails> taskDetailsList = getTaskDetails(order, courtCase, courtDetails, requestInfo);
         List<TaskRequest> taskRequestList = new ArrayList<>();
         taskDetailsList.forEach(taskDetail -> {
@@ -166,7 +152,6 @@ public class TaskUtil {
                             .amount(Amount.builder().type("FINE").status("DONE").amount("0").build()) // here amount need to fetch from somewhere
                             .status("INPROGRESS")
                             .additionalDetails(additionalDetails) // here new hashmap
-                            .workflow(workflowObject)
                             .build();
                     taskRequestList.add(TaskRequest.builder().requestInfo(requestInfo).task(task).build());
                 }
@@ -815,6 +800,20 @@ public class TaskUtil {
             result.add(entry);
         }
         return result;
+    }
+
+
+    public void enrichTaskWorkflow(String channel, Order order, TaskRequest taskRequest) {
+        WorkflowObject workflowObject = new WorkflowObject();
+        if (EMAIL.equalsIgnoreCase(channel) || SMS.equalsIgnoreCase(channel)) {
+            workflowObject.setAction("CREATE_WITH_OUT_PAYMENT");
+        } else {
+            workflowObject.setAction("CREATE");
+        }
+        workflowObject.setComments(order.getOrderType());
+        workflowObject.setDocuments(Collections.singletonList(Document.builder().build()));
+
+        taskRequest.getTask().setWorkflow(workflowObject);
     }
 
 }

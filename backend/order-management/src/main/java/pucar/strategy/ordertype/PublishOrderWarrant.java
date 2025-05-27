@@ -1,5 +1,6 @@
 package pucar.strategy.ordertype;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
@@ -122,8 +123,14 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
         additionalDetails.put("litigants", complainantIndividualId);
 
         try {
-            List<TaskRequest> taskRequests = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, courtCase,EMAIL);
+            List<TaskRequest> taskRequests = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, courtCase);
             for (TaskRequest taskRequest : taskRequests) {
+
+                String taskDetailString = objectMapper.writeValueAsString(taskRequest.getTask().getTaskDetails());
+                Map<String, Object> jsonMap = objectMapper.readValue(taskDetailString, new TypeReference<Map<String, Object>>() {
+                });
+                String channel = jsonUtil.getNestedValue(jsonMap, Arrays.asList("deliveryChannels", "channelCode"), String.class);
+                taskUtil.enrichTaskWorkflow(channel, order, taskRequest);
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
 
                 // create pending task
