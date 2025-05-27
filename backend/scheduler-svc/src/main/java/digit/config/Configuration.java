@@ -166,7 +166,7 @@ public class Configuration {
     private String hearingSearchEndPoint;
 
     @Value("${drishti.hearing.update.endpoint}")
-    private String hearingUpdateEndPoint;
+    private String hearingsUpdateEndPoint;
 
     @Value("${app.zone.id}")
     private String zoneId;
