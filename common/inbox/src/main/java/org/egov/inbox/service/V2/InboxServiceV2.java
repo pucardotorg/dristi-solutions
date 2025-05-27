@@ -13,9 +13,7 @@ import org.egov.inbox.repository.builder.V2.InboxQueryBuilder;
 import org.egov.inbox.service.V2.validator.ValidatorDefaultImplementation;
 import org.egov.inbox.service.WorkflowService;
 import org.egov.inbox.util.MDMSUtil;
-import org.egov.inbox.web.model.Inbox;
-import org.egov.inbox.web.model.InboxRequest;
-import org.egov.inbox.web.model.InboxResponse;
+import org.egov.inbox.web.model.*;
 import org.egov.inbox.web.model.V2.*;
 import org.egov.inbox.web.model.workflow.BusinessService;
 import org.egov.inbox.web.model.workflow.ProcessInstance;
@@ -369,6 +367,90 @@ public class InboxServiceV2 {
         SearchResponse searchResponse = SearchResponse.builder().data(data).build();
         return searchResponse;
     }
+
+    public ActionCategorySearchResponse getSpecificFieldsActionFromESIndex(SearchRequest searchRequest) {
+        String tenantId = searchRequest.getIndexSearchCriteria().getTenantId();
+        String moduleName = searchRequest.getIndexSearchCriteria().getModuleName();
+        Map<String, Object> moduleSearchCriteria = searchRequest.getIndexSearchCriteria().getModuleSearchCriteria();
+
+        validator.validateSearchCriteria(tenantId, moduleName, moduleSearchCriteria);
+        InboxQueryConfiguration inboxQueryConfiguration = mdmsUtil.getConfigFromMDMS(tenantId, moduleName);
+        hashParamsWhereverRequiredBasedOnConfiguration(moduleSearchCriteria, inboxQueryConfiguration);
+
+        IndexSearchCriteria indexSearchCriteria = searchRequest.getIndexSearchCriteria();
+
+        ActionCategorySearchResponse actionCategorySearchResponse = new ActionCategorySearchResponse();
+
+        searchRequest.getIndexSearchCriteria().getModuleSearchCriteria().put("actionCategory", indexSearchCriteria.getSearchReviewProcess().getActionCategory());
+        List<Data> reviewProcessData = getDataFromSimpleSearch(searchRequest, inboxQueryConfiguration.getIndex());
+        List<Data> filteredReviewProcessData = deduplicateByFilingNumber(reviewProcessData);
+
+        indexSearchCriteria.getSearchReviewProcess().setCount(filteredReviewProcessData.size());
+        if(!indexSearchCriteria.getSearchReviewProcess().getIsOnlyCountRequired()) {
+            indexSearchCriteria.getSearchReviewProcess().setData(filteredReviewProcessData);
+        }
+        actionCategorySearchResponse.setReviewProcessData(indexSearchCriteria.getSearchReviewProcess());
+
+        searchRequest.getIndexSearchCriteria().getModuleSearchCriteria().put("actionCategory", indexSearchCriteria.getSearchScheduleHearing().getActionCategory());
+        List<Data> scheduleHearingData = getDataFromSimpleSearch(searchRequest, inboxQueryConfiguration.getIndex());
+        List<Data> filteredScheduleHearingData = deduplicateByFilingNumber(scheduleHearingData);
+
+        indexSearchCriteria.getSearchScheduleHearing().setCount(filteredScheduleHearingData.size());
+        if(!indexSearchCriteria.getSearchScheduleHearing().getIsOnlyCountRequired()) {
+            indexSearchCriteria.getSearchScheduleHearing().setData(filteredScheduleHearingData);
+        }
+        actionCategorySearchResponse.setReviewProcessData(indexSearchCriteria.getSearchScheduleHearing());
+
+        searchRequest.getIndexSearchCriteria().getModuleSearchCriteria().put("actionCategory", indexSearchCriteria.getSearchViewApplication().getActionCategory());
+        List<Data> viewApplicationData = getDataFromSimpleSearch(searchRequest, inboxQueryConfiguration.getIndex());
+        List<Data> filteredViewApplicationData = deduplicateByFilingNumber(viewApplicationData);
+
+        indexSearchCriteria.getSearchViewApplication().setCount(filteredViewApplicationData.size());
+        if(!indexSearchCriteria.getSearchViewApplication().getIsOnlyCountRequired()) {
+            indexSearchCriteria.getSearchViewApplication().setData(filteredViewApplicationData);
+        }
+        actionCategorySearchResponse.setReviewProcessData(indexSearchCriteria.getSearchViewApplication());
+
+        searchRequest.getIndexSearchCriteria().getModuleSearchCriteria().put("actionCategory", indexSearchCriteria.getSearchRegisterCases().getActionCategory());
+        List<Data> registerCasesData = getDataFromSimpleSearch(searchRequest, inboxQueryConfiguration.getIndex());
+        List<Data> filteredRegisterCasesData = deduplicateByFilingNumber(registerCasesData);
+
+        indexSearchCriteria.getSearchRegisterCases().setCount(filteredRegisterCasesData.size());
+        if(!indexSearchCriteria.getSearchRegisterCases().getIsOnlyCountRequired()) {
+            indexSearchCriteria.getSearchRegisterCases().setData(filteredRegisterCasesData);
+        }
+        actionCategorySearchResponse.setReviewProcessData(indexSearchCriteria.getSearchRegisterCases());
+
+        return actionCategorySearchResponse;
+
+    }
+
+    public static List<Data> deduplicateByFilingNumber(List<Data> dataList) {
+        Map<String, Data> uniqueMap = new LinkedHashMap<>();
+
+        for (Data data : dataList) {
+            String filingNumber = extractFilingNumber(data);
+            if (filingNumber != null && !uniqueMap.containsKey(filingNumber)) {
+                uniqueMap.put(filingNumber, data);
+            }
+        }
+
+        return new ArrayList<>(uniqueMap.values());
+    }
+
+    // Helper method to extract filingNumber from the fields list
+    private static String extractFilingNumber(Data data) {
+        if (data.getFields() == null) return null;
+
+        for (Field field : data.getFields()) {
+            if ("filingNumber".equals(field.getKey())) {
+                return field.getValue() != null ? field.getValue().toString() : null;
+            }
+        }
+
+        return null;
+    }
+
 
     private List<Data> getDataFromSimpleSearch(SearchRequest searchRequest, String index) {
         Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE);

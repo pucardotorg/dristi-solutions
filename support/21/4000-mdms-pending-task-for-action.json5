@@ -1,4 +1,4 @@
-{
+[{
   "tenantId": "kl",
   "masterName": "common-masters",
   "moduleName": "PendingTaskType",
@@ -80,6 +80,36 @@
     },
 
     //data update
+    {
+      "id": "aa57771a-a58f-4bb6-9a44-354cdc7763c9",
+      "tenantId": "kl",
+      "schemaCode": "common-masters.PendingTaskType",
+      "uniqueIdentifier": "1",
+      "data": {
+        "closerAction": [
+          "SEND_BACK",
+          "REGISTER"
+        ],
+        "triggerAction": [
+          "VALIDATE"
+        ],
+        "id": "1",
+        "actor": "Judge",
+        "state": "PENDING_REGISTRATION",
+        "isgeneric": false,
+        "screenType": "home",
+        "pendingTask": "Register Case",
+        "workflowModule": "case-default",
+        "actionCategory": "Register cases"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+        "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+        "createdTime": 1724750461420,
+        "lastModifiedTime": 1748345437658
+      }
+    },
     {
       "id": "2e4402c8-8a7e-4527-8ac5-40905d01967d",
       "tenantId": "kl",
@@ -306,4 +336,119 @@
     }
 
   ]
-}
+},
+  {
+    "tenantId": "kl",
+    "masterName": "INBOX",
+    "moduleName": "InboxQueryConfiguration",
+    "mdmsPayload": [
+      {
+        "id": "fcc825d8-cd98-4b46-96d1-876bcd9bedb6",
+        "tenantId": "kl",
+        "schemaCode": "INBOX.InboxQueryConfiguration",
+        "uniqueIdentifier": "pending-tasks-index",
+        "data": {
+          "sortBy": {
+            "path": "Data.isCompleted",
+            "defaultOrder": "ASC"
+          },
+          "sourceFilterPathList": [
+            "Data"
+          ],
+          "allowedSearchCriteria": [
+            {
+              "name": "id",
+              "path": "Data.id.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "entityType",
+              "path": "Data.entityType.keyword",
+              "operator": "EQUAL",
+              "isMandatory": false
+            },
+            {
+              "name": "referenceId",
+              "path": "Data.referenceId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "status",
+              "path": "Data.status.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "assignedTo",
+              "path": "Data.assignedTo.uuid.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "assignedRole",
+              "path": "Data.assignedRole.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "cnrNumber",
+              "path": "Data.cnrNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "filingNumber",
+              "path": "Data.filingNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "isCompleted",
+              "path": "Data.isCompleted",
+              "isMandatory": false
+            },
+            {
+              "name": "stateSla",
+              "path": "Data.stateSla",
+              "isMandatory": false
+            },
+            {
+              "name": "businessServiceSla",
+              "path": "Data.businessServiceSla",
+              "isMandatory": false
+            },
+            {
+              "name": "isDiary",
+              "path": "Data.isDiary",
+              "isMandatory": false
+            },
+            {
+              "name": "screenType",
+              "path": "Data.screenType.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "courtId",
+              "path": "Data.courtId.keyword",
+              "isMandatory": false
+            },
+            {
+              "path": "Data.stage.keyword",
+              "name": "stage",
+              "isMandatory": false
+            },
+            {
+              "name": "searchableFields",
+              "path": "Data.searchableFields.keyword",
+              "isMandatory": false
+            }
+          ],
+          "index": "pending-tasks-index",
+          "module": "Pending Tasks Service"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+          "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "createdTime": 1721905184083,
+          "lastModifiedTime": 1748349936478
+        }
+      }
+    ]
+  }
+]

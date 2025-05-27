@@ -309,10 +309,11 @@ public class IndexerUtils {
         }
         String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
         String advocateDetails = extractAdvocateDetails(JsonPath.read(caseObject.toString(), CASE_REPRESENTATIVES));
+        String searchableFields = caseNumber+", "+caseTitle+", "+advocateDetails;
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber,caseStage,advocateDetails,actionCategory,assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber,caseStage,advocateDetails,actionCategory,searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType
         );
     }
 
