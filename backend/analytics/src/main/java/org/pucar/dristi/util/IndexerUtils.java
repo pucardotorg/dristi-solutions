@@ -391,7 +391,7 @@ public class IndexerUtils {
         boolean isCompleted = true;
         boolean isGeneric = false;
         String actors = null;
-        PendingTaskType matchedPendingTaskType = null; // Store the matched pending task type
+        List<ReferenceEntityTypeNameMapping> referenceEntityTypeMappings = null; // Store the reference mappings
 
         List<org.pucar.dristi.web.models.PendingTaskType> pendingTaskTypeList = mdmsDataConfig.getPendingTaskTypeMap().get(entityType);
         if (pendingTaskTypeList == null) return caseDetails;
@@ -404,7 +404,7 @@ public class IndexerUtils {
                 isCompleted = false;
                 isGeneric = pendingTaskType.getIsgeneric();
                 actors = pendingTaskType.getActor();
-                matchedPendingTaskType = pendingTaskType; // Store the matched task type
+                referenceEntityTypeMappings = pendingTaskType.getReferenceEntityTypeNameMapping();
                 break;
             }
         }
@@ -420,7 +420,7 @@ public class IndexerUtils {
         Map<String, String> entityDetails = processEntityByType(entityType, request, referenceId, object);
 
         // Update name based on referenceEntityType and referenceEntityTypeNameMapping
-        name = getUpdatedTaskName(entityDetails, matchedPendingTaskType, name);
+        name = getUpdatedTaskName(entityDetails, referenceEntityTypeMappings, name);
 
         // Add additional details to the caseDetails map
         caseDetails.putAll(entityDetails);
@@ -654,28 +654,22 @@ public class IndexerUtils {
     }
 
     private String getUpdatedTaskName(Map<String, String> entityDetails,
-                                      PendingTaskType matchedPendingTaskType,
+                                      List<ReferenceEntityTypeNameMapping> referenceEntityTypeMappings,
                                       String currentName) {
 
-        // Check conditions in proper order: empty -> null -> containsKey -> matchedPendingTaskType
-        if (entityDetails.isEmpty() ||
-                entityDetails.get("referenceEntityType") == null ||
-                !entityDetails.containsKey("referenceEntityType") ||
-                matchedPendingTaskType == null) {
+        if (referenceEntityTypeMappings == null || referenceEntityTypeMappings.isEmpty()
+                || entityDetails.isEmpty()
+                || entityDetails.get("referenceEntityType") == null
+                || !entityDetails.containsKey("referenceEntityType")) {
             return currentName;
         }
 
-        String referenceEntityType = entityDetails.get("referenceEntityType");
+        String applicationType = entityDetails.get("referenceEntityType");
 
-        // Check if the pending task type has referenceEntityTypeNameMapping
-        List<ReferenceEntityTypeNameMapping> referenceEntityTypeMappings =
-                matchedPendingTaskType.getReferenceEntityTypeNameMapping();
-
-        if (referenceEntityTypeMappings != null) {
-            for (ReferenceEntityTypeNameMapping mapping : referenceEntityTypeMappings) {
-                if (referenceEntityType.equalsIgnoreCase(mapping.getReferenceEntityType())) {
-                    return mapping.getPendingTaskName();
-                }
+        // Check if referenceEntityTypeMappings has any mappings
+        for (ReferenceEntityTypeNameMapping mapping : referenceEntityTypeMappings) {
+            if (applicationType.equals(mapping.getReferenceEntityType())) {
+                return mapping.getPendingTaskName();
             }
         }
 
