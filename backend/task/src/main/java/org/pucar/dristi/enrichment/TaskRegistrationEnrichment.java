@@ -8,8 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.HrmsUtil;
 import org.pucar.dristi.util.IdgenUtil;
+import org.pucar.dristi.web.models.CourtCase;
 import org.pucar.dristi.web.models.Task;
 import org.pucar.dristi.web.models.TaskRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,15 +30,14 @@ public class TaskRegistrationEnrichment {
     private final IdgenUtil idgenUtil;
     private final Configuration config;
     private final ObjectMapper objectMapper;
-
-    private final HrmsUtil hrmsUtil;
+    private final CaseUtil caseUtil;
 
     @Autowired
-    public TaskRegistrationEnrichment(IdgenUtil idgenUtil, Configuration config, ObjectMapper objectMapper, HrmsUtil hrmsUtil) {
+    public TaskRegistrationEnrichment(IdgenUtil idgenUtil, Configuration config, ObjectMapper objectMapper, CaseUtil caseUtil, HrmsUtil hrmsUtil) {
         this.idgenUtil = idgenUtil;
         this.config = config;
         this.objectMapper = objectMapper;
-        this.hrmsUtil = hrmsUtil;
+        this.caseUtil = caseUtil;
     }
 
     public void enrichTaskRegistration(TaskRequest taskRequest) {
@@ -79,7 +80,12 @@ public class TaskRegistrationEnrichment {
 
     private void enrichCourtId(TaskRequest taskRequest) {
 
-        String courtId = hrmsUtil.getCourtId(taskRequest.getRequestInfo());
+        List<CourtCase> caseDetails = caseUtil.getCaseDetails(taskRequest);
+
+        if (caseDetails.isEmpty()) {
+            throw new CustomException(ENRICHMENT_EXCEPTION, "case not found");
+        }
+        String courtId = caseDetails.get(0).getCourtId();
         taskRequest.getTask().setCourtId(courtId);
 
     }
