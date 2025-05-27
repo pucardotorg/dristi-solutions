@@ -551,7 +551,7 @@ export const reviewCaseFileFormConfig = [
                 //   value: "caseSettlementCondition.text",
                 // },
                 {
-                  type: "text",
+                  type: "formattedText",
                   label: "CS_MEMORANDUM_OF_COMPLAINT_HEADER",
                   // textDependentOn: "memorandumOfComplaint.document",
                   // textDependentValue: "DOCUMENT_UPLOADED",
