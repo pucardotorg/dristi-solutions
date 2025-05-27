@@ -668,7 +668,7 @@ public class IndexerUtils {
 
         // Check if referenceEntityTypeMappings has any mappings
         for (ReferenceEntityTypeNameMapping mapping : referenceEntityTypeMappings) {
-            if (applicationType.equals(mapping.getReferenceEntityType())) {
+            if (applicationType.equalsIgnoreCase(mapping.getReferenceEntityType())) {
                 return mapping.getPendingTaskName();
             }
         }
