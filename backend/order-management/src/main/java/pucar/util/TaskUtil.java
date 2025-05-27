@@ -335,7 +335,7 @@ public class TaskUtil {
 
     private void getCaseDetails(Order order, TaskDetails taskDetails, CourtCase courtCase, Map<String, Object> courtDetails) {
 
-        String hearingDate = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "dateOfHearing"), String.class);
+        String hearingDate = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "dateForHearing"), String.class);
         Long hearingDateEpoch = null;
         if (hearingDate != null) hearingDateEpoch = dateUtil.getEpochFromDateString(hearingDate, "yyyy-MM-dd");
 
