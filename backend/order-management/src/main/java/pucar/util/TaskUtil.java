@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.models.individual.Boundary;
 import org.egov.tracer.model.CustomException;
 import org.egov.tracer.model.ServiceCallException;
 import org.springframework.http.HttpEntity;
@@ -29,6 +30,10 @@ import pucar.web.models.calculator.CalculationRes;
 import pucar.web.models.calculator.TaskPaymentCriteria;
 import pucar.web.models.calculator.TaskPaymentRequest;
 import pucar.web.models.courtCase.CourtCase;
+import pucar.web.models.courtCase.Party;
+import pucar.web.models.individual.Individual;
+import pucar.web.models.individual.IndividualSearch;
+import pucar.web.models.individual.IndividualSearchRequest;
 import pucar.web.models.task.*;
 
 import java.util.*;
@@ -49,8 +54,9 @@ public class TaskUtil {
     private final Configuration config;
     private final MdmsUtil mdmsUtil;
     private final PaymentCalculatorUtil paymentCalculatorUtil;
+    private final IndividualUtil individualUtil;
 
-    public TaskUtil(RestTemplate restTemplate, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, JsonUtil jsonUtil, Configuration config, MdmsUtil mdmsUtil, ChannelTypeMap channelTypeMap, PaymentCalculatorUtil paymentCalculatorUtil) {
+    public TaskUtil(RestTemplate restTemplate, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, JsonUtil jsonUtil, Configuration config, MdmsUtil mdmsUtil, ChannelTypeMap channelTypeMap, PaymentCalculatorUtil paymentCalculatorUtil, IndividualUtil individualUtil) {
         this.restTemplate = restTemplate;
         this.serviceRequestRepository = serviceRequestRepository;
         this.objectMapper = objectMapper;
@@ -59,6 +65,7 @@ public class TaskUtil {
         this.config = config;
         this.mdmsUtil = mdmsUtil;
         this.paymentCalculatorUtil = paymentCalculatorUtil;
+        this.individualUtil = individualUtil;
     }
 
     public TaskResponse callCreateTask(TaskRequest taskRequest) {
@@ -213,12 +220,40 @@ public class TaskUtil {
             getSummonWarrantOrNoticeDetails(order, taskDetails, courtCase);
             getRespondentDetails(order, taskDetails, courtCase);
             getWitnessDetails(order, taskDetails, courtCase);
+            getComplainantDetails(order, taskDetails, courtCase);
             getCaseDetails(order, taskDetails, courtCase, courtDetails);
             return getDeliveryChannel(order, taskDetails, courtCase, requestInfo);
         } catch (Exception e) {
             log.error("Exception in getTaskDetails", e);
             throw new CustomException();
         }
+
+    }
+
+    private void getComplainantDetails(Order order, TaskDetails taskDetails, CourtCase courtCase) {
+
+        ComplainantDetails complainantDetails = new ComplainantDetails();
+
+        String complainantName = getComplainantNameFromCase(courtCase);
+        String individualId ;
+        Optional<Party> primaryComplainant = courtCase.getLitigants().stream().filter(item -> COMPLAINANT_PRIMARY.equalsIgnoreCase(item.getPartyType())).findFirst(); // TODO: check
+        if (primaryComplainant.isPresent()) {
+            individualId = primaryComplainant.get().getIndividualId();
+
+            IndividualSearchRequest individualSearchRequest = IndividualSearchRequest.builder()
+                    .individual(IndividualSearch.builder().individualId(individualId).build())
+                    .requestInfo(RequestInfo.builder().build()).build();  // empty request info , if not working pass request info here
+
+            List<Individual> individual = individualUtil.getIndividualByIndividualId(individualSearchRequest, order.getTenantId(), 1);
+
+            Map<String, Object> complainantAddressFromIndividualDetail = getComplainantAddressFromIndividualDetail(individual.get(0));
+
+            complainantDetails.setAddress(complainantAddressFromIndividualDetail);
+
+        }
+        complainantDetails.setName(complainantName);
+        taskDetails.setComplainantDetails(complainantDetails);
+
 
     }
 
@@ -336,14 +371,14 @@ public class TaskUtil {
             respondentDetails = docSubType.equals("Witness") ? getRespondentAccused(order, courtCase) : null;
         }
 
-            if (respondentDetails != null){
-                witnessDetails = WitnessDetails.builder()
-                        .name(respondentDetails.getName())
-                        .phone(respondentDetails.getPhone())
-                        .email(respondentDetails.getEmail())
-                        .address(respondentDetails.getAddress())
-                        .build();
-            }
+        if (respondentDetails != null) {
+            witnessDetails = WitnessDetails.builder()
+                    .name(respondentDetails.getName())
+                    .phone(respondentDetails.getPhone())
+                    .email(respondentDetails.getEmail())
+                    .address(respondentDetails.getAddress())
+                    .build();
+        }
 
         taskDetails.setWitnessDetails(witnessDetails);
     }
@@ -642,22 +677,21 @@ public class TaskUtil {
      * Extracts complainant address fields from individualDetail JsonObject structure, returns as Map<String, Object>.
      * Mirrors the JS logic for complainantAddress.
      */
-    public Map<String, Object> getComplainantAddressFromIndividualDetail(Map<String, Object> individualDetail) {
-        if (individualDetail == null) return Collections.emptyMap();
-        List<?> individuals = jsonUtil.getNestedValue(individualDetail, List.of("Individual"), List.class);
-        if (individuals == null || individuals.isEmpty()) return Collections.emptyMap();
-        Map<?, ?> firstIndividual = (Map<?, ?>) individuals.get(0);
-        List<?> addresses = jsonUtil.getNestedValue(firstIndividual, List.of("address"), List.class);
-        if (addresses == null || addresses.isEmpty()) return Collections.emptyMap();
-        Map<?, ?> address = (Map<?, ?>) addresses.get(0);
+    public Map<String, Object> getComplainantAddressFromIndividualDetail(Individual individual) {
 
-        String pincode = jsonUtil.getNestedValue(address, List.of("pincode"), String.class);
-        String addressLine2 = jsonUtil.getNestedValue(address, List.of("addressLine2"), String.class);
-        String city = jsonUtil.getNestedValue(address, List.of("city"), String.class);
-        String addressLine1 = jsonUtil.getNestedValue(address, List.of("addressLine1"), String.class);
-        String locality = jsonUtil.getNestedValue(address, List.of("address"), String.class);
-        String longitude = jsonUtil.getNestedValue(address, List.of("longitude"), String.class);
-        String latitude = jsonUtil.getNestedValue(address, List.of("latitude"), String.class);
+        if (individual == null) return Collections.emptyMap();
+        List<org.egov.common.models.individual.Address> addresses = individual.getAddress();
+        org.egov.common.models.individual.Address address = addresses != null && !addresses.isEmpty() ? addresses.get(0) : null;
+
+        if (address == null) return Collections.emptyMap();
+
+        String pincode = address.getPincode();
+        String addressLine2 = address.getAddressLine2();
+        String city = address.getCity();
+        String addressLine1 = address.getAddressLine1();
+        Boundary locality = address.getLocality();
+        Double longitude = address.getLongitude();
+        Double latitude = address.getLatitude();
 
         Map<String, Object> coordinate = new HashMap<>();
         coordinate.put("longitude", longitude);

@@ -101,6 +101,7 @@ public class ServiceConstants {
     public static final String ERROR_WHILE_FETCHING_FROM_MDMS = "ERROR_WHILE_FETCHING_FROM_MDMS";
 
     public static final String PENDING_ADMISSION_HEARING = "PENDING_ADMISSION_HEARING";
+    public static final String COMPLAINANT_PRIMARY = "complainant.primary";
 
     // order type
     public static final String ACCEPTANCE_REJECTION_DCA = "ACCEPTANCE_REJECTION_DCA";

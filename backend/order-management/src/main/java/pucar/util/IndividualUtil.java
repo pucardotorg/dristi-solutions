@@ -59,9 +59,10 @@ public class IndividualUtil {
     }
 
 
-    public List<Individual> getIndividualByIndividualId(IndividualSearchRequest individualRequest, StringBuilder uri) {
+    public List<Individual> getIndividualByIndividualId(IndividualSearchRequest individualRequest, String tenantId, Integer limit) {
         List<Individual> individuals = new ArrayList<>();
         try {
+            StringBuilder uri = buildIndividualSearchUri(tenantId, limit);
             Object responseMap = serviceRequestRepository.fetchResult(uri, individualRequest);
             if (responseMap != null) {
                 String jsonString = objectMapper.writeValueAsString(responseMap);
