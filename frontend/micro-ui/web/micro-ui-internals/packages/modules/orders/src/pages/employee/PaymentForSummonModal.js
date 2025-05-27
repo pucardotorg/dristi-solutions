@@ -165,6 +165,8 @@ const PaymentForSummonModal = ({ path }) => {
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
+
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const fetchCaseLockStatus = useCallback(async () => {
     try {
       const status = await DRISTIService.getCaseLockStatus(
@@ -202,6 +204,7 @@ const PaymentForSummonModal = ({ path }) => {
       criteria: {
         tenantId: tenantId,
         taskNumber: taskNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
@@ -212,7 +215,7 @@ const PaymentForSummonModal = ({ path }) => {
   const filteredTasks = useMemo(() => tasksData?.list, [tasksData]);
 
   const { data: orderData, isloading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
-    { tenantId, criteria: { id: filteredTasks?.[0]?.orderId } },
+    { tenantId, criteria: { id: filteredTasks?.[0]?.orderId, ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filteredTasks?.[0]?.orderId,
     Boolean(filteredTasks?.[0]?.orderId)
@@ -243,6 +246,7 @@ const PaymentForSummonModal = ({ path }) => {
         tenantID: tenantId,
         filingNumber: filingNumber,
         hearingId: orderData?.list?.[0]?.hearingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },

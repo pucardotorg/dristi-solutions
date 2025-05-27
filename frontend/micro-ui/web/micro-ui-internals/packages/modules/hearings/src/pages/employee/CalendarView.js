@@ -46,6 +46,7 @@ const MonthlyCalendar = () => {
   const [caseType, setCaseType] = useState({});
   const [stepper, setStepper] = useState(0);
   const initial = "dayGridMonth";
+  const courtId = localStorage.getItem("courtId");
 
   const search = window.location.search;
   const { fromDate, toDate, slot, slotId, initialView, count } = useMemo(() => {
@@ -65,6 +66,7 @@ const MonthlyCalendar = () => {
       fromDate: dateRange.start ? dateRange.start.getTime() : null,
       toDate: dateRange.end ? dateRange.end.getTime() : null,
       attendeeIndividualId: individualId,
+      ...(courtId && { courtId }),
     },
   };
 
