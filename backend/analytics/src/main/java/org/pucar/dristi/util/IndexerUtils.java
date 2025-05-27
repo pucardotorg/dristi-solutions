@@ -18,11 +18,7 @@ import org.pucar.dristi.kafka.consumer.EventConsumerConfig;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.service.SmsNotificationService;
 import org.pucar.dristi.service.UserService;
-import org.pucar.dristi.web.models.CaseCriteria;
-import org.pucar.dristi.web.models.CaseSearchRequest;
-import org.pucar.dristi.web.models.PendingTask;
-import org.pucar.dristi.web.models.PendingTaskType;
-import org.pucar.dristi.web.models.SmsTemplateData;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -423,27 +419,8 @@ public class IndexerUtils {
         request.put("RequestInfo", requestInfo);
         Map<String, String> entityDetails = processEntityByType(entityType, request, referenceId, object);
 
-        // Check if entityDetails contains applicationType and update name accordingly
-        if (entityDetails.containsKey("applicationType") &&
-                entityDetails.get("applicationType") != null &&
-                matchedPendingTaskType != null) {
-
-            String applicationType = entityDetails.get("applicationType");
-
-            // Check if the pending task type has referenceEntityTypeNameMapping
-            List<Map<String, Object>> referenceEntityTypeMappings =
-                    matchedPendingTaskType.getReferenceEntityTypeNameMapping();
-
-            if (!referenceEntityTypeMappings.isEmpty() && referenceEntityTypeMappings != null) {
-                for (Map<String, Object> mapping : referenceEntityTypeMappings) {
-                    String referenceEntityType = (String) mapping.get("referenceEntityType");
-                    if (applicationType.equalsIgnoreCase(referenceEntityType)) {
-                        name = (String) mapping.get("pendingTaskName");
-                        break;
-                    }
-                }
-            }
-        }
+        // Update name based on referenceEntityType and referenceEntityTypeNameMapping
+        name = getUpdatedTaskName(entityDetails, matchedPendingTaskType, name);
 
         // Add additional details to the caseDetails map
         caseDetails.putAll(entityDetails);
@@ -601,7 +578,7 @@ public class IndexerUtils {
         caseDetails.put("filingNumber", filingNumber);
         caseDetails.put("caseId", caseId);
         caseDetails.put("caseTitle", caseTitle);
-        caseDetails.put("applicationType", applicationType);
+        caseDetails.put("referenceEntityType", applicationType);
 
         return caseDetails;
     }
@@ -674,6 +651,35 @@ public class IndexerUtils {
             stateSla += currentTime;
         }
         return stateSla;
+    }
+
+    private String getUpdatedTaskName(Map<String, String> entityDetails,
+                                      PendingTaskType matchedPendingTaskType,
+                                      String currentName) {
+
+        // Check conditions in proper order: empty -> null -> containsKey -> matchedPendingTaskType
+        if (entityDetails.isEmpty() ||
+                entityDetails.get("referenceEntityType") == null ||
+                !entityDetails.containsKey("referenceEntityType") ||
+                matchedPendingTaskType == null) {
+            return currentName;
+        }
+
+        String referenceEntityType = entityDetails.get("referenceEntityType");
+
+        // Check if the pending task type has referenceEntityTypeNameMapping
+        List<ReferenceEntityTypeNameMapping> referenceEntityTypeMappings =
+                matchedPendingTaskType.getReferenceEntityTypeNameMapping();
+
+        if (referenceEntityTypeMappings != null) {
+            for (ReferenceEntityTypeNameMapping mapping : referenceEntityTypeMappings) {
+                if (referenceEntityType.equalsIgnoreCase(mapping.getReferenceEntityType())) {
+                    return mapping.getPendingTaskName();
+                }
+            }
+        }
+
+        return currentName;
     }
 
 }
