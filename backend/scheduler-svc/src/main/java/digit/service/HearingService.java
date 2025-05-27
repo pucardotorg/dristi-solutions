@@ -13,12 +13,13 @@ import digit.web.models.*;
 import digit.web.models.hearing.*;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
+import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
@@ -41,9 +42,10 @@ public class HearingService {
     private final MasterDataUtil helper;
     private final HearingUtil hearingUtil;
     private final DateUtil dateUtil;
+    private final UserService userService;
 
     @Autowired
-    public HearingService(HearingEnrichment hearingEnrichment, Producer producer, Configuration config, HearingRepository hearingRepository, ServiceConstants serviceConstants, MasterDataUtil helper, HearingUtil hearingUtil, DateUtil dateUtil) {
+    public HearingService(HearingEnrichment hearingEnrichment, Producer producer, Configuration config, HearingRepository hearingRepository, ServiceConstants serviceConstants, MasterDataUtil helper, HearingUtil hearingUtil, DateUtil dateUtil, UserService userService) {
         this.hearingEnrichment = hearingEnrichment;
         this.producer = producer;
         this.config = config;
@@ -52,6 +54,7 @@ public class HearingService {
         this.helper = helper;
         this.hearingUtil = hearingUtil;
         this.dateUtil = dateUtil;
+        this.userService = userService;
     }
 
 
@@ -239,7 +242,7 @@ public class HearingService {
                     .toDate(getToDate())
                     .build();
 
-            RequestInfo requestInfo = new RequestInfo();
+            RequestInfo requestInfo = createInternalRequestInfo();
 
             HearingListSearchRequest searchRequest = HearingListSearchRequest.builder()
                     .requestInfo(requestInfo)
@@ -300,6 +303,18 @@ public class HearingService {
             log.error("operation=updateHearingsToAbated, result=FAILURE, message={}", e.getMessage(), e);
             throw new CustomException("UPDATE_HEARING_ERROR", "Error while updating abated hearings");
         }
+    }
+
+    private RequestInfo createInternalRequestInfo() {
+        org.egov.common.contract.request.User userInfo = new User();
+        userInfo.setUuid(userService.internalMicroserviceRoleUuid);
+        userInfo.setRoles(userService.internalMicroserviceRoles);
+        userInfo.getRoles().add(Role.builder().code(WORKFLOW_ABANDON)
+                        .name(WORKFLOW_ABANDON)
+                        .tenantId(config.getEgovStateTenantId())
+                .build());
+        userInfo.setTenantId(config.getEgovStateTenantId());
+        return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
     }
 
 
