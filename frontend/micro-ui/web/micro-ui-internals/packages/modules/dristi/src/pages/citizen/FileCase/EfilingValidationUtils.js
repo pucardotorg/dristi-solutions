@@ -1024,7 +1024,7 @@ export const accusedAddressValidation = ({ formData, selected, setAddressError, 
           const isEmpty = /^\s*$/.test(address?.[addressKey]?.[data?.name]);
           return (
             isEmpty ||
-            !address?.[addressKey]?.[data?.name].match(window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern)
+            !address?.[addressKey]?.[data?.name]?.match(window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern)
           );
         })
       )
@@ -1047,7 +1047,7 @@ export const addressValidation = ({ formData, selected, setAddressError, config 
         );
         return (
           isEmpty ||
-          !formData?.[formData?.[selected]?.code === "INDIVIDUAL" ? "addressDetails" : "addressCompanyDetails"]?.[data?.name].match(
+          !formData?.[formData?.[selected]?.code === "INDIVIDUAL" ? "addressDetails" : "addressCompanyDetails"]?.[data?.name]?.match(
             window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
           )
         );
@@ -1062,7 +1062,7 @@ export const addressValidation = ({ formData, selected, setAddressError, config 
           const isEmpty = /^\s*$/.test(formData?.poaAddressDetails?.[data?.name]);
           return (
             isEmpty ||
-            !formData?.poaAddressDetails?.[data?.name].match(
+            !formData?.poaAddressDetails?.[data?.name]?.match(
               window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
             )
           );
@@ -2991,7 +2991,10 @@ export const updateCaseDetails = async ({
                 }
               })
             );
-            setFormDataValue("vakalatnamaFileUpload", vakalatnamaDocumentData?.vakalatnamaFileUpload);
+            let updatedAdvocateDetails = data?.data?.multipleAdvocatesAndPip;
+            updatedAdvocateDetails.vakalatnamaFileUpload = vakalatnamaDocumentData?.vakalatnamaFileUpload;
+
+            setFormDataValue("MultipleAdvocatesAndPip", updatedAdvocateDetails);
           }
           const pipAffidavitDocumentData = { pipAffidavitFileUpload: null };
           if (data?.data?.multipleAdvocatesAndPip?.pipAffidavitFileUpload?.document) {
@@ -3016,7 +3019,12 @@ export const updateCaseDetails = async ({
                 }
               })
             );
-            setFormDataValue("pipAffidavitFileUpload", pipAffidavitDocumentData?.pipAffidavitFileUpload);
+            debugger;
+            let updatedPipDetails = data?.data?.multipleAdvocatesAndPip;
+            updatedPipDetails.pipAffidavitFileUpload = pipAffidavitDocumentData?.pipAffidavitFileUpload;
+
+            setFormDataValue("MultipleAdvocatesAndPip", updatedPipDetails);
+            // setFormDataValue("pipAffidavitFileUpload", pipAffidavitDocumentData?.pipAffidavitFileUpload);
           }
           const advocateDetailsDocTypes = [documentsTypeMapping["vakalatnamaFileUpload"], documentsTypeMapping["pipAffidavitFileUpload"]];
           updateTempDocListMultiForm(docList, advocateDetailsDocTypes);
