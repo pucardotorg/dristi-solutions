@@ -20,7 +20,7 @@ public class DeliveryChannel {
     private String channelCode;
 
     @JsonProperty("fees")
-    private String fees;
+    private Double fees;
 
     @JsonProperty("paymentTransactionId")
     private String paymentTransactionId;

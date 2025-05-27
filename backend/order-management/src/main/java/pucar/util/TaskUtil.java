@@ -254,7 +254,6 @@ public class TaskUtil {
         complainantDetails.setName(complainantName);
         taskDetails.setComplainantDetails(complainantDetails);
 
-
     }
 
     private List<TaskDetails> getDeliveryChannel(Order order, TaskDetails taskDetails, CourtCase courtCase, RequestInfo requestInfo) throws JsonProcessingException {
@@ -299,7 +298,7 @@ public class TaskUtil {
             DeliveryChannel deliveryChannel = DeliveryChannel.builder()
                     .channelName(ChannelTypeMap.getStateSlaMap().get(channelType).get("type"))
                     .channelCode(ChannelTypeMap.getStateSlaMap().get(channelType).get("code"))
-                    .fees(courtFee.toString())
+                    .fees(courtFee)
                     .feesStatus("pending").build();
             taskDetailsClone.setDeliveryChannel(deliveryChannel);
 
