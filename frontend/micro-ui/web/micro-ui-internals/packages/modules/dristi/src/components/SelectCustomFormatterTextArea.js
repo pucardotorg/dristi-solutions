@@ -7,6 +7,7 @@ import { EditorState, convertToRaw, ContentState } from "draft-js";
 import draftToHtml from "draftjs-to-html";
 import htmlToDraft from "html-to-draftjs";
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
+import sanitizeHtml from "sanitize-html";
 
 const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, errors }) => {
   const inputs = useMemo(
@@ -22,6 +23,23 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
     [config?.populators?.inputs]
   );
 
+  const defaultSanitizeOptions = {
+    allowedTags: [
+      "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "p", "a", "ul", "ol", "nl", "li", "b", "i", "strong",
+      "em", "strike", "code", "hr", "br", "div", "table", "thead", "caption", "tbody", "tr", "th", "td",
+      "pre", "span", "img"
+    ],
+    allowedAttributes: {
+      a: ["href", "name", "target"],
+      img: ["src", "alt", "title", "width", "height"],
+      p: ["class", "style"],
+      div: ["class", "style"],
+      span: ["class", "style"]
+    },
+    stripIgnoreTag: true,
+    stripIgnoreAttribute: true,
+  };
+
   const [editorState, setEditorState] = useState(() => EditorState.createEmpty());
   const [formdata, setFormData] = useState(formData);
 
@@ -30,15 +48,16 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
 
   useEffect(() => {
     const rawHtml = formData?.[configKey]?.[inputName] || "";
+    const sanitizedIncomingHtml = sanitizeHtml(rawHtml, defaultSanitizeOptions);
 
     const currentHtml = draftToHtml(convertToRaw(editorState.getCurrentContent()));
     const normalize = (str) => str.replace(/\s/g, "");
 
-    if (normalize(rawHtml) === normalize(currentHtml)) return;
+    if (normalize(sanitizedIncomingHtml) === normalize(currentHtml)) return;
 
     try {
-      const isHtml = /<\/?[a-z][\s\S]*>/i?.test(rawHtml);
-      const safeHtml = isHtml ? rawHtml : `<p>${rawHtml}</p>`;
+      const isHtml = /<\/?[a-z][\s\S]*>/i?.test(sanitizedIncomingHtml);
+      const safeHtml = isHtml ? sanitizedIncomingHtml : `<p>${sanitizedIncomingHtml}</p>`;
 
       const contentBlock = htmlToDraft(safeHtml);
       if (contentBlock && Array.isArray(contentBlock.contentBlocks)) {
@@ -96,7 +115,8 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
     setEditorState(state);
     const rawContent = convertToRaw(state.getCurrentContent());
     const html = draftToHtml(rawContent);
-    setValue(html, input?.name);
+    const sanitizedHtml = sanitizeHtml(html, defaultSanitizeOptions);
+    setValue(sanitizedHtml, input?.name);
   };
 
   const handleKeyCommand = (command, editorState) => {
