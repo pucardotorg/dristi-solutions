@@ -136,9 +136,6 @@ public class Configuration {
     @Value("${dristi.adiary.create.bulk}")
     private String aDiaryCreateBulkEndPoint;
 
-    @Value("${court.id}")
-    private String courtId;
-
     // Inbox Config
     @Value("${dristi.inbox.host}")
     private String inboxHost;
