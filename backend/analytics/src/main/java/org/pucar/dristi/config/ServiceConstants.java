@@ -96,6 +96,7 @@ public class ServiceConstants {
     public static final String ORDER_FINDINGS_PATH = "$.additionalDetails.formdata.findings.code";
     public static final String ORDER_CATEGORY_PATH = "$.orderCategory";
     public static final String ORDER_COMPOSITE_ITEMS_PATH = "$.compositeItems.*";
+    public static final String APPLICATION_TYPE_PATH = "$.applicationType";
 
 
     public static final String RES_MSG_ID = "uief87324";

@@ -395,6 +395,7 @@ public class IndexerUtils {
         boolean isCompleted = true;
         boolean isGeneric = false;
         String actors = null;
+        PendingTaskType matchedPendingTaskType = null; // Store the matched pending task type
 
         List<org.pucar.dristi.web.models.PendingTaskType> pendingTaskTypeList = mdmsDataConfig.getPendingTaskTypeMap().get(entityType);
         if (pendingTaskTypeList == null) return caseDetails;
@@ -407,6 +408,7 @@ public class IndexerUtils {
                 isCompleted = false;
                 isGeneric = pendingTaskType.getIsgeneric();
                 actors = pendingTaskType.getActor();
+                matchedPendingTaskType = pendingTaskType; // Store the matched task type
                 break;
             }
         }
@@ -421,11 +423,33 @@ public class IndexerUtils {
         request.put("RequestInfo", requestInfo);
         Map<String, String> entityDetails = processEntityByType(entityType, request, referenceId, object);
 
+        // Check if entityDetails contains applicationType and update name accordingly
+        if (entityDetails.containsKey("applicationType") &&
+                entityDetails.get("applicationType") != null &&
+                matchedPendingTaskType != null) {
+
+            String applicationType = entityDetails.get("applicationType");
+
+            // Check if the pending task type has referenceEntityTypeNameMapping
+            List<Map<String, Object>> referenceEntityTypeMappings =
+                    matchedPendingTaskType.getReferenceEntityTypeNameMapping();
+
+            if (!referenceEntityTypeMappings.isEmpty() && referenceEntityTypeMappings != null) {
+                for (Map<String, Object> mapping : referenceEntityTypeMappings) {
+                    String referenceEntityType = (String) mapping.get("referenceEntityType");
+                    if (applicationType.equalsIgnoreCase(referenceEntityType)) {
+                        name = (String) mapping.get("pendingTaskName");
+                        break;
+                    }
+                }
+            }
+        }
+
         // Add additional details to the caseDetails map
         caseDetails.putAll(entityDetails);
         caseDetails.put("name", name);
         caseDetails.put("screenType", screenType);
-        caseDetails.put("actors",actors);
+        caseDetails.put("actors", actors);
         if (isGeneric) caseDetails.put("isGeneric", "Generic");
 
         return caseDetails;
@@ -568,6 +592,7 @@ public class IndexerUtils {
 
         Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
 
+        String applicationType = JsonPath.read(applicationObject.toString(), APPLICATION_TYPE_PATH);
         String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
         String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
         String cnrNumber = JsonPath.read(caseObject.toString(), CNR_NUMBER_PATH);
@@ -576,6 +601,7 @@ public class IndexerUtils {
         caseDetails.put("filingNumber", filingNumber);
         caseDetails.put("caseId", caseId);
         caseDetails.put("caseTitle", caseTitle);
+        caseDetails.put("applicationType", applicationType);
 
         return caseDetails;
     }
