@@ -2,7 +2,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/";
 import PreHearingModal from "../../components/PreHearingModal";
@@ -48,16 +48,22 @@ const MonthlyCalendar = ({ hideRight }) => {
   const initial = "dayGridMonth";
 
   const search = window.location.search;
-  const { fromDate, toDate, slot, slotId, initialView, count } = useMemo(() => {
+  const [fromDate, setFromDate] = useState(null);
+  const [toDate, setToDate] = useState(null);
+  const [slot, setSlot] = useState(null);
+  const [slotId, setSlotId] = useState(null);
+  const [initialView, setInitialView] = useState(initial);
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
     const searchParams = new URLSearchParams(search);
-    const fromDate = Number(searchParams.get("from-date")) || null;
-    const toDate = Number(searchParams.get("to-date")) || null;
-    const slot = searchParams.get("slot") || null;
-    const slotId = searchParams.get("slotId") || null;
-    const initialView = searchParams.get("view") || initial;
-    const count = searchParams.get("count") || 0;
-    return { fromDate, toDate, slot, slotId, initialView, count };
-  }, [search]);
+    setFromDate(Number(searchParams.get("from-date")) || null);
+    setToDate(Number(searchParams.get("to-date")) || null);
+    setSlot(searchParams.get("slot") || null);
+    setSlotId(searchParams.get("slotId") || null);
+    setInitialView(searchParams.get("view") || initial);
+    setCount(Number(searchParams.get("count")) || 0);
+  }, [search, initial]);
 
   const reqBody = {
     criteria: {
@@ -219,7 +225,6 @@ const MonthlyCalendar = ({ hideRight }) => {
   // };
 
   const handleEventClick = (arg, ...rest) => {
-    console.log(arg, ...rest);
     const fromDate = arg.event.start;
     const count = arg.event.extendedProps.count;
     const toDate = arg.event.end;
@@ -230,18 +235,33 @@ const MonthlyCalendar = ({ hideRight }) => {
     searchParams.set("slotId", arg.event.extendedProps.slotId);
     searchParams.set("view", getCurrentViewType());
     searchParams.set("count", count);
-    history.replace({ search: searchParams.toString() });
+    setFromDate(fromDate.getTime());
+    setToDate(toDate.getTime());
+    setSlot(arg.event.extendedProps.slot);
+    setSlotId(arg.event.extendedProps.slotId);
+    setInitialView(getCurrentViewType());
+    setCount(count);
+    if (!hideRight) history.replace({ search: searchParams.toString() });
   };
 
   const closeModal = () => {
-    const searchParams = new URLSearchParams(search);
-    searchParams.delete("from-date");
-    searchParams.delete("to-date");
-    searchParams.delete("slot");
-    searchParams.delete("slotId");
-    searchParams.delete("view");
-    searchParams.delete("count");
-    history.replace({ search: searchParams.toString() });
+    if (!hideRight) {
+      const searchParams = new URLSearchParams(search);
+      searchParams.delete("from-date");
+      searchParams.delete("to-date");
+      searchParams.delete("slot");
+      searchParams.delete("slotId");
+      searchParams.delete("view");
+      searchParams.delete("count");
+      history.replace({ search: searchParams.toString() });
+    } else {
+      setFromDate(null);
+      setToDate(null);
+      setSlot(null);
+      setSlotId(null);
+      setInitialView(initial);
+      setCount(0);
+    }
   };
 
   const onSubmit = () => {
