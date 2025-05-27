@@ -3019,7 +3019,6 @@ export const updateCaseDetails = async ({
                 }
               })
             );
-            debugger;
             let updatedPipDetails = data?.data?.multipleAdvocatesAndPip;
             updatedPipDetails.pipAffidavitFileUpload = pipAffidavitDocumentData?.pipAffidavitFileUpload;
 
