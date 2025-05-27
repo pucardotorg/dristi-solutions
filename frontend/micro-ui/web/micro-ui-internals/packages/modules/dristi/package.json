@@ -42,7 +42,8 @@
     "react-simple-maps": "2.0.0",
     "react-time-picker": "4.2.1",
     "react-tooltip": "4.1.2",
-    "recharts": "^2.0.9"
+    "recharts": "^2.0.9",
+    "sanitize-html": "^2.17.0"
   },
   "author": "JaganKumar <jagan.kumar@egov.org.in>",
   "license": "MIT"
