@@ -1,6 +1,7 @@
 package digit.service;
 
 import digit.config.Configuration;
+import digit.util.HrmsUtil;
 import digit.web.models.CaseDiary;
 import digit.web.models.CaseDiaryGenerateRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,9 @@ public class GenerateDiaryService {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private HrmsUtil hrmsUtil;
+
     private static final String TIME_ZONE = "Asia/Kolkata";
 
     // This runs everyday at 11:59 PM
@@ -44,7 +48,7 @@ public class GenerateDiaryService {
             CaseDiary diary = new CaseDiary();
             diary.setDiaryDate(generateDiaryDate());
             diary.setDiaryType(DIARY_TYPE);
-            diary.setCourtId(configuration.getCourtId());
+            diary.setCourtId(hrmsUtil.getCourtId(requestInfo));
             diary.setTenantId(configuration.getTenantId());
 
             generateRequest.setDiary(diary);

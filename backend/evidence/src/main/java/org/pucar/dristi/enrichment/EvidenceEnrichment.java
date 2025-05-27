@@ -1,13 +1,14 @@
 package org.pucar.dristi.enrichment;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.IdgenUtil;
-import org.pucar.dristi.web.models.Artifact;
-import org.pucar.dristi.web.models.Comment;
-import org.pucar.dristi.web.models.EvidenceRequest;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -23,11 +24,13 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 public class EvidenceEnrichment {
     private final IdgenUtil idgenUtil;
     private Configuration configuration;
+    private final CaseUtil caseUtil;
 
     @Autowired
-    public EvidenceEnrichment(IdgenUtil idgenUtil,Configuration configuration) {
+    public EvidenceEnrichment(IdgenUtil idgenUtil, Configuration configuration, CaseUtil caseUtil) {
         this.idgenUtil = idgenUtil;
         this.configuration = configuration;
+        this.caseUtil = caseUtil;
     }
 
     public void enrichEvidenceRegistration(EvidenceRequest evidenceRequest) {
@@ -57,11 +60,12 @@ public class EvidenceEnrichment {
 
             evidenceRequest.getArtifact().setAuditdetails(auditDetails);
             evidenceRequest.getArtifact().setId(UUID.randomUUID());
-            evidenceRequest.getArtifact().setCourtId(configuration.getCourtId());
+
             for (Comment comment : evidenceRequest.getArtifact().getComments()) {
                 comment.setId(UUID.randomUUID());
             }
 
+            evidenceRequest.getArtifact().setCourtId(getCourtId(evidenceRequest));
             evidenceRequest.getArtifact().setIsActive(true);
             evidenceRequest.getArtifact().setCreatedDate(System.currentTimeMillis());
 
@@ -77,6 +81,32 @@ public class EvidenceEnrichment {
             log.error("Error enriching evidence application: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in evidence enrichment service: " + e.toString());
         }
+    }
+
+    private String getCourtId(EvidenceRequest evidenceRequest) {
+        CaseSearchRequest caseSearchRequest = createCaseSearchRequest(
+                evidenceRequest.getRequestInfo(), evidenceRequest.getArtifact().getFilingNumber());
+
+        JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+
+        if (caseDetails == null || caseDetails.isEmpty()) {
+            throw new CustomException("CASE_NOT_FOUND", "Case not found for the filing number: " + evidenceRequest.getArtifact().getFilingNumber());
+        }
+
+        JsonNode courtIdNode = caseDetails.get(0).get("courtId");
+        if (courtIdNode == null || courtIdNode.isNull()) {
+            throw new CustomException("COURT_ID_NOT_FOUND", "Court ID not found in case details");
+        }
+
+        return courtIdNode.textValue();
+    }
+
+    private CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String fillingNUmber) {
+        CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+        caseSearchRequest.setRequestInfo(requestInfo);
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(fillingNUmber).defaultFields(false).build();
+        caseSearchRequest.addCriteriaItem(caseCriteria);
+        return caseSearchRequest;
     }
 
     public void enrichEvidenceNumber(EvidenceRequest evidenceRequest) {

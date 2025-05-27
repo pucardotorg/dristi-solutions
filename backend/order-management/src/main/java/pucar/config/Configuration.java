@@ -136,6 +136,8 @@ public class Configuration {
     @Value("${dristi.adiary.create.bulk}")
     private String aDiaryCreateBulkEndPoint;
 
+    @Value("${court.id}")
+    private String courtId;
 
     // Inbox Config
     @Value("${dristi.inbox.host}")
@@ -177,5 +179,12 @@ public class Configuration {
     // zone id
     @Value("${app.zone.id}")
     private String zoneId;
+
+    //HRMS
+    @Value("${egov.hrms.host}")
+    private String hrmsHost;
+
+    @Value("${egov.hrms.search.endpoint}")
+    private String hrmsEndPoint;
 
 }

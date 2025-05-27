@@ -1,9 +1,8 @@
 package org.pucar.dristi.enrichment;
 
 
-import lombok.extern.slf4j.Slf4j;
 import com.fasterxml.jackson.databind.JsonNode;
-
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
@@ -14,6 +13,7 @@ import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.CaseUtil;
+import org.pucar.dristi.util.HrmsUtil;
 import org.pucar.dristi.util.EtreasuryUtil;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.web.models.*;
@@ -35,15 +35,17 @@ public class CaseRegistrationEnrichment {
     private IdgenUtil idgenUtil;
     private CaseUtil caseUtil;
     private Configuration config;
+    private HrmsUtil hrmsUtil;
     private final EtreasuryUtil etreasuryUtil;
 
     @Autowired
-    public CaseRegistrationEnrichment(IndividualService individualService, AdvocateUtil advocateUtil, IdgenUtil idgenUtil, CaseUtil caseUtil, Configuration config, EtreasuryUtil etreasuryUtil) {
+    public CaseRegistrationEnrichment(IndividualService individualService, AdvocateUtil advocateUtil, IdgenUtil idgenUtil, CaseUtil caseUtil, Configuration config, EtreasuryUtil etreasuryUtil, HrmsUtil hrmsUtil) {
         this.individualService = individualService;
         this.advocateUtil = advocateUtil;
         this.idgenUtil = idgenUtil;
         this.caseUtil = caseUtil;
         this.config = config;
+        this.hrmsUtil = hrmsUtil;
         this.etreasuryUtil = etreasuryUtil;
     }
 
@@ -180,7 +182,7 @@ public class CaseRegistrationEnrichment {
 
             courtCase.setId(UUID.randomUUID());
             enrichCaseRegistrationUponCreateAndUpdate(courtCase, auditDetails);
-            courtCase.setCourtId(config.getCourtId());
+
             courtCase.setFilingNumber(courtCaseRegistrationFillingNumberIdList.get(0));
 
 
@@ -188,6 +190,12 @@ public class CaseRegistrationEnrichment {
             log.error("Error enriching case application :: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, e.getMessage());
         }
+    }
+
+    private String getCourtId(RequestInfo requestInfo) {
+
+        return hrmsUtil.getCourtId(requestInfo);
+
     }
 
     private void enrichCaseRegistrationUponCreateAndUpdate(CourtCase courtCase, AuditDetails auditDetails) {
@@ -404,7 +412,8 @@ public class CaseRegistrationEnrichment {
         // TO DO- Need to enhance this after HRMS integration
         if (isJudge || isBenchClerk) {
             for (CaseCriteria element : searchRequest.getCriteria()) {
-                element.setJudgeId(JUDGE_ID);
+                String courtId = getCourtId(searchRequest.getRequestInfo());
+                element.setCourtId(courtId);
             }
 
         }
@@ -450,13 +459,13 @@ public class CaseRegistrationEnrichment {
         List<Role> roles = userInfo.getRoles();
 
         switch (type.toLowerCase()) {
-            case "employee" -> enrichEmployeeUserId(roles, caseSearchRequest.getCriteria());
+            case "employee" -> enrichEmployeeUserId(roles, caseSearchRequest.getCriteria(), requestInfo);
             case "citizen" -> enrichCitizenUserId(roles, caseSearchRequest.getCriteria(),requestInfo);
             default -> throw new IllegalArgumentException("Unknown user type: " + type);
         }
     }
 
-    private void enrichEmployeeUserId(List<Role> roles, CaseSearchCriteriaV2 criteria){
+    private void enrichEmployeeUserId(List<Role> roles, CaseSearchCriteriaV2 criteria, RequestInfo requestInfo) {
 
         boolean isJudge = roles.stream()
                 .anyMatch(role -> JUDGE_ROLE.equals(role.getCode()));
@@ -466,7 +475,8 @@ public class CaseRegistrationEnrichment {
 
         // TO DO- Need to enhance this after HRMS integration
         if (isJudge || isBenchClerk) {
-            criteria.setJudgeId(JUDGE_ID);
+            String courtId = getCourtId(requestInfo);
+            criteria.setCourtId(courtId);
         }
 
     }
@@ -502,13 +512,13 @@ public class CaseRegistrationEnrichment {
         List<Role> roles = userInfo.getRoles();
 
         switch (type.toLowerCase()) {
-            case "employee" -> enrichEmployeeUserId(roles, caseListRequest.getCriteria());
+            case "employee" -> enrichEmployeeUserId(roles, caseListRequest.getCriteria(), requestInfo);
             case "citizen" -> enrichCitizenUserId(roles, caseListRequest.getCriteria(),requestInfo);
             default -> throw new IllegalArgumentException("Unknown user type: " + type);
         }
     }
 
-    private void enrichEmployeeUserId(List<Role> roles, CaseSummaryListCriteria caseSummaryListCriteria){
+    private void enrichEmployeeUserId(List<Role> roles, CaseSummaryListCriteria caseSummaryListCriteria, RequestInfo requestInfo) {
 
         boolean isJudge = roles.stream()
                 .anyMatch(role -> JUDGE_ROLE.equals(role.getCode()));
@@ -518,7 +528,8 @@ public class CaseRegistrationEnrichment {
 
         // TO DO- Need to enhance this after HRMS integration
         if (isJudge || isBenchClerk) {
-            caseSummaryListCriteria.setJudgeId(JUDGE_ID);
+            String courtId = getCourtId(requestInfo);
+            caseSummaryListCriteria.setCourtId(courtId);
         }
 
     }
