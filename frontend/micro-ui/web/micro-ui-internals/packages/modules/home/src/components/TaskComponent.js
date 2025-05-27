@@ -16,8 +16,6 @@ import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { updateCaseDetails } from "../../../cases/src/utils/joinCaseUtils";
 import AdvocateReplacementComponent from "./AdvocateReplacementComponent";
-import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
-import useSearchOrdersNotificationService from "@egovernments/digit-ui-module-orders/src/hooks/orders/useSearchOrdersNotificationService";
 
 export const CaseWorkflowAction = {
   SAVE_DRAFT: "SAVE_DRAFT",
@@ -47,6 +45,7 @@ const TasksComponent = ({
   const history = useHistory();
   const { t } = useTranslation();
   const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles?.map((role) => role?.code) || [], []);
+  const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
   const isCourtRoomManager = roles.includes("COURT_ROOM_MANAGER");
   const taskTypeCode = useMemo(() => taskType?.code, [taskType]);
   const [searchCaseLoading, setSearchCaseLoading] = useState(false);
@@ -59,6 +58,7 @@ const TasksComponent = ({
   const [responsePendingTask, setResponsePendingTask] = useState({});
   const [responseDoc, setResponseDoc] = useState({});
   const [isResponseApiCalled, setIsResponseApiCalled] = useState(false);
+  const courtId = localStorage.getItem("courtId");
   const [{ joinCaseConfirmModal, joinCasePaymentModal, data }, setPendingTaskActionModals] = useState({
     joinCaseConfirmModal: false,
     joinCasePaymentModal: false,
@@ -87,6 +87,7 @@ const TasksComponent = ({
           ...(!isLitigant && { assignedRole: [...roles] }),
           ...(inCase && { filingNumber: filingNumber }),
           screenType: isDiary ? ["Adiary"] : isApplicationCompositeOrder ? ["applicationCompositeOrder"] : ["home", "applicationCompositeOrder"],
+          ...(!isLitigant && courtId && !isScrutiny && { courtId }),
         },
         limit: 10000,
         offset: 0,
@@ -134,14 +135,14 @@ const TasksComponent = ({
           filingNumber,
           tenantId,
           applicationNumber,
-          courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52'
+          ...(courtId && { courtId }),
         },
         tenantId,
       });
       setSearchCaseLoading(false);
       return applicationData?.applicationList?.[0] || {};
     },
-    [filingNumber, tenantId]
+    [filingNumber, tenantId, courtId]
   );
 
   const getOrderDetail = useCallback(
@@ -153,14 +154,14 @@ const TasksComponent = ({
           filingNumber,
           tenantId,
           orderNumber,
-          courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52'
+          ...(courtId && { courtId }),
         },
         tenantId,
       });
       setSearchCaseLoading(false);
       return orderData?.list?.[0] || {};
     },
-    [filingNumber, tenantId]
+    [courtId, filingNumber, tenantId]
   );
 
   const handleReviewOrder = useCallback(
@@ -414,6 +415,7 @@ const TasksComponent = ({
           criteria: [
             {
               filingNumber: pendingTask?.filingNumber,
+              ...(pendingTask?.courtId && { courtId: pendingTask?.courtId }),
             },
           ],
           tenantId,

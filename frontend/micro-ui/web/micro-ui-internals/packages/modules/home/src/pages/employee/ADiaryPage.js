@@ -165,7 +165,7 @@ const ADiaryPage = ({ path }) => {
     }
     setStepper(parseInt(stepper) - 1);
   };
-  const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+  const courtId = localStorage.getItem("courtId");
 
   const onSubmit = async () => {
     if (parseInt(stepper) === 0) {
@@ -176,7 +176,7 @@ const ADiaryPage = ({ path }) => {
             tenantId: tenantId,
             diaryDate: entryDate,
             diaryType: "ADiary",
-            judgeId: judgeId,
+            courtId: courtId,
           },
         });
         setGenerateAdiaryLoader(false);
@@ -233,7 +233,7 @@ const ADiaryPage = ({ path }) => {
         const diary = await HomeService.getADiarySearch({
           criteria: {
             tenantId: tenantId,
-            judgeId: judgeId,
+            courtId: courtId,
             date: entryDate,
           },
         });
@@ -257,17 +257,25 @@ const ADiaryPage = ({ path }) => {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const newFilestore = signedDocumentUploadID || localStorageID;
       fileStoreIds.delete(newFilestore);
+      if (ADiarypdf) {
+        fileStoreIds.delete(ADiarypdf);
+      }
       await HomeService.updateADiaryPDF({
         diary: {
           tenantId: tenantId,
           diaryDate: entryDate,
           diaryType: "ADiary",
-          judgeId: judgeId,
+          courtId: courtId,
           documents: [
             {
               tenantId: tenantId,
               fileStoreId: signedDocumentUploadID || localStorageID,
               isActive: true,
+            },
+            {
+              tenantId: tenantId,
+              fileStoreId: ADiarypdf,
+              isActive: false,
             },
             ...Array.from(fileStoreIds).map((fileStoreId) => ({
               fileStoreId: fileStoreId,
@@ -296,7 +304,7 @@ const ADiaryPage = ({ path }) => {
     {
       criteria: {
         tenantId: tenantId,
-        judgeId: judgeId,
+        courtId: courtId,
         date: entryDate,
       },
       pagination: {

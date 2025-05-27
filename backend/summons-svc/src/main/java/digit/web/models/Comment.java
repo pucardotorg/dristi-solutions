@@ -23,43 +23,42 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 public class Comment {
-	@JsonProperty("id")
+    @JsonProperty("id")
 
-	@Valid
-	private UUID id = null;
+    @Valid
+    private UUID id = null;
 
-	@JsonProperty("tenantId")
-	@NotNull
+    @JsonProperty("tenantId")
+    @NotNull
 
-	private String tenantId = null;
+    private String tenantId = null;
 
-	@JsonProperty("artifactId")
-	@NotNull
+    @JsonProperty("artifactId")
+    @NotNull
 
-	private String artifactId = null;
+    private String artifactId = null;
 
-	@JsonProperty("individualId")
-	@NotNull
+    @JsonProperty("individualId")
+    @NotNull
 
-	private String individualId = null;
+    private String individualId = null;
 
-	@JsonProperty("comment")
-	@NotNull
+    @JsonProperty("comment")
+    @NotNull
 
-	@Size(min = 2, max = 2048)
-	private String comment = null;
+    @Size(min = 2, max = 2048)
+    private String comment = null;
 
-	@JsonProperty("isActive")
+    @JsonProperty("isActive")
 
-	private Boolean isActive = true;
+    private Boolean isActive = true;
 
-	@JsonProperty("additionalDetails")
+    @JsonProperty("additionalDetails")
 
-	private Object additionalDetails = null;
+    private Object additionalDetails = null;
 
-	@JsonProperty("auditdetails")
+    @JsonProperty("auditdetails")
 
-	@Valid
-	private AuditDetails auditdetails = null;
-
+    @Valid
+    private AuditDetails auditdetails = null;
 }

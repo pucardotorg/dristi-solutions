@@ -1,3 +1,10 @@
+const defaultSearchValues = {
+  caseTitleFilingNumber: "",
+  sortOrder: "DESC",
+  caseType: "",
+  paymentType: "",
+};
+
 export const paymentTabInboxConfig = {
   tenantId: "pg",
   moduleName: "paymentInboxConfig",
@@ -34,10 +41,7 @@ export const paymentTabInboxConfig = {
             primaryLabel: "ES_COMMON_SEARCH",
             secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
             minReqFields: 0,
-            defaultValues: {
-              caseTitleFilingNumber: "",
-              sortOrder: "DESC",
-            },
+            defaultValues: defaultSearchValues,
             fields: [
               {
                 type: "component",

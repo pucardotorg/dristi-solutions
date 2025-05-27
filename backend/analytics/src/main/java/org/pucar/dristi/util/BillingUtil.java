@@ -14,8 +14,11 @@ import org.egov.tracer.model.ServiceCallException;
 import org.json.JSONObject;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
-import org.pucar.dristi.web.models.CaseCriteria;
+import org.pucar.dristi.util.CaseUtil;
+import org.pucar.dristi.util.IndexerUtils;
+import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.web.models.CaseSearchRequest;
+import org.pucar.dristi.web.models.CaseCriteria;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
+import static org.pucar.dristi.config.ServiceConstants.CASE_COURTCASENUMBER_PATH;
 
 @Slf4j
 @Component

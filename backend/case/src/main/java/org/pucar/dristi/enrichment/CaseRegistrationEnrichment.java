@@ -9,6 +9,7 @@ import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.CaseUtil;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
