@@ -98,6 +98,7 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
       criteria: {
         filingNumber: filingNumber,
         tenantId: tenantId,
+        ...(caseData?.case?.courtId && { courtId: caseData?.case?.courtId }),
       },
     },
     {},
@@ -115,6 +116,7 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
           filingNumber: filingNumber,
           isCompleted: false,
           assignedTo: userInfo?.uuid,
+          ...(caseData?.case?.courtId && { courtId: caseData?.case?.courtId }),
         },
         limit: 10000,
         offset: 0,
@@ -134,6 +136,7 @@ const SubmissionReview = ({ caseData, setUpdateCounter, openSubmissionsViewModal
           filingNumber: filingNumber,
           isCompleted: false,
           assignedTo: userInfo?.uuid,
+          ...(caseData?.case?.courtId && { courtId: caseData?.case?.courtId }),
         },
         limit: 10000,
         offset: 0,

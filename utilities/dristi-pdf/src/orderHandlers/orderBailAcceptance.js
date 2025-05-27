@@ -58,7 +58,7 @@ const orderBailAcceptance = async (
 
     const resCase = await handleApiCall(
       res,
-      () => search_case(cnrNumber, tenantId, requestInfo),
+      () => search_case(cnrNumber, tenantId, requestInfo, order?.courtId),
       "Failed to query case service"
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
@@ -75,7 +75,8 @@ const orderBailAcceptance = async (
         search_application(
           tenantId,
           order?.additionalDetails?.formdata?.refApplicationId,
-          requestInfo
+          requestInfo,
+          order?.courtId
         ),
       "Failed to query application service"
     );
