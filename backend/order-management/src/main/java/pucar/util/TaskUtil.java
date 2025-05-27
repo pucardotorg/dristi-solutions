@@ -235,7 +235,7 @@ public class TaskUtil {
         ComplainantDetails complainantDetails = new ComplainantDetails();
 
         String complainantName = getComplainantNameFromCase(courtCase);
-        String individualId ;
+        String individualId;
         Optional<Party> primaryComplainant = courtCase.getLitigants().stream().filter(item -> COMPLAINANT_PRIMARY.equalsIgnoreCase(item.getPartyType())).findFirst(); // TODO: check
         if (primaryComplainant.isPresent()) {
             individualId = primaryComplainant.get().getIndividualId();
@@ -450,7 +450,14 @@ public class TaskUtil {
                 List<Address> addresses = new ArrayList<>();
                 for (Object addr : addressList) {
                     if (addr instanceof Map) {
-                        addresses.add(objectMapper.convertValue(addr, Address.class));
+
+                        String innerAddress = jsonUtil.getNestedValue(addr, Arrays.asList("address"), String.class);
+                        if (innerAddress != null) {
+                            Address address = objectMapper.convertValue(innerAddress, Address.class);
+                            addresses.add(address);
+                        } else {
+                            addresses.add(objectMapper.convertValue(addr, Address.class));
+                        }
                     } else if (addr instanceof Address) {
                         addresses.add((Address) addr);
                     }
