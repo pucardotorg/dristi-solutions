@@ -206,13 +206,6 @@ public class Configuration {
 	@Value("${elastic.pending.task.search}")
 	private String pendingTaskSearchPath;
 
-	//HRMS
-	@Value("${egov.hrms.host}")
-	private String hrmsHost;
-
-	@Value("${egov.hrms.search.endpoint}")
-	private String hrmsEndPoint;
-
 	// User Config
 	@Value("${egov.user.host}")
 	private String userHost;
