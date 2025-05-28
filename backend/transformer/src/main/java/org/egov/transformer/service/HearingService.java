@@ -5,16 +5,16 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.models.*;
 import org.egov.transformer.producer.TransformerProducer;
+import org.egov.transformer.util.JsonUtil;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
-
-import static org.egov.transformer.config.ServiceConstants.*;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -23,12 +23,14 @@ public class HearingService {
     private final TransformerProducer producer;
     private final CaseService caseService;
     private final TransformerProperties properties;
+    private final JsonUtil jsonUtil;
 
     @Autowired
-    public HearingService(TransformerProducer producer, CaseService caseService, TransformerProperties properties) {
+    public HearingService(TransformerProducer producer, CaseService caseService, TransformerProperties properties, JsonUtil jsonUtil) {
         this.producer = producer;
         this.caseService = caseService;
         this.properties = properties;
+        this.jsonUtil = jsonUtil;
     }
 
     public void addCaseDetailsToHearing(Hearing hearing, String topic) throws IOException {
@@ -57,6 +59,11 @@ public class HearingService {
 
     @NotNull
     private OpenHearing getOpenHearing(Hearing hearing, CourtCase courtCase) {
+
+        List<AdvocateMapping> representatives = courtCase.getRepresentatives();
+
+        Advocate advocate = getAdvocates(representatives, hearing);
+
         OpenHearing openHearing = new OpenHearing();
         openHearing.setHearingUuid(hearing.getId().toString());
         openHearing.setHearingNumber(hearing.getHearingId());
@@ -71,7 +78,59 @@ public class HearingService {
         openHearing.setFromDate(hearing.getStartTime());
         openHearing.setToDate(hearing.getEndTime());
         openHearing.setCourtId(courtCase.getCourtId());
+        openHearing.setCaseFilingDate(courtCase.getFilingDate());
+        openHearing.setAdvocate(advocate);
+        openHearing.setHearingType(hearing.getHearingType());
+        openHearing.setSearchableFields(getSearchableFields(advocate, hearing, courtCase));
+
         return openHearing;
+    }
+
+    private List<String> getSearchableFields(Advocate advocate, Hearing hearing, CourtCase courtCase) {
+
+        List<String> searchableFields = new ArrayList<>();
+        searchableFields.addAll(advocate.getComplainant());
+        searchableFields.addAll(advocate.getAccused());
+        searchableFields.add(courtCase.getCaseTitle());
+        searchableFields.addAll(hearing.getFilingNumber());
+        if(hearing.getCmpNumber() != null) searchableFields.add(hearing.getCmpNumber());
+        if(hearing.getCourtCaseNumber() != null) searchableFields.add(hearing.getCourtCaseNumber());
+        return searchableFields;
+
+    }
+
+    private Advocate getAdvocates(List<AdvocateMapping> representatives, Hearing hearing) {
+
+        List<String> complainantNames = new ArrayList<>();
+        List<String> accusedNames = new ArrayList<>();
+
+        Advocate advocate = Advocate.builder().build();
+        advocate.setComplainant(complainantNames);
+        advocate.setAccused(accusedNames);
+
+        if (representatives != null) {
+            for (AdvocateMapping representative : representatives) {
+                if (representative != null && representative.getAdditionalDetails() != null) {
+                    Object additionalDetails = representative.getAdditionalDetails();
+                    String advocateName = jsonUtil.getNestedValue(additionalDetails, List.of("advocateName"), String.class);
+                    if (advocateName != null && !advocateName.isEmpty()) {
+                        List<Party> representingList = Optional.ofNullable(representative.getRepresenting())
+                                .orElse(Collections.emptyList());
+                        if (!representingList.isEmpty()) {
+                            Party first = representingList.get(0);
+                            if (first.getPartyType() != null && first.getPartyType().contains("complainant")) {
+                                complainantNames.add(advocateName);
+                            } else {
+                                accusedNames.add(advocateName);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return advocate;
+
     }
 
     private String enrichCaseNumber(Hearing hearing, CourtCase courtCase) {
