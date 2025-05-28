@@ -306,6 +306,7 @@ public class IndexerUtils {
 
     private String getCourtId(String filingNumber, RequestInfo request) {
         try {
+            request.getUserInfo().setType("EMPLOYEE");
             org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(request, filingNumber);
             JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
             return caseDetails.get(0).path("courtId").textValue();
