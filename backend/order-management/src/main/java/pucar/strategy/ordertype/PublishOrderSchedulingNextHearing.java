@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pucar.config.Configuration;
 import pucar.strategy.OrderUpdateStrategy;
+import pucar.strategy.hearing.HearingUpdateBasedOnStatus;
 import pucar.util.CaseUtil;
 import pucar.util.HearingUtil;
 import pucar.web.models.Order;
@@ -14,8 +15,7 @@ import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.courtCase.CaseCriteria;
 import pucar.web.models.courtCase.CaseSearchRequest;
 import pucar.web.models.courtCase.CourtCase;
-import pucar.web.models.hearing.HearingRequest;
-import pucar.web.models.hearing.HearingResponse;
+import pucar.web.models.hearing.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,11 +31,14 @@ public class PublishOrderSchedulingNextHearing implements OrderUpdateStrategy {
     private final Configuration configuration;
     private final CaseUtil caseUtil;
 
+    private final HearingUpdateBasedOnStatus hearingUpdateBasedOnStatus;
+
     @Autowired
-    public PublishOrderSchedulingNextHearing(HearingUtil hearingUtil, Configuration configuration, CaseUtil caseUtil) {
+    public PublishOrderSchedulingNextHearing(HearingUtil hearingUtil, Configuration configuration, CaseUtil caseUtil, HearingUpdateBasedOnStatus hearingUpdateBasedOnStatus) {
         this.hearingUtil = hearingUtil;
         this.configuration = configuration;
         this.caseUtil = caseUtil;
+        this.hearingUpdateBasedOnStatus = hearingUpdateBasedOnStatus;
     }
 
     @Override
@@ -70,12 +73,28 @@ public class PublishOrderSchedulingNextHearing implements OrderUpdateStrategy {
 
         HearingResponse newHearing = hearingUtil.createOrUpdateHearing(request, createHearingURI);
 
+        updateHearingSummary(orderRequest);
+
         order.setHearingNumber(newHearing.getHearing().getHearingId());
         log.info("hearing number:{}", newHearing.getHearing().getHearingId());
 
         log.info("pre processing, result=SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
 
         return null;
+    }
+
+    private void updateHearingSummary(OrderRequest orderRequest) {
+
+        Order order = orderRequest.getOrder();
+        RequestInfo requestInfo = orderRequest.getRequestInfo();
+        String hearingNumber = order.getHearingNumber();
+
+        List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
+                .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
+        Hearing hearing = hearings.get(0);
+
+        hearingUpdateBasedOnStatus.updateHearingBasedOnStatus(hearing, orderRequest);
+
     }
 
     @Override
