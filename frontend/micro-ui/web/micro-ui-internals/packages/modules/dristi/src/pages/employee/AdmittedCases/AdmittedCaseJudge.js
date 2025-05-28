@@ -46,6 +46,9 @@ import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearc
 import Breadcrumb from "../../../components/BreadCrumb";
 import Button from "../../../components/Button";
 import MonthlyCalendar from "../../../../../hearings/src/pages/employee/CalendarView";
+import OrderDrawer from "./OrderDrawer";
+import WitnessDrawer from "./WitnessDrawer";
+import AddParty from "../../../../../hearings/src/pages/employee/AddParty";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -171,6 +174,9 @@ const AdmittedCaseJudge = () => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 
   const [showCalendarModal, setShowCalendarModal] = useState(false);
+  const [showEndHearingModal, setShowEndHearingModal] = useState(false);
+  const [showWitnessModal, setShowWitnessModal] = useState(false);
+  const [addPartyModal, setAddPartyModal] = useState(false);
   const [show, setShow] = useState(false);
   const [openAdmitCaseModal, setOpenAdmitCaseModal] = useState(true);
   const [documentSubmission, setDocumentSubmission] = useState();
@@ -1962,6 +1968,11 @@ const AdmittedCaseJudge = () => {
     [hearingDetails?.HearingList]
   );
 
+  const currentActiveHearing = useMemo(() => hearingDetails?.HearingList?.find((list) => list?.hearingId === currentHearingId), [
+    hearingDetails?.HearingList,
+    currentHearingId,
+  ]);
+
   const currentHearingStatus = useMemo(
     () =>
       hearingDetails?.HearingList?.length === 1 &&
@@ -2289,19 +2300,15 @@ const AdmittedCaseJudge = () => {
       if (option.value === "DOWNLOAD_CASE_FILE") {
         handleDownloadPDF();
       } else if (option.value === "NEXT_HEARING") {
-        console.log("NEXT_HEARING");
-        // openHearingModule();
       } else if (option.value === "VIEW_CALENDAR") {
-        console.log("VIEW_CALENDAR");
         setShowCalendarModal(true);
       } else if (option.value === "GENERATE_ORDER") {
-        console.log("GENERATE_ORDER");
+        setShowEndHearingModal(true);
       } else if (option.value === "END_HEARING") {
-        console.log("END_HEARING");
+        setShowEndHearingModal(true);
       } else if (option.value === "TAKE_WITNESS_DEPOSITION") {
-        console.log("TAKE_WITNESS_DEPOSITION");
+        setShowWitnessModal(true);
       } else if (option.value === "SUBMIT_DOCUMENTS") {
-        console.log("SUBMIT_DOCUMENTS");
       }
     },
     [handleDownloadPDF]
@@ -3306,6 +3313,52 @@ const AdmittedCaseJudge = () => {
             <MonthlyCalendar hideRight={true} />
           </div>
         </Modal>
+      )}
+      <OrderDrawer
+        isOpen={showEndHearingModal}
+        onClose={() => setShowEndHearingModal(false)}
+        onSubmit={(action) => {
+          if (action === "end-hearing") {
+            // Handle end hearing action
+            console.log("End hearing and schedule next");
+          } else if (action === "view-cause-list") {
+            // Handle view cause list action
+            console.log("View cause list");
+          }
+          setShowEndHearingModal(false);
+        }}
+        attendees={currentActiveHearing?.attendees}
+        caseDetails={caseDetails}
+      />
+      <WitnessDrawer
+        isOpen={showWitnessModal}
+        onClose={() => setShowWitnessModal(false)}
+        onSubmit={(action) => {
+          if (action === "end-hearing") {
+            // Handle end hearing action
+            console.log("End hearing and schedule next");
+          } else if (action === "view-cause-list") {
+            // Handle view cause list action
+            console.log("View cause list");
+          }
+          setShowWitnessModal(false);
+        }}
+        attendees={currentActiveHearing?.attendees}
+        caseDetails={caseDetails}
+        hearing={currentActiveHearing}
+        setAddPartyModal={setAddPartyModal}
+      />
+      {addPartyModal && (
+        <AddParty
+          onCancel={() => setAddPartyModal(false)}
+          onAddSuccess={() => {
+            // refetchCase();
+          }}
+          caseData={caseDetails}
+          tenantId={"kl"}
+          hearing={currentActiveHearing}
+          refetchHearing={() => {}}
+        ></AddParty>
       )}
     </div>
   );
