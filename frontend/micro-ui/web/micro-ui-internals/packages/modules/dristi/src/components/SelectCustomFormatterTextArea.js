@@ -7,7 +7,7 @@ import { EditorState, convertToRaw, ContentState } from "draft-js";
 import draftToHtml from "draftjs-to-html";
 import htmlToDraft from "html-to-draftjs";
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
-import sanitizeHtml from "sanitize-html";
+import DOMPurify from 'dompurify';
 
 const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, errors }) => {
   const inputs = useMemo(
@@ -24,20 +24,18 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
   );
 
   const defaultSanitizeOptions = {
-    allowedTags: [
+    ALLOWED_TAGS: [
       "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "p", "a", "ul", "ol", "nl", "li", "b", "i", "strong",
       "em", "strike", "code", "hr", "br", "div", "table", "thead", "caption", "tbody", "tr", "th", "td",
       "pre", "span", "img"
     ],
-    allowedAttributes: {
+    ALLOWED_ATTR: {
       a: ["href", "name", "target"],
       img: ["src", "alt", "title", "width", "height"],
       p: ["class", "style"],
       div: ["class", "style"],
       span: ["class", "style"]
-    },
-    stripIgnoreTag: true,
-    stripIgnoreAttribute: true,
+    }
   };
 
   const [editorState, setEditorState] = useState(() => EditorState.createEmpty());
@@ -48,7 +46,7 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
 
   useEffect(() => {
     const rawHtml = formData?.[configKey]?.[inputName] || "";
-    const sanitizedIncomingHtml = sanitizeHtml(rawHtml, defaultSanitizeOptions);
+    const sanitizedIncomingHtml =  DOMPurify.sanitize(rawHtml, defaultSanitizeOptions);
 
     const currentHtml = draftToHtml(convertToRaw(editorState.getCurrentContent()));
     const normalize = (str) => str.replace(/\s/g, "");
@@ -115,7 +113,7 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
     setEditorState(state);
     const rawContent = convertToRaw(state.getCurrentContent());
     const html = draftToHtml(rawContent);
-    const sanitizedHtml = sanitizeHtml(html, defaultSanitizeOptions);
+    const sanitizedHtml = DOMPurify.sanitize(html, defaultSanitizeOptions);
     setValue(sanitizedHtml, input?.name);
   };
 
