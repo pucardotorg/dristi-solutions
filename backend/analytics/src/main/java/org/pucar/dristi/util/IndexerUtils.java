@@ -672,9 +672,11 @@ public class IndexerUtils {
 
         Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
 
+        String applicationType = JsonPath.read(applicationObject.toString(), APPLICATION_TYPE_PATH);
         String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
         String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
         String cnrNumber = JsonPath.read(caseObject.toString(), CNR_NUMBER_PATH);
+        caseDetails.put("referenceEntityType", applicationType);
 
         caseDetails.put("cnrNumber", cnrNumber);
         caseDetails.put("filingNumber", filingNumber);
