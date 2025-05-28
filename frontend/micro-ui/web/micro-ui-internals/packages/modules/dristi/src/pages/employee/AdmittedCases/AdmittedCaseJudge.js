@@ -49,6 +49,7 @@ import MonthlyCalendar from "../../../../../hearings/src/pages/employee/Calendar
 import OrderDrawer from "./OrderDrawer";
 import WitnessDrawer from "./WitnessDrawer";
 import AddParty from "../../../../../hearings/src/pages/employee/AddParty";
+import CaseOverviewJudge from "./CaseOverviewJudge";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -161,7 +162,7 @@ const AdmittedCaseJudge = () => {
   const { pathname, search, hash } = location;
   const { path } = useRouteMatch();
   const urlParams = new URLSearchParams(location.search);
-  const { hearingId, taskOrderType, artifactNumber } = Digit.Hooks.useQueryParams();
+  const { hearingId, taskOrderType, artifactNumber, insideHearing = false } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isFSO = roles.some((role) => role.code === "FSO_ROLE");
@@ -3074,7 +3075,7 @@ const AdmittedCaseJudge = () => {
       </div>
       {tabData?.filter((tab) => tab.label === "Overview")?.[0]?.active && (
         <div className="case-overview-wrapper">
-          <CaseOverview
+          <CaseOverviewJudge
             handleDownload={handleDownload}
             handleExtensionRequest={handleExtensionRequest}
             handleSubmitDocument={handleSubmitDocument}
@@ -3088,6 +3089,9 @@ const AdmittedCaseJudge = () => {
             extensionApplications={extensionApplications}
             productionOfDocumentApplications={productionOfDocumentApplications}
             submitBailDocumentsApplications={submitBailDocumentsApplications}
+            filingNumber={filingNumber}
+            currentHearingId={currentHearingId}
+            caseDetails={caseDetails}
           />
         </div>
       )}
@@ -3159,7 +3163,8 @@ const AdmittedCaseJudge = () => {
       {toast && toastDetails && (
         <Toast error={toastDetails?.isError} label={t(toastDetails?.message)} onClose={() => setToast(false)} style={{ maxWidth: "670px" }} />
       )}
-      {showActionBar &&
+      {!insideHearing &&
+        showActionBar &&
         !isWorkFlowFetching &&
         ((currentHearingStatus === HearingWorkflowState.SCHEDULED && tertiaryAction.action) || primaryAction?.label || secondaryAction.action) && (
           <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
@@ -3193,7 +3198,7 @@ const AdmittedCaseJudge = () => {
             )}
           </ActionBar>
         )}
-      {isOpenDCA && <DocumentModal config={dcaConfirmModalConfig} />}
+      {isOpenDCA && !insideHearing && <DocumentModal config={dcaConfirmModalConfig} />}
       {showModal && (
         <AdmissionActionModal
           t={t}
@@ -3271,7 +3276,7 @@ const AdmittedCaseJudge = () => {
           caseDetails={caseDetails}
         />
       )}
-      {showVoidModal && <DocumentModal config={voidModalConfig} />}
+      {showVoidModal && !insideHearing && <DocumentModal config={voidModalConfig} />}
       {showNotificationModal && (
         <PublishedNotificationModal
           t={t}

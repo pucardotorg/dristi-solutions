@@ -41,6 +41,7 @@ const TasksComponent = ({
   isApplicationCompositeOrder = false,
   compositeOrderObj,
   pendingSignOrderList,
+  tableView = false,
 }) => {
   const JoinCasePayment = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCasePayment"), []);
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
@@ -642,7 +643,7 @@ const TasksComponent = ({
   .digit-dropdown-select-wrap .digit-dropdown-options-card span {
     height:unset !important;
   }`;
-  return (
+  return !tableView ? (
     <div className="tasks-component">
       <React.Fragment>
         <h2>{!isLitigant ? t("YOUR_TASK") : t("ALL_PENDING_TASK_TEXT")}</h2>
@@ -711,6 +712,7 @@ const TasksComponent = ({
                         setShowSubmitResponseModal={setShowSubmitResponseModal}
                         setResponsePendingTask={setResponsePendingTask}
                         setPendingTaskActionModals={setPendingTaskActionModals}
+                        tableView={true}
                       />
                     </div>
                   ) : (
@@ -768,6 +770,73 @@ const TasksComponent = ({
       {joinCaseConfirmModal && <DocumentModal config={joinCaseConfirmConfig} />}
       {joinCasePaymentModal && <DocumentModal config={joinCasePaymentConfig} />}
     </div>
-  );
+  ) : <div className="tasks-component-table-view">
+    <h1 className="heading-m">{t("PENDING_ACTIONS")}</h1>
+    {isLoading || isOptionsLoading ? (
+          <Loader />
+        ) : totalPendingTask !== undefined && totalPendingTask > 0 ? (
+          <React.Fragment>
+          {searchCaseLoading && <Loader />}
+          {!searchCaseLoading && (
+            <React.Fragment>
+              {taskIncludes?.length > 0 ? (
+                <div className="task-section">
+                  <PendingTaskAccordion
+                    pendingTasks={taskIncludesPendingTasks}
+                    allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+                    accordionHeader={"Take_Action"}
+                    t={t}
+                    isHighlighted={true}
+                    isAccordionOpen={true}
+                    isOpenInNewTab={true}
+                    setShowSubmitResponseModal={setShowSubmitResponseModal}
+                    setResponsePendingTask={setResponsePendingTask}
+                    setPendingTaskActionModals={setPendingTaskActionModals}
+                    tableView={true}
+                  />
+                </div>
+              ) : (
+                <React.Fragment>
+                  {/* <div className="task-section">
+                    <PendingTaskAccordion
+                      pendingTasks={pendingTaskDataInWeek}
+                      allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+                      accordionHeader={"COMPLETE_THIS_WEEK"}
+                      t={t}
+                      totalCount={pendingTaskDataInWeek?.length}
+                      isHighlighted={true}
+                      isAccordionOpen={true}
+                      setShowSubmitResponseModal={setShowSubmitResponseModal}
+                      setResponsePendingTask={setResponsePendingTask}
+                      setPendingTaskActionModals={setPendingTaskActionModals}
+                    />
+                  </div> */}
+                  <div className="">
+                    <PendingTaskAccordion
+                      pendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+                      allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+                      accordionHeader={"ALL_OTHER_TASKS"}
+                      t={t}
+                      totalCount={allOtherPendingTask?.length}
+                      setShowSubmitResponseModal={setShowSubmitResponseModal}
+                      setResponsePendingTask={setResponsePendingTask}
+                      setPendingTaskActionModals={setPendingTaskActionModals}
+                      tableView={true}
+                    />
+                  </div>
+                </React.Fragment>
+              )}
+            </React.Fragment>
+          )}
+        </React.Fragment>
+    ) : (
+      <div
+        style={{
+        }}
+      >
+        {!isLitigant ? t("NO_TASK_TEXT") : t("NO_PENDING_TASK_TEXT")}
+      </div>
+    )}
+  </div>;
 };
 export default React.memo(TasksComponent);
