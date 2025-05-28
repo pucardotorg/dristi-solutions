@@ -63,15 +63,6 @@ public class PendingTask {
     @NotNull
     private String filingNumber = null;
 
-    @JsonProperty("caseNumber")
-    private String caseNumber = null;
-
-    @JsonProperty("stage")
-    private String stage = null;
-
-    @JsonProperty("advocateDetails")
-    private String advocateDetails = null;
-
     @JsonProperty("actionCategory")
     private String actionCategory = null;
 
@@ -100,5 +91,8 @@ public class PendingTask {
 
     @JsonProperty("screenType")
     private String screenType = null;
+
+    @JsonProperty("courtId")
+    private String courtId = null;
 
 }

@@ -212,6 +212,8 @@ const SubmissionsCreate = ({ path }) => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
 
+  const caseCourtId = useMemo(() => caseDetails?.case?.courtId, [caseDetails]);
+
   // filtering out litigants which are part in person.
   const pipComplainants = useMemo(() => {
     return caseDetails?.litigants
@@ -276,6 +278,7 @@ const SubmissionsCreate = ({ path }) => {
         filingNumber,
         applicationNumber,
         tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
@@ -290,6 +293,7 @@ const SubmissionsCreate = ({ path }) => {
         filingNumber,
         applicationType: "DELAY_CONDONATION",
         tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
@@ -453,6 +457,7 @@ const SubmissionsCreate = ({ path }) => {
         tenantID: tenantId,
         filingNumber: filingNumber,
         hearingId: hearingId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },
@@ -508,7 +513,16 @@ const SubmissionsCreate = ({ path }) => {
   );
 
   const { data: orderData, isloading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
-    { tenantId, criteria: { filingNumber, applicationNumber: "", cnrNumber: caseDetails?.cnrNumber, orderNumber: orderNumber || orderRefNumber } },
+    {
+      tenantId,
+      criteria: {
+        filingNumber,
+        applicationNumber: "",
+        cnrNumber: caseDetails?.cnrNumber,
+        orderNumber: orderNumber || orderRefNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
+      },
+    },
     { tenantId },
     filingNumber + caseDetails?.cnrNumber,
     Boolean(filingNumber && caseDetails?.cnrNumber && (orderNumber || orderRefNumber))
@@ -531,7 +545,13 @@ const SubmissionsCreate = ({ path }) => {
   const { data: allOrdersData, isloading: isAllOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
     {
       tenantId,
-      criteria: { filingNumber, applicationNumber: "", cnrNumber: caseDetails?.cnrNumber, orderType: "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" },
+      criteria: {
+        filingNumber,
+        applicationNumber: "",
+        cnrNumber: caseDetails?.cnrNumber,
+        orderType: "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE",
+        ...(caseCourtId && { courtId: caseCourtId }),
+      },
     },
     { tenantId },
     filingNumber + caseDetails?.cnrNumber + "allOrdersData",
@@ -1457,6 +1477,7 @@ const SubmissionsCreate = ({ path }) => {
           handleBack={handleBack}
           documents={applicationDetails?.documents || []}
           setApplicationPdfFileStoreId={setApplicationPdfFileStoreId}
+          courtId={caseCourtId}
         />
       )}
       {showsignatureModal && (

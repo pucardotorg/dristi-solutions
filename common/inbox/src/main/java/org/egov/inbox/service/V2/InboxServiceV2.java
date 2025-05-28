@@ -25,6 +25,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static org.egov.inbox.util.InboxConstants.*;
 
@@ -378,52 +379,44 @@ public class InboxServiceV2 {
         hashParamsWhereverRequiredBasedOnConfiguration(moduleSearchCriteria, inboxQueryConfiguration);
 
         IndexSearchCriteria indexSearchCriteria = searchRequest.getIndexSearchCriteria();
+        ActionCategorySearchResponse response = new ActionCategorySearchResponse();
 
-        ActionCategorySearchResponse actionCategorySearchResponse = new ActionCategorySearchResponse();
+        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchReviewProcess(), inboxQueryConfiguration, response::setReviewProcessData);
+        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchScheduleHearing(), inboxQueryConfiguration, response::setScheduleHearingData);
+        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchViewApplication(),inboxQueryConfiguration, response::setViewApplicationData);
+        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRegisterCases(), inboxQueryConfiguration, response::setRegisterCasesData);
 
-        searchRequest.getIndexSearchCriteria().getModuleSearchCriteria().put("actionCategory", indexSearchCriteria.getSearchReviewProcess().getActionCategory());
-        List<Data> reviewProcessData = getDataFromSimpleSearch(searchRequest, inboxQueryConfiguration.getIndex());
-        List<Data> filteredReviewProcessData = deduplicateByFilingNumber(reviewProcessData);
-
-        indexSearchCriteria.getSearchReviewProcess().setCount(filteredReviewProcessData.size());
-        if(!indexSearchCriteria.getSearchReviewProcess().getIsOnlyCountRequired()) {
-            indexSearchCriteria.getSearchReviewProcess().setData(filteredReviewProcessData);
-        }
-        actionCategorySearchResponse.setReviewProcessData(indexSearchCriteria.getSearchReviewProcess());
-
-        searchRequest.getIndexSearchCriteria().getModuleSearchCriteria().put("actionCategory", indexSearchCriteria.getSearchScheduleHearing().getActionCategory());
-        List<Data> scheduleHearingData = getDataFromSimpleSearch(searchRequest, inboxQueryConfiguration.getIndex());
-        List<Data> filteredScheduleHearingData = deduplicateByFilingNumber(scheduleHearingData);
-
-        indexSearchCriteria.getSearchScheduleHearing().setCount(filteredScheduleHearingData.size());
-        if(!indexSearchCriteria.getSearchScheduleHearing().getIsOnlyCountRequired()) {
-            indexSearchCriteria.getSearchScheduleHearing().setData(filteredScheduleHearingData);
-        }
-        actionCategorySearchResponse.setReviewProcessData(indexSearchCriteria.getSearchScheduleHearing());
-
-        searchRequest.getIndexSearchCriteria().getModuleSearchCriteria().put("actionCategory", indexSearchCriteria.getSearchViewApplication().getActionCategory());
-        List<Data> viewApplicationData = getDataFromSimpleSearch(searchRequest, inboxQueryConfiguration.getIndex());
-        List<Data> filteredViewApplicationData = deduplicateByFilingNumber(viewApplicationData);
-
-        indexSearchCriteria.getSearchViewApplication().setCount(filteredViewApplicationData.size());
-        if(!indexSearchCriteria.getSearchViewApplication().getIsOnlyCountRequired()) {
-            indexSearchCriteria.getSearchViewApplication().setData(filteredViewApplicationData);
-        }
-        actionCategorySearchResponse.setReviewProcessData(indexSearchCriteria.getSearchViewApplication());
-
-        searchRequest.getIndexSearchCriteria().getModuleSearchCriteria().put("actionCategory", indexSearchCriteria.getSearchRegisterCases().getActionCategory());
-        List<Data> registerCasesData = getDataFromSimpleSearch(searchRequest, inboxQueryConfiguration.getIndex());
-        List<Data> filteredRegisterCasesData = deduplicateByFilingNumber(registerCasesData);
-
-        indexSearchCriteria.getSearchRegisterCases().setCount(filteredRegisterCasesData.size());
-        if(!indexSearchCriteria.getSearchRegisterCases().getIsOnlyCountRequired()) {
-            indexSearchCriteria.getSearchRegisterCases().setData(filteredRegisterCasesData);
-        }
-        actionCategorySearchResponse.setReviewProcessData(indexSearchCriteria.getSearchRegisterCases());
-
-        return actionCategorySearchResponse;
-
+        return response;
     }
+
+    private void populateActionCategoryData(SearchRequest searchRequest,
+                                            Criteria criteria,
+                                            InboxQueryConfiguration config,
+                                            Consumer<Criteria> setter) {
+        Map<String, Object> searchCriteria = searchRequest.getIndexSearchCriteria().getModuleSearchCriteria();
+
+        searchCriteria.put("actionCategory", criteria.getActionCategory());
+
+        if (criteria.getDate() != null) {
+            searchCriteria.put("stateSla", criteria.getDate());
+        }
+
+        if (criteria.getSearchableFields() != null) {
+            searchCriteria.put("searchableFields", criteria.getSearchableFields());
+        }
+
+        List<Data> resultData = getDataFromSimpleSearch(searchRequest, config.getIndex());
+        List<Data> filteredData = deduplicateByFilingNumber(resultData);
+
+        criteria.setCount(filteredData.size());
+
+        if (!criteria.getIsOnlyCountRequired()) {
+            criteria.setData(filteredData);
+        }
+
+        setter.accept(criteria);
+    }
+
 
     public static List<Data> deduplicateByFilingNumber(List<Data> dataList) {
         Map<String, Data> uniqueMap = new LinkedHashMap<>();

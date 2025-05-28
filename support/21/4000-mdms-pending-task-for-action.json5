@@ -405,7 +405,8 @@
             {
               "name": "stateSla",
               "path": "Data.stateSla",
-              "isMandatory": false
+              "isMandatory": false,
+              "operator": "LTE"
             },
             {
               "name": "businessServiceSla",
@@ -435,6 +436,12 @@
             {
               "name": "searchableFields",
               "path": "Data.searchableFields.keyword",
+              "operator": "WILDCARD",
+              "isMandatory": false
+            },
+            {
+              "path": "Data.actionCategory.keyword",
+              "name": "actionCategory",
               "isMandatory": false
             }
           ],

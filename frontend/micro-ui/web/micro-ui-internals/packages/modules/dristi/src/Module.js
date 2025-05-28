@@ -70,6 +70,7 @@ import SearchableDropdown from "./components/SearchableDropdown";
 import useFetchBill from "./hooks/dristi/useFetchBill";
 import WorkflowTimeline from "./components/WorkflowTimeline";
 import ImageModal from "./components/ImageModal";
+import SelectCustomFormatterTextArea from "./components/SelectCustomFormatterTextArea";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -190,7 +191,8 @@ const componentsToRegister = {
   TriangleIcon,
   ShowAllTranscriptModal,
   SearchableDropdown,
-  WorkflowTimeline
+  WorkflowTimeline,
+  SelectCustomFormatterTextArea,
 };
 
 const overrideHooks = () => {

@@ -55,7 +55,6 @@ import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../utils/s
 import { getAdvocates, getuuidNameMap } from "../../utils/caseUtils";
 import { HearingWorkflowAction, HearingWorkflowState } from "../../utils/hearingWorkflow";
 import _ from "lodash";
-import { useGetPendingTask } from "../../hooks/orders/useGetPendingTask";
 import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName } from "../../utils";
@@ -248,7 +247,7 @@ const GenerateOrders = () => {
   const roles = Digit.UserService.getUser()?.info?.roles;
   const canESign = roles?.some((role) => role.code === "ORDER_ESIGN");
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
-  const judgeName = window?.globalConfigs?.getConfig("JUDGE_NAME");
+  const judgeName = localStorage.getItem("judgeName");
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
   const toast = useToast();
   const [currentPublishedOrder, setCurrentPublishedOrder] = useState(null);
@@ -268,11 +267,12 @@ const GenerateOrders = () => {
   const [profileEditorName, setProfileEditorName] = useState("");
   const currentDiaryEntry = history.location?.state?.diaryEntry;
 
-    // Access breadcrumb context to get and set case navigation data
+  // Access breadcrumb context to get and set case navigation data
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
 
   const [fileStoreIds, setFileStoreIds] = useState(new Set());
+  const courtId = localStorage.getItem("courtId");
 
   const setSelectedOrder = (orderIndex) => {
     _setSelectedOrder(orderIndex);
@@ -334,11 +334,12 @@ const GenerateOrders = () => {
           criteria: [
             {
               filingNumber: filingNumber,
+              ...(courtId && { courtId }),
             },
           ],
           tenantId,
         },
-        {},
+        {}
       );
       const caseId = caseData?.criteria?.[0]?.responseList?.[0]?.id;
       setCaseData(caseData);
@@ -347,17 +348,15 @@ const GenerateOrders = () => {
         setBreadCrumbsParamsData({
           caseId,
           filingNumber,
-        })
+        });
         isBreadCrumbsParamsDataSet.current = true;
       }
-    }
-    catch (err) {
+    } catch (err) {
       setCaseApiError(err);
-    }
-    finally {
+    } finally {
       setIsCaseDetailsLoading(false);
     }
-  }
+  };
 
   // Fetch case details on component mount
   useEffect(() => {
@@ -375,11 +374,14 @@ const GenerateOrders = () => {
     [caseData]
   );
 
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
+
   const { data: applicationData, isLoading: isApplicationDetailsLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
         filingNumber: filingNumber,
         tenantId: tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
@@ -559,7 +561,13 @@ const GenerateOrders = () => {
   const { data: ordersData, refetch: refetchOrdersData, isLoading: isOrdersLoading, isFetching: isOrdersFetching } = useSearchOrdersService(
     {
       tenantId,
-      criteria: { filingNumber, applicationNumber: "", cnrNumber, status: OrderWorkflowState.DRAFT_IN_PROGRESS },
+      criteria: {
+        filingNumber,
+        applicationNumber: "",
+        cnrNumber,
+        status: OrderWorkflowState.DRAFT_IN_PROGRESS,
+        ...(caseCourtId && { courtId: caseCourtId }),
+      },
       pagination: { limit: 1000, offset: 0 },
     },
     { tenantId },
@@ -671,6 +679,7 @@ const GenerateOrders = () => {
               filingNumber: filingNumber,
               orderNumber: orderNumber,
               status: "PUBLISHED",
+              ...(caseCourtId && { courtId: caseCourtId }),
             },
             tenantId,
           },
@@ -719,7 +728,14 @@ const GenerateOrders = () => {
   const { data: publishedNoticeOrdersData } = useSearchOrdersService(
     {
       tenantId,
-      criteria: { filingNumber, applicationNumber: "", cnrNumber, orderType: "NOTICE", status: "PUBLISHED" },
+      criteria: {
+        filingNumber,
+        applicationNumber: "",
+        cnrNumber,
+        orderType: "NOTICE",
+        status: "PUBLISHED",
+        ...(caseCourtId && { courtId: caseCourtId }),
+      },
       pagination: { limit: 1000, offset: 0 },
     },
     { tenantId },
@@ -759,6 +775,7 @@ const GenerateOrders = () => {
         cnrNumber,
         orderType: "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE",
         status: OrderWorkflowState.PUBLISHED,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       pagination: { limit: 1000, offset: 0 },
     },
@@ -785,7 +802,14 @@ const GenerateOrders = () => {
   const { data: publishedBailOrdersData, isLoading: isPublishedOrdersLoading } = useSearchOrdersService(
     {
       tenantId,
-      criteria: { filingNumber, applicationNumber: "", cnrNumber, status: OrderWorkflowState.PUBLISHED, orderType: "ACCEPT_BAIL" },
+      criteria: {
+        filingNumber,
+        applicationNumber: "",
+        cnrNumber,
+        status: OrderWorkflowState.PUBLISHED,
+        orderType: "ACCEPT_BAIL",
+        ...(caseCourtId && { courtId: caseCourtId }),
+      },
       pagination: { limit: 1000, offset: 0 },
     },
     { tenantId },
@@ -805,47 +829,6 @@ const GenerateOrders = () => {
       setOrderTitles(orderTitlesInitial);
     }
   }, [ordersData, t]);
-  const { data: pendingTaskData = [], isLoading: pendingTasksLoading } = useGetPendingTask({
-    data: {
-      SearchCriteria: {
-        tenantId,
-        moduleName: "Pending Tasks Service",
-        moduleSearchCriteria: {
-          filingNumber,
-          isCompleted: false,
-        },
-        limit: 10000,
-        offset: 0,
-      },
-    },
-    params: { tenantId },
-    key: filingNumber,
-  });
-
-  const pendingTaskDetails = useMemo(() => pendingTaskData?.data || [], [pendingTaskData]);
-  const mandatorySubmissionTasks = useMemo(() => {
-    const pendingtask = pendingTaskDetails?.filter((obj) =>
-      obj.fields.some((field) => field.key === "referenceId" && field.value?.includes(currentOrder?.linkedOrderNumber))
-    );
-    if (pendingtask?.length > 0) {
-      return pendingtask?.map((item) =>
-        item?.fields.reduce((acc, field) => {
-          if (field.key.startsWith("assignedTo[")) {
-            const indexMatch = field.key.match(/assignedTo\[(\d+)\]\.uuid/);
-            if (indexMatch) {
-              const index = parseInt(indexMatch[1], 10);
-              acc.assignedTo = acc.assignedTo || [];
-              acc.assignedTo[index] = { uuid: field.value };
-            }
-          } else {
-            acc[field.key] = field.value;
-          }
-          return acc;
-        }, {})
-      );
-    }
-    return [];
-  }, [currentOrder?.linkedOrderNumber, pendingTaskDetails]);
 
   const applicationDetails = useMemo(
     () =>
@@ -886,6 +869,7 @@ const GenerateOrders = () => {
         tenantID: tenantId,
         filingNumber: filingNumber,
         hearingId: hearingId || hearingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },
@@ -3470,6 +3454,7 @@ const GenerateOrders = () => {
             criteria: {
               tenantId: tenantId,
               taskNumber: additionalDetails?.taskNumber,
+              ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
             },
           });
           if (["APPROVED", "REJECTED"].includes(taskSearch?.list?.[0]?.status)) {
@@ -3829,7 +3814,6 @@ const GenerateOrders = () => {
     isApplicationDetailsLoading ||
     !ordersData?.list ||
     isHearingLoading ||
-    pendingTasksLoading ||
     isCourtIdsLoading ||
     isPublishedOrdersLoading
   ) {
@@ -4047,6 +4031,7 @@ const GenerateOrders = () => {
           businessOfDay={businessOfTheDay}
           updateOrder={updateOrder}
           setShowBulkModal={setShowBulkModal}
+          courtId={caseCourtId}
         />
       )}
       {showsignatureModal && (

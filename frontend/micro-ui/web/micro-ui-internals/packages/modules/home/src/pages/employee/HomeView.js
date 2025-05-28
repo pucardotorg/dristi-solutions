@@ -59,6 +59,7 @@ const HomeView = () => {
   });
   const userInfo = useMemo(() => Digit?.UserService?.getUser()?.info, [Digit.UserService]);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
   const isNyayMitra = roles.some((role) => role.code === "NYAY_MITRA_ROLE");
@@ -66,6 +67,7 @@ const HomeView = () => {
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [toastMsg, setToastMsg] = useState(null);
+  const courtId = localStorage.getItem("courtId");
 
   const [config, setConfig] = useState(null);
   const { data: individualData, isLoading, isFetching } = window?.Digit.Hooks.dristi.useGetIndividualUser(
@@ -125,6 +127,7 @@ const HomeView = () => {
           entityType: "Order",
           tenantId: tenantId,
           status: OrderWorkflowState.PENDING_BULK_E_SIGN,
+          ...(courtId && { courtId }),
         },
       },
     },
@@ -166,16 +169,18 @@ const HomeView = () => {
             searchKey: "filingNumber",
             defaultFields: true,
             advocateId: advocateId,
+            ...(courtId && { courtId }),
           }
         : individualId
         ? {
             searchKey: "filingNumber",
             defaultFields: true,
             litigantId: individualId,
+            ...(courtId && { courtId }),
           }
-        : {}),
+        : { ...(courtId && { courtId }) }),
     };
-  }, [advocateId, individualId]);
+  }, [advocateId, individualId, courtId]);
 
   useEffect(() => {
     setDefaultValues(defaultSearchValues);
@@ -259,10 +264,11 @@ const HomeView = () => {
     {
       criteria: {
         ...(citizenId ? (advocateId ? { advocateId } : { litigantId: individualId }) : {}),
-        courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+        ...(courtId && userInfoType === "employee" && !isScrutiny && { courtId }),
         pagination: { offSet: 0, limit: 1 },
         tenantId,
       },
+      tenantId,
     },
     {},
     `dristi-${citizenId}`,
@@ -336,7 +342,6 @@ const HomeView = () => {
   };
 
   const handleScrutinyAndLock = async (filingNumber) => {
-    const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
     if (isScrutiny) {
       try {
         const response = await DRISTIService.getCaseLockStatus({}, { uniqueId: filingNumber, tenantId: tenantId });
