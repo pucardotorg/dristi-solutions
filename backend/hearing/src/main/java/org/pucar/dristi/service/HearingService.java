@@ -403,6 +403,11 @@ public class HearingService {
         }
 
         List<String> hearingIds = hearingsToReschedule.stream().filter((hearing) -> !Objects.equals(hearing.getStatus(), COMPLETED)).map(Hearing::getHearingId).toList();
+
+        if (hearingIds.isEmpty()) {
+            log.info("all hearings are completed");
+            return new ArrayList<>();
+        }
         bulkReschedule.setHearingIds(hearingIds);
         request.setBulkReschedule(bulkReschedule);
         log.info("no of hearings to reschedule: {}", hearingIds.size());
