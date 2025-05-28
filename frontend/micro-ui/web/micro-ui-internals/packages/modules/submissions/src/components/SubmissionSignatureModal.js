@@ -12,7 +12,7 @@ function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup,
   const [formData, setFormData] = useState({}); // storing the file upload data
   const [pageModule, setPageModule] = useState("ci");
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
-
+  const [loader, setLoader] = useState(false);
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${applicationPdfFileStoreId}`;
@@ -54,14 +54,17 @@ function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup,
   const onSubmit = async () => {
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
+        setLoader(true);
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setIsSigned(true);
         setOpenUploadSignatureModal(false);
       } catch (error) {
+        setLoader(false);
         console.error("error", error);
         setFormData({});
       }
+      setLoader(false);
     }
   };
 
@@ -151,6 +154,7 @@ function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup,
       config={uploadModalConfig}
       formData={formData}
       onSubmit={onSubmit}
+      isDisabled={loader}
     />
   );
 }

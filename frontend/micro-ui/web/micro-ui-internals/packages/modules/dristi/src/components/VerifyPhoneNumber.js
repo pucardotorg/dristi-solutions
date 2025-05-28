@@ -269,13 +269,16 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
                 latitude: currentAddress?.latitude || "",
               },
               locality: address1,
-              isCurrAddrSame: addressArray?.length > 1 ? {
-                code: "NO",
-                name: "NO",
-              } : {
-                code: "YES",
-                name: "YES",
-              },
+              isCurrAddrSame:
+                addressArray?.length > 1
+                  ? {
+                      code: "NO",
+                      name: "NO",
+                    }
+                  : {
+                      code: "YES",
+                      name: "YES",
+                    },
             },
             firstName: givenName,
             lastName: familyName,
@@ -312,15 +315,15 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
                   : null,
                 ...(config?.key === "poaVerification"
                   ? {
-                    "poaAddressDetails-select": data["addressDetails-select"],
-                    poaAddressDetails: data["addressDetails-select"],
-                  }
+                      "poaAddressDetails-select": data["addressDetails-select"],
+                      poaAddressDetails: data["addressDetails-select"],
+                    }
                   : {
-                    "addressDetails-select": data["addressDetails-select"],
-                    addressDetails: data["addressDetails-select"],
-                    "currentAddressDetails-select": data["currentAddressDetails-select"],
-                    currentAddressDetails: data["currentAddressDetails-select"],
-                  }),
+                      "addressDetails-select": data["addressDetails-select"],
+                      addressDetails: data["addressDetails-select"],
+                      "currentAddressDetails-select": data["currentAddressDetails-select"],
+                      currentAddressDetails: data["currentAddressDetails-select"],
+                    }),
               },
               isUserVerified: true,
             },

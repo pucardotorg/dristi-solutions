@@ -45,7 +45,7 @@ const InsideHearingMainPage = () => {
   const [witnessModalOpen, setWitnessModalOpen] = useState(false);
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState("");
   const [isItemPending, setIsItemPending] = useState(false);
-
+  const courtId = localStorage.getItem("courtId");
   const { t } = useTranslation();
 
   const onCancel = () => {
@@ -62,6 +62,8 @@ const InsideHearingMainPage = () => {
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
+
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
   const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "FilingType" },
@@ -98,7 +100,7 @@ const InsideHearingMainPage = () => {
   };
   const { data: hearingsData, refetch: refetchHearing = () => {} } = Digit.Hooks.hearings.useGetHearings(
     reqBody,
-    { applicationNumber: "", cnrNumber: "", hearingId },
+    { applicationNumber: "", cnrNumber: "", hearingId, ...(caseCourtId && { courtId: caseCourtId }) },
     "dristi",
     true,
     refetchTime
@@ -130,6 +132,7 @@ const InsideHearingMainPage = () => {
       criteria: [
         {
           filingNumber,
+          ...(courtId && userType === "employee" && { courtId }),
         },
       ],
       tenantId,
@@ -145,6 +148,7 @@ const InsideHearingMainPage = () => {
       criteria: {
         filingNumber,
         tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },

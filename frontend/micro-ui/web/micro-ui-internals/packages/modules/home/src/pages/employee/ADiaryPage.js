@@ -119,6 +119,7 @@ const ADiaryPage = ({ path }) => {
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState("");
   const [generateAdiaryLoader, setGenerateAdiaryLoader] = useState(false);
   const [noAdiaryModal, setNoAdiaryModal] = useState(false);
+  const [loader, setLoader] = useState(false);
 
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
@@ -165,7 +166,7 @@ const ADiaryPage = ({ path }) => {
     }
     setStepper(parseInt(stepper) - 1);
   };
-  const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+  const courtId = localStorage.getItem("courtId");
 
   const onSubmit = async () => {
     if (parseInt(stepper) === 0) {
@@ -210,6 +211,7 @@ const ADiaryPage = ({ path }) => {
   const onUploadSubmit = async () => {
     if (formData?.uploadSignature?.Signature?.length > 0) {
       try {
+        setLoader(true);
         const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
         setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
         setFileStoreIds((prevFileStoreIds) => new Set([...prevFileStoreIds, uploadedFileId?.[0]?.fileStoreId]));
@@ -217,9 +219,11 @@ const ADiaryPage = ({ path }) => {
         setOpenUploadSignatureModal(false);
       } catch (error) {
         console.error("error", error);
+        setLoader(false);
         setFormData({});
         setIsSigned(false);
       }
+      setLoader(false);
     }
   };
 
@@ -572,6 +576,7 @@ const ADiaryPage = ({ path }) => {
               config={uploadModalConfig}
               formData={formData}
               onSubmit={onUploadSubmit}
+              isDisabled={loader}
             />
           )}
 

@@ -46,6 +46,7 @@ const MonthlyCalendar = ({ hideRight }) => {
   const [caseType, setCaseType] = useState({});
   const [stepper, setStepper] = useState(0);
   const initial = "dayGridMonth";
+  const courtId = localStorage.getItem("courtId");
 
   const search = window.location.search;
   const [fromDate, setFromDate] = useState(null);
@@ -71,6 +72,7 @@ const MonthlyCalendar = ({ hideRight }) => {
       fromDate: dateRange.start ? dateRange.start.getTime() : null,
       toDate: dateRange.end ? dateRange.end.getTime() : null,
       attendeeIndividualId: individualId,
+      ...(courtId && { courtId }),
     },
   };
 

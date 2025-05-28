@@ -147,8 +147,6 @@ const formatDate = (date) => {
   return "";
 };
 
-const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
-
 const AdmittedCases = () => {
   const { t } = useTranslation();
   const location = useLocation();
@@ -226,6 +224,7 @@ const AdmittedCases = () => {
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const historyCaseData = location?.state?.caseData;
   const historyOrderData = location?.state?.orderData;
+  const courtId = localStorage.getItem("courtId");
   const reqEvidenceUpdate = {
     url: Urls.dristi.evidenceUpdate,
     params: {},
@@ -243,7 +242,7 @@ const AdmittedCases = () => {
     {
       criteria: {
         caseId: caseId,
-        courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+        ...(courtId && { courtId }),
       },
       tenantId,
     },
@@ -255,6 +254,7 @@ const AdmittedCases = () => {
 
   const caseData = historyCaseData || apiCaseData;
   const caseDetails = useMemo(() => caseData?.cases || {}, [caseData]);
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber || "", [caseDetails]);
@@ -358,6 +358,7 @@ const AdmittedCases = () => {
       criteria: {
         filingNumber,
         tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
@@ -555,14 +556,14 @@ const AdmittedCases = () => {
       },
       {
         key: "COURT_NAME",
-        value: t(`COMMON_MASTERS_COURT_R00M_${caseDetails?.courtId}`),
+        value: t(`COMMON_MASTERS_COURT_R00M_${caseCourtId}`),
       },
       {
         key: "SUBMITTED_ON",
         value: formatDate(new Date(caseDetails?.filingDate)),
       },
     ],
-    [caseDetails?.caseCategory, caseDetails?.courtId, caseDetails?.filingDate, caseDetails?.filingNumber, t]
+    [caseCourtId, caseDetails?.caseCategory, caseDetails?.filingDate, caseDetails?.filingNumber, t]
   );
 
   const configList = useMemo(() => {
@@ -611,7 +612,7 @@ const AdmittedCases = () => {
           criteria: {
             tenantId: tenantId,
             notificationNumber: order?.businessObject?.orderNotification?.id,
-            courtId: courtId,
+            ...(caseCourtId && { courtId: caseCourtId }),
           },
           pagination: {
             limit: 100,
@@ -623,7 +624,14 @@ const AdmittedCases = () => {
       } else {
         if (order?.businessObject?.orderNotification?.entityType === "Order") {
           const orderResponse = await ordersService.searchOrder(
-            { criteria: { tenantId: tenantId, filingNumber: filingNumber, orderNumber: order?.businessObject?.orderNotification?.id } },
+            {
+              criteria: {
+                tenantId: tenantId,
+                filingNumber: filingNumber,
+                orderNumber: order?.businessObject?.orderNotification?.id,
+                ...(caseCourtId && { courtId: caseCourtId }),
+              },
+            },
             { tenantId }
           );
           order = orderResponse?.list?.[0];
@@ -703,6 +711,7 @@ const AdmittedCases = () => {
                 criteria: [
                   {
                     filingNumber: filingNumber,
+                    ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
                   },
                 ],
               },
@@ -733,6 +742,7 @@ const AdmittedCases = () => {
                   moduleSearchCriteria: {
                     ...tabConfig.apiDetails.requestBody.inbox.moduleSearchCriteria,
                     caseNumbers: [filingNumber, caseDetails?.cmpNumber, caseDetails?.courtCaseNumber]?.filter(Boolean),
+                    ...(caseCourtId && { courtId: caseCourtId }),
                   },
                 },
               },
@@ -787,6 +797,7 @@ const AdmittedCases = () => {
                 criteria: {
                   filingNumber: filingNumber,
                   tenantId: tenantId,
+                  ...(caseCourtId && { courtId: caseCourtId }),
                 },
               },
             },
@@ -851,6 +862,7 @@ const AdmittedCases = () => {
                   caseId: caseDetails?.id,
                   filingNumber: caseDetails?.filingNumber,
                   tenantId: tenantId,
+                  ...(caseCourtId && { courtId: caseCourtId }),
                 },
               },
             },
@@ -917,6 +929,7 @@ const AdmittedCases = () => {
                 criteria: {
                   filingNumber: filingNumber,
                   tenantId: tenantId,
+                  ...(caseCourtId && { courtId: caseCourtId }),
                 },
               },
             },
@@ -1021,7 +1034,7 @@ const AdmittedCases = () => {
         artifactList: selectedRow,
       },
     ];
-    const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+    const courtId = localStorage.getItem("courtId");
     try {
       const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
       await DRISTIService.addADiaryEntry(
@@ -1234,14 +1247,13 @@ const AdmittedCases = () => {
 
   const getEvidence = async () => {
     try {
-      // Add courtId to criteria if it exists
       const response = await DRISTIService.searchEvidence(
         {
           criteria: {
-            filingNumber: filingNumber,
-            artifactNumber: artifactNumber,
-            tenantId: tenantId,
-            courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+            filingNumber,
+            artifactNumber,
+            tenantId,
+            ...(caseCourtId && { courtId: caseCourtId }),
           },
           tenantId,
         },
@@ -1299,9 +1311,10 @@ const AdmittedCases = () => {
         const response = await DRISTIService.searchEvidence(
           {
             criteria: {
-              filingNumber: filingNumber,
-              artifactNumber: artifactNumber,
-              tenantId: tenantId,
+              filingNumber,
+              artifactNumber,
+              tenantId,
+              ...(caseCourtId && { courtId: caseCourtId }),
             },
             tenantId,
           },
@@ -1915,6 +1928,7 @@ const AdmittedCases = () => {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
@@ -1965,7 +1979,7 @@ const AdmittedCases = () => {
   );
 
   const { data: apiOrdersData } = useSearchOrdersService(
-    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED" } },
+    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filingNumber + currentHearingId,
     Boolean(filingNumber && !historyOrderData),
@@ -2056,7 +2070,8 @@ const AdmittedCases = () => {
         hearing: { tenantId },
         criteria: {
           tenantID: tenantId,
-          filingNumber: filingNumber,
+          filingNumber,
+          ...(caseCourtId && { courtId: caseCourtId }),
         },
       });
       if (HearingList?.length >= 1) {
@@ -2109,7 +2124,14 @@ const AdmittedCases = () => {
             list: [orderData],
           } = await Digit.ordersService.searchOrder({
             tenantId,
-            criteria: { filingNumber, applicationNumber: "", cnrNumber, status: OrderWorkflowState.DRAFT_IN_PROGRESS, hearingNumber: hearingNumber },
+            criteria: {
+              filingNumber,
+              applicationNumber: "",
+              cnrNumber,
+              status: OrderWorkflowState.DRAFT_IN_PROGRESS,
+              hearingNumber: hearingNumber,
+              ...(caseCourtId && { courtId: caseCourtId }),
+            },
             pagination: { limit: 1, offset: 0 },
           });
           if (
@@ -2206,7 +2228,7 @@ const AdmittedCases = () => {
           },
           {
             key: "COURT_NAME",
-            value: t(`COMMON_MASTERS_COURT_R00M_${caseDetails?.courtId}`),
+            value: t(`COMMON_MASTERS_COURT_R00M_${caseCourtId}`),
           },
           {
             key: "CASE_TYPE",
@@ -3130,7 +3152,8 @@ const AdmittedCases = () => {
           t={t}
           notification={currentNotification}
           handleDownload={handleDownload}
-          filingNumber={filingNumber}
+          cmpNumber={caseDetails?.cmpNumber}
+          stNumber={caseDetails?.courtCaseNumber}
           handleOrdersTab={handleOrdersTab}
         />
       )}

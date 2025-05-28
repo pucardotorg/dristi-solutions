@@ -72,6 +72,9 @@ function AdmissionActionModal({
   const history = useHistory();
   const [showErrorToast, setShowErrorToast] = useState(false);
   const [label, setLabel] = useState(false);
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const courtId = localStorage.getItem("courtId");
 
   const closeToast = () => {
     setShowErrorToast(false);
@@ -167,6 +170,7 @@ function AdmissionActionModal({
         criteria: [
           {
             status: ["PENDING_ADMISSION"],
+            ...(courtId && userType === "employee" && { courtId }),
           },
         ],
         tenantId,

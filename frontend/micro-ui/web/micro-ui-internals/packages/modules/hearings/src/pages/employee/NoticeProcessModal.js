@@ -113,20 +113,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
   const [showNoticeModal, setshowNoticeModal] = useState(false);
   const [rowData, setRowData] = useState({});
 
-  const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
-    {
-      criteria: [
-        {
-          filingNumber: filingNumber,
-        },
-      ],
-      tenantId,
-    },
-    {},
-    `dristi-${filingNumber}`,
-    filingNumber,
-    Boolean(filingNumber)
-  );
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
   const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
     {
@@ -134,6 +121,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },
@@ -171,7 +159,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
   };
 
   const { data: ordersData } = useSearchOrdersService(
-    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED" } },
+    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filingNumber,
     Boolean(filingNumber)
