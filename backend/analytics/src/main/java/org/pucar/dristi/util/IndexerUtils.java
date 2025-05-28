@@ -347,6 +347,7 @@ public class IndexerUtils {
         List<Map<String, Object>> representatives = JsonPath.read(caseObject.toString(), CASE_REPRESENTATIVES);
         Map<String, List<String>> advocates = extractAdvocateDetails(representatives);
         String advocateDetails = new JSONObject(advocates).toString();
+        log.info("advocateDetails: {}", advocateDetails);
 
         List<String> searchableFieldsList = new ArrayList<>();
         searchableFieldsList.add(caseNumber);
@@ -354,6 +355,7 @@ public class IndexerUtils {
         searchableFieldsList.addAll(extractAdvocateNames(representatives));
 
         String searchableFields = new JSONArray(searchableFieldsList).toString();
+        log.info("searchableFields: {}", searchableFields);
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
@@ -365,24 +367,35 @@ public class IndexerUtils {
         if (representatives == null || representatives.isEmpty()) {
             return Collections.emptyMap();
         }
+        log.info("Extracting advocate details from representatives: {}", representatives);
 
         Map<String, List<String>> partyAdvocateMap = new HashMap<>();
 
         for (Map<String, Object> representative : representatives) {
-            Map<String, Object> additionalDetails = (Map<String, Object>) representative.get("additionalDetails");
-            String advocateName = additionalDetails != null ? (String) additionalDetails.get("advocateName") : "";
 
-            List<Map<String, Object>> representingList = (List<Map<String, Object>>) representative.get("representing");
+            String advocateName = "";
+            if (representative.containsKey("additionalDetails") && representative.get("additionalDetails") != null) {
+                Map<String, Object> additionalDetails = (Map<String, Object>) representative.get("additionalDetails");
+                if (additionalDetails.containsKey("advocateName") && additionalDetails.get("advocateName") != null) {
+                    advocateName = additionalDetails.get("advocateName").toString();
+                }
+            }
 
-            if (representingList != null) {
-                for (Map<String, Object> representing : representingList) {
-                    String partyType = (String) representing.get("partyType");
-                    String roleKey = partyType.contains("complainant") ? "complainant" : "accused";
+            if (representative.containsKey("representing") && representative.get("representing") != null) {
+                List<Map<String, Object>> representingList = (List<Map<String, Object>>) representative.get("representing");
 
-                    partyAdvocateMap
-                            .computeIfAbsent(roleKey, k -> new ArrayList<>())
-                            .add(advocateName);
-                    break;
+                log.info("Representing list: {}", representingList);
+                if (representingList != null) {
+                    for (Map<String, Object> representing : representingList) {
+                        String partyType = (String) representing.get("partyType");
+                        String roleKey = partyType.contains("complainant") ? "complainant" : "accused";
+
+                        log.info("Party type: {}, Role key: {}", partyType, roleKey);
+                        partyAdvocateMap
+                                .computeIfAbsent(roleKey, k -> new ArrayList<>())
+                                .add(advocateName);
+                        break;
+                    }
                 }
             }
         }
@@ -397,9 +410,16 @@ public class IndexerUtils {
         List<String> advocateNames = new ArrayList<>();
 
         for (Map<String, Object> representative : representatives) {
-            Map<String, Object> additionalDetails = (Map<String, Object>) representative.get("additionalDetails");
-            String advocateName = additionalDetails != null ? (String) additionalDetails.get("advocateName") : "";
-            advocateNames.add(advocateName);
+            String advocateName = "";
+            if (representative.containsKey("additionalDetails") && representative.get("additionalDetails") != null) {
+                Map<String, Object> additionalDetails = (Map<String, Object>) representative.get("additionalDetails");
+                if (additionalDetails.containsKey("advocateName") && additionalDetails.get("advocateName") != null) {
+                    advocateName = additionalDetails.get("advocateName").toString();
+                    log.info("Extracted advocate name: {}", advocateName);
+                    advocateNames.add(advocateName);
+                }
+            }
+
         }
         return advocateNames;
     }
