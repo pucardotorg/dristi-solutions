@@ -580,6 +580,12 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
                       if (input?.data?.[index]?.data?.multipleAdvocatesAndPip?.isComplainantPip?.code === "NO") {
                         updatedConfig = [
                           ...updatedConfig,
+                          {
+                            type: "text",
+                            label: "CS_NUMBER_OF_ADVOCATES",
+                            value: `multipleAdvocatesAndPip.numberOfAdvocates`,
+                            enableScrutinyField: true,
+                          },
                           ...input.data[index].data.multipleAdvocatesAndPip?.multipleAdvocateNameDetails
                             ?.map((litigant, index) => [
                               {
