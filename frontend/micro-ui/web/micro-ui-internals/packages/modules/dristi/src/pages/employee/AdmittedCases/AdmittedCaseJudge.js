@@ -2318,6 +2318,10 @@ const AdmittedCaseJudge = () => {
     [filingNumber, history]
   );
 
+  const handleCourtAction = useCallback(() => {
+    history.push(`/${window?.contextPath}/employee/submissions/submit-document?filingNumber=${filingNumber}`);
+  }, [filingNumber, history]);
+
   const handleEmployeeAction = useCallback(
     (option) => {
       if (option.value === "DOWNLOAD_CASE_FILE") {
@@ -2345,14 +2349,11 @@ const AdmittedCaseJudge = () => {
       } else if (option.value === "TAKE_WITNESS_DEPOSITION") {
         setShowWitnessModal(true);
       } else if (option.value === "SUBMIT_DOCUMENTS") {
+        handleCourtAction();
       }
     },
     [currentInProgressHearing?.hearingId, data, handleDownloadPDF, history]
   );
-
-  const handleCourtAction = useCallback(() => {
-    history.push(`/${window?.contextPath}/employee/submissions/submit-document?filingNumber=${filingNumber}`);
-  }, [filingNumber, history]);
 
   const openHearingModule = useCallback(() => {
     setShowScheduleHearingModal(true);
