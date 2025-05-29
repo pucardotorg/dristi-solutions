@@ -392,6 +392,7 @@ public class CaseService {
             //Search and validate case Exist
             List<CaseCriteria> existingApplications = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(caseRequest.getCases().getFilingNumber()).caseId(String.valueOf(caseRequest.getCases().getId())).cnrNumber(caseRequest.getCases().getCnrNumber()).courtCaseNumber(caseRequest.getCases().getCourtCaseNumber()).build()), caseRequest.getRequestInfo());
 
+            String courtId = caseRequest.getCases().getCourtId();
             // Validate whether the application that is being requested for update indeed exists
             if (!validator.validateUpdateRequest(caseRequest, existingApplications.get(0).getResponseList())) {
                 throw new CustomException(VALIDATION_ERR, "Case Application does not exist");
@@ -407,6 +408,11 @@ public class CaseService {
             enrichmentService.enrichCourtCase(caseRequest);
             String previousStatus = caseRequest.getCases().getStatus();
             workflowService.updateWorkflowStatus(caseRequest);
+
+
+            if(caseRequest.getCases().getCourtId() == null && PENDING_REGISTRATION.equalsIgnoreCase(caseRequest.getCases().getStatus())) {
+                caseRequest.getCases().setCourtId(courtId);
+            }
 
             // check for last e-sign
             // if its last e-sign update the process instance case will move to pending payment

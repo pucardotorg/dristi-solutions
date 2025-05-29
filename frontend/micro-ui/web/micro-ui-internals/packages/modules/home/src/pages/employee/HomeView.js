@@ -169,18 +169,18 @@ const HomeView = () => {
             searchKey: "filingNumber",
             defaultFields: true,
             advocateId: advocateId,
-            ...(courtId && { courtId }),
+            ...(courtId && !isScrutiny && { courtId }),
           }
         : individualId
         ? {
             searchKey: "filingNumber",
             defaultFields: true,
             litigantId: individualId,
-            ...(courtId && { courtId }),
+            ...(courtId && !isScrutiny && { courtId }),
           }
-        : { ...(courtId && { courtId }) }),
+        : { ...(courtId && !isScrutiny && { courtId }) }),
     };
-  }, [advocateId, individualId, courtId]);
+  }, [advocateId, individualId, courtId, isScrutiny]);
 
   useEffect(() => {
     setDefaultValues(defaultSearchValues);
