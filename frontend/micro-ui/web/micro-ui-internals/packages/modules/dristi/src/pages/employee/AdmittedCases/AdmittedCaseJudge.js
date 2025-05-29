@@ -218,6 +218,7 @@ const AdmittedCaseJudge = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [showCitizenMenu, setShowCitizenMenu] = useState(false);
   const [showJoinCase, setShowJoinCase] = useState(false);
+  const [shouldRefetchCaseData, setShouldRefetchCaseData] = useState(false);
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
@@ -263,11 +264,12 @@ const AdmittedCaseJudge = () => {
     {},
     `dristi-admitted-${caseId}`,
     caseId,
-    Boolean(caseId && !historyCaseData)
+    Boolean(caseId && (shouldRefetchCaseData || !historyCaseData))
   );
 
   const caseData = historyCaseData || apiCaseData;
   const caseDetails = useMemo(() => caseData?.cases || {}, [caseData]);
+  const latestCaseDetails = useMemo(() => apiCaseData?.cases || historyCaseData?.cases || {}, [apiCaseData, historyCaseData]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber || "", [caseDetails]);
@@ -1932,7 +1934,7 @@ const AdmittedCaseJudge = () => {
     }
   }, [caseDetails?.filingNumber, handleAdmitDismissCaseOrder, secondaryAction.action]);
 
-  const { data: hearingDetails } = Digit.Hooks.hearings.useGetHearings(
+  const { data: hearingDetails, refetch: refetchHearing } = Digit.Hooks.hearings.useGetHearings(
     {
       hearing: { tenantId },
       criteria: {
@@ -1977,6 +1979,11 @@ const AdmittedCaseJudge = () => {
 
   const currentHearingId = useMemo(
     () => hearingDetails?.HearingList?.find((list) => ["SCHEDULED", "IN_PROGRESS"].includes(list?.status))?.hearingId,
+    [hearingDetails?.HearingList]
+  );
+
+  const currentInProgressHearingId = useMemo(
+    () => hearingDetails?.HearingList?.find((list) => ["IN_PROGRESS"].includes(list?.status))?.hearingId,
     [hearingDetails?.HearingList]
   );
 
@@ -3421,32 +3428,41 @@ const AdmittedCaseJudge = () => {
         attendees={currentActiveHearing?.attendees}
         caseDetails={caseDetails}
       />
-      <WitnessDrawer
-        isOpen={showWitnessModal}
-        onClose={() => setShowWitnessModal(false)}
-        onSubmit={(action) => {
-          if (action === "end-hearing") {
-            // Handle end hearing action
-            console.log("End hearing and schedule next");
-          } else if (action === "view-cause-list") {
-            // Handle view cause list action
-            console.log("View cause list");
-          }
-          setShowWitnessModal(false);
-        }}
-        attendees={currentActiveHearing?.attendees}
-        caseDetails={caseDetails}
-        hearing={currentActiveHearing}
-        setAddPartyModal={setAddPartyModal}
-      />
+      {showWitnessModal && (
+        <WitnessDrawer
+          isOpen={showWitnessModal}
+          onClose={() => {
+            setShowWitnessModal(false);
+            refetchHearing();
+          }}
+          refetchHearing={refetchHearing}
+          onSubmit={(action) => {
+            if (action === "end-hearing") {
+              // Handle end hearing action
+              console.log("End hearing and schedule next");
+            } else if (action === "view-cause-list") {
+              // Handle view cause list action
+              console.log("View cause list");
+            }
+            setShowWitnessModal(false);
+          }}
+          attendees={currentActiveHearing?.attendees}
+          caseDetails={latestCaseDetails}
+          hearing={currentActiveHearing}
+          hearingId={currentInProgressHearingId}
+          setAddPartyModal={setAddPartyModal}
+          tenantId={tenantId}
+        />
+      )}
       {addPartyModal && (
         <AddParty
           onCancel={() => setAddPartyModal(false)}
           onAddSuccess={() => {
-            // refetchCase();
+            setShouldRefetchCaseData(true);
+            refetchCaseData();
           }}
-          caseData={caseDetails}
-          tenantId={"kl"}
+          caseDetails={latestCaseDetails}
+          tenantId={tenantId}
           hearing={currentActiveHearing}
           refetchHearing={() => {}}
         ></AddParty>

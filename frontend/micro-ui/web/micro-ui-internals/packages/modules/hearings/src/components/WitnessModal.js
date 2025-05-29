@@ -1,9 +1,8 @@
-import { Button, CardText, Modal } from "@egovernments/digit-ui-react-components";
+import { Button, CardText, Modal, Loader } from "@egovernments/digit-ui-react-components";
 import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
 import { FileUploadIcon } from "../../../dristi/src/icons/svgIndex";
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Urls } from "../hooks/services/Urls";
 import { hearingService } from "../hooks/services";
 
 const Heading = (props) => {
@@ -38,7 +37,7 @@ const BackBtn = ({ text }) => {
   );
 };
 
-const WitnessModal = ({ handleClose, hearingId, setSignedDocumentUploadID, handleProceed }) => {
+const WitnessModal = ({ handleClose, hearingId, setSignedDocumentUploadID, handleProceed, isProceeding }) => {
   const { t } = useTranslation();
   const [isUploaded, setUploaded] = useState(false);
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
@@ -46,6 +45,7 @@ const WitnessModal = ({ handleClose, hearingId, setSignedDocumentUploadID, handl
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [formData, setFormData] = useState({}); // storing the file upload data
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
   const name = "Signature";
   const uploadModalConfig = useMemo(() => {
@@ -104,6 +104,7 @@ const WitnessModal = ({ handleClose, hearingId, setSignedDocumentUploadID, handl
   // for Dowloading the Witness Deposition
   const handleDownload = async () => {
     try {
+      setIsDownloading(true);
       const res = await hearingService.generateWitnessDepostionDownload(reqBody, {
         applicationNumber: "",
         cnrNumber: "",
@@ -124,7 +125,12 @@ const WitnessModal = ({ handleClose, hearingId, setSignedDocumentUploadID, handl
     } catch (error) {
       console.error("Error downloading PDF:", error);
     }
+    setIsDownloading(false);
   };
+
+  if(isDownloading || isProceeding){
+    return <Loader />
+  }
 
   return !openUploadSignatureModal ? (
     <Modal
