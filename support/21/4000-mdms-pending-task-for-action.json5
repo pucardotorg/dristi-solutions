@@ -111,6 +111,39 @@
       }
     },
     {
+      "id": "59041f95-c91e-4a6f-a9a0-5c1dfe58f395",
+      "tenantId": "kl",
+      "schemaCode": "common-masters.PendingTaskType",
+      "uniqueIdentifier": "15",
+      "data": {
+        "id": "15",
+        "actor": "Judge/CMO",
+        "state": "PENDINGAPPROVAL",
+        "isgeneric": false,
+        "screenType": "applicationCompositeOrder",
+        "pendingTask": "Accept Document Submission",
+        "actionCategory": "View Application",
+        "closerAction": [
+          "APPROVE",
+          "REJECT",
+          "DELETE",
+          "ABANDON"
+        ],
+        "triggerAction": [
+          "RESPONSE",
+          "AUTO ESCALATE"
+        ],
+        "workflowModule": "application-voluntary-submission"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+        "lastModifiedBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+        "createdTime": 1724750461961,
+        "lastModifiedTime": 1740574119219
+      }
+    },
+    {
       "id": "2e4402c8-8a7e-4527-8ac5-40905d01967d",
       "tenantId": "kl",
       "schemaCode": "common-masters.PendingTaskType",
@@ -429,8 +462,8 @@
               "isMandatory": false
             },
             {
-              "path": "Data.stage.keyword",
-              "name": "stage",
+              "path": "Data.substage.keyword",
+              "name": "substage",
               "isMandatory": false
             },
             {
