@@ -3,6 +3,7 @@ const pdfService = require("../service/pdfService");
 const fileService = require("../service/fileService");
 const config = require("../config/config");
 const { DocumentError } = require("../util/errorUtils");
+const { htmlToFormattedText } = require("../util/htmlToFormattedText");
 
 /**
  * Generates a PDF document for a case.
@@ -28,9 +29,11 @@ exports.generateCasePdf = async (req, res, next) => {
     const prayer = await caseService.getPrayerSwornStatementDetails(
       caseData
     )?.[0]?.prayer;
-    const complaint =
+    const complaint = htmlToFormattedText(
       caseService.getPrayerSwornStatementDetails(caseData)?.[0]
-        ?.memorandumOfComplaintText;
+        ?.memorandumOfComplaintText
+    );
+
     const dateOfFiling = caseService.formatDate(
       caseData?.filingDate ? new Date(caseData?.filingDate) : new Date()
     );
