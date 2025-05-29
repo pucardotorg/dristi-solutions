@@ -1180,7 +1180,8 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t) => {
       switch (key) {
         case "FILING_NAME":
-          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} />;
+          const showValue = row?.additionalDetails?.formdata?.documentTitle ? row?.additionalDetails?.formdata?.documentTitle : value;
+          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={showValue} showAsHeading={true} />;
         case "TYPE":
           return t(row?.filingType) || "";
         case "FILE":
