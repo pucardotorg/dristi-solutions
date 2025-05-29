@@ -2,6 +2,8 @@ package org.egov.inbox.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.PathNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.utils.MultiStateInstanceUtil;
 import org.egov.inbox.web.model.InboxSortConfiguration;
@@ -27,6 +29,7 @@ import static org.egov.inbox.util.InboxConstants.*;
 
 
 @Component
+@Slf4j
 public class MDMSUtil {
     @Autowired
     private RestTemplate restTemplate;
@@ -67,7 +70,7 @@ public class MDMSUtil {
         return configuration;
     }
 
-    @Cacheable(value = "sortConfiguration")
+    //    @Cacheable(value = "sortConfiguration")
     public InboxSortConfiguration getSortConfigFromMDMS(String tenantId, String moduleName) {
 
         StringBuilder uri = new StringBuilder();
@@ -79,7 +82,11 @@ public class MDMSUtil {
             response = restTemplate.postForObject(uri.toString(), mdmsCriteriaReq, Map.class);
             String jsonpath = MDMS_SORT_RESPONSE_JSONPATH.replace(MODULE_PLACEHOLDER, moduleName);
             configs = JsonPath.read(response, jsonpath);
+        } catch (PathNotFoundException e) {
+            log.info("Inbox Sort Configuration not found in MDMS response for: " + moduleName);
+            return null;
         } catch (Exception e) {
+            log.error("Error in fetching inbox sort configuration from MDMS for: " + moduleName);
             throw new CustomException("CONFIG_ERROR", "Error in fetching inbox query configuration from MDMS for: " + moduleName);
         }
 
