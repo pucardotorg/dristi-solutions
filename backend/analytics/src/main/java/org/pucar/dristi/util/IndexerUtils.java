@@ -186,13 +186,22 @@ public class IndexerUtils {
         String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
 
         List<Map<String, Object>> representatives = JsonPath.read(caseObject.toString(), CASE_REPRESENTATIVES);
-        Map<String, List<String>> advocates = extractAdvocateDetails(representatives);
-        String advocateDetails = new JSONObject(advocates).toString();
+
+        AdvocateDetail advocate = getAdvocates(representatives);
+        String advocateDetails = "{}";
+
+        try {
+            advocateDetails = mapper.writeValueAsString(advocate);
+        } catch (Exception e) {
+            log.error("Error while building advocate details json", e);
+            throw new CustomException(Pending_Task_Exception, "Error while building advocate details json: " + e);
+        }
 
         List<String> searchableFieldsList = new ArrayList<>();
         searchableFieldsList.add(caseNumber);
         searchableFieldsList.add(caseTitle);
-        searchableFieldsList.addAll(extractAdvocateNames(representatives));
+        searchableFieldsList.addAll(advocate.getAccused());
+        searchableFieldsList.addAll(advocate.getComplainant());
 
         String searchableFields = new JSONArray(searchableFieldsList).toString();
 
@@ -347,14 +356,22 @@ public class IndexerUtils {
         String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
 
         List<Map<String, Object>> representatives = JsonPath.read(caseObject.toString(), CASE_REPRESENTATIVES);
-        Map<String, List<String>> advocates = extractAdvocateDetails(representatives);
-        String advocateDetails = new JSONObject(advocates).toString();
-        log.info("advocateDetails: {}", advocateDetails);
+
+        AdvocateDetail advocate = getAdvocates(representatives);
+        String advocateDetails = "{}";
+
+        try {
+            advocateDetails = mapper.writeValueAsString(advocate);
+        } catch (Exception e) {
+            log.error("Error while building advocate details json", e);
+            throw new CustomException(Pending_Task_Exception, "Error while building advocate details json: " + e);
+        }
 
         List<String> searchableFieldsList = new ArrayList<>();
         searchableFieldsList.add(caseNumber);
         searchableFieldsList.add(caseTitle);
-        searchableFieldsList.addAll(extractAdvocateNames(representatives));
+        searchableFieldsList.addAll(advocate.getAccused());
+        searchableFieldsList.addAll(advocate.getComplainant());
 
         String searchableFields = new JSONArray(searchableFieldsList).toString();
         log.info("searchableFields: {}", searchableFields);
@@ -365,14 +382,17 @@ public class IndexerUtils {
         );
     }
 
-    public Map<String, List<String>> extractAdvocateDetails(List<Map<String, Object>> representatives) {
-        if (representatives == null || representatives.isEmpty()) {
-            return Collections.emptyMap();
-        }
+    private AdvocateDetail getAdvocates(List<Map<String, Object>> representatives) {
+
+        List<String> complainantNames = new ArrayList<>();
+        List<String> accusedNames = new ArrayList<>();
+
+        AdvocateDetail advocate = AdvocateDetail.builder().build();
+        advocate.setComplainant(complainantNames);
+        advocate.setAccused(accusedNames);
+
         log.info("Extracting advocate details from representatives: {}", representatives);
 
-        Map<String, List<String>> partyAdvocateMap = new HashMap<>();
-
         for (Map<String, Object> representative : representatives) {
 
             String advocateName = "";
@@ -382,48 +402,26 @@ public class IndexerUtils {
                     advocateName = additionalDetails.get("advocateName").toString();
                 }
             }
+                    if (representative.containsKey("representing") && representative.get("representing") != null) {
+                        List<Map<String, Object>> representingList = (List<Map<String, Object>>) representative.get("representing");
+                        log.info("Representing list: {}", representingList);
+                        if (representingList != null) {
+                            for (Map<String, Object> representing : representingList) {
+                                String partyType = (String) representing.get("partyType");
+                                if(partyType.contains("complainant")){
+                                    complainantNames.add(advocateName);
+                                }else {
+                                    accusedNames.add(advocateName);
+                                }
 
-            if (representative.containsKey("representing") && representative.get("representing") != null) {
-                List<Map<String, Object>> representingList = (List<Map<String, Object>>) representative.get("representing");
-
-                log.info("Representing list: {}", representingList);
-                if (representingList != null) {
-                    for (Map<String, Object> representing : representingList) {
-                        String partyType = (String) representing.get("partyType");
-                        String roleKey = partyType.contains("complainant") ? "complainant" : "accused";
-
-                        log.info("Party type: {}, Role key: {}", partyType, roleKey);
-                        partyAdvocateMap
-                                .computeIfAbsent(roleKey, k -> new ArrayList<>())
-                                .add(advocateName);
-                        break;
+                                break;
+                            }
+                        }
                     }
                 }
-            }
-        }
-        return partyAdvocateMap;
-    }
 
-    private List<String> extractAdvocateNames(List<Map<String, Object>> representatives) {
-        if (representatives == null || representatives.isEmpty()) {
-            return Collections.emptyList();
-        }
+        return advocate;
 
-        List<String> advocateNames = new ArrayList<>();
-
-        for (Map<String, Object> representative : representatives) {
-            String advocateName = "";
-            if (representative.containsKey("additionalDetails") && representative.get("additionalDetails") != null) {
-                Map<String, Object> additionalDetails = (Map<String, Object>) representative.get("additionalDetails");
-                if (additionalDetails.containsKey("advocateName") && additionalDetails.get("advocateName") != null) {
-                    advocateName = additionalDetails.get("advocateName").toString();
-                    log.info("Extracted advocate name: {}", advocateName);
-                    advocateNames.add(advocateName);
-                }
-            }
-
-        }
-        return advocateNames;
     }
 
     private String getCourtId(String filingNumber, RequestInfo request) {

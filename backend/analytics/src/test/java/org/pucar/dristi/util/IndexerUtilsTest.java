@@ -1,7 +1,6 @@
 package org.pucar.dristi.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jayway.jsonpath.JsonPath;
 import org.egov.common.contract.request.User;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,17 +11,7 @@ import org.mockito.MockitoAnnotations;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.MdmsDataConfig;
 import org.pucar.dristi.service.UserService;
-import org.pucar.dristi.util.*;
-import org.pucar.dristi.util.ApplicationUtil;
-import org.pucar.dristi.util.CaseOverallStatusUtil;
-import org.pucar.dristi.util.CaseUtil;
-import org.pucar.dristi.util.EvidenceUtil;
-import org.pucar.dristi.util.HearingUtil;
-import org.pucar.dristi.util.IndexerUtils;
-import org.pucar.dristi.util.OrderUtil;
-import org.pucar.dristi.util.TaskUtil;
-import org.pucar.dristi.web.models.PendingTask;
-import org.pucar.dristi.web.models.PendingTaskType;
+import org.pucar.dristi.web.models.*;
 import org.springframework.http.*;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.ResourceAccessException;
@@ -194,34 +183,36 @@ public class IndexerUtilsTest {
     public void testBuildPayloadWithPendingTask() throws Exception {
         PendingTask pendingTask = getPendingTask();
 
-        when(mapper.writeValueAsString(any())).thenReturn("{\"key\":\"value\"}");
-
         String expected = String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
                 "index", "referenceId", "id", "name", "entityType", "referenceId", "status", "COURT-456","HEARING","{\"complainant\":[\"John Doe\"]}","action","[\"COURT-456\",\"caseTitle\",\"John Doe\"]","[null]", "[\"role\"]", "cnrNumber", "filingNumber", "caseId", "caseTitle",true, 123L, 456L, "{\"key\":\"value\"}", null, null,1000000000
         );
 
         String mockCaseJson = """
-{
-  "cmpNumber": "CMP-123",
-  "courtCaseNumber": "COURT-456",
-  "stage": "HEARING",
-  "representatives": [
-    {
-      "additionalDetails": {
-        "advocateName": "John Doe"
-      },
-      "representing": [
-        {
-          "partyType": "complainant.primary"
-        }
-      ]
-    }
-  ]
-}
-""";
+                {
+                  "cmpNumber": "CMP-123",
+                  "courtCaseNumber": "COURT-456",
+                  "stage": "HEARING",
+                  "representatives": [
+                    {
+                      "additionalDetails": {
+                        "advocateName": "John Doe"
+                      },
+                      "representing": [
+                        {
+                          "partyType": "complainant.primary"
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
 
-                when(caseUtil.getCase(any(), any(), any(), any(), any())).thenReturn(mockCaseJson);
+        when(mapper.writeValueAsString(argThat(arg -> arg instanceof AdvocateDetail)))
+                .thenReturn("{\"complainant\":[\"John Doe\"]}");
+        when(mapper.writeValueAsString(argThat(arg -> !(arg instanceof AdvocateDetail)))).thenReturn("{\"key\":\"value\"}");
+
+        when(caseUtil.getCase(any(), any(), any(), any(), any())).thenReturn(mockCaseJson);
 
         when(config.getIndex()).thenReturn("index");
 
@@ -243,8 +234,8 @@ public class IndexerUtilsTest {
                 + "\"assignedRoles\": [\"role1\", \"role2\"],"
                 + "\"tenantId\": \"tenantId\","
                 + "\"action\": \"action\","
-                + "\"additionalDetails\" : {\"key\":\"value\", \"excludeRoles\":[\"role2\"]}" +
-                ",\"courtId\":\null\""
+                + "\"additionalDetails\" : {\"key\":\"value\", \"excludeRoles\":[\"role2\"]}," +
+                "\"courtId\":\"null\""
                 + "}";
         JSONObject requestInfo = new JSONObject();
 
@@ -252,27 +243,30 @@ public class IndexerUtilsTest {
         when(config.getIndex()).thenReturn("index");
         when(caseOverallStatusUtil.checkCaseOverAllStatus(anyString(), anyString(), anyString(), anyString(), anyString(), any()))
                 .thenReturn(new Object());
-        when(mapper.writeValueAsString(any())).thenReturn("{\"key\":\"value\", \"excludeRoles\":[\"role2\"]}");
+        when(mapper.writeValueAsString(argThat(arg -> arg instanceof AdvocateDetail)))
+                .thenReturn("{\"complainant\":[\"John Doe\"]}");
+        when(mapper.writeValueAsString(argThat(arg -> !(arg instanceof AdvocateDetail)))).thenReturn("{\"key\":\"value\", \"excludeRoles\":[\"role2\"]}");
+
         when(mapper.convertValue(anyString(), eq(String.class))).thenReturn("{\"key\":\"value\"}");
         String mockCaseJson = """
-{
-  "cmpNumber": "CMP-123",
-  "courtCaseNumber": "COURT-456",
-  "stage": "HEARING",
-  "representatives": [
-    {
-      "additionalDetails": {
-        "advocateName": "John Doe"
-      },
-      "representing": [
-        {
-          "partyType": "complainant.primary"
-        }
-      ]
-    }
-  ]
-}
-""";
+                {
+                  "cmpNumber": "CMP-123",
+                  "courtCaseNumber": "COURT-456",
+                  "stage": "HEARING",
+                  "representatives": [
+                    {
+                      "additionalDetails": {
+                        "advocateName": "John Doe"
+                      },
+                      "representing": [
+                        {
+                          "partyType": "complainant.primary"
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
 
         when(caseUtil.getCase(any(), any(), any(), any(), any())).thenReturn(mockCaseJson);
 
@@ -282,8 +276,8 @@ public class IndexerUtilsTest {
         );
 
         PendingTaskType pendingTaskType = PendingTaskType.builder().isgeneric(false).pendingTask("name").state("status").triggerAction(List.of("action")).build();
-        Map<String,List<PendingTaskType>> map = new HashMap<>();
-        map.put("entityType",List.of(pendingTaskType));
+        Map<String, List<PendingTaskType>> map = new HashMap<>();
+        map.put("entityType", List.of(pendingTaskType));
         when(mdmsDataConfig.getPendingTaskTypeMap()).thenReturn(map);
 
         String result = indexerUtils.buildPayload(jsonItem, requestInfo);
@@ -319,7 +313,7 @@ public class IndexerUtilsTest {
         headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
         headers.add("Authorization", "Basic bnVsbDpudWxs");
         HttpEntity<String> entity = new HttpEntity<>(request, headers);
-        when(restTemplate.postForObject(uri,entity,String.class)).thenReturn("{\"errors\":true}");
+        when(restTemplate.postForObject(uri, entity, String.class)).thenReturn("{\"errors\":true}");
 
         // Act
         indexerUtils.esPost(uri, request);
