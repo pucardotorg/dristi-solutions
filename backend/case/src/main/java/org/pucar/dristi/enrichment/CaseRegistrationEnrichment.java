@@ -416,6 +416,10 @@ public class CaseRegistrationEnrichment {
                 element.setCourtId(courtId);
             }
 
+        }  else {
+            for (CaseCriteria element : searchRequest.getCriteria()) {
+                element.setCourtId(null);
+            }
         }
 
     }
@@ -477,6 +481,8 @@ public class CaseRegistrationEnrichment {
         if (isJudge || isBenchClerk) {
             String courtId = getCourtId(requestInfo);
             criteria.setCourtId(courtId);
+        }else {
+            criteria.setCourtId(null);
         }
 
     }
@@ -530,6 +536,8 @@ public class CaseRegistrationEnrichment {
         if (isJudge || isBenchClerk) {
             String courtId = getCourtId(requestInfo);
             caseSummaryListCriteria.setCourtId(courtId);
+        }else {
+            caseSummaryListCriteria.setCourtId(null);
         }
 
     }
