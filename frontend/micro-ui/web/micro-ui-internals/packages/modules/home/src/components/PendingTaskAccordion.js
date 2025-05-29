@@ -196,7 +196,7 @@ function PendingTaskAccordion({
       </div>
     </div>
   ) : (
-    <div className="tasks-component-table" style={{ display: "flex", flexDirection: "column", gap: 8, marginLeft: "20px" }}>
+    <div className="tasks-component-table" style={{ display: "flex", flexDirection: "column", marginLeft: "20px" }}>
       <div
         className="tasks-component-table-header"
         style={{
@@ -229,7 +229,7 @@ function PendingTaskAccordion({
               justifyContent: "space-between",
               alignItems: "center",
               borderBottom: "1px solid #E8E8E8",
-              padding: "10px 20px 10PX 15PX",
+              padding: "20px 20px 20px 15px",
               cursor: "pointer",
             }}
             onClick={() => {

@@ -2730,14 +2730,15 @@ const AdmittedCaseJudge = () => {
 
   // outcome always null unless case went on final stage
   const showActionBar = useMemo(
-    () =>
-      (primaryAction.action ||
+    () => 
+      // If there is any hearing in progress, do not show action bar
+      !currentInProgressHearing && (primaryAction.action ||
         secondaryAction.action ||
         tertiaryAction.action ||
         ([CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(caseDetails?.status) && !isCitizen)) &&
       !caseDetails?.outcome &&
       !isCourtRoomManager,
-    [primaryAction.action, secondaryAction.action, tertiaryAction.action, caseDetails?.status, caseDetails?.outcome, isCitizen, isCourtRoomManager]
+    [primaryAction.action, secondaryAction.action, tertiaryAction.action, caseDetails?.status, caseDetails?.outcome, isCitizen, isCourtRoomManager, currentInProgressHearing]
   );
 
   // const handleOpenSummonNoticeModal = async (partyIndex) => {
@@ -3041,6 +3042,7 @@ const AdmittedCaseJudge = () => {
                 onClick={() => {
                   onTabChange(num, i);
                 }}
+                style={{ fontSize: "18px" }}
                 disabled={["Complaint", "Overview"].includes(i?.label) ? false : isTabDisabled}
               >
                 {t(i?.displayLabel)}
@@ -3119,7 +3121,7 @@ const AdmittedCaseJudge = () => {
           )}
         </div>
       )}
-      <div className={`inbox-search-wrapper orders-tab-inbox-wrapper`} style={showActionBar ? { paddingBottom: "60px" } : {}}>
+      <div className={`inbox-search-wrapper orders-tab-inbox-wrapper`}>
         {inboxComposer}
       </div>
       {tabData?.filter((tab) => tab.label === "Overview")?.[0]?.active && (
