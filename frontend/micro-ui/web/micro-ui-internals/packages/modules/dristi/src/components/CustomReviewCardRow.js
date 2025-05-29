@@ -509,7 +509,74 @@ const CustomReviewCardRow = ({
             )}
           </div>
         );
+      case "formattedText":
+        let formattedValue;
+        if (Array.isArray(value)) {
+          formattedValue = value.map((key) => extractValue(data, key)).join(" ");
+        } else {
+          formattedValue = extractValue(data, value);
+        }
+        const dependentValue = extractValue(data, textDependentOn);
 
+        if ((showFlagIcon && dependentValue && t(textDependentValue)) || value === "delayCondonationType.name") {
+          showFlagIcon = false;
+        }
+
+        return (
+          <div className={`text-main ${bgclassname}`}>
+            <div className="text">
+              <div style={style} className="label">
+                {t(label)}
+              </div>
+              <div
+                className="value"
+                style={{ overflowY: "auto", maxHeight: "310px" }}
+                dangerouslySetInnerHTML={{
+                  __html:
+                    formattedValue && typeof formattedValue === "string"
+                      ? formattedValue
+                      : isLocalizationRequired
+                      ? t(formattedValue)
+                      : formattedValue || (dependentValue && t(textDependentValue)) || t(notAvailable) || t(""),
+                }}
+              ></div>
+              {showFlagIcon && (
+                <div
+                  className="flag"
+                  onClick={(e) => {
+                    handleOpenPopup(e, configKey, name, dataIndex, value);
+                  }}
+                  key={dataIndex}
+                >
+                  {dataError && isScrutiny ? (
+                    <React.Fragment>
+                      <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`Click`}>
+                        {" "}
+                        <EditPencilIcon />
+                      </span>
+                      <ReactTooltip id={`Click`} place="bottom" content={t("CS_CLICK_TO_EDIT") || ""}>
+                        {t("CS_CLICK_TO_EDIT")}
+                      </ReactTooltip>
+                    </React.Fragment>
+                  ) : (
+                    <FlagIcon />
+                  )}
+                </div>
+              )}
+            </div>
+
+            {dataError && isScrutiny && (
+              <div className="scrutiny-error input">
+                {bgclassname === "preverror" ? (
+                  <span style={{ color: "#4d83cf", fontWeight: 300 }}>{t("CS_PREVIOUS_ERROR")}</span>
+                ) : (
+                  <FlagIcon isError={true} />
+                )}
+                {dataError}
+              </div>
+            )}
+          </div>
+        );
       case "infoBox":
         if (!data?.[value]?.header) {
           return null;
