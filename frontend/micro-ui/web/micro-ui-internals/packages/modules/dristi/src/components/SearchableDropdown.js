@@ -90,7 +90,7 @@ const SearchableDropdown = ({ t, isCaseReAssigned, selectedAdvocatesList, value,
   return (
     <div
       className="dropdown-container"
-      style={{ position: "relative", width: "100%", marginBottom: "20px", pointerEvents: !isCaseReAssigned ? "auto" : "none" }}
+      style={{ position: "relative", width: "100%", marginBottom: "20px", pointerEvents: isCaseReAssigned ? (isCaseReAssigned.hasOwnProperty("numberOfAdvocates") ? "auto" : "none") : "auto" }}
     >
       <input
         type="text"
@@ -129,7 +129,7 @@ const SearchableDropdown = ({ t, isCaseReAssigned, selectedAdvocatesList, value,
           color: "black",
           cursor: "pointer",
           zIndex: 10,
-          pointerEvents: disabled || isCaseReAssigned ? "none" : "auto",
+          pointerEvents: disabled || isCaseReAssigned ? (isCaseReAssigned.hasOwnProperty("numberOfAdvocates") ? "auto" : "none") : "auto",
         }}
       >
         <ArrowDown />

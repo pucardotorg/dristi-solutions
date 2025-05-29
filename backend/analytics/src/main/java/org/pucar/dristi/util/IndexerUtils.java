@@ -196,6 +196,7 @@ public class IndexerUtils {
 
         String searchableFields = new JSONArray(searchableFieldsList).toString();
 
+        Long createdTime = clock.millis();
         try {
             additionalDetails = mapper.writeValueAsString(pendingTask.getAdditionalDetails());
         } catch (Exception e) {
@@ -206,7 +207,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status,caseNumber,caseStage,advocateDetails,actionCategory,searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status,caseNumber,caseStage,advocateDetails,actionCategory,searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId,createdTime
         );
     }
 
@@ -257,6 +258,7 @@ public class IndexerUtils {
         String actionCategory = details.get("actionCategory");
         RequestInfo requestInfo1 = mapper.readValue(requestInfo.toString(), RequestInfo.class);
         String courtId = getCourtId(filingNumber, requestInfo1);
+        Long createdTime = clock.millis();
 
         if (isGeneric) {
             log.info("creating pending task from generic task");
@@ -359,7 +361,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber,caseStage,advocateDetails,actionCategory,searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType,courtId
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber,caseStage,advocateDetails,actionCategory,searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType,courtId,createdTime
         );
     }
 
@@ -426,6 +428,7 @@ public class IndexerUtils {
 
     private String getCourtId(String filingNumber, RequestInfo request) {
         try {
+            request.getUserInfo().setType("EMPLOYEE");
             org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(request, filingNumber);
             JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
             return caseDetails.get(0).path("courtId").textValue();
