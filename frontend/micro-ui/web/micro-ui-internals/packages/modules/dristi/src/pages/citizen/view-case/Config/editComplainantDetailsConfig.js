@@ -587,6 +587,27 @@ const editComplainantDetailsFormConfig = [
       {
         type: "component",
         component: "SelectCustomTextArea",
+        key: "prayer",
+        withoutLabel: true,
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "PRAYER",
+              type: "TextAreaComponent",
+              isOptional: true,
+            },
+          ],
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
         key: "reasonForChange",
         label: "CS_REASON_FOR_CHANGE",
         withoutLabel: true,
