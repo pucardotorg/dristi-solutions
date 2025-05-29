@@ -49,6 +49,7 @@ import OrderDrawer from "./OrderDrawer";
 import WitnessDrawer from "./WitnessDrawer";
 import AddParty from "../../../../../hearings/src/pages/employee/AddParty";
 import CaseOverviewJudge from "./CaseOverviewJudge";
+import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -294,6 +295,48 @@ const AdmittedCaseJudge = () => {
   });
 
   const nextActions = useMemo(() => workFlowDetails?.nextActions || [{}], [workFlowDetails]);
+  const [data, setData] = useState([]);
+
+  const fetchInbox = useCallback(async () => {
+    try {
+      const now = new Date();
+      const fromDate = new Date(now.setHours(0, 0, 0, 0)).getTime();
+      const toDate = new Date(now.setHours(23, 59, 59, 999)).getTime();
+
+      const payload = {
+        inbox: {
+          processSearchCriteria: {
+            businessService: ["hearing-default"],
+            moduleName: "Hearing Service",
+            tenantId: "kl",
+          },
+          moduleSearchCriteria: {
+            tenantId: "kl",
+            ...(fromDate && toDate ? { fromDate, toDate } : {}),
+            status: "IN_PROGRESS",
+          },
+          tenantId: "kl",
+          limit: 300,
+          offset: 0,
+        },
+      };
+
+      const res = await HomeService.InboxSearch(payload, { tenantId: "kl" });
+      setData(res?.items || []);
+    } catch (err) {
+      console.log("error", err);
+    } finally {
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchInbox();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    console.log("data", data);
+  }, [data]);
 
   const primaryAction = useMemo(() => {
     return casePrimaryActions?.find((action) => nextActions?.some((data) => data.action === action?.action)) || { action: "", label: "" };
@@ -2273,6 +2316,19 @@ const AdmittedCaseJudge = () => {
       if (option.value === "DOWNLOAD_CASE_FILE") {
         handleDownloadPDF();
       } else if (option.value === "NEXT_HEARING") {
+        if (data?.length === 0) {
+          history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+        } else {
+          const index = data?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentInProgressHearing?.hearingId);
+          if (index === data?.length - 1 || index === -1) {
+            history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+          } else {
+            const row = data?.[index + 1];
+            history.push(
+              `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseId}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
+            );
+          }
+        }
       } else if (option.value === "VIEW_CALENDAR") {
         setShowCalendarModal(true);
       } else if (option.value === "GENERATE_ORDER") {
@@ -2284,7 +2340,7 @@ const AdmittedCaseJudge = () => {
       } else if (option.value === "SUBMIT_DOCUMENTS") {
       }
     },
-    [handleDownloadPDF]
+    [currentInProgressHearing?.hearingId, data, handleDownloadPDF, history]
   );
 
   const handleCourtAction = useCallback(() => {
