@@ -93,7 +93,7 @@ public class PublishOrderSchedulingNextHearing implements OrderUpdateStrategy {
                 .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
         Hearing hearing = hearings.get(0);
 
-        hearingUpdateBasedOnStatus.updateHearingBasedOnStatus(hearing, orderRequest);
+        hearingUpdateBasedOnStatus.updateHearingBasedOnStatus(hearing, orderRequest, false);
 
     }
 

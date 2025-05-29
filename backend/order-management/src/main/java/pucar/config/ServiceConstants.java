@@ -61,6 +61,13 @@ public class ServiceConstants {
 
     public static final String ERROR_WHILE_FETCHING_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE";
 
+    public static final String GET_ATTENDEES_FOR_SCHEDULE_NEXT_HEARING = "namesOfPartiesRequired";
+
+    public static final String GET_ATTENDEES_OF_EXISTING_HEARING = "attendees";
+
+    public static final String PASSED_OVER = "PASSED_OVER";
+
+
     //
 
     public static final String CASE_ADMITTED = "CASE_ADMITTED";

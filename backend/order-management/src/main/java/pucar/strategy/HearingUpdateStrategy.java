@@ -6,7 +6,7 @@ import pucar.web.models.hearing.Hearing;
 
 public interface HearingUpdateStrategy {
 
-    boolean updateHearingWithOutWorkflow(String status);
+    boolean updateHearingBasedOnStatus(String status, boolean isCreateOrderCall);
 
     void updateHearingBasedOnStatus(Hearing hearing, OrderRequest orderRequest);
 }

@@ -17,11 +17,11 @@ public class HearingUpdateBasedOnStatus {
         this.strategies = strategies;
     }
 
-    public void updateHearingBasedOnStatus(Hearing hearing, OrderRequest orderRequest) {
+    public void updateHearingBasedOnStatus(Hearing hearing, OrderRequest orderRequest, boolean isCreateOrderCall) {
 
         String status = hearing.getStatus();
 
-        strategies.stream().filter(hearingUpdateStrategy -> hearingUpdateStrategy.updateHearingWithOutWorkflow(status))
+        strategies.stream().filter(hearingUpdateStrategy -> hearingUpdateStrategy.updateHearingBasedOnStatus(status, isCreateOrderCall))
                 .forEach(hearingUpdateStrategy -> hearingUpdateStrategy.updateHearingBasedOnStatus(hearing, orderRequest));
 
     }
