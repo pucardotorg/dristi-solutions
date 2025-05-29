@@ -79,6 +79,15 @@ public class Task {
     @JsonProperty("assignedTo")
     private Object assignedTo = null;
 
+    @JsonProperty("caseTitle")
+    private String caseTitle = null;
+
+    @JsonProperty("courtId")
+    private String courtId;
+
+    @JsonProperty("caseId")
+    private String caseId = null;
+
     @JsonProperty("isActive")
     private Boolean isActive = null;
 
