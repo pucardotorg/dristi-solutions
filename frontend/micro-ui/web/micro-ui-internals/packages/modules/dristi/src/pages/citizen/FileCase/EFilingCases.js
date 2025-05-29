@@ -1769,13 +1769,14 @@ function EFilingCases({ path }) {
           let isVakalatnamaFileMissing = false;
           let isPipAffidavitFileMissing = false;
           let isAdvocateCountDiffer = false;
-          if (multipleAdvocateNameDetails && Array.isArray(multipleAdvocateNameDetails) && multipleAdvocateNameDetails?.length > 0) {
-            if (multipleAdvocateNameDetails?.length !== numberOfAdvocates) {
-              isAdvocateCountDiffer = true;
-            }
-          }
+
           if (isComplainantPip?.code === "NO") {
             // IF complainant is not party in person, an advocate must be present
+            if (multipleAdvocateNameDetails && Array.isArray(multipleAdvocateNameDetails) && multipleAdvocateNameDetails?.length > 0) {
+              if (multipleAdvocateNameDetails?.length !== numberOfAdvocates) {
+                isAdvocateCountDiffer = true;
+              }
+            }
             if (!multipleAdvocateNameDetails || (Array.isArray(multipleAdvocateNameDetails) && multipleAdvocateNameDetails?.length === 0)) {
               isAnAdvocateMissing = true;
             } else if (
