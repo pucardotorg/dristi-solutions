@@ -175,6 +175,7 @@ const EpostTrackingPage = () => {
       if (rowData?.original?.deliveryStatus === "NOT_DELIVERED") {
         ordersService.customApiService(Urls.orders.pendingTask, {
           pendingTask: {
+            actionCategory: "Review Process",
             name: `Re-issue ${orderType === "NOTICE" ? "Notice" : "Summon"}`,
             entityType: "order-default",
             referenceId: `MANUAL_${orderData?.list[0]?.hearingNumber}`,

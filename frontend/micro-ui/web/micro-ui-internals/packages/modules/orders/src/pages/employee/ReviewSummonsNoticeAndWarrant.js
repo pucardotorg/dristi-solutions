@@ -55,7 +55,6 @@ export const getJudgeDefaultConfig = () => {
   });
 };
 
-
 function getAction(selectedDelievery, orderType) {
   const key = selectedDelievery?.key;
 
@@ -69,7 +68,6 @@ function getAction(selectedDelievery, orderType) {
 
   return orderType === "WARRANT" ? "NOT_DELIVERED" : "NOT_SERVED";
 }
-
 
 const ReviewSummonsNoticeAndWarrant = () => {
   const { t } = useTranslation();
@@ -287,6 +285,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         if (selectedDelievery?.key === "NOT_DELIVERED") {
           ordersService.customApiService(Urls.orders.pendingTask, {
             pendingTask: {
+              actionCategory: "Review Process",
               name: `Re-issue ${orderType === "NOTICE" ? "Notice" : "Summon"}`,
               entityType: "order-default",
               referenceId: `MANUAL_${orderData?.list[0]?.hearingNumber}`,

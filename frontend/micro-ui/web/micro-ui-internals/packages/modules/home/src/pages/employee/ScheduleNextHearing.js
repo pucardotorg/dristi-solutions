@@ -271,6 +271,7 @@ function ScheduleNextHearing({
         .then(async (res) => {
           await HomeService.customApiService(Urls.pendingTask, {
             pendingTask: {
+              actionCategory: "Schedule Hearing",
               name: "Create Order for rescheduling the hearing",
               entityType: "order-default",
               referenceId: `MANUAL_${referenceId}`,

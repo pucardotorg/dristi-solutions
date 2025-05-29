@@ -13,17 +13,19 @@ export const pendingTaskConfig = {
       // tenantId: Digit.ULBService.getCurrentTenantId(),
     },
     requestBody: {
-      moduleName: "Pending Tasks Service",
-      moduleSearchCriteria: {
+      SearchCriteria: {
+        moduleName: "Pending Tasks Service",
         tenantId: Digit.ULBService.getCurrentTenantId(),
+        limit: 10,
+        offset: 0,
       },
     },
     masterName: "commonUiConfig",
     moduleName: "HomePendingConfig",
     minParametersForSearchForm: 0,
     tableFormJsonPath: "requestParam",
-    filterFormJsonPath: "requestBody.HearingList",
-    searchFormJsonPath: "requestBody.HearingList",
+    filterFormJsonPath: "requestBody",
+    searchFormJsonPath: "requestBody",
   },
   sections: {
     search: {
@@ -42,6 +44,12 @@ export const pendingTaskConfig = {
             disable: false,
             populators: {
               name: "date",
+              validation: {
+                customValidationFn: {
+                  moduleName: "dristiOrders",
+                  masterName: "minTodayDateValidation",
+                },
+              },
             },
           },
           {
@@ -84,36 +92,30 @@ export const pendingTaskConfig = {
       uiConfig: {
         columns: [
           {
-            label: "HEARING_TYPE",
+            label: "CASE_NAME",
             jsonPath: "hearingType",
             additionalCustomization: true,
           },
-          // {
-          //   label: "Stage",
-          //   jsonPath: "",
-          // },
           {
-            label: "PARTIES",
-            jsonPath: "attendees",
+            label: "CASE_ID",
+            jsonPath: "hearingType",
             additionalCustomization: true,
           },
           {
-            label: "STATUS",
-            jsonPath: "status",
+            label: "STAGE",
+            jsonPath: "hearingType",
             additionalCustomization: true,
           },
           {
-            label: "DATE",
-            jsonPath: "startTime",
-            additionalCustomization: true,
-          },
-          {
-            label: "CS_ACTIONS",
+            label: "ADVOCATES",
+            labelChildren: "OutlinedInfoIcon",
+            tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",
+            jsonPath: "hearingType",
             additionalCustomization: true,
           },
         ],
         enableColumnSort: true,
-        resultsJsonPath: "HearingList",
+        resultsJsonPath: "SearchCriteria",
       },
       show: true,
     },

@@ -1746,6 +1746,7 @@ const AdmittedCases = () => {
         setModalInfo({ ...modalInfo, page: 2 });
         DRISTIService.customApiService(Urls.dristi.pendingTask, {
           pendingTask: {
+            actionCategory: "Schedule Hearing",
             name: "Schedule Admission Hearing",
             entityType: "case-default",
             referenceId: `MANUAL_${caseDetails?.filingNumber}`,
@@ -1823,6 +1824,7 @@ const AdmittedCases = () => {
         );
         DRISTIService.customApiService(Urls.dristi.pendingTask, {
           pendingTask: {
+            actionCategory: "Schedule Hearing",
             name: "Schedule Hearing",
             entityType: "case-default",
             referenceId: `MANUAL_${caseDetails?.filingNumber}`,

@@ -1881,22 +1881,51 @@ export const UICustomizations = {
   HomePendingConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const tenantId = window?.Digit.ULBService.getStateId();
-      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role?.code);
+      const currentDateInMs = new Date().setHours(0, 0, 0, 0);
+      const selectedDateInMs = new Date(requestCriteria?.state?.searchForm?.date).setHours(0, 0, 0, 0);
+      const activeTab = additionalDetails?.activeTab;
+
       return {
         ...requestCriteria,
         body: {
           ...requestCriteria.body,
-          moduleSearchCriteria: {
-            ...requestCriteria.body.moduleSearchCriteria,
-            caseSearch: requestCriteria?.state?.searchForm?.caseSearchText,
-            date: requestCriteria?.state?.searchForm?.date,
-            stage: requestCriteria?.state?.searchForm?.stage,
+          SearchCriteria: {
+            ...requestCriteria.body.SearchCriteria,
+            moduleSearchCriteria: {
+              ...requestCriteria?.body?.SearchCriteria?.moduleSearchCriteria,
+              searchReviewProcess: {
+                date: activeTab === "REVIEW_PROCESS" ? selectedDateInMs : currentDateInMs,
+                isOnlyCountRequired: activeTab === "REVIEW_PROCESS" ? false : true,
+                count: 10,
+                actionCategory: "Review Process",
+              },
+              searchViewApplication: {
+                date: activeTab === "VIEW_APPLICATION" ? selectedDateInMs : currentDateInMs,
+                isOnlyCountRequired: activeTab === "VIEW_APPLICATION" ? false : true,
+                count: 10,
+                actionCategory: "View Application",
+              },
+              searchScheduleHearing: {
+                date: activeTab === "SCHEDULE_HEARING" ? selectedDateInMs : currentDateInMs,
+                isOnlyCountRequired: activeTab === "SCHEDULE_HEARING" ? false : true,
+                count: 10,
+                actionCategory: "Schedule Hearing",
+              },
+              searchRegisterCases: {
+                date: activeTab === "REGISTRATION" ? selectedDateInMs : currentDateInMs,
+                isOnlyCountRequired: activeTab === "REGISTRATION" ? false : true,
+                count: 10,
+                actionCategory: "Register cases",
+              },
+              tenantId,
+            },
           },
-          tenantId,
-          pagination: {
-            limit: requestCriteria?.state?.tableForm?.limit,
-            offSet: requestCriteria?.state?.tableForm?.offset,
-          },
+          // tenantId,
+          // pagination: {
+          //   limit: requestCriteria?.state?.tableForm?.limit,
+          //   offSet: requestCriteria?.state?.tableForm?.offset,
+          // },
         },
         config: {
           ...requestCriteria.config,
@@ -1961,214 +1990,6 @@ export const UICustomizations = {
         default:
           break;
       }
-    },
-    dropDownItems: (row, configs) => {
-      const formatDate = (date) => {
-        const day = String(date.getDate()).padStart(2, "0");
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const year = date.getFullYear();
-        return `${day}-${month}-${year}`;
-      };
-      const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
-      const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
-      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-      const date = new Date(row.startTime);
-      const future = row.startTime > Date.now();
-      const showActions = configs && configs.hasOwnProperty("showMakeSubmission") ? configs.showMakeSubmission : true;
-      if (row.status === "SCHEDULED" && userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE")) {
-        return [
-          {
-            label: "Reschedule hearing",
-            id: "reschedule",
-            action: (history) => {
-              const requestBody = {
-                order: {
-                  createdDate: null,
-                  tenantId: row.tenantId,
-                  hearingNumber: row?.hearingId,
-                  filingNumber: row.filingNumber[0],
-                  cnrNumber: row.cnrNumbers[0],
-                  statuteSection: {
-                    tenantId: row.tenantId,
-                  },
-                  orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                  orderCategory: "INTERMEDIATE",
-                  orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                  status: "",
-                  isActive: true,
-                  workflow: {
-                    action: OrderWorkflowAction.SAVE_DRAFT,
-                    comments: "Creating order",
-                    assignes: null,
-                    rating: null,
-                    documents: [{}],
-                  },
-                  documents: [],
-                  additionalDetails: {
-                    formdata: {
-                      orderType: {
-                        type: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                        isactive: true,
-                        code: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                        name: "ORDER_TYPE_INITIATING_RESCHEDULING_OF_HEARING_DATE",
-                      },
-                      originalHearingDate: `${date.getFullYear()}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
-                        date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()
-                      }`,
-                    },
-                  },
-                },
-              };
-              ordersService
-                .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
-                .then((res) => {
-                  history.push(
-                    `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
-                    {
-                      caseId: row.caseId,
-                      tab: "Orders",
-                    }
-                  );
-                })
-                .catch((err) => {});
-            },
-          },
-          {
-            label: "View transcript",
-            id: "view_transcript",
-            hide: true,
-            action: (history) => {
-              alert("Not Yet Implemented");
-            },
-          },
-          {
-            label: "View witness deposition",
-            id: "view_witness",
-            hide: true,
-            action: (history) => {
-              alert("Not Yet Implemented");
-            },
-          },
-          {
-            label: "View pending task",
-            id: "view_pending_tasks",
-            hide: true,
-            action: (history) => {
-              alert("Not Yet Implemented");
-            },
-          },
-        ];
-      }
-      if (row.status === "SCHEDULED" && userInfo?.type === "CITIZEN") {
-        return [
-          {
-            label: "Request for Reschedule hearing",
-            id: "reschedule",
-            hide: !showActions,
-            action: (history) => {
-              history.push(
-                `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${row.filingNumber[0]}&hearingId=${row.hearingId}&applicationType=RE_SCHEDULE`
-              );
-            },
-          },
-          {
-            label: "Request for Checkout Request",
-            id: "reschedule",
-            hide: !showActions,
-            action: (history) => {
-              history.push(
-                `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${row.filingNumber[0]}&hearingId=${row.hearingId}&applicationType=CHECKOUT_REQUEST`
-              );
-            },
-          },
-          {
-            label: "View transcript",
-            id: "view_transcript",
-            hide: true,
-            action: (history) => {
-              alert("Not Yet Implemented");
-            },
-          },
-          {
-            label: "View witness deposition",
-            id: "view_witness",
-            hide: true,
-            action: (history) => {
-              alert("Not Yet Implemented");
-            },
-          },
-          {
-            label: "View pending task",
-            id: "view_pending_tasks",
-            hide: true,
-            action: (history) => {
-              alert("Not Yet Implemented");
-            },
-          },
-        ];
-      }
-
-      if (![HearingWorkflowState?.SCHEDULED, HearingWorkflowState?.ABATED, HearingWorkflowState?.OPTOUT].includes(row.status)) {
-        return [
-          {
-            label: "View transcript",
-            id: "view_transcript",
-            hide: false,
-            disabled: false,
-            action: (history, column, row) => {
-              column.clickFunc(row);
-            },
-          },
-          {
-            label: "View witness deposition",
-            id: "view_witness",
-            hide: false,
-            disabled: true,
-            action: (history) => {
-              alert("Not Yet Implemented");
-            },
-          },
-          {
-            label: "View pending task",
-            id: "view_pending_tasks",
-            hide: true,
-            disabled: true,
-            action: (history) => {
-              alert("Not Yet Implemented");
-            },
-          },
-        ];
-      }
-
-      return [
-        {
-          label: "View transcript",
-          id: "view_transcript",
-          hide: false,
-          disabled: true,
-          action: (history) => {
-            alert("Not Yet Implemented");
-          },
-        },
-        {
-          label: "View witness deposition",
-          id: "view_witness",
-          hide: false,
-          disabled: true,
-          action: (history) => {
-            alert("Not Yet Implemented");
-          },
-        },
-        {
-          label: "View pending task",
-          id: "view_pending_tasks",
-          hide: true,
-          disabled: true,
-          action: (history) => {
-            alert("Not Yet Implemented");
-          },
-        },
-      ];
     },
   },
   patternValidation: (key) => {

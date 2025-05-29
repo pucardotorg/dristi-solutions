@@ -12,8 +12,17 @@ export const Urls = {
   generateADiaryPDF: "/ab-diary/case/diary/v1/generate",
   updateADiaryPDF: "/ab-diary/case/diary/v1/update",
   searchADiary: "/ab-diary/case/diary/v1/search",
+  inboxSearch: "/inbox/v2/index/_search",
 };
 export const HomeService = {
+  InboxSearch: (data, params) =>
+    Request({
+      url: Urls.inboxSearch,
+      useCache: true,
+      userService: true,
+      data,
+      params,
+    }),
   getPendingTaskService: (data, params) =>
     Request({
       url: Urls.getPendingTaskFields,
