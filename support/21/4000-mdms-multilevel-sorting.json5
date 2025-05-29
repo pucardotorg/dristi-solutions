@@ -1,0 +1,34 @@
+{
+  "tenantId": "kl",
+  "code": "Hearing.HearingStatus",
+  "description": "Hearing status and priority",
+  "definition": {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "required": [
+      "id",
+      "code",
+      "status",
+      "priority"
+    ],
+    "x-unique": [
+      "id"
+    ],
+    "properties": {
+      "id": {
+        "type": "integer"
+      },
+      "priority": {
+        "type": "integer"
+      },
+      "code": {
+        "type": "string"
+      },
+      "status": {
+        "type": "string"
+      }
+    },
+    "additionalProperties": false
+  },
+  "isActive": true,
+}
