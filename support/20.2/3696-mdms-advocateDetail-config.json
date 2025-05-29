@@ -1,0 +1,128 @@
+{
+  "tenantId": "kl",
+  "masterName": "commonUiConfig",
+  "moduleName": "advocateDetailsConfig",
+  "mdmsPayload": [
+    {
+      "id": "2da7be57-7170-4dbe-8ad8-b73dd1d11832",
+      "tenantId": "kl",
+      "schemaCode": "commonUiConfig.advocateDetailsConfig",
+      "uniqueIdentifier": "1",
+      "data": {
+        "id": 1,
+        "header": "CS_ADVOCATE_DETAILS_HEADING",
+        "subtext": "CS_ADVOCATE_DETAILS_SUBTEXT",
+        "className": "advocate-detail",
+        "formconfig": [
+          {
+            "body": [
+              {
+                "key": "multipleAdvocatesAndPip",
+                "type": "component",
+                "component": "MultipleAdvocatesAndPip",
+                "populators": {
+                  "inputs": [
+                    {
+                      "name": "isComplainantPip",
+                      "type": "radioInput",
+                      "label": "CS_IF_COMPLAINANT_IS_PIP",
+                      "options": [
+                        {
+                          "code": "YES",
+                          "name": "Yes",
+                          "isEnabled": true
+                        },
+                        {
+                          "code": "NO",
+                          "name": "No",
+                          "isEnabled": true
+                        }
+                      ]
+                    },
+                    {
+                      "name": "numberOfAdvocates",
+                      "type": "textInput",
+                      "label": "CS_NUMBER_OF_ADVOCATES"
+                    },
+                    {
+                      "name": "firstName",
+                      "type": "textInput",
+                      "label": "FIRST_NAME"
+                    },
+                    {
+                      "name": "middleName",
+                      "type": "textInput",
+                      "label": "MIDDLE_NAME_OPTIONAL"
+                    },
+                    {
+                      "name": "lastName",
+                      "type": "textInput",
+                      "label": "LAST_NAME"
+                    },
+                    {
+                      "name": "document",
+                      "type": "DragDropComponent",
+                      "fileKey": "vakalatnamaFileUpload",
+                      "fileTypes": [
+                        "JPG",
+                        "PDF",
+                        "PNG"
+                      ],
+                      "maxFileSize": 50,
+                      "documentHeader": "UPLOAD_VAKALATNAMA",
+                      "isDocDependentOn": "multipleAdvocatesAndPip",
+                      "isMultipleUpload": true,
+                      "uploadGuidelines": "UPLOAD_DOC_50",
+                      "isDocDependentKey": "showVakalatNamaUpload",
+                      "infoTooltipMessage": "UPLOAD_VAKALATNAMA",
+                      "maxFileErrorMessage": "CS_FILE_LIMIT_50_MB",
+                      "downloadTemplateLink": "https://pucarfilestore.blob.core.windows.net/pucar-filestore/kl/Vakalat.Template.docx",
+                      "downloadTemplateText": "VAKALATNAMA_TEMPLATE_TEXT"
+                    },
+                    {
+                      "type": "InfoComponent",
+                      "infoText": "AFFIDAVIT_NECESSARY_FOR_PIP",
+                      "infoHeader": "CS_PLEASE_NOTE",
+                      "infoTooltipMessage": "ADVOCATE_DETAIL_NOTE"
+                    },
+                    {
+                      "name": "document",
+                      "type": "DragDropComponent",
+                      "fileKey": "pipAffidavitFileUpload",
+                      "fileTypes": [
+                        "JPG",
+                        "PDF",
+                        "PNG"
+                      ],
+                      "maxFileSize": 50,
+                      "documentHeader": "UPLOAD_AFFIDAVIT",
+                      "isDocDependentOn": "multipleAdvocatesAndPip",
+                      "isMultipleUpload": true,
+                      "uploadGuidelines": "UPLOAD_DOC_50",
+                      "isDocDependentKey": "showAffidavit",
+                      "maxFileErrorMessage": "CS_FILE_LIMIT_50_MB"
+                    }
+                  ],
+                  "isDependent": true
+                },
+                "labelHeading": "CS_ADVOCATE_HEADING",
+                "withoutLabel": true
+              }
+            ]
+          }
+        ],
+        "selectDocumentName": {
+          "vakalatnamaFileUpload": "VAKALATNAMA",
+          "pipAffidavitFileUpload": "UPLOAD_PIP_AFFIDAVIT"
+        }
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+        "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+        "createdTime": 1728654609319,
+        "lastModifiedTime": 1741263835726
+      }
+    }
+  ]
+}

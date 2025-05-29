@@ -96,25 +96,26 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     formData?.[config?.key]
       ? formData?.[config?.key]
       : {
-          boxComplainant: {
-            firstName: "",
-            middleName: "",
-            lastName: "",
-            individualId: "",
-            mobileNumber: "",
-            index: 0,
-          },
-          isComplainantPip: {
-            code: "NO",
-            name: "No",
-            isEnabled: true,
-          },
-          multipleAdvocateNameDetails: [],
-          showVakalatNamaUpload: true,
-          showAffidavit: false,
-          vakalatnamaFileUpload: null,
-          pipAffidavitFileUpload: null,
-        }
+        boxComplainant: {
+          firstName: "",
+          middleName: "",
+          lastName: "",
+          individualId: "",
+          mobileNumber: "",
+          index: 0,
+        },
+        numberOfAdvocates: 0,
+        isComplainantPip: {
+          code: "NO",
+          name: "No",
+          isEnabled: true,
+        },
+        multipleAdvocateNameDetails: [],
+        showVakalatNamaUpload: true,
+        showAffidavit: false,
+        vakalatnamaFileUpload: null,
+        pipAffidavitFileUpload: null,
+      }
   );
 
   useEffect(() => {
@@ -148,7 +149,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
   }, [config?.populators?.inputs]);
 
   const inputs = useMemo(() => {
-    const nameInputs = config?.populators?.inputs?.filter((input) => input?.type === "textInput");
+    const nameInputs = config?.populators?.inputs?.filter((input) => input?.type === "textInput" && input?.name !== "numberOfAdvocates");
     if (nameInputs?.length > 0) {
       return nameInputs;
     } else
@@ -169,6 +170,18 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
           name: "lastName",
         },
       ];
+  }, [config?.populators?.inputs]);
+
+  const numberOfAdvocatesInput = useMemo(() => {
+    const numberOfAdvocatesInput = config?.populators?.inputs?.find((input) => input?.name === "numberOfAdvocates");
+    if (numberOfAdvocatesInput) {
+      return numberOfAdvocatesInput;
+    } else
+      return {
+        type: "textInput",
+        label: "CS_NUMBER_OF_ADVOCATES",
+        name: "numberOfAdvocates",
+      };
   }, [config?.populators?.inputs]);
 
   const noteInput = useMemo(() => {
@@ -260,18 +273,26 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
     const caseStatus = caseDetails?.status;
     if (caseStatus === CaseWorkflowState.CASE_REASSIGNED) {
       if (caseDetails?.additionalDetails?.judge?.comment) {
-        return { vakalatnamaFileUpload: true, pipAffidavitFileUpload: true };
+        return { vakalatnamaFileUpload: true, pipAffidavitFileUpload: true, numberOfAdvocates: true };
       }
+      let errorMssg = {};
       const curentFormIndex = advocateAndPipData?.boxComplainant?.index;
       const currentFormErrorObject =
         caseDetails?.additionalDetails?.scrutiny?.data?.additionalDetails?.advocateDetails?.form?.[curentFormIndex] || {};
       if (Object.keys(currentFormErrorObject)?.length > 0) {
-        if (currentFormErrorObject?.hasOwnProperty("multipleAdvocatesAndPip.vakalatnamaFileUpload.document")) {
-          return { vakalatnamaFileUpload: true, message: currentFormErrorObject?.image?.FSOError || "" };
+        if (currentFormErrorObject?.hasOwnProperty("multipleAdvocatesAndPip.vakalatnamaFileUpload.document") && currentFormErrorObject?.["multipleAdvocatesAndPip.vakalatnamaFileUpload.document"]?.FSOError) {
+          errorMssg = { ...errorMssg, vakalatnamaFileUpload: true, vakalatnamaFileUploadMessage: currentFormErrorObject?.["multipleAdvocatesAndPip.vakalatnamaFileUpload.document"]?.FSOError || "" };
         }
-        if (currentFormErrorObject?.hasOwnProperty("multipleAdvocatesAndPip.pipAffidavitFileUpload.document")) {
-          return { pipAffidavitFileUpload: true, message: currentFormErrorObject?.image?.FSOError || "" };
+        if (currentFormErrorObject?.hasOwnProperty("multipleAdvocatesAndPip.pipAffidavitFileUpload.document") && currentFormErrorObject?.["multipleAdvocatesAndPip.pipAffidavitFileUpload.document"]?.FSOError) {
+          errorMssg = { ...errorMssg, pipAffidavitFileUpload: true, pipAffidavitFileUploadMessage: currentFormErrorObject?.["multipleAdvocatesAndPip.pipAffidavitFileUpload.document"]?.FSOError || "" };
         }
+        if (currentFormErrorObject?.hasOwnProperty("multipleAdvocatesAndPip.numberOfAdvocates") && currentFormErrorObject?.["multipleAdvocatesAndPip.numberOfAdvocates"]?.FSOError) {
+          errorMssg = { ...errorMssg, numberOfAdvocates: true, numberOfAdvocatesMessage: currentFormErrorObject?.["multipleAdvocatesAndPip.numberOfAdvocates"]?.FSOError || "" };
+        }
+
+        if (Object.keys(errorMssg)?.length > 0) {
+          return errorMssg;
+        } else return { reassigned: true };
       } else return { reassigned: true };
     }
     return false;
@@ -714,123 +735,168 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
         <div style={{ color: "#0A0A0A", fontWeight: 700, fontSize: "16px", marginBottom: "15px" }}>{t(config?.labelHeading)}</div>
       )}
       {!advocateAndPipData?.showAffidavit && (
-        <div className="advocate-details-div" style={{ pointerEvents: !isCaseReAssigned ? "auto" : "none" }}>
-          {Array.isArray(advocateAndPipData?.multipleAdvocateNameDetails) &&
-            Object.keys(advocateAndPipData?.multipleAdvocateNameDetails?.[0] || {})?.length !== 0 &&
-            advocateAndPipData?.multipleAdvocateNameDetails.map((data, index) => {
-              return (
-                <div
-                  key={index}
-                  style={{
-                    marginBottom: "0px",
-                    padding: "0px",
-                    borderRadius: "8px",
-                  }}
-                >
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "0px",
-                    }}
-                  >
-                    <h1 style={{ fontSize: "18px", fontWeight: "bold" }}>Advocate {index + 1}</h1>
-                    {!(
-                      advocateAndPipData?.boxComplainant?.index === 0 &&
-                      advocateAndPipData?.multipleAdvocateNameDetails?.[index]?.advocateBarRegNumberWithName?.individualId === individualId
-                    ) && (
-                      <span
-                        onClick={() => handleDeleteAdvocate(index)}
-                        style={{
-                          cursor: "pointer",
-                          color: "red",
-                          display: "flex",
-                          alignItems: "center",
-                        }}
-                      >
-                        <CustomDeleteIcon />
-                      </span>
-                    )}
-                  </div>
+        <React.Fragment>
+          {isCaseReAssigned && isCaseReAssigned.hasOwnProperty("numberOfAdvocates") && isCaseReAssigned?.numberOfAdvocatesMessage && (
+            <ScrutinyInfoAdvocate message={isCaseReAssigned?.numberOfAdvocatesMessage} t={t}></ScrutinyInfoAdvocate>
+          )}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: "30px",
+              pointerEvents: isCaseReAssigned ? (isCaseReAssigned.hasOwnProperty("numberOfAdvocates") ? "auto" : "none") : "auto"
+            }}
+          >
+            <div
+              style={{
+                fontSize: "16px",
+                color: "#0A0A0A",
+                marginBottom: "16px",
+                fontWeight: 700,
+              }}
+            >
+              {t(numberOfAdvocatesInput?.label)}
+            </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "left", gap: "0px" }}>
-                    <h1 style={{ fontSize: "14px" }}> {t("BAR_REGISTRATON")}</h1>
-                    <SearchableDropdown
-                      t={t}
-                      isCaseReAssigned={isCaseReAssigned}
-                      selectedAdvocatesList={advocateAndPipData?.multipleAdvocateNameDetails}
-                      value={data?.advocateBarRegNumberWithName}
-                      onChange={(value) => handleInputChange(index, "advocateBarRegNumberWithName", value)}
-                      disabled={data?.advocateBarRegNumberWithName?.individualId === individualId}
-                    />
-
-                    {data?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal &&
-                      inputs.map((input, i) => {
-                        return (
-                          <div style={{ width: "100%", textAlign: "left", marginBottom: "20px" }}>
-                            <label
-                              style={{
-                                fontSize: "14px",
-                                display: "block",
-                                marginBottom: "5px",
-                              }}
-                            >
-                              {t(input.label)}
-                            </label>
-                            <input
-                              type="text"
-                              value={data?.advocateNameDetails?.[input.name] || ""}
-                              //   onChange={(e) => handleInputChange(index, input.name, e.target.value)}
-                              style={{
-                                width: "100%",
-                                padding: "10px",
-                                fontSize: "16px",
-                                border: "1px solid #3D3C3C",
-                                borderRadius: "0px",
-                              }}
-                              disabled={true}
-                            />
-                          </div>
-                        );
-                      })}
-                  </div>
-                </div>
-              );
-            })}
-          {
-            <div>
-              <CustomAddIcon />
-              <Button
-                className="add-location-btn"
-                label={t("ADD_ADVOCATE")}
-                style={{
-                  display: "inline-block",
-                  margin: "0 0 20px 0",
-                  fontSize: "16px",
-                  background: "none",
-                  border: "none",
-                  textDecoration: "none",
-                  cursor: "pointer",
+            <div style={{ textAlign: "left", marginBottom: "20px" }}>
+              <input
+                type="text"
+                value={advocateAndPipData?.numberOfAdvocates || ""}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, ""); // Allow only numbers
+                  const numberOfAdvocates = value ? parseInt(value, 10) : 0;
+                  const newData = { ...advocateAndPipData, numberOfAdvocates };
+                  setAdvocateAndPipData(newData);
+                  onSelect(config.key, newData);
                 }}
-                onButtonClick={handleAddAdvocate}
+                style={{
+                  padding: "10px",
+                  fontSize: "16px",
+                  border: "1px solid #3D3C3C",
+                  borderRadius: "0px",
+                }}
               />
             </div>
-          }
-          {advocateAndPipData?.multipleAdvocateNameDetails &&
-            advocateAndPipData?.multipleAdvocateNameDetails.length > 0 &&
-            !advocateAndPipData?.multipleAdvocateNameDetails.every((item) => Object.keys(item).length === 0) && (
-              <div className="custom-note-main-div advocate-document-info" style={{ marginBottom: "24px" }}>
-                <div className="custom-note-heading-div">
-                  <CustomErrorTooltip message={t("ADVOCATE_DETAIL_INFO_TOOLTIP")} showTooltip={true} />
-                  <h2>{t(noteInput?.infoHeader)}</h2>
-                </div>
-                <div className="custom-note-info-div">
-                  <p>{`${t("ADVOCATE_DETAIL_INFO_TOOLTIP")} `}</p>
-                </div>
+          </div>
+          <div className="advocate-details-div" style={{ pointerEvents: isCaseReAssigned ? (isCaseReAssigned.hasOwnProperty("numberOfAdvocates") ? "auto" : "none") : "auto" }}>
+            {Array.isArray(advocateAndPipData?.multipleAdvocateNameDetails) &&
+              Object.keys(advocateAndPipData?.multipleAdvocateNameDetails?.[0] || {})?.length !== 0 &&
+              advocateAndPipData?.multipleAdvocateNameDetails.map((data, index) => {
+                return (
+                  <div
+                    key={index}
+                    style={{
+                      marginBottom: "0px",
+                      padding: "0px",
+                      borderRadius: "8px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: "0px",
+                      }}
+                    >
+                      <h1 style={{ fontSize: "18px", fontWeight: "bold" }}>Advocate {index + 1}</h1>
+                      {!(
+                        advocateAndPipData?.boxComplainant?.index === 0 &&
+                        advocateAndPipData?.multipleAdvocateNameDetails?.[index]?.advocateBarRegNumberWithName?.individualId === individualId
+                      ) && (
+                          <span
+                            onClick={() => handleDeleteAdvocate(index)}
+                            style={{
+                              cursor: "pointer",
+                              color: "red",
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            <CustomDeleteIcon />
+                          </span>
+                        )}
+                    </div>
+
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "left", gap: "0px" }}>
+                      <h1 style={{ fontSize: "14px" }}> {t("BAR_REGISTRATON")}</h1>
+                      <SearchableDropdown
+                        t={t}
+                        isCaseReAssigned={isCaseReAssigned}
+                        selectedAdvocatesList={advocateAndPipData?.multipleAdvocateNameDetails}
+                        value={data?.advocateBarRegNumberWithName}
+                        onChange={(value) => handleInputChange(index, "advocateBarRegNumberWithName", value)}
+                        disabled={data?.advocateBarRegNumberWithName?.individualId === individualId}
+                      />
+
+                      {data?.advocateBarRegNumberWithName?.barRegistrationNumberOriginal &&
+                        inputs.map((input, i) => {
+                          return (
+                            <div style={{ width: "100%", textAlign: "left", marginBottom: "20px" }}>
+                              <label
+                                style={{
+                                  fontSize: "14px",
+                                  display: "block",
+                                  marginBottom: "5px",
+                                }}
+                              >
+                                {t(input.label)}
+                              </label>
+                              <input
+                                type="text"
+                                value={data?.advocateNameDetails?.[input.name] || ""}
+                                //   onChange={(e) => handleInputChange(index, input.name, e.target.value)}
+                                style={{
+                                  width: "100%",
+                                  padding: "10px",
+                                  fontSize: "16px",
+                                  border: "1px solid #3D3C3C",
+                                  borderRadius: "0px",
+                                }}
+                                disabled={true}
+                              />
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                );
+              })}
+            {
+              <div>
+                <CustomAddIcon />
+                <Button
+                  className="add-location-btn"
+                  label={t("ADD_ADVOCATE")}
+                  style={{
+                    display: "inline-block",
+                    margin: "0 0 20px 0",
+                    fontSize: "16px",
+                    background: "none",
+                    border: "none",
+                    textDecoration: "none",
+                    cursor: "pointer",
+                  }}
+                  onButtonClick={handleAddAdvocate}
+                />
               </div>
-            )}
-        </div>
+            }
+            {advocateAndPipData?.multipleAdvocateNameDetails &&
+              advocateAndPipData?.multipleAdvocateNameDetails.length > 0 &&
+              !advocateAndPipData?.multipleAdvocateNameDetails.every((item) => Object.keys(item).length === 0) && (
+                <div className="custom-note-main-div advocate-document-info" style={{ marginBottom: "24px" }}>
+                  <div className="custom-note-heading-div">
+                    <CustomErrorTooltip message={t("ADVOCATE_DETAIL_INFO_TOOLTIP")} showTooltip={true} />
+                    <h2>{t(noteInput?.infoHeader)}</h2>
+                  </div>
+                  <div className="custom-note-info-div">
+                    <p>{`${t("ADVOCATE_DETAIL_INFO_TOOLTIP")} `}</p>
+                  </div>
+                </div>
+              )}
+          </div>
+        </React.Fragment>
       )}
       {advocateAndPipData?.showAffidavit && (
         <div className="custom-note-main-div advocate-document-info" style={{ marginBottom: "24px" }}>
@@ -853,6 +919,7 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
             input?.isDocDependentOn && input?.isDocDependentKey
               ? formData?.[input?.isDocDependentOn]?.[input?.isDocDependentKey]
               : !input?.hideDocument;
+          const message = input?.fileKey === "vakalatnamaFileUpload" ? isCaseReAssigned?.vakalatnamaFileUploadMessage : input?.fileKey === "pipAffidavitFileUpload" ? isCaseReAssigned?.pipAffidavitFileUploadMessage : "";
           return (
             <div style={{ pointerEvents: isCaseReAssigned ? (isCaseReAssigned.hasOwnProperty(input?.fileKey) ? "auto" : "none") : "auto" }}>
               {showDocument && (
@@ -870,8 +937,9 @@ function MultipleAdvocatesAndPip({ t, config, onSelect, formData, errors, setErr
                     }
                     {input.documentSubText && <p className="custom-document-sub-header">{t(input.documentSubText)}</p>}
                   </div>
-                  {isCaseReAssigned && isCaseReAssigned.hasOwnProperty(input?.fileKey) && isCaseReAssigned?.message && (
-                    <ScrutinyInfoAdvocate message={isCaseReAssigned?.message} t={t}></ScrutinyInfoAdvocate>
+
+                  {isCaseReAssigned && isCaseReAssigned.hasOwnProperty(input?.fileKey) && message && (
+                    <ScrutinyInfoAdvocate message={message} t={t}></ScrutinyInfoAdvocate>
                   )}
                   {currentValue.map((file, index) => (
                     <RenderFileCard
