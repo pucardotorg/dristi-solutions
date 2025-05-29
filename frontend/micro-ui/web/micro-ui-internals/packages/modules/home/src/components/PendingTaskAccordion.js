@@ -2,6 +2,7 @@ import { InfoBannerIcon } from "@egovernments/digit-ui-components";
 import { CustomArrowDownIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import React, { useMemo, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { getFormattedDate } from "../utils";
 // import { CustomArrowDownIcon, CustomArrowUpIcon } from "../icons/svgIndex";
 
 function PendingTaskAccordion({
@@ -218,8 +219,9 @@ function PendingTaskAccordion({
           {t("CREATED_ON")}
         </div>
       </div>
-      <div className="tasks-component-table-body" style={{ overflowY: "auto", maxHeight: "200px" }}>
-        {pendingTasks?.map((item) => (
+      <div className="tasks-component-table-body" style={{ overflowY: "auto", maxHeight: "300px" }}>
+        {pendingTasks?.map((item) => {
+          return (
           <div
             className="tasks-component-table-row"
             key={`${item?.filingNumber}-${item?.referenceId}`}
@@ -291,10 +293,10 @@ function PendingTaskAccordion({
               {item?.due}
             </div>
             <div className="tasks-component-table-row-cell" style={{ width: "30%" }}>
-              {item?.createdOn}
+              {getFormattedDate(item?.createdTime)}
             </div>
           </div>
-        ))}
+        )})}
       </div>
     </div>
   );

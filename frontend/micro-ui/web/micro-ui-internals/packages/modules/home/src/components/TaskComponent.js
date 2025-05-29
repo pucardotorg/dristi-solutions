@@ -329,6 +329,7 @@ const TasksComponent = ({
       const screenType = data?.fields?.find((field) => field.key === "screenType")?.value;
       const dateOfApplication = data?.fields?.find((field) => field.key === "additionalDetails.dateOfApplication")?.value;
       const uniqueId = data?.fields?.find((field) => field.key === "additionalDetails.uniqueId")?.value;
+      const createdTime = data?.fields?.find((field) => field.key === "createdTime")?.value;
 
       const updateReferenceId = referenceId.split("_").pop();
       const defaultObj = { referenceId: updateReferenceId, id: caseId, cnrNumber, filingNumber, caseTitle };
@@ -360,6 +361,7 @@ const TasksComponent = ({
         filingNumber: filingNumber,
         caseType: "NIA S138",
         due: due,
+        createdTime,
         dayCount: dayCount ? dayCount : dayCount === 0 ? 0 : Infinity,
         isCompleted,
         dueDateColor: due === "Due today" ? "#9E400A" : "",
