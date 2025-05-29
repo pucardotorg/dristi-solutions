@@ -1,22 +1,25 @@
 const defaultSearchValues = {
-  hearingType: {},
+  caseSearchText: "",
+  date: new Date().toISOString().split("T")[0],
+  stage: null,
 };
 
 export const pendingTaskConfig = {
   label: "PENDING_TASKS_TAB",
   type: "search",
   apiDetails: {
-    serviceName: "/hearing/v1/search",
+    serviceName: "/inbox/v2/_getFields",
     requestParam: {
-      tenantId: Digit.ULBService.getCurrentTenantId(),
+      // tenantId: Digit.ULBService.getCurrentTenantId(),
     },
     requestBody: {
-      criteria: {
+      moduleName: "Pending Tasks Service",
+      moduleSearchCriteria: {
         tenantId: Digit.ULBService.getCurrentTenantId(),
       },
     },
     masterName: "commonUiConfig",
-    moduleName: "SearchIndividualConfig",
+    moduleName: "HomePendingConfig",
     minParametersForSearchForm: 0,
     tableFormJsonPath: "requestParam",
     filterFormJsonPath: "requestBody.HearingList",
@@ -32,32 +35,44 @@ export const pendingTaskConfig = {
         defaultValues: defaultSearchValues,
         fields: [
           {
-            label: "TYPE",
+            label: "DATE",
             isMandatory: false,
-            key: "hearingType",
+            key: "date",
+            type: "date",
+            disable: false,
+            populators: {
+              name: "date",
+            },
+          },
+          {
+            label: "STAGE",
+            isMandatory: false,
+            key: "stage",
             type: "dropdown",
             populators: {
-              name: "hearingType",
-              optionsKey: "type",
+              name: "stage",
+              optionsKey: "name",
               mdmsConfig: {
-                masterName: "HearingType",
-                moduleName: "Hearing",
-                // localePrefix: "SUBMISSION_TYPE",
+                masterName: "pendingTaskFilterText",
+                moduleName: "case",
+                // select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+                select: "(data) => { return data?.case?.pendingTaskFilterText || [] }",
               },
             },
           },
           {
-            label: "Status",
+            label: "CS_CASE_NAME_ADVOCATE",
+            type: "text",
+            key: "caseSearchText",
             isMandatory: false,
-            key: "status",
-            type: "dropdown",
+            disable: false,
             populators: {
-              name: "status",
-              optionsKey: "value",
-              options: [
-                { value: "SCHEDULED", label: "SCHEDULED" },
-                { value: "COMPLETED", label: "COMPLETED" },
-              ],
+              name: "caseSearchText",
+              error: "BR_PATTERN_ERR_MSG",
+              validation: {
+                pattern: {},
+                minlength: 2,
+              },
             },
           },
         ],

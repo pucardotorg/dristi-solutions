@@ -4,40 +4,28 @@ import SideBarTitle from "./SideBarTitle";
 import SidebarItem from "./SideBarItem";
 import BulkReschedule from "../../../hearings/src/pages/employee/BulkReschedule";
 
-const HomeSidebar = ({ t, onTabChange, activeTab }) => {
-  const { data: options, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(
-    Digit.ULBService.getStateId(),
-    "case",
-    [{ name: "pendingTaskFilterText" }],
-    {
-      select: (data) => {
-        return data?.case?.pendingTaskFilterText || [];
-      },
-    }
-  );
-
+const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hearingCount = 0 }) => {
   const [stepper, setStepper] = useState(0);
-
   return (
-    <div style={{ width: 280, background: "#fafbfc", borderRight: "1px solid #eee", minHeight: "100vh" }}>
+    <div style={{ width: 280, background: "#fafbfc", borderRight: "1px solid #eee" }}>
       <SideBarTitle
         t={t}
         title="HEARINGS_TAB"
-        count={options?.length || 0}
+        count={hearingCount}
         onClick={() => onTabChange("HEARINGS_TAB")}
         active={activeTab === "HEARINGS_TAB"}
       />
 
-      <HomeAccordian title={t("PENDING_TASKS_TAB")} count={options?.length || 0}>
+      <HomeAccordian title={t("PENDING_TASKS_TAB")}>
         {!isOptionsLoading &&
-          options?.map((option, index) => (
+          Object.keys(options).map((key, index) => (
             <SidebarItem
               t={t}
               key={index}
-              label={option.name}
-              count={option.count || 13}
-              active={activeTab === option.name}
-              onClick={() => onTabChange("PENDING_TASKS_TAB", option.name)}
+              label={options[key].name}
+              count={options[key].count || 0}
+              active={activeTab === options[key].name}
+              onClick={() => onTabChange("PENDING_TASKS_TAB", key, options[key].func)}
             />
           ))}
       </HomeAccordian>

@@ -7,6 +7,7 @@ import { OwnerColumn } from "../components/OwnerColumn";
 import { RenderInstance } from "../components/RenderInstance";
 import OverlayDropdown from "../components/OverlayDropdown";
 import CustomChip from "../components/CustomChip";
+import ActionEdit from "../components/ActionEdit";
 import ReactTooltip from "react-tooltip";
 import { getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../Utils";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
@@ -1513,6 +1514,658 @@ export const UICustomizations = {
             searchParams.set("isAdvocate", isAdvocate);
             sessionStorage.setItem("caseId", caseId);
             history.push(`/${window.contextPath}/${userType}/dristi/home/view-case/edit-profile?${searchParams.toString()}`);
+          },
+        },
+      ];
+    },
+  },
+  HomeHearingConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const updatedCriteria = {
+        processSearchCriteria: {
+          businessService: ["hearing-default"],
+          moduleName: "Hearing Service",
+          tenantId: requestCriteria?.params?.tenantId || "kl",
+        },
+        moduleSearchCriteria: {
+          fromDate: new Date(requestCriteria?.state?.searchForm?.date + "T00:00:00").getTime(),
+          toDate: new Date(requestCriteria?.state?.searchForm?.date + "T23:59:59.999").getTime(),
+          tenantId: requestCriteria?.params?.tenantId || "kl",
+          ...(requestCriteria?.state?.searchForm?.status && { status: requestCriteria?.state?.searchForm?.status?.value }),
+        },
+        tenantId: requestCriteria?.params?.tenantId || "kl",
+        limit: requestCriteria?.state?.tableForm?.limit || 10,
+        offset: requestCriteria?.state?.tableForm?.offset || 0,
+      };
+
+      return {
+        ...requestCriteria,
+        body: {
+          inbox: updatedCriteria,
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            if (!data || !data.items) {
+              console.error("Data or items is null or undefined");
+              return [];
+            }
+            try {
+              additionalDetails?.setCount(data?.totalCount || (Array.isArray(data) ? data.length : 0));
+              const updatedItems = data.items.map((item, index) => {
+                return {
+                  ...item,
+                  index,
+                };
+              });
+              return {
+                ...data,
+                items: updatedItems,
+              };
+            } catch (error) {
+              console.error("Error processing data:", error);
+              return data;
+            }
+          },
+        },
+      };
+    },
+
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        // case "ADVOCATES":
+        //   if (value === null || value === undefined || value === "undefined" || value === "null") {
+        //     return null;
+        //   }
+        //   return (
+        //     <div>
+        //       {value?.length > 2 && (
+        //         <ReactTooltip id={`hearing-list`}>{value?.map((party) => party?.partyName || party?.name).join(", ")}</ReactTooltip>
+        //       )}
+        //       <span data-tip data-for={`hearing-list`}>{`${value
+        //         ?.slice(0, 2)
+        //         ?.map((party) => party?.partyName || party?.name)
+        //         ?.join(", ")}${value?.length > 2 ? `+${value?.length - 2}` : ""}`}</span>
+        //     </div>
+        //   );
+        case "STATUS":
+          return <CustomChip text={t(value)} shade={value === "PUBLISHED" ? "green" : "orange"} />;
+        case "CS_ACTIONS":
+          return (
+            <span>
+              <div
+                style={{
+                  position: "absolute",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  width: 40,
+                  height: 0,
+                  marginRight: 10,
+                }}
+              >
+                <div style={{ cursor: "pointer" }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <ActionEdit column={column} row={row} master="commonUiConfig" module="HomeHearingConfig" />{" "}
+                  </svg>
+                </div>
+              </div>
+              <div style={{ position: "absolute", display: "flex", justifyContent: "center", alignItems: "center", width: 40, height: 0 }}>
+                <div style={{ cursor: "pointer" }}>
+                  <svg width="4" height="16" viewBox="0 0 4 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="HomeHearingConfig" />{" "}
+                  </svg>
+                </div>
+              </div>
+            </span>
+          );
+        case "S.NO":
+          return row?.index ? row?.index + 1 : 1;
+        case "CASE_NAME":
+          debugger;
+          console.log(
+            `/${window?.contextPath}/ui/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
+          );
+
+          return (
+            <Link
+              to={`/${window?.contextPath}/ui/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`}
+            >
+              {value ? value : "-"}
+            </Link>
+          );
+        default:
+          return value ? value : "-";
+      }
+    },
+    dropDownItems: (row, configs) => {
+      const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
+      const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+      const date = new Date(row.startTime);
+      const future = row.startTime > Date.now();
+      const showActions = configs && configs.hasOwnProperty("showMakeSubmission") ? configs.showMakeSubmission : true;
+      if (row?.businessObject?.hearingDetails?.status === "SCHEDULED" && userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE")) {
+        return [
+          {
+            label: "Start hearing",
+            id: "reschedule",
+            action: (history) => {
+              const requestBody = {
+                order: {
+                  createdDate: null,
+                  tenantId: row.tenantId,
+                  hearingNumber: row?.hearingId,
+                  filingNumber: row.filingNumber[0],
+                  cnrNumber: row.cnrNumbers[0],
+                  statuteSection: {
+                    tenantId: row.tenantId,
+                  },
+                  orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  orderCategory: "INTERMEDIATE",
+                  orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  status: "",
+                  isActive: true,
+                  workflow: {
+                    action: OrderWorkflowAction.SAVE_DRAFT,
+                    comments: "Creating order",
+                    assignes: null,
+                    rating: null,
+                    documents: [{}],
+                  },
+                  documents: [],
+                  additionalDetails: {
+                    formdata: {
+                      orderType: {
+                        type: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                        isactive: true,
+                        code: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                        name: "ORDER_TYPE_INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                      },
+                      originalHearingDate: `${date.getFullYear()}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
+                        date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()
+                      }`,
+                    },
+                  },
+                },
+              };
+              ordersService
+                .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
+                .then((res) => {
+                  history.push(
+                    `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    {
+                      caseId: row.caseId,
+                      tab: "Orders",
+                    }
+                  );
+                })
+                .catch((err) => {});
+            },
+          },
+          {
+            label: "Mark as Passed Over",
+            id: "reschedule",
+            action: (history) => {
+              const requestBody = {
+                order: {
+                  createdDate: null,
+                  tenantId: row.tenantId,
+                  hearingNumber: row?.hearingId,
+                  filingNumber: row.filingNumber[0],
+                  cnrNumber: row.cnrNumbers[0],
+                  statuteSection: {
+                    tenantId: row.tenantId,
+                  },
+                  orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  orderCategory: "INTERMEDIATE",
+                  orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  status: "",
+                  isActive: true,
+                  workflow: {
+                    action: OrderWorkflowAction.SAVE_DRAFT,
+                    comments: "Creating order",
+                    assignes: null,
+                    rating: null,
+                    documents: [{}],
+                  },
+                  documents: [],
+                  additionalDetails: {
+                    formdata: {
+                      orderType: {
+                        type: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                        isactive: true,
+                        code: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                        name: "ORDER_TYPE_INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                      },
+                      originalHearingDate: `${date.getFullYear()}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
+                        date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()
+                      }`,
+                    },
+                  },
+                },
+              };
+              ordersService
+                .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
+                .then((res) => {
+                  history.push(
+                    `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    {
+                      caseId: row.caseId,
+                      tab: "Orders",
+                    }
+                  );
+                })
+                .catch((err) => {});
+            },
+          },
+        ];
+      } else if (row?.businessObject?.hearingDetails?.status === "IN_PROGRESS" && userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE")) {
+        return [
+          {
+            label: "End hearing",
+            id: "reschedule",
+            action: (history) => {
+              const requestBody = {
+                order: {
+                  createdDate: null,
+                  tenantId: row.tenantId,
+                  hearingNumber: row?.hearingId,
+                  filingNumber: row.filingNumber[0],
+                  cnrNumber: row.cnrNumbers[0],
+                  statuteSection: {
+                    tenantId: row.tenantId,
+                  },
+                  orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  orderCategory: "INTERMEDIATE",
+                  orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  status: "",
+                  isActive: true,
+                  workflow: {
+                    action: OrderWorkflowAction.SAVE_DRAFT,
+                    comments: "Creating order",
+                    assignes: null,
+                    rating: null,
+                    documents: [{}],
+                  },
+                  documents: [],
+                  additionalDetails: {
+                    formdata: {
+                      orderType: {
+                        type: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                        isactive: true,
+                        code: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                        name: "ORDER_TYPE_INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                      },
+                      originalHearingDate: `${date.getFullYear()}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
+                        date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()
+                      }`,
+                    },
+                  },
+                },
+              };
+              ordersService
+                .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
+                .then((res) => {
+                  history.push(
+                    `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    {
+                      caseId: row.caseId,
+                      tab: "Orders",
+                    }
+                  );
+                })
+                .catch((err) => {});
+            },
+          },
+          {
+            label: "Mark as Passed Over",
+            id: "reschedule",
+            action: (history) => {
+              const requestBody = {
+                order: {
+                  createdDate: null,
+                  tenantId: row.tenantId,
+                  hearingNumber: row?.hearingId,
+                  filingNumber: row.filingNumber[0],
+                  cnrNumber: row.cnrNumbers[0],
+                  statuteSection: {
+                    tenantId: row.tenantId,
+                  },
+                  orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  orderCategory: "INTERMEDIATE",
+                  orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  status: "",
+                  isActive: true,
+                  workflow: {
+                    action: OrderWorkflowAction.SAVE_DRAFT,
+                    comments: "Creating order",
+                    assignes: null,
+                    rating: null,
+                    documents: [{}],
+                  },
+                  documents: [],
+                  additionalDetails: {
+                    formdata: {
+                      orderType: {
+                        type: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                        isactive: true,
+                        code: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                        name: "ORDER_TYPE_INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                      },
+                      originalHearingDate: `${date.getFullYear()}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
+                        date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()
+                      }`,
+                    },
+                  },
+                },
+              };
+              ordersService
+                .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
+                .then((res) => {
+                  history.push(
+                    `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    {
+                      caseId: row.caseId,
+                      tab: "Orders",
+                    }
+                  );
+                })
+                .catch((err) => {});
+            },
+          },
+        ];
+      }
+    },
+  },
+  HomePendingConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria.body,
+          moduleSearchCriteria: {
+            ...requestCriteria.body.moduleSearchCriteria,
+            caseSearch: requestCriteria?.state?.searchForm?.caseSearchText,
+            date: requestCriteria?.state?.searchForm?.date,
+            stage: requestCriteria?.state?.searchForm?.stage,
+          },
+          tenantId,
+          pagination: {
+            limit: requestCriteria?.state?.tableForm?.limit,
+            offSet: requestCriteria?.state?.tableForm?.offset,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            additionalDetails?.setCount(data?.totalCount || (Array.isArray(data) ? data.length : 0));
+            return data;
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t) => {
+      const showDocument =
+        userRoles?.includes("APPLICATION_APPROVER") || userRoles?.includes("DEPOSITION_ESIGN") || row.workflow?.action !== "PENDINGREVIEW";
+      switch (key) {
+        case "DOCUMENT_TEXT":
+          return showDocument ? <OwnerColumn rowData={row} colData={column} t={t} /> : "";
+        case "FILE":
+          return showDocument ? <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} /> : "";
+        case "DATE_ADDED":
+        case "DATE_ISSUED":
+        case "DATE":
+          const date = new Date(value);
+          const day = date.getDate().toString().padStart(2, "0");
+          const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
+          const year = date.getFullYear();
+          const formattedDate = `${day}-${month}-${year}`;
+          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
+        case "PARTIES":
+          if (value === null || value === undefined || value === "undefined" || value === "null") {
+            return null;
+          }
+          return (
+            <div>
+              {value?.length > 2 && (
+                <ReactTooltip id={`hearing-list`}>{value?.map((party) => party?.partyName || party?.name).join(", ")}</ReactTooltip>
+              )}
+              <span data-tip data-for={`hearing-list`}>{`${value
+                ?.slice(0, 2)
+                ?.map((party) => party?.partyName || party?.name)
+                ?.join(", ")}${value?.length > 2 ? `+${value?.length - 2}` : ""}`}</span>
+            </div>
+          );
+        case "ORDER_TYPE":
+          return <OrderName rowData={row} colData={column} value={value} />;
+        case "SUBMISSION_TYPE":
+          return <OwnerColumn rowData={row} colData={column} t={t} value={value} showAsHeading={true} />;
+        case "DOCUMENT_TYPE":
+          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} />;
+        case "HEARING_TYPE":
+        case "SOURCE":
+        case "STATUS":
+          //Need to change the shade as per the value
+          return <CustomChip text={t(value)} shade={value === "PUBLISHED" ? "green" : "orange"} />;
+        case "OWNER":
+          return removeInvalidNameParts(value);
+        case "SUBMISSION_ID":
+          return value ? value : "-";
+        case "CS_ACTIONS":
+          return (
+            <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="SearchIndividualConfig" />
+          );
+        default:
+          break;
+      }
+    },
+    dropDownItems: (row, configs) => {
+      const formatDate = (date) => {
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
+        return `${day}-${month}-${year}`;
+      };
+      const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
+      const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+      const date = new Date(row.startTime);
+      const future = row.startTime > Date.now();
+      const showActions = configs && configs.hasOwnProperty("showMakeSubmission") ? configs.showMakeSubmission : true;
+      if (row.status === "SCHEDULED" && userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE")) {
+        return [
+          {
+            label: "Reschedule hearing",
+            id: "reschedule",
+            action: (history) => {
+              const requestBody = {
+                order: {
+                  createdDate: null,
+                  tenantId: row.tenantId,
+                  hearingNumber: row?.hearingId,
+                  filingNumber: row.filingNumber[0],
+                  cnrNumber: row.cnrNumbers[0],
+                  statuteSection: {
+                    tenantId: row.tenantId,
+                  },
+                  orderTitle: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  orderCategory: "INTERMEDIATE",
+                  orderType: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                  status: "",
+                  isActive: true,
+                  workflow: {
+                    action: OrderWorkflowAction.SAVE_DRAFT,
+                    comments: "Creating order",
+                    assignes: null,
+                    rating: null,
+                    documents: [{}],
+                  },
+                  documents: [],
+                  additionalDetails: {
+                    formdata: {
+                      orderType: {
+                        type: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                        isactive: true,
+                        code: "INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                        name: "ORDER_TYPE_INITIATING_RESCHEDULING_OF_HEARING_DATE",
+                      },
+                      originalHearingDate: `${date.getFullYear()}-${date.getMonth() < 9 ? `0${date.getMonth() + 1}` : date.getMonth() + 1}-${
+                        date.getDate() < 10 ? `0${date.getDate()}` : date.getDate()
+                      }`,
+                    },
+                  },
+                },
+              };
+              ordersService
+                .createOrder(requestBody, { tenantId: Digit.ULBService.getCurrentTenantId() })
+                .then((res) => {
+                  history.push(
+                    `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${row.filingNumber[0]}&orderNumber=${res.order.orderNumber}`,
+                    {
+                      caseId: row.caseId,
+                      tab: "Orders",
+                    }
+                  );
+                })
+                .catch((err) => {});
+            },
+          },
+          {
+            label: "View transcript",
+            id: "view_transcript",
+            hide: true,
+            action: (history) => {
+              alert("Not Yet Implemented");
+            },
+          },
+          {
+            label: "View witness deposition",
+            id: "view_witness",
+            hide: true,
+            action: (history) => {
+              alert("Not Yet Implemented");
+            },
+          },
+          {
+            label: "View pending task",
+            id: "view_pending_tasks",
+            hide: true,
+            action: (history) => {
+              alert("Not Yet Implemented");
+            },
+          },
+        ];
+      }
+      if (row.status === "SCHEDULED" && userInfo?.type === "CITIZEN") {
+        return [
+          {
+            label: "Request for Reschedule hearing",
+            id: "reschedule",
+            hide: !showActions,
+            action: (history) => {
+              history.push(
+                `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${row.filingNumber[0]}&hearingId=${row.hearingId}&applicationType=RE_SCHEDULE`
+              );
+            },
+          },
+          {
+            label: "Request for Checkout Request",
+            id: "reschedule",
+            hide: !showActions,
+            action: (history) => {
+              history.push(
+                `/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${row.filingNumber[0]}&hearingId=${row.hearingId}&applicationType=CHECKOUT_REQUEST`
+              );
+            },
+          },
+          {
+            label: "View transcript",
+            id: "view_transcript",
+            hide: true,
+            action: (history) => {
+              alert("Not Yet Implemented");
+            },
+          },
+          {
+            label: "View witness deposition",
+            id: "view_witness",
+            hide: true,
+            action: (history) => {
+              alert("Not Yet Implemented");
+            },
+          },
+          {
+            label: "View pending task",
+            id: "view_pending_tasks",
+            hide: true,
+            action: (history) => {
+              alert("Not Yet Implemented");
+            },
+          },
+        ];
+      }
+
+      if (![HearingWorkflowState?.SCHEDULED, HearingWorkflowState?.ABATED, HearingWorkflowState?.OPTOUT].includes(row.status)) {
+        return [
+          {
+            label: "View transcript",
+            id: "view_transcript",
+            hide: false,
+            disabled: false,
+            action: (history, column, row) => {
+              column.clickFunc(row);
+            },
+          },
+          {
+            label: "View witness deposition",
+            id: "view_witness",
+            hide: false,
+            disabled: true,
+            action: (history) => {
+              alert("Not Yet Implemented");
+            },
+          },
+          {
+            label: "View pending task",
+            id: "view_pending_tasks",
+            hide: true,
+            disabled: true,
+            action: (history) => {
+              alert("Not Yet Implemented");
+            },
+          },
+        ];
+      }
+
+      return [
+        {
+          label: "View transcript",
+          id: "view_transcript",
+          hide: false,
+          disabled: true,
+          action: (history) => {
+            alert("Not Yet Implemented");
+          },
+        },
+        {
+          label: "View witness deposition",
+          id: "view_witness",
+          hide: false,
+          disabled: true,
+          action: (history) => {
+            alert("Not Yet Implemented");
+          },
+        },
+        {
+          label: "View pending task",
+          id: "view_pending_tasks",
+          hide: true,
+          disabled: true,
+          action: (history) => {
+            alert("Not Yet Implemented");
           },
         },
       ];
