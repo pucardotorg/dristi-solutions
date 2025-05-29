@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { RadioButtons, Dropdown, LabelFieldPair, CardLabel } from "@egovernments/digit-ui-react-components";
+import { RadioButtons, Dropdown, LabelFieldPair, CardLabel, CardLabelError } from "@egovernments/digit-ui-react-components";
 import { LeftArrow } from "../../../icons/svgIndex";
 import CustomTextArea from "../../../components/CustomTextArea";
 import MultiSelectDropdown from "../../../components/MultiSelectDropdown";
@@ -10,17 +10,33 @@ import { getFormattedName } from "../../../../../hearings/src/utils";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
 import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/caseUtils";
 import { removeInvalidNameParts } from "../../../Utils";
+import { OrderWorkflowAction, OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
+import { ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
+import { useHistory } from "react-router-dom/cjs/react-router-dom";
 
-const OrderDrawer = ({ isOpen, onClose, onSubmit, attendees, caseDetails }) => {
+const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId }) => {
   const { t } = useTranslation();
+  const targetRef = useRef(null);
+  const history = useHistory();
+  const userInfo = Digit.UserService.getUser()?.info;
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+
   const [orderData, setOrderData] = useState({
     attendees: [],
     botdText: "",
-    hearingType: "",
+    hearingType: {},
     hearingDate: "",
-    isCaseDisposed: "CASE_DISPOSED",
+    isCaseDisposed: {},
     partiesToAttendHearing: [],
   });
+  console.log("orderData", orderData);
+  const [orderError, setOrderError] = useState({
+    botdText: "",
+    hearingType: "",
+    hearingDate: "",
+    partiesToAttendHearing: "",
+  });
+  const [isApiLoading, setIsApiLoading] = useState(false);
 
   const { data: hearingTypeOptions, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -28,10 +44,43 @@ const OrderDrawer = ({ isOpen, onClose, onSubmit, attendees, caseDetails }) => {
     [{ name: "HearingType" }],
     {
       select: (data) => {
-        return data?.case?.pendingTaskFilterText || [];
+        return data?.Hearing?.HearingType || [];
       },
     }
   );
+
+  const { data: orderDataNextHearing } = Digit.Hooks.orders.useSearchOrdersService(
+    {
+      tenantId: caseDetails?.tenantId,
+      criteria: {
+        tenantID: caseDetails?.tenantId,
+        filingNumber: caseDetails?.filingNumber,
+        orderType: "SCHEDULING_NEXT_HEARING",
+        status: OrderWorkflowState.DRAFT_IN_PROGRESS,
+        ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
+      },
+    },
+    { tenantId: caseDetails?.tenantId },
+    caseDetails?.filingNumber + OrderWorkflowState.DRAFT_IN_PROGRESS + isOpen,
+    Boolean(caseDetails?.filingNumber && isOpen)
+  );
+
+  const orderDataNextHearingData = useMemo(() => orderDataNextHearing?.list?.[0], [orderDataNextHearing]);
+
+  useEffect(() => {
+    if (orderDataNextHearingData) {
+      const order = orderDataNextHearingData;
+      const [year, month, day] = order?.additionalDetails?.formdata?.hearingDate?.split("-");
+      setOrderData({
+        attendees: order?.additionalDetails?.formdata?.attendees,
+        botdText: order?.additionalDetails?.formdata?.hearingSummary?.text,
+        hearingType: order?.additionalDetails?.formdata?.hearingPurpose,
+        hearingDate: new Date(year, month - 1, day).getTime(),
+        isCaseDisposed: {},
+        partiesToAttendHearing: order?.additionalDetails?.formdata?.namesOfPartiesRequired,
+      });
+    }
+  }, [orderDataNextHearingData]);
 
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
 
@@ -136,6 +185,205 @@ const OrderDrawer = ({ isOpen, onClose, onSubmit, attendees, caseDetails }) => {
     );
   }, [caseDetails]);
 
+  const validateOrderData = useCallback((orderData) => {
+    const errors = {};
+    if (!orderData?.botdText?.trim() && !orderData?.botdText?.trim()?.length < 2) errors.botdText = "CS_ORDER_BUSINESS_OF_THE_DAY";
+    if (!orderData?.attendees?.length) errors.attendees = "CS_ORDER_CASE_ATTENDEES";
+    if (!orderData?.hearingType) errors.hearingType = "CS_ORDER_HEARING_TYPE";
+    if (!orderData?.hearingDate) errors.hearingDate = "CS_ORDER_HEARING_DATE";
+    if (!orderData?.partiesToAttendHearing?.length) errors.partiesToAttendHearing = "CS_ORDER_PARTIES_TO_ATTEND_HEARING";
+    return errors;
+  }, []);
+
+  const onSubmit = useCallback(
+    async (type) => {
+      const errors = validateOrderData(orderData);
+      if (Object.keys(errors).length) {
+        setOrderError(errors);
+        return;
+      }
+      setIsApiLoading(true);
+      const date = new Date(orderData?.hearingDate);
+      // Check for invalid date
+      if (isNaN(date)) return "N/A";
+
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const year = date.getFullYear();
+      if (type === "save-draft") {
+        if (orderDataNextHearingData) {
+          const payload = {
+            order: {
+              ...orderDataNextHearingData,
+              additionalDetails: {
+                ...orderDataNextHearingData?.additionalDetails,
+                formdata: {
+                  ...orderDataNextHearingData?.additionalDetails?.formdata,
+                  hearingDate: `${year}-${month}-${day}`,
+                  hearingSummary: {
+                    text: orderData?.botdText,
+                  },
+                  namesOfPartiesRequired: orderData?.partiesToAttendHearing,
+                  hearingPurpose: orderData?.hearingType,
+                  attendees: orderData?.attendees,
+                },
+                refHearingId: currentHearingId,
+              },
+              workflow: { ...orderDataNextHearingData?.workflow, action: OrderWorkflowAction.SAVE_DRAFT, documents: [{}] },
+            },
+          };
+          try {
+            await ordersService.updateOrder(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
+          } catch (error) {
+            console.log("error", error);
+          }
+        } else {
+          const payload = {
+            order: {
+              createdDate: null,
+              tenantId: caseDetails?.tenantId,
+              filingNumber: caseDetails?.filingNumber,
+              cnrNumber: caseDetails?.cnrNumber,
+              statuteSection: {
+                tenantId: caseDetails?.tenantId,
+              },
+              orderTitle: "SCHEDULING_NEXT_HEARING",
+              orderCategory: "INTERMEDIATE",
+              orderType: "SCHEDULING_NEXT_HEARING",
+              status: "",
+              isActive: true,
+              workflow: {
+                action: OrderWorkflowAction.SAVE_DRAFT,
+                comments: "Creating order",
+                assignes: [],
+                rating: null,
+                documents: [{}],
+              },
+              documents: [],
+              additionalDetails: {
+                formdata: {
+                  orderType: {
+                    type: "SCHEDULING_NEXT_HEARING",
+                    isactive: true,
+                    code: "SCHEDULING_NEXT_HEARING",
+                    name: "ORDER_TYPE_SCHEDULING_NEXT_HEARING",
+                  },
+                  hearingDate: `${year}-${month}-${day}`,
+                  hearingSummary: {
+                    text: orderData?.botdText,
+                  },
+                  namesOfPartiesRequired: orderData?.partiesToAttendHearing,
+                  hearingPurpose: orderData?.hearingType,
+                  attendees: orderData?.attendees,
+                },
+                refHearingId: currentHearingId,
+              },
+            },
+          };
+          try {
+            await ordersService.createOrder(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
+          } catch (error) {
+            console.log("error", error);
+          }
+        }
+      } else if (type === "add-other-items") {
+        if (orderDataNextHearingData) {
+          const payload = {
+            order: {
+              ...orderDataNextHearingData,
+              additionalDetails: {
+                ...orderDataNextHearingData?.additionalDetails,
+                formdata: {
+                  ...orderDataNextHearingData?.additionalDetails?.formdata,
+                  hearingDate: `${year}-${month}-${day}`,
+                  hearingSummary: {
+                    text: orderData?.botdText,
+                  },
+                  namesOfPartiesRequired: orderData?.partiesToAttendHearing,
+                  hearingPurpose: orderData?.hearingType,
+                  attendees: orderData?.attendees,
+                },
+                refHearingId: currentHearingId,
+              },
+              workflow: { ...orderDataNextHearingData?.workflow, action: OrderWorkflowAction.SAVE_DRAFT, documents: [{}] },
+            },
+          };
+          try {
+            const response = await ordersService.updateOrder(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
+            history.push(
+              `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
+            );
+          } catch (error) {
+            console.log("error", error);
+          }
+        } else {
+          const payload = {
+            order: {
+              createdDate: null,
+              tenantId: caseDetails?.tenantId,
+              filingNumber: caseDetails?.filingNumber,
+              cnrNumber: caseDetails?.cnrNumber,
+              statuteSection: {
+                tenantId: caseDetails?.tenantId,
+              },
+              orderTitle: "SCHEDULING_NEXT_HEARING",
+              orderCategory: "INTERMEDIATE",
+              orderType: "SCHEDULING_NEXT_HEARING",
+              status: "",
+              isActive: true,
+              workflow: {
+                action: OrderWorkflowAction.SAVE_DRAFT,
+                comments: "Creating order",
+                assignes: [],
+                rating: null,
+                documents: [{}],
+              },
+              documents: [],
+              additionalDetails: {
+                formdata: {
+                  orderType: {
+                    type: "SCHEDULING_NEXT_HEARING",
+                    isactive: true,
+                    code: "SCHEDULING_NEXT_HEARING",
+                    name: "ORDER_TYPE_SCHEDULING_NEXT_HEARING",
+                  },
+                  hearingDate: `${year}-${month}-${day}`,
+                  hearingSummary: {
+                    text: orderData?.botdText,
+                  },
+                  namesOfPartiesRequired: orderData?.partiesToAttendHearing,
+                  hearingPurpose: orderData?.hearingType,
+                  attendees: orderData?.attendees,
+                },
+                refHearingId: currentHearingId,
+              },
+            },
+          };
+          try {
+            const response = await ordersService.createOrder(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
+            history.push(
+              `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
+            );
+          } catch (error) {
+            console.log("error", error);
+          }
+        }
+      }
+      setIsApiLoading(false);
+    },
+    [
+      validateOrderData,
+      orderData,
+      orderDataNextHearingData,
+      caseDetails?.tenantId,
+      caseDetails?.filingNumber,
+      caseDetails?.cnrNumber,
+      currentHearingId,
+      history,
+      userType,
+    ]
+  );
+
   const attendeeOptions = useMemo(() => {
     if (!Array.isArray(attendees)) {
       return [];
@@ -147,6 +395,8 @@ const OrderDrawer = ({ isOpen, onClose, onSubmit, attendees, caseDetails }) => {
       return acc;
     }, []);
     return uniqueAttendees.map((attendee) => ({
+      ...attendee,
+      partyType: attendee?.type,
       value: attendee.individualId || attendee.name,
       label: attendee.name,
     }));
@@ -184,7 +434,7 @@ const OrderDrawer = ({ isOpen, onClose, onSubmit, attendees, caseDetails }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="bottom-drawer-wrapper">
+    <div ref={targetRef} className="bottom-drawer-wrapper">
       <div className="bottom-drawer-overlay" onClick={onClose} />
       <div className={`bottom-drawer ${isOpen ? "open" : ""}`}>
         <div className="drawer-header">
@@ -206,10 +456,15 @@ const OrderDrawer = ({ isOpen, onClose, onSubmit, attendees, caseDetails }) => {
                     ...orderData,
                     botdText: value,
                   }));
+                  setOrderError((orderError) => ({
+                    ...orderError,
+                    botdText: null,
+                  }));
                 }}
                 id="botdText"
                 info={t("BUSINESS_OF_THE_DAY")}
               />
+              {orderError?.botdText && <CardLabelError style={{ margin: 0, padding: 0 }}> {t(orderError?.botdText)} </CardLabelError>}
             </LabelFieldPair>
 
             <LabelFieldPair className="case-label-field-pair" style={{ width: "344px" }}>
@@ -223,13 +478,18 @@ const OrderDrawer = ({ isOpen, onClose, onSubmit, attendees, caseDetails }) => {
                     ...orderData,
                     attendees: value?.map((val) => val[1]),
                   }));
+                  setOrderError((orderError) => ({
+                    ...orderError,
+                    attendees: null,
+                  }));
                 }}
                 customLabel={customLabel}
                 config={{
                   isSelectAll: true,
                 }}
-                // parentRef={targetRef}
+                parentRef={targetRef}
               />
+              {orderError?.attendees && <CardLabelError style={{ margin: 0, padding: 0 }}> {t(orderError?.attendees)} </CardLabelError>}
             </LabelFieldPair>
           </div>
           <div className="drawer-section">
@@ -242,47 +502,56 @@ const OrderDrawer = ({ isOpen, onClose, onSubmit, attendees, caseDetails }) => {
                   selectedOption={orderData?.isCaseDisposed}
                   disabled={false}
                   optionsKey={"label"}
-                  options={[{ label: `${t("CS_CASE_DISPOSED")}: ${t("CS_CASE_NEXT_HEARING_SCHEDULED")}`, value: "CASE_DISPOSED" }]}
+                  options={[{ label: `CS_CASE_DISPOSED_NEXT_HEARING_SCHEDULED`, value: "CASE_DISPOSED" }]}
                   additionalWrapperClass={"radio-disabled"}
                   onSelect={(value) => {
                     setOrderData((orderData) => ({
                       ...orderData,
-                      isCaseDisposed: value,
+                      isCaseDisposed: orderData?.isCaseDisposed?.value === value?.value ? {} : value,
+                    }));
+                    setOrderError((orderError) => ({
+                      ...orderError,
+                      isCaseDisposed: null,
                     }));
                   }}
                 />
               </LabelFieldPair>
             </div>
             <div className="drawer-sub-section">
-              <LabelFieldPair className="case-label-field-pair">
+              <LabelFieldPair className={`case-label-field-pair ${orderData?.isCaseDisposed?.value === "CASE_DISPOSED" ? "disabled" : ""}`}>
                 <CardLabel className="case-input-label">{`${t("HEARING_TYPE")}`}</CardLabel>
                 <Dropdown
                   t={t}
-                  option={[]}
+                  option={hearingTypeOptions}
                   selected={orderData?.hearingType}
-                  optionKey={"fullName"}
+                  optionKey={"code"}
                   select={(e) => {
                     setOrderData((orderData) => ({
                       ...orderData,
                       hearingType: e,
                     }));
+                    setOrderError((orderError) => ({
+                      ...orderError,
+                      hearingType: null,
+                    }));
                   }}
                   freeze={true}
                   topbarOptionsClassName={"top-bar-option"}
-                  disable={false}
+                  disable={orderData?.isCaseDisposed?.value === "CASE_DISPOSED"}
                   style={{
                     marginBottom: "1px",
                   }}
                 />
+                {orderError?.hearingType && <CardLabelError style={{ margin: 0, padding: 0 }}> {t(orderError?.hearingType)} </CardLabelError>}
               </LabelFieldPair>
-              <LabelFieldPair className="case-label-field-pair">
+              <LabelFieldPair className={`case-label-field-pair ${orderData?.isCaseDisposed?.value === "CASE_DISPOSED" ? "disabled" : ""}`}>
                 <CardLabel className="case-input-label">{`${t("CS_CASE_SELECT_HEARING_DATE")}`}</CardLabel>
                 <CustomDatePicker
                   t={t}
                   config={{
                     type: "component",
                     component: "CustomDatePicker",
-                    disable: false,
+                    disable: orderData?.isCaseDisposed?.value === "CASE_DISPOSED",
                     key: "hearingDate",
                     label: "CS_CASE_SELECT_HEARING_DATE",
                     className: "order-date-picker",
@@ -297,8 +566,9 @@ const OrderDrawer = ({ isOpen, onClose, onSubmit, attendees, caseDetails }) => {
                   formData={orderData}
                   onDateChange={(date) => setOrderData((orderData) => ({ ...orderData, hearingDate: new Date(date).setHours(0, 0, 0, 0) }))}
                 />
+                {orderError?.hearingDate && <CardLabelError style={{ margin: 0, padding: 0 }}> {t(orderError?.hearingDate)} </CardLabelError>}
               </LabelFieldPair>
-              <LabelFieldPair className="case-label-field-pair">
+              <LabelFieldPair className={`case-label-field-pair ${orderData?.isCaseDisposed?.value === "CASE_DISPOSED" ? "disabled" : ""}`}>
                 <CardLabel className="case-input-label">{`${t("CS_CASE_PARTIES_ATTEND_HEARING")}`}</CardLabel>
                 <MultiSelectDropdown
                   options={[...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses]}
@@ -309,20 +579,33 @@ const OrderDrawer = ({ isOpen, onClose, onSubmit, attendees, caseDetails }) => {
                       ...orderData,
                       partiesToAttendHearing: value?.map((val) => val[1]),
                     }));
+                    setOrderError((orderError) => ({
+                      ...orderError,
+                      partiesToAttendHearing: null,
+                    }));
                   }}
                   customLabel={customAttendeeLabel}
                   config={{
                     isSelectAll: true,
                   }}
-                  // parentRef={targetRef}
+                  disable={orderData?.isCaseDisposed?.value === "CASE_DISPOSED"}
+                  parentRef={targetRef}
                 />
+                {orderError?.partiesToAttendHearing && (
+                  <CardLabelError style={{ margin: 0, padding: 0 }}> {t(orderError?.partiesToAttendHearing)} </CardLabelError>
+                )}
               </LabelFieldPair>
             </div>
           </div>
         </div>
         <div className="drawer-footer">
-          <Button label={t("Add Other Items")} variation="outlined" onClick={() => onSubmit("add-other-items")} />
-          <Button label={t("SAVE_DRAFT")} className={"order-drawer-save-btn"} onClick={() => onSubmit("save-draft")} />
+          <Button label={t("CS_ADD_OTHER_ITEMS")} variation="outlined" onButtonClick={() => onSubmit("add-other-items")} isDisabled={isApiLoading} />
+          <Button
+            label={t("SAVE_DRAFT")}
+            className={"order-drawer-save-btn"}
+            onButtonClick={() => onSubmit("save-draft")}
+            isDisabled={isApiLoading}
+          />
         </div>
       </div>
     </div>

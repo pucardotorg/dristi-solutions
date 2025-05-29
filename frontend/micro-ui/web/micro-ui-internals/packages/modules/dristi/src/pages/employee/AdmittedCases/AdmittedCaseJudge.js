@@ -1,6 +1,6 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
-import { ActionBar, SubmitBar, Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg } from "@egovernments/digit-ui-react-components";
+import { ActionBar, SubmitBar, Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
@@ -8,7 +8,6 @@ import { CustomThreeDots, RightArrow } from "../../../icons/svgIndex";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import ViewCaseFile from "../scrutiny/ViewCaseFile";
 import { TabSearchconfig } from "./AdmittedCasesConfig";
-import CaseOverview from "./CaseOverview";
 import EvidenceModal from "./EvidenceModal";
 import ExtraComponent from "./ExtraComponent";
 import "./tabs.css";
@@ -176,6 +175,7 @@ const AdmittedCaseJudge = () => {
 
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState(false);
+  const [showOrderModal, setShowOrderModal] = useState(false);
   const [showWitnessModal, setShowWitnessModal] = useState(false);
   const [addPartyModal, setAddPartyModal] = useState(false);
   const [show, setShow] = useState(false);
@@ -1555,38 +1555,6 @@ const AdmittedCaseJudge = () => {
     ]
   );
 
-  const getDefaultValue = (value) => value || "N.A.";
-  const formatDateOrDefault = (date) => (date ? formatDate(new Date(date)) : "N.A.");
-
-  const caseBasicDetails = useMemo(() => {
-    return [
-      {
-        key: "CS_FILING_NO",
-        value: getDefaultValue(caseDetails?.filingNumber),
-      },
-      {
-        key: "CS_COMPLAINT_NO",
-        value: getDefaultValue(caseDetails?.cmpNumber),
-      },
-      {
-        key: "CS_CNR",
-        value: getDefaultValue(caseDetails?.cnrNumber),
-      },
-      {
-        key: "CS_CCST",
-        value: getDefaultValue(caseDetails?.courtCaseNumber),
-      },
-      {
-        key: "SUBMITTED_ON",
-        value: formatDateOrDefault(caseDetails?.filingDate),
-      },
-      {
-        key: "REGISTERED_ON",
-        value: formatDateOrDefault(caseDetails?.registrationDate),
-      },
-    ];
-  }, [caseDetails]);
-
   const updateCaseDetails = useCallback(
     async (action, data = {}) => {
       let respondentDetails = caseDetails?.additionalDetails?.respondentDetails;
@@ -1969,6 +1937,10 @@ const AdmittedCaseJudge = () => {
     [hearingDetails?.HearingList]
   );
 
+  const currentInProgressHearing = useMemo(() => hearingDetails?.HearingList?.find((list) => list?.status === "IN_PROGRESS"), [
+    hearingDetails?.HearingList,
+  ]);
+
   const currentActiveHearing = useMemo(() => hearingDetails?.HearingList?.find((list) => list?.hearingId === currentHearingId), [
     hearingDetails?.HearingList,
     currentHearingId,
@@ -2304,7 +2276,7 @@ const AdmittedCaseJudge = () => {
       } else if (option.value === "VIEW_CALENDAR") {
         setShowCalendarModal(true);
       } else if (option.value === "GENERATE_ORDER") {
-        setShowEndHearingModal(true);
+        setShowOrderModal(true);
       } else if (option.value === "END_HEARING") {
         setShowEndHearingModal(true);
       } else if (option.value === "TAKE_WITNESS_DEPOSITION") {
@@ -2581,22 +2553,26 @@ const AdmittedCaseJudge = () => {
   const employeeActionOptions = useMemo(() => {
     if (isJudge)
       return [
-        {
-          value: "END_HEARING",
-          label: "END_HEARING",
-        },
-        {
-          value: "TAKE_WITNESS_DEPOSITION",
-          label: "TAKE_WITNESS_DEPOSITION",
-        },
-        {
-          value: "GENERATE_ORDER",
-          label: "GENERATE_ORDER",
-        },
-        {
-          value: "SUBMIT_DOCUMENTS",
-          label: "SUBMIT_DOCUMENTS",
-        },
+        ...(currentInProgressHearing
+          ? [
+              {
+                value: "END_HEARING",
+                label: "END_HEARING",
+              },
+              {
+                value: "TAKE_WITNESS_DEPOSITION",
+                label: "TAKE_WITNESS_DEPOSITION",
+              },
+              {
+                value: "GENERATE_ORDER",
+                label: "GENERATE_ORDER",
+              },
+              {
+                value: "SUBMIT_DOCUMENTS",
+                label: "SUBMIT_DOCUMENTS",
+              },
+            ]
+          : []),
         {
           value: "DOWNLOAD_CASE_FILE",
           label: "DOWNLOAD_CASE_FILE",
@@ -2604,18 +2580,20 @@ const AdmittedCaseJudge = () => {
       ];
     else if (isBenchClerk)
       return [
-        {
-          value: "END_HEARING",
-          label: "END_HEARING",
-        },
-        {
-          value: "TAKE_WITNESS_DEPOSITION",
-          label: "TAKE_WITNESS_DEPOSITION",
-        },
-        {
-          value: "GENERATE_ORDER",
-          label: "GENERATE_ORDER",
-        },
+        ...(currentInProgressHearing && [
+          {
+            value: "END_HEARING",
+            label: "END_HEARING",
+          },
+          {
+            value: "TAKE_WITNESS_DEPOSITION",
+            label: "TAKE_WITNESS_DEPOSITION",
+          },
+          {
+            value: "GENERATE_ORDER",
+            label: "GENERATE_ORDER",
+          },
+        ]),
         {
           value: "SUBMIT_DOCUMENTS",
           label: "SUBMIT_DOCUMENTS",
@@ -2625,7 +2603,7 @@ const AdmittedCaseJudge = () => {
           label: "DOWNLOAD_CASE_FILE",
         },
       ];
-  }, [isJudge, isBenchClerk]);
+  }, [isJudge, currentInProgressHearing, isBenchClerk]);
 
   const courtActionOptions = useMemo(
     () => [
@@ -2891,20 +2869,36 @@ const AdmittedCaseJudge = () => {
                 <div className="evidence-header-wrapper">
                   <div className="evidence-hearing-header" style={{ background: "transparent" }}>
                     <div className="evidence-actions" style={{ ...(isTabDisabled ? { pointerEvents: "none" } : {}) }}>
-                      <Button
-                        variation={"outlined"}
-                        label={t("CS_CASE_VIEW_CALENDAR")}
-                        onButtonClick={() => handleEmployeeAction({ value: "VIEW_CALENDAR" })}
-                        style={{ boxShadow: "none" }}
-                      ></Button>
-                      <Button
-                        variation={"primary"}
-                        label={t("CS_CASE_NEXT_HEARING")}
-                        children={<RightArrow />}
-                        isSuffix={true}
-                        onButtonClick={() => handleEmployeeAction({ value: "NEXT_HEARING" })}
-                        style={{ boxShadow: "none" }}
-                      ></Button>
+                      {currentInProgressHearing ? (
+                        <React.Fragment>
+                          <Button
+                            variation={"outlined"}
+                            label={t("CS_CASE_VIEW_CALENDAR")}
+                            onButtonClick={() => handleEmployeeAction({ value: "VIEW_CALENDAR" })}
+                            style={{ boxShadow: "none" }}
+                          ></Button>
+                          <Button
+                            variation={"primary"}
+                            label={t("CS_CASE_NEXT_HEARING")}
+                            children={<RightArrow />}
+                            isSuffix={true}
+                            onButtonClick={() => handleEmployeeAction({ value: "NEXT_HEARING" })}
+                            style={{ boxShadow: "none" }}
+                          ></Button>
+                        </React.Fragment>
+                      ) : (
+                        <React.Fragment>
+                          <ActionButton
+                            variation={"primary"}
+                            label={t("TAKE_ACTION_LABEL")}
+                            icon={showMenu ? "ExpandLess" : "ExpandMore"}
+                            isSuffix={true}
+                            onClick={handleTakeAction}
+                            className={"take-action-btn-class"}
+                          ></ActionButton>
+                          {showMenu && <Menu options={takeActionOptions} onSelect={(option) => handleSelect(option)}></Menu>}
+                        </React.Fragment>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -2957,7 +2951,7 @@ const AdmittedCaseJudge = () => {
             </div>
           )}
         </div>
-        {hasAnyRelevantOrderType && (
+        {/* {hasAnyRelevantOrderType && (
           <div
             style={{
               backgroundColor: "#FFF6EA",
@@ -2981,9 +2975,8 @@ const AdmittedCaseJudge = () => {
               {t("NOTICE_CLICK_HERE")}
             </span>
           </div>
-        )}
+        )} */}
 
-        <CustomCaseInfoDiv t={t} data={caseBasicDetails} column={6} />
         <div className="search-tabs-container">
           <div>
             {tabData?.map((i, num) => (
@@ -3319,9 +3312,44 @@ const AdmittedCaseJudge = () => {
           </div>
         </Modal>
       )}
+      {showEndHearingModal && (
+        <Modal
+          headerBarMain={<Heading label={t("CS_CASE_CONFIRM_END_HEARING")} />}
+          headerBarEnd={
+            <CloseBtn
+              onClick={() => {
+                setShowEndHearingModal(false);
+              }}
+            />
+          }
+          actionSaveLabel={t("CS_CASE_END_START_NEXT_HEARING")}
+          actionSaveOnSubmit={() => {
+            setShowEndHearingModal(false);
+          }}
+          actionCancelOnSubmit={() => {
+            setShowEndHearingModal(false);
+          }}
+          actionCancelLabel={t("CS_COMMON_CANCEL")}
+          actionCustomLabel={t("CS_CASE_END_VIEW_CAUSE_LIST")}
+          customActionClassName={"end-and-view-causelist-button"}
+          submitClassName={"end-and-view-causelist-submit-button"}
+          className={"confirm-end-hearing-modal"}
+        >
+          <div style={{ margin: "16px 0px" }}>
+            <CheckBox
+              onChange={() => {
+                // setGenerateOrder((prev) => !prev);
+              }}
+              label={`${t("CS_CASE_PASS_OVER")}: ${t("CS_CASE_PASS_OVER_HEARING_TEXT")}`}
+              // checked={generateOrder}
+              disable={false}
+            />
+          </div>
+        </Modal>
+      )}
       <OrderDrawer
-        isOpen={showEndHearingModal}
-        onClose={() => setShowEndHearingModal(false)}
+        isOpen={showOrderModal}
+        onClose={() => setShowOrderModal(false)}
         onSubmit={(action) => {
           if (action === "end-hearing") {
             // Handle end hearing action
@@ -3330,7 +3358,7 @@ const AdmittedCaseJudge = () => {
             // Handle view cause list action
             console.log("View cause list");
           }
-          setShowEndHearingModal(false);
+          setShowOrderModal(false);
         }}
         attendees={currentActiveHearing?.attendees}
         caseDetails={caseDetails}

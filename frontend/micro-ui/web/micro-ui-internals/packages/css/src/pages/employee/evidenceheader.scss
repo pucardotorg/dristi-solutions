@@ -309,12 +309,10 @@
     right: 0;
     background: #fff;
     border-radius: 16px 16px 0 0;
-    padding: 24px;
+    padding: 24px 0px 24px 24px;
     transform: translateY(100%);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    max-height: 90vh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+    max-height: calc(100vh - 90px);
     opacity: 0;
     visibility: hidden;
 
@@ -359,10 +357,13 @@
       display: flex;
       flex-direction: column;
       margin: 0px 0px 16px 0px;
+      padding-right: 16px;
       opacity: 1;
       transform: translateY(20px);
       transition: all 0.3s ease;
       transition-delay: 0.2s;
+      max-height: calc(100vh - 264px);
+      overflow-y: auto;
 
       .open & {
         opacity: 1;
@@ -400,6 +401,20 @@
           .case-label-field-pair {
             flex: 1;
             width: 100%;
+
+            &.disabled {
+              .select-wrap {
+                background-color: rgb(217, 217, 217);
+                cursor: not-allowed;
+              }
+              .multi-select-dropdown-wrap {
+                background-color: rgb(217, 217, 217);
+                cursor: not-allowed;
+              }
+              .order-date-picker {
+                border-color: #a6abae !important;
+              }
+            }
           }
           .master,
           .select {
@@ -430,6 +445,7 @@
       justify-content: flex-end;
       gap: 16px;
       padding-top: 32px;
+      padding-right: 32px;
 
       .order-drawer-save-btn {
         padding: 12px;
