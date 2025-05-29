@@ -196,7 +196,7 @@ function PendingTaskAccordion({
       </div>
     </div>
   ) : (
-    <div className="tasks-component-table" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+    <div className="tasks-component-table" style={{ display: "flex", flexDirection: "column", gap: 8, marginLeft: "20px" }}>
       <div
         className="tasks-component-table-header"
         style={{
@@ -205,7 +205,7 @@ function PendingTaskAccordion({
           justifyContent: "space-between",
           alignItems: "center",
           borderBottom: "1px solid #BBBBBD",
-          padding: "5px 20px 10PX 20PX",
+          padding: "10px 20px 10PX 15PX",
         }}
       >
         <div className="tasks-component-table-header-row-cell" style={{ width: "40%", color: "#0B0C0C", fontWeight: "bold" }}>
@@ -218,7 +218,7 @@ function PendingTaskAccordion({
           {t("CREATED_ON")}
         </div>
       </div>
-      <div className="tasks-component-table-body">
+      <div className="tasks-component-table-body" style={{ overflowY: "auto", maxHeight: "200px" }}>
         {pendingTasks?.map((item) => (
           <div
             className="tasks-component-table-row"
@@ -229,7 +229,7 @@ function PendingTaskAccordion({
               justifyContent: "space-between",
               alignItems: "center",
               borderBottom: "1px solid #E8E8E8",
-              padding: "5px 20px 10PX 20PX",
+              padding: "10px 20px 10PX 15PX",
               cursor: "pointer",
             }}
             onClick={() => {

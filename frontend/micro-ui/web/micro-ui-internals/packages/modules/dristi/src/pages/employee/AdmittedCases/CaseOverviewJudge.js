@@ -132,8 +132,8 @@ const CaseOverviewJudge = ({
   }
   return (
     <div style={{display:"flex", flexDirection:"column", gap:"1rem"}}>
-        <div className="hearing-summary-container">
-            {hearingRes?.HearingList?.filter((hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status)).length !== 0 && (
+        <div className="hearing-summary-container" style={{ marginLeft: "20px"}}>
+            {hearingRes?.HearingList?.find((hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status) && Boolean(hearing?.transcript?.[0])) && (
                           <Card>
                             <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
                               <div
@@ -176,6 +176,7 @@ const CaseOverviewJudge = ({
                         )}
         </div>
         <div className="pending-actions-container">
+        <Card>
             <TasksComponent
                       taskType={taskType}
                       setTaskType={setTaskType}
@@ -186,16 +187,19 @@ const CaseOverviewJudge = ({
                       inCase={true}
                       tableView={true}
                     />
+                    </Card>
         </div>
         <div className="process-summary-container">
+        <Card>
         {<NoticeProcessModal
         showModal={false}
           filingNumber={filingNumber}
           currentHearingId={currentHearingId}
           caseDetails={caseDetails}
         />}
+        </Card>
         </div>
-        {showAllTranscript && <ShowAllTranscriptModal setShowAllTranscript={setShowAllTranscript} hearingList={previousHearing} />}
+        {showAllTranscript && <ShowAllTranscriptModal setShowAllTranscript={setShowAllTranscript} hearingList={previousHearing} judgeView={true} />}
 
 
     </div>

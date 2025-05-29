@@ -714,7 +714,6 @@ const TasksComponent = ({
                         setShowSubmitResponseModal={setShowSubmitResponseModal}
                         setResponsePendingTask={setResponsePendingTask}
                         setPendingTaskActionModals={setPendingTaskActionModals}
-                        tableView={true}
                       />
                     </div>
                   ) : (
@@ -773,47 +772,15 @@ const TasksComponent = ({
       {joinCasePaymentModal && <DocumentModal config={joinCasePaymentConfig} />}
     </div>
   ) : <div className="tasks-component-table-view">
-    <h1 className="heading-m">{t("PENDING_ACTIONS")}</h1>
     {isLoading || isOptionsLoading ? (
           <Loader />
         ) : totalPendingTask !== undefined && totalPendingTask > 0 ? (
           <React.Fragment>
           {searchCaseLoading && <Loader />}
           {!searchCaseLoading && (
-            <React.Fragment>
-              {taskIncludes?.length > 0 ? (
-                <div className="task-section">
-                  <PendingTaskAccordion
-                    pendingTasks={taskIncludesPendingTasks}
-                    allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
-                    accordionHeader={"Take_Action"}
-                    t={t}
-                    isHighlighted={true}
-                    isAccordionOpen={true}
-                    isOpenInNewTab={true}
-                    setShowSubmitResponseModal={setShowSubmitResponseModal}
-                    setResponsePendingTask={setResponsePendingTask}
-                    setPendingTaskActionModals={setPendingTaskActionModals}
-                    tableView={true}
-                  />
-                </div>
-              ) : (
-                <React.Fragment>
-                  {/* <div className="task-section">
-                    <PendingTaskAccordion
-                      pendingTasks={pendingTaskDataInWeek}
-                      allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
-                      accordionHeader={"COMPLETE_THIS_WEEK"}
-                      t={t}
-                      totalCount={pendingTaskDataInWeek?.length}
-                      isHighlighted={true}
-                      isAccordionOpen={true}
-                      setShowSubmitResponseModal={setShowSubmitResponseModal}
-                      setResponsePendingTask={setResponsePendingTask}
-                      setPendingTaskActionModals={setPendingTaskActionModals}
-                    />
-                  </div> */}
-                  <div className="">
+            <div>
+            <h1 className="heading-m">{t("PENDING_ACTIONS")}</h1>
+              <div>
                     <PendingTaskAccordion
                       pendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
                       allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
@@ -826,18 +793,11 @@ const TasksComponent = ({
                       tableView={true}
                     />
                   </div>
-                </React.Fragment>
-              )}
-            </React.Fragment>
+                  </div>
           )}
         </React.Fragment>
     ) : (
-      <div
-        style={{
-        }}
-      >
-        {!isLitigant ? t("NO_TASK_TEXT") : t("NO_PENDING_TASK_TEXT")}
-      </div>
+      <React.Fragment></React.Fragment>
     )}
   </div>;
 };
