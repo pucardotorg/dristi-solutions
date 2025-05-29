@@ -1761,13 +1761,19 @@ function EFilingCases({ path }) {
       // Calculation of Mandatory fields for Advocate Details page
       for (let i = 0; i < currentPageData?.length; i++) {
         const formData = currentPageData?.[i]?.data || {};
-        const { boxComplainant, isComplainantPip, multipleAdvocateNameDetails, vakalatnamaFileUpload, pipAffidavitFileUpload } =
+        const { boxComplainant, isComplainantPip, numberOfAdvocates, multipleAdvocateNameDetails, vakalatnamaFileUpload, pipAffidavitFileUpload } =
           formData?.multipleAdvocatesAndPip || {};
 
         if (boxComplainant?.individualId) {
           let isAnAdvocateMissing = false;
           let isVakalatnamaFileMissing = false;
           let isPipAffidavitFileMissing = false;
+          let isAdvocateCountDiffer = false;
+          if (multipleAdvocateNameDetails && Array.isArray(multipleAdvocateNameDetails) && multipleAdvocateNameDetails?.length > 0) {
+            if (multipleAdvocateNameDetails?.length !== numberOfAdvocates) {
+              isAdvocateCountDiffer = true;
+            }
+          }
           if (isComplainantPip?.code === "NO") {
             // IF complainant is not party in person, an advocate must be present
             if (!multipleAdvocateNameDetails || (Array.isArray(multipleAdvocateNameDetails) && multipleAdvocateNameDetails?.length === 0)) {
@@ -1791,7 +1797,7 @@ function EFilingCases({ path }) {
               isPipAffidavitFileMissing = true;
             }
           }
-          const missingFields = [isAnAdvocateMissing, isVakalatnamaFileMissing, isPipAffidavitFileMissing];
+          const missingFields = [isAnAdvocateMissing, isVakalatnamaFileMissing, isPipAffidavitFileMissing, isAdvocateCountDiffer];
           totalMandatoryLeft += missingFields.filter(Boolean).length;
         }
       }
