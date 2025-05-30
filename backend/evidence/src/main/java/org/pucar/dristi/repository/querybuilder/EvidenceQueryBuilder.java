@@ -172,16 +172,6 @@ public class EvidenceQueryBuilder {
         }
         return firstCriteria;
     }
-    boolean addArtifactIsEvidenceCriteria(Boolean criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, List<Integer> preparedStmtArgList) {
-        if (criteria != null) {
-            addClauseIfRequired(query, firstCriteria);
-            query.append("art.isEvidence = ?");
-            preparedStmtList.add(criteria);
-            preparedStmtArgList.add(Types.VARCHAR);
-            firstCriteria = false;
-        }
-        return firstCriteria;
-    }
 
     boolean addArtifactCriteria(Boolean criteria, StringBuilder query, String criteriaClause,List<Object> preparedStmtList, boolean firstCriteria, List<Integer> preparedStmtArgList) {
         if (criteria != null) {
