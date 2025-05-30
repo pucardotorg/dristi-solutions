@@ -182,6 +182,8 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
                 },
               },
             }}
+            toolbarHidden={config?.disable}
+            readOnly={config?.disable}
           />
 
           {errors?.[configKey] && (
