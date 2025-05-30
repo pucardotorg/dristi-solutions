@@ -5,7 +5,29 @@ import { Dropdown, TextInput, LabelFieldPair, CardLabel } from "@egovernments/di
 import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
 
+const Heading = (props) => {
+  return <h1 className="heading-m">{props.label}</h1>;
+};
+
+const CloseBtn = (props) => {
+  return (
+    <div
+      onClick={props?.onClick}
+      style={{
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        paddingRight: "20px",
+        cursor: "pointer",
+        ...(props?.backgroundColor && { backgroundColor: props.backgroundColor }),
+      }}
+    >
+      <CloseSvg />
+    </div>
+  );
+};
 function useInboxSearch({ limit = 300, offset = 0 } = {}) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -66,13 +88,15 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
     purpose: "",
     caseQuery: "",
   });
-  // const { t } = useTranslation();
   const history = useHistory();
 
   const { data: tableData, loading, error, fetchInbox } = useInboxSearch();
   const roles = window?.Digit.UserService.getUser()?.info?.roles;
   const isJudge = roles.some((role) => role.code === "CASE_APPROVER");
   const userType = Digit.UserService.getType();
+  const [passOver, setPassOver] = useState(false);
+  const [showEndHearingModal, setShowEndHearingModal] = useState(false);
+  const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
 
   const handleClear = useCallback(() => {
     const cleared = { date: todayStr, status: "", purpose: "", caseQuery: "" };
@@ -100,18 +124,20 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
     { code: "COMPLETED", name: "Completed" },
     { code: "Passed Over", name: "Passed Over" },
     { code: "SCHEDULED", name: "Scheduled" },
-    { code: "Abated", name: "Abated" },
+    { code: "ABATED", name: "Abated" },
     { code: "IN_PROGRESS", name: "Ongoing" },
+    { code: "PASSED_OVER", name: "Passed Over" },
+    // {code : "OPT_OUT" ,name : "Opt out"}
   ];
 
   const statusClass = (status) => {
     if (!status) return "status-default";
-    const s = status.toLowerCase();
-    if (s.includes("completed")) return "status-completed";
-    if (s.includes("ongoing")) return "status-ongoing";
-    if (s.includes("passed")) return "status-passed";
-    if (s.includes("scheduled")) return "status-scheduled";
-    if (s.includes("abated")) return "status-abated";
+    if (status === "COMPLETED") return "status-completed";
+    if (status === "IN_PROGRESS") return "status-ongoing";
+    if (status === "SCHEDULED") return "status-scheduled";
+    if (status === "ABATED") return "status-abated";
+    if (status === "OPT_OUT") return "status-completed";
+    if (status === "PASSED_OVER") return "status-passed-over";
     return "status-default";
   };
 
@@ -185,14 +211,40 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
         dropDownitems.push({
           label: "End Hearing",
           id: "end_hearing",
-          action: () => {},
+          action: () => {
+            setShowEndHearingModal(true);
+          },
         });
       }
       if (row?.businessObject?.hearingDetails?.status === "IN_PROGRESS") {
         dropDownitems.push({
           label: "Mark as Passed Over",
           id: "pass_hearing",
-          action: () => {},
+          action: () => {
+            try {
+              hearingService
+                ?.searchHearings(
+                  {
+                    criteria: {
+                      hearingId: row?.businessObject?.hearingDetails?.hearingNumber,
+                      tenantId: row?.businessObject?.hearingDetails?.tenantId,
+                    },
+                  },
+                  { tenantId: row?.businessObject?.hearingDetails?.tenantId }
+                )
+                .then((response) => {
+                  if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
+                    hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
+                      history.push(
+                        `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
+                      );
+                    });
+                  }
+                });
+            } catch (e) {
+              console.log(e);
+            }
+          },
         });
       }
       return dropDownitems;
@@ -235,7 +287,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
         </td>
         <td>
           <span className={`status-badge ${statusClass(row?.businessObject?.hearingDetails?.status)}`}>
-            {row?.businessObject?.hearingDetails?.status || "-"}
+            {row?.businessObject?.hearingDetails?.status === "IN_PROGRESS" ? t("ONGOING") : t(row?.businessObject?.hearingDetails?.status) || "-"}
           </span>
         </td>
         <td>{t(row?.businessObject?.hearingDetails?.hearingType) || "-"}</td>
@@ -251,7 +303,8 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
               style={{ position: "relative" }}
               onClick={() => {
                 history.push(
-                  `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
+                  `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`,
+                  { openOrder: true }
                 );
               }}
               className="edit-icon"
@@ -303,7 +356,22 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
           color: #fff;
           font-size: 19px;
           line-height: 2rem;
-          width :200px
+          width :200px;
+           backgroundColor: "#007E7E";
+                width: "212px";
+                height: "40px";
+                paddingTop: "8px";
+                paddingRight: "24px";
+                paddingBottom: "8px";
+                paddingLeft: "24px";
+                gap: "4px";
+                  fontSize: "16px";
+                fontWeight: 700;
+                fontFamily: "Roboto";
+                lineHeight: "19.2px";
+                textAlign: "left";
+                margin: "0px";
+                color: "white";
         }
         .filter-bar .clear-btn {
           background: #fff;
@@ -352,13 +420,16 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
           color: #3D3C3C;
         }
         .status-ongoing {
-          background: #E4F2E4;
+         background: #E4F2E4;
           color: #00703C;
         }
         .status-passed {
           background: #FFF6E8;
           color: #9E400A;
         }
+          .status-passed-over{
+          background: #FFF6E8;
+          color: #9E400A;}
         .status-scheduled {
          background: #E4F2E4;
           color: #00703C;
@@ -507,6 +578,83 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
           </table>
         </div>
       </div>
+      {showEndHearingModal && (
+        <Modal
+          headerBarMain={<Heading label={t("CS_CASE_CONFIRM_END_HEARING")} />}
+          headerBarEnd={
+            <CloseBtn
+              onClick={() => {
+                setShowEndHearingModal(false);
+              }}
+            />
+          }
+          actionSaveLabel={t("CS_CASE_END_START_NEXT_HEARING")}
+          actionSaveOnSubmit={async () => {
+            //need to get hearing data
+            hearingService
+              ?.searchHearings(
+                {
+                  criteria: {
+                    // hearingId: row?.businessObject?.hearingDetails?.hearingNumber,
+                    // tenantId: row?.businessObject?.hearingDetails?.tenantId,
+                  },
+                }
+                // { tenantId: row?.businessObject?.hearingDetails?.tenantId }
+              )
+              .then((response) => {
+                if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
+                  hearingService
+                    .updateHearings(
+                      {
+                        tenantId: Digit.ULBService.getCurrentTenantId(),
+                        hearing: { ...response?.HearingList?.[0], workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
+                        hearingType: "",
+                        status: "",
+                      },
+                      { applicationNumber: "", cnrNumber: "" }
+                    )
+                    .then(() => {
+                      setShowEndHearingModal(false);
+                    });
+                }
+              });
+          }}
+          actionCustomLabelSubmit={async () => {
+            hearingService
+              .updateHearings(
+                {
+                  tenantId: Digit.ULBService.getCurrentTenantId(),
+                  // hearing: { ...currentActiveHearing, workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
+                  hearingType: "",
+                  status: "",
+                },
+                { applicationNumber: "", cnrNumber: "" }
+              )
+              .then(() => {
+                setShowEndHearingModal(false);
+              });
+          }}
+          actionCancelOnSubmit={() => {
+            setShowEndHearingModal(false);
+          }}
+          actionCancelLabel={t("CS_COMMON_CANCEL")}
+          actionCustomLabel={t("CS_CASE_END_VIEW")}
+          customActionClassName={"end-and-view-causelist-button"}
+          submitClassName={"end-and-view-causelist-submit-button"}
+          className={"confirm-end-hearing-modal"}
+        >
+          <div style={{ margin: "16px 0px" }}>
+            <CheckBox
+              onChange={(e) => {
+                setPassOver(e.target.checked);
+              }}
+              label={`${t("CS_CASE_PASS_OVER")}: ${t("CS_CASE_PASS_OVER_HEARING_TEXT")}`}
+              checked={passOver}
+              disable={false}
+            />
+          </div>
+        </Modal>
+      )}
     </React.Fragment>
   );
 };

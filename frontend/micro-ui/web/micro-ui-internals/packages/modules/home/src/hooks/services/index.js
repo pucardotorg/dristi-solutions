@@ -13,11 +13,20 @@ export const Urls = {
   updateADiaryPDF: "/ab-diary/case/diary/v1/update",
   searchADiary: "/ab-diary/case/diary/v1/search",
   inboxSearch: "/inbox/v2/index/_search",
+  pendingTaskSearch: "/inbox/v2/_getFields/actionCategory",
 };
 export const HomeService = {
   InboxSearch: (data, params) =>
     Request({
       url: Urls.inboxSearch,
+      useCache: true,
+      userService: true,
+      data,
+      params,
+    }),
+  pendingTaskSearch: (data, params) =>
+    Request({
+      url: Urls.pendingTaskSearch,
       useCache: true,
       userService: true,
       data,

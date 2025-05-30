@@ -8,7 +8,7 @@ export const pendingTaskConfig = {
   label: "PENDING_TASKS_TAB",
   type: "search",
   apiDetails: {
-    serviceName: "/inbox/v2/_getFields",
+    serviceName: "/inbox/v2/_getFields/actionCategory",
     requestParam: {
       // tenantId: Digit.ULBService.getCurrentTenantId(),
     },
@@ -16,6 +16,11 @@ export const pendingTaskConfig = {
       SearchCriteria: {
         moduleName: "Pending Tasks Service",
         tenantId: Digit.ULBService.getCurrentTenantId(),
+
+        moduleSearchCriteria: {
+          screenType: ["home", "applicationCompositeOrder"],
+          isCompleted: false,
+        },
         limit: 10,
         offset: 0,
       },
@@ -93,29 +98,29 @@ export const pendingTaskConfig = {
         columns: [
           {
             label: "CASE_NAME",
-            jsonPath: "hearingType",
+            jsonPath: "caseTitle",
             additionalCustomization: true,
           },
           {
             label: "CASE_ID",
-            jsonPath: "hearingType",
+            jsonPath: "caseNumber",
             additionalCustomization: true,
           },
           {
             label: "STAGE",
-            jsonPath: "hearingType",
+            jsonPath: "substage",
             additionalCustomization: true,
           },
           {
             label: "ADVOCATES",
             labelChildren: "OutlinedInfoIcon",
             tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",
-            jsonPath: "hearingType",
+            jsonPath: "advocateDetails",
             additionalCustomization: true,
           },
         ],
         enableColumnSort: true,
-        resultsJsonPath: "SearchCriteria",
+        resultsJsonPath: "data",
       },
       show: true,
     },

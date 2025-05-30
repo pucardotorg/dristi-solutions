@@ -1629,11 +1629,6 @@ export const UICustomizations = {
         case "S.NO":
           return row?.index ? row?.index + 1 : 1;
         case "CASE_NAME":
-          debugger;
-          console.log(
-            `/${window?.contextPath}/ui/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
-          );
-
           return (
             <Link
               to={`/${window?.contextPath}/ui/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`}
@@ -1901,31 +1896,26 @@ export const UICustomizations = {
             ...requestCriteria.body.SearchCriteria,
             moduleSearchCriteria: {
               ...requestCriteria?.body?.SearchCriteria?.moduleSearchCriteria,
-              searchReviewProcess: {
-                date: activeTab === "REVIEW_PROCESS" ? selectedDateInMs : currentDateInMs,
-                isOnlyCountRequired: activeTab === "REVIEW_PROCESS" ? false : true,
-                count: 10,
-                actionCategory: "Review Process",
-              },
-              searchViewApplication: {
-                date: activeTab === "VIEW_APPLICATION" ? selectedDateInMs : currentDateInMs,
-                isOnlyCountRequired: activeTab === "VIEW_APPLICATION" ? false : true,
-                count: 10,
-                actionCategory: "View Application",
-              },
-              searchScheduleHearing: {
-                date: activeTab === "SCHEDULE_HEARING" ? selectedDateInMs : currentDateInMs,
-                isOnlyCountRequired: activeTab === "SCHEDULE_HEARING" ? false : true,
-                count: 10,
-                actionCategory: "Schedule Hearing",
-              },
-              searchRegisterCases: {
-                date: activeTab === "REGISTRATION" ? selectedDateInMs : currentDateInMs,
-                isOnlyCountRequired: activeTab === "REGISTRATION" ? false : true,
-                count: 10,
-                actionCategory: "Register cases",
-              },
-              tenantId,
+            },
+            searchReviewProcess: {
+              date: activeTab === "REVIEW_PROCESS" ? selectedDateInMs : currentDateInMs,
+              isOnlyCountRequired: activeTab === "REVIEW_PROCESS" ? false : true,
+              actionCategory: "Review Process",
+            },
+            searchViewApplication: {
+              date: activeTab === "VIEW_APPLICATION" ? selectedDateInMs : currentDateInMs,
+              isOnlyCountRequired: activeTab === "VIEW_APPLICATION" ? false : true,
+              actionCategory: "View Application",
+            },
+            searchScheduleHearing: {
+              date: activeTab === "SCHEDULE_HEARING" ? selectedDateInMs : currentDateInMs,
+              isOnlyCountRequired: activeTab === "SCHEDULE_HEARING" ? false : true,
+              actionCategory: "Schedule Hearing",
+            },
+            searchRegisterCases: {
+              date: 922337203685477,
+              isOnlyCountRequired: activeTab === "REGISTRATION" ? false : true,
+              actionCategory: "Register cases",
             },
           },
           // tenantId,
@@ -1937,8 +1927,37 @@ export const UICustomizations = {
         config: {
           ...requestCriteria.config,
           select: (data) => {
-            additionalDetails?.setCount(data?.totalCount || (Array.isArray(data) ? data.length : 0));
-            return data;
+            const reviwCount = data?.reviewProcessData?.count || 0;
+            const applicationCount = data?.viewApplicationData?.count || 0;
+            const scheduleCount = data?.scheduleHearingData?.count || 0;
+            const registerCount = data?.registerCasesData?.count || 0;
+
+            // setPendingTaskCount();
+            additionalDetails?.setCount({
+              REGISTRATION: registerCount,
+              REVIEW_PROCESS: reviwCount,
+              VIEW_APPLICATION: applicationCount,
+              SCHEDULE_HEARING: scheduleCount,
+            });
+            const processFields = (fields) => {
+              const result = fields.reduce((acc, curr) => {
+                const key = curr.key.replace(/\[.*?\]/g, "");
+                acc[key] = curr.value;
+                return acc;
+              }, {});
+
+              return {
+                caseTitle: result.caseTitle,
+                caseNumber: result.caseNumber,
+                substage: result.substage,
+                advocateDetails: result["advocateDetails.complainant[0]"],
+              };
+            };
+            if (activeTab === "REVIEW_PROCESS") {
+              return { data: data?.reviewProcessData?.data?.map((item) => processFields(item.fields)) || [] };
+            } else if (activeTab === "VIEW_APPLICATION") return data?.viewApplicationData?.data?.map((item) => processFields(item.fields));
+            else if (activeTab === "SCHEDULE_HEARING") return data?.scheduleHearingData?.data?.map((item) => processFields(item.fields));
+            else return { data: data?.registerCasesData?.data?.map((item) => processFields(item.fields)) || [] };
           },
         },
       };
@@ -1995,7 +2014,7 @@ export const UICustomizations = {
             <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="SearchIndividualConfig" />
           );
         default:
-          break;
+          return value ? value : "-";
       }
     },
   },

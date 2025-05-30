@@ -4,7 +4,7 @@ import SideBarTitle from "./SideBarTitle";
 import SidebarItem from "./SideBarItem";
 import BulkReschedule from "../../../hearings/src/pages/employee/BulkReschedule";
 
-const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hearingCount = 0 }) => {
+const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hearingCount = 0, pendingTaskCount }) => {
   const [stepper, setStepper] = useState(0);
   return (
     <div style={{ width: 280, background: "#fafbfc", borderRight: "1px solid #eee" }}>
@@ -23,7 +23,7 @@ const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hea
               t={t}
               key={index}
               label={options[key].name}
-              count={options[key].count || 0}
+              count={pendingTaskCount[key] || 0}
               active={activeTab === options[key].name}
               onClick={() => onTabChange("PENDING_TASKS_TAB", key, options[key].func)}
             />

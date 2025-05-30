@@ -1,6 +1,6 @@
 import React from "react";
 
-const SideBarTitle = ({ t, title, count, active, onClick }) => {
+const SideBarTitle = ({ t, title, count = null, active, onClick }) => {
   return (
     <div
       onClick={onClick}
@@ -17,7 +17,8 @@ const SideBarTitle = ({ t, title, count, active, onClick }) => {
       }}
     >
       {t(title)}
-      {count && (
+
+      {count !== null && (
         <span
           style={{
             fontSize: 14,

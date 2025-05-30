@@ -175,12 +175,10 @@ const AdmittedCaseJudge = () => {
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 
-  const [viewCauseList, setViewCauseList] = useState(false);
   const [apiCalled, setApiCalled] = useState(false);
   const [passOver, setPassOver] = useState(false);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false });
-  const [showOrderModal, setShowOrderModal] = useState(false);
   const [showWitnessModal, setShowWitnessModal] = useState(false);
   const [addPartyModal, setAddPartyModal] = useState(false);
   const [show, setShow] = useState(false);
@@ -244,6 +242,9 @@ const AdmittedCaseJudge = () => {
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const historyCaseData = location?.state?.caseData;
   const historyOrderData = location?.state?.orderData;
+  const openOrder = location?.state?.openOrder;
+  const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
+
   const reqEvidenceUpdate = {
     url: Urls.dristi.evidenceUpdate,
     params: {},
@@ -3506,22 +3507,25 @@ const AdmittedCaseJudge = () => {
           </div>
         </Modal>
       )}
-      <OrderDrawer
-        isOpen={showOrderModal}
-        onClose={() => setShowOrderModal(false)}
-        onSubmit={(action) => {
-          if (action === "end-hearing") {
-            // Handle end hearing action
-            console.log("End hearing and schedule next");
-          } else if (action === "view-cause-list") {
-            // Handle view cause list action
-            console.log("View cause list");
-          }
-          setShowOrderModal(false);
-        }}
-        attendees={currentActiveHearing?.attendees}
-        caseDetails={caseDetails}
-      />
+      {showOrderModal && (
+        <OrderDrawer
+          isOpen={showOrderModal}
+          onClose={() => setShowOrderModal(false)}
+          onSubmit={(action) => {
+            if (action === "end-hearing") {
+              // Handle end hearing action
+              console.log("End hearing and schedule next");
+            } else if (action === "view-cause-list") {
+              // Handle view cause list action
+              console.log("View cause list");
+            }
+            setShowOrderModal(false);
+          }}
+          attendees={currentActiveHearing?.attendees}
+          caseDetails={caseDetails}
+        />
+      )}
+
       {showWitnessModal && (
         <WitnessDrawer
           isOpen={showWitnessModal}

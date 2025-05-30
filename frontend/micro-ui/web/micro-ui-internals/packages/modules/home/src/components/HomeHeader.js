@@ -1,4 +1,6 @@
+import useGetHearingLink from "@egovernments/digit-ui-module-hearings/src/hooks/hearings/useGetHearingLink";
 import React, { useMemo } from "react";
+import { Button } from "@egovernments/digit-ui-components";
 
 const linkStyle = {
   fontFamily: "Roboto",
@@ -22,22 +24,51 @@ const HomeHeader = ({ t }) => {
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
+  const { data: hearingLink } = useGetHearingLink();
 
   return (
     <div style={{ borderTop: "1px #e8e8e8 solid", width: "100vw", padding: "24px 40px" }}>
       <div className="header" style={{ fontFamily: "Roboto", fontWeight: 700, fontSize: "40px", lineHeight: "100%", letterSpacing: "0%" }}>
         {t("CS_HOME_HELLO")}, <span style={{ color: "#77787B" }}>{name}</span>
         {isJudge && (
-          <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start", padding: "32px 0px 0px" }}>
-            <a href={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle} target="_self" rel="noopener noreferrer">
-              {t("OPEN_DASHBOARD")}
-            </a>
-            <a href={`/${window.contextPath}/employee/home/dashboard?select=2`} style={linkStyle} target="_self" rel="noopener noreferrer">
-              {t("OPEN_REGISTERS")}
-            </a>
-            <a href={`/${window.contextPath}/employee/home/home-pending-task`} style={linkStyle} target="_self" rel="noopener noreferrer">
-              {t("OPEN_ALL_CASES")}
-            </a>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end" }}>
+            <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start", padding: "32px 0px 0px" }}>
+              <a href={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle} target="_self" rel="noopener noreferrer">
+                {t("OPEN_DASHBOARD")}
+              </a>
+              <a href={`/${window.contextPath}/employee/home/dashboard?select=2`} style={linkStyle} target="_self" rel="noopener noreferrer">
+                {t("OPEN_REGISTERS")}
+              </a>
+              <a href={`/${window.contextPath}/employee/home/home-pending-task`} style={linkStyle} target="_self" rel="noopener noreferrer">
+                {t("OPEN_ALL_CASES")}
+              </a>
+            </div>
+            <Button
+              variation={"tertiary"}
+              label={t("JOIN_VIDEO_CONFERENCE")}
+              onClick={() => {
+                window.open(hearingLink, "_blank");
+              }}
+              style={{
+                backgroundColor: "#007E7E",
+                width: "212px",
+                height: "40px",
+                paddingTop: "8px",
+                paddingRight: "24px",
+                paddingBottom: "8px",
+                paddingLeft: "24px",
+                gap: "4px",
+              }}
+              textStyles={{
+                fontSize: "16px",
+                fontWeight: 700,
+                fontFamily: "Roboto",
+                lineHeight: "19.2px",
+                textAlign: "left",
+                margin: "0px",
+                color: "white",
+              }}
+            ></Button>
           </div>
         )}
       </div>
