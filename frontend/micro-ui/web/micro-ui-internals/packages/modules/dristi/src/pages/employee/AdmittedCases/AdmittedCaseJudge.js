@@ -3463,14 +3463,18 @@ const AdmittedCaseJudge = () => {
           className={"confirm-end-hearing-modal"}
         >
           <div style={{ margin: "16px 0px" }}>
-            <CheckBox
-              onChange={(e) => {
-                setPassOver(e.target.checked);
-              }}
-              label={`${t("CS_CASE_PASS_OVER")}: ${t("CS_CASE_PASS_OVER_HEARING_TEXT")}`}
-              checked={passOver}
-              disable={false}
-            />
+            {!isNextHearingDrafted ? (
+              <p>{t("CS_CASE_AN_ORDER_BOTD_FIRST")}</p>
+            ) : (
+              <CheckBox
+                onChange={(e) => {
+                  setPassOver(e.target.checked);
+                }}
+                label={`${t("CS_CASE_PASS_OVER")}: ${t("CS_CASE_PASS_OVER_HEARING_TEXT")}`}
+                checked={passOver}
+                disable={false}
+              />
+            )}
           </div>
         </Modal>
       )}

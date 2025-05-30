@@ -29,7 +29,6 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
     isCaseDisposed: {},
     partiesToAttendHearing: [],
   });
-  console.log("orderData", orderData);
   const [orderError, setOrderError] = useState({
     botdText: "",
     hearingType: "",
@@ -199,7 +198,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
   const onSubmit = useCallback(
     async (type) => {
       const errors = validateOrderData(orderData);
-      if (Object.keys(errors).length) {
+      if (Object.keys(errors).length && type === "add-other-items") {
         setOrderError(errors);
         return;
       }
