@@ -167,8 +167,8 @@ const DashboardPage = () => {
   const handleDownload = async (downloadLink, index) => {
     setDownloadingIndices((prev) => [...prev, index]);
     console.log("need to remove", process.env.REACT_APP_KIBANA_USERNAME, process.env.REACT_APP_KIBANA_PASSWORD);
-    const username = process.env.REACT_APP_KIBANA_USERNAME || "anonymous";
-    const password = process.env.REACT_APP_KIBANA_PASSWORD || "Beehyv@123";
+    const username = process.env.REACT_APP_KIBANA_USERNAME || "michaelGeorge";
+    const password = process.env.REACT_APP_KIBANA_PASSWORD || "ONcourts*247";
     const credentials = btoa(`${username}:${password}`);
     const config = {
       headers: {
