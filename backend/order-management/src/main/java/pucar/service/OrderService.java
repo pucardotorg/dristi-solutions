@@ -2,19 +2,27 @@ package pucar.service;
 
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import pucar.factory.OrderFactory;
 import pucar.factory.OrderServiceFactoryProvider;
+import pucar.strategy.hearing.HearingUpdateBasedOnStatus;
 import pucar.util.ADiaryUtil;
+import pucar.util.HearingUtil;
 import pucar.util.OrderUtil;
 import pucar.web.models.Order;
 import pucar.web.models.OrderRequest;
 import pucar.web.models.OrderResponse;
 import pucar.web.models.adiary.BulkDiaryEntryRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
+import pucar.web.models.hearing.Hearing;
+import pucar.web.models.hearing.HearingCriteria;
+import pucar.web.models.hearing.HearingSearchRequest;
 
 import java.util.List;
+
+import static pucar.config.ServiceConstants.SCHEDULING_NEXT_HEARING;
 
 
 @Service
@@ -24,20 +32,40 @@ public class OrderService {
     private final OrderUtil orderUtil;
     private final OrderServiceFactoryProvider factoryProvider;
     private final ADiaryUtil aDiaryUtil;
+    private final HearingUtil hearingUtil;
+    private final HearingUpdateBasedOnStatus hearingUpdateBasedOnStatus;
 
     @Autowired
-    public OrderService(OrderUtil orderUtil, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil) {
+    public OrderService(OrderUtil orderUtil, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil, HearingUpdateBasedOnStatus hearingUpdateBasedOnStatus) {
         this.orderUtil = orderUtil;
         this.factoryProvider = factoryProvider;
         this.aDiaryUtil = aDiaryUtil;
+        this.hearingUtil = hearingUtil;
+        this.hearingUpdateBasedOnStatus = hearingUpdateBasedOnStatus;
     }
 
 
     public Order createOrder(@Valid OrderRequest request) {
         log.info("creating order, result= IN_PROGRESS,orderNumber:{}, orderType:{}", request.getOrder().getOrderNumber(), request.getOrder().getOrderType());
         OrderResponse orderResponse = orderUtil.createOrder(request);
+        updateHearingSummary(request);
         log.info("created order, result= SUCCESS");
         return orderResponse.getOrder();
+    }
+
+    private void updateHearingSummary(OrderRequest request) {
+
+        Order order = request.getOrder();
+        RequestInfo requestInfo = request.getRequestInfo();
+
+        if (SCHEDULING_NEXT_HEARING.equalsIgnoreCase(order.getOrderType())) {
+            String hearingNumber = order.getHearingNumber();
+            List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
+                    .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
+            Hearing hearing = hearings.get(0);
+            hearingUpdateBasedOnStatus.updateHearingBasedOnStatus(hearing, request ,true);
+        }
+
     }
 
     public Order updateOrder(@Valid OrderRequest request) {
