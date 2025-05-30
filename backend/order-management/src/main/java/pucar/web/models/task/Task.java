@@ -109,6 +109,9 @@ public class Task {
     @JsonProperty("caseId")
     private String caseId = null;
 
+    @JsonProperty("courtId")
+    private String courtId;
+
 
     public Task addDocumentsItem(Document documentsItem) {
         this.documents.add(documentsItem);

@@ -4796,6 +4796,14 @@ export const configsApproveRejectLitigantDetailsChange = [
         },
       },
       {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
         type: "component",
         component: "SelectCustomTextArea",
         key: "reasonForLitigantDetailsChange",
