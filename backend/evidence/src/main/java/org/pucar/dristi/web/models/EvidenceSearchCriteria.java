@@ -30,6 +30,7 @@ public class EvidenceSearchCriteria {
     private String filingNumber;
     private UUID owner;
     private String tenantId;
+    private String filingType;
     private String fileStoreId;
     private String courtId;
 
