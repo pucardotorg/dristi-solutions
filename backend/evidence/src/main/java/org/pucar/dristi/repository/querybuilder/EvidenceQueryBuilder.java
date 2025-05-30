@@ -50,13 +50,15 @@ public class EvidenceQueryBuilder {
             String fileStoreId = criteria.getFileStoreId();
             String courtId = criteria.getCourtId();
             String filingType = criteria.getFilingType();
+            Boolean isVoid = criteria.getIsVoid();
 
             // Build the query using the extracted fields
             firstCriteria = addArtifactCriteria(id, query, preparedStmtList, firstCriteria, "art.id = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(caseId, query, preparedStmtList, firstCriteria, "art.caseId = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(application, query, preparedStmtList, firstCriteria, "art.application = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(artifactType, query, preparedStmtList, firstCriteria, "art.artifactType = ?",preparedStmtArgList);
-            firstCriteria = addArtifactCriteria(evidenceStatus, query, preparedStmtList, firstCriteria,preparedStmtArgList);
+            firstCriteria = addArtifactCriteria(evidenceStatus, query,"art.isEvidence = ?", preparedStmtList, firstCriteria,preparedStmtArgList);
+            firstCriteria = addArtifactCriteria(isVoid, query,"art.isVoid = ?", preparedStmtList, firstCriteria,preparedStmtArgList);
             firstCriteria = addArtifactCriteria(filingNumber, query, preparedStmtList, firstCriteria, "art.filingNumber = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(hearing, query, preparedStmtList, firstCriteria, "art.hearing = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(order, query, preparedStmtList, firstCriteria, "art.orders = ?",preparedStmtArgList);
@@ -170,12 +172,13 @@ public class EvidenceQueryBuilder {
         }
         return firstCriteria;
     }
-    boolean addArtifactCriteria(Boolean criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, List<Integer> preparedStmtArgList) {
+
+    boolean addArtifactCriteria(Boolean criteria, StringBuilder query, String criteriaClause,List<Object> preparedStmtList, boolean firstCriteria, List<Integer> preparedStmtArgList) {
         if (criteria != null) {
             addClauseIfRequired(query, firstCriteria);
-            query.append("art.isEvidence = ?");
+            query.append(criteriaClause);
             preparedStmtList.add(criteria);
-            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtArgList.add(Types.BOOLEAN);
             firstCriteria = false;
         }
         return firstCriteria;
