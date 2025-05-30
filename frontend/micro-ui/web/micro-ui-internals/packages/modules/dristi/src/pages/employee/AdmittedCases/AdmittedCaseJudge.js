@@ -176,7 +176,7 @@ const AdmittedCaseJudge = () => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 
   const [viewCauseList, setViewCauseList] = useState(false);
-  const [isNextHearingDrafted, setIsNextHearingDrafted] = useState(false);
+  const [apiCalled, setApiCalled] = useState(false);
   const [passOver, setPassOver] = useState(false);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false });
@@ -2322,13 +2322,14 @@ const AdmittedCaseJudge = () => {
 
   const nextHearing = useCallback(() => {
     if (data?.length === 0) {
-      history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+      history.push(`/${window?.contextPath}/employee/home/home-screen`);
     } else {
-      const index = data?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentInProgressHearing?.hearingId);
-      if (index === data?.length - 1 || index === -1) {
-        history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+      const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
+      const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentInProgressHearing?.hearingId);
+      if (index === -1 || validData?.length === 1) {
+        history.push(`/${window?.contextPath}/employee/home/home-screen`);
       } else {
-        const row = data?.[index + 1];
+        const row = validData[(index + 1) % validData?.length];
         if (["SCHEDULED", "PASSED_OVER"].includes(row?.businessObject?.hearingDetails?.status)) {
           hearingService
             .searchHearings(
@@ -2371,22 +2372,30 @@ const AdmittedCaseJudge = () => {
       } else if (option.value === "GENERATE_ORDER") {
         setShowOrderModal(true);
       } else if (option.value === "END_HEARING") {
-        const orderResponse = await ordersService.searchOrder(
-          {
-            tenantId: caseDetails?.tenantId,
-            criteria: {
-              tenantID: caseDetails?.tenantId,
-              filingNumber: caseDetails?.filingNumber,
-              orderType: "SCHEDULING_NEXT_HEARING",
-              status: OrderWorkflowState.DRAFT_IN_PROGRESS,
-              ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
+        try {
+          setApiCalled(true);
+          const orderResponse = await ordersService.searchOrder(
+            {
+              tenantId: caseDetails?.tenantId,
+              criteria: {
+                tenantID: caseDetails?.tenantId,
+                filingNumber: caseDetails?.filingNumber,
+                orderType: "SCHEDULING_NEXT_HEARING",
+                status: OrderWorkflowState.DRAFT_IN_PROGRESS,
+                ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
+              },
             },
-          },
-          { tenantId: caseDetails?.tenantId }
-        );
-        debugger;
-        if (orderResponse?.list?.length > 0) {
-          setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: true });
+            { tenantId: caseDetails?.tenantId }
+          );
+          if (orderResponse?.list?.length > 0) {
+            setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: true });
+          } else {
+            setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true });
+          }
+        } catch (error) {
+          console.error("Error fetching order", error);
+        } finally {
+          setApiCalled(false);
         }
       } else if (option.value === "TAKE_WITNESS_DEPOSITION") {
         setShowWitnessModal(true);
@@ -2394,7 +2403,7 @@ const AdmittedCaseJudge = () => {
         handleCourtAction();
       }
     },
-    [handleCourtAction, handleDownloadPDF, nextHearing]
+    [caseDetails?.courtId, caseDetails?.filingNumber, caseDetails?.tenantId, handleCourtAction, handleDownloadPDF, nextHearing, ordersService]
   );
 
   const openHearingModule = useCallback(() => {
@@ -2858,7 +2867,7 @@ const AdmittedCaseJudge = () => {
   return (
     <div className="admitted-case" style={{ position: "absolute", width: "100%" }}>
       <Breadcrumb crumbs={employeeCrumbs} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>
-      {downloadCasePdfLoading && (
+      {(downloadCasePdfLoading || apiCalled) && (
         <div
           style={{
             width: "100vw",
@@ -2884,7 +2893,7 @@ const AdmittedCaseJudge = () => {
         {caseDetails?.caseTitle && <Header styles={{ marginBottom: "-30px" }}>{caseDetails?.caseTitle}</Header>}
         <div className="admitted-case-details" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px" }}>
           <div className="case-details-title" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div className="sub-details-text">{caseDetails?.cmpNumber || caseDetails?.filingNumber}</div>
+            <div className="sub-details-text">{caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber}</div>
             <hr className="vertical-line" />
             <div className="sub-details-text">{t(caseDetails?.substage)}</div>
             {caseDetails?.outcome && (
@@ -3445,7 +3454,7 @@ const AdmittedCaseJudge = () => {
               .updateHearings(
                 {
                   tenantId: Digit.ULBService.getCurrentTenantId(),
-                  hearing: { ...currentActiveHearing, workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
+                  hearing: { ...currentInProgressHearing, workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
                   hearingType: "",
                   status: "",
                 },
@@ -3461,7 +3470,7 @@ const AdmittedCaseJudge = () => {
               .updateHearings(
                 {
                   tenantId: Digit.ULBService.getCurrentTenantId(),
-                  hearing: { ...currentActiveHearing, workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
+                  hearing: { ...currentInProgressHearing, workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
                   hearingType: "",
                   status: "",
                 },
