@@ -438,45 +438,6 @@ public class IndexerUtils {
 
     }
 
-    public static List<String> extractIndividualIds(JsonNode rootNode) {
-        List<String> individualIds = new ArrayList<>();
-
-        JsonNode complainantDetailsNode = rootNode.path("complainantDetails")
-                .path("formdata");
-        if (complainantDetailsNode.isArray()) {
-            for (JsonNode complainantNode : complainantDetailsNode) {
-                JsonNode complainantVerificationNode = complainantNode.path("data")
-                        .path("complainantVerification")
-                        .path("individualDetails");
-                if (!complainantVerificationNode.isMissingNode()) {
-                    String individualId = complainantVerificationNode.path("individualId").asText();
-                    if (!individualId.isEmpty()) {
-                        individualIds.add(individualId);
-                    }
-                }
-            }
-        }
-
-        JsonNode advocateDetailsNode = rootNode.path("advocateDetails")
-                .path("formdata");
-        if (advocateDetailsNode.isArray()) {
-            for (JsonNode advocateNode : advocateDetailsNode) {
-                JsonNode advocateListNode = advocateNode.path("data")
-                        .path("advocateBarRegNumberWithName");
-                if (advocateListNode.isArray()) {
-                    for (JsonNode advocateInfoNode : advocateListNode) {
-                        String individualId = advocateInfoNode.path("individualId").asText();
-                        if (!individualId.isEmpty()) {
-                            individualIds.add(individualId);
-                        }
-                    }
-                }
-            }
-        }
-
-        return individualIds;
-    }
-
     private List<String> callIndividualService(RequestInfo requestInfo, List<String> individualIds) {
 
         List<String> mobileNumber = new ArrayList<>();
