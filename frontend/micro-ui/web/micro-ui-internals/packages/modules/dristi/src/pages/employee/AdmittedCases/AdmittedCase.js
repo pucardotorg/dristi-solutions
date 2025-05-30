@@ -1635,7 +1635,7 @@ const AdmittedCases = () => {
   const handleAdmitDismissCaseOrder = useCallback(
     async (generateOrder, type) => {
       try {
-        const orderType = type === "reject" ? "DISMISS_CASE" : type === "accept" ? "ADMIT_CASE" : null;
+        const orderType = type === "reject" ? "DISMISS_CASE" : type === "accept" ? "TAKE_COGNIZANCE" : null;
         const formdata = {
           orderType: {
             code: orderType,
