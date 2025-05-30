@@ -37,7 +37,7 @@ public class HearingControllerTest {
         scheduleHearing.setCaseId("caseId");
         List<ScheduleHearing> scheduleHearings = List.of(scheduleHearing);
 
-        when(hearingService.schedule(scheduleHearingRequest)).thenReturn(scheduleHearings);
+        when(hearingService.scheduleHearingInScheduler(scheduleHearingRequest)).thenReturn(scheduleHearings);
 
         ResponseEntity<HearingResponse> response = hearingApiController.scheduleHearing(scheduleHearingRequest);
 
