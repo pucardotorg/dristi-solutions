@@ -66,7 +66,7 @@ const OrderPreviewOrderTypeMap = {
   SET_BAIL_TERMS: "order-set-terms-of-bail",
   REJECT_BAIL: "order-bail-rejection",
   ACCEPT_BAIL: "order-bail-acceptance",
-  ADMIT_CASE: "order-admit-case",
+  TAKE_COGNIZANCE: "order-admit-case",
   DISMISS_CASE: "order-dismiss-case",
   APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE:
     "order-approval-rejection-litigant-details",
