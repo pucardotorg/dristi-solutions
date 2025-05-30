@@ -44,19 +44,21 @@ function PendingTaskAccordion({
     setIsOpen(!isOpen);
   };
 
-  const redirectPendingTaskUrl = async (url, isCustomFunction = () => {}, params = {}, isOpenInNewTab) => {
-    if (isCustomFunction) {
-      await url({ ...params, isOpenInNewTab });
-    } else {
-      history.push(url, {
-        state: {
-          params: params,
-        },
-      });
-      setCheck(!check);
-    }
-  };
-
+  const redirectPendingTaskUrl = useCallback(
+    async (url, isCustomFunction = () => {}, params = {}, isOpenInNewTab) => {
+      if (isCustomFunction) {
+        await url({ ...params, isOpenInNewTab });
+      } else {
+        history.push(url, {
+          state: {
+            params: params,
+          },
+        });
+        setCheck(!check);
+      }
+    },
+    [history, check, setCheck]
+  );
   const formatDate = (dateInMS) => {
     try {
       const milliseconds = parseInt(dateInMS?.split("-")[1]);
@@ -80,7 +82,19 @@ function PendingTaskAccordion({
     }
   };
 
-  const pendingTasksTable = useCallback(
+  const sortedPendingTasks = useMemo(() => {
+    return [...pendingTasks].sort((a, b) => {
+      const dateA = new Date(a?.stateSla);
+      const dateB = new Date(b?.stateSla);
+
+      const timeA = isNaN(dateA) ? Infinity : dateA.getTime();
+      const timeB = isNaN(dateB) ? Infinity : dateB.getTime();
+
+      return timeA - timeB;
+    });
+  }, [pendingTasks]);
+
+  const pendingTasksTableView = useCallback(
     (modalView = false) => {
       return (
         <div>
@@ -103,6 +117,7 @@ function PendingTaskAccordion({
                 flexDirection: "row",
                 justifyContent: "space-between",
                 alignItems: "center",
+                borderTop: "1px solid #BBBBBD",
                 borderBottom: "1px solid #BBBBBD",
                 padding: "10px 20px 10PX 15PX",
               }}
@@ -121,7 +136,7 @@ function PendingTaskAccordion({
               className="tasks-component-table-body"
               style={{ ...(modalView ? { overflowY: "auto", maxHeight: "60vh" } : { overflowY: "hidden", maxHeight: "300px" }) }}
             >
-              {pendingTasks?.map((item) => {
+              {sortedPendingTasks?.map((item) => {
                 return (
                   <div
                     className="tasks-component-table-row"
@@ -193,14 +208,20 @@ function PendingTaskAccordion({
                       } else redirectPendingTaskUrl(item?.redirectUrl, item?.isCustomFunction, item?.params);
                     }}
                   >
-                    <div className="tasks-component-table-row-cell" style={{ width: "40%" }}>
+                    <div className="tasks-component-table-row-cell" style={{ width: "40%", color: "#0A0A0A" }}>
                       {item?.actionName}
                     </div>
-                    <div className="tasks-component-table-row-cell" style={{ width: "30%" }}>
-                      {item?.due}
+                    <div
+                      className="tasks-component-table-row-cell"
+                      style={{
+                        ...(item?.stateSla < new Date().getTime() ? { color: "#D3302F", fontWeight: "bold" } : { color: "##3D3C3C" }),
+                        width: "30%",
+                      }}
+                    >
+                      {item?.stateSla ? getFormattedDate(item?.stateSla) : t("NO_DUE_DATE")}
                     </div>
-                    <div className="tasks-component-table-row-cell" style={{ width: "30%" }}>
-                      {getFormattedDate(item?.createdTime)}
+                    <div className="tasks-component-table-row-cell" style={{ width: "30%", color: "#3D3C3C" }}>
+                      {item?.createdTime ? getFormattedDate(item?.createdTime) : t("DATE_NOT_AVAILABLE")}
                     </div>
                   </div>
                 );
@@ -346,7 +367,7 @@ function PendingTaskAccordion({
     </div>
   ) : (
     <React.Fragment>
-      {pendingTasksTable()}
+      {pendingTasksTableView()}
       {showAllPendingTasksModal && (
         <Modal
           headerBarEnd={<CloseBtn onClick={() => setShowAllPendingTasksModal(false)} />}
@@ -355,7 +376,7 @@ function PendingTaskAccordion({
           headerBarMain={<Heading label={t("")} />}
           hideSubmit
         >
-          {pendingTasksTable(true)}
+          {pendingTasksTableView(true)}
         </Modal>
       )}
     </React.Fragment>

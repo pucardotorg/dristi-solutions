@@ -174,18 +174,16 @@ const CaseOverviewJudge = ({
         )}
       </div>
       <div className="pending-actions-container">
-        <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none" }}>
-          <TasksComponent
-            taskType={taskType}
-            setTaskType={setTaskType}
-            isLitigant={userRoles.includes("CITIZEN")}
-            uuid={userInfo?.uuid}
-            userInfoType={userInfoType}
-            filingNumber={filingNumber}
-            inCase={true}
-            tableView={true}
-          />
-        </Card>
+        <TasksComponent
+          taskType={taskType}
+          setTaskType={setTaskType}
+          isLitigant={userRoles.includes("CITIZEN")}
+          uuid={userInfo?.uuid}
+          userInfoType={userInfoType}
+          filingNumber={filingNumber}
+          inCase={true}
+          tableView={true}
+        />
       </div>
       <div className="process-summary-container">
         <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none" }}>

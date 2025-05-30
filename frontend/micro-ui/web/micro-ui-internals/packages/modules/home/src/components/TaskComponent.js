@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CardLabel, Dropdown } from "@egovernments/digit-ui-components";
-import { Button, LabelFieldPair } from "@egovernments/digit-ui-react-components";
+import { Button, LabelFieldPair, Card } from "@egovernments/digit-ui-react-components";
 import { Loader } from "@egovernments/digit-ui-react-components";
 import { useGetPendingTask } from "../hooks/useGetPendingTask";
 import { useTranslation } from "react-i18next";
@@ -360,6 +360,7 @@ const TasksComponent = ({
         caseTitle,
         filingNumber: filingNumber,
         caseType: "NIA S138",
+        stateSla,
         due: due,
         createdTime,
         dayCount: dayCount ? dayCount : dayCount === 0 ? 0 : Infinity,
@@ -781,21 +782,25 @@ const TasksComponent = ({
         <React.Fragment>
           {searchCaseLoading && <Loader />}
           {!searchCaseLoading && (
-            <div>
-              <div>
-                <PendingTaskAccordion
-                  pendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
-                  allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
-                  accordionHeader={"ALL_OTHER_TASKS"}
-                  t={t}
-                  totalCount={allOtherPendingTask?.length}
-                  setShowSubmitResponseModal={setShowSubmitResponseModal}
-                  setResponsePendingTask={setResponsePendingTask}
-                  setPendingTaskActionModals={setPendingTaskActionModals}
-                  tableView={true}
-                />
-              </div>
-            </div>
+            <React.Fragment>
+              {pendingTasks?.length > 0 && (
+                <div>
+                  <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none" }}>
+                    <PendingTaskAccordion
+                      pendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+                      allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+                      accordionHeader={"ALL_OTHER_TASKS"}
+                      t={t}
+                      totalCount={allOtherPendingTask?.length}
+                      setShowSubmitResponseModal={setShowSubmitResponseModal}
+                      setResponsePendingTask={setResponsePendingTask}
+                      setPendingTaskActionModals={setPendingTaskActionModals}
+                      tableView={true}
+                    />
+                  </Card>
+                </div>
+              )}
+            </React.Fragment>
           )}
         </React.Fragment>
       ) : (
