@@ -3447,7 +3447,7 @@ const AdmittedCaseJudge = () => {
               }}
             />
           }
-          actionSaveLabel={t("CS_CASE_END_START_NEXT_HEARING")}
+          actionSaveLabel={t(passOver ? "CS_CASE_PASS_OVER_START_NEXT_HEARING" : "CS_CASE_END_START_NEXT_HEARING")}
           hideModalActionbar={!showEndHearingModal.isNextHearingDrafted}
           actionSaveOnSubmit={async () => {
             hearingService
@@ -3485,7 +3485,7 @@ const AdmittedCaseJudge = () => {
             setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: false });
           }}
           actionCancelLabel={t("CS_COMMON_CANCEL")}
-          actionCustomLabel={t("CS_CASE_END_VIEW_CAUSE_LIST")}
+          actionCustomLabel={t(passOver ? "CS_CASE_PASS_OVER_VIEW_CAUSE_LIST" : "CS_CASE_END_VIEW_CAUSE_LIST")}
           customActionClassName={"end-and-view-causelist-button"}
           submitClassName={"end-and-view-causelist-submit-button"}
           className={"confirm-end-hearing-modal"}

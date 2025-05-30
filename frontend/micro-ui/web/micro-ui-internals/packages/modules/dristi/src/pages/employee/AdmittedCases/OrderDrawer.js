@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
-import { RadioButtons, Dropdown, LabelFieldPair, CardLabel, CardLabelError } from "@egovernments/digit-ui-react-components";
+import { RadioButtons, Dropdown, LabelFieldPair, CardLabel, CardLabelError, Toast } from "@egovernments/digit-ui-react-components";
 import { LeftArrow } from "../../../icons/svgIndex";
 import CustomTextArea from "../../../components/CustomTextArea";
 import MultiSelectDropdown from "../../../components/MultiSelectDropdown";
@@ -36,6 +36,20 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
     partiesToAttendHearing: "",
   });
   const [isApiLoading, setIsApiLoading] = useState(false);
+  const [showErrorToast, setShowErrorToast] = useState(null);
+
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
+
+  const closeToast = () => {
+    setShowErrorToast(null);
+  };
 
   const { data: hearingTypeOptions, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(
     Digit.ULBService.getStateId(),
@@ -233,6 +247,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
           };
           try {
             await ordersService.updateOrder(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
+            setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
           } catch (error) {
             console.log("error", error);
           }
@@ -507,6 +522,9 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
                     setOrderData((orderData) => ({
                       ...orderData,
                       isCaseDisposed: orderData?.isCaseDisposed?.value === value?.value ? {} : value,
+                      hearingDate: null,
+                      hearingType: null,
+                      partiesToAttendHearing: [],
                     }));
                     setOrderError((orderError) => ({
                       ...orderError,
@@ -598,7 +616,12 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
           </div>
         </div>
         <div className="drawer-footer">
-          <Button label={t("CS_ADD_OTHER_ITEMS")} variation="outlined" onButtonClick={() => onSubmit("add-other-items")} isDisabled={isApiLoading} />
+          <Button
+            label={t("CS_CASE_ADD_OTHER_ITEMS")}
+            variation="outlined"
+            onButtonClick={() => onSubmit("add-other-items")}
+            isDisabled={isApiLoading}
+          />
           <Button
             label={t("SAVE_DRAFT")}
             className={"order-drawer-save-btn"}
@@ -607,6 +630,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
           />
         </div>
       </div>
+      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </div>
   );
 };
