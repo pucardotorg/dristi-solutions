@@ -50,7 +50,7 @@ public class PublishOrderAdmitCase implements OrderUpdateStrategy {
         Order order = orderRequest.getOrder();
         String action = order.getWorkflow().getAction();
 
-        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && ADMIT_CASE.equalsIgnoreCase(order.getOrderType());
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && TAKE_COGNIZANCE.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
