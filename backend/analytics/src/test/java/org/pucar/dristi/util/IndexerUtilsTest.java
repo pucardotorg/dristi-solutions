@@ -1,5 +1,6 @@
 package org.pucar.dristi.util;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.request.User;
 import org.json.JSONObject;
@@ -12,6 +13,10 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.MdmsDataConfig;
 import org.pucar.dristi.service.UserService;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.AdvocateMapping;
+import org.pucar.dristi.web.models.Party;
+import org.pucar.dristi.web.models.PendingTask;
+import org.pucar.dristi.web.models.PendingTaskType;
 import org.springframework.http.*;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.ResourceAccessException;
@@ -43,6 +48,9 @@ public class IndexerUtilsTest {
 
     @Mock
     private HearingUtil hearingUtil;
+
+    @Mock
+    private JsonUtil jsonUtil;
 
     @Mock
     private EvidenceUtil evidenceUtil;
@@ -183,9 +191,23 @@ public class IndexerUtilsTest {
     public void testBuildPayloadWithPendingTask() throws Exception {
         PendingTask pendingTask = getPendingTask();
 
+        when(mapper.writeValueAsString(eq(AdvocateUtil.class))).thenReturn("{\"complainant\":[\"John Doe\"]}");
+
+        AdvocateMapping representative = AdvocateMapping.builder().build();
+        Party party = Party.builder().partyType("complainant.primary").build();
+        representative.setRepresenting(List.of(party));
+        representative.setAdditionalDetails(Map.of("advocateName", "John Doe"));
+
+        when(mapper.convertValue(any(), eq(new TypeReference<List<AdvocateMapping>>() {
+        })))
+                .thenReturn(List.of(representative));
+        when(jsonUtil.getNestedValue(any(), eq(List.of("advocateName")), eq(String.class)))
+                .thenReturn("John Doe");
+
+
         String expected = String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", "COURT-456","HEARING","{\"complainant\":[\"John Doe\"]}","action","[\"COURT-456\",\"caseTitle\",\"John Doe\"]","[null]", "[\"role\"]", "cnrNumber", "filingNumber", "caseId", "caseTitle",true, 123L, 456L, "{\"key\":\"value\"}", null, null,1000000000
+                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", "COURT-456", "HEARING", "{\"complainant\":[\"John Doe\"]}", "action", "[\"COURT-456\",\"caseTitle\"]", "[null]", "[\"role\"]", "cnrNumber", "filingNumber", "caseId", "caseTitle", true, 123L, 456L, "{\"key\":\"value\"}", null, null,1000000000
         );
 
         String mockCaseJson = """
@@ -243,9 +265,20 @@ public class IndexerUtilsTest {
         when(config.getIndex()).thenReturn("index");
         when(caseOverallStatusUtil.checkCaseOverAllStatus(anyString(), anyString(), anyString(), anyString(), anyString(), any()))
                 .thenReturn(new Object());
-        when(mapper.writeValueAsString(argThat(arg -> arg instanceof AdvocateDetail)))
+
+        AdvocateMapping representative = AdvocateMapping.builder().build();
+        Party party = Party.builder().partyType("complainant.primary").build();
+        representative.setRepresenting(List.of(party));
+        representative.setAdditionalDetails(Map.of("advocateName", "John Doe"));
+
+        when(mapper.convertValue(any(), eq(new TypeReference<List<AdvocateMapping>>() {
+        })))
+                .thenReturn(List.of(representative));
+        when(jsonUtil.getNestedValue(any(), eq(List.of("advocateName")), eq(String.class)))
+                .thenReturn("John Doe");
+
+        when(mapper.writeValueAsString(argThat(arg -> !(arg instanceof AdvocateUtil))))
                 .thenReturn("{\"complainant\":[\"John Doe\"]}");
-        when(mapper.writeValueAsString(argThat(arg -> !(arg instanceof AdvocateDetail)))).thenReturn("{\"key\":\"value\", \"excludeRoles\":[\"role2\"]}");
 
         when(mapper.convertValue(anyString(), eq(String.class))).thenReturn("{\"key\":\"value\"}");
         String mockCaseJson = """
@@ -272,7 +305,7 @@ public class IndexerUtilsTest {
 
         String expected = String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", "COURT-456","HEARING","{\"complainant\":[\"John Doe\"]}","null","[\"COURT-456\",null,\"John Doe\"]","[\"user1\"]", "[\"role1\",\"role2\"]", "null", "null", "null","null",false, ONE_DAY_DURATION_MILLIS+1000000000L, 456L, "{\"key\":\"value\", \"excludeRoles\":[\"role2\"]}", null,null,1000000000
+                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", "COURT-456","HEARING","{\"complainant\":[\"John Doe\"]}","null","[\"COURT-456\",null]","[\"user1\"]", "[\"role1\",\"role2\"]", "null", "null", "null","null",false, ONE_DAY_DURATION_MILLIS+1000000000L, 456L, "{\"complainant\":[\"John Doe\"]}", null,null,1000000000
         );
 
         PendingTaskType pendingTaskType = PendingTaskType.builder().isgeneric(false).pendingTask("name").state("status").triggerAction(List.of("action")).build();

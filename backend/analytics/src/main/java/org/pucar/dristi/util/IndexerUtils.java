@@ -70,9 +70,11 @@ public class IndexerUtils {
 
     private final UserService userService;
 
+    private final JsonUtil jsonUtil;
+
 
     @Autowired
-    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, Clock clock, UserService userService) {
+    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, Clock clock, UserService userService, JsonUtil jsonUtil) {
         this.restTemplate = restTemplate;
         this.config = config;
         this.caseUtil = caseUtil;
@@ -87,6 +89,7 @@ public class IndexerUtils {
         this.advocateUtil = advocateUtil;
         this.clock = clock;
         this.userService = userService;
+        this.jsonUtil = jsonUtil;
     }
 
     public static boolean isNullOrEmpty(String str) {
@@ -174,18 +177,20 @@ public class IndexerUtils {
         JSONObject request = new JSONObject();
         request.put(REQUEST_INFO, createInternalRequestInfo());
 
-        Object caseObject = caseUtil.getCase(request,config.getEgovStateTenantId() , cnrNumber, filingNumber, null);
+        Object caseObject = caseUtil.getCase(request, config.getEgovStateTenantId(), cnrNumber, filingNumber, null);
         String cmpNumber = JsonPath.read(caseObject.toString(), CASE_CMPNUMBER_PATH);
         String courtCaseNumber = JsonPath.read(caseObject.toString(), CASE_COURTCASENUMBER_PATH);
 
-        if(courtCaseNumber!=null && !courtCaseNumber.isEmpty()){
+        if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
             caseNumber = courtCaseNumber;
-        }else if(cmpNumber!=null && !cmpNumber.isEmpty()){
+        } else if (cmpNumber != null && !cmpNumber.isEmpty()) {
             caseNumber = cmpNumber;
         }
         String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
 
-        List<Map<String, Object>> representatives = JsonPath.read(caseObject.toString(), CASE_REPRESENTATIVES);
+        List<Map<String, Object>> representativesMap = JsonPath.read(caseObject.toString(), CASE_REPRESENTATIVES);
+        List<AdvocateMapping> representatives = mapper.convertValue(representativesMap, new TypeReference<List<AdvocateMapping>>() {
+        });
 
         AdvocateDetail advocate = getAdvocates(representatives);
         String advocateDetails = "{}";
@@ -216,7 +221,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status,caseNumber,caseStage,advocateDetails,actionCategory,searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId,createdTime
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime
         );
     }
 
@@ -276,9 +281,9 @@ public class IndexerUtils {
             assignedTo = assignToList.toString();
             Object dueDate = JsonPath.read(task.toString(), DUE_DATE_PATH);
             stateSla = dueDate != null ? ((Number) dueDate).longValue() : null;
-            assignedRole =  new JSONArray().toString();
+            assignedRole = new JSONArray().toString();
         }
-        if(!isCompleted) {
+        if (!isCompleted) {
             try {
                 if (actors.toLowerCase().contains(ADVOCATE) || actors.toLowerCase().contains(LITIGANT)) {
                     String jsonString = requestInfo.toString();
@@ -312,10 +317,10 @@ public class IndexerUtils {
         Object additionalDetails;
         try {
             additionalDetails = JsonPath.read(jsonItem, "additionalDetails");
-            if(additionalDetails!=null){
+            if (additionalDetails != null) {
                 additionalDetails = mapper.writeValueAsString(additionalDetails);
-            }else {
-                additionalDetails="{}";
+            } else {
+                additionalDetails = "{}";
             }
             JsonNode additonalDetailsJsonNode = mapper.readTree(additionalDetails.toString());
             if (additonalDetailsJsonNode != null && additonalDetailsJsonNode.has("excludeRoles")) {
@@ -348,14 +353,16 @@ public class IndexerUtils {
         String cmpNumber = JsonPath.read(caseObject.toString(), CASE_CMPNUMBER_PATH);
         String courtCaseNumber = JsonPath.read(caseObject.toString(), CASE_COURTCASENUMBER_PATH);
 
-        if(courtCaseNumber!=null && !courtCaseNumber.isEmpty()){
+        if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
             caseNumber = courtCaseNumber;
-        }else if(cmpNumber!=null && !cmpNumber.isEmpty()){
+        } else if (cmpNumber != null && !cmpNumber.isEmpty()) {
             caseNumber = cmpNumber;
         }
         String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
 
-        List<Map<String, Object>> representatives = JsonPath.read(caseObject.toString(), CASE_REPRESENTATIVES);
+        List<Map<String, Object>> representativesMap = JsonPath.read(caseObject.toString(), CASE_REPRESENTATIVES);
+        List<AdvocateMapping> representatives = mapper.convertValue(representativesMap, new TypeReference<List<AdvocateMapping>>() {
+        });
 
         AdvocateDetail advocate = getAdvocates(representatives);
         String advocateDetails = "{}";
@@ -378,11 +385,12 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber,caseStage,advocateDetails,actionCategory,searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType,courtId,createdTime
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime
         );
     }
 
-    private AdvocateDetail getAdvocates(List<Map<String, Object>> representatives) {
+
+    private AdvocateDetail getAdvocates(List<AdvocateMapping> representatives) {
 
         List<String> complainantNames = new ArrayList<>();
         List<String> accusedNames = new ArrayList<>();
@@ -391,34 +399,27 @@ public class IndexerUtils {
         advocate.setComplainant(complainantNames);
         advocate.setAccused(accusedNames);
 
-        log.info("Extracting advocate details from representatives: {}", representatives);
-
-        for (Map<String, Object> representative : representatives) {
-
-            String advocateName = "";
-            if (representative.containsKey("additionalDetails") && representative.get("additionalDetails") != null) {
-                Map<String, Object> additionalDetails = (Map<String, Object>) representative.get("additionalDetails");
-                if (additionalDetails.containsKey("advocateName") && additionalDetails.get("advocateName") != null) {
-                    advocateName = additionalDetails.get("advocateName").toString();
-                }
-            }
-                    if (representative.containsKey("representing") && representative.get("representing") != null) {
-                        List<Map<String, Object>> representingList = (List<Map<String, Object>>) representative.get("representing");
-                        log.info("Representing list: {}", representingList);
-                        if (representingList != null) {
-                            for (Map<String, Object> representing : representingList) {
-                                String partyType = (String) representing.get("partyType");
-                                if(partyType.contains("complainant")){
-                                    complainantNames.add(advocateName);
-                                }else {
-                                    accusedNames.add(advocateName);
-                                }
-
-                                break;
+        if (representatives != null) {
+            for (AdvocateMapping representative : representatives) {
+                if (representative != null && representative.getAdditionalDetails() != null) {
+                    Object additionalDetails = representative.getAdditionalDetails();
+                    String advocateName = jsonUtil.getNestedValue(additionalDetails, List.of("advocateName"), String.class);
+                    if (advocateName != null && !advocateName.isEmpty()) {
+                        List<Party> representingList = Optional.ofNullable(representative.getRepresenting())
+                                .orElse(Collections.emptyList());
+                        if (!representingList.isEmpty()) {
+                            Party first = representingList.get(0);
+                            if (first.getPartyType() != null && first.getPartyType().contains("complainant")) {
+                                complainantNames.add(advocateName);
+                            } else {
+                                accusedNames.add(advocateName);
                             }
                         }
                     }
                 }
+            }
+        }
+
 
         return advocate;
 
@@ -438,71 +439,70 @@ public class IndexerUtils {
     }
 
     public static List<String> extractIndividualIds(JsonNode rootNode) {
-		List<String> individualIds = new ArrayList<>();
+        List<String> individualIds = new ArrayList<>();
 
-		JsonNode complainantDetailsNode = rootNode.path("complainantDetails")
-				.path("formdata");
-		if (complainantDetailsNode.isArray()) {
-			for (JsonNode complainantNode : complainantDetailsNode) {
-				JsonNode complainantVerificationNode = complainantNode.path("data")
-						.path("complainantVerification")
-						.path("individualDetails");
-				if (!complainantVerificationNode.isMissingNode()) {
-					String individualId = complainantVerificationNode.path("individualId").asText();
-					if (!individualId.isEmpty()) {
-						individualIds.add(individualId);
-					}
-				}
-			}
-		}
+        JsonNode complainantDetailsNode = rootNode.path("complainantDetails")
+                .path("formdata");
+        if (complainantDetailsNode.isArray()) {
+            for (JsonNode complainantNode : complainantDetailsNode) {
+                JsonNode complainantVerificationNode = complainantNode.path("data")
+                        .path("complainantVerification")
+                        .path("individualDetails");
+                if (!complainantVerificationNode.isMissingNode()) {
+                    String individualId = complainantVerificationNode.path("individualId").asText();
+                    if (!individualId.isEmpty()) {
+                        individualIds.add(individualId);
+                    }
+                }
+            }
+        }
 
-		JsonNode advocateDetailsNode = rootNode.path("advocateDetails")
-				.path("formdata");
-		if (advocateDetailsNode.isArray()) {
-			for (JsonNode advocateNode : advocateDetailsNode) {
-				JsonNode advocateListNode = advocateNode.path("data")
-						.path("advocateBarRegNumberWithName");
-				if (advocateListNode.isArray()) {
-					for (JsonNode advocateInfoNode : advocateListNode) {
-						String individualId = advocateInfoNode.path("individualId").asText();
-						if (!individualId.isEmpty()) {
-							individualIds.add(individualId);
-						}
-					}
-				}
-			}
-		}
+        JsonNode advocateDetailsNode = rootNode.path("advocateDetails")
+                .path("formdata");
+        if (advocateDetailsNode.isArray()) {
+            for (JsonNode advocateNode : advocateDetailsNode) {
+                JsonNode advocateListNode = advocateNode.path("data")
+                        .path("advocateBarRegNumberWithName");
+                if (advocateListNode.isArray()) {
+                    for (JsonNode advocateInfoNode : advocateListNode) {
+                        String individualId = advocateInfoNode.path("individualId").asText();
+                        if (!individualId.isEmpty()) {
+                            individualIds.add(individualId);
+                        }
+                    }
+                }
+            }
+        }
 
-		return individualIds;
-	}
+        return individualIds;
+    }
 
-	private List<String> callIndividualService(RequestInfo requestInfo, List<String> individualIds) {
+    private List<String> callIndividualService(RequestInfo requestInfo, List<String> individualIds) {
 
-		List<String> mobileNumber = new ArrayList<>();
-		for(String id : individualIds){
-			List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, id);
-			if(individuals.get(0).getMobileNumber() != null){
-				mobileNumber.add(individuals.get(0).getMobileNumber());
-			}
-		}
-		return mobileNumber;
-	}
+        List<String> mobileNumber = new ArrayList<>();
+        for (String id : individualIds) {
+            List<Individual> individuals = individualService.getIndividualsByIndividualId(requestInfo, id);
+            if (individuals.get(0).getMobileNumber() != null) {
+                mobileNumber.add(individuals.get(0).getMobileNumber());
+            }
+        }
+        return mobileNumber;
+    }
 
-	private SmsTemplateData enrichSmsTemplateData(Map<String, String> details,String tenantId) {
-		return SmsTemplateData.builder()
-				.cmpNumber(details.get("cmpNumber"))
+    private SmsTemplateData enrichSmsTemplateData(Map<String, String> details, String tenantId) {
+        return SmsTemplateData.builder()
+                .cmpNumber(details.get("cmpNumber"))
                 .efilingNumber(details.get("filingNumber"))
                 .tenantId(tenantId).build();
-	}
+    }
 
-	public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String filingNumber) {
-		CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
-		caseSearchRequest.setRequestInfo(requestInfo);
-		CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build();
-		caseSearchRequest.addCriteriaItem(caseCriteria);
-		return caseSearchRequest;
-	}
-
+    public CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String filingNumber) {
+        CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+        caseSearchRequest.setRequestInfo(requestInfo);
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build();
+        caseSearchRequest.addCriteriaItem(caseCriteria);
+        return caseSearchRequest;
+    }
 
 
     public Map<String, String> processEntity(String entityType, String referenceId, String status, String action, Object object, JSONObject requestInfo) {
@@ -550,7 +550,7 @@ public class IndexerUtils {
         caseDetails.put("name", name);
         caseDetails.put("screenType", screenType);
         caseDetails.put("actionCategory", actionCategory);
-        caseDetails.put("actors",actors);
+        caseDetails.put("actors", actors);
         if (isGeneric) caseDetails.put("isGeneric", "Generic");
 
         return caseDetails;
