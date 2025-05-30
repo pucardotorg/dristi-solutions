@@ -3478,7 +3478,7 @@ const AdmittedCaseJudge = () => {
               )
               .then(() => {
                 setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: false });
-                setViewCauseList(true);
+                history.push(`/${window?.contextPath}/employee/home/home-screen`);
               });
           }}
           actionCancelOnSubmit={() => {
