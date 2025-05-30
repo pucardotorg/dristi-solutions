@@ -239,22 +239,31 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
           </span>
         </td>
         <td>{t(row?.businessObject?.hearingDetails?.hearingType) || "-"}</td>
-        <td style={{ textAlign: "center", position: "relative" }}>
-          <div
-            onClick={() => {
-              history.push(
-                `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
-              );
-            }}
-            className="edit-icon"
-          >
-            <EditIcon />
+        <td
+          style={{
+            textAlign: "center",
+            position: "relative",
+            display: "table-cell",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "space-between" }}>
+            <div
+              style={{ position: "relative" }}
+              onClick={() => {
+                history.push(
+                  `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
+                );
+              }}
+              className="edit-icon"
+            >
+              <EditIcon />
+            </div>
+            <OverlayDropdown style={{ position: "relative" }} row={row} cutomDropdownItems={getActionItems(row)} position="relative" />
           </div>
-          <OverlayDropdown style={{ position: "relative" }} row={row} cutomDropdownItems={getActionItems(row)} />
         </td>
       </tr>
     ));
-  }, [history, tableData]);
+  }, [history, t, tableData]);
 
   return (
     <React.Fragment>

@@ -339,10 +339,6 @@ const AdmittedCaseJudge = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    console.log("data", data);
-  }, [data]);
-
   const primaryAction = useMemo(() => {
     return casePrimaryActions?.find((action) => nextActions?.some((data) => data.action === action?.action)) || { action: "", label: "" };
   }, [nextActions]);
@@ -2333,7 +2329,7 @@ const AdmittedCaseJudge = () => {
         history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
       } else {
         const row = data?.[index + 1];
-        if (row?.businessObject?.hearingDetails?.status === "SCHEDULED") {
+        if (["SCHEDULED", "PASSED_OVER"].includes(row?.businessObject?.hearingDetails?.status)) {
           hearingService
             .searchHearings(
               {
@@ -2348,7 +2344,7 @@ const AdmittedCaseJudge = () => {
             )
             .then((response) => {
               hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
-                window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row.caseId}&filingNumber=${row.filingNumber}&tab=Overview`;
+                window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
               });
             })
             .catch((error) => {
@@ -2722,19 +2718,25 @@ const AdmittedCaseJudge = () => {
   const employeeCrumbs = useMemo(
     () => [
       {
-        path: `/${window?.contextPath}/employee`,
+        path: `/${window?.contextPath}/employee/home/home-screen`,
         content: t("ES_COMMON_HOME"),
         show: true,
         isLast: false,
       },
       {
+        path: `/${window?.contextPath}/employee/home/home-pending-task`,
+        content: t("OPEN_ALL_CASES"),
+        show: true,
+        isLast: false,
+      },
+      {
         path: `${path}/home/view-case`,
-        content: caseDetails?.cmpNumber || caseDetails?.filingNumber,
+        content: t("VIEW_CASE"),
         show: true,
         isLast: true,
       },
     ],
-    [caseDetails?.cmpNumber, caseDetails?.filingNumber, path, t]
+    [path, t]
   );
 
   const advocateName = useMemo(() => {
