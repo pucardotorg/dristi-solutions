@@ -86,8 +86,8 @@ export const compositeOrderAllowedTypes = [
   },
   {
     key: "admit_case",
-    orderTypes: ["ADMIT_CASE"],
-    unAllowedOrderTypes: ["ADMIT_CASE", "DISMISS_CASE"],
+    orderTypes: ["TAKE_COGNIZANCE"],
+    unAllowedOrderTypes: ["TAKE_COGNIZANCE", "DISMISS_CASE"],
   },
 ];
 
@@ -126,7 +126,7 @@ const configKeys = {
   ACCEPT_BAIL: configsIssueBailAcceptance,
   SET_BAIL_TERMS: configsSetTermBail,
   ACCEPTANCE_REJECTION_DCA: configsAcceptRejectDelayCondonation,
-  ADMIT_CASE: configsAdmitCase,
+  TAKE_COGNIZANCE: configsAdmitCase,
   DISMISS_CASE: configsDismissCase,
   APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE: configsApproveRejectLitigantDetailsChange,
   ADVOCATE_REPLACEMENT_APPROVAL: replaceAdvocateConfig,
@@ -412,7 +412,7 @@ const GenerateOrders = () => {
           "(data) => {return data['Order'].OrderType?.filter((item)=>[`DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
       } else {
         updatedConfig[0].body[0].populators.mdmsConfig.select =
-          "(data) => {return data['Order'].OrderType?.filter((item)=>[`ADMIT_CASE`, `DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+          "(data) => {return data['Order'].OrderType?.filter((item)=>[`TAKE_COGNIZANCE`, `DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
       }
     }
     return updatedConfig;
@@ -2161,7 +2161,7 @@ const GenerateOrders = () => {
         return `CMP: ${t(applicationDetails?.applicationType)} ${applicationDetails?.applicationNumber} stands ${
           currentOrder?.orderDetails?.isDcaAcceptedOrRejected === "ACCEPTED" ? "allowed" : "dismissed"
         }`;
-      case "ADMIT_CASE":
+      case "TAKE_COGNIZANCE":
         return `Cognizance of the offence taken on file as ${caseDetails?.cmpNumber} under Section 138 of the Negotiable Instruments Act`;
       case "DISMISS_CASE":
         return `Case has been dismissed`;
@@ -3496,7 +3496,7 @@ const GenerateOrders = () => {
           break;
         }
 
-        if (["ADMIT_CASE", "DISMISS_CASE"].includes(orderType) && ["CASE_DISMISSED", "CASE_ADMITTED"].includes(caseDetails?.status)) {
+        if (["TAKE_COGNIZANCE", "DISMISS_CASE"].includes(orderType) && ["CASE_DISMISSED", "CASE_ADMITTED"].includes(caseDetails?.status)) {
           setShowErrorToast({
             label: "CASE_ADMITTED" === caseDetails?.status ? t("CASE_ALREADY_ADMITTED") : t("CASE_ALREADY_REJECTED"),
             error: true,
