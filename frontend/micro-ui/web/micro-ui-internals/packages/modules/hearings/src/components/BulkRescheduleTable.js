@@ -46,7 +46,7 @@ const BulkRescheduleTable = ({ tableData, setNewHearingData, t }) => {
             <tbody>
               {tableData?.map((item, index) => (
                 <tr key={index}>
-                  <td>{item?.caseName}</td>
+                  <td>{item?.title}</td>
                   <td>{item?.caseId}</td>
                   <td>{item?.caseStage}</td>
                   <td>{t(item?.hearingType)}</td>
