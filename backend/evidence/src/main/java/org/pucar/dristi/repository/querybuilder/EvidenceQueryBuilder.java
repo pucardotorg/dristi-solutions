@@ -49,6 +49,7 @@ public class EvidenceQueryBuilder {
             String artifactNumber = criteria.getArtifactNumber();
             String fileStoreId = criteria.getFileStoreId();
             String courtId = criteria.getCourtId();
+            String filingType = criteria.getFilingType();
 
             // Build the query using the extracted fields
             firstCriteria = addArtifactCriteria(id, query, preparedStmtList, firstCriteria, "art.id = ?",preparedStmtArgList);
@@ -61,6 +62,7 @@ public class EvidenceQueryBuilder {
             firstCriteria = addArtifactCriteria(order, query, preparedStmtList, firstCriteria, "art.orders = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(sourceId, query, preparedStmtList, firstCriteria, "art.sourceId = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(courtId, query, preparedStmtList, firstCriteria, "art.courtId = ?",preparedStmtArgList);
+            firstCriteria = addArtifactCriteria(filingType, query, preparedStmtList, firstCriteria, "art.filingType = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(owner != null ? owner.toString() : null, query, preparedStmtList, firstCriteria, "art.createdBy = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(sourceName, query, preparedStmtList, firstCriteria, "art.sourceName = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(fileStoreId, query, preparedStmtList, firstCriteria, "art.file ->> 'fileStore' = ?",preparedStmtArgList);
