@@ -86,11 +86,11 @@ public class EvidenceQueryBuilderTest {
         String criteriaClause = "art.isEvidence = ?";
 
         // Call the method under test
-        boolean result = queryBuilder.addArtifactCriteria(criteria, query,"art.isVoid=?", preparedStmtList, firstCriteria,new ArrayList<>());
+        boolean result = queryBuilder.addArtifactCriteria(criteria, query,"art.isEvidence=?", preparedStmtList, firstCriteria,new ArrayList<>());
 
         // Verify the results
         assertFalse(result); // firstCriteria should be false after adding the first criteria
-        assertEquals("SELECT * FROM artifacts WHERE art.isEvidence = ?", query.toString()); // query should have the criteria appended
+        assertEquals("SELECT * FROM artifacts WHERE art.isEvidence=?", query.toString()); // query should have the criteria appended
         assertEquals(1, preparedStmtList.size()); // preparedStmtList should have one element
         assertEquals(criteria, preparedStmtList.get(0)); // the criteria should be added to the preparedStmtList
     }
