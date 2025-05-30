@@ -3,9 +3,8 @@ import HomeHeader from "../../components/HomeHeader";
 import { useTranslation } from "react-i18next";
 import HomeSidebar from "../../components/HomeSidebar";
 import { InboxSearchComposer } from "@egovernments/digit-ui-react-components";
-import { labelToConfigMapping } from "../../configs/MainHomeScreenConfig";
-import { homeHearingsConfig } from "../../configs/HearingsConfig";
 import HomeHearingsTab from "./HomeHearingsTab";
+import { pendingTaskConfig } from "../../configs/PendingTaskConfig";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -20,7 +19,7 @@ const MainHomeScreen = () => {
   const [activeTab, setActiveTab] = useState("HEARINGS_TAB");
   const [updateCounter, setUpdateCounter] = useState(0);
   const [hearingCount, setHearingCount] = useState(0);
-  const [config, setConfig] = useState({ ...homeHearingsConfig, additionalDetails: { setCount: setHearingCount } });
+  const [config, setConfig] = useState(pendingTaskConfig);
   const [registerCount, setRegisterCount] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
   const [applicationCount, setApplicationCount] = useState(0);
@@ -59,8 +58,9 @@ const MainHomeScreen = () => {
       func: setScheduleCount,
     },
   };
+
   const handleTabChange = (title, label, func) => {
-    let updatedConfig = labelToConfigMapping?.find((config) => config?.label === title)?.config;
+    let updatedConfig = config;
     if (label) {
       setActiveTab(label);
       updatedConfig = {
@@ -72,7 +72,6 @@ const MainHomeScreen = () => {
       };
     } else {
       setActiveTab(title);
-      updatedConfig = { ...updatedConfig, additionalDetails: { setCount: setHearingCount } };
     }
     setConfig(updatedConfig);
   };
@@ -97,7 +96,7 @@ const MainHomeScreen = () => {
         />
         {activeTab === "HEARINGS_TAB" ? (
           <div style={{ width: "100%" }}>
-            <HomeHearingsTab setHearingCount={setHearingCount} />
+            <HomeHearingsTab t={t} setHearingCount={setHearingCount} />
           </div>
         ) : (
           <div className="inbox-search-wrapper" style={{ width: "100%" }}>

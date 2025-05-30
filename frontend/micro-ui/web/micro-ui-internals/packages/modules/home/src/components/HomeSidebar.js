@@ -31,9 +31,9 @@ const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hea
       </HomeAccordian>
 
       <HomeAccordian title={t("CS_HOME_SIGN")}>
-        <SidebarItem t={t} label="CS_HOME_ORDERS" onClick={() => window.open(`/${window.contextPath}/employee/home/bulk-esign-order`, "_blank")} />
-        <SidebarItem t={t} label="CS_HOME_PROCESS" onClick={() => window.open(`/${window.contextPath}/employee/orders/Summons&Notice`, "_blank")} />
-        <SidebarItem t={t} label="CS_HOME_A_DAIRY" onClick={() => window.open(`/${window.contextPath}/employee/home/dashboard/adiary`, "_blank")} />
+        <SidebarItem t={t} label="CS_HOME_ORDERS" href={`/${window.contextPath}/employee/home/bulk-esign-order`} />
+        <SidebarItem t={t} label="CS_HOME_PROCESS" href={`/${window.contextPath}/employee/orders/Summons&Notice`} />
+        <SidebarItem t={t} label="CS_HOME_A_DAIRY" href={`/${window.contextPath}/employee/home/dashboard/adiary`} />
       </HomeAccordian>
 
       <SideBarTitle t={t} title="CS_HOME_BULK_RESCHEDULE" onClick={() => setStepper((prev) => prev + 1)} />

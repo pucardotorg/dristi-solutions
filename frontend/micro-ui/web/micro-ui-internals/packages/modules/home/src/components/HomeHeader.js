@@ -1,5 +1,4 @@
 import React, { useMemo } from "react";
-import { Link } from "react-router-dom";
 
 const linkStyle = {
   fontFamily: "Roboto",
@@ -30,13 +29,13 @@ const HomeHeader = ({ t }) => {
         {t("CS_HOME_HELLO")}, <span style={{ color: "#77787B" }}>{name}</span>
         {isJudge && (
           <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start", padding: "32px 0px 0px" }}>
-            <a href={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle} target="_blank" rel="noopener noreferrer">
+            <a href={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle} target="_self" rel="noopener noreferrer">
               {t("OPEN_DASHBOARD")}
             </a>
-            <a href={`/${window.contextPath}/employee/home/dashboard?select=2`} style={linkStyle} target="_blank" rel="noopener noreferrer">
+            <a href={`/${window.contextPath}/employee/home/dashboard?select=2`} style={linkStyle} target="_self" rel="noopener noreferrer">
               {t("OPEN_REGISTERS")}
             </a>
-            <a href={`/${window.contextPath}/employee/home/home-pending-task`} style={linkStyle} target="_blank" rel="noopener noreferrer">
+            <a href={`/${window.contextPath}/employee/home/home-pending-task`} style={linkStyle} target="_self" rel="noopener noreferrer">
               {t("OPEN_ALL_CASES")}
             </a>
           </div>

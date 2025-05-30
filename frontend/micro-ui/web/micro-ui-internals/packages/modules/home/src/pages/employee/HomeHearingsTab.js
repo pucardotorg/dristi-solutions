@@ -1,14 +1,11 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { HomeService } from "../../hooks/services";
 import { Link } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { RadioButtons, Dropdown, TextInput, LabelFieldPair, CardLabel, CardLabelError } from "@egovernments/digit-ui-react-components";
+import { Dropdown, TextInput, LabelFieldPair, CardLabel } from "@egovernments/digit-ui-react-components";
 import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";
-import { flatten } from "lodash";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
-// Custom hook for inbox search
 function useInboxSearch({ limit = 300, offset = 0 } = {}) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -62,14 +59,14 @@ function useInboxSearch({ limit = 300, offset = 0 } = {}) {
 
 const todayStr = new Date().toISOString().slice(0, 10);
 
-const HomeHearingsTab = ({ setHearingCount = () => {} }) => {
+const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
   const [filters, setFilters] = useState({
     date: todayStr,
     status: "",
     purpose: "",
     caseQuery: "",
   });
-  const { t } = useTranslation();
+  // const { t } = useTranslation();
   const history = useHistory();
 
   const { data: tableData, loading, error, fetchInbox } = useInboxSearch();
@@ -98,7 +95,7 @@ const HomeHearingsTab = ({ setHearingCount = () => {} }) => {
       return data || [];
     },
   });
-
+  // need to fetch from mdms
   const statusOptions = [
     { code: "COMPLETED", name: "Completed" },
     { code: "Passed Over", name: "Passed Over" },
@@ -147,58 +144,59 @@ const HomeHearingsTab = ({ setHearingCount = () => {} }) => {
       </defs>
     </svg>
   );
-  const getActionItems = (row) => {
-    const searchParams = new URLSearchParams();
-    let dropDownitems = [];
-    if (row?.businessObject?.hearingDetails?.status === "SCHEDULED") {
-      dropDownitems.push({
-        label: "Start Hearing",
-        id: "start_hearing",
-        action: (history) => {
-          try {
-            hearingService
-              ?.searchHearings(
-                {
-                  criteria: {
-                    hearingId: row?.businessObject?.hearingDetails?.hearingNumber,
-                    tenantId: row?.businessObject?.hearingDetails?.tenantId,
-                  },
-                },
-                { tenantId: row?.businessObject?.hearingDetails?.tenantId }
-              )
-              .then((response) => {
-                if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
-                  hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
-                    window.location.href = `/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`;
-                  });
-                }
-              });
-            window.open(`/${window.contextPath}/${userType}/dristi/home/view-case?${searchParams.toString()}`, "_blank");
-          } catch (e) {
-            console.log(e);
-          }
-        },
-      });
-    }
-    if (row?.businessObject?.hearingDetails?.status === "IN_PROGRESS") {
-      dropDownitems.push({
-        label: "End Hearing",
-        id: "end_hearing",
-        action: (history) => {},
-      });
-    }
-    if (row?.businessObject?.hearingDetails?.status === "IN_PROGRESS") {
-      dropDownitems.push({
-        label: "Mark as Passed Over",
-        id: "pass_hearing",
-        action: (history) => {},
-      });
-    }
-    return dropDownitems;
-  };
 
   const tableRows = useMemo(() => {
     if (!Array.isArray(tableData)) return null;
+    const getActionItems = (row) => {
+      const searchParams = new URLSearchParams();
+      let dropDownitems = [];
+      if (row?.businessObject?.hearingDetails?.status === "SCHEDULED") {
+        dropDownitems.push({
+          label: "Start Hearing",
+          id: "start_hearing",
+          action: () => {
+            try {
+              hearingService
+                ?.searchHearings(
+                  {
+                    criteria: {
+                      hearingId: row?.businessObject?.hearingDetails?.hearingNumber,
+                      tenantId: row?.businessObject?.hearingDetails?.tenantId,
+                    },
+                  },
+                  { tenantId: row?.businessObject?.hearingDetails?.tenantId }
+                )
+                .then((response) => {
+                  if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
+                    hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
+                      history.push(
+                        `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
+                      );
+                    });
+                  }
+                });
+            } catch (e) {
+              console.log(e);
+            }
+          },
+        });
+      }
+      if (row?.businessObject?.hearingDetails?.status === "IN_PROGRESS") {
+        dropDownitems.push({
+          label: "End Hearing",
+          id: "end_hearing",
+          action: () => {},
+        });
+      }
+      if (row?.businessObject?.hearingDetails?.status === "IN_PROGRESS") {
+        dropDownitems.push({
+          label: "Mark as Passed Over",
+          id: "pass_hearing",
+          action: () => {},
+        });
+      }
+      return dropDownitems;
+    };
 
     return tableData.map((row, idx) => (
       <tr key={row?.id || idx} className="custom-table-row">
@@ -209,7 +207,6 @@ const HomeHearingsTab = ({ setHearingCount = () => {} }) => {
           >
             <span className="case-link">{row?.businessObject?.hearingDetails?.caseTitle || "-"}</span>
           </Link>
-          {/* <span className="case-link"></span> */}
         </td>
         <td>{row?.businessObject?.hearingDetails?.caseNumber || "-"}</td>
         <td style={{ whiteSpace: "pre-line" }}>
@@ -241,7 +238,7 @@ const HomeHearingsTab = ({ setHearingCount = () => {} }) => {
             {row?.businessObject?.hearingDetails?.status || "-"}
           </span>
         </td>
-        <td>{row?.businessObject?.hearingDetails?.hearingType || "-"}</td>
+        <td>{t(row?.businessObject?.hearingDetails?.hearingType) || "-"}</td>
         <td style={{ textAlign: "center", position: "relative" }}>
           <div
             onClick={() => {
@@ -249,6 +246,7 @@ const HomeHearingsTab = ({ setHearingCount = () => {} }) => {
                 `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
               );
             }}
+            className="edit-icon"
           >
             <EditIcon />
           </div>
@@ -256,21 +254,20 @@ const HomeHearingsTab = ({ setHearingCount = () => {} }) => {
         </td>
       </tr>
     ));
-  }, [tableData]);
-  console.log(filters, "filters");
+  }, [history, tableData]);
 
   return (
     <React.Fragment>
       <style>{`
       .home-input input {
         margin-bottom: 0px !important;
+        border: 1px solid black;
       }
         .main-table-card {
           background: #fff;
           border-radius: 12px;
           box-shadow: 0 2px 8px rgba(44,62,80,0.07);
-        padding: 0px 18px 18px 18px;
-          // margin-top: 24px;
+         padding: 0px 18px 18px 18px;
         }
         .filter-bar {
           display: flex;
@@ -364,33 +361,7 @@ const HomeHearingsTab = ({ setHearingCount = () => {} }) => {
         .status-default {
           background: #f5f5f5;
           color: #333;
-        }
-        .action-icon {
-          display: inline-block;
-          width: 28px;
-          height: 28px;
-          margin: 0 2px;
-          border-radius: 6px;
-          background: #f3f3f3;
-          vertical-align: middle;
-          position: relative;
-        }
-        .edit-icon:before {
-          content: '\u270E';
-          position: absolute;
-          left: 7px;
-          top: 4px;
-          font-size: 16px;
-          color: #159392;
-        }
-        .menu-icon:before {
-          content: '\u22EE';
-          position: absolute;
-          left: 10px;
-          top: 3px;
-          font-size: 16px;
-          color: #333;
-        }
+        }      
         .advocate-header {
           display: flex;
           align-items: center;
@@ -416,8 +387,6 @@ const HomeHearingsTab = ({ setHearingCount = () => {} }) => {
           overflow-y: auto;}
       `}</style>
       <div className="filter-bar">
-        {/* <input type="date" name="date" value={filters.date} min={todayStr} onChange={handleInputChange} /> */}
-
         <div style={{ display: "flex", gap: "12px" }}>
           <LabelFieldPair className={`case-label-field-pair `}>
             <CardLabel className="case-input-label">{`${t("Date")}`}</CardLabel>
@@ -427,10 +396,9 @@ const HomeHearingsTab = ({ setHearingCount = () => {} }) => {
               type={"date"}
               value={filters?.date}
               onChange={(e) => {
-                console.log(e);
                 setFilters((prev) => ({ ...prev, date: e.target.value }));
               }}
-              min={new Date().toISOString().split("T")[0]}
+              // min={new Date().toISOString().split("T")[0]}
             />
           </LabelFieldPair>
           <LabelFieldPair className={`case-label-field-pair `} style={{ marginTop: "1px" }}>
@@ -497,24 +465,24 @@ const HomeHearingsTab = ({ setHearingCount = () => {} }) => {
             <thead>
               <tr>
                 <th style={{ width: "10px" }}>S.No.</th>
-                <th>Case Name</th>
-                <th>Case Number</th>
+                <th>{t("CS_CASE_NAME")}</th>
+                <th>{t("CS_CASE_NUMBER_HOME")}</th>
                 <th className="advocate-header">
-                  Advocates{" "}
+                  {t("CS_COMMON_ADVOCATES")}{" "}
                   <span className="info-icon" title="Advocate details">
                     &#9432;
                   </span>
                 </th>
-                <th>Status</th>
-                <th>Purpose</th>
-                <th>Actions</th>
+                <th>{t("STATUS")}</th>
+                <th>{t("PURPOSE")}</th>
+                <th>{t("ACTIONS")}</th>
               </tr>
             </thead>
             <tbody className="table-content ">
               {loading ? (
                 <tr>
                   <td colSpan={7} style={{ textAlign: "center", padding: 24 }}>
-                    Loading...
+                    {t("LOADING")}
                   </td>
                 </tr>
               ) : tableRows && tableRows.length > 0 ? (
@@ -522,7 +490,7 @@ const HomeHearingsTab = ({ setHearingCount = () => {} }) => {
               ) : (
                 <tr>
                   <td colSpan={7} style={{ textAlign: "center", padding: 24 }}>
-                    No data found
+                    {t("NO_DATA_FOUND")}
                   </td>
                 </tr>
               )}
