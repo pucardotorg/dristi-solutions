@@ -879,6 +879,26 @@ const GenerateOrders = () => {
   const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
   const hearingsList = useMemo(() => hearingsData?.HearingList?.sort((a, b) => b.startTime - a.startTime), [hearingsData]);
 
+  const attendeeOptions = useMemo(() => {
+    if (!Array.isArray(hearingDetails?.attendees)) {
+      return [];
+    }
+    const uniqueAttendees = hearingDetails?.attendees.reduce((acc, attendee) => {
+      if (!acc.some((item) => item?.individualId === attendee?.individualId)) {
+        acc.push(attendee);
+      }
+      return acc;
+    }, []);
+    return uniqueAttendees.map((attendee) => ({
+      ...attendee,
+      partyType: attendee?.type,
+      value: attendee.individualId || attendee.name,
+      label: attendee.name,
+    }));
+  }, [hearingDetails?.attendees]);
+
+  console.log("attendeeOptions", attendeeOptions);
+
   const isHearingScheduled = useMemo(() => {
     const isPresent = (hearingsData?.HearingList || []).some((hearing) => hearing?.status === HearingWorkflowState.SCHEDULED);
     return isPresent;
@@ -983,6 +1003,15 @@ const GenerateOrders = () => {
               return {
                 ...section,
                 body: section.body.map((field) => {
+                  if (field.key === "attendees") {
+                    return {
+                      ...field,
+                      populators: {
+                        ...field.populators,
+                        options: attendeeOptions,
+                      },
+                    };
+                  }
                   if (field.key === "namesOfPartiesRequired") {
                     return {
                       ...field,
@@ -1212,6 +1241,15 @@ const GenerateOrders = () => {
             return {
               ...section,
               body: section.body.map((field) => {
+                if (field.key === "attendees") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: attendeeOptions,
+                    },
+                  };
+                }
                 if (field.key === "namesOfPartiesRequired") {
                   return {
                     ...field,
@@ -1402,7 +1440,23 @@ const GenerateOrders = () => {
       });
       return [updatedConfig];
     }
-  }, [caseDetails, applicationTypeConfigUpdated, complainants, currentOrder, respondents, t, unJoinedLitigant, witnesses, selectedOrder]);
+  }, [
+    currentOrder?.orderCategory,
+    currentOrder?.compositeItems,
+    currentOrder?.additionalDetails?.applicationStatus,
+    currentOrder?.orderNumber,
+    currentOrder?.orderType,
+    applicationTypeConfigUpdated,
+    complainants,
+    respondents,
+    attendeeOptions,
+    poaHolders,
+    unJoinedLitigant,
+    witnesses,
+    caseDetails?.id,
+    caseDetails?.filingNumber,
+    t,
+  ]);
 
   const multiSelectDropdownKeys = useMemo(() => {
     const foundKeys = [];
@@ -3751,7 +3805,7 @@ const GenerateOrders = () => {
       }
     }
     return false;
-  }, [currentOrder, selectedOrder]);
+  }, [currentOrder?.compositeItems, currentOrder?.orderCategory, currentOrder?.orderNumber, ordersData?.list]);
 
   const DcaWarning = useMemo(() => {
     let warningObj = { show: false, message: "" };
@@ -3804,7 +3858,16 @@ const GenerateOrders = () => {
       }
       return warningObj;
     }
-  }, [currentOrder, isDelayApplicationSubmitted, caseDetails, isDCANoticeGenerated]);
+  }, [
+    currentOrder?.orderCategory,
+    currentOrder?.additionalDetails?.formdata?.orderType?.code,
+    currentOrder?.additionalDetails?.formdata?.noticeType?.code,
+    currentOrder?.compositeItems,
+    caseDetails?.caseDetails?.delayApplications?.formdata,
+    isDCANoticeGenerated,
+    isDelayApplicationSubmitted,
+    t,
+  ]);
 
   if (
     loader ||

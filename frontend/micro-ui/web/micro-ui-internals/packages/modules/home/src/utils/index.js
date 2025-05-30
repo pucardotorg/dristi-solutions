@@ -73,6 +73,16 @@ export const formatDateYYMMDD = (date) => {
   return `${year}-${month}-${day}`;
 };
 
+export const getFormattedDate = (epochTime) => {
+  const date = new Date(epochTime);
+const formattedDate = date.toLocaleDateString('en-GB', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+return formattedDate
+};
+
 export const getSuffixByBusinessCode = (paymentType = [], businessCode) => {
   return paymentType?.find((data) => data?.businessService?.some((businessService) => businessService?.businessCode === businessCode))?.suffix || "";
 };

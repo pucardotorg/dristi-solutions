@@ -285,3 +285,200 @@
     }
   }
 }
+
+.bottom-drawer-wrapper {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+
+  .bottom-drawer-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+
+  .bottom-drawer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border-radius: 16px 16px 0 0;
+    padding: 24px 0px 24px 24px;
+    transform: translateY(100%);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    max-height: calc(100vh - 90px);
+    opacity: 0;
+    visibility: hidden;
+
+    &.open {
+      transform: translateY(0);
+      opacity: 1;
+      visibility: visible;
+      box-shadow: 0px -4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    .drawer-header {
+      .header-content {
+        display: flex;
+        gap: 8px;
+
+        h2 {
+          margin: 0px;
+          font-family: Roboto;
+          font-weight: 700;
+          font-size: 24px;
+          line-height: 100%;
+          letter-spacing: 0%;
+          color: #231f20;
+        }
+
+        .drawer-close-button {
+          background: none;
+          border: none;
+          cursor: pointer;
+          padding: 4px;
+
+          svg {
+            width: 16px;
+            height: 16px;
+          }
+        }
+      }
+    }
+
+    .drawer-content {
+      gap: 32px;
+      display: flex;
+      flex-direction: column;
+      margin: 0px 0px 16px 0px;
+      padding-right: 16px;
+      opacity: 1;
+      transform: translateY(20px);
+      transition: all 0.3s ease;
+      transition-delay: 0.2s;
+      max-height: calc(100vh - 264px);
+      overflow-y: auto;
+
+      .open & {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .drawer-section {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 16px;
+        border: 1px #e8e8e8 solid;
+
+        .custom-textarea-style {
+          textarea {
+            width: 100%;
+            height: 148px;
+          }
+          textarea:focus {
+            outline: none;
+            border: none;
+            box-shadow: none;
+          }
+          .cell-text {
+            display: none;
+          }
+        }
+        .order-date-picker {
+          border-color: #566056 !important;
+        }
+        .drawer-sub-section {
+          display: flex;
+          gap: 16px;
+          justify-content: space-between;
+          .case-label-field-pair {
+            flex: 1;
+            width: 100%;
+
+            &.disabled {
+              .select-wrap {
+                background-color: rgb(217, 217, 217);
+                cursor: not-allowed;
+              }
+              .multi-select-dropdown-wrap {
+                background-color: rgb(217, 217, 217);
+                cursor: not-allowed;
+              }
+              .order-date-picker {
+                border-color: #a6abae !important;
+              }
+            }
+          }
+          .master,
+          .select {
+            height: 42px;
+          }
+          .radio-wrap {
+            margin: 0px !important;
+          }
+          .drawer-sub-section-title {
+            font-family: Roboto;
+            font-weight: 700;
+            font-size: 24px;
+            line-height: 100%;
+            letter-spacing: 0%;
+            color: #231f20;
+            margin: 0px;
+          }
+
+          .custom-date-picker {
+            margin-bottom: 0px !important;
+          }
+        }
+      }
+    }
+
+    .drawer-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 16px;
+      padding-top: 32px;
+      padding-right: 32px;
+
+      .order-drawer-save-btn {
+        padding: 12px;
+        box-shadow: none;
+      }
+    }
+  }
+}
+
+.confirm-end-hearing-modal {
+  width: 896px !important;
+
+  .checkbox-wrap {
+    .custom-checkbox {
+      margin: 8px 0px 0px;
+    }
+  }
+}
+
+.selector-button-primary.end-and-view-causelist-button {
+  background: #fff;
+  box-shadow: none;
+  border: 1px #007e7e solid;
+  h2 {
+    color: #007e7e;
+    font-family: Roboto;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 100%;
+  }
+}
+
+.end-and-view-causelist-submit-button {
+  background: #bb2c2f !important;
+  border: none !important;
+}

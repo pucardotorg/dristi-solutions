@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import SelectCustomNote from "@egovernments/digit-ui-module-dristi/src/components/SelectCustomNote.js";
 import { Urls } from "../../hooks/services/Urls.js";
 
-const AddParty = ({ onCancel, onAddSuccess, caseData, tenantId, hearing, refetchHearing }) => {
+const AddParty = ({ onCancel, onAddSuccess, caseDetails, tenantId, hearing, refetchHearing }) => {
   const { t } = useTranslation();
   const DRISTIService = Digit?.ComponentRegistryService?.getComponent("DRISTIService");
   const [formConfigs, setFormConfigs] = useState([addPartyConfig(1)]);
@@ -118,9 +118,6 @@ const AddParty = ({ onCancel, onAddSuccess, caseData, tenantId, hearing, refetch
       };
     });
 
-    const caseDetails = {
-      ...caseData?.criteria?.[0]?.responseList?.[0],
-    };
     const witnessDetails = caseDetails.additionalDetails?.witnessDetails
       ? [...caseDetails.additionalDetails?.witnessDetails?.formdata, ...newWitnesses]
       : [...newWitnesses];

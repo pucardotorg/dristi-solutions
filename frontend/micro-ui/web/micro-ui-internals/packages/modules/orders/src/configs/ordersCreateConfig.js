@@ -1186,6 +1186,29 @@ export const configsScheduleNextHearingDate = [
         populators: { name: "judgeDesignation", hideInForm: true },
       },
       {
+        label: "CS_CASE_ATTENDEES",
+        isMandatory: true,
+        schemaKeyPath: "orderDetails.partyName",
+        transformer: "customDropdown",
+        key: "attendees",
+        type: "dropdown",
+        populators: {
+          name: "attendees",
+          allowMultiSelect: true,
+          optionsKey: "label",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          selectedText: "party(s)",
+          options: [
+            {
+              code: "PARTY_1",
+              name: "PARTY_1",
+            },
+          ],
+        },
+      },
+      {
         label: "NAMES_OF_PARTIES_REQUIRED",
         isMandatory: true,
         schemaKeyPath: "orderDetails.partyName",
@@ -1250,6 +1273,26 @@ export const configsScheduleNextHearingDate = [
   //     },
   //   ],
   // },
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "hearingSummary",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "HEARING_SUMMARY",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+    ],
+  },
   {
     body: [
       {
@@ -4751,6 +4794,14 @@ export const configsApproveRejectLitigantDetailsChange = [
             },
           ],
         },
+      },
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
       },
       {
         type: "component",

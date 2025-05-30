@@ -106,6 +106,8 @@ const EvidenceModal = ({
     setBusinessOfTheDay(computeDefaultBOTD);
   }, [computeDefaultBOTD, setBusinessOfTheDay]);
 
+  const documentApplicationType = useMemo(() => documentSubmission?.[0]?.applicationList?.applicationType, [documentSubmission]);
+
   const respondingUuids = useMemo(() => {
     return documentSubmission?.[0]?.details?.additionalDetails?.respondingParty?.map((party) => party?.uuid?.map((uuid) => uuid))?.flat() || [];
   }, [documentSubmission]);
@@ -147,7 +149,8 @@ const EvidenceModal = ({
     let label = "";
     if (modalType === "Submissions") {
       if (userType === "employee") {
-        label = t("Approve");
+        const applicationType = documentSubmission?.[0]?.applicationList?.applicationType;
+        label = applicationType === "PROFILE_EDITING" ? t("REVIEW_CHANGES") : t("Approve");
       } else {
         if (userInfo?.uuid === createdBy) {
           label = t("DOWNLOAD_SUBMISSION");
@@ -1064,6 +1067,13 @@ const EvidenceModal = ({
       return;
     }
     if (userType === "employee") {
+      if (documentApplicationType === "PROFILE_EDITING") {
+        const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
+        history.push(
+          `/${window.contextPath}/employee/dristi/home/view-case/review-litigant-details?caseId=${caseId}&referenceId=${documentSubmission?.[0]?.details?.additionalDetails?.pendingTaskRefId}&refApplicationId=${refApplicationId}`
+        );
+        return;
+      }
       if (isBail) {
         await handleApplicationAction(true, "accept");
       } else if (modalType === "Submissions" && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION") {
@@ -1236,7 +1246,7 @@ const EvidenceModal = ({
           actionSaveLabel={actionSaveLabel}
           actionSaveOnSubmit={actionSaveOnSubmit}
           hideSubmit={currentDiaryEntry || !showSubmit} // Not allowing submit action for court room manager
-          actionCancelLabel={currentDiaryEntry || !isJudge ? false : actionCancelLabel} // Not allowing cancel action for court room manager
+          actionCancelLabel={documentApplicationType === "PROFILE_EDITING" || currentDiaryEntry || !isJudge ? false : actionCancelLabel} // Not allowing cancel action for court room manager
           actionCustomLabel={!customLabelShow ? false : actionCustomLabel} // Not allowing cancel action for court room manager
           actionCancelOnSubmit={actionCancelOnSubmit}
           actionCustomLabelSubmit={actionCustomLabelSubmit}

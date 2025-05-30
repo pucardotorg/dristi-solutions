@@ -14,7 +14,7 @@ public class ServiceConstants {
 
     //Consumer
     public static final String ES_INDEX_HEADER_FORMAT = "{\"index\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
-    public static final String ES_INDEX_DOCUMENT_FORMAT = "{\"Data\": {\"id\":\"%s\",\"name\":\"%s\",\"entityType\":\"%s\",\"referenceId\":\"%s\",\"status\":\"%s\",\"assignedTo\":%s,\"assignedRole\":%s,\"cnrNumber\":\"%s\",\"filingNumber\":\"%s\",\"caseId\":\"%s\",\"caseTitle\":\"%s\",\"isCompleted\":%b,\"stateSla\":%d,\"businessServiceSla\":%d,\"additionalDetails\":%s,\"screenType\":\"%s,\"courtId\":\"%s\"}}\n";
+    public static final String ES_INDEX_DOCUMENT_FORMAT = "{\"Data\":{\"id\":\"%s\",\"name\":\"%s\",\"entityType\":\"%s\",\"referenceId\":\"%s\",\"status\":\"%s\",\"assignedTo\":%s,\"assignedRole\":%s,\"cnrNumber\":\"%s\",\"filingNumber\":\"%s\",\"caseId\":\"%s\",\"caseTitle\":\"%s\",\"isCompleted\":%b,\"stateSla\":%d,\"businessServiceSla\":%d,\"additionalDetails\":%s,\"screenType\":\"%s\",\"courtId\":\"%s\",\"createdTime\":%d}}\n";
     public static final String TENANTID_MDC_STRING = "TENANTID";
 
 
@@ -96,6 +96,7 @@ public class ServiceConstants {
     public static final String ORDER_FINDINGS_PATH = "$.additionalDetails.formdata.findings.code";
     public static final String ORDER_CATEGORY_PATH = "$.orderCategory";
     public static final String ORDER_COMPOSITE_ITEMS_PATH = "$.compositeItems.*";
+    public static final String APPLICATION_TYPE_PATH = "$.applicationType";
 
 
     public static final String RES_MSG_ID = "uief87324";

@@ -169,18 +169,18 @@ const HomeView = () => {
             searchKey: "filingNumber",
             defaultFields: true,
             advocateId: advocateId,
-            ...(courtId && { courtId }),
+            ...(courtId && !isScrutiny && { courtId }),
           }
         : individualId
         ? {
             searchKey: "filingNumber",
             defaultFields: true,
             litigantId: individualId,
-            ...(courtId && { courtId }),
+            ...(courtId && !isScrutiny && { courtId }),
           }
-        : { ...(courtId && { courtId }) }),
+        : { ...(courtId && !isScrutiny && { courtId }) }),
     };
-  }, [advocateId, individualId, courtId]);
+  }, [advocateId, individualId, courtId, isScrutiny]);
 
   useEffect(() => {
     setDefaultValues(defaultSearchValues);
@@ -262,13 +262,12 @@ const HomeView = () => {
 
   const { data: citizenCaseData, isLoading: isCitizenCaseDataLoading } = useSearchCaseListService(
     {
-      criteria: [
-        {
-          ...(citizenId ? (advocateId ? { advocateId } : { litigantId: individualId }) : {}),
-          ...(courtId && userInfoType === "employee" && !isScrutiny && { courtId }),
-          pagination: { offSet: 0, limit: 1 },
-        },
-      ],
+      criteria: {
+        ...(citizenId ? (advocateId ? { advocateId } : { litigantId: individualId }) : {}),
+        ...(courtId && userInfoType === "employee" && !isScrutiny && { courtId }),
+        pagination: { offSet: 0, limit: 1 },
+        tenantId,
+      },
       tenantId,
     },
     {},

@@ -791,18 +791,23 @@ export const getAdvocatesAndPipRemainingFields = (formdata, t) => {
   const allErrorData = [];
   for (let i = 0; i < formdata?.length; i++) {
     const formData = formdata?.[i]?.data || {};
-    const { boxComplainant, isComplainantPip, multipleAdvocateNameDetails, vakalatnamaFileUpload, pipAffidavitFileUpload } =
+    const { boxComplainant, isComplainantPip, numberOfAdvocates, multipleAdvocateNameDetails, vakalatnamaFileUpload, pipAffidavitFileUpload } =
       formData?.multipleAdvocatesAndPip || {};
 
     let errorObject = {
       ADVOCATE_INFORMATION_MISSING: false,
       VAKALATNAMA_DOCUMENT_MISSING: false,
       AFFIDAVIT_DOCUMENT_MISSING: false,
+      ADVOCATE_COUNT_DIFFER: false,
+      NUMBER_OF_ADVOCATES_MISSING: false,
     };
     if (boxComplainant?.individualId) {
       let isAnAdvocateMissing = false;
       let isVakalatnamaFileMissing = false;
       let isPipAffidavitFileMissing = false;
+      let isAdvocateCountDiffer = false;
+      let isNumberOfAdvocatesMissing = false;
+
       if (isComplainantPip?.code === "NO") {
         // IF complainant is not party in person, an advocate must be present
         if (!multipleAdvocateNameDetails || (Array.isArray(multipleAdvocateNameDetails) && multipleAdvocateNameDetails?.length === 0)) {
@@ -819,6 +824,12 @@ export const getAdvocatesAndPipRemainingFields = (formdata, t) => {
         if (!vakalatnamaFileUpload || vakalatnamaFileUpload?.document?.length === 0) {
           isVakalatnamaFileMissing = true;
         }
+        if(!numberOfAdvocates) {
+          isNumberOfAdvocatesMissing = true;
+        }
+        if(numberOfAdvocates && multipleAdvocateNameDetails?.length !== numberOfAdvocates) {
+          isAdvocateCountDiffer = true;
+        }
       }
       if (isComplainantPip?.code === "YES") {
         // IF complainant is party in person, there must be a PIP affidavit document uploaded.
@@ -829,6 +840,8 @@ export const getAdvocatesAndPipRemainingFields = (formdata, t) => {
       errorObject.ADVOCATE_INFORMATION_MISSING = isAnAdvocateMissing;
       errorObject.VAKALATNAMA_DOCUMENT_MISSING = isVakalatnamaFileMissing;
       errorObject.AFFIDAVIT_DOCUMENT_MISSING = isPipAffidavitFileMissing;
+      errorObject.ADVOCATE_COUNT_DIFFER = isAdvocateCountDiffer;
+      errorObject.NUMBER_OF_ADVOCATES_MISSING = isNumberOfAdvocatesMissing;
     }
     let mandatoryLeft = false;
     for (let key in errorObject) {
@@ -1024,7 +1037,7 @@ export const accusedAddressValidation = ({ formData, selected, setAddressError, 
           const isEmpty = /^\s*$/.test(address?.[addressKey]?.[data?.name]);
           return (
             isEmpty ||
-            !address?.[addressKey]?.[data?.name].match(window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern)
+            !address?.[addressKey]?.[data?.name]?.match(window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern)
           );
         })
       )
@@ -1047,7 +1060,7 @@ export const addressValidation = ({ formData, selected, setAddressError, config 
         );
         return (
           isEmpty ||
-          !formData?.[formData?.[selected]?.code === "INDIVIDUAL" ? "addressDetails" : "addressCompanyDetails"]?.[data?.name].match(
+          !formData?.[formData?.[selected]?.code === "INDIVIDUAL" ? "addressDetails" : "addressCompanyDetails"]?.[data?.name]?.match(
             window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
           )
         );
@@ -1062,7 +1075,7 @@ export const addressValidation = ({ formData, selected, setAddressError, config 
           const isEmpty = /^\s*$/.test(formData?.poaAddressDetails?.[data?.name]);
           return (
             isEmpty ||
-            !formData?.poaAddressDetails?.[data?.name].match(
+            !formData?.poaAddressDetails?.[data?.name]?.match(
               window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
             )
           );
@@ -2991,7 +3004,10 @@ export const updateCaseDetails = async ({
                 }
               })
             );
-            setFormDataValue("vakalatnamaFileUpload", vakalatnamaDocumentData?.vakalatnamaFileUpload);
+            let updatedAdvocateDetails = data?.data?.multipleAdvocatesAndPip;
+            updatedAdvocateDetails.vakalatnamaFileUpload = vakalatnamaDocumentData?.vakalatnamaFileUpload;
+
+            setFormDataValue("MultipleAdvocatesAndPip", updatedAdvocateDetails);
           }
           const pipAffidavitDocumentData = { pipAffidavitFileUpload: null };
           if (data?.data?.multipleAdvocatesAndPip?.pipAffidavitFileUpload?.document) {
@@ -3016,7 +3032,11 @@ export const updateCaseDetails = async ({
                 }
               })
             );
-            setFormDataValue("pipAffidavitFileUpload", pipAffidavitDocumentData?.pipAffidavitFileUpload);
+            let updatedPipDetails = data?.data?.multipleAdvocatesAndPip;
+            updatedPipDetails.pipAffidavitFileUpload = pipAffidavitDocumentData?.pipAffidavitFileUpload;
+
+            setFormDataValue("MultipleAdvocatesAndPip", updatedPipDetails);
+            // setFormDataValue("pipAffidavitFileUpload", pipAffidavitDocumentData?.pipAffidavitFileUpload);
           }
           const advocateDetailsDocTypes = [documentsTypeMapping["vakalatnamaFileUpload"], documentsTypeMapping["pipAffidavitFileUpload"]];
           updateTempDocListMultiForm(docList, advocateDetailsDocTypes);

@@ -2,6 +2,7 @@ import { InfoBannerIcon } from "@egovernments/digit-ui-components";
 import { CustomArrowDownIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import React, { useMemo, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { getFormattedDate } from "../utils";
 // import { CustomArrowDownIcon, CustomArrowUpIcon } from "../icons/svgIndex";
 
 function PendingTaskAccordion({
@@ -15,6 +16,7 @@ function PendingTaskAccordion({
   setShowSubmitResponseModal,
   setResponsePendingTask,
   setPendingTaskActionModals,
+  tableView = false,
 }) {
   const history = useHistory();
   const [isOpen, setIsOpen] = useState(isAccordionOpen);
@@ -63,7 +65,7 @@ function PendingTaskAccordion({
     }
   };
 
-  return (
+  return !tableView ? (
     <div
       key={`${accordionKey}-${pendingTasks?.map((task) => task.filingNumber).join(",")}`}
       className="accordion-wrapper"
@@ -192,6 +194,109 @@ function PendingTaskAccordion({
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  ) : (
+    <div className="tasks-component-table" style={{ display: "flex", flexDirection: "column", marginLeft: "20px" }}>
+      <div
+        className="tasks-component-table-header"
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          borderBottom: "1px solid #BBBBBD",
+          padding: "10px 20px 10PX 15PX",
+        }}
+      >
+        <div className="tasks-component-table-header-row-cell" style={{ width: "40%", color: "#0B0C0C", fontWeight: "bold" }}>
+          {t("TASK")}
+        </div>
+        <div className="tasks-component-table-header-row-cell" style={{ width: "30%", color: "#0B0C0C", fontWeight: "bold" }}>
+          {t("DUE_DATE")}
+        </div>
+        <div className="tasks-component-table-header-row-cell" style={{ width: "30%", color: "#0B0C0C", fontWeight: "bold" }}>
+          {t("CREATED_ON")}
+        </div>
+      </div>
+      <div className="tasks-component-table-body" style={{ overflowY: "auto", maxHeight: "300px" }}>
+        {pendingTasks?.map((item) => {
+          return (
+          <div
+            className="tasks-component-table-row"
+            key={`${item?.filingNumber}-${item?.referenceId}`}
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              borderBottom: "1px solid #E8E8E8",
+              padding: "20px 20px 20px 15px",
+              cursor: "pointer",
+            }}
+            onClick={() => {
+              if (item?.actionName === "Pay Vakalatnama Fees") {
+                setPendingTaskActionModals((pendingTaskActionModals) => ({
+                  ...pendingTaskActionModals,
+                  joinCasePaymentModal: true,
+                  data: {
+                    filingNumber: item?.filingNumber,
+                    taskNumber: item?.referenceId,
+                  },
+                }));
+                return;
+              }
+              if (item?.actionName === "Review Advocate Replace Request") {
+                setPendingTaskActionModals((pendingTaskActionModals) => ({
+                  ...pendingTaskActionModals,
+                  joinCaseConfirmModal: true,
+                  data: {
+                    filingNumber: item?.filingNumber,
+                    taskNumber: item?.referenceId,
+                  },
+                }));
+                return;
+              }
+              if (item?.status === "PENDING_SIGN" && item?.screenType === "Adiary") {
+                history.push(`/${window.contextPath}/employee/home/dashboard/adiary?date=${item?.params?.referenceId}`);
+              } else if (item?.status === "PROFILE_EDIT_REQUEST") {
+                const caseId = item?.params?.caseId;
+                const referenceId = item?.referenceId;
+                const dateOfApplication = item?.params?.dateOfApplication;
+                const uniqueId = item?.params?.uniqueId;
+
+                history.push(
+                  `/${window.contextPath}/employee/dristi/home/view-case/review-litigant-details?caseId=${caseId}&referenceId=${referenceId}`,
+                  {
+                    dateOfApplication,
+                    uniqueId,
+                  }
+                );
+              } else if (item?.status === "PENDING_RESPONSE") {
+                if (isJudge) {
+                  const caseId = item?.params?.caseId;
+                  const filingNumber = item?.params?.filingNumber;
+                  history.push(`/${window.contextPath}/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`, {
+                    triggerAdmitCase: true,
+                  });
+                } else {
+                  setResponsePendingTask(item);
+                  setShowSubmitResponseModal(true);
+                }
+              } else redirectPendingTaskUrl(item?.redirectUrl, item?.isCustomFunction, item?.params);
+            }}
+          >
+            <div className="tasks-component-table-row-cell" style={{ width: "40%" }}>
+              {item?.actionName}
+            </div>
+            <div className="tasks-component-table-row-cell" style={{ width: "30%" }}>
+              {item?.due}
+            </div>
+            <div className="tasks-component-table-row-cell" style={{ width: "30%" }}>
+              {getFormattedDate(item?.createdTime)}
+            </div>
+          </div>
+        )})}
       </div>
     </div>
   );

@@ -39,6 +39,7 @@ const TasksComponent = ({
   isApplicationCompositeOrder = false,
   compositeOrderObj,
   pendingSignOrderList,
+  tableView = false,
 }) => {
   const JoinCasePayment = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCasePayment"), []);
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
@@ -328,6 +329,7 @@ const TasksComponent = ({
       const screenType = data?.fields?.find((field) => field.key === "screenType")?.value;
       const dateOfApplication = data?.fields?.find((field) => field.key === "additionalDetails.dateOfApplication")?.value;
       const uniqueId = data?.fields?.find((field) => field.key === "additionalDetails.uniqueId")?.value;
+      const createdTime = data?.fields?.find((field) => field.key === "createdTime")?.value;
 
       const updateReferenceId = referenceId.split("_").pop();
       const defaultObj = { referenceId: updateReferenceId, id: caseId, cnrNumber, filingNumber, caseTitle };
@@ -359,6 +361,7 @@ const TasksComponent = ({
         filingNumber: filingNumber,
         caseType: "NIA S138",
         due: due,
+        createdTime,
         dayCount: dayCount ? dayCount : dayCount === 0 ? 0 : Infinity,
         isCompleted,
         dueDateColor: due === "Due today" ? "#9E400A" : "",
@@ -644,7 +647,7 @@ const TasksComponent = ({
   .digit-dropdown-select-wrap .digit-dropdown-options-card span {
     height:unset !important;
   }`;
-  return (
+  return !tableView ? (
     <div className="tasks-component">
       <React.Fragment>
         <h2>{!isLitigant ? t("YOUR_TASK") : t("ALL_PENDING_TASK_TEXT")}</h2>
@@ -770,6 +773,34 @@ const TasksComponent = ({
       {joinCaseConfirmModal && <DocumentModal config={joinCaseConfirmConfig} />}
       {joinCasePaymentModal && <DocumentModal config={joinCasePaymentConfig} />}
     </div>
-  );
+  ) : <div className="tasks-component-table-view">
+    {isLoading || isOptionsLoading ? (
+          <Loader />
+        ) : totalPendingTask !== undefined && totalPendingTask > 0 ? (
+          <React.Fragment>
+          {searchCaseLoading && <Loader />}
+          {!searchCaseLoading && (
+            <div>
+            <h1 className="heading-m">{t("PENDING_ACTIONS")}</h1>
+              <div>
+                    <PendingTaskAccordion
+                      pendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+                      allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+                      accordionHeader={"ALL_OTHER_TASKS"}
+                      t={t}
+                      totalCount={allOtherPendingTask?.length}
+                      setShowSubmitResponseModal={setShowSubmitResponseModal}
+                      setResponsePendingTask={setResponsePendingTask}
+                      setPendingTaskActionModals={setPendingTaskActionModals}
+                      tableView={true}
+                    />
+                  </div>
+                  </div>
+          )}
+        </React.Fragment>
+    ) : (
+      <React.Fragment></React.Fragment>
+    )}
+  </div>;
 };
 export default React.memo(TasksComponent);

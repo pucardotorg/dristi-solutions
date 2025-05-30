@@ -18,11 +18,7 @@ import org.pucar.dristi.kafka.consumer.EventConsumerConfig;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.service.SmsNotificationService;
 import org.pucar.dristi.service.UserService;
-import org.pucar.dristi.web.models.CaseCriteria;
-import org.pucar.dristi.web.models.CaseSearchRequest;
-import org.pucar.dristi.web.models.PendingTask;
-import org.pucar.dristi.web.models.PendingTaskType;
-import org.pucar.dristi.web.models.SmsTemplateData;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -172,6 +168,7 @@ public class IndexerUtils {
         String additionalDetails = "{}";
         String screenType = pendingTask.getScreenType();
         String courtId = getCourtId(filingNumber, createInternalRequestInfo());
+        Long createdTime = clock.millis();
         try {
             additionalDetails = mapper.writeValueAsString(pendingTask.getAdditionalDetails());
         } catch (Exception e) {
@@ -182,7 +179,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime
         );
     }
 
@@ -232,6 +229,7 @@ public class IndexerUtils {
         String actors = details.get("actors");
         RequestInfo requestInfo1 = mapper.readValue(requestInfo.toString(), RequestInfo.class);
         String courtId = getCourtId(filingNumber, requestInfo1);
+        Long createdTime = clock.millis();
 
         if (isGeneric) {
             log.info("creating pending task from generic task");
@@ -304,12 +302,13 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime
         );
     }
 
     private String getCourtId(String filingNumber, RequestInfo request) {
         try {
+            request.getUserInfo().setType("EMPLOYEE");
             org.pucar.dristi.web.models.CaseSearchRequest caseSearchRequest = createCaseSearchRequest(request, filingNumber);
             JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
             return caseDetails.get(0).path("courtId").textValue();
@@ -395,6 +394,7 @@ public class IndexerUtils {
         boolean isCompleted = true;
         boolean isGeneric = false;
         String actors = null;
+        List<ReferenceEntityTypeNameMapping> referenceEntityTypeMappings = null; // Store the reference mappings
 
         List<org.pucar.dristi.web.models.PendingTaskType> pendingTaskTypeList = mdmsDataConfig.getPendingTaskTypeMap().get(entityType);
         if (pendingTaskTypeList == null) return caseDetails;
@@ -407,6 +407,7 @@ public class IndexerUtils {
                 isCompleted = false;
                 isGeneric = pendingTaskType.getIsgeneric();
                 actors = pendingTaskType.getActor();
+                referenceEntityTypeMappings = pendingTaskType.getReferenceEntityTypeNameMapping();
                 break;
             }
         }
@@ -421,11 +422,14 @@ public class IndexerUtils {
         request.put("RequestInfo", requestInfo);
         Map<String, String> entityDetails = processEntityByType(entityType, request, referenceId, object);
 
+        // Update name based on referenceEntityType and referenceEntityTypeNameMapping
+        name = getUpdatedTaskName(entityDetails, referenceEntityTypeMappings, name);
+
         // Add additional details to the caseDetails map
         caseDetails.putAll(entityDetails);
         caseDetails.put("name", name);
         caseDetails.put("screenType", screenType);
-        caseDetails.put("actors",actors);
+        caseDetails.put("actors", actors);
         if (isGeneric) caseDetails.put("isGeneric", "Generic");
 
         return caseDetails;
@@ -568,6 +572,7 @@ public class IndexerUtils {
 
         Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
 
+        String applicationType = JsonPath.read(applicationObject.toString(), APPLICATION_TYPE_PATH);
         String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
         String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
         String cnrNumber = JsonPath.read(caseObject.toString(), CNR_NUMBER_PATH);
@@ -576,6 +581,7 @@ public class IndexerUtils {
         caseDetails.put("filingNumber", filingNumber);
         caseDetails.put("caseId", caseId);
         caseDetails.put("caseTitle", caseTitle);
+        caseDetails.put("referenceEntityType", applicationType);
 
         return caseDetails;
     }
@@ -648,6 +654,29 @@ public class IndexerUtils {
             stateSla += currentTime;
         }
         return stateSla;
+    }
+
+    private String getUpdatedTaskName(Map<String, String> entityDetails,
+                                      List<ReferenceEntityTypeNameMapping> referenceEntityTypeMappings,
+                                      String currentName) {
+
+        if (referenceEntityTypeMappings == null || referenceEntityTypeMappings.isEmpty()
+                || entityDetails.isEmpty()
+                || entityDetails.get("referenceEntityType") == null
+                || !entityDetails.containsKey("referenceEntityType")) {
+            return currentName;
+        }
+
+        String applicationType = entityDetails.get("referenceEntityType");
+
+        // Check if referenceEntityTypeMappings has any mappings
+        for (ReferenceEntityTypeNameMapping mapping : referenceEntityTypeMappings) {
+            if (applicationType.equalsIgnoreCase(mapping.getReferenceEntityType())) {
+                return mapping.getPendingTaskName();
+            }
+        }
+
+        return currentName;
     }
 
 }
