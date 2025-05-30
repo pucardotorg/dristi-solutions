@@ -179,7 +179,7 @@ const AdmittedCaseJudge = () => {
   const [isNextHearingDrafted, setIsNextHearingDrafted] = useState(false);
   const [passOver, setPassOver] = useState(false);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
-  const [showEndHearingModal, setShowEndHearingModal] = useState(false);
+  const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false });
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [showWitnessModal, setShowWitnessModal] = useState(false);
   const [addPartyModal, setAddPartyModal] = useState(false);
@@ -2361,7 +2361,7 @@ const AdmittedCaseJudge = () => {
   }, [currentInProgressHearing?.hearingId, data, history, userType]);
 
   const handleEmployeeAction = useCallback(
-    (option) => {
+    async (option) => {
       if (option.value === "DOWNLOAD_CASE_FILE") {
         handleDownloadPDF();
       } else if (option.value === "NEXT_HEARING") {
@@ -2371,7 +2371,23 @@ const AdmittedCaseJudge = () => {
       } else if (option.value === "GENERATE_ORDER") {
         setShowOrderModal(true);
       } else if (option.value === "END_HEARING") {
-        setShowEndHearingModal(true);
+        const orderResponse = await ordersService.searchOrder(
+          {
+            tenantId: caseDetails?.tenantId,
+            criteria: {
+              tenantID: caseDetails?.tenantId,
+              filingNumber: caseDetails?.filingNumber,
+              orderType: "SCHEDULING_NEXT_HEARING",
+              status: OrderWorkflowState.DRAFT_IN_PROGRESS,
+              ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
+            },
+          },
+          { tenantId: caseDetails?.tenantId }
+        );
+        debugger;
+        if (orderResponse?.list?.length > 0) {
+          setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: true });
+        }
       } else if (option.value === "TAKE_WITNESS_DEPOSITION") {
         setShowWitnessModal(true);
       } else if (option.value === "SUBMIT_DOCUMENTS") {
@@ -3412,17 +3428,18 @@ const AdmittedCaseJudge = () => {
           </div>
         </Modal>
       )}
-      {showEndHearingModal && (
+      {showEndHearingModal.openEndHearingModal && (
         <Modal
           headerBarMain={<Heading label={t("CS_CASE_CONFIRM_END_HEARING")} />}
           headerBarEnd={
             <CloseBtn
               onClick={() => {
-                setShowEndHearingModal(false);
+                setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: false });
               }}
             />
           }
           actionSaveLabel={t("CS_CASE_END_START_NEXT_HEARING")}
+          hideModalActionbar={!showEndHearingModal.isNextHearingDrafted}
           actionSaveOnSubmit={async () => {
             hearingService
               .updateHearings(
@@ -3435,7 +3452,7 @@ const AdmittedCaseJudge = () => {
                 { applicationNumber: "", cnrNumber: "" }
               )
               .then(() => {
-                setShowEndHearingModal(false);
+                setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: false });
                 nextHearing();
               });
           }}
@@ -3451,12 +3468,12 @@ const AdmittedCaseJudge = () => {
                 { applicationNumber: "", cnrNumber: "" }
               )
               .then(() => {
-                setShowEndHearingModal(false);
+                setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: false });
                 setViewCauseList(true);
               });
           }}
           actionCancelOnSubmit={() => {
-            setShowEndHearingModal(false);
+            setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: false });
           }}
           actionCancelLabel={t("CS_COMMON_CANCEL")}
           actionCustomLabel={t("CS_CASE_END_VIEW_CAUSE_LIST")}
@@ -3465,7 +3482,7 @@ const AdmittedCaseJudge = () => {
           className={"confirm-end-hearing-modal"}
         >
           <div style={{ margin: "16px 0px" }}>
-            {!isNextHearingDrafted ? (
+            {!showEndHearingModal.isNextHearingDrafted ? (
               <p>{t("CS_CASE_AN_ORDER_BOTD_FIRST")}</p>
             ) : (
               <CheckBox
@@ -3495,7 +3512,6 @@ const AdmittedCaseJudge = () => {
         }}
         attendees={currentActiveHearing?.attendees}
         caseDetails={caseDetails}
-        setIsNextHearingDrafted={setIsNextHearingDrafted}
       />
       {showWitnessModal && (
         <WitnessDrawer

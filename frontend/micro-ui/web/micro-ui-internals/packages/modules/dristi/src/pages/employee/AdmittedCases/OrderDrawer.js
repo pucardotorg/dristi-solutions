@@ -14,7 +14,7 @@ import { OrderWorkflowAction, OrderWorkflowState } from "@egovernments/digit-ui-
 import { ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom";
 
-const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId, setIsNextHearingDrafted }) => {
+const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId }) => {
   const { t } = useTranslation();
   const targetRef = useRef(null);
   const history = useHistory();
@@ -68,7 +68,6 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
 
   useEffect(() => {
     if (orderDataNextHearingData) {
-      setIsNextHearingDrafted(true);
       const order = orderDataNextHearingData;
       const [year, month, day] = order?.additionalDetails?.formdata?.hearingDate?.split("-");
       setOrderData({
