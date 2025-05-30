@@ -20,8 +20,7 @@ import pucar.web.models.hearing.*;
 import java.util.Collections;
 import java.util.List;
 
-import static pucar.config.ServiceConstants.E_SIGN;
-import static pucar.config.ServiceConstants.SCHEDULING_NEXT_HEARING;
+import static pucar.config.ServiceConstants.*;
 
 @Component
 @Slf4j

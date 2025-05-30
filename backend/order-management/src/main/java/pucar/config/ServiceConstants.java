@@ -78,9 +78,11 @@ public class ServiceConstants {
     public static final String ADMIT = "ADMIT";
     public static final String ADMISSION = "ADMISSION";
     public static final String ABANDON = "ABANDON";
+    public static final String ABANDONED = "ABANDONED";
     public static final String CLOSE = "CLOSE";
     public static final String COMPLETED = "COMPLETED";
     public static final String ABATED = "ABATED";
+    public static final String SAVE_DRAFT = "SAVE_DRAFT";
 
     public static final String IN_PROGRESS = "IN_PROGRESS";
     public static final String MANUAL = "MANUAL_";

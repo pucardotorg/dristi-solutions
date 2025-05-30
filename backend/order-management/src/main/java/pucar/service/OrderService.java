@@ -22,6 +22,7 @@ import pucar.web.models.hearing.HearingSearchRequest;
 
 import java.util.List;
 
+import static pucar.config.ServiceConstants.SAVE_DRAFT;
 import static pucar.config.ServiceConstants.SCHEDULING_NEXT_HEARING;
 
 
@@ -63,7 +64,8 @@ public class OrderService {
             List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
                     .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
             Hearing hearing = hearings.get(0);
-            hearingUpdateBasedOnStatus.updateHearingBasedOnStatus(hearing, request ,true);
+            boolean isSaveDraftAction = order.getWorkflow().getAction().equalsIgnoreCase(SAVE_DRAFT);
+            hearingUpdateBasedOnStatus.updateHearingBasedOnStatus(hearing, request ,isSaveDraftAction);
         }
 
     }
@@ -93,6 +95,8 @@ public class OrderService {
         }
 
         log.info("updated order and created diary entry, result= SUCCESS");
+
+        updateHearingSummary(request);
 
         return orderResponse.getOrder();
     }

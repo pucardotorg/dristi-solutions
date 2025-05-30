@@ -39,8 +39,8 @@ public class HearingUpdateWithOutWorkFlow implements HearingUpdateStrategy {
     }
 
     @Override
-    public boolean updateHearingBasedOnStatus(String status, boolean isCreateOrderCall) {
-        return COMPLETED.equalsIgnoreCase(status) || isCreateOrderCall;
+    public boolean updateHearingBasedOnStatus(String status, boolean isSaveDraftAction) {
+        return COMPLETED.equalsIgnoreCase(status) || isSaveDraftAction;
     }
 
     @Override

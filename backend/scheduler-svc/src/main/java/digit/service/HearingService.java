@@ -261,7 +261,7 @@ public class HearingService {
                 return;
             }
 
-            updateHearingsToAbated(hearings, requestInfo);
+            updateHearingsToAbondenState(hearings, requestInfo);
 
             log.info("operation=abating, result=SUCCESS");
         } catch (Exception e) {
@@ -278,7 +278,7 @@ public class HearingService {
         return dateUtil.getEpochFromLocalDateTime(LocalDate.now().minusDays(1).atTime(LocalTime.MAX));
     }
 
-    public void updateHearingsToAbated(List<Hearing> hearings, RequestInfo requestInfo) {
+    public void updateHearingsToAbondenState(List<Hearing> hearings, RequestInfo requestInfo) {
         try {
             log.info("operation=updateHearingsToAbated, result=IN_PROGRESS, hearingsCount={}", hearings.size());
 
