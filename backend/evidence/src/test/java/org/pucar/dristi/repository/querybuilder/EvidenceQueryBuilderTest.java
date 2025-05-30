@@ -86,7 +86,7 @@ public class EvidenceQueryBuilderTest {
         String criteriaClause = "art.isEvidence = ?";
 
         // Call the method under test
-        boolean result = queryBuilder.addArtifactCriteria(criteria, query, preparedStmtList, firstCriteria,new ArrayList<>());
+        boolean result = queryBuilder.addArtifactCriteria(criteria, query,"art.isVoid=?", preparedStmtList, firstCriteria,new ArrayList<>());
 
         // Verify the results
         assertFalse(result); // firstCriteria should be false after adding the first criteria
@@ -119,6 +119,7 @@ public class EvidenceQueryBuilderTest {
                 .addArtifactCriteria(
                         anyBoolean(),
                         any(StringBuilder.class),
+                        anyString(),
                         anyList(),
                         anyBoolean(),
                         anyList()
