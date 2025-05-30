@@ -34,6 +34,7 @@ public class EvidenceSearchCriteria {
     private String filingType;
     private String fileStoreId;
     private String courtId;
+    private String sourceType;
 
     @JsonIgnore
     private String userUuid;

@@ -70,6 +70,7 @@ public class ApplicationQueryBuilder {
             firstCriteria = addCriteria(applicationCriteria.getTenantId(), query, firstCriteria, "app.tenantId = ?", preparedStmtList,preparedStmtArgList);
             firstCriteria = addCriteria(applicationCriteria.getStatus(), query, firstCriteria, "app.status = ?", preparedStmtList,preparedStmtArgList);
             firstCriteria = addCriteria(applicationCriteria.getCourtId(), query, firstCriteria, "app.courtId = ?", preparedStmtList,preparedStmtArgList);
+            firstCriteria = addCriteria(applicationCriteria.getReferenceId(), query, firstCriteria, "app.referenceId = ?", preparedStmtList,preparedStmtArgList);
             firstCriteria = addCriteria(applicationCriteria.getOwner()!=null?applicationCriteria.getOwner().toString():null, query, firstCriteria, "app.createdBy = ?", preparedStmtList,preparedStmtArgList);
             firstCriteria = addPartialCriteriaForApplicationCMPNumber(applicationCriteria.getApplicationCMPNumber(), query, firstCriteria, preparedStmtList,preparedStmtArgList);
             addPartialCriteria(applicationCriteria.getApplicationNumber(), query, firstCriteria, preparedStmtList,preparedStmtArgList);

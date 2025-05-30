@@ -51,6 +51,7 @@ public class EvidenceQueryBuilder {
             String courtId = criteria.getCourtId();
             String filingType = criteria.getFilingType();
             Boolean isVoid = criteria.getIsVoid();
+            String sourceType = criteria.getSourceType();
 
             // Build the query using the extracted fields
             firstCriteria = addArtifactCriteria(id, query, preparedStmtList, firstCriteria, "art.id = ?",preparedStmtArgList);
@@ -59,6 +60,7 @@ public class EvidenceQueryBuilder {
             firstCriteria = addArtifactCriteria(artifactType, query, preparedStmtList, firstCriteria, "art.artifactType = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(evidenceStatus, query,"art.isEvidence = ?", preparedStmtList, firstCriteria,preparedStmtArgList);
             firstCriteria = addArtifactCriteria(isVoid, query,"art.isVoid = ?", preparedStmtList, firstCriteria,preparedStmtArgList);
+            firstCriteria = addArtifactCriteria(sourceType, query, preparedStmtList, firstCriteria, "art.sourceType = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(filingNumber, query, preparedStmtList, firstCriteria, "art.filingNumber = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(hearing, query, preparedStmtList, firstCriteria, "art.hearing = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(order, query, preparedStmtList, firstCriteria, "art.orders = ?",preparedStmtArgList);
