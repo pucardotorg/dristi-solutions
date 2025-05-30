@@ -71,9 +71,10 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
   }, [caseDetails, hearing?.additionalDetails?.witnessDepositions]);
 
   const isDepositionSaved = useMemo(() => {
-    return (hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitness?.uuid)?.isDepositionSaved === true
-     || 
-      hearingData?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitness?.uuid)?.isDepositionSaved === true)
+    return (
+      hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitness?.uuid)?.isDepositionSaved === true ||
+      hearingData?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitness?.uuid)?.isDepositionSaved === true
+    );
   }, [selectedWitness, hearing, hearingData]);
 
   const handleDropdownChange = (selectedWitnessOption) => {
@@ -205,7 +206,6 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
       setIsProceeding(false);
       console.error("Error updating witness:", error);
     }
-    
   };
 
   if (isFilingTypeLoading) {
@@ -234,7 +234,7 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
                 optionKey={"label"}
                 select={handleDropdownChange}
                 freeze={true}
-                disable={false}
+                disable={isProceeding}
                 selected={
                   IsSelectedWitness
                     ? {
@@ -252,7 +252,7 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
               />
             </LabelFieldPair>
 
-            <div style={{ width: "151px", height: "19px", fontSize: "13px", color: "#007E7E", marginTop: "2px" }}>
+            <div style={{ height: "19px", color: "#007E7E", marginTop: "2px" }}>
               <button
                 style={{
                   background: "none",
@@ -260,8 +260,8 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
                   padding: 0,
                   margin: 0,
                   cursor: "pointer",
-                  fontSize: "13px",
-                  color: "#007E7E",
+                  fontSize: "14px",
+                  color: "rgb(0, 126, 126)",
                   fontWeight: 700,
                 }}
                 onClick={onClickAddWitness}
@@ -283,7 +283,7 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
                 }}
                 value={IsSelectedWitness ? witnessDepositionText || "" : ""}
                 onChange={(e) => setWitnessDepositionText(e.target.value)}
-                disabled={isDepositionSaved || !IsSelectedWitness}
+                disabled={isDepositionSaved || !IsSelectedWitness || isProceeding}
               />
               {!isDepositionSaved && IsSelectedWitness && (
                 <TranscriptComponent
@@ -297,9 +297,12 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
             <div className="drawer-footer" style={{ display: "flex", justifyContent: "start", flexDirection: "row" }}>
               <Button
                 label={t("SAVE")}
-                isDisabled={isDepositionSaved || !IsSelectedWitness}
+                isDisabled={isDepositionSaved || !IsSelectedWitness || isProceeding}
                 className={"order-drawer-save-btn"}
                 onButtonClick={saveWitnessDeposition}
+                style={{
+                  width: "110px",
+                }}
               />
             </div>
           </div>
@@ -308,7 +311,7 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
 
       {witnessModalOpen && (
         <WitnessModal
-        isProceeding={isProceeding}
+          isProceeding={isProceeding}
           handleClose={handleClose}
           hearingId={hearingId}
           setSignedDocumentUploadID={setSignedDocumentUploadID}

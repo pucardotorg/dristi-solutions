@@ -1,4 +1,4 @@
-import { Button, CloseSvg, FormComposerV2, Modal } from "@egovernments/digit-ui-react-components";
+import { Button, CloseSvg, FormComposerV2, Modal, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useRef, useState } from "react";
 import addPartyConfig from "../../configs/AddNewPartyConfig.js";
 import { useTranslation } from "react-i18next";
@@ -11,6 +11,7 @@ const AddParty = ({ onCancel, onAddSuccess, caseDetails, tenantId, hearing, refe
   const [formConfigs, setFormConfigs] = useState([addPartyConfig(1)]);
   const [aFormData, setFormData] = useState([{}]);
   const setFormErrors = useRef([]);
+  const [isPartyAdding, setIsPartyAdding] = useState(false);
 
   const { mutateAsync: updateAttendees } = Digit.Hooks.useCustomAPIMutationHook({
     url: Urls.hearing.hearingUpdateTranscript,
@@ -55,6 +56,7 @@ const AddParty = ({ onCancel, onAddSuccess, caseDetails, tenantId, hearing, refe
   };
 
   const handleSubmit = (e) => {
+    setIsPartyAdding(true);
     e?.stopPropagation();
     e?.preventDefault();
     const cleanedData = aFormData
@@ -88,6 +90,7 @@ const AddParty = ({ onCancel, onAddSuccess, caseDetails, tenantId, hearing, refe
           onCancel();
         });
     }
+    setIsPartyAdding(false);
   };
   const generateUUID = () => {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
@@ -189,90 +192,96 @@ const AddParty = ({ onCancel, onAddSuccess, caseDetails, tenantId, hearing, refe
       actionSaveLabel={t("HEARING_ADD")}
       actionSaveOnSubmit={handleSubmit}
     >
-      <div style={{ padding: "16px 0px 24px 0px" }}>
-        <SelectCustomNote
-          config={{
-            populators: {
-              inputs: [
-                {
-                  infoHeader: "CS_PLEASE_COMMON_NOTE",
-                  infoText: "NEW_PARTY_NOTE",
-                  infoTooltipMessage: "NEW_PARTY_NOTE",
-                  type: "InfoComponent",
+      {isPartyAdding ? (
+        <Loader />
+      ) : (
+        <div>
+          <div style={{ padding: "16px 0px 24px 0px" }}>
+            <SelectCustomNote
+              config={{
+                populators: {
+                  inputs: [
+                    {
+                      infoHeader: "CS_PLEASE_COMMON_NOTE",
+                      infoText: "NEW_PARTY_NOTE",
+                      infoTooltipMessage: "NEW_PARTY_NOTE",
+                      type: "InfoComponent",
+                    },
+                  ],
                 },
-              ],
-            },
-          }}
-          t={t}
-        />
-      </div>
-      <div className="add-party">
-        {formConfigs.map((config, index) => (
-          <FormComposerV2
-            key={index}
-            config={[config]}
-            onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
-              onFormValueChange(formData, index);
-              if (!setFormErrors.current.hasOwnProperty(index)) {
-                setFormErrors.current[index] = setError;
-              }
-              if (JSON.stringify(formData) !== JSON.stringify(aFormData[index].data)) {
-                if (formData && Object.keys(formData).length !== 0) {
-                  const errors = validateFormData(formData, index + 1);
-                  for (const key of Object.keys(formData)) {
-                    if (formData[key] && !errors.hasOwnProperty(key)) {
-                      clearErrors(key);
+              }}
+              t={t}
+            />
+          </div>
+          <div className="add-party">
+            {formConfigs.map((config, index) => (
+              <FormComposerV2
+                key={index}
+                config={[config]}
+                onFormValueChange={(setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+                  onFormValueChange(formData, index);
+                  if (!setFormErrors.current.hasOwnProperty(index)) {
+                    setFormErrors.current[index] = setError;
+                  }
+                  if (JSON.stringify(formData) !== JSON.stringify(aFormData[index].data)) {
+                    if (formData && Object.keys(formData).length !== 0) {
+                      const errors = validateFormData(formData, index + 1);
+                      for (const key of Object.keys(formData)) {
+                        if (formData[key] && !errors.hasOwnProperty(key)) {
+                          clearErrors(key);
+                        }
+                      }
                     }
                   }
-                }
-              }
-            }}
-            fieldStyle={{ width: "100%" }}
-          />
-        ))}
-      </div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3rem" }}>
-        <Button
-          onButtonClick={handleAddParty}
-          label={t("ADD_PARTY")}
-          style={{
-            border: "none",
-            boxShadow: "none",
-            marginTop: "10px",
-            borderColor: "#007E7E",
-            width: "28%",
-            backgroundColor: "#fff",
-          }}
-          textStyles={{
-            fontFamily: "Roboto",
-            fontSize: "16px",
-            fontWeight: 700,
-            lineHeight: "18.75px",
-            textAlign: "start",
-            color: "#007E7E",
-          }}
-        />
-        <Button
-          onButtonClick={handleRemoveParty}
-          label={t("REMOVE_PARTY")}
-          style={{
-            border: "none",
-            boxShadow: "none",
-            marginTop: "10px",
-            borderColor: "#007E7E",
-            width: "28%",
-            backgroundColor: "#fff",
-          }}
-          textStyles={{
-            fontFamily: "Roboto",
-            fontSize: "16px",
-            fontWeight: 700,
-            lineHeight: "18.75px",
-            textAlign: "end",
-            color: "#007E7E",
-          }}
-        />
-      </div>
+                }}
+                fieldStyle={{ width: "100%" }}
+              />
+            ))}
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3rem" }}>
+            <Button
+              onButtonClick={handleAddParty}
+              label={t("ADD_PARTY")}
+              style={{
+                border: "none",
+                boxShadow: "none",
+                marginTop: "10px",
+                borderColor: "#007E7E",
+                width: "28%",
+                backgroundColor: "#fff",
+              }}
+              textStyles={{
+                fontFamily: "Roboto",
+                fontSize: "16px",
+                fontWeight: 700,
+                lineHeight: "18.75px",
+                textAlign: "start",
+                color: "#007E7E",
+              }}
+            />
+            <Button
+              onButtonClick={handleRemoveParty}
+              label={t("REMOVE_PARTY")}
+              style={{
+                border: "none",
+                boxShadow: "none",
+                marginTop: "10px",
+                borderColor: "#007E7E",
+                width: "28%",
+                backgroundColor: "#fff",
+              }}
+              textStyles={{
+                fontFamily: "Roboto",
+                fontSize: "16px",
+                fontWeight: 700,
+                lineHeight: "18.75px",
+                textAlign: "end",
+                color: "#007E7E",
+              }}
+            />
+          </div>
+        </div>
+      )}
     </Modal>
   );
 };

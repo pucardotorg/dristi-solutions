@@ -773,34 +773,35 @@ const TasksComponent = ({
       {joinCaseConfirmModal && <DocumentModal config={joinCaseConfirmConfig} />}
       {joinCasePaymentModal && <DocumentModal config={joinCasePaymentConfig} />}
     </div>
-  ) : <div className="tasks-component-table-view">
-    {isLoading || isOptionsLoading ? (
-          <Loader />
-        ) : totalPendingTask !== undefined && totalPendingTask > 0 ? (
-          <React.Fragment>
+  ) : (
+    <div className="tasks-component-table-view">
+      {isLoading || isOptionsLoading ? (
+        <Loader />
+      ) : totalPendingTask !== undefined && totalPendingTask > 0 ? (
+        <React.Fragment>
           {searchCaseLoading && <Loader />}
           {!searchCaseLoading && (
             <div>
-            <h1 className="heading-m">{t("PENDING_ACTIONS")}</h1>
               <div>
-                    <PendingTaskAccordion
-                      pendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
-                      allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
-                      accordionHeader={"ALL_OTHER_TASKS"}
-                      t={t}
-                      totalCount={allOtherPendingTask?.length}
-                      setShowSubmitResponseModal={setShowSubmitResponseModal}
-                      setResponsePendingTask={setResponsePendingTask}
-                      setPendingTaskActionModals={setPendingTaskActionModals}
-                      tableView={true}
-                    />
-                  </div>
-                  </div>
+                <PendingTaskAccordion
+                  pendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+                  allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+                  accordionHeader={"ALL_OTHER_TASKS"}
+                  t={t}
+                  totalCount={allOtherPendingTask?.length}
+                  setShowSubmitResponseModal={setShowSubmitResponseModal}
+                  setResponsePendingTask={setResponsePendingTask}
+                  setPendingTaskActionModals={setPendingTaskActionModals}
+                  tableView={true}
+                />
+              </div>
+            </div>
           )}
         </React.Fragment>
-    ) : (
-      <React.Fragment></React.Fragment>
-    )}
-  </div>;
+      ) : (
+        <React.Fragment></React.Fragment>
+      )}
+    </div>
+  );
 };
 export default React.memo(TasksComponent);
