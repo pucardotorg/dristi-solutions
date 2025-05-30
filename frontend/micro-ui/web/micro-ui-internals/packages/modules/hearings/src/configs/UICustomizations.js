@@ -72,7 +72,7 @@ export const UICustomizations = {
                       )
                       .then((response) => {
                         hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
-                          window.location.href = `/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`;
+                          window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row.caseId}&filingNumber=${row.filingNumber}&tab=Overview`;
                         });
                       });
                   }}
@@ -94,7 +94,8 @@ export const UICustomizations = {
                   variation={"secondary"}
                   label={t("JOIN_HEARING")}
                   onButtonClick={() => {
-                    window.location.href = `/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`;
+                    const path = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row.caseId}&filingNumber=${row.filingNumber}&tab=Overview`;
+                    window.location = path;
                   }}
                   style={{ marginRight: "1rem" }}
                   textStyles={{
