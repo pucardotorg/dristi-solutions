@@ -13,9 +13,7 @@ import org.egov.inbox.repository.builder.V2.InboxQueryBuilder;
 import org.egov.inbox.service.V2.validator.ValidatorDefaultImplementation;
 import org.egov.inbox.service.WorkflowService;
 import org.egov.inbox.util.MDMSUtil;
-import org.egov.inbox.web.model.Inbox;
-import org.egov.inbox.web.model.InboxRequest;
-import org.egov.inbox.web.model.InboxResponse;
+import org.egov.inbox.web.model.*;
 import org.egov.inbox.web.model.V2.*;
 import org.egov.inbox.web.model.workflow.BusinessService;
 import org.egov.inbox.web.model.workflow.ProcessInstance;
@@ -27,6 +25,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static org.egov.inbox.util.InboxConstants.*;
 
@@ -369,6 +368,82 @@ public class InboxServiceV2 {
         SearchResponse searchResponse = SearchResponse.builder().data(data).build();
         return searchResponse;
     }
+
+    public ActionCategorySearchResponse getSpecificFieldsActionFromESIndex(SearchRequest searchRequest) {
+        String tenantId = searchRequest.getIndexSearchCriteria().getTenantId();
+        String moduleName = searchRequest.getIndexSearchCriteria().getModuleName();
+        Map<String, Object> moduleSearchCriteria = searchRequest.getIndexSearchCriteria().getModuleSearchCriteria();
+
+        validator.validateSearchCriteria(tenantId, moduleName, moduleSearchCriteria);
+        InboxQueryConfiguration inboxQueryConfiguration = mdmsUtil.getConfigFromMDMS(tenantId, moduleName);
+        hashParamsWhereverRequiredBasedOnConfiguration(moduleSearchCriteria, inboxQueryConfiguration);
+
+        IndexSearchCriteria indexSearchCriteria = searchRequest.getIndexSearchCriteria();
+        ActionCategorySearchResponse response = new ActionCategorySearchResponse();
+
+        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchReviewProcess(), inboxQueryConfiguration, response::setReviewProcessData);
+        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchScheduleHearing(), inboxQueryConfiguration, response::setScheduleHearingData);
+        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchViewApplication(),inboxQueryConfiguration, response::setViewApplicationData);
+        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRegisterCases(), inboxQueryConfiguration, response::setRegisterCasesData);
+
+        return response;
+    }
+
+    private void populateActionCategoryData(SearchRequest searchRequest,
+                                            Criteria criteria,
+                                            InboxQueryConfiguration config,
+                                            Consumer<Criteria> setter) {
+        Map<String, Object> searchCriteria = searchRequest.getIndexSearchCriteria().getModuleSearchCriteria();
+
+        searchCriteria.put("actionCategory", criteria.getActionCategory());
+
+        if (criteria.getDate() != null) {
+            searchCriteria.put("stateSla", criteria.getDate());
+        }
+
+        if (criteria.getSearchableFields() != null) {
+            searchCriteria.put("searchableFields", criteria.getSearchableFields());
+        }
+
+        List<Data> resultData = getDataFromSimpleSearch(searchRequest, config.getIndex());
+        List<Data> filteredData = deduplicateByFilingNumber(resultData);
+
+        criteria.setCount(filteredData.size());
+
+        if (!criteria.getIsOnlyCountRequired()) {
+            criteria.setData(filteredData);
+        }
+
+        setter.accept(criteria);
+    }
+
+
+    public static List<Data> deduplicateByFilingNumber(List<Data> dataList) {
+        Map<String, Data> uniqueMap = new LinkedHashMap<>();
+
+        for (Data data : dataList) {
+            String filingNumber = extractFilingNumber(data);
+            if (filingNumber != null && !uniqueMap.containsKey(filingNumber)) {
+                uniqueMap.put(filingNumber, data);
+            }
+        }
+
+        return new ArrayList<>(uniqueMap.values());
+    }
+
+    // Helper method to extract filingNumber from the fields list
+    private static String extractFilingNumber(Data data) {
+        if (data.getFields() == null) return null;
+
+        for (Field field : data.getFields()) {
+            if ("filingNumber".equals(field.getKey())) {
+                return field.getValue() != null ? field.getValue().toString() : null;
+            }
+        }
+
+        return null;
+    }
+
 
     private List<Data> getDataFromSimpleSearch(SearchRequest searchRequest, String index) {
         Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE);
