@@ -427,7 +427,7 @@ public class HearingService {
             if (scheduleHearingMap.containsKey(scheduleHearing.getHearingBookingId())) {
                 Hearing hearing = scheduleHearingMap.get(scheduleHearing.getHearingBookingId());
                 scheduleHearing.setOriginalHearingDate(hearing.getStartTime());
-                scheduleHearing.setCaseId(hearing.getCmpNumber());
+                scheduleHearing.setCaseId(hearing.getCaseReferenceNumber());
                 scheduleHearing.setJudgeIds(hearing.getPresidedBy().getJudgeID());
                 scheduleHearing.setFilingNumber(hearing.getFilingNumber());
                 // todo: check for case title
