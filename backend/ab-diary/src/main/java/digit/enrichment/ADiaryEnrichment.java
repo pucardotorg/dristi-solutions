@@ -3,7 +3,6 @@ package digit.enrichment;
 import digit.repository.DiaryRepository;
 import digit.util.ADiaryUtil;
 import digit.web.models.*;
-import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
@@ -45,6 +44,7 @@ public class ADiaryEnrichment {
             diary.setAuditDetails(auditDetails);
 
             if (caseDiaryRequest.getDiary().getDocuments() != null) {
+
                 enrichDiaryDocument(caseDiaryRequest);
             }
 
@@ -95,7 +95,7 @@ public class ADiaryEnrichment {
             // TODO works for A-diary need to enrich for B-diary
             CaseDiarySearchRequest caseDiaryRequest = CaseDiarySearchRequest.builder()
                     .criteria(CaseDiarySearchCriteria.builder()
-                            .judgeId(caseDiary.getJudgeId())
+                            .courtId(caseDiary.getCourtId())
                             .date(caseDiary.getDiaryDate())
                             .diaryType(caseDiary.getDiaryType())
                             .tenantId(caseDiary.getTenantId())

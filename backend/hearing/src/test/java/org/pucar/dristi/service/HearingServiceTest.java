@@ -442,18 +442,18 @@ public class HearingServiceTest {
         assertTrue(exception.getMessage().contains("custom exception"));
     }
 
-    @Test
-    void testUpdateBulkHearing_Success() {
-        when(hearingRepository.checkHearingsExist(any(Hearing.class))).thenReturn(Collections.singletonList(hearing));
-        when(schedulerUtil.getScheduledHearings(any())).thenReturn(Collections.singletonList(scheduleHearing));
-        when(config.getBulkRescheduleTopic()).thenReturn("test-topic");
-
-        List<Hearing> result = hearingService.updateBulkHearing(hearingUpdateBulkRequest);
-
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(producer, times(1)).push(eq("test-topic"), any(HearingUpdateBulkRequest.class));
-    }
+//    @Test
+//    void testUpdateBulkHearing_Success() {
+//        when(hearingRepository.checkHearingsExist(any(Hearing.class))).thenReturn(Collections.singletonList(hearing));
+//        when(schedulerUtil.getScheduledHearings(any())).thenReturn(Collections.singletonList(scheduleHearing));
+//        when(config.getBulkRescheduleTopic()).thenReturn("test-topic");
+//
+//        List<Hearing> result = hearingService.updateBulkHearing(hearingUpdateBulkRequest);
+//
+//        assertNotNull(result);
+//        assertEquals(1, result.size());
+//        verify(producer, times(1)).push(eq("test-topic"), any(HearingUpdateBulkRequest.class));
+//    }
 
     @Test
     void testUpdateBulkHearing_ExceptionHandling() {

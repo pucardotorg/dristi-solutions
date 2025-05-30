@@ -11,6 +11,9 @@ function ReIssueSummonsModal() {
   const history = useHistory();
   const { hearingId, filingNumber, cnrNumber, orderType, caseId, caseTitle } = Digit.Hooks.useQueryParams();
   const tenantId = Digit.ULBService.getCurrentTenantId();
+  const userInfo = Digit.UserService.getUser()?.info;
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+  const courtId = localStorage.getItem("courtId");
   const { data: hearingsData, isLoading: isHearingLoading } = Digit.Hooks.hearings.useGetHearings(
     {
       hearing: { tenantId },
@@ -18,6 +21,7 @@ function ReIssueSummonsModal() {
         tenantID: tenantId,
         filingNumber: filingNumber,
         hearingId: hearingId,
+        ...(courtId && userType === "employee" && { courtId }),
       },
     },
     { applicationNumber: "", cnrNumber },

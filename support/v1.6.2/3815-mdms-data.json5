@@ -1,0 +1,227 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "PoliceStation",
+    // this data are present in UAT and missing in prod need to add this data
+    "mdmsPayload": [
+      {
+        "id": "82255d87-1b2e-4e02-b4a0-d9e188cef6c5",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281001",
+        "data": {
+          "code": 15281001,
+          "name": "ALAPPUZHA NORTH",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1739801145522,
+          "lastModifiedTime": 1739801145522
+        }
+      },
+      {
+        "id": "7635482d-9208-4f09-8ebf-d5a6b820e982",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "15281002",
+        "data": {
+          "code": 15281002,
+          "name": "ALAPPUZHA SOUTH",
+          "active": true,
+          "district": "ALAPPUZHA"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "lastModifiedBy": "1c9fd0e8-871b-4942-a0c6-cdc5717c48fb",
+          "createdTime": 1739863265147,
+          "lastModifiedTime": 1739863265147
+        }
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "moduleName": "case",
+    "masterName": "PoliceStation",
+    // this data need to be inactivated in prod through db
+    "mdmsPayload": [
+      {
+        "id": "87460b2d-3e15-4346-b17c-1288440ada40",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "9",
+        "data": {
+          "id": 9,
+          "code": "ANCHALUMMOODU",
+          "name": "Anchalummoodu Police Station",
+          "isActive": true
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "58f7c717-9e8e-4c35-8866-e0fe29350b66",
+          "lastModifiedBy": "58f7c717-9e8e-4c35-8866-e0fe29350b66",
+          "createdTime": 1732014160400,
+          "lastModifiedTime": 1732014160400
+        }
+      },
+      {
+        "id": "75987be3-0cb5-4785-ab5e-f190fe7ebf5f",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "8",
+        "data": {
+          "id": 8,
+          "code": "ERAVIPURAM",
+          "name": "Eravipuram Police Station",
+          "isActive": true
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "58f7c717-9e8e-4c35-8866-e0fe29350b66",
+          "lastModifiedBy": "58f7c717-9e8e-4c35-8866-e0fe29350b66",
+          "createdTime": 1732014149269,
+          "lastModifiedTime": 1732014149269
+        }
+      },
+      {
+        "id": "67c7f994-8461-4f5c-a07f-35163cc74f6e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "7",
+        "data": {
+          "id": 7,
+          "code": "KILIKOLLOOR",
+          "name": "Kilikolloor Police Station",
+          "isActive": true
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "58f7c717-9e8e-4c35-8866-e0fe29350b66",
+          "lastModifiedBy": "58f7c717-9e8e-4c35-8866-e0fe29350b66",
+          "createdTime": 1732014135998,
+          "lastModifiedTime": 1732014135998
+        }
+      },
+      {
+        "id": "4903df7c-890f-4b3e-b4f7-1e5d2cc1fb6e",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "6",
+        "data": {
+          "id": 6,
+          "code": "KOLLAM_EAST",
+          "name": "Kollam East Police Station",
+          "isActive": true
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "58f7c717-9e8e-4c35-8866-e0fe29350b66",
+          "lastModifiedBy": "58f7c717-9e8e-4c35-8866-e0fe29350b66",
+          "createdTime": 1732014124615,
+          "lastModifiedTime": 1732014124615
+        }
+      },
+      {
+        "id": "61c80a49-179a-4512-9e41-9195af485aae",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "5",
+        "data": {
+          "id": 5,
+          "code": "KOLLAM_WEST",
+          "name": "Kollam West Police Station",
+          "isActive": true
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "58f7c717-9e8e-4c35-8866-e0fe29350b66",
+          "lastModifiedBy": "58f7c717-9e8e-4c35-8866-e0fe29350b66",
+          "createdTime": 1732014083296,
+          "lastModifiedTime": 1732014083296
+        }
+      },
+      {
+        "id": "7fbbdb49-6cd1-4275-ab04-f1dc7ef63993",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "4",
+        "data": {
+          "id": 4,
+          "code": "KOTTIYAM",
+          "name": "Kottiyam Police Station",
+          "isActive": true
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "58f7c717-9e8e-4c35-8866-e0fe29350b66",
+          "lastModifiedBy": "58f7c717-9e8e-4c35-8866-e0fe29350b66",
+          "createdTime": 1732014071260,
+          "lastModifiedTime": 1732014071260
+        }
+      },
+      {
+        "id": "e3728bc1-3f85-4077-b74b-cfc9bc33aa55",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "3",
+        "data": {
+          "id": 3,
+          "code": "KUNDARA",
+          "name": "Kundara Police Station",
+          "isActive": true
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "58f7c717-9e8e-4c35-8866-e0fe29350b66",
+          "lastModifiedBy": "58f7c717-9e8e-4c35-8866-e0fe29350b66",
+          "createdTime": 1732014058868,
+          "lastModifiedTime": 1732014058868
+        }
+      },
+      {
+        "id": "0cd95802-86ed-4551-8431-553d6563f8f8",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "2",
+        "data": {
+          "id": 2,
+          "code": "PALLITHOTTAM",
+          "name": "Pallithottam Police Station",
+          "isActive": true
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "58f7c717-9e8e-4c35-8866-e0fe29350b66",
+          "lastModifiedBy": "58f7c717-9e8e-4c35-8866-e0fe29350b66",
+          "createdTime": 1732014044979,
+          "lastModifiedTime": 1732014044979
+        }
+      },
+      {
+        "id": "984d30c2-19c0-420d-9cae-ace7eff4b8b1",
+        "tenantId": "kl",
+        "schemaCode": "case.PoliceStation",
+        "uniqueIdentifier": "1",
+        "data": {
+          "id": 1,
+          "code": "SAKTHIKULANGARA",
+          "name": "Sakthikulangara Police Station",
+          "isActive": true
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "58f7c717-9e8e-4c35-8866-e0fe29350b66",
+          "createdTime": 1729002857706,
+          "lastModifiedTime": 1732014005146
+        }
+      }
+    ]
+  }
+]

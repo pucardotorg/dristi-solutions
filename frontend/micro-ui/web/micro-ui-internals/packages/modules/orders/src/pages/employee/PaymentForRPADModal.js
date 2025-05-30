@@ -165,6 +165,8 @@ const PaymentForRPADModal = ({ path }) => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
 
+  const caseCourtId = useMemo(() => caseDetails?.case?.courtId, [caseDetails]);
+
   const fetchCaseLockStatus = useCallback(async () => {
     try {
       const status = await DRISTIService.getCaseLockStatus(
@@ -208,6 +210,7 @@ const PaymentForRPADModal = ({ path }) => {
       criteria: {
         tenantId: tenantId,
         taskNumber: taskNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
@@ -218,7 +221,7 @@ const PaymentForRPADModal = ({ path }) => {
   const filteredTasks = useMemo(() => tasksData?.list, [tasksData]);
 
   const { data: orderData, isloading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
-    { tenantId, criteria: { id: filteredTasks?.[0]?.orderId } },
+    { tenantId, criteria: { id: filteredTasks?.[0]?.orderId, ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filteredTasks?.[0]?.orderId,
     Boolean(filteredTasks?.[0]?.orderId)
@@ -242,6 +245,7 @@ const PaymentForRPADModal = ({ path }) => {
         tenantID: tenantId,
         filingNumber: filingNumber,
         hearingId: orderDetails?.hearingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },

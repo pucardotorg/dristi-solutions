@@ -10,10 +10,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.IdgenUtil;
-import org.pucar.dristi.web.models.Amount;
-import org.pucar.dristi.web.models.Task;
-import org.pucar.dristi.web.models.TaskRequest;
+import org.pucar.dristi.web.models.*;
 
 import java.util.Collections;
 import java.util.UUID;
@@ -33,6 +32,9 @@ class TaskRegistrationEnrichmentTest {
 
     @Mock
     private Configuration configuration;
+
+    @Mock
+    private CaseUtil caseUtil;
 
     @BeforeEach
     void setUp() {
@@ -62,24 +64,44 @@ class TaskRegistrationEnrichmentTest {
     void testEnrichTaskRegistration_Success() {
         // Given
         TaskRequest taskRequest = createMockTaskRequest();
+
+        // Add a document to test document enrichment
+         Document mockDocument = new Document();
+        taskRequest.getTask().setDocuments(Collections.singletonList(mockDocument));
+
+        // Set a task type that is NOT "JOIN_CASE_PAYMENT" to avoid objectMapper logic
+        taskRequest.getTask().setTaskType("OTHER_TYPE");
+
+        // Mock configuration and ID generation
         String mockTenantId = "FIL123";
         String mockTaskId = "TASK123";
-        String mockTaskNumber = "FIL-123" + "-" + mockTaskId;
+        String mockTaskNumber = "FIL-123-TASK123";
 
         when(configuration.getTaskConfig()).thenReturn("taskConfigValue");
         when(configuration.getTaskFormat()).thenReturn("taskFormatValue");
-        when(idgenUtil.getIdList(any(), any(),any(),any(), eq(1), eq(false)))
+        when(idgenUtil.getIdList(any(), eq(mockTenantId), eq("taskConfigValue"), eq("taskFormatValue"), eq(1), eq(false)))
                 .thenReturn(Collections.singletonList(mockTaskId));
+
+        // Mock court case response for enrichCourtId
+        CourtCase mockCase = new CourtCase();
+        mockCase.setCourtId("court-001");
+        when(caseUtil.getCaseDetails(any())).thenReturn(Collections.singletonList(mockCase));
 
         // When
         taskRegistrationEnrichment.enrichTaskRegistration(taskRequest);
 
         // Then
-        assertNotNull(taskRequest.getTask().getAuditDetails());
-        assertNotNull(taskRequest.getTask().getId());
-        assertEquals(mockTaskNumber, taskRequest.getTask().getTaskNumber());
+        Task task = taskRequest.getTask();
+        assertNotNull(task.getAuditDetails());
+        assertNotNull(task.getId());
+        assertEquals(mockTaskNumber, task.getTaskNumber());
+        assertEquals("court-001", task.getCourtId());
+        assertEquals(1, task.getDocuments().size());
+        assertNotNull(task.getDocuments().get(0).getId());
+        assertEquals(task.getDocuments().get(0).getId(), task.getDocuments().get(0).getDocumentUid());
         verify(idgenUtil).getIdList(any(), eq(mockTenantId), eq("taskConfigValue"), eq("taskFormatValue"), eq(1), eq(false));
     }
+
 
     @Test
     void testEnrichCaseApplicationUponUpdate_Success() {
