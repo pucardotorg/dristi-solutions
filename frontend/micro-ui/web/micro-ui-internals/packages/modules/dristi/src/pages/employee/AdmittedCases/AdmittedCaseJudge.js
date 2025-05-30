@@ -50,6 +50,7 @@ import WitnessDrawer from "./WitnessDrawer";
 import AddParty from "../../../../../hearings/src/pages/employee/AddParty";
 import CaseOverviewJudge from "./CaseOverviewJudge";
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
+import { hearingService } from "../../../../../hearings/src/hooks/services";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -174,6 +175,9 @@ const AdmittedCaseJudge = () => {
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 
+  const [viewCauseList, setViewCauseList] = useState(false);
+  const [isNextHearingDrafted, setIsNextHearingDrafted] = useState(false);
+  const [passOver, setPassOver] = useState(false);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState(false);
   const [showOrderModal, setShowOrderModal] = useState(false);
@@ -315,7 +319,6 @@ const AdmittedCaseJudge = () => {
           moduleSearchCriteria: {
             tenantId: "kl",
             ...(fromDate && toDate ? { fromDate, toDate } : {}),
-            status: "IN_PROGRESS",
           },
           tenantId: "kl",
           limit: 300,
@@ -2321,24 +2324,52 @@ const AdmittedCaseJudge = () => {
     history.push(`/${window?.contextPath}/employee/submissions/submit-document?filingNumber=${filingNumber}`);
   }, [filingNumber, history]);
 
+  const nextHearing = useCallback(() => {
+    if (data?.length === 0) {
+      history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+    } else {
+      const index = data?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentInProgressHearing?.hearingId);
+      if (index === data?.length - 1 || index === -1) {
+        history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+      } else {
+        const row = data?.[index + 1];
+        if (row?.businessObject?.hearingDetails?.status === "SCHEDULED") {
+          hearingService
+            .searchHearings(
+              {
+                criteria: {
+                  hearingId: row?.businessObject?.hearingDetails?.hearingNumber,
+                  tenantId: row?.businessObject?.hearingDetails?.tenantId,
+                  ...(row?.businessObject?.hearingDetails?.courtId &&
+                    userType === "employee" && { courtId: row?.businessObject?.hearingDetails?.courtId }),
+                },
+              },
+              { tenantId: row?.businessObject?.hearingDetails?.tenantId }
+            )
+            .then((response) => {
+              hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
+                window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row.caseId}&filingNumber=${row.filingNumber}&tab=Overview`;
+              });
+            })
+            .catch((error) => {
+              console.error("Error starting hearing", error);
+              history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+            });
+        } else {
+          history.push(
+            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
+          );
+        }
+      }
+    }
+  }, [currentInProgressHearing?.hearingId, data, history, userType]);
+
   const handleEmployeeAction = useCallback(
     (option) => {
       if (option.value === "DOWNLOAD_CASE_FILE") {
         handleDownloadPDF();
       } else if (option.value === "NEXT_HEARING") {
-        if (data?.length === 0) {
-          history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
-        } else {
-          const index = data?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentInProgressHearing?.hearingId);
-          if (index === data?.length - 1 || index === -1) {
-            history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
-          } else {
-            const row = data?.[index + 1];
-            history.push(
-              `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseId}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
-            );
-          }
-        }
+        nextHearing();
       } else if (option.value === "VIEW_CALENDAR") {
         setShowCalendarModal(true);
       } else if (option.value === "GENERATE_ORDER") {
@@ -2351,7 +2382,7 @@ const AdmittedCaseJudge = () => {
         handleCourtAction();
       }
     },
-    [currentInProgressHearing?.hearingId, data, handleDownloadPDF, history]
+    [handleCourtAction, handleDownloadPDF, nextHearing]
   );
 
   const openHearingModule = useCallback(() => {
@@ -2835,13 +2866,7 @@ const AdmittedCaseJudge = () => {
         {caseDetails?.caseTitle && <Header styles={{ marginBottom: "-30px" }}>{caseDetails?.caseTitle}</Header>}
         <div className="admitted-case-details" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px" }}>
           <div className="case-details-title" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            {statue && (
-              <React.Fragment>
-                <div className="sub-details-text">{statue}</div>
-              </React.Fragment>
-            )}
-            <hr className="vertical-line" />
-            <div className="sub-details-text">{t(caseDetails?.stage)}</div>
+            <div className="sub-details-text">{caseDetails?.cmpNumber || caseDetails?.filingNumber}</div>
             <hr className="vertical-line" />
             <div className="sub-details-text">{t(caseDetails?.substage)}</div>
             {caseDetails?.outcome && (
@@ -3396,8 +3421,37 @@ const AdmittedCaseJudge = () => {
             />
           }
           actionSaveLabel={t("CS_CASE_END_START_NEXT_HEARING")}
-          actionSaveOnSubmit={() => {
-            setShowEndHearingModal(false);
+          actionSaveOnSubmit={async () => {
+            hearingService
+              .updateHearings(
+                {
+                  tenantId: Digit.ULBService.getCurrentTenantId(),
+                  hearing: { ...currentActiveHearing, workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
+                  hearingType: "",
+                  status: "",
+                },
+                { applicationNumber: "", cnrNumber: "" }
+              )
+              .then(() => {
+                setShowEndHearingModal(false);
+                nextHearing();
+              });
+          }}
+          actionCustomLabelSubmit={async () => {
+            hearingService
+              .updateHearings(
+                {
+                  tenantId: Digit.ULBService.getCurrentTenantId(),
+                  hearing: { ...currentActiveHearing, workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
+                  hearingType: "",
+                  status: "",
+                },
+                { applicationNumber: "", cnrNumber: "" }
+              )
+              .then(() => {
+                setShowEndHearingModal(false);
+                setViewCauseList(true);
+              });
           }}
           actionCancelOnSubmit={() => {
             setShowEndHearingModal(false);
@@ -3410,11 +3464,11 @@ const AdmittedCaseJudge = () => {
         >
           <div style={{ margin: "16px 0px" }}>
             <CheckBox
-              onChange={() => {
-                // setGenerateOrder((prev) => !prev);
+              onChange={(e) => {
+                setPassOver(e.target.checked);
               }}
               label={`${t("CS_CASE_PASS_OVER")}: ${t("CS_CASE_PASS_OVER_HEARING_TEXT")}`}
-              // checked={generateOrder}
+              checked={passOver}
               disable={false}
             />
           </div>
@@ -3435,6 +3489,7 @@ const AdmittedCaseJudge = () => {
         }}
         attendees={currentActiveHearing?.attendees}
         caseDetails={caseDetails}
+        setIsNextHearingDrafted={setIsNextHearingDrafted}
       />
       {showWitnessModal && (
         <WitnessDrawer
