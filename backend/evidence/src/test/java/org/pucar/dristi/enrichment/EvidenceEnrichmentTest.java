@@ -89,7 +89,6 @@ public class EvidenceEnrichmentTest {
         when(configuration.getArtifactFormat()).thenReturn("testformat");
         when(caseUtil.searchCaseDetails(any())).thenReturn(mockJsonNode);
         when(mockJsonNode.get("courtId")).thenReturn(mockJsonNode);
-        when(mockJsonNode.get("courtId").get(0)).thenReturn(mockJsonNode);
 
         // Call the method to be tested
         evidenceEnrichment.enrichEvidenceRegistration(evidenceRequest);
