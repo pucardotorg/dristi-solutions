@@ -101,6 +101,15 @@ public class Task {
     @Valid
     private Workflow workflow = null;
 
+    @JsonProperty("caseTitle")
+    private String caseTitle = null;
+
+    @JsonProperty("courtId")
+    private String courtId;
+
+    @JsonProperty("caseId")
+    private String caseId = null;
+
 
     public Task addDocumentsItem(Document documentsItem) {
         if(this.documents == null || this.documents.isEmpty()){
