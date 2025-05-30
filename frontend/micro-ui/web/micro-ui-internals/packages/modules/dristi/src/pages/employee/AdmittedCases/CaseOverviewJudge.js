@@ -134,8 +134,7 @@ const CaseOverviewJudge = ({
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
       <div className="hearing-summary-container">
         {hearingRes?.HearingList?.find((hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status) && Boolean(hearing?.transcript?.[0])) && (
-                  <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none" }}>
-
+          <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none" }}>
             <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
               <div
                 style={{
@@ -189,7 +188,7 @@ const CaseOverviewJudge = ({
         </Card>
       </div>
       <div className="process-summary-container">
-      <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none" }}>
+        <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none" }}>
           {<NoticeProcessModal showModal={false} filingNumber={filingNumber} currentHearingId={currentHearingId} caseDetails={caseDetails} />}
         </Card>
       </div>

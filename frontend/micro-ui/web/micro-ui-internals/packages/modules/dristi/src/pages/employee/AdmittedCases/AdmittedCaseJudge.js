@@ -7,7 +7,7 @@ import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
 import { CustomThreeDots, RightArrow } from "../../../icons/svgIndex";
 import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import ViewCaseFile from "../scrutiny/ViewCaseFile";
-import { TabSearchconfig } from "./AdmittedCasesConfig";
+import { TabSearchconfigNew } from "./AdmittedCasesConfig";
 import EvidenceModal from "./EvidenceModal";
 import ExtraComponent from "./ExtraComponent";
 import "./tabs.css";
@@ -745,7 +745,7 @@ const AdmittedCaseJudge = () => {
       }
     };
 
-    const activeTabConfig = TabSearchconfig?.TabSearchconfig.find((tabConfig) => tabConfig.label === activeTab);
+    const activeTabConfig = TabSearchconfigNew?.TabSearchconfig.find((tabConfig) => tabConfig.label === activeTab);
     if (!activeTabConfig) return [];
 
     const getTabConfig = (tabConfig) => {
@@ -1110,7 +1110,7 @@ const AdmittedCaseJudge = () => {
 
   const newTabSearchConfig = useMemo(
     () => ({
-      ...TabSearchconfig,
+      ...TabSearchconfigNew,
       TabSearchconfig: configList,
     }),
     [configList]
@@ -1269,7 +1269,7 @@ const AdmittedCaseJudge = () => {
   }, [caseInfo, isDelayApplicationPending, isDelayCondonationApplicable, isOpenFromPendingTask, t]);
 
   const tabData = useMemo(() => {
-    return TabSearchconfig?.TabSearchconfig?.map((configItem, index) => ({
+    return TabSearchconfigNew?.TabSearchconfig?.map((configItem, index) => ({
       key: index,
       label: configItem.label,
       active: configItem?.label === activeTab ? true : false,
@@ -1982,10 +1982,9 @@ const AdmittedCaseJudge = () => {
     [hearingDetails?.HearingList]
   );
 
-  const currentInProgressHearingId = useMemo(
-    () => hearingDetails?.HearingList?.find((list) => ["IN_PROGRESS"].includes(list?.status))?.hearingId,
-    [hearingDetails?.HearingList]
-  );
+  const currentInProgressHearingId = useMemo(() => hearingDetails?.HearingList?.find((list) => ["IN_PROGRESS"].includes(list?.status))?.hearingId, [
+    hearingDetails?.HearingList,
+  ]);
 
   const currentInProgressHearing = useMemo(() => hearingDetails?.HearingList?.find((list) => list?.status === "IN_PROGRESS"), [
     hearingDetails?.HearingList,
@@ -2738,15 +2737,25 @@ const AdmittedCaseJudge = () => {
 
   // outcome always null unless case went on final stage
   const showActionBar = useMemo(
-    () => 
+    () =>
       // If there is any hearing in progress, do not show action bar
-      !currentInProgressHearing && (primaryAction.action ||
+      !currentInProgressHearing &&
+      (primaryAction.action ||
         secondaryAction.action ||
         tertiaryAction.action ||
         ([CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(caseDetails?.status) && !isCitizen)) &&
       !caseDetails?.outcome &&
       !isCourtRoomManager,
-    [primaryAction.action, secondaryAction.action, tertiaryAction.action, caseDetails?.status, caseDetails?.outcome, isCitizen, isCourtRoomManager, currentInProgressHearing]
+    [
+      primaryAction.action,
+      secondaryAction.action,
+      tertiaryAction.action,
+      caseDetails?.status,
+      caseDetails?.outcome,
+      isCitizen,
+      isCourtRoomManager,
+      currentInProgressHearing,
+    ]
   );
 
   // const handleOpenSummonNoticeModal = async (partyIndex) => {
@@ -3129,9 +3138,7 @@ const AdmittedCaseJudge = () => {
           )}
         </div>
       )}
-      <div className={`inbox-search-wrapper orders-tab-inbox-wrapper`}>
-        {inboxComposer}
-      </div>
+      <div className={`inbox-search-wrapper orders-tab-inbox-wrapper`}>{inboxComposer}</div>
       {tabData?.filter((tab) => tab.label === "Overview")?.[0]?.active && (
         <div className="case-overview-wrapper">
           <CaseOverviewJudge
