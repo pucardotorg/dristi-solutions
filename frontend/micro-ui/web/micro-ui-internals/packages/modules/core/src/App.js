@@ -4,6 +4,8 @@ import CitizenApp from "./pages/citizen";
 import EmployeeApp from "./pages/employee";
 import { useTranslation } from "react-i18next";
 import TopBarSideBar from "./components/TopBarSideBar";
+import usePageLoadTimeLogger from "./hooks/usePageLoadTimeLogger";
+
 const styles = {
   container: {
     display: "flex",
@@ -29,6 +31,7 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData ,de
   const userDetails = Digit.UserService.getUser();
   const { data: storeData } = Digit.Hooks.useStore.getInitData();
   const { stateInfo } = storeData || {};
+  usePageLoadTimeLogger();
   
   const DSO = Digit.UserService.hasAccess(["FSM_DSO"]);
   let CITIZEN = userDetails?.info?.type === "CITIZEN" || !window.location.pathname.split("/").includes("employee") ? true : false;
