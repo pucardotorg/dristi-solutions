@@ -198,20 +198,10 @@ public class Configuration {
     private String causeListPdfTopic;
 
     //court details
-    @Value("${court.id}")
-    private String courtId;
 
-    @Value("${court.name}")
-    private String courtName;
 
     @Value("${court.enabled}")
     private Boolean courtEnabled;
-
-    @Value("${judge.name}")
-    private String judgeName;
-
-    @Value("${judge.designation}")
-    private String judgeDesignation;
 
 
     @Value("${egov.advocate.host}")
@@ -226,6 +216,12 @@ public class Configuration {
 
     @Value("${egov.individual.search.path}")
     private String individualSearchEndpoint;
+
+    @Value("${dristi.hrms.host}")
+    private String hrmsHost;
+
+    @Value("${dristi.hrms.endpoint}")
+    private String hrmsEndPoint;
 
     //Localization
     @Value("${egov.localization.host}")
