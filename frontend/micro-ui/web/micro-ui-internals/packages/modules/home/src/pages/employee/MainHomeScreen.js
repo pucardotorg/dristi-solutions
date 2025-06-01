@@ -37,6 +37,88 @@ const MainHomeScreen = () => {
     return { ...config };
   }, [config]);
 
+  const getTodayRange = () => {
+    const currentDate = new Date();
+    const fromDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 0, 0, 0, 0).getTime();
+    const toDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 23, 59, 59, 999).getTime();
+    return { fromDate, toDate };
+  };
+
+  // API call for hearing tab count
+  const fetchHearingCount = async () => {
+    const { fromDate, toDate } = getTodayRange();
+    const payload = {
+      inbox: {
+        processSearchCriteria: {
+          businessService: ["hearing-default"],
+          moduleName: "Hearing Service",
+          tenantId: tenantId,
+        },
+        moduleSearchCriteria: {
+          tenantId: tenantId,
+          ...(fromDate && toDate ? { fromDate, toDate } : {}),
+        },
+        tenantId: tenantId,
+        limit: 300,
+        offset: 0,
+      },
+    };
+    const res = await HomeService.InboxSearch(payload, { tenantId: tenantId });
+    setHearingCount(res?.totalCount || 0);
+  };
+
+  // API call for pending tasks count
+  const fetchPendingTaskCounts = async () => {
+    const { fromDate } = getTodayRange();
+    const payload = {
+      SearchCriteria: {
+        moduleName: "Pending Tasks Service",
+        tenantId: tenantId,
+        limit: 10,
+        offset: 0,
+        moduleSearchCriteria: {
+          screenType: ["home", "applicationCompositeOrder"],
+          isCompleted: false,
+        },
+        searchReviewProcess: {
+          date: fromDate,
+          isOnlyCountRequired: false,
+          actionCategory: "Review Process",
+        },
+        searchViewApplication: {
+          date: fromDate,
+          isOnlyCountRequired: false,
+          actionCategory: "View Application",
+        },
+        searchScheduleHearing: {
+          date: fromDate,
+          isOnlyCountRequired: true,
+          actionCategory: "Schedule Hearing",
+        },
+        searchRegisterCases: {
+          date: fromDate,
+          isOnlyCountRequired: false,
+          actionCategory: "Register cases",
+        },
+      },
+    };
+    let res = await HomeService.pendingTaskSearch(payload, { tenantId: tenantId });
+    const reviwCount = res?.reviewProcessData?.count || 0;
+    const applicationCount = res?.viewApplicationData?.count || 0;
+    const scheduleCount = res?.scheduleHearingData?.count || 0;
+    const registerCount = res?.registerCasesData?.count || 0;
+    setPendingTaskCount({
+      REGISTRATION: registerCount,
+      REVIEW_PROCESS: reviwCount,
+      VIEW_APPLICATION: applicationCount,
+      SCHEDULE_HEARING: scheduleCount,
+    });
+  };
+
+  useEffect(() => {
+    fetchPendingTaskCounts();
+  }, []);
+
   const options = {
     REGISTRATION: {
       name: "Registrater Cases",
@@ -60,90 +142,16 @@ const MainHomeScreen = () => {
     },
   };
 
-  const updatePrevTabCount = async (title) => {
-    const currentDate = new Date();
-    const fromDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 0, 0, 0, 0).getTime();
-    const toDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 23, 59, 59, 999).getTime();
-    try {
-      if (title === "HEARINGS_TAB") {
-        debugger;
-        const payload = {
-          inbox: {
-            processSearchCriteria: {
-              businessService: ["hearing-default"],
-              moduleName: "Hearing Service",
-              tenantId: tenantId,
-            },
-            moduleSearchCriteria: {
-              tenantId: tenantId,
-              ...(fromDate && toDate ? { fromDate, toDate } : {}),
-            },
-            tenantId: tenantId,
-            limit: 300,
-            offset: 0,
-          },
-        };
-        const res = await HomeService.InboxSearch(payload, { tenantId: tenantId });
-        setHearingCount(res?.totalCount || 0);
-      } else {
-        const payload = {
-          SearchCriteria: {
-            moduleName: "Pending Tasks Service",
-            tenantId: tenantId,
-            limit: 10,
-            offset: 0,
-
-            moduleSearchCriteria: {
-              screenType: ["home", "applicationCompositeOrder"],
-              isCompleted: false,
-            },
-
-            searchReviewProcess: {
-              date: 1748543400000,
-              isOnlyCountRequired: false,
-              actionCategory: "Review Process",
-            },
-            searchViewApplication: {
-              date: 1748543400000,
-              isOnlyCountRequired: false,
-              actionCategory: "View Application",
-            },
-            searchScheduleHearing: {
-              date: 1748543400000,
-              isOnlyCountRequired: true,
-              actionCategory: "Schedule Hearing",
-            },
-            searchRegisterCases: {
-              date: null,
-              isOnlyCountRequired: false,
-              actionCategory: "Register cases",
-            },
-          },
-        };
-        let res = await HomeService.pendingTaskSearch(payload, { tenantId: tenantId });
-
-        const reviwCount = res?.reviewProcessData?.count || 0;
-        const applicationCount = res?.viewApplicationData?.count || 0;
-        const scheduleCount = res?.scheduleHearingData?.count || 0;
-        const registerCount = res?.registerCasesData?.count || 0;
-
-        setPendingTaskCount({
-          REGISTRATION: registerCount,
-          REVIEW_PROCESS: reviwCount,
-          VIEW_APPLICATION: applicationCount,
-          SCHEDULE_HEARING: scheduleCount,
-        });
-      }
-    } catch (e) {
-      console.log(e);
-    }
-  };
-
+  // When tab changes, update previous tab's count
   const handleTabChange = (title, label, func) => {
-    let updatedConfig = config;
     if (title !== activeTabTitle) {
-      updatePrevTabCount(activeTabTitle);
+      if (activeTabTitle === "HEARINGS_TAB") {
+        fetchHearingCount();
+      } else {
+        fetchPendingTaskCounts();
+      }
     }
+    let updatedConfig = config;
     if (label) {
       setActiveTab(label);
       updatedConfig = {
@@ -159,6 +167,7 @@ const MainHomeScreen = () => {
     setConfig(updatedConfig);
     setActiveTabTitle(title);
   };
+
   const inboxSearchComposer = useMemo(
     () => (
       <InboxSearchComposer key={`${activeTab}-${updateCounter}`} customStyle={sectionsParentStyle} configs={modifiedConfig}></InboxSearchComposer>

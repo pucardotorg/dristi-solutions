@@ -325,149 +325,255 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
         margin-bottom: 0px !important;
         border: 1px solid black;
       }
-        .main-table-card {
-          background: #fff;
-          border-radius: 12px;
-          box-shadow: 0 2px 8px rgba(44,62,80,0.07);
-         padding: 0px 18px 18px 18px;
-        }
+      .main-table-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(44,62,80,0.07);
+        padding: 0px 18px 18px 18px;
+        position: relative;
+        overflow: hidden;
+      }
+      .filter-bar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(44,62,80,0.06);
+        padding: 16px 18px;
+        margin-bottom: 8px;
+        justify-content: space-between;
+      }
+      .filter-bar .filter-fields {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        flex: 1 1 300px;
+        min-width: 0;
+      }
+      .filter-bar .filter-actions {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        align-items: center;
+        margin-left: 12px;
+      }
+      @media (max-width: 900px) {
         .filter-bar {
-          display: flex;
-          gap: 12px;
-          align-items: center;
-          background: #fff;
-          border-radius: 8px;
-          box-shadow: 0 1px 4px rgba(44,62,80,0.06);
-          padding: 16px 18px;
-          margin-bottom: 8px;
-          justify-content: space-between;
+          flex-direction: column;
+          align-items: stretch;
         }
-       
-        .filter-bar button {
-          border-radius: 0;
-          font-size: 16px;
-          padding: 8px 22px;
-          font-weight: 500;
-          border: none;
-          margin-left: 2px;
-        }
-        .filter-bar .search-btn {
-          background: #159392;
-          color: #fff;
-          font-size: 19px;
-          line-height: 2rem;
-          width :200px;
-           backgroundColor: "#007E7E";
-                width: "212px";
-                height: "40px";
-                paddingTop: "8px";
-                paddingRight: "24px";
-                paddingBottom: "8px";
-                paddingLeft: "24px";
-                gap: "4px";
-                  fontSize: "16px";
-                fontWeight: 700;
-                fontFamily: "Roboto";
-                lineHeight: "19.2px";
-                textAlign: "left";
-                margin: "0px";
-                color: "white";
-        }
-        .filter-bar .clear-btn {
-          background: #fff;
-          color: #159392;
-          border: 0px;
-          cursor: pointer;
-          padding-left: 3px;
-          padding-right: 3px;
-        }
-        .main-table {
+        .filter-bar .filter-fields {
           width: 100%;
-          border-collapse: separate;
-          border-spacing: 0;
         }
-        .main-table th {
-          font-weight: 600;
-          font-size: 15px;
-          background: #fff;
-          padding: 12px 8px;
-          border-bottom: 2px solid #e8e8e8;
+        .filter-bar .filter-actions {
+          margin-left: 0;
+          margin-top: 12px;
+          justify-content: flex-start;
         }
-        .custom-table-row td {
-          padding: 14px 8px;
-          border-bottom: 1px solid #e8e8e8;
-          font-size: 15px;
-          background: #fff;
-        }
-        .custom-table-row:hover {
-          background: #f6fafd;
-        }
-        .case-link {
-          cursor: pointer;
-          color:#0A0A0A;
-          text-decoration: underline;
-          font-weight: 500;
-        }
-        .status-badge {
-          display: inline-block;
-          padding: 2px 14px;
-          border-radius: 12px;
-          font-size: 14px;
-          font-weight: 500;
-        }
-        .status-completed {
-          background: #E8E8E8;
-          color: #3D3C3C;
-        }
-        .status-ongoing {
-         background: #E4F2E4;
-          color: #00703C;
-        }
-        .status-passed {
-          background: #FFF6E8;
-          color: #9E400A;
-        }
-          .status-passed-over{
-          background: #FFF6E8;
-          color: #9E400A;}
-        .status-scheduled {
-         background: #E4F2E4;
-          color: #00703C;
-        }
-        .status-abated {
-         background: #E8E8E8;
-          color: #3D3C3C;
-        }
-        .status-default {
-          background: #f5f5f5;
-          color: #333;
-        }      
-        .advocate-header {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-        .advocate-header .info-icon {
-          font-size: 15px;
-          color: #888;
-          cursor: pointer;
-        }
-        .table-scroll {
-          max-height: 420px;
-          overflow: auto;
-          height: calc(100vh - 361px);
-        }
+      }
+      .filter-bar button.search-btn {
+        background: #007E7E;
+        color: #fff;
+        font-size: 16px;
+        font-weight: 700;
+        font-family: Roboto, sans-serif;
+        line-height: 19.2px;
+        border-radius: 8px;
+        border: none;
+        padding: 8px 24px;
+        margin: 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        transition: background 0.2s;
+        min-width: 140px;
+        cursor: pointer;
+      }
+      .filter-bar button.search-btn:hover {
+        background: #159392;
+      }
+      .filter-bar .clear-btn {
+        background: #fff;
+        color: #007E7E;
+        border: 1px solid #007E7E;
+        border-radius: 8px;
+        cursor: pointer;
+        padding: 8px 18px;
+        font-size: 16px;
+        font-weight: 500;
+        margin-right: 4px;
+        transition: background 0.2s, color 0.2s;
+      }
+      .filter-bar .clear-btn:hover {
+        background: #E4F2E4;
+        color: #007E7E;
+      }
+      .main-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        position: relative;
+      }
+      .main-table th {
+        font-weight: 600;
+        font-size: 15px;
+        background: #fff;
+        padding: 12px 8px;
+        border-bottom: 2px solid #e8e8e8;
+        position: relative;
+        box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+        text-align: left;
+      }
+      .custom-table-row td {
+        padding: 14px 8px;
+        border-bottom: 1px solid #e8e8e8;
+        font-size: 15px;
+        background: #fff;
+        text-align: left;
+      }
+      .custom-table-row:hover {
+        background: #f6fafd;
+      }
+      .case-link {
+        cursor: pointer;
+        color:#0A0A0A;
+        text-decoration: underline;
+        font-weight: 500;
+      }
+      .status-badge {
+        display: inline-block;
+        padding: 2px 14px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 500;
+      }
+      .status-completed {
+        background: #E8E8E8;
+        color: #3D3C3C;
+      }
+      .status-ongoing {
+       background: #E4F2E4;
+        color: #00703C;
+      }
+      .status-passed {
+        background: #FFF6E8;
+        color: #9E400A;
+      }
+        .status-passed-over{
+        background: #FFF6E8;
+        color: #9E400A;}
+      .status-scheduled {
+       background: #E4F2E4;
+        color: #00703C;
+      }
+      .status-abated {
+       background: #E8E8E8;
+        color: #3D3C3C;
+      }
+      .status-default {
+        background: #f5f5f5;
+        color: #333;
+      }      
+      .advocate-header {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .advocate-header .info-icon {
+        font-size: 15px;
+        color: #888;
+        cursor: pointer;
+      }
+     /* Update your existing styles in the HomeHearingsTab component */
 
-        .table-content {
-          margin-top: 60px; 
-        }
+.main-table-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(44,62,80,0.07);
+  padding: 0px 18px 18px 18px;
+  /* Add these properties for better scrolling */
+  position: relative;
+  overflow: hidden;
+}
+
+.table-scroll {
+  max-height: 420px;
+  overflow: auto;
+  height: calc(100vh - 361px);
+  /* Remove margin-top if present */
+}
+
+.main-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  /* Ensure table takes full width */
+  position: relative;
+}
+
+.main-table thead {
+  /* Make header sticky */
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.main-table th {
+  font-weight: 600;
+  font-size: 15px;
+  background: #fff;
+  padding: 12px 8px;
+  border-bottom: 2px solid #e8e8e8;
+  /* Ensure background covers content below */
+  position: relative;
+  /* Add shadow for better visual separation */
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+}
+
+.custom-table-row td {
+  padding: 14px 8px;
+  border-bottom: 1px solid #e8e8e8;
+  font-size: 15px;
+  background: #fff;
+}
+
+.custom-table-row:hover {
+  background: #f6fafd;
+}
+
+/* Remove this class since we're using sticky header */
+.table-content {
+  /* Remove margin-top: 60px; */
+}
+
+/* Alternative approach if you need more control over the scroll container */
+.table-container {
+  position: relative;
+  max-height: 420px;
+  overflow-y: auto;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+}
+
+.table-container .main-table {
+  margin: 0;
+}
+
+.table-container .main-table thead th {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 5;
+}
 
         .jk-dropdown-unique{
          max-height: 300px;
           overflow-y: auto;}
+
+
       `}</style>
       <div className="filter-bar">
-        <div style={{ display: "flex", gap: "12px" }}>
+        <div className="filter-fields">
           <LabelFieldPair className={`case-label-field-pair `}>
             <CardLabel className="case-input-label">{`${t("Date")}`}</CardLabel>
             <TextInput
@@ -478,7 +584,6 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
               onChange={(e) => {
                 setFilters((prev) => ({ ...prev, date: e.target.value }));
               }}
-              // min={new Date().toISOString().split("T")[0]}
             />
           </LabelFieldPair>
           <LabelFieldPair className={`case-label-field-pair `} style={{ marginTop: "1px" }}>
@@ -515,7 +620,6 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
               }}
             />
           </LabelFieldPair>
-
           <LabelFieldPair className={`case-label-field-pair `}>
             <CardLabel className="case-input-label">{`${t("CASE_NAME")}`}</CardLabel>
             <TextInput
@@ -529,8 +633,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
             />
           </LabelFieldPair>
         </div>
-        {/* <input type="text" name="caseQuery" placeholder="Case ID, Name, Advocate" value={filters.caseQuery} onChange={handleInputChange} /> */}
-        <div>
+        <div className="filter-actions">
           <span className="clear-btn" onClick={handleClear}>
             Clear Search
           </span>
@@ -558,7 +661,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
                 <th>{t("ACTIONS")}</th>
               </tr>
             </thead>
-            <tbody className="table-content ">
+            <tbody>
               {loading ? (
                 <tr>
                   <td colSpan={7} style={{ textAlign: "center", padding: 24 }}>

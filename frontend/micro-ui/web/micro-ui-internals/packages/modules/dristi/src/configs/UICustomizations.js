@@ -1891,11 +1891,15 @@ export const UICustomizations = {
       return {
         ...requestCriteria,
         body: {
-          ...requestCriteria.body,
+          // ...requestCriteria.body,
           SearchCriteria: {
             ...requestCriteria.body.SearchCriteria,
             moduleSearchCriteria: {
               ...requestCriteria?.body?.SearchCriteria?.moduleSearchCriteria,
+              ...(requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.value }),
+              ...(requestCriteria?.state?.searchForm?.caseSearchText && {
+                searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+              }),
             },
             searchReviewProcess: {
               date: activeTab === "REVIEW_PROCESS" ? selectedDateInMs : currentDateInMs,
@@ -1940,23 +1944,26 @@ export const UICustomizations = {
               SCHEDULE_HEARING: scheduleCount,
             });
             const processFields = (fields) => {
-              const result = fields.reduce((acc, curr) => {
-                const key = curr.key.replace(/\[.*?\]/g, "");
-                acc[key] = curr.value;
+              const result = fields?.reduce((acc, curr) => {
+                const key = curr?.key?.replace(/\[.*?\]/g, "");
+                acc[key] = curr?.value;
                 return acc;
               }, {});
 
               return {
-                caseTitle: result.caseTitle,
-                caseNumber: result.caseNumber,
-                substage: result.substage,
+                caseTitle: result?.caseTitle,
+                caseNumber: result?.caseNumber,
+                substage: result?.substage,
+                filingNumber: result?.filingNumber,
+                caseId: result?.caseId,
                 advocateDetails: result["advocateDetails.complainant[0]"],
               };
             };
             if (activeTab === "REVIEW_PROCESS") {
               return { data: data?.reviewProcessData?.data?.map((item) => processFields(item.fields)) || [] };
-            } else if (activeTab === "VIEW_APPLICATION") return data?.viewApplicationData?.data?.map((item) => processFields(item.fields));
-            else if (activeTab === "SCHEDULE_HEARING") return data?.scheduleHearingData?.data?.map((item) => processFields(item.fields));
+            } else if (activeTab === "VIEW_APPLICATION") {
+              return { data: data?.viewApplicationData?.data?.map((item) => processFields(item.fields)) };
+            } else if (activeTab === "SCHEDULE_HEARING") return { data: data?.scheduleHearingData?.data?.map((item) => processFields(item.fields)) };
             else return { data: data?.registerCasesData?.data?.map((item) => processFields(item.fields)) || [] };
           },
         },
@@ -1966,19 +1973,13 @@ export const UICustomizations = {
       const showDocument =
         userRoles?.includes("APPLICATION_APPROVER") || userRoles?.includes("DEPOSITION_ESIGN") || row.workflow?.action !== "PENDINGREVIEW";
       switch (key) {
-        case "DOCUMENT_TEXT":
-          return showDocument ? <OwnerColumn rowData={row} colData={column} t={t} /> : "";
-        case "FILE":
-          return showDocument ? <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} /> : "";
-        case "DATE_ADDED":
-        case "DATE_ISSUED":
-        case "DATE":
-          const date = new Date(value);
-          const day = date.getDate().toString().padStart(2, "0");
-          const month = (date.getMonth() + 1).toString().padStart(2, "0"); // Month is zero-based
-          const year = date.getFullYear();
-          const formattedDate = `${day}-${month}-${year}`;
-          return <span>{value && value !== "0" ? formattedDate : ""}</span>;
+        case "CASE_NAME":
+          return (
+            <Link to={`/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview`}>
+              {value ? value : "-"}
+            </Link>
+          );
+        case "ADVOCATES":
         case "PARTIES":
           if (value === null || value === undefined || value === "undefined" || value === "null") {
             return null;
@@ -1993,25 +1994,6 @@ export const UICustomizations = {
                 ?.map((party) => party?.partyName || party?.name)
                 ?.join(", ")}${value?.length > 2 ? `+${value?.length - 2}` : ""}`}</span>
             </div>
-          );
-        case "ORDER_TYPE":
-          return <OrderName rowData={row} colData={column} value={value} />;
-        case "SUBMISSION_TYPE":
-          return <OwnerColumn rowData={row} colData={column} t={t} value={value} showAsHeading={true} />;
-        case "DOCUMENT_TYPE":
-          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} />;
-        case "HEARING_TYPE":
-        case "SOURCE":
-        case "STATUS":
-          //Need to change the shade as per the value
-          return <CustomChip text={t(value)} shade={value === "PUBLISHED" ? "green" : "orange"} />;
-        case "OWNER":
-          return removeInvalidNameParts(value);
-        case "SUBMISSION_ID":
-          return value ? value : "-";
-        case "CS_ACTIONS":
-          return (
-            <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="SearchIndividualConfig" />
           );
         default:
           return value ? value : "-";
