@@ -268,7 +268,7 @@ const GenerateOrders = () => {
   const [profileEditorName, setProfileEditorName] = useState("");
   const currentDiaryEntry = history.location?.state?.diaryEntry;
 
-    // Access breadcrumb context to get and set case navigation data
+  // Access breadcrumb context to get and set case navigation data
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
 
@@ -338,7 +338,7 @@ const GenerateOrders = () => {
           ],
           tenantId,
         },
-        {},
+        {}
       );
       const caseId = caseData?.criteria?.[0]?.responseList?.[0]?.id;
       setCaseData(caseData);
@@ -347,17 +347,15 @@ const GenerateOrders = () => {
         setBreadCrumbsParamsData({
           caseId,
           filingNumber,
-        })
+        });
         isBreadCrumbsParamsDataSet.current = true;
       }
-    }
-    catch (err) {
+    } catch (err) {
       setCaseApiError(err);
-    }
-    finally {
+    } finally {
       setIsCaseDetailsLoading(false);
     }
-  }
+  };
 
   // Fetch case details on component mount
   useEffect(() => {
@@ -657,10 +655,19 @@ const GenerateOrders = () => {
     if (isSignSuccess) {
       setShowsignatureModal(true);
       setOrderPdfFileStoreID(savedOrderPdf);
-      sessionStorage.removeItem("esignProcess");
-      sessionStorage.removeItem("orderPDF");
     }
   }, [defaultIndex, orderNumber, selectedOrder]);
+
+  useEffect(() => {
+    if (showsignatureModal) {
+      const cleanupTimer = setTimeout(() => {
+        sessionStorage.removeItem("esignProcess");
+        sessionStorage.removeItem("orderPDF");
+      }, 200);
+  
+      return () => clearTimeout(cleanupTimer);
+    }
+  }, [showsignatureModal]);
 
   useEffect(() => {
     const getOrder = async () => {
