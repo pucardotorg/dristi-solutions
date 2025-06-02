@@ -184,7 +184,9 @@ public class TaskService {
 
             log.info("operation=updateTask, status=SUCCESS, BODY: {}", body);
 
-            filterDocuments(List.of(body.getTask()),
+            filterDocuments(new ArrayList<>() {{
+                                add(body.getTask());
+                            }},
                     Task::getDocuments,
                     Task::setDocuments);
 

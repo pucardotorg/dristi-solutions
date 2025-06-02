@@ -127,7 +127,7 @@ public class OrderRegistrationService {
 
             callNotificationService(body, updatedState, orderType);
 
-            filterDocuments(List.of(body.getOrder()), Order::getDocuments, Order::setDocuments);
+            filterDocuments(new ArrayList<>() {{ add(body.getOrder());}}, Order::getDocuments, Order::setDocuments);
 
             return body.getOrder();
 

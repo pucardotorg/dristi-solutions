@@ -117,7 +117,9 @@ public class ApplicationService {
             smsNotificationUtil.callNotificationService(applicationRequest, application.getStatus(), application.getApplicationType());
             producer.push(config.getApplicationUpdateTopic(), applicationRequest);
 
-            filterDocuments(List.of(application),
+            filterDocuments(new ArrayList<>() {{
+                                add(application);
+                            }},
                     Application::getDocuments,
                     Application::setDocuments);
 

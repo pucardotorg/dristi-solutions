@@ -152,7 +152,9 @@ public class HearingService {
             String updatedState = hearingRequest.getHearing().getStatus();
             callNotificationService(hearingRequest, updatedState);
 
-            filterDocuments(List.of(hearing),
+            filterDocuments(new ArrayList<>() {{
+                                add(hearing);
+                            }},
                     Hearing::getDocuments,
                     Hearing::setDocuments);
 
