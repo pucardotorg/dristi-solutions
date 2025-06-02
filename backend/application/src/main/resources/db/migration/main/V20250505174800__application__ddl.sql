@@ -1,2 +1,0 @@
-ALTER TABLE dristi_application_document
-ADD COLUMN  isActive bool DEFAULT TRUE;
