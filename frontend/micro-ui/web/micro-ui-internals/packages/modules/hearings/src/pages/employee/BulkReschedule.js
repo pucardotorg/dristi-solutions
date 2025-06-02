@@ -116,15 +116,16 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     if (currentDiaryEntry) setStepper(1);
     const esignProcess = sessionStorage.getItem("esignProcess");
     if (esignProcess) {
-      sessionStorage.removeItem("esignProcess");
-      clearLocalStorage();
+      setTimeout(() => {
+        sessionStorage.removeItem("esignProcess");
+        clearLocalStorage();
+      }, 200);
     }
   }, [currentDiaryEntry, setStepper]);
 
   useEffect(() => {
     if (bulkNotificationStepper) {
       setStepper(bulkNotificationStepper);
-      sessionStorage.removeItem("bulkNotificationStepper");
     }
   }, [bulkNotificationStepper, setStepper]);
 
