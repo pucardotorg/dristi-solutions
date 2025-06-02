@@ -173,7 +173,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
               <BackButton />
             </div>
           )}
-          {/* {location.pathname.includes("/view-case") && <Breadcrumb crumbs={citizenCrumb} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>} */}
+          {location.pathname.includes("/edit-profile") && <Breadcrumb crumbs={citizenCrumb} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>}
 
           {userType !== "LITIGANT" && (
             <PrivateRoute exact path={`${path}/home/application-details`} component={(props) => <ApplicationDetails {...props} />} />
