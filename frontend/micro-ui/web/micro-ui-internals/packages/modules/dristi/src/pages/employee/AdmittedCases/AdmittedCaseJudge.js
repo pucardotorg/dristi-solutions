@@ -2388,7 +2388,10 @@ const AdmittedCaseJudge = () => {
             },
             { tenantId: caseDetails?.tenantId }
           );
-          if (orderResponse?.list?.length > 0) {
+          if (
+            orderResponse?.list?.length > 0 &&
+            orderResponse?.list?.find((order) => order?.additionalDetails?.referenceId === currentInProgressHearing?.hearingNumber)
+          ) {
             setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: true });
           } else {
             setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true });
@@ -3525,6 +3528,7 @@ const AdmittedCaseJudge = () => {
           }}
           attendees={currentActiveHearing?.attendees}
           caseDetails={caseDetails}
+          currentHearingId={currentInProgressHearingId}
         />
       )}
 

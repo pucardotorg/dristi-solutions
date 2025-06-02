@@ -78,7 +78,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
     Boolean(caseDetails?.filingNumber && isOpen)
   );
 
-  const orderDataNextHearingData = useMemo(() => orderDataNextHearing?.list?.find((order) => order?.hearingNumber === currentHearingId), [
+  const orderDataNextHearingData = useMemo(() => orderDataNextHearing?.list?.find((order) => order?.additionalDetails?.referenceId === currentHearingId), [
     currentHearingId,
     orderDataNextHearing?.list,
   ]);
