@@ -3843,9 +3843,6 @@ const GenerateOrders = () => {
     return <Loader />;
   }
 
-  console.log(showsignatureModal, "fsdf");
-  
-
   return (
     <div className="generate-orders">
       <div className="orders-list-main" style={{ flex: 1 }}>
