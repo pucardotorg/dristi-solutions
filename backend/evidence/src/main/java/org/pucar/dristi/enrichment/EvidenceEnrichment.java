@@ -93,12 +93,7 @@ public class EvidenceEnrichment {
             throw new CustomException("CASE_NOT_FOUND", "Case not found for the filing number: " + evidenceRequest.getArtifact().getFilingNumber());
         }
 
-        JsonNode courtIdNode = caseDetails.get(0).get("courtId");
-        if (courtIdNode == null || courtIdNode.isNull()) {
-            throw new CustomException("COURT_ID_NOT_FOUND", "Court ID not found in case details");
-        }
-
-        return courtIdNode.textValue();
+        return caseDetails.get("courtId").textValue();
     }
 
     private CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String fillingNUmber) {

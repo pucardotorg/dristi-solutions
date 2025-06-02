@@ -102,7 +102,7 @@ class ApplicationEnrichmentTest {
 
         // Mock CaseUtil return for courtId
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode courtNode = mapper.createArrayNode().add(mapper.createObjectNode().put("courtId", "COURT123"));
+        JsonNode courtNode = mapper.valueToTree(Collections.singletonMap("courtId", "COURT123"));
         when(caseUtil.searchCaseDetails(any())).thenReturn(courtNode);
 
         // Call method under test

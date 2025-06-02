@@ -114,7 +114,7 @@ public class ServiceConstants {
     // order type
     public static final String ACCEPTANCE_REJECTION_DCA = "ACCEPTANCE_REJECTION_DCA";
     public static final String ACCEPT_BAIL = "ACCEPT_BAIL";
-    public static final String ADMIT_CASE = "ADMIT_CASE";
+    public static final String TAKE_COGNIZANCE = "TAKE_COGNIZANCE";
     public static final String ADMIT_DISMISS_CASE = "ADMIT_DISMISS_CASE";
     public static final String ADVOCATE_REPLACEMENT_APPROVAL = "ADVOCATE_REPLACEMENT_APPROVAL";
     public static final String APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE = "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE";
