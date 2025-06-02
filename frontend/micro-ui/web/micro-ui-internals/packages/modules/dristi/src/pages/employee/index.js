@@ -78,7 +78,9 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
   ];
   const showBreadCrumbs = useMemo(
     () =>
-      location.pathname.includes("/view-case")
+      location.pathname.includes("/review-litigant-details")
+        ? true
+        : location.pathname.includes("/view-case")
         ? false
         : location.pathname.includes("/pending-payment-inbox") || location.pathname.includes("/view-case") || true,
     [location.pathname]
