@@ -2696,20 +2696,22 @@ const AdmittedCaseJudge = () => {
       ];
     else if (isBenchClerk)
       return [
-        ...(currentInProgressHearing && [
-          {
-            value: "END_HEARING",
-            label: "END_HEARING",
-          },
-          {
-            value: "TAKE_WITNESS_DEPOSITION",
-            label: "TAKE_WITNESS_DEPOSITION",
-          },
-          {
-            value: "GENERATE_ORDER",
-            label: "GENERATE_ORDER",
-          },
-        ]),
+        ...(currentInProgressHearing
+          ? [
+              {
+                value: "END_HEARING",
+                label: "END_HEARING",
+              },
+              {
+                value: "TAKE_WITNESS_DEPOSITION",
+                label: "TAKE_WITNESS_DEPOSITION",
+              },
+              {
+                value: "GENERATE_ORDER",
+                label: "GENERATE_ORDER",
+              },
+            ]
+          : []),
         {
           value: "SUBMIT_DOCUMENTS",
           label: "SUBMIT_DOCUMENTS",
