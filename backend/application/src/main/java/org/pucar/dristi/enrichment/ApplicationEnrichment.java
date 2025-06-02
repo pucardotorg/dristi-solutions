@@ -82,15 +82,10 @@ public class ApplicationEnrichment {
         JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
 
         if (caseDetails == null || caseDetails.isEmpty()) {
-            throw new CustomException("COURT_ID_NOT_FOUND", "Court ID not found in case details");
+            throw new CustomException("CASE_DETAILS_NOT_FOUND", "Case details not found in case details");
         }
 
-        JsonNode courtIdNode = caseDetails.get(0).get("courtId");
-        if (courtIdNode == null || courtIdNode.isNull()) {
-            throw new CustomException("COURT_ID_NOT_FOUND", "Court ID not found in case details");
-        }
-
-        return courtIdNode.textValue();
+        return caseDetails.get("courtId").textValue();
     }
 
     public void enrichApplicationNumberByCMPNumber(ApplicationRequest applicationRequest) {

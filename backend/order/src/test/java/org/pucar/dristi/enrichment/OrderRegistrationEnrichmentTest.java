@@ -70,7 +70,6 @@ class OrderRegistrationEnrichmentTest {
         String mockOrderNumber = "tenant-123" + "-" + mockOrderId;
 
         // Prepare mock courtId node
-        JsonNode mockJsonNode = mock(JsonNode.class);
         JsonNode mockedCaseDetails = mock(JsonNode.class);
         JsonNode courtIdNode = mock(JsonNode.class);
 
@@ -82,8 +81,7 @@ class OrderRegistrationEnrichmentTest {
         when(idgenUtil.getIdList(any(), eq("tenant123"), any(), any(), eq(1), eq(false)))
                 .thenReturn(Collections.singletonList(mockOrderId));
 
-        when(caseUtil.searchCaseDetails(any())).thenReturn(mockJsonNode);
-        when(mockJsonNode.get(0)).thenReturn(mockedCaseDetails);
+        when(caseUtil.searchCaseDetails(any())).thenReturn(mockedCaseDetails);
         when(mockedCaseDetails.get("courtId")).thenReturn(courtIdNode);
 
         // When
