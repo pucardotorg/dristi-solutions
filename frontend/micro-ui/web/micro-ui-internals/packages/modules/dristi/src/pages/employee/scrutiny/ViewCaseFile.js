@@ -18,7 +18,7 @@ import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import downloadPdfWithLink from "../../../Utils/downloadPdfWithLink";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
 import { use } from "react";
-const judgeId = localStorage.getItem("judgeId");
+const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
 const courtId = localStorage.getItem("courtId");
 const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
 

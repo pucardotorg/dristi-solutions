@@ -1,10 +1,14 @@
 package digit.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.Configuration;
-import digit.util.HrmsUtil;
+import digit.util.MdmsUtil;
 import digit.web.models.CaseDiary;
 import digit.web.models.CaseDiaryGenerateRequest;
+import digit.web.models.CourtRoom;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +18,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
 
 import static digit.config.ServiceConstants.*;
 
@@ -31,7 +37,10 @@ public class GenerateDiaryService {
     private UserService userService;
 
     @Autowired
-    private HrmsUtil hrmsUtil;
+    private MdmsUtil mdmsUtil;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private static final String TIME_ZONE = "Asia/Kolkata";
 
@@ -48,17 +57,29 @@ public class GenerateDiaryService {
             CaseDiary diary = new CaseDiary();
             diary.setDiaryDate(generateDiaryDate());
             diary.setDiaryType(DIARY_TYPE);
-            diary.setCourtId(hrmsUtil.getCourtId(requestInfo));
+            List<String> courtRooms = getActiveCourtRooms();
             diary.setTenantId(configuration.getTenantId());
 
-            generateRequest.setDiary(diary);
-            generateRequest.setRequestInfo(requestInfo);
-            diaryService.generateDiary(generateRequest);
+            // generate for all active court rooms
+            courtRooms.forEach(courtRoom -> {
+                diary.setCourtId(courtRoom);
+                generateRequest.setDiary(diary);
+                generateRequest.setRequestInfo(requestInfo);
+                diaryService.generateDiary(generateRequest);
+            });
         } catch (Exception ex) {
             log.error("Error generating diary :: {}", ex.getMessage());
         }
 
         log.info("Cron job completed for generating diary");
+    }
+
+    private List<String> getActiveCourtRooms() {
+        Map<String, Map<String, JSONArray>> courtRooms = mdmsUtil.fetchMdmsData(RequestInfo.builder().build(), configuration.getTenantId(), COMMON_MASTER_MODULE, List.of(COURT_ROOM_MASTER));
+        JSONArray jsonArray = courtRooms.get(COMMON_MASTER_MODULE).get(COURT_ROOM_MASTER);
+        List<CourtRoom> rooms = objectMapper.convertValue(jsonArray, new TypeReference<List<CourtRoom>>() {
+        });
+        return rooms.stream().map(CourtRoom::getCode).toList();
     }
 
     private Long generateDiaryDate() {
