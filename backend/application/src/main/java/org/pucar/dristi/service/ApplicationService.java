@@ -22,6 +22,9 @@ import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -114,6 +117,10 @@ public class ApplicationService {
             smsNotificationUtil.callNotificationService(applicationRequest, application.getStatus(), application.getApplicationType());
             producer.push(config.getApplicationUpdateTopic(), applicationRequest);
 
+            filterDocuments(List.of(application),
+                    Application::getDocuments,
+                    Application::setDocuments);
+
             return applicationRequest.getApplication();
 
         } catch (CustomException e) {
@@ -122,6 +129,22 @@ public class ApplicationService {
         } catch (Exception e) {
             log.error("Error occurred while updating application {}", e.getMessage());
             throw new CustomException(UPDATE_APPLICATION_ERR, "Error occurred while updating application: " + e.getMessage());
+        }
+    }
+
+    private <T> void filterDocuments(List<T> entities,
+                                     Function<T, List<Document>> getDocs,
+                                     BiConsumer<T, List<Document>> setDocs) {
+        if (entities == null) return;
+
+        for (T entity : entities) {
+            List<Document> docs = getDocs.apply(entity);
+            if (docs != null) {
+                List<Document> activeDocs = docs.stream()
+                        .filter(Document::getIsActive)
+                        .collect(Collectors.toList());
+                setDocs.accept(entity, activeDocs); // ✅ set it back
+            }
         }
     }
 
@@ -150,7 +173,7 @@ public class ApplicationService {
                         Application parentApplication = relatedApplications.get(0);
                         parentApplication.setWorkflow(application.getWorkflow());
                         updateApplication(ApplicationRequest.builder().application(parentApplication)
-                                .requestInfo(requestInfo).build(),true);
+                                .requestInfo(requestInfo).build(), true);
 
                     } else {
                         log.info("Application with id : {} not found in DB", applicationId);

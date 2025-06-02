@@ -22,6 +22,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -124,6 +127,8 @@ public class OrderRegistrationService {
 
             callNotificationService(body, updatedState, orderType);
 
+            filterDocuments(List.of(body.getOrder()), Order::getDocuments, Order::setDocuments);
+
             return body.getOrder();
 
         } catch (CustomException e) {
@@ -134,6 +139,22 @@ public class OrderRegistrationService {
             throw new CustomException(ORDER_UPDATE_EXCEPTION, "Error occurred while updating order: " + e.getMessage());
         }
 
+    }
+
+    private <T> void filterDocuments(List<T> entities,
+                                     Function<T, List<Document>> getDocs,
+                                     BiConsumer<T, List<Document>> setDocs) {
+        if (entities == null) return;
+
+        for (T entity : entities) {
+            List<Document> docs = getDocs.apply(entity);
+            if (docs != null) {
+                List<Document> activeDocs = docs.stream()
+                        .filter(Document::getIsActive)
+                        .collect(Collectors.toList());
+                setDocs.accept(entity, activeDocs); // ✅ set it back
+            }
+        }
     }
 
     private void deleteFileStoreDocumentsIfInactive(Order order) {
