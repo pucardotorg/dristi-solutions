@@ -2390,7 +2390,7 @@ const AdmittedCaseJudge = () => {
           );
           if (
             orderResponse?.list?.length > 0 &&
-            orderResponse?.list?.find((order) => order?.additionalDetails?.referenceId === currentInProgressHearing?.hearingNumber)
+            orderResponse?.list?.find((order) => order?.additionalDetails?.refHearingId === currentInProgressHearing?.hearingNumber)
           ) {
             setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: true });
           } else {

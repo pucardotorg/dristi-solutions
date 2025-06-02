@@ -62,7 +62,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
     }
   );
 
-  const { data: orderDataNextHearing } = Digit.Hooks.orders.useSearchOrdersService(
+  const { data: orderDataNextHearing, refetch: refetchOrderDataNextHearing } = Digit.Hooks.orders.useSearchOrdersService(
     {
       tenantId: caseDetails?.tenantId,
       criteria: {
@@ -78,7 +78,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
     Boolean(caseDetails?.filingNumber && isOpen)
   );
 
-  const orderDataNextHearingData = useMemo(() => orderDataNextHearing?.list?.find((order) => order?.additionalDetails?.referenceId === currentHearingId), [
+  const orderDataNextHearingData = useMemo(() => orderDataNextHearing?.list?.find((order) => order?.additionalDetails?.refHearingId === currentHearingId), [
     currentHearingId,
     orderDataNextHearing?.list,
   ]);
@@ -386,6 +386,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
           }
         }
       }
+     await refetchOrderDataNextHearing();
       setIsApiLoading(false);
     },
     [
@@ -399,6 +400,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
       currentHearingId,
       history,
       userType,
+      refetchOrderDataNextHearing,
     ]
   );
 
