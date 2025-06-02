@@ -125,6 +125,9 @@ public class Hearing {
 
     private String notes = null;
 
+    @JsonProperty("hearingSummary")
+    private String hearingSummary = null;
+
 
     public Hearing addFilingNumberItem(String filingNumberItem) {
         this.filingNumber.add(filingNumberItem);
