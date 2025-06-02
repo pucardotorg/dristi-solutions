@@ -65,4 +65,10 @@ public class OpenHearing {
     @JsonProperty("caseFilingDate")
     private Long caseFilingDate = null;
 
+    @JsonProperty("statusOrder")
+    private Integer statusOrder = null;
+
+    @JsonProperty("hearingTypeOrder")
+    private Integer hearingTypeOrder = null;
+
 }

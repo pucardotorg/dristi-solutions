@@ -61,4 +61,12 @@ public class TransformerProperties {
 
     @Value("${transformer.producer.order.notification.topic}")
     private String orderAndNotificationTopic;
+
+
+    //MDMS
+    @Value("${egov.mdms.host}")
+    private String mdmsHost;
+
+    @Value("${egov.mdms.search.endpoint}")
+    private String mdmsEndPoint;
 }
