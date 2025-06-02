@@ -144,7 +144,7 @@ async function scheduleHearingDate(
           ).toLocaleDateString("en-IN"),
           partyNames: order.orderDetails.partyName.join(", "),
           additionalComments:
-            order?.additionalDetails?.formdata?.comments?.text || "",
+            order?.additionalDetails?.formdata?.hearingSummary?.text || "",
           purposeOfHearing: purposeOfHearing,
           judgeSignature: judgeDetails.judgeSignature,
           judgeName: judgeDetails.name,
