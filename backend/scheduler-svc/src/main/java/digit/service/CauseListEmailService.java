@@ -46,11 +46,19 @@ public class CauseListEmailService {
      * @param requestInfo Request information
      * @param tenantId tenantId
      */
-    public void sendCauseListEmail(String fileStoreId, String hearingDate, RequestInfo requestInfo, String tenantId) {
+    public void sendCauseListEmail(String fileStoreId, LocalDate hearingDate, RequestInfo requestInfo, String tenantId) {
         try {
-            // Format the hearing date for email subject
-            LocalDate date = LocalDate.parse(hearingDate);
-            String formattedDate = date.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+
+            if (fileStoreId == null || fileStoreId.trim().isEmpty()) {
+                throw new CustomException("INVALID_INPUT", "FileStoreId cannot be null or empty");
+            }
+            if (requestInfo == null) {
+                throw new CustomException("INVALID_INPUT", "RequestInfo cannot be null");
+            }
+
+            String formattedDate = hearingDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+
+            String updatedTenantId = tenantId == null ? config.getEgovStateTenantId() : tenantId;
 
             // Create the email subject with the formatted date
             String subject = config.getCauseListSubject().replace("${date_of_causeList}", formattedDate);
@@ -72,7 +80,7 @@ public class CauseListEmailService {
                     .isHTML(false)
                     .emailTo(emailRecipients)
                     .fileStoreId(fileStoreMap)
-                    .tenantId(config.getEgovStateTenantId())
+                    .tenantId(updatedTenantId)
                     .templateCode(ServiceConstants.CAUSE_LIST_EMAIL_TEMPLATE_CODE)
                     .build();
 
@@ -82,7 +90,7 @@ public class CauseListEmailService {
                     .email(email)
                     .build();
 
-            String updatedTopic = centralInstanceUtil.getStateSpecificTopicName(tenantId, config.getEmailTopic());
+            String updatedTopic = centralInstanceUtil.getStateSpecificTopicName(updatedTenantId, config.getEmailTopic());
 
             kafkaTemplate.send(updatedTopic, emailRequest);
 

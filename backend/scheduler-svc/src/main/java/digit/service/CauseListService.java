@@ -185,7 +185,7 @@ public class CauseListService {
 
             producer.push(config.getCauseListPdfTopic(), causeListPdfRequest);
 
-            causeListEmailService.sendCauseListEmail(document.getFileStore(), dateUtil.getLocalDateFromEpoch(causeList.get(0).getStartTime()).toString(), requestInfo, causeLists.get(0).getTenantId());
+            causeListEmailService.sendCauseListEmail(document.getFileStore(), dateUtil.getLocalDateFromEpoch(causeList.get(0).getStartTime()), requestInfo, causeLists.get(0).getTenantId());
 
             for (Hearing hearing : hearingList) {
                 if (!hearing.getFilingNumber().isEmpty()) {
