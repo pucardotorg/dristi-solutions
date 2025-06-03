@@ -16,9 +16,9 @@ import static org.pucar.dristi.config.ServiceConstants.*;
 public class EvidenceQueryBuilder {
 
     private static final String BASE_ARTIFACT_QUERY = " SELECT art.id as id, art.tenantId as tenantId, art.artifactNumber as artifactNumber, " +
-            "art.evidenceNumber as evidenceNumber, art.externalRefNumber as externalRefNumber, art.caseId as caseId, art.courtId as courtId," +
+            "art.evidenceNumber as evidenceNumber, art.externalRefNumber as externalRefNumber, art.caseId as caseId, " +
             "art.application as application, art.filingNumber as filingNumber, art.hearing as hearing, art.orders as orders, art.mediaType as mediaType, " +
-            "art.artifactType as artifactType, art.sourceType as sourceType, art.sourceID as sourceID, art.sourceName as sourceName, art.applicableTo as applicableTo, " +
+            "art.artifactType as artifactType, art.sourceType as sourceType, art.sourceID as sourceID, art.courtId as courtId, art.sourceName as sourceName, art.applicableTo as applicableTo, " +
             "art.comments as comments, art.file as file, art.createdDate as createdDate, art.isActive as isActive, art.isEvidence as isEvidence, art.status as status, art.description as description, " +
             "art.artifactDetails as artifactDetails, art.additionalDetails as additionalDetails, art.createdBy as createdBy, " +
             "art.lastModifiedBy as lastModifiedBy, art.createdTime as createdTime, art.lastModifiedTime as lastModifiedTime, " +
@@ -49,19 +49,25 @@ public class EvidenceQueryBuilder {
             String artifactNumber = criteria.getArtifactNumber();
             String fileStoreId = criteria.getFileStoreId();
             String courtId = criteria.getCourtId();
+            String filingType = criteria.getFilingType();
+            Boolean isVoid = criteria.getIsVoid();
+            String sourceType = criteria.getSourceType();
 
             // Build the query using the extracted fields
             firstCriteria = addArtifactCriteria(id, query, preparedStmtList, firstCriteria, "art.id = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(caseId, query, preparedStmtList, firstCriteria, "art.caseId = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(application, query, preparedStmtList, firstCriteria, "art.application = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(artifactType, query, preparedStmtList, firstCriteria, "art.artifactType = ?",preparedStmtArgList);
-            firstCriteria = addArtifactCriteria(evidenceStatus, query, preparedStmtList, firstCriteria,preparedStmtArgList);
+            firstCriteria = addArtifactCriteria(evidenceStatus, query,"art.isEvidence = ?", preparedStmtList, firstCriteria,preparedStmtArgList);
+            firstCriteria = addArtifactCriteria(isVoid, query,"art.isVoid = ?", preparedStmtList, firstCriteria,preparedStmtArgList);
+            firstCriteria = addArtifactCriteria(sourceType, query, preparedStmtList, firstCriteria, "art.sourceType = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(filingNumber, query, preparedStmtList, firstCriteria, "art.filingNumber = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(hearing, query, preparedStmtList, firstCriteria, "art.hearing = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(order, query, preparedStmtList, firstCriteria, "art.orders = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(sourceId, query, preparedStmtList, firstCriteria, "art.sourceId = ?",preparedStmtArgList);
-            firstCriteria = addArtifactCriteria(owner != null ? owner.toString() : null, query, preparedStmtList, firstCriteria, "art.createdBy = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(courtId, query, preparedStmtList, firstCriteria, "art.courtId = ?",preparedStmtArgList);
+            firstCriteria = addArtifactCriteria(filingType, query, preparedStmtList, firstCriteria, "art.filingType = ?",preparedStmtArgList);
+            firstCriteria = addArtifactCriteria(owner != null ? owner.toString() : null, query, preparedStmtList, firstCriteria, "art.createdBy = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(sourceName, query, preparedStmtList, firstCriteria, "art.sourceName = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(fileStoreId, query, preparedStmtList, firstCriteria, "art.file ->> 'fileStore' = ?",preparedStmtArgList);
             addArtifactPartialCriteria(artifactNumber, query, preparedStmtList, firstCriteria,preparedStmtArgList);
@@ -168,10 +174,11 @@ public class EvidenceQueryBuilder {
         }
         return firstCriteria;
     }
-    boolean addArtifactCriteria(Boolean criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, List<Integer> preparedStmtArgList) {
+
+    boolean addArtifactCriteria(Boolean criteria, StringBuilder query, String criteriaClause,List<Object> preparedStmtList, boolean firstCriteria, List<Integer> preparedStmtArgList) {
         if (criteria != null) {
             addClauseIfRequired(query, firstCriteria);
-            query.append("art.isEvidence = ?");
+            query.append(criteriaClause);
             preparedStmtList.add(criteria);
             preparedStmtArgList.add(Types.BOOLEAN);
             firstCriteria = false;

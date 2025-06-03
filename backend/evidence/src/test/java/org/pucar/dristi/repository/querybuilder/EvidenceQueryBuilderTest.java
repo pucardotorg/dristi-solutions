@@ -42,7 +42,7 @@ public class EvidenceQueryBuilderTest {
                 "testHearing", "testOrder", "testSourceId", "testSourceName", "artifactNumber", UUID.fromString("baf36d5a-58ff-4b9b-b263-69ab45b1c7b4")));
 
         // Expected query
-        String expectedQuery = " SELECT art.id as id, art.tenantId as tenantId, art.artifactNumber as artifactNumber, art.evidenceNumber as evidenceNumber, art.externalRefNumber as externalRefNumber, art.caseId as caseId, art.courtId as courtId,art.application as application, art.filingNumber as filingNumber, art.hearing as hearing, art.orders as orders, art.mediaType as mediaType, art.artifactType as artifactType, art.sourceType as sourceType, art.sourceID as sourceID, art.sourceName as sourceName, art.applicableTo as applicableTo, art.comments as comments, art.file as file, art.createdDate as createdDate, art.isActive as isActive, art.isEvidence as isEvidence, art.status as status, art.description as description, art.artifactDetails as artifactDetails, art.additionalDetails as additionalDetails, art.createdBy as createdBy, art.lastModifiedBy as lastModifiedBy, art.createdTime as createdTime, art.lastModifiedTime as lastModifiedTime, art.isVoid as isVoid, art.reason as reason, art.filingType as filingType, art.publishedDate as publishedDate FROM dristi_evidence_artifact art WHERE art.id = ? AND art.caseId = ? AND art.application = ? AND art.artifactType = ? AND art.isEvidence = ? AND art.filingNumber = ? AND art.hearing = ? AND art.orders = ? AND art.sourceId = ? AND art.createdBy = ? AND art.sourceName = ? AND art.artifactNumber LIKE ?";
+        String expectedQuery = " SELECT art.id as id, art.tenantId as tenantId, art.artifactNumber as artifactNumber, art.evidenceNumber as evidenceNumber, art.externalRefNumber as externalRefNumber, art.caseId as caseId, art.application as application, art.filingNumber as filingNumber, art.hearing as hearing, art.orders as orders, art.mediaType as mediaType, art.artifactType as artifactType, art.sourceType as sourceType, art.sourceID as sourceID, art.courtId as courtId, art.sourceName as sourceName, art.applicableTo as applicableTo, art.comments as comments, art.file as file, art.createdDate as createdDate, art.isActive as isActive, art.isEvidence as isEvidence, art.status as status, art.description as description, art.artifactDetails as artifactDetails, art.additionalDetails as additionalDetails, art.createdBy as createdBy, art.lastModifiedBy as lastModifiedBy, art.createdTime as createdTime, art.lastModifiedTime as lastModifiedTime, art.isVoid as isVoid, art.reason as reason, art.filingType as filingType, art.publishedDate as publishedDate FROM dristi_evidence_artifact art WHERE art.id = ? AND art.caseId = ? AND art.application = ? AND art.artifactType = ? AND art.isEvidence = ? AND art.filingNumber = ? AND art.hearing = ? AND art.orders = ? AND art.sourceId = ? AND art.createdBy = ? AND art.sourceName = ? AND art.artifactNumber LIKE ?";
         // Calling the method under test
         String query = queryBuilder.getArtifactSearchQuery(preparedStmtList,new ArrayList<>(), criteria);
 
@@ -66,7 +66,7 @@ public class EvidenceQueryBuilderTest {
         criteria.setArtifactNumber(null);
 
         // Expected query
-        String expectedQuery=" SELECT art.id as id, art.tenantId as tenantId, art.artifactNumber as artifactNumber, art.evidenceNumber as evidenceNumber, art.externalRefNumber as externalRefNumber, art.caseId as caseId, art.courtId as courtId,art.application as application, art.filingNumber as filingNumber, art.hearing as hearing, art.orders as orders, art.mediaType as mediaType, art.artifactType as artifactType, art.sourceType as sourceType, art.sourceID as sourceID, art.sourceName as sourceName, art.applicableTo as applicableTo, art.comments as comments, art.file as file, art.createdDate as createdDate, art.isActive as isActive, art.isEvidence as isEvidence, art.status as status, art.description as description, art.artifactDetails as artifactDetails, art.additionalDetails as additionalDetails, art.createdBy as createdBy, art.lastModifiedBy as lastModifiedBy, art.createdTime as createdTime, art.lastModifiedTime as lastModifiedTime, art.isVoid as isVoid, art.reason as reason, art.filingType as filingType, art.publishedDate as publishedDate FROM dristi_evidence_artifact art";
+        String expectedQuery = " SELECT art.id as id, art.tenantId as tenantId, art.artifactNumber as artifactNumber, art.evidenceNumber as evidenceNumber, art.externalRefNumber as externalRefNumber, art.caseId as caseId, art.application as application, art.filingNumber as filingNumber, art.hearing as hearing, art.orders as orders, art.mediaType as mediaType, art.artifactType as artifactType, art.sourceType as sourceType, art.sourceID as sourceID, art.courtId as courtId, art.sourceName as sourceName, art.applicableTo as applicableTo, art.comments as comments, art.file as file, art.createdDate as createdDate, art.isActive as isActive, art.isEvidence as isEvidence, art.status as status, art.description as description, art.artifactDetails as artifactDetails, art.additionalDetails as additionalDetails, art.createdBy as createdBy, art.lastModifiedBy as lastModifiedBy, art.createdTime as createdTime, art.lastModifiedTime as lastModifiedTime, art.isVoid as isVoid, art.reason as reason, art.filingType as filingType, art.publishedDate as publishedDate FROM dristi_evidence_artifact art";
         List<Object> preparedStmtList = new ArrayList<>();
 
         // Calling the method under test
@@ -86,11 +86,11 @@ public class EvidenceQueryBuilderTest {
         String criteriaClause = "art.isEvidence = ?";
 
         // Call the method under test
-        boolean result = queryBuilder.addArtifactCriteria(criteria, query, preparedStmtList, firstCriteria,new ArrayList<>());
+        boolean result = queryBuilder.addArtifactCriteria(criteria, query,"art.isEvidence=?", preparedStmtList, firstCriteria,new ArrayList<>());
 
         // Verify the results
         assertFalse(result); // firstCriteria should be false after adding the first criteria
-        assertEquals("SELECT * FROM artifacts WHERE art.isEvidence = ?", query.toString()); // query should have the criteria appended
+        assertEquals("SELECT * FROM artifacts WHERE art.isEvidence=?", query.toString()); // query should have the criteria appended
         assertEquals(1, preparedStmtList.size()); // preparedStmtList should have one element
         assertEquals(criteria, preparedStmtList.get(0)); // the criteria should be added to the preparedStmtList
     }
@@ -119,6 +119,7 @@ public class EvidenceQueryBuilderTest {
                 .addArtifactCriteria(
                         anyBoolean(),
                         any(StringBuilder.class),
+                        anyString(),
                         anyList(),
                         anyBoolean(),
                         anyList()
