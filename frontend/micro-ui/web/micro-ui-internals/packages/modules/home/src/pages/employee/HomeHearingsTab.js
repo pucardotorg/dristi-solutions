@@ -566,14 +566,14 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
         font-size: 16px;
         font-weight: 700;
         font-family: Roboto, sans-serif;
-        line-height: 19.2px;
-        border-radius: 8px;
+        line-height: 24px;
+        border-radius: 0px;
         border: none;
         padding: 8px 24px;
         margin: 0;
         box-shadow: 0 2px 4px rgba(0,0,0,0.04);
         transition: background 0.2s;
-        min-width: 140px;
+        min-width: 210px;
         cursor: pointer;
       }
       .filter-bar button.search-btn:hover {
@@ -582,8 +582,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
       .filter-bar .clear-btn {
         background: #fff;
         color: #007E7E;
-        border: 1px solid #007E7E;
-        border-radius: 8px;
+        border: none !important;
         cursor: pointer;
         padding: 8px 18px;
         font-size: 16px;

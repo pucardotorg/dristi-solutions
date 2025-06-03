@@ -11,6 +11,10 @@ const bredCrumbStyle = { maxWidth: "min-content" };
 
 const ProjectBreadCrumb = ({ location }) => {
   const userInfo = Digit?.UserService?.getUser()?.info;
+  const roles = userInfo?.roles;
+  const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
+
   let userType = "employee";
   if (userInfo) {
     userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
@@ -18,7 +22,10 @@ const ProjectBreadCrumb = ({ location }) => {
   const { t } = useTranslation();
   const crumbs = [
     {
-      path: `/${window?.contextPath}/${userType}/home/home-pending-task`,
+      path:
+        isJudge || isBenchClerk
+          ? `/${window?.contextPath}/${userType}/home/home-screen`
+          : `/${window?.contextPath}/${userType}/home/home-pending-task`,
       content: t("HOME"),
       show: true,
     },

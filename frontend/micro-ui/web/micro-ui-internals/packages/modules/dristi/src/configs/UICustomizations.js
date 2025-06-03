@@ -1979,6 +1979,7 @@ export const UICustomizations = {
                 filingNumber: result?.filingNumber,
                 caseId: result?.caseId,
                 advocateDetails: result?.advocateDetails,
+                tab: activeTab,
               };
             };
             if (activeTab === "REVIEW_PROCESS") {
@@ -1991,18 +1992,25 @@ export const UICustomizations = {
         },
       };
     },
-    additionalCustomizations: (row, key, column, value, t) => {
+    additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
       switch (key) {
-        case "CASE_NAME":
-          return (
+        case "CASE_NAME": {
+          return row?.tab === "REGISTRATION" ? (
             <Link
               style={{ color: "black", textDecoration: "underline" }}
-              // className="custom-link"
+              to={`/${window?.contextPath}/employee/dristi/admission?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview`}
+            >
+              {value ? value : "-"}
+            </Link>
+          ) : (
+            <Link
+              style={{ color: "black", textDecoration: "underline" }}
               to={`/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview`}
             >
               {value ? value : "-"}
             </Link>
           );
+        }
         case "ADVOCATES":
           if (value === null || value === undefined || value === "undefined" || value === "null") {
             return null;

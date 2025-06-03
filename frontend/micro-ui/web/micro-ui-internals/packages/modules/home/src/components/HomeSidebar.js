@@ -30,7 +30,7 @@ const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hea
           ))}
       </HomeAccordian>
 
-      <HomeAccordian title={t("CS_HOME_SIGN")}>
+      <HomeAccordian title={t("CS_HOME_SIGN")} defaultOpen>
         <SidebarItem t={t} label="CS_HOME_ORDERS" href={`/${window.contextPath}/employee/home/bulk-esign-order`} />
         <SidebarItem t={t} label="CS_HOME_PROCESS" href={`/${window.contextPath}/employee/orders/Summons&Notice`} />
         <SidebarItem t={t} label="CS_HOME_A_DAIRY" href={`/${window.contextPath}/employee/home/dashboard/adiary`} />
