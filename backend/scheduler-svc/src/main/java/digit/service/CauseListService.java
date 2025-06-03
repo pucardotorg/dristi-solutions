@@ -185,7 +185,19 @@ public class CauseListService {
 
             producer.push(config.getCauseListPdfTopic(), causeListPdfRequest);
 
-            causeListEmailService.sendCauseListEmail(document.getFileStore(), dateUtil.getLocalDateFromEpoch(causeList.get(0).getStartTime()), requestInfo, causeLists.get(0).getTenantId());
+            LocalDate causeListDate = dateUtil.getLocalDateFromEpoch(causeList.get(0).getStartTime());
+            try {
+
+                causeListEmailService.sendCauseListEmail(
+                        document.getFileStore(),
+                        causeListDate,
+                        requestInfo,
+                        causeLists.get(0).getTenantId()
+                );
+            } catch (Exception e) {
+                log.error("Failed to send cause list email for date: {}, error: {}", causeListDate.toString(), e.getMessage(), e);
+            }
+
 
             for (Hearing hearing : hearingList) {
                 if (!hearing.getFilingNumber().isEmpty()) {
