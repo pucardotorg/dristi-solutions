@@ -98,4 +98,12 @@ public class ServiceConstants {
 
     public static final String CAUSE_LIST_EMAIL_TEMPLATE_CODE = "CAUSELIST_EMAIL";
 
+    public static final String PASSED_OVER = "PASSED_OVER";
+
+    public static final String SCHEDULED = "SCHEDULED";
+
+    public static final String ABANDON = "ABANDON";
+
+    public static final String WORKFLOW_ABANDON = "WORKFLOW_ABANDON";
+
 }
