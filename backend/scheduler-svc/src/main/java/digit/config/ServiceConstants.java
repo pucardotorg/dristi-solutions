@@ -96,4 +96,6 @@ public class ServiceConstants {
     // File name pattern
     public static final String CAUSE_LIST_FILE_NAME_PATTERN = "CauseList_%s.pdf";
 
+    public static final String CAUSE_LIST_EMAIL_TEMPLATE_CODE = "CAUSELIST_EMAIL";
+
 }
