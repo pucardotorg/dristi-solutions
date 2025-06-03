@@ -1895,7 +1895,7 @@ export const UICustomizations = {
             ...requestCriteria.body.SearchCriteria,
             moduleSearchCriteria: {
               ...requestCriteria?.body?.SearchCriteria?.moduleSearchCriteria,
-              ...(requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.value }),
+              ...(requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.code }),
             },
             searchReviewProcess: {
               date: activeTab === "REVIEW_PROCESS" ? selectedDateInMs : currentDateInMs,
@@ -1933,12 +1933,9 @@ export const UICustomizations = {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
             },
+            limit: requestCriteria?.state?.tableForm?.limit || 10,
+            offset: requestCriteria?.state?.tableForm?.offset || 0,
           },
-          // tenantId,
-          // pagination: {
-          //   limit: requestCriteria?.state?.tableForm?.limit,
-          //   offSet: requestCriteria?.state?.tableForm?.offset,
-          // },
         },
         config: {
           ...requestCriteria.config,

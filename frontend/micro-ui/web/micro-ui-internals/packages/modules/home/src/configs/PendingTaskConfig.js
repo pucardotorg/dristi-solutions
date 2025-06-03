@@ -111,13 +111,18 @@ export const pendingTaskConfig = {
             type: "dropdown",
             populators: {
               name: "stage",
-              optionsKey: "name",
+              optionsKey: "code",
               mdmsConfig: {
-                masterName: "pendingTaskFilterText",
+                masterName: "SubStage",
                 moduleName: "case",
-                // select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
-                select: "(data) => { return data?.case?.pendingTaskFilterText || [] }",
+                select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
               },
+              // mdmsConfig: {
+              //   masterName: "pendingTaskFilterText",
+              //   moduleName: "case",
+              //   // select: "(data) => {return data['case'].SubStage?.map((item) => {return item});}",
+              //   select: "(data) => { return data?.case?.pendingTaskFilterText || [] }",
+              // },
             },
           },
           {
