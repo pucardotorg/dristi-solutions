@@ -99,7 +99,6 @@ public class CauseListEmailService {
 
             log.info("Cause list email sent successfully for date: {}", hearingDate);
         } catch (Exception e) {
-            log.error("Failed to send cause list email for date: {}, error: {}", hearingDate, e.getMessage(), e);
             throw new CustomException(ServiceConstants.EMAIL_SEND_ERROR,
                     ServiceConstants.EMAIL_SEND_ERROR_MESSAGE + e.getMessage());
         }
