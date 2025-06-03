@@ -92,4 +92,7 @@ public class ServiceConstants {
 
     public static final String WORKFLOW_ABANDON = "WORKFLOW_ABANDON";
 
+
+    public static final String IN_PROGRESS = "IN_PROGRESS";
+
 }

@@ -253,7 +253,7 @@ public class HearingService {
 
             // Filter hearings with statuses: PASSED_OVER or SCHEDULED
             hearings = hearings.stream()
-                    .filter(hearing -> PASSED_OVER.equals(hearing.getStatus()) || SCHEDULED.equals(hearing.getStatus()))
+                    .filter(hearing -> PASSED_OVER.equals(hearing.getStatus()) || SCHEDULED.equals(hearing.getStatus()) || IN_PROGRESS.equals(hearing.getStatus()))
                     .toList();
 
             if (hearings.isEmpty()) {
