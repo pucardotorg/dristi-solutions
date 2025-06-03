@@ -313,6 +313,7 @@ public class HearingService {
                         .name(WORKFLOW_ABANDON)
                         .tenantId(config.getEgovStateTenantId())
                 .build());
+        userInfo.setType(EMPLOYEE);
         userInfo.setTenantId(config.getEgovStateTenantId());
         return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
     }
