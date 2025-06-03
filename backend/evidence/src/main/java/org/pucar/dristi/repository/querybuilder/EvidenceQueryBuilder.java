@@ -173,7 +173,7 @@ public class EvidenceQueryBuilder {
             addClauseIfRequired(query, firstCriteria);
             query.append("art.isEvidence = ?");
             preparedStmtList.add(criteria);
-            preparedStmtArgList.add(Types.VARCHAR);
+            preparedStmtArgList.add(Types.BOOLEAN);
             firstCriteria = false;
         }
         return firstCriteria;
