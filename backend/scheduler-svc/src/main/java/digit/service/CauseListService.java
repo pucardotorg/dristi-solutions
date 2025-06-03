@@ -53,6 +53,7 @@ public class CauseListService {
     private ApplicationUtil applicationUtil;
     private FileStoreUtil fileStoreUtil;
     private UserService userService;
+    private CauseListEmailService causeListEmailService;
 
     private IndividualService individualService;
 
@@ -63,7 +64,8 @@ public class CauseListService {
                             Producer producer, Configuration config, PdfServiceUtil pdfServiceUtil,
                             MdmsUtil mdmsUtil, ServiceConstants serviceConstants, HearingUtil hearingUtil,
                             CaseUtil caseUtil, DateUtil dateUtil, ObjectMapper objectMapper, ApplicationUtil applicationUtil,
-                            FileStoreUtil fileStoreUtil, UserService userService, IndividualService individualService, SmsNotificationService notificationService) {
+                            FileStoreUtil fileStoreUtil, UserService userService, IndividualService individualService, SmsNotificationService notificationService,
+                            CauseListEmailService causeListEmailService) {
         this.hearingRepository = hearingRepository;
         this.causeListRepository = causeListRepository;
         this.producer = producer;
@@ -80,6 +82,7 @@ public class CauseListService {
         this.userService = userService;
         this.individualService = individualService;
         this.notificationService = notificationService;
+        this.causeListEmailService = causeListEmailService;
     }
 
     public void updateCauseListForTomorrow() {
@@ -181,6 +184,9 @@ public class CauseListService {
             CauseListPdfRequest causeListPdfRequest = CauseListPdfRequest.builder().requestInfo(requestInfo).causeListPdf(causeListPdf).build();
 
             producer.push(config.getCauseListPdfTopic(), causeListPdfRequest);
+
+            causeListEmailService.sendCauseListEmail(document.getFileStore(), dateUtil.getLocalDateFromEpoch(causeList.get(0).getStartTime()).toString(), requestInfo, causeLists.get(0).getTenantId());
+
             for (Hearing hearing : hearingList) {
                 if (!hearing.getFilingNumber().isEmpty()) {
                     callNotificationService(hearing.getFilingNumber().get(0),requestInfo,hearingDate);

@@ -246,4 +246,13 @@ public class Configuration {
     @Value("${cause.list.cutoff.time}")
     private String cutoffTime;
 
+    @Value("${email.topic}")
+    private String emailTopic;
+
+    @Value("${email.cause.list.subject}")
+    private String causeListSubject;
+
+    @Value("${email.cause.list.recipients}")
+    private String causeListRecipients;
+
 }
