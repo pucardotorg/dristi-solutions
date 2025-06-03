@@ -668,14 +668,12 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
         color: #888;
         cursor: pointer;
       }
-     /* Update your existing styles in the HomeHearingsTab component */
 
 .main-table-card {
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(44,62,80,0.07);
   padding: 0px 18px 18px 18px;
-  /* Add these properties for better scrolling */
   position: relative;
   overflow: hidden;
 }
@@ -684,19 +682,16 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
   max-height: 420px;
   overflow: auto;
   height: calc(100vh - 361px);
-  /* Remove margin-top if present */
 }
 
 .main-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
-  /* Ensure table takes full width */
   position: relative;
 }
 
 .main-table thead {
-  /* Make header sticky */
   position: sticky;
   top: 0;
   z-index: 10;
@@ -708,9 +703,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
   background: #fff;
   padding: 12px 8px;
   border-bottom: 2px solid #e8e8e8;
-  /* Ensure background covers content below */
   position: relative;
-  /* Add shadow for better visual separation */
   box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
 }
 
@@ -725,12 +718,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
   background: #f6fafd;
 }
 
-/* Remove this class since we're using sticky header */
-.table-content {
-  /* Remove margin-top: 60px; */
-}
 
-/* Alternative approach if you need more control over the scroll container */
 .table-container {
   position: relative;
   max-height: 420px;
@@ -819,10 +807,10 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
         </div>
         <div className="filter-actions">
           <span className="clear-btn" onClick={handleClear}>
-            Clear Search
+            {t("ES_COMMON_CLEAR_SEARCH")}
           </span>
           <button className="search-btn" onClick={handleSearch}>
-            Search
+            {t("ES_COMMON_SEARCH")}
           </button>
         </div>
       </div>

@@ -24,7 +24,7 @@ const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hea
               key={index}
               label={options[key].name}
               count={pendingTaskCount[key] || 0}
-              active={activeTab === options[key].name}
+              active={activeTab === key}
               onClick={() => onTabChange("PENDING_TASKS_TAB", key, options[key].func)}
             />
           ))}

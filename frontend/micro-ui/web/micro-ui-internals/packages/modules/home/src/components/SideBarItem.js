@@ -15,9 +15,11 @@ const sharedStyle = {
 const SidebarItem = ({ t, label, count, active, onClick, href }) => {
   const style = {
     ...sharedStyle,
-    borderLeft: active ? "4px solid #f47738" : "none",
+    // borderLeft: active ? "4px solid #f47738" : "none",
+    background: active ? "#E8E8E8" : "#F9FAFB",
     textDecoration: "none",
   };
+  console.log(active, label);
 
   const content = (
     <React.Fragment>
