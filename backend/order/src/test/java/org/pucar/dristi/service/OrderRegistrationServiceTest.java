@@ -15,6 +15,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.OrderRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.OrderRepository;
+import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.WorkflowUtil;
 import org.pucar.dristi.validators.OrderRegistrationValidator;
 import org.pucar.dristi.web.models.*;
@@ -51,6 +52,9 @@ import static org.mockito.Mockito.*;
 
    @Mock
    private ObjectMapper objectMapper;
+
+   @Mock
+   private FileStoreUtil fileStoreUtil;
 
     @BeforeEach
      void setup() {
@@ -377,4 +381,47 @@ import static org.mockito.Mockito.*;
       assertTrue(exception.getMessage().contains("Error occurred while removing item/order"));
       verify(orderRepository).getOrders(any(OrderCriteria.class), isNull());
    }
+
+    @Test
+    void testUpdateOrder_filtersInactiveDocuments() {
+        // Setup
+        OrderRequest orderRequest = new OrderRequest();
+        Order order = new Order();
+        order.setWorkflow(new WorkflowObject());
+        order.setOrderCategory("other");
+        order.setOrderType("other");
+
+        // One active and one inactive document
+        Document activeDoc = new Document();
+        activeDoc.setIsActive(true);
+
+        Document inactiveDoc = new Document();
+        inactiveDoc.setIsActive(false);
+
+        order.setDocuments(List.of(activeDoc, inactiveDoc));
+        orderRequest.setOrder(order);
+
+        // Mocks
+        when(validator.validateApplicationExistence(any(OrderRequest.class))).thenReturn(true);
+        doNothing().when(enrichmentUtil).enrichOrderRegistrationUponUpdate(any(OrderRequest.class));
+        doNothing().when(enrichmentUtil).enrichCompositeOrderItemIdOnAddItem(any(OrderRequest.class));
+        doNothing().when(producer).push(anyString(), any(OrderRequest.class));
+        when(config.getUpdateOrderKafkaTopic()).thenReturn("update-order-topic");
+
+        // Method call
+        Order result = orderRegistrationService.updateOrder(orderRequest);
+
+        // Assertions
+        assertNotNull(result);
+        assertNotNull(result.getDocuments());
+        assertEquals(1, result.getDocuments().size());
+        assertTrue(result.getDocuments().get(0).getIsActive()); // Only active doc retained
+
+        // Verifications
+        verify(validator).validateApplicationExistence(orderRequest);
+        verify(enrichmentUtil).enrichOrderRegistrationUponUpdate(orderRequest);
+        verify(enrichmentUtil).enrichCompositeOrderItemIdOnAddItem(orderRequest);
+        verify(producer).push("update-order-topic", orderRequest);
+    }
+
 }

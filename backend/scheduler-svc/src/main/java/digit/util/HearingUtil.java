@@ -68,4 +68,17 @@ public class HearingUtil {
         }
         return hearingList;
     }
+
+    public void updateHearings(HearingRequest request) {
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS,false);
+        StringBuilder uri = new StringBuilder(configuration.getHearingHost().concat(configuration.getHearingsUpdateEndPoint()));
+        try {
+            serviceRequestRepository.fetchResult(uri,request);
+        } catch (HttpClientErrorException e) {
+            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
+            throw new ServiceCallException(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error(SEARCHER_SERVICE_EXCEPTION, e);
+        }
+    }
 }

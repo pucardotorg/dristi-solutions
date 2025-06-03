@@ -87,10 +87,12 @@ const useESign = () => {
         setIsSignedHeading && setIsSignedHeading(true);
       }
 
-      localStorage.removeItem("signStatus");
-      localStorage.removeItem("name");
-      sessionStorage.removeItem("isSignSuccess");
-      sessionStorage.removeItem("esignProcess");
+      setTimeout(() => {
+        localStorage.removeItem("signStatus");
+        localStorage.removeItem("name");
+        sessionStorage.removeItem("isSignSuccess");
+        sessionStorage.removeItem("esignProcess");
+      }, 200);
     }
   };
 
@@ -120,10 +122,12 @@ const useESign = () => {
         }
       }
 
-      localStorage.removeItem("signStatus");
-      localStorage.removeItem("name");
-      sessionStorage.removeItem("isSignSuccess");
-      sessionStorage.removeItem("esignProcess");
+      setTimeout(() => {
+        localStorage.removeItem("signStatus");
+        localStorage.removeItem("name");
+        sessionStorage.removeItem("isSignSuccess");
+        sessionStorage.removeItem("esignProcess");
+      }, 200);
     }
   };
 
