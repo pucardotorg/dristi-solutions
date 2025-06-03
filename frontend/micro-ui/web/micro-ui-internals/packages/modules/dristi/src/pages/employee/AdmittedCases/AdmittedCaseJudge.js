@@ -2390,7 +2390,7 @@ const AdmittedCaseJudge = () => {
           );
           if (
             orderResponse?.list?.length > 0 &&
-            orderResponse?.list?.find((order) => order?.additionalDetails?.refHearingId === currentInProgressHearing?.hearingNumber)
+            orderResponse?.list?.find((order) => order?.additionalDetails?.refHearingId === currentInProgressHearing?.hearingId)
           ) {
             setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: true });
           } else {
@@ -2407,7 +2407,16 @@ const AdmittedCaseJudge = () => {
         handleCourtAction();
       }
     },
-    [caseDetails?.courtId, caseDetails?.filingNumber, caseDetails?.tenantId, handleCourtAction, handleDownloadPDF, nextHearing, ordersService]
+    [
+      caseDetails?.courtId,
+      caseDetails?.filingNumber,
+      caseDetails?.tenantId,
+      currentInProgressHearing?.hearingId,
+      handleCourtAction,
+      handleDownloadPDF,
+      nextHearing,
+      ordersService,
+    ]
   );
 
   const openHearingModule = useCallback(() => {
@@ -2702,8 +2711,8 @@ const AdmittedCaseJudge = () => {
         ...(currentInProgressHearing
           ? [
               {
-                value: "END_HEARING",
-                label: "END_HEARING",
+                value: "NEXT_HEARING",
+                label: "NEXT_HEARING",
               },
               {
                 value: "TAKE_WITNESS_DEPOSITION",
@@ -3011,11 +3020,11 @@ const AdmittedCaseJudge = () => {
                           ></Button>
                           <Button
                             variation={"primary"}
-                            label={t("CS_CASE_NEXT_HEARING")}
-                            children={<RightArrow />}
+                            label={t(isBenchClerk ? "CS_CASE_END_HEARING" : isJudge ? "CS_CASE_NEXT_HEARING" : "")}
+                            children={isBenchClerk ? null : isJudge ? <RightArrow /> : null}
                             isSuffix={true}
-                            onButtonClick={() => handleEmployeeAction({ value: "NEXT_HEARING" })}
-                            style={{ boxShadow: "none" }}
+                            onButtonClick={() => handleEmployeeAction({ value: isBenchClerk ? "END_HEARING" : isJudge ? "NEXT_HEARING" : "" })}
+                            style={{ boxShadow: "none", ...(isBenchClerk ? { backgroundColor: "#BB2C2F", border: "none" } : {}) }}
                           ></Button>
                         </React.Fragment>
                       ) : (
@@ -3035,7 +3044,7 @@ const AdmittedCaseJudge = () => {
                   </div>
                 </div>
               )}
-              {isBenchClerk && (
+              {isBenchClerk && !currentInProgressHearing && (
                 <div className="evidence-header-wrapper">
                   <div className="evidence-hearing-header" style={{ background: "transparent" }}>
                     <div className="evidence-actions" style={{ ...(isTabDisabled ? { pointerEvents: "none" } : {}) }}>
@@ -3529,6 +3538,7 @@ const AdmittedCaseJudge = () => {
           attendees={currentActiveHearing?.attendees}
           caseDetails={caseDetails}
           currentHearingId={currentInProgressHearingId}
+          setUpdateCounter={setUpdateCounter}
         />
       )}
 

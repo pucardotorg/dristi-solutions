@@ -14,7 +14,7 @@ import { OrderWorkflowAction, OrderWorkflowState } from "@egovernments/digit-ui-
 import { ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom";
 
-const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId }) => {
+const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId, setUpdateCounter }) => {
   const { t } = useTranslation();
   const targetRef = useRef(null);
   const history = useHistory();
@@ -78,20 +78,24 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
     Boolean(caseDetails?.filingNumber && isOpen)
   );
 
-  const orderDataNextHearingData = useMemo(() => orderDataNextHearing?.list?.find((order) => order?.additionalDetails?.refHearingId === currentHearingId), [
-    currentHearingId,
-    orderDataNextHearing?.list,
-  ]);
+  const orderDataNextHearingData = useMemo(
+    () => orderDataNextHearing?.list?.find((order) => order?.additionalDetails?.refHearingId === currentHearingId),
+    [currentHearingId, orderDataNextHearing?.list]
+  );
 
   useEffect(() => {
     if (orderDataNextHearingData) {
       const order = orderDataNextHearingData;
-      const [year, month, day] = order?.additionalDetails?.formdata?.hearingDate?.split("-");
+      let hearingDate;
+      if (order?.additionalDetails?.formdata?.hearingDate) {
+        const [year, month, day] = order?.additionalDetails?.formdata?.hearingDate?.split("-");
+        hearingDate = new Date(year, month - 1, day).getTime();
+      }
       setOrderData({
         attendees: order?.additionalDetails?.formdata?.attendees,
         botdText: order?.additionalDetails?.formdata?.hearingSummary?.text,
         hearingType: order?.additionalDetails?.formdata?.hearingPurpose,
-        hearingDate: new Date(year, month - 1, day).getTime(),
+        hearingDate: hearingDate,
         isCaseDisposed: {},
         partiesToAttendHearing: order?.additionalDetails?.formdata?.namesOfPartiesRequired,
       });
@@ -205,7 +209,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
     const errors = {};
     if (!orderData?.botdText?.trim() && !orderData?.botdText?.trim()?.length < 2) errors.botdText = "CS_ORDER_BUSINESS_OF_THE_DAY";
     if (!orderData?.attendees?.length) errors.attendees = "CS_ORDER_CASE_ATTENDEES";
-    if (!orderData?.hearingType) errors.hearingType = "CS_ORDER_HEARING_TYPE";
+    if (!orderData?.hearingType?.code) errors.hearingType = "CS_ORDER_HEARING_TYPE";
     if (!orderData?.hearingDate) errors.hearingDate = "CS_ORDER_HEARING_DATE";
     if (!orderData?.partiesToAttendHearing?.length) errors.partiesToAttendHearing = "CS_ORDER_PARTIES_TO_ATTEND_HEARING";
     return errors;
@@ -221,11 +225,13 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
       setIsApiLoading(true);
       const date = new Date(orderData?.hearingDate);
       // Check for invalid date
-      if (isNaN(date)) return "N/A";
-
-      const day = String(date.getDate()).padStart(2, "0");
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const year = date.getFullYear();
+      let hearingDate;
+      if (!isNaN(date)) {
+        const day = String(date.getDate()).padStart(2, "0");
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const year = date.getFullYear();
+        hearingDate = `${year}-${month}-${day}`;
+      }
       if (type === "save-draft") {
         if (orderDataNextHearingData) {
           const payload = {
@@ -235,7 +241,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
                 ...orderDataNextHearingData?.additionalDetails,
                 formdata: {
                   ...orderDataNextHearingData?.additionalDetails?.formdata,
-                  hearingDate: `${year}-${month}-${day}`,
+                  hearingDate,
                   hearingSummary: {
                     text: orderData?.botdText,
                   },
@@ -285,7 +291,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
                     code: "SCHEDULING_NEXT_HEARING",
                     name: "ORDER_TYPE_SCHEDULING_NEXT_HEARING",
                   },
-                  hearingDate: `${year}-${month}-${day}`,
+                  hearingDate,
                   hearingSummary: {
                     text: orderData?.botdText,
                   },
@@ -312,7 +318,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
                 ...orderDataNextHearingData?.additionalDetails,
                 formdata: {
                   ...orderDataNextHearingData?.additionalDetails?.formdata,
-                  hearingDate: `${year}-${month}-${day}`,
+                  hearingDate,
                   hearingSummary: {
                     text: orderData?.botdText,
                   },
@@ -364,7 +370,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
                     code: "SCHEDULING_NEXT_HEARING",
                     name: "ORDER_TYPE_SCHEDULING_NEXT_HEARING",
                   },
-                  hearingDate: `${year}-${month}-${day}`,
+                  hearingDate,
                   hearingSummary: {
                     text: orderData?.botdText,
                   },
@@ -386,21 +392,23 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
           }
         }
       }
-     await refetchOrderDataNextHearing();
+      await refetchOrderDataNextHearing();
+      setUpdateCounter((prev) => prev + 1);
       setIsApiLoading(false);
     },
     [
       validateOrderData,
       orderData,
+      refetchOrderDataNextHearing,
+      setUpdateCounter,
       orderDataNextHearingData,
+      currentHearingId,
       t,
       caseDetails?.tenantId,
       caseDetails?.filingNumber,
       caseDetails?.cnrNumber,
-      currentHearingId,
       history,
       userType,
-      refetchOrderDataNextHearing,
     ]
   );
 
