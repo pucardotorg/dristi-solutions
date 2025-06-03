@@ -73,6 +73,7 @@ public class CauseListEmailService {
                     .emailTo(emailRecipients)
                     .fileStoreId(fileStoreMap)
                     .tenantId(config.getEgovStateTenantId())
+                    .templateCode(ServiceConstants.CAUSE_LIST_EMAIL_TEMPLATE_CODE)
                     .build();
 
             // Create email request
