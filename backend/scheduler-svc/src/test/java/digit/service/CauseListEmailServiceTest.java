@@ -17,6 +17,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,28 +45,30 @@ class CauseListEmailServiceTest {
 
     private RequestInfo requestInfo;
     private String fileStoreId;
-    private String hearingDate;
+    private LocalDate hearingDate;
     private String tenantId;
-    private String formattedSubject;
+    private String formattedSubjectPattern;
     private String recipients;
     private String stateTenantId;
     private String emailTopic;
     private String updatedTopic;
+    private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
     @BeforeEach
     void setUp() {
         requestInfo = new RequestInfo();
         fileStoreId = "test-file-store-id-123";
-        hearingDate = "2024-03-15";
+        hearingDate = LocalDate.of(2024, 3, 15);
         tenantId = "pb.amritsar";
-        formattedSubject = "Cause List for Date: ${date_of_causeList}";
+        // The service will replace ${date_of_causeList} with hearingDate.format(dateFormatter)
+        formattedSubjectPattern = "Cause List for Date: ${date_of_causeList}";
         recipients = "test1@example.com, test2@example.com, test3@example.com";
         stateTenantId = "pb";
         emailTopic = "email-topic";
         updatedTopic = "pb-email-topic";
 
         // Common mock setup used in tests
-        when(config.getCauseListSubject()).thenReturn(formattedSubject);
+        when(config.getCauseListSubject()).thenReturn(formattedSubjectPattern);
         when(config.getCauseListRecipients()).thenReturn(recipients);
         when(config.getEgovStateTenantId()).thenReturn(stateTenantId);
         when(config.getEmailTopic()).thenReturn(emailTopic);
@@ -90,9 +94,10 @@ class CauseListEmailServiceTest {
 
         Email capturedEmail = capturedEmailRequest.getEmail();
         assertNotNull(capturedEmail);
-        assertEquals("Cause List for Date: 15-03-2024", capturedEmail.getSubject());
+        String expectedDateString = hearingDate.format(dateFormatter);
+        assertEquals("Cause List for Date: " + expectedDateString, capturedEmail.getSubject());
         assertEquals(ServiceConstants.CAUSE_LIST_EMAIL_BODY, capturedEmail.getBody());
-        assertEquals(stateTenantId, capturedEmail.getTenantId());
+        assertEquals(tenantId, capturedEmail.getTenantId());
         assertFalse(capturedEmail.getIsHTML());
 
         Set<String> emailTo = capturedEmail.getEmailTo();
@@ -103,15 +108,15 @@ class CauseListEmailServiceTest {
 
         Map<String, String> fileStoreMap = capturedEmail.getFileStoreId();
         assertEquals(1, fileStoreMap.size());
-        assertEquals("CauseList_15-03-2024.pdf", fileStoreMap.get(fileStoreId));
+        assertEquals("CauseList_" + expectedDateString + ".pdf", fileStoreMap.get(fileStoreId));
     }
 
     @Test
-    void testSendCauseListEmail_InvalidDateFormat_ThrowsException() {
-        String invalidDate = "invalid-date";
+    void testSendCauseListEmail_NullDate_ThrowsException() {
+        LocalDate nullDate = null;
 
         CustomException exception = assertThrows(CustomException.class, () ->
-                causeListEmailService.sendCauseListEmail(fileStoreId, invalidDate, requestInfo, tenantId)
+                causeListEmailService.sendCauseListEmail(fileStoreId, nullDate, requestInfo, tenantId)
         );
 
         assertEquals(ServiceConstants.EMAIL_SEND_ERROR, exception.getCode());

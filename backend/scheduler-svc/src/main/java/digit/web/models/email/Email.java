@@ -1,9 +1,6 @@
 package digit.web.models.email;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import lombok.*;
 
 import java.util.Map;
 import java.util.Set;
@@ -12,6 +9,7 @@ import java.util.Set;
 @Getter
 @Builder
 @EqualsAndHashCode
+@NoArgsConstructor
 public class Email {
 
     private Set<String> emailTo;
