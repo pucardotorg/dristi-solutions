@@ -84,12 +84,16 @@ public class ServiceConstants {
 
     public static final String SCREEN_TYPE = "home";
 
-    public static final String PASSED_OVER = "PASSED_OVER";
+    public static final String CAUSE_LIST_EMAIL_BODY =
+            "Please find attached the cause list for of the 24X7 ON Court located in the Kollam District Court Complex. " +
+                    "We kindly request the Bar Association to share the causelist in the relevant channels with concerned advocates.\n\n" +
+                    "Regards,\n";
 
-    public static final String SCHEDULED = "SCHEDULED";
+    // Other constants can be added here
+    public static final String EMAIL_SEND_ERROR = "EMAIL_SEND_ERROR";
+    public static final String EMAIL_SEND_ERROR_MESSAGE = "Failed to send cause list email: ";
 
-    public static final String ABANDON = "ABANDON";
-
-    public static final String WORKFLOW_ABANDON = "WORKFLOW_ABANDON";
+    // File name pattern
+    public static final String CAUSE_LIST_FILE_NAME_PATTERN = "CauseList_%s.pdf";
 
 }
