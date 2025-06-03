@@ -226,7 +226,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
   );
 
   const handleEditClick = useCallback(
-    (row) => {
+    async (row) => {
       const hearingDetails = row?.businessObject?.hearingDetails;
       if (["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status)) {
         try {
@@ -243,10 +243,15 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
             .then((response) => {
               if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
                 hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
-                  history.push(
-                    `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`,
-                    { openOrder: true }
-                  );
+                  if (isBenchClerk) {
+                    history.push(
+                      `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
+                    );
+                  } else
+                    history.push(
+                      `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`,
+                      { openOrder: true }
+                    );
                 });
               }
             });
@@ -254,11 +259,37 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
           console.log(e);
         }
       }
-      if (["IN_PROGRESS"].includes(hearingDetails?.status)) {
+      if (!isBenchClerk && ["IN_PROGRESS"].includes(hearingDetails?.status)) {
         history.push(
           `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`,
           { openOrder: true }
         );
+      } else if (isBenchClerk && ["IN_PROGRESS"].includes(hearingDetails?.status)) {
+        try {
+          const orderResponse = await ordersService.searchOrder(
+            {
+              tenantId: hearingDetails?.tenantId,
+              criteria: {
+                tenantID: hearingDetails?.tenantId,
+                filingNumber: hearingDetails?.filingNumber,
+                orderType: "SCHEDULING_NEXT_HEARING",
+                status: OrderWorkflowState.DRAFT_IN_PROGRESS,
+                ...(hearingDetails?.courtId && { courtId: hearingDetails?.courtId }),
+              },
+            },
+            { tenantId: hearingDetails?.tenantId }
+          );
+          if (
+            orderResponse?.list?.length > 0 &&
+            orderResponse?.list?.find((order) => order?.additionalDetails?.refHearingId === hearingDetails?.hearingNumber)
+          ) {
+            setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: true, currentHearing: hearingDetails });
+          } else {
+            setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: {} });
+          }
+        } catch (e) {
+          console.log(e);
+        }
       }
     },
     [history]
@@ -270,7 +301,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
       const searchParams = new URLSearchParams();
       let dropDownitems = [];
       const hearingDetails = row?.businessObject?.hearingDetails;
-      if (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") {
+      if (!isBenchClerk && (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER")) {
         dropDownitems.push({
           label: "Start Hearing",
           id: "start_hearing",
@@ -301,7 +332,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
           },
         });
       }
-      if (hearingDetails?.status === "IN_PROGRESS") {
+      if (!isBenchClerk && hearingDetails?.status === "IN_PROGRESS") {
         dropDownitems.push({
           label: "End Hearing",
           id: "end_hearing",
@@ -455,7 +486,15 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
                   }}
                   className="edit-icon"
                 >
-                  {isBenchClerk ? hearingDetails?.status === "PASSED_OVER" ? t("START_NEW") : t("END_NEW") : <EditIcon />}
+                  {isBenchClerk ? (
+                    hearingDetails?.status === "PASSED_OVER" || hearingDetails?.status === "SCHEDULED" ? (
+                      <span style={{ color: "green", fontWeight: "700", cursor: "pointer" }}>{t("START_HEARING")}</span>
+                    ) : (
+                      <span style={{ color: "red", fontWeight: "700", cursor: "pointer" }}>{t("END_HEARING")}</span>
+                    )
+                  ) : (
+                    <EditIcon />
+                  )}
                 </div>
               )}
               <AsyncOverlayDropdown style={{ position: "relative" }} row={row} getDropdownItems={getActionItems} position="relative" />
@@ -573,7 +612,6 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
         text-align: left;
       }
       .custom-table-row td {
-        padding: 14px 8px;
         border-bottom: 1px solid #e8e8e8;
         font-size: 15px;
         background: #fff;
@@ -679,7 +717,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
 }
 
 .custom-table-row td {
-  padding: 14px 8px;
+  padding: 0px 8px;
   border-bottom: 1px solid #e8e8e8;
   font-size: 15px;
   background: #fff;

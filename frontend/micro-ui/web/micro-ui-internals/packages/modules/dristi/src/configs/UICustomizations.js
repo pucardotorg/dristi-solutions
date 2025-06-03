@@ -1925,7 +1925,7 @@ export const UICustomizations = {
                 }),
             },
             searchRegisterCases: {
-              date: 922337203685477,
+              date: null,
               isOnlyCountRequired: activeTab === "REGISTRATION" ? false : true,
               actionCategory: "Register cases",
               ...(activeTab === "REGISTRATION" &&
@@ -1957,8 +1957,21 @@ export const UICustomizations = {
             });
             const processFields = (fields) => {
               const result = fields?.reduce((acc, curr) => {
-                const key = curr?.key?.replace(/\[.*?\]/g, "");
-                acc[key] = curr?.value;
+                const key = curr?.key;
+                if (key.includes("advocateDetails")) {
+                  const subKey = key.replace("advocateDetails.", "");
+                  if (subKey.includes("[")) {
+                    const arrayKey = subKey.replace(/\[.*?\]/g, "");
+                    if (!acc.advocateDetails) acc.advocateDetails = {};
+                    if (!acc.advocateDetails[arrayKey]) acc.advocateDetails[arrayKey] = [];
+                    acc.advocateDetails[arrayKey].push(curr.value);
+                  } else {
+                    if (!acc.advocateDetails) acc.advocateDetails = {};
+                    acc.advocateDetails[subKey] = curr.value;
+                  }
+                } else {
+                  acc[key] = curr.value;
+                }
                 return acc;
               }, {});
 
@@ -1968,7 +1981,7 @@ export const UICustomizations = {
                 substage: result?.substage,
                 filingNumber: result?.filingNumber,
                 caseId: result?.caseId,
-                advocateDetails: result["advocateDetails.complainant[0]"],
+                advocateDetails: result?.advocateDetails,
               };
             };
             if (activeTab === "REVIEW_PROCESS") {
@@ -1982,29 +1995,43 @@ export const UICustomizations = {
       };
     },
     additionalCustomizations: (row, key, column, value, t) => {
-      const showDocument =
-        userRoles?.includes("APPLICATION_APPROVER") || userRoles?.includes("DEPOSITION_ESIGN") || row.workflow?.action !== "PENDINGREVIEW";
       switch (key) {
         case "CASE_NAME":
           return (
-            <Link to={`/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview`}>
+            <Link
+              style={{ color: "black", textDecoration: "underline" }}
+              // className="custom-link"
+              to={`/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview`}
+            >
               {value ? value : "-"}
             </Link>
           );
         case "ADVOCATES":
-        case "PARTIES":
           if (value === null || value === undefined || value === "undefined" || value === "null") {
             return null;
           }
           return (
             <div>
-              {value?.length > 2 && (
-                <ReactTooltip id={`hearing-list`}>{value?.map((party) => party?.partyName || party?.name).join(", ")}</ReactTooltip>
-              )}
-              <span data-tip data-for={`hearing-list`}>{`${value
-                ?.slice(0, 2)
-                ?.map((party) => party?.partyName || party?.name)
-                ?.join(", ")}${value?.length > 2 ? `+${value?.length - 2}` : ""}`}</span>
+              <p data-tip data-for={`hearing-list`}>
+                {row?.advocateDetails?.complainant?.length > 0 &&
+                  `${row?.advocateDetails?.complainant?.[0]}(C)${
+                    row?.advocateDetails?.complainant?.length === 2
+                      ? " + 1 Other"
+                      : row?.advocateDetails?.complainant?.length > 2
+                      ? ` + ${row?.advocateDetails?.complainant?.length - 1} others`
+                      : ""
+                  }`}
+              </p>
+              <p data-tip data-for={`hearing-list`}>
+                {row?.advocateDetails?.accused?.length > 0 &&
+                  `${row?.advocateDetails?.accused?.[0]}(A)${
+                    row?.advocateDetails?.accused?.length === 2
+                      ? " + 1 Other"
+                      : row?.advocateDetailss?.accused?.length > 2
+                      ? ` + ${row?.advocateDetailss?.accused?.length - 1} others`
+                      : ""
+                  }`}
+              </p>
             </div>
           );
         default:

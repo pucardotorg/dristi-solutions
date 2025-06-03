@@ -88,12 +88,12 @@ const MainHomeScreen = () => {
         },
         searchReviewProcess: {
           date: fromDate,
-          isOnlyCountRequired: false,
+          isOnlyCountRequired: true,
           actionCategory: "Review Process",
         },
         searchViewApplication: {
           date: fromDate,
-          isOnlyCountRequired: false,
+          isOnlyCountRequired: true,
           actionCategory: "View Application",
         },
         searchScheduleHearing: {
@@ -102,8 +102,8 @@ const MainHomeScreen = () => {
           actionCategory: "Schedule Hearing",
         },
         searchRegisterCases: {
-          date: fromDate,
-          isOnlyCountRequired: false,
+          date: null,
+          isOnlyCountRequired: true,
           actionCategory: "Register cases",
         },
       },
@@ -147,22 +147,7 @@ const MainHomeScreen = () => {
       func: setScheduleCount,
     },
   };
-  const convertEpochToDate = (dateEpoch) => {
-    // Returning null in else case because new Date(null) returns initial date from calender
-    if (dateEpoch) {
-      const dateFromApi = new Date(dateEpoch);
-      let month = dateFromApi.getMonth() + 1;
-      let day = dateFromApi.getDate();
-      let year = dateFromApi.getFullYear();
-      month = (month > 9 ? "" : "0") + month;
-      day = (day > 9 ? "" : "0") + day;
-      return `${year}-${month}-${day}`;
-    } else {
-      return null;
-    }
-  };
 
-  // When tab changes, update previous tab's count
   const handleTabChange = (title, label, func) => {
     if (title !== activeTabTitle) {
       if (activeTabTitle === "HEARINGS_TAB") {
