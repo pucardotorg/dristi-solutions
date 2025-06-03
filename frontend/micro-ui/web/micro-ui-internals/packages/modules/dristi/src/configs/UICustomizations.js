@@ -1884,10 +1884,9 @@ export const UICustomizations = {
     preProcess: (requestCriteria, additionalDetails) => {
       const tenantId = window?.Digit.ULBService.getStateId();
       const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role?.code);
-      const currentDateInMs = new Date().setHours(0, 0, 0, 0);
-      const selectedDateInMs = new Date(requestCriteria?.state?.searchForm?.date).setHours(0, 0, 0, 0);
+      const currentDateInMs = new Date().setHours(23, 59, 59, 999);
+      const selectedDateInMs = new Date(requestCriteria?.state?.searchForm?.date).setHours(23, 59, 59, 999);
       const activeTab = additionalDetails?.activeTab;
-
       return {
         ...requestCriteria,
         body: {
@@ -1897,29 +1896,42 @@ export const UICustomizations = {
             moduleSearchCriteria: {
               ...requestCriteria?.body?.SearchCriteria?.moduleSearchCriteria,
               ...(requestCriteria?.state?.searchForm?.stage && { substage: requestCriteria?.state?.searchForm?.stage?.value }),
-              ...(requestCriteria?.state?.searchForm?.caseSearchText && {
-                searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
-              }),
             },
             searchReviewProcess: {
               date: activeTab === "REVIEW_PROCESS" ? selectedDateInMs : currentDateInMs,
               isOnlyCountRequired: activeTab === "REVIEW_PROCESS" ? false : true,
               actionCategory: "Review Process",
+              ...(activeTab === "REVIEW_PROCESS" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
             },
             searchViewApplication: {
               date: activeTab === "VIEW_APPLICATION" ? selectedDateInMs : currentDateInMs,
               isOnlyCountRequired: activeTab === "VIEW_APPLICATION" ? false : true,
               actionCategory: "View Application",
+              ...(activeTab === "VIEW_APPLICATION" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
             },
             searchScheduleHearing: {
               date: activeTab === "SCHEDULE_HEARING" ? selectedDateInMs : currentDateInMs,
               isOnlyCountRequired: activeTab === "SCHEDULE_HEARING" ? false : true,
               actionCategory: "Schedule Hearing",
+              ...(activeTab === "SCHEDULE_HEARING" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
             },
             searchRegisterCases: {
               date: 922337203685477,
               isOnlyCountRequired: activeTab === "REGISTRATION" ? false : true,
               actionCategory: "Register cases",
+              ...(activeTab === "REGISTRATION" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
             },
           },
           // tenantId,

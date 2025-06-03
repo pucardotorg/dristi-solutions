@@ -63,7 +63,7 @@ function useInboxSearch({ limit = 300, offset = 0 } = {}) {
           },
         };
         if (filters?.status?.code) payload.inbox.moduleSearchCriteria.status = filters?.status?.code;
-        if (filters?.purpose) payload.inbox.moduleSearchCriteria.hearingType = filters.purpose;
+        if (filters?.purpose) payload.inbox.moduleSearchCriteria.hearingType = filters.purpose?.code;
         if (filters?.caseQuery) payload.inbox.moduleSearchCriteria.searchableFields = filters.caseQuery;
 
         const res = await HomeService.InboxSearch(payload, { tenantId: "kl" });
@@ -93,8 +93,13 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
   const history = useHistory();
 
   const { data: tableData, loading, error, fetchInbox } = useInboxSearch();
-  const roles = window?.Digit.UserService.getUser()?.info?.roles;
-  const isJudge = roles.some((role) => role.code === "CASE_APPROVER");
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const name = userInfo?.name;
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+
+  const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
+
   const userType = Digit.UserService.getType();
   const [passOver, setPassOver] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false, currentHearing: {} });
@@ -450,7 +455,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
                   }}
                   className="edit-icon"
                 >
-                  <EditIcon />
+                  {isBenchClerk ? hearingDetails?.status === "PASSED_OVER" ? t("START_NEW") : t("END_NEW") : <EditIcon />}
                 </div>
               )}
               <AsyncOverlayDropdown style={{ position: "relative" }} row={row} getDropdownItems={getActionItems} position="relative" />
@@ -751,10 +756,10 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
             <Dropdown
               t={t}
               option={hearingTypeOptions?.Hearing?.HearingType ? hearingTypeOptions?.Hearing?.HearingType : []}
-              selected={filters?.hearingType}
+              selected={filters?.purpose}
               optionKey={"code"}
               select={(e) => {
-                setFilters((prev) => ({ ...prev, purpose: e?.code }));
+                setFilters((prev) => ({ ...prev, purpose: e }));
               }}
               topbarOptionsClassName={"top-bar-option"}
               style={{

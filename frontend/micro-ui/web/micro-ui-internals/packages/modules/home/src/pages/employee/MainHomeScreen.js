@@ -21,13 +21,19 @@ const MainHomeScreen = () => {
   const [activeTab, setActiveTab] = useState("HEARINGS_TAB");
   const [updateCounter, setUpdateCounter] = useState(0);
   const [hearingCount, setHearingCount] = useState(0);
-  const [config, setConfig] = useState(pendingTaskConfig);
+  const [config, setConfig] = useState(structuredClone(pendingTaskConfig));
   const [registerCount, setRegisterCount] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
   const [applicationCount, setApplicationCount] = useState(0);
   const [scheduleCount, setScheduleCount] = useState(0);
   const [activeTabTitle, setActiveTabTitle] = useState("HEARINGS_TAB");
-  const [pendingTaskCount, setPendingTaskCount] = useState({ REGISTRATION: 10, REVIEW_PROCESS: 0, VIEW_APPLICATION: 0, SCHEDULE_HEARING: 0 });
+  const [pendingTaskCount, setPendingTaskCount] = useState({ REGISTRATION: 0, REVIEW_PROCESS: 0, VIEW_APPLICATION: 0, SCHEDULE_HEARING: 0 });
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const name = userInfo?.name;
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+
+  const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
 
   useEffect(() => {
     setUpdateCounter((prev) => prev + 1);
@@ -141,6 +147,20 @@ const MainHomeScreen = () => {
       func: setScheduleCount,
     },
   };
+  const convertEpochToDate = (dateEpoch) => {
+    // Returning null in else case because new Date(null) returns initial date from calender
+    if (dateEpoch) {
+      const dateFromApi = new Date(dateEpoch);
+      let month = dateFromApi.getMonth() + 1;
+      let day = dateFromApi.getDate();
+      let year = dateFromApi.getFullYear();
+      month = (month > 9 ? "" : "0") + month;
+      day = (day > 9 ? "" : "0") + day;
+      return `${year}-${month}-${day}`;
+    } else {
+      return null;
+    }
+  };
 
   // When tab changes, update previous tab's count
   const handleTabChange = (title, label, func) => {
@@ -151,16 +171,44 @@ const MainHomeScreen = () => {
         fetchPendingTaskCounts();
       }
     }
-    let updatedConfig = config;
+    let updatedConfig = { ...config };
     if (label) {
       setActiveTab(label);
-      updatedConfig = {
-        ...updatedConfig,
-        additionalDetails: {
-          setCount: setPendingTaskCount,
-          activeTab: label,
-        },
-      };
+      if (label === "REGISTRATION") {
+        updatedConfig.sections.search.uiConfig.fields = [
+          {
+            label: "CS_CASE_NAME_ADVOCATE",
+            type: "text",
+            key: "caseSearchText",
+            isMandatory: false,
+            disable: false,
+            populators: {
+              name: "caseSearchText",
+              error: "BR_PATTERN_ERR_MSG",
+              validation: {
+                pattern: {},
+                minlength: 2,
+              },
+            },
+          },
+        ];
+        updatedConfig = {
+          ...updatedConfig,
+          additionalDetails: {
+            setCount: setPendingTaskCount,
+            activeTab: label,
+          },
+        };
+      } else {
+        updatedConfig.sections.search.uiConfig.fields = structuredClone(pendingTaskConfig?.sections?.search?.uiConfig?.fields);
+        updatedConfig = {
+          ...updatedConfig,
+          additionalDetails: {
+            setCount: setPendingTaskCount,
+            activeTab: label,
+          },
+        };
+      }
     } else {
       setActiveTab(title);
     }
