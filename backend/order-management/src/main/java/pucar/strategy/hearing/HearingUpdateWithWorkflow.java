@@ -1,7 +1,9 @@
 package pucar.strategy.hearing;
 
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import pucar.config.Configuration;
 import pucar.strategy.HearingUpdateStrategy;
 import pucar.util.CaseUtil;
@@ -20,6 +22,8 @@ import java.util.List;
 
 import static pucar.config.ServiceConstants.*;
 
+@Component
+@Slf4j
 public class HearingUpdateWithWorkflow implements HearingUpdateStrategy {
 
     private final HearingUtil hearingUtil;
@@ -43,6 +47,8 @@ public class HearingUpdateWithWorkflow implements HearingUpdateStrategy {
     @Override
     public void updateHearingBasedOnStatus(Hearing hearing, OrderRequest orderRequest) {
 
+        log.info("updateHearingBasedOnStatus with workflow : {}", hearing);
+
         RequestInfo requestInfo = orderRequest.getRequestInfo();
         Order order = orderRequest.getOrder();
 
@@ -61,5 +67,6 @@ public class HearingUpdateWithWorkflow implements HearingUpdateStrategy {
 
         hearingUtil.createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(orderRequest.getRequestInfo()).build(), updateUri);
 
+        log.info("updateHearingBasedOnStatus with workflow status SUCCESS : {}", hearing);
     }
 }

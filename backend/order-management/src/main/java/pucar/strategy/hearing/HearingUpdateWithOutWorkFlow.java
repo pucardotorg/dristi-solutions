@@ -46,6 +46,8 @@ public class HearingUpdateWithOutWorkFlow implements HearingUpdateStrategy {
     @Override
     public void updateHearingBasedOnStatus(Hearing hearing, OrderRequest orderRequest) {
 
+        log.info("updateHearingBasedOnStatus with out workflow : {}", hearing);
+
         RequestInfo requestInfo = orderRequest.getRequestInfo();
         Order order = orderRequest.getOrder();
 
@@ -60,6 +62,8 @@ public class HearingUpdateWithOutWorkFlow implements HearingUpdateStrategy {
         updateUri.append(configuration.getHearingHost()).append(configuration.getUpdateHearingSummaryEndPoint());
 
         hearingUtil.createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(orderRequest.getRequestInfo()).build(), updateUri);
+
+        log.info("updateHearingBasedOnStatus with out workflow status SUCCESS : {}", hearing);
 
     }
 }
