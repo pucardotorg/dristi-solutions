@@ -396,10 +396,14 @@ public class InboxServiceV2 {
 
         if (criteria.getDate() != null) {
             searchCriteria.put("stateSla", criteria.getDate());
+        }else {
+            searchCriteria.remove("stateSla");
         }
 
         if (criteria.getSearchableFields() != null) {
             searchCriteria.put("searchableFields", criteria.getSearchableFields());
+        }else{
+            searchCriteria.remove("searchableFields");
         }
 
         List<Data> resultData = getDataFromSimpleSearch(searchRequest, config.getIndex());

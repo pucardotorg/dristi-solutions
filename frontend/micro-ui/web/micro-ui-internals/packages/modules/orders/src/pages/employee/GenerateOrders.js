@@ -665,10 +665,19 @@ const GenerateOrders = () => {
     if (isSignSuccess) {
       setShowsignatureModal(true);
       setOrderPdfFileStoreID(savedOrderPdf);
-      sessionStorage.removeItem("esignProcess");
-      sessionStorage.removeItem("orderPDF");
     }
   }, [defaultIndex, orderNumber, selectedOrder]);
+
+  useEffect(() => {
+    if (showsignatureModal) {
+      const cleanupTimer = setTimeout(() => {
+        sessionStorage.removeItem("esignProcess");
+        sessionStorage.removeItem("orderPDF");
+      }, 200);
+  
+      return () => clearTimeout(cleanupTimer);
+    }
+  }, [showsignatureModal]);
 
   useEffect(() => {
     const getOrder = async () => {
