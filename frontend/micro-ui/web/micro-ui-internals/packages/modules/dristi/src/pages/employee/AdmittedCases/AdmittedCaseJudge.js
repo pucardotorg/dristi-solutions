@@ -2351,7 +2351,7 @@ const AdmittedCaseJudge = () => {
             })
             .catch((error) => {
               console.error("Error starting hearing", error);
-              history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+              history.push(`/${window?.contextPath}/employee/home/home-screen`);
             });
         } else {
           history.push(

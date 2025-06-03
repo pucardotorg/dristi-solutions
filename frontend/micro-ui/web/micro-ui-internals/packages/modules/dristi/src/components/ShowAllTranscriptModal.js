@@ -51,7 +51,7 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, hearingList, judgeView =
             <div>
               <TextArea
                 style={{ width: "100%", height: "12vh", border: "solid 1px #3d3c3c", resize: "none" }}
-                value={hearing.transcript?.[0] || ""}
+                value={hearing?.hearingSummary || ""}
                 readOnly
               />
             </div>

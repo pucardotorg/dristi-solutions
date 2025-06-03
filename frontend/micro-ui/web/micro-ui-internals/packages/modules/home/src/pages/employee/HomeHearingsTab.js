@@ -2,10 +2,12 @@ import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { HomeService } from "../../hooks/services";
 import { Link } from "react-router-dom";
 import { Dropdown, TextInput, LabelFieldPair, CardLabel } from "@egovernments/digit-ui-react-components";
-import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";
+import AsyncOverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/AsyncOverlayDropdown";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
+import { ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
+import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -95,7 +97,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
   const isJudge = roles.some((role) => role.code === "CASE_APPROVER");
   const userType = Digit.UserService.getType();
   const [passOver, setPassOver] = useState(false);
-  const [showEndHearingModal, setShowEndHearingModal] = useState(false);
+  const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false, currentHearing: {} });
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
 
   const handleClear = useCallback(() => {
@@ -171,12 +173,99 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
     </svg>
   );
 
+  const nextHearing = useCallback(
+    (currentHearing) => {
+      if (tableData?.length === 0) {
+        history.push(`/${window?.contextPath}/employee/home/home-screen`);
+      } else {
+        const validData = tableData?.filter((item) =>
+          ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status)
+        );
+        const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentHearing?.hearingId);
+        if (index === -1 || validData?.length === 1) {
+          // history.push(`/${window?.contextPath}/employee/home/home-screen`);
+          return;
+        } else {
+          const row = validData[(index + 1) % validData?.length];
+          if (["SCHEDULED", "PASSED_OVER"].includes(row?.businessObject?.hearingDetails?.status)) {
+            hearingService
+              .searchHearings(
+                {
+                  criteria: {
+                    hearingId: row?.businessObject?.hearingDetails?.hearingNumber,
+                    tenantId: row?.businessObject?.hearingDetails?.tenantId,
+                    ...(row?.businessObject?.hearingDetails?.courtId &&
+                      userType === "employee" && { courtId: row?.businessObject?.hearingDetails?.courtId }),
+                  },
+                },
+                { tenantId: row?.businessObject?.hearingDetails?.tenantId }
+              )
+              .then((response) => {
+                hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
+                  window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
+                });
+              })
+              .catch((error) => {
+                console.error("Error starting hearing", error);
+                history.push(`/${window?.contextPath}/employee/home/home-screen`);
+              });
+          } else {
+            history.push(
+              `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
+            );
+          }
+        }
+      }
+    },
+    [history, userType, tableData]
+  );
+
+  const handleEditClick = useCallback(
+    (row) => {
+      const hearingDetails = row?.businessObject?.hearingDetails;
+      if (["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status)) {
+        try {
+          hearingService
+            ?.searchHearings(
+              {
+                criteria: {
+                  hearingId: hearingDetails?.hearingNumber,
+                  tenantId: hearingDetails?.tenantId,
+                },
+              },
+              { tenantId: hearingDetails?.tenantId }
+            )
+            .then((response) => {
+              if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
+                hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
+                  history.push(
+                    `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`,
+                    { openOrder: true }
+                  );
+                });
+              }
+            });
+        } catch (e) {
+          console.log(e);
+        }
+      }
+      if (["IN_PROGRESS"].includes(hearingDetails?.status)) {
+        history.push(
+          `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`,
+          { openOrder: true }
+        );
+      }
+    },
+    [history]
+  );
+
   const tableRows = useMemo(() => {
     if (!Array.isArray(tableData)) return null;
-    const getActionItems = (row) => {
+    const getActionItems = async (row) => {
       const searchParams = new URLSearchParams();
       let dropDownitems = [];
-      if (row?.businessObject?.hearingDetails?.status === "SCHEDULED") {
+      const hearingDetails = row?.businessObject?.hearingDetails;
+      if (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") {
         dropDownitems.push({
           label: "Start Hearing",
           id: "start_hearing",
@@ -186,17 +275,17 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
                 ?.searchHearings(
                   {
                     criteria: {
-                      hearingId: row?.businessObject?.hearingDetails?.hearingNumber,
-                      tenantId: row?.businessObject?.hearingDetails?.tenantId,
+                      hearingId: hearingDetails?.hearingNumber,
+                      tenantId: hearingDetails?.tenantId,
                     },
                   },
-                  { tenantId: row?.businessObject?.hearingDetails?.tenantId }
+                  { tenantId: hearingDetails?.tenantId }
                 )
                 .then((response) => {
                   if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
                     hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
                       history.push(
-                        `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
+                        `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
                       );
                     });
                   }
@@ -207,116 +296,170 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
           },
         });
       }
-      if (row?.businessObject?.hearingDetails?.status === "IN_PROGRESS") {
+      if (hearingDetails?.status === "IN_PROGRESS") {
         dropDownitems.push({
           label: "End Hearing",
           id: "end_hearing",
-          action: () => {
-            setShowEndHearingModal(true);
-          },
-        });
-      }
-      if (row?.businessObject?.hearingDetails?.status === "IN_PROGRESS") {
-        dropDownitems.push({
-          label: "Mark as Passed Over",
-          id: "pass_hearing",
-          action: () => {
+          action: async () => {
             try {
-              hearingService
-                ?.searchHearings(
-                  {
-                    criteria: {
-                      hearingId: row?.businessObject?.hearingDetails?.hearingNumber,
-                      tenantId: row?.businessObject?.hearingDetails?.tenantId,
-                    },
+              const orderResponse = await ordersService.searchOrder(
+                {
+                  tenantId: hearingDetails?.tenantId,
+                  criteria: {
+                    tenantID: hearingDetails?.tenantId,
+                    filingNumber: hearingDetails?.filingNumber,
+                    orderType: "SCHEDULING_NEXT_HEARING",
+                    status: OrderWorkflowState.DRAFT_IN_PROGRESS,
+                    ...(hearingDetails?.courtId && { courtId: hearingDetails?.courtId }),
                   },
-                  { tenantId: row?.businessObject?.hearingDetails?.tenantId }
-                )
-                .then((response) => {
-                  if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
-                    hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
-                      history.push(
-                        `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
-                      );
-                    });
-                  }
-                });
+                },
+                { tenantId: hearingDetails?.tenantId }
+              );
+              if (
+                orderResponse?.list?.length > 0 &&
+                orderResponse?.list?.find((order) => order?.additionalDetails?.refHearingId === hearingDetails?.hearingNumber)
+              ) {
+                setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: true, currentHearing: hearingDetails });
+              } else {
+                setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: {} });
+              }
             } catch (e) {
               console.log(e);
             }
           },
         });
       }
+
+      if (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "IN_PROGRESS") {
+        dropDownitems.push({
+          label: "Mark as Passed Over",
+          id: "pass_over",
+          action: async () => {
+            try {
+              const orderResponse = await ordersService.searchOrder(
+                {
+                  tenantId: hearingDetails?.tenantId,
+                  criteria: {
+                    tenantID: hearingDetails?.tenantId,
+                    filingNumber: hearingDetails?.filingNumber,
+                    orderType: "SCHEDULING_NEXT_HEARING",
+                    status: OrderWorkflowState.DRAFT_IN_PROGRESS,
+                    ...(hearingDetails?.courtId && { courtId: hearingDetails?.courtId }),
+                  },
+                },
+                { tenantId: hearingDetails?.tenantId }
+              );
+              if (
+                orderResponse?.list?.length > 0 &&
+                orderResponse?.list?.find((order) => order?.additionalDetails?.refHearingId === hearingDetails?.hearingNumber)
+              ) {
+                setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: false, currentHearing: hearingDetails });
+
+                hearingService
+                  ?.searchHearings(
+                    {
+                      criteria: {
+                        hearingId: hearingDetails?.hearingNumber,
+                        tenantId: hearingDetails?.tenantId,
+                      },
+                    },
+                    { tenantId: hearingDetails?.tenantId }
+                  )
+                  .then((response) => {
+                    if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
+                      hearingService.updateHearings(
+                        {
+                          tenantId: Digit.ULBService.getCurrentTenantId(),
+                          hearing: { ...response?.HearingList?.[0], workflow: { action: "PASS_OVER" } },
+                          hearingType: "",
+                          status: "",
+                        },
+                        { applicationNumber: "", cnrNumber: "" }
+                      );
+                    }
+                  });
+              } else {
+                setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: {} });
+              }
+            } catch (e) {
+              console.log(e);
+            }
+          },
+        });
+      }
+
       return dropDownitems;
     };
 
-    return tableData.map((row, idx) => (
-      <tr key={row?.id || idx} className="custom-table-row">
-        <td>{idx + 1}</td>
-        <td>
-          <Link
-            to={`/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`}
-          >
-            <span className="case-link">{row?.businessObject?.hearingDetails?.caseTitle || "-"}</span>
-          </Link>
-        </td>
-        <td>{row?.businessObject?.hearingDetails?.caseNumber || "-"}</td>
-        <td style={{ whiteSpace: "pre-line" }}>
-          <div>
-            <p data-tip data-for={`hearing-list`}>
-              {row?.businessObject?.hearingDetails?.advocate?.complainant?.length > 0 &&
-                `${row?.businessObject?.hearingDetails?.advocate?.complainant?.[0]}(C)${
-                  row?.businessObject?.hearingDetails?.advocate?.complainant?.length === 2
-                    ? " + 1 Other"
-                    : row?.businessObject?.hearingDetails?.advocates?.complainant?.length > 2
-                    ? ` + ${row?.businessObject?.hearingDetails?.advocates?.complainant?.length - 1} others`
-                    : ""
-                }`}
-            </p>
-            <p data-tip data-for={`hearing-list`}>
-              {row?.businessObject?.hearingDetails?.advocate?.accused?.length > 0 &&
-                `${row?.businessObject?.hearingDetails?.advocate?.accused?.[0]}(A)${
-                  row?.businessObject?.hearingDetails?.advocate?.accused?.length === 2
-                    ? " + 1 Other"
-                    : row?.businessObject?.hearingDetails?.advocates?.accused?.length > 2
-                    ? ` + ${row?.businessObject?.hearingDetails?.advocates?.accused?.length - 1} others`
-                    : ""
-                }`}
-            </p>
-          </div>
-        </td>
-        <td>
-          <span className={`status-badge ${statusClass(row?.businessObject?.hearingDetails?.status)}`}>
-            {row?.businessObject?.hearingDetails?.status === "IN_PROGRESS" ? t("ONGOING") : t(row?.businessObject?.hearingDetails?.status) || "-"}
-          </span>
-        </td>
-        <td>{t(row?.businessObject?.hearingDetails?.hearingType) || "-"}</td>
-        <td
-          style={{
-            textAlign: "center",
-            position: "relative",
-            display: "table-cell",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "space-between" }}>
-            <div
-              style={{ position: "relative" }}
-              onClick={() => {
-                history.push(
-                  `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`,
-                  { openOrder: true }
-                );
-              }}
-              className="edit-icon"
+    return tableData.map((row, idx) => {
+      const hearingDetails = row?.businessObject?.hearingDetails;
+      return (
+        <tr key={row?.id || idx} className="custom-table-row">
+          <td>{idx + 1}</td>
+          <td>
+            <Link
+              to={`/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`}
             >
-              <EditIcon />
+              <span className="case-link">{hearingDetails?.caseTitle || "-"}</span>
+            </Link>
+          </td>
+          <td>{hearingDetails?.caseNumber || "-"}</td>
+          <td style={{ whiteSpace: "pre-line" }}>
+            <div>
+              <p data-tip data-for={`hearing-list`}>
+                {hearingDetails?.advocate?.complainant?.length > 0 &&
+                  `${hearingDetails?.advocate?.complainant?.[0]}(C)${
+                    hearingDetails?.advocate?.complainant?.length === 2
+                      ? " + 1 Other"
+                      : hearingDetails?.advocates?.complainant?.length > 2
+                      ? ` + ${hearingDetails?.advocates?.complainant?.length - 1} others`
+                      : ""
+                  }`}
+              </p>
+              <p data-tip data-for={`hearing-list`}>
+                {hearingDetails?.advocate?.accused?.length > 0 &&
+                  `${hearingDetails?.advocate?.accused?.[0]}(A)${
+                    hearingDetails?.advocate?.accused?.length === 2
+                      ? " + 1 Other"
+                      : hearingDetails?.advocates?.accused?.length > 2
+                      ? ` + ${hearingDetails?.advocates?.accused?.length - 1} others`
+                      : ""
+                  }`}
+              </p>
             </div>
-            <OverlayDropdown style={{ position: "relative" }} row={row} cutomDropdownItems={getActionItems(row)} position="relative" />
-          </div>
-        </td>
-      </tr>
-    ));
-  }, [history, t, tableData]);
+          </td>
+          <td>
+            <span className={`status-badge ${statusClass(hearingDetails?.status)}`}>
+              {hearingDetails?.status === "IN_PROGRESS" ? t("ONGOING") : t(hearingDetails?.status) || "-"}
+            </span>
+          </td>
+          <td>{t(hearingDetails?.hearingType) || "-"}</td>
+          <td
+            style={{
+              textAlign: "center",
+              position: "relative",
+              display: "table-cell",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "space-between" }}>
+              {["SCHEDULED", "IN_PROGRESS", "PASSED_OVER"].includes(hearingDetails?.status) && (
+                <div
+                  style={{ position: "relative" }}
+                  onClick={() => {
+                    handleEditClick(row);
+                  }}
+                  className="edit-icon"
+                >
+                  <EditIcon />
+                </div>
+              )}
+              <AsyncOverlayDropdown style={{ position: "relative" }} row={row} getDropdownItems={getActionItems} position="relative" />
+            </div>
+          </td>
+        </tr>
+      );
+    });
+  }, [history, t, tableData, handleEditClick]);
 
   return (
     <React.Fragment>
@@ -681,28 +824,29 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
           </table>
         </div>
       </div>
-      {showEndHearingModal && (
+      {showEndHearingModal.openEndHearingModal && (
         <Modal
           headerBarMain={<Heading label={t("CS_CASE_CONFIRM_END_HEARING")} />}
           headerBarEnd={
             <CloseBtn
               onClick={() => {
-                setShowEndHearingModal(false);
+                setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
               }}
             />
           }
-          actionSaveLabel={t("CS_CASE_END_START_NEXT_HEARING")}
+          actionSaveLabel={t(passOver ? "CS_CASE_PASS_OVER_START_NEXT_HEARING" : "CS_CASE_END_START_NEXT_HEARING")}
+          hideModalActionbar={!showEndHearingModal.isNextHearingDrafted}
           actionSaveOnSubmit={async () => {
             //need to get hearing data
             hearingService
-              ?.searchHearings(
+              .searchHearings(
                 {
                   criteria: {
-                    // hearingId: row?.businessObject?.hearingDetails?.hearingNumber,
-                    // tenantId: row?.businessObject?.hearingDetails?.tenantId,
+                    hearingId: showEndHearingModal?.currentHearing?.hearingId,
+                    tenantId: showEndHearingModal?.currentHearing?.tenantId,
                   },
-                }
-                // { tenantId: row?.businessObject?.hearingDetails?.tenantId }
+                },
+                { tenantId: showEndHearingModal?.currentHearing?.tenantId }
               )
               .then((response) => {
                 if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
@@ -717,44 +861,63 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
                       { applicationNumber: "", cnrNumber: "" }
                     )
                     .then(() => {
-                      setShowEndHearingModal(false);
+                      setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+                      nextHearing(showEndHearingModal?.currentHearing);
                     });
                 }
               });
           }}
           actionCustomLabelSubmit={async () => {
             hearingService
-              .updateHearings(
+              .searchHearings(
                 {
-                  tenantId: Digit.ULBService.getCurrentTenantId(),
-                  // hearing: { ...currentActiveHearing, workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
-                  hearingType: "",
-                  status: "",
+                  criteria: {
+                    hearingId: showEndHearingModal?.currentHearing?.hearingId,
+                    tenantId: showEndHearingModal?.currentHearing?.tenantId,
+                  },
                 },
-                { applicationNumber: "", cnrNumber: "" }
+                { tenantId: showEndHearingModal?.currentHearing?.tenantId }
               )
-              .then(() => {
-                setShowEndHearingModal(false);
+              .then((response) => {
+                if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
+                  hearingService
+                    .updateHearings(
+                      {
+                        tenantId: Digit.ULBService.getCurrentTenantId(),
+                        hearing: { ...response?.HearingList?.[0], workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
+                        hearingType: "",
+                        status: "",
+                      },
+                      { applicationNumber: "", cnrNumber: "" }
+                    )
+                    .then(() => {
+                      setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+                    });
+                }
               });
           }}
           actionCancelOnSubmit={() => {
-            setShowEndHearingModal(false);
+            setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
           }}
           actionCancelLabel={t("CS_COMMON_CANCEL")}
-          actionCustomLabel={t("CS_CASE_END_VIEW")}
+          actionCustomLabel={t(passOver ? "CS_CASE_PASS_OVER_HEARING" : "CS_CASE_END_HEARING")}
           customActionClassName={"end-and-view-causelist-button"}
           submitClassName={"end-and-view-causelist-submit-button"}
           className={"confirm-end-hearing-modal"}
         >
           <div style={{ margin: "16px 0px" }}>
-            <CheckBox
-              onChange={(e) => {
-                setPassOver(e.target.checked);
-              }}
-              label={`${t("CS_CASE_PASS_OVER")}: ${t("CS_CASE_PASS_OVER_HEARING_TEXT")}`}
-              checked={passOver}
-              disable={false}
-            />
+            {!showEndHearingModal.isNextHearingDrafted ? (
+              <p>{t("CS_CASE_AN_ORDER_BOTD_FIRST")}</p>
+            ) : (
+              <CheckBox
+                onChange={(e) => {
+                  setPassOver(e.target.checked);
+                }}
+                label={`${t("CS_CASE_PASS_OVER")}: ${t("CS_CASE_PASS_OVER_HEARING_TEXT")}`}
+                checked={passOver}
+                disable={false}
+              />
+            )}
           </div>
         </Modal>
       )}

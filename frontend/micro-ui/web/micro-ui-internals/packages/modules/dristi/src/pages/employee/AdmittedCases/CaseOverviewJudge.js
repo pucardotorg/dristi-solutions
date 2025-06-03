@@ -133,7 +133,7 @@ const CaseOverviewJudge = ({
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
       <div className="hearing-summary-container">
-        {hearingRes?.HearingList?.find((hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status) && Boolean(hearing?.transcript?.[0])) && (
+        {hearingRes?.HearingList?.find((hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status) && Boolean(hearing?.hearingSummary)) && (
           <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none" }}>
             <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
               <div
@@ -166,8 +166,8 @@ const CaseOverviewJudge = ({
                 lineHeight: "24px",
               }}
             >
-              {previousHearing?.[0]?.transcript?.length
-                ? previousHearing?.[0]?.transcript?.map((transcript) => <div>{transcript}</div>)
+              {previousHearing?.[0]?.hearingSummary
+                ? <div>{previousHearing?.[0]?.hearingSummary}</div>
                 : "No Transcript available for this hearing"}
             </div>
           </Card>

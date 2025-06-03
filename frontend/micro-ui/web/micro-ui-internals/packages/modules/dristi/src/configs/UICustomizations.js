@@ -479,7 +479,7 @@ export const UICustomizations = {
     },
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const caseId = row?.businessObject?.billDetails?.caseId;
-      const filingNumber = row?.businessObject?.billDetails?.caseTitleFilingNumber.split(",")[1].trim();
+      const filingNumber = row?.businessObject?.billDetails?.filingNumber;
       const cmpNumber = row?.businessObject?.billDetails?.cmpNumber;
       const courtCaseNumber = row?.businessObject?.billDetails?.courtCaseNumber;
       const caseTitle = row?.businessObject?.billDetails?.caseTitleFilingNumber.split(",")[0].trim();
