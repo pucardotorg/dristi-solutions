@@ -128,12 +128,11 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
   });
   // need to fetch from mdms
   const statusOptions = [
-    { code: "COMPLETED", name: "Completed" },
-    { code: "Passed Over", name: "Passed Over" },
     { code: "SCHEDULED", name: "Scheduled" },
-    { code: "ABATED", name: "Abated" },
     { code: "IN_PROGRESS", name: "Ongoing" },
     { code: "PASSED_OVER", name: "Passed Over" },
+    { code: "COMPLETED", name: "Completed" },
+    { code: "ABATED", name: "Abandoned" },
     // {code : "OPT_OUT" ,name : "Opt out"}
   ];
 
@@ -858,7 +857,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
               ) : (
                 <tr>
                   <td colSpan={7} style={{ textAlign: "center", padding: 24 }}>
-                    {t("NO_DATA_FOUND")}
+                    {t("NO_HEARING_DATA_FOUND")}
                   </td>
                 </tr>
               )}
