@@ -55,6 +55,9 @@ public class CauseListEmailService {
             if (requestInfo == null) {
                 throw new CustomException("INVALID_INPUT", "RequestInfo cannot be null");
             }
+            if (hearingDate == null) {
+                throw new CustomException("INVALID_INPUT", "HearingDate cannot be null");
+            }
 
             String formattedDate = hearingDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"));
 
