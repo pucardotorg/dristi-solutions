@@ -174,29 +174,23 @@ public class IndexerUtils {
         String actionCategory = pendingTask.getActionCategory();
 
 
-        RequestInfo requestInfo = createInternalRequestInfo();
-        requestInfo.getUserInfo().setType("EMPLOYEE");
-        CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, filingNumber);
-        JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
-        log.info("case details :: {}, for filingNumber: {}", caseDetails,filingNumber);
+        JsonNode caseDetails = getCaseDetails(filingNumber);
 
         String courtId = caseDetails.get(0).path("courtId").textValue();
 
-        JSONObject request = new JSONObject();
-        request.put(REQUEST_INFO, createInternalRequestInfo());
-
         String cmpNumber = caseDetails.get(0).path("cmpNumber").textValue();
         String courtCaseNumber = caseDetails.get(0).path("courtCaseNumber").textValue();
+        String caseStage = caseDetails.get(0).path("stage").textValue();
 
         if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
             caseNumber = courtCaseNumber;
         } else if (cmpNumber != null && !cmpNumber.isEmpty()) {
             caseNumber = cmpNumber;
         }
-        String caseStage = caseDetails.get(0).path("stage").textValue();
 
         JsonNode representativesNode = caseUtil.getRepresentatives(caseDetails);
-        List<AdvocateMapping> representatives = mapper.convertValue(representativesNode, new TypeReference<List<AdvocateMapping>>() {});
+        List<AdvocateMapping> representatives = mapper.convertValue(representativesNode, new TypeReference<List<AdvocateMapping>>() {
+        });
 
         AdvocateDetail advocate = getAdvocates(representatives);
         String advocateDetails = "{}";
@@ -229,6 +223,18 @@ public class IndexerUtils {
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
                 config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime
         );
+    }
+
+    private JsonNode getCaseDetails(String filingNumber) {
+        try {
+            RequestInfo requestInfo = createInternalRequestInfo();
+            requestInfo.getUserInfo().setType("EMPLOYEE");
+            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, filingNumber);
+            return caseUtil.searchCaseDetails(caseSearchRequest);
+        } catch (Exception e) {
+            log.error("Error occurred while getting case details for filingNumber :: {}",filingNumber);
+        }
+        return null;
     }
 
     private RequestInfo createInternalRequestInfo() {
@@ -322,9 +328,9 @@ public class IndexerUtils {
             }
         }
 
-        log.info("case details :: {}, for filingNumber: {}", caseDetails,filingNumber);
+        log.info("case details :: {}, for filingNumber: {}", caseDetails, filingNumber);
         String courtId;
-        if(caseDetails==null){
+        if (caseDetails == null) {
             requestInfo1.getUserInfo().setType("EMPLOYEE");
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo1, filingNumber);
             caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
@@ -375,7 +381,8 @@ public class IndexerUtils {
         }
 
         JsonNode representativesNode = caseUtil.getRepresentatives(caseDetails);
-        List<AdvocateMapping> representatives = mapper.convertValue(representativesNode, new TypeReference<List<AdvocateMapping>>() {});
+        List<AdvocateMapping> representatives = mapper.convertValue(representativesNode, new TypeReference<List<AdvocateMapping>>() {
+        });
 
         AdvocateDetail advocate = getAdvocates(representatives);
         String advocateDetails = "{}";

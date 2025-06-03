@@ -122,6 +122,9 @@ public class Configuration {
     @Value("${dristi.hearing.update.endpoint}")
     private String HearingUpdateEndPoint;
 
+        @Value("${dristi.hearing.summary.update.endpoint}")
+    private String updateHearingSummaryEndPoint;
+
     @Value("${dristi.hearing.create.endpoint}")
     private String HearingCreateEndPoint;
 

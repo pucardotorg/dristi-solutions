@@ -22,8 +22,7 @@ import pucar.web.models.hearing.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static pucar.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
-import static pucar.config.ServiceConstants.SEARCHER_SERVICE_EXCEPTION;
+import static pucar.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -118,7 +117,7 @@ public class HearingUtil {
 //                .orElseThrow(() -> new CustomException("ERROR_IN_ADDITIONAL_DETAILS", "Hearing Purpose Type not found in additional details"));
     }
 
-    public List<Attendee> getAttendeesFromAdditionalDetails(Order order) {
+    public List<Attendee> getAttendeesFromAdditionalDetails(Order order, String attendeePath) {
 
         //todo: need to fetch from case all the adv ids and then find out individual ids of adv present in case
 
@@ -128,7 +127,7 @@ public class HearingUtil {
                 .map(map -> map.get("formdata"))
                 .filter(Map.class::isInstance)
                 .map(map -> (Map<?, ?>) map)
-                .map(map -> map.get("namesOfPartiesRequired"))
+                .map(map -> map.get(attendeePath))
                 .filter(List.class::isInstance)
                 .map(list -> (List<?>) list)
                 .map(list -> list.stream()
@@ -152,10 +151,12 @@ public class HearingUtil {
 
     }
 
-    public List<Attendee> getAttendees(RequestInfo requestInfo, CourtCase courtCase, Order order) {
+    public List<Attendee> getAttendees(RequestInfo requestInfo, CourtCase courtCase, Order order, boolean isForNextHearing) {
+
+        String getAttendees = isForNextHearing ? GET_ATTENDEES_FOR_SCHEDULE_NEXT_HEARING : GET_ATTENDEES_OF_EXISTING_HEARING;
 
 
-        List<Attendee> litigantAndPOAHolders = getAttendeesFromAdditionalDetails(order);
+        List<Attendee> litigantAndPOAHolders = getAttendeesFromAdditionalDetails(order, getAttendees);
 
         List<String> advocateIds = courtCase.getRepresentatives() == null ?
                 Collections.emptyList() :
@@ -214,9 +215,10 @@ public class HearingUtil {
                 .cmpNumber(courtCase.getCmpNumber())
                 .hearingType(getHearingTypeFromAdditionalDetails(order.getAdditionalDetails()))
                 .status("true") // this is not confirmed ui is sending true
-                .attendees(getAttendees(requestInfo, courtCase, order))
+                .attendees(getAttendees(requestInfo, courtCase, order , true))
                 .startTime(getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "hearingDate")))
                 .endTime(getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "hearingDate")))
+                .hearingSummary(order.getHearingSummary())
                 .workflow(workflowObject)
                 .applicationNumbers(new ArrayList<>())
                 .presidedBy(PresidedBy.builder()  // todo:this is hardcoded but needs to come from order
@@ -273,6 +275,21 @@ public class HearingUtil {
             // No valid brackets found, append new brackets
             return text + " (" + newValue + ")";
         }
+
+    }
+
+    public String getHearingSummary(Order order) {
+
+        return Optional.ofNullable(order.getAdditionalDetails())
+                .filter(Map.class::isInstance)
+                .map(map -> (Map<?, ?>) map)
+                .map(map -> map.get("formdata"))
+                .filter(Map.class::isInstance)
+                .map(map -> (Map<?, ?>) map)
+                .map(map -> map.get("hearingSummary"))
+                .filter(String.class::isInstance)
+                .map(String.class::cast)
+                .orElse(null);
 
     }
 }

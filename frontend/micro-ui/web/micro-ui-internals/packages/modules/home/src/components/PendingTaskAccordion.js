@@ -214,7 +214,9 @@ function PendingTaskAccordion({
                     <div
                       className="tasks-component-table-row-cell"
                       style={{
-                        ...(item?.stateSla < new Date().getTime() ? { color: "#D3302F", fontWeight: "bold" } : { color: "##3D3C3C" }),
+                        ...(item?.stateSla && item?.stateSla < new Date().getTime()
+                          ? { color: "#D3302F", fontWeight: "bold" }
+                          : { color: "##3D3C3C" }),
                         width: "30%",
                       }}
                     >
@@ -231,7 +233,7 @@ function PendingTaskAccordion({
         </div>
       );
     },
-    [history, isJudge, pendingTasks, redirectPendingTaskUrl, setPendingTaskActionModals, setResponsePendingTask, setShowSubmitResponseModal, t]
+    [history, isJudge, redirectPendingTaskUrl, setPendingTaskActionModals, setResponsePendingTask, setShowSubmitResponseModal, t, sortedPendingTasks]
   );
 
   return !tableView ? (

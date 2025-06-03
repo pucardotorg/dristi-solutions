@@ -312,7 +312,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
 
   const modalContent = (
     <div className="summon-modal" style={{ width: "100%" }}>
-            {!showModal && <h1 className="heading-m">{t("PROCESS_SUMMARY")}</h1>}
+      {!showModal && <h1 className="heading-m">{t("PROCESS_SUMMARY")}</h1>}
       <div className="rounds-of-delivery" style={{ cursor: "pointer", marginLeft: "17px" }}>
         {orderListFiltered.map((item, index) => (
           <div
@@ -338,92 +338,96 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
           </div>
         ))}
       </div>
-      {caseInfo}
-      <h1 className="heading-m">{t("ROUND_OF_DELIEVERY")}</h1>
-      <div className="rounds-of-delivery" style={{ cursor: "pointer", marginLeft: "17px" }}>
-        {orderList.map((item, index) => (
-          <div
-            key={index}
-            onClick={() => {
-              setActiveIndex({ ...activeIndex, orderIndex: index });
-              setOrderLoading(true);
-              setOrderNumber(item?.orderNumber);
-              setOrderType(item?.orderType);
-              setOrderId(item?.id);
-              setItemId(item?.itemId);
-              setTimeout(() => {
-                setOrderLoading((prev) => !prev);
-              }, 0);
-            }}
-            className={`round-item ${index === activeIndex?.orderIndex ? "active" : ""}`}
-          >
-            <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "auto", whiteSpace: "nowrap" }}>
-              <span>{item?.displayTitle || `${orderList?.length - index} (${item?.orderType})`}</span>
-            </div>
+      {orderListFiltered?.length === 0 && <h1 style={{ marginLeft: "15px" }}>{t("NO_PROCESS_DONE_YET")}</h1>}
+      {showModal && caseInfo}
+      {orderListFiltered?.length > 0 && (
+        <React.Fragment>
+          <h1 className="heading-m">{t("ROUND_OF_DELIEVERY")}</h1>
+          <div className="rounds-of-delivery" style={{ cursor: "pointer", marginLeft: "17px" }}>
+            {orderList.map((item, index) => (
+              <div
+                key={index}
+                onClick={() => {
+                  setActiveIndex({ ...activeIndex, orderIndex: index });
+                  setOrderLoading(true);
+                  setOrderNumber(item?.orderNumber);
+                  setOrderType(item?.orderType);
+                  setOrderId(item?.id);
+                  setItemId(item?.itemId);
+                  setTimeout(() => {
+                    setOrderLoading((prev) => !prev);
+                  }, 0);
+                }}
+                className={`round-item ${index === activeIndex?.orderIndex ? "active" : ""}`}
+              >
+                <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "auto", whiteSpace: "nowrap" }}>
+                  <span>{item?.displayTitle || `${orderList?.length - index} (${item?.orderType})`}</span>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      {orderList?.[activeIndex?.orderIndex] && (
-        <div className="case-info" style={{ height: "auto" }}>
-          <div className="case-info-column" style={{ justifyContent: "flex-start", gap: "10px" }}>
-            <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
-              <span>{t("ORDER_ISSUED_ON")}</span>
-              <span>{formatDate(new Date(orderList[activeIndex.orderIndex]?.createdDate), "DD-MM-YYYY")}</span>
+          {orderList?.[activeIndex?.orderIndex] && (
+            <div className="case-info" style={{ height: "auto" }}>
+              <div className="case-info-column" style={{ justifyContent: "flex-start", gap: "10px" }}>
+                <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
+                  <span>{t("ORDER_ISSUED_ON")}</span>
+                  <span>{formatDate(new Date(orderList[activeIndex.orderIndex]?.createdDate), "DD-MM-YYYY")}</span>
+                </div>
+                <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
+                  <span style={{ minWidth: "50%" }}>{t("HEARING_DATE")}</span>
+                  <span>{formatDate(new Date(orderList[activeIndex.orderIndex]?.orderDetails?.hearingDate), "DD-MM-YYYY")}</span>
+                </div>
+              </div>
+              <div style={{ marginLeft: "10px" }}>
+                <a
+                  href={`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`}
+                  className="case-info-link"
+                  style={{ color: "black" }}
+                >
+                  {t("View Order")}
+                </a>
+              </div>
             </div>
-            <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
-              <span style={{ minWidth: "50%" }}>{t("HEARING_DATE")}</span>
-              <span>{formatDate(new Date(orderList[activeIndex.orderIndex]?.orderDetails?.hearingDate), "DD-MM-YYYY")}</span>
-            </div>
-          </div>
-          <div style={{ marginLeft: "10px" }}>
-            <a
-              href={`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`}
-              className="case-info-link"
-              style={{ color: "black" }}
-            >
-              {t("View Order")}
-            </a>
-          </div>
-        </div>
-      )}
+          )}
 
-      {orderNumber && !orderLoading && config && (
-        <InboxSearchComposer
-          configs={config}
-          defaultValues={filingNumber}
-          additionalConfig={{
-            resultsTable: {
-              onClickRow: (props) => {
-                if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED", "OTHER"].includes(props?.original?.status)) {
-                  setRowData(props?.original);
-                  setshowNoticeModal(true);
-                  return;
-                }
-              },
-            },
-          }}
-        />
-      )}
-      {isButtonVisible && currentHearingId && userType === "employee" && (
-        <div className="action-buttons" style={actionButtonStyle}>
-          <Button
-            label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : orderType === "NOTICE" ? "Notice" : "Warrant"}`)}
-            onButtonClick={() => {
-              handleNavigate();
-            }}
-            className="action-button"
-            style={{
-              boxShadow: "none",
-              padding: "16px 24px",
-            }}
-            textStyles={headingStyle}
-          />
-        </div>
+          {orderNumber && !orderLoading && config && (
+            <InboxSearchComposer
+              configs={config}
+              defaultValues={filingNumber}
+              additionalConfig={{
+                resultsTable: {
+                  onClickRow: (props) => {
+                    if (["DELIVERED", "UNDELIVERED", "EXECUTED", "NOT_EXECUTED", "OTHER"].includes(props?.original?.status)) {
+                      setRowData(props?.original);
+                      setshowNoticeModal(true);
+                      return;
+                    }
+                  },
+                },
+              }}
+            />
+          )}
+          {isButtonVisible && currentHearingId && userType === "employee" && (
+            <div className="action-buttons" style={actionButtonStyle}>
+              <Button
+                label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : orderType === "NOTICE" ? "Notice" : "Warrant"}`)}
+                onButtonClick={() => {
+                  handleNavigate();
+                }}
+                className="action-button"
+                style={{
+                  boxShadow: "none",
+                  padding: "16px 24px",
+                }}
+                textStyles={headingStyle}
+              />
+            </div>
+          )}
+        </React.Fragment>
       )}
     </div>
   );
-
 
   return (
     <React.Fragment>
@@ -446,16 +450,10 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
       ) : (
         <div>{modalContent}</div>
       )}
-  
-      {showNoticeModal && (
-        <ReviewNoticeModal
-          rowData={rowData}
-          handleCloseNoticeModal={handleCloseNoticeModal}
-          t={t}
-        />
-      )}
+
+      {showNoticeModal && <ReviewNoticeModal rowData={rowData} handleCloseNoticeModal={handleCloseNoticeModal} t={t} />}
     </React.Fragment>
-  );  
+  );
 };
 
 export default NoticeProcessModal;

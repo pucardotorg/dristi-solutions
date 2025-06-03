@@ -24,6 +24,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -150,6 +152,12 @@ public class HearingService {
             String updatedState = hearingRequest.getHearing().getStatus();
             callNotificationService(hearingRequest, updatedState);
 
+            filterDocuments(new ArrayList<>() {{
+                                add(hearing);
+                            }},
+                    Hearing::getDocuments,
+                    Hearing::setDocuments);
+
             return hearingRequest.getHearing();
 
         } catch (CustomException e) {
@@ -160,6 +168,22 @@ public class HearingService {
             throw new CustomException(HEARING_UPDATE_EXCEPTION, "Error occurred while updating hearing: " + e.getMessage());
         }
 
+    }
+
+    private <T> void filterDocuments(List<T> entities,
+                                     Function<T, List<Document>> getDocs,
+                                     BiConsumer<T, List<Document>> setDocs) {
+        if (entities == null) return;
+
+        for (T entity : entities) {
+            List<Document> docs = getDocs.apply(entity);
+            if (docs != null) {
+                List<Document> activeDocs = docs.stream()
+                        .filter(Document::getIsActive)
+                        .collect(Collectors.toList());
+                setDocs.accept(entity, activeDocs); // ✅ set it back
+            }
+        }
     }
 
     private void deleteFileStoreDocumentsIfInactive(Hearing hearing) {
