@@ -61,7 +61,7 @@ class CauseListEmailServiceTest {
         hearingDate = LocalDate.of(2024, 3, 15);
         tenantId = "pb.amritsar";
         // The service will replace ${date_of_causeList} with hearingDate.format(dateFormatter)
-        formattedSubjectPattern = "Cause List for Date: ${date_of_causeList}";
+        formattedSubjectPattern = "Cause List for Date: {date_of_causeList}";
         recipients = "test1@example.com, test2@example.com, test3@example.com";
         stateTenantId = "pb";
         emailTopic = "email-topic";
