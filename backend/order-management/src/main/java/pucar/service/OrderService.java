@@ -60,7 +60,7 @@ public class OrderService {
         RequestInfo requestInfo = request.getRequestInfo();
 
         if (SCHEDULING_NEXT_HEARING.equalsIgnoreCase(order.getOrderType())) {
-            String hearingNumber = order.getHearingNumber();
+            String hearingNumber = hearingUtil.getHearingNumberFormApplicationAdditionalDetails(order.getAdditionalDetails());
             List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
                     .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
             Hearing hearing = hearings.get(0);

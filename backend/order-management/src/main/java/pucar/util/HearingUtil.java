@@ -282,14 +282,27 @@ public class HearingUtil {
 
         return Optional.ofNullable(order.getAdditionalDetails())
                 .filter(Map.class::isInstance)
-                .map(map -> (Map<?, ?>) map)
-                .map(map -> map.get("formdata"))
+                .map(details -> (Map<?, ?>) details)
+                .map(details -> details.get("formdata"))
                 .filter(Map.class::isInstance)
-                .map(map -> (Map<?, ?>) map)
-                .map(map -> map.get("hearingSummary"))
+                .map(formdata -> (Map<?, ?>) formdata)
+                .map(formdata -> formdata.get("hearingSummary"))
+                .filter(Map.class::isInstance)
+                .map(hearingSummary -> (Map<?, ?>) hearingSummary)
+                .map(hearingSummary -> hearingSummary.get("text"))
                 .filter(String.class::isInstance)
                 .map(String.class::cast)
                 .orElse(null);
+    }
 
+
+    public String getHearingNumberFormApplicationAdditionalDetails(Object additionalDetails) {
+        return Optional.ofNullable(additionalDetails)
+                .filter(Map.class::isInstance)
+                .map(details -> (Map<?, ?>) details)
+                .map(details -> details.get("referenceId"))
+                .filter(String.class::isInstance)
+                .map(String.class::cast)
+                .orElse(null);
     }
 }

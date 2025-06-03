@@ -86,7 +86,7 @@ public class PublishOrderSchedulingNextHearing implements OrderUpdateStrategy {
 
         Order order = orderRequest.getOrder();
         RequestInfo requestInfo = orderRequest.getRequestInfo();
-        String hearingNumber = order.getHearingNumber();
+        String hearingNumber = hearingUtil.getHearingNumberFormApplicationAdditionalDetails(order.getAdditionalDetails());
 
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
                 .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
