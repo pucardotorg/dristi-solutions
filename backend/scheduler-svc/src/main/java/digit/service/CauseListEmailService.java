@@ -64,7 +64,7 @@ public class CauseListEmailService {
             String updatedTenantId = tenantId == null ? config.getEgovStateTenantId() : tenantId;
 
             // Create the email subject with the formatted date
-            String subject = config.getCauseListSubject().replace("${date_of_causeList}", formattedDate);
+            String subject = config.getCauseListSubject().replace("{date_of_causeList}", formattedDate);
 
             // Create file store map with attachment
             Map<String, String> fileStoreMap = new HashMap<>();
