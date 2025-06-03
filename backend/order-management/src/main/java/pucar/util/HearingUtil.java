@@ -300,7 +300,7 @@ public class HearingUtil {
         return Optional.ofNullable(additionalDetails)
                 .filter(Map.class::isInstance)
                 .map(details -> (Map<?, ?>) details)
-                .map(details -> details.get("referenceId"))
+                .map(details -> details.get("refHearingId"))
                 .filter(String.class::isInstance)
                 .map(String.class::cast)
                 .orElse(null);
