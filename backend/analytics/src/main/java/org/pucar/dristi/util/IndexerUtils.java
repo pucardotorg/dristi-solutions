@@ -180,7 +180,7 @@ public class IndexerUtils {
 
         String cmpNumber = caseDetails.get(0).path("cmpNumber").textValue();
         String courtCaseNumber = caseDetails.get(0).path("courtCaseNumber").textValue();
-        String caseStage = caseDetails.get(0).path("stage").textValue();
+        String caseStage = caseDetails.get(0).path("substage").textValue();
 
         if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
             caseNumber = courtCaseNumber;
@@ -372,7 +372,7 @@ public class IndexerUtils {
 
         String cmpNumber = caseDetails.get(0).path("cmpNumber").textValue();
         String courtCaseNumber = caseDetails.get(0).path("courtCaseNumber").textValue();
-        String caseStage = caseDetails.get(0).path("stage").textValue();
+        String caseStage = caseDetails.get(0).path("substage").textValue();
 
         if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
             caseNumber = courtCaseNumber;
