@@ -2,7 +2,7 @@ import { InfoBannerIcon } from "@egovernments/digit-ui-components";
 import { CustomArrowDownIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import React, { useCallback, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import { getFormattedDate } from "../utils";
+import { checkIfDueDatePassed, getFormattedDate } from "../utils";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { CloseSvg } from "@egovernments/digit-ui-react-components";
 // import { CustomArrowDownIcon, CustomArrowUpIcon } from "../icons/svgIndex";
@@ -137,6 +137,7 @@ function PendingTaskAccordion({
               style={{ ...(modalView ? { overflowY: "auto", maxHeight: "60vh" } : { overflowY: "hidden", maxHeight: "300px" }) }}
             >
               {sortedPendingTasks?.map((item) => {
+                const isDueDatePassed = checkIfDueDatePassed(item?.stateSla);
                 return (
                   <div
                     className="tasks-component-table-row"
@@ -214,9 +215,7 @@ function PendingTaskAccordion({
                     <div
                       className="tasks-component-table-row-cell"
                       style={{
-                        ...(item?.stateSla && item?.stateSla < new Date().getTime()
-                          ? { color: "#D3302F", fontWeight: "bold" }
-                          : { color: "##3D3C3C" }),
+                        ...(isDueDatePassed ? { color: "#D3302F", fontWeight: "bold" } : { color: "##3D3C3C" }),
                         width: "30%",
                       }}
                     >
