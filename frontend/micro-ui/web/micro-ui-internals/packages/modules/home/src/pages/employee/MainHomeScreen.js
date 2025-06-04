@@ -7,6 +7,7 @@ import HomeHearingsTab from "./HomeHearingsTab";
 import { pendingTaskConfig } from "../../configs/PendingTaskConfig";
 import { HomeService } from "../../hooks/services";
 import { Loader } from "@egovernments/digit-ui-react-components";
+import { useHistory } from "react-router-dom";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -18,6 +19,8 @@ const sectionsParentStyle = {
 
 const MainHomeScreen = () => {
   const { t } = useTranslation();
+  const history = useHistory();
+
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [activeTab, setActiveTab] = useState("HEARINGS_TAB");
   const [updateCounter, setUpdateCounter] = useState(0);
@@ -31,11 +34,24 @@ const MainHomeScreen = () => {
   const [pendingTaskCount, setPendingTaskCount] = useState({ REGISTRATION: 0, REVIEW_PROCESS: 0, VIEW_APPLICATION: 0, SCHEDULE_HEARING: 0 });
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const [loader, setLoader] = useState(false);
+  const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false, currentHearing: {} });
 
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
+
+  const userType = useMemo(() => {
+    if (!userInfo) return "employee";
+    return userInfo?.type === "CITIZEN" ? "citizen" : "employee";
+  }, [userInfo]);
+
+  useEffect(() => {
+    if (!isJudge && !isBenchClerk && !isTypist) {
+      history.push(`/${window?.contextPath}/${userType}/home/home-pending-task`);
+    }
+  }, [isJudge, isBenchClerk, userType, history, isTypist]);
 
   useEffect(() => {
     setUpdateCounter((prev) => prev + 1);
@@ -214,27 +230,43 @@ const MainHomeScreen = () => {
 
   return (
     <React.Fragment>
-      <HomeHeader t={t} />
-      <div className="main-home-screen" style={{ display: "flex", borderTop: "1px #e8e8e8 solid", width: "100vw", height: "calc(100vh - 252px)" }}>
-        <HomeSidebar
-          t={t}
-          onTabChange={handleTabChange}
-          activeTab={activeTab}
-          options={options}
-          isOptionsLoading={false}
-          hearingCount={hearingCount}
-          pendingTaskCount={pendingTaskCount}
-        />
-        {activeTab === "HEARINGS_TAB" ? (
-          <div style={{ width: "100%" }}>
-            <HomeHearingsTab t={t} setHearingCount={setHearingCount} setLoader={setLoader} />
-          </div>
-        ) : (
-          <div className="inbox-search-wrapper" style={{ width: "100%", maxHeight: "calc(100vh - 252px)", overflowY: "auto" }}>
-            {inboxSearchComposer}
-          </div>
-        )}
-      </div>
+      {loader ? (
+        <Loader />
+      ) : (
+        <React.Fragment>
+          {" "}
+          <HomeHeader t={t} />
+          <div
+            className="main-home-screen"
+            style={{ display: "flex", borderTop: "1px #e8e8e8 solid", width: "100vw", height: "calc(100vh - 252px)" }}
+          >
+            <HomeSidebar
+              t={t}
+              onTabChange={handleTabChange}
+              activeTab={activeTab}
+              options={options}
+              isOptionsLoading={false}
+              hearingCount={hearingCount}
+              pendingTaskCount={pendingTaskCount}
+            />
+            {activeTab === "HEARINGS_TAB" ? (
+              <div style={{ width: "100%" }}>
+                <HomeHearingsTab
+                  t={t}
+                  setHearingCount={setHearingCount}
+                  setLoader={setLoader}
+                  setShowEndHearingModal={setShowEndHearingModal}
+                  showEndHearingModal={showEndHearingModal}
+                />
+              </div>
+            ) : (
+              <div className="inbox-search-wrapper" style={{ width: "100%", maxHeight: "calc(100vh - 252px)", overflowY: "auto" }}>
+                {inboxSearchComposer}
+              </div>
+            )}
+          </div>{" "}
+        </React.Fragment>
+      )}
     </React.Fragment>
   );
 };

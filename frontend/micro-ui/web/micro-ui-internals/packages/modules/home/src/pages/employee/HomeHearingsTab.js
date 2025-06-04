@@ -84,7 +84,7 @@ function useInboxSearch({ limit = 300, offset = 0 } = {}) {
 
 const todayStr = new Date().toISOString().slice(0, 10);
 
-const HomeHearingsTab = ({ t, setHearingCount = () => {}, setLoader = () => {} }) => {
+const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHearingCount = () => {}, setLoader = () => {} }) => {
   const [filters, setFilters] = useState({
     date: todayStr,
     status: "",
@@ -101,9 +101,12 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {}, setLoader = () => {} }
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
 
-  const userType = Digit.UserService.getType();
+  const userType = useMemo(() => {
+    if (!userInfo) return "employee";
+    return userInfo?.type === "CITIZEN" ? "citizen" : "employee";
+  }, [userInfo]);
   const [passOver, setPassOver] = useState(false);
-  const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false, currentHearing: {} });
+  //   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false, currentHearing: {} });
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const [toastMsg, setToastMsg] = useState(null);
 
@@ -271,8 +274,11 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {}, setLoader = () => {} }
                       `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
                     );
                   });
+                  setLoader(false);
+                } else {
+                  setLoader(false);
+                  showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
                 }
-                setLoader(false);
               });
             return;
           } catch (e) {
@@ -297,14 +303,15 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {}, setLoader = () => {} }
               },
               { tenantId: hearingDetails?.tenantId }
             );
-            setLoader(false);
             if (
               orderResponse?.list?.length > 0 &&
               orderResponse?.list?.find((order) => order?.additionalDetails?.refHearingId === hearingDetails?.hearingNumber)
             ) {
               setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: true, currentHearing: hearingDetails });
+              setLoader(false);
             } else {
               setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: {} });
+              setLoader(false);
             }
           } catch (e) {
             console.log(e);
@@ -366,7 +373,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {}, setLoader = () => {} }
           id: "end_hearing",
           action: async () => {
             try {
-              // setLoader(true);
+              setLoader(true);
               const orderResponse = await ordersService.searchOrder(
                 {
                   tenantId: hearingDetails?.tenantId,
@@ -385,13 +392,14 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {}, setLoader = () => {} }
                 orderResponse?.list?.find((order) => order?.additionalDetails?.refHearingId === hearingDetails?.hearingNumber)
               ) {
                 setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: true, currentHearing: hearingDetails });
+                setLoader(false);
               } else {
                 setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: {} });
+                setLoader(false);
               }
-              // setLoader(false);
             } catch (e) {
               console.log(e);
-              // setLoader(false);
+              setLoader(false);
               showToast("error", t("ISSUE_IN_END_HEARING"), 5000);
             }
           },
@@ -466,8 +474,9 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {}, setLoader = () => {} }
               }
             } catch (e) {
               console.log(e);
-              setLoader(false);
               showToast("error", t("ISSUE_IN_PASS_OVER"), 5000);
+            } finally {
+              setLoader(false);
             }
           },
         });
@@ -793,21 +802,82 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {}, setLoader = () => {} }
          max-height: 300px;
           overflow-y: auto;}
 
-
+.date-arrow-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.date-arrow-btn {
+  background: transparent;
+  border: none;
+  color: #007E7E;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  padding: 0;
+}
+.date-arrow-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.date-arrow-btn:hover:not(:disabled) {
+  background: #f5f5f5;
+}
       `}</style>
       <div className="filter-bar">
         <div className="filter-fields">
           <LabelFieldPair className={`case-label-field-pair `}>
-            <CardLabel className="case-input-label">{`${t("Date")}`}</CardLabel>
-            <TextInput
-              className="home-input"
-              key={"status"}
-              type={"date"}
-              value={filters?.date}
-              onChange={(e) => {
-                setFilters((prev) => ({ ...prev, date: e.target.value }));
-              }}
-            />
+            <CardLabel className="case-input-label" style={{ paddingLeft: "30px" }}>{`${t("Date")}`}</CardLabel>
+            <div className="date-arrow-group">
+              <button
+                type="button"
+                className="date-arrow-btn"
+                aria-label="Previous Day"
+                onClick={() => {
+                  const prevDate = new Date(filters?.date);
+                  prevDate.setDate(prevDate.getDate() - 1);
+                  setFilters((prev) => ({ ...prev, date: prevDate.toISOString().slice(0, 10) }));
+                }}
+                disabled={loading}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 19L8 12L15 5" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <TextInput
+                className="home-input"
+                key={"status"}
+                type={"date"}
+                value={filters?.date}
+                onChange={(e) => {
+                  setFilters((prev) => ({ ...prev, date: e.target.value }));
+                }}
+                style={{ minWidth: 120, textAlign: "center" }}
+                disabled={loading}
+              />
+              <button
+                type="button"
+                className="date-arrow-btn"
+                aria-label="Next Day"
+                onClick={() => {
+                  const nextDate = new Date(filters?.date);
+                  nextDate.setDate(nextDate.getDate() + 1);
+                  setFilters((prev) => ({ ...prev, date: nextDate.toISOString().slice(0, 10) }));
+                }}
+                disabled={loading}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 5L16 12L9 19" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+            </div>
           </LabelFieldPair>
           <LabelFieldPair className={`case-label-field-pair `} style={{ marginTop: "1px" }}>
             <CardLabel className="case-input-label">{`${t("STATUS")}`}</CardLabel>
