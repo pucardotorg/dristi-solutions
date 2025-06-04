@@ -2432,6 +2432,10 @@ const AdmittedCaseJudge = () => {
         history.push(`/${window?.contextPath}/employee/submissions/submissions-create?filingNumber=${filingNumber}&applicationType=DOCUMENT`);
         return;
       }
+      if (option === t("SUBMIT_DOCUMENTS")) {
+        history.push(`/${window?.contextPath}/employee/submissions/submit-document?filingNumber=${filingNumber}`);
+        return;
+      }
       if (option === t("SCHEDULE_HEARING")) {
         openHearingModule();
         return;
@@ -2745,15 +2749,7 @@ const AdmittedCaseJudge = () => {
     []
   );
 
-  const takeActionOptions = useMemo(
-    () => [
-      ...(userRoles?.includes("SUBMISSION_CREATOR") && !userRoles?.includes("BENCH_CLERK") ? [t("MAKE_SUBMISSION")] : []),
-      t("GENERATE_ORDER_HOME"),
-      t("SCHEDULE_HEARING"),
-      t("REFER_TO_ADR"),
-    ],
-    [t, userRoles]
-  );
+  const takeActionOptions = useMemo(() => [t("CS_GENERATE_ORDER"), t("SUBMIT_DOCUMENTS")], [t]);
 
   const employeeCrumbs = useMemo(
     () => [
@@ -3037,7 +3033,9 @@ const AdmittedCaseJudge = () => {
                             onClick={handleTakeAction}
                             className={"take-action-btn-class"}
                           ></ActionButton>
-                          {showMenu && <Menu options={takeActionOptions} onSelect={(option) => handleSelect(option)}></Menu>}
+                          {showMenu && (
+                            <Menu textStyles={{ cursor: "pointer" }} options={takeActionOptions} onSelect={(option) => handleSelect(option)}></Menu>
+                          )}
                         </React.Fragment>
                       )}
                     </div>
