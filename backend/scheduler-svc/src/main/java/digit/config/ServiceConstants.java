@@ -50,6 +50,7 @@ public class ServiceConstants {
     public static final String PENDING_TASK_ENTITY_TYPE = "order-managelifecycle";
     public static final String PENDING_TASK_NAME = "Create Order for rescheduling the hearing";
     public static final String PENDING_TASK_STATUS = "RESCHEDULE_HEARING";
+    public static final String SCHEDULE_HEARING_ACTION_CATEGORY = "Schedule Hearing";
 
     public static final String STATUS_RESCHEDULE = "RESCHEDULE";
 
