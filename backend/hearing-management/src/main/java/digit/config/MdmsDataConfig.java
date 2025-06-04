@@ -28,7 +28,7 @@ public class MdmsDataConfig {
     private final Configuration configuration;
 
     @Getter
-    private List<String> dates = new ArrayList<>();
+    private List<String> courtHolidays = new ArrayList<>();
 
     @Autowired
     public MdmsDataConfig(MdmsUtil mdmsUtil, Configuration configuration) {
@@ -44,7 +44,7 @@ public class MdmsDataConfig {
     private void loadCourtNonWorkingDates(){
         try {
             RequestInfo requestInfo = RequestInfo.builder().build();
-            dates.addAll(getCourtNonWorkingDays(requestInfo,configuration.getTenantId()));
+            courtHolidays.addAll(getCourtNonWorkingDays(requestInfo,configuration.getTenantId()));
         } catch (Exception e) {
             log.error("Error while fetching court non working days");
         }

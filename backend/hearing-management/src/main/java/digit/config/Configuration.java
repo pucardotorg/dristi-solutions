@@ -48,6 +48,12 @@ public class Configuration {
     @Value("${egov.idgen.path}")
     private String idGenPath;
 
+    @Value("${egov.scheduler.host}")
+    private String schedulerHost;
+
+    @Value("${egov.scheduler.path}")
+    private String schedulerPath;
+
     //mdms
     @Value("${egov.court.holidays.mdms.path}")
     private String courtHolidayMdmsPath;

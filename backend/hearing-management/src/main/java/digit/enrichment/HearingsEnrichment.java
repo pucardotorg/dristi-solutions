@@ -14,8 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static digit.config.ServiceConstants.COURT_NON_WORKING;
-import static digit.config.ServiceConstants.ENRICHMENT_ERROR;
+import static digit.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -29,7 +28,7 @@ public class HearingsEnrichment {
         this.mdmsDataConfig = mdmsDataConfig;
     }
 
-    public List<HearingSearchResponse> enrichHearings(List<Hearing> hearingList) {
+    public List<HearingSearchResponse> enrichHearings(List<Hearing> hearingList, List<String> optOutDates) {
 
         try {
             log.info("Enriching hearings, result= IN_PROGRESS, request = {}", hearingList);
@@ -53,7 +52,7 @@ public class HearingsEnrichment {
             List<HearingSearchResponse> responseList = groupedByDate.entrySet().stream()
                     .map(entry -> HearingSearchResponse.builder()
                             .hearingDate(entry.getKey())
-                            .dateType(checkDayType(entry.getKey()))
+                            .dateType(checkDayType(entry.getKey(), optOutDates))
                             .noOfHearing(entry.getValue().size())
                             .hearingList(entry.getValue())
                             .build())
@@ -68,18 +67,19 @@ public class HearingsEnrichment {
         }
     }
 
-    private String checkDayType(String key) {
-        String courtNonWorkingDay = checkIfCourtNonWorkingDay(key);
-        if(courtNonWorkingDay!=null){
-            return courtNonWorkingDay;
+    private String checkDayType(String key, List<String> optOutDates) {
+        ;
+        //check holiday
+        if(mdmsDataConfig != null && mdmsDataConfig.getCourtHolidays().contains(key)){
+            return COURT_NON_WORKING;
         }
 
         //check opted out day
+        if(optOutDates.contains(key)){
+            return OPTED_OUT;
+        }
 
         return null;
     }
 
-    private String checkIfCourtNonWorkingDay(String key) {
-        return mdmsDataConfig.getDates().contains(key) ? COURT_NON_WORKING : null;
-    }
 }

@@ -2,15 +2,18 @@ package digit.service;
 
 import digit.enrichment.HearingsEnrichment;
 import digit.util.HearingUtil;
-import digit.web.models.HearingListResponse;
-import digit.web.models.HearingSearchListResponse;
-import digit.web.models.HearingSearchRequest;
-import digit.web.models.HearingSearchResponse;
+import digit.util.SchedulerUtil;
+import digit.web.models.*;
+import digit.web.models.scheduler.JudgeCalendarResponse;
+import digit.web.models.scheduler.JudgeCalenderSearchCriteria;
+import digit.web.models.scheduler.JudgeCalenderSearchRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,10 +27,13 @@ public class HearingService {
 
     private final HearingsEnrichment hearingsEnrichment;
 
+    private final SchedulerUtil schedulerUtil;
+
     @Autowired
-    public HearingService(HearingUtil hearingUtil, HearingsEnrichment hearingsEnrichment) {
+    public HearingService(HearingUtil hearingUtil, HearingsEnrichment hearingsEnrichment, SchedulerUtil schedulerUtil) {
         this.hearingUtil = hearingUtil;
         this.hearingsEnrichment = hearingsEnrichment;
+        this.schedulerUtil = schedulerUtil;
     }
 
     public HearingSearchListResponse searchHearings(HearingSearchRequest hearingSearchRequest) {
@@ -41,7 +47,10 @@ public class HearingService {
             List<HearingSearchResponse> hearingSearchResponseList = new ArrayList<>();
 
             if (hearingListResponse != null && hearingListResponse.getHearingList() != null) {
-                hearingSearchResponseList = hearingsEnrichment.enrichHearings(hearingListResponse.getHearingList());
+                String judgeId= getJudgeIdFromHearing(hearingListResponse.getHearingList());
+                List<String> optOutDates = getOptOutDates(hearingSearchRequest,judgeId);
+
+                hearingSearchResponseList = hearingsEnrichment.enrichHearings(hearingListResponse.getHearingList(),optOutDates);
                 return HearingSearchListResponse.builder()
                         .totalCount(hearingListResponse.getTotalCount())
                         .hearingList(hearingSearchResponseList)
@@ -59,6 +68,45 @@ public class HearingService {
             log.error("Error occurred while searching hearings");
             throw new CustomException(HEARING_SEARCH_EXCEPTION, e.getMessage());
         }
+    }
+
+    private String getJudgeIdFromHearing(List<Hearing> hearingList) {
+        if(!hearingList.isEmpty()){
+            return hearingList.get(0).getPresidedBy().getJudgeID().get(0);
+        }
+        return "";
+    }
+
+    private List<String> getOptOutDates(HearingSearchRequest hearingSearchRequest, String judgeId) {
+        List<String> optOutDates = new ArrayList<>();
+        JudgeCalenderSearchRequest judgeCalenderSearchRequest = JudgeCalenderSearchRequest.builder().build();
+        JudgeCalenderSearchCriteria criteria = JudgeCalenderSearchCriteria.builder()
+                .judgeId(judgeId)
+                .fromDate(hearingSearchRequest.getCriteria().getFromDate())
+                .toDate(hearingSearchRequest.getCriteria().getToDate())
+                .ruleType(List.of("RESCHEDULE"))
+                .courtId(hearingSearchRequest.getCriteria().getCourtId())
+                .tenantId(hearingSearchRequest.getCriteria().getTenantId())
+                .build();
+        judgeCalenderSearchRequest.setRequestInfo(hearingSearchRequest.getRequestInfo());
+        judgeCalenderSearchRequest.setCriteria(List.of(criteria));
+
+        JudgeCalendarResponse judgeCalendarResponse = schedulerUtil.searchJudgeCalender(judgeCalenderSearchRequest);
+        if(judgeCalendarResponse!=null){
+            judgeCalendarResponse.getJudgeCalendarRules().forEach(judgeCalendarRule -> {
+                optOutDates.add(convertLongDateToDateString(judgeCalendarRule.getDate()));
+            });
+        }
+
+        return optOutDates;
+
+    }
+
+    private String convertLongDateToDateString(Long date) {
+        return Instant.ofEpochMilli(date)
+                .atZone(ZoneId.of("Asia/Kolkata"))
+                .toLocalDate()
+                .toString();
     }
 
 }
