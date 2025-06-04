@@ -75,7 +75,7 @@ const MainHomeScreen = () => {
 
   // API call for pending tasks count
   const fetchPendingTaskCounts = async () => {
-    const { fromDate } = getTodayRange();
+    const { fromDate, toDate } = getTodayRange();
     const payload = {
       SearchCriteria: {
         moduleName: "Pending Tasks Service",
@@ -87,17 +87,17 @@ const MainHomeScreen = () => {
           isCompleted: false,
         },
         searchReviewProcess: {
-          date: fromDate,
+          date: toDate,
           isOnlyCountRequired: true,
           actionCategory: "Review Process",
         },
         searchViewApplication: {
-          date: fromDate,
+          date: toDate,
           isOnlyCountRequired: true,
           actionCategory: "View Application",
         },
         searchScheduleHearing: {
-          date: fromDate,
+          date: toDate,
           isOnlyCountRequired: true,
           actionCategory: "Schedule Hearing",
         },
