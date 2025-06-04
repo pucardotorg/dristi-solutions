@@ -43,6 +43,9 @@ public class PendingTask {
     @JsonProperty("filingNumber")
     private String filingNumber = null;
 
+    @JsonProperty("actionCategory")
+    private String actionCategory = null;
+
     @JsonProperty("caseId")
     private String caseId = null;
 
