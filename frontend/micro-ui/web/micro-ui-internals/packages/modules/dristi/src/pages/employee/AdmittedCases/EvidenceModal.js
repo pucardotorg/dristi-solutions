@@ -149,7 +149,7 @@ const EvidenceModal = ({
     if (modalType === "Submissions") {
       if (userType === "employee") {
         const applicationType = documentSubmission?.[0]?.applicationList?.applicationType;
-        label = applicationType === "PROFILE_EDITING" ? t("REVIEW_CHANGES") : t("Approve");
+        label = applicationType === "CORRECTION_IN_COMPLAINANT_DETAILS" ? t("REVIEW_CHANGES") : t("Approve");
       } else {
         if (userInfo?.uuid === createdBy) {
           label = t("DOWNLOAD_SUBMISSION");
@@ -1057,7 +1057,7 @@ const EvidenceModal = ({
       return;
     }
     if (userType === "employee") {
-      if (documentApplicationType === "PROFILE_EDITING") {
+      if (documentApplicationType === "CORRECTION_IN_COMPLAINANT_DETAILS") {
         const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
         history.push(
           `/${window.contextPath}/employee/dristi/home/view-case/review-litigant-details?caseId=${caseId}&referenceId=${documentSubmission?.[0]?.details?.additionalDetails?.pendingTaskRefId}&refApplicationId=${refApplicationId}`
@@ -1236,7 +1236,9 @@ const EvidenceModal = ({
           actionSaveLabel={actionSaveLabel}
           actionSaveOnSubmit={actionSaveOnSubmit}
           hideSubmit={currentDiaryEntry || !showSubmit} // Not allowing submit action for court room manager
-          actionCancelLabel={documentApplicationType === "PROFILE_EDITING" || currentDiaryEntry || !isJudge ? false : actionCancelLabel} // Not allowing cancel action for court room manager
+          actionCancelLabel={
+            documentApplicationType === "CORRECTION_IN_COMPLAINANT_DETAILS" || currentDiaryEntry || !isJudge ? false : actionCancelLabel
+          } // Not allowing cancel action for court room manager
           actionCustomLabel={!customLabelShow ? false : actionCustomLabel} // Not allowing cancel action for court room manager
           actionCancelOnSubmit={actionCancelOnSubmit}
           actionCustomLabelSubmit={actionCustomLabelSubmit}

@@ -383,7 +383,7 @@ const SubmissionsCreate = ({ path }) => {
                   ...input.populators,
                   mdmsConfig: {
                     ...input.populators.mdmsConfig,
-                    select: `(data) => {return data['Application'].ApplicationType?.filter((item)=>!["EXTENSION_SUBMISSION_DEADLINE","DOCUMENT","RE_SCHEDULE","CHECKOUT_REQUEST", "SUBMIT_BAIL_DOCUMENTS", "PROFILE_EDITING",${
+                    select: `(data) => {return data['Application'].ApplicationType?.filter((item)=>!["EXTENSION_SUBMISSION_DEADLINE","DOCUMENT","RE_SCHEDULE","CHECKOUT_REQUEST", "SUBMIT_BAIL_DOCUMENTS", "CORRECTION_IN_COMPLAINANT_DETAILS",${
                       isDelayApplicationPending ? `"DELAY_CONDONATION",` : ""
                     }${
                       !BAIL_APPLICATION_EXCLUDED_STATUSES.includes(caseDetails?.status) ? `"REQUEST_FOR_BAIL",` : ""
@@ -418,7 +418,7 @@ const SubmissionsCreate = ({ path }) => {
       SUBMIT_BAIL_DOCUMENTS: submitDocsForBail,
       DELAY_CONDONATION: submitDelayCondonation,
       OTHERS: configsOthers, // need to chnage here
-      PROFILE_EDITING:
+      CORRECTION_IN_COMPLAINANT_DETAILS:
         applicationDetails?.additionalDetails?.profileEditType === "respondentDetails"
           ? getModifiedForm(editRespondentConfig.formconfig, formdata)
           : getModifiedForm(editComplainantDetailsConfig.formconfig, formdata),
@@ -795,7 +795,9 @@ const SubmissionsCreate = ({ path }) => {
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (
       applicationType &&
-      !["OTHERS", "DOCUMENT", "REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION", "PROFILE_EDITING"].includes(applicationType) &&
+      !["OTHERS", "DOCUMENT", "REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION", "CORRECTION_IN_COMPLAINANT_DETAILS"].includes(
+        applicationType
+      ) &&
       !formData?.applicationDate
     ) {
       setValue("applicationDate", formatDate(new Date()));
