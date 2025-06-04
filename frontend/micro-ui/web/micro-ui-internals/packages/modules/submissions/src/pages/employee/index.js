@@ -1,5 +1,5 @@
-import { AppContainer, BreadCrumb, PrivateRoute } from "@egovernments/digit-ui-react-components";
-import React, { useMemo } from "react";
+import { AppContainer, PrivateRoute } from "@egovernments/digit-ui-react-components";
+import React, { useMemo, useContext } from "react";
 import { useTranslation } from "react-i18next";
 import { Switch } from "react-router-dom";
 import SubmissionsResponse from "./SubmissionsResponse";
@@ -7,6 +7,8 @@ import SubmissionsCreate from "./SubmissionsCreate";
 import SubmissionsSearch from "./SubmissionsSearch";
 import SubmissionDocuments from "./SubmissionDocuments";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
+import BreadCrumbSubmissions from "../../components/BreadCrumbSubmissions";
 const bredCrumbStyle = { maxWidth: "min-content" };
 
 const ProjectBreadCrumb = ({ location }) => {
@@ -14,6 +16,9 @@ const ProjectBreadCrumb = ({ location }) => {
   const roles = userInfo?.roles;
   const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
   const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  // Access the breadcrumb context to get case navigation data
+  const { BreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
+  const { caseId, filingNumber } = BreadCrumbsParamsData;
 
   let userType = "employee";
   if (userInfo) {
@@ -22,20 +27,27 @@ const ProjectBreadCrumb = ({ location }) => {
   const { t } = useTranslation();
   const crumbs = [
     {
-      path:
-        isJudge || isBenchClerk
-          ? `/${window?.contextPath}/${userType}/home/home-screen`
-          : `/${window?.contextPath}/${userType}/home/home-pending-task`,
-      content: t("HOME"),
+      path: `/${window?.contextPath}/${userType}/home/home-pending-task`,
+      content: t("CS_HOME"),
       show: true,
     },
+    // Conditionally add the View Case breadcrumb if case data is available in context
+    ...(caseId && filingNumber
+      ? [
+          {
+            path: `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`,
+            content: t("VIEW_CASE"),
+            show: true,
+          },
+        ]
+      : []),
     {
       path: `/${window?.contextPath}/${userType}`,
       content: t(location.pathname.split("/").pop()),
       show: true,
     },
   ];
-  return <BreadCrumb crumbs={crumbs} spanStyle={bredCrumbStyle} />;
+  return <BreadCrumbSubmissions crumbs={crumbs} spanStyle={bredCrumbStyle} />;
 };
 
 const App = ({ path, stateCode, userType, tenants }) => {

@@ -43,6 +43,7 @@ import PublishedNotificationModal from "./publishedNotificationModal";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import NoticeAccordion from "../../../components/NoticeAccordion";
 import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
+import Breadcrumb from "../../../components/BreadCrumb";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -2624,6 +2625,24 @@ const AdmittedCases = () => {
     }
   }, [caseDetails, downloadPdf, tenantId, showToast]);
 
+  const citizenCrumbs = useMemo(
+      () => [
+        {
+          path: `/${window?.contextPath}/citizen/home/home-pending-task`,
+          content: t("ES_COMMON_HOME"),
+          show: true,
+          isLast: false,
+        },
+        {
+          path: `${path}/home/view-case`,
+          content: t("VIEW_CASE"),
+          show: true,
+          isLast: true,
+        },
+      ],
+      [path, t]
+    );
+
   const inboxComposer = useMemo(() => {
     if (
       activeTab === "Documents" &&
@@ -2648,6 +2667,7 @@ const AdmittedCases = () => {
 
   return (
     <div className="admitted-case" style={{ position: "absolute", width: "100%" }}>
+      <Breadcrumb crumbs={citizenCrumbs} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>
       {downloadCasePdfLoading && (
         <div
           style={{
