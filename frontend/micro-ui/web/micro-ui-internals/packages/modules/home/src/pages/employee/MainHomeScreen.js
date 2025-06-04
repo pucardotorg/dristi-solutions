@@ -6,6 +6,7 @@ import { InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import HomeHearingsTab from "./HomeHearingsTab";
 import { pendingTaskConfig } from "../../configs/PendingTaskConfig";
 import { HomeService } from "../../hooks/services";
+import { Loader } from "@egovernments/digit-ui-react-components";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -29,7 +30,8 @@ const MainHomeScreen = () => {
   const [activeTabTitle, setActiveTabTitle] = useState("HEARINGS_TAB");
   const [pendingTaskCount, setPendingTaskCount] = useState({ REGISTRATION: 0, REVIEW_PROCESS: 0, VIEW_APPLICATION: 0, SCHEDULE_HEARING: 0 });
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-  const name = userInfo?.name;
+  const [loader, setLoader] = useState(false);
+
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
@@ -50,7 +52,6 @@ const MainHomeScreen = () => {
     return { fromDate, toDate };
   };
 
-  // API call for hearing tab count
   const fetchHearingCount = async () => {
     const { fromDate, toDate } = getTodayRange();
     const payload = {
@@ -73,7 +74,6 @@ const MainHomeScreen = () => {
     setHearingCount(res?.totalCount || 0);
   };
 
-  // API call for pending tasks count
   const fetchPendingTaskCounts = async () => {
     const { fromDate, toDate } = getTodayRange();
     const payload = {
@@ -127,7 +127,7 @@ const MainHomeScreen = () => {
 
   const options = {
     REGISTRATION: {
-      name: "Registrater Cases",
+      name: "Register Cases",
       count: registerCount,
       func: setRegisterCount,
     },
@@ -137,7 +137,7 @@ const MainHomeScreen = () => {
       func: setReviewCount,
     },
     VIEW_APPLICATION: {
-      name: "View Application",
+      name: "View Applications",
       count: applicationCount,
       func: setApplicationCount,
     },
@@ -208,6 +208,10 @@ const MainHomeScreen = () => {
     [activeTab, updateCounter, modifiedConfig]
   );
 
+  if (loader) {
+    return <Loader />;
+  }
+
   return (
     <React.Fragment>
       <HomeHeader t={t} />
@@ -223,10 +227,10 @@ const MainHomeScreen = () => {
         />
         {activeTab === "HEARINGS_TAB" ? (
           <div style={{ width: "100%" }}>
-            <HomeHearingsTab t={t} setHearingCount={setHearingCount} />
+            <HomeHearingsTab t={t} setHearingCount={setHearingCount} setLoader={setLoader} />
           </div>
         ) : (
-          <div className="inbox-search-wrapper" style={{ width: "100%" }}>
+          <div className="inbox-search-wrapper" style={{ width: "100%", maxHeight: "calc(100vh - 252px)", overflowY: "auto" }}>
             {inboxSearchComposer}
           </div>
         )}

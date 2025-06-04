@@ -84,7 +84,7 @@ function useInboxSearch({ limit = 300, offset = 0 } = {}) {
 
 const todayStr = new Date().toISOString().slice(0, 10);
 
-const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
+const HomeHearingsTab = ({ t, setHearingCount = () => {}, setLoader = () => {} }) => {
   const [filters, setFilters] = useState({
     date: todayStr,
     status: "",
@@ -95,11 +95,11 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
 
   const { data: tableData, loading, error, fetchInbox } = useInboxSearch();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-  const name = userInfo?.name;
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
 
   const userType = Digit.UserService.getType();
   const [passOver, setPassOver] = useState(false);
@@ -194,8 +194,9 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
         const validData = tableData?.filter((item) =>
           ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status)
         );
-        const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentHearing?.hearingId);
+        const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentHearing?.hearingNumber);
         if (index === -1 || validData?.length === 1) {
+          // showToast("error", t("NO_MORE_HEARINGS"), 5000);
           // history.push(`/${window?.contextPath}/employee/home/home-screen`);
           return;
         } else {
@@ -214,9 +215,15 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
                 { tenantId: row?.businessObject?.hearingDetails?.tenantId }
               )
               .then((response) => {
-                hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
-                  window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
-                });
+                if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
+                  if (response?.HearingList[0]?.status === "SCHEDULED" || response?.HearingList[0]?.status === "PASSED_OVER") {
+                    hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
+                      window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
+                    });
+                  } else {
+                    showToast("error", t("ISSUE_IN_NEXT_START_HEARING"), 5000);
+                  }
+                }
               })
               .catch((error) => {
                 console.error("Error starting hearing", error);
@@ -236,87 +243,92 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
   const handleEditClick = useCallback(
     async (row) => {
       const hearingDetails = row?.businessObject?.hearingDetails;
-      if (["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status)) {
-        try {
-          hearingService
-            ?.searchHearings(
-              {
-                criteria: {
-                  hearingId: hearingDetails?.hearingNumber,
-                  tenantId: hearingDetails?.tenantId,
-                },
-              },
-              { tenantId: hearingDetails?.tenantId }
-            )
-            .then((response) => {
-              if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
-                hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
-                  if (isBenchClerk) {
-                    history.push(
-                      `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
-                    );
-                  } else
-                    history.push(
-                      `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`,
-                      { openOrder: true }
-                    );
-                });
-              }
-            });
-        } catch (e) {
-          console.log(e);
-          showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
-        }
-      }
-      if (!isBenchClerk && ["IN_PROGRESS"].includes(hearingDetails?.status)) {
+
+      if (isJudge || isTypist) {
         history.push(
           `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`,
           { openOrder: true }
         );
-      } else if (isBenchClerk && ["IN_PROGRESS"].includes(hearingDetails?.status)) {
-        //for bench clerk action he will have end hearing instead of edit icon
-        try {
-          const orderResponse = await ordersService.searchOrder(
-            {
-              tenantId: hearingDetails?.tenantId,
-              criteria: {
-                tenantID: hearingDetails?.tenantId,
-                filingNumber: hearingDetails?.filingNumber,
-                orderType: "SCHEDULING_NEXT_HEARING",
-                status: OrderWorkflowState.DRAFT_IN_PROGRESS,
-                ...(hearingDetails?.courtId && { courtId: hearingDetails?.courtId }),
-              },
-            },
-            { tenantId: hearingDetails?.tenantId }
-          );
-          if (
-            orderResponse?.list?.length > 0 &&
-            orderResponse?.list?.find((order) => order?.additionalDetails?.refHearingId === hearingDetails?.hearingNumber)
-          ) {
-            setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: true, currentHearing: hearingDetails });
-          } else {
-            setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: {} });
+        return;
+      } else if (isBenchClerk) {
+        if (["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status)) {
+          try {
+            setLoader(true);
+            hearingService
+              ?.searchHearings(
+                {
+                  criteria: {
+                    hearingId: hearingDetails?.hearingNumber,
+                    tenantId: hearingDetails?.tenantId,
+                  },
+                },
+                { tenantId: hearingDetails?.tenantId }
+              )
+              .then((response) => {
+                if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
+                  hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
+                    history.push(
+                      `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
+                    );
+                  });
+                }
+                setLoader(false);
+              });
+            return;
+          } catch (e) {
+            console.log(e);
+            setLoader(false);
+            showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
           }
-        } catch (e) {
-          console.log(e);
+        } else if (isBenchClerk && ["IN_PROGRESS"].includes(hearingDetails?.status)) {
+          //for bench clerk action he will have end hearing instead of edit icon
+          try {
+            setLoader(true);
+            const orderResponse = await ordersService.searchOrder(
+              {
+                tenantId: hearingDetails?.tenantId,
+                criteria: {
+                  tenantID: hearingDetails?.tenantId,
+                  filingNumber: hearingDetails?.filingNumber,
+                  orderType: "SCHEDULING_NEXT_HEARING",
+                  status: OrderWorkflowState.DRAFT_IN_PROGRESS,
+                  ...(hearingDetails?.courtId && { courtId: hearingDetails?.courtId }),
+                },
+              },
+              { tenantId: hearingDetails?.tenantId }
+            );
+            setLoader(false);
+            if (
+              orderResponse?.list?.length > 0 &&
+              orderResponse?.list?.find((order) => order?.additionalDetails?.refHearingId === hearingDetails?.hearingNumber)
+            ) {
+              setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: true, currentHearing: hearingDetails });
+            } else {
+              setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: {} });
+            }
+          } catch (e) {
+            console.log(e);
+            setLoader(false);
+            showToast("error", t("ISSUE_IN_UPDATE_HEARING"), 5000);
+          }
         }
       }
     },
-    [history]
+    [history, isBenchClerk, isJudge, isTypist, t]
   );
 
   const tableRows = useMemo(() => {
     if (!Array.isArray(tableData)) return null;
     const getActionItems = async (row) => {
-      const searchParams = new URLSearchParams();
       let dropDownitems = [];
       const hearingDetails = row?.businessObject?.hearingDetails;
-      if (!isBenchClerk && (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER")) {
+      if ((isJudge || isTypist) && (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER")) {
         dropDownitems.push({
           label: "Start Hearing",
           id: "start_hearing",
           action: () => {
             try {
+              setLoader(true);
               hearingService
                 ?.searchHearings(
                   {
@@ -333,21 +345,28 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
                       history.push(
                         `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
                       );
+                      setLoader(false);
                     });
+                  } else {
+                    setLoader(false);
+                    showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
                   }
                 });
             } catch (e) {
               console.log(e);
+              setLoader(false);
+              showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
             }
           },
         });
       }
-      if (!isBenchClerk && hearingDetails?.status === "IN_PROGRESS") {
+      if ((isJudge || isTypist) && hearingDetails?.status === "IN_PROGRESS") {
         dropDownitems.push({
           label: "End Hearing",
           id: "end_hearing",
           action: async () => {
             try {
+              // setLoader(true);
               const orderResponse = await ordersService.searchOrder(
                 {
                   tenantId: hearingDetails?.tenantId,
@@ -369,8 +388,11 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
               } else {
                 setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: {} });
               }
+              // setLoader(false);
             } catch (e) {
               console.log(e);
+              // setLoader(false);
+              showToast("error", t("ISSUE_IN_END_HEARING"), 5000);
             }
           },
         });
@@ -383,6 +405,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
           action: async () => {
             try {
               let orderResponse = null;
+              setLoader(true);
               if (hearingDetails?.status !== "SCHEDULED") {
                 orderResponse = await ordersService.searchOrder(
                   {
@@ -432,15 +455,19 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
                           { applicationNumber: "", cnrNumber: "" }
                         )
                         .then((res) => {
+                          setLoader(false);
                           if (res?.hearing?.status === "PASSED_OVER") fetchInbox(filters, setHearingCount);
                         });
                     }
                   });
               } else {
+                setLoader(false);
                 setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: {} });
               }
             } catch (e) {
               console.log(e);
+              setLoader(false);
+              showToast("error", t("ISSUE_IN_PASS_OVER"), 5000);
             }
           },
         });
@@ -603,7 +630,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
       .filter-bar button.search-btn:hover {
         background: #159392;
       }
-      .filter-bar .clear-btn {
+      .filter-bar button.clear-btn {
         background: #fff;
         color: #007E7E;
         border: none !important;
@@ -614,9 +641,8 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
         margin-right: 4px;
         transition: background 0.2s, color 0.2s;
       }
-      .filter-bar .clear-btn:hover {
-        background: #E4F2E4;
-        color: #007E7E;
+      .filter-bar button.clear-btn:hover {
+        background: "transparent";
       }
       .main-table {
         width: 100%;
@@ -831,10 +857,10 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
           </LabelFieldPair>
         </div>
         <div className="filter-actions">
-          <span className="clear-btn" onClick={handleClear}>
+          <button className="clear-btn" onClick={handleClear} disabled={loading}>
             {t("ES_COMMON_CLEAR_SEARCH")}
-          </span>
-          <button className="search-btn" onClick={handleSearch}>
+          </button>
+          <button className="search-btn" onClick={handleSearch} disabled={loading}>
             {t("ES_COMMON_SEARCH")}
           </button>
         </div>
@@ -896,7 +922,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
               ?.searchHearings(
                 {
                   criteria: {
-                    hearingId: showEndHearingModal?.currentHearing?.hearingId,
+                    hearingId: showEndHearingModal?.currentHearing?.hearingNumber,
                     tenantId: showEndHearingModal?.currentHearing?.tenantId,
                   },
                 },
@@ -926,7 +952,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
               ?.searchHearings(
                 {
                   criteria: {
-                    hearingId: showEndHearingModal?.currentHearing?.hearingId,
+                    hearingId: showEndHearingModal?.currentHearing?.hearingNumber,
                     tenantId: showEndHearingModal?.currentHearing?.tenantId,
                   },
                 },
@@ -945,8 +971,8 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
                       { applicationNumber: "", cnrNumber: "" }
                     )
                     .then((res) => {
-                      if (res?.hearing?.status === "PASSED_OVER" || res?.hearing?.status === "COMPLETED") fetchInbox(filters, setHearingCount);
                       setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+                      if (res?.hearing?.status === "PASSED_OVER" || res?.hearing?.status === "COMPLETED") fetchInbox(filters, setHearingCount);
                     });
                 }
               });

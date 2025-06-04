@@ -16,7 +16,7 @@ const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hea
         active={activeTab === "HEARINGS_TAB"}
       />
 
-      <HomeAccordian title={t("PENDING_TASKS_TAB")}>
+      <HomeAccordian title={t("PENDING_TASKS_TAB")} defaultOpen>
         {!isOptionsLoading &&
           Object.keys(options).map((key, index) => (
             <SidebarItem
