@@ -283,7 +283,8 @@ async function applicationProfileEdit(
           barRegistrationNumber,
           currentName: partyName,
           currentDetailsLitigantType: currentDetailsLitigantType || "",
-          currentAge: oldData?.data?.complainantAge || "",
+          currentAge:
+            oldData?.data?.respondentAge || oldData?.data?.complainantAge || "",
           currentMobileNumber: getCommaSeparatedValues(
             oldData?.data?.phonenumbers?.mobileNumber
           ),
@@ -297,7 +298,7 @@ async function applicationProfileEdit(
           currentCompanyName: currentCompanyName || "",
           currentEntityType: currentEntityType || "",
           newName: newPartyName,
-          newAge: newData?.complainantAge || "",
+          newAge: newData?.respondentAge || newData?.complainantAge || "",
           newMobileNumber: getCommaSeparatedValues(
             newData?.phonenumbers?.mobileNumber
           ),
