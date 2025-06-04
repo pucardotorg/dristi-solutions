@@ -48,6 +48,18 @@ public class Configuration {
     @Value("${egov.idgen.path}")
     private String idGenPath;
 
+    //mdms
+    @Value("${egov.court.holidays.mdms.path}")
+    private String courtHolidayMdmsPath;
+
+    @Value("${egov.schedule.hearing.module}")
+    private String scheduleHearingModuleName;
+
+    @Value("${egov.court.holiday.master}")
+    private String courtHolidayMasterName;
+
+    @Value("${egov.tenantId}")
+    private String tenantId;
 
     //Workflow Config
     @Value("${egov.workflow.host}")

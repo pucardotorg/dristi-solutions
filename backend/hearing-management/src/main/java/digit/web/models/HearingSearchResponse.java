@@ -29,6 +29,10 @@ public class HearingSearchResponse {
     @Valid
     private String hearingDate = null;
 
+    @JsonProperty("dateType")
+    @Valid
+    private String dateType = null;
+
     @JsonProperty("noOfHearing")
     @Valid
     private Integer noOfHearing = null;
