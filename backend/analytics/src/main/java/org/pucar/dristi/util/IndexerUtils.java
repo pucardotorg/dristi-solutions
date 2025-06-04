@@ -180,7 +180,7 @@ public class IndexerUtils {
 
         String cmpNumber = caseDetails.get(0).path("cmpNumber").textValue();
         String courtCaseNumber = caseDetails.get(0).path("courtCaseNumber").textValue();
-        String caseStage = caseDetails.get(0).path("substage").textValue();
+        String caseSubStage = caseDetails.get(0).path("substage").textValue();
 
         if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
             caseNumber = courtCaseNumber;
@@ -221,7 +221,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime
         );
     }
 
@@ -372,7 +372,7 @@ public class IndexerUtils {
 
         String cmpNumber = caseDetails.get(0).path("cmpNumber").textValue();
         String courtCaseNumber = caseDetails.get(0).path("courtCaseNumber").textValue();
-        String caseStage = caseDetails.get(0).path("substage").textValue();
+        String caseSubStage = caseDetails.get(0).path("substage").textValue();
 
         if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
             caseNumber = courtCaseNumber;
@@ -405,7 +405,7 @@ public class IndexerUtils {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime
+                config.getIndex(), referenceId, id, name, entityType, referenceId, status, caseNumber, caseSubStage, advocateDetails, actionCategory, searchableFields, assignedTo, assignedRole, cnrNumber, filingNumber, caseId, caseTitle, isCompleted, stateSla, businessServiceSla, additionalDetails, screenType, courtId, createdTime
         );
     }
 
