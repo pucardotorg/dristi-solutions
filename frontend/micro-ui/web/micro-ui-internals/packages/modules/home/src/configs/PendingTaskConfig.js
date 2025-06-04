@@ -149,7 +149,7 @@ export const pendingTaskConfig = {
       uiConfig: {
         columns: [
           {
-            label: "CASE_NAME",
+            label: "PENDING_CASE_NAME",
             jsonPath: "caseTitle",
             additionalCustomization: true,
           },

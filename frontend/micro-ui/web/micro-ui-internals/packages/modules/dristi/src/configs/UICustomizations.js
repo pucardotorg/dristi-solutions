@@ -1994,7 +1994,7 @@ export const UICustomizations = {
     },
     additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
       switch (key) {
-        case "CASE_NAME": {
+        case "PENDING_CASE_NAME": {
           return row?.tab === "REGISTRATION" ? (
             <Link
               style={{ color: "black", textDecoration: "underline" }}

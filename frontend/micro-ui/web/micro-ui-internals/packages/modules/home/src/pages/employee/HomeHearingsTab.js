@@ -439,7 +439,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
             </Link>
           </td>
           <td>{hearingDetails?.caseNumber || "-"}</td>
-          <td style={{ whiteSpace: "pre-line" }}>
+          <td style={{ whiteSpace: "pre-line", padding: "12px 0px" }}>
             <div>
               <p data-tip data-for={`hearing-list`}>
                 {hearingDetails?.advocate?.complainant?.length > 0 &&
