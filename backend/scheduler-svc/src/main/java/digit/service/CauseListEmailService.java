@@ -1,6 +1,7 @@
 package digit.service;
 
 
+import com.google.gson.Gson;
 import digit.config.Configuration;
 import digit.config.ServiceConstants;
 import digit.web.models.email.Email;
@@ -47,8 +48,9 @@ public class CauseListEmailService {
      * @param tenantId tenantId
      */
     public void sendCauseListEmail(String fileStoreId, LocalDate hearingDate, RequestInfo requestInfo, String tenantId) {
-        try {
+        log.info("operation = sendCauseListEmail, result = IN_PROGRESS, hearingDate = {}", hearingDate);
 
+        try {
             if (fileStoreId == null || fileStoreId.trim().isEmpty()) {
                 throw new CustomException("INVALID_INPUT", "FileStoreId cannot be null or empty");
             }
@@ -76,11 +78,16 @@ public class CauseListEmailService {
                     .filter(s -> !s.isEmpty())
                     .collect(Collectors.toSet());
 
+            Map<String, Object> bodyMap = new HashMap<>();
+            bodyMap.put("emailBody", ServiceConstants.CAUSE_LIST_EMAIL_BODY);
+            String emailBody = new Gson().toJson(bodyMap);
+
+
             // Build email object
             Email email = Email.builder()
                     .subject(subject)
-                    .body(ServiceConstants.CAUSE_LIST_EMAIL_BODY)
-                    .isHTML(false)
+                    .body(emailBody)
+                    .isHTML(true)
                     .emailTo(emailRecipients)
                     .fileStoreId(fileStoreMap)
                     .tenantId(updatedTenantId)
@@ -97,8 +104,9 @@ public class CauseListEmailService {
 
             kafkaTemplate.send(updatedTopic, emailRequest);
 
-            log.info("Cause list email sent successfully for date: {}", hearingDate);
+            log.info("operation = sendCauseListEmail, result = SUCCESS, hearingDate = {}", hearingDate);
         } catch (Exception e) {
+            log.error("operation = sendCauseListEmail, result = FAILURE, hearingDate = {}, error = {}", hearingDate, e.getMessage(), e);
             throw new CustomException(ServiceConstants.EMAIL_SEND_ERROR,
                     ServiceConstants.EMAIL_SEND_ERROR_MESSAGE + e.getMessage());
         }
