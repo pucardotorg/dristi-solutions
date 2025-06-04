@@ -75,12 +75,23 @@ export const formatDateYYMMDD = (date) => {
 
 export const getFormattedDate = (epochTime) => {
   const date = new Date(epochTime);
-const formattedDate = date.toLocaleDateString('en-GB', {
-  day: 'numeric',
-  month: 'long',
-  year: 'numeric',
-});
-return formattedDate
+  const formattedDate = date.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  return formattedDate;
+};
+
+export const checkIfDueDatePassed = (dueDate) => {
+  const slaDate = new Date(dueDate);
+  const today = new Date();
+
+  // Set both dates to midnight to ignore time
+  slaDate.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
+  if (!dueDate) return false;
+  else return slaDate > today;
 };
 
 export const getSuffixByBusinessCode = (paymentType = [], businessCode) => {
