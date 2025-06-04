@@ -1,5 +1,6 @@
 package digit.service;
 
+import com.google.gson.Gson;
 import digit.config.Configuration;
 import digit.config.ServiceConstants;
 import digit.web.models.email.Email;
@@ -12,7 +13,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.*;
-
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -60,14 +60,12 @@ class CauseListEmailServiceTest {
         fileStoreId = "test-file-store-id-123";
         hearingDate = LocalDate.of(2024, 3, 15);
         tenantId = "pb.amritsar";
-        // The service will replace ${date_of_causeList} with hearingDate.format(dateFormatter)
         formattedSubjectPattern = "Cause List for Date: {date_of_causeList}";
         recipients = "test1@example.com, test2@example.com, test3@example.com";
         stateTenantId = "pb";
         emailTopic = "email-topic";
         updatedTopic = "pb-email-topic";
 
-        // Common mock setup used in tests
         when(config.getCauseListSubject()).thenReturn(formattedSubjectPattern);
         when(config.getCauseListRecipients()).thenReturn(recipients);
         when(config.getEgovStateTenantId()).thenReturn(stateTenantId);
@@ -77,10 +75,8 @@ class CauseListEmailServiceTest {
 
     @Test
     void testSendCauseListEmail_Success() {
-        // Act
         causeListEmailService.sendCauseListEmail(fileStoreId, hearingDate, requestInfo, tenantId);
 
-        // Capture sent email
         ArgumentCaptor<EmailRequest> emailRequestCaptor = ArgumentCaptor.forClass(EmailRequest.class);
         ArgumentCaptor<String> topicCaptor = ArgumentCaptor.forClass(String.class);
 
@@ -94,11 +90,15 @@ class CauseListEmailServiceTest {
 
         Email capturedEmail = capturedEmailRequest.getEmail();
         assertNotNull(capturedEmail);
+
         String expectedDateString = hearingDate.format(dateFormatter);
         assertEquals("Cause List for Date: " + expectedDateString, capturedEmail.getSubject());
-        assertEquals(ServiceConstants.CAUSE_LIST_EMAIL_BODY, capturedEmail.getBody());
+
+        String expectedBody = new Gson().toJson(Map.of("emailBody", ServiceConstants.CAUSE_LIST_EMAIL_BODY));
+        assertEquals(expectedBody, capturedEmail.getBody());
+
         assertEquals(tenantId, capturedEmail.getTenantId());
-        assertFalse(capturedEmail.getIsHTML());
+        assertTrue(capturedEmail.getIsHTML());
 
         Set<String> emailTo = capturedEmail.getEmailTo();
         assertEquals(3, emailTo.size());
