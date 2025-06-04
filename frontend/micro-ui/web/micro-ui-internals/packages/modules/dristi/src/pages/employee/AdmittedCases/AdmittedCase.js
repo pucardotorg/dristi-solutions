@@ -2626,22 +2626,22 @@ const AdmittedCases = () => {
   }, [caseDetails, downloadPdf, tenantId, showToast]);
 
   const citizenCrumbs = useMemo(
-      () => [
-        {
-          path: `/${window?.contextPath}/citizen/home/home-pending-task`,
-          content: t("ES_COMMON_HOME"),
-          show: true,
-          isLast: false,
-        },
-        {
-          path: `${path}/home/view-case`,
-          content: t("VIEW_CASE"),
-          show: true,
-          isLast: true,
-        },
-      ],
-      [path, t]
-    );
+    () => [
+      {
+        path: `/${window?.contextPath}/citizen/home/home-pending-task`,
+        content: t("ES_COMMON_HOME"),
+        show: true,
+        isLast: false,
+      },
+      {
+        path: `${path}/home/view-case`,
+        content: t("VIEW_CASE"),
+        show: true,
+        isLast: true,
+      },
+    ],
+    [path, t]
+  );
 
   const inboxComposer = useMemo(() => {
     if (
