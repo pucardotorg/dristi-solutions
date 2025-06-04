@@ -8,6 +8,7 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
 import { ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
+import { Toast } from "@egovernments/digit-ui-react-components";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -104,6 +105,14 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
   const [passOver, setPassOver] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false, currentHearing: {} });
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
+  const [toastMsg, setToastMsg] = useState(null);
+
+  const showToast = (type, message, duration = 5000) => {
+    setToastMsg({ key: type, action: message });
+    setTimeout(() => {
+      setToastMsg(null);
+    }, duration);
+  };
 
   const handleClear = useCallback(() => {
     const cleared = { date: todayStr, status: "", purpose: "", caseQuery: "" };
@@ -193,7 +202,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
           const row = validData[(index + 1) % validData?.length];
           if (["SCHEDULED", "PASSED_OVER"].includes(row?.businessObject?.hearingDetails?.status)) {
             hearingService
-              .searchHearings(
+              ?.searchHearings(
                 {
                   criteria: {
                     hearingId: row?.businessObject?.hearingDetails?.hearingNumber,
@@ -205,7 +214,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
                 { tenantId: row?.businessObject?.hearingDetails?.tenantId }
               )
               .then((response) => {
-                hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
+                hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
                   window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
                 });
               })
@@ -241,7 +250,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
             )
             .then((response) => {
               if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
-                hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
+                hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
                   if (isBenchClerk) {
                     history.push(
                       `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
@@ -256,6 +265,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
             });
         } catch (e) {
           console.log(e);
+          showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
         }
       }
       if (!isBenchClerk && ["IN_PROGRESS"].includes(hearingDetails?.status)) {
@@ -264,6 +274,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
           { openOrder: true }
         );
       } else if (isBenchClerk && ["IN_PROGRESS"].includes(hearingDetails?.status)) {
+        //for bench clerk action he will have end hearing instead of edit icon
         try {
           const orderResponse = await ordersService.searchOrder(
             {
@@ -318,7 +329,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
                 )
                 .then((response) => {
                   if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
-                    hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
+                    hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
                       history.push(
                         `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
                       );
@@ -371,22 +382,26 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
           id: "pass_over",
           action: async () => {
             try {
-              const orderResponse = await ordersService.searchOrder(
-                {
-                  tenantId: hearingDetails?.tenantId,
-                  criteria: {
-                    tenantID: hearingDetails?.tenantId,
-                    filingNumber: hearingDetails?.filingNumber,
-                    orderType: "SCHEDULING_NEXT_HEARING",
-                    status: OrderWorkflowState.DRAFT_IN_PROGRESS,
-                    ...(hearingDetails?.courtId && { courtId: hearingDetails?.courtId }),
+              let orderResponse = null;
+              if (hearingDetails?.status !== "SCHEDULED") {
+                orderResponse = await ordersService.searchOrder(
+                  {
+                    tenantId: hearingDetails?.tenantId,
+                    criteria: {
+                      tenantID: hearingDetails?.tenantId,
+                      filingNumber: hearingDetails?.filingNumber,
+                      orderType: "SCHEDULING_NEXT_HEARING",
+                      status: OrderWorkflowState.DRAFT_IN_PROGRESS,
+                      ...(hearingDetails?.courtId && { courtId: hearingDetails?.courtId }),
+                    },
                   },
-                },
-                { tenantId: hearingDetails?.tenantId }
-              );
+                  { tenantId: hearingDetails?.tenantId }
+                );
+              }
               if (
-                orderResponse?.list?.length > 0 &&
-                orderResponse?.list?.find((order) => order?.additionalDetails?.refHearingId === hearingDetails?.hearingNumber)
+                hearingDetails?.status === "SCHEDULED" ||
+                (orderResponse?.list?.length > 0 &&
+                  orderResponse?.list?.find((order) => order?.additionalDetails?.refHearingId === hearingDetails?.hearingNumber))
               ) {
                 setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: false, currentHearing: hearingDetails });
 
@@ -401,16 +416,24 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
                     { tenantId: hearingDetails?.tenantId }
                   )
                   .then((response) => {
-                    if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
-                      hearingService.updateHearings(
-                        {
-                          tenantId: Digit.ULBService.getCurrentTenantId(),
-                          hearing: { ...response?.HearingList?.[0], workflow: { action: "PASS_OVER" } },
-                          hearingType: "",
-                          status: "",
-                        },
-                        { applicationNumber: "", cnrNumber: "" }
-                      );
+                    if (
+                      Array.isArray(response?.HearingList) &&
+                      response?.HearingList?.length > 0 &&
+                      (response?.HearingList?.[0]?.status === "SCHEDULED" || hearingDetails?.status === "IN_PROGRESS")
+                    ) {
+                      hearingService
+                        ?.updateHearings(
+                          {
+                            tenantId: Digit.ULBService.getCurrentTenantId(),
+                            hearing: { ...response?.HearingList?.[0], workflow: { action: "PASS_OVER" } },
+                            hearingType: "",
+                            status: "",
+                          },
+                          { applicationNumber: "", cnrNumber: "" }
+                        )
+                        .then((res) => {
+                          if (res?.hearing?.status === "PASSED_OVER") fetchInbox(filters, setHearingCount);
+                        });
                     }
                   });
               } else {
@@ -870,7 +893,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
           actionSaveOnSubmit={async () => {
             //need to get hearing data
             hearingService
-              .searchHearings(
+              ?.searchHearings(
                 {
                   criteria: {
                     hearingId: showEndHearingModal?.currentHearing?.hearingId,
@@ -882,7 +905,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
               .then((response) => {
                 if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
                   hearingService
-                    .updateHearings(
+                    ?.updateHearings(
                       {
                         tenantId: Digit.ULBService.getCurrentTenantId(),
                         hearing: { ...response?.HearingList?.[0], workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
@@ -900,7 +923,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
           }}
           actionCustomLabelSubmit={async () => {
             hearingService
-              .searchHearings(
+              ?.searchHearings(
                 {
                   criteria: {
                     hearingId: showEndHearingModal?.currentHearing?.hearingId,
@@ -912,7 +935,7 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
               .then((response) => {
                 if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
                   hearingService
-                    .updateHearings(
+                    ?.updateHearings(
                       {
                         tenantId: Digit.ULBService.getCurrentTenantId(),
                         hearing: { ...response?.HearingList?.[0], workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
@@ -921,7 +944,8 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
                       },
                       { applicationNumber: "", cnrNumber: "" }
                     )
-                    .then(() => {
+                    .then((res) => {
+                      if (res?.hearing?.status === "PASSED_OVER" || res?.hearing?.status === "COMPLETED") fetchInbox(filters, setHearingCount);
                       setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
                     });
                 }
@@ -951,6 +975,15 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
             )}
           </div>
         </Modal>
+      )}
+      {toastMsg && (
+        <Toast
+          error={toastMsg.key === "error"}
+          label={t(toastMsg.action)}
+          onClose={() => setToastMsg(null)}
+          isDleteBtn={true}
+          style={{ maxWidth: "500px" }}
+        />
       )}
     </React.Fragment>
   );
