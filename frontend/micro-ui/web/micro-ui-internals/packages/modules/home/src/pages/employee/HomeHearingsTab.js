@@ -476,10 +476,10 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
               display: "table-cell",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "space-around" }}>
               {["SCHEDULED", "IN_PROGRESS", "PASSED_OVER"].includes(hearingDetails?.status) && (
                 <div
-                  style={{ position: "relative" }}
+                  style={{ position: "relative", cursor: "pointer", justifyContent: "space-around", maxWidth: "80px" }}
                   onClick={() => {
                     handleEditClick(row);
                   }}
@@ -496,7 +496,9 @@ const HomeHearingsTab = ({ t, setHearingCount = () => {} }) => {
                   )}
                 </div>
               )}
-              <AsyncOverlayDropdown style={{ position: "relative" }} row={row} getDropdownItems={getActionItems} position="relative" />
+              {["SCHEDULED", "IN_PROGRESS", "PASSED_OVER"].includes(hearingDetails?.status) && (
+                <AsyncOverlayDropdown style={{ position: "relative" }} row={row} getDropdownItems={getActionItems} position="relative" />
+              )}
             </div>
           </td>
         </tr>
