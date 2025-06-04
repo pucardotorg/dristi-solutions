@@ -91,7 +91,7 @@ export const checkIfDueDatePassed = (dueDate) => {
   slaDate.setHours(0, 0, 0, 0);
   today.setHours(0, 0, 0, 0);
   if (!dueDate) return false;
-  else return slaDate > today;
+  else return slaDate < today;
 };
 
 export const getSuffixByBusinessCode = (paymentType = [], businessCode) => {
