@@ -215,7 +215,7 @@ function PendingTaskAccordion({
                     <div
                       className="tasks-component-table-row-cell"
                       style={{
-                        ...(isDueDatePassed ? { color: "#D3302F", fontWeight: "bold" } : { color: "##3D3C3C" }),
+                        ...(isDueDatePassed ? { color: "#D3302F", fontWeight: "bold" } : { color: "rgb(61, 60, 60)" }),
                         width: "30%",
                       }}
                     >
