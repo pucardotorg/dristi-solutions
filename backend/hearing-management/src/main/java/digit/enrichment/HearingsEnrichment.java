@@ -52,7 +52,7 @@ public class HearingsEnrichment {
             List<HearingSearchResponse> responseList = groupedByDate.entrySet().stream()
                     .map(entry -> HearingSearchResponse.builder()
                             .hearingDate(entry.getKey())
-                            .dateType(checkDayType(entry.getKey(), optOutDates))
+                            .dayStatus(checkDayType(entry.getKey(), optOutDates))
                             .noOfHearing(entry.getValue().size())
                             .hearingList(entry.getValue())
                             .build())

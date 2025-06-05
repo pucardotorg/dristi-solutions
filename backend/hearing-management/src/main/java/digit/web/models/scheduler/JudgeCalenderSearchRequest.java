@@ -22,5 +22,5 @@ public class JudgeCalenderSearchRequest {
 
     @JsonProperty("criteria")
     @Valid
-    private List<JudgeCalenderSearchCriteria> criteria = null;
+    private JudgeCalenderSearchCriteria criteria = null;
 }

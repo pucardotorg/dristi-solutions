@@ -29,9 +29,9 @@ public class HearingSearchResponse {
     @Valid
     private String hearingDate = null;
 
-    @JsonProperty("dateType")
+    @JsonProperty("dayStatus")
     @Valid
-    private String dateType = null;
+    private String dayStatus = null;
 
     @JsonProperty("noOfHearing")
     @Valid

@@ -89,7 +89,7 @@ public class HearingService {
                 .tenantId(hearingSearchRequest.getCriteria().getTenantId())
                 .build();
         judgeCalenderSearchRequest.setRequestInfo(hearingSearchRequest.getRequestInfo());
-        judgeCalenderSearchRequest.setCriteria(List.of(criteria));
+        judgeCalenderSearchRequest.setCriteria(criteria);
 
         JudgeCalendarResponse judgeCalendarResponse = schedulerUtil.searchJudgeCalender(judgeCalenderSearchRequest);
         if(judgeCalendarResponse!=null){
