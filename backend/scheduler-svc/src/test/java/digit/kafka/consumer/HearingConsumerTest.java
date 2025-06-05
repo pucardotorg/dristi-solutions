@@ -1,21 +1,25 @@
 package digit.kafka.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import digit.config.Configuration;
 import digit.kafka.cosumer.HearingConsumer;
 import digit.service.hearing.HearingProcessor;
+import digit.util.HearingUtil;
+import digit.web.models.hearing.Hearing;
 import digit.web.models.hearing.HearingRequest;
+import digit.web.models.hearing.HearingUpdateBulkRequest;
+import digit.web.models.hearing.RetryHearingRequest;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.MockitoAnnotations;
 
 import java.util.HashMap;
+import java.util.List;
 
 import static org.mockito.Mockito.*;
 
-@ExtendWith(MockitoExtension.class)
 class HearingConsumerTest {
 
     @Mock
@@ -24,11 +28,19 @@ class HearingConsumerTest {
     @Mock
     private HearingProcessor mockProcessor;
 
+    @Mock
+    private HearingUtil mockHearingUtil;
+
+    @Mock
+    private Configuration mockConfiguration;
+
     private HearingConsumer hearingConsumer;
 
     @BeforeEach
-    void setUp() {
-        hearingConsumer = new HearingConsumer(mockMapper, mockProcessor);
+    void setup() {
+        MockitoAnnotations.openMocks(this);
+        when(mockConfiguration.getHearingRetryDelayMs()).thenReturn(5000L);
+        hearingConsumer = new HearingConsumer(mockMapper, mockProcessor, mockHearingUtil, mockConfiguration);
     }
 
     @Test
@@ -45,13 +57,29 @@ class HearingConsumerTest {
 
         // Assert
         verify(mockMapper).convertValue(record, HearingRequest.class);
-        verify(mockProcessor).processCreateHearingRequest(mockHearingRequest);
+        verify(mockProcessor).processCreateHearingRequest(mockHearingRequest, Boolean.TRUE);
     }
 
     @Test
     void testConstructor() {
         // This test ensures the constructor is covered
-        HearingConsumer consumer = new HearingConsumer(mockMapper, mockProcessor);
+        HearingConsumer consumer = new HearingConsumer(mockMapper, mockProcessor, mockHearingUtil, mockConfiguration);
         Assertions.assertNotNull(consumer);
+    }
+
+    @Test
+    void testRetryCallHearing() {
+        HearingUpdateBulkRequest mockBulkRequest = mock(HearingUpdateBulkRequest.class);
+        RetryHearingRequest retryRequest = new RetryHearingRequest();
+        retryRequest.setHearingRequest(mockBulkRequest);
+        retryRequest.setIsRetryRequired(Boolean.FALSE);
+
+        Hearing mockHearing = Hearing.builder().hearingId("HEAR123").build();
+        when(mockBulkRequest.getHearings()).thenReturn(List.of(mockHearing));
+
+        hearingConsumer.retryCallHearing(retryRequest);
+
+        verify(mockHearingUtil).callHearing(mockBulkRequest, false);
+        verify(mockConfiguration, times(2)).getHearingRetryDelayMs();
     }
 }
