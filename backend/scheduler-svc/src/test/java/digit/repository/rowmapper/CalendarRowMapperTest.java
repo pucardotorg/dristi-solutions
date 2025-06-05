@@ -1,5 +1,6 @@
 package digit.repository.rowmapper;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.models.coremodels.AuditDetails;
 import digit.web.models.JudgeCalendarRule;
 import digit.web.models.enums.JudgeRuleType;
@@ -26,6 +27,9 @@ public class CalendarRowMapperTest {
     private CalendarRowMapper mapper;
 
     @Mock
+    private ObjectMapper objectMapper;
+
+    @Mock
     private ResultSet resultSet;
 
     @Test
@@ -42,6 +46,7 @@ public class CalendarRowMapperTest {
         when(resultSet.getString("last_modified_by")).thenReturn("admin");
         when(resultSet.getLong("last_modified_time")).thenReturn(System.currentTimeMillis());
         when(resultSet.getInt("row_version")).thenReturn(1);
+        when(resultSet.getString("court_ids")).thenReturn("[\"C001\", \"C002\"]");
 
         // Call mapRow and validate
         JudgeCalendarRule calendarRule = mapper.mapRow(resultSet, 1);
