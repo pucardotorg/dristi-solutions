@@ -43,6 +43,7 @@ import PublishedNotificationModal from "./publishedNotificationModal";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import NoticeAccordion from "../../../components/NoticeAccordion";
 import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
+import ViewCaseFileNew from "./ViewFileCaseNew";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -2881,7 +2882,7 @@ const AdmittedCases = () => {
           openSubmissionsViewModal={openSubmissionViewModal}
         />
       )}
-      {config?.label !== "Overview" && config?.label !== "Complaint" && config?.label !== "History" && (
+      {config?.label !== "Overview" && config?.label !== "caseFileOverview" && config?.label !== "Complaint" && config?.label !== "History" && (
         <div style={{ width: "100%", background: "white", padding: "10px", display: "flex", justifyContent: "space-between", marginTop: "10px" }}>
           <div style={{ fontWeight: 700, fontSize: "24px", lineHeight: "28.8px" }}>{t(`All_${config?.label.toUpperCase()}_TABLE_HEADER`)}</div>
           {/* {(!userRoles.includes("CITIZENS") || userRoles.includes("ADVOCATE_ROLE")) &&
@@ -2942,7 +2943,12 @@ const AdmittedCases = () => {
           )}
         </div>
       )}
-      <div className={`inbox-search-wrapper orders-tab-inbox-wrapper`} style={showActionBar ? { paddingBottom: "60px" } : {}}>
+      <div
+        className="inbox-search-wrapper orders-tab-inbox-wrapper"
+        style={{
+          paddingBottom: tabData?.find((tab) => tab.label === "caseFileOverview")?.active ? "0px" : showActionBar ? "60px" : undefined,
+        }}
+      >
         {inboxComposer}
       </div>
 
@@ -2968,6 +2974,11 @@ const AdmittedCases = () => {
       {tabData?.filter((tab) => tab.label === "Complaint")?.[0]?.active && (
         <div className="view-case-file-wrapper">
           <ViewCaseFile t={t} inViewCase={true} caseDetailsAdmitted={caseDetails} />
+        </div>
+      )}
+      {tabData?.filter((tab) => tab.label === "caseFileOverview")?.[0]?.active && (
+        <div className="view-case-file-new-wrapper" style={{ padding: "16px 16px 16px 0" }}>
+          <ViewCaseFileNew caseDetails={caseDetails} tenantId={tenantId} filingNumber={filingNumber} />
         </div>
       )}
       {show && (
