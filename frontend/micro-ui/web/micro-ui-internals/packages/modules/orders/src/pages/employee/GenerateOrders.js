@@ -564,9 +564,8 @@ const GenerateOrders = () => {
       criteria: {
         filingNumber,
         applicationNumber: "",
-        cnrNumber,
         status: OrderWorkflowState.DRAFT_IN_PROGRESS,
-        ...(caseCourtId && { courtId: caseCourtId }),
+        courtId: courtId
       },
       pagination: { limit: 1000, offset: 0 },
     },
@@ -613,10 +612,10 @@ const GenerateOrders = () => {
     return `${year}-${month}-${day}`;
   };
   useEffect(() => {
-    if (!ordersData?.list || ordersData?.list.length < 1) {
-      setFormList([defaultOrderData]);
+        if (!ordersData?.list || ordersData?.list.length < 1) {
+            setFormList([defaultOrderData]);
     } else {
-      const formListNew = structuredClone([...(ordersData?.list || [])].reverse());
+            const formListNew = structuredClone([...(ordersData?.list || [])].reverse());
       const updatedFormList = formListNew?.map((order, index) => {
         if (order?.orderCategory === "COMPOSITE") {
           const updatedCompositeItems = order?.compositeItems?.map((compItem, i) => {
