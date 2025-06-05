@@ -305,6 +305,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
           };
           try {
             await ordersService.createOrder(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
+            setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
           } catch (error) {
             console.log("error", error);
           }
