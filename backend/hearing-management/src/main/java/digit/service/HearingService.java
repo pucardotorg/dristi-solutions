@@ -4,7 +4,7 @@ import digit.enrichment.HearingsEnrichment;
 import digit.util.HearingUtil;
 import digit.util.SchedulerUtil;
 import digit.web.models.*;
-import digit.web.models.scheduler.JudgeCalendarResponse;
+import digit.web.models.scheduler.JudgeRuleResponse;
 import digit.web.models.scheduler.JudgeCalenderSearchCriteria;
 import digit.web.models.scheduler.JudgeCalenderSearchRequest;
 import lombok.extern.slf4j.Slf4j;
@@ -91,7 +91,7 @@ public class HearingService {
         judgeCalenderSearchRequest.setRequestInfo(hearingSearchRequest.getRequestInfo());
         judgeCalenderSearchRequest.setCriteria(criteria);
 
-        JudgeCalendarResponse judgeCalendarResponse = schedulerUtil.searchJudgeCalender(judgeCalenderSearchRequest);
+        JudgeRuleResponse judgeCalendarResponse = schedulerUtil.searchJudgeCalender(judgeCalenderSearchRequest);
         if(judgeCalendarResponse!=null){
             judgeCalendarResponse.getJudgeCalendarRules().forEach(judgeCalendarRule -> {
                 optOutDates.add(convertLongDateToDateString(judgeCalendarRule.getDate()));

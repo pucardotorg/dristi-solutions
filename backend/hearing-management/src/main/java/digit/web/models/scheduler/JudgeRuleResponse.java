@@ -14,7 +14,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class JudgeCalendarResponse {
+public class JudgeRuleResponse {
 
     @JsonProperty("ResponseInfo")
     @Valid
