@@ -2710,29 +2710,37 @@ const AdmittedCaseJudge = () => {
           label: "DOWNLOAD_CASE_FILE",
         },
       ];
-    else if (isBenchClerk)
-      return [
-        ...(currentInProgressHearing
-          ? [
-              {
-                value: "NEXT_HEARING",
-                label: "NEXT_HEARING",
-              },
-              {
-                value: "TAKE_WITNESS_DEPOSITION",
-                label: "TAKE_WITNESS_DEPOSITION",
-              },
-              {
-                value: "GENERATE_ORDER",
-                label: "GENERATE_ORDER",
-              },
-            ]
-          : []),
-        {
-          value: "DOWNLOAD_CASE_FILE",
-          label: "DOWNLOAD_CASE_FILE",
-        },
-      ];
+    else if (isBenchClerk) {
+      return currentInProgressHearing
+        ? [
+            {
+              value: "NEXT_HEARING",
+              label: "NEXT_HEARING",
+            },
+            {
+              value: "TAKE_WITNESS_DEPOSITION",
+              label: "TAKE_WITNESS_DEPOSITION",
+            },
+            {
+              value: "GENERATE_ORDER",
+              label: "GENERATE_ORDER",
+            },
+            {
+              value: "SUBMIT_DOCUMENTS",
+              label: "SUBMIT_DOCUMENTS",
+            },
+            {
+              value: "DOWNLOAD_CASE_FILE",
+              label: "DOWNLOAD_CASE_FILE",
+            },
+          ]
+        : [
+            {
+              value: "DOWNLOAD_CASE_FILE",
+              label: "DOWNLOAD_CASE_FILE",
+            },
+          ];
+    }
   }, [isJudge, currentInProgressHearing, isBenchClerk]);
 
   const courtActionOptions = useMemo(
