@@ -79,6 +79,7 @@ const MainHomeScreen = () => {
         },
         moduleSearchCriteria: {
           tenantId: tenantId,
+          courtId: localStorage.getItem("courtId"),
           ...(fromDate && toDate ? { fromDate, toDate } : {}),
         },
         tenantId: tenantId,
@@ -101,6 +102,7 @@ const MainHomeScreen = () => {
         moduleSearchCriteria: {
           screenType: ["home", "applicationCompositeOrder"],
           isCompleted: false,
+          courtId: localStorage.getItem("courtId"),
         },
         searchReviewProcess: {
           date: toDate,
