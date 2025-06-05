@@ -235,7 +235,7 @@ const SubmissionsCreate = ({ path }) => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
 
-  const caseCourtId = useMemo(() => caseDetails?.case?.courtId, [caseDetails]);
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
   // filtering out litigants which are part in person.
   const pipComplainants = useMemo(() => {
@@ -307,7 +307,7 @@ const SubmissionsCreate = ({ path }) => {
     },
     {},
     applicationNumber + filingNumber,
-    Boolean(applicationNumber && filingNumber)
+    Boolean(applicationNumber && filingNumber && caseCourtId)
   );
 
   const { data: delayCondonationData } = Digit.Hooks.submissions.useSearchSubmissionService(
@@ -322,7 +322,7 @@ const SubmissionsCreate = ({ path }) => {
     },
     {},
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const fullName = useMemo(() => {
@@ -501,7 +501,7 @@ const SubmissionsCreate = ({ path }) => {
     },
     { applicationNumber: "", cnrNumber: "" },
     "dristi",
-    true
+    Boolean(filingNumber && caseCourtId)
   );
 
   useEffect(() => {
@@ -552,7 +552,7 @@ const SubmissionsCreate = ({ path }) => {
     },
     { tenantId },
     filingNumber + caseDetails?.cnrNumber,
-    Boolean(filingNumber && caseDetails?.cnrNumber && (orderNumber || orderRefNumber))
+    Boolean(filingNumber && caseDetails?.cnrNumber && (orderNumber || orderRefNumber) && caseCourtId)
   );
   const orderDetails = useMemo(() => orderData?.list?.[0], [orderData]);
   const isComposite = useMemo(() => orderDetails?.orderCategory === "COMPOSITE", [orderDetails]);
@@ -582,7 +582,7 @@ const SubmissionsCreate = ({ path }) => {
     },
     { tenantId },
     filingNumber + caseDetails?.cnrNumber + "allOrdersData",
-    Boolean(filingNumber && caseDetails?.cnrNumber)
+    Boolean(filingNumber && caseDetails?.cnrNumber && caseCourtId)
   );
   const allOrdersList = useMemo(() => allOrdersData?.list, [allOrdersData]);
   const extensionOrders = useMemo(

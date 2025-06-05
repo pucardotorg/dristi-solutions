@@ -142,7 +142,7 @@ const BulkReschedule = ({ stepper, setStepper, refetch, selectedDate = new Date(
     },
     {},
     `${bulkFromDate}-${bulkToDate}`,
-    Boolean(bulkFromDate && bulkToDate && stepper > 0)
+    Boolean(bulkFromDate && bulkToDate && stepper > 0 && courtId)
   );
 
   function formatTimeFromEpoch(epoch) {

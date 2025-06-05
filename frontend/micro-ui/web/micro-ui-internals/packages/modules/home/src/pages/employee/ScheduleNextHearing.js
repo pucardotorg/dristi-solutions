@@ -173,7 +173,7 @@ function ScheduleNextHearing({
     },
     {},
     "",
-    true
+    Boolean(caseCourtId)
   );
 
   const { data: dateResponse } = Digit.Hooks.home.useSearchReschedule(

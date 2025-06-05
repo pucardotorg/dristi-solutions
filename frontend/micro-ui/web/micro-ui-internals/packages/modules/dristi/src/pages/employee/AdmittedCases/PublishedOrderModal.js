@@ -69,13 +69,13 @@ function PublishedOrderModal({
       criteria: {
         referenceId: order?.orderNumber,
         tenantId,
-        courtId: courtId,
+        courtId: caseCourtId,
         caseId: caseDetails?.cmpNumber,
       },
     },
     {},
     order?.orderNumber + caseDetails?.id,
-    Boolean(order?.orderNumber) && !Boolean(isCitizen) && Boolean(caseDetails?.id)
+    Boolean(order?.orderNumber && caseCourtId) && !Boolean(isCitizen) && Boolean(caseDetails?.id)
   );
 
   const isComposite = useMemo(() => order?.orderCategory === "COMPOSITE", [order]);
@@ -134,7 +134,7 @@ function PublishedOrderModal({
     },
     {},
     applicationNumberSetTerms + order?.filingNumber,
-    Boolean(applicationNumberSetTerms && order?.filingNumber)
+    Boolean(applicationNumberSetTerms && order?.filingNumber && caseCourtId)
   );
   const applicationDetails = useMemo(() => applicationData?.applicationList?.[0], [applicationData]);
 

@@ -365,7 +365,7 @@ const AdmittedCases = () => {
     },
     {},
     filingNumber + "allApplications",
-    filingNumber
+    Boolean(filingNumber && caseCourtId)
   );
   const extensionApplications = useMemo(
     () =>
@@ -712,7 +712,7 @@ const AdmittedCases = () => {
                 criteria: [
                   {
                     filingNumber: filingNumber,
-                    ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
+                    ...(caseCourtId && { courtId: caseCourtId }),
                   },
                 ],
               },
@@ -1008,6 +1008,7 @@ const AdmittedCases = () => {
     isBenchClerk,
     downloadPdf,
     ordersService,
+    caseCourtId,
   ]);
 
   const handleEvidenceAction = async () => {
@@ -1934,7 +1935,7 @@ const AdmittedCases = () => {
     },
     {},
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   // const isDcaHearingScheduled = useMemo(() => {
@@ -1983,7 +1984,7 @@ const AdmittedCases = () => {
     { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filingNumber + currentHearingId,
-    Boolean(filingNumber && !historyOrderData),
+    Boolean(filingNumber && !historyOrderData && caseCourtId),
     0
   );
 

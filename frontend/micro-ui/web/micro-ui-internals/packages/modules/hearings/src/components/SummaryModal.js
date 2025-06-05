@@ -106,7 +106,7 @@ const SummaryModal = ({
     reqBody,
     { applicationNumber: "", cnrNumber: "", hearingId, ...(caseCourtId && { courtId: caseCourtId }) },
     hearingId,
-    true
+    Boolean(caseCourtId)
   );
 
   useEffect(() => {

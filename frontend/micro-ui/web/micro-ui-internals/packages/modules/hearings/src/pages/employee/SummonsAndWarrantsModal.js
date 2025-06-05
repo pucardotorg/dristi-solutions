@@ -153,7 +153,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     },
     { applicationNumber: "", cnrNumber: "" },
     hearingId,
-    Boolean(hearingId)
+    Boolean(hearingId && caseCourtId)
   );
 
   const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
@@ -237,7 +237,7 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const [orderList, setOrderList] = useState([]);
