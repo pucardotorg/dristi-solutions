@@ -123,6 +123,7 @@ class EvidenceServiceTest {
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.setUserInfo(User.builder().type("EMPLOYEE").roles(Collections.singletonList(Role.builder().build())).build());
         EvidenceSearchCriteria criteria = new EvidenceSearchCriteria();
+        criteria.setTenantId("kl");
         when(repository.getArtifacts(criteria,null)).thenReturn(Collections.emptyList());
 
         List<Artifact> result = evidenceService.searchEvidence(requestInfo, criteria,null);
@@ -135,6 +136,7 @@ class EvidenceServiceTest {
         RequestInfo requestInfo = new RequestInfo();
         requestInfo.setUserInfo(User.builder().type("EMPLOYEE").roles(Collections.singletonList(Role.builder().build())).build());
         EvidenceSearchCriteria criteria = new EvidenceSearchCriteria();
+        criteria.setTenantId("kl");
         when(repository.getArtifacts(criteria,null)).thenReturn(List.of(artifact));
 
         // Mocking the ProcessInstance and Workflow
