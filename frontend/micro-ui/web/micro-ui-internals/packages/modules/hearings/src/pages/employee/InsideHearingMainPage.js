@@ -102,7 +102,7 @@ const InsideHearingMainPage = () => {
     reqBody,
     { applicationNumber: "", cnrNumber: "", hearingId, ...(caseCourtId && { courtId: caseCourtId }) },
     "dristi",
-    true,
+    Boolean(caseCourtId),
     refetchTime
   );
 
@@ -154,7 +154,7 @@ const InsideHearingMainPage = () => {
     },
     {},
     filingNumber + "allApplications",
-    filingNumber
+    Boolean(filingNumber && caseCourtId)
   );
 
   const isDelayApplicationPending = useMemo(() => {

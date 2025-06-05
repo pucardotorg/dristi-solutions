@@ -165,7 +165,7 @@ const PaymentForRPADModal = ({ path }) => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
 
-  const caseCourtId = useMemo(() => caseDetails?.case?.courtId, [caseDetails]);
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
   const fetchCaseLockStatus = useCallback(async () => {
     try {
@@ -215,7 +215,7 @@ const PaymentForRPADModal = ({ path }) => {
     },
     {},
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const filteredTasks = useMemo(() => tasksData?.list, [tasksData]);
@@ -224,7 +224,7 @@ const PaymentForRPADModal = ({ path }) => {
     { tenantId, criteria: { id: filteredTasks?.[0]?.orderId, ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filteredTasks?.[0]?.orderId,
-    Boolean(filteredTasks?.[0]?.orderId)
+    Boolean(filteredTasks?.[0]?.orderId && caseCourtId)
   );
   const orderDetails = useMemo(() => orderData?.list?.[0] || {}, [orderData]);
 
@@ -250,7 +250,7 @@ const PaymentForRPADModal = ({ path }) => {
     },
     { applicationNumber: "", cnrNumber: "" },
     orderDetails?.hearingNumber,
-    Boolean(orderDetails?.hearingNumber)
+    Boolean(orderDetails?.hearingNumber && caseCourtId)
   );
 
   const consumerCode = useMemo(() => {
