@@ -2729,10 +2729,6 @@ const AdmittedCaseJudge = () => {
             ]
           : []),
         {
-          value: "SUBMIT_DOCUMENTS",
-          label: "SUBMIT_DOCUMENTS",
-        },
-        {
           value: "DOWNLOAD_CASE_FILE",
           label: "DOWNLOAD_CASE_FILE",
         },
@@ -3050,26 +3046,6 @@ const AdmittedCaseJudge = () => {
                   </div>
                 </div>
               )}
-              {isBenchClerk && !currentInProgressHearing && (
-                <div className="evidence-header-wrapper">
-                  <div className="evidence-hearing-header" style={{ background: "transparent" }}>
-                    <div className="evidence-actions" style={{ ...(isTabDisabled ? { pointerEvents: "none" } : {}) }}>
-                      <ActionButton
-                        variation={"primary"}
-                        label={t("CS_CASE_MAKE_FILINGS")}
-                        icon={showMenuFilings ? "ExpandLess" : "ExpandMore"}
-                        isSuffix={true}
-                        onClick={handleTakeFilingAction}
-                        className={"take-action-btn-class"}
-                      ></ActionButton>
-                      {showMenuFilings && (
-                        <Menu t={t} optionKey={"label"} localeKeyPrefix={"CS_CASE"} options={courtActionOptions} onSelect={handleCourtAction}></Menu>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
               <div className="evidence-header-wrapper">
                 <div className="evidence-hearing-header" style={{ background: "transparent" }}>
                   <div className="evidence-actions">
