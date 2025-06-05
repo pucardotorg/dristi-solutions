@@ -35,6 +35,7 @@ export const pendingTaskConfig = {
         moduleSearchCriteria: {
           screenType: ["home", "applicationCompositeOrder"],
           isCompleted: false,
+          courtId: localStorage.getItem("courtId"),
           assignedRole: [
             "DIARY_APPROVER",
             "HEARING_VIEWER",

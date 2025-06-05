@@ -56,6 +56,7 @@ function useInboxSearch({ limit = 300, offset = 0 } = {}) {
             },
             moduleSearchCriteria: {
               tenantId: "kl",
+              courtId: localStorage.getItem("courtId"),
               ...(fromDate && toDate ? { fromDate, toDate } : {}),
             },
             tenantId: "kl",
