@@ -192,7 +192,7 @@ public class CauseListService {
                         document.getFileStore(),
                         causeListDate,
                         requestInfo,
-                        causeLists.get(0).getTenantId()
+                        causeList.get(0).getTenantId()
                 );
             } catch (Exception e) {
                 log.error("Failed to send cause list email for date: {}, error: {}", causeListDate.toString(), e.getMessage(), e);
