@@ -47,21 +47,38 @@ public class HearingConsumer {
 
 
     @KafkaListener(topics = {"egov-hearing-update-time-retry"}, groupId = "hearing-update-time-retry")
-    public void retryCallHearing(RetryHearingRequest retryRequest) {
-        long delay = configuration.getHearingRetryDelayMs() != null ? configuration.getHearingRetryDelayMs() : 60000L;
+    public void retryCallHearing(final HashMap<String, Object> record, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        log.info("Received create hearing update time message in topic {}", topic);
         try {
-            log.info("Delaying retry of callHearing by {} ms for hearingId: {}", delay, retryRequest.getHearingRequest().getHearings().get(0).getHearingId());
-            Thread.sleep(delay);
-        } catch (InterruptedException e) {
-            log.warn("Thread interrupted while delaying retry for hearingId: {}", retryRequest.getHearingRequest().getHearings().get(0).getHearingId(), e);
-            Thread.currentThread().interrupt();
-        }
+            RetryHearingRequest retryRequest = mapper.convertValue(record, RetryHearingRequest.class);
+            long delay = configuration.getHearingRetryDelayMs() != null ? configuration.getHearingRetryDelayMs() : 60000L;
 
-        try {
-            hearingUtil.callHearing(retryRequest.getHearingRequest(), retryRequest.getIsRetryRequired());
-            log.info("Successfully called hearingUtil.callHearing for hearingId: {}", retryRequest.getHearingRequest().getHearings().get(0).getHearingId());
+            if (retryRequest.getHearingRequest() == null ||
+                    retryRequest.getHearingRequest().getHearings() == null ||
+                    retryRequest.getHearingRequest().getHearings().isEmpty()) {
+                log.error("Invalid hearing request structure in retry request");
+                return;
+            }
+
+            String hearingId = retryRequest.getHearingRequest().getHearings().get(0).getHearingId();
+            log.info("Delaying retry of callHearing by {} ms for hearingId: {}", delay, hearingId);
+
+            try {
+                Thread.sleep(delay);
+            } catch (InterruptedException ie) {
+                log.warn("Thread interrupted while delaying retry for hearingId: {}", hearingId, ie);
+                Thread.currentThread().interrupt();
+            }
+
+            try {
+                hearingUtil.callHearing(retryRequest.getHearingRequest(), retryRequest.getIsRetryRequired());
+                log.info("Successfully called hearingUtil.callHearing for hearingId: {}", hearingId);
+            } catch (Exception ex) {
+                log.error("Failed to call hearingUtil.callHearing for hearingId: {}", hearingId, ex);
+            }
+
         } catch (Exception e) {
-            log.error("Failed to call hearingUtil.callHearing for hearingId: {}", retryRequest.getHearingRequest().getHearings().get(0).getHearingId(), e);
+            log.error("Error occurred while deserializing RetryHearingRequest", e);
         }
     }
 
