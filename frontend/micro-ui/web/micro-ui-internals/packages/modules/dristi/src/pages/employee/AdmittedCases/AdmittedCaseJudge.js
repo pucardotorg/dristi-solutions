@@ -3514,7 +3514,7 @@ const AdmittedCaseJudge = () => {
             }
             setShowOrderModal(false);
           }}
-          attendees={currentActiveHearing?.attendees}
+          attendees={currentInProgressHearing?.attendees}
           caseDetails={caseDetails}
           currentHearingId={currentInProgressHearingId}
           setUpdateCounter={setUpdateCounter}
