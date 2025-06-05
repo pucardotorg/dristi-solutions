@@ -249,10 +249,16 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
       const hearingDetails = row?.businessObject?.hearingDetails;
 
       if (isJudge || isTypist) {
-        history.push(
-          `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`,
-          { openOrder: true }
-        );
+        if (hearingDetails?.status === "SCHEDULED") {
+          history.push(
+            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
+          );
+        } else {
+          history.push(
+            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`,
+            { openOrder: true }
+          );
+        }
         return;
       } else if (isBenchClerk) {
         if (["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status)) {

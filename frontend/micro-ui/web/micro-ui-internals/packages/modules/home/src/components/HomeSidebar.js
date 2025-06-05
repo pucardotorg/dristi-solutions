@@ -3,8 +3,9 @@ import HomeAccordian from "./HomeAccordian";
 import SideBarTitle from "./SideBarTitle";
 import SidebarItem from "./SideBarItem";
 import BulkReschedule from "../../../hearings/src/pages/employee/BulkReschedule";
+import { HomeService } from "../hooks/services";
 
-const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hearingCount = 0, pendingTaskCount }) => {
+const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hearingCount = 0, pendingTaskCount, showToast = () => {} }) => {
   const [stepper, setStepper] = useState(0);
   return (
     <div style={{ width: 280, background: "#fafbfc", borderRight: "1px solid #eee" }}>
@@ -31,7 +32,47 @@ const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hea
       </HomeAccordian>
 
       <HomeAccordian title={t("CS_HOME_SIGN")} defaultOpen>
-        <SidebarItem t={t} label="CS_HOME_ORDERS" href={`/${window.contextPath}/employee/home/bulk-esign-order`} />
+        <SidebarItem
+          t={t}
+          label="CS_HOME_ORDERS"
+          href={`/${window.contextPath}/employee/home/bulk-esign-order`}
+          onClick={async (e) => {
+            e.preventDefault();
+            let shouldProceed = true;
+            const payload = {
+              inbox: {
+                processSearchCriteria: {
+                  businessService: ["notification"],
+                  moduleName: "Transformer service",
+                  tenantId: Digit.ULBService.getCurrentTenantId(),
+                },
+                moduleSearchCriteria: {
+                  entityType: "Order",
+                  tenantId: Digit.ULBService.getCurrentTenantId(),
+                  status: "PENDING_BULK_E-SIGN",
+                  courtId: localStorage.getItem("courtId"),
+                },
+                tenantId: Digit.ULBService.getCurrentTenantId(),
+                limit: 300,
+                offset: 0,
+              },
+            };
+
+            try {
+              const res = await HomeService.InboxSearch(payload, { tenantId: "kl" });
+              shouldProceed = res?.totalCount > 0;
+            } catch (err) {
+              showToast("error", t("ISSUE_IN_FETCHING"), 5000);
+              shouldProceed = false;
+              return;
+            }
+            if (shouldProceed) {
+              window.location.href = `/${window.contextPath}/employee/home/bulk-esign-order`;
+            } else {
+              showToast("error", t("NO_MORE_HEARINGS"), 5000);
+            }
+          }}
+        />
         <SidebarItem t={t} label="CS_HOME_PROCESS" href={`/${window.contextPath}/employee/orders/Summons&Notice`} />
         <SidebarItem t={t} label="CS_HOME_A_DAIRY" href={`/${window.contextPath}/employee/home/dashboard/adiary`} />
       </HomeAccordian>

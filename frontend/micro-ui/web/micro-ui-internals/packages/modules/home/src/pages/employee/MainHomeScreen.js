@@ -8,6 +8,7 @@ import { pendingTaskConfig } from "../../configs/PendingTaskConfig";
 import { HomeService } from "../../hooks/services";
 import { Loader } from "@egovernments/digit-ui-react-components";
 import { useHistory } from "react-router-dom";
+import { Toast } from "@egovernments/digit-ui-react-components";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -35,6 +36,7 @@ const MainHomeScreen = () => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const [loader, setLoader] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false, currentHearing: {} });
+  const [toastMsg, setToastMsg] = useState(null);
 
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
@@ -66,6 +68,12 @@ const MainHomeScreen = () => {
     const fromDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 0, 0, 0, 0).getTime();
     const toDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 23, 59, 59, 999).getTime();
     return { fromDate, toDate };
+  };
+  const showToast = (type, message, duration = 5000) => {
+    setToastMsg({ key: type, action: message });
+    setTimeout(() => {
+      setToastMsg(null);
+    }, duration);
   };
 
   const fetchHearingCount = async () => {
@@ -250,6 +258,7 @@ const MainHomeScreen = () => {
               isOptionsLoading={false}
               hearingCount={hearingCount}
               pendingTaskCount={pendingTaskCount}
+              showToast={showToast}
             />
             {activeTab === "HEARINGS_TAB" ? (
               <div style={{ width: "100%" }}>
@@ -265,6 +274,15 @@ const MainHomeScreen = () => {
               <div className="inbox-search-wrapper" style={{ width: "100%", maxHeight: "calc(100vh - 252px)", overflowY: "auto" }}>
                 {inboxSearchComposer}
               </div>
+            )}
+            {toastMsg && (
+              <Toast
+                error={toastMsg.key === "error"}
+                label={t(toastMsg.action)}
+                onClose={() => setToastMsg(null)}
+                isDleteBtn={true}
+                style={{ maxWidth: "500px" }}
+              />
             )}
           </div>{" "}
         </React.Fragment>
