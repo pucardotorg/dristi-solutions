@@ -35,17 +35,19 @@ const JoinCasePayment = ({ filingNumber, taskNumber, setPendingTaskActionModals,
     [caseData]
   );
 
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
+
   const { data: tasksData } = Digit.Hooks.hearings.useGetTaskList(
     {
       criteria: {
         tenantId: tenantId,
         taskNumber: taskNumber,
-        ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
     taskNumber,
-    Boolean(taskNumber)
+    Boolean(taskNumber && caseCourtId)
   );
 
   const task = useMemo(() => tasksData?.list?.[0], [tasksData]);
