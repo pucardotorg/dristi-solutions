@@ -91,8 +91,10 @@ public class HearingService {
         judgeCalenderSearchRequest.setRequestInfo(hearingSearchRequest.getRequestInfo());
         judgeCalenderSearchRequest.setCriteria(criteria);
 
+        log.info("Judge Calendar Search Request :: {} ", judgeCalenderSearchRequest);
         JudgeRuleResponse judgeCalendarResponse = schedulerUtil.searchJudgeCalender(judgeCalenderSearchRequest);
-        if(judgeCalendarResponse!=null){
+        log.info("Judge Calendar Response :: {} ", judgeCalendarResponse);
+        if(judgeCalendarResponse!=null && judgeCalendarResponse.getJudgeCalendarRules()!=null){
             judgeCalendarResponse.getJudgeCalendarRules().forEach(judgeCalendarRule -> {
                 optOutDates.add(convertLongDateToDateString(judgeCalendarRule.getDate()));
             });

@@ -37,37 +37,45 @@ public class MdmsDataConfig {
     }
 
     @PostConstruct
-    public void loadConfigData(){
+    public void loadConfigData() {
         loadCourtNonWorkingDates();
     }
 
-    private void loadCourtNonWorkingDates(){
+    private void loadCourtNonWorkingDates() {
         try {
             RequestInfo requestInfo = RequestInfo.builder().build();
-            courtHolidays.addAll(getCourtNonWorkingDays(requestInfo,configuration.getTenantId()));
+            log.info("Fetching court non working days");
+            courtHolidays.addAll(getCourtNonWorkingDays(requestInfo, configuration.getTenantId()));
         } catch (Exception e) {
             log.error("Error while fetching court non working days");
         }
     }
 
     private List<String> getCourtNonWorkingDays(RequestInfo requestInfo, String tenantId) {
-        String mdmsData = mdmsUtil.fetchMdmsData(requestInfo, tenantId,
-                configuration.getScheduleHearingModuleName(), List.of(configuration.getCourtHolidayMasterName()));
+        try {
+            String mdmsData = mdmsUtil.fetchMdmsData(requestInfo, tenantId,
+                    configuration.getScheduleHearingModuleName(), List.of(configuration.getCourtHolidayMasterName()));
 
-        List<String> rawDates = JsonPath.read(mdmsData, "");
-        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT_D_M_Y);
-        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT_Y_M_D);
+            List<String> rawDates = JsonPath.read(mdmsData, configuration.getCourtHolidayMdmsPath());
+            DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT_D_M_Y);
+            DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT_Y_M_D);
+            log.info("Successfully fetched court non working days having count :: {}", rawDates.size());
 
-        return rawDates.stream()
-                .map(date -> {
-                    try {
-                        return LocalDate.parse(date, inputFormatter).format(outputFormatter);
-                    } catch (DateTimeParseException e) {
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+            return rawDates.stream()
+                    .map(date -> {
+                        try {
+                            return LocalDate.parse(date, inputFormatter).format(outputFormatter);
+                        } catch (DateTimeParseException e) {
+                            return null;
+                        }
+                    })
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
 
+        } catch (Exception e) {
+            log.error("Error while calling mdms :: {}",e.getMessage());
+        }
+
+        return new ArrayList<>();
     }
 }
