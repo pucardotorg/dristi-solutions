@@ -45,7 +45,9 @@ public class PublishOrderSchedulingNextHearing implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        return true;
+        Order order = orderRequest.getOrder();
+        String action = order.getWorkflow().getAction();
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && SCHEDULING_NEXT_HEARING.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
