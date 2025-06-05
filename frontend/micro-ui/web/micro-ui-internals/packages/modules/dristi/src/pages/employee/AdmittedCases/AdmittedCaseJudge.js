@@ -163,7 +163,7 @@ const AdmittedCaseJudge = () => {
   const { pathname, search, hash } = location;
   const { path } = useRouteMatch();
   const urlParams = new URLSearchParams(location.search);
-  const { hearingId, taskOrderType, artifactNumber, insideHearing = false } = Digit.Hooks.useQueryParams();
+  const { hearingId, taskOrderType, artifactNumber } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isFSO = roles.some((role) => role.code === "FSO_ROLE");
@@ -2827,6 +2827,14 @@ const AdmittedCaseJudge = () => {
     ]
   );
 
+  const viewActionBar = useMemo(() => {
+    return (
+      showActionBar &&
+      !isWorkFlowFetching &&
+      ((currentHearingStatus === HearingWorkflowState.SCHEDULED && tertiaryAction.action) || primaryAction?.label || secondaryAction.action)
+    );
+  }, [showActionBar, isWorkFlowFetching, currentHearingStatus, tertiaryAction.action, primaryAction?.label, secondaryAction.action]);
+
   // const handleOpenSummonNoticeModal = async (partyIndex) => {
   //   if (currentHearingId) {
   //     history.push(`${path}?filingNumber=${filingNumber}&caseId=${caseId}&taskOrderType=NOTICE&hearingId=${currentHearingId}&tab=${config?.label}`, {
@@ -3205,7 +3213,7 @@ const AdmittedCaseJudge = () => {
       )}
       <div className={`inbox-search-wrapper orders-tab-inbox-wrapper`}>{inboxComposer}</div>
       {tabData?.filter((tab) => tab.label === "Overview")?.[0]?.active && (
-        <div className="case-overview-wrapper">
+        <div className="case-overview-wrapper" style={{ ...(viewActionBar ? { marginBottom: "60px" } : {}) }}>
           <CaseOverviewJudge
             handleDownload={handleDownload}
             handleExtensionRequest={handleExtensionRequest}
@@ -3294,42 +3302,39 @@ const AdmittedCaseJudge = () => {
       {toast && toastDetails && (
         <Toast error={toastDetails?.isError} label={t(toastDetails?.message)} onClose={() => setToast(false)} style={{ maxWidth: "670px" }} />
       )}
-      {!insideHearing &&
-        showActionBar &&
-        !isWorkFlowFetching &&
-        ((currentHearingStatus === HearingWorkflowState.SCHEDULED && tertiaryAction.action) || primaryAction?.label || secondaryAction.action) && (
-          <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
-            <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
-              {currentHearingStatus === HearingWorkflowState.SCHEDULED && tertiaryAction.action && (
-                <Button className="previous-button" variation="secondary" label={t(tertiaryAction.label)} onButtonClick={onSaveDraft} />
-              )}
-              {primaryAction?.label && (
-                <SubmitBar
-                  label={t(isPendingNoticeStatus ? "ISSUE_BNSS_NOTICE" : primaryAction?.label)}
-                  submit="submit"
-                  disabled={""}
-                  onSubmit={onSubmit}
-                />
-              )}
-            </div>
-            {secondaryAction.action && (
-              <Button
-                className="previous-button"
-                variation="secondary"
-                style={{
-                  border: "none",
-                  marginLeft: 0,
-                  fontSize: 16,
-                  fontWeight: 700,
-                  color: secondaryAction.action === "REJECT" && "#BB2C2F",
-                }}
-                label={t(secondaryAction.label)}
-                onButtonClick={onSendBack}
+      {viewActionBar && (
+        <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
+          <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
+            {currentHearingStatus === HearingWorkflowState.SCHEDULED && tertiaryAction.action && (
+              <Button className="previous-button" variation="secondary" label={t(tertiaryAction.label)} onButtonClick={onSaveDraft} />
+            )}
+            {primaryAction?.label && (
+              <SubmitBar
+                label={t(isPendingNoticeStatus ? "ISSUE_BNSS_NOTICE" : primaryAction?.label)}
+                submit="submit"
+                disabled={""}
+                onSubmit={onSubmit}
               />
             )}
-          </ActionBar>
-        )}
-      {isOpenDCA && !insideHearing && <DocumentModal config={dcaConfirmModalConfig} />}
+          </div>
+          {secondaryAction.action && (
+            <Button
+              className="previous-button"
+              variation="secondary"
+              style={{
+                border: "none",
+                marginLeft: 0,
+                fontSize: 16,
+                fontWeight: 700,
+                color: secondaryAction.action === "REJECT" && "#BB2C2F",
+              }}
+              label={t(secondaryAction.label)}
+              onButtonClick={onSendBack}
+            />
+          )}
+        </ActionBar>
+      )}
+      {isOpenDCA && <DocumentModal config={dcaConfirmModalConfig} />}
       {showModal && (
         <AdmissionActionModal
           t={t}
@@ -3407,7 +3412,7 @@ const AdmittedCaseJudge = () => {
           caseDetails={caseDetails}
         />
       )}
-      {showVoidModal && !insideHearing && <DocumentModal config={voidModalConfig} />}
+      {showVoidModal && <DocumentModal config={voidModalConfig} />}
       {showNotificationModal && (
         <PublishedNotificationModal
           t={t}
