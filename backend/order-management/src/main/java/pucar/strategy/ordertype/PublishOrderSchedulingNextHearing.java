@@ -45,7 +45,7 @@ public class PublishOrderSchedulingNextHearing implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        return false;
+        return true;
     }
 
     @Override
