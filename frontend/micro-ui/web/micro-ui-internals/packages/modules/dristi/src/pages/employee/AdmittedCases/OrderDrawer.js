@@ -4,7 +4,7 @@ import { RadioButtons, Dropdown, LabelFieldPair, CardLabel, CardLabelError, Toas
 import { LeftArrow } from "../../../icons/svgIndex";
 import CustomTextArea from "../../../components/CustomTextArea";
 import MultiSelectDropdown from "../../../components/MultiSelectDropdown";
-import CustomDatePicker from "../../../../../hearings/src/components/CustomDatePicker";
+import CustomDatePickerV2 from "../../../../../hearings/src/components/CustomDatePickerV2";
 import Button from "../../../components/Button";
 import { getFormattedName } from "../../../../../hearings/src/utils";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
@@ -207,11 +207,13 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
 
   const validateOrderData = useCallback((orderData) => {
     const errors = {};
-    if (!orderData?.botdText?.trim() && !orderData?.botdText?.trim()?.length < 2) errors.botdText = "CS_ORDER_BUSINESS_OF_THE_DAY";
-    if (!orderData?.attendees?.length) errors.attendees = "CS_ORDER_CASE_ATTENDEES";
-    if (!orderData?.hearingType?.code) errors.hearingType = "CS_ORDER_HEARING_TYPE";
-    if (!orderData?.hearingDate) errors.hearingDate = "CS_ORDER_HEARING_DATE";
-    if (!orderData?.partiesToAttendHearing?.length) errors.partiesToAttendHearing = "CS_ORDER_PARTIES_TO_ATTEND_HEARING";
+    if (!orderData?.botdText?.trim() && !orderData?.botdText?.trim()?.length < 2) errors.botdText = "CORE_REQUIRED_FIELD_ERROR";
+    if (!orderData?.attendees?.length) errors.attendees = "CORE_REQUIRED_FIELD_ERROR";
+    if (orderData?.isCaseDisposed?.value !== "CASE_DISPOSED") {
+      if (!orderData?.hearingType?.code) errors.hearingType = "CORE_REQUIRED_FIELD_ERROR";
+      if (!orderData?.hearingDate) errors.hearingDate = "CORE_REQUIRED_FIELD_ERROR";
+      if (!orderData?.partiesToAttendHearing?.length) errors.partiesToAttendHearing = "CORE_REQUIRED_FIELD_ERROR";
+    }
     return errors;
   }, []);
 
@@ -223,14 +225,16 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
         return;
       }
       setIsApiLoading(true);
-      const date = new Date(orderData?.hearingDate);
-      // Check for invalid date
-      let hearingDate;
-      if (!isNaN(date)) {
-        const day = String(date.getDate()).padStart(2, "0");
-        const month = String(date.getMonth() + 1).padStart(2, "0");
-        const year = date.getFullYear();
-        hearingDate = `${year}-${month}-${day}`;
+      let date = undefined;
+      let hearingDate = undefined;
+      if (orderData?.hearingDate) {
+        date = new Date(orderData?.hearingDate);
+        if (!isNaN(date)) {
+          const day = String(date.getDate()).padStart(2, "0");
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const year = date.getFullYear();
+          hearingDate = `${year}-${month}-${day}`;
+        }
       }
       if (type === "save-draft") {
         if (orderDataNextHearingData) {
@@ -305,6 +309,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
           };
           try {
             await ordersService.createOrder(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
+            setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
           } catch (error) {
             console.log("error", error);
           }
@@ -543,6 +548,9 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
                     setOrderError((orderError) => ({
                       ...orderError,
                       isCaseDisposed: null,
+                      hearingDate: null,
+                      hearingType: null,
+                      partiesToAttendHearing: null,
                     }));
                   }}
                 />
@@ -577,7 +585,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
               </LabelFieldPair>
               <LabelFieldPair className={`case-label-field-pair ${orderData?.isCaseDisposed?.value === "CASE_DISPOSED" ? "disabled" : ""}`}>
                 <CardLabel className="case-input-label">{`${t("CS_CASE_SELECT_HEARING_DATE")}`}</CardLabel>
-                <CustomDatePicker
+                <CustomDatePickerV2
                   t={t}
                   config={{
                     type: "component",
@@ -588,14 +596,16 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
                     className: "order-date-picker",
                     isMandatory: true,
                     customStyleLabelField: { display: "flex", justifyContent: "space-between" },
-                    popUpStyleMain: { minHeight: "100%" },
                     populators: {
                       name: "hearingDate",
                       // error: "Required",
                     },
                   }}
                   formData={orderData}
-                  onDateChange={(date) => setOrderData((orderData) => ({ ...orderData, hearingDate: new Date(date).setHours(0, 0, 0, 0) }))}
+                  onDateChange={(date) => {
+                    setOrderData((orderData) => ({ ...orderData, hearingDate: new Date(date).setHours(0, 0, 0, 0) }));
+                    setOrderError((orderError) => ({ ...orderError, hearingDate: null }));
+                  }}
                 />
                 {orderError?.hearingDate && <CardLabelError style={{ margin: 0, padding: 0 }}> {t(orderError?.hearingDate)} </CardLabelError>}
               </LabelFieldPair>
