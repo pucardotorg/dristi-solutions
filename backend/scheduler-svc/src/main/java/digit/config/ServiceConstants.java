@@ -87,8 +87,8 @@ public class ServiceConstants {
 
     public static final String CAUSE_LIST_EMAIL_BODY =
             "Please find attached the cause list for of the 24X7 ON Court located in the Kollam District Court Complex. " +
-                    "We kindly request the Bar Association to share the causelist in the relevant channels with concerned advocates.\n\n" +
-                    "Regards,\n";
+                    "We kindly request the Bar Association to share the causelist in the relevant channels with concerned advocates.<br><br>" +
+                    "Regards,";
 
     // Other constants can be added here
     public static final String EMAIL_SEND_ERROR = "EMAIL_SEND_ERROR";
