@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { LabelFieldPair, TextInput, CloseSvg, CardLabelError, CardLabel } from "@egovernments/digit-ui-react-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 
-const CustomDatePicker = ({ t, config, formData, onSelect, errors, onDateChange }) => {
+const CustomDatePickerV2 = ({ t, config, formData, onSelect, errors, onDateChange }) => {
   const [showModal, setShowModal] = useState(false);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const CustomCalendar = Digit.ComponentRegistryService.getComponent("CustomCalendar");
+  const CustomCalendar = Digit.ComponentRegistryService.getComponent("CustomCalendarV2");
   const handleSelect = (date) => {
     if (onDateChange) {
       onDateChange(date);
@@ -56,7 +56,9 @@ const CustomDatePicker = ({ t, config, formData, onSelect, errors, onDateChange 
           headerBarMain={true}
           headerBarEnd={<CloseBtn onClick={() => setShowModal(false)} />}
           hideSubmit={true}
-          popmoduleClassName="custom-date-selector-modal"
+          className="custom-date-selector-modal-main-v2"
+          popupModuleMianClassName="custom-date-selector-modal-v2"
+          popupModuleMianStyles={{ width: "640px" }}
           popupStyles={{
             width: "fit-content",
           }}
@@ -99,4 +101,4 @@ const CalendarIcon = () => (
   </svg>
 );
 
-export default CustomDatePicker;
+export default CustomDatePickerV2;

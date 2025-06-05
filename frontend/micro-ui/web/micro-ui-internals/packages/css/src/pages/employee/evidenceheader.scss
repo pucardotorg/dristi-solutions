@@ -310,14 +310,11 @@
     background: #fff;
     border-radius: 16px 16px 0 0;
     padding: 24px 0px 24px 24px;
-    transform: translateY(100%);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     max-height: calc(100vh - 90px);
     opacity: 0;
     visibility: hidden;
 
     &.open {
-      transform: translateY(0);
       opacity: 1;
       visibility: visible;
       box-shadow: 0px -4px 16px rgba(0, 0, 0, 0.08);
@@ -358,16 +355,11 @@
       flex-direction: column;
       margin: 0px 0px 16px 0px;
       padding-right: 16px;
-      opacity: 1;
-      transform: translateY(20px);
-      transition: all 0.3s ease;
-      transition-delay: 0.2s;
       max-height: calc(100vh - 264px);
       overflow-y: auto;
 
       .open & {
         opacity: 1;
-        transform: translateY(0);
       }
 
       .drawer-section {

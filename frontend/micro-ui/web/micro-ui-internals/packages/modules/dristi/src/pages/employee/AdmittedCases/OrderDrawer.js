@@ -4,7 +4,7 @@ import { RadioButtons, Dropdown, LabelFieldPair, CardLabel, CardLabelError, Toas
 import { LeftArrow } from "../../../icons/svgIndex";
 import CustomTextArea from "../../../components/CustomTextArea";
 import MultiSelectDropdown from "../../../components/MultiSelectDropdown";
-import CustomDatePicker from "../../../../../hearings/src/components/CustomDatePicker";
+import CustomDatePickerV2 from "../../../../../hearings/src/components/CustomDatePickerV2";
 import Button from "../../../components/Button";
 import { getFormattedName } from "../../../../../hearings/src/utils";
 import { constructFullName } from "@egovernments/digit-ui-module-orders/src/utils";
@@ -577,7 +577,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
               </LabelFieldPair>
               <LabelFieldPair className={`case-label-field-pair ${orderData?.isCaseDisposed?.value === "CASE_DISPOSED" ? "disabled" : ""}`}>
                 <CardLabel className="case-input-label">{`${t("CS_CASE_SELECT_HEARING_DATE")}`}</CardLabel>
-                <CustomDatePicker
+                <CustomDatePickerV2
                   t={t}
                   config={{
                     type: "component",
@@ -588,7 +588,6 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
                     className: "order-date-picker",
                     isMandatory: true,
                     customStyleLabelField: { display: "flex", justifyContent: "space-between" },
-                    popUpStyleMain: { minHeight: "100%" },
                     populators: {
                       name: "hearingDate",
                       // error: "Required",
