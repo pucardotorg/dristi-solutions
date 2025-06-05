@@ -5,7 +5,7 @@ import { caseFileLabels } from "../../../Utils";
 import { useTranslation } from "react-i18next";
 import { useQueries } from "react-query";
 import { DRISTIService } from "../../../services";
-import { set } from "lodash";
+import { has, set } from "lodash";
 const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
 
 function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
@@ -19,6 +19,8 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
   const [selectedDocument, setSelectedDocument] = useState("complaint");
   const [selectedFileStoreId, setSelectedFileStoreId] = useState(null);
   const [disposedApplicationChildren, setDisposedApplicationChildren] = useState([]);
+  const [bailApplicationChildren, setBailApplicationChildren] = useState([]);
+  const [processChildren, setProcessChildren] = useState([]);
   const [loading, setLoading] = useState(true);
   const [publishedOrderData, setPublishedOrderData] = useState([]);
 
@@ -63,7 +65,6 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
   };
 
   const handleDocumentSelect = (docId, fileStoreId, title) => {
-    console.log("Selected Document ID:", title);
     setSelectedDocument(docId);
     setSelectedFileStoreId(fileStoreId);
   };
@@ -259,6 +260,98 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
   );
 
   const disposedApplicationList = useMemo(() => disposedApplicationData?.applicationList, [disposedApplicationData]);
+
+  const { data: bailApplicationsData } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        status: "COMPLETED",
+        courtId: courtId,
+        filingNumber: filingNumber,
+        applicationType: "REQUEST_FOR_BAIL",
+        tenantId,
+      },
+      pagination: {
+        sortBy: "applicationCMPNumber",
+        order: "asc",
+      },
+    },
+    {},
+    filingNumber + "bailApplicationsData",
+    filingNumber
+  );
+
+  const bailApplicationsList = useMemo(() => bailApplicationsData?.applicationList, [bailApplicationsData]);
+
+  useEffect(() => {
+    const fetchProcessData = async () => {
+      try {
+        const resTask = await DRISTIService.customApiService("/task/v1/table/search", {
+          criteria: {
+            completeStatus: [
+              "ISSUE_SUMMON",
+              "ISSUE_NOTICE",
+              "ISSUE_WARRANT",
+              "OTHER",
+              "ABATED",
+              "SUMMON_SENT",
+              "EXECUTED",
+              "NOT_EXECUTED",
+              "WARRANT_SENT",
+              "DELIVERED",
+              "UNDELIVERED",
+              "NOTICE_SENT",
+            ],
+            searchText: caseDetails?.cnrNumber || caseDetails?.cmpNumber || caseDetails?.courtCaseNumber,
+            courtId: caseDetails?.courtId,
+            tenantId,
+          },
+          pagination: {
+            sortBy: "createdDate",
+            order: "asc",
+          },
+        });
+
+        const taskList = resTask?.list || [];
+
+        const groupedTasks = {
+          NOTICE: [],
+          WARRANT: [],
+          SUMMONS: [],
+        };
+
+        taskList.forEach((task) => {
+          const expectedType = task.documentStatus === "SIGN_PENDING" ? "GENERATE_TASK_DOCUMENT" : "SIGNED_TASK_DOCUMENT";
+
+          const fileStoreId = task.documents?.find((doc) => doc.documentType === expectedType)?.fileStore;
+
+          if (fileStoreId && groupedTasks[task.orderType]) {
+            groupedTasks[task.orderType].push(fileStoreId);
+          }
+        });
+
+        const processItems = Object.entries(groupedTasks)
+          .filter(([_, files]) => files.length > 0)
+          .map(([type, files], index) => ({
+            id: `process-${type.toLowerCase()}`,
+            title: type.charAt(0).toUpperCase() + type.slice(1).toLowerCase(),
+            hasChildren: true,
+            children: files.map((fileStoreId, idx) => ({
+              id: `process-${type.toLowerCase()}-${idx + 1}`,
+              title: `${type.charAt(0)}${type.slice(1).toLowerCase()} ${idx + 1}`,
+              fileStoreId,
+              hasChildren: false,
+            })),
+          }));
+
+        setProcessChildren(processItems);
+      } catch (error) {
+        console.error("Error fetching process data:", error);
+        setProcessChildren([]);
+      }
+    };
+
+    fetchProcessData();
+  }, [caseDetails, tenantId]);
 
   const productionQueries = useQueries(
     orderList.map((order) => ({
@@ -557,7 +650,6 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
 
             const combinedOrders = orderResponses.flatMap((res) => res?.list || []);
 
-            // Signed
             const signedDoc = application?.documents?.find((doc) => doc?.documentType === "SIGNED" || doc?.documentType === "CONDONATION_DOC");
 
             const signedSubitem = signedDoc?.fileStore
@@ -569,7 +661,6 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
                 }
               : null;
 
-            // Objections
             const validObjectionComments = (application?.comment || []).filter((comment) => comment?.additionalDetails?.commentDocumentId);
 
             const objectionChildren = validObjectionComments.map((comment, objIndex) => ({
@@ -589,7 +680,6 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
                   }
                 : null;
 
-            // Orders
             const orderFileStoreIds = [];
 
             combinedOrders.forEach((order) => {
@@ -616,7 +706,6 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
                   }
                 : null;
 
-            // --- Final structure per application ---
             const childItems = [signedSubitem, objectionsSubitem, ordersSubitem].filter(Boolean);
 
             childrenItems.push({
@@ -638,6 +727,142 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
 
     generateDisposedApplicationStructure();
   }, [disposedApplicationList, courtId, filingNumber, tenantId]);
+
+  useEffect(() => {
+    const buildBailApplicationStructure = async () => {
+      if (!bailApplicationsList || bailApplicationsList.length === 0) return;
+
+      const children = await Promise.all(
+        bailApplicationsList.map(async (application, index) => {
+          const signed = [];
+          const others = [];
+
+          application?.documents?.forEach((doc) => {
+            if (doc?.fileStore) {
+              if (doc.documentType === "SIGNED") signed.push(doc.fileStore);
+              else others.push(doc.fileStore);
+            }
+          });
+
+          const signedNode = {
+            id: `${application.applicationNumber}-signed`,
+            title: "Application (Signed)",
+            hasChildren: false,
+            fileStoreId: signed[0] || null,
+          };
+
+          const otherDocsChildren = others.map((fsId, i) => ({
+            id: `${application.applicationNumber}-other-${i}`,
+            title: `Document ${i + 1}`,
+            fileStoreId: fsId,
+            hasChildren: false,
+          }));
+
+          const otherDocsNode = {
+            id: `${application.applicationNumber}-others`,
+            title: "Other Documents",
+            hasChildren: otherDocsChildren.length > 0,
+            children: otherDocsChildren,
+          };
+
+          let submitBailNode = null;
+          try {
+            const resOrder = await DRISTIService.searchOrders({
+              criteria: {
+                courtId,
+                filingNumber,
+                applicationNumber: application.applicationNumber,
+                status: "PUBLISHED",
+                orderType: "SET_BAIL_TERMS",
+                tenantId,
+              },
+            });
+            debugger;
+
+            const orderList = resOrder?.list || [];
+
+            if (orderList.length > 0) {
+              const resSubmissions = await DRISTIService.searchSubmissions({
+                criteria: {
+                  courtId,
+                  filingNumber,
+                  referenceId: orderList[0]?.id,
+                  applicationType: "SUBMIT_BAIL_DOCUMENTS",
+                  status: "COMPLETED",
+                  tenantId,
+                },
+              });
+
+              const submitApps = resSubmissions?.applicationList || [];
+
+              if (submitApps.length > 0) {
+                const docs = submitApps[0]?.documents || [];
+                const submitSigned = [];
+                const submitOthers = [];
+
+                docs.forEach((doc) => {
+                  if (doc?.fileStore) {
+                    if (doc.documentType === "SIGNED") submitSigned.push(doc.fileStore);
+                    else submitOthers.push(doc.fileStore);
+                  }
+                });
+
+                const submitChildren = [];
+
+                submitSigned.forEach((fsId, i) =>
+                  submitChildren.push({
+                    id: `${application.applicationNumber}-submit-signed-${i}`,
+                    title: "Signed Document",
+                    fileStoreId: fsId,
+                    hasChildren: false,
+                  })
+                );
+
+                if (submitOthers.length > 0) {
+                  const othersChildren = submitOthers.map((fsId, j) => ({
+                    id: `${application.applicationNumber}-submit-other-${j}`,
+                    title: `Document ${j + 1}`,
+                    fileStoreId: fsId,
+                    hasChildren: false,
+                  }));
+
+                  submitChildren.push({
+                    id: `${application.applicationNumber}-submit-other-group`,
+                    title: "Other Documents",
+                    hasChildren: true,
+                    children: othersChildren,
+                  });
+                }
+
+                submitBailNode = {
+                  id: `${application.applicationNumber}-submit-bail`,
+                  title: "Submit Bail Documents",
+                  hasChildren: true,
+                  children: submitChildren,
+                };
+              }
+            }
+          } catch (e) {
+            console.error("Error fetching Submit Bail Documents for", application.applicationNumber, e);
+          }
+
+          const appChildren = [signedNode, otherDocsNode];
+          if (submitBailNode) appChildren.push(submitBailNode);
+
+          return {
+            id: application.applicationNumber,
+            title: application.applicationType + " " + (index + 1),
+            hasChildren: appChildren.length > 0,
+            children: appChildren,
+          };
+        })
+      );
+
+      setBailApplicationChildren(children);
+    };
+
+    buildBailApplicationStructure();
+  }, [bailApplicationsList, tenantId, courtId, filingNumber]);
 
   useEffect(() => {
     const getOrder = async () => {
@@ -700,7 +925,6 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
       }
     });
 
-    // Convert groupedDocs into structured format for Initial Filing children
     const initialFilingChildren = Object.entries(groupedDocs).map(([docType, entries]) => {
       const label = caseFileLabels[docType];
       if (entries.length === 1) {
@@ -717,7 +941,6 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
       }
     });
 
-    // Get specific document file store IDs
     const getFileStoreByType = (type) => {
       const doc = docs.find((d) => d.documentType === type);
       return doc ? doc.fileStore : null;
@@ -728,23 +951,21 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     const complaintEvidenceChildren = generateCompliantEvidenceStructure(complaintEvidenceData);
     const accusedEvidenceChildren = generateAccusedEvidenceStructure(accusedEvidenceData);
     const courtEvidenceChildren = generateCourtEvidenceStructure(courtEvidenceData, courtEvidenceDepositionData);
-    // const disposedApplicationChildren = generateDisaposedApplicationStructure(disposedApplicationList, combinedOrderList);
 
-    // Main structure with fixed items
     const mainStructure = [
+      {
+        id: "pending-application",
+        title: "Pending Application",
+        hasChildren: pendingApplicationChildren.length > 0,
+        number: 1,
+        children: pendingApplicationChildren,
+      },
       {
         id: "complaint",
         title: "Complaint",
         fileStoreId: getFileStoreByType("case.complaint.signed"),
         hasChildren: false,
-        number: 1,
-      },
-      {
-        id: "pending-application",
-        title: "Pending Application",
-        hasChildren: pendingApplicationChildren.length > 0,
         number: 2,
-        children: pendingApplicationChildren,
       },
       {
         id: "initial-filing",
@@ -823,18 +1044,32 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
         children: disposedApplicationChildren,
       },
       {
+        id: "bail-applications",
+        title: "Bail Applications",
+        hasChildren: bailApplicationsList?.length > 0,
+        number: 12,
+        children: bailApplicationChildren,
+      },
+      {
         id: "payment-receipt",
         title: "Payment Receipt",
         fileStoreId: getFileStoreByType("PAYMENT_RECEIPT"),
         hasChildren: false,
-        number: 12,
+        number: 13,
       },
       {
         id: "orders",
         title: "Orders",
         hasChildren: publishedOrderData.length > 0,
-        number: 13,
+        number: 14,
         children: publishedOrderChildren,
+      },
+      {
+        id: "processes",
+        title: "Processes",
+        hasChildren: processChildren?.length > 0,
+        number: 15,
+        children: processChildren,
       },
     ];
 
@@ -847,7 +1082,6 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     const isSelected = selectedDocument === item.id;
     const paddingLeft = level * 20 + 16;
 
-    // Generate display number and title
     let displayNumber = "";
     if (level === 0) {
       displayNumber = item.number.toString();
