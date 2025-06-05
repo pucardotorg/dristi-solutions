@@ -75,7 +75,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
     },
     {},
     taskNumber,
-    Boolean(taskNumber)
+    Boolean(taskNumber && caseDetails?.courtId)
   );
 
   const task = useMemo(() => tasksData?.list?.[0], [tasksData]);

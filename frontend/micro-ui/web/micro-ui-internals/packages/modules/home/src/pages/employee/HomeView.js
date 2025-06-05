@@ -135,7 +135,7 @@ const HomeView = () => {
     },
     { tenantId },
     OrderWorkflowState.PENDING_BULK_E_SIGN,
-    Boolean(isJudge)
+    Boolean(isJudge && courtId)
   );
 
   const refreshInbox = () => {

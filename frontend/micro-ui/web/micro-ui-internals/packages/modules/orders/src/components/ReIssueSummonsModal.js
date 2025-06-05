@@ -26,7 +26,7 @@ function ReIssueSummonsModal() {
     },
     { applicationNumber: "", cnrNumber },
     hearingId,
-    Boolean(hearingId)
+    Boolean(hearingId && userType)
   );
   const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
 

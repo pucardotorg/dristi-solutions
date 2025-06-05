@@ -246,7 +246,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
     {},
     `dristi-${filingNumber}`,
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && courtId)
   );
   const caseDetails = useMemo(
     () => ({
