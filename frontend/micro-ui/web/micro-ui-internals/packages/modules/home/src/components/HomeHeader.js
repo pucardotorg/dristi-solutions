@@ -25,6 +25,7 @@ const HomeHeader = ({ t }) => {
 
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
 
   const { data: hearingLink } = useGetHearingLink();
 
@@ -32,7 +33,7 @@ const HomeHeader = ({ t }) => {
     <div style={{ borderTop: "1px #e8e8e8 solid", width: "100vw", padding: "24px 40px" }}>
       <div className="header" style={{ fontFamily: "Roboto", fontWeight: 700, fontSize: "40px", lineHeight: "100%", letterSpacing: "0%" }}>
         {t("CS_HOME_HELLO")}, <span style={{ color: "#77787B" }}>{name}</span>
-        {(isJudge || isBenchClerk) && (
+        {(isJudge || isBenchClerk || isTypist) && (
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end" }}>
             <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start", padding: "32px 0px 0px" }}>
               <a href={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle} target="_self" rel="noopener noreferrer">
