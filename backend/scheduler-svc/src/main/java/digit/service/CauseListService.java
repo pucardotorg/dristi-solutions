@@ -670,7 +670,7 @@ public class CauseListService {
                 .requestInfo(createInternalRequestInfo())
                 .hearings(hearingList)
                 .build();
-        hearingUtil.callHearing(updateBulkRequest);
+        hearingUtil.callHearing(updateBulkRequest, Boolean.FALSE);
     }
 
     private RequestInfo createInternalRequestInfo() {
