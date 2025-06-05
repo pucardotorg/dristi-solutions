@@ -268,19 +268,27 @@ public class HearingUtil {
             String insideBracket = text.substring(startIdx + 1, endIdx).trim();
             String afterBracket = text.substring(endIdx);
 
-            StringBuilder updatedBracket = new StringBuilder();
-            if (!insideBracket.isEmpty()) {
-                updatedBracket.append(insideBracket).append(", ").append(newValue);
-            } else {
-                updatedBracket.append(newValue);
+            // Check if newValue already exists (case-insensitive)
+            List<String> existingValues = Arrays.stream(insideBracket.split(","))
+                    .map(String::trim)
+                    .toList();
+
+            boolean alreadyPresent = existingValues.stream()
+                    .anyMatch(val -> val.equalsIgnoreCase(newValue));
+
+            if (!alreadyPresent) {
+                if (!insideBracket.isEmpty()) {
+                    insideBracket += ", " + newValue;
+                } else {
+                    insideBracket = newValue;
+                }
             }
 
-            return beforeBracket + updatedBracket + afterBracket;
+            return beforeBracket + insideBracket + afterBracket;
         } else {
             // No valid brackets found, append new brackets
             return text + " (" + newValue + ")";
         }
-
     }
 
     public String getHearingSummary(Order order) {
