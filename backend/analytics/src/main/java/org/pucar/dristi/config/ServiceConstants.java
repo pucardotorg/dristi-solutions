@@ -32,6 +32,7 @@ public class ServiceConstants {
                     + "\"amount\": %f,"
                     + "\"billStatus\": \"%s\","
                     + "\"consumerCode\": \"%s\","
+                    + "\"filingNumber\": \"%s\","
                     + "\"service\": \"%s\","
                     + "\"courtId\": \"%s\""
                     + "},"
