@@ -154,27 +154,19 @@ const MainHomeScreen = () => {
   const options = {
     REGISTRATION: {
       name: "Register Cases",
-      count: registerCount,
-      func: setRegisterCount,
     },
     REVIEW_PROCESS: {
       name: "Review Process",
-      count: reviewCount,
-      func: setReviewCount,
     },
     VIEW_APPLICATION: {
       name: "View Applications",
-      count: applicationCount,
-      func: setApplicationCount,
     },
     SCHEDULE_HEARING: {
       name: "Schedule Hearing",
-      count: scheduleCount,
-      func: setScheduleCount,
     },
   };
 
-  const handleTabChange = (title, label, func) => {
+  const handleTabChange = (title, label) => {
     if (title !== activeTabTitle) {
       if (activeTabTitle === "HEARINGS_TAB") {
         fetchHearingCount();

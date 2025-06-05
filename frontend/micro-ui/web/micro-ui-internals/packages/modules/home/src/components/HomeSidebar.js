@@ -26,7 +26,7 @@ const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hea
               label={options[key].name}
               count={pendingTaskCount[key] || 0}
               active={activeTab === key}
-              onClick={() => onTabChange("PENDING_TASKS_TAB", key, options[key].func)}
+              onClick={() => onTabChange("PENDING_TASKS_TAB", key)}
             />
           ))}
       </HomeAccordian>
@@ -69,7 +69,7 @@ const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hea
             if (shouldProceed) {
               window.location.href = `/${window.contextPath}/employee/home/bulk-esign-order`;
             } else {
-              showToast("error", t("NO_MORE_HEARINGS"), 5000);
+              showToast("error", t("NO_BULK_SIGN_ORDERS"), 5000);
             }
           }}
         />

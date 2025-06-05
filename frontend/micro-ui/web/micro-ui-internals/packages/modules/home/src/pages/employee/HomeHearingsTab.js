@@ -134,20 +134,25 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
 
   const stateId = React.useMemo(() => Digit.ULBService.getStateId(), []);
 
-  const { data: hearingTypeOptions, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(stateId, "Hearing", [{ name: "HearingType" }], {
-    select: (data) => {
-      return data || [];
-    },
-  });
-  // need to fetch from mdms
-  const statusOptions = [
-    { code: "SCHEDULED", name: "Scheduled" },
-    { code: "IN_PROGRESS", name: "Ongoing" },
-    { code: "PASSED_OVER", name: "Passed Over" },
-    { code: "COMPLETED", name: "Completed" },
-    { code: "ABANDONED", name: "Abandoned" },
-    { code: "OPT_OUT", name: "Opt out" },
-  ];
+  const { data: hearingTypeOptions, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(
+    stateId,
+    "Hearing",
+    [{ name: "HearingType" }, { name: "HearingStatus" }],
+    {
+      select: (data) => {
+        return data || [];
+      },
+    }
+  );
+  const statusOptions = useMemo(() => {
+    return (
+      hearingTypeOptions?.Hearing?.HearingStatus?.map((status) => ({
+        id: status?.id, // include id for sorting
+        code: status?.code,
+        name: status?.code !== "IN_PROGRESS" ? status?.code : "ON_GOING_HEARING",
+      }))?.sort((a, b) => a.id - b.id) || []
+    );
+  }, [hearingTypeOptions]);
 
   const statusClass = (status) => {
     if (!status) return "status-default";
@@ -892,7 +897,7 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
               t={t}
               option={statusOptions ? statusOptions : []}
               selected={filters?.status}
-              optionKey={"code"}
+              optionKey={"name"}
               select={(e) => {
                 setFilters((prev) => ({ ...prev, status: e }));
               }}
