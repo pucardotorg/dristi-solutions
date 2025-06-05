@@ -88,7 +88,7 @@ class HearingConsumerTest {
 
         // Assert
         verify(mockMapper).convertValue(record, RetryHearingRequest.class);
-        verify(mockBulkRequest).getHearings();
+        verify(mockBulkRequest, times(3)).getHearings();
         verify(mockConfiguration, times(2)).getHearingRetryDelayMs();
         verify(mockHearingUtil).callHearing(mockBulkRequest, false);
     }

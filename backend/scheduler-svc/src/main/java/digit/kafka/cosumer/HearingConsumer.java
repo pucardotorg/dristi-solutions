@@ -53,6 +53,13 @@ public class HearingConsumer {
             RetryHearingRequest retryRequest = mapper.convertValue(record, RetryHearingRequest.class);
             long delay = configuration.getHearingRetryDelayMs() != null ? configuration.getHearingRetryDelayMs() : 60000L;
 
+            if (retryRequest.getHearingRequest() == null ||
+                    retryRequest.getHearingRequest().getHearings() == null ||
+                    retryRequest.getHearingRequest().getHearings().isEmpty()) {
+                log.error("Invalid hearing request structure in retry request");
+                return;
+            }
+
             String hearingId = retryRequest.getHearingRequest().getHearings().get(0).getHearingId();
             log.info("Delaying retry of callHearing by {} ms for hearingId: {}", delay, hearingId);
 
