@@ -683,6 +683,8 @@ export const updateProfileData = async ({
             isActive: true,
           },
         },
+        dateOfApplication: new Date().getTime(),
+        uniqueId: uniqueId,
         profileEditType: selected,
         pendingTaskRefId: referenceId,
         onBehalOfName: null,
