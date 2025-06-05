@@ -14,8 +14,11 @@ import org.springframework.web.client.HttpClientErrorException;
 import pucar.config.Configuration;
 import pucar.repository.ServiceRequestRepository;
 import pucar.web.models.Order;
+import pucar.web.models.OrderRequest;
 import pucar.web.models.WorkflowObject;
 import pucar.web.models.courtCase.AdvocateMapping;
+import pucar.web.models.courtCase.CaseCriteria;
+import pucar.web.models.courtCase.CaseSearchRequest;
 import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.hearing.*;
 
@@ -35,8 +38,9 @@ public class HearingUtil {
     private final CacheUtil cacheUtil;
     private final JsonUtil jsonUtil;
     private final DateUtil dateUtil;
+    private final CaseUtil caseUtil;
 
-    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, AdvocateUtil advocateUtil, CacheUtil cacheUtil, JsonUtil jsonUtil, DateUtil dateUtil) {
+    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, AdvocateUtil advocateUtil, CacheUtil cacheUtil, JsonUtil jsonUtil, DateUtil dateUtil, CaseUtil caseUtil) {
         this.objectMapper = objectMapper;
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
@@ -44,6 +48,7 @@ public class HearingUtil {
         this.cacheUtil = cacheUtil;
         this.jsonUtil = jsonUtil;
         this.dateUtil = dateUtil;
+        this.caseUtil = caseUtil;
     }
 
 
@@ -304,5 +309,58 @@ public class HearingUtil {
                 .filter(String.class::isInstance)
                 .map(String.class::cast)
                 .orElse(null);
+    }
+
+    public void updateHearingSummary(OrderRequest orderRequest, Hearing hearing) {
+        log.info("updating hearing summary status IN_PROGRESS : {}", orderRequest);
+
+        RequestInfo requestInfo = orderRequest.getRequestInfo();
+        Order order = orderRequest.getOrder();
+
+        List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
+                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
+                .requestInfo(requestInfo).build());
+
+        hearing.setHearingSummary(getHearingSummary(order));
+        hearing.setAttendees(getAttendees(orderRequest.getRequestInfo(), cases.get(0), order, false));
+
+        StringBuilder updateUri = new StringBuilder();
+        updateUri.append(configuration.getHearingHost()).append(configuration.getUpdateHearingSummaryEndPoint());
+
+        createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(orderRequest.getRequestInfo()).build(), updateUri);
+
+        log.info("updating hearing summary status SUCCESS : {}", hearing);
+    }
+
+    public void updateHearingStatus(OrderRequest orderRequest) {
+
+        log.info("updating hearing status based on order request: {}", orderRequest);
+
+        Order order = orderRequest.getOrder();
+        RequestInfo requestInfo = orderRequest.getRequestInfo();
+        String hearingNumber = getHearingNumberFormApplicationAdditionalDetails(order.getAdditionalDetails());
+
+        List<Hearing> hearings = fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
+                .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
+        Hearing hearing = hearings.get(0);
+
+        String hearingStatus = hearing.getStatus();
+
+        log.info("status of hearing: {}, hearingNumber: {}", hearingStatus, hearingNumber);
+
+        if ((IN_PROGRESS.equalsIgnoreCase(hearingStatus) || PASSED_OVER.equalsIgnoreCase(hearingStatus) || ABANDONED.equalsIgnoreCase(hearingStatus))) {
+
+            WorkflowObject workflowObject = new WorkflowObject();
+            workflowObject.setAction(CLOSE);
+            hearing.setWorkflow(workflowObject);
+
+            StringBuilder updateUri = new StringBuilder();
+            updateUri.append(configuration.getHearingHost()).append(configuration.getHearingUpdateEndPoint());
+
+            createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(orderRequest.getRequestInfo()).build(), updateUri);
+
+            log.info("updated hearing status to close for hearingNumber: {}", hearingNumber);
+        }
+
     }
 }
