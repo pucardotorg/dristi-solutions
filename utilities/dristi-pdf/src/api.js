@@ -55,7 +55,7 @@ async function search_task(taskNumber, tenantId, requestinfo, courtId) {
   }
 }
 
-async function search_table_task(tenantId, requestinfo, criteria) {
+async function search_table_task(tenantId, requestinfo, criteria, pagination) {
   try {
     return await axios({
       method: "post",
@@ -63,6 +63,7 @@ async function search_table_task(tenantId, requestinfo, criteria) {
       data: {
         RequestInfo: requestinfo,
         criteria,
+        pagination,
         tenantId,
       },
     });

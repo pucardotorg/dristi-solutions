@@ -20,39 +20,52 @@ async function processTaskProcesses(
   );
 
   if (processesSection?.length !== 0) {
-    const resTaskUnsigned = await search_table_task(tenantId, requestInfo, {
-      completeStatus: ["ISSUE_SUMMON", "ISSUE_NOTICE", "ISSUE_WARRANT"],
-      searchText:
-        courtCase.cnrNumber || courtCase.cmpNumber || courtCase.courtCaseNumber,
-      courtId: courtCase.courtId,
+    const resTask = await search_table_task(
       tenantId,
-    });
+      requestInfo,
+      {
+        completeStatus: [
+          "ISSUE_SUMMON",
+          "ISSUE_NOTICE",
+          "ISSUE_WARRANT",
+          "OTHER",
+          "ABATED",
+          "SUMMON_SENT",
+          "EXECUTED",
+          "NOT_EXECUTED",
+          "WARRANT_SENT",
+          "DELIVERED",
+          "UNDELIVERED",
+          "NOTICE_SENT",
+        ],
+        searchText:
+          courtCase.cnrNumber ||
+          courtCase.cmpNumber ||
+          courtCase.courtCaseNumber,
+        courtId: courtCase.courtId,
+        tenantId,
+      },
+      {
+        sortBy: "createdDate",
+        order: "asc",
+      }
+    );
 
-    const unsignedTaskList = resTaskUnsigned?.data?.list;
+    const taskList = resTask?.data?.list;
 
-    const resTaskSigned = await search_table_task(tenantId, requestInfo, {
-      completeStatus: [
-        "OTHER",
-        "ABATED",
-        "SUMMON_SENT",
-        "EXECUTED",
-        "NOT_EXECUTED",
-        "WARRANT_SENT",
-        "DELIVERED",
-        "UNDELIVERED",
-        "NOTICE_SENT",
-      ],
-      searchText:
-        courtCase.cnrNumber || courtCase.cmpNumber || courtCase.courtCaseNumber,
-      courtId: courtCase.courtId,
-      tenantId,
-    });
+    // Group while preserving createdDate order
+    const noticeTasks = taskList.filter((task) => task.orderType === "NOTICE");
+    const summonsTasks = taskList.filter(
+      (task) => task.orderType === "SUMMONS"
+    );
+    const warrantsTasks = taskList.filter(
+      (task) => task.orderType === "WARRANT"
+    );
 
-    const signedTaskList = resTaskSigned?.data?.list;
+    // Concatenate groups to get final ordered list
+    const orderedTaskList = [...noticeTasks, ...summonsTasks, ...warrantsTasks];
 
-    const taskList = [...unsignedTaskList, ...signedTaskList];
-
-    if (taskList.length !== 0) {
+    if (orderedTaskList.length !== 0) {
       const processesLineItems = await Promise.all(
         taskList.map(async (task, ind) => {
           if (task?.documents?.length !== 0) {
