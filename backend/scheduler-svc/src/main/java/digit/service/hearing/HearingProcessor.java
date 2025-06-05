@@ -60,7 +60,7 @@ public class HearingProcessor {
      *
      * @param hearingRequest a {@link HearingRequest} object containing the hearing details.
      */
-    public void processCreateHearingRequest(HearingRequest hearingRequest) {
+    public void processCreateHearingRequest(HearingRequest hearingRequest, Boolean isRetryRequired) {
         log.info("operation = processCreateHearingRequest, result = IN_PROGRESS, hearingId={}", hearingRequest.getHearing().getHearingId());
         try {
             Hearing hearing = hearingRequest.getHearing();
@@ -99,7 +99,7 @@ public class HearingProcessor {
                     .hearings(Collections.singletonList(hearing))
                     .build();
             log.debug("updating hearing in hearing module,hearingId={}", hearing.getHearingId());
-            hearingUtil.callHearing(updateHearingRequest);
+            hearingUtil.callHearing(updateHearingRequest, isRetryRequired);
 
             producer.push(config.getScheduleHearingTopic(), ScheduleHearingRequest.builder().requestInfo(requestInfo).hearing(scheduledHearings).build());
             log.info("operation = processCreateHearingRequest, result = SUCCESS, hearingId={}", hearing.getHearingId());
