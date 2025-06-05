@@ -71,8 +71,9 @@ class HearingConsumerTest {
     void testRetryCallHearing() {
         // Arrange
         HashMap<String, Object> record = new HashMap<>();
-        RetryHearingRequest retryRequest = new RetryHearingRequest();
+        String topic = "egov-hearing-update-time-retry";
 
+        RetryHearingRequest retryRequest = new RetryHearingRequest();
         HearingUpdateBulkRequest mockBulkRequest = mock(HearingUpdateBulkRequest.class);
         Hearing mockHearing = Hearing.builder().hearingId("HEAR123").build();
 
@@ -83,7 +84,7 @@ class HearingConsumerTest {
         when(mockBulkRequest.getHearings()).thenReturn(List.of(mockHearing));
 
         // Act
-        hearingConsumer.retryCallHearing(record);
+        hearingConsumer.retryCallHearing(record, topic);
 
         // Assert
         verify(mockMapper).convertValue(record, RetryHearingRequest.class);
@@ -91,4 +92,5 @@ class HearingConsumerTest {
         verify(mockConfiguration, times(2)).getHearingRetryDelayMs();
         verify(mockHearingUtil).callHearing(mockBulkRequest, false);
     }
+
 }

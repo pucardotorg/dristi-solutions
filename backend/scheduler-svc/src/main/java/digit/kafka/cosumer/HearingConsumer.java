@@ -47,7 +47,8 @@ public class HearingConsumer {
 
 
     @KafkaListener(topics = {"egov-hearing-update-time-retry"}, groupId = "hearing-update-time-retry")
-    public void retryCallHearing(final HashMap<String, Object> record) {
+    public void retryCallHearing(final HashMap<String, Object> record, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        log.info("Received create hearing update time message in topic {}", topic);
         try {
             RetryHearingRequest retryRequest = mapper.convertValue(record, RetryHearingRequest.class);
             long delay = configuration.getHearingRetryDelayMs() != null ? configuration.getHearingRetryDelayMs() : 60000L;
