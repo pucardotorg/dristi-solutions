@@ -144,8 +144,8 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
     { code: "IN_PROGRESS", name: "Ongoing" },
     { code: "PASSED_OVER", name: "Passed Over" },
     { code: "COMPLETED", name: "Completed" },
-    { code: "ABATED", name: "Abandoned" },
-    // {code : "OPT_OUT" ,name : "Opt out"}
+    { code: "ABANDONED", name: "Abandoned" },
+    { code: "OPT_OUT", name: "Opt out" },
   ];
 
   const statusClass = (status) => {
