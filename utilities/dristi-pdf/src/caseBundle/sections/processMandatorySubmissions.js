@@ -67,7 +67,7 @@ async function processMandatorySubmissions(
 
           if (applicationList?.length !== 0) {
             const innerLineItems = await Promise.all(
-              applicationList.map(async (application, ind) => {
+              applicationList.map(async (application, index) => {
                 if (application?.documents?.length !== 0) {
                   let newApplicationFileStoreId;
                   const signed = [];
@@ -132,6 +132,10 @@ async function processMandatorySubmissions(
                           : "ACCUSED";
                     }
 
+                    const documentPath = `7.${index + 1} ${
+                      application.applicationType
+                    } ${index + 1} in 7 ${section.section}`;
+
                     const mandatorySubmissionsFileStoreId =
                       await applyDocketToDocument(
                         newApplicationFileStoreId,
@@ -143,6 +147,7 @@ async function processMandatorySubmissions(
                           docketDateOfSubmission: new Date(
                             application.createdDate
                           ).toLocaleDateString("en-IN"),
+                          documentPath: documentPath,
                         },
                         courtCase,
                         tenantId,
@@ -153,7 +158,7 @@ async function processMandatorySubmissions(
                     return {
                       sourceId: newApplicationFileStoreId,
                       fileStoreId: mandatorySubmissionsFileStoreId,
-                      sortParam: ind + 1,
+                      sortParam: index + 1,
                       createPDF: false,
                       content: "mandatorysubmissions",
                     };
@@ -161,7 +166,7 @@ async function processMandatorySubmissions(
                     return {
                       sourceId: newApplicationFileStoreId,
                       fileStoreId: newApplicationFileStoreId,
-                      sortParam: ind + 1,
+                      sortParam: index + 1,
                       createPDF: false,
                       content: "mandatorysubmissions",
                     };

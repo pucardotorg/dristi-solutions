@@ -386,7 +386,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
       if (signedDoc?.fileStore) {
         children.push({
           id: `${application?.applicationNumber}-signed`,
-          title: "Signed PDF",
+          title: "Application",
           fileStoreId: signedDoc?.fileStore,
           hasChildren: false,
         });
@@ -461,7 +461,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
 
         return {
           id: `evidence-${index}`,
-          title: `Additional Filing ${index + 1}`,
+          title: t(evidence?.artifactType),
           fileStoreId: evidenceFileStoreId,
           hasChildren: false,
         };
@@ -498,7 +498,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
           signed.forEach((signedFileStoreId, idx) => {
             prodDocChildren.push({
               id: `${application.applicationNumber}-signed-${idx}`,
-              title: `Application (SIGNED)`,
+              title: `Application`,
               fileStoreId: signedFileStoreId,
               hasChildren: false,
             });
@@ -514,7 +514,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
 
             prodDocChildren.push({
               id: `${application.applicationNumber}-others`,
-              title: `Other Documents ${applicationCounter}`,
+              title: `Other Documents`,
               hasChildren: true,
               children: otherChildren,
             });
@@ -522,7 +522,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
 
           children.push({
             id: `${application.applicationNumber}-prod-${applicationCounter}`,
-            title: `Production of documents ${applicationCounter}`,
+            title: `${t(application.applicationType)} ${applicationCounter}`,
             hasChildren: true,
             number: applicationCounter,
             children: prodDocChildren,
@@ -542,7 +542,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
       .filter((artifact) => artifact?.file?.fileStore)
       .map((artifact, idx) => ({
         id: `complaint-evidence-${idx}`,
-        title: `Evidence ${idx + 1}`,
+        title: t(artifact?.artifactType),
         fileStoreId: artifact.file.fileStore,
         hasChildren: false,
       }));
@@ -551,11 +551,11 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
   const generateAccusedEvidenceStructure = (accusedEvidenceData) => {
     if (!accusedEvidenceData?.artifacts || !Array.isArray(accusedEvidenceData.artifacts)) return [];
     return accusedEvidenceData.artifacts
-      .filter((artifact) => artifact?.file?.fileStore)
-      .map((artifact, idx) => ({
+      .filter((evidence) => evidence?.file?.fileStore)
+      .map((evidence, idx) => ({
         id: `accused-evidence-${idx}`,
-        title: `Evidence ${idx + 1}`,
-        fileStoreId: artifact.file.fileStore,
+        title: t(evidence?.artifactType),
+        fileStoreId: evidence?.file?.fileStore,
         hasChildren: false,
       }));
   };
@@ -655,7 +655,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
             const signedSubitem = signedDoc?.fileStore
               ? {
                   id: `${applicationNumber}-signed`,
-                  title: "Signed PDF",
+                  title: "Application",
                   fileStoreId: signedDoc.fileStore,
                   hasChildren: false,
                 }
@@ -746,7 +746,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
 
           const signedNode = {
             id: `${application.applicationNumber}-signed`,
-            title: "Application (Signed)",
+            title: "Application",
             hasChildren: false,
             fileStoreId: signed[0] || null,
           };
@@ -812,7 +812,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
                 submitSigned.forEach((fsId, i) =>
                   submitChildren.push({
                     id: `${application.applicationNumber}-submit-signed-${i}`,
-                    title: "Signed Document",
+                    title: "Application",
                     fileStoreId: fsId,
                     hasChildren: false,
                   })
@@ -851,7 +851,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
 
           return {
             id: application.applicationNumber,
-            title: application.applicationType + " " + (index + 1),
+            title: t(application.applicationType) + " " + (index + 1),
             hasChildren: appChildren.length > 0,
             children: appChildren,
           };
@@ -896,7 +896,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
 
       return {
         id: `published-order-${index}`,
-        title: `Order ${index + 1}`,
+        title: order.orderTitle,
         fileStoreId: fileStoreId,
         hasChildren: false,
       };
@@ -969,7 +969,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
       },
       {
         id: "initial-filing",
-        title: "Initial Filing",
+        title: "Initial Filings",
         hasChildren: true,
         number: 3,
         children: initialFilingChildren,
@@ -1003,7 +1003,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
       },
       {
         id: "evidence",
-        title: "Additional Filing",
+        title: "Additional Filings",
         hasChildren: evidenceChildren.length > 0,
         number: 6,
         children: evidenceChildren,
@@ -1017,14 +1017,14 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
       },
       {
         id: "complaint-evidence",
-        title: "Evidence by Complainant",
+        title: "Evidence of Complainant",
         hasChildren: complaintEvidenceData?.artifacts?.length > 0,
         number: 8,
         children: complaintEvidenceChildren,
       },
       {
         id: "accused-evidence",
-        title: "Evidence by Accused",
+        title: "Evidence of Accused",
         hasChildren: accusedEvidenceData?.artifacts?.length > 0,
         number: 9,
         children: accusedEvidenceChildren,
@@ -1051,25 +1051,25 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
         children: bailApplicationChildren,
       },
       {
+        id: "processes",
+        title: "Processes",
+        hasChildren: processChildren?.length > 0,
+        number: 13,
+        children: processChildren,
+      },
+      {
         id: "payment-receipt",
         title: "Payment Receipt",
         fileStoreId: getFileStoreByType("PAYMENT_RECEIPT"),
         hasChildren: false,
-        number: 13,
+        number: 14,
       },
       {
         id: "orders",
         title: "Orders",
         hasChildren: publishedOrderData.length > 0,
-        number: 14,
-        children: publishedOrderChildren,
-      },
-      {
-        id: "processes",
-        title: "Processes",
-        hasChildren: processChildren?.length > 0,
         number: 15,
-        children: processChildren,
+        children: publishedOrderChildren,
       },
     ];
 

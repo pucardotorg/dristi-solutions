@@ -18,6 +18,7 @@ async function processFilingsSection(
   const sortedFilingSection = [...filingsSection].sort(
     (secA, secB) => secA.sorton - secB.sorton
   );
+  let validIndex = 0;
   const filingsLineItems = await Promise.all(
     sortedFilingSection.map(async (section, index) => {
       const documentFileStoreId = courtCase.documents.find(
@@ -26,6 +27,7 @@ async function processFilingsSection(
       if (!documentFileStoreId) {
         return null;
       }
+      let newFileStoreId = documentFileStoreId;
       if (section.docketpagerequired === "yes") {
         const complainant = courtCase.litigants?.find((litigant) =>
           litigant.partyType.includes("complainant.primary")
@@ -37,7 +39,10 @@ async function processFilingsSection(
           )
         )?.additionalDetails?.advocateName;
 
-        const mergedFilingDocumentFileStoreId = await applyDocketToDocument(
+        const documentPath = `3.${validIndex + 1} ${section.Items} in 3 ${
+          section.section
+        }`;
+        newFileStoreId = await applyDocketToDocument(
           documentFileStoreId,
           {
             docketApplicationType: `${section.section.toUpperCase()} - ${
@@ -49,29 +54,22 @@ async function processFilingsSection(
             docketDateOfSubmission: new Date(
               courtCase.registrationDate
             ).toLocaleDateString("en-IN"),
+            documentPath,
           },
           courtCase,
           tenantId,
           requestInfo,
           TEMP_FILES_DIR
         );
-
-        return {
-          sourceId: documentFileStoreId,
-          fileStoreId: mergedFilingDocumentFileStoreId,
-          sortParam: index + 1,
-          createPDF: false,
-          content: "initialFiling",
-        };
-      } else {
-        return {
-          sourceId: documentFileStoreId,
-          fileStoreId: documentFileStoreId,
-          sortParam: index + 1,
-          createPDF: false,
-          content: "initialFiling",
-        };
       }
+      validIndex++;
+      return {
+        sourceId: documentFileStoreId,
+        fileStoreId: newFileStoreId,
+        sortParam: index + 1,
+        createPDF: false,
+        content: "initialFiling",
+      };
     })
   );
 

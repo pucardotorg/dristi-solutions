@@ -83,8 +83,11 @@ async function processVakalatSection(
     const section = vakalatnamaSection[0];
 
     const vakalatLineItems = await Promise.all(
-      vakalats.map(async (vakalat) => {
+      vakalats.map(async (vakalat, index) => {
         if (section.docketpagerequired === "yes") {
+          const documentPath = `5.${index + 1} ${section.Items} in 5 ${
+            section.section
+          }`;
           const mergedVakalatDocumentFileStoreId = await applyDocketToDocument(
             vakalat.fileStoreId,
             {
@@ -99,6 +102,7 @@ async function processVakalatSection(
               docketDateOfSubmission: new Date(
                 vakalat.dateOfAddition
               ).toLocaleDateString("en-IN"),
+              documentPath: documentPath,
             },
             courtCase,
             tenantId,

@@ -97,6 +97,10 @@ async function processPendingApplicationsSection(
                   : "ACCUSED";
             }
 
+            const documentPath = `1.${index + 1}.1 ${section.Items} in 1.${
+              index + 1
+            } ${application.applicationType} in 1 ${section.section}`;
+
             newApplicationFileStoreId = await applyDocketToDocument(
               applicationFileStoreId,
               {
@@ -109,6 +113,7 @@ async function processPendingApplicationsSection(
                 docketDateOfSubmission: new Date(
                   application.createdDate
                 ).toLocaleDateString("en-IN"),
+                documentPath: documentPath,
               },
               courtCase,
               tenantId,
@@ -124,7 +129,8 @@ async function processPendingApplicationsSection(
             if (objectionDocuments?.length !== 0) {
               // Process all objection documents sequentially
               const objectionFileStoreIds = [];
-              for (const doc of objectionDocuments || []) {
+              for (let i = 0; i < (objectionDocuments || []).length; i++) {
+                const doc = objectionDocuments[i];
                 if (!doc?.additionalDetails?.commentDocumentId) {
                   continue;
                 }
@@ -186,6 +192,12 @@ async function processPendingApplicationsSection(
                     docketCounselFor = "COMPLAINANT";
                   }
 
+                  const documentPath = `1.${index + 1}.2.${i + 1} Objection ${
+                    i + 1
+                  } in 1.${index + 1}.2 ${objectionSection.Items} in 1.${
+                    index + 1
+                  } ${application.applicationType} in 1 ${section.section}`;
+
                   newObjectionDocumentFileStoreId = await applyDocketToDocument(
                     objectionDocumentFileStoreId,
                     {
@@ -198,6 +210,7 @@ async function processPendingApplicationsSection(
                       docketDateOfSubmission: new Date(
                         doc.auditdetails.createdTime
                       ).toLocaleDateString("en-IN"),
+                      documentPath: documentPath,
                     },
                     courtCase,
                     tenantId,

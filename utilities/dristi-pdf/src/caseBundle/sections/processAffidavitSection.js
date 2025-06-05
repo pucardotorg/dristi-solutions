@@ -39,6 +39,10 @@ async function processAffidavitSection(
           )
         )?.additionalDetails?.advocateName;
 
+        const documentPath = `4.${index + 1} ${section.Items} in 4 ${
+          section.section
+        }`;
+
         const mergedFilingDocumentFileStoreId = await applyDocketToDocument(
           documentFileStoreId,
           {
@@ -51,6 +55,7 @@ async function processAffidavitSection(
             docketDateOfSubmission: new Date(
               courtCase.registrationDate
             ).toLocaleDateString("en-IN"),
+            documentPath: documentPath,
           },
           courtCase,
           tenantId,

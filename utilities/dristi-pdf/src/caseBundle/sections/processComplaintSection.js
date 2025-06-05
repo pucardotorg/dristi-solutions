@@ -49,6 +49,7 @@ async function processComplaintSection(
           docketDateOfSubmission: new Date(
             courtCase.registrationDate
           ).toLocaleDateString("en-IN"),
+          documentPath: `2 ${section.section}`,
         },
         courtCase,
         tenantId,

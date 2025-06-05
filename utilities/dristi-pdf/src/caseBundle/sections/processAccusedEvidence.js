@@ -86,6 +86,10 @@ async function processAccusedEvidence(
                 )?.additionalDetails?.advocateName || docketNameOfFiling;
             }
 
+            const documentPath = `9.${index + 1} ${
+              evidence.artifactType
+            } in 9 ${section.section}`;
+
             newEvidenceFileStoreId = await applyDocketToDocument(
               evidenceFileStoreId,
               {
@@ -98,6 +102,7 @@ async function processAccusedEvidence(
                 docketDateOfSubmission: new Date(
                   evidence.createdDate
                 ).toLocaleDateString("en-IN"),
+                documentPath: documentPath,
               },
               courtCase,
               tenantId,

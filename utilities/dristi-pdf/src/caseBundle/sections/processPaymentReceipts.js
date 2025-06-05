@@ -46,6 +46,7 @@ async function processPaymentReceipts(
             docketDateOfSubmission: new Date(
               courtCase.registrationDate
             ).toLocaleDateString("en-IN"),
+            documentPath: `14 ${section.section}`,
           },
           courtCase,
           tenantId,

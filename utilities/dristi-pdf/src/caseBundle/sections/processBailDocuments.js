@@ -44,7 +44,7 @@ async function processBailDocuments(
 
     if (applicationList?.length !== 0) {
       const innerLineItems = await Promise.all(
-        applicationList.map(async (application, ind) => {
+        applicationList.map(async (application, index) => {
           if (application?.documents?.length !== 0) {
             const signed = [];
             const others = [];
@@ -106,6 +106,12 @@ async function processBailDocuments(
                     : "ACCUSED";
               }
 
+              const documentPath = `12.${
+                index + 1
+              }.1 Application and Other Documents in 12.${index + 1} ${
+                application.applicationType
+              } ${index + 1} in 12 ${section.section}`;
+
               newApplicationFileStoreId = await applyDocketToDocument(
                 newApplicationFileStoreId,
                 {
@@ -116,6 +122,7 @@ async function processBailDocuments(
                   docketDateOfSubmission: new Date(
                     application.createdDate
                   ).toLocaleDateString("en-IN"),
+                  documentPath: documentPath,
                 },
                 courtCase,
                 tenantId,
@@ -156,7 +163,7 @@ async function processBailDocuments(
                 const signed = [];
                 const others = [];
 
-                submitBailApplications[0].documents.forEach((document) => {
+                submitBailApplication.documents.forEach((document) => {
                   if (document?.fileStore) {
                     if (document.documentType === "SIGNED") {
                       signed.push(document.fileStore);
@@ -215,6 +222,12 @@ async function processBailDocuments(
                         : "ACCUSED";
                   }
 
+                  const documentPath = `12.${index + 1}.3 ${
+                    submitBailApplication.applicationType
+                  } in 12.${index + 1} ${application.applicationType} ${
+                    index + 1
+                  } in 12 ${section.section}`;
+
                   newFileStoreId = await applyDocketToDocument(
                     newFileStoreId,
                     {
@@ -227,6 +240,7 @@ async function processBailDocuments(
                       docketDateOfSubmission: new Date(
                         submitBailApplication.createdDate
                       ).toLocaleDateString("en-IN"),
+                      documentPath: documentPath,
                     },
                     courtCase,
                     tenantId,
@@ -246,7 +260,7 @@ async function processBailDocuments(
             return {
               sourceId: combinedFileStore,
               fileStoreId: newApplicationFileStoreId,
-              sortParam: ind + 1,
+              sortParam: index + 1,
               createPDF: false,
               content: "baildocument",
             };
