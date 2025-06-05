@@ -9,9 +9,7 @@ const asyncMiddleware = require("../utils/asyncMiddleware");
 const buildCasePdf = require("../caseBundle/buildCasePdf");
 const processCaseBundle = require("../caseBundle/generateIndex");
 const { logger } = require("../logger");
-
-const A4_WIDTH = 595.28; // A4 width in points
-const A4_HEIGHT = 841.89; // A4 height in points
+const { A4_WIDTH, A4_HEIGHT } = require("../caseBundle/utils/size");
 
 router.post(
   "/case-bundle",
