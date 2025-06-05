@@ -258,4 +258,9 @@ public class Configuration {
     @Value("${email.cause.list.recipients}")
     private String causeListRecipients;
 
+    @Value("${drishti.hearing.retry.update.time.topic}")
+    private String retryHearingUpdateTimeTopic;
+
+    @Value("${hearing.retry.delay.ms:60000}")
+    private Long hearingRetryDelayMs;
 }
