@@ -1,21 +1,14 @@
-package digit.web.models;
-
+package digit.web.models.scheduler;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import digit.models.coremodels.AuditDetails;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.egov.common.contract.models.AuditDetails;
 import org.springframework.validation.annotation.Validated;
 
-import java.util.List;
-
-/**
- * JudgeCalendarRule
- */
 @Validated
-@jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-04-16T18:22:58.738027694+05:30[Asia/Kolkata]")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -39,9 +32,6 @@ public class JudgeCalendarRule {
 
     @JsonProperty("tenantId")
     private String tenantId;
-
-    @JsonProperty("courtIds")
-    private List<String> courtIds;
 
     @JsonProperty("auditDetails")
     private AuditDetails auditDetails;

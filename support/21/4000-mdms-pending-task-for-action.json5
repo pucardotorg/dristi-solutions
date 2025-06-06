@@ -20,8 +20,7 @@
           "state",
           "workflowModule",
           "closerAction",
-          "screenType",
-          "actionCategory"
+          "screenType"
         ],
         "x-unique": [
           "id"
@@ -365,6 +364,75 @@
         "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
         "createdTime": 1748259547890,
         "lastModifiedTime": 1748259799618
+      }
+    },
+    {
+      "id": "01cccf1c-0d7b-4b08-be05-a7f89488cab1",
+      "tenantId": "kl",
+      "schemaCode": "common-masters.PendingTaskType",
+      "uniqueIdentifier": "24",
+      "data": {
+        "id": "24",
+        "actor": "Judge",
+        "state": "ABANDONED",
+        "isgeneric": false,
+        "screenType": "home",
+        "pendingTask": "order for scheduling next hearing",
+        "closerAction": [
+          "CLOSE"
+        ],
+        "triggerAction": [
+          "ABANDON"
+        ],
+        "actionCategory": "Schedule Hearing",
+        "workflowModule": "hearing-default"
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "createdTime": 1748874535499,
+        "lastModifiedTime": 1749034526349
+      }
+    },
+    {
+      "id": "10dd4f04-53d4-44c3-80c2-c5bd0b3eae9c",
+      "tenantId": "kl",
+      "schemaCode": "common-masters.PendingTaskType",
+      "uniqueIdentifier": "14",
+      "data": {
+        "id": "14",
+        "actor": "Judge/CMO",
+        "state": "PENDINGREVIEW",
+        "isgeneric": false,
+        "screenType": "applicationCompositeOrder",
+        "pendingTask": "Review Document Submission",
+        "closerAction": [
+          "APPROVE",
+          "REJECT",
+          "AUTOESCALATE",
+          "DELETE",
+          "RESPOND",
+          "ABANDON"
+        ],
+        "triggerAction": [
+          "PAY"
+        ],
+        "actionCategory": "View Application",
+        "workflowModule": "application-voluntary-submission",
+        "referenceEntityTypeNameMapping": [
+          {
+            "pendingTaskName": "Review Litigant Details Change",
+            "referenceEntityType": "CORRECTION_IN_COMPLAINANT_DETAILS"
+          }
+        ]
+      },
+      "isActive": true,
+      "auditDetails": {
+        "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+        "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+        "createdTime": 1724750461933,
+        "lastModifiedTime": 1748934207202
       }
     }
 

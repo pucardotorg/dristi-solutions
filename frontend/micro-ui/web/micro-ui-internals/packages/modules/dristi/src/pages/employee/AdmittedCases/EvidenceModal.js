@@ -1070,7 +1070,11 @@ const EvidenceModal = ({
       if (documentApplicationType === "CORRECTION_IN_COMPLAINANT_DETAILS") {
         const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
         history.push(
-          `/${window.contextPath}/employee/dristi/home/view-case/review-litigant-details?caseId=${caseId}&referenceId=${documentSubmission?.[0]?.details?.additionalDetails?.pendingTaskRefId}&refApplicationId=${refApplicationId}`
+          `/${window.contextPath}/employee/dristi/home/view-case/review-litigant-details?caseId=${caseId}&referenceId=${documentSubmission?.[0]?.details?.additionalDetails?.pendingTaskRefId}&refApplicationId=${refApplicationId}`,
+          {
+            dateOfApplication: documentSubmission?.[0]?.applicationList?.additionalDetails?.dateOfApplication,
+            uniqueId: documentSubmission?.[0]?.applicationList?.additionalDetails?.uniqueId,
+          }
         );
         return;
       }

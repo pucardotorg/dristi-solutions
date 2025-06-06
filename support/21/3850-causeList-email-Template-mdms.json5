@@ -1,0 +1,27 @@
+[
+  {
+    tenantId: "kl",
+    moduleName: "mail-template",
+    masterName: "email-template",
+    mdmsPayload: [
+      {
+        "id": "138254c1-7676-4e90-8e8c-724bb496571a",
+        "tenantId": "kl",
+        "schemaCode": "mail-template.email-template",
+        "uniqueIdentifier": "CAUSELIST_EMAIL",
+        "data": {
+          "code": "CAUSELIST_EMAIL",
+          "name": "CauseList Email Template",
+          "value": "<!DOCTYPE html><html><head></head><body><p>{{header}}</p><p>{{message}}</p><p>{{footer}}</p></body></html>"
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "lastModifiedBy": "b3838be4-d71d-4a01-91b2-0726c16cf2e8",
+          "createdTime": 1748931471364,
+          "lastModifiedTime": 1748931471364
+        }
+      }
+    ]
+  }
+]
