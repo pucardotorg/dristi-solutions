@@ -1,9 +1,12 @@
 package digit.enrichment;
 
+import digit.config.HearingSlotStatus;
+import digit.config.MdmsDataConfig;
 import digit.web.models.Hearing;
 import digit.web.models.HearingResponse;
 import digit.web.models.HearingSearchResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -12,13 +15,21 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static digit.config.ServiceConstants.ENRICHMENT_ERROR;
+import static digit.config.ServiceConstants.*;
 
 @Component
 @Slf4j
 public class HearingsEnrichment {
 
-    public List<HearingSearchResponse> enrichHearings(List<Hearing> hearingList) {
+    private final MdmsDataConfig mdmsDataConfig;
+
+
+    @Autowired
+    public HearingsEnrichment(MdmsDataConfig mdmsDataConfig) {
+        this.mdmsDataConfig = mdmsDataConfig;
+    }
+
+    public List<HearingSearchResponse> enrichHearings(List<Hearing> hearingList, List<String> optOutDates) {
 
         try {
             log.info("Enriching hearings, result= IN_PROGRESS, request = {}", hearingList);
@@ -42,6 +53,7 @@ public class HearingsEnrichment {
             List<HearingSearchResponse> responseList = groupedByDate.entrySet().stream()
                     .map(entry -> HearingSearchResponse.builder()
                             .hearingDate(entry.getKey())
+                            .dayStatus(checkDayType(entry.getKey(), optOutDates))
                             .noOfHearing(entry.getValue().size())
                             .hearingList(entry.getValue())
                             .build())
@@ -56,5 +68,19 @@ public class HearingsEnrichment {
         }
     }
 
+    private String checkDayType(String key, List<String> optOutDates) {
+        ;
+        //check holiday
+        if(mdmsDataConfig != null && mdmsDataConfig.getCourtHolidays().contains(key)){
+            return HearingSlotStatus.COURT_NON_WORKING.getValue();
+        }
+
+        //check opted out day
+        if(optOutDates.contains(key)){
+            return HearingSlotStatus.OPTED_OUT.getValue();
+        }
+
+        return null;
+    }
 
 }
