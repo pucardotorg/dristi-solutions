@@ -62,11 +62,7 @@ public class CaseBundleIndexBuilderService {
 
         List<Mdms> mdmsData = mdmsV2Util.fetchMdmsV2Data(requestInfo,tenantID,null,null,configuration.getStateMasterSchema(),true,filters);
 
-        if(mdmsData.isEmpty()){
-            return false;
-        }
-
-        return true;
+        return !mdmsData.isEmpty();
     }
 
     public String getCaseNumber(RequestInfo requestInfo, String filingNumber, String tenantId) {
@@ -120,6 +116,54 @@ public class CaseBundleIndexBuilderService {
         return caseId;
     }
 
+    public CourtCase getCourtCase(RequestInfo requestInfo, String filingNumber, String tenantId) {
+        CourtCase courtCase = CourtCase.builder().build();
+        CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
+        caseSearchRequest.setTenantId(tenantId);
+        CaseCriteria caseCriteria = new CaseCriteria();
+        caseCriteria.setFilingNumber(filingNumber);
+        caseCriteria.setDefaultFields(false);
+        List<CaseCriteria> caseList = new ArrayList<>();
+        caseList.add(caseCriteria);
+        caseSearchRequest.setCriteria(caseList);
+        caseSearchRequest.setRequestInfo(requestInfo);
+
+        StringBuilder uri = new StringBuilder();
+        uri.append(configuration.getCaseHost()).append(configuration.getCaseSearchUrl());
+
+        Object response = null;
+        try {
+            response = serviceRequestRepository.fetchResult(uri, caseSearchRequest);
+        } catch (Exception e) {
+            log.error("Error while fetching case data from service request repository", e);
+        }
+
+
+        try {
+            Map<String, Object> responseMap = (Map<String, Object>) response;
+            List<Map<String, Object>> criteriaList = (List<Map<String, Object>>) responseMap.get("criteria");
+
+            if (criteriaList == null || criteriaList.isEmpty()) {
+                log.error(CASE_ERROR_MESSAGE);
+                throw new CustomException(CASE_NOT_FOUND, CASE_ERROR_MESSAGE);
+            }
+
+            Map<String, Object> criteria = criteriaList.get(0);
+
+            List<Map<String,Object>> responseList  = (List<Map<String,Object>>) criteria.get("responseList");
+
+            if (responseList != null) {
+                courtCase = objectMapper.convertValue(responseList.get(0), CourtCase.class);
+            }
+
+        } catch (Exception e) {
+            log.error("Error processing case response", e);
+        }
+
+        return courtCase;
+
+    }
+
     @KafkaListener(topics = {"${casemanagement.kafka.workflow.transition.topic}"})
     public void listen(final HashMap<String, Object> record) {
         List<Map<String, Object>> processInstances = (List<Map<String, Object>>) record.get("ProcessInstances");
@@ -140,8 +184,91 @@ public class CaseBundleIndexBuilderService {
             stateName = (String) state.get("state");
         }
 
+        String filingNumber = null;
+
+        if (businessId != null) {
+            filingNumber = businessId;
+        }
+
         Boolean isValid = isValidState(moduleName, businessService, stateName, tenantId,requestInfo);
         if(isValid){
+            enrichCaseBundlePdfIndex(requestInfo, filingNumber, tenantId, stateName);
+        }
+
+
+    }
+
+    @KafkaListener(topics = {"#{'${casemanagement.kafka.non.workflow.transition.topics}'.split(',')}"})
+    public void listenTopics(final HashMap<String, Object> record) {
+        RequestInfo requestInfo = objectMapper.convertValue(record.get("RequestInfo"), RequestInfo.class);
+
+        String tenantId = requestInfo.getUserInfo().getTenantId();
+
+        String filingNumber = extractFilingNumber(record);
+
+        CourtCase courtCase = getCourtCase(requestInfo, filingNumber, tenantId);
+
+        List<String> allowedStatuses = configuration.getCaseAllowedStatusesList();
+
+        String caseStatus = courtCase.getStatus();
+        boolean canCaseBundleEnrich = allowedStatuses.stream()
+                .anyMatch(status -> status.equalsIgnoreCase(caseStatus));
+
+
+
+        String stateName = extractStatus(record);
+
+        if (canCaseBundleEnrich) {
+            enrichCaseBundlePdfIndex(requestInfo, filingNumber, tenantId, stateName);
+        }
+
+
+    }
+
+    private String extractStatus(HashMap<String, Object> record) {
+        for (Map.Entry<String, Object> entry : record.entrySet()) {
+            String key = entry.getKey();
+
+            if ("RequestInfo".equalsIgnoreCase(key)) {
+                continue;
+            }
+
+            Object value = entry.getValue();
+
+            if (value instanceof Map<?, ?> valueMap) {
+                Object status = valueMap.get("status");
+                if (status != null) {
+                    return status.toString();
+                }
+            }
+        }
+        return null;
+    }
+
+    private String extractFilingNumber(Map<String, Object> record) {
+        for (Map.Entry<String, Object> entry : record.entrySet()) {
+            String key = entry.getKey();
+
+            // Skip "RequestInfo"
+            if ("RequestInfo".equalsIgnoreCase(key)) {
+                continue;
+            }
+
+            Object value = entry.getValue();
+
+            if (value instanceof Map<?, ?> valueMap) {
+                Object filingNumber = valueMap.get("filingNumber");
+                if (filingNumber != null) {
+                    return filingNumber.toString();
+                }
+            }
+        }
+        return null;
+    }
+
+
+    private void enrichCaseBundlePdfIndex(RequestInfo requestInfo, String businessId, String tenantId, String stateName) {
+
             String caseID = getCaseNumber(requestInfo,businessId,tenantId);
             if(caseID!=null){
                 String uri = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + configuration.getSearchPath();
@@ -204,8 +331,6 @@ public class CaseBundleIndexBuilderService {
             else{
                 log.error("No case present for processing");
             }
-
-        }
 
 
     }
