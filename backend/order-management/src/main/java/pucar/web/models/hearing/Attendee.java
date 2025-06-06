@@ -12,8 +12,8 @@ import lombok.NoArgsConstructor;
 @Builder
 public class Attendee {
 
-    @JsonProperty("uuid")
-    private String uuid = null;
+    @JsonProperty("id")
+    private String id = null;
 
     @JsonProperty("name")
     private String name = null;
