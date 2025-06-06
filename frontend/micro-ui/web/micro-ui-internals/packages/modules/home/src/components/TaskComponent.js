@@ -243,7 +243,7 @@ const TasksComponent = ({
   );
 
   const handleCreateOrder = useCallback(
-    async ({ cnrNumber, filingNumber, orderType, referenceId, caseId, caseTitle }) => {
+    async ({ cnrNumber, filingNumber, orderType, referenceId, caseId, caseTitle, pendingTaskForDraft = true }) => {
       let reqBody = {
         order: {
           createdDate: null,
@@ -280,11 +280,11 @@ const TasksComponent = ({
       };
       try {
         const res = await HomeService.customApiService(Urls.orderCreate, reqBody, { tenantId });
-        HomeService.customApiService(Urls.pendingTask, {
+        pendingTaskForDraft && HomeService.customApiService(Urls.pendingTask, {
           pendingTask: {
             name: t("ORDER_CREATED"),
             entityType: "order-default",
-            referenceId: `MANUAL_${res?.order?.orderNumber}`,
+            referenceId: `MANUAL_${referenceId}`,
             status: "SAVE_DRAFT",
             assignedTo: [],
             assignedRole: ["JUDGE_ROLE"],
@@ -348,6 +348,7 @@ const TasksComponent = ({
         additionalDetails = {
           orderType: "SCHEDULE_OF_HEARING_DATE",
           caseTitle: caseTitle,
+          pendingTaskForDraft: false,
         };
       }
       const searchParams = new URLSearchParams();
