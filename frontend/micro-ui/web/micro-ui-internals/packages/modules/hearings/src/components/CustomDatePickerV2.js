@@ -33,7 +33,7 @@ const CustomDatePickerV2 = ({ t, config, formData, onSelect, errors, onDateChang
           type="text"
           style={{ border: 0, margin: 0, color: config?.disable ? "#9e9e9e" : "black" }}
           value={formData?.[config?.key] ? new Date(formData?.[config?.key]).toLocaleDateString() : ""}
-          placeholder={t(config.placeholder || t("mm/dd/yyy"))}
+          placeholder={t(config.placeholder || t("mm/dd/yyyy"))}
           readOnly
         />
         <button
