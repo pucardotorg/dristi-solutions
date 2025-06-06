@@ -205,6 +205,49 @@ public class HearingUtil {
         return assingee;
     }
 
+    public List<Attendee> getAttendeesForHearingSummary(RequestInfo requestInfo, CourtCase courtCase, Order order, boolean isForNextHearing) {
+
+        String getAttendees = isForNextHearing ? GET_ATTENDEES_FOR_SCHEDULE_NEXT_HEARING : GET_ATTENDEES_OF_EXISTING_HEARING;
+
+
+        List<Attendee> litigantAndPOAHolders = getAttendeesFromAdditionalDetails(order, getAttendees);
+
+        List<String> advocateIds = courtCase.getRepresentatives() == null ?
+                Collections.emptyList() :
+                courtCase.getRepresentatives().stream()
+                        .map(AdvocateMapping::getAdvocateId)
+                        .toList();
+
+        Map<String, String> advocate = advocateUtil.getAdvocate(requestInfo, advocateIds);
+
+        // check if this individual id exist in litigantAndPoaHolders map
+        // if yes then update name
+        // else add in last this entry
+        List<Attendee> assingee = new ArrayList<>(litigantAndPOAHolders);
+        for (Map.Entry<String, String> entry : advocate.entrySet()) {
+            String individualId = entry.getKey();
+            int index = -1;
+            Attendee attendee = null;
+            for (int i = 0; i < litigantAndPOAHolders.size(); i++) {
+                attendee = litigantAndPOAHolders.get(i);
+                if (individualId.equalsIgnoreCase(attendee.getIndividualId())) {
+                    index = i;
+                    break;
+                }
+            }
+
+            if (index != -1) {
+                String name = attendee.getName();
+                String modifiedName = addValueToBrackets(name, "Advocate");
+                attendee.setName(modifiedName);
+
+                assingee.set(index, attendee);
+
+            }
+        }
+        return assingee;
+    }
+
 
     public HearingRequest createHearingRequestForScheduleNextHearingAndScheduleOfHearingDate(RequestInfo requestInfo, Order order, CourtCase courtCase) {
 
@@ -330,7 +373,7 @@ public class HearingUtil {
                 .requestInfo(requestInfo).build());
 
         hearing.setHearingSummary(getHearingSummary(order));
-        hearing.setAttendees(getAttendees(orderRequest.getRequestInfo(), cases.get(0), order, false));
+        hearing.setAttendees(getAttendeesForHearingSummary(orderRequest.getRequestInfo(), cases.get(0), order, false));
 
         StringBuilder updateUri = new StringBuilder();
         updateUri.append(configuration.getHearingHost()).append(configuration.getUpdateHearingSummaryEndPoint());
