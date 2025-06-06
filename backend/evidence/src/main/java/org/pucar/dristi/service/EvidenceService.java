@@ -155,7 +155,7 @@ public class EvidenceService {
 
         return requestInfo.getUserInfo().getRoles().stream()
                 .anyMatch(role ->
-                        tenantId.equals(role.getTenantId()) && (BENCH_CLERK.equals(role.getCode()) || JUDGE_ROLE.equals(role.getCode()))
+                        tenantId.equals(role.getTenantId()) && (BENCH_CLERK.equals(role.getCode()) || JUDGE_ROLE.equals(role.getCode()) || TYPIST_ROLE.equals(role.getCode()))
                 );
     }
 
