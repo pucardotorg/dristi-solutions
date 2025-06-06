@@ -361,7 +361,7 @@ const GenerateOrders = () => {
   // Fetch case details on component mount
   useEffect(() => {
     fetchCaseDetails();
-  }, []);
+  }, [courtId]);
 
   const userInfo = Digit.UserService.getUser()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
@@ -387,7 +387,7 @@ const GenerateOrders = () => {
     },
     {},
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const isDelayApplicationPending = useMemo(() => {
@@ -565,13 +565,13 @@ const GenerateOrders = () => {
         filingNumber,
         applicationNumber: "",
         status: OrderWorkflowState.DRAFT_IN_PROGRESS,
-        courtId: courtId
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       pagination: { limit: 1000, offset: 0 },
     },
     { tenantId },
     filingNumber + OrderWorkflowState.DRAFT_IN_PROGRESS,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const defaultIndex = useMemo(() => {
@@ -612,10 +612,10 @@ const GenerateOrders = () => {
     return `${year}-${month}-${day}`;
   };
   useEffect(() => {
-        if (!ordersData?.list || ordersData?.list.length < 1) {
-            setFormList([defaultOrderData]);
+    if (!ordersData?.list || ordersData?.list.length < 1) {
+      setFormList([defaultOrderData]);
     } else {
-            const formListNew = structuredClone([...(ordersData?.list || [])].reverse());
+      const formListNew = structuredClone([...(ordersData?.list || [])].reverse());
       const updatedFormList = formListNew?.map((order, index) => {
         if (order?.orderCategory === "COMPOSITE") {
           const updatedCompositeItems = order?.compositeItems?.map((compItem, i) => {
@@ -673,7 +673,7 @@ const GenerateOrders = () => {
         sessionStorage.removeItem("esignProcess");
         sessionStorage.removeItem("orderPDF");
       }, 200);
-  
+
       return () => clearTimeout(cleanupTimer);
     }
   }, [showsignatureModal]);
@@ -709,7 +709,7 @@ const GenerateOrders = () => {
     if (orderNumber && currentDiaryEntry) {
       getOrder();
     }
-  }, [currentDiaryEntry, filingNumber, orderNumber, tenantId]);
+  }, [currentDiaryEntry, filingNumber, orderNumber, tenantId, caseCourtId]);
 
   useEffect(() => {
     if (orderPdfFileStoreID) {
@@ -739,7 +739,6 @@ const GenerateOrders = () => {
       criteria: {
         filingNumber,
         applicationNumber: "",
-        cnrNumber,
         orderType: "NOTICE",
         status: "PUBLISHED",
         ...(caseCourtId && { courtId: caseCourtId }),
@@ -748,7 +747,7 @@ const GenerateOrders = () => {
     },
     { tenantId },
     filingNumber + OrderWorkflowState.PUBLISHED + "NOTICE",
-    Boolean(filingNumber && isNoticeOrder)
+    Boolean(filingNumber && isNoticeOrder && caseCourtId)
   );
 
   const isDCANoticeGenerated = useMemo(
@@ -780,7 +779,6 @@ const GenerateOrders = () => {
       criteria: {
         filingNumber,
         applicationNumber: "",
-        cnrNumber,
         orderType: "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE",
         status: OrderWorkflowState.PUBLISHED,
         ...(caseCourtId && { courtId: caseCourtId }),
@@ -789,7 +787,7 @@ const GenerateOrders = () => {
     },
     { tenantId },
     filingNumber + OrderWorkflowState.PUBLISHED + "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE",
-    Boolean(filingNumber && cnrNumber && isApproveRejectLitigantDetailsChange)
+    Boolean(filingNumber && cnrNumber && isApproveRejectLitigantDetailsChange && caseCourtId)
   );
 
   const publishedLitigantDetailsChangeOrders = useMemo(() => approveRejectLitigantDetailsChangeOrderData?.list || [], [
@@ -813,7 +811,6 @@ const GenerateOrders = () => {
       criteria: {
         filingNumber,
         applicationNumber: "",
-        cnrNumber,
         status: OrderWorkflowState.PUBLISHED,
         orderType: "ACCEPT_BAIL",
         ...(caseCourtId && { courtId: caseCourtId }),
@@ -822,7 +819,7 @@ const GenerateOrders = () => {
     },
     { tenantId },
     filingNumber + OrderWorkflowState.PUBLISHED + "ACCEPT_BAIL",
-    Boolean(filingNumber && cnrNumber && isJudgementOrder)
+    Boolean(filingNumber && cnrNumber && isJudgementOrder && caseCourtId)
   );
   const publishedBailOrder = useMemo(() => publishedBailOrdersData?.list?.[0] || {}, [publishedBailOrdersData]);
 
@@ -882,7 +879,7 @@ const GenerateOrders = () => {
     },
     { applicationNumber: "", cnrNumber: "" },
     hearingId || hearingNumber,
-    true
+    Boolean(filingNumber && caseCourtId)
   );
   const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
   const hearingsList = useMemo(() => hearingsData?.HearingList?.sort((a, b) => b.startTime - a.startTime), [hearingsData]);
@@ -909,6 +906,11 @@ const GenerateOrders = () => {
 
   const isHearingScheduled = useMemo(() => {
     const isPresent = (hearingsData?.HearingList || []).some((hearing) => hearing?.status === HearingWorkflowState.SCHEDULED);
+    return isPresent;
+  }, [hearingsData]);
+
+  const isHearingInProgress = useMemo(() => {
+    const isPresent = (hearingsData?.HearingList || []).some((hearing) => hearing?.status === HearingWorkflowState.INPROGRESS);
     return isPresent;
   }, [hearingsData]);
 
@@ -3552,7 +3554,16 @@ const GenerateOrders = () => {
           break;
         }
 
-        if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType) && (isHearingScheduled || isHearingOptout)) {
+        if (["SCHEDULE_OF_HEARING_DATE"].includes(orderType) && (isHearingScheduled || isHearingInProgress || isHearingOptout)) {
+          setShowErrorToast({
+            label: isHearingScheduled ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE") : isHearingInProgress ? t("HEARING_IS_ALREADY_IN_PROGRESS_FOR_THIS_CASE") : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
+            error: true,
+          });
+          hasError = true;
+          break;
+        }
+
+        if (["SCHEDULING_NEXT_HEARING"].includes(orderType) && (isHearingScheduled || isHearingOptout)) {
           setShowErrorToast({
             label: isHearingScheduled ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE") : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
             error: true,

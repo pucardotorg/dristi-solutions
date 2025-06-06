@@ -124,7 +124,7 @@ const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...prop
         ...(courtId && userType === "employee" && { courtId }),
       },
     };
-  }, [dateRange.start, props?.attendeeIndividualId, tenantId]);
+  }, [dateRange.start, props?.attendeeIndividualId, tenantId, courtId, userType]);
 
   const reqBodyMonthly = useMemo(
     () => ({
@@ -135,7 +135,7 @@ const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...prop
         ...(courtId && userType === "employee" && { courtId }),
       },
     }),
-    [dayLeftInOngoingMonthRange, props?.attendeeIndividualId, tenantId]
+    [dayLeftInOngoingMonthRange, props?.attendeeIndividualId, tenantId, courtId, userType]
   );
 
   const individualId = useMemo(() => {

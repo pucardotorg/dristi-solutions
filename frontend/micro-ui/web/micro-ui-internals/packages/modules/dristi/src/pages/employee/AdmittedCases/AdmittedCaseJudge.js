@@ -155,8 +155,6 @@ const formatDate = (date) => {
   return "";
 };
 
-const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
-
 const AdmittedCaseJudge = () => {
   const { t } = useTranslation();
   const location = useLocation();
@@ -169,6 +167,7 @@ const AdmittedCaseJudge = () => {
   const isFSO = roles.some((role) => role.code === "FSO_ROLE");
   const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
   const isBenchClerk = roles.some((role) => role.code === "BENCH_CLERK");
+  const isTypist = roles.some((role) => role.code === "TYPIST_ROLE");
   const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
   const applicationNumber = urlParams.get("applicationNumber");
@@ -244,6 +243,7 @@ const AdmittedCaseJudge = () => {
   const historyOrderData = location?.state?.orderData;
   const openOrder = location?.state?.openOrder;
   const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
+  const courtId = localStorage.getItem("courtId");
 
   const reqEvidenceUpdate = {
     url: Urls.dristi.evidenceUpdate,
@@ -262,7 +262,7 @@ const AdmittedCaseJudge = () => {
     {
       criteria: {
         caseId: caseId,
-        courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+        ...(courtId && { courtId }),
       },
       tenantId,
     },
@@ -274,6 +274,7 @@ const AdmittedCaseJudge = () => {
 
   const caseData = historyCaseData || apiCaseData;
   const caseDetails = useMemo(() => caseData?.cases || {}, [caseData]);
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const latestCaseDetails = useMemo(() => apiCaseData?.cases || historyCaseData?.cases || {}, [apiCaseData, historyCaseData]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
@@ -417,10 +418,11 @@ const AdmittedCaseJudge = () => {
         tenantId,
       },
       tenantId,
+      ...(caseCourtId && { courtId: caseCourtId }),
     },
     {},
     filingNumber + "allApplications",
-    filingNumber
+    Boolean(filingNumber && caseCourtId)
   );
   const extensionApplications = useMemo(
     () =>
@@ -612,14 +614,14 @@ const AdmittedCaseJudge = () => {
       },
       {
         key: "COURT_NAME",
-        value: t(`COMMON_MASTERS_COURT_R00M_${caseDetails?.courtId}`),
+        value: t(`COMMON_MASTERS_COURT_R00M_${caseCourtId}`),
       },
       {
         key: "SUBMITTED_ON",
         value: formatDate(new Date(caseDetails?.filingDate)),
       },
     ],
-    [caseDetails?.caseCategory, caseDetails?.courtId, caseDetails?.filingDate, caseDetails?.filingNumber, t]
+    [caseCourtId, caseDetails?.caseCategory, caseDetails?.filingDate, caseDetails?.filingNumber, t]
   );
 
   const configList = useMemo(() => {
@@ -630,7 +632,7 @@ const AdmittedCaseJudge = () => {
       const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditdetails?.createdBy;
       const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
       const documentStatus = docObj?.[0]?.artifactList?.status;
-      if (isCitizen || isBenchClerk) {
+      if (isCitizen || isBenchClerk || isTypist || isJudge) {
         if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
           history.push(
             `/${window?.contextPath}/${
@@ -668,7 +670,7 @@ const AdmittedCaseJudge = () => {
           criteria: {
             tenantId: tenantId,
             notificationNumber: order?.businessObject?.orderNotification?.id,
-            courtId: courtId,
+            ...(caseCourtId && { courtId: caseCourtId }),
           },
           pagination: {
             limit: 100,
@@ -680,7 +682,14 @@ const AdmittedCaseJudge = () => {
       } else {
         if (order?.businessObject?.orderNotification?.entityType === "Order") {
           const orderResponse = await ordersService.searchOrder(
-            { criteria: { tenantId: tenantId, filingNumber: filingNumber, orderNumber: order?.businessObject?.orderNotification?.id } },
+            {
+              criteria: {
+                tenantId: tenantId,
+                filingNumber: filingNumber,
+                orderNumber: order?.businessObject?.orderNotification?.id,
+                ...(caseCourtId && { courtId: caseCourtId }),
+              },
+            },
             { tenantId }
           );
           order = orderResponse?.list?.[0];
@@ -760,6 +769,7 @@ const AdmittedCaseJudge = () => {
                 criteria: [
                   {
                     filingNumber: filingNumber,
+                    ...(caseCourtId && { courtId: caseCourtId }),
                   },
                 ],
               },
@@ -790,6 +800,7 @@ const AdmittedCaseJudge = () => {
                   moduleSearchCriteria: {
                     ...tabConfig.apiDetails.requestBody.inbox.moduleSearchCriteria,
                     caseNumbers: [filingNumber, caseDetails?.cmpNumber, caseDetails?.courtCaseNumber]?.filter(Boolean),
+                    ...(caseCourtId && { courtId: caseCourtId }),
                   },
                 },
               },
@@ -844,6 +855,7 @@ const AdmittedCaseJudge = () => {
                 criteria: {
                   filingNumber: filingNumber,
                   tenantId: tenantId,
+                  ...(caseCourtId && { courtId: caseCourtId }),
                 },
               },
             },
@@ -908,6 +920,7 @@ const AdmittedCaseJudge = () => {
                   caseId: caseDetails?.id,
                   filingNumber: caseDetails?.filingNumber,
                   tenantId: tenantId,
+                  ...(caseCourtId && { courtId: caseCourtId }),
                 },
               },
             },
@@ -1051,6 +1064,7 @@ const AdmittedCaseJudge = () => {
     isBenchClerk,
     downloadPdf,
     ordersService,
+    caseCourtId,
   ]);
 
   const handleEvidenceAction = async () => {
@@ -1078,7 +1092,7 @@ const AdmittedCaseJudge = () => {
         artifactList: selectedRow,
       },
     ];
-    const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+    const courtId = localStorage.getItem("courtId");
     try {
       const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
       await DRISTIService.addADiaryEntry(
@@ -1298,7 +1312,7 @@ const AdmittedCaseJudge = () => {
             filingNumber: filingNumber,
             artifactNumber: artifactNumber,
             tenantId: tenantId,
-            courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+            ...(caseCourtId && { courtId: caseCourtId }),
           },
           tenantId,
         },
@@ -1359,6 +1373,7 @@ const AdmittedCaseJudge = () => {
               filingNumber: filingNumber,
               artifactNumber: artifactNumber,
               tenantId: tenantId,
+              ...(caseCourtId && { courtId: caseCourtId }),
             },
             tenantId,
           },
@@ -1940,11 +1955,12 @@ const AdmittedCaseJudge = () => {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   // const isDcaHearingScheduled = useMemo(() => {
@@ -2003,10 +2019,10 @@ const AdmittedCaseJudge = () => {
   );
 
   const { data: apiOrdersData } = useSearchOrdersService(
-    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED" } },
+    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filingNumber + currentHearingId,
-    Boolean(filingNumber && !historyOrderData),
+    Boolean(filingNumber && !historyOrderData && caseCourtId),
     0
   );
 
@@ -2095,6 +2111,7 @@ const AdmittedCaseJudge = () => {
         criteria: {
           tenantID: tenantId,
           filingNumber: filingNumber,
+          ...(caseCourtId && { courtId: caseCourtId }),
         },
       });
       if (HearingList?.length >= 1) {
@@ -2244,7 +2261,7 @@ const AdmittedCaseJudge = () => {
           },
           {
             key: "COURT_NAME",
-            value: t(`COMMON_MASTERS_COURT_R00M_${caseDetails?.courtId}`),
+            value: t(`COMMON_MASTERS_COURT_R00M_${caseCourtId}`),
           },
           {
             key: "CASE_TYPE",
@@ -2383,7 +2400,7 @@ const AdmittedCaseJudge = () => {
                 filingNumber: caseDetails?.filingNumber,
                 orderType: "SCHEDULING_NEXT_HEARING",
                 status: OrderWorkflowState.DRAFT_IN_PROGRESS,
-                ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
+                ...(caseCourtId && { courtId: caseCourtId }),
               },
             },
             { tenantId: caseDetails?.tenantId }
@@ -2408,7 +2425,7 @@ const AdmittedCaseJudge = () => {
       }
     },
     [
-      caseDetails?.courtId,
+      caseCourtId,
       caseDetails?.filingNumber,
       caseDetails?.tenantId,
       currentInProgressHearing?.hearingId,
@@ -2710,29 +2727,37 @@ const AdmittedCaseJudge = () => {
           label: "DOWNLOAD_CASE_FILE",
         },
       ];
-    else if (isBenchClerk)
-      return [
-        ...(currentInProgressHearing
-          ? [
-              {
-                value: "NEXT_HEARING",
-                label: "NEXT_HEARING",
-              },
-              {
-                value: "TAKE_WITNESS_DEPOSITION",
-                label: "TAKE_WITNESS_DEPOSITION",
-              },
-              {
-                value: "GENERATE_ORDER",
-                label: "GENERATE_ORDER",
-              },
-            ]
-          : []),
-        {
-          value: "DOWNLOAD_CASE_FILE",
-          label: "DOWNLOAD_CASE_FILE",
-        },
-      ];
+    else if (isBenchClerk) {
+      return currentInProgressHearing
+        ? [
+            {
+              value: "NEXT_HEARING",
+              label: "NEXT_HEARING",
+            },
+            {
+              value: "TAKE_WITNESS_DEPOSITION",
+              label: "TAKE_WITNESS_DEPOSITION",
+            },
+            {
+              value: "GENERATE_ORDER",
+              label: "GENERATE_ORDER",
+            },
+            {
+              value: "SUBMIT_DOCUMENTS",
+              label: "SUBMIT_DOCUMENTS",
+            },
+            {
+              value: "DOWNLOAD_CASE_FILE",
+              label: "DOWNLOAD_CASE_FILE",
+            },
+          ]
+        : [
+            {
+              value: "DOWNLOAD_CASE_FILE",
+              label: "DOWNLOAD_CASE_FILE",
+            },
+          ];
+    }
   }, [isJudge, currentInProgressHearing, isBenchClerk]);
 
   const courtActionOptions = useMemo(
@@ -3514,7 +3539,7 @@ const AdmittedCaseJudge = () => {
             }
             setShowOrderModal(false);
           }}
-          attendees={currentActiveHearing?.attendees}
+          attendees={currentInProgressHearing?.attendees}
           caseDetails={caseDetails}
           currentHearingId={currentInProgressHearingId}
           setUpdateCounter={setUpdateCounter}

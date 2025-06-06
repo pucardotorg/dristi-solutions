@@ -126,7 +126,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     },
     { applicationNumber: "", cnrNumber: "" },
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const hearingDetails = useMemo(() => {
@@ -162,7 +162,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const [orderList, setOrderList] = useState([]);
@@ -409,7 +409,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
             />
           )}
           {isButtonVisible && currentHearingId && userType === "employee" && (
-            <div className="action-buttons" style={actionButtonStyle}>
+            <div className="action-buttons" style={{...(showModal ? actionButtonStyle : {})}}>
               <Button
                 label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : orderType === "NOTICE" ? "Notice" : "Warrant"}`)}
                 onButtonClick={() => {

@@ -65,7 +65,7 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
       }),
     ];
     return configCopy;
-  }, [hearingData.fromDate, hearingData.toDate, hearingData.slot, tenantId, userType, individualId]);
+  }, [hearingData.fromDate, hearingData.toDate, hearingData.slot, tenantId, userType, individualId, courtId]);
 
   // const getTotalCount = useCallback(
   //   async function () {

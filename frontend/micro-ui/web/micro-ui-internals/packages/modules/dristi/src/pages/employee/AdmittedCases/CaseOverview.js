@@ -86,7 +86,7 @@ const CaseOverview = ({
     },
     {},
     cnrNumber + filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const { data: ordersRes, isLoading: isOrdersLoading } = useGetOrders(
@@ -99,7 +99,7 @@ const CaseOverview = ({
     },
     {},
     cnrNumber + filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const previousHearing = hearingRes?.HearingList?.filter((hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status)).sort(
