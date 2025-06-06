@@ -192,7 +192,7 @@ public class HearingUtil {
                 String modifiedName = addValueToBrackets(name, "Advocate");
                 attendee.setName(modifiedName);
 
-                assingee.add(index, attendee);
+                assingee.set(index, attendee);
 
             } else {
                 assingee.add(Attendee.builder()
