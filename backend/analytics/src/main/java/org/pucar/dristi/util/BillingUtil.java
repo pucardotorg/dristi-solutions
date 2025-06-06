@@ -85,6 +85,7 @@ public class BillingUtil {
         String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
         String cmpNumber = JsonPath.read(caseObject.toString(), CASE_CMPNUMBER_PATH);
         String courtCaseNumber = JsonPath.read(caseObject.toString(), CASE_COURTCASENUMBER_PATH);
+        String courtId = JsonPath.read(caseObject.toString(), CASE_COURTID_PATH);
 
         if(courtCaseNumber!=null && !courtCaseNumber.isEmpty()){
             caseNumber = courtCaseNumber;
@@ -96,8 +97,6 @@ public class BillingUtil {
         String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
         net.minidev.json.JSONArray statutesAndSections = JsonPath.read(caseObject.toString(), CASE_STATUTES_AND_SECTIONS);
         String caseType = getCaseType(statutesAndSections);
-        RequestInfo requestInfoObj = objectMapper.convertValue(requestInfo, RequestInfo.class);
-        String courtId = getCourtId(filingNumber, requestInfoObj);
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_BILLING_FORMAT,

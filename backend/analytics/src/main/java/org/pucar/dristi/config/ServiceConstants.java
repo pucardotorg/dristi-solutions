@@ -85,6 +85,7 @@ public class ServiceConstants {
     public static final String CASE_TITLE_PATH = "$.caseTitle";
     public static final String CASE_CMPNUMBER_PATH = "$.cmpNumber";
     public static final String CASE_COURTCASENUMBER_PATH = "$.courtCaseNumber";
+    public static final String CASE_COURTID_PATH = "$.courtId";
     public static final String CASEID_PATH = "$.id";
 
     public static final String CASE_STAGE_PATH = "$.stage";
