@@ -361,7 +361,7 @@ const GenerateOrders = () => {
   // Fetch case details on component mount
   useEffect(() => {
     fetchCaseDetails();
-  }, []);
+  }, [courtId]);
 
   const userInfo = Digit.UserService.getUser()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
@@ -387,7 +387,7 @@ const GenerateOrders = () => {
     },
     {},
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const isDelayApplicationPending = useMemo(() => {
@@ -564,7 +564,6 @@ const GenerateOrders = () => {
       criteria: {
         filingNumber,
         applicationNumber: "",
-        cnrNumber,
         status: OrderWorkflowState.DRAFT_IN_PROGRESS,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
@@ -572,7 +571,7 @@ const GenerateOrders = () => {
     },
     { tenantId },
     filingNumber + OrderWorkflowState.DRAFT_IN_PROGRESS,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const defaultIndex = useMemo(() => {
@@ -674,7 +673,7 @@ const GenerateOrders = () => {
         sessionStorage.removeItem("esignProcess");
         sessionStorage.removeItem("orderPDF");
       }, 200);
-  
+
       return () => clearTimeout(cleanupTimer);
     }
   }, [showsignatureModal]);
@@ -710,7 +709,7 @@ const GenerateOrders = () => {
     if (orderNumber && currentDiaryEntry) {
       getOrder();
     }
-  }, [currentDiaryEntry, filingNumber, orderNumber, tenantId]);
+  }, [currentDiaryEntry, filingNumber, orderNumber, tenantId, caseCourtId]);
 
   useEffect(() => {
     if (orderPdfFileStoreID) {
@@ -740,7 +739,6 @@ const GenerateOrders = () => {
       criteria: {
         filingNumber,
         applicationNumber: "",
-        cnrNumber,
         orderType: "NOTICE",
         status: "PUBLISHED",
         ...(caseCourtId && { courtId: caseCourtId }),
@@ -749,7 +747,7 @@ const GenerateOrders = () => {
     },
     { tenantId },
     filingNumber + OrderWorkflowState.PUBLISHED + "NOTICE",
-    Boolean(filingNumber && isNoticeOrder)
+    Boolean(filingNumber && isNoticeOrder && caseCourtId)
   );
 
   const isDCANoticeGenerated = useMemo(
@@ -781,7 +779,6 @@ const GenerateOrders = () => {
       criteria: {
         filingNumber,
         applicationNumber: "",
-        cnrNumber,
         orderType: "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE",
         status: OrderWorkflowState.PUBLISHED,
         ...(caseCourtId && { courtId: caseCourtId }),
@@ -790,7 +787,7 @@ const GenerateOrders = () => {
     },
     { tenantId },
     filingNumber + OrderWorkflowState.PUBLISHED + "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE",
-    Boolean(filingNumber && cnrNumber && isApproveRejectLitigantDetailsChange)
+    Boolean(filingNumber && cnrNumber && isApproveRejectLitigantDetailsChange && caseCourtId)
   );
 
   const publishedLitigantDetailsChangeOrders = useMemo(() => approveRejectLitigantDetailsChangeOrderData?.list || [], [
@@ -814,7 +811,6 @@ const GenerateOrders = () => {
       criteria: {
         filingNumber,
         applicationNumber: "",
-        cnrNumber,
         status: OrderWorkflowState.PUBLISHED,
         orderType: "ACCEPT_BAIL",
         ...(caseCourtId && { courtId: caseCourtId }),
@@ -823,7 +819,7 @@ const GenerateOrders = () => {
     },
     { tenantId },
     filingNumber + OrderWorkflowState.PUBLISHED + "ACCEPT_BAIL",
-    Boolean(filingNumber && cnrNumber && isJudgementOrder)
+    Boolean(filingNumber && cnrNumber && isJudgementOrder && caseCourtId)
   );
   const publishedBailOrder = useMemo(() => publishedBailOrdersData?.list?.[0] || {}, [publishedBailOrdersData]);
 
@@ -883,7 +879,7 @@ const GenerateOrders = () => {
     },
     { applicationNumber: "", cnrNumber: "" },
     hearingId || hearingNumber,
-    true
+    Boolean(filingNumber && caseCourtId)
   );
   const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
   const hearingsList = useMemo(() => hearingsData?.HearingList?.sort((a, b) => b.startTime - a.startTime), [hearingsData]);

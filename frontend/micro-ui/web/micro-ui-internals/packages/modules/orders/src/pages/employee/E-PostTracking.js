@@ -111,7 +111,7 @@ const EpostTrackingPage = () => {
     },
     {},
     rowData?.original?.taskNumber,
-    Boolean(rowData)
+    Boolean(rowData && courtId)
   );
 
   const ePostFee = taskData?.list?.[0]?.taskDetails?.deliveryChannels?.fees;
@@ -153,7 +153,7 @@ const EpostTrackingPage = () => {
     { tenantId, criteria: { id: taskData?.list[0]?.orderId, ...(courtId && { courtId }) } },
     { tenantId },
     taskData?.list[0]?.orderId,
-    Boolean(taskData)
+    Boolean(taskData && courtId)
   );
 
   const orderType = useMemo(

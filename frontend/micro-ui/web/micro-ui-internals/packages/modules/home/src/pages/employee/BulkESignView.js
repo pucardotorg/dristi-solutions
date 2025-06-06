@@ -94,7 +94,7 @@ function BulkESignView() {
     },
     { tenantId },
     orderNumber,
-    Boolean(orderNumber)
+    Boolean(orderNumber && courtId)
   );
 
   const { data: bulkOrdersData } = useSearchOrdersNotificationService(
@@ -117,7 +117,7 @@ function BulkESignView() {
     },
     { tenantId },
     `${orderNumber}-${OrderWorkflowState.PENDING_BULK_E_SIGN}`,
-    true
+    Boolean(courtId)
   );
 
   const orderDetails = useMemo(() => ordersData?.list?.[0] || {}, [ordersData]);
@@ -225,7 +225,7 @@ function BulkESignView() {
         },
       },
     };
-  }, [history, tenantId, userType]);
+  }, [history, tenantId, userType, courtId]);
 
   const onFormValueChange = async (form) => {
     if (Object.keys(form?.searchForm)?.length > 0) {
