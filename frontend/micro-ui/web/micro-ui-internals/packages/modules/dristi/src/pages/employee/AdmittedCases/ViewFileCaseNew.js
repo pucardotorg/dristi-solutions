@@ -777,7 +777,6 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
                 tenantId,
               },
             });
-            debugger;
 
             const orderList = resOrder?.list || [];
 
@@ -1094,19 +1093,8 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     return (
       <div key={item.id}>
         <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "8px 16px",
-            minHeight: "47px",
-            width: "272px",
-            cursor: "pointer",
-            backgroundColor: isSelected ? "#E8E8E8" : "transparent",
-            paddingLeft: `${paddingLeft}px`,
-            borderBottom: "1px solid #E8E8E8",
-            transition: "background-color 0.2s ease",
-          }}
+          className="menu-item-container"
+          style={{ backgroundColor: isSelected ? "#E8E8E8" : "transparent", paddingLeft: `${paddingLeft}px` }}
           onClick={() => {
             if (item.hasChildren) {
               console.log("Toggling expanded state for:", item.id);
@@ -1115,23 +1103,10 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
               handleDocumentSelect(item.id, item.fileStoreId, displayTitle);
             }
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = isSelected ? "#E8E8E8" : "#f9fafb")}
+          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = isSelected ? "#E8E8E8" : "#F9FAFB")}
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = isSelected ? "#E8E8E8" : "transparent")}
         >
-          <span
-            style={{
-              fontFamily: "Roboto",
-              fontWeight: isSelected ? 700 : 400,
-              fontSize: "16px",
-              lineHeight: "1.2",
-              letterSpacing: "0%",
-              flex: 1,
-              color: "#77787B",
-              textIndent: "-1.7em",
-              paddingLeft: "2em",
-              wordWrap: "break-word",
-            }}
-          >
+          <span className="menu-item-title" style={{ fontWeight: isSelected ? 700 : 400 }}>
             {displayTitle}
           </span>
 
@@ -1159,32 +1134,19 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
   };
 
   return (
-    <div style={{ display: "flex", height: "846px", backgroundColor: "#F9FAFB", gap: "16px" }}>
-      {/* Left Sidebar */}
-      <div style={{ width: "272px", backgroundColor: "#f9fafb", borderRight: "1px solid #e5e7eb", overflowX: "hidden", padding: "8px 8px 8px 0" }}>
-        <div style={{ padding: "16px", borderBottom: "1px solid #e5e7eb", backgroundColor: "#ffffff" }}>
-          <h2
-            style={{
-              fontFamily: "Roboto",
-              fontWeight: 700,
-              fontSize: "24px",
-              lineHeight: "100%",
-              letterSpacing: "0%",
-              color: "#1f2937",
-            }}
-          >
-            Case File
-          </h2>
-        </div>
+    <React.Fragment>
+      {/* Left Sidebar - Fixed position with its own scrolling */}
+      <div className="sidebar-panel">
+        <div className="sidebar-header">Case File</div>
 
-        <div>{dynamicCaseFileStructure.map((item) => renderMenuItem(item))}</div>
+        <div className="scrollable-container">{dynamicCaseFileStructure.map((item) => renderMenuItem(item))}</div>
       </div>
 
-      {/* Right Content Area */}
-      <div style={{ flex: 1, overflowY: "auto" }}>
-        <MemoDocViewerWrapper tenantId={tenantId} fileStoreId={selectedFileStoreId} showDownloadOption={false} docHeight="600px" docWidth="900px" />
+      {/* Right Content Area - Independent scrolling */}
+      <div className="doc-viewer-container">
+        <MemoDocViewerWrapper tenantId={tenantId} fileStoreId={selectedFileStoreId} showDownloadOption={false} docHeight="100%" docWidth="100%" />
       </div>
-    </div>
+    </React.Fragment>
   );
 }
 

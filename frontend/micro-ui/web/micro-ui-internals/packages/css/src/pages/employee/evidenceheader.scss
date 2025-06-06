@@ -285,3 +285,115 @@
     }
   }
 }
+
+.view-case-file-new-wrapper {
+  display: flex;
+  background-color: #f9fafb;
+  height: calc(100vh - 80px);
+
+  .scrollable-container {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: calc(100% - 57px);
+    scrollbar-width: thin;
+    scrollbar-color: #c5c5c5 #f9fafb;
+    direction: rtl;
+  }
+
+  .scrollable-container > * {
+    direction: ltr;
+  }
+
+  /* Custom scrollbar styles */
+  .scrollable-container::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollable-container::-webkit-scrollbar-track {
+    background: #f9fafb;
+  }
+
+  .scrollable-container::-webkit-scrollbar-thumb {
+    background-color: #c5c5c5;
+    border-radius: 4px;
+  }
+
+  .scrollable-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+
+  .menu-item-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    min-height: 47px;
+    cursor: pointer;
+    border-bottom: 1px solid #e8e8e8;
+  }
+
+  .menu-item-container .menu-item-container.selected {
+    background-color: #e8e8e8;
+  }
+
+  .menu-item-title {
+    font-family: Roboto;
+    font-size: 16px;
+    line-height: 1.2;
+    letter-spacing: 0%;
+    flex: 1;
+    color: #77787b;
+    text-indent: -1.7em;
+    padding-left: 2em;
+    word-wrap: break-word;
+  }
+
+  .menu-item-title.selected {
+    font-weight: 700;
+  }
+
+  .menu-item-icon {
+    margin-left: 8px;
+  }
+
+  .sidebar-panel {
+    width: 280px;
+    background-color: #f9fafb;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: sticky;
+    top: 0;
+  }
+
+  .sidebar-header {
+    font-size: 24px;
+    font-weight: 700;
+    font-family: Roboto, sans-serif;
+    line-height: 100%;
+    letter-spacing: 0%;
+    color: #1f2937;
+    padding: 16px;
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    justify-content: center;
+    position: sticky;
+    top: 0;
+    background-color: #f9fafb;
+    z-index: 10;
+  }
+
+  .doc-viewer-container {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    height: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: #c5c5c5 #f9fafb;
+
+    .docviewer-wrapper {
+      margin-top: 0px !important;
+    }
+  }
+}

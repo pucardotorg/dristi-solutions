@@ -2978,7 +2978,7 @@ const AdmittedCases = () => {
         </div>
       )}
       {tabData?.filter((tab) => tab.label === "caseFileOverview")?.[0]?.active && (
-        <div className="view-case-file-new-wrapper" style={{ padding: "16px 16px 16px 0" }}>
+        <div className="view-case-file-new-wrapper">
           <ViewCaseFileNew caseDetails={caseDetails} tenantId={tenantId} filingNumber={filingNumber} />
         </div>
       )}
