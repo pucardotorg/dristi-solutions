@@ -140,6 +140,7 @@ public class HearingUtil {
                             Map<String, Object> attendeeMap = (Map<String, Object>) attendee;
                             return Attendee.builder()
                                     .name((String) attendeeMap.get("name"))
+                                    .uuid((String) attendeeMap.get("uuid"))
                                     .individualId((String) attendeeMap.get("individualId"))
                                     .type((String) attendeeMap.get("partyType"))
                                     .wasPresent((Boolean) attendeeMap.get("wasPresent"))
@@ -203,6 +204,8 @@ public class HearingUtil {
                         .build());
             }
         }
+
+        assingee.forEach(attendee -> attendee.setUuid(UUID.randomUUID().toString()));
         return assingee;
     }
 
@@ -331,7 +334,12 @@ public class HearingUtil {
                 .requestInfo(requestInfo).build());
 
         hearing.setHearingSummary(getHearingSummary(order));
-        hearing.setAttendees(getAttendeesFromAdditionalDetails(orderRequest.getOrder() , GET_ATTENDEES_OF_EXISTING_HEARING));
+        List<Attendee> attendeesPresent  = getAttendeesFromAdditionalDetails(order, GET_ATTENDEES_OF_EXISTING_HEARING);
+        List<Attendee> attendees = hearing.getAttendees();
+
+        attendees.forEach(attendee -> {
+            attendee.setWasPresent(attendeesPresent.stream().anyMatch(present -> present.getUuid().equalsIgnoreCase(attendee.getUuid())));
+        });
 
         StringBuilder updateUri = new StringBuilder();
         updateUri.append(configuration.getHearingHost()).append(configuration.getUpdateHearingSummaryEndPoint());
