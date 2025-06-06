@@ -254,7 +254,7 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
       const hearingDetails = row?.businessObject?.hearingDetails;
 
       if (isJudge || isTypist) {
-        if (hearingDetails?.status === "SCHEDULED") {
+        if (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") {
           history.push(
             `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
           );
