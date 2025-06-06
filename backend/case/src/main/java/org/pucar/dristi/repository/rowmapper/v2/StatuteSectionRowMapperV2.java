@@ -20,8 +20,8 @@ public class StatuteSectionRowMapperV2 implements ResultSetExtractor<Map<UUID, S
                 UUID id = UUID.fromString(rs.getString("case_id"));
 
                 StatuteSectionV2 statuteSectionV2 = StatuteSectionV2.builder()
-                        .section(stringToList(rs.getString("sections")).get(0))
-                        .subsection(stringToList(rs.getString("subsections")).get(0))
+                        .section(rs.getString("sections"))
+                        .subsection(rs.getString("subsections"))
                         .build();
 
                 statuteSectionMap.put(id, statuteSectionV2);
@@ -34,18 +34,6 @@ public class StatuteSectionRowMapperV2 implements ResultSetExtractor<Map<UUID, S
             throw new CustomException("ROW_MAPPER_EXCEPTION", "Exception occurred while processing Case ResultSet: " + e.getMessage());
         }
         return statuteSectionMap;
-    }
-
-    public List<String> stringToList(String str){
-        List<String> list = new ArrayList<>();
-        if(str!=null){
-            StringTokenizer st = new StringTokenizer(str,",");
-            while (st.hasMoreTokens()) {
-                list.add(st.nextToken());
-            }
-        }
-
-        return list;
     }
 
 }
