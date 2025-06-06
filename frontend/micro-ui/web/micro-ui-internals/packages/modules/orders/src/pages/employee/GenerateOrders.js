@@ -909,6 +909,11 @@ const GenerateOrders = () => {
     return isPresent;
   }, [hearingsData]);
 
+  const isHearingInProgress = useMemo(() => {
+    const isPresent = (hearingsData?.HearingList || []).some((hearing) => hearing?.status === HearingWorkflowState.INPROGRESS);
+    return isPresent;
+  }, [hearingsData]);
+
   const isHearingOptout = useMemo(() => {
     const isPresent = (hearingsData?.HearingList || []).some((hearing) => hearing?.status === HearingWorkflowState.OPTOUT);
     return isPresent;
@@ -3549,7 +3554,16 @@ const GenerateOrders = () => {
           break;
         }
 
-        if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType) && (isHearingScheduled || isHearingOptout)) {
+        if (["SCHEDULE_OF_HEARING_DATE"].includes(orderType) && (isHearingScheduled || isHearingInProgress || isHearingOptout)) {
+          setShowErrorToast({
+            label: isHearingScheduled ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE") : isHearingInProgress ? t("HEARING_IS_ALREADY_IN_PROGRESS_FOR_THIS_CASE") : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
+            error: true,
+          });
+          hasError = true;
+          break;
+        }
+
+        if (["SCHEDULING_NEXT_HEARING"].includes(orderType) && (isHearingScheduled || isHearingOptout)) {
           setShowErrorToast({
             label: isHearingScheduled ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE") : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
             error: true,

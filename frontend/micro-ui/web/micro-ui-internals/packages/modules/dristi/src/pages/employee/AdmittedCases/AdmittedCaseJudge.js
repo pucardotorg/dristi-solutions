@@ -167,6 +167,7 @@ const AdmittedCaseJudge = () => {
   const isFSO = roles.some((role) => role.code === "FSO_ROLE");
   const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
   const isBenchClerk = roles.some((role) => role.code === "BENCH_CLERK");
+  const isTypist = roles.some((role) => role.code === "TYPIST_ROLE");
   const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
   const applicationNumber = urlParams.get("applicationNumber");
@@ -631,7 +632,7 @@ const AdmittedCaseJudge = () => {
       const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditdetails?.createdBy;
       const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
       const documentStatus = docObj?.[0]?.artifactList?.status;
-      if (isCitizen || isBenchClerk) {
+      if (isCitizen || isBenchClerk || isTypist || isJudge) {
         if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
           history.push(
             `/${window?.contextPath}/${
@@ -2726,29 +2727,37 @@ const AdmittedCaseJudge = () => {
           label: "DOWNLOAD_CASE_FILE",
         },
       ];
-    else if (isBenchClerk)
-      return [
-        ...(currentInProgressHearing
-          ? [
-              {
-                value: "NEXT_HEARING",
-                label: "NEXT_HEARING",
-              },
-              {
-                value: "TAKE_WITNESS_DEPOSITION",
-                label: "TAKE_WITNESS_DEPOSITION",
-              },
-              {
-                value: "GENERATE_ORDER",
-                label: "GENERATE_ORDER",
-              },
-            ]
-          : []),
-        {
-          value: "DOWNLOAD_CASE_FILE",
-          label: "DOWNLOAD_CASE_FILE",
-        },
-      ];
+    else if (isBenchClerk) {
+      return currentInProgressHearing
+        ? [
+            {
+              value: "NEXT_HEARING",
+              label: "NEXT_HEARING",
+            },
+            {
+              value: "TAKE_WITNESS_DEPOSITION",
+              label: "TAKE_WITNESS_DEPOSITION",
+            },
+            {
+              value: "GENERATE_ORDER",
+              label: "GENERATE_ORDER",
+            },
+            {
+              value: "SUBMIT_DOCUMENTS",
+              label: "SUBMIT_DOCUMENTS",
+            },
+            {
+              value: "DOWNLOAD_CASE_FILE",
+              label: "DOWNLOAD_CASE_FILE",
+            },
+          ]
+        : [
+            {
+              value: "DOWNLOAD_CASE_FILE",
+              label: "DOWNLOAD_CASE_FILE",
+            },
+          ];
+    }
   }, [isJudge, currentInProgressHearing, isBenchClerk]);
 
   const courtActionOptions = useMemo(
@@ -3530,7 +3539,7 @@ const AdmittedCaseJudge = () => {
             }
             setShowOrderModal(false);
           }}
-          attendees={currentActiveHearing?.attendees}
+          attendees={currentInProgressHearing?.attendees}
           caseDetails={caseDetails}
           currentHearingId={currentInProgressHearingId}
           setUpdateCounter={setUpdateCounter}

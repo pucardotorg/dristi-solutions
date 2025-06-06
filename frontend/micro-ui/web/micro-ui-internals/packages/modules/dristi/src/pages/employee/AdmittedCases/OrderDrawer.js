@@ -533,7 +533,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
               <LabelFieldPair className="case-label-field-pair">
                 <RadioButtons
                   selectedOption={orderData?.isCaseDisposed}
-                  disabled={false}
+                  disabled={true}
                   optionsKey={"label"}
                   options={[{ label: `CS_CASE_DISPOSED_NEXT_HEARING_SCHEDULED`, value: "CASE_DISPOSED" }]}
                   additionalWrapperClass={"radio-disabled"}

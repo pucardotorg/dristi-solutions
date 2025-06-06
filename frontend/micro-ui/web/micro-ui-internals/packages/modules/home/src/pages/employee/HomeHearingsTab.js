@@ -517,8 +517,8 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
                   `${hearingDetails?.advocate?.complainant?.[0]}(C)${
                     hearingDetails?.advocate?.complainant?.length === 2
                       ? " + 1 Other"
-                      : hearingDetails?.advocates?.complainant?.length > 2
-                      ? ` + ${hearingDetails?.advocates?.complainant?.length - 1} others`
+                      : hearingDetails?.advocate?.complainant?.length > 2
+                      ? ` + ${hearingDetails?.advocate?.complainant?.length - 1} others`
                       : ""
                   }`}
               </p>
@@ -527,8 +527,8 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
                   `${hearingDetails?.advocate?.accused?.[0]}(A)${
                     hearingDetails?.advocate?.accused?.length === 2
                       ? " + 1 Other"
-                      : hearingDetails?.advocates?.accused?.length > 2
-                      ? ` + ${hearingDetails?.advocates?.accused?.length - 1} others`
+                      : hearingDetails?.advocate?.accused?.length > 2
+                      ? ` + ${hearingDetails?.advocate?.accused?.length - 1} others`
                       : ""
                   }`}
               </p>
