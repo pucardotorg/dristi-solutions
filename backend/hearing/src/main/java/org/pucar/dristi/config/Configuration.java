@@ -191,6 +191,9 @@ public class Configuration {
     @Value("${dristi.scheduler.create.endpoint}")
     private String schedulerCreateEndPoint;
 
+    @Value("${dristi.scheduler.calendar.update.endpoint}")
+    private String judgeCalendarUpdateEndPoint;
+
     @Value("${dristi.scheduler.bulk.reschedule.endpoint}")
     private String bulkRescheduleEndPoint;
 

@@ -128,6 +128,9 @@ public class Hearing {
     @JsonProperty("hearingSummary")
     private String hearingSummary = null;
 
+    @JsonProperty("hearingDurationInMillis")
+    private Long hearingDurationInMillis = null;
+
 
     public Hearing addFilingNumberItem(String filingNumberItem) {
         this.filingNumber.add(filingNumberItem);
