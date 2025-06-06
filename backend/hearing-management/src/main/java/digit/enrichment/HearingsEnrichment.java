@@ -1,5 +1,6 @@
 package digit.enrichment;
 
+import digit.config.HearingSlotStatus;
 import digit.config.MdmsDataConfig;
 import digit.web.models.Hearing;
 import digit.web.models.HearingResponse;
@@ -71,12 +72,12 @@ public class HearingsEnrichment {
         ;
         //check holiday
         if(mdmsDataConfig != null && mdmsDataConfig.getCourtHolidays().contains(key)){
-            return COURT_NON_WORKING;
+            return HearingSlotStatus.COURT_NON_WORKING.getValue();
         }
 
         //check opted out day
         if(optOutDates.contains(key)){
-            return OPTED_OUT;
+            return HearingSlotStatus.OPTED_OUT.getValue();
         }
 
         return null;

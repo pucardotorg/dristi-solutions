@@ -25,10 +25,6 @@ public class ServiceConstants {
 
     public static final String DATE_FORMAT_Y_M_D = "yyyy-MM-dd";
     public static final String DATE_FORMAT_D_M_Y = "dd-MM-yyyy";
-    public static final String COURT_NON_WORKING = "Court Non-Working";
-    public static final String SLOTS_FULL = "Slots Full";
-    public static final String SLOT_AVAILABLE = "Slot Available";
-    public static final String OPTED_OUT = "Opted Out";
     public static final String ILLEGAL_ARGUMENT_EXCEPTION_CODE = "IllegalArgumentException";
     public static final String OBJECTMAPPER_UNABLE_TO_CONVERT = "ObjectMapper not able to convertValue in userCall";
     public static final String DOB_FORMAT_D_M_Y_H_M_S = "dd-MM-yyyy HH:mm:ss";
