@@ -358,11 +358,11 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
           .filter(([_, files]) => files.length > 0)
           .map(([type, files], index) => ({
             id: `process-${type.toLowerCase()}`,
-            title: type.charAt(0).toUpperCase() + type.slice(1).toLowerCase(),
+            title: type,
             hasChildren: true,
             children: files.map((fileStoreId, idx) => ({
               id: `process-${type.toLowerCase()}-${idx + 1}`,
-              title: `${type.charAt(0)}${type.slice(1).toLowerCase()} ${idx + 1}`,
+              title: `${t(type)} ${idx + 1}`,
               fileStoreId,
               hasChildren: false,
             })),
@@ -411,7 +411,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
       if (signedDoc?.fileStore) {
         children.push({
           id: `${application?.applicationNumber}-signed`,
-          title: "Application",
+          title: "APPLICATION_PDF_HEADING",
           fileStoreId: signedDoc?.fileStore,
           hasChildren: false,
         });
@@ -420,14 +420,14 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
       if (validObjectionComments.length > 0) {
         const objectionChildren = validObjectionComments.map((comment, objIndex) => ({
           id: `${application?.applicationNumber}-objection-${objIndex}`,
-          title: `Objection ${objIndex + 1}`,
+          title: `${t("OBJECTION_APPLICATION")} ${objIndex + 1}`,
           fileStoreId: comment?.additionalDetails?.commentDocumentId,
           hasChildren: false,
         }));
 
         children.push({
           id: `${application?.applicationNumber}-objections`,
-          title: "Objections",
+          title: "OBJECTION_APPLICATION_HEADING",
           hasChildren: true,
           children: objectionChildren,
         });
@@ -469,7 +469,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
 
     return Array.from(fileStoreIds).map((fileStoreId, index) => ({
       id: `vakalatnama-${index}`,
-      title: `Vakalatnama ${index + 1}`,
+      title: `${t("VAKALATNAMA_HEADING")} ${index + 1}`,
       fileStoreId,
       hasChildren: false,
     }));
@@ -526,7 +526,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
           signed.forEach((signedFileStoreId, idx) => {
             prodDocChildren.push({
               id: `${application.applicationNumber}-signed-${idx}`,
-              title: `Application`,
+              title: `APPLICATION_PDF_HEADING`,
               fileStoreId: signedFileStoreId,
               hasChildren: false,
             });
@@ -535,14 +535,14 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
           if (others.length > 0) {
             const otherChildren = others.map((fileStoreId, idx) => ({
               id: `${application.applicationNumber}-other-${idx}`,
-              title: `Document`,
+              title: `${t("DOCUMENT_HEADING")} ${idx + 1}`,
               fileStoreId,
               hasChildren: false,
             }));
 
             prodDocChildren.push({
               id: `${application.applicationNumber}-others`,
-              title: `Other Documents`,
+              title: `OTHER_DOCUMENTS_HEADING`,
               hasChildren: true,
               children: otherChildren,
             });
@@ -591,24 +591,24 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
   const generateCourtEvidenceStructure = (courtEvidenceData, courtEvidenceDepositionData) => {
     // "Depositions" children from courtEvidenceDepositionData
     const depositions = Array.isArray(courtEvidenceDepositionData?.artifacts)
-      ? courtEvidenceDepositionData.artifacts
+      ? courtEvidenceDepositionData?.artifacts
           .filter((artifact) => artifact?.file?.fileStore)
           .map((artifact, idx) => ({
             id: `court-deposition-${idx}`,
-            title: `Deposition ${idx + 1}`,
-            fileStoreId: artifact.file.fileStore,
+            title: artifact?.artifactType,
+            fileStoreId: artifact?.file?.fileStore,
             hasChildren: false,
           }))
       : [];
 
     // "Evidences" children from courtEvidenceData
     const evidences = Array.isArray(courtEvidenceData?.artifacts)
-      ? courtEvidenceData.artifacts
+      ? courtEvidenceData?.artifacts
           .filter((artifact) => artifact?.file?.fileStore)
           .map((artifact, idx) => ({
             id: `court-evidence-${idx}`,
-            title: `Evidence ${idx + 1}`,
-            fileStoreId: artifact.file.fileStore,
+            title: artifact?.artifactType,
+            fileStoreId: artifact?.file?.fileStore,
             hasChildren: false,
           }))
       : [];
@@ -616,13 +616,13 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     return [
       {
         id: "court-depositions",
-        title: "Depositions",
+        title: "DEPOSITIONS_PDF_HEADING",
         hasChildren: depositions.length > 0,
         children: depositions,
       },
       {
         id: "court-evidences",
-        title: "Evidences",
+        title: "EVIDENCES_PDF_HEADING",
         hasChildren: evidences.length > 0,
         children: evidences,
       },
@@ -683,7 +683,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
             const signedSubitem = signedDoc?.fileStore
               ? {
                   id: `${applicationNumber}-signed`,
-                  title: "Application",
+                  title: "APPLICATION_PDF_HEADING",
                   fileStoreId: signedDoc.fileStore,
                   hasChildren: false,
                 }
@@ -693,7 +693,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
 
             const objectionChildren = validObjectionComments.map((comment, objIndex) => ({
               id: `${applicationNumber}-objection-${objIndex}`,
-              title: `Objection ${objIndex + 1}`,
+              title: `${t("OBJECTION_APPLICATION")} ${objIndex + 1}`,
               fileStoreId: comment.additionalDetails.commentDocumentId,
               hasChildren: false,
             }));
@@ -702,33 +702,28 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
               objectionChildren.length > 0
                 ? {
                     id: `${applicationNumber}-objections`,
-                    title: "Objections",
+                    title: "OBJECTION_APPLICATION_HEADING",
                     hasChildren: true,
                     children: objectionChildren,
                   }
                 : null;
 
-            const orderFileStoreIds = [];
-
-            combinedOrders.forEach((order) => {
-              const document = order?.documents?.find((doc) => doc?.documentType === "SIGNED");
-              if (document?.fileStore) {
-                orderFileStoreIds.push(document.fileStore);
-              }
+            const orderChildren = combinedOrders?.map((order, idx) => {
+              const document = order?.documents?.find((doc) => doc?.documentType === "SIGNED")?.fileStore;
+              if (!document) return null;
+              return {
+                id: `${applicationNumber}-order-${idx}`,
+                title: order?.orderTitle,
+                fileStoreId: document,
+                hasChildren: false,
+              };
             });
-
-            const orderChildren = orderFileStoreIds.map((fsId, idx) => ({
-              id: `${applicationNumber}-order-${idx}`,
-              title: `Order ${idx + 1}`,
-              fileStoreId: fsId,
-              hasChildren: false,
-            }));
 
             const ordersSubitem =
               orderChildren.length > 0
                 ? {
                     id: `${applicationNumber}-orders`,
-                    title: "Orders",
+                    title: "ORDERS_APPLICATION_HEADING",
                     hasChildren: true,
                     children: orderChildren,
                   }
@@ -774,21 +769,21 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
 
           const signedNode = {
             id: `${application.applicationNumber}-signed`,
-            title: "Application",
+            title: "APPLICATION_PDF_HEADING",
             hasChildren: false,
             fileStoreId: signed[0] || null,
           };
 
           const otherDocsChildren = others.map((fsId, i) => ({
             id: `${application.applicationNumber}-other-${i}`,
-            title: `Document ${i + 1}`,
+            title: `${t("DOCUMENT_HEADING")} ${i + 1}`,
             fileStoreId: fsId,
             hasChildren: false,
           }));
 
           const otherDocsNode = {
             id: `${application.applicationNumber}-others`,
-            title: "Other Documents",
+            title: "OTHER_DOCUMENTS_HEADING",
             hasChildren: otherDocsChildren.length > 0,
             children: otherDocsChildren,
           };
@@ -839,7 +834,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
                 submitSigned.forEach((fsId, i) =>
                   submitChildren.push({
                     id: `${application.applicationNumber}-submit-signed-${i}`,
-                    title: "Application",
+                    title: "APPLICATION_PDF_HEADING",
                     fileStoreId: fsId,
                     hasChildren: false,
                   })
@@ -848,14 +843,14 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
                 if (submitOthers.length > 0) {
                   const othersChildren = submitOthers.map((fsId, j) => ({
                     id: `${application.applicationNumber}-submit-other-${j}`,
-                    title: `Document ${j + 1}`,
+                    title: `${t("DOCUMENT_HEADING")} ${j + 1}`,
                     fileStoreId: fsId,
                     hasChildren: false,
                   }));
 
                   submitChildren.push({
                     id: `${application.applicationNumber}-submit-other-group`,
-                    title: "Other Documents",
+                    title: "OTHER_DOCUMENTS_HEADING",
                     hasChildren: true,
                     children: othersChildren,
                   });
@@ -982,40 +977,40 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     const mainStructure = [
       {
         id: "pending-application",
-        title: "Pending Application",
+        title: "PENDING_APPLICATION",
         hasChildren: pendingApplicationChildren.length > 0,
         number: 1,
         children: pendingApplicationChildren,
       },
       {
         id: "complaint",
-        title: "Complaint",
+        title: "COMPLAINT_PDF",
         fileStoreId: getFileStoreByType("case.complaint.signed"),
         hasChildren: false,
         number: 2,
       },
       {
         id: "initial-filing",
-        title: "Initial Filings",
+        title: "INITIAL_FILINGS",
         hasChildren: true,
         number: 3,
         children: initialFilingChildren,
       },
       {
         id: "affidavits",
-        title: "Affidavits",
+        title: "AFFIDAVITS_PDF",
         hasChildren: true,
         number: 4,
         children: [
           {
             id: "affidavit-225bnss",
-            title: "Affidavit under Section 225 BNSS",
+            title: "AFFIDAVIT_UNDER_SECTION_255_BNSS",
             fileStoreId: getFileStoreByType("case.affidavit.225bnss"),
             hasChildren: false,
           },
           {
             id: "affidavit-223bnss",
-            title: "Affidavit under Section 223 BNSS",
+            title: "AFFIDAVIT_UNDER_SECTION_223_BNSS",
             fileStoreId: getFileStoreByType("case.affidavit.223bnss"),
             hasChildren: false,
           },
@@ -1023,77 +1018,77 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
       },
       {
         id: "vakalatnama",
-        title: "Vakalats",
+        title: "VAKALATS",
         hasChildren: vakalatnamaChildren.length > 0,
         number: 5,
         children: vakalatnamaChildren,
       },
       {
         id: "evidence",
-        title: "Additional Filings",
+        title: "ADDITIONAL_FILINGS",
         hasChildren: evidenceChildren.length > 0,
         number: 6,
         children: evidenceChildren,
       },
       {
         id: "mandatory-submissions-responses",
-        title: "Mandatory Submissions",
+        title: "MANDATORY_SUBMISSIONS",
         hasChildren: ordersData?.list?.length > 0,
         number: 7,
         children: mandatorySubmissionsChildren,
       },
       {
         id: "complaint-evidence",
-        title: "Evidence of Complainant",
+        title: "EVIDENCE_OF_COMPLAINANT",
         hasChildren: complaintEvidenceData?.artifacts?.length > 0,
         number: 8,
         children: complaintEvidenceChildren,
       },
       {
         id: "accused-evidence",
-        title: "Evidence of Accused",
+        title: "EVIDENCE_OF_ACCUSED",
         hasChildren: accusedEvidenceData?.artifacts?.length > 0,
         number: 9,
         children: accusedEvidenceChildren,
       },
       {
         id: "court-evidence",
-        title: "Court Evidence",
+        title: "COURT_EVIDENCE",
         hasChildren: courtEvidenceData?.artifacts?.length > 0,
         number: 10,
         children: courtEvidenceChildren,
       },
       {
         id: "disposed-applications",
-        title: "Disposed Applications",
+        title: "DISPOSED_APPLICATIONS_PDF",
         hasChildren: disposedApplicationList?.length > 0,
         number: 11,
         children: disposedApplicationChildren,
       },
       {
         id: "bail-applications",
-        title: "Bail Applications",
+        title: "BAIL_APPLICATIONS_PDF",
         hasChildren: bailApplicationsList?.length > 0,
         number: 12,
         children: bailApplicationChildren,
       },
       {
         id: "processes",
-        title: "Processes",
+        title: "PROCESSES_CASE_PDF",
         hasChildren: processChildren?.length > 0,
         number: 13,
         children: processChildren,
       },
       {
         id: "payment-receipt",
-        title: "Payment Receipt",
+        title: "PAYMENT_RECEIPT_CASE_PDF",
         fileStoreId: getFileStoreByType("PAYMENT_RECEIPT"),
         hasChildren: false,
         number: 14,
       },
       {
         id: "orders",
-        title: "Orders",
+        title: "ORDERS_CASE_PDF",
         hasChildren: publishedOrderData.length > 0,
         number: 15,
         children: publishedOrderChildren,
@@ -1130,7 +1125,6 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
           style={{ backgroundColor: isSelected ? "#E8E8E8" : "transparent", paddingLeft: `${paddingLeft}px` }}
           onClick={() => {
             if (item.hasChildren) {
-              console.log("Toggling expanded state for:", item.id);
               toggleExpanded(item);
             } else if (item.fileStoreId && item.id !== selectedDocument) {
               handleDocumentSelect(item.id, item.fileStoreId, displayTitle);
@@ -1184,7 +1178,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     <React.Fragment>
       {/* Left Sidebar - Fixed position with its own scrolling */}
       <div className="sidebar-panel">
-        <div className="sidebar-header">Case File</div>
+        <div className="sidebar-header">{t("CASE_FILE_HEADING")}</div>
 
         <div className="scrollable-container">{dynamicCaseFileStructure.map((item) => renderMenuItem(item))}</div>
       </div>
