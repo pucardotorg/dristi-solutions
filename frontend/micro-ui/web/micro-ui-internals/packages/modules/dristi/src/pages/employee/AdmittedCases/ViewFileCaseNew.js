@@ -5,7 +5,8 @@ import { caseFileLabels } from "../../../Utils";
 import { useTranslation } from "react-i18next";
 import { useQueries } from "react-query";
 import { DRISTIService } from "../../../services";
-import { has, set } from "lodash";
+import { Urls } from "../../../hooks";
+import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
 
 function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
@@ -15,6 +16,14 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     affidavit: false,
     "pending-application": false,
   });
+  const reqEvidenceUpdate = {
+    url: Urls.dristi.evidenceUpdate,
+    params: {},
+    body: {},
+    config: {
+      enable: false,
+    },
+  };
 
   const [selectedDocument, setSelectedDocument] = useState("complaint");
   const [selectedFileStoreId, setSelectedFileStoreId] = useState(null);
@@ -23,6 +32,9 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
   const [processChildren, setProcessChildren] = useState([]);
   const [loading, setLoading] = useState(true);
   const [publishedOrderData, setPublishedOrderData] = useState([]);
+  const [contextMenu, setContextMenu] = useState(null);
+  const { downloadPdf } = useDownloadCasePdf();
+  const evidenceUpdateMutation = Digit.Hooks.useCustomAPIMutationHook(reqEvidenceUpdate);
 
   const { t } = useTranslation();
 
@@ -68,6 +80,19 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     setSelectedDocument(docId);
     setSelectedFileStoreId(fileStoreId);
   };
+  const { data: hearingDetails } = Digit.Hooks.hearings.useGetHearings(
+    {
+      hearing: { tenantId },
+      criteria: {
+        tenantID: tenantId,
+        filingNumber: filingNumber,
+        courtId: courtId,
+      },
+    },
+    {},
+    filingNumber,
+    Boolean(filingNumber && courtId)
+  );
 
   const { data: applicationData, isLoading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
@@ -89,7 +114,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
 
   const applicationList = useMemo(() => applicationData?.applicationList, [applicationData]);
 
-  const { data: directEvidenceData } = Digit.Hooks.submissions.useSearchEvidenceService(
+  const { data: directEvidenceData, refetch: directEvidenceRefetch } = Digit.Hooks.submissions.useSearchEvidenceService(
     {
       criteria: {
         courtId: courtId,
@@ -110,7 +135,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     filingNumber
   );
 
-  const { data: applicationEvidenceData } = Digit.Hooks.submissions.useSearchEvidenceService(
+  const { data: applicationEvidenceData, refetch: applicationEvidenceRefetch } = Digit.Hooks.submissions.useSearchEvidenceService(
     {
       criteria: {
         courtId: courtId,
@@ -157,7 +182,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
 
   const orderList = Array.isArray(ordersData?.list) ? ordersData.list : [];
 
-  const { data: complaintEvidenceData } = Digit.Hooks.submissions.useSearchEvidenceService(
+  const { data: complaintEvidenceData, refetch: complainantEvidenceRefetch } = Digit.Hooks.submissions.useSearchEvidenceService(
     {
       criteria: {
         courtId: courtId,
@@ -178,7 +203,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     filingNumber
   );
 
-  const { data: accusedEvidenceData } = Digit.Hooks.submissions.useSearchEvidenceService(
+  const { data: accusedEvidenceData, refetch: accusedEvidenceRefetch } = Digit.Hooks.submissions.useSearchEvidenceService(
     {
       criteria: {
         courtId: courtId,
@@ -199,7 +224,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     filingNumber
   );
 
-  const { data: courtEvidenceData } = Digit.Hooks.submissions.useSearchEvidenceService(
+  const { data: courtEvidenceData, refetch: courtEvidenceRefetch } = Digit.Hooks.submissions.useSearchEvidenceService(
     {
       criteria: {
         courtId: courtId,
@@ -220,7 +245,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     filingNumber
   );
 
-  const { data: courtEvidenceDepositionData } = Digit.Hooks.submissions.useSearchEvidenceService(
+  const { data: courtEvidenceDepositionData, refetch: courtDepositionRefetch } = Digit.Hooks.submissions.useSearchEvidenceService(
     {
       criteria: {
         courtId: courtId,
@@ -464,6 +489,9 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
           title: t(evidence?.artifactType),
           fileStoreId: evidenceFileStoreId,
           hasChildren: false,
+          isEvidence: evidence?.isEvidence,
+          artifactNumber: evidence?.artifactNumber,
+          artifactList: evidence,
         };
       })
       .filter((item) => item !== null);
@@ -1074,6 +1102,11 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
 
     return mainStructure;
   };
+  useEffect(() => {
+    const handleClickOutside = () => setContextMenu(null);
+    window.addEventListener("click", handleClickOutside);
+    return () => window.removeEventListener("click", handleClickOutside);
+  }, []);
 
   const dynamicCaseFileStructure = generateCaseFileStructure(caseDetails?.documents || []);
   const renderMenuItem = (item, level = 0, parentNumber = "") => {
@@ -1105,6 +1138,20 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
           }}
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = isSelected ? "#E8E8E8" : "#F9FAFB")}
           onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = isSelected ? "#E8E8E8" : "transparent")}
+          onContextMenu={(e) => {
+            e.preventDefault();
+            if (item.fileStoreId) {
+              setContextMenu({
+                mouseX: e.clientX + 2,
+                mouseY: e.clientY - 6,
+                fileStoreId: item?.fileStoreId,
+                isEvidence: item?.isEvidence,
+                artifactNumber: item?.artifactNumber,
+                artifactList: item?.artifactList,
+                isEvidenceMenu: parentNumber?.startsWith("6") || false,
+              });
+            }
+          }}
         >
           <span className="menu-item-title" style={{ fontWeight: isSelected ? 700 : 400 }}>
             {displayTitle}
@@ -1146,6 +1193,89 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
       <div className="doc-viewer-container">
         <MemoDocViewerWrapper tenantId={tenantId} fileStoreId={selectedFileStoreId} showDownloadOption={false} docHeight="100%" docWidth="100%" />
       </div>
+      {contextMenu && (
+        <div
+          style={{
+            position: "fixed",
+            top: contextMenu.mouseY,
+            left: contextMenu.mouseX,
+            backgroundColor: "white",
+            border: "1px solid #ccc",
+            boxShadow: "0px 0px 5px rgba(0,0,0,0.2)",
+            zIndex: 9999,
+          }}
+          onMouseLeave={() => setContextMenu(null)}
+        >
+          <div
+            style={{ padding: "8px", cursor: "pointer" }}
+            onClick={() => {
+              downloadPdf(tenantId, contextMenu.fileStoreId);
+              setContextMenu(null);
+            }}
+          >
+            {t("DOWNLOAD_PDF")}
+          </div>
+
+          {contextMenu?.isEvidenceMenu && contextMenu?.isEvidence === false && (
+            <div
+              style={{ padding: "8px", cursor: "pointer" }}
+              onClick={async () => {
+                try {
+                  const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing?.status === "SCHEDULED");
+
+                  await DRISTIService.addADiaryEntry({
+                    diaryEntry: {
+                      courtId,
+                      businessOfDay: `${contextMenu?.artifactNumber} marked as evidence`,
+                      tenantId,
+                      entryDate: new Date().setHours(0, 0, 0, 0),
+                      caseNumber: caseDetails?.cmpNumber,
+                      referenceId: contextMenu?.artifactNumber,
+                      referenceType: "Documents",
+                      hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
+                      additionalDetails: {
+                        filingNumber,
+                      },
+                    },
+                  });
+
+                  await evidenceUpdateMutation
+                    .mutateAsync({
+                      url: Urls.dristi.evidenceUpdate,
+                      params: {},
+                      body: {
+                        artifact: {
+                          ...contextMenu.artifactList,
+                          isEvidence: true,
+                          isVoid: false,
+                          reason: "",
+                          filingNumber,
+                        },
+                      },
+                      config: {
+                        enable: true,
+                      },
+                    })
+                    .then(() => {
+                      directEvidenceRefetch();
+                      applicationEvidenceRefetch();
+                      complainantEvidenceRefetch();
+                      accusedEvidenceRefetch();
+                      courtEvidenceRefetch();
+                      courtDepositionRefetch();
+                    });
+                } catch (error) {
+                  console.error("error: ", error);
+                }
+
+                setContextMenu(null);
+              }}
+            >
+              {t("MARK_AS_EVIDENCE")}
+            </div>
+          )}
+        </div>
+      )}
     </React.Fragment>
   );
 }
