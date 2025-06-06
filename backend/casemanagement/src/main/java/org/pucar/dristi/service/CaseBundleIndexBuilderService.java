@@ -184,18 +184,27 @@ public class CaseBundleIndexBuilderService {
             stateName = (String) state.get("state");
         }
 
-        String filingNumber = null;
-
-        if (businessId != null) {
-            filingNumber = businessId;
-        }
+        String filingNumber;
 
         Boolean isValid = isValidState(moduleName, businessService, stateName, tenantId,requestInfo);
         if(isValid){
+            filingNumber = getFilingNumberFromBusinessId(businessId, moduleName);
             enrichCaseBundlePdfIndex(requestInfo, filingNumber, tenantId, stateName);
         }
 
 
+    }
+
+    private String getFilingNumberFromBusinessId(String businessId, String moduleName) {
+        if ("case".equalsIgnoreCase(moduleName)) {
+            return businessId;
+        }
+        else {
+            String[] parts = businessId.split("-");
+            String result = String.join("-", parts[0], parts[1], parts[2]);
+            log.info(result);
+            return result;
+        }
     }
 
     @KafkaListener(topics = {"#{'${casemanagement.kafka.non.workflow.transition.topics}'.split(',')}"})
