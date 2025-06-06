@@ -84,14 +84,15 @@ export const getFormattedDate = (epochTime) => {
 };
 
 export const checkIfDueDatePassed = (dueDate) => {
+  if (!dueDate) return false;
+
   const slaDate = new Date(dueDate);
   const today = new Date();
 
   // Set both dates to midnight to ignore time
   slaDate.setHours(0, 0, 0, 0);
   today.setHours(0, 0, 0, 0);
-  if (!dueDate) return false;
-  else return slaDate < today;
+  return slaDate < today;
 };
 
 export const getSuffixByBusinessCode = (paymentType = [], businessCode) => {

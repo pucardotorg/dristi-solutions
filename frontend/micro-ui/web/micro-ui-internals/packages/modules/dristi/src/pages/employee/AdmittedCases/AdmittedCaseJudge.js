@@ -2757,8 +2757,38 @@ const AdmittedCaseJudge = () => {
               label: "DOWNLOAD_CASE_FILE",
             },
           ];
+    } else if (isTypist) {
+      return currentInProgressHearing
+        ? [
+            {
+              value: "END_HEARING",
+              label: "END_HEARING",
+            },
+            {
+              value: "TAKE_WITNESS_DEPOSITION",
+              label: "TAKE_WITNESS_DEPOSITION",
+            },
+            {
+              value: "SUBMIT_DOCUMENTS",
+              label: "SUBMIT_DOCUMENTS",
+            },
+            {
+              value: "VIEW_CALENDAR",
+              label: "VIEW_CALENDAR",
+            },
+            {
+              value: "DOWNLOAD_CASE_FILE",
+              label: "DOWNLOAD_CASE_FILE",
+            },
+          ]
+        : [
+            {
+              value: "DOWNLOAD_CASE_FILE",
+              label: "DOWNLOAD_CASE_FILE",
+            },
+          ];
     }
-  }, [isJudge, currentInProgressHearing, isBenchClerk]);
+  }, [isJudge, currentInProgressHearing, isBenchClerk, isTypist]);
 
   const courtActionOptions = useMemo(
     () => [
@@ -3039,16 +3069,16 @@ const AdmittedCaseJudge = () => {
                         <React.Fragment>
                           <Button
                             variation={"outlined"}
-                            label={t("CS_CASE_VIEW_CALENDAR")}
-                            onButtonClick={() => handleEmployeeAction({ value: "VIEW_CALENDAR" })}
+                            label={t(isTypist ? "CS_GENERATE_ORDER" : "CS_CASE_VIEW_CALENDAR")}
+                            onButtonClick={() => handleEmployeeAction({ value: isTypist ? "GENERATE_ORDER" : "VIEW_CALENDAR" })}
                             style={{ boxShadow: "none" }}
                           ></Button>
                           <Button
                             variation={"primary"}
-                            label={t(isBenchClerk ? "CS_CASE_END_HEARING" : isJudge ? "CS_CASE_NEXT_HEARING" : "")}
-                            children={isBenchClerk ? null : isJudge ? <RightArrow /> : null}
+                            label={t(isBenchClerk ? "CS_CASE_END_HEARING" : (isJudge || isTypist) ? "CS_CASE_NEXT_HEARING" : "")}
+                            children={isBenchClerk ? null : (isJudge || isTypist) ? <RightArrow /> : null}
                             isSuffix={true}
-                            onButtonClick={() => handleEmployeeAction({ value: isBenchClerk ? "END_HEARING" : isJudge ? "NEXT_HEARING" : "" })}
+                            onButtonClick={() => handleEmployeeAction({ value: isBenchClerk ? "END_HEARING" : (isJudge || isTypist) ? "NEXT_HEARING" : "" })}
                             style={{ boxShadow: "none", ...(isBenchClerk ? { backgroundColor: "#BB2C2F", border: "none" } : {}) }}
                           ></Button>
                         </React.Fragment>

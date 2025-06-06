@@ -56,15 +56,17 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, hearingList, judgeView =
               />
             </div>
 
-            <div style={{border: "solid 1px rgb(61, 60, 60)", marginTop: "-5px", padding: "5px" }}>
-              <span>Attendees: </span>
-              <span style={{ whiteSpace: "normal", wordBreak: "normal" }}>
-                {hearing.attendees
-                  ?.map((attendee, index) => attendee?.name)
-                  .filter(Boolean)
-                  .join(", ")}
-              </span>
-            </div>
+            {hearing?.attendees && hearing?.attendees?.length > 0 && (
+              <div style={{ border: "solid 1px rgb(61, 60, 60)", marginTop: "-5px", padding: "5px" }}>
+                <span>Attendees: </span>
+                <span style={{ whiteSpace: "normal", wordBreak: "normal" }}>
+                  {hearing?.attendees
+                    ?.map((attendee, index) => attendee?.name)
+                    ?.filter(Boolean)
+                    ?.join(", ")}
+                </span>
+              </div>
+            )}
           </div>
         ))}
       </div>
