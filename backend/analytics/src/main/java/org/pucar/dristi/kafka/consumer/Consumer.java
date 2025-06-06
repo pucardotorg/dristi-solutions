@@ -38,7 +38,7 @@ public class Consumer {
     }
 
 
-    @KafkaListener(id = "demandGenerateListener",topics = {"${kafka.topic.demand.generate}"})
+    @KafkaListener(id = "demandGenerateListener",topics = {"${kafka.topic.demand.generate}"}, containerFactory = "billingContainerFactory")
     private void handleDemandGenerateTopic(final HashMap<String, Object> record) {
         try {
             log.info("Listening to demand generate topic, kafkaJson: {}", record);
@@ -49,7 +49,7 @@ public class Consumer {
         }
     }
 
-    @KafkaListener(id = "paymentCollectListener",topics = {"${kafka.topic.egov.collection.payment.create}"})
+    @KafkaListener(id = "paymentCollectListener",topics = {"${kafka.topic.egov.collection.payment.create}"}, containerFactory = "billingContainerFactory")
     private void handlePaymentCollectTopic(final HashMap<String, Object> record) {
         try {
             log.info("Listening to payment collect topic, kafkaJson: {}", record);
@@ -60,7 +60,7 @@ public class Consumer {
         }
     }
 
-    @KafkaListener(id = "workflowTransitionListener",topics = {"${kafka.topic.save.wf.transitions}"})
+    @KafkaListener(id = "workflowTransitionListener",topics = {"${kafka.topic.save.wf.transitions}"}, containerFactory = "indexerContainerFactory")
     private void handleWorkflowTransitionTopics(final HashMap<String, Object> record) {
         try {
             log.info("Listening to save wf transitions topic, kafkaJson: {}", record);
