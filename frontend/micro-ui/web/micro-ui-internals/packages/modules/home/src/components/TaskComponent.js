@@ -282,9 +282,9 @@ const TasksComponent = ({
         const res = await HomeService.customApiService(Urls.orderCreate, reqBody, { tenantId });
         HomeService.customApiService(Urls.pendingTask, {
           pendingTask: {
-            name: "Order Created",
+            name: t("ORDER_CREATED"),
             entityType: "order-default",
-            referenceId: `MANUAL_${referenceId}`,
+            referenceId: `MANUAL_${res?.order?.orderNumber}`,
             status: "SAVE_DRAFT",
             assignedTo: [],
             assignedRole: ["JUDGE_ROLE"],
@@ -340,10 +340,16 @@ const TasksComponent = ({
         : dueInSec
         ? Math.abs(Math.ceil(dueInSec / dayInMillisecond))
         : null;
-      const additionalDetails = pendingTaskActions?.[status]?.additionalDetailsKeys?.reduce((result, current) => {
+      let additionalDetails = pendingTaskActions?.[status]?.additionalDetailsKeys?.reduce((result, current) => {
         result[current] = data?.fields?.find((field) => field.key === `additionalDetails.${current}`)?.value;
         return result;
       }, {});
+      if (actionName === "order for scheduling next hearing") {
+        additionalDetails = {
+          orderType: "SCHEDULE_OF_HEARING_DATE",
+          caseTitle: caseTitle,
+        };
+      }
       const searchParams = new URLSearchParams();
       pendingTaskActions?.[status]?.redirectDetails?.params?.forEach((item) => {
         searchParams.set(item?.key, item?.value ? defaultObj?.[item?.value] : item?.defaultValue);

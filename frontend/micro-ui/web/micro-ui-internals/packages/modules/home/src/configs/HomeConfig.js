@@ -367,6 +367,18 @@ export const pendingTaskHearingActions = {
       ],
     },
   },
+  ABANDONED: {
+    actorName: ["JUDGE"],
+    actionName: "Schedule admission hearing",
+    customFunction: "handleCreateOrder",
+    // additionalDetailsKeys: ["orderType"],
+    redirectDetails: {
+      url: "/orders/generate-orders",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+      ],
+    },
+  },
 };
 
 export const pendingTaskOrderActions = {
