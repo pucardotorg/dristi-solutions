@@ -55,4 +55,7 @@ public class PendingTaskType {
     @JsonProperty("closerAction")
     @Valid
     private List<String> closerAction = new ArrayList<>();
+
+    @JsonProperty("referenceEntityTypeNameMapping")
+    private List<ReferenceEntityTypeNameMapping> referenceEntityTypeNameMapping = null;
 }

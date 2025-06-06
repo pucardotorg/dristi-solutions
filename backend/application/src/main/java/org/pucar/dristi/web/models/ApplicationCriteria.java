@@ -48,4 +48,8 @@ public class ApplicationCriteria {
     @Valid
     private String status = null;
 
+    @JsonProperty("referenceId")
+    @Valid
+    private String referenceId = null;
+
 }

@@ -46,6 +46,7 @@ const ReviewLitigantDetails = ({ path }) => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const caseId = urlParams.get("caseId");
   const referenceId = urlParams.get("referenceId");
+  const refApplicationNUmber = urlParams.get("refApplicationId");
   const [showDocModal, setShowDocModal] = useState(false);
 
   const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
@@ -215,6 +216,7 @@ const ReviewLitigantDetails = ({ path }) => {
             documents: [{}],
           },
           documents: [],
+          applicationNumber: [refApplicationNUmber],
           additionalDetails: {
             formdata: {
               orderType: {
@@ -226,6 +228,7 @@ const ReviewLitigantDetails = ({ path }) => {
                 code: action === "ACCEPT" ? "GRANTED" : "REJECTED",
                 name: action === "ACCEPT" ? "GRANTED" : "REJECTED",
               },
+              refApplicationId: refApplicationNUmber,
               reasonForLitigantDetailsChange: { text: profileRequest?.reason || "" },
             },
             dateOfApplication: location?.state?.dateOfApplication,
@@ -233,6 +236,7 @@ const ReviewLitigantDetails = ({ path }) => {
             applicantPartyUuid: profileRequest?.editorDetails?.uuid,
             applicantType: profileRequest?.editorDetails?.isAdvocate ? "ADVOCATE" : "COMPLAINANT",
             pendingTaskRefId: referenceId,
+            applicationStatus: action === "ACCEPT" ? "APPROVED" : "REJECTED",
           },
         },
       };

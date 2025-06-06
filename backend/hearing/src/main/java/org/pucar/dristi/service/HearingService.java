@@ -310,8 +310,8 @@ public class HearingService {
             }
 
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
-                    .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
-                    .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
+                    .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "")
+                    .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").textValue() : "")
                     .hearingDate(date)
                     .hearingType(localizedHearingType)
                     .tenantId(hearingRequest.getHearing().getTenantId()).build();

@@ -1327,9 +1327,14 @@ function EFilingCases({ path }) {
                 let key = formComponent.key || formComponent.populators?.name;
                 if (formComponent.type === "component") {
                   if (
-                    ["SelectCustomDragDrop", "SelectBulkInputs", "SelectCustomTextArea", "SelectUploadFiles", "SelectUserTypeComponent"].includes(
-                      formComponent.component
-                    )
+                    [
+                      "SelectCustomDragDrop",
+                      "SelectBulkInputs",
+                      "SelectCustomTextArea",
+                      "SelectUploadFiles",
+                      "SelectCustomFormatterTextArea",
+                      "SelectUserTypeComponent",
+                    ].includes(formComponent.component)
                   ) {
                     key = formComponent.key + "." + formComponent.populators?.inputs?.[0]?.name;
                   }

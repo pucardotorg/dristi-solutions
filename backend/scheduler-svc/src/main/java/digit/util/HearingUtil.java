@@ -6,11 +6,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import digit.config.Configuration;
+import digit.kafka.producer.Producer;
 import digit.repository.ServiceRequestRepository;
-import digit.web.models.hearing.Hearing;
-import digit.web.models.hearing.HearingListSearchRequest;
-import digit.web.models.hearing.HearingRequest;
-import digit.web.models.hearing.HearingUpdateBulkRequest;
+import digit.web.models.hearing.*;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.ServiceCallException;
 import org.springframework.stereotype.Component;
@@ -30,22 +28,31 @@ public class HearingUtil {
 
     private final ServiceRequestRepository serviceRequestRepository;
 
-    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository) {
+    private final Producer producer;
+
+    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, Producer producer) {
         this.objectMapper = objectMapper;
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
+        this.producer = producer;
     }
 
-    public void callHearing(HearingUpdateBulkRequest hearingRequest) {
-        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS,false);
+    public void callHearing(HearingUpdateBulkRequest hearingRequest, Boolean isRetryRequired) {
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         StringBuilder uri = new StringBuilder(configuration.getHearingHost().concat(configuration.getHearingUpdateEndPoint()));
         try {
-            serviceRequestRepository.fetchResult(uri,hearingRequest);
+            serviceRequestRepository.fetchResult(uri, hearingRequest);
         } catch (HttpClientErrorException e) {
             log.error(EXTERNAL_SERVICE_EXCEPTION, e);
             throw new ServiceCallException(e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error(SEARCHER_SERVICE_EXCEPTION, e);
+            if (Boolean.TRUE.equals(isRetryRequired)) {
+                log.info("Retrying callHearing after delay for hearingId: {}", hearingRequest.getHearings().get(0).getHearingId());
+
+                RetryHearingRequest retryPayload = new RetryHearingRequest(hearingRequest, Boolean.FALSE);
+                producer.push(configuration.getRetryHearingUpdateTimeTopic(), retryPayload);
+            }
         }
     }
 

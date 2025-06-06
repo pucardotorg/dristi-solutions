@@ -166,11 +166,11 @@ public class PaymentUpdateService {
         Set<String> phoneNumbers = callIndividualService(applicationRequest.getRequestInfo(), individualIds);
 
         SmsTemplateData smsTemplateData = SmsTemplateData.builder()
-                .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
-                .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
+                .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "")
+                .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").textValue() : "")
                 .applicationType(applicationType)
-                .originalHearingDate(formData.has("initialHearingDate") ? formData.get("initialHearingDate").asText() : "")
-                .reScheduledHearingDate(formData.has("changedHearingDate") ? formData.get("changedHearingDate").asText() : "")
+                .originalHearingDate(formData.has("initialHearingDate") ? formData.get("initialHearingDate").textValue() : "")
+                .reScheduledHearingDate(formData.has("changedHearingDate") ? formData.get("changedHearingDate").textValue() : "")
                 .tenantId(applicationRequest.getApplication().getTenantId()).build();
 
         for (String number : phoneNumbers) {

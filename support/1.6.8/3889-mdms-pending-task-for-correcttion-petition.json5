@@ -1,0 +1,148 @@
+[
+  {
+    "tenantId": "kl",
+    "masterName": "common-masters",
+    "moduleName": "PendingTaskType",
+    "mdmsPayload": [
+      //schema update
+      {
+        "id": "2fd73d45-7b94-499f-9d65-0df2e158eb82",
+        "tenantId": "kl",
+        "code": "common-masters.PendingTaskType",
+        "description": null,
+        "definition": {
+          "type": "object",
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "required": [
+            "id",
+            "pendingTask",
+            "actor",
+            "triggerAction",
+            "state",
+            "workflowModule",
+            "closerAction",
+            "screenType"
+          ],
+          "x-unique": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "actor": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string"
+            },
+            "isgeneric": {
+              "type": "boolean"
+            },
+            "screenType": {
+              "type": "string"
+            },
+            "pendingTask": {
+              "type": "string"
+            },
+            "closerAction": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "triggerAction": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "actionCategory": {
+              "type": "string"
+            },
+            "workflowModule": {
+              "type": "string"
+            },
+            "referenceEntityTypeNameMapping": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "referenceEntityType",
+                  "pendingTaskName"
+                ],
+                "properties": {
+                  "pendingTaskName": {
+                    "type": "string"
+                  },
+                  "referenceEntityType": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "isActive": true
+      },
+
+
+      //data update
+      {
+        "id": "10dd4f04-53d4-44c3-80c2-c5bd0b3eae9c",
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": "14",
+        "data": {
+          "id": "14",
+          "actor": "Judge/CMO",
+          "state": "PENDINGREVIEW",
+          "isgeneric": false,
+          "screenType": "applicationCompositeOrder",
+          "pendingTask": "Review Document Submission",
+          "closerAction": [
+            "APPROVE",
+            "REJECT",
+            "AUTOESCALATE",
+            "DELETE",
+            "RESPOND",
+            "ABANDON"
+          ],
+          "triggerAction": [
+            "PAY"
+          ],
+          "workflowModule": "application-voluntary-submission",
+          "referenceEntityTypeNameMapping": [
+            {
+              "pendingTaskName": "Review Litigant Details Change",
+              "referenceEntityType": "CORRECTION_IN_COMPLAINANT_DETAILS"
+            }
+          ]
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "tenantId": "kl",
+    "masterName": "Application",
+    "moduleName": "ApplicationType",
+    "mdmsPayload": [
+      {
+        "id": "398a42f5-3493-4a5e-aa4b-bc353082f40d",
+        "tenantId": "kl",
+        "schemaCode": "Application.ApplicationType",
+        "uniqueIdentifier": "15",
+        "data": {
+          "id": 15,
+          "type": "CORRECTION_IN_COMPLAINANT_DETAILS",
+          "isactive": true,
+          "totalAmount": "20"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

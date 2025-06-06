@@ -20,6 +20,7 @@ public class EvidenceSearchCriteria {
     private String caseId;
     private String applicationNumber;
     private String artifactType;
+    private Boolean isVoid;
     private Boolean evidenceStatus;
     private String hearing;
     private String order;
@@ -27,11 +28,13 @@ public class EvidenceSearchCriteria {
     private String sourceName;
     private String status;
     private String artifactNumber;
-    private String courtId = null;
     private String filingNumber;
     private UUID owner;
     private String tenantId;
+    private String filingType;
     private String fileStoreId;
+    private String courtId;
+    private String sourceType;
 
     @JsonIgnore
     private String userUuid;
