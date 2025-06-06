@@ -209,7 +209,7 @@ const PaymentForSummonModal = ({ path }) => {
     },
     {},
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const filteredTasks = useMemo(() => tasksData?.list, [tasksData]);
@@ -218,7 +218,7 @@ const PaymentForSummonModal = ({ path }) => {
     { tenantId, criteria: { id: filteredTasks?.[0]?.orderId, ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filteredTasks?.[0]?.orderId,
-    Boolean(filteredTasks?.[0]?.orderId)
+    Boolean(filteredTasks?.[0]?.orderId && caseCourtId)
   );
 
   const compositeItem = useMemo(
@@ -251,7 +251,7 @@ const PaymentForSummonModal = ({ path }) => {
     },
     { applicationNumber: "", cnrNumber: "" },
     orderData?.list?.[0]?.hearingNumber,
-    Boolean(orderData?.list?.[0]?.hearingNumber)
+    Boolean(orderData?.list?.[0]?.hearingNumber && caseCourtId)
   );
 
   const consumerCode = useMemo(() => {

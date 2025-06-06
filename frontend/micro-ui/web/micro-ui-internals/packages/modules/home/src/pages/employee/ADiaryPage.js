@@ -254,7 +254,7 @@ const ADiaryPage = ({ path }) => {
       }
     };
     getDiarySearch();
-  }, [entryDate, tenantId]);
+  }, [entryDate, tenantId, courtId]);
 
   const uploadSignedPdf = async () => {
     try {
@@ -319,7 +319,7 @@ const ADiaryPage = ({ path }) => {
     {},
     `diary-entries-${entryDate}-${offSet}`,
     entryDate,
-    Boolean(entryDate)
+    Boolean(entryDate && courtId)
   );
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);

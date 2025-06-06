@@ -542,7 +542,7 @@ const EvidenceModal = ({
     },
     {},
     artifactNumber,
-    Boolean(artifactNumber)
+    Boolean(artifactNumber && caseCourtId)
   );
 
   const evidenceDetails = useMemo(() => evidenceData?.artifacts?.[0], [evidenceData]);

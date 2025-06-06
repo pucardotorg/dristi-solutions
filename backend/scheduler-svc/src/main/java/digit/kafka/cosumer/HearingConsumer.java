@@ -72,7 +72,6 @@ public class HearingConsumer {
 
             try {
                 hearingUtil.callHearing(retryRequest.getHearingRequest(), retryRequest.getIsRetryRequired());
-                log.info("Successfully called hearingUtil.callHearing for hearingId: {}", hearingId);
             } catch (Exception ex) {
                 log.error("Failed to call hearingUtil.callHearing for hearingId: {}", hearingId, ex);
             }

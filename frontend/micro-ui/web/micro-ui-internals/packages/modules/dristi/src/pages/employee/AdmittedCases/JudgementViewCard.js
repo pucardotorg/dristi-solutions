@@ -45,7 +45,7 @@ const JudgementViewCard = ({ caseData, width }) => {
     },
     {},
     caseData?.filingNumber,
-    Boolean(caseData?.filingNumber && tenantId && finalOutcomeOrderType)
+    Boolean(caseData?.filingNumber && tenantId && finalOutcomeOrderType && caseCourtId)
   );
 
   const finalOutcomeOrder = ordersRes?.list?.[0];
