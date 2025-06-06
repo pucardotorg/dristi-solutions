@@ -418,8 +418,10 @@ public class HearingService {
         Set<Integer> slotIds = bulkReschedule.getSlotIds();
 
         validator.validateBulkRescheduleRequest(requestInfo, bulkReschedule);
+        updateJudgeCalendar(request);
 
         List<Hearing> hearingsToReschedule = getHearingsForBulkReschedule(slotIds, bulkReschedule, requestInfo);
+
 
         if (hearingsToReschedule.isEmpty()) {
             log.info("No hearings found for bulk reschedule");
@@ -451,6 +453,39 @@ public class HearingService {
         }
 
         return scheduleHearings;
+    }
+
+    private void updateJudgeCalendar(@Valid BulkRescheduleRequest request) {
+        log.info("operation=updateJudgeCalendar, status=IN_PROGRESS");
+        Long startTime = request.getBulkReschedule().getStartTime();
+        Long endTime = request.getBulkReschedule().getEndTime();
+        String judgeId = request.getBulkReschedule().getJudgeId();
+        String tenantId = request.getBulkReschedule().getTenantId();
+        String courtId = request.getBulkReschedule().getCourtId();
+
+        Long startOfTheDay = dateUtil.getStartOfTheDayForEpoch(startTime);
+
+        log.info("startOfTheDay: {}, endTime: {}", startOfTheDay, endTime);
+        List<JudgeCalendarRule> judgeCalendars = new ArrayList<>();
+
+        for (Long i = startOfTheDay; i < endTime; i = i + 86400000) {
+            JudgeCalendarRule judgeCalendarRule = new JudgeCalendarRule();
+            judgeCalendarRule.setTenantId(tenantId);
+            judgeCalendarRule.setJudgeId(judgeId);
+            judgeCalendarRule.setDate(i);
+            judgeCalendarRule.setRuleType("RESCHEDULE");
+            judgeCalendarRule.setCourtIds(Collections.singletonList(courtId));
+            judgeCalendars.add(judgeCalendarRule);
+        }
+        JudgeCalendarUpdateRequest calendarUpdateRequest = JudgeCalendarUpdateRequest.builder()
+                .requestInfo(request.getRequestInfo())
+                .judgeCalendarRule(judgeCalendars)
+                .build();
+
+        schedulerUtil.updateJudgeCalendar(calendarUpdateRequest);
+
+        log.info("operation=updateJudgeCalendar, status=COMPLETED");
+
     }
 
 
