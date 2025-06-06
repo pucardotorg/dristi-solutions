@@ -149,6 +149,17 @@ public class EvidenceService {
             }
         }
     }
+
+    private boolean canCourtEmployeeSign(EvidenceSearchCriteria searchCriteria, RequestInfo requestInfo) {
+        String tenantId = searchCriteria.getTenantId();
+
+        return requestInfo.getUserInfo().getRoles().stream()
+                .anyMatch(role ->
+                        tenantId.equals(role.getTenantId()) && (BENCH_CLERK.equals(role.getCode()) || JUDGE_ROLE.equals(role.getCode()) || TYPIST_ROLE.equals(role.getCode()))
+                );
+    }
+
+
     public Artifact updateEvidence(EvidenceRequest evidenceRequest) {
         try {
             Boolean isEvidence = evidenceRequest.getArtifact().getIsEvidence();
