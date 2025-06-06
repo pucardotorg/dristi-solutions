@@ -2033,8 +2033,8 @@ export const UICustomizations = {
                   `${row?.advocateDetails?.accused?.[0]}(A)${
                     row?.advocateDetails?.accused?.length === 2
                       ? " + 1 Other"
-                      : row?.advocateDetailss?.accused?.length > 2
-                      ? ` + ${row?.advocateDetailss?.accused?.length - 1} others`
+                      : row?.advocateDetails?.accused?.length > 2
+                      ? ` + ${row?.advocateDetails?.accused?.length - 1} others`
                       : ""
                   }`}
               </p>

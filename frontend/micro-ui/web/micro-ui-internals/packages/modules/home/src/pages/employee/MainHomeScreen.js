@@ -78,73 +78,83 @@ const MainHomeScreen = () => {
 
   const fetchHearingCount = async () => {
     const { fromDate, toDate } = getTodayRange();
-    const payload = {
-      inbox: {
-        processSearchCriteria: {
-          businessService: ["hearing-default"],
-          moduleName: "Hearing Service",
+    try {
+      const payload = {
+        inbox: {
+          processSearchCriteria: {
+            businessService: ["hearing-default"],
+            moduleName: "Hearing Service",
+            tenantId: tenantId,
+          },
+          moduleSearchCriteria: {
+            tenantId: tenantId,
+            courtId: localStorage.getItem("courtId"),
+            ...(fromDate && toDate ? { fromDate, toDate } : {}),
+          },
           tenantId: tenantId,
+          limit: 300,
+          offset: 0,
         },
-        moduleSearchCriteria: {
-          tenantId: tenantId,
-          courtId: localStorage.getItem("courtId"),
-          ...(fromDate && toDate ? { fromDate, toDate } : {}),
-        },
-        tenantId: tenantId,
-        limit: 300,
-        offset: 0,
-      },
-    };
-    const res = await HomeService.InboxSearch(payload, { tenantId: tenantId });
-    setHearingCount(res?.totalCount || 0);
+      };
+      const res = await HomeService.InboxSearch(payload, { tenantId: tenantId });
+      setHearingCount(res?.totalCount || 0);
+    } catch (err) {
+      showToast("error", t("ISSUE_IN_FETCHING"), 5000);
+      console.log(err);
+    }
   };
 
   const fetchPendingTaskCounts = async () => {
     const { fromDate, toDate } = getTodayRange();
-    const payload = {
-      SearchCriteria: {
-        moduleName: "Pending Tasks Service",
-        tenantId: tenantId,
-        limit: 10,
-        offset: 0,
-        moduleSearchCriteria: {
-          screenType: ["home", "applicationCompositeOrder"],
-          isCompleted: false,
-          courtId: localStorage.getItem("courtId"),
+    try {
+      const payload = {
+        SearchCriteria: {
+          moduleName: "Pending Tasks Service",
+          tenantId: tenantId,
+          limit: 10,
+          offset: 0,
+          moduleSearchCriteria: {
+            screenType: ["home", "applicationCompositeOrder"],
+            isCompleted: false,
+            courtId: localStorage.getItem("courtId"),
+          },
+          searchReviewProcess: {
+            date: toDate,
+            isOnlyCountRequired: true,
+            actionCategory: "Review Process",
+          },
+          searchViewApplication: {
+            date: toDate,
+            isOnlyCountRequired: true,
+            actionCategory: "View Application",
+          },
+          searchScheduleHearing: {
+            date: toDate,
+            isOnlyCountRequired: true,
+            actionCategory: "Schedule Hearing",
+          },
+          searchRegisterCases: {
+            date: null,
+            isOnlyCountRequired: true,
+            actionCategory: "Register cases",
+          },
         },
-        searchReviewProcess: {
-          date: toDate,
-          isOnlyCountRequired: true,
-          actionCategory: "Review Process",
-        },
-        searchViewApplication: {
-          date: toDate,
-          isOnlyCountRequired: true,
-          actionCategory: "View Application",
-        },
-        searchScheduleHearing: {
-          date: toDate,
-          isOnlyCountRequired: true,
-          actionCategory: "Schedule Hearing",
-        },
-        searchRegisterCases: {
-          date: null,
-          isOnlyCountRequired: true,
-          actionCategory: "Register cases",
-        },
-      },
-    };
-    let res = await HomeService.pendingTaskSearch(payload, { tenantId: tenantId });
-    const reviwCount = res?.reviewProcessData?.count || 0;
-    const applicationCount = res?.viewApplicationData?.count || 0;
-    const scheduleCount = res?.scheduleHearingData?.count || 0;
-    const registerCount = res?.registerCasesData?.count || 0;
-    setPendingTaskCount({
-      REGISTRATION: registerCount,
-      REVIEW_PROCESS: reviwCount,
-      VIEW_APPLICATION: applicationCount,
-      SCHEDULE_HEARING: scheduleCount,
-    });
+      };
+      let res = await HomeService.pendingTaskSearch(payload, { tenantId: tenantId });
+      const reviwCount = res?.reviewProcessData?.count || 0;
+      const applicationCount = res?.viewApplicationData?.count || 0;
+      const scheduleCount = res?.scheduleHearingData?.count || 0;
+      const registerCount = res?.registerCasesData?.count || 0;
+      setPendingTaskCount({
+        REGISTRATION: registerCount,
+        REVIEW_PROCESS: reviwCount,
+        VIEW_APPLICATION: applicationCount,
+        SCHEDULE_HEARING: scheduleCount,
+      });
+    } catch (err) {
+      showToast("error", t("ISSUE_IN_FETCHING"), 5000);
+      console.log(err);
+    }
   };
 
   useEffect(() => {

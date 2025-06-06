@@ -52,14 +52,14 @@ function useInboxSearch({ limit = 300, offset = 0 } = {}) {
             processSearchCriteria: {
               businessService: ["hearing-default"],
               moduleName: "Hearing Service",
-              tenantId: "kl",
+              tenantId: Digit.ULBService.getCurrentTenantId(),
             },
             moduleSearchCriteria: {
-              tenantId: "kl",
+              tenantId: Digit.ULBService.getCurrentTenantId(),
               courtId: localStorage.getItem("courtId"),
               ...(fromDate && toDate ? { fromDate, toDate } : {}),
             },
-            tenantId: "kl",
+            tenantId: Digit.ULBService.getCurrentTenantId(),
             limit,
             offset,
           },
@@ -68,7 +68,7 @@ function useInboxSearch({ limit = 300, offset = 0 } = {}) {
         if (filters?.purpose) payload.inbox.moduleSearchCriteria.hearingType = filters.purpose?.code;
         if (filters?.caseQuery) payload.inbox.moduleSearchCriteria.searchableFields = filters.caseQuery;
 
-        const res = await HomeService.InboxSearch(payload, { tenantId: "kl" });
+        const res = await HomeService.InboxSearch(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
         setData(res?.items || []);
         setHearingCount(res?.totalCount || 0);
       } catch (err) {
