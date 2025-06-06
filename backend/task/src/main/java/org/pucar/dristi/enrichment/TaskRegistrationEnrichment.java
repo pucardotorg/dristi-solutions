@@ -80,6 +80,7 @@ public class TaskRegistrationEnrichment {
 
     private void enrichCourtId(TaskRequest taskRequest) {
 
+        taskRequest.getRequestInfo().getUserInfo().setType("EMPLOYEE");
         List<CourtCase> caseDetails = caseUtil.getCaseDetails(taskRequest);
 
         if (caseDetails.isEmpty()) {
