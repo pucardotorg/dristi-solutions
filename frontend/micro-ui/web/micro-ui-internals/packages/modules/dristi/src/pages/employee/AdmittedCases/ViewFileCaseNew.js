@@ -76,7 +76,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     });
   };
 
-  const handleDocumentSelect = (docId, fileStoreId, title) => {
+  const handleDocumentSelect = (docId, fileStoreId) => {
     setSelectedDocument(docId);
     setSelectedFileStoreId(fileStoreId);
   };
@@ -507,14 +507,14 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
       applicationList.forEach((application) => {
         if (application?.documents?.length > 0) {
           const signed = [];
-          const others = [];
+          const otherDocument = [];
 
-          application.documents.forEach((document) => {
+          application.documents?.forEach((document) => {
             if (document?.fileStore) {
-              if (document.documentType === "SIGNED") {
-                signed.push(document.fileStore);
+              if (document?.documentType === "SIGNED") {
+                signed?.push(document?.fileStore);
               } else {
-                others.push(document.fileStore);
+                otherDocument?.push(document);
               }
             }
           });
@@ -532,11 +532,11 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
             });
           });
 
-          if (others.length > 0) {
-            const otherChildren = others.map((fileStoreId, idx) => ({
+          if (otherDocument.length > 0) {
+            const otherChildren = otherDocument?.map((doc, idx) => ({
               id: `${application.applicationNumber}-other-${idx}`,
-              title: `${t("DOCUMENT_HEADING")} ${idx + 1}`,
-              fileStoreId,
+              title: doc?.additionalDetails?.name?.split(".")[0],
+              fileStoreId: doc?.fileStore,
               hasChildren: false,
             }));
 
@@ -758,12 +758,12 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
       const children = await Promise.all(
         bailApplicationsList.map(async (application, index) => {
           const signed = [];
-          const others = [];
+          const otherDocument = [];
 
           application?.documents?.forEach((doc) => {
             if (doc?.fileStore) {
-              if (doc.documentType === "SIGNED") signed.push(doc.fileStore);
-              else others.push(doc.fileStore);
+              if (doc.documentType === "SIGNED") signed.push(doc?.fileStore);
+              else otherDocument?.push(doc);
             }
           });
 
@@ -774,10 +774,10 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
             fileStoreId: signed[0] || null,
           };
 
-          const otherDocsChildren = others.map((fsId, i) => ({
+          const otherDocsChildren = otherDocument?.map((doc, i) => ({
             id: `${application.applicationNumber}-other-${i}`,
-            title: `${t("DOCUMENT_HEADING")} ${i + 1}`,
-            fileStoreId: fsId,
+            title: doc?.additionalDetails?.name?.split(".")[0],
+            fileStoreId: doc?.fileStore,
             hasChildren: false,
           }));
 
@@ -820,12 +820,12 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
               if (submitApps.length > 0) {
                 const docs = submitApps[0]?.documents || [];
                 const submitSigned = [];
-                const submitOthers = [];
+                const submitOtherDocument = [];
 
                 docs.forEach((doc) => {
                   if (doc?.fileStore) {
-                    if (doc.documentType === "SIGNED") submitSigned.push(doc.fileStore);
-                    else submitOthers.push(doc.fileStore);
+                    if (doc?.documentType === "SIGNED") submitSigned?.push(doc?.fileStore);
+                    else submitOtherDocument?.push(doc);
                   }
                 });
 
@@ -840,11 +840,11 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
                   })
                 );
 
-                if (submitOthers.length > 0) {
-                  const othersChildren = submitOthers.map((fsId, j) => ({
+                if (submitOtherDocument.length > 0) {
+                  const othersChildren = submitOtherDocument?.map((doc, j) => ({
                     id: `${application.applicationNumber}-submit-other-${j}`,
-                    title: `${t("DOCUMENT_HEADING")} ${j + 1}`,
-                    fileStoreId: fsId,
+                    title: doc?.additionalDetails?.name?.split(".")[0],
+                    fileStoreId: doc?.fileStore,
                     hasChildren: false,
                   }));
 
@@ -910,6 +910,54 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
 
     getOrder();
   }, [filingNumber, tenantId, courtId]);
+
+  const handleMarkAsEvidence = async () => {
+    try {
+      await evidenceUpdateMutation
+        .mutateAsync({
+          url: Urls.dristi.evidenceUpdate,
+          params: {},
+          body: {
+            artifact: {
+              ...contextMenu.artifactList,
+              isEvidence: true,
+            },
+          },
+          config: {
+            enable: true,
+          },
+        })
+        .then(async () => {
+          const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing?.status === "SCHEDULED");
+
+          await DRISTIService.addADiaryEntry({
+            diaryEntry: {
+              courtId,
+              businessOfDay: `${contextMenu?.artifactNumber} marked as evidence`,
+              tenantId,
+              entryDate: new Date().setHours(0, 0, 0, 0),
+              caseNumber: caseDetails?.cmpNumber,
+              referenceId: contextMenu?.artifactNumber,
+              referenceType: "Documents",
+              hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
+              additionalDetails: {
+                filingNumber,
+              },
+            },
+          });
+          directEvidenceRefetch();
+          applicationEvidenceRefetch();
+          complainantEvidenceRefetch();
+          accusedEvidenceRefetch();
+          courtEvidenceRefetch();
+          courtDepositionRefetch();
+        });
+    } catch (error) {
+      console.error("error: ", error);
+    }
+
+    setContextMenu(null);
+  };
 
   const generatePublishedOrderChildren = (publishedOrderList) => {
     return publishedOrderList.map((order, index) => {
@@ -1116,8 +1164,6 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
       displayNumber = parentNumber;
     }
 
-    const displayTitle = level === 0 ? `${displayNumber}. ${t(item.title)}` : `${displayNumber} ${t(item.title)}`;
-
     return (
       <div key={item.id}>
         <div
@@ -1127,7 +1173,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
             if (item.hasChildren) {
               toggleExpanded(item);
             } else if (item.fileStoreId && item.id !== selectedDocument) {
-              handleDocumentSelect(item.id, item.fileStoreId, displayTitle);
+              handleDocumentSelect(item.id, item.fileStoreId);
             }
           }}
           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = isSelected ? "#E8E8E8" : "#F9FAFB")}
@@ -1147,8 +1193,9 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
             }
           }}
         >
-          <span className="menu-item-title" style={{ fontWeight: isSelected ? 700 : 400 }}>
-            {displayTitle}
+          <span className="menu-item-title" style={{ color: isSelected ? "#3D3C3C" : "#77787B", fontWeight: isSelected ? 700 : 400 }}>
+            <span className="menu-item-number">{level === 0 ? displayNumber + "." : displayNumber}</span>
+            <span className="menu-item-text">{` ${t(item.title)}`}</span>
           </span>
 
           {item.hasChildren && <div style={{ marginLeft: "8px" }}>{isExpanded ? <CustomArrowUpIcon /> : <CustomArrowDownIcon />}</div>}
@@ -1189,19 +1236,15 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
       </div>
       {contextMenu && (
         <div
+          className="context-menu"
           style={{
-            position: "fixed",
             top: contextMenu.mouseY,
             left: contextMenu.mouseX,
-            backgroundColor: "white",
-            border: "1px solid #ccc",
-            boxShadow: "0px 0px 5px rgba(0,0,0,0.2)",
-            zIndex: 9999,
           }}
           onMouseLeave={() => setContextMenu(null)}
         >
           <div
-            style={{ padding: "8px", cursor: "pointer" }}
+            style={{ padding: "10px", cursor: "pointer" }}
             onClick={() => {
               downloadPdf(tenantId, contextMenu.fileStoreId);
               setContextMenu(null);
@@ -1209,62 +1252,8 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
           >
             {t("DOWNLOAD_PDF")}
           </div>
-
           {contextMenu?.isEvidenceMenu && contextMenu?.isEvidence === false && (
-            <div
-              style={{ padding: "8px", cursor: "pointer" }}
-              onClick={async () => {
-                try {
-                  const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing?.status === "SCHEDULED");
-
-                  await DRISTIService.addADiaryEntry({
-                    diaryEntry: {
-                      courtId,
-                      businessOfDay: `${contextMenu?.artifactNumber} marked as evidence`,
-                      tenantId,
-                      entryDate: new Date().setHours(0, 0, 0, 0),
-                      caseNumber: caseDetails?.cmpNumber,
-                      referenceId: contextMenu?.artifactNumber,
-                      referenceType: "Documents",
-                      hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
-                      additionalDetails: {
-                        filingNumber,
-                      },
-                    },
-                  });
-
-                  await evidenceUpdateMutation
-                    .mutateAsync({
-                      url: Urls.dristi.evidenceUpdate,
-                      params: {},
-                      body: {
-                        artifact: {
-                          ...contextMenu.artifactList,
-                          isEvidence: true,
-                          isVoid: false,
-                          reason: "",
-                          filingNumber,
-                        },
-                      },
-                      config: {
-                        enable: true,
-                      },
-                    })
-                    .then(() => {
-                      directEvidenceRefetch();
-                      applicationEvidenceRefetch();
-                      complainantEvidenceRefetch();
-                      accusedEvidenceRefetch();
-                      courtEvidenceRefetch();
-                      courtDepositionRefetch();
-                    });
-                } catch (error) {
-                  console.error("error: ", error);
-                }
-
-                setContextMenu(null);
-              }}
-            >
+            <div style={{ padding: "10px", cursor: "pointer" }} onClick={handleMarkAsEvidence}>
               {t("MARK_AS_EVIDENCE")}
             </div>
           )}

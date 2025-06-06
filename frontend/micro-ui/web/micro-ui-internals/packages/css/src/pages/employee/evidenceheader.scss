@@ -337,26 +337,32 @@
   }
 
   .menu-item-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.4;
+    word-break: break-word;
     font-family: Roboto;
     font-size: 16px;
     line-height: 1.2;
-    letter-spacing: 0%;
-    flex: 1;
-    color: #77787b;
-    text-indent: -1.7em;
-    padding-left: 2em;
-    word-wrap: break-word;
-  }
-
-  .menu-item-title.selected {
-    font-weight: 700;
   }
 
   .menu-item-icon {
     margin-left: 8px;
   }
 
+  .menu-item-number {
+    flex-shrink: 0;
+    text-align: right;
+  }
+
+  .menu-item-text {
+    flex: 1;
+    word-break: break-word;
+  }
+
   .sidebar-panel {
+    flex: 1;
     width: 280px;
     background-color: #f9fafb;
     border-right: 1px solid #e5e7eb;
@@ -374,10 +380,8 @@
     line-height: 100%;
     letter-spacing: 0%;
     color: #1f2937;
-    padding: 16px;
+    padding: 20px;
     border-bottom: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: center;
     position: sticky;
     top: 0;
     background-color: #f9fafb;
@@ -385,7 +389,7 @@
   }
 
   .doc-viewer-container {
-    flex: 1;
+    flex: 4;
     padding: 16px;
     overflow-y: auto;
     height: 100%;
@@ -395,5 +399,13 @@
     .docviewer-wrapper {
       margin-top: 0px !important;
     }
+  }
+
+  .context-menu {
+    position: fixed;
+    background-color: white;
+    border: 1px solid #ccc;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
   }
 }
