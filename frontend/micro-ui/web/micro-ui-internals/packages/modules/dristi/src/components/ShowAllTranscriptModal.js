@@ -61,6 +61,7 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, hearingList, judgeView =
                 <span>Attendees: </span>
                 <span style={{ whiteSpace: "normal", wordBreak: "normal" }}>
                   {hearing?.attendees
+                    ?.filter((attendee) => attendee?.wasPresent)
                     ?.map((attendee, index) => attendee?.name)
                     ?.filter(Boolean)
                     ?.join(", ")}
