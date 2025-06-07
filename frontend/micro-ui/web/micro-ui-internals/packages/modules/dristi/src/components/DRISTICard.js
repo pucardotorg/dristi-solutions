@@ -14,6 +14,7 @@ const DRISTICard = () => {
   const isScrutiny = useMemo(() => roles.some((role) => role.code === "CASE_REVIEWER"), [roles]);
   const isCourtOfficer = useMemo(() => roles.some((role) => role.code === "HEARING_CREATOR"), [roles]);
   const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
   const isNyayMitra = ["ADVOCATE_APPLICATION_VIEWER", "ADVOCATE_APPROVER", "ADVOCATE_CLERK_APPROVER"].reduce((res, curr) => {
     if (!res) return res;
@@ -21,7 +22,9 @@ const DRISTICard = () => {
     return res;
   }, true);
 
-  if (isScrutiny || isJudge || isCourtOfficer || isBenchClerk) {
+  if (isJudge || isTypist || isBenchClerk) {
+    history.push(`/${window?.contextPath}/employee/home/home-screen`);
+  } else if (isScrutiny) {
     history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
   } else if (isCitizen) {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);

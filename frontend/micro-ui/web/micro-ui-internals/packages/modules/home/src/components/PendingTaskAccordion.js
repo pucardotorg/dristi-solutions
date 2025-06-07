@@ -1,8 +1,23 @@
 import { InfoBannerIcon } from "@egovernments/digit-ui-components";
 import { CustomArrowDownIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { checkIfDueDatePassed, getFormattedDate } from "../utils";
+import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
+import { CloseSvg } from "@egovernments/digit-ui-react-components";
 // import { CustomArrowDownIcon, CustomArrowUpIcon } from "../icons/svgIndex";
+
+const CloseBtn = (props) => {
+  return (
+    <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
+      <CloseSvg />
+    </div>
+  );
+};
+
+const Heading = (props) => {
+  return <h1 className="heading-m">{props.label}</h1>;
+};
 
 function PendingTaskAccordion({
   pendingTasks,
@@ -15,10 +30,12 @@ function PendingTaskAccordion({
   setShowSubmitResponseModal,
   setResponsePendingTask,
   setPendingTaskActionModals,
+  tableView = false,
 }) {
   const history = useHistory();
   const [isOpen, setIsOpen] = useState(isAccordionOpen);
   const [check, setCheck] = useState(false);
+  const [showAllPendingTasksModal, setShowAllPendingTasksModal] = useState(false);
 
   const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles?.map((role) => role?.code) || [], []);
   const isJudge = roles.includes("JUDGE_ROLE");
@@ -27,19 +44,21 @@ function PendingTaskAccordion({
     setIsOpen(!isOpen);
   };
 
-  const redirectPendingTaskUrl = async (url, isCustomFunction = () => {}, params = {}, isOpenInNewTab) => {
-    if (isCustomFunction) {
-      await url({ ...params, isOpenInNewTab });
-    } else {
-      history.push(url, {
-        state: {
-          params: params,
-        },
-      });
-      setCheck(!check);
-    }
-  };
-
+  const redirectPendingTaskUrl = useCallback(
+    async (url, isCustomFunction = () => {}, params = {}, isOpenInNewTab) => {
+      if (isCustomFunction) {
+        await url({ ...params, isOpenInNewTab });
+      } else {
+        history.push(url, {
+          state: {
+            params: params,
+          },
+        });
+        setCheck(!check);
+      }
+    },
+    [history, check, setCheck]
+  );
   const formatDate = (dateInMS) => {
     try {
       const milliseconds = parseInt(dateInMS?.split("-")[1]);
@@ -63,7 +82,160 @@ function PendingTaskAccordion({
     }
   };
 
-  return (
+  const sortedPendingTasks = useMemo(() => {
+    return [...pendingTasks].sort((a, b) => {
+      const dateA = new Date(a?.stateSla);
+      const dateB = new Date(b?.stateSla);
+
+      const timeA = isNaN(dateA) ? Infinity : dateA.getTime();
+      const timeB = isNaN(dateB) ? Infinity : dateB.getTime();
+
+      return timeA - timeB;
+    });
+  }, [pendingTasks]);
+
+  const pendingTasksTableView = useCallback(
+    (modalView = false) => {
+      return (
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h1 className="heading-m">{t("PENDING_ACTIONS")}</h1>
+            {!modalView && (
+              <span
+                style={{ lineHeight: "normal", marginLeft: "12px", cursor: "pointer", fontWeight: "bold", color: "rgb(0, 126, 126)" }}
+                onClick={() => setShowAllPendingTasksModal(true)}
+              >
+                {t("VIEW_ALL_PENDING_TASKS")}
+              </span>
+            )}
+          </div>
+          <div className="tasks-component-table" style={{ display: "flex", flexDirection: "column", marginLeft: "20px" }}>
+            <div
+              className="tasks-component-table-header"
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                borderTop: "1px solid #BBBBBD",
+                borderBottom: "1px solid #BBBBBD",
+                padding: "10px 20px 10PX 15PX",
+              }}
+            >
+              <div className="tasks-component-table-header-row-cell" style={{ width: "40%", color: "#0B0C0C", fontWeight: "bold" }}>
+                {t("TASK")}
+              </div>
+              <div className="tasks-component-table-header-row-cell" style={{ width: "30%", color: "#0B0C0C", fontWeight: "bold" }}>
+                {t("DUE_DATE")}
+              </div>
+              <div className="tasks-component-table-header-row-cell" style={{ width: "30%", color: "#0B0C0C", fontWeight: "bold" }}>
+                {t("CREATED_ON")}
+              </div>
+            </div>
+            <div
+              className="tasks-component-table-body"
+              style={{ ...(modalView ? { overflowY: "auto", maxHeight: "60vh" } : { overflowY: "hidden", maxHeight: "300px" }) }}
+            >
+              {sortedPendingTasks?.map((item) => {
+                const isDueDatePassed = checkIfDueDatePassed(item?.stateSla);
+                return (
+                  <div
+                    className="tasks-component-table-row"
+                    key={`${item?.filingNumber}-${item?.referenceId}`}
+                    style={{
+                      display: "flex",
+                      flexDirection: "row",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      borderBottom: "1px solid #E8E8E8",
+                      padding: "20px 20px 20px 15px",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => {
+                      if (modalView) {
+                        setShowAllPendingTasksModal(false);
+                      }
+                      if (item?.actionName === "Pay Vakalatnama Fees") {
+                        setPendingTaskActionModals((pendingTaskActionModals) => ({
+                          ...pendingTaskActionModals,
+                          joinCasePaymentModal: true,
+                          data: {
+                            filingNumber: item?.filingNumber,
+                            taskNumber: item?.referenceId,
+                          },
+                        }));
+                        return;
+                      }
+                      if (item?.actionName === "Review Advocate Replace Request") {
+                        setPendingTaskActionModals((pendingTaskActionModals) => ({
+                          ...pendingTaskActionModals,
+                          joinCaseConfirmModal: true,
+                          data: {
+                            filingNumber: item?.filingNumber,
+                            taskNumber: item?.referenceId,
+                          },
+                        }));
+                        return;
+                      }
+                      if (item?.status === "PENDING_SIGN" && item?.screenType === "Adiary") {
+                        history.push(`/${window.contextPath}/employee/home/dashboard/adiary?date=${item?.params?.referenceId}`);
+                      } else if (item?.status === "PROFILE_EDIT_REQUEST") {
+                        const caseId = item?.params?.caseId;
+                        const referenceId = item?.referenceId;
+                        const dateOfApplication = item?.params?.dateOfApplication;
+                        const uniqueId = item?.params?.uniqueId;
+
+                        history.push(
+                          `/${window.contextPath}/employee/dristi/home/view-case/review-litigant-details?caseId=${caseId}&referenceId=${referenceId}`,
+                          {
+                            dateOfApplication,
+                            uniqueId,
+                          }
+                        );
+                      } else if (item?.status === "PENDING_RESPONSE") {
+                        if (isJudge) {
+                          const caseId = item?.params?.caseId;
+                          const filingNumber = item?.params?.filingNumber;
+                          history.push(
+                            `/${window.contextPath}/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`,
+                            {
+                              triggerAdmitCase: true,
+                            }
+                          );
+                        } else {
+                          setResponsePendingTask(item);
+                          setShowSubmitResponseModal(true);
+                        }
+                      } else redirectPendingTaskUrl(item?.redirectUrl, item?.isCustomFunction, item?.params);
+                    }}
+                  >
+                    <div className="tasks-component-table-row-cell" style={{ width: "40%", color: "#0A0A0A" }}>
+                      {item?.actionName}
+                    </div>
+                    <div
+                      className="tasks-component-table-row-cell"
+                      style={{
+                        ...(isDueDatePassed ? { color: "#D3302F", fontWeight: "bold" } : { color: "rgb(61, 60, 60)" }),
+                        width: "30%",
+                      }}
+                    >
+                      {item?.stateSla ? getFormattedDate(item?.stateSla) : t("NO_DUE_DATE")}
+                    </div>
+                    <div className="tasks-component-table-row-cell" style={{ width: "30%", color: "#3D3C3C" }}>
+                      {item?.createdTime ? getFormattedDate(item?.createdTime) : t("DATE_NOT_AVAILABLE")}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    },
+    [history, isJudge, redirectPendingTaskUrl, setPendingTaskActionModals, setResponsePendingTask, setShowSubmitResponseModal, t, sortedPendingTasks]
+  );
+
+  return !tableView ? (
     <div
       key={`${accordionKey}-${pendingTasks?.map((task) => task.filingNumber).join(",")}`}
       className="accordion-wrapper"
@@ -194,6 +366,21 @@ function PendingTaskAccordion({
         </div>
       </div>
     </div>
+  ) : (
+    <React.Fragment>
+      {pendingTasksTableView()}
+      {showAllPendingTasksModal && (
+        <Modal
+          headerBarEnd={<CloseBtn onClick={() => setShowAllPendingTasksModal(false)} />}
+          formId="modal-action"
+          popupStyles={{ width: "70%", paddingBottom: "20px" }}
+          headerBarMain={<Heading label={t("")} />}
+          hideSubmit
+        >
+          {pendingTasksTableView(true)}
+        </Modal>
+      )}
+    </React.Fragment>
   );
 }
 

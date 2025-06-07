@@ -98,6 +98,10 @@ export const Urls = {
   case: {
     addWitness: "/case/v1/add/witness",
   },
+  hearing: {
+    hearingUpdateTranscript: "/hearing/v1/update_transcript_additional_attendees",
+    uploadWitnesspdf: "/hearing/witnessDeposition/v1/uploadPdf",
+  },
   FileFetchById: "/filestore/v1/files/id",
   CombineDocuments: "/egov-pdf/dristi-pdf/combine-documents",
 };

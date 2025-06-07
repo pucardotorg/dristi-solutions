@@ -172,6 +172,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
       const res = await ordersService.createOrder(reqbody, { tenantId });
       DRISTIService.customApiService(Urls.dristi.pendingTask, {
         pendingTask: {
+          actionCategory: "View Application",
           name: t("ADVOCATE_REPLACEMENT_APPROVAL"),
           entityType: "order-default",
           referenceId: `MANUAL_${res?.order?.orderNumber}`,
