@@ -631,6 +631,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
                   }}
                   disable={orderData?.isCaseDisposed?.value === "CASE_DISPOSED"}
                   parentRef={targetRef}
+                  isOpenAbove={true}
                 />
                 {orderError?.partiesToAttendHearing && (
                   <CardLabelError style={{ margin: 0, padding: 0 }}> {t(orderError?.partiesToAttendHearing)} </CardLabelError>
