@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import pucar.config.Configuration;
 import pucar.strategy.OrderUpdateStrategy;
-import pucar.strategy.hearing.HearingUpdateBasedOnStatus;
 import pucar.util.CaseUtil;
 import pucar.util.HearingUtil;
 import pucar.web.models.Order;
@@ -30,14 +29,11 @@ public class PublishOrderSchedulingNextHearing implements OrderUpdateStrategy {
     private final Configuration configuration;
     private final CaseUtil caseUtil;
 
-    private final HearingUpdateBasedOnStatus hearingUpdateBasedOnStatus;
-
     @Autowired
-    public PublishOrderSchedulingNextHearing(HearingUtil hearingUtil, Configuration configuration, CaseUtil caseUtil, HearingUpdateBasedOnStatus hearingUpdateBasedOnStatus) {
+    public PublishOrderSchedulingNextHearing(HearingUtil hearingUtil, Configuration configuration, CaseUtil caseUtil) {
         this.hearingUtil = hearingUtil;
         this.configuration = configuration;
         this.caseUtil = caseUtil;
-        this.hearingUpdateBasedOnStatus = hearingUpdateBasedOnStatus;
     }
 
     @Override
@@ -49,7 +45,9 @@ public class PublishOrderSchedulingNextHearing implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        return false;
+        Order order = orderRequest.getOrder();
+        String action = order.getWorkflow().getAction();
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && SCHEDULING_NEXT_HEARING.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -72,8 +70,6 @@ public class PublishOrderSchedulingNextHearing implements OrderUpdateStrategy {
 
         HearingResponse newHearing = hearingUtil.createOrUpdateHearing(request, createHearingURI);
 
-        updateHearingSummary(orderRequest);
-
         order.setHearingNumber(newHearing.getHearing().getHearingId());
         log.info("hearing number:{}", newHearing.getHearing().getHearingId());
 
@@ -82,22 +78,11 @@ public class PublishOrderSchedulingNextHearing implements OrderUpdateStrategy {
         return null;
     }
 
-    private void updateHearingSummary(OrderRequest orderRequest) {
-
-        Order order = orderRequest.getOrder();
-        RequestInfo requestInfo = orderRequest.getRequestInfo();
-        String hearingNumber = hearingUtil.getHearingNumberFormApplicationAdditionalDetails(order.getAdditionalDetails());
-
-        List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
-                .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
-        Hearing hearing = hearings.get(0);
-
-        hearingUpdateBasedOnStatus.updateHearingBasedOnStatus(hearing, orderRequest, false);
-
-    }
-
     @Override
     public OrderRequest postProcess(OrderRequest orderRequest) {
+
+        hearingUtil.updateHearingStatus(orderRequest);
+
         return null;
     }
 

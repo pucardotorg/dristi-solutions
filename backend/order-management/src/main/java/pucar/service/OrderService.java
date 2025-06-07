@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import pucar.factory.OrderFactory;
 import pucar.factory.OrderServiceFactoryProvider;
-import pucar.strategy.hearing.HearingUpdateBasedOnStatus;
 import pucar.util.ADiaryUtil;
 import pucar.util.HearingUtil;
 import pucar.util.OrderUtil;
@@ -22,8 +21,7 @@ import pucar.web.models.hearing.HearingSearchRequest;
 
 import java.util.List;
 
-import static pucar.config.ServiceConstants.SAVE_DRAFT;
-import static pucar.config.ServiceConstants.SCHEDULING_NEXT_HEARING;
+import static pucar.config.ServiceConstants.*;
 
 
 @Service
@@ -34,15 +32,13 @@ public class OrderService {
     private final OrderServiceFactoryProvider factoryProvider;
     private final ADiaryUtil aDiaryUtil;
     private final HearingUtil hearingUtil;
-    private final HearingUpdateBasedOnStatus hearingUpdateBasedOnStatus;
 
     @Autowired
-    public OrderService(OrderUtil orderUtil, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil, HearingUpdateBasedOnStatus hearingUpdateBasedOnStatus) {
+    public OrderService(OrderUtil orderUtil, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil) {
         this.orderUtil = orderUtil;
         this.factoryProvider = factoryProvider;
         this.aDiaryUtil = aDiaryUtil;
         this.hearingUtil = hearingUtil;
-        this.hearingUpdateBasedOnStatus = hearingUpdateBasedOnStatus;
     }
 
 
@@ -64,8 +60,7 @@ public class OrderService {
             List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
                     .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
             Hearing hearing = hearings.get(0);
-            boolean isSaveDraftAction = order.getWorkflow().getAction().equalsIgnoreCase(SAVE_DRAFT);
-            hearingUpdateBasedOnStatus.updateHearingBasedOnStatus(hearing, request ,isSaveDraftAction);
+            hearingUtil.updateHearingSummary(request, hearing);
         }
 
     }
