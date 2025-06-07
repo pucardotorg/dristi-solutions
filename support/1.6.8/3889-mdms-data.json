@@ -1,0 +1,21 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "Application",
+    "masterName": "ApplicationType",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "Application.ApplicationType",
+        "uniqueIdentifier": "15",
+        "data": {
+          "id": 15,
+          "type": "CORRECTION_IN_COMPLAINANT_DETAILS",
+          "isactive": true,
+          "totalAmount": "20"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]
