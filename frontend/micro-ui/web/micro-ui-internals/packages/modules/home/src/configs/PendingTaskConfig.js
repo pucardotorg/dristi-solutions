@@ -1,6 +1,9 @@
+const today = new Date();
+const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+
 const defaultSearchValues = {
   caseSearchText: "",
-  date: new Date().toISOString().split("T")[0],
+  date: todayStr,
   stage: null,
 };
 

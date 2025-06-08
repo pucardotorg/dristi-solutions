@@ -83,7 +83,8 @@ function useInboxSearch({ limit = 300, offset = 0 } = {}) {
   return { data, loading, error, fetchInbox };
 }
 
-const todayStr = new Date().toISOString().slice(0, 10);
+const today = new Date();
+const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
 
 const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHearingCount = () => {}, setLoader = () => {} }) => {
   const [filters, setFilters] = useState({
@@ -578,271 +579,256 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
   }, [history, t, tableData, handleEditClick]);
 
   return (
-    <React.Fragment>
+    <div className="full-height-container">
       <style>{`
-      .home-input input {
-        margin-bottom: 0px !important;
-        border: 1px solid black;
-      }
-      .main-table-card {
-        background: #fff;
-        border-radius: 12px;
-        box-shadow: 0 2px 8px rgba(44,62,80,0.07);
-        padding: 0px 18px 18px 18px;
-        position: relative;
-        overflow: hidden;
-      }
-      .filter-bar {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        align-items: center;
-        background: #fff;
-        border-radius: 8px;
-        box-shadow: 0 1px 4px rgba(44,62,80,0.06);
-        padding: 16px 18px;
-        margin-bottom: 8px;
-        justify-content: space-between;
-      }
-      .filter-bar .filter-fields {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px;
-        flex: 1 1 300px;
-        min-width: 0;
-      }
-      .filter-bar .filter-actions {
-        display: flex;
-        flex-direction: row;
-        gap: 8px;
-        align-items: center;
-        margin-left: 12px;
-      }
-      @media (max-width: 900px) {
-        .filter-bar {
+        .home-input input {
+          margin-bottom: 0px !important;
+          border: 1px solid black;
+        }
+
+        .full-height-container {
+          display: flex;
           flex-direction: column;
-          align-items: stretch;
+          height: calc(100vh - 260px);
+          padding-bottom: 10px;
         }
+
+        .filter-bar {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          align-items: center;
+          background: #fff;
+          border-radius: 8px;
+          box-shadow: 0 1px 4px rgba(44,62,80,0.06);
+          padding: 16px 18px;
+          margin-bottom: 8px;
+          justify-content: space-between;
+          flex-shrink: 0;
+        }
+
         .filter-bar .filter-fields {
-          width: 100%;
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          flex: 1 1 300px;
+          min-width: 0;
         }
+
         .filter-bar .filter-actions {
-          margin-left: 0;
-          margin-top: 12px;
-          justify-content: flex-start;
+          display: flex;
+          flex-direction: row;
+          gap: 8px;
+          align-items: center;
+          margin-left: 12px;
         }
-      }
-      .filter-bar button.search-btn {
-        background: #007E7E;
-        color: #fff;
-        font-size: 16px;
-        font-weight: 700;
-        font-family: Roboto, sans-serif;
-        line-height: 24px;
-        border-radius: 0px;
-        border: none;
-        padding: 8px 24px;
-        margin: 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-        transition: background 0.2s;
-        min-width: 210px;
-        cursor: pointer;
-      }
-      .filter-bar button.search-btn:hover {
-        background: #159392;
-      }
-      .filter-bar button.clear-btn {
-        background: #fff;
-        color: #007E7E;
-        border: none !important;
-        cursor: pointer;
-        padding: 8px 18px;
-        font-size: 16px;
-        font-weight: 500;
-        margin-right: 4px;
-        transition: background 0.2s, color 0.2s;
-      }
-      .filter-bar button.clear-btn:hover {
-        background: "transparent";
-      }
-      .main-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        position: relative;
-      }
-      .main-table th {
-        font-weight: 600;
-        font-size: 15px;
-        background: #fff;
-        padding: 12px 8px;
-        border-bottom: 2px solid #e8e8e8;
-        position: relative;
-        box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
-        text-align: left;
-      }
-      .custom-table-row td {
-        border-bottom: 1px solid #e8e8e8;
-        font-size: 15px;
-        background: #fff;
-        text-align: left;
-      }
-      .custom-table-row:hover {
-        background: #f6fafd;
-      }
-      .case-link {
-        cursor: pointer;
-        color:#0A0A0A;
-        text-decoration: underline;
-        font-weight: 500;
-      }
-      .status-badge {
-        display: inline-block;
-        padding: 2px 14px;
-        border-radius: 12px;
-        font-size: 14px;
-        font-weight: 500;
-      }
-      .status-completed {
-        background: #E8E8E8;
-        color: #3D3C3C;
-      }
-      .status-ongoing {
-       background: #E4F2E4;
-        color: #00703C;
-      }
-      .status-passed {
-        background: #FFF6E8;
-        color: #9E400A;
-      }
-        .status-passed-over{
-        background: #FFF6E8;
-        color: #9E400A;}
-      .status-scheduled {
-       background: #E4F2E4;
-        color: #00703C;
-      }
-      .status-abated {
-       background: #E8E8E8;
-        color: #3D3C3C;
-      }
-      .status-default {
-        background: #f5f5f5;
-        color: #333;
-      }      
-      .advocate-header {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
-      .advocate-header .info-icon {
-        font-size: 15px;
-        color: #888;
-        cursor: pointer;
-      }
 
-.main-table-card {
-  background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(44,62,80,0.07);
-  padding: 0px 18px 18px 18px;
-  position: relative;
-  overflow: hidden;
-}
+        @media (max-width: 900px) {
+          .filter-bar {
+            flex-direction: column;
+            align-items: stretch;
+          }
+          .filter-bar .filter-fields {
+            width: 100%;
+          }
+          .filter-bar .filter-actions {
+            margin-left: 0;
+            margin-top: 12px;
+            justify-content: flex-start;
+          }
+        }
 
-.table-scroll {
-  max-height: 420px;
-  overflow: auto;
-  height: calc(100vh - 361px);
-}
+        .filter-bar button.search-btn {
+          background: #007E7E;
+          color: #fff;
+          font-size: 16px;
+          font-weight: 700;
+          font-family: Roboto, sans-serif;
+          line-height: 24px;
+          border-radius: 0px;
+          border: none;
+          padding: 8px 24px;
+          margin: 0;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+          transition: background 0.2s;
+          min-width: 210px;
+          cursor: pointer;
+        }
 
-.main-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  position: relative;
-}
+        .filter-bar button.search-btn:hover {
+          background: #159392;
+        }
 
-.main-table thead {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
+        .filter-bar button.clear-btn {
+          background: #fff;
+          color: #007E7E;
+          border: none !important;
+          cursor: pointer;
+          padding: 8px 18px;
+          font-size: 16px;
+          font-weight: 500;
+          margin-right: 4px;
+          transition: background 0.2s, color 0.2s;
+        }
 
-.main-table th {
-  font-weight: 600;
-  font-size: 15px;
-  background: #fff;
-  padding: 12px 8px;
-  border-bottom: 2px solid #e8e8e8;
-  position: relative;
-  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
-}
+        .filter-bar button.clear-btn:hover {
+          background: transparent;
+        }
 
-.custom-table-row td {
-  padding: 0px 8px;
-  border-bottom: 1px solid #e8e8e8;
-  font-size: 15px;
-  background: #fff;
-}
+        .main-table-card {
+          background: #fff;
+          border-radius: 12px;
+          box-shadow: 0 2px 8px rgba(44,62,80,0.07);
+          padding: 0px 18px 18px 18px;
+          position: relative;
+          overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          min-height: 0;
+        }
 
-.custom-table-row:hover {
-  background: #f6fafd;
-}
+        .table-scroll {
+          flex: 1;
+          overflow: auto;
+          min-height: 0;
+        }
 
+        .main-table {
+          width: 100%;
+          border-collapse: separate;
+          border-spacing: 0;
+          position: relative;
+        }
 
-.table-container {
-  position: relative;
-  max-height: 420px;
-  overflow-y: auto;
-  border: 1px solid #e8e8e8;
-  border-radius: 8px;
-}
+        .main-table thead {
+          position: sticky;
+          top: 0;
+          z-index: 10;
+        }
 
-.table-container .main-table {
-  margin: 0;
-}
+        .main-table th {
+          font-weight: 600;
+          font-size: 15px;
+          background: #fff;
+          padding: 12px 8px;
+          border-bottom: 2px solid #e8e8e8;
+          position: relative;
+          box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+          text-align: left;
+        }
 
-.table-container .main-table thead th {
-  position: sticky;
-  top: 0;
-  background: #fff;
-  z-index: 5;
-}
+        .custom-table-row td {
+          padding: 0px 8px;
+          border-bottom: 1px solid #e8e8e8;
+          font-size: 15px;
+          background: #fff;
+          text-align: left;
+        }
 
-        .jk-dropdown-unique{
-         max-height: 300px;
-          overflow-y: auto;}
+        .custom-table-row:hover {
+          background: #f6fafd;
+        }
 
-.date-arrow-group {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.date-arrow-btn {
-  background: transparent;
-  border: none;
-  color: #007E7E;
-  font-size: 18px;
-  font-weight: bold;
-  border-radius: 4px;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s;
-  padding: 0;
-}
-.date-arrow-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.date-arrow-btn:hover:not(:disabled) {
-  background: #f5f5f5;
-}
-      `}</style>
+        .case-link {
+          cursor: pointer;
+          color: #0A0A0A;
+          text-decoration: underline;
+          font-weight: 500;
+        }
+
+        .status-badge {
+          display: inline-block;
+          padding: 2px 14px;
+          border-radius: 12px;
+          font-size: 14px;
+          font-weight: 500;
+        }
+
+        .status-completed {
+          background: #E8E8E8;
+          color: #3D3C3C;
+        }
+
+        .status-ongoing {
+          background: #E4F2E4;
+          color: #00703C;
+        }
+
+        .status-passed {
+          background: #FFF6E8;
+          color: #9E400A;
+        }
+
+        .status-passed-over {
+          background: #FFF6E8;
+          color: #9E400A;
+        }
+
+        .status-scheduled {
+          background: #E4F2E4;
+          color: #00703C;
+        }
+
+        .status-abated {
+          background: #E8E8E8;
+          color: #3D3C3C;
+        }
+
+        .status-default {
+          background: #f5f5f5;
+          color: #333;
+        }
+
+        .advocate-header {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+        }
+
+        .advocate-header .info-icon {
+          font-size: 15px;
+          color: #888;
+          cursor: pointer;
+        }
+
+        .jk-dropdown-unique {
+          max-height: 300px;
+          overflow-y: auto;
+        }
+
+        .date-arrow-group {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .date-arrow-btn {
+          background: transparent;
+          border: none;
+          color: #007E7E;
+          font-size: 18px;
+          font-weight: bold;
+          border-radius: 4px;
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: background 0.2s, color 0.2s;
+          padding: 0;
+        }
+
+        .date-arrow-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        .date-arrow-btn:hover:not(:disabled) {
+          background: #f5f5f5;
+        }
+`}</style>
       <div className="filter-bar">
         <div className="filter-fields">
           <LabelFieldPair className={`case-label-field-pair `}>
@@ -1093,7 +1079,7 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
           style={{ maxWidth: "500px" }}
         />
       )}
-    </React.Fragment>
+    </div>
   );
 };
 
