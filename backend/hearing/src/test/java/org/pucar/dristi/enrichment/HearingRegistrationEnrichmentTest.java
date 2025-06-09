@@ -14,6 +14,7 @@ import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.web.models.Document;
 import org.pucar.dristi.web.models.Hearing;
 import org.pucar.dristi.web.models.HearingRequest;
+import org.pucar.dristi.web.models.WorkflowObject;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -49,6 +50,7 @@ class HearingRegistrationEnrichmentTest {
         User userInfo = new User();
         userInfo.setUuid(UUID.randomUUID().toString());
         requestInfo.setUserInfo(userInfo);
+        hearing.setWorkflow(new WorkflowObject());
 
         HearingRequest hearingRequest = new HearingRequest();
         hearingRequest.setHearing(hearing);

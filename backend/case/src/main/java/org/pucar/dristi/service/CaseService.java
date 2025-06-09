@@ -399,7 +399,7 @@ public class CaseService {
             }
 
             //todo: enhance for files delete
-            List<Document> documentToDelete  = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
+            List<Document> documentToDelete = extractDocumentsToDelete(caseRequest.getCases(), existingApplications.get(0).getResponseList().get(0));
             // Enrich application upon update
             enrichmentUtil.enrichCaseApplicationUponUpdate(caseRequest, existingApplications.get(0).getResponseList());
 
@@ -410,7 +410,7 @@ public class CaseService {
             workflowService.updateWorkflowStatus(caseRequest);
 
 
-            if(caseRequest.getCases().getCourtId() == null && PENDING_REGISTRATION.equalsIgnoreCase(caseRequest.getCases().getStatus())) {
+            if (caseRequest.getCases().getCourtId() == null && PENDING_REGISTRATION.equalsIgnoreCase(caseRequest.getCases().getStatus())) {
                 caseRequest.getCases().setCourtId(courtId);
             }
 
@@ -588,7 +588,6 @@ public class CaseService {
     }
 
 
-
     private List<Document> extractLitigantDocuments(CourtCase updateCase, CourtCase existingCase) {
         List<Document> documentsToDelete = new ArrayList<>();
         if (existingCase.getLitigants() != null) {
@@ -695,12 +694,12 @@ public class CaseService {
 
     private void removeInactiveDocuments(List<Document> documentsToDelete) {
         List<String> fileStoreIds = new ArrayList<>();
-        for(Document document : documentsToDelete) {
-            if(!document.getIsActive()) {
+        for (Document document : documentsToDelete) {
+            if (!document.getIsActive()) {
                 fileStoreIds.add(document.getFileStore());
             }
         }
-        if(!fileStoreIds.isEmpty()){
+        if (!fileStoreIds.isEmpty()) {
             fileStoreUtil.deleteFilesByFileStore(fileStoreIds, config.getTenantId());
             log.info("Deleted files for case with ids: {}", fileStoreIds);
         }
@@ -1234,14 +1233,17 @@ public class CaseService {
             CourtCase caseObj = CourtCase.builder()
                     .filingNumber(filingNumber)
                     .build();
+            CourtCase courtCase = courtCaseList.get(0);
 
+            if (courtCase != null) {
+                caseObj.setAuditdetails(courtCase.getAuditdetails());
+            }
             caseObj.setAdditionalDetails(addWitnessRequest.getAdditionalDetails());
             caseObj = encryptionDecryptionUtil.encryptObject(caseObj, config.getCourtCaseEncrypt(), CourtCase.class);
 
             addWitnessRequest.setAdditionalDetails(caseObj.getAdditionalDetails());
             producer.push(config.getAdditionalJoinCaseTopic(), addWitnessRequest);
 
-            CourtCase courtCase = courtCaseList.get(0);
             if (courtCase != null) {
                 courtCase.setAdditionalDetails(addWitnessRequest.getAdditionalDetails());
                 updateCourtCaseInRedis(addWitnessRequest.getRequestInfo().getUserInfo().getTenantId(), courtCase);
@@ -1577,8 +1579,8 @@ public class CaseService {
 
     public void joinCaseAdvocate(JoinCaseV2Request joinCaseRequest, CourtCase courtCase, CourtCase caseObj, AuditDetails auditDetails, AdvocateMapping existingRepresentative) {
         if (joinCaseRequest.getJoinCaseData().getRepresentative().getIsReplacing()) {
-            for(RepresentingJoinCase representingJoinCase: joinCaseRequest.getJoinCaseData().getRepresentative().getRepresenting()){
-                if(!isValidReplacement(courtCase,joinCaseRequest.getJoinCaseData().getRepresentative(),representingJoinCase)){
+            for (RepresentingJoinCase representingJoinCase : joinCaseRequest.getJoinCaseData().getRepresentative().getRepresenting()) {
+                if (!isValidReplacement(courtCase, joinCaseRequest.getJoinCaseData().getRepresentative(), representingJoinCase)) {
                     log.info("Not a valid request for replacement");
                     return;
                 }
@@ -1586,7 +1588,7 @@ public class CaseService {
             replaceAdvocate(joinCaseRequest, courtCase, joinCaseRequest.getJoinCaseData().getRepresentative().getAdvocateId());
 
         } else {
-            boolean isValid = checkIsValidRequestForAdding(joinCaseRequest,courtCase);
+            boolean isValid = checkIsValidRequestForAdding(joinCaseRequest, courtCase);
             if (!isValid) {
                 log.info("Not a valid request since litigant is now pip");
                 return;
@@ -1598,7 +1600,7 @@ public class CaseService {
     private boolean checkIsValidRequestForAdding(JoinCaseV2Request joinCaseRequest, CourtCase courtCase) {
         List<String> individualIdsOfAllPIP = Optional.ofNullable(courtCase.getLitigants())
                 .orElse(Collections.emptyList())
-                .stream().filter(litigant->isPIP(litigant,courtCase)).map(Party::getIndividualId).toList();
+                .stream().filter(litigant -> isPIP(litigant, courtCase)).map(Party::getIndividualId).toList();
 
         for (RepresentingJoinCase representingJoinCase : joinCaseRequest.getJoinCaseData().getRepresentative().getRepresenting()) {
             if (individualIdsOfAllPIP.contains(representingJoinCase.getIndividualId())) {
@@ -1609,11 +1611,11 @@ public class CaseService {
     }
 
     private boolean isPIP(Party litigant, CourtCase courtCase) {
-        if(litigant.getPartyType().contains("complainant")){
-            if(courtCase.getRepresentatives()!= null && !courtCase.getRepresentatives().isEmpty()) {
+        if (litigant.getPartyType().contains("complainant")) {
+            if (courtCase.getRepresentatives() != null && !courtCase.getRepresentatives().isEmpty()) {
                 for (AdvocateMapping mapping : courtCase.getRepresentatives()) {
                     Party litigantParty = mapping.getRepresenting().stream()
-                                .filter(party -> party.getIndividualId().equalsIgnoreCase(litigant.getIndividualId()) && party.getIsActive())
+                            .filter(party -> party.getIndividualId().equalsIgnoreCase(litigant.getIndividualId()) && party.getIsActive())
                             .findFirst()
                             .orElse(null);
 
@@ -1624,9 +1626,8 @@ public class CaseService {
                 }
             }
             return true;
-        }
-        else{
-            if(litigant.getDocuments()!=null && !litigant.getDocuments().isEmpty()) {
+        } else {
+            if (litigant.getDocuments() != null && !litigant.getDocuments().isEmpty()) {
                 for (Document document : litigant.getDocuments()) {
                     Object additionalDetails = document.getAdditionalDetails();
                     ObjectNode additionalDetailsNode = objectMapper.convertValue(additionalDetails, ObjectNode.class);
@@ -1648,13 +1649,13 @@ public class CaseService {
         if (representingJoinCase.getIsAlreadyPip()) {
             return isValidPipLitigantReplacement(litigantId, courtCase);
         } else {
-            return isValidAdvocateReplacement(courtCase, representative,representingJoinCase);
+            return isValidAdvocateReplacement(courtCase, representative, representingJoinCase);
         }
     }
 
     private boolean isLitigantStillSelfRepresented(String litigantId, List<AdvocateMapping> advocateMappings) {
-        log.info("operation=isLitigantStillSelfRepresented, status=IN_PROGRESS, litigantId , advocateMappings: {} , {}",litigantId, advocateMappings);
-        if(advocateMappings!=null) {
+        log.info("operation=isLitigantStillSelfRepresented, status=IN_PROGRESS, litigantId , advocateMappings: {} , {}", litigantId, advocateMappings);
+        if (advocateMappings != null) {
             for (AdvocateMapping mapping : advocateMappings) {
                 Party litigantParty = mapping.getRepresenting().stream()
                         .filter(party -> party.getIndividualId().equalsIgnoreCase(litigantId) && party.getIsActive())
@@ -1668,12 +1669,12 @@ public class CaseService {
                 }
             }
         }
-        log.info("operation=isLitigantStillSelfRepresented, status=SUCCESS, litigantId , advocateMappings: {} ,{}",litigantId, advocateMappings);
+        log.info("operation=isLitigantStillSelfRepresented, status=SUCCESS, litigantId , advocateMappings: {} ,{}", litigantId, advocateMappings);
         return true;
     }
 
     private boolean isValidPipLitigantReplacement(String litigantId, CourtCase courtCase) {
-        log.info("operation=isValidPipLitigantReplacement, status=IN_PROGRESS, litigantId , courtCase: {} , {}",litigantId,courtCase);
+        log.info("operation=isValidPipLitigantReplacement, status=IN_PROGRESS, litigantId , courtCase: {} , {}", litigantId, courtCase);
         // Check if litigant exists and is active
         Party litigant = Optional.ofNullable(courtCase.getLitigants())
                 .orElse(Collections.emptyList())
@@ -1683,7 +1684,7 @@ public class CaseService {
                 .orElse(null);
 
         if (litigant == null) {
-            log.info("operation=isValidPipLitigantReplacement, status=FAILURE, litigantId , courtCase: {} , {}",litigantId,courtCase);
+            log.info("operation=isValidPipLitigantReplacement, status=FAILURE, litigantId , courtCase: {} , {}", litigantId, courtCase);
             return false;
         }
         // Check if litigant is still self-represented (PIP)
@@ -1691,26 +1692,26 @@ public class CaseService {
     }
 
     private boolean isValidAdvocateReplacement(CourtCase courtCase, JoinCaseRepresentative representative, RepresentingJoinCase representingJoinCase) {
-        log.info("operation=isValidAdvocateReplacement, status=IN_PROGRESS, advocate details , courtCase: {} , {}",representative,courtCase);
+        log.info("operation=isValidAdvocateReplacement, status=IN_PROGRESS, advocate details , courtCase: {} , {}", representative, courtCase);
         String newAdvocateId = representative.getAdvocateId();
         String litigantId = representingJoinCase.getIndividualId();
 
         List<String> advocateIds = representingJoinCase.getReplaceAdvocates();
 
         // Check if the advocate exists and is active
-        for (String advocateId: advocateIds){
+        for (String advocateId : advocateIds) {
             AdvocateMapping advocateMapping = Optional.ofNullable(courtCase.getRepresentatives())
                     .orElse(Collections.emptyList()).stream()
                     .filter(mapping -> advocateId.equalsIgnoreCase(mapping.getAdvocateId()) && mapping.getIsActive()).findFirst().orElse(null);
 
-            if (advocateMapping== null) {
-                log.info("operation=isValidAdvocateReplacement, status=FAILURE, replacement details , courtCase: {} , {}",advocateMapping,courtCase);
+            if (advocateMapping == null) {
+                log.info("operation=isValidAdvocateReplacement, status=FAILURE, replacement details , courtCase: {} , {}", advocateMapping, courtCase);
                 return false;
             }
 
             // Check if the advocate is representing the specified litigant and the litigant is active
             if (!isAdvocateRepresentingActiveLitigant(advocateMapping, litigantId)) {
-                log.info("operation=isValidAdvocateReplacement, status=FAILURE, replacement details , courtCase, advocateMapping: {} , {}, {}",representative,courtCase, advocateMapping);
+                log.info("operation=isValidAdvocateReplacement, status=FAILURE, replacement details , courtCase, advocateMapping: {} , {}, {}", representative, courtCase, advocateMapping);
                 return false;
             }
         }
@@ -1724,7 +1725,7 @@ public class CaseService {
     }
 
     private boolean isAdvocateAlreadyRepresentingLitigant(String advocateId, String litigantId, List<AdvocateMapping> advocateMappings) {
-        if(advocateMappings!=null) {
+        if (advocateMappings != null) {
             for (AdvocateMapping mapping : advocateMappings) {
                 if (mapping.getAdvocateId().equalsIgnoreCase(advocateId)) {
                     Party litigantParty = mapping.getRepresenting().stream()
@@ -1739,7 +1740,7 @@ public class CaseService {
                 }
             }
         }
-        log.info("operation=isAdvocateAlreadyRepresentingLitigant, status=FAILURE, advocateId, litigantId , {} , {}",advocateId, litigantId);
+        log.info("operation=isAdvocateAlreadyRepresentingLitigant, status=FAILURE, advocateId, litigantId , {} , {}", advocateId, litigantId);
         return false;
     }
 
@@ -3015,7 +3016,7 @@ public class CaseService {
         ObjectNode taskDetailsNodeFromResponse = objectMapper.convertValue(taskResponse.getTask().getTaskDetails(), ObjectNode.class);
         String consumerCode = taskDetailsNodeFromResponse.get("consumerCode").asText();
 
-        etreasuryUtil.createDemand(joinCaseRequest, consumerCode,calculationList);
+        etreasuryUtil.createDemand(joinCaseRequest, consumerCode, calculationList);
 
         return taskResponse.getTask().getTaskNumber();
 
@@ -4815,31 +4816,31 @@ public class CaseService {
         }
     }
 
-    public Map<String,AtomicBoolean> enrichAccessCode(AccessCodeGenerateRequest accessCodeGenerateRequest) {
-        Map<String,AtomicBoolean> responseMap = new HashMap<>();
+    public Map<String, AtomicBoolean> enrichAccessCode(AccessCodeGenerateRequest accessCodeGenerateRequest) {
+        Map<String, AtomicBoolean> responseMap = new HashMap<>();
         for (String filingNumber : accessCodeGenerateRequest.getFilingNumberList()) {
             AtomicBoolean generated = new AtomicBoolean(false);
 
-            List<CaseCriteria> casesList  = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(filingNumber).build()), accessCodeGenerateRequest.getRequestInfo());
+            List<CaseCriteria> casesList = caseRepository.getCases(Collections.singletonList(CaseCriteria.builder().filingNumber(filingNumber).build()), accessCodeGenerateRequest.getRequestInfo());
             casesList.forEach(caseCriteria -> {
                 caseCriteria.getResponseList().forEach(cases -> {
-                    if(cases.getAccessCode()==null || cases.getAccessCode().isEmpty()){
+                    if (cases.getAccessCode() == null || cases.getAccessCode().isEmpty()) {
                         CourtCase decryptedCourtCase = encryptionDecryptionUtil.decryptObject(cases, config.getCaseDecryptSelf(), CourtCase.class, accessCodeGenerateRequest.getRequestInfo());
                         CaseRequest caseRequest = CaseRequest.builder().cases(decryptedCourtCase).requestInfo(accessCodeGenerateRequest.getRequestInfo()).build();
 
                         enrichmentUtil.enrichAccessCode(caseRequest);
-                        log.info("In enrich access code if null for caseId :: {}, access-code :: {}", caseRequest.getCases().getId(),caseRequest.getCases().getAccessCode());
+                        log.info("In enrich access code if null for caseId :: {}, access-code :: {}", caseRequest.getCases().getId(), caseRequest.getCases().getAccessCode());
 
                         caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
 
-                        producer.push(config.getCaseUpdateStatusTopic(),caseRequest);
+                        producer.push(config.getCaseUpdateStatusTopic(), caseRequest);
                         cacheService.save(accessCodeGenerateRequest.getRequestInfo().getUserInfo().getTenantId() + ":" + cases.getId().toString(), caseRequest.getCases());
                         generated.set(true);
                     }
                 });
             });
 
-            responseMap.put(filingNumber,generated);
+            responseMap.put(filingNumber, generated);
         }
 
         return responseMap;

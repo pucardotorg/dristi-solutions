@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -253,7 +254,7 @@ public class HearingService {
 
             // Filter hearings with statuses: PASSED_OVER or SCHEDULED
             hearings = hearings.stream()
-                    .filter(hearing -> PASSED_OVER.equals(hearing.getStatus()) || SCHEDULED.equals(hearing.getStatus()))
+                    .filter(hearing -> PASSED_OVER.equals(hearing.getStatus()) || SCHEDULED.equals(hearing.getStatus()) || IN_PROGRESS.equals(hearing.getStatus()))
                     .toList();
 
             if (hearings.isEmpty()) {
@@ -271,11 +272,11 @@ public class HearingService {
     }
 
     private Long getFromDate() {
-        return dateUtil.getEpochFromLocalDateTime(LocalDate.now().minusDays(1).atStartOfDay());
+        return dateUtil.getEpochFromLocalDateTime(LocalDate.now(ZoneId.of(config.getZoneId())).minusDays(1).atStartOfDay());
     }
 
     private Long getToDate() {
-        return dateUtil.getEpochFromLocalDateTime(LocalDate.now().minusDays(1).atTime(LocalTime.MAX));
+        return dateUtil.getEpochFromLocalDateTime(LocalDate.now(ZoneId.of(config.getZoneId())).minusDays(1).atTime(LocalTime.MAX));
     }
 
     public void updateHearingsToAbondenState(List<Hearing> hearings, RequestInfo requestInfo) {
@@ -313,6 +314,7 @@ public class HearingService {
                         .name(WORKFLOW_ABANDON)
                         .tenantId(config.getEgovStateTenantId())
                 .build());
+        userInfo.setType(EMPLOYEE);
         userInfo.setTenantId(config.getEgovStateTenantId());
         return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
     }

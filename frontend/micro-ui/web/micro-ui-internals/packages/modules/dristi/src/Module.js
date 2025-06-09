@@ -71,6 +71,7 @@ import useFetchBill from "./hooks/dristi/useFetchBill";
 import WorkflowTimeline from "./components/WorkflowTimeline";
 import ImageModal from "./components/ImageModal";
 import SelectCustomFormatterTextArea from "./components/SelectCustomFormatterTextArea";
+import CustomCalendarV2 from "./components/CustomCalendarV2";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -172,6 +173,7 @@ const componentsToRegister = {
   DRISTIService,
   CustomChooseDate,
   CustomCalendar,
+  CustomCalendarV2,
   RightArrow,
   useBillSearch,
   useFetchBill,

@@ -345,7 +345,8 @@ public class IndexerUtils {
             requestInfo1.getUserInfo().setType("EMPLOYEE");
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo1, filingNumber);
             caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
-
+        }
+        if (caseDetails != null) {
             courtId = caseDetails.get(0).path("courtId").textValue();
 
             String cmpNumber = caseDetails.get(0).path("cmpNumber").textValue();

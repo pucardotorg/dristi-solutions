@@ -318,9 +318,9 @@ public class CaseBundleIndexBuilderService {
 
                         Map<String, Object> pdfResponseMap = objectMapper.convertValue(pdfResponse, Map.class);
                         Map<String, Object> indexMap = (Map<String, Object>) pdfResponseMap.get("index");
-                        List<String> fileStoreIds = extractFileStore((JsonNode) indexMap);
-                        removeFileStore(curFileStore, fileStoreIds, tenantId);
                         JsonNode updateIndexJson = objectMapper.valueToTree(indexMap);
+                        List<String> fileStoreIds = extractFileStore(updateIndexJson);
+                        removeFileStore(curFileStore, fileStoreIds, tenantId);
 
                         String esUpdateUrl = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + "/_update/" + caseID;
                         String esRequest;
@@ -362,7 +362,10 @@ public class CaseBundleIndexBuilderService {
 
     private List<String> extractFileStore(JsonNode indexJson) {
         List<String> fileStoreIds = new ArrayList<>();
-        fileStoreIds.add(indexJson.path("fileStoreId").textValue());
+        String fileStoreIdFromIndex = indexJson.path("fileStoreId").textValue();
+        if(fileStoreIdFromIndex!=null && !fileStoreIdFromIndex.isEmpty()) {
+            fileStoreIds.add(fileStoreIdFromIndex);
+        }
         JsonNode sections = indexJson.path("sections");
         if (sections.isArray()) {
             for (JsonNode section : sections) {
