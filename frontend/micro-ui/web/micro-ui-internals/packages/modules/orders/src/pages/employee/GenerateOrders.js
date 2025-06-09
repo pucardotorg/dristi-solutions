@@ -612,6 +612,9 @@ const GenerateOrders = () => {
     return `${year}-${month}-${day}`;
   };
   useEffect(() => {
+    if (isOrdersLoading || isOrdersFetching) {
+      return;
+    }
     if (!ordersData?.list || ordersData?.list.length < 1) {
       setFormList([defaultOrderData]);
     } else {
@@ -967,6 +970,7 @@ const GenerateOrders = () => {
   );
 
   const modifiedFormConfig = useMemo(() => {
+    if (!currentOrder) return null;
     if (currentOrder?.orderCategory === "COMPOSITE") {
       return currentOrder?.compositeItems?.map((item) => {
         // We will disable the order type dropdown as a quick fix to handle formcomposer issue
@@ -3900,7 +3904,8 @@ const GenerateOrders = () => {
     !ordersData?.list ||
     isHearingLoading ||
     isCourtIdsLoading ||
-    isPublishedOrdersLoading
+    isPublishedOrdersLoading ||
+    !modifiedFormConfig
   ) {
     return <Loader />;
   }
