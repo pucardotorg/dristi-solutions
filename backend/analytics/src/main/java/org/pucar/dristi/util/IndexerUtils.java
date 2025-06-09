@@ -174,41 +174,47 @@ public class IndexerUtils {
         String actionCategory = pendingTask.getActionCategory();
 
 
-        JsonNode caseDetails = getCaseDetails(filingNumber);
-
-        String courtId = caseDetails.get(0).path("courtId").textValue();
-
-        String cmpNumber = caseDetails.get(0).path("cmpNumber").textValue();
-        String courtCaseNumber = caseDetails.get(0).path("courtCaseNumber").textValue();
-        String caseSubStage = caseDetails.get(0).path("substage").textValue();
-
-        if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
-            caseNumber = courtCaseNumber;
-        } else if (cmpNumber != null && !cmpNumber.isEmpty()) {
-            caseNumber = cmpNumber;
-        }
-
-        JsonNode representativesNode = caseUtil.getRepresentatives(caseDetails);
-        List<AdvocateMapping> representatives = mapper.convertValue(representativesNode, new TypeReference<List<AdvocateMapping>>() {
-        });
-
-        AdvocateDetail advocate = getAdvocates(representatives);
+        String courtId = null;
+        String caseSubStage = null;
         String advocateDetails = "{}";
+        String searchableFields = null;
+        if (filingNumber != null) {
+            JsonNode caseDetails = getCaseDetails(filingNumber);
 
-        try {
-            advocateDetails = mapper.writeValueAsString(advocate);
-        } catch (Exception e) {
-            log.error("Error while building advocate details json", e);
-            throw new CustomException(Pending_Task_Exception, "Error while building advocate details json: " + e);
+            courtId = caseDetails.get(0).path("courtId").textValue();
+
+            String cmpNumber = caseDetails.get(0).path("cmpNumber").textValue();
+            String courtCaseNumber = caseDetails.get(0).path("courtCaseNumber").textValue();
+            caseSubStage = caseDetails.get(0).path("substage").textValue();
+
+            if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
+                caseNumber = courtCaseNumber;
+            } else if (cmpNumber != null && !cmpNumber.isEmpty()) {
+                caseNumber = cmpNumber;
+            }
+
+            JsonNode representativesNode = caseUtil.getRepresentatives(caseDetails);
+            List<AdvocateMapping> representatives = mapper.convertValue(representativesNode, new TypeReference<List<AdvocateMapping>>() {
+            });
+
+            AdvocateDetail advocate = getAdvocates(representatives);
+
+            try {
+                advocateDetails = mapper.writeValueAsString(advocate);
+            } catch (Exception e) {
+                log.error("Error while building advocate details json", e);
+                throw new CustomException(Pending_Task_Exception, "Error while building advocate details json: " + e);
+            }
+
+            List<String> searchableFieldsList = new ArrayList<>();
+            searchableFieldsList.add(caseNumber);
+            searchableFieldsList.add(caseTitle);
+            searchableFieldsList.addAll(advocate.getAccused());
+            searchableFieldsList.addAll(advocate.getComplainant());
+
+            searchableFields = new JSONArray(searchableFieldsList).toString();
+
         }
-
-        List<String> searchableFieldsList = new ArrayList<>();
-        searchableFieldsList.add(caseNumber);
-        searchableFieldsList.add(caseTitle);
-        searchableFieldsList.addAll(advocate.getAccused());
-        searchableFieldsList.addAll(advocate.getComplainant());
-
-        String searchableFields = new JSONArray(searchableFieldsList).toString();
 
         Long createdTime = clock.millis();
         try {
@@ -232,7 +238,7 @@ public class IndexerUtils {
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, filingNumber);
             return caseUtil.searchCaseDetails(caseSearchRequest);
         } catch (Exception e) {
-            log.error("Error occurred while getting case details for filingNumber :: {}",filingNumber);
+            log.error("Error occurred while getting case details for filingNumber :: {}", filingNumber);
         }
         return null;
     }
@@ -329,15 +335,53 @@ public class IndexerUtils {
         }
 
         log.info("case details :: {}, for filingNumber: {}", caseDetails, filingNumber);
-        String courtId;
-        if (caseDetails == null) {
+        String courtId = null;
+        String caseSubStage = null;
+        String advocateDetails = "{}";
+        String searchableFields = null;
+        String caseNumber = filingNumber;
+
+        if (caseDetails == null && filingNumber != null) {
             requestInfo1.getUserInfo().setType("EMPLOYEE");
             CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo1, filingNumber);
             caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
         }
+        if (caseDetails != null) {
+            courtId = caseDetails.get(0).path("courtId").textValue();
 
-        courtId = caseDetails.get(0).path("courtId").textValue();
+            String cmpNumber = caseDetails.get(0).path("cmpNumber").textValue();
+            String courtCaseNumber = caseDetails.get(0).path("courtCaseNumber").textValue();
+            caseSubStage = caseDetails.get(0).path("substage").textValue();
 
+            if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
+                caseNumber = courtCaseNumber;
+            } else if (cmpNumber != null && !cmpNumber.isEmpty()) {
+                caseNumber = cmpNumber;
+            }
+
+            JsonNode representativesNode = caseUtil.getRepresentatives(caseDetails);
+            List<AdvocateMapping> representatives = mapper.convertValue(representativesNode, new TypeReference<List<AdvocateMapping>>() {
+            });
+
+            AdvocateDetail advocate = getAdvocates(representatives);
+
+            try {
+                advocateDetails = mapper.writeValueAsString(advocate);
+            } catch (Exception e) {
+                log.error("Error while building advocate details json", e);
+                throw new CustomException(Pending_Task_Exception, "Error while building advocate details json: " + e);
+            }
+
+            List<String> searchableFieldsList = new ArrayList<>();
+            searchableFieldsList.add(caseNumber);
+            searchableFieldsList.add(caseTitle);
+            searchableFieldsList.addAll(advocate.getAccused());
+            searchableFieldsList.addAll(advocate.getComplainant());
+
+             searchableFields = new JSONArray(searchableFieldsList).toString();
+            log.info("searchableFields: {}", searchableFields);
+
+        }
 
         Object additionalDetails;
         try {
@@ -367,41 +411,6 @@ public class IndexerUtils {
             log.error("Error while building listener payload");
             throw new CustomException(Pending_Task_Exception, "Error occurred while preparing pending task: " + e);
         }
-
-        String caseNumber = filingNumber;
-
-        String cmpNumber = caseDetails.get(0).path("cmpNumber").textValue();
-        String courtCaseNumber = caseDetails.get(0).path("courtCaseNumber").textValue();
-        String caseSubStage = caseDetails.get(0).path("substage").textValue();
-
-        if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
-            caseNumber = courtCaseNumber;
-        } else if (cmpNumber != null && !cmpNumber.isEmpty()) {
-            caseNumber = cmpNumber;
-        }
-
-        JsonNode representativesNode = caseUtil.getRepresentatives(caseDetails);
-        List<AdvocateMapping> representatives = mapper.convertValue(representativesNode, new TypeReference<List<AdvocateMapping>>() {
-        });
-
-        AdvocateDetail advocate = getAdvocates(representatives);
-        String advocateDetails = "{}";
-
-        try {
-            advocateDetails = mapper.writeValueAsString(advocate);
-        } catch (Exception e) {
-            log.error("Error while building advocate details json", e);
-            throw new CustomException(Pending_Task_Exception, "Error while building advocate details json: " + e);
-        }
-
-        List<String> searchableFieldsList = new ArrayList<>();
-        searchableFieldsList.add(caseNumber);
-        searchableFieldsList.add(caseTitle);
-        searchableFieldsList.addAll(advocate.getAccused());
-        searchableFieldsList.addAll(advocate.getComplainant());
-
-        String searchableFields = new JSONArray(searchableFieldsList).toString();
-        log.info("searchableFields: {}", searchableFields);
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,

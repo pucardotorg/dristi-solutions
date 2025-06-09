@@ -662,13 +662,24 @@ const EditProfile = ({ path }) => {
     )?.data;
   }, [caseDetails, uniqueId]);
 
-  const onBehalfOfUuid = useMemo(() => {
-    if (selected === "complainantDetails") {
-      return currentComplainant?.complainantVerification?.individualDetails?.uuid;
-    } else {
+  const getOnBehalfOfUuid = async () => {
+    try {
+      const response = await window?.Digit.DRISTIService.searchIndividualUser(
+        {
+          Individual: {
+            individualId: uniqueId,
+          },
+        },
+        { tenantId, limit: 1000, offset: 0 }
+      );
+  
+      const individual = response?.Individual?.[0];
+      return individual?.userUuid || uniqueId;
+    } catch (error) {
+      console.error("Failed to fetch individual:", error);
       return uniqueId;
     }
-  }, [currentComplainant?.complainantVerification?.individualDetails?.uuid, selected, uniqueId]);
+  };
 
   const getDefaultValues = useMemo(() => {
     if (selected === "complainantDetails") {
@@ -763,6 +774,7 @@ const EditProfile = ({ path }) => {
     } else {
       setIsLoader(true);
       try {
+        const onBehalfOfUuid = await getOnBehalfOfUuid();
         const res = await updateProfileData({
           t,
           isCompleted: true,
