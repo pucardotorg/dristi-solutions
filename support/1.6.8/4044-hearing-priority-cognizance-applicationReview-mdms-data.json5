@@ -1,0 +1,39 @@
+[
+  {
+    "moduleName": "court",
+    "masterName": "hearings",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "id": "3eff109c-dab8-4f00-b278-8579cc855d89",
+        "tenantId": "kl",
+        "schemaCode": "court.hearings",
+        "uniqueIdentifier": "17",
+        "data": {
+          "id": 17,
+          "priority": 120,
+          "hearingName": "APPLICATION_REVIEW",
+          "hearingTime": "10",
+          "hearingType": "APPLICATION_REVIEW",
+          "unitOfMeasurement": "Minutes"
+        },
+        "isActive": true
+      },
+      {
+        "id": "bde4d0da-6174-4024-be7f-9278bc5ed80e",
+        "tenantId": "kl",
+        "schemaCode": "court.hearings",
+        "uniqueIdentifier": "16",
+        "data": {
+          "id": 16,
+          "priority": 105,
+          "hearingName": "COGNIZANCE",
+          "hearingTime": "10",
+          "hearingType": "COGNIZANCE",
+          "unitOfMeasurement": "Minutes"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]
