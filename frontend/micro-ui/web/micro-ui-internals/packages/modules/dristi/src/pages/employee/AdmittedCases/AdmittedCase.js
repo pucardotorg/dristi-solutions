@@ -43,7 +43,7 @@ import PublishedNotificationModal from "./publishedNotificationModal";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import NoticeAccordion from "../../../components/NoticeAccordion";
 import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
-import ViewCaseFileNew from "./ViewFileCaseNew";
+import CaseBundleView from "./CaseBundleView";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -2979,7 +2979,7 @@ const AdmittedCases = () => {
       )}
       {tabData?.filter((tab) => tab.label === "caseFileOverview")?.[0]?.active && (
         <div className="view-case-file-new-wrapper">
-          <ViewCaseFileNew caseDetails={caseDetails} tenantId={tenantId} filingNumber={filingNumber} />
+          <CaseBundleView caseDetails={caseDetails} tenantId={tenantId} filingNumber={filingNumber} />
         </div>
       )}
       {show && (

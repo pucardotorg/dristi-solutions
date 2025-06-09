@@ -7,9 +7,10 @@ import { useQueries } from "react-query";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
+import { Loader } from "@egovernments/digit-ui-react-components";
 const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
 
-function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
+function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const [expandedItems, setExpandedItems] = useState({
     "initial-filing": false,
     cheque: false,
@@ -80,7 +81,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     setSelectedDocument(docId);
     setSelectedFileStoreId(fileStoreId);
   };
-  const { data: hearingDetails } = Digit.Hooks.hearings.useGetHearings(
+  const { data: hearingDetails, isLoading: isHearingLoading } = Digit.Hooks.hearings.useGetHearings(
     {
       hearing: { tenantId },
       criteria: {
@@ -94,7 +95,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     Boolean(filingNumber && courtId)
   );
 
-  const { data: applicationData, isLoading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+  const { data: applicationData, isLoading: isPendingReviewApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
         status: "PENDINGREVIEW",
@@ -114,7 +115,11 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
 
   const applicationList = useMemo(() => applicationData?.applicationList, [applicationData]);
 
-  const { data: directEvidenceData, refetch: directEvidenceRefetch } = Digit.Hooks.submissions.useSearchEvidenceService(
+  const {
+    data: directEvidenceData,
+    isLoading: isDirectEvidenceLoading,
+    refetch: directEvidenceRefetch,
+  } = Digit.Hooks.submissions.useSearchEvidenceService(
     {
       criteria: {
         courtId: courtId,
@@ -135,7 +140,11 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     filingNumber
   );
 
-  const { data: applicationEvidenceData, refetch: applicationEvidenceRefetch } = Digit.Hooks.submissions.useSearchEvidenceService(
+  const {
+    data: applicationEvidenceData,
+    isLoading: isApplicationEvidenceLoading,
+    refetch: applicationEvidenceRefetch,
+  } = Digit.Hooks.submissions.useSearchEvidenceService(
     {
       criteria: {
         courtId: courtId,
@@ -161,7 +170,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
   const newEvidenceList = [...(directEvidenceList || []), ...(applicationEvidenceList || [])];
   const combinedEvidenceList = newEvidenceList.sort((a, b) => a?.auditDetails?.createdTime - b?.auditDetails?.createdTime);
 
-  const { data: ordersData } = Digit.Hooks.dristi.useGetOrders(
+  const { data: ordersData, isLoading: isMandatoryOrdersLoading } = Digit.Hooks.dristi.useGetOrders(
     {
       criteria: {
         filingNumber: filingNumber,
@@ -182,7 +191,11 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
 
   const orderList = Array.isArray(ordersData?.list) ? ordersData.list : [];
 
-  const { data: complaintEvidenceData, refetch: complainantEvidenceRefetch } = Digit.Hooks.submissions.useSearchEvidenceService(
+  const {
+    data: complaintEvidenceData,
+    isLoading: isComplaintEvidenceLoading,
+    refetch: complainantEvidenceRefetch,
+  } = Digit.Hooks.submissions.useSearchEvidenceService(
     {
       criteria: {
         courtId: courtId,
@@ -203,7 +216,11 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     filingNumber
   );
 
-  const { data: accusedEvidenceData, refetch: accusedEvidenceRefetch } = Digit.Hooks.submissions.useSearchEvidenceService(
+  const {
+    data: accusedEvidenceData,
+    isLoading: isAccusedEvidenceLoading,
+    refetch: accusedEvidenceRefetch,
+  } = Digit.Hooks.submissions.useSearchEvidenceService(
     {
       criteria: {
         courtId: courtId,
@@ -224,7 +241,11 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     filingNumber
   );
 
-  const { data: courtEvidenceData, refetch: courtEvidenceRefetch } = Digit.Hooks.submissions.useSearchEvidenceService(
+  const {
+    data: courtEvidenceData,
+    isLoading: isCourtEvidenceLoading,
+    refetch: courtEvidenceRefetch,
+  } = Digit.Hooks.submissions.useSearchEvidenceService(
     {
       criteria: {
         courtId: courtId,
@@ -245,7 +266,11 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     filingNumber
   );
 
-  const { data: courtEvidenceDepositionData, refetch: courtDepositionRefetch } = Digit.Hooks.submissions.useSearchEvidenceService(
+  const {
+    data: courtEvidenceDepositionData,
+    isLoading: isCourtDepositionEvidenceLoading,
+    refetch: courtDepositionRefetch,
+  } = Digit.Hooks.submissions.useSearchEvidenceService(
     {
       criteria: {
         courtId: courtId,
@@ -266,7 +291,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     filingNumber
   );
 
-  const { data: disposedApplicationData } = Digit.Hooks.submissions.useSearchSubmissionService(
+  const { data: disposedApplicationData, isLoading: isDisposedApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
         status: "COMPLETED",
@@ -286,7 +311,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
 
   const disposedApplicationList = useMemo(() => disposedApplicationData?.applicationList, [disposedApplicationData]);
 
-  const { data: bailApplicationsData } = Digit.Hooks.submissions.useSearchSubmissionService(
+  const { data: bailApplicationsData, isLoading: isBailApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
         status: "COMPLETED",
@@ -310,6 +335,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
   useEffect(() => {
     const fetchProcessData = async () => {
       try {
+        setLoading(true);
         const resTask = await DRISTIService.customApiService("/task/v1/table/search", {
           criteria: {
             completeStatus: [
@@ -372,11 +398,13 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
       } catch (error) {
         console.error("Error fetching process data:", error);
         setProcessChildren([]);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchProcessData();
-  }, [caseDetails, tenantId]);
+  }, [caseDetails, t, tenantId]);
 
   const productionQueries = useQueries(
     orderList.map((order) => ({
@@ -560,7 +588,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     });
 
     return children;
-  }, [productionQueries]);
+  }, [productionQueries, t]);
 
   const evidenceChildren = generateEvidenceStructure(combinedEvidenceList);
 
@@ -749,12 +777,13 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
     };
 
     generateDisposedApplicationStructure();
-  }, [disposedApplicationList, courtId, filingNumber, tenantId]);
+  }, [disposedApplicationList, courtId, filingNumber, tenantId, t]);
 
   useEffect(() => {
     const buildBailApplicationStructure = async () => {
       if (!bailApplicationsList || bailApplicationsList.length === 0) return;
 
+      setLoading(true);
       const children = await Promise.all(
         bailApplicationsList.map(async (application, index) => {
           const signed = [];
@@ -858,7 +887,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
 
                 submitBailNode = {
                   id: `${application.applicationNumber}-submit-bail`,
-                  title: "Submit Bail Documents",
+                  title: submitApps[0]?.applicationType,
                   hasChildren: true,
                   children: submitChildren,
                 };
@@ -879,16 +908,17 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
           };
         })
       );
-
+      setLoading(false);
       setBailApplicationChildren(children);
     };
 
     buildBailApplicationStructure();
-  }, [bailApplicationsList, tenantId, courtId, filingNumber]);
+  }, [bailApplicationsList, tenantId, courtId, filingNumber, t]);
 
   useEffect(() => {
     const getOrder = async () => {
       try {
+        setLoading(true);
         const response = await DRISTIService.searchOrders({
           criteria: {
             filingNumber: filingNumber,
@@ -902,6 +932,7 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
           },
         });
         const orderData = response?.list || [];
+        setLoading(false);
         setPublishedOrderData(orderData);
       } catch (error) {
         console.error("Error fetching order:", error);
@@ -1152,6 +1183,30 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
   }, []);
 
   const dynamicCaseFileStructure = generateCaseFileStructure(caseDetails?.documents || []);
+
+  if (
+    loading ||
+    isDirectEvidenceLoading ||
+    isApplicationEvidenceLoading ||
+    isBailApplicationLoading ||
+    isComplaintEvidenceLoading ||
+    isDisposedApplicationLoading ||
+    isAccusedEvidenceLoading ||
+    isComplaintEvidenceLoading ||
+    isCourtEvidenceLoading ||
+    isCourtDepositionEvidenceLoading ||
+    isDisposedApplicationLoading ||
+    isBailApplicationLoading ||
+    isHearingLoading ||
+    isPendingReviewApplicationLoading ||
+    isMandatoryOrdersLoading
+  ) {
+    return (
+      <div style={{ width: "100%", paddingTop: "50px" }}>
+        <Loader />
+      </div>
+    );
+  }
   const renderMenuItem = (item, level = 0, parentNumber = "") => {
     const isExpanded = expandedItems[item.id];
     const isSelected = selectedDocument === item.id;
@@ -1263,4 +1318,4 @@ function ViewCaseFileNew({ caseDetails, tenantId, filingNumber }) {
   );
 }
 
-export default ViewCaseFileNew;
+export default CaseBundleView;
