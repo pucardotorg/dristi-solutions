@@ -17,11 +17,11 @@ import pucar.web.models.courtCase.CaseCriteria;
 import pucar.web.models.courtCase.CaseRequest;
 import pucar.web.models.courtCase.CaseSearchRequest;
 import pucar.web.models.courtCase.CourtCase;
-import pucar.web.models.hearing.HearingRequest;
-import pucar.web.models.hearing.HearingResponse;
+import pucar.web.models.hearing.*;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static pucar.config.ServiceConstants.*;
 
@@ -113,9 +113,28 @@ public class PublishOrderScheduleOfHearingDate implements OrderUpdateStrategy {
 
         }
 
+        // if any abandon hearing is there close the hearing and close pending task for that hearing number
+        List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder()
+                .criteria(HearingCriteria.builder().tenantId(order.getTenantId())
+                        .filingNumber(order.getFilingNumber()).build()).requestInfo(requestInfo).build());
+
+        List<Hearing> abandonHearings = Optional.ofNullable(hearings).orElse(Collections.emptyList()).stream().filter(hearing -> ABANDONED.equalsIgnoreCase(hearing.getStatus())).toList();
+
+        if (!abandonHearings.isEmpty()) {
+            StringBuilder hearingUpdateUri = new StringBuilder(configuration.getHearingHost()).append(configuration.getHearingUpdateEndPoint());
+            log.info("Abandoning the hearings");
+            for (Hearing hearing : abandonHearings) {
+                WorkflowObject workflowObject = new WorkflowObject();
+                workflowObject.setAction(CLOSE);
+                hearing.setWorkflow(workflowObject);
+                HearingRequest request = HearingRequest.builder().requestInfo(requestInfo).hearing(hearing).build();
+                hearingUtil.createOrUpdateHearing(request, hearingUpdateUri);
+            }
+        }
+
         // close manual pending task for filing number
         log.info("close manual pending task for hearing number:{}", order.getHearingNumber());
-        pendingTaskUtil.closeManualPendingTask(order.getHearingNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(), courtCase.getId().toString(),courtCase.getCaseTitle());
+        pendingTaskUtil.closeManualPendingTask(order.getHearingNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(), courtCase.getId().toString(), courtCase.getCaseTitle());
 
         log.info("post processing, result= SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), order.getOrderType());
 
