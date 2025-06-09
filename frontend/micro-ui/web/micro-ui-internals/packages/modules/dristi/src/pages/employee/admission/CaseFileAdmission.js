@@ -604,6 +604,7 @@ function CaseFileAdmission({ t, path }) {
       }
       DRISTIService.customApiService(Urls.dristi.pendingTask, {
         pendingTask: {
+          actionCategory: "Schedule Hearing",
           name: "Schedule Hearing",
           entityType: "case-default",
           referenceId: `MANUAL_${caseDetails?.filingNumber}`,
@@ -945,6 +946,7 @@ function CaseFileAdmission({ t, path }) {
         );
         DRISTIService.customApiService(Urls.dristi.pendingTask, {
           pendingTask: {
+            actionCategory: "Schedule Hearing",
             name: "Schedule Hearing",
             entityType: "case-default",
             referenceId: `MANUAL_${caseDetails?.filingNumber}`,

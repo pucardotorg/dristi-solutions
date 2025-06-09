@@ -6,6 +6,7 @@ import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.util.WorkflowUtil;
+import org.pucar.dristi.web.models.Attendee;
 import org.pucar.dristi.web.models.Hearing;
 import org.pucar.dristi.web.models.HearingRequest;
 import org.pucar.dristi.web.models.ProcessInstance;
@@ -59,7 +60,15 @@ public class HearingRegistrationEnrichment {
             List<String> hearingIdList = idgenUtil.getIdList(hearingRequest.getRequestInfo(), tenantId, idName, idFormat, 1, false);
             hearing.setHearingId(hearing.getFilingNumber().get(0) + "-" + hearingIdList.get(0));
 
-            if (null != hearing.getCourtCaseNumber())
+            List<Attendee> attendees = hearing.getAttendees();
+
+            if (attendees != null && !attendees.isEmpty()) {
+                attendees.forEach(attendee -> {
+                    attendee.setId(String.valueOf(UUID.randomUUID()));
+                });
+            }
+
+            if(null != hearing.getCourtCaseNumber())
                 hearing.setCaseReferenceNumber(hearing.getCourtCaseNumber());
             else
                 hearing.setCaseReferenceNumber(hearing.getCmpNumber());

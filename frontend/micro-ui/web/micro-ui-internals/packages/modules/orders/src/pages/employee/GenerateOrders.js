@@ -884,8 +884,32 @@ const GenerateOrders = () => {
   const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
   const hearingsList = useMemo(() => hearingsData?.HearingList?.sort((a, b) => b.startTime - a.startTime), [hearingsData]);
 
+  const attendeeOptions = useMemo(() => {
+    if (!Array.isArray(hearingDetails?.attendees)) {
+      return [];
+    }
+    return hearingDetails?.attendees.map((attendee) => ({
+      ...attendee,
+      partyType: attendee?.type,
+      value: attendee.individualId || attendee.name,
+      label: attendee.name,
+    }));
+  }, [hearingDetails?.attendees]);
+
+  console.log("attendeeOptions", attendeeOptions);
+
   const isHearingScheduled = useMemo(() => {
     const isPresent = (hearingsData?.HearingList || []).some((hearing) => hearing?.status === HearingWorkflowState.SCHEDULED);
+    return isPresent;
+  }, [hearingsData]);
+
+  const isHearingInProgress = useMemo(() => {
+    const isPresent = (hearingsData?.HearingList || []).some((hearing) => hearing?.status === HearingWorkflowState.INPROGRESS);
+    return isPresent;
+  }, [hearingsData]);
+
+  const isHearingInPassedOver = useMemo(() => {
+    const isPresent = (hearingsData?.HearingList || []).some((hearing) => hearing?.status === HearingWorkflowState.PASSED_OVER);
     return isPresent;
   }, [hearingsData]);
 
@@ -988,6 +1012,15 @@ const GenerateOrders = () => {
               return {
                 ...section,
                 body: section.body.map((field) => {
+                  if (field.key === "attendees") {
+                    return {
+                      ...field,
+                      populators: {
+                        ...field.populators,
+                        options: attendeeOptions,
+                      },
+                    };
+                  }
                   if (field.key === "namesOfPartiesRequired") {
                     return {
                       ...field,
@@ -1217,6 +1250,15 @@ const GenerateOrders = () => {
             return {
               ...section,
               body: section.body.map((field) => {
+                if (field.key === "attendees") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: attendeeOptions,
+                    },
+                  };
+                }
                 if (field.key === "namesOfPartiesRequired") {
                   return {
                     ...field,
@@ -1407,7 +1449,23 @@ const GenerateOrders = () => {
       });
       return [updatedConfig];
     }
-  }, [caseDetails, applicationTypeConfigUpdated, complainants, currentOrder, respondents, t, unJoinedLitigant, witnesses, selectedOrder]);
+  }, [
+    currentOrder?.orderCategory,
+    currentOrder?.compositeItems,
+    currentOrder?.additionalDetails?.applicationStatus,
+    currentOrder?.orderNumber,
+    currentOrder?.orderType,
+    applicationTypeConfigUpdated,
+    complainants,
+    respondents,
+    attendeeOptions,
+    poaHolders,
+    unJoinedLitigant,
+    witnesses,
+    caseDetails?.id,
+    caseDetails?.filingNumber,
+    t,
+  ]);
 
   const multiSelectDropdownKeys = useMemo(() => {
     const foundKeys = [];
@@ -1605,7 +1663,7 @@ const GenerateOrders = () => {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
           updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
-        } else if (isHearingScheduled) {
+        } else if (isHearingScheduled || isHearingInPassedOver || isHearingInProgress) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         }
         setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
@@ -1647,7 +1705,7 @@ const GenerateOrders = () => {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
           updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
-        } else if (isHearingScheduled) {
+        } else if (isHearingScheduled || isHearingInPassedOver || isHearingInProgress) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         }
         setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
@@ -1693,7 +1751,7 @@ const GenerateOrders = () => {
           updatedFormdata.dateOfHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
           updatedFormdata.dateOfHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
-        } else if (isHearingScheduled) {
+        } else if (isHearingScheduled || isHearingInPassedOver || isHearingInProgress) {
           updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));
         }
         setValueRef?.current?.[index]?.("dateOfHearing", updatedFormdata.dateOfHearing);
@@ -2083,7 +2141,7 @@ const GenerateOrders = () => {
           currentOrder?.orderDetails?.purposeOfHearing || currentOrder?.additionalDetails?.formdata?.hearingPurpose?.code
         )} on ${formatDate(new Date(currentOrder?.additionalDetails?.formdata?.hearingDate), "DD-MM-YYYY")}`;
       case "SCHEDULING_NEXT_HEARING":
-        return `${currentOrder?.additionalDetails?.formdata?.comments?.text || ""}`;
+        return `${currentOrder?.additionalDetails?.formdata?.hearingSummary?.text || ""}`;
       case "RESCHEDULE_OF_HEARING_DATE":
         return `Hearing for ${formatDate(
           new Date(currentOrder?.additionalDetails?.formdata?.originalHearingDate),
@@ -3495,7 +3553,20 @@ const GenerateOrders = () => {
           break;
         }
 
-        if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType) && (isHearingScheduled || isHearingOptout)) {
+        if (["SCHEDULE_OF_HEARING_DATE"].includes(orderType) && (isHearingScheduled || isHearingInProgress || isHearingOptout)) {
+          setShowErrorToast({
+            label: isHearingScheduled
+              ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE")
+              : isHearingInProgress
+              ? t("HEARING_IS_ALREADY_IN_PROGRESS_FOR_THIS_CASE")
+              : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
+            error: true,
+          });
+          hasError = true;
+          break;
+        }
+
+        if (["SCHEDULING_NEXT_HEARING"].includes(orderType) && (isHearingScheduled || isHearingOptout)) {
           setShowErrorToast({
             label: isHearingScheduled ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE") : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
             error: true,
@@ -3661,7 +3732,7 @@ const GenerateOrders = () => {
   };
 
   if (!filingNumber) {
-    history.push("/employee/home/home-pending-task");
+    history.push("/employee/home/home-screen");
   }
 
   const handleAddForm = () => {
@@ -3756,7 +3827,7 @@ const GenerateOrders = () => {
       }
     }
     return false;
-  }, [currentOrder, selectedOrder]);
+  }, [currentOrder?.compositeItems, currentOrder?.orderCategory, currentOrder?.orderNumber, ordersData?.list]);
 
   const DcaWarning = useMemo(() => {
     let warningObj = { show: false, message: "" };
@@ -3809,7 +3880,16 @@ const GenerateOrders = () => {
       }
       return warningObj;
     }
-  }, [currentOrder, isDelayApplicationSubmitted, caseDetails, isDCANoticeGenerated]);
+  }, [
+    currentOrder?.orderCategory,
+    currentOrder?.additionalDetails?.formdata?.orderType?.code,
+    currentOrder?.additionalDetails?.formdata?.noticeType?.code,
+    currentOrder?.compositeItems,
+    caseDetails?.caseDetails?.delayApplications?.formdata,
+    isDCANoticeGenerated,
+    isDelayApplicationSubmitted,
+    t,
+  ]);
 
   if (
     loader ||

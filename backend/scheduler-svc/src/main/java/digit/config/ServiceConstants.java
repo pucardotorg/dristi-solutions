@@ -85,7 +85,6 @@ public class ServiceConstants {
 
     public static final String SCREEN_TYPE = "home";
 
-
     public static final String CAUSE_LIST_EMAIL_BODY =
             "Please find attached the cause list for of the 24X7 ON Court located in the Kollam District Court Complex. " +
                     "We kindly request the Bar Association to share the causelist in the relevant channels with concerned advocates.<br><br>" +
@@ -108,5 +107,9 @@ public class ServiceConstants {
 
     public static final String WORKFLOW_ABANDON = "WORKFLOW_ABANDON";
 
+
+    public static final String IN_PROGRESS = "IN_PROGRESS";
+
+    public static final String EMPLOYEE = "EMPLOYEE";
 
 }

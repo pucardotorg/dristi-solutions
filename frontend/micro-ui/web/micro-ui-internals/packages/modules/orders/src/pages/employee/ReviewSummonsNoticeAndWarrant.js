@@ -300,12 +300,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
         if (selectedDelievery?.key === "NOT_DELIVERED") {
           ordersService.customApiService(Urls.orders.pendingTask, {
             pendingTask: {
+              actionCategory: "Review Process",
               name: `Re-issue ${orderType === "NOTICE" ? "Notice" : "Summon"}`,
               entityType: "order-default",
               referenceId: `MANUAL_${orderData?.list[0]?.hearingNumber}`,
               status: `RE-ISSUE_${orderType === "NOTICE" ? "NOTICE" : "SUMMON"}`,
               assignedTo: [],
-              assignedRole: ["JUDGE_ROLE"],
+              assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "TYPIST_ROLE"],
               cnrNumber: tasksData?.list[0]?.cnrNumber,
               filingNumber: tasksData?.list[0]?.filingNumber,
               caseId: tasksData?.list[0]?.caseId,
