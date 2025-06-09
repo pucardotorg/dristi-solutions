@@ -1,6 +1,7 @@
 import { Urls } from "../../../hooks";
 import { DRISTIService } from "../../../services";
-import { combineMultipleFiles, documentsTypeMapping } from "../../../Utils";
+import { cleanString, combineMultipleFiles, documentsTypeMapping } from "../../../Utils";
+import { SubmissionWorkflowAction } from "../../../Utils/submissionWorkflow";
 import { efilingDocumentKeyAndTypeMapping } from "../FileCase/Config/efilingDocumentKeyAndTypeMapping";
 import { formatName, onDocumentUpload, sendDocumentForOcr, updateIndividualUser } from "../FileCase/EfilingValidationUtils";
 
@@ -320,6 +321,12 @@ export const updateProfileData = async ({
   setFormDataValue,
   history,
   currentComplainant,
+  individualId,
+  userTypeCitizen,
+  userInfo,
+  sourceType,
+  onBehalfOfUuid,
+  filingType,
 }) => {
   function cloneFormDataRemoveIcon(originalFormDataArray) {
     return originalFormDataArray.map((originalFormData) => {
@@ -356,6 +363,8 @@ export const updateProfileData = async ({
   await processFormData();
 
   let profilePayload = {};
+  let formdataPayload = {};
+  let docList = [];
 
   if (selected === "complainantDetails") {
     const newFormData = await Promise.all(
@@ -400,6 +409,7 @@ export const updateProfileData = async ({
                     documentName: uploadedData.filename || document?.documentName,
                     fileName: "Company documents",
                   };
+                  docList.push(doc);
                   return doc;
                 }
               })
@@ -424,6 +434,7 @@ export const updateProfileData = async ({
                     documentName: uploadedData.filename || document?.documentName,
                     fileName: "supporting Document",
                   };
+                  docList.push(doc);
                   return doc;
                 }
               })
@@ -480,10 +491,11 @@ export const updateProfileData = async ({
       reason: reasonForChange?.text || "",
       document: supportingDocument?.document?.[0] || {},
     };
+
+    formdataPayload = { ...remainingFormData, supportingDocument, reasonForChange };
   }
 
   if (selected === "respondentDetails") {
-    let docList = [];
     const newFormData = await Promise.all(
       updatedFormData
         .filter((item) => item.isenabled)
@@ -568,6 +580,7 @@ export const updateProfileData = async ({
                     documentName: uploadedData.filename || document?.documentName,
                     fileName: "supporting Document",
                   };
+                  docList.push(doc);
                   return doc;
                 }
               })
@@ -627,36 +640,99 @@ export const updateProfileData = async ({
       reason: reasonForChange?.text || "",
       document: supportingDocument?.document?.[0] || {},
     };
+
+    formdataPayload = { ...remainingFormData, supportingDocument, reasonForChange };
   }
 
+  let applicationSchema = {};
+  if (userTypeCitizen === "ADVOCATE") {
+    applicationSchema = {
+      ...applicationSchema,
+      applicationDetails: { ...applicationSchema?.applicationDetails, advocateIndividualId: individualId },
+    };
+  }
   const referenceId = `MANUAL_${uniqueId}_${editorUuid}_${caseDetails?.id}`;
   const ifProfileRequestAlreadyExists = caseDetails?.additionalDetails?.profileRequests?.find((req) => req?.pendingTaskRefId === referenceId);
+
+  const applicationReqBody = {
+    tenantId,
+    application: {
+      ...applicationSchema,
+      tenantId,
+      filingNumber: caseDetails?.filingNumber,
+      cnrNumber: caseDetails?.cnrNumber,
+      cmpNumber: caseDetails?.cmpNumber,
+      caseId: caseDetails?.id,
+      referenceId: null,
+      createdDate: new Date().getTime(),
+      applicationType: "CORRECTION_IN_COMPLAINANT_DETAILS",
+      status: caseDetails?.status,
+      isActive: true,
+      createdBy: userInfo?.uuid,
+      statuteSection: { tenantId },
+      additionalDetails: {
+        formdata: {
+          ...formdataPayload,
+          submissionType: {
+            code: "APPLICATION",
+            name: "APPLICATION",
+          },
+          applicationType: {
+            name: "APPLICATION_TYPE_CORRECTION_IN_COMPLAINANT_DETAILS",
+            type: "CORRECTION_IN_COMPLAINANT_DETAILS",
+            isActive: true,
+          },
+        },
+        dateOfApplication: new Date().getTime(),
+        uniqueId: uniqueId,
+        profileEditType: selected,
+        pendingTaskRefId: referenceId,
+        onBehalOfName: null,
+        partyType: sourceType?.toLowerCase(),
+        isResponseRequired: true,
+        owner: cleanString(userInfo?.name),
+      },
+      documents: docList,
+      onBehalfOf: [onBehalfOfUuid],
+      comment: [],
+      workflow: {
+        id: "workflow123",
+        action: SubmissionWorkflowAction.CREATE,
+        status: "in_progress",
+        comments: "Workflow comments",
+        documents: [{}],
+      },
+    },
+  };
 
   if (ifProfileRequestAlreadyExists) {
     toast.error(t("AN_EDIT_PROFILE_REQUEST_ALREADY_EXISTS"));
     history.goBack();
   } else {
     try {
-      await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-        pendingTask: {
-          name: "Review Litigant Details Change",
-          entityType: "case-default",
-          referenceId,
-          status: "PROFILE_EDIT_REQUEST",
-          assignedTo: [],
-          assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "COURT_ROOM_MANAGER"],
-          cnrNumber: caseDetails?.cnrNumber,
-          filingNumber: caseDetails?.filingNumber,
-          caseId: caseDetails?.id,
-          caseTitle: caseDetails?.caseTitle,
-          isCompleted: false,
-          additionalDetails: {
-            dateOfApplication: new Date().getTime(),
-            uniqueId: uniqueId,
-          },
-          tenantId,
-        },
-      });
+      // await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+      //   pendingTask: {
+      //     name: "Review Litigant Details Change",
+      //     entityType: "case-default",
+      //     referenceId,
+      //     status: "PROFILE_EDIT_REQUEST",
+      //     assignedTo: [],
+      //     assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "COURT_ROOM_MANAGER"],
+      //     cnrNumber: caseDetails?.cnrNumber,
+      //     filingNumber: caseDetails?.filingNumber,
+      //     caseId: caseDetails?.id,
+      //     caseTitle: caseDetails?.caseTitle,
+      //     isCompleted: false,
+      //     additionalDetails: {
+      //       dateOfApplication: new Date().getTime(),
+      //       uniqueId: uniqueId,
+      //     },
+      //     tenantId,
+      //   },
+      // });
+
+      // history.goBack();
+      let evidenceReqBody = {};
 
       await DRISTIService.createProfileRequest(
         {
@@ -664,7 +740,31 @@ export const updateProfileData = async ({
         },
         tenantId
       );
-      history.goBack();
+
+      const res = await DRISTIService.createApplication(applicationReqBody, { tenantId });
+
+      docList?.forEach((docs) => {
+        evidenceReqBody = {
+          artifact: {
+            artifactType: "DOCUMENTARY",
+            caseId: caseDetails?.id,
+            application: res?.application?.applicationNumber,
+            filingNumber: caseDetails?.filingNumber,
+            tenantId,
+            comments: [],
+            file: docs,
+            sourceType,
+            sourceID: individualId,
+            filingType: filingType,
+            additionalDetails: {
+              uuid: userInfo?.uuid,
+            },
+          },
+        };
+        DRISTIService.createEvidence(evidenceReqBody);
+      });
+
+      return res;
     } catch (error) {
       toast.error(t("SOMETHING_WENT_WRONG"));
       console.error(error);

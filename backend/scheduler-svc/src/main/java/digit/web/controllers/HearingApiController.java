@@ -84,7 +84,7 @@ public class HearingApiController {
     @RequestMapping(value = "/script", method = RequestMethod.POST)
     public ResponseEntity<?> script(@Parameter(in = ParameterIn.DEFAULT, description = "Hearing Details and Request Info", required = true, schema = @Schema()) @Valid @RequestBody HearingRequest request) {
         log.info("api=/script, result = IN_PROGRESS");
-        processor.processCreateHearingRequest(request);
+        processor.processCreateHearingRequest(request, Boolean.FALSE);
         log.info("api=/script, result = SUCCESS");
         return new ResponseEntity<>(HttpStatus.OK);
     }

@@ -163,7 +163,7 @@ public class CaseBundleIndexBuilderService {
                         log.error("not able to get data from es for given case ID");
                     } else {
                         JsonNode indexJson = hitsNode.get(0).path("_source");
-                        List<String> curFileStore = extractFileStore(indexJson);
+                       // List<String> curFileStore = extractFileStore(indexJson);
                         ProcessCaseBundlePdfRequest processCaseBundlePdfRequest = new ProcessCaseBundlePdfRequest();
                         processCaseBundlePdfRequest.setRequestInfo(requestInfo);
                         processCaseBundlePdfRequest.setCaseId(caseID);
@@ -182,8 +182,8 @@ public class CaseBundleIndexBuilderService {
 
                         Map<String, Object> pdfResponseMap = objectMapper.convertValue(pdfResponse, Map.class);
                         Map<String, Object> indexMap = (Map<String, Object>) pdfResponseMap.get("index");
-                        List<String> fileStoreIds = extractFileStore((JsonNode) indexMap);
-                        removeFileStore(curFileStore, fileStoreIds, tenantId);
+                        //List<String> fileStoreIds = extractFileStore((JsonNode) indexMap);
+                        //removeFileStore(curFileStore, fileStoreIds, tenantId);
                         JsonNode updateIndexJson = objectMapper.valueToTree(indexMap);
 
                         String esUpdateUrl = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + "/_update/" + caseID;
