@@ -31,6 +31,11 @@ export const TabSearchconfig = {
       type: "search",
     },
     {
+      label: "caseFileOverview",
+      displayLabel: "CASE_FILE_OVERVIEW_TAB",
+      type: "search",
+    },
+    {
       label: "Complaint",
       displayLabel: "COMPLAINT_TAB",
       type: "search",
@@ -752,6 +757,11 @@ export const TabSearchconfigNew = {
     {
       label: "Overview",
       displayLabel: "OVERVIEW_TAB",
+      type: "search",
+    },
+    {
+      label: "caseFileOverview",
+      displayLabel: "CASE_FILE_OVERVIEW_TAB",
       type: "search",
     },
     {

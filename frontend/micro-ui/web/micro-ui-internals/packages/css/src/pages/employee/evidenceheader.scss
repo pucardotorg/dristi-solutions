@@ -286,6 +286,129 @@
   }
 }
 
+.view-case-file-new-wrapper {
+  display: flex;
+  background-color: #f9fafb;
+  height: calc(100vh - 80px);
+
+  .scrollable-container {
+    overflow-y: auto;
+    overflow-x: hidden;
+    height: calc(100% - 57px);
+    scrollbar-width: thin;
+    scrollbar-color: #c5c5c5 #f9fafb;
+    direction: rtl;
+  }
+
+  .scrollable-container > * {
+    direction: ltr;
+  }
+
+  /* Custom scrollbar styles */
+  .scrollable-container::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .scrollable-container::-webkit-scrollbar-track {
+    background: #f9fafb;
+  }
+
+  .scrollable-container::-webkit-scrollbar-thumb {
+    background-color: #c5c5c5;
+    border-radius: 4px;
+  }
+
+  .scrollable-container::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+
+  .menu-item-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    min-height: 47px;
+    cursor: pointer;
+    border-bottom: 1px solid #e8e8e8;
+  }
+
+  .menu-item-container .menu-item-container.selected {
+    background-color: #e8e8e8;
+  }
+
+  .menu-item-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    line-height: 1.4;
+    word-break: break-word;
+    font-family: Roboto;
+    font-size: 16px;
+    line-height: 1.2;
+  }
+
+  .menu-item-icon {
+    margin-left: 8px;
+  }
+
+  .menu-item-number {
+    flex-shrink: 0;
+    text-align: right;
+  }
+
+  .menu-item-text {
+    flex: 1;
+    word-break: break-word;
+  }
+
+  .sidebar-panel {
+    flex: 1;
+    width: 280px;
+    background-color: #f9fafb;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: sticky;
+    top: 0;
+  }
+
+  .sidebar-header {
+    font-size: 24px;
+    font-weight: 700;
+    font-family: Roboto, sans-serif;
+    line-height: 100%;
+    letter-spacing: 0%;
+    color: #1f2937;
+    padding: 20px;
+    border-bottom: 1px solid #e5e7eb;
+    position: sticky;
+    top: 0;
+    background-color: #f9fafb;
+    z-index: 10;
+  }
+
+  .doc-viewer-container {
+    flex: 4;
+    padding: 16px;
+    overflow-y: auto;
+    height: 100%;
+    scrollbar-width: thin;
+    scrollbar-color: #c5c5c5 #f9fafb;
+
+    .docviewer-wrapper {
+      margin-top: 0px !important;
+    }
+  }
+
+  .context-menu {
+    position: fixed;
+    background-color: white;
+    border: 1px solid #ccc;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+  }
+}
 .bottom-drawer-wrapper {
   position: fixed;
   bottom: 0;

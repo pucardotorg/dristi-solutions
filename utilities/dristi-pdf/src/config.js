@@ -297,6 +297,7 @@ module.exports = {
     localization: process.env.EGOV_LOCALIZATION_HOST || "http://localhost:8083",
     filestore:
       process.env.EGOV_FILESTORE_SERVICE_HOST || "http://localhost:8084",
+    evidence: process.env.DRISTI_EVIDENCE_HOST || "http://localhost:8090",
   },
 
   paths: {
@@ -318,6 +319,8 @@ module.exports = {
     filestore_search_id: "/filestore/v1/files/id",
     hearing_bulk_reschedule: "/hearing/v1/bulk/_reschedule",
     task_search: "task/v1/search",
+    task_table_search: "/task/v1/table/search",
+    evidence_search: "/evidence/v1/_search",
   },
 
   constraints: {
