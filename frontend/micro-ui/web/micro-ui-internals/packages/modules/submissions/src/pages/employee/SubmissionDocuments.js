@@ -51,8 +51,9 @@ const SubmissionDocuments = ({ path }) => {
   const todayDate = new Date().getTime();
   const [loader, setLoader] = useState(false);
   const entityType = "voluntary-document-submission";
-  const roles = Digit.UserService.getUser()?.info?.roles;
-  const isBenchClerk = roles.some((role) => role.code === "BENCH_CLERK");
+  const isEmployee = useMemo(() => userInfo?.roles?.some((role) => ["BENCH_CLERK", "JUDGE_ROLE", "TYPIST_ROLE"].includes(role?.code)), [
+    userInfo?.roles,
+  ]);
 
   const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "FilingType" },
@@ -118,7 +119,7 @@ const SubmissionDocuments = ({ path }) => {
     },
     {},
     artifactNumber,
-    Boolean(artifactNumber)
+    Boolean(artifactNumber && caseCourtId)
   );
 
   const evidenceDetails = useMemo(() => evidenceData?.artifacts?.[0], [evidenceData]);
@@ -238,7 +239,7 @@ const SubmissionDocuments = ({ path }) => {
               comments: [],
               file,
               sourceType,
-              sourceID: isBenchClerk ? userInfo?.uuid : individualId,
+              sourceID: isEmployee ? userInfo?.uuid : individualId,
               filingType: filingType,
               additionalDetails: {
                 uuid: userInfo?.uuid,
@@ -257,7 +258,7 @@ const SubmissionDocuments = ({ path }) => {
             stateSla: todayDate + stateSla.PENDINGESIGN_SUBMIT_DOCUMENT,
           });
         }
-        if (isBenchClerk) {
+        if (isEmployee) {
           history.replace(
             `/${window?.contextPath}/employee/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${evidence?.artifact?.artifactNumber}`
           );
@@ -386,7 +387,7 @@ const SubmissionDocuments = ({ path }) => {
               mdmsConfig: {
                 moduleName: "Submission",
                 masterName: "SubmissionDocumentType",
-                select: `(data) => {return data['Submission'].SubmissionDocumentType?.filter((item) => {return !(item.code === "MISCELLANEOUS" && ${!isBenchClerk});});}`,
+                select: `(data) => {return data['Submission'].SubmissionDocumentType?.filter((item) => {return !(item.code === "MISCELLANEOUS" && ${!isEmployee});});}`,
               },
             },
           };
@@ -407,7 +408,7 @@ const SubmissionDocuments = ({ path }) => {
         })
       );
     }
-  }, [artifactNumber, t, isBenchClerk]);
+  }, [artifactNumber, t, isEmployee]);
 
   if (loader || isFilingTypeLoading || isEvidenceLoading) {
     return <Loader />;
@@ -437,7 +438,7 @@ const SubmissionDocuments = ({ path }) => {
       <div className="citizen create-submission" style={{ padding: "24px 24px 24px 40px" }}>
         {" "}
         <Header> {t(submissionDocumentDetailsConfig.header)}</Header>
-        {isBenchClerk ? (
+        {isEmployee ? (
           <div style={{ lineHeight: "24px" }}> {t(submissionDocumentDetailsConfig.subText11)}</div>
         ) : (
           <div style={{ lineHeight: "24px" }}> {t(submissionDocumentDetailsConfig.subText1)}</div>

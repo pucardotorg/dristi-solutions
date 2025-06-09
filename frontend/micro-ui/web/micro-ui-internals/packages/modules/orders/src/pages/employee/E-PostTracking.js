@@ -111,7 +111,7 @@ const EpostTrackingPage = () => {
     },
     {},
     rowData?.original?.taskNumber,
-    Boolean(rowData)
+    Boolean(rowData && courtId)
   );
 
   const ePostFee = taskData?.list?.[0]?.taskDetails?.deliveryChannels?.fees;
@@ -153,7 +153,7 @@ const EpostTrackingPage = () => {
     { tenantId, criteria: { id: taskData?.list[0]?.orderId, ...(courtId && { courtId }) } },
     { tenantId },
     taskData?.list[0]?.orderId,
-    Boolean(taskData)
+    Boolean(taskData && courtId)
   );
 
   const orderType = useMemo(
@@ -177,6 +177,7 @@ const EpostTrackingPage = () => {
       if (rowData?.original?.deliveryStatus === "NOT_DELIVERED") {
         ordersService.customApiService(Urls.orders.pendingTask, {
           pendingTask: {
+            actionCategory: "Review Process",
             name: `Re-issue ${orderType === "NOTICE" ? "Notice" : "Summon"}`,
             entityType: "order-default",
             referenceId: `MANUAL_${orderData?.list[0]?.hearingNumber}`,

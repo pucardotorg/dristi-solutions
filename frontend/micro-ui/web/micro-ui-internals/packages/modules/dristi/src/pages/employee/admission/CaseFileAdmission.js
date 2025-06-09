@@ -166,7 +166,7 @@ function CaseFileAdmission({ t, path }) {
     },
     {},
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const { data: applicationData, isLoading: isApplicationLoading, refetch: applicationRefetch } = Digit.Hooks.submissions.useSearchSubmissionService(
@@ -180,7 +180,7 @@ function CaseFileAdmission({ t, path }) {
     },
     {},
     filingNumber + "allApplications",
-    filingNumber
+    Boolean(filingNumber && caseCourtId)
   );
 
   const isDelayApplicationPending = useMemo(
@@ -604,6 +604,7 @@ function CaseFileAdmission({ t, path }) {
       }
       DRISTIService.customApiService(Urls.dristi.pendingTask, {
         pendingTask: {
+          actionCategory: "Schedule Hearing",
           name: "Schedule Hearing",
           entityType: "case-default",
           referenceId: `MANUAL_${caseDetails?.filingNumber}`,
@@ -945,6 +946,7 @@ function CaseFileAdmission({ t, path }) {
         );
         DRISTIService.customApiService(Urls.dristi.pendingTask, {
           pendingTask: {
+            actionCategory: "Schedule Hearing",
             name: "Schedule Hearing",
             entityType: "case-default",
             referenceId: `MANUAL_${caseDetails?.filingNumber}`,

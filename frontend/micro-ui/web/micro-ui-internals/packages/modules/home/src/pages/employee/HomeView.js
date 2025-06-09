@@ -61,6 +61,8 @@ const HomeView = () => {
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
+
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
   const isNyayMitra = roles.some((role) => role.code === "NYAY_MITRA_ROLE");
   const isClerk = roles.some((role) => role.code === "BENCH_CLERK");
@@ -133,7 +135,7 @@ const HomeView = () => {
     },
     { tenantId },
     OrderWorkflowState.PENDING_BULK_E_SIGN,
-    Boolean(isJudge)
+    Boolean(isJudge && courtId)
   );
 
   const refreshInbox = () => {
@@ -460,7 +462,7 @@ const HomeView = () => {
                 advocateId={advocateId}
                 t={t}
               />
-              {(isJudge || isClerk) && (
+              {(isJudge || isClerk || isTypist) && (
                 <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start" }}>
                   {isJudge && (
                     <React.Fragment>

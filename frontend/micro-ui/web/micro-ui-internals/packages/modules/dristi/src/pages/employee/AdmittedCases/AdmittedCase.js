@@ -43,6 +43,7 @@ import PublishedNotificationModal from "./publishedNotificationModal";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import NoticeAccordion from "../../../components/NoticeAccordion";
 import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
+import Breadcrumb from "../../../components/BreadCrumb";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -364,7 +365,7 @@ const AdmittedCases = () => {
     },
     {},
     filingNumber + "allApplications",
-    filingNumber
+    Boolean(filingNumber && caseCourtId)
   );
   const extensionApplications = useMemo(
     () =>
@@ -711,7 +712,7 @@ const AdmittedCases = () => {
                 criteria: [
                   {
                     filingNumber: filingNumber,
-                    ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
+                    ...(caseCourtId && { courtId: caseCourtId }),
                   },
                 ],
               },
@@ -1007,6 +1008,7 @@ const AdmittedCases = () => {
     isBenchClerk,
     downloadPdf,
     ordersService,
+    caseCourtId,
   ]);
 
   const handleEvidenceAction = async () => {
@@ -1786,6 +1788,7 @@ const AdmittedCases = () => {
         setModalInfo({ ...modalInfo, page: 2 });
         DRISTIService.customApiService(Urls.dristi.pendingTask, {
           pendingTask: {
+            actionCategory: "Schedule Hearing",
             name: "Schedule Admission Hearing",
             entityType: "case-default",
             referenceId: `MANUAL_${caseDetails?.filingNumber}`,
@@ -1863,6 +1866,7 @@ const AdmittedCases = () => {
         );
         DRISTIService.customApiService(Urls.dristi.pendingTask, {
           pendingTask: {
+            actionCategory: "Schedule Hearing",
             name: "Schedule Hearing",
             entityType: "case-default",
             referenceId: `MANUAL_${caseDetails?.filingNumber}`,
@@ -1933,7 +1937,7 @@ const AdmittedCases = () => {
     },
     {},
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   // const isDcaHearingScheduled = useMemo(() => {
@@ -1982,7 +1986,7 @@ const AdmittedCases = () => {
     { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filingNumber + currentHearingId,
-    Boolean(filingNumber && !historyOrderData),
+    Boolean(filingNumber && !historyOrderData && caseCourtId),
     0
   );
 
@@ -2622,6 +2626,24 @@ const AdmittedCases = () => {
     }
   }, [caseDetails, downloadPdf, tenantId, showToast]);
 
+  const citizenCrumbs = useMemo(
+    () => [
+      {
+        path: `/${window?.contextPath}/citizen/home/home-pending-task`,
+        content: t("ES_COMMON_HOME"),
+        show: true,
+        isLast: false,
+      },
+      {
+        path: `${path}/home/view-case`,
+        content: t("VIEW_CASE"),
+        show: true,
+        isLast: true,
+      },
+    ],
+    [path, t]
+  );
+
   const inboxComposer = useMemo(() => {
     if (
       activeTab === "Documents" &&
@@ -2646,6 +2668,7 @@ const AdmittedCases = () => {
 
   return (
     <div className="admitted-case" style={{ position: "absolute", width: "100%" }}>
+      <Breadcrumb crumbs={citizenCrumbs} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>
       {downloadCasePdfLoading && (
         <div
           style={{

@@ -542,7 +542,7 @@ const EvidenceModal = ({
     },
     {},
     artifactNumber,
-    Boolean(artifactNumber)
+    Boolean(artifactNumber && caseCourtId)
   );
 
   const evidenceDetails = useMemo(() => evidenceData?.artifacts?.[0], [evidenceData]);
@@ -986,7 +986,14 @@ const EvidenceModal = ({
           const res = await ordersService.createOrder(reqbody, { tenantId });
           const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType, isBail ? type : showConfirmationModal?.type);
           DRISTIService.customApiService(Urls.dristi.pendingTask, {
+            //need to add actioncategory for ORDER_EXTENSION_SUBMISSION_DEADLINE , ORDER_FOR_INITIATING_RESCHEDULING_OF_HEARING_DATE
             pendingTask: {
+              actionCategory:
+                name === "ORDER_EXTENSION_SUBMISSION_DEADLINE"
+                  ? "View Application"
+                  : name === "ORDER_FOR_INITIATING_RESCHEDULING_OF_HEARING_DATE"
+                  ? "Schedule Hearing"
+                  : null,
               name: t(name),
               entityType: "order-default",
               referenceId: `MANUAL_${res?.order?.orderNumber}`,
@@ -1063,7 +1070,11 @@ const EvidenceModal = ({
       if (documentApplicationType === "CORRECTION_IN_COMPLAINANT_DETAILS") {
         const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
         history.push(
-          `/${window.contextPath}/employee/dristi/home/view-case/review-litigant-details?caseId=${caseId}&referenceId=${documentSubmission?.[0]?.details?.additionalDetails?.pendingTaskRefId}&refApplicationId=${refApplicationId}`
+          `/${window.contextPath}/employee/dristi/home/view-case/review-litigant-details?caseId=${caseId}&referenceId=${documentSubmission?.[0]?.details?.additionalDetails?.pendingTaskRefId}&refApplicationId=${refApplicationId}`,
+          {
+            dateOfApplication: documentSubmission?.[0]?.applicationList?.additionalDetails?.dateOfApplication,
+            uniqueId: documentSubmission?.[0]?.applicationList?.additionalDetails?.uniqueId,
+          }
         );
         return;
       }

@@ -361,7 +361,7 @@ const GenerateOrders = () => {
   // Fetch case details on component mount
   useEffect(() => {
     fetchCaseDetails();
-  }, []);
+  }, [courtId]);
 
   const userInfo = Digit.UserService.getUser()?.info;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
@@ -387,7 +387,7 @@ const GenerateOrders = () => {
     },
     {},
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const isDelayApplicationPending = useMemo(() => {
@@ -564,7 +564,6 @@ const GenerateOrders = () => {
       criteria: {
         filingNumber,
         applicationNumber: "",
-        cnrNumber,
         status: OrderWorkflowState.DRAFT_IN_PROGRESS,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
@@ -572,7 +571,7 @@ const GenerateOrders = () => {
     },
     { tenantId },
     filingNumber + OrderWorkflowState.DRAFT_IN_PROGRESS,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const defaultIndex = useMemo(() => {
@@ -665,10 +664,19 @@ const GenerateOrders = () => {
     if (isSignSuccess) {
       setShowsignatureModal(true);
       setOrderPdfFileStoreID(savedOrderPdf);
-      sessionStorage.removeItem("esignProcess");
-      sessionStorage.removeItem("orderPDF");
     }
   }, [defaultIndex, orderNumber, selectedOrder]);
+
+  useEffect(() => {
+    if (showsignatureModal) {
+      const cleanupTimer = setTimeout(() => {
+        sessionStorage.removeItem("esignProcess");
+        sessionStorage.removeItem("orderPDF");
+      }, 200);
+
+      return () => clearTimeout(cleanupTimer);
+    }
+  }, [showsignatureModal]);
 
   useEffect(() => {
     const getOrder = async () => {
@@ -701,7 +709,7 @@ const GenerateOrders = () => {
     if (orderNumber && currentDiaryEntry) {
       getOrder();
     }
-  }, [currentDiaryEntry, filingNumber, orderNumber, tenantId]);
+  }, [currentDiaryEntry, filingNumber, orderNumber, tenantId, caseCourtId]);
 
   useEffect(() => {
     if (orderPdfFileStoreID) {
@@ -731,7 +739,6 @@ const GenerateOrders = () => {
       criteria: {
         filingNumber,
         applicationNumber: "",
-        cnrNumber,
         orderType: "NOTICE",
         status: "PUBLISHED",
         ...(caseCourtId && { courtId: caseCourtId }),
@@ -740,7 +747,7 @@ const GenerateOrders = () => {
     },
     { tenantId },
     filingNumber + OrderWorkflowState.PUBLISHED + "NOTICE",
-    Boolean(filingNumber && isNoticeOrder)
+    Boolean(filingNumber && isNoticeOrder && caseCourtId)
   );
 
   const isDCANoticeGenerated = useMemo(
@@ -772,7 +779,6 @@ const GenerateOrders = () => {
       criteria: {
         filingNumber,
         applicationNumber: "",
-        cnrNumber,
         orderType: "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE",
         status: OrderWorkflowState.PUBLISHED,
         ...(caseCourtId && { courtId: caseCourtId }),
@@ -781,7 +787,7 @@ const GenerateOrders = () => {
     },
     { tenantId },
     filingNumber + OrderWorkflowState.PUBLISHED + "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE",
-    Boolean(filingNumber && cnrNumber && isApproveRejectLitigantDetailsChange)
+    Boolean(filingNumber && cnrNumber && isApproveRejectLitigantDetailsChange && caseCourtId)
   );
 
   const publishedLitigantDetailsChangeOrders = useMemo(() => approveRejectLitigantDetailsChangeOrderData?.list || [], [
@@ -805,7 +811,6 @@ const GenerateOrders = () => {
       criteria: {
         filingNumber,
         applicationNumber: "",
-        cnrNumber,
         status: OrderWorkflowState.PUBLISHED,
         orderType: "ACCEPT_BAIL",
         ...(caseCourtId && { courtId: caseCourtId }),
@@ -814,7 +819,7 @@ const GenerateOrders = () => {
     },
     { tenantId },
     filingNumber + OrderWorkflowState.PUBLISHED + "ACCEPT_BAIL",
-    Boolean(filingNumber && cnrNumber && isJudgementOrder)
+    Boolean(filingNumber && cnrNumber && isJudgementOrder && caseCourtId)
   );
   const publishedBailOrder = useMemo(() => publishedBailOrdersData?.list?.[0] || {}, [publishedBailOrdersData]);
 
@@ -874,13 +879,37 @@ const GenerateOrders = () => {
     },
     { applicationNumber: "", cnrNumber: "" },
     hearingId || hearingNumber,
-    true
+    Boolean(filingNumber && caseCourtId)
   );
   const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
   const hearingsList = useMemo(() => hearingsData?.HearingList?.sort((a, b) => b.startTime - a.startTime), [hearingsData]);
 
+  const attendeeOptions = useMemo(() => {
+    if (!Array.isArray(hearingDetails?.attendees)) {
+      return [];
+    }
+    return hearingDetails?.attendees.map((attendee) => ({
+      ...attendee,
+      partyType: attendee?.type,
+      value: attendee.individualId || attendee.name,
+      label: attendee.name,
+    }));
+  }, [hearingDetails?.attendees]);
+
+  console.log("attendeeOptions", attendeeOptions);
+
   const isHearingScheduled = useMemo(() => {
     const isPresent = (hearingsData?.HearingList || []).some((hearing) => hearing?.status === HearingWorkflowState.SCHEDULED);
+    return isPresent;
+  }, [hearingsData]);
+
+  const isHearingInProgress = useMemo(() => {
+    const isPresent = (hearingsData?.HearingList || []).some((hearing) => hearing?.status === HearingWorkflowState.INPROGRESS);
+    return isPresent;
+  }, [hearingsData]);
+
+  const isHearingInPassedOver = useMemo(() => {
+    const isPresent = (hearingsData?.HearingList || []).some((hearing) => hearing?.status === HearingWorkflowState.PASSED_OVER);
     return isPresent;
   }, [hearingsData]);
 
@@ -983,6 +1012,15 @@ const GenerateOrders = () => {
               return {
                 ...section,
                 body: section.body.map((field) => {
+                  if (field.key === "attendees") {
+                    return {
+                      ...field,
+                      populators: {
+                        ...field.populators,
+                        options: attendeeOptions,
+                      },
+                    };
+                  }
                   if (field.key === "namesOfPartiesRequired") {
                     return {
                       ...field,
@@ -1212,6 +1250,15 @@ const GenerateOrders = () => {
             return {
               ...section,
               body: section.body.map((field) => {
+                if (field.key === "attendees") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: attendeeOptions,
+                    },
+                  };
+                }
                 if (field.key === "namesOfPartiesRequired") {
                   return {
                     ...field,
@@ -1402,7 +1449,23 @@ const GenerateOrders = () => {
       });
       return [updatedConfig];
     }
-  }, [caseDetails, applicationTypeConfigUpdated, complainants, currentOrder, respondents, t, unJoinedLitigant, witnesses, selectedOrder]);
+  }, [
+    currentOrder?.orderCategory,
+    currentOrder?.compositeItems,
+    currentOrder?.additionalDetails?.applicationStatus,
+    currentOrder?.orderNumber,
+    currentOrder?.orderType,
+    applicationTypeConfigUpdated,
+    complainants,
+    respondents,
+    attendeeOptions,
+    poaHolders,
+    unJoinedLitigant,
+    witnesses,
+    caseDetails?.id,
+    caseDetails?.filingNumber,
+    t,
+  ]);
 
   const multiSelectDropdownKeys = useMemo(() => {
     const foundKeys = [];
@@ -1600,7 +1663,7 @@ const GenerateOrders = () => {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
           updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
-        } else if (isHearingScheduled) {
+        } else if (isHearingScheduled || isHearingInPassedOver || isHearingInProgress) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         }
         setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
@@ -1642,7 +1705,7 @@ const GenerateOrders = () => {
           updatedFormdata.dateForHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
           updatedFormdata.dateForHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
-        } else if (isHearingScheduled) {
+        } else if (isHearingScheduled || isHearingInPassedOver || isHearingInProgress) {
           updatedFormdata.dateForHearing = formatDate(new Date(hearingDetails?.startTime));
         }
         setValueRef?.current?.[index]?.("dateForHearing", updatedFormdata.dateForHearing);
@@ -1688,7 +1751,7 @@ const GenerateOrders = () => {
           updatedFormdata.dateOfHearing = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate || "";
         } else if (rescheduleHearingItem) {
           updatedFormdata.dateOfHearing = rescheduleHearingItem?.orderSchema?.additionalDetails?.formdata?.newHearingDate || "";
-        } else if (isHearingScheduled) {
+        } else if (isHearingScheduled || isHearingInPassedOver || isHearingInProgress) {
           updatedFormdata.dateOfHearing = formatDate(new Date(hearingDetails?.startTime));
         }
         setValueRef?.current?.[index]?.("dateOfHearing", updatedFormdata.dateOfHearing);
@@ -2078,7 +2141,7 @@ const GenerateOrders = () => {
           currentOrder?.orderDetails?.purposeOfHearing || currentOrder?.additionalDetails?.formdata?.hearingPurpose?.code
         )} on ${formatDate(new Date(currentOrder?.additionalDetails?.formdata?.hearingDate), "DD-MM-YYYY")}`;
       case "SCHEDULING_NEXT_HEARING":
-        return `${currentOrder?.additionalDetails?.formdata?.comments?.text || ""}`;
+        return `${currentOrder?.additionalDetails?.formdata?.hearingSummary?.text || ""}`;
       case "RESCHEDULE_OF_HEARING_DATE":
         return `Hearing for ${formatDate(
           new Date(currentOrder?.additionalDetails?.formdata?.originalHearingDate),
@@ -3490,7 +3553,20 @@ const GenerateOrders = () => {
           break;
         }
 
-        if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(orderType) && (isHearingScheduled || isHearingOptout)) {
+        if (["SCHEDULE_OF_HEARING_DATE"].includes(orderType) && (isHearingScheduled || isHearingInProgress || isHearingOptout)) {
+          setShowErrorToast({
+            label: isHearingScheduled
+              ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE")
+              : isHearingInProgress
+              ? t("HEARING_IS_ALREADY_IN_PROGRESS_FOR_THIS_CASE")
+              : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
+            error: true,
+          });
+          hasError = true;
+          break;
+        }
+
+        if (["SCHEDULING_NEXT_HEARING"].includes(orderType) && (isHearingScheduled || isHearingOptout)) {
           setShowErrorToast({
             label: isHearingScheduled ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE") : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
             error: true,
@@ -3656,7 +3732,7 @@ const GenerateOrders = () => {
   };
 
   if (!filingNumber) {
-    history.push("/employee/home/home-pending-task");
+    history.push("/employee/home/home-screen");
   }
 
   const handleAddForm = () => {
@@ -3751,7 +3827,7 @@ const GenerateOrders = () => {
       }
     }
     return false;
-  }, [currentOrder, selectedOrder]);
+  }, [currentOrder?.compositeItems, currentOrder?.orderCategory, currentOrder?.orderNumber, ordersData?.list]);
 
   const DcaWarning = useMemo(() => {
     let warningObj = { show: false, message: "" };
@@ -3804,7 +3880,16 @@ const GenerateOrders = () => {
       }
       return warningObj;
     }
-  }, [currentOrder, isDelayApplicationSubmitted, caseDetails, isDCANoticeGenerated]);
+  }, [
+    currentOrder?.orderCategory,
+    currentOrder?.additionalDetails?.formdata?.orderType?.code,
+    currentOrder?.additionalDetails?.formdata?.noticeType?.code,
+    currentOrder?.compositeItems,
+    caseDetails?.caseDetails?.delayApplications?.formdata,
+    isDCANoticeGenerated,
+    isDelayApplicationSubmitted,
+    t,
+  ]);
 
   if (
     loader ||

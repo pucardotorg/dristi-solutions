@@ -34,7 +34,7 @@ const NextHearingCard = ({ caseData, width }) => {
     },
     {},
     cnr + filingNumber,
-    true
+    Boolean(filingNumber && caseCourtId)
   );
 
   const scheduledHearing = hearingRes?.HearingList?.filter(

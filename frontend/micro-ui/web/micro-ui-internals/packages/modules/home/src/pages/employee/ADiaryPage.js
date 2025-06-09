@@ -126,6 +126,9 @@ const ADiaryPage = ({ path }) => {
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
 
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
+
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
 
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
@@ -254,7 +257,7 @@ const ADiaryPage = ({ path }) => {
       }
     };
     getDiarySearch();
-  }, [entryDate, tenantId]);
+  }, [entryDate, tenantId, courtId]);
 
   const uploadSignedPdf = async () => {
     try {
@@ -319,7 +322,7 @@ const ADiaryPage = ({ path }) => {
     {},
     `diary-entries-${entryDate}-${offSet}`,
     entryDate,
-    Boolean(entryDate)
+    Boolean(entryDate && courtId)
   );
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);
@@ -462,7 +465,7 @@ const ADiaryPage = ({ path }) => {
           )}
         </div>
         <div style={styles.rightPanel}>
-          {
+          {isJudge && (
             <div>
               {!isSelectedDataSigned &&
                 entryDate !== new Date().setHours(0, 0, 0, 0) &&
@@ -481,7 +484,7 @@ const ADiaryPage = ({ path }) => {
                 isDiary={true}
               />
             </div>
-          }
+          )}
         </div>
         <div className="adiary-container">
           {stepper === 1 && (

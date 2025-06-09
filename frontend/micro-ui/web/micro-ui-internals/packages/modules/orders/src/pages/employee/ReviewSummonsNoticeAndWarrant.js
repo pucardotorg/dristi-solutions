@@ -65,7 +65,6 @@ export const getJudgeDefaultConfig = (courtId) => {
   });
 };
 
-
 function getAction(selectedDelievery, orderType) {
   const key = selectedDelievery?.key;
 
@@ -79,7 +78,6 @@ function getAction(selectedDelievery, orderType) {
 
   return orderType === "WARRANT" ? "NOT_DELIVERED" : "NOT_SERVED";
 }
-
 
 const ReviewSummonsNoticeAndWarrant = () => {
   const { t } = useTranslation();
@@ -171,7 +169,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     },
     {},
     rowData?.taskNumber,
-    Boolean(showActionModal || step)
+    Boolean((showActionModal || step) && courtId)
   );
 
   const getTaskDetailsByTaskNumber = useCallback(
@@ -185,7 +183,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       });
       handleRowClick({ original: response?.list?.[0] });
     },
-    [taskNumber, tenantId]
+    [taskNumber, tenantId, courtId]
   );
 
   useEffect(() => {
@@ -198,7 +196,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     { tenantId, criteria: { id: tasksData?.list[0]?.orderId, ...(courtId && { courtId }) } },
     { tenantId },
     tasksData?.list[0]?.orderId,
-    Boolean(tasksData)
+    Boolean(tasksData && courtId)
   );
 
   const compositeItem = useMemo(
@@ -302,12 +300,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
         if (selectedDelievery?.key === "NOT_DELIVERED") {
           ordersService.customApiService(Urls.orders.pendingTask, {
             pendingTask: {
+              actionCategory: "Review Process",
               name: `Re-issue ${orderType === "NOTICE" ? "Notice" : "Summon"}`,
               entityType: "order-default",
               referenceId: `MANUAL_${orderData?.list[0]?.hearingNumber}`,
               status: `RE-ISSUE_${orderType === "NOTICE" ? "NOTICE" : "SUMMON"}`,
               assignedTo: [],
-              assignedRole: ["JUDGE_ROLE"],
+              assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "TYPIST_ROLE"],
               cnrNumber: tasksData?.list[0]?.cnrNumber,
               filingNumber: tasksData?.list[0]?.filingNumber,
               caseId: tasksData?.list[0]?.caseId,

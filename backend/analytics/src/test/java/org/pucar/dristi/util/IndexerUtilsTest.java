@@ -1,7 +1,9 @@
 package org.pucar.dristi.util;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
@@ -187,135 +189,162 @@ public class IndexerUtilsTest {
     }
 
 
-//    @Test
-//    public void testBuildPayloadWithPendingTask() throws Exception {
-//        PendingTask pendingTask = getPendingTask();
-//
-//        when(mapper.writeValueAsString(eq(AdvocateUtil.class))).thenReturn("{\"complainant\":[\"John Doe\"]}");
-//
-//        AdvocateMapping representative = AdvocateMapping.builder().build();
-//        Party party = Party.builder().partyType("complainant.primary").build();
-//        representative.setRepresenting(List.of(party));
-//        representative.setAdditionalDetails(Map.of("advocateName", "John Doe"));
-//
-//        when(mapper.convertValue(any(), eq(new TypeReference<List<AdvocateMapping>>() {
-//        })))
-//                .thenReturn(List.of(representative));
-//        when(jsonUtil.getNestedValue(any(), eq(List.of("advocateName")), eq(String.class)))
-//                .thenReturn("John Doe");
-//
-//
-//        String expected = String.format(
-//                ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-//                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", "COURT-456", "HEARING", "{\"complainant\":[\"John Doe\"]}", "action", "[\"COURT-456\",\"caseTitle\"]", "[null]", "[\"role\"]", "cnrNumber", "filingNumber", "caseId", "caseTitle", true, 123L, 456L, "{\"key\":\"value\"}", null, null,1000000000
-//        );
-//
-//        String mockCaseJson = """
-//                {
-//                  "cmpNumber": "CMP-123",
-//                  "courtCaseNumber": "COURT-456",
-//                  "stage": "HEARING",
-//                  "representatives": [
-//                    {
-//                      "additionalDetails": {
-//                        "advocateName": "John Doe"
-//                      },
-//                      "representing": [
-//                        {
-//                          "partyType": "complainant.primary"
-//                        }
-//                      ]
-//                    }
-//                  ]
-//                }
-//                """;
-//
-//        when(mapper.writeValueAsString(argThat(arg -> arg instanceof AdvocateDetail)))
-//                .thenReturn("{\"complainant\":[\"John Doe\"]}");
-//        when(mapper.writeValueAsString(argThat(arg -> !(arg instanceof AdvocateDetail)))).thenReturn("{\"key\":\"value\"}");
-//
-//        when(caseUtil.getCase(any(), any(), any(), any(), any())).thenReturn(mockCaseJson);
-//
-//        when(config.getIndex()).thenReturn("index");
-//
-//        String result = indexerUtils.buildPayload(pendingTask);
-//        assertEquals(expected, result);
-//    }
-//
-//    @Test
-//    public void testBuildPayloadWithJsonString() throws Exception {
-//        String jsonItem = "{"
-//                + "\"id\": \"id\","
-//                + "\"businessService\": \"entityType\","
-//                + "\"businessId\": \"referenceId\","
-//                + "\"state\": {\"state\":\"status\"," +
-//                " \"actions\":[{\"roles\" : [\"role1\", \"role2\"]}]},"
-//                + "\"stateSla\": 86400,"
-//                + "\"businesssServiceSla\": 456,"
-//                + "\"assignes\": [\"user1\"],"
-//                + "\"assignedRoles\": [\"role1\", \"role2\"],"
-//                + "\"tenantId\": \"tenantId\","
-//                + "\"action\": \"action\","
-//                + "\"additionalDetails\" : {\"key\":\"value\", \"excludeRoles\":[\"role2\"]}," +
-//                "\"courtId\":\"null\""
-//                + "}";
-//        JSONObject requestInfo = new JSONObject();
-//
-//
-//        when(config.getIndex()).thenReturn("index");
-//        when(caseOverallStatusUtil.checkCaseOverAllStatus(anyString(), anyString(), anyString(), anyString(), anyString(), any()))
-//                .thenReturn(new Object());
-//
-//        AdvocateMapping representative = AdvocateMapping.builder().build();
-//        Party party = Party.builder().partyType("complainant.primary").build();
-//        representative.setRepresenting(List.of(party));
-//        representative.setAdditionalDetails(Map.of("advocateName", "John Doe"));
-//
-//        when(mapper.convertValue(any(), eq(new TypeReference<List<AdvocateMapping>>() {
-//        })))
-//                .thenReturn(List.of(representative));
-//        when(jsonUtil.getNestedValue(any(), eq(List.of("advocateName")), eq(String.class)))
-//                .thenReturn("John Doe");
-//
-//        when(mapper.writeValueAsString(argThat(arg -> !(arg instanceof AdvocateUtil))))
-//                .thenReturn("{\"complainant\":[\"John Doe\"]}");
-//
-//        when(mapper.convertValue(anyString(), eq(String.class))).thenReturn("{\"key\":\"value\"}");
-//        String mockCaseJson = """
-//                {
-//                  "cmpNumber": "CMP-123",
-//                  "courtCaseNumber": "COURT-456",
-//                  "stage": "HEARING",
-//                  "representatives": [
-//                    {
-//                      "additionalDetails": {
-//                        "advocateName": "John Doe"
-//                      },
-//                      "representing": [
-//                        {
-//                          "partyType": "complainant.primary"
-//                        }
-//                      ]
-//                    }
-//                  ]
-//                }
-//                """;
-//
-//        when(caseUtil.getCase(any(), any(), any(), any(), any())).thenReturn(mockCaseJson);
-//
-//        String expected = String.format(
-//                ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-//                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", "COURT-456","HEARING","{\"complainant\":[\"John Doe\"]}","null","[\"COURT-456\",null]","[\"user1\"]", "[\"role1\",\"role2\"]", "null", "null", "null","null",false, ONE_DAY_DURATION_MILLIS+1000000000L, 456L, "{\"complainant\":[\"John Doe\"]}", null,null,1000000000
-//        );
-//
-//        PendingTaskType pendingTaskType = PendingTaskType.builder().isgeneric(false).pendingTask("name").state("status").triggerAction(List.of("action")).build();
-//        Map<String, List<PendingTaskType>> map = new HashMap<>();
-//        map.put("entityType", List.of(pendingTaskType));
-//        when(mdmsDataConfig.getPendingTaskTypeMap()).thenReturn(map);
-//
-//        String result = indexerUtils.buildPayload(jsonItem, requestInfo);
-//        assertEquals(expected, result);
-//    }
+    @Test
+    public void testBuildPayloadWithPendingTask() throws Exception {
+        // Arrange
+        PendingTask pendingTask = getPendingTask();
+
+        // Prepare mock representative advocate
+        AdvocateMapping representative = AdvocateMapping.builder().build();
+        Party party = Party.builder().partyType("complainant.primary").build();
+        representative.setRepresenting(List.of(party));
+        representative.setAdditionalDetails(Map.of("advocateName", "John Doe"));
+
+        // Mock conversion of representative
+        when(mapper.convertValue(any(), any(TypeReference.class)))
+                .thenReturn(List.of(representative));
+
+        // Mock nested value extraction
+        when(jsonUtil.getNestedValue(any(), eq(List.of("advocateName")), eq(String.class)))
+                .thenReturn("John Doe");
+
+        // Mock writing AdvocateDetail as JSON
+        when(mapper.writeValueAsString(argThat(arg -> arg instanceof AdvocateDetail)))
+                .thenReturn("{\"complainant\":[\"John Doe\"]}");
+
+        // Mock writing other objects
+        when(mapper.writeValueAsString(argThat(arg -> !(arg instanceof AdvocateDetail))))
+                .thenReturn("{\"key\":\"value\"}");
+
+        // Mock case response
+        String mockCaseJson = """
+          [  {
+              "cmpNumber": "CMP-123",
+              "courtCaseNumber": "COURT-456",
+              "substage": "HEARING",
+              "representatives": [
+                {
+                  "additionalDetails": {
+                    "advocateName": "John Doe"
+                  },
+                  "representing": [
+                    {
+                      "partyType": "complainant.primary"
+                    }
+                  ]
+                }
+              ]
+            }]
+            """;
+        JsonNode mockCaseJsonNode = new ObjectMapper().readTree(mockCaseJson);
+
+        when(caseUtil.searchCaseDetails(any())).thenReturn(mockCaseJsonNode);
+
+        // Mock config
+        when(config.getIndex()).thenReturn("index");
+
+        // Mock clock time
+        when(clock.millis()).thenReturn(1000000000L);
+
+        // Act
+        String result = indexerUtils.buildPayload(pendingTask);
+
+        // Expected output string
+        String expected = String.format(
+                ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
+                "index", "referenceId", "id", "name", "entityType", "referenceId", "status",
+                "COURT-456", "HEARING", "{\"complainant\":[\"John Doe\"]}", "action",
+                "[\"COURT-456\",\"caseTitle\",\"John Doe\"]", "[null]", "[\"role\"]", "cnrNumber",
+                "filingNumber", "caseId", "caseTitle", true, 123L, 456L,
+                "{\"key\":\"value\"}", null, null, 1000000000
+        );
+
+        // Assert
+        assertEquals(expected, result);
+    }
+
+
+    @Test
+    public void testBuildPayloadWithJsonString() throws Exception {
+        String jsonItem = "{"
+                + "\"id\": \"id\","
+                + "\"businessService\": \"entityType\","
+                + "\"businessId\": \"referenceId\","
+                + "\"state\": {\"state\":\"status\"," +
+                " \"actions\":[{\"roles\" : [\"role1\", \"role2\"]}]},"
+                + "\"stateSla\": 86400,"
+                + "\"businesssServiceSla\": 456,"
+                + "\"assignes\": [\"user1\"],"
+                + "\"assignedRoles\": [\"role1\", \"role2\"],"
+                + "\"tenantId\": \"tenantId\","
+                + "\"action\": \"action\","
+                + "\"additionalDetails\" : {\"key\":\"value\", \"excludeRoles\":[\"role2\"]}," +
+                "\"courtId\":\"null\""
+                + "}";
+        JSONObject requestInfo = new JSONObject();
+
+
+        when(config.getIndex()).thenReturn("index");
+        when(caseOverallStatusUtil.checkCaseOverAllStatus(anyString(), anyString(), anyString(), anyString(), anyString(), any()))
+                .thenReturn(new Object());
+
+        AdvocateMapping representative = AdvocateMapping.builder().build();
+        Party party = Party.builder().partyType("complainant.primary").build();
+        representative.setRepresenting(List.of(party));
+        representative.setAdditionalDetails(Map.of("advocateName", "John Doe"));
+
+        when(mapper.convertValue(any(), eq(new TypeReference<List<AdvocateMapping>>() {
+        })))
+                .thenReturn(List.of(representative));
+        when(jsonUtil.getNestedValue(any(), eq(List.of("advocateName")), eq(String.class)))
+                .thenReturn("John Doe");
+
+        when(mapper.writeValueAsString(argThat(arg -> !(arg instanceof AdvocateUtil))))
+                .thenReturn("{\"complainant\":[\"John Doe\"]}");
+
+        when(mapper.convertValue(anyString(), eq(String.class))).thenReturn("{\"key\":\"value\"}");
+        String mockCaseJson = """
+               [ {
+                  "cmpNumber": "CMP-123",
+                  "courtCaseNumber": "COURT-456",
+                  "substage": "HEARING",
+                  "representatives": [
+                    {
+                      "additionalDetails": {
+                        "advocateName": "John Doe"
+                      },
+                      "representing": [
+                        {
+                          "partyType": "complainant.primary"
+                        }
+                      ]
+                    }
+                  ]
+                }]
+                """;
+
+        RequestInfo mockRequestInfo = new RequestInfo();
+        mockRequestInfo.setUserInfo(new User());
+// set any fields in mockRequestInfo if needed
+
+        when(mapper.readValue(anyString(), eq(RequestInfo.class))).thenReturn(mockRequestInfo);
+
+        JsonNode mockCaseJsonNode = new ObjectMapper().readTree(mockCaseJson);
+        when(caseUtil.searchCaseDetails(any())).thenReturn(mockCaseJsonNode);
+
+        String expected = String.format(
+                ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
+                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", null,null,"{}","null",null,"[\"user1\"]", "[\"role1\",\"role2\"]", "null", "null", "null","null",false, ONE_DAY_DURATION_MILLIS+1000000000L, 456L, "{\"complainant\":[\"John Doe\"]}", null,null,1000000000
+        );
+
+        PendingTaskType pendingTaskType = PendingTaskType.builder().isgeneric(false).pendingTask("name").state("status").triggerAction(List.of("action")).build();
+        Map<String, List<PendingTaskType>> map = new HashMap<>();
+        map.put("entityType", List.of(pendingTaskType));
+        when(mdmsDataConfig.getPendingTaskTypeMap()).thenReturn(map);
+
+        String result = indexerUtils.buildPayload(jsonItem, requestInfo);
+        assertEquals(expected, result);
+    }
 
     @Test
     public void testEsPost_ResourceAccessException() {
