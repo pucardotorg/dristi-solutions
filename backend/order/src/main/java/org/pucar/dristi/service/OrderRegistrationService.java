@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micrometer.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -359,15 +360,15 @@ public class OrderRegistrationService {
             }
 
             Set<String> phonenumbers = callIndividualService(orderRequest.getRequestInfo(), individualIds);
-            String hearingDate = formData.has("hearingDate") ? formData.get("hearingDate").asText()
+            String hearingDate = formData.has("hearingDate") ? formData.get("hearingDate").textValue()
                     : formData.has("newHearingDate") ? formData.get("newHearingDate").asText()
                     : "";
 
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
-                    .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
-                    .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
+                    .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "")
+                    .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").textValue() : "")
                     .hearingDate(hearingDate)
-                    .submissionDate(formData.has("submissionDeadline") ? formData.get("submissionDeadline").asText() : "")
+                    .submissionDate(formData.has("submissionDeadline") ? formData.get("submissionDeadline").textValue() : "")
                     .tenantId(orderRequest.getOrder().getTenantId()).build();
 
             if (receiver != null && receiver.equalsIgnoreCase(RESPONDENT)) {

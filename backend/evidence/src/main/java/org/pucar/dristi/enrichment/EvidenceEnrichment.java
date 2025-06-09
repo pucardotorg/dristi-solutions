@@ -60,7 +60,6 @@ public class EvidenceEnrichment {
 
             evidenceRequest.getArtifact().setAuditdetails(auditDetails);
             evidenceRequest.getArtifact().setId(UUID.randomUUID());
-
             for (Comment comment : evidenceRequest.getArtifact().getComments()) {
                 comment.setId(UUID.randomUUID());
             }

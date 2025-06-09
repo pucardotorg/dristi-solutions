@@ -29,6 +29,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
+import static org.pucar.dristi.config.ServiceConstants.HEARING_TYPE_MODULE_CODE;
 
 @Service
 @Slf4j
@@ -326,8 +327,8 @@ public class HearingService {
             }
 
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
-                    .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
-                    .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
+                    .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "")
+                    .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").textValue() : "")
                     .hearingDate(date)
                     .hearingType(localizedHearingType)
                     .tenantId(hearingRequest.getHearing().getTenantId()).build();
@@ -422,7 +423,6 @@ public class HearingService {
 
         List<Hearing> hearingsToReschedule = getHearingsForBulkReschedule(slotIds, bulkReschedule, requestInfo);
 
-
         if (hearingsToReschedule.isEmpty()) {
             log.info("No hearings found for bulk reschedule");
             return new ArrayList<>();
@@ -445,7 +445,7 @@ public class HearingService {
             if (scheduleHearingMap.containsKey(scheduleHearing.getHearingBookingId())) {
                 Hearing hearing = scheduleHearingMap.get(scheduleHearing.getHearingBookingId());
                 scheduleHearing.setOriginalHearingDate(hearing.getStartTime());
-                scheduleHearing.setCaseId(hearing.getCmpNumber());
+                scheduleHearing.setCaseId(hearing.getCaseReferenceNumber());
                 scheduleHearing.setJudgeIds(hearing.getPresidedBy().getJudgeID());
                 scheduleHearing.setFilingNumber(hearing.getFilingNumber());
                 // todo: check for case title
@@ -559,7 +559,8 @@ public class HearingService {
                 hearingType.equalsIgnoreCase(REPORTS) || hearingType.equalsIgnoreCase(ARGUMENTS) || hearingType.equalsIgnoreCase(PLEA) ||
                 hearingType.equalsIgnoreCase(EXECUTION) || hearingType.equalsIgnoreCase(EXAMINATION_UNDER_S351_BNSS) ||
                 hearingType.equalsIgnoreCase(EVIDENCE_COMPLAINANT) || hearingType.equalsIgnoreCase(EVIDENCE_ACCUSED) ||
-                hearingType.equalsIgnoreCase(APPEARANCE) || hearingType.equalsIgnoreCase(ADMISSION) || hearingType.equalsIgnoreCase(JUDGEMENT)) {
+                hearingType.equalsIgnoreCase(APPEARANCE) || hearingType.equalsIgnoreCase(ADMISSION) || hearingType.equalsIgnoreCase(JUDGEMENT))
+        {
             return VARIABLE_HEARING_SCHEDULED;
         }
         return null;

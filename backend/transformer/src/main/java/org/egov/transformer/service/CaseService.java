@@ -116,4 +116,14 @@ public class CaseService {
             throw new CustomException("Error fetching case: ", ServiceConstants.ERROR_CASE_SEARCH);
         }
     }
+
+    public CourtCase getCases(CaseSearchRequest searchCaseRequest) {
+        log.info("operation = getCases, result = IN_PROGRESS");
+
+        StringBuilder url = new StringBuilder(properties.getCaseSearchUrlHost() + properties.getCaseSearchUrlEndPoint());
+
+        Object response = repository.fetchResult(url, searchCaseRequest);
+        log.info("operation = getCases, result = SUCCESS");
+        return objectMapper.convertValue(JsonPath.read(response, COURT_CASE_JSON_PATH), CourtCase.class);
+    }
 }
