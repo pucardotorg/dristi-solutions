@@ -85,6 +85,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isJudge = roles.some((role) => role.code === "JUDGE_ROLE");
+  const isTypist = roles.some((role) => role.code === "TYPIST_ROLE");
   const courtId = localStorage.getItem("courtId");
   const [config, setConfig] = useState(isJudge ? getJudgeDefaultConfig(courtId)?.[0] : SummonsTabsConfig?.SummonsTabsConfig?.[0]);
   const [showActionModal, setShowActionModal] = useState(false);
@@ -579,7 +580,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           type: "document",
           modalBody: <DocumentViewerWithComment infos={infos} documents={documents} links={links} />,
           actionSaveOnSubmit: () => {},
-          hideSubmit: rowData?.taskType === "WARRANT" && rowData?.documentStatus === "SIGN_PENDING" && !isJudge,
+          hideSubmit: isTypist ? true : rowData?.taskType === "WARRANT" && rowData?.documentStatus === "SIGN_PENDING" && !isJudge,
         },
         {
           heading: { label: t("ADD_SIGNATURE") },
@@ -684,6 +685,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       heading: { label: t("PRINT_SEND_DOCUMENT") },
       actionSaveLabel: t("MARK_AS_SENT"),
       isStepperModal: false,
+      hideSubmit: isTypist ? true : false,
       modalBody: (
         <PrintAndSendDocumentComponent
           infos={infos}
@@ -721,6 +723,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       actionSaveOnSubmit: handleUpdateStatus,
       actionCancelOnSubmit: handleDownload,
       isDisabled: isDisabled,
+      hideSubmit: isTypist ? true : false,
     };
   }, [handleCloseActionModal, handleDownload, handleUpdateStatus, sentInfos, isDisabled, links, orderType, rowData, selectedDelievery, t]);
 
