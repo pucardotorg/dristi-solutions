@@ -41,18 +41,18 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
   const courtId = localStorage.getItem("courtId");
   useEffect(() => {
-    const complaintDoc = caseDetails?.documents.find((d) => d.documentType === "case.complaint.signed");
+    const complaintDoc = caseDetails?.documents?.find((d) => d?.documentType === "case.complaint.signed");
     if (complaintDoc?.fileStore && !selectedFileStoreId) {
-      setSelectedFileStoreId(complaintDoc.fileStore);
+      setSelectedFileStoreId(complaintDoc?.fileStore);
     }
   }, [caseDetails, selectedFileStoreId]);
 
   const collectDescendantIds = (item) => {
     let ids = [];
-    if (item.hasChildren && item.children) {
-      for (const child of item.children) {
-        ids.push(child.id);
-        if (child.hasChildren) {
+    if (item?.hasChildren && item?.children) {
+      for (const child of item?.children) {
+        ids.push(child?.id);
+        if (child?.hasChildren) {
           ids = ids.concat(collectDescendantIds(child));
         }
       }
@@ -62,17 +62,17 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
   const toggleExpanded = (item) => {
     setExpandedItems((prev) => {
-      const currentlyExpanded = !!prev[item.id];
+      const currentlyExpanded = !!prev[item?.id];
 
       if (currentlyExpanded) {
         const descendants = collectDescendantIds(item);
-        const newState = { ...prev, [item.id]: false };
-        descendants.forEach((id) => {
+        const newState = { ...prev, [item?.id]: false };
+        descendants?.forEach((id) => {
           delete newState[id];
         });
         return newState;
       } else {
-        return { ...prev, [item.id]: true };
+        return { ...prev, [item?.id]: true };
       }
     });
   };
@@ -168,7 +168,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const directEvidenceList = directEvidenceData?.artifacts;
   const applicationEvidenceList = applicationEvidenceData?.artifacts;
   const newEvidenceList = [...(directEvidenceList || []), ...(applicationEvidenceList || [])];
-  const combinedEvidenceList = newEvidenceList.sort((a, b) => a?.auditDetails?.createdTime - b?.auditDetails?.createdTime);
+  const combinedEvidenceList = newEvidenceList?.sort((a, b) => a?.auditDetails?.createdTime - b?.auditDetails?.createdTime);
 
   const { data: ordersData, isLoading: isMandatoryOrdersLoading } = Digit.Hooks.dristi.useGetOrders(
     {
@@ -189,7 +189,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     filingNumber
   );
 
-  const orderList = Array.isArray(ordersData?.list) ? ordersData.list : [];
+  const orderList = Array.isArray(ordersData?.list) ? ordersData?.list : [];
 
   const {
     data: complaintEvidenceData,
@@ -370,24 +370,24 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           SUMMONS: [],
         };
 
-        taskList.forEach((task) => {
-          const expectedType = task.documentStatus === "SIGN_PENDING" ? "GENERATE_TASK_DOCUMENT" : "SIGNED_TASK_DOCUMENT";
+        taskList?.forEach((task) => {
+          const expectedType = task?.documentStatus === "SIGN_PENDING" ? "GENERATE_TASK_DOCUMENT" : "SIGNED_TASK_DOCUMENT";
 
-          const fileStoreId = task.documents?.find((doc) => doc.documentType === expectedType)?.fileStore;
+          const fileStoreId = task?.documents?.find((doc) => doc?.documentType === expectedType)?.fileStore;
 
           if (fileStoreId && groupedTasks[task.orderType]) {
-            groupedTasks[task.orderType].push(fileStoreId);
+            groupedTasks[task?.orderType]?.push(fileStoreId);
           }
         });
 
         const processItems = Object.entries(groupedTasks)
-          .filter(([_, files]) => files.length > 0)
-          .map(([type, files], index) => ({
-            id: `process-${type.toLowerCase()}`,
+          ?.filter(([_, files]) => files?.length > 0)
+          ?.map(([type, files], index) => ({
+            id: `process-${type?.toLowerCase()}`,
             title: type,
             hasChildren: true,
-            children: files.map((fileStoreId, idx) => ({
-              id: `process-${type.toLowerCase()}-${idx + 1}`,
+            children: files?.map((fileStoreId, idx) => ({
+              id: `process-${type?.toLowerCase()}-${idx + 1}`,
               title: `${t(type)} ${idx + 1}`,
               fileStoreId,
               hasChildren: false,
@@ -407,15 +407,15 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   }, [caseDetails, t, tenantId]);
 
   const productionQueries = useQueries(
-    orderList.map((order) => ({
-      queryKey: ["productionOfDocumentApplications", order.id],
+    orderList?.map((order) => ({
+      queryKey: ["productionOfDocumentApplications", order?.id],
       queryFn: () =>
         DRISTIService.searchSubmissions({
           criteria: {
             status: "COMPLETED",
             courtId,
             filingNumber,
-            referenceId: order.id,
+            referenceId: order?.id,
             applicationType: "PRODUCTION_DOCUMENTS",
             tenantId,
           },
@@ -424,20 +424,20 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
             order: "asc",
           },
         }),
-      enabled: !!order.id,
+      enabled: !!order?.id,
     }))
   );
 
   const generatePendingApplicationStructure = (applications) => {
-    return applications.map((application) => {
+    return applications?.map((application) => {
       const signedDoc = application?.documents?.find((doc) => doc?.documentType === "SIGNED" || doc?.documentType === "CONDONATION_DOC");
 
-      const validObjectionComments = (application?.comment || []).filter((comment) => comment?.additionalDetails?.commentDocumentId);
+      const validObjectionComments = (application?.comment || [])?.filter((comment) => comment?.additionalDetails?.commentDocumentId);
 
       const children = [];
 
       if (signedDoc?.fileStore) {
-        children.push({
+        children?.push({
           id: `${application?.applicationNumber}-signed`,
           title: "APPLICATION_PDF_HEADING",
           fileStoreId: signedDoc?.fileStore,
@@ -445,15 +445,15 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         });
       }
 
-      if (validObjectionComments.length > 0) {
-        const objectionChildren = validObjectionComments.map((comment, objIndex) => ({
+      if (validObjectionComments?.length > 0) {
+        const objectionChildren = validObjectionComments?.map((comment, objIndex) => ({
           id: `${application?.applicationNumber}-objection-${objIndex}`,
           title: `${t("OBJECTION_APPLICATION")} ${objIndex + 1}`,
           fileStoreId: comment?.additionalDetails?.commentDocumentId,
           hasChildren: false,
         }));
 
-        children.push({
+        children?.push({
           id: `${application?.applicationNumber}-objections`,
           title: "OBJECTION_APPLICATION_HEADING",
           hasChildren: true,
@@ -464,7 +464,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       return {
         id: application?.applicationNumber,
         title: application?.applicationType,
-        hasChildren: children.length > 0,
+        hasChildren: children?.length > 0,
         children: children,
       };
     });
@@ -475,27 +475,28 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
     const fileStoreIds = new Set();
 
-    const litigants = caseDetails.litigants.map((litigant) => ({
+    const litigants = caseDetails?.litigants?.map((litigant) => ({
       ...litigant,
-      representatives: caseDetails.representatives?.filter((rep) => rep?.representing?.some((c) => c?.individualId === litigant?.individualId)) || [],
+      representatives:
+        caseDetails?.representatives?.filter((rep) => rep?.representing?.some((c) => c?.individualId === litigant?.individualId)) || [],
     }));
 
-    litigants.forEach((litigant) => {
+    litigants?.forEach((litigant) => {
       const litigantFileStoreId = litigant?.documents?.[0]?.fileStore;
-      if (!litigant.representatives.length && litigantFileStoreId) {
-        fileStoreIds.add(litigantFileStoreId);
+      if (!litigant?.representatives?.length && litigantFileStoreId) {
+        fileStoreIds?.add(litigantFileStoreId);
       }
 
       for (const rep of litigant.representatives) {
         const updatedLitigant = rep?.representing?.find((lit) => lit?.individualId === litigant?.individualId);
         const repFileStoreId = updatedLitigant?.documents?.[0]?.fileStore;
         if (repFileStoreId) {
-          fileStoreIds.add(repFileStoreId);
+          fileStoreIds?.add(repFileStoreId);
         }
       }
     });
 
-    return Array.from(fileStoreIds).map((fileStoreId, index) => ({
+    return Array.from(fileStoreIds)?.map((fileStoreId, index) => ({
       id: `vakalatnama-${index}`,
       title: `${t("VAKALATNAMA_HEADING")} ${index + 1}`,
       fileStoreId,
@@ -504,10 +505,10 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   };
 
   const generateEvidenceStructure = (combinedList) => {
-    if (!Array.isArray(combinedList) || combinedList.length === 0) return [];
+    if (!Array.isArray(combinedList) || combinedList?.length === 0) return [];
 
     return combinedList
-      .map((evidence, index) => {
+      ?.map((evidence, index) => {
         const evidenceFileStoreId = evidence?.file?.fileStore;
 
         if (!evidenceFileStoreId) return null;
@@ -522,7 +523,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           artifactList: evidence,
         };
       })
-      .filter((item) => item !== null);
+      ?.filter((item) => item !== null);
   };
 
   const mandatorySubmissionsChildren = useMemo(() => {
@@ -530,14 +531,14 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     const children = [];
 
     productionQueries.forEach((query) => {
-      const applicationList = query.data?.applicationList || [];
+      const applicationList = query?.data?.applicationList || [];
 
-      applicationList.forEach((application) => {
+      applicationList?.forEach((application) => {
         if (application?.documents?.length > 0) {
           const signed = [];
           const otherDocument = [];
 
-          application.documents?.forEach((document) => {
+          application?.documents?.forEach((document) => {
             if (document?.fileStore) {
               if (document?.documentType === "SIGNED") {
                 signed?.push(document?.fileStore);
@@ -551,8 +552,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
           const prodDocChildren = [];
 
-          signed.forEach((signedFileStoreId, idx) => {
-            prodDocChildren.push({
+          signed?.forEach((signedFileStoreId, idx) => {
+            prodDocChildren?.push({
               id: `${application.applicationNumber}-signed-${idx}`,
               title: `APPLICATION_PDF_HEADING`,
               fileStoreId: signedFileStoreId,
@@ -560,25 +561,25 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
             });
           });
 
-          if (otherDocument.length > 0) {
+          if (otherDocument?.length > 0) {
             const otherChildren = otherDocument?.map((doc, idx) => ({
-              id: `${application.applicationNumber}-other-${idx}`,
+              id: `${application?.applicationNumber}-other-${idx}`,
               title: doc?.additionalDetails?.name?.split(".")[0],
               fileStoreId: doc?.fileStore,
               hasChildren: false,
             }));
 
-            prodDocChildren.push({
-              id: `${application.applicationNumber}-others`,
+            prodDocChildren?.push({
+              id: `${application?.applicationNumber}-others`,
               title: `OTHER_DOCUMENTS_HEADING`,
               hasChildren: true,
               children: otherChildren,
             });
           }
 
-          children.push({
-            id: `${application.applicationNumber}-prod-${applicationCounter}`,
-            title: `${t(application.applicationType)} ${applicationCounter}`,
+          children?.push({
+            id: `${application?.applicationNumber}-prod-${applicationCounter}`,
+            title: `${t(application?.applicationType)} ${applicationCounter}`,
             hasChildren: true,
             number: applicationCounter,
             children: prodDocChildren,
@@ -593,22 +594,22 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const evidenceChildren = generateEvidenceStructure(combinedEvidenceList);
 
   const generateCompliantEvidenceStructure = (complaintEvidenceData) => {
-    if (!complaintEvidenceData?.artifacts || !Array.isArray(complaintEvidenceData.artifacts)) return [];
-    return complaintEvidenceData.artifacts
-      .filter((artifact) => artifact?.file?.fileStore)
-      .map((artifact, idx) => ({
+    if (!complaintEvidenceData?.artifacts || !Array.isArray(complaintEvidenceData?.artifacts)) return [];
+    return complaintEvidenceData?.artifacts
+      ?.filter((artifact) => artifact?.file?.fileStore)
+      ?.map((artifact, idx) => ({
         id: `complaint-evidence-${idx}`,
         title: t(artifact?.artifactType),
-        fileStoreId: artifact.file.fileStore,
+        fileStoreId: artifact?.file?.fileStore,
         hasChildren: false,
       }));
   };
 
   const generateAccusedEvidenceStructure = (accusedEvidenceData) => {
-    if (!accusedEvidenceData?.artifacts || !Array.isArray(accusedEvidenceData.artifacts)) return [];
-    return accusedEvidenceData.artifacts
-      .filter((evidence) => evidence?.file?.fileStore)
-      .map((evidence, idx) => ({
+    if (!accusedEvidenceData?.artifacts || !Array.isArray(accusedEvidenceData?.artifacts)) return [];
+    return accusedEvidenceData?.artifacts
+      ?.filter((evidence) => evidence?.file?.fileStore)
+      ?.map((evidence, idx) => ({
         id: `accused-evidence-${idx}`,
         title: t(evidence?.artifactType),
         fileStoreId: evidence?.file?.fileStore,
@@ -620,8 +621,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     // "Depositions" children from courtEvidenceDepositionData
     const depositions = Array.isArray(courtEvidenceDepositionData?.artifacts)
       ? courtEvidenceDepositionData?.artifacts
-          .filter((artifact) => artifact?.file?.fileStore)
-          .map((artifact, idx) => ({
+          ?.filter((artifact) => artifact?.file?.fileStore)
+          ?.map((artifact, idx) => ({
             id: `court-deposition-${idx}`,
             title: artifact?.artifactType,
             fileStoreId: artifact?.file?.fileStore,
@@ -632,8 +633,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     // "Evidences" children from courtEvidenceData
     const evidences = Array.isArray(courtEvidenceData?.artifacts)
       ? courtEvidenceData?.artifacts
-          .filter((artifact) => artifact?.file?.fileStore)
-          .map((artifact, idx) => ({
+          ?.filter((artifact) => artifact?.file?.fileStore)
+          ?.map((artifact, idx) => ({
             id: `court-evidence-${idx}`,
             title: artifact?.artifactType,
             fileStoreId: artifact?.file?.fileStore,
@@ -645,13 +646,13 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       {
         id: "court-depositions",
         title: "DEPOSITIONS_PDF_HEADING",
-        hasChildren: depositions.length > 0,
+        hasChildren: depositions?.length > 0,
         children: depositions,
       },
       {
         id: "court-evidences",
         title: "EVIDENCES_PDF_HEADING",
-        hasChildren: evidences.length > 0,
+        hasChildren: evidences?.length > 0,
         children: evidences,
       },
     ];
@@ -665,7 +666,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       const childrenItems = [];
 
       await Promise.all(
-        disposedApplicationList.map(async (application, index) => {
+        disposedApplicationList?.map(async (application, index) => {
           const applicationNumber = application?.applicationNumber;
           const referenceId = application?.referenceId;
 
@@ -673,7 +674,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
             const orderPromises = [];
 
             if (referenceId) {
-              orderPromises.push(
+              orderPromises?.push(
                 DRISTIService.searchOrders({
                   criteria: {
                     courtId,
@@ -688,7 +689,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
             }
 
             if (applicationNumber) {
-              orderPromises.push(
+              orderPromises?.push(
                 DRISTIService.searchOrders({
                   criteria: {
                     courtId,
@@ -704,7 +705,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
             const orderResponses = await Promise.all(orderPromises);
 
-            const combinedOrders = orderResponses.flatMap((res) => res?.list || []);
+            const combinedOrders = orderResponses?.flatMap((res) => res?.list || []);
 
             const signedDoc = application?.documents?.find((doc) => doc?.documentType === "SIGNED" || doc?.documentType === "CONDONATION_DOC");
 
@@ -712,22 +713,22 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
               ? {
                   id: `${applicationNumber}-signed`,
                   title: "APPLICATION_PDF_HEADING",
-                  fileStoreId: signedDoc.fileStore,
+                  fileStoreId: signedDoc?.fileStore,
                   hasChildren: false,
                 }
               : null;
 
-            const validObjectionComments = (application?.comment || []).filter((comment) => comment?.additionalDetails?.commentDocumentId);
+            const validObjectionComments = (application?.comment || [])?.filter((comment) => comment?.additionalDetails?.commentDocumentId);
 
-            const objectionChildren = validObjectionComments.map((comment, objIndex) => ({
+            const objectionChildren = validObjectionComments?.map((comment, objIndex) => ({
               id: `${applicationNumber}-objection-${objIndex}`,
               title: `${t("OBJECTION_APPLICATION")} ${objIndex + 1}`,
-              fileStoreId: comment.additionalDetails.commentDocumentId,
+              fileStoreId: comment.additionalDetails?.commentDocumentId,
               hasChildren: false,
             }));
 
             const objectionsSubitem =
-              objectionChildren.length > 0
+              objectionChildren?.length > 0
                 ? {
                     id: `${applicationNumber}-objections`,
                     title: "OBJECTION_APPLICATION_HEADING",
@@ -748,7 +749,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
             });
 
             const ordersSubitem =
-              orderChildren.length > 0
+              orderChildren?.length > 0
                 ? {
                     id: `${applicationNumber}-orders`,
                     title: "ORDERS_APPLICATION_HEADING",
@@ -757,12 +758,12 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
                   }
                 : null;
 
-            const childItems = [signedSubitem, objectionsSubitem, ordersSubitem].filter(Boolean);
+            const childItems = [signedSubitem, objectionsSubitem, ordersSubitem]?.filter(Boolean);
 
             childrenItems.push({
               id: applicationNumber,
-              title: application.applicationType,
-              hasChildren: childItems.length > 0,
+              title: application?.applicationType,
+              hasChildren: childItems?.length > 0,
               number: `11.${index + 1}`,
               children: childItems,
             });
@@ -785,35 +786,35 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
       setLoading(true);
       const children = await Promise.all(
-        bailApplicationsList.map(async (application, index) => {
+        bailApplicationsList?.map(async (application, index) => {
           const signed = [];
           const otherDocument = [];
 
           application?.documents?.forEach((doc) => {
             if (doc?.fileStore) {
-              if (doc.documentType === "SIGNED") signed.push(doc?.fileStore);
+              if (doc?.documentType === "SIGNED") signed?.push(doc?.fileStore);
               else otherDocument?.push(doc);
             }
           });
 
           const signedNode = {
-            id: `${application.applicationNumber}-signed`,
+            id: `${application?.applicationNumber}-signed`,
             title: "APPLICATION_PDF_HEADING",
             hasChildren: false,
             fileStoreId: signed[0] || null,
           };
 
           const otherDocsChildren = otherDocument?.map((doc, i) => ({
-            id: `${application.applicationNumber}-other-${i}`,
+            id: `${application?.applicationNumber}-other-${i}`,
             title: doc?.additionalDetails?.name?.split(".")[0],
             fileStoreId: doc?.fileStore,
             hasChildren: false,
           }));
 
           const otherDocsNode = {
-            id: `${application.applicationNumber}-others`,
+            id: `${application?.applicationNumber}-others`,
             title: "OTHER_DOCUMENTS_HEADING",
-            hasChildren: otherDocsChildren.length > 0,
+            hasChildren: otherDocsChildren?.length > 0,
             children: otherDocsChildren,
           };
 
@@ -823,7 +824,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
               criteria: {
                 courtId,
                 filingNumber,
-                applicationNumber: application.applicationNumber,
+                applicationNumber: application?.applicationNumber,
                 status: "PUBLISHED",
                 orderType: "SET_BAIL_TERMS",
                 tenantId,
@@ -832,7 +833,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
             const orderList = resOrder?.list || [];
 
-            if (orderList.length > 0) {
+            if (orderList?.length > 0) {
               const resSubmissions = await DRISTIService.searchSubmissions({
                 criteria: {
                   courtId,
@@ -860,9 +861,9 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
                 const submitChildren = [];
 
-                submitSigned.forEach((fsId, i) =>
-                  submitChildren.push({
-                    id: `${application.applicationNumber}-submit-signed-${i}`,
+                submitSigned?.forEach((fsId, i) =>
+                  submitChildren?.push({
+                    id: `${application?.applicationNumber}-submit-signed-${i}`,
                     title: "APPLICATION_PDF_HEADING",
                     fileStoreId: fsId,
                     hasChildren: false,
@@ -871,14 +872,14 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
                 if (submitOtherDocument.length > 0) {
                   const othersChildren = submitOtherDocument?.map((doc, j) => ({
-                    id: `${application.applicationNumber}-submit-other-${j}`,
+                    id: `${application?.applicationNumber}-submit-other-${j}`,
                     title: doc?.additionalDetails?.name?.split(".")[0],
                     fileStoreId: doc?.fileStore,
                     hasChildren: false,
                   }));
 
                   submitChildren.push({
-                    id: `${application.applicationNumber}-submit-other-group`,
+                    id: `${application?.applicationNumber}-submit-other-group`,
                     title: "OTHER_DOCUMENTS_HEADING",
                     hasChildren: true,
                     children: othersChildren,
@@ -886,7 +887,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
                 }
 
                 submitBailNode = {
-                  id: `${application.applicationNumber}-submit-bail`,
+                  id: `${application?.applicationNumber}-submit-bail`,
                   title: submitApps[0]?.applicationType,
                   hasChildren: true,
                   children: submitChildren,
@@ -894,16 +895,16 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
               }
             }
           } catch (e) {
-            console.error("Error fetching Submit Bail Documents for", application.applicationNumber, e);
+            console.error("Error fetching Submit Bail Documents for", application?.applicationNumber, e);
           }
 
           const appChildren = [signedNode, otherDocsNode];
-          if (submitBailNode) appChildren.push(submitBailNode);
+          if (submitBailNode) appChildren?.push(submitBailNode);
 
           return {
-            id: application.applicationNumber,
-            title: t(application.applicationType) + " " + (index + 1),
-            hasChildren: appChildren.length > 0,
+            id: application?.applicationNumber,
+            title: t(application?.applicationType) + " " + (index + 1),
+            hasChildren: appChildren?.length > 0,
             children: appChildren,
           };
         })
@@ -950,7 +951,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           params: {},
           body: {
             artifact: {
-              ...contextMenu.artifactList,
+              ...contextMenu?.artifactList,
               isEvidence: true,
             },
           },
@@ -970,7 +971,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
               caseNumber: caseDetails?.cmpNumber,
               referenceId: contextMenu?.artifactNumber,
               referenceType: "Documents",
-              hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
+              hearingDate: (Array.isArray(nextHearing) && nextHearing?.length > 0 && nextHearing[0]?.startTime) || null,
               additionalDetails: {
                 filingNumber,
               },
@@ -991,13 +992,13 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   };
 
   const generatePublishedOrderChildren = (publishedOrderList) => {
-    return publishedOrderList.map((order, index) => {
+    return publishedOrderList?.map((order, index) => {
       const signedDoc = order?.documents?.find((doc) => doc?.documentType === "SIGNED");
       const fileStoreId = signedDoc?.fileStore;
 
       return {
         id: `published-order-${index}`,
-        title: order.orderTitle,
+        title: order?.orderTitle,
         fileStoreId: fileStoreId,
         hasChildren: false,
       };
@@ -1008,19 +1009,19 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     const groupedDocs = {};
 
     docs.forEach((doc) => {
-      const labelKey = Object.keys(caseFileLabels).find((key) => key === doc.documentType);
+      const labelKey = Object?.keys(caseFileLabels)?.find((key) => key === doc?.documentType);
       if (labelKey) {
         const title = caseFileLabels[labelKey];
-        const parentKey = doc.documentType;
+        const parentKey = doc?.documentType;
 
         if (!groupedDocs[parentKey]) {
           groupedDocs[parentKey] = [];
         }
 
         groupedDocs[parentKey].push({
-          id: doc.documentUid,
-          title: groupedDocs[parentKey].length > 0 ? `${title} ${groupedDocs[parentKey].length + 1}` : title,
-          fileStoreId: doc.fileStore,
+          id: doc?.documentUid,
+          title: groupedDocs[parentKey]?.length > 0 ? `${title} ${groupedDocs[parentKey]?.length + 1}` : title,
+          fileStoreId: doc?.fileStore,
           hasChildren: false,
         });
       }
@@ -1043,8 +1044,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     });
 
     const getFileStoreByType = (type) => {
-      const doc = docs.find((d) => d.documentType === type);
-      return doc ? doc.fileStore : null;
+      const doc = docs.find((d) => d?.documentType === type);
+      return doc ? doc?.fileStore : null;
     };
 
     const pendingApplicationChildren = generatePendingApplicationStructure(applicationList);
@@ -1057,7 +1058,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       {
         id: "pending-application",
         title: "PENDING_APPLICATION",
-        hasChildren: pendingApplicationChildren.length > 0,
+        hasChildren: pendingApplicationChildren?.length > 0,
         number: 1,
         children: pendingApplicationChildren,
       },
@@ -1098,14 +1099,14 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       {
         id: "vakalatnama",
         title: "VAKALATS",
-        hasChildren: vakalatnamaChildren.length > 0,
+        hasChildren: vakalatnamaChildren?.length > 0,
         number: 5,
         children: vakalatnamaChildren,
       },
       {
         id: "evidence",
         title: "ADDITIONAL_FILINGS",
-        hasChildren: evidenceChildren.length > 0,
+        hasChildren: evidenceChildren?.length > 0,
         number: 6,
         children: evidenceChildren,
       },
@@ -1168,7 +1169,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       {
         id: "orders",
         title: "ORDERS_CASE_PDF",
-        hasChildren: publishedOrderData.length > 0,
+        hasChildren: publishedOrderData?.length > 0,
         number: 15,
         children: publishedOrderChildren,
       },
@@ -1178,8 +1179,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   };
   useEffect(() => {
     const handleClickOutside = () => setContextMenu(null);
-    window.addEventListener("click", handleClickOutside);
-    return () => window.removeEventListener("click", handleClickOutside);
+    window?.addEventListener("click", handleClickOutside);
+    return () => window?.removeEventListener("click", handleClickOutside);
   }, []);
 
   const dynamicCaseFileStructure = generateCaseFileStructure(caseDetails?.documents || []);

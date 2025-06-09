@@ -16,7 +16,9 @@ async function convertFileStoreToDocument(
   const mimeType = headers["content-type"];
   let filingPDFDocument;
   if (mimeType === "application/pdf") {
-    filingPDFDocument = await PDFDocument.load(stream);
+    filingPDFDocument = await PDFDocument.load(stream, {
+      ignoreEncryption: true,
+    });
   } else if (["image/jpeg", "image/png", "image/jpg"].includes(mimeType)) {
     filingPDFDocument = await PDFDocument.create();
     let img;

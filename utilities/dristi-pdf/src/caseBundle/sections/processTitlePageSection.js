@@ -38,9 +38,9 @@ async function processTitlePageSection(
       data,
       { RequestInfo: requestInfo }
     );
-    const caseCoverDoc = await PDFDocument.load(
-      caseCoverPdfResponse.data
-    ).catch((e) => {
+    const caseCoverDoc = await PDFDocument.load(caseCoverPdfResponse.data, {
+      ignoreEncryption: true,
+    }).catch((e) => {
       logger.error(JSON.stringify(e));
       throw e;
     });

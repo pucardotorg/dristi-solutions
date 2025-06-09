@@ -87,7 +87,8 @@ async function applyDocketToDocument(
     { RequestInfo: requestInfo }
   );
   const filingDocketPDFDocument = await PDFDocument.load(
-    filingDocketPdfResponse.data
+    filingDocketPdfResponse.data,
+    { ignoreEncryption: true }
   );
 
   const mergedDocumentWithDocket = await mergePDFDocuments(
