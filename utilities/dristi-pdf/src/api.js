@@ -55,6 +55,26 @@ async function search_task(taskNumber, tenantId, requestinfo, courtId) {
   }
 }
 
+async function search_table_task(tenantId, requestinfo, criteria, pagination) {
+  try {
+    return await axios({
+      method: "post",
+      url: URL.resolve(config.host.task, config.paths.task_table_search),
+      data: {
+        RequestInfo: requestinfo,
+        criteria,
+        pagination,
+        tenantId,
+      },
+    });
+  } catch (error) {
+    logger.error(
+      `Error in ${config.paths.task_table_search}: ${error.message}`
+    );
+    throw error;
+  }
+}
+
 async function search_case(cnrNumber, tenantId, requestinfo, courtId) {
   try {
     return await axios({
@@ -114,6 +134,32 @@ async function search_order(
         ...(orderType && { orderType: orderType }),
         ...(courtId && { courtId: courtId }),
       },
+    },
+  });
+}
+
+async function search_order_v2(tenantId, requestinfo, criteria, pagination) {
+  return await axios({
+    method: "post",
+    url: URL.resolve(config.host.order, config.paths.order_search),
+    data: {
+      RequestInfo: requestinfo,
+      tenantId: tenantId,
+      criteria,
+      pagination,
+    },
+  });
+}
+
+async function search_evidence_v2(tenantId, requestinfo, criteria, pagination) {
+  return await axios({
+    method: "post",
+    url: URL.resolve(config.host.evidence, config.paths.evidence_search),
+    data: {
+      RequestInfo: requestinfo,
+      tenantId: tenantId,
+      criteria,
+      pagination,
     },
   });
 }
@@ -259,6 +305,24 @@ async function search_application(
         applicationNumber: applicationId,
         ...(courtId && { courtId: courtId }),
       },
+    },
+  });
+}
+
+async function search_application_v2(
+  tenantId,
+  requestinfo,
+  criteria,
+  pagination
+) {
+  return await axios({
+    method: "post",
+    url: URL.resolve(config.host.application, config.paths.application_search),
+    data: {
+      RequestInfo: requestinfo,
+      tenantId: tenantId,
+      criteria,
+      pagination,
     },
   });
 }
@@ -481,4 +545,8 @@ module.exports = {
   bulk_hearing_reschedule,
   search_multiple_cases,
   search_task,
+  search_table_task,
+  search_application_v2,
+  search_order_v2,
+  search_evidence_v2,
 };
