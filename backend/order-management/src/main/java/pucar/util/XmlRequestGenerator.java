@@ -50,7 +50,7 @@ public class XmlRequestGenerator {
 
         } catch (Exception e) {
             log.error(XML_CREATE_ERROR_MESSAGE);
-            throw new CustomException(XML_CREATE_ERROR,XML_CREATE_ERROR_MESSAGE);
+            throw new CustomException(XML_CREATE_ERROR, XML_CREATE_ERROR_MESSAGE);
         }
     }
 

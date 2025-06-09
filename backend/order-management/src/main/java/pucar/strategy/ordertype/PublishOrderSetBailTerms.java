@@ -147,18 +147,18 @@ public class PublishOrderSetBailTerms implements OrderUpdateStrategy {
     private Object getAdditionalDetails(CourtCase courtCase, Application application) {
         Map<String, Object> additionalDetails = new HashMap<>();
 
-        additionalDetails.put("litigants", Arrays.asList(
+        additionalDetails.put("litigants", Collections.singletonList(
                 courtCase.getLitigants().stream()
-                        .filter(litigant -> jsonUtil.getNestedValue(litigant.getAdditionalDetails(), Arrays.asList("uuid"), String.class).equals(jsonUtil.getNestedValue(application.getAdditionalDetails(), Arrays.asList("formdata", "selectComplainant", "uuid"), String.class)))
+                        .filter(litigant -> jsonUtil.getNestedValue(litigant.getAdditionalDetails(), List.of("uuid"), String.class).equals(jsonUtil.getNestedValue(application.getAdditionalDetails(), Arrays.asList("formdata", "selectComplainant", "uuid"), String.class)))
                         .map(Party::getIndividualId)
                         .findFirst()
                         .orElse(null)
 
         ));
-        additionalDetails.put("litigantUuid", Arrays.asList(
+        additionalDetails.put("litigantUuid", Collections.singletonList(
                 courtCase.getLitigants().stream()
-                        .filter(litigant -> jsonUtil.getNestedValue(litigant.getAdditionalDetails(), Arrays.asList("uuid"), String.class).equals(jsonUtil.getNestedValue(application.getAdditionalDetails(), Arrays.asList("formdata", "selectComplainant", "uuid"), String.class)))
-                        .map(litigant -> jsonUtil.getNestedValue(litigant.getAdditionalDetails(), Arrays.asList("uuid"), String.class))
+                        .filter(litigant -> jsonUtil.getNestedValue(litigant.getAdditionalDetails(), List.of("uuid"), String.class).equals(jsonUtil.getNestedValue(application.getAdditionalDetails(), Arrays.asList("formdata", "selectComplainant", "uuid"), String.class)))
+                        .map(litigant -> jsonUtil.getNestedValue(litigant.getAdditionalDetails(), List.of("uuid"), String.class))
                         .findFirst()
                         .orElse(null)
         ));

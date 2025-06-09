@@ -14,6 +14,9 @@ public class TaskDetails {
     @JsonProperty("summonDetails")
     private SummonsDetails summonDetails = null;
 
+    @JsonProperty("noticeDetails")
+    private NoticeDetails noticeDetails = null;
+
     @JsonProperty("warrantDetails")
     private WarrantDetails warrantDetails = null;
 
@@ -23,6 +26,12 @@ public class TaskDetails {
     @JsonProperty("respondentDetails")
     private RespondentDetails respondentDetails = null;
 
+    @JsonProperty("witnessDetails")
+    private WitnessDetails witnessDetails = null;
+
     @JsonProperty("deliveryChannel")
     private DeliveryChannel deliveryChannel = null;
+
+    @JsonProperty("complainantDetails")
+    private ComplainantDetails complainantDetails = null;
 }

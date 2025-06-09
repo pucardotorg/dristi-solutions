@@ -3,7 +3,6 @@ package pucar.web.models.task;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Data;
-import org.egov.common.contract.models.Address;
 import org.springframework.validation.annotation.Validated;
 
 @Validated
@@ -21,7 +20,7 @@ public class CaseDetails {
     @JsonProperty("caseTitle")
     private String caseTitle;
 
-    @JsonProperty("caseYear")
+    @JsonProperty("year")
     private String caseYear;
 
     @JsonProperty("caseCharge")
@@ -43,5 +42,8 @@ public class CaseDetails {
     private String phoneNumber;
 
     @JsonProperty("courtAddress")
-    private Address courtAddress;
+    private String courtAddress;
+
+    @JsonProperty("hearingNumber")
+    private String hearingNumber;
 }

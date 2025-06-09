@@ -45,7 +45,7 @@ public class PublishOrderAssigningDateRescheduledHearing implements OrderUpdateS
 
     @Override
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
-       return false;
+        return false;
     }
 
     @Override

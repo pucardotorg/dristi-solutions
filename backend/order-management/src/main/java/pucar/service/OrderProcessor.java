@@ -8,7 +8,9 @@ import java.util.List;
 public interface OrderProcessor {
 
     void preProcessOrder(OrderRequest request);
+
     void postProcessOrder(OrderRequest request);
+
     List<CaseDiaryEntry> processCommonItems(OrderRequest request);
 
 

@@ -168,6 +168,25 @@ public class Configuration {
     @Value("${dristi.individual.search.endpoint}")
     private String individualSearchEndPoint;
 
+    // MDMS Config
+    @Value("${dristi.mdms.host}")
+    private String mdmsHost;
+
+    @Value("${dristi.mdms.endpoint}")
+    private String mdmsEndPoint;
+
+    @Value("${dristi.mdms.schema.endpoint}")
+    private String mdmsSchemaEndPoint;
+
+    // Payment Calculator Config
+    @Value("${dristi.payment.calculator.host}")
+    private String paymentCalculatorHost;
+
+    @Value("${dristi.payment.calculator.endpoint}")
+    private String paymentCalculatorEndpoint;
+
+    @Value("${dristi.judge.name}")
+    private String judgeName;
 
     @Value("${spring.redis.timeout}")
     private Long redisTimeout;

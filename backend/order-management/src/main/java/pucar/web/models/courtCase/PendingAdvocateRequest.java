@@ -31,8 +31,8 @@ public class PendingAdvocateRequest {
     private IndividualDetails individualDetails;
 
 
-    public void addTaskReferenceNoList (List<String> taskReferenceNoList) {
-        if(this.taskReferenceNoList == null) {
+    public void addTaskReferenceNoList(List<String> taskReferenceNoList) {
+        if (this.taskReferenceNoList == null) {
             this.taskReferenceNoList = new ArrayList<>();
         }
         this.taskReferenceNoList.addAll(taskReferenceNoList);

@@ -33,7 +33,7 @@ public class Task {
     private UUID orderId = null;
 
     @JsonProperty("filingNumber")
-    @NotNull (message = "filing number is required to create a task")
+    @NotNull(message = "filing number is required to create a task")
     private String filingNumber = null;
 
     @JsonProperty("taskNumber")

@@ -1,5 +1,4 @@
-package org.pucar.dristi.web.models.v2;
-
+package pucar.web.models.mdms;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
@@ -8,24 +7,20 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.response.ResponseInfo;
-import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 
-@Validated
-@jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-04-15T11:31:40.281899+05:30[Asia/Kolkata]")
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CaseSummarySearchResponse {
+public class MdmsResponseV2 {
 
     @JsonProperty("ResponseInfo")
     @Valid
     private ResponseInfo responseInfo = null;
 
-    @JsonProperty("caseSummaries")
-    @Valid
-    private List<CaseSummarySearch> caseSummaries = null;
-
+    @JsonProperty("mdms")
+    private List<Mdms> mdms = null;
 }

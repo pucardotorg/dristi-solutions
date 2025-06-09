@@ -6,7 +6,7 @@ import pucar.service.CompositeOrderService;
 import pucar.service.OrderProcessor;
 
 @Component
-public class CompositeOrderFactory implements OrderFactory{
+public class CompositeOrderFactory implements OrderFactory {
 
     private final CompositeOrderService compositeOrderService;
 

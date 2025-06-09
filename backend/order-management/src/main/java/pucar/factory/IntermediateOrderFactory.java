@@ -5,7 +5,7 @@ import pucar.service.IntermediateOrderService;
 import pucar.service.OrderProcessor;
 
 @Component
-public class IntermediateOrderFactory implements OrderFactory{
+public class IntermediateOrderFactory implements OrderFactory {
 
     private final IntermediateOrderService intermediateOrderService;
 

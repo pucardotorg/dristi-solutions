@@ -126,7 +126,7 @@ public class BSSService {
         // File section with attribute
         Map<String, Object> file = new LinkedHashMap<>();
         file.put(ATTRIBUTE, Map.of(NAME, TYPE, VALUE, PDF));
-        ;// rn this is hardcode once we support other feature we will dynamically fetch this
+        // rn this is hardcode once we support other feature we will dynamically fetch this
         requestData.put(FILE, file);
 
         // PDF section // enrich this section

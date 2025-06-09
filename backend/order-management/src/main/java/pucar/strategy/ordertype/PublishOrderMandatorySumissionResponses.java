@@ -33,7 +33,7 @@ public class PublishOrderMandatorySumissionResponses implements OrderUpdateStrat
     private final PendingTaskUtil pendingTaskUtil;
     private final JsonUtil jsonUtil;
     private final DateUtil dateUtil;
-    private final CaseUtil caseUtil ;
+    private final CaseUtil caseUtil;
 
     @Autowired
     public PublishOrderMandatorySumissionResponses(PendingTaskUtil pendingTaskUtil, JsonUtil jsonUtil, DateUtil dateUtil, CaseUtil caseUtil) {

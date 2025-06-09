@@ -2,7 +2,6 @@ package pucar.strategy.ordertype;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
@@ -125,45 +124,39 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
         additionalDetails.put("litigants", complainantIndividualId);
 
 
-        String taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), String.class);
-
         try {
-            JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
-            for (JsonNode taskDetail : taskDetailsArray) {
+            List<TaskRequest> taskRequests = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, courtCase);
+            for (TaskRequest taskRequest : taskRequests) {
 
-                String taskDetailString = objectMapper.writeValueAsString(taskDetail);
-                Map<String, Object> jsonMap = objectMapper.readValue(taskDetailString, new TypeReference<>() {
+                String taskDetailString = objectMapper.writeValueAsString(taskRequest.getTask().getTaskDetails());
+                Map<String, Object> jsonMap = objectMapper.readValue(taskDetailString, new TypeReference<Map<String, Object>>() {
                 });
                 String channel = jsonUtil.getNestedValue(jsonMap, Arrays.asList("deliveryChannels", "channelCode"), String.class);
 
-                TaskRequest taskRequest = taskUtil.createTaskRequestForSummonWarrantAndNotice(requestInfo, order, taskDetail,courtCase, channel);
+                taskUtil.enrichTaskWorkflow(channel, order, taskRequest);
                 TaskResponse taskResponse = taskUtil.callCreateTask(taskRequest);
 
-                // create pending task
+                String name = pendingTaskUtil.getPendingTaskNameForSummonAndNotice(channel, order.getOrderType());
+                String status = PAYMENT_PENDING + channel;
 
-                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))) {
-                    String name = pendingTaskUtil.getPendingTaskNameForSummonAndNotice(channel, order.getOrderType());
-                    String status = PAYMENT_PENDING + channel;
+                PendingTask pendingTask = PendingTask.builder()
+                        .name(name)
+                        .referenceId(MANUAL + taskResponse.getTask().getTaskNumber())
+                        .entityType("order-default")
+                        .status(status)
+                        .assignedTo(uniqueAssignee)
+                        .cnrNumber(courtCase.getCnrNumber())
+                        .filingNumber(courtCase.getFilingNumber())
+                        .caseTitle(courtCase.getCaseTitle())
+                        .caseId(courtCase.getId().toString())
+                        .isCompleted(false)
+                        .stateSla(sla)
+                        .additionalDetails(additionalDetails)
+                        .screenType("home")
+                        .build();
 
-                    PendingTask pendingTask = PendingTask.builder()
-                            .name(name)
-                            .referenceId(MANUAL + taskResponse.getTask().getTaskNumber())
-                            .entityType("order-default")
-                            .status(status)
-                            .assignedTo(uniqueAssignee)
-                            .cnrNumber(courtCase.getCnrNumber())
-                            .filingNumber(courtCase.getFilingNumber())
-                            .caseTitle(courtCase.getCaseTitle())
-                            .caseId(courtCase.getId().toString())
-                            .isCompleted(false)
-                            .stateSla(sla)
-                            .additionalDetails(additionalDetails)
-                            .screenType("home")
-                            .build();
-
-                    pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
-                    ).pendingTask(pendingTask).build());
-                }
+                pendingTaskUtil.createPendingTask(PendingTaskRequest.builder().requestInfo(requestInfo
+                ).pendingTask(pendingTask).build());
 
 
             }
@@ -172,7 +165,7 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
             throw new RuntimeException(e);
         }
 
-        pendingTaskUtil.closeManualPendingTask(order.getHearingNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(),courtCase.getId().toString(),courtCase.getCaseTitle());
+        pendingTaskUtil.closeManualPendingTask(order.getHearingNumber(), requestInfo, courtCase.getFilingNumber(), courtCase.getCnrNumber(), courtCase.getId().toString(), courtCase.getCaseTitle());
 
 
         return null;

@@ -14,7 +14,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Amount   {
+public class Amount {
 
     @JsonProperty("id")
     @Valid

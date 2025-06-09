@@ -28,4 +28,7 @@ public class SummonsDetails {
 
     @JsonProperty("partyType")
     private String partyType;
+
+    @JsonProperty("caseFilingDate")
+    private Long caseFilingDate;
 }
