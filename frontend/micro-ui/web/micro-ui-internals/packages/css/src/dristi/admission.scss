@@ -118,6 +118,9 @@
                 border: none !important;
               }
             }
+            .rdrSelected {
+              display: none !important;
+            }
             flex-basis: 14.28571% !important;
             height: 70px !important;
             align-items: flex-start !important;
@@ -166,10 +169,33 @@
               }
               .non-working-day {
                 background-color: #ebebeb;
+                &.selected-date {
+                  background-color: #007e7e !important;
+                  .current-month {
+                    color: #ffffff !important;
+                  }
+                }
               }
+
               .working-day.current-month {
-                background-color: #e4ffe4;
-                border: solid 0.5px #32a74c;
+                &.selected-date {
+                  background-color: #007e7e !important;
+                  .working-day-text {
+                    color: #ffffff !important;
+                  }
+                }
+                &.slot-available {
+                  background-color: #e6f5e6;
+                  border: solid 0.5px #32a74c;
+                }
+                &.opted-out {
+                  background-color: #ffebee;
+                  border: solid 0.5px #ffa0a0;
+                }
+                &.slots-full {
+                  background-color: #ffffff;
+                  border: solid 0.5px #e2e2e2;
+                }
               }
               .past-date {
                 border: none !important;
@@ -223,9 +249,10 @@
       }
     }
     .calendar-legend-wrapper {
-      margin: 0px 24px 24px;
+      margin: 0px 24px;
       border-top: 1px #d7d7d7 solid;
       padding-top: 16px;
+      padding-bottom: 24px;
     }
     .calendar-legend {
       background-color: #f3f6f9;

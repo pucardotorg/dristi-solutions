@@ -58,7 +58,7 @@ function CustomCalendarV2({ config, t, handleSelect, onCalendarConfirm, selected
     if (!hearingDetails) return counts;
     hearingDetails.forEach((hearing) => {
       if (hearing?.hearingDate && hearing?.noOfHearing) {
-        counts[hearing.hearingDate] = hearing.noOfHearing;
+        counts[hearing.hearingDate] = { noOfHearing: hearing.noOfHearing, dayStatus: hearing.dayStatus || "Slot Available" };
       }
     });
 
@@ -80,7 +80,7 @@ function CustomCalendarV2({ config, t, handleSelect, onCalendarConfirm, selected
       2,
       "0"
     )}`;
-    const hearingCount = hearingCounts[dateStr] || 0;
+    const hearingCount = hearingCounts[dateStr]?.noOfHearing || 0;
     return hearingCount;
   }, [hearingCounts, selectedDate]);
 
@@ -91,14 +91,29 @@ function CustomCalendarV2({ config, t, handleSelect, onCalendarConfirm, selected
     const isNonWorkingDay = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
     const isDateFromCurrentMonth = date.getMonth() === currentMonth.getMonth() && date.getFullYear() === currentMonth.getFullYear();
     const isPastDate = date.getDate() < new Date().getDate();
-    const hearingCount = hearingCounts[dateStr] || 0;
+    const hearingCount = hearingCounts[dateStr]?.noOfHearing || 0;
+    const dayStatus = hearingCounts[dateStr]?.dayStatus || "";
+    const isSelectedDate =
+      selectedDate?.getDate() === date?.getDate() &&
+      selectedDate?.getMonth() === date?.getMonth() &&
+      selectedDate?.getFullYear() === date?.getFullYear();
     return (
       <React.Fragment>
         <div className="custom-day">
           <div
             className={`${isDateFromCurrentMonth ? "current-month" : ""}${isNonWorkingDay ? " non-working-day" : " working-day"}${
               isPastDate ? " past-date" : ""
-            }`}
+            }${
+              dayStatus === "Opted Out"
+                ? " opted-out"
+                : dayStatus === "Court Non-Working"
+                ? " court-non-working"
+                : dayStatus === "Slots Full"
+                ? " slots-full"
+                : dayStatus === "Slot Available"
+                ? " slot-available"
+                : ""
+            }${isSelectedDate ? " selected-date" : ""}`}
           >
             <span className={`${isDateFromCurrentMonth ? "current-month" : ""}${isNonWorkingDay ? " non-working-day-text" : " working-day-text"}`}>
               {date.getDate()}
