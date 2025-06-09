@@ -55,7 +55,6 @@ export const getJudgeDefaultConfig = () => {
   });
 };
 
-
 function getAction(selectedDelievery, orderType) {
   const key = selectedDelievery?.key;
 
@@ -70,13 +69,13 @@ function getAction(selectedDelievery, orderType) {
   return orderType === "WARRANT" ? "NOT_DELIVERED" : "NOT_SERVED";
 }
 
-
 const ReviewSummonsNoticeAndWarrant = () => {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isJudge = roles.some((role) => role.code === "JUDGE_ROLE");
+  const isTypist = roles.some((role) => role.code === "TYPIST_ROLE");
   const [config, setConfig] = useState(isJudge ? getJudgeDefaultConfig()?.[0] : SummonsTabsConfig?.SummonsTabsConfig?.[0]);
   const [showActionModal, setShowActionModal] = useState(false);
   const [showNoticeModal, setshowNoticeModal] = useState(false);
@@ -564,7 +563,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           type: "document",
           modalBody: <DocumentViewerWithComment infos={infos} documents={documents} links={links} />,
           actionSaveOnSubmit: () => {},
-          hideSubmit: rowData?.taskType === "WARRANT" && rowData?.documentStatus === "SIGN_PENDING" && !isJudge,
+          hideSubmit: isTypist ? true : rowData?.taskType === "WARRANT" && rowData?.documentStatus === "SIGN_PENDING" && !isJudge,
         },
         {
           heading: { label: t("ADD_SIGNATURE") },
@@ -669,6 +668,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       heading: { label: t("PRINT_SEND_DOCUMENT") },
       actionSaveLabel: t("MARK_AS_SENT"),
       isStepperModal: false,
+      hideSubmit: isTypist ? true : false,
       modalBody: (
         <PrintAndSendDocumentComponent
           infos={infos}
@@ -706,6 +706,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       actionSaveOnSubmit: handleUpdateStatus,
       actionCancelOnSubmit: handleDownload,
       isDisabled: isDisabled,
+      hideSubmit: isTypist ? true : false,
     };
   }, [handleCloseActionModal, handleDownload, handleUpdateStatus, sentInfos, isDisabled, links, orderType, rowData, selectedDelievery, t]);
 
