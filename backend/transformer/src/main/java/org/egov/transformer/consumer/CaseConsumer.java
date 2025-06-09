@@ -5,12 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.egov.common.contract.models.AuditDetails;
-import org.egov.common.contract.workflow.ProcessInstance;
+import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.models.*;
 import org.egov.transformer.producer.TransformerProducer;
 import org.egov.transformer.repository.CourtIdRepository;
 import org.egov.transformer.service.CaseService;
+import org.egov.transformer.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +22,11 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import static org.egov.transformer.config.ServiceConstants.FLOW_JAC;
+import static org.egov.transformer.config.ServiceConstants.msgId;
 
 @Component
 @Slf4j
@@ -33,16 +39,18 @@ public class CaseConsumer {
     private final TransformerProperties transformerProperties;
     private final CaseService caseService;
     private final CourtIdRepository courtIdRepository;
+    private final UserService userService;
 
     @Autowired
     public CaseConsumer(ObjectMapper objectMapper,
                         TransformerProducer producer,
-                        TransformerProperties transformerProperties, CaseService caseService, CourtIdRepository courtIdRepository) {
+                        TransformerProperties transformerProperties, CaseService caseService, CourtIdRepository courtIdRepository, UserService userService) {
         this.objectMapper = objectMapper;
         this.producer = producer;
         this.transformerProperties = transformerProperties;
         this.caseService = caseService;
         this.courtIdRepository = courtIdRepository;
+        this.userService = userService;
     }
 
     @KafkaListener(topics = {"${transformer.consumer.create.case.topic}"})
@@ -72,13 +80,13 @@ public class CaseConsumer {
 
     @KafkaListener(topics = {"${transformer.consumer.case.status.update.topic}"})
     public void updateCaseStatus(ConsumerRecord<String, Object> payload,
-                                 @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+                           @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         publishCase(payload, transformerProperties.getUpdateCaseTopic());
     }
 
     @KafkaListener(topics = {"${transformer.consumer.join.case.kafka.topic}"})
     public void updateJoinCase(ConsumerRecord<String, Object> payload,
-                               @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+                           @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         publishCase(payload, transformerProperties.getUpdateCaseTopic());
     }
 
@@ -102,16 +110,18 @@ public class CaseConsumer {
     private void publishCase(ConsumerRecord<String, Object> payload,
                              @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
-            CourtCase courtCase = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseRequest>() {
-            })).getCases();
+            CaseRequest caseReq = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseRequest>() {
+            }));
+            CourtCase courtCase = caseReq.getCases();
             logger.info("Received Object: {} ", objectMapper.writeValueAsString(courtCase));
-            CourtCase existingCourtCase = caseService.fetchCase(courtCase.getFilingNumber());
+//            CourtCase existingCourtCase = caseService.fetchCase(courtCase.getFilingNumber());
+            CourtCase existingCourtCase = caseService.getCase(courtCase.getFilingNumber(), courtCase.getTenantId(), caseReq.getRequestInfo());
             courtCase.setDates();
-            if (null != existingCourtCase) {
-                if (null != existingCourtCase.getBailOrderDetails()) {
+            if(null != existingCourtCase) {
+                if(null != existingCourtCase.getBailOrderDetails()) {
                     courtCase.setBailOrderDetails(existingCourtCase.getBailOrderDetails());
                 }
-                if (null != existingCourtCase.getJudgementOrderDetails()) {
+                if(null != existingCourtCase.getJudgementOrderDetails()) {
                     courtCase.setJudgementOrderDetails(existingCourtCase.getJudgementOrderDetails());
                 }
             }
@@ -131,7 +141,9 @@ public class CaseConsumer {
             CaseOverallStatus caseOverallStatus = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseStageSubStage>() {
             })).getCaseOverallStatus();
             logger.info("Received Object: {} ", objectMapper.writeValueAsString(caseOverallStatus));
-            CourtCase courtCase = caseService.fetchCase(caseOverallStatus.getFilingNumber());
+//            CourtCase courtCase = caseService.fetchCase(caseOverallStatus.getFilingNumber());
+            //TODO : need to get from indexer once indexer is fixed
+            CourtCase courtCase = caseService.getCases(createCaseSearchRequest(caseOverallStatus.getFilingNumber(), caseOverallStatus.getTenantId(), createInternalRequestInfo()));
             courtCase.setDates();
             courtCase.setStage(caseOverallStatus.getStage());
             courtCase.setSubstage(caseOverallStatus.getSubstage());
@@ -147,10 +159,11 @@ public class CaseConsumer {
 
     private void fetchAndPublishEditCase(ConsumerRecord<String, Object> payload, String updateCaseTopic) {
         try {
-            CaseRequest caseRequest = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseRequest>() {
-            }));
+            CaseRequest caseRequest = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseRequest>() {}));
             logger.info("Received Object: {} ", objectMapper.writeValueAsString(caseRequest.getCases()));
-            CourtCase courtCaseElasticSearch = caseService.fetchCase(caseRequest.getCases().getFilingNumber());
+//            CourtCase courtCaseElasticSearch = caseService.fetchCase(caseRequest.getCases().getFilingNumber());
+            //TODO : need to get from indexer once indexer is fixed
+            CourtCase courtCaseElasticSearch = caseService.getCase(caseRequest.getCases().getFilingNumber(), caseRequest.getCases().getTenantId(), caseRequest.getRequestInfo());
             courtCaseElasticSearch.setAdditionalDetails(caseRequest.getCases().getAdditionalDetails());
             courtCaseElasticSearch.setCaseTitle(caseRequest.getCases().getCaseTitle());
 
@@ -174,7 +187,9 @@ public class CaseConsumer {
             Outcome outcome = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseOutcome>() {
             })).getOutcome();
             logger.info("Received Object: {} ", objectMapper.writeValueAsString(outcome));
-            CourtCase courtCase = caseService.fetchCase(outcome.getFilingNumber());
+//            CourtCase courtCase = caseService.fetchCase(outcome.getFilingNumber());
+            //TODO : need to get from indexer once indexer is fixed
+            CourtCase courtCase = caseService.getCases(createCaseSearchRequest(outcome.getFilingNumber(), outcome.getTenantId(), createInternalRequestInfo()));
             courtCase.setDates();
             courtCase.setOutcome(outcome.getOutcome());
             CaseRequest caseRequest = new CaseRequest();
@@ -198,5 +213,23 @@ public class CaseConsumer {
         caseCriteriaList.add(caseCriteria);
         caseResponse.setCriteria(caseCriteriaList);
         producer.push("case-legacy-topic", caseResponse);
+    }
+
+    private RequestInfo createInternalRequestInfo() {
+        User userInfo = new User();
+        userInfo.setUuid(userService.internalMicroserviceRoleUuid);
+        userInfo.setRoles(userService.internalMicroserviceRoles);
+        userInfo.setTenantId(transformerProperties.getEgovStateTenantId());
+        return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
+    }
+
+    private CaseSearchRequest createCaseSearchRequest(String filingNumber, String tenantId, RequestInfo requestInfo) {
+        CaseCriteria criteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build();
+        return  CaseSearchRequest.builder()
+                .requestInfo(requestInfo)
+                .tenantId(tenantId)
+                .criteria(Collections.singletonList(criteria))
+                .flow(FLOW_JAC)
+                .build();
     }
 }
