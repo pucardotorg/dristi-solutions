@@ -1,0 +1,457 @@
+openapi: "3.0.2"
+info:
+  title: Case A and B Diary related APIs
+  description: This API specification defines the various APIs that are used to manage the A and B diaries. A diary is daily diary for everything happening in a Judge's court, across cases. It is specific to a judge and date and is generated daily and signed. B diary is a diary specific to a Judge and a case and is generated only once at the end of the case. It tracks all actions happening in a case.
+  version: "1.0"
+tags:
+  - name: Case Diaries
+paths:
+
+  /case/diary/v1/addDiaryEntry:
+    post:
+      tags:
+        - Case Diaries
+      operationId: addDiaryEntry
+      summary: add an entry to the diary. If no diary exists, first create an entry and then insert diary entry. Mostly to be used for A Diary
+      requestBody:
+        description: Details for the new diary entry + RequestInfo meta data.
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/CaseDiaryEntryRequest'
+      responses:
+        "201":
+          description: ResponseInfo with diary entry added successfully
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/CaseDiaryEntryResponse'
+        "400":
+          description: addition of diary entry failed
+          content:
+            'application/json':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+  /case/diary/v1/search:
+    post:
+      tags:
+        - Case Diaries
+      operationId: searchDiaries
+      summary: get the list of diaries based on input parameters
+      requestBody:
+        description: Details for the search of diaries + RequestInfo meta data.
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/CaseDiarySearchRequest'
+        required: true
+      responses:
+        "200":
+          description: ResponseInfo with Case Diary list
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/CaseDiaryListResponse'
+        "400":
+          description: failed to find case diary
+          content:
+            'application/json':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /case/diary/entries/v1/search:
+    post:
+      tags:
+        - Case Diaries
+      operationId: searchDiaryEntries
+      summary: get the list of diary entries based on input parameters
+      requestBody:
+        description: Details for the search of diary entries + RequestInfo meta data.
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/CaseDiarySearchRequest'
+        required: true
+      responses:
+        "200":
+          description: ResponseInfo with Case Diary Entries list
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/CaseDiaryEntryListResponse'
+        "400":
+          description: failed to find case diary
+          content:
+            'application/json':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /case/diary/v1/{tenantId}/{judgeId}/{diaryType}:
+    get:
+      tags:
+        - Case Diaries
+      description: The API is used to get the fileStoreId of the published (signed) PDF for the case diary. example - GET /case/diary/v1/KL/<judgeid>/ADiary?
+      operationId: getDiaryStoreId
+      parameters:
+        - name: tenantId
+          in: path
+          description: tenant Id
+          required: true
+          schema:
+            type: string
+            pattern: "^[a-zA-Z]{2}$"
+            maxLength: 2
+            minLength: 2
+        - name: judgeId
+          in: path
+          description: the Id of the Judge, whose diary is being queried
+          required: true
+          schema:
+            type: string
+        - name: diaryType
+          in: path
+          description: the type of the diary i.e. A diary or B diary
+          required: true
+          schema:
+            type: string
+            enum: ["ADiary", "BDiary"]
+        - name: date
+          in: query
+          required: false
+          description: the date for which we want the diary in EPOCH format, but with time component set to 0. This will be used in case we are searching A diary
+          schema:
+            type: integer
+            format: int64
+        - name: caseId
+          in: query
+          required: false
+          description: the caseId for which we want the diary. This will be used in case we are searching for B diary
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: respond with case diary PDF fileStoreId of signed PDF
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/CaseDiaryResponse'
+        '400':
+          description: unable to get file store id
+          content:
+            'application/json':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /case/diary/v1/generate:
+    post:
+      tags:
+        - Case Diaries
+      operationId: generate
+      summary: Generate the PDF for the diary, store it and return the PDF's file store ID. This will be the unsigned PDF
+      requestBody:
+        description: Details for diary whose PDF is being created + RequestInfo meta data.
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/CaseDiaryGenerateRequest'
+      responses:
+        "201":
+          description: ResponseInfo with file store ID of the case PDF generated
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/CaseDiaryFile'
+        "400":
+          description: case diary PDF generation failed
+          content:
+            'application/json':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /case/diary/entry/v1/update:
+    post:
+      tags:
+        - Case Diaries
+      summary: update the case diary entry. this is mostly done before the signed PDF is created
+      requestBody:
+        description: updated diary line item + RequestInfo meta data.
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/CaseDiaryEntryRequest'
+      responses:
+        "200":
+          description: ResponseInfo with diary entry updated successfully
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/CaseDiaryEntryResponse'
+        "400":
+          description: diary entry update failed
+          content:
+            'application/json':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+  /case/diary/v1/update:
+    post:
+      tags:
+        - Case Diaries
+      summary: update the case diary. this is mostly used to update the file store ID after generating the signed PDF
+      requestBody:
+        description: updated diary + RequestInfo meta data.
+        content:
+          'application/json':
+            schema:
+              $ref: '#/components/schemas/CaseDiaryRequest'
+      responses:
+        "200":
+          description: ResponseInfo with diary updated successfully
+          content:
+            'application/json':
+              schema:
+                $ref: '#/components/schemas/CaseDiaryResponse'
+        "400":
+          description: diary update failed
+          content:
+            'application/json':
+              schema:
+                $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    CaseDiaryRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        diary:
+          $ref: '#/components/schemas/CaseDiary'
+
+    CaseDiaryResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        diaryEntry:
+          $ref: '#/components/schemas/CaseDiary'
+
+    CaseDiaryEntryRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        diaryEntry:
+          $ref: '#/components/schemas/CaseDiaryEntry'
+
+    CaseDiaryEntryResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        diaryEntry:
+          $ref: '#/components/schemas/CaseDiaryEntry'
+
+    CaseDiaryGenerateRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        diary:
+          $ref: '#/components/schemas/CaseDiary'
+
+    CaseDiaryFile:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        fileStoreID:
+          type: string
+          description: file store ID of the case diary. it will be regular PDF ID when responding to addDiaryEntry API, but will be signed PDF ID when responding to update method
+
+    CaseDiarySearchRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/RequestInfo'
+        criteria:
+          $ref: '#/components/schemas/CaseDiarySearchCriteria'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+
+    CaseDiaryListResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        diaries:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseDiaryListItem'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+
+    CaseDiaryEntryListResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/ResponseInfo'
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/CaseDiaryEntry'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+
+    CaseDiary:
+      type: object
+      description: the PDF for the case diary. Mostly will be storing the signed PDF, but there is a provision to store unsigned PDF also
+      required:
+        - tenantId
+        - diaryType
+        - judgeId
+      oneOf:
+        - required: [diaryDate, caseNumber]
+      properties:
+        id:
+          type: string
+          description: primary key to identify the entity
+          format: uuid
+          minLength: 36
+          maxLength: 36
+          readOnly: true
+        tenantId:
+          type: string
+          description: This is tenantId of the case
+        caseNumber:
+          type: string
+          description: ST number of the case for which this diary is created in case of B Diary. Since B diary is generated on closure of the case, it will have a ST number.  For A diary this field will be null
+        diaryDate:
+          type: integer
+          format: int64
+          description: EPOCH date, with time as 00:00:00 for the diary in case of A diary. for B diary, this will be 0
+        diaryType:
+          type: string
+          description: Master data ID the type of diary -ADiary or BDiary or something else in future
+          example: ADiary, BDiary
+        judgeId:
+          type: string
+          description: ID is the Judge for whom this diary is being managed
+        documents:
+          type: array
+          description: array of PDF document fileStore IDs, where documentType will have help identify if it is signed or unsigned
+          example: documentType = casediary.signed / casediary.unsigned
+          items:
+            $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Document'
+        additionalDetails:
+          type: object
+          description: This field is meant to hold any extra information that we want to store from V2 version. It is not meant to be used in V1.
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/AuditDetails'
+
+
+    CaseDiaryEntry:
+      type: object
+      description: individual diary line item i.e. business of the day. A set of these are picked up to create the final A or B diary. If items are picked up using tenant, JudgeId and date, then it forms A diary. If they are picked up using tenant, JudgeId and caseId, then it forms B diary
+      required:
+        - id
+        - tenantId
+        - entryDate
+        - caseId
+        - judgeId
+        - businessOfDay
+      properties:
+        id:
+          type: string
+          description: primary key to identify the entity
+          format: uuid
+          minLength: 36
+          maxLength: 36
+          readOnly: true
+        tenantId:
+          type: string
+          description: This is tenantId of the case
+        entryDate:
+          type: integer
+          format: int64
+          description: EPOCH date (time is 00:00:00) when the entry was created. All diary operations are only with date, and we don't need time. Setting time to 0, helps compare two values for same date.
+        caseNumber:
+          type: string
+          description: CMP/ST number of the case for which the entry is being made
+        judgeId:
+          type: string
+          description: ID is the Judge for whom this diary entry is being made
+        businessOfDay:
+          type: string
+          maxLength: 1024
+          description: the business of the day that is being recorded for the diary
+        referenceId:
+          type: string
+          description: UUID of the entity from where business of the day has come, like Order ID. could be null as well
+        referenceType:
+          type: string
+          description: master data ID for difference entities/services from which business of the day has come. will have a value if referenceId is not null.
+          example: order, hearing, evidence etc.
+        hearingDate:
+          type: integer
+          format: int64
+          description: EPOCH date time (in milliseconds) of the next hearing date. This will come from the Order or Hearing object (depending on where the API will get called). A value of 0 will mean no hearing date
+        additionalDetails:
+          type: object
+          description: This field is meant to hold any extra information that we want to store from V2 version. It is not meant to be used in V1.
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/AuditDetails'
+
+
+    CaseDiaryListItem:
+      type: object
+      description: this entity is only for use by get API to return a list of items. it is not stored in DB, but is filled by getting data from DB. This will mostly be used for A Diary to show a list of A diaries across dates
+      properties:
+        diaryId:
+          type: string
+          description: primary key to identify the entity
+          format: uuid
+          minLength: 36
+          maxLength: 36
+          readOnly: true
+        tenantId:
+          type: string
+          description: This is tenantId of the case
+        date:
+          type: integer
+          format: int64
+          description: EPOCH date, with time as 00:00:00 for the diary
+        diaryType:
+          type: string
+          description: Master data ID the type of diary -A or B or something else in future
+          example: ADiary, BDiary
+        fileStoreID:
+          type: string
+          description: file store ID for the signed version of the PDF for the diary
+
+    CaseDiarySearchCriteria:
+      type: object
+      required:
+        - tenantId
+        - judgeId
+      oneOf:
+        - required: [date, caseId]
+      properties:
+        tenantId:
+          type: string
+          description: This is tenantId of the case
+        date:
+          type: integer
+          format: int64
+          description: EPOCH date, with time as 00:00:00 for the diary. To be filled for A diary. For B diary, this can be set to 0
+        caseId:
+          type: string
+          description: The case for which this diary is created in case of B Diary. For A diary this field will be null
+        diaryType:
+          type: string
+          description: Master data ID the type of diary -A or B or something else in future
+          example: ADiary, BDiary
+        judgeId:
+          type: string
+          description: ID is the Judge for whom this diary is being managed
