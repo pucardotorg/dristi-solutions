@@ -888,13 +888,7 @@ const GenerateOrders = () => {
     if (!Array.isArray(hearingDetails?.attendees)) {
       return [];
     }
-    const uniqueAttendees = hearingDetails?.attendees.reduce((acc, attendee) => {
-      if (!acc.some((item) => item?.individualId === attendee?.individualId)) {
-        acc.push(attendee);
-      }
-      return acc;
-    }, []);
-    return uniqueAttendees.map((attendee) => ({
+    return hearingDetails?.attendees.map((attendee) => ({
       ...attendee,
       partyType: attendee?.type,
       value: attendee.individualId || attendee.name,
@@ -3561,7 +3555,11 @@ const GenerateOrders = () => {
 
         if (["SCHEDULE_OF_HEARING_DATE"].includes(orderType) && (isHearingScheduled || isHearingInProgress || isHearingOptout)) {
           setShowErrorToast({
-            label: isHearingScheduled ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE") : isHearingInProgress ? t("HEARING_IS_ALREADY_IN_PROGRESS_FOR_THIS_CASE") : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
+            label: isHearingScheduled
+              ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE")
+              : isHearingInProgress
+              ? t("HEARING_IS_ALREADY_IN_PROGRESS_FOR_THIS_CASE")
+              : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
             error: true,
           });
           hasError = true;

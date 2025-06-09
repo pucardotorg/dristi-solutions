@@ -421,13 +421,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
     if (!Array.isArray(attendees)) {
       return [];
     }
-    const uniqueAttendees = attendees.reduce((acc, attendee) => {
-      if (!acc.some((item) => item?.individualId === attendee?.individualId)) {
-        acc.push(attendee);
-      }
-      return acc;
-    }, []);
-    return uniqueAttendees.map((attendee) => ({
+    return attendees.map((attendee) => ({
       ...attendee,
       partyType: attendee?.type,
       value: attendee.individualId || attendee.name,
