@@ -379,8 +379,8 @@ public class TaskUtil {
         Object orderFormData = getOrderFormDataByOrderType(order.getAdditionalDetails(), order.getOrderType());
         String respondentName = getRespondentName(order.getAdditionalDetails(), order.getOrderType());
         List<Address> respondentAddress = getRespondentAddress(order, courtCase);
-        String email = getRespondentEmails(orderFormData).get(0);
-        String phone = getRespondentPhoneNumbers(orderFormData).get(0);
+        String email = getRespondentEmails(orderFormData).isEmpty() ? " " : getRespondentEmails(orderFormData).get(0);
+        String phone = getRespondentPhoneNumbers(orderFormData).isEmpty() ? " " : getRespondentPhoneNumbers(orderFormData).get(0);
 
         return RespondentDetails.builder()
                 .name(respondentName)
