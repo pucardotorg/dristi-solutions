@@ -1,5 +1,6 @@
 package org.pucar.dristi.util;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
@@ -11,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,5 +96,20 @@ public class SchedulerUtil {
             throw new CustomException("ERR_SCHEDULER_EXCEPTION", "Error occurred while creating scheduled hearings.");
         }
         return scheduleHearings;
+    }
+
+    public List<JudgeCalendarRule> updateJudgeCalendar(JudgeCalendarUpdateRequest calendarUpdateRequest) {
+
+        StringBuilder uri = new StringBuilder();
+        uri.append(configuration.getSchedulerHost()).append(configuration.getJudgeCalendarUpdateEndPoint());
+        Object response = repository.fetchResult(uri, calendarUpdateRequest);
+        List<JudgeCalendarRule> updateResponse = new ArrayList<>();
+        try {
+            updateResponse = mapper.convertValue(response, new TypeReference<List<JudgeCalendarRule>>() {});
+        } catch (Exception e) {
+            log.error("Error occurred while updating judge calendar.");
+            throw new CustomException("ERR_SCHEDULER_EXCEPTION", "Error occurred while updating judge calendar.");
+        }
+        return updateResponse;
     }
 }
