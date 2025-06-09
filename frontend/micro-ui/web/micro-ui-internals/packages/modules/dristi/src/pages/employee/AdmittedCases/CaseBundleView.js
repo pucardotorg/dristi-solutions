@@ -39,7 +39,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
   const { t } = useTranslation();
 
-  const courtId = localStorage.getItem("courtId");
+  const courtId = caseDetails?.courtId;
   useEffect(() => {
     const complaintDoc = caseDetails?.documents?.find((d) => d?.documentType === "case.complaint.signed");
     if (complaintDoc?.fileStore && !selectedFileStoreId) {
@@ -1283,7 +1283,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       <div className="sidebar-panel">
         <div className="sidebar-header">{t("CASE_FILE_HEADING")}</div>
 
-        <div className="scrollable-container">{dynamicCaseFileStructure.map((item) => renderMenuItem(item))}</div>
+        <div className="scrollable-container">{dynamicCaseFileStructure?.map((item) => renderMenuItem(item))}</div>
       </div>
 
       {/* Right Content Area - Independent scrolling */}
