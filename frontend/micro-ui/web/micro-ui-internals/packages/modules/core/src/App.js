@@ -4,6 +4,8 @@ import CitizenApp from "./pages/citizen";
 import EmployeeApp from "./pages/employee";
 import { useTranslation } from "react-i18next";
 import TopBarSideBar from "./components/TopBarSideBar";
+import { trackEvent } from "./lib/gtag";
+import { getCLS, getFID, getLCP, getFCP, getTTFB } from "web-vitals";
 const styles = {
   container: {
     display: "flex",
@@ -18,6 +20,28 @@ const styles = {
     fontSize: "24px",
     color: "#333",
   },
+};
+
+// Function to report web vitals metrics using trackEvent
+const reportWebVitals = ({ name, delta, id, value }) => {
+  // Prepare the metric data
+  const eventName = `web-vital-${name}`;
+  const eventValue = Math.round(name === 'CLS' ? delta * 1000 : delta); // Convert to milliseconds
+  const url = window.location.pathname;
+  const eventCategory = 'Web Vitals';
+  
+  // Use the trackEvent function to send the metric to Google Analytics
+  trackEvent(eventName, eventValue, url, eventCategory, true);
+  
+  // Optional: Log the metrics in development for debugging
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`Web Vitals: ${name}`, {
+      name,
+      value: Math.round(name === 'CLS' ? value * 1000 : value), // Convert to milliseconds
+      delta: Math.round(name === 'CLS' ? delta * 1000 : delta), // Convert to milliseconds
+      id
+    });
+  }
 };
 
 export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData ,defaultLanding="citizen"}) => {
@@ -65,8 +89,28 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData ,de
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  history.listen(() => {
+  // Track web vitals on initial load
+  useEffect(() => {
+    // Measure and report the web vitals
+    getFCP(reportWebVitals); // First Contentful Paint
+    getLCP(reportWebVitals); // Largest Contentful Paint
+    getFID(reportWebVitals); // First Input Delay
+    getCLS(reportWebVitals); // Cumulative Layout Shift
+    getTTFB(reportWebVitals); // Time to First Byte
+  }, []);
+
+  // Track web vitals on route changes
+  history.listen((location) => {
     window?.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    
+    // Re-measure and report web vitals on route changes
+    // This is especially important for SPAs where page transitions don't reload the page
+    setTimeout(() => {
+      getFCP(reportWebVitals);
+      getLCP(reportWebVitals);
+      // Note: FID is only measured on the initial page load
+      getCLS(reportWebVitals);
+    }, 100); // Small delay to allow the new page content to render
   });
 
   const handleUserDropdownSelection = (option) => {
