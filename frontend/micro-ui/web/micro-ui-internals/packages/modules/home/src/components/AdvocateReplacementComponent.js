@@ -40,14 +40,12 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
   const [isApiCalled, setIsApiCalled] = useState(false);
 
   const [{ modalType, isOpen }, setConfirmModal] = useState({ modalType: null, isOpen: false });
-  const courtId = localStorage.getItem("courtId");
 
   const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
     {
       criteria: [
         {
           filingNumber: filingNumber,
-          ...(courtId && !isCitizen && { courtId }),
         },
       ],
       tenantId,
@@ -58,24 +56,16 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
     Boolean(filingNumber)
   );
 
-  const caseDetails = useMemo(
-    () => ({
-      ...caseData?.criteria?.[0]?.responseList?.[0],
-    }),
-    [caseData]
-  );
-
   const { data: tasksData } = Digit.Hooks.hearings.useGetTaskList(
     {
       criteria: {
         tenantId: tenantId,
         taskNumber: taskNumber,
-        ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
       },
     },
     {},
     taskNumber,
-    Boolean(taskNumber && caseDetails?.courtId)
+    Boolean(taskNumber)
   );
 
   const task = useMemo(() => tasksData?.list?.[0], [tasksData]);
@@ -126,6 +116,13 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
     [task, tenantId, setPendingTaskActionModals, toast, t, refetch]
   );
 
+  const caseDetails = useMemo(
+    () => ({
+      ...caseData?.criteria?.[0]?.responseList?.[0],
+    }),
+    [caseData]
+  );
+
   const replaceAdvocateOrderCreate = async (type) => {
     const formdata = {
       orderType: {
@@ -172,7 +169,6 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
       const res = await ordersService.createOrder(reqbody, { tenantId });
       DRISTIService.customApiService(Urls.dristi.pendingTask, {
         pendingTask: {
-          actionCategory: "View Application",
           name: t("ADVOCATE_REPLACEMENT_APPROVAL"),
           entityType: "order-default",
           referenceId: `MANUAL_${res?.order?.orderNumber}`,

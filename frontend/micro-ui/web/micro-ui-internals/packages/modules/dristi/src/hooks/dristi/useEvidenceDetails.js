@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "react-query";
+import useGetSubmissions from "./useGetSubmissions";
 import { DRISTIService } from "../../services";
 
 const useEvidenceDetails = ({ url, params, body, config = {}, plainAccessRequest, state, changeQueryName = "Random" }) => {

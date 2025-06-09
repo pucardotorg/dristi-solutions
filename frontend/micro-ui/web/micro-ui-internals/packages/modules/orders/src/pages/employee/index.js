@@ -44,7 +44,7 @@ const ProjectBreadCrumb = ({ location }) => {
       },
       
       // Conditionally add the View Case breadcrumb if case data is available in context
-      ...(caseId && filingNumber && !pathname.includes("Summons&Notice")?
+      ...(caseId && filingNumber?
         [{
         path: `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`,
         content: t("VIEW_CASE"),

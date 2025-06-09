@@ -14,7 +14,6 @@ const OrderDrafts = ({ caseData, setOrderModal }) => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [currentOrder, setCurrentOrder] = useState({});
-  const caseCourtId = useMemo(() => caseData?.case?.courtId, [caseData]);
 
   const { data: ordersRes, refetch: refetchOrdersData, isLoading: isOrdersLoading } = useGetOrders(
     {
@@ -22,7 +21,6 @@ const OrderDrafts = ({ caseData, setOrderModal }) => {
         filingNumber: filingNumber,
         tenantId: tenantId,
         status: "DRAFT_IN_PROGRESS",
-        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},

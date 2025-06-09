@@ -2,7 +2,7 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import FullCalendar from "@fullcalendar/react";
 import timeGridPlugin from "@fullcalendar/timegrid";
-import React, { useState, useRef, useCallback, useEffect, useMemo } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/";
 import PreHearingModal from "../../components/PreHearingModal";
@@ -11,7 +11,7 @@ import { Button, Loader } from "@egovernments/digit-ui-react-components";
 import BulkReschedule from "./BulkReschedule";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-const MonthlyCalendar = ({ hideRight }) => {
+const MonthlyCalendar = () => {
   const history = useHistory();
   const { t } = useTranslation();
   const calendarRef = useRef(null);
@@ -46,25 +46,18 @@ const MonthlyCalendar = ({ hideRight }) => {
   const [caseType, setCaseType] = useState({});
   const [stepper, setStepper] = useState(0);
   const initial = "dayGridMonth";
-  const courtId = localStorage.getItem("courtId");
 
   const search = window.location.search;
-  const [fromDate, setFromDate] = useState(null);
-  const [toDate, setToDate] = useState(null);
-  const [slot, setSlot] = useState(null);
-  const [slotId, setSlotId] = useState(null);
-  const [initialView, setInitialView] = useState(initial);
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
+  const { fromDate, toDate, slot, slotId, initialView, count } = useMemo(() => {
     const searchParams = new URLSearchParams(search);
-    setFromDate(Number(searchParams.get("from-date")) || null);
-    setToDate(Number(searchParams.get("to-date")) || null);
-    setSlot(searchParams.get("slot") || null);
-    setSlotId(searchParams.get("slotId") || null);
-    setInitialView(searchParams.get("view") || initial);
-    setCount(Number(searchParams.get("count")) || 0);
-  }, [search, initial]);
+    const fromDate = Number(searchParams.get("from-date")) || null;
+    const toDate = Number(searchParams.get("to-date")) || null;
+    const slot = searchParams.get("slot") || null;
+    const slotId = searchParams.get("slotId") || null;
+    const initialView = searchParams.get("view") || initial;
+    const count = searchParams.get("count") || 0;
+    return { fromDate, toDate, slot, slotId, initialView, count };
+  }, [search]);
 
   const reqBody = {
     criteria: {
@@ -72,7 +65,6 @@ const MonthlyCalendar = ({ hideRight }) => {
       fromDate: dateRange.start ? dateRange.start.getTime() : null,
       toDate: dateRange.end ? dateRange.end.getTime() : null,
       attendeeIndividualId: individualId,
-      ...(courtId && { courtId }),
     },
   };
 
@@ -227,6 +219,7 @@ const MonthlyCalendar = ({ hideRight }) => {
   // };
 
   const handleEventClick = (arg, ...rest) => {
+    console.log(arg, ...rest);
     const fromDate = arg.event.start;
     const count = arg.event.extendedProps.count;
     const toDate = arg.event.end;
@@ -237,33 +230,18 @@ const MonthlyCalendar = ({ hideRight }) => {
     searchParams.set("slotId", arg.event.extendedProps.slotId);
     searchParams.set("view", getCurrentViewType());
     searchParams.set("count", count);
-    setFromDate(fromDate.getTime());
-    setToDate(toDate.getTime());
-    setSlot(arg.event.extendedProps.slot);
-    setSlotId(arg.event.extendedProps.slotId);
-    setInitialView(getCurrentViewType());
-    setCount(count);
-    if (!hideRight) history.replace({ search: searchParams.toString() });
+    history.replace({ search: searchParams.toString() });
   };
 
   const closeModal = () => {
-    if (!hideRight) {
-      const searchParams = new URLSearchParams(search);
-      searchParams.delete("from-date");
-      searchParams.delete("to-date");
-      searchParams.delete("slot");
-      searchParams.delete("slotId");
-      searchParams.delete("view");
-      searchParams.delete("count");
-      history.replace({ search: searchParams.toString() });
-    } else {
-      setFromDate(null);
-      setToDate(null);
-      setSlot(null);
-      setSlotId(null);
-      setInitialView(initial);
-      setCount(0);
-    }
+    const searchParams = new URLSearchParams(search);
+    searchParams.delete("from-date");
+    searchParams.delete("to-date");
+    searchParams.delete("slot");
+    searchParams.delete("slotId");
+    searchParams.delete("view");
+    searchParams.delete("count");
+    history.replace({ search: searchParams.toString() });
   };
 
   const onSubmit = () => {
@@ -277,13 +255,13 @@ const MonthlyCalendar = ({ hideRight }) => {
   // }
   return (
     <React.Fragment>
-      {Digit.UserService.getType() === "employee" && !hideRight && (
+      {Digit.UserService.getType() === "employee" && (
         <div style={{ display: "flex", justifyContent: "end", paddingRight: "24px", marginTop: "5px" }}>
           <Button label={t("BULK_RESCHEDULE")} onButtonClick={onSubmit}></Button>
         </div>
       )}
       <div style={{ display: "flex" }}>
-        <div style={{ width: hideRight ? "100%" : "70%" }}>
+        <div style={{ width: "70%" }}>
           <div>
             <FullCalendar
               plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -293,7 +271,7 @@ const MonthlyCalendar = ({ hideRight }) => {
                 center: "title",
                 end: "next,dayGridMonth,timeGridWeek,timeGridDay",
               }}
-              height={hideRight ? "75vh" : "85vh"}
+              height={"85vh"}
               events={Calendar_events}
               eventContent={(arg) => {
                 return (
@@ -362,19 +340,17 @@ const MonthlyCalendar = ({ hideRight }) => {
             )}
           </div>
         </div>
-        {hideRight ? null : (
-          <div className="right-side">
-            <TasksComponent
-              taskType={taskType}
-              setTaskType={setTaskType}
-              caseType={caseType}
-              setCaseType={setCaseType}
-              isLitigant={Boolean(userInfoType === "citizen")}
-              uuid={userInfo?.uuid}
-              userInfoType={userInfoType}
-            />
-          </div>
-        )}
+        <div className="right-side">
+          <TasksComponent
+            taskType={taskType}
+            setTaskType={setTaskType}
+            caseType={caseType}
+            setCaseType={setCaseType}
+            isLitigant={Boolean(userInfoType === "citizen")}
+            uuid={userInfo?.uuid}
+            userInfoType={userInfoType}
+          />
+        </div>
       </div>
       <BulkReschedule stepper={stepper} setStepper={setStepper} selectedSlot={[]} />
     </React.Fragment>

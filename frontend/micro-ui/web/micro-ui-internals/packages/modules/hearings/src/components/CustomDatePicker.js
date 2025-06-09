@@ -1,17 +1,12 @@
 import React, { useState } from "react";
-import { LabelFieldPair, TextInput, CloseSvg, CardLabelError, CardLabel } from "@egovernments/digit-ui-react-components";
-import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
+import { Modal, LabelFieldPair, TextInput, CloseSvg, CardLabelError } from "@egovernments/digit-ui-react-components";
 
-const CustomDatePicker = ({ t, config, formData, onSelect, errors, onDateChange }) => {
+const CustomDatePicker = ({ t, config, formData, onSelect, errors }) => {
   const [showModal, setShowModal] = useState(false);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const CustomCalendar = Digit.ComponentRegistryService.getComponent("CustomCalendar");
   const handleSelect = (date) => {
-    if (onDateChange) {
-      onDateChange(date);
-    } else {
-      onSelect(config.key, new Date(date).setHours(0, 0, 0, 0));
-    }
+    onSelect(config.key, new Date(date).setHours(0, 0, 0, 0));
     setShowModal(false);
   };
   const customDateConfig = {
@@ -20,19 +15,18 @@ const CustomDatePicker = ({ t, config, formData, onSelect, errors, onDateChange 
   };
 
   return (
-    <div style={{ marginBottom: "24px" }} className="custom-date-picker">
+    <div style={{ marginBottom: "24px" }}>
       <LabelFieldPair
         style={{
           border: config?.disable ? "1px solid #9e9e9e" : "1px solid black",
           background: config?.disable ? "#D9D9D9" : "transparent",
           ...(config?.customStyleLabelField && config?.customStyleLabelField),
         }}
-        className={config?.className}
       >
         <TextInput
           type="text"
           style={{ border: 0, margin: 0, color: config?.disable ? "#9e9e9e" : "black" }}
-          value={formData?.[config?.key] ? new Date(formData?.[config?.key]).toLocaleDateString() : ""}
+          value={formData[config?.key] ? new Date(formData[config?.key]).toLocaleDateString() : ""}
           placeholder={t(config.placeholder || t("mm/dd/yyy"))}
           readOnly
         />
@@ -45,9 +39,9 @@ const CustomDatePicker = ({ t, config, formData, onSelect, errors, onDateChange 
           <CalendarIcon />
         </button>
       </LabelFieldPair>
-      {errors?.[config?.key] && (
+      {errors[config?.key] && (
         <CardLabelError style={{ width: "70%", fontSize: "12px" }}>
-          {errors?.[config?.key]?.message ? t(errors?.[config?.key]?.message) : t(`required`)}
+          {errors[config?.key]?.message ? t(errors[config?.key]?.message) : t(`required`)}
         </CardLabelError>
       )}
 
@@ -57,16 +51,13 @@ const CustomDatePicker = ({ t, config, formData, onSelect, errors, onDateChange 
           headerBarEnd={<CloseBtn onClick={() => setShowModal(false)} />}
           hideSubmit={true}
           popmoduleClassName="custom-date-selector-modal"
-          popupStyles={{
-            width: "fit-content",
-          }}
         >
           <CustomCalendar
             config={customDateConfig}
             t={t}
             minDate={new Date()}
             handleSelect={handleSelect}
-            selectedCustomDate={formData?.[config?.key]}
+            selectedCustomDate={formData[config?.key]}
             tenantId={tenantId}
           />
         </Modal>

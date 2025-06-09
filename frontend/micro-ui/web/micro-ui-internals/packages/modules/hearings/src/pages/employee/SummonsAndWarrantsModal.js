@@ -108,14 +108,11 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
   const [itemId, setItemId] = useState(null);
   const [orderLoading, setOrderLoading] = useState(false);
   const userType = Digit.UserService.getType();
-  const courtId = localStorage.getItem("courtId");
-
   const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
     {
       criteria: [
         {
           filingNumber: filingNumber,
-          ...(courtId && userType === "employee" && { courtId }),
         },
       ],
       tenantId,
@@ -126,21 +123,6 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     Boolean(filingNumber)
   );
 
-  const caseDetails = useMemo(
-    () => ({
-      ...caseData?.criteria?.[0]?.responseList?.[0],
-    }),
-    [caseData]
-  );
-
-  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
-  const isCaseAdmitted = useMemo(() => caseDetails?.status === "CASE_ADMITTED", [caseDetails]);
-
-  const { caseId, cnrNumber, caseTitle } = useMemo(
-    () => ({ cnrNumber: caseDetails.cnrNumber || "", caseId: caseDetails?.id, caseTitle: caseDetails?.caseTitle }),
-    [caseDetails]
-  );
-
   const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
     {
       hearing: { tenantId },
@@ -148,15 +130,28 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
         tenantID: tenantId,
         filingNumber: filingNumber,
         hearingId: hearingId,
-        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },
     hearingId,
-    Boolean(hearingId && caseCourtId)
+    Boolean(hearingId)
   );
 
   const hearingDetails = useMemo(() => hearingsData?.HearingList?.[0], [hearingsData]);
+
+  const caseDetails = useMemo(
+    () => ({
+      ...caseData?.criteria?.[0]?.responseList?.[0],
+    }),
+    [caseData]
+  );
+
+  const isCaseAdmitted = useMemo(() => caseDetails?.status === "CASE_ADMITTED", [caseDetails]);
+
+  const { caseId, cnrNumber, caseTitle } = useMemo(
+    () => ({ cnrNumber: caseDetails.cnrNumber || "", caseId: caseDetails?.id, caseTitle: caseDetails?.caseTitle }),
+    [caseDetails]
+  );
 
   const handleCloseModal = () => {
     if (handleClose) {
@@ -234,10 +229,10 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
   };
 
   const { data: ordersData } = useSearchOrdersService(
-    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
+    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED" } },
     { tenantId },
     filingNumber,
-    Boolean(filingNumber && caseCourtId)
+    Boolean(filingNumber)
   );
 
   const [orderList, setOrderList] = useState([]);
@@ -283,14 +278,13 @@ const SummonsAndWarrantsModal = ({ handleClose }) => {
     setItemId(orderListFiltered?.[0]?.ordersList?.[0]?.itemId);
   }, [orderListFiltered]);
 
-  const config = useMemo(() => summonsConfig({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId, caseCourtId }), [
+  const config = useMemo(() => summonsConfig({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId }), [
     taskCnrNumber,
     filingNumber,
     orderId,
     orderNumber,
     orderType,
     itemId,
-    caseCourtId,
   ]);
 
   const getOrderPartyData = (orderType, orderList) => {

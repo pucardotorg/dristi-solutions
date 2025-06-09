@@ -9,7 +9,6 @@ import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 const JudgementViewCard = ({ caseData, width }) => {
   const { t } = useTranslation();
   const [showFinalOutcomeOrder, setShowFinalOutcomeOrder] = useState(false);
-  const caseCourtId = useMemo(() => caseData?.case?.courtId, [caseData]);
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { downloadPdf } = useDownloadCasePdf();
 
@@ -40,12 +39,11 @@ const JudgementViewCard = ({ caseData, width }) => {
         tenantId: tenantId,
         orderType: finalOutcomeOrderType,
         status: "PUBLISHED",
-        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
     caseData?.filingNumber,
-    Boolean(caseData?.filingNumber && tenantId && finalOutcomeOrderType && caseCourtId)
+    Boolean(caseData?.filingNumber && tenantId && finalOutcomeOrderType)
   );
 
   const finalOutcomeOrder = ordersRes?.list?.[0];

@@ -165,8 +165,6 @@ const PaymentForSummonModal = ({ path }) => {
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
-
-  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const fetchCaseLockStatus = useCallback(async () => {
     try {
       const status = await DRISTIService.getCaseLockStatus(
@@ -204,21 +202,20 @@ const PaymentForSummonModal = ({ path }) => {
       criteria: {
         tenantId: tenantId,
         taskNumber: taskNumber,
-        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
     filingNumber,
-    Boolean(filingNumber && caseCourtId)
+    Boolean(filingNumber)
   );
 
   const filteredTasks = useMemo(() => tasksData?.list, [tasksData]);
 
   const { data: orderData, isloading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
-    { tenantId, criteria: { id: filteredTasks?.[0]?.orderId, ...(caseCourtId && { courtId: caseCourtId }) } },
+    { tenantId, criteria: { id: filteredTasks?.[0]?.orderId } },
     { tenantId },
     filteredTasks?.[0]?.orderId,
-    Boolean(filteredTasks?.[0]?.orderId && caseCourtId)
+    Boolean(filteredTasks?.[0]?.orderId)
   );
 
   const compositeItem = useMemo(
@@ -246,12 +243,11 @@ const PaymentForSummonModal = ({ path }) => {
         tenantID: tenantId,
         filingNumber: filingNumber,
         hearingId: orderData?.list?.[0]?.hearingNumber,
-        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },
     orderData?.list?.[0]?.hearingNumber,
-    Boolean(orderData?.list?.[0]?.hearingNumber && caseCourtId)
+    Boolean(orderData?.list?.[0]?.hearingNumber)
   );
 
   const consumerCode = useMemo(() => {

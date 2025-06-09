@@ -16,7 +16,6 @@ import Home from "./home";
 import ViewCaseFile from "./scrutiny/ViewCaseFile";
 import ReviewLitigantDetails from "./AdmittedCases/ReviewLitigantDetails";
 import EmployeeProfileEdit from "../../components/EmployeeProfileEdit/EmployeeProfileEdit";
-import AdmittedCaseJudge from "./AdmittedCases/AdmittedCaseJudge";
 
 const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileStoreId }) => {
   const { t } = useTranslation();
@@ -31,8 +30,6 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
   const isUserLoggedIn = Boolean(token);
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = JSON.parse(eSignWindowObject);
-
-  const isJudgeView = roles.some((role) => ["CASE_APPROVER", "BENCH_CLERK", "COURT_ROOM_MANAGER", "TYPIST_ROLE"].includes(role.code));
 
   const employeeCrumbs = [
     {
@@ -78,15 +75,9 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
       isLast: true,
     },
   ];
-  const showBreadCrumbs = useMemo(
-    () =>
-      location.pathname.includes("/review-litigant-details")
-        ? true
-        : location.pathname.includes("/view-case")
-        ? false
-        : location.pathname.includes("/pending-payment-inbox") || location.pathname.includes("/view-case") || true,
-    [location.pathname]
-  );
+  const showBreadCrumbs = useMemo(() => location.pathname.includes("/pending-payment-inbox") || location.pathname.includes("/view-case") || true, [
+    location.pathname,
+  ]);
   if (result) {
     sessionStorage.setItem("isSignSuccess", result);
   }
@@ -126,11 +117,7 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
           <div className={location.pathname.endsWith("employee/dristi/cases") ? "file-case-main" : ""}></div>
           <PrivateRoute exact path={`${path}/cases`} component={Home} />
           <PrivateRoute exact path={`${path}/admission`} component={(props) => <CaseFileAdmission {...props} t={t} path={path} />} />
-          <PrivateRoute
-            exact
-            path={`${path}/home/view-case`}
-            component={isJudgeView ? (props) => <AdmittedCaseJudge /> : (props) => <AdmittedCases />}
-          />
+          <PrivateRoute exact path={`${path}/home/view-case`} component={(props) => <AdmittedCases />} />
           <PrivateRoute exact path={`${path}/home/view-case/review-litigant-details`} component={(props) => <ReviewLitigantDetails />} />
           <PrivateRoute exact path={`${path}/case`} component={(props) => <ViewCaseFile {...props} t={t} />} />
           <PrivateRoute exact path={`${path}/home/edit-profile`}>

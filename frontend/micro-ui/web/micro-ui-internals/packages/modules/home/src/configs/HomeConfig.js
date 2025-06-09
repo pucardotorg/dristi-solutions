@@ -125,20 +125,6 @@ export const rolesToConfigMapping = [
     },
   },
   {
-    roles: ["TYPIST_ROLE"],
-    config: TabJudgeSearchConfig,
-    isTypist: true,
-    onRowClickRoute: {
-      dependentUrl: "/dristi/admission",
-      urlDependentOn: "status",
-      urlDependentValue: "",
-      params: [
-        { key: "filingNumber", value: "filingNumber" },
-        { key: "caseId", value: "id" },
-      ],
-    },
-  },
-  {
     roles: ["CASE_VIEWER", "HEARING_CREATOR"],
     config: TabJudgeSearchConfig,
     isCourtOfficer: true,
@@ -364,18 +350,6 @@ export const pendingTaskHearingActions = {
       params: [
         { key: "filingNumber", value: "filingNumber" },
         { key: "status", defaultValue: "OPTOUT" },
-      ],
-    },
-  },
-  ABANDONED: {
-    actorName: ["JUDGE"],
-    actionName: "Schedule admission hearing",
-    customFunction: "handleCreateOrder",
-    // additionalDetailsKeys: ["orderType"],
-    redirectDetails: {
-      url: "/orders/generate-orders",
-      params: [
-        { key: "filingNumber", value: "filingNumber" },
       ],
     },
   },

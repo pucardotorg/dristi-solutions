@@ -55,6 +55,5 @@ module.exports = function (app) {
     "/kerala-icops",
     "/order-management",
     "/hearing-management",
-    "/inbox/v2/_getFields/actionCategory",
   ].forEach((location) => app.use(location, createProxy));
 };

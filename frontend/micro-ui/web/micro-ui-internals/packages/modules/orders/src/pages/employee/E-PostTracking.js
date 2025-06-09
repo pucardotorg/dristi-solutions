@@ -38,7 +38,6 @@ const EpostTrackingPage = () => {
   const [toast, setToast] = useState(null);
   const dayInMillisecond = 24 * 3600 * 1000;
   const todayDate = new Date().getTime();
-  const courtId = localStorage.getItem("courtId");
 
   const showToast = (type, message, duration = 5000) => {
     setToast({ key: type, action: message });
@@ -106,12 +105,11 @@ const EpostTrackingPage = () => {
       criteria: {
         tenantId: tenantId,
         taskNumber: rowData?.original?.taskNumber,
-        ...(courtId && { courtId }),
       },
     },
     {},
     rowData?.original?.taskNumber,
-    Boolean(rowData && courtId)
+    Boolean(rowData)
   );
 
   const ePostFee = taskData?.list?.[0]?.taskDetails?.deliveryChannels?.fees;
@@ -150,10 +148,10 @@ const EpostTrackingPage = () => {
   };
 
   const { data: orderData } = Digit.Hooks.orders.useSearchOrdersService(
-    { tenantId, criteria: { id: taskData?.list[0]?.orderId, ...(courtId && { courtId }) } },
+    { tenantId, criteria: { id: taskData?.list[0]?.orderId } },
     { tenantId },
     taskData?.list[0]?.orderId,
-    Boolean(taskData && courtId)
+    Boolean(taskData)
   );
 
   const orderType = useMemo(
@@ -177,7 +175,6 @@ const EpostTrackingPage = () => {
       if (rowData?.original?.deliveryStatus === "NOT_DELIVERED") {
         ordersService.customApiService(Urls.orders.pendingTask, {
           pendingTask: {
-            actionCategory: "Review Process",
             name: `Re-issue ${orderType === "NOTICE" ? "Notice" : "Summon"}`,
             entityType: "order-default",
             referenceId: `MANUAL_${orderData?.list[0]?.hearingNumber}`,

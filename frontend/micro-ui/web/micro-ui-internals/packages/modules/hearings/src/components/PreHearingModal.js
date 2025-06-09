@@ -17,7 +17,6 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
   const [purposeModalData, setPurposeModalData] = useState({});
   const [rescheduleAll, setRescheduleAll] = useState(false);
   const [stepper, setStepper] = useState(0);
-  const courtId = localStorage.getItem("courtId");
 
   const DateFormat = "DD-MM-YYYY";
 
@@ -47,10 +46,6 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
       slot: hearingData.slot,
       tenantId: tenantId,
     };
-    configCopy.apiDetails.requestBody = {
-      ...configCopy.apiDetails.requestBody,
-      courtId: courtId,
-    };
     configCopy.additionalDetails = {
       attendeeIndividualId: userType === "citizen" && individualId,
     };
@@ -65,7 +60,7 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
       }),
     ];
     return configCopy;
-  }, [hearingData.fromDate, hearingData.toDate, hearingData.slot, tenantId, userType, individualId, courtId]);
+  }, [hearingData.fromDate, hearingData.toDate, hearingData.slot, tenantId, userType, individualId]);
 
   // const getTotalCount = useCallback(
   //   async function () {

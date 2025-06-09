@@ -24,12 +24,12 @@ const CloseBtn = (props) => {
   );
 };
 
-const ShowAllTranscriptModal = ({ setShowAllTranscript, hearingList, judgeView = false }) => {
+const ShowAllTranscriptModal = ({ setShowAllTranscript, hearingList }) => {
   const { t } = useTranslation();
 
   return (
     <Modal
-      headerBarMain={<Heading heading={judgeView ? t("HEARING_SUMMARIES") : t("ALL_HEARING_TRANSCRIPT")} />}
+      headerBarMain={<Heading heading={t("ALL_HEARING_TRANSCRIPT")} />}
       headerBarEnd={<CloseBtn onClick={() => setShowAllTranscript(false)} />}
       actionCancelLabel={null}
       actionCancelOnSubmit={() => {}}
@@ -43,31 +43,14 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, hearingList, judgeView =
         {hearingList?.map((hearing, index) => (
           <div key={index} style={{ paddingRight: "20px", marginTop: "15px" }}>
             <div className="transcript-header" style={{ display: "flex", justifyContent: "space-between" }}>
-              <div style={{ marginLeft: "4px" }}>{`${hearing?.hearingType.charAt(0).toUpperCase()}${hearing?.hearingType
-                .slice(1)
-                .toLowerCase()} Hearing`}</div>
+              <div style={{marginLeft:"4px"}}>{`${hearing?.hearingType.charAt(0).toUpperCase()}${hearing?.hearingType.slice(1).toLowerCase()} Hearing`}</div>
               <div style={{ marginRight: "8px" }}>{`${formatDate(hearing?.startTime)}`}</div>
             </div>
-            <div>
-              <TextArea
-                style={{ width: "100%", height: "12vh", border: "solid 1px #3d3c3c", resize: "none" }}
-                value={hearing?.hearingSummary || ""}
-                readOnly
-              />
-            </div>
-
-            {hearing?.attendees && hearing?.attendees?.length > 0 && (
-              <div style={{ border: "solid 1px rgb(61, 60, 60)", marginTop: "-5px", padding: "5px" }}>
-                <span>Attendees: </span>
-                <span style={{ whiteSpace: "normal", wordBreak: "normal" }}>
-                  {hearing?.attendees
-                    ?.filter((attendee) => attendee?.wasPresent)
-                    ?.map((attendee, index) => attendee?.name)
-                    ?.filter(Boolean)
-                    ?.join(", ")}
-                </span>
-              </div>
-            )}
+            <TextArea
+              style={{ width: "100%", height: "12vh", border: "solid 1px #3d3c3c", resize: "none",  }}
+              value={hearing.transcript?.[0] || ""}
+              readOnly
+            />
           </div>
         ))}
       </div>

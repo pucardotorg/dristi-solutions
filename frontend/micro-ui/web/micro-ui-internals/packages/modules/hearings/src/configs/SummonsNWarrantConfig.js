@@ -4,7 +4,7 @@
 //   applicationNumber:""
 // };
 
-export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId, courtId }) => {
+export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, taskCnrNumber, itemId }) => {
   return {
     label: `1(${orderType === "NOTICE" ? "Notice" : "Summon"}s)`,
     type: "search",

@@ -216,7 +216,7 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
       },
       { tenantId: stateCode, limit: 10, offset: 0 }
     )
-      .then(async (individualData) => {
+      .then((individualData) => {
         if (Array.isArray(individualData?.Individual) && individualData?.Individual?.length > 0) {
           let permanentAddress;
           let currentAddress;
@@ -329,7 +329,9 @@ function VerifyPhoneNumber({ t, config, onSelect, formData = {}, errors, setErro
             },
             { shouldValidate: true }
           );
-          ["firstName", "lastName", "middleName"].forEach((key) => onSelect(key, data[key], { shouldValidate: true }));
+          if (config?.screen === "join-case") {
+            ["firstName", "lastName", "middleName"].forEach((key) => onSelect(key, data[key], { shouldValidate: true }));
+          }
         } else {
           onSelect(
             config?.key,

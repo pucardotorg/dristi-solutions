@@ -84,7 +84,6 @@ const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...prop
   const [hearingCaseList, setHearingCaseList] = useState([]);
   const [isCaseLoading, setIsCaseLoading] = useState(false);
   const { data: slotTime } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "court", [{ name: "slots" }]);
-  const courtId = localStorage.getItem("courtId");
 
   // Get the current date
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -121,10 +120,9 @@ const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...prop
         fromDate: dateRange.start,
         attendeeIndividualId: props?.attendeeIndividualId,
         toDate: today.getTime(),
-        ...(courtId && userType === "employee" && { courtId }),
       },
     };
-  }, [dateRange.start, props?.attendeeIndividualId, tenantId, courtId, userType]);
+  }, [dateRange.start, props?.attendeeIndividualId, tenantId]);
 
   const reqBodyMonthly = useMemo(
     () => ({
@@ -132,10 +130,9 @@ const UpcomingHearings = ({ t, userInfoType, individualData, advocateId, ...prop
         tenantId,
         ...dayLeftInOngoingMonthRange,
         attendeeIndividualId: props?.attendeeIndividualId,
-        ...(courtId && userType === "employee" && { courtId }),
       },
     }),
-    [dayLeftInOngoingMonthRange, props?.attendeeIndividualId, tenantId, courtId, userType]
+    [dayLeftInOngoingMonthRange, props?.attendeeIndividualId, tenantId]
   );
 
   const individualId = useMemo(() => {

@@ -68,7 +68,6 @@ function BulkESignView() {
   const { orderNumber, deleteOrder } = Digit.Hooks.useQueryParams();
   const [showBulkSignAllModal, setShowBulkSignAllModal] = useState(false);
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
-  const courtId = localStorage.getItem("courtId");
 
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
@@ -89,12 +88,12 @@ function BulkESignView() {
   const { data: ordersData } = useSearchOrdersService(
     {
       tenantId,
-      criteria: { orderNumber: orderNumber, ...(courtId && { courtId }) },
+      criteria: { orderNumber: orderNumber },
       pagination: { limit: 1000, offset: 0 },
     },
     { tenantId },
     orderNumber,
-    Boolean(orderNumber && courtId)
+    Boolean(orderNumber)
   );
 
   const { data: bulkOrdersData } = useSearchOrdersNotificationService(
@@ -111,13 +110,12 @@ function BulkESignView() {
           entityType: "Order",
           tenantId: tenantId,
           status: OrderWorkflowState.PENDING_BULK_E_SIGN,
-          ...(courtId && { courtId }),
         },
       },
     },
     { tenantId },
     `${orderNumber}-${OrderWorkflowState.PENDING_BULK_E_SIGN}`,
-    Boolean(courtId)
+    true
   );
 
   const orderDetails = useMemo(() => ordersData?.list?.[0] || {}, [ordersData]);
@@ -167,7 +165,7 @@ function BulkESignView() {
     const setOrderFunc = async (order) => {
       if (order?.businessObject?.orderNotification?.entityType === "Order") {
         const orderResponse = await ordersService.searchOrder(
-          { criteria: { tenantId: tenantId, orderNumber: order?.businessObject?.orderNotification?.id, ...(courtId && { courtId }) } },
+          { criteria: { tenantId: tenantId, orderNumber: order?.businessObject?.orderNotification?.id } },
           { tenantId }
         );
         order = orderResponse?.list?.[0];
@@ -184,19 +182,6 @@ function BulkESignView() {
 
     return {
       ...bulkESignOrderConfig,
-      apiDetails: {
-        ...bulkESignOrderConfig.apiDetails,
-        requestBody: {
-          ...bulkESignOrderConfig.apiDetails.requestBody,
-          inbox: {
-            ...bulkESignOrderConfig.apiDetails.requestBody.inbox,
-            moduleSearchCriteria: {
-              ...bulkESignOrderConfig.apiDetails.requestBody.inbox.moduleSearchCriteria,
-              ...(courtId && { courtId }),
-            },
-          },
-        },
-      },
       sections: {
         ...bulkESignOrderConfig.sections,
         searchResult: {
@@ -225,7 +210,7 @@ function BulkESignView() {
         },
       },
     };
-  }, [history, tenantId, userType, courtId]);
+  }, [history, tenantId, userType]);
 
   const onFormValueChange = async (form) => {
     if (Object.keys(form?.searchForm)?.length > 0) {
@@ -243,7 +228,6 @@ function BulkESignView() {
           startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
           endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
         }),
-        ...(courtId && { courtId }),
       };
       await HomeService.customApiService(bulkESignOrderConfig?.apiDetails?.serviceName, {
         inbox: {

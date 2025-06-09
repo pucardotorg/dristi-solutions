@@ -27,7 +27,6 @@ const CaseOverview = ({
 }) => {
   const { t } = useTranslation();
   const filingNumber = caseData.filingNumber;
-  const caseCourtId = useMemo(() => caseData?.case?.courtId, [caseData]);
   const history = useHistory();
   const cnrNumber = caseData.cnrNumber;
   const caseId = caseData.caseId;
@@ -81,12 +80,11 @@ const CaseOverview = ({
       criteria: {
         filingNumber: filingNumber,
         tenantId: tenantId,
-        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
     cnrNumber + filingNumber,
-    Boolean(filingNumber && caseCourtId)
+    Boolean(filingNumber)
   );
 
   const { data: ordersRes, isLoading: isOrdersLoading } = useGetOrders(
@@ -94,12 +92,11 @@ const CaseOverview = ({
       criteria: {
         filingNumber: filingNumber,
         tenantId: tenantId,
-        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
     cnrNumber + filingNumber,
-    Boolean(filingNumber && caseCourtId)
+    Boolean(filingNumber)
   );
 
   const previousHearing = hearingRes?.HearingList?.filter((hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status)).sort(

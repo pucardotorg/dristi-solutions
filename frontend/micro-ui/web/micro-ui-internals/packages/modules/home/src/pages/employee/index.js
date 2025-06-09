@@ -16,7 +16,6 @@ import DashboardPage from "./Dashboard";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import ADiaryPage from "./ADiaryPage";
 import BulkESignView from "./BulkESignView";
-import MainHomeScreen from "./MainHomeScreen";
 const bredCrumbStyle = { maxWidth: "min-content" };
 
 const ProjectBreadCrumb = ({ location }) => {
@@ -101,7 +100,6 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute exact path={`${path}/home-pending-task/home-schedule-hearing`} component={() => <ScheduleHearing />} />
         <PrivateRoute exact path={`${path}/home-pending-task/home-set-next-hearing`} component={() => <ScheduleNextHearing />} />
         <PrivateRoute exact path={`${path}/home-pending-task`} component={() => <HomeView></HomeView>} />
-        <PrivateRoute exact path={`${path}/home-screen`} component={() => <MainHomeScreen></MainHomeScreen>} />
         <PrivateRoute path={`${path}/bulk-esign-order`} component={() => <BulkESignView></BulkESignView>} />
         <PrivateRoute path={`${path}/dashboard/adiary`} component={() => <ADiaryPage></ADiaryPage>} />
         <PrivateRoute exact path={`${path}/dashboard`} component={() => <DashboardPage></DashboardPage>} />

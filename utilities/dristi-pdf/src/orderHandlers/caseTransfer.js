@@ -44,7 +44,7 @@ async function caseTransfer(
     // Search for case details
     const resCase = await handleApiCall(
       res,
-      () => search_case(cnrNumber, tenantId, requestInfo, order?.courtId),
+      () => search_case(cnrNumber, tenantId, requestInfo),
       "Failed to query case service"
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];

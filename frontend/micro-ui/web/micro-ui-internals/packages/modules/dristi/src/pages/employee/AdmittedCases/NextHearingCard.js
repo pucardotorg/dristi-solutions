@@ -1,5 +1,5 @@
 import { Button, Card, Loader } from "@egovernments/digit-ui-react-components";
-import React, { useMemo } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { DRISTIService } from "../../../services";
@@ -15,7 +15,6 @@ function timeInMillisFromDateAndTime(date, hhmmssms) {
 const NextHearingCard = ({ caseData, width }) => {
   const filingNumber = caseData.filingNumber;
   const cnr = caseData.cnrNumber;
-  const caseCourtId = useMemo(() => caseData?.case?.courtId, [caseData]);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const history = useHistory();
   const { t } = useTranslation();
@@ -29,12 +28,11 @@ const NextHearingCard = ({ caseData, width }) => {
         fromDate: timeInMillisFromDateAndTime(new Date(), "00:00:00:00"),
         filingNumber: filingNumber,
         tenantId: tenantId,
-        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
     cnr + filingNumber,
-    Boolean(filingNumber && caseCourtId)
+    true
   );
 
   const scheduledHearing = hearingRes?.HearingList?.filter(

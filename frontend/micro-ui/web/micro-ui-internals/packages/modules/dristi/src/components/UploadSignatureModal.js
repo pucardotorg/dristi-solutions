@@ -5,18 +5,7 @@ import Modal from "./Modal";
 import { useToast } from "./Toast/useToast";
 import WarningTextComponent from "./WarningTextComponent";
 
-function UploadSignatureModal({
-  t,
-  setOpenUploadSignatureModal,
-  config,
-  onSelect,
-  formData,
-  name,
-  showWarning = false,
-  warningText,
-  onSubmit,
-  isDisabled = false,
-}) {
+function UploadSignatureModal({ t, setOpenUploadSignatureModal, config, onSelect, formData, name, showWarning = false, warningText, onSubmit }) {
   const toast = useToast();
   const [error, setError] = useState({});
   function setValue(value, input) {
@@ -66,7 +55,7 @@ function UploadSignatureModal({
       actionSaveLabel={t("CS_SUBMIT_SIGNATURE")}
       actionSaveOnSubmit={onSubmit}
       formId="modal-action"
-      isDisabled={!formData?.[config.key] || Boolean(Object.keys(error).length) || isDisabled}
+      isDisabled={!formData?.[config.key] || Boolean(Object.keys(error).length)}
       headerBarMain={<Heading label={t("CS_UPLOAD_SIGNATURE")} />}
       className="upload-signature-modal"
       submitTextClassName="upload-signature-button"

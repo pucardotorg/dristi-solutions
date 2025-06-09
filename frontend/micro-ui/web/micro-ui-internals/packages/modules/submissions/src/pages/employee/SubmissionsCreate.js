@@ -235,8 +235,6 @@ const SubmissionsCreate = ({ path }) => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
 
-  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
-
   // filtering out litigants which are part in person.
   const pipComplainants = useMemo(() => {
     return caseDetails?.litigants
@@ -301,13 +299,12 @@ const SubmissionsCreate = ({ path }) => {
         filingNumber,
         applicationNumber,
         tenantId,
-        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
     {},
     applicationNumber + filingNumber,
-    Boolean(applicationNumber && filingNumber && caseCourtId)
+    Boolean(applicationNumber && filingNumber)
   );
 
   const { data: delayCondonationData } = Digit.Hooks.submissions.useSearchSubmissionService(
@@ -316,13 +313,12 @@ const SubmissionsCreate = ({ path }) => {
         filingNumber,
         applicationType: "DELAY_CONDONATION",
         tenantId,
-        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
     {},
     filingNumber,
-    Boolean(filingNumber && caseCourtId)
+    Boolean(filingNumber)
   );
 
   const fullName = useMemo(() => {
@@ -496,12 +492,11 @@ const SubmissionsCreate = ({ path }) => {
         tenantID: tenantId,
         filingNumber: filingNumber,
         hearingId: hearingId,
-        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },
     "dristi",
-    Boolean(filingNumber && caseCourtId)
+    true
   );
 
   useEffect(() => {
@@ -540,19 +535,10 @@ const SubmissionsCreate = ({ path }) => {
   );
 
   const { data: orderData, isloading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
-    {
-      tenantId,
-      criteria: {
-        filingNumber,
-        applicationNumber: "",
-        cnrNumber: caseDetails?.cnrNumber,
-        orderNumber: orderNumber || orderRefNumber,
-        ...(caseCourtId && { courtId: caseCourtId }),
-      },
-    },
+    { tenantId, criteria: { filingNumber, applicationNumber: "", cnrNumber: caseDetails?.cnrNumber, orderNumber: orderNumber || orderRefNumber } },
     { tenantId },
     filingNumber + caseDetails?.cnrNumber,
-    Boolean(filingNumber && caseDetails?.cnrNumber && (orderNumber || orderRefNumber) && caseCourtId)
+    Boolean(filingNumber && caseDetails?.cnrNumber && (orderNumber || orderRefNumber))
   );
   const orderDetails = useMemo(() => orderData?.list?.[0], [orderData]);
   const isComposite = useMemo(() => orderDetails?.orderCategory === "COMPOSITE", [orderDetails]);
@@ -572,17 +558,11 @@ const SubmissionsCreate = ({ path }) => {
   const { data: allOrdersData, isloading: isAllOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
     {
       tenantId,
-      criteria: {
-        filingNumber,
-        applicationNumber: "",
-        cnrNumber: caseDetails?.cnrNumber,
-        orderType: "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE",
-        ...(caseCourtId && { courtId: caseCourtId }),
-      },
+      criteria: { filingNumber, applicationNumber: "", cnrNumber: caseDetails?.cnrNumber, orderType: "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" },
     },
     { tenantId },
     filingNumber + caseDetails?.cnrNumber + "allOrdersData",
-    Boolean(filingNumber && caseDetails?.cnrNumber && caseCourtId)
+    Boolean(filingNumber && caseDetails?.cnrNumber)
   );
   const allOrdersList = useMemo(() => allOrdersData?.list, [allOrdersData]);
   const extensionOrders = useMemo(
@@ -1506,7 +1486,6 @@ const SubmissionsCreate = ({ path }) => {
           handleBack={handleBack}
           documents={applicationDetails?.documents || []}
           setApplicationPdfFileStoreId={setApplicationPdfFileStoreId}
-          courtId={caseCourtId}
         />
       )}
       {showsignatureModal && (

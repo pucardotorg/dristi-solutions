@@ -60,7 +60,6 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
   const code = req.query.code;
   const requestInfo = req.body.RequestInfo;
   const bulkRescheduleData = req.body.BulkReschedule;
-  const courtId = bulkRescheduleData?.courtId;
 
   const missingFields = [];
   if (!tenantId) missingFields.push("tenantId");
@@ -145,7 +144,6 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
     // Extract filingNumber from the response
     const criteria = resBulkHearingData?.map((hearing) => ({
       filingNumber: hearing?.filingNumber?.[0],
-      courtId: courtId,
     }));
 
     // case api call
@@ -223,7 +221,7 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
       res,
       tenantId,
       "Judge",
-      courtId,
+      bulkRescheduleData?.courtId,
       requestInfo
     );
 

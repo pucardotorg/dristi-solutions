@@ -80,7 +80,7 @@ const applicationSubmitBailDocuments = async (
         : {};
 
     const resCase = await handleApiCall(
-      () => search_case(cnrNumber, tenantId, requestInfo, application?.courtId),
+      () => search_case(cnrNumber, tenantId, requestInfo),
       "Failed to query case service"
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];

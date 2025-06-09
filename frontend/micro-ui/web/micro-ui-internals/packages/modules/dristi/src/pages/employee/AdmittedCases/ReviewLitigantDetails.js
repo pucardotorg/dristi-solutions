@@ -48,9 +48,6 @@ const ReviewLitigantDetails = ({ path }) => {
   const referenceId = urlParams.get("referenceId");
   const refApplicationNUmber = urlParams.get("refApplicationId");
   const [showDocModal, setShowDocModal] = useState(false);
-  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
-  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const courtId = localStorage.getItem("courtId");
 
   const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
     {
@@ -58,7 +55,6 @@ const ReviewLitigantDetails = ({ path }) => {
         {
           caseId: caseId,
           defaultFields: false,
-          ...(courtId && userType === "employee" && { courtId }),
         },
       ],
       tenantId,

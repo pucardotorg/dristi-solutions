@@ -1,6 +1,15 @@
 import { Request } from "@egovernments/digit-ui-libraries";
 import { Urls } from "./Urls";
 
+const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+const benchId = window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID";
+const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+const presidedBy = {
+  judgeID: [judgeId],
+  benchID: benchId,
+  courtID: courtId,
+};
+
 export const ordersService = {
   createOrder: (data, params) =>
     Request({
@@ -35,11 +44,12 @@ export const ordersService = {
       params,
     }),
   searchOrder: (data, params) =>
+    // Add courtId to criteria if it exists
     Request({
       url: Urls.orders.orderSearch,
       useCache: true,
       userService: true,
-      data,
+      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52' } },
       params,
     }),
   searchOrderNotifications: (data, params) =>
@@ -75,11 +85,6 @@ export const ordersService = {
       params,
     }),
   createHearings: (data, params) => {
-    const presidedBy = {
-      judgeID: [localStorage.getItem("judgeId")],
-      benchID: window?.globalConfigs?.getConfig("BENCH_ID") || "BENCH_ID",
-      courtID: localStorage.getItem("courtId"),
-    };
     const updatedData = {
       ...data,
       hearing: {
@@ -96,11 +101,18 @@ export const ordersService = {
     });
   },
   updateHearings: (data, params) => {
+    const updatedData = {
+      ...data,
+      hearing: {
+        ...data.hearing,
+        presidedBy: presidedBy,
+      },
+    };
     return Request({
       url: Urls.orders.updateHearings,
       useCache: false,
       userService: false,
-      data: data,
+      data: updatedData,
       params,
     });
   },
@@ -166,7 +178,7 @@ export const taskService = {
       url: Urls.Task.search,
       useCache: true,
       userService: true,
-      data,
+      data: { ...data, criteria: { ...data?.criteria, courtId: window?.globalConfigs?.getConfig("COURT_ID") || 'KLKM52' } },
       params,
     }),
 };

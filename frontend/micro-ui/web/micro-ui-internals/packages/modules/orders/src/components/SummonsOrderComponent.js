@@ -219,7 +219,6 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   const orderType = useMemo(() => formData?.orderType?.code, [formData?.orderType?.code]);
   const [userList, setUserList] = useState([]);
   const [policeStationIdMapping, setPoliceStationIdMapping] = useState([]);
-  const courtId = localStorage.getItem("courtId");
   const [deliveryChannels, setDeliveryChannels] = useState([
     { label: "SMS", type: "SMS", code: "SMS", values: [] },
     { label: "EMAIL", type: "E-mail", code: "EMAIL", values: [] },
@@ -240,13 +239,13 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
 
   const { data: caseData, refetch } = useSearchCaseService(
     {
-      criteria: [{ filingNumber: filingNumber, ...(courtId && { courtId }) }],
+      criteria: [{ filingNumber: filingNumber }],
       tenantId,
     },
     {},
     `dristi-${filingNumber}`,
     filingNumber,
-    Boolean(filingNumber && courtId)
+    Boolean(filingNumber)
   );
   const caseDetails = useMemo(
     () => ({
