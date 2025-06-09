@@ -17,7 +17,13 @@
           "hearingType": "APPLICATION_REVIEW",
           "unitOfMeasurement": "Minutes"
         },
-        "isActive": true
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1749208644941,
+          "lastModifiedTime": 1749208644941
+        }
       },
       {
         "id": "bde4d0da-6174-4024-be7f-9278bc5ed80e",
@@ -32,7 +38,13 @@
           "hearingType": "COGNIZANCE",
           "unitOfMeasurement": "Minutes"
         },
-        "isActive": true
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1749208611429,
+          "lastModifiedTime": 1749208611429
+        }
       }
     ]
   }
