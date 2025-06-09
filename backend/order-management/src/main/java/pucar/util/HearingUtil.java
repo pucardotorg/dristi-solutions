@@ -204,8 +204,6 @@ public class HearingUtil {
                         .build());
             }
         }
-
-        assingee.forEach(attendee -> attendee.setId(UUID.randomUUID().toString()));
         return assingee;
     }
 
