@@ -228,7 +228,7 @@ public class HearingService {
         moduleHearing.get(0).setEndTime(schedule.get(0).getEndTime());
 
         hearingUtil.callHearing(HearingUpdateBulkRequest.builder().requestInfo(request.getRequestInfo())
-                .hearings(moduleHearing).build());
+                .hearings(moduleHearing).build(), Boolean.FALSE);
 
 
         return scheduleHearing;
