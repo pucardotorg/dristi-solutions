@@ -1,0 +1,127 @@
+[
+  // sorting order in open hearing index
+  {
+    "tenantId": "kl",
+    "masterName": "INBOX",
+    "moduleName": "InboxSortConfiguration",
+    "mdmsPayload": {
+      "tenantId": "kl",
+      "schemaCode": "INBOX.InboxSortConfiguration",
+      "uniqueIdentifier": "open-hearing-index",
+      "data": {
+        // this needs to be first otherwise it will not work as expected
+        "sortBy": [
+          {
+            "code": "STATUS_ORDER",
+            "path": "Data.hearingDetails.statusOrder",
+            "orderType": "ASC",
+            "isActive": true
+          },
+          //
+          {
+            "code": "TYPE_SORTING_SCRIPT",
+            "script": "{\"_script\":{\"type\":\"string\",\"script\":{\"source\":\"def value = doc['Data.hearingDetails.caseNumber.keyword']; if (value.size() > 0) { def parts = value.value.splitOnToken('/'); if (parts.length > 1) { return parts[0]; } else { return ''; } } else { return ''; }\"},\"order\":\"desc\"}}",
+            "isActive": true,
+            "orderType": "ASC"
+          },
+          {
+            "code": "YEAR_SORTING_SCRIPT",
+            "script": "{\"_script\":{\"type\":\"number\",\"script\":{\"source\":\"def value = doc['Data.hearingDetails.caseNumber.keyword']; if (value.size() > 0) { def parts = value.value.splitOnToken('/'); if (parts.length > 2) { return Long.parseLong(parts[2]); } else { return 0; } } else { return 0; }\"},\"order\":\"asc\"}}",
+            "isActive": true,
+            "orderType": "ASC"
+          },
+          {
+            "code": "NUMBER_SORTING_SCRIPT",
+            "script": "{\"_script\":{\"type\":\"number\",\"script\":{\"source\":\"def value = doc['Data.hearingDetails.caseNumber.keyword']; if (value.size() > 0) { def parts = value.value.splitOnToken('/'); if (parts.length > 1) { return Long.parseLong(parts[1]); } else { return 0; } } else { return 0; }\"},\"order\":\"asc\"}}",
+            "isActive": true,
+            "orderType": "ASC"
+          }
+        ],
+        "index": "open-hearing-index",
+        "module": "Hearing Service"
+      },
+      "isActive": true
+    }
+  },
+
+  // hearing status data
+  {
+    "tenantId": "kl",
+    "masterName": "Hearing",
+    "moduleName": "HearingStatus",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "Hearing.HearingStatus",
+        "uniqueIdentifier": "6",
+        "data": {
+          "id": 6,
+          "code": "ABANDONED",
+          "status": "ABANDONED",
+          "priority": 50
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "Hearing.HearingStatus",
+        "uniqueIdentifier": "5",
+        "data": {
+          "id": 5,
+          "code": "PASSED_OVER",
+          "status": "PASSED_OVER",
+          "priority": 30
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "Hearing.HearingStatus",
+        "uniqueIdentifier": "4",
+        "data": {
+          "id": 4,
+          "code": "OPT_OUT",
+          "status": "OPT_OUT",
+          "priority": 60
+        },
+        "isActive": true,
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "Hearing.HearingStatus",
+        "uniqueIdentifier": "3",
+        "data": {
+          "id": 3,
+          "code": "COMPLETED",
+          "status": "COMPLETED",
+          "priority": 40
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "Hearing.HearingStatus",
+        "uniqueIdentifier": "2",
+        "data": {
+          "id": 2,
+          "code": "IN_PROGRESS",
+          "status": "IN_PROGRESS",
+          "priority": 10
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "Hearing.HearingStatus",
+        "uniqueIdentifier": "1",
+        "data": {
+          "id": 1,
+          "code": "SCHEDULED",
+          "status": "SCHEDULED",
+          "priority": 20
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

@@ -30,13 +30,13 @@
           "status": {
             "type": "string"
           }
-        },
-        "additionalProperties": false
+        }
       },
-      "isActive": true,
+      "isActive": true
     },
     // INBOX.InboxSortConfiguration
     {
+      "id": "4b941915-15e0-4bf1-84c3-e896524e25c5",
       "tenantId": "kl",
       "code": "INBOX.InboxSortConfiguration",
       "description": "Sort configuration for inbox",
@@ -63,11 +63,9 @@
             "items": {
               "type": "object",
               "required": [
-                "path",
                 "orderType",
                 "isActive",
-                "code",
-                "script"
+                "code"
               ],
               "properties": {
                 "path": {
@@ -85,14 +83,13 @@
                 "script": {
                   "type": "string"
                 }
-              },
-              "additionalProperties": false
-            },
-          },
-          "additionalProperties": false
+              }
+            }
+          }
         },
         "isActive": true
-      }
+      },
+      "isActive": true
     }
   ]
 }
