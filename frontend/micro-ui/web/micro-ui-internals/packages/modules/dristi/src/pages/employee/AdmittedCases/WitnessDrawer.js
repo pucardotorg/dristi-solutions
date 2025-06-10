@@ -72,7 +72,6 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
 
   const isDepositionSaved = useMemo(() => {
     return (
-      hearingData?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitness?.uuid)?.isDepositionSaved === true ||
       hearingData?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitness?.uuid)?.isDepositionSaved === true
     );
   }, [selectedWitness, hearingData]);

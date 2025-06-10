@@ -742,7 +742,7 @@ const InsideHearingMainPage = () => {
             onAddSuccess={() => {
               refetchCase();
             }}
-            caseData={caseData}
+            caseDetails={caseDetails}
             tenantId={tenantId}
             hearing={hearing}
             refetchHearing={refetchHearing}
