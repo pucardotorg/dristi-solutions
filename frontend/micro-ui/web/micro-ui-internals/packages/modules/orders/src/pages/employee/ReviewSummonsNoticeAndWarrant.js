@@ -580,7 +580,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           type: "document",
           modalBody: <DocumentViewerWithComment infos={infos} documents={documents} links={links} />,
           actionSaveOnSubmit: () => {},
-          hideSubmit: isTypist ? true : rowData?.taskType === "WARRANT" && rowData?.documentStatus === "SIGN_PENDING" && !isJudge,
+          hideSubmit: isTypist || (rowData?.taskType === "WARRANT" && rowData?.documentStatus === "SIGN_PENDING" && !isJudge),
         },
         {
           heading: { label: t("ADD_SIGNATURE") },
@@ -685,7 +685,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       heading: { label: t("PRINT_SEND_DOCUMENT") },
       actionSaveLabel: t("MARK_AS_SENT"),
       isStepperModal: false,
-      hideSubmit: isTypist ? true : false,
+      hideSubmit: isTypist,
       modalBody: (
         <PrintAndSendDocumentComponent
           infos={infos}
@@ -723,7 +723,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
       actionSaveOnSubmit: handleUpdateStatus,
       actionCancelOnSubmit: handleDownload,
       isDisabled: isDisabled,
-      hideSubmit: isTypist ? true : false,
+      hideSubmit: isTypist,
     };
   }, [handleCloseActionModal, handleDownload, handleUpdateStatus, sentInfos, isDisabled, links, orderType, rowData, selectedDelievery, t]);
 
