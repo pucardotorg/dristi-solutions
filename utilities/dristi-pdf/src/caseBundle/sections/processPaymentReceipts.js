@@ -56,7 +56,7 @@ async function processPaymentReceipts(
             docketDateOfSubmission: new Date(
               courtCase.registrationDate
             ).toLocaleDateString("en-IN"),
-            documentPath: `${dynamicSectionNumber} ${section.section}`,
+            documentPath: `${dynamicSectionNumber}.1 Case Filing Payment in ${dynamicSectionNumber} ${section.section}`,
           },
           courtCase,
           tenantId,
