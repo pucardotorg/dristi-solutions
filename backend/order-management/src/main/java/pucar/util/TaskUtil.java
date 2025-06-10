@@ -304,9 +304,12 @@ public class TaskUtil {
             GeoLocationDetails geoLocationDetails = objectMapper.convertValue(geoLocationObject, GeoLocationDetails.class);
             address.setGeoLocationDetails(geoLocationDetails);
             address.setId(id);
-            address.setCoordinate(CoordinateAddress.builder()
-                    .latitude(geoLocationDetails.getLatitude())
-                    .longitude(geoLocationDetails.getLongitude()).build());
+            address.setGeoLocationDetails(geoLocationDetails);
+            if (geoLocationDetails != null) {
+                address.setCoordinate(CoordinateAddress.builder()
+                        .latitude(geoLocationDetails.getLatitude())
+                        .longitude(geoLocationDetails.getLongitude()).build());
+            }
             taskDetails.getRespondentDetails().setAddress(address);
 
         } else if (channel.get("type") == "SMS" || channel.get("type") == "E-mail") {
