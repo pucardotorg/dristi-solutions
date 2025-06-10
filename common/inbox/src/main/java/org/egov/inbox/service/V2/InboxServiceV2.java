@@ -409,8 +409,16 @@ public class InboxServiceV2 {
         List<Data> resultData = getDataFromSimpleSearch(searchRequest, config.getIndex());
         List<Data> filteredData = deduplicateByFilingNumber(resultData);
 
-        List<Data> totalResultData = getTotalCountFromSimpleSearch(searchRequest, config.getIndex());
+        Integer limit = searchRequest.getIndexSearchCriteria().getLimit();
+        Integer offset = searchRequest.getIndexSearchCriteria().getOffset();
+        searchRequest.getIndexSearchCriteria().setLimit(10000);
+        searchRequest.getIndexSearchCriteria().setOffset(0);
+
+        List<Data> totalResultData = getDataFromSimpleSearch(searchRequest, config.getIndex());
         List<Data> totalFilteredData = deduplicateByFilingNumber(totalResultData);
+
+        searchRequest.getIndexSearchCriteria().setLimit(limit);
+        searchRequest.getIndexSearchCriteria().setOffset(offset);
 
         criteria.setCount(totalFilteredData.size());
 
@@ -451,20 +459,6 @@ public class InboxServiceV2 {
 
     private List<Data> getDataFromSimpleSearch(SearchRequest searchRequest, String index) {
         Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE);
-        try {
-            String q = mapper.writeValueAsString(finalQueryBody);
-            log.info("Query: " + q);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        StringBuilder uri = getURI(index, SEARCH_PATH);
-        Object result = serviceRequestRepository.fetchESResult(uri, finalQueryBody);
-        List<Data> dataList = parseSearchResponseForSimpleSearch(result);
-        return dataList;
-    }
-
-    private List<Data> getTotalCountFromSimpleSearch(SearchRequest searchRequest, String index) {
-        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.FALSE);
         try {
             String q = mapper.writeValueAsString(finalQueryBody);
             log.info("Query: " + q);
