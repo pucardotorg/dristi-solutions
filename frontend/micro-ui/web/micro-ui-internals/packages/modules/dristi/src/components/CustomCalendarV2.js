@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { Calendar } from "react-date-range";
 import { CalendarLeftArrow, CalendarRightArrow, InfoToolTipIcon } from "../icons/svgIndex";
 import { CardHeader } from "@egovernments/digit-ui-react-components";
@@ -125,32 +125,6 @@ function CustomCalendarV2({ config, t, handleSelect, onCalendarConfirm, selected
             </p>
           )}
         </div>
-        {/* {isNonWorkingDay ? (
-          <div className={`${isDateFromCurrentMonth && isNonWorkingDay ? "non-working-day current-month" : ""}`}>
-            <span className={`${isDateFromCurrentMonth && isNonWorkingDay ? "non-working-day-text current-month" : ""}`}>{date.getDate()}</span>
-          </div>
-        ) : (
-          <div className={`working-day ${isDateFromCurrentMonth ? "current-month" : ""}`} style={{ height: hearingCount > 0 ? "72px" : "51px" }}>
-            <span className={`working-day-text ${isDateFromCurrentMonth ? "current-month" : ""}`}>{date.getDate()}</span>
-            {hearingCount > 0 && (
-              <div
-                style={{
-                  fontSize: "8px",
-                  color: "#931847",
-                  position: "absolute",
-                  top: "25px",
-                  right: 2,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  zIndex: 3,
-                }}
-              >
-                {hearingCount} {t("HEARINGS")}
-              </div>
-            )}
-          </div>
-        )} */}
       </React.Fragment>
     );
   };
@@ -196,7 +170,6 @@ function CustomCalendarV2({ config, t, handleSelect, onCalendarConfirm, selected
           setCurrentMonth(date);
         }}
       />
-      <div></div>
       {config?.showBottomBar && (
         <div className="calendar-bottom-div">
           <CardHeader>
