@@ -61,6 +61,13 @@ public class ServiceConstants {
 
     public static final String ERROR_WHILE_FETCHING_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE";
 
+    public static final String GET_ATTENDEES_FOR_SCHEDULE_NEXT_HEARING = "namesOfPartiesRequired";
+
+    public static final String GET_ATTENDEES_OF_EXISTING_HEARING = "attendees";
+
+    public static final String PASSED_OVER = "PASSED_OVER";
+
+
     //
 
     public static final String CASE_ADMITTED = "CASE_ADMITTED";
@@ -71,9 +78,13 @@ public class ServiceConstants {
     public static final String ADMIT = "ADMIT";
     public static final String ADMISSION = "ADMISSION";
     public static final String ABANDON = "ABANDON";
+    public static final String ABANDONED = "ABANDONED";
     public static final String CLOSE = "CLOSE";
     public static final String COMPLETED = "COMPLETED";
     public static final String ABATED = "ABATED";
+    public static final String SAVE_DRAFT = "SAVE_DRAFT";
+
+    public static final String IN_PROGRESS = "IN_PROGRESS";
     public static final String MANUAL = "MANUAL_";
     public static final String APPROVE = "APPROVE";
     public static final String SEND_BACK = "SEND_BACK";

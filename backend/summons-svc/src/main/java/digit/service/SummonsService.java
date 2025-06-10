@@ -194,7 +194,6 @@ public class SummonsService {
         }
         task.setWorkflow(workflow);
         enrichPoliceStationReport(task, request.getSummonsDelivery());
-
         Role role = Role.builder().code(config.getSystemAdmin()).tenantId(config.getEgovStateTenantId()).build();
         request.getRequestInfo().getUserInfo().getRoles().add(role);
         TaskRequest taskRequest = TaskRequest.builder()
@@ -276,6 +275,7 @@ public class SummonsService {
         }
         return null;
     }
+
     private void enrichPoliceStationReport(Task task, @Valid SummonsDelivery summonsDelivery) {
         String fileStoreId = extractFileStoreId(summonsDelivery);
         if (fileStoreId != null) {
@@ -319,12 +319,11 @@ public class SummonsService {
                     return config.getNonBailableWarrantPdfTemplateKey();
                 } else {
                     throw new CustomException("INVALID_DOC_SUB_TYPE", "Document Sub-Type must be valid. Provided: " + docSubType);
-                }
-            }
+                }            }
             case NOTICE -> {
-                if (Objects.equals(noticeType, BNSS_NOTICE)) {
+                if(Objects.equals(noticeType, BNSS_NOTICE)){
                     return config.getTaskBnssNoticePdfTemplateKey();
-                } else if (Objects.equals(noticeType, DCA_NOTICE)) {
+                } else if(Objects.equals(noticeType, DCA_NOTICE)) {
                     return config.getTaskDcaNoticePdfTemplateKey();
                 } else {
                     return qrCode ? config.getTaskNoticeQrPdfTemplateKey() : config.getTaskNotificationTemplateKey();
@@ -340,12 +339,9 @@ public class SummonsService {
         }
 
         return switch (taskType) {
-            case SUMMON ->
-                    taskDetails.getSummonDetails() != null ? taskDetails.getSummonDetails().getDocSubType() : null;
-            case WARRANT ->
-                    taskDetails.getWarrantDetails() != null ? taskDetails.getWarrantDetails().getDocSubType() : null;
-            case NOTICE ->
-                    taskDetails.getNoticeDetails() != null ? taskDetails.getNoticeDetails().getDocSubType() : null;
+            case SUMMON -> taskDetails.getSummonDetails() != null ? taskDetails.getSummonDetails().getDocSubType() : null;
+            case WARRANT -> taskDetails.getWarrantDetails() != null ? taskDetails.getWarrantDetails().getDocSubType() : null;
+            case NOTICE -> taskDetails.getNoticeDetails() != null ? taskDetails.getNoticeDetails().getDocSubType() : null;
             default -> throw new CustomException("INVALID_TASK_TYPE", "Task Type must be valid. Provided: " + taskType);
         };
     }

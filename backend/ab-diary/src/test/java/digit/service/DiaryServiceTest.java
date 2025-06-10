@@ -211,7 +211,7 @@ public class DiaryServiceTest {
 
         when(diaryRepository.getCaseDiariesWithDocuments(any())).thenReturn(mockDiaries);
 
-        CaseDiary result = diaryService.searchCaseDiaryForJudge(
+        CaseDiary result = diaryService.searchCaseDiaryForCourt(
                 "tenant1", "judge1", "ADiary", System.currentTimeMillis(), UUID.randomUUID()
         );
 
@@ -223,7 +223,7 @@ public class DiaryServiceTest {
     @Test
     void searchCaseDiaryForJudgeNoDataOrCaseIdException() {
         CustomException exception = assertThrows(CustomException.class, () -> {
-            diaryService.searchCaseDiaryForJudge(
+            diaryService.searchCaseDiaryForCourt(
                     "tenant1", "judge1", "ADiary", null, null
             );
         });
@@ -237,7 +237,7 @@ public class DiaryServiceTest {
         when(diaryRepository.getCaseDiariesWithDocuments(any())).thenReturn(mockDiaries);
 
         CustomException exception = assertThrows(CustomException.class, () -> {
-            diaryService.searchCaseDiaryForJudge(
+            diaryService.searchCaseDiaryForCourt(
                     "tenant1", "judge1", "ADiary", System.currentTimeMillis(), UUID.randomUUID()
             );
         });

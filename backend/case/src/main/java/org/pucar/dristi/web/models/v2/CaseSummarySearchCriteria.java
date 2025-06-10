@@ -1,12 +1,15 @@
 package org.pucar.dristi.web.models.v2;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.pucar.dristi.web.models.Pagination;
 import org.springframework.validation.annotation.Validated;
+
+import java.util.List;
 
 /**
  * CaseCriteria

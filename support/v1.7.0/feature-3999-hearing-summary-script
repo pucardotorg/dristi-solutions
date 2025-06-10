@@ -1,0 +1,14 @@
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+UPDATE dristi_hearing
+SET attendees = (
+  SELECT jsonb_agg(
+           jsonb_set(
+             elem,
+             '{id}',
+             to_jsonb(gen_random_uuid())
+           )
+         )
+  FROM jsonb_array_elements(attendees) AS elem
+)
+WHERE attendees IS NOT NULL;

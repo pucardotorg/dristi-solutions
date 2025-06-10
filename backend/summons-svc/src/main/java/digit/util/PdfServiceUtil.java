@@ -134,7 +134,7 @@ public class PdfServiceUtil {
     private String getExecutorName(TaskRequest taskRequest) {
 
         if(taskRequest.getTask().getTaskDetails().getRespondentDetails().getAddress().getGeoLocationDetails() != null &&
-        taskRequest.getTask().getTaskDetails().getRespondentDetails().getAddress().getGeoLocationDetails().getPoliceStationDetails() != null) {
+                taskRequest.getTask().getTaskDetails().getRespondentDetails().getAddress().getGeoLocationDetails().getPoliceStationDetails() != null) {
             return taskRequest.getTask().getTaskDetails().getRespondentDetails().getAddress().getGeoLocationDetails().getPoliceStationDetails().getName();
         }
         Coordinate coordinate = taskRequest.getTask().getTaskDetails().getRespondentDetails().getAddress().getCoordinate();

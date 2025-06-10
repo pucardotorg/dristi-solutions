@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.List;
+
 @Validated
 @Getter
 @Setter
@@ -50,5 +52,23 @@ public class OpenHearing {
 
     @JsonProperty("toDate")
     private Long toDate = null;
+
+    @JsonProperty("advocate")
+    private Advocate advocate = null;
+
+    @JsonProperty("searchableFields")
+    private List<String> searchableFields = null;
+
+    @JsonProperty("hearingType")
+    private String hearingType = null;
+
+    @JsonProperty("caseFilingDate")
+    private Long caseFilingDate = null;
+
+    @JsonProperty("statusOrder")
+    private Integer statusOrder = null;
+
+    @JsonProperty("hearingTypeOrder")
+    private Integer hearingTypeOrder = null;
 
 }

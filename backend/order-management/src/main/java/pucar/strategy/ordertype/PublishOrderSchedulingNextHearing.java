@@ -14,14 +14,12 @@ import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.courtCase.CaseCriteria;
 import pucar.web.models.courtCase.CaseSearchRequest;
 import pucar.web.models.courtCase.CourtCase;
-import pucar.web.models.hearing.HearingRequest;
-import pucar.web.models.hearing.HearingResponse;
+import pucar.web.models.hearing.*;
 
 import java.util.Collections;
 import java.util.List;
 
-import static pucar.config.ServiceConstants.E_SIGN;
-import static pucar.config.ServiceConstants.SCHEDULING_NEXT_HEARING;
+import static pucar.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -47,7 +45,9 @@ public class PublishOrderSchedulingNextHearing implements OrderUpdateStrategy {
 
     @Override
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
-        return false;
+        Order order = orderRequest.getOrder();
+        String action = order.getWorkflow().getAction();
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && SCHEDULING_NEXT_HEARING.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -80,6 +80,9 @@ public class PublishOrderSchedulingNextHearing implements OrderUpdateStrategy {
 
     @Override
     public OrderRequest postProcess(OrderRequest orderRequest) {
+
+        hearingUtil.updateHearingStatus(orderRequest);
+
         return null;
     }
 
