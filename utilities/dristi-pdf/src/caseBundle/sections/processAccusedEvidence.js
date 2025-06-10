@@ -6,6 +6,7 @@ const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
 const {
   duplicateExistingFileStore,
 } = require("../utils/duplicateExistingFileStore");
+const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
 
 async function processAccusedEvidence(
   courtCase,
@@ -18,6 +19,15 @@ async function processAccusedEvidence(
   const accusedEvidenceSection = filterCaseBundleBySection(
     caseBundleMaster,
     "accusedevidence"
+  );
+
+  const sectionPosition = indexCopy.sections.findIndex(
+    (s) => s.name === "accusedevidence"
+  );
+
+  const dynamicSectionNumber = getDynamicSectionNumber(
+    indexCopy,
+    sectionPosition
   );
 
   if (accusedEvidenceSection?.length !== 0) {
@@ -86,9 +96,9 @@ async function processAccusedEvidence(
                 )?.additionalDetails?.advocateName || docketNameOfFiling;
             }
 
-            const documentPath = `9.${index + 1} ${
+            const documentPath = `${dynamicSectionNumber}.${index + 1} ${
               evidence.artifactType
-            } in 9 ${section.section}`;
+            } in ${dynamicSectionNumber} ${section.section}`;
 
             newEvidenceFileStoreId = await applyDocketToDocument(
               evidenceFileStoreId,

@@ -5,6 +5,7 @@ const {
 const {
   filterCaseBundleBySection,
 } = require("../utils/filterCaseBundleBySection");
+const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
 
 async function processVakalatSection(
   courtCase,
@@ -18,6 +19,15 @@ async function processVakalatSection(
   const vakalatnamaSection = filterCaseBundleBySection(
     caseBundleMaster,
     "vakalat"
+  );
+
+  const sectionPosition = indexCopy.sections.findIndex(
+    (s) => s.name === "vakalat"
+  );
+
+  const dynamicSectionNumber = getDynamicSectionNumber(
+    indexCopy,
+    sectionPosition
   );
 
   const litigants = courtCase?.litigants?.map((litigant) => ({
@@ -85,9 +95,9 @@ async function processVakalatSection(
     const vakalatLineItems = await Promise.all(
       vakalats.map(async (vakalat, index) => {
         if (section.docketpagerequired === "yes") {
-          const documentPath = `5.${index + 1} ${section.Items} in 5 ${
-            section.section
-          }`;
+          const documentPath = `${dynamicSectionNumber}.${index + 1} ${
+            section.Items
+          } in ${dynamicSectionNumber} ${section.section}`;
           const mergedVakalatDocumentFileStoreId = await applyDocketToDocument(
             vakalat.fileStoreId,
             {

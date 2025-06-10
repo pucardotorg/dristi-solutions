@@ -2,6 +2,7 @@ const {
   filterCaseBundleBySection,
 } = require("../utils/filterCaseBundleBySection");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
+const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
 
 async function processComplaintSection(
   courtCase,
@@ -14,6 +15,15 @@ async function processComplaintSection(
   const complaintSection = filterCaseBundleBySection(
     caseBundleMaster,
     "complaint"
+  );
+
+  const sectionPosition = indexCopy.sections.findIndex(
+    (s) => s.name === "complaint"
+  );
+
+  const dynamicSectionNumber = getDynamicSectionNumber(
+    indexCopy,
+    sectionPosition
   );
 
   if (complaintSection?.length !== 0) {
@@ -49,7 +59,7 @@ async function processComplaintSection(
           docketDateOfSubmission: new Date(
             courtCase.registrationDate
           ).toLocaleDateString("en-IN"),
-          documentPath: `2 ${section.section}`,
+          documentPath: `${dynamicSectionNumber} ${section.section}`,
         },
         courtCase,
         tenantId,

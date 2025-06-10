@@ -9,6 +9,12 @@ const {
 const {
   duplicateExistingFileStore,
 } = require("../utils/duplicateExistingFileStore");
+const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+
+const extractNumber = (cmpNumber) => {
+  const parts = cmpNumber.split("/");
+  return parts.length > 1 ? parseInt(parts[1], 10) : cmpNumber;
+};
 
 async function processPendingApplicationsSection(
   courtCase,
@@ -28,6 +34,15 @@ async function processPendingApplicationsSection(
     "pendingapplicationobjections"
   );
 
+  const sectionPosition = indexCopy.sections.findIndex(
+    (s) => s.name === "pendingapplications"
+  );
+
+  const dynamicSectionNumber = getDynamicSectionNumber(
+    indexCopy,
+    sectionPosition
+  );
+
   if (pendingReviewApplicationSection?.length !== 0) {
     const section = pendingReviewApplicationSection[0];
     const pendingReviewApplications = await search_application_v2(
@@ -45,7 +60,44 @@ async function processPendingApplicationsSection(
       }
     );
 
-    const applicationList = pendingReviewApplications?.data?.applicationList;
+    // Search for PENDINGAPPROVAL applications
+    const pendingApprovalApplications = await search_application_v2(
+      tenantId,
+      requestInfo,
+      {
+        status: "PENDINGAPPROVAL",
+        courtId: courtCase.courtId,
+        filingNumber: courtCase.filingNumber,
+        tenantId,
+      },
+      {
+        sortBy: section.sorton,
+        order: "asc",
+      }
+    );
+
+    // Combine both application lists
+    const pendingReviewList =
+      pendingReviewApplications?.data?.applicationList || [];
+    const pendingApprovalList =
+      pendingApprovalApplications?.data?.applicationList || [];
+    const combinedApplicationList = [
+      ...pendingReviewList,
+      ...pendingApprovalList,
+    ];
+
+    // Sort the combined list by applicationCMPNumber
+    const applicationList = combinedApplicationList.sort((a, b) => {
+      // Handle null values - null values come last
+      if (!a.applicationCMPNumber && !b.applicationCMPNumber) return 0;
+      if (!a.applicationCMPNumber) return 1;
+      if (!b.applicationCMPNumber) return -1;
+
+      const aNum = extractNumber(a.applicationCMPNumber);
+      const bNum = extractNumber(b.applicationCMPNumber);
+
+      return aNum - bNum;
+    });
 
     if (applicationList?.length !== 0) {
       const pendingApplicationLineItems = await Promise.all(
@@ -97,9 +149,11 @@ async function processPendingApplicationsSection(
                   : "ACCUSED";
             }
 
-            const documentPath = `1.${index + 1}.1 ${section.Items} in 1.${
-              index + 1
-            } ${application.applicationType} in 1 ${section.section}`;
+            const documentPath = `${dynamicSectionNumber}.${index + 1}.1 ${
+              section.Items
+            } in ${dynamicSectionNumber}.${index + 1} ${
+              application.applicationType
+            } in ${dynamicSectionNumber} ${section.section}`;
 
             newApplicationFileStoreId = await applyDocketToDocument(
               applicationFileStoreId,
