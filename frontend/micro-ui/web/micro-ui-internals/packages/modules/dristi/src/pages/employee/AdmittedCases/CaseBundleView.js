@@ -1057,7 +1057,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         }
 
         groupedDocs[parentKey].push({
-          id: doc?.documentUid,
+          id: doc?.id,
           title: groupedDocs[parentKey]?.length > 0 ? `${title} ${groupedDocs[parentKey]?.length + 1}` : title,
           fileStoreId: doc?.fileStore,
           hasChildren: false,
@@ -1092,14 +1092,18 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     const accusedEvidenceChildren = generateAccusedEvidenceStructure(accusedEvidenceData);
     const courtEvidenceChildren = generateCourtEvidenceStructure(courtEvidenceData, courtEvidenceDepositionData);
 
-    const paymentReceiptsChildren = [
-      {
-        id: "PAYMENT_RECEIPT",
-        title: "CASE_FILING_PAYMENT_RECEIPT",
-        fileStoreId: getFileStoreByType("PAYMENT_RECEIPT"),
-        hasChildren: false,
-      },
-    ];
+    const casePaymentFilestoreId = getFileStoreByType("PAYMENT_RECEIPT");
+
+    const paymentReceiptsChildren = casePaymentFilestoreId
+      ? [
+          {
+            id: "PAYMENT_RECEIPT",
+            title: "CASE_FILING_PAYMENT_RECEIPT",
+            fileStoreId: casePaymentFilestoreId,
+            hasChildren: false,
+          },
+        ]
+      : [];
 
     const mainStructureRaw = [
       {
@@ -1227,6 +1231,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
     return mainStructure;
   };
+
+  debugger;
   useEffect(() => {
     const handleClickOutside = () => setContextMenu(null);
     window?.addEventListener("click", handleClickOutside);
