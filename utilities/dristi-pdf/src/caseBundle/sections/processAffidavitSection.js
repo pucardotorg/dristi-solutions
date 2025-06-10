@@ -2,6 +2,7 @@ const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
 const {
   filterCaseBundleBySection,
 } = require("../utils/filterCaseBundleBySection");
+const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
 
 async function processAffidavitSection(
   courtCase,
@@ -16,6 +17,16 @@ async function processAffidavitSection(
     caseBundleMaster,
     "affidavit"
   );
+
+  const sectionPosition = indexCopy.sections.findIndex(
+    (s) => s.name === "affidavit"
+  );
+
+  const dynamicSectionNumber = getDynamicSectionNumber(
+    indexCopy,
+    sectionPosition
+  );
+
   const sortedAffidavitsSection = [...affidavitsSection].sort(
     (secA, secB) => secA.sorton - secB.sorton
   );
@@ -39,9 +50,9 @@ async function processAffidavitSection(
           )
         )?.additionalDetails?.advocateName;
 
-        const documentPath = `4.${index + 1} ${section.Items} in 4 ${
-          section.section
-        }`;
+        const documentPath = `${dynamicSectionNumber}.${index + 1} ${
+          section.Items
+        } in ${dynamicSectionNumber} ${section.section}`;
 
         const mergedFilingDocumentFileStoreId = await applyDocketToDocument(
           documentFileStoreId,

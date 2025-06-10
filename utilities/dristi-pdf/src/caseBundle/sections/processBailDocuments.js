@@ -6,6 +6,7 @@ const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
 const {
   combineMultipleFilestores,
 } = require("../utils/combineMultipleFilestores");
+const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
 
 async function processBailDocuments(
   courtCase,
@@ -18,6 +19,15 @@ async function processBailDocuments(
   const bailDocumentSection = filterCaseBundleBySection(
     caseBundleMaster,
     "baildocument"
+  );
+
+  const sectionPosition = indexCopy.sections.findIndex(
+    (s) => s.name === "baildocument"
+  );
+
+  const dynamicSectionNumber = getDynamicSectionNumber(
+    indexCopy,
+    sectionPosition
   );
 
   if (bailDocumentSection?.length !== 0) {
@@ -106,11 +116,13 @@ async function processBailDocuments(
                     : "ACCUSED";
               }
 
-              const documentPath = `12.${
+              const documentPath = `${dynamicSectionNumber}.${
                 index + 1
-              }.1 Application and Other Documents in 12.${index + 1} ${
-                application.applicationType
-              } ${index + 1} in 12 ${section.section}`;
+              }.1 Application and Other Documents in ${dynamicSectionNumber}.${
+                index + 1
+              } ${application.applicationType} ${
+                index + 1
+              } in ${dynamicSectionNumber} ${section.section}`;
 
               newApplicationFileStoreId = await applyDocketToDocument(
                 newApplicationFileStoreId,
@@ -222,11 +234,13 @@ async function processBailDocuments(
                         : "ACCUSED";
                   }
 
-                  const documentPath = `12.${index + 1}.3 ${
-                    submitBailApplication.applicationType
-                  } in 12.${index + 1} ${application.applicationType} ${
+                  const documentPath = `${dynamicSectionNumber}.${
                     index + 1
-                  } in 12 ${section.section}`;
+                  }.3 ${
+                    submitBailApplication.applicationType
+                  } in ${dynamicSectionNumber}.${index + 1} ${
+                    application.applicationType
+                  } ${index + 1} in ${dynamicSectionNumber} ${section.section}`;
 
                   newFileStoreId = await applyDocketToDocument(
                     newFileStoreId,
