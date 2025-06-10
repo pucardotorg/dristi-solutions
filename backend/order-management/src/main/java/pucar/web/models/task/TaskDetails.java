@@ -29,8 +29,8 @@ public class TaskDetails {
     @JsonProperty("witnessDetails")
     private WitnessDetails witnessDetails = null;
 
-    @JsonProperty("deliveryChannel")
-    private DeliveryChannel deliveryChannel = null;
+    @JsonProperty("deliveryChannels")
+    private DeliveryChannel deliveryChannels = null;
 
     @JsonProperty("complainantDetails")
     private ComplainantDetails complainantDetails = null;

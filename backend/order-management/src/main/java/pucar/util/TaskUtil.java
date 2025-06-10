@@ -277,7 +277,7 @@ public class TaskUtil {
                     .channelCode(ChannelTypeMap.getStateSlaMap().get(channelType).get("code"))
                     .fees(courtFee)
                     .feesStatus("pending").build();
-            taskDetailsClone.setDeliveryChannel(deliveryChannel);
+            taskDetailsClone.setDeliveryChannels(deliveryChannel);
 
             updateAddressInRespondentDetails(order.getOrderType(), taskDetailsClone, channel);
             updateAddressInWitnessDetails(order.getOrderType(), taskDetailsClone, channel);
@@ -300,8 +300,8 @@ public class TaskUtil {
             Object insideAddressObject = jsonUtil.getNestedValue(addressObject, List.of("address"), Object.class);
             Object geoLocationObject = jsonUtil.getNestedValue(addressObject, List.of("geoLocationDetails"), Object.class);
             String id = jsonUtil.getNestedValue(addressObject, List.of("id"), String.class);
-            Address address = objectMapper.convertValue(objectMapper.writeValueAsString(insideAddressObject), Address.class);
-            GeoLocationDetails geoLocationDetails = objectMapper.convertValue(objectMapper.writeValueAsString(geoLocationObject), GeoLocationDetails.class);
+            Address address = objectMapper.convertValue(insideAddressObject, Address.class);
+            GeoLocationDetails geoLocationDetails = objectMapper.convertValue(geoLocationObject, GeoLocationDetails.class);
             address.setGeoLocationDetails(geoLocationDetails);
             address.setId(id);
             address.setCoordinate(CoordinateAddress.builder()
