@@ -1984,11 +1984,25 @@ export const UICustomizations = {
               };
             };
             if (activeTab === "REVIEW_PROCESS") {
-              return { data: data?.reviewProcessData?.data?.map((item) => processFields(item.fields)) || [] };
+              return {
+                TotalCount: data?.reviewProcessData?.count,
+                data: data?.reviewProcessData?.data?.map((item) => processFields(item.fields)) || [],
+              };
             } else if (activeTab === "VIEW_APPLICATION") {
-              return { data: data?.viewApplicationData?.data?.map((item) => processFields(item.fields)) };
-            } else if (activeTab === "SCHEDULE_HEARING") return { data: data?.scheduleHearingData?.data?.map((item) => processFields(item.fields)) };
-            else return { data: data?.registerCasesData?.data?.map((item) => processFields(item.fields)) || [] };
+              return {
+                TotalCount: data?.viewApplicationData?.count,
+                data: data?.viewApplicationData?.data?.map((item) => processFields(item.fields)),
+              };
+            } else if (activeTab === "SCHEDULE_HEARING")
+              return {
+                TotalCount: data?.scheduleHearingData?.count,
+                data: data?.scheduleHearingData?.data?.map((item) => processFields(item.fields)),
+              };
+            else
+              return {
+                TotalCount: data?.registerCasesData?.count,
+                data: data?.registerCasesData?.data?.map((item) => processFields(item.fields)) || [],
+              };
           },
         },
       };
