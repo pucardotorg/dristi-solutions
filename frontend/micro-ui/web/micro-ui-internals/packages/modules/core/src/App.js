@@ -3,6 +3,8 @@ import { Redirect, Route, Switch, useHistory, useLocation } from "react-router-d
 import CitizenApp from "./pages/citizen";
 import EmployeeApp from "./pages/employee";
 import { useTranslation } from "react-i18next";
+import { trackEvent } from "./lib/gtag";
+import { getCLS, getFID, getLCP, getFCP, getTTFB } from "web-vitals";
 import TopBarSideBar from "./components/TopBarSideBar";
 const styles = {
   container: {
@@ -20,16 +22,16 @@ const styles = {
   },
 };
 
-export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData ,defaultLanding="citizen"}) => {
+export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, defaultLanding = "citizen" }) => {
   const history = useHistory();
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   const innerWidth = window.innerWidth;
   const [isMobileView, setIsMobileView] = useState(window.innerWidth < 900);
   const cityDetails = Digit.ULBService.getCurrentUlb();
   const userDetails = Digit.UserService.getUser();
   const { data: storeData } = Digit.Hooks.useStore.getInitData();
   const { stateInfo } = storeData || {};
-  
+
   const DSO = Digit.UserService.hasAccess(["FSM_DSO"]);
   let CITIZEN = userDetails?.info?.type === "CITIZEN" || !window.location.pathname.split("/").includes("employee") ? true : false;
 
@@ -57,6 +59,19 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData ,de
   }, [pathname]);
 
   useEffect(() => {
+
+    // Track web vitals
+    const reportWebVitals = ({ name, delta, id, value }) => {
+      trackEvent(name, value, pathname + search, "Web Vitals");
+    };
+
+    // Measure and report web vitals
+    getFID(reportWebVitals);
+    getLCP(reportWebVitals);
+    getFCP(reportWebVitals);
+  }, [pathname, search]);
+
+  useEffect(() => {
     const handleResize = () => {
       setIsMobileView(window.innerWidth < 900);
     };
@@ -65,9 +80,15 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData ,de
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  history.listen(() => {
-    window?.scrollTo({ top: 0, left: 0, behavior: "smooth" });
-  });
+  useEffect(() => {
+    // Set up history listener for smooth scrolling
+    const unlisten = history.listen(() => {
+      window?.scrollTo({ top: 0, left: 0, behavior: "smooth" });
+    });
+
+    // Clean up the listener when component unmounts
+    return () => unlisten();
+  }, [history]);
 
   const handleUserDropdownSelection = (option) => {
     option.func();
@@ -92,22 +113,22 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData ,de
     initData,
   };
 
-  const {t}= useTranslation()
+  const { t } = useTranslation()
 
   if (isMobileView) {
-    return  (
+    return (
       <div style={styles.container}>
-         <TopBarSideBar
-        t={t}
-        stateInfo={stateInfo}
-        userDetails={userDetails}
-        cityDetails={cityDetails}
-        mobileView={false}
-        handleUserDropdownSelection={handleUserDropdownSelection}
-        logoUrl={logoUrl}
-        showSidebar={true}
-      />
-       <h1 style={styles.text}>{t("MOBILE_VIEW_ERROR")}</h1>
+        <TopBarSideBar
+          t={t}
+          stateInfo={stateInfo}
+          userDetails={userDetails}
+          cityDetails={cityDetails}
+          mobileView={false}
+          handleUserDropdownSelection={handleUserDropdownSelection}
+          logoUrl={logoUrl}
+          showSidebar={true}
+        />
+        <h1 style={styles.text}>{t("MOBILE_VIEW_ERROR")}</h1>
       </div>
     );
   }
