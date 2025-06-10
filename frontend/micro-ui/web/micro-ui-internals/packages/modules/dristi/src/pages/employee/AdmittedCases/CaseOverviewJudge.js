@@ -108,7 +108,7 @@ const CaseOverviewJudge = ({
     Boolean(filingNumber)
   );
 
-  const previousHearing = hearingRes?.HearingList?.filter((hearing) => [HearingWorkflowState?.COMPLETED, HearingWorkflowState?.ABATED].includes(hearing?.status)).sort(
+  const previousHearing = hearingRes?.HearingList?.filter((hearing) => [HearingWorkflowState?.COMPLETED, HearingWorkflowState?.ABANDONED].includes(hearing?.status)).sort(
     (hearing1, hearing2) => hearing2.endTime - hearing1.endTime
   );
 
