@@ -37,6 +37,7 @@ router.post(
     const tenantId = req.query.tenantId;
     const requestInfo = req.body.RequestInfo;
     let qrCode = req.query.qrCode;
+    const courtId = req.query.courtId;
 
     // Set qrCode to false if it is undefined, null, or empty
     if (!qrCode) {
@@ -56,7 +57,8 @@ router.post(
 
     const resApplication = await handleApiCall(
       res,
-      () => search_application(tenantId, applicationNumber, requestInfo),
+      () =>
+        search_application(tenantId, applicationNumber, requestInfo, courtId),
       "Failed to query application service"
     );
     const application = resApplication?.data?.applicationList[0];
@@ -68,7 +70,7 @@ router.post(
       res,
       tenantId,
       "Judge",
-      application?.courtId,
+      courtId || application?.courtId,
       requestInfo
     );
 
