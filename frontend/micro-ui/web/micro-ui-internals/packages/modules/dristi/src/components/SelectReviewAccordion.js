@@ -53,12 +53,14 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
   const [formDataLoad, setFormDataLoad] = useState(true);
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const isCitizen = useMemo(() => (userInfo?.type === "CITIZEN" ? true : false), [userInfo]);
+  const courtId = localStorage.getItem("courtId");
 
   const { isLoading, data: caseData } = useSearchCaseService(
     {
       criteria: [
         {
           caseId: caseId,
+          ...(!isScrutiny && !isCitizen && courtId && { courtId }),
         },
       ],
       tenantId,

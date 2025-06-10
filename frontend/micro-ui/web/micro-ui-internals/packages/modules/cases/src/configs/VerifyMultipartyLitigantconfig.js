@@ -50,7 +50,6 @@ export const VerifyMultipartyLitigantConfig = [
         disableConfigKey: "individualDetails",
         isMandatory: true,
         isVerifiedOtpDisabledKey: "isDuplicateNumber",
-        screen: "join-case",
         validation: {
           required: true,
           minLength: 10,
