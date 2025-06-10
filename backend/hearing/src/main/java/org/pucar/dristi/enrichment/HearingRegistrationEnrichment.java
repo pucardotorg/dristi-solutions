@@ -12,6 +12,7 @@ import org.pucar.dristi.web.models.HearingRequest;
 import org.pucar.dristi.web.models.ProcessInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import java.util.List;
 import java.util.UUID;
@@ -68,7 +69,7 @@ public class HearingRegistrationEnrichment {
                 });
             }
 
-            if(null != hearing.getCourtCaseNumber())
+            if (null != hearing.getCourtCaseNumber())
                 hearing.setCaseReferenceNumber(hearing.getCourtCaseNumber());
             else
                 hearing.setCaseReferenceNumber(hearing.getCmpNumber());
@@ -108,6 +109,10 @@ public class HearingRegistrationEnrichment {
     }
 
     private void enrichHearingDuration(HearingRequest hearingRequest) {
+
+        if (hearingRequest.getHearing().getWorkflow() == null || ObjectUtils.isEmpty(hearingRequest.getHearing().getWorkflow())) {
+            return;
+        }
 
         String workflowAction = hearingRequest.getHearing().getWorkflow().getAction();
 
@@ -153,7 +158,7 @@ public class HearingRegistrationEnrichment {
                 }
             }
 
-            if (hearingDuration != null ) {
+            if (hearingDuration != null) {
                 String action = processInstance.get(0).getAction();
                 if (START.equalsIgnoreCase(action)) {
                     hearingDuration = hearingDuration + (System.currentTimeMillis() - processInstance.get(0).getAuditDetails().getCreatedTime());
