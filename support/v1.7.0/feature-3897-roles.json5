@@ -1,0 +1,18 @@
+[
+  [
+    // need to add these roles for judge
+    {
+      "name": "SUBMISSION_CREATOR",
+      "code": "SUBMISSION_CREATOR",
+      "tenantId": "kl"
+    },
+    {
+      "name": "PDF_CREATOR",
+      "code": "PDF_CREATOR",
+      "tenantId": "kl"
+    }
+  ],
+  [
+    // need to add roles of typist
+  ]
+]
