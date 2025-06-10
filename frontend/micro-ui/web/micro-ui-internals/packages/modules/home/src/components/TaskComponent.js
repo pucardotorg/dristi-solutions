@@ -640,14 +640,7 @@ const TasksComponent = ({
         label: t("PAY_TO_JOIN_CASE"),
       },
       isStepperModal: false,
-      modalBody: (
-        <JoinCasePayment
-          filingNumber={data?.filingNumber}
-          taskNumber={data?.taskNumber}
-          setPendingTaskActionModals={setPendingTaskActionModals}
-          refetch={refetch}
-        />
-      ),
+      modalBody: <JoinCasePayment taskNumber={data?.taskNumber} setPendingTaskActionModals={setPendingTaskActionModals} refetch={refetch} />,
       hideModalActionbar: true,
     };
   }, [t, data, refetch, setPendingTaskActionModals]);

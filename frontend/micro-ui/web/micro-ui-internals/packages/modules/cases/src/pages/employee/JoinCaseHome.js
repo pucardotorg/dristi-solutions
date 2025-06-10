@@ -1345,7 +1345,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     },
     // 4
     {
-      modalMain: <JoinCasePayment type="join-case-flow" filingNumber={caseDetails?.filingNumber} taskNumber={taskNumber} />,
+      modalMain: <JoinCasePayment type="join-case-flow" taskNumber={taskNumber} />,
     },
     // 5
     {
