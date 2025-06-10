@@ -1,12 +1,43 @@
-import React, { useState } from "react";
-import { LabelFieldPair, TextInput, CloseSvg, CardLabelError, CardLabel } from "@egovernments/digit-ui-react-components";
+import React, { useEffect, useState } from "react";
+import { LabelFieldPair, TextInput, CloseSvg, CardLabelError, Toast } from "@egovernments/digit-ui-react-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 
 const CustomDatePickerV2 = ({ t, config, formData, onSelect, errors, onDateChange }) => {
   const [showModal, setShowModal] = useState(false);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const CustomCalendar = Digit.ComponentRegistryService.getComponent("CustomCalendarV2");
+
+  const { data: nonWorkingDay } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "schedule-hearing", [{ name: "COURT000334" }], {
+    select: (data) => {
+      return data || [];
+    },
+  });
+
+  const [showErrorToast, setShowErrorToast] = useState(null);
+
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
+
+  const closeToast = () => {
+    setShowErrorToast(null);
+  };
+
   const handleSelect = (date) => {
+    const formattedDate = date.toLocaleDateString("en-GB");
+    const formattedForCheck = formattedDate.replace(/\//g, "-");
+    const isNonWorkingDay = nonWorkingDay?.["schedule-hearing"]?.["COURT000334"]?.some((item) => item.date === formattedForCheck);
+    if (isNonWorkingDay) {
+      setShowErrorToast({
+        error: true,
+        label: t("CS_COMMON_COURT_NON_WORKING"),
+      });
+    }
     if (onDateChange) {
       onDateChange(date);
     } else {
@@ -73,6 +104,7 @@ const CustomDatePickerV2 = ({ t, config, formData, onSelect, errors, onDateChang
           />
         </Modal>
       )}
+      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </div>
   );
 };
