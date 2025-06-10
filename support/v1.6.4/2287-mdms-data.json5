@@ -1,0 +1,66 @@
+  {
+    "mastername": "roleactions",
+    "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+    "mdmsPayload": [
+        {
+          "id": "0d5eec97-5a05-48e7-b7ce-cfbb51a25cca",
+          "tenantId": "kl",
+          "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+          "uniqueIdentifier": "463",
+          "data": {
+            "id": 463,
+            "actionid": 2706,
+            "rolecode": "FSO_ROLE",
+            "tenantid": "kl",
+            "actioncode": "2706"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+            "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+            "createdTime": 1746519100958,
+            "lastModifiedTime": 1746594589163
+          }
+        },
+        {
+          "id": "81fb4889-6e11-41c0-81c2-5a3c68676fce",
+          "tenantId": "kl",
+          "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+          "uniqueIdentifier": "462",
+          "data": {
+            "id": 462,
+            "actionid": 2705,
+            "rolecode": "FSO_ROLE",
+            "tenantid": "kl",
+            "actioncode": "2705"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+            "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+            "createdTime": 1746519033618,
+            "lastModifiedTime": 1746519033618
+          }
+        },
+        {
+          "id": "ab1adba8-6363-4f81-a798-cf7d377b6e35",
+          "tenantId": "kl",
+          "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+          "uniqueIdentifier": "461",
+          "data": {
+            "id": 461,
+            "actionid": 2704,
+            "rolecode": "FSO_ROLE",
+            "tenantid": "kl",
+            "actioncode": "2704"
+          },
+          "isActive": true,
+          "auditDetails": {
+            "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+            "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+            "createdTime": 1746518983219,
+            "lastModifiedTime": 1746518983219
+          }
+        }
+      ]
+  }

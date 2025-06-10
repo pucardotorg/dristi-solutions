@@ -170,7 +170,6 @@ class PaymentServiceTest {
         when(transactionDetails.getStatus()).thenReturn("success");
         when(requestInfo.getUserInfo()).thenReturn(mock(User.class));
         doNothing().when(enrichment).enrichTreasuryPaymentData(any(), any());
-
         TreasuryPaymentData treasuryPaymentData = paymentService.decryptAndProcessTreasuryPayload(treasuryParams,requestInfo);
 
         assertNotNull(treasuryPaymentData);

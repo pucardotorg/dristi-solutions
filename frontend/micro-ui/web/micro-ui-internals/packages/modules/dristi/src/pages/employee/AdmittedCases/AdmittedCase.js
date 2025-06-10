@@ -43,6 +43,7 @@ import PublishedNotificationModal from "./publishedNotificationModal";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import NoticeAccordion from "../../../components/NoticeAccordion";
 import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
+import Breadcrumb from "../../../components/BreadCrumb";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -147,8 +148,6 @@ const formatDate = (date) => {
   return "";
 };
 
-const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
-
 const AdmittedCases = () => {
   const { t } = useTranslation();
   const location = useLocation();
@@ -226,6 +225,7 @@ const AdmittedCases = () => {
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const historyCaseData = location?.state?.caseData;
   const historyOrderData = location?.state?.orderData;
+  const courtId = localStorage.getItem("courtId");
   const reqEvidenceUpdate = {
     url: Urls.dristi.evidenceUpdate,
     params: {},
@@ -234,19 +234,19 @@ const AdmittedCases = () => {
       enable: false,
     },
   };
-  
+
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
-    
+
   const evidenceUpdateMutation = Digit.Hooks.useCustomAPIMutationHook(reqEvidenceUpdate);
 
   const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useCaseDetailSearchService(
     {
       criteria: {
         caseId: caseId,
-        courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+        ...(courtId && { courtId }),
       },
       tenantId,
-    },  
+    },
     {},
     `dristi-admitted-${caseId}`,
     caseId,
@@ -255,6 +255,7 @@ const AdmittedCases = () => {
 
   const caseData = historyCaseData || apiCaseData;
   const caseDetails = useMemo(() => caseData?.cases || {}, [caseData]);
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber || "", [caseDetails]);
@@ -358,12 +359,13 @@ const AdmittedCases = () => {
       criteria: {
         filingNumber,
         tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
     {},
     filingNumber + "allApplications",
-    filingNumber
+    Boolean(filingNumber && caseCourtId)
   );
   const extensionApplications = useMemo(
     () =>
@@ -555,14 +557,14 @@ const AdmittedCases = () => {
       },
       {
         key: "COURT_NAME",
-        value: t(`COMMON_MASTERS_COURT_R00M_${caseDetails?.courtId}`),
+        value: t(`COMMON_MASTERS_COURT_R00M_${caseCourtId}`),
       },
       {
         key: "SUBMITTED_ON",
         value: formatDate(new Date(caseDetails?.filingDate)),
       },
     ],
-    [caseDetails?.caseCategory, caseDetails?.courtId, caseDetails?.filingDate, caseDetails?.filingNumber, t]
+    [caseCourtId, caseDetails?.caseCategory, caseDetails?.filingDate, caseDetails?.filingNumber, t]
   );
 
   const configList = useMemo(() => {
@@ -611,7 +613,7 @@ const AdmittedCases = () => {
           criteria: {
             tenantId: tenantId,
             notificationNumber: order?.businessObject?.orderNotification?.id,
-            courtId: courtId,
+            ...(caseCourtId && { courtId: caseCourtId }),
           },
           pagination: {
             limit: 100,
@@ -623,7 +625,14 @@ const AdmittedCases = () => {
       } else {
         if (order?.businessObject?.orderNotification?.entityType === "Order") {
           const orderResponse = await ordersService.searchOrder(
-            { criteria: { tenantId: tenantId, filingNumber: filingNumber, orderNumber: order?.businessObject?.orderNotification?.id } },
+            {
+              criteria: {
+                tenantId: tenantId,
+                filingNumber: filingNumber,
+                orderNumber: order?.businessObject?.orderNotification?.id,
+                ...(caseCourtId && { courtId: caseCourtId }),
+              },
+            },
             { tenantId }
           );
           order = orderResponse?.list?.[0];
@@ -703,6 +712,7 @@ const AdmittedCases = () => {
                 criteria: [
                   {
                     filingNumber: filingNumber,
+                    ...(caseCourtId && { courtId: caseCourtId }),
                   },
                 ],
               },
@@ -733,6 +743,7 @@ const AdmittedCases = () => {
                   moduleSearchCriteria: {
                     ...tabConfig.apiDetails.requestBody.inbox.moduleSearchCriteria,
                     caseNumbers: [filingNumber, caseDetails?.cmpNumber, caseDetails?.courtCaseNumber]?.filter(Boolean),
+                    ...(caseCourtId && { courtId: caseCourtId }),
                   },
                 },
               },
@@ -787,6 +798,7 @@ const AdmittedCases = () => {
                 criteria: {
                   filingNumber: filingNumber,
                   tenantId: tenantId,
+                  ...(caseCourtId && { courtId: caseCourtId }),
                 },
               },
             },
@@ -851,6 +863,7 @@ const AdmittedCases = () => {
                   caseId: caseDetails?.id,
                   filingNumber: caseDetails?.filingNumber,
                   tenantId: tenantId,
+                  ...(caseCourtId && { courtId: caseCourtId }),
                 },
               },
             },
@@ -917,6 +930,7 @@ const AdmittedCases = () => {
                 criteria: {
                   filingNumber: filingNumber,
                   tenantId: tenantId,
+                  ...(caseCourtId && { courtId: caseCourtId }),
                 },
               },
             },
@@ -994,6 +1008,7 @@ const AdmittedCases = () => {
     isBenchClerk,
     downloadPdf,
     ordersService,
+    caseCourtId,
   ]);
 
   const handleEvidenceAction = async () => {
@@ -1021,7 +1036,7 @@ const AdmittedCases = () => {
         artifactList: selectedRow,
       },
     ];
-    const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+    const courtId = localStorage.getItem("courtId");
     try {
       const nextHearing = hearingDetails?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
       await DRISTIService.addADiaryEntry(
@@ -1234,14 +1249,13 @@ const AdmittedCases = () => {
 
   const getEvidence = async () => {
     try {
-      // Add courtId to criteria if it exists
       const response = await DRISTIService.searchEvidence(
         {
           criteria: {
-            filingNumber: filingNumber,
-            artifactNumber: artifactNumber,
-            tenantId: tenantId,
-            courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+            filingNumber,
+            artifactNumber,
+            tenantId,
+            ...(caseCourtId && { courtId: caseCourtId }),
           },
           tenantId,
         },
@@ -1299,9 +1313,10 @@ const AdmittedCases = () => {
         const response = await DRISTIService.searchEvidence(
           {
             criteria: {
-              filingNumber: filingNumber,
-              artifactNumber: artifactNumber,
-              tenantId: tenantId,
+              filingNumber,
+              artifactNumber,
+              tenantId,
+              ...(caseCourtId && { courtId: caseCourtId }),
             },
             tenantId,
           },
@@ -1430,28 +1445,27 @@ const AdmittedCases = () => {
       setShow(true);
     }
   }, []);
-  
 
   /**
- * Update breadcrumb navigation context when URL parameters change
- * 
- * This effect synchronizes the breadcrumb navigation state with the current URL parameters.
- * It runs whenever the URL path, search parameters, or hash fragment changes.
- * 
- * The effect:
- * 1. Extracts current case data from the breadcrumb context
- * 2. Gets the case ID and filing number from URL parameters
- * 3. Updates the breadcrumb context only if the values differ from current context
- * 
- * This ensures consistent navigation context across the application when users
- * navigate directly to this page via URL rather than through the application flow.
- */
+   * Update breadcrumb navigation context when URL parameters change
+   *
+   * This effect synchronizes the breadcrumb navigation state with the current URL parameters.
+   * It runs whenever the URL path, search parameters, or hash fragment changes.
+   *
+   * The effect:
+   * 1. Extracts current case data from the breadcrumb context
+   * 2. Gets the case ID and filing number from URL parameters
+   * 3. Updates the breadcrumb context only if the values differ from current context
+   *
+   * This ensures consistent navigation context across the application when users
+   * navigate directly to this page via URL rather than through the application flow.
+   */
   useEffect(() => {
     const { caseId: caseIdFromBreadCrumb, filingNumber: filingNumberFromBreadCrumb } = BreadCrumbsParamsData;
     const caseId = urlParams.get("caseId");
     const filingNumber = urlParams.get("filingNumber");
-    if(!(caseIdFromBreadCrumb === caseId && filingNumberFromBreadCrumb === filingNumber)){
-      setBreadCrumbsParamsData({caseId, filingNumber})
+    if (!(caseIdFromBreadCrumb === caseId && filingNumberFromBreadCrumb === filingNumber)) {
+      setBreadCrumbsParamsData({ caseId, filingNumber });
     }
   }, [pathname, search, hash]);
 
@@ -1774,6 +1788,7 @@ const AdmittedCases = () => {
         setModalInfo({ ...modalInfo, page: 2 });
         DRISTIService.customApiService(Urls.dristi.pendingTask, {
           pendingTask: {
+            actionCategory: "Schedule Hearing",
             name: "Schedule Admission Hearing",
             entityType: "case-default",
             referenceId: `MANUAL_${caseDetails?.filingNumber}`,
@@ -1851,6 +1866,7 @@ const AdmittedCases = () => {
         );
         DRISTIService.customApiService(Urls.dristi.pendingTask, {
           pendingTask: {
+            actionCategory: "Schedule Hearing",
             name: "Schedule Hearing",
             entityType: "case-default",
             referenceId: `MANUAL_${caseDetails?.filingNumber}`,
@@ -1916,11 +1932,12 @@ const AdmittedCases = () => {
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   // const isDcaHearingScheduled = useMemo(() => {
@@ -1966,10 +1983,10 @@ const AdmittedCases = () => {
   );
 
   const { data: apiOrdersData } = useSearchOrdersService(
-    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED" } },
+    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filingNumber + currentHearingId,
-    Boolean(filingNumber && !historyOrderData),
+    Boolean(filingNumber && !historyOrderData && caseCourtId),
     0
   );
 
@@ -2057,7 +2074,8 @@ const AdmittedCases = () => {
         hearing: { tenantId },
         criteria: {
           tenantID: tenantId,
-          filingNumber: filingNumber,
+          filingNumber,
+          ...(caseCourtId && { courtId: caseCourtId }),
         },
       });
       if (HearingList?.length >= 1) {
@@ -2110,7 +2128,14 @@ const AdmittedCases = () => {
             list: [orderData],
           } = await Digit.ordersService.searchOrder({
             tenantId,
-            criteria: { filingNumber, applicationNumber: "", cnrNumber, status: OrderWorkflowState.DRAFT_IN_PROGRESS, hearingNumber: hearingNumber },
+            criteria: {
+              filingNumber,
+              applicationNumber: "",
+              cnrNumber,
+              status: OrderWorkflowState.DRAFT_IN_PROGRESS,
+              hearingNumber: hearingNumber,
+              ...(caseCourtId && { courtId: caseCourtId }),
+            },
             pagination: { limit: 1, offset: 0 },
           });
           if (
@@ -2207,7 +2232,7 @@ const AdmittedCases = () => {
           },
           {
             key: "COURT_NAME",
-            value: t(`COMMON_MASTERS_COURT_R00M_${caseDetails?.courtId}`),
+            value: t(`COMMON_MASTERS_COURT_R00M_${caseCourtId}`),
           },
           {
             key: "CASE_TYPE",
@@ -2601,6 +2626,24 @@ const AdmittedCases = () => {
     }
   }, [caseDetails, downloadPdf, tenantId, showToast]);
 
+  const citizenCrumbs = useMemo(
+    () => [
+      {
+        path: `/${window?.contextPath}/citizen/home/home-pending-task`,
+        content: t("ES_COMMON_HOME"),
+        show: true,
+        isLast: false,
+      },
+      {
+        path: `${path}/home/view-case`,
+        content: t("VIEW_CASE"),
+        show: true,
+        isLast: true,
+      },
+    ],
+    [path, t]
+  );
+
   const inboxComposer = useMemo(() => {
     if (
       activeTab === "Documents" &&
@@ -2625,6 +2668,7 @@ const AdmittedCases = () => {
 
   return (
     <div className="admitted-case" style={{ position: "absolute", width: "100%" }}>
+      <Breadcrumb crumbs={citizenCrumbs} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>
       {downloadCasePdfLoading && (
         <div
           style={{
@@ -3131,7 +3175,8 @@ const AdmittedCases = () => {
           t={t}
           notification={currentNotification}
           handleDownload={handleDownload}
-          filingNumber={filingNumber}
+          cmpNumber={caseDetails?.cmpNumber}
+          stNumber={caseDetails?.courtCaseNumber}
           handleOrdersTab={handleOrdersTab}
         />
       )}

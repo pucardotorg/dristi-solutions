@@ -138,10 +138,9 @@ exports.caseComplaintPdf = async (req, res, next) => {
     const prayer = await caseService.getPrayerSwornStatementDetails(
       caseData
     )?.[0]?.prayer;
-    const complaint = htmlToFormattedText(
+    const complaint =
       caseService.getPrayerSwornStatementDetails(caseData)?.[0]
-        ?.memorandumOfComplaintText
-    );
+        ?.memorandumOfComplaintText;
     const dateOfFiling = caseService.formatDate(
       caseData?.filingDate ? new Date(caseData?.filingDate) : new Date()
     );

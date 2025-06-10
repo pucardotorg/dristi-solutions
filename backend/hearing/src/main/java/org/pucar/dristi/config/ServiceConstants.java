@@ -83,6 +83,10 @@ public class ServiceConstants {
     public static final String NOTIFICATION_MODULE_CODE = "notification";
     public static final String NOTIFICATION_LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
     public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
+    public static final String CLOSE = "CLOSE";
+    public static final String START = "START";
+    public static final String PASS_OVER = "PASS_OVER";
+    public static final String ABANDON = "ABANDON";
 
     // module for localized hearing types
     public static final String HEARING_TYPE_MODULE_CODE = "hearingTypes";

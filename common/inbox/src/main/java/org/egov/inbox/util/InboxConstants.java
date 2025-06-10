@@ -6,10 +6,12 @@ import org.springframework.stereotype.Component;
 public class InboxConstants {
 
     public static final String INBOX_QUERY_CONFIG_NAME = "InboxQueryConfiguration";
+    public static final String INBOX_SORT_CONFIG_NAME = "InboxSortConfiguration";
 
     public static final String INBOX_MODULE_CODE = "INBOX";
 
     public static final String MDMS_RESPONSE_JSONPATH = "$.MdmsRes.INBOX.InboxQueryConfiguration[?(@.module==\'{{MODULE_NAME}}\')]";
+    public static final String MDMS_SORT_RESPONSE_JSONPATH = "$.MdmsRes.INBOX.InboxSortConfiguration[?(@.module==\'{{MODULE_NAME}}\')]";
 
     public static final String MODULE_PLACEHOLDER = "{{MODULE_NAME}}";
 

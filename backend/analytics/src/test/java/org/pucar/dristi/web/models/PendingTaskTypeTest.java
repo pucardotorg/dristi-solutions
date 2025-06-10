@@ -37,7 +37,7 @@ class PendingTaskTypeTest {
         ReferenceEntityTypeNameMapping mapping2 = new ReferenceEntityTypeNameMapping("documentSubmission", "Review Document Submission");
         List<ReferenceEntityTypeNameMapping> referenceEntityTypeNameMapping = Arrays.asList(mapping1, mapping2);
 
-        PendingTaskType pendingTaskType = new PendingTaskType(id, pendingTask, actor, false, triggerAction, state, workflowModule, "home", closerAction, referenceEntityTypeNameMapping);
+        PendingTaskType pendingTaskType = new PendingTaskType(id, pendingTask, actor,false, triggerAction, state, workflowModule, "home","actionCategory",closerAction,referenceEntityTypeNameMapping);
 
         assertEquals(id, pendingTaskType.getId());
         assertEquals(pendingTask, pendingTaskType.getPendingTask());
@@ -134,7 +134,7 @@ class PendingTaskTypeTest {
                 .workflowModule(workflowModule)
                 .closerAction(closerAction)
                 .build();
-        String expected = "PendingTaskType(id=123, pendingTask=task1, actor=actor1, isgeneric=null, triggerAction=[action1, action2], state=state1, workflowModule=module1, screenType=null, closerAction=[close1, close2], referenceEntityTypeNameMapping=null)";
+        String expected = "PendingTaskType(id=123, pendingTask=task1, actor=actor1, isgeneric=null, triggerAction=[action1, action2], state=state1, workflowModule=module1, screenType=null, actionCategory=null, closerAction=[close1, close2], referenceEntityTypeNameMapping=null)";
         assertEquals(expected, pendingTaskType.toString());
     }
 

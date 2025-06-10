@@ -1,5 +1,6 @@
 package org.pucar.dristi.enrichment;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
@@ -11,6 +12,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.web.models.Artifact;
 import org.pucar.dristi.web.models.Comment;
@@ -35,6 +37,9 @@ public class EvidenceEnrichmentTest {
     @Mock
     private Configuration configuration;
 
+    @Mock
+    private CaseUtil caseUtil;
+
     @InjectMocks
     private EvidenceEnrichment evidenceEnrichment;
 
@@ -57,6 +62,9 @@ public class EvidenceEnrichmentTest {
 
     @Test
     void testEnrichEvidenceRegistration() {
+
+        JsonNode mockJsonNode = mock(JsonNode.class);
+
         RequestInfo requestInfo = new RequestInfo();
         User userInfo = new User();
         userInfo.setTenantId("tenantId");
@@ -79,6 +87,8 @@ public class EvidenceEnrichmentTest {
         when(idgenUtil.getIdList(any(), any(), any(), any(), any(),any())).thenReturn(idList);
         when(configuration.getArtifactConfig()).thenReturn("config");
         when(configuration.getArtifactFormat()).thenReturn("testformat");
+        when(caseUtil.searchCaseDetails(any())).thenReturn(mockJsonNode);
+        when(mockJsonNode.get("courtId")).thenReturn(mockJsonNode);
 
         // Call the method to be tested
         evidenceEnrichment.enrichEvidenceRegistration(evidenceRequest);

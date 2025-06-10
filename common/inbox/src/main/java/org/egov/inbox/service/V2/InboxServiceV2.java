@@ -3,7 +3,6 @@ package org.egov.inbox.service.V2;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.wnameless.json.flattener.JsonFlattener;
-import com.google.gson.Gson;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.hash.HashService;
@@ -13,9 +12,7 @@ import org.egov.inbox.repository.builder.V2.InboxQueryBuilder;
 import org.egov.inbox.service.V2.validator.ValidatorDefaultImplementation;
 import org.egov.inbox.service.WorkflowService;
 import org.egov.inbox.util.MDMSUtil;
-import org.egov.inbox.web.model.Inbox;
-import org.egov.inbox.web.model.InboxRequest;
-import org.egov.inbox.web.model.InboxResponse;
+import org.egov.inbox.web.model.*;
 import org.egov.inbox.web.model.V2.*;
 import org.egov.inbox.web.model.workflow.BusinessService;
 import org.egov.inbox.web.model.workflow.ProcessInstance;
@@ -27,6 +24,7 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import static org.egov.inbox.util.InboxConstants.*;
 
@@ -60,11 +58,10 @@ public class InboxServiceV2 {
 
 
     /**
-     *
      * @param inboxRequest
      * @return
      */
-    public InboxResponse getInboxResponse(InboxRequest inboxRequest){
+    public InboxResponse getInboxResponse(InboxRequest inboxRequest) {
 
         validator.validateSearchCriteria(inboxRequest);
         InboxQueryConfiguration inboxQueryConfiguration = mdmsUtil.getConfigFromMDMS(inboxRequest.getInbox().getTenantId(), inboxRequest.getInbox().getProcessSearchCriteria().getModuleName());
@@ -301,7 +298,7 @@ public class InboxServiceV2 {
         Map<String, List<String>> businessServiceVsUuidsBasedOnSearchCriteria = new HashMap<>();
 
         // If status uuids are being passed in process search criteria, segregating them based on their business service
-        if(!CollectionUtils.isEmpty(uuidsInSearchCriteria)) {
+        if (!CollectionUtils.isEmpty(uuidsInSearchCriteria)) {
             uuidsInSearchCriteria.forEach(uuid -> {
                 businessServiceVsStateUuids.keySet().forEach(businessService -> {
                     HashSet<String> setOfUuids = businessServiceVsStateUuids.get(businessService);
@@ -315,7 +312,7 @@ public class InboxServiceV2 {
                 });
 
             });
-        }else{
+        } else {
             businessServiceVsStateUuids.keySet().forEach(businessService -> {
                 HashSet<String> setOfUuids = businessServiceVsStateUuids.get(businessService);
                 businessServiceVsUuidsBasedOnSearchCriteria.put(businessService, new ArrayList<>(setOfUuids));
@@ -323,13 +320,12 @@ public class InboxServiceV2 {
         }
 
 
-
         List<String> businessServices = new ArrayList<>(businessServiceVsUuidsBasedOnSearchCriteria.keySet());
         Integer totalCount = 0;
         // Fetch slot percentage only once here !!!!!!!!!!
 
 
-        for(int i = 0; i < businessServices.size(); i++){
+        for (int i = 0; i < businessServices.size(); i++) {
             String businessService = businessServices.get(i);
             Long businessServiceSla = businessServiceSlaMap.get(businessService);
             inboxRequest.getInbox().getProcessSearchCriteria().setStatus(businessServiceVsUuidsBasedOnSearchCriteria.get(businessService));
@@ -337,9 +333,9 @@ public class InboxServiceV2 {
             StringBuilder uri = getURI(indexName, COUNT_PATH);
             Map<String, Object> response = (Map<String, Object>) serviceRequestRepository.fetchESResult(uri, finalQueryBody);
             Integer currentCount = 0;
-            if(response.containsKey(COUNT_CONSTANT)){
+            if (response.containsKey(COUNT_CONSTANT)) {
                 currentCount = (Integer) response.get(COUNT_CONSTANT);
-            }else{
+            } else {
                 throw new CustomException("INBOX_COUNT_ERR", "Error occurred while executing ES count query");
             }
             totalCount += currentCount;
@@ -350,7 +346,7 @@ public class InboxServiceV2 {
     }
 
 
-    private StringBuilder getURI(String indexName, String endpoint){
+    private StringBuilder getURI(String indexName, String endpoint) {
         StringBuilder uri = new StringBuilder(config.getIndexServiceHost());
         uri.append(indexName);
         uri.append(endpoint);
@@ -370,13 +366,92 @@ public class InboxServiceV2 {
         return searchResponse;
     }
 
+    public ActionCategorySearchResponse getSpecificFieldsActionFromESIndex(SearchRequest searchRequest) {
+        String tenantId = searchRequest.getIndexSearchCriteria().getTenantId();
+        String moduleName = searchRequest.getIndexSearchCriteria().getModuleName();
+        Map<String, Object> moduleSearchCriteria = searchRequest.getIndexSearchCriteria().getModuleSearchCriteria();
+
+        validator.validateSearchCriteria(tenantId, moduleName, moduleSearchCriteria);
+        InboxQueryConfiguration inboxQueryConfiguration = mdmsUtil.getConfigFromMDMS(tenantId, moduleName);
+        hashParamsWhereverRequiredBasedOnConfiguration(moduleSearchCriteria, inboxQueryConfiguration);
+
+        IndexSearchCriteria indexSearchCriteria = searchRequest.getIndexSearchCriteria();
+        ActionCategorySearchResponse response = new ActionCategorySearchResponse();
+
+        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchReviewProcess(), inboxQueryConfiguration, response::setReviewProcessData);
+        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchScheduleHearing(), inboxQueryConfiguration, response::setScheduleHearingData);
+        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchViewApplication(),inboxQueryConfiguration, response::setViewApplicationData);
+        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRegisterCases(), inboxQueryConfiguration, response::setRegisterCasesData);
+
+        return response;
+    }
+
+    private void populateActionCategoryData(SearchRequest searchRequest,
+                                            Criteria criteria,
+                                            InboxQueryConfiguration config,
+                                            Consumer<Criteria> setter) {
+        Map<String, Object> searchCriteria = searchRequest.getIndexSearchCriteria().getModuleSearchCriteria();
+
+        searchCriteria.put("actionCategory", criteria.getActionCategory());
+
+        if (criteria.getDate() != null) {
+            searchCriteria.put("stateSla", criteria.getDate());
+        }else {
+            searchCriteria.remove("stateSla");
+        }
+
+        if (criteria.getSearchableFields() != null) {
+            searchCriteria.put("searchableFields", criteria.getSearchableFields());
+        }else{
+            searchCriteria.remove("searchableFields");
+        }
+
+        List<Data> resultData = getDataFromSimpleSearch(searchRequest, config.getIndex());
+        List<Data> filteredData = deduplicateByFilingNumber(resultData);
+
+        criteria.setCount(filteredData.size());
+
+        if (!criteria.getIsOnlyCountRequired()) {
+            criteria.setData(filteredData);
+        }
+
+        setter.accept(criteria);
+    }
+
+
+    public static List<Data> deduplicateByFilingNumber(List<Data> dataList) {
+        Map<String, Data> uniqueMap = new LinkedHashMap<>();
+
+        for (Data data : dataList) {
+            String filingNumber = extractFilingNumber(data);
+            if (filingNumber != null && !uniqueMap.containsKey(filingNumber)) {
+                uniqueMap.put(filingNumber, data);
+            }
+        }
+
+        return new ArrayList<>(uniqueMap.values());
+    }
+
+    // Helper method to extract filingNumber from the fields list
+    private static String extractFilingNumber(Data data) {
+        if (data.getFields() == null) return null;
+
+        for (Field field : data.getFields()) {
+            if ("filingNumber".equals(field.getKey())) {
+                return field.getValue() != null ? field.getValue().toString() : null;
+            }
+        }
+
+        return null;
+    }
+
+
     private List<Data> getDataFromSimpleSearch(SearchRequest searchRequest, String index) {
         Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE);
         try {
             String q = mapper.writeValueAsString(finalQueryBody);
-            log.info("Query: "+q);
-        }
-        catch (Exception e){
+            log.info("Query: " + q);
+        } catch (Exception e) {
             e.printStackTrace();
         }
         StringBuilder uri = getURI(index, SEARCH_PATH);
@@ -386,9 +461,9 @@ public class InboxServiceV2 {
     }
 
     private List<Data> parseSearchResponseForSimpleSearch(Object result) {
-        Map<String, Object> hits = (Map<String, Object>)((Map<String, Object>) result).get(HITS);
+        Map<String, Object> hits = (Map<String, Object>) ((Map<String, Object>) result).get(HITS);
         List<Map<String, Object>> nestedHits = (List<Map<String, Object>>) hits.get(HITS);
-        if(CollectionUtils.isEmpty(nestedHits)){
+        if (CollectionUtils.isEmpty(nestedHits)) {
             return new ArrayList<>();
         }
 
@@ -396,7 +471,7 @@ public class InboxServiceV2 {
         nestedHits.forEach(hit -> {
             Data data = new Data();
             Map<String, Object> sourceObject = (Map<String, Object>) hit.get(SOURCE_KEY);
-            Map<String, Object> dataObject = (Map<String, Object>)sourceObject.get(DATA_KEY);
+            Map<String, Object> dataObject = (Map<String, Object>) sourceObject.get(DATA_KEY);
             List<Field> fields = getFieldsFromDataObject(dataObject);
             data.setFields(fields);
             dataList.add(data);
@@ -415,13 +490,13 @@ public class InboxServiceV2 {
                 field.setValue(flattenedDataObject.get(key));
                 listOfFields.add(field);
             });
-        }catch (JsonProcessingException ex){
+        } catch (JsonProcessingException ex) {
             throw new CustomException("EG_INBOX_GET_FIELDS_ERR", "Error while processing JSON.");
         }
         return listOfFields;
     }
 
-    public InboxResponse getIndexResponse(InboxRequest inboxRequest){
+    public InboxResponse getIndexResponse(InboxRequest inboxRequest) {
 
         validator.validateSearchCriteria(inboxRequest);
         InboxQueryConfiguration inboxQueryConfiguration = mdmsUtil.getConfigFromMDMS(inboxRequest.getInbox().getTenantId(), inboxRequest.getInbox().getProcessSearchCriteria().getModuleName());
@@ -436,7 +511,7 @@ public class InboxServiceV2 {
         return inboxResponse;
     }
 
-    private List<Inbox> getIndexItems(InboxRequest inboxRequest, String indexName){
+    private List<Inbox> getIndexItems(InboxRequest inboxRequest, String indexName) {
 //        List<BusinessService> businessServices = workflowService.getBusinessServices(inboxRequest);
 //        enrichActionableStatusesFromRole(inboxRequest, businessServices);
 //        if(CollectionUtils.isEmpty(inboxRequest.getInbox().getProcessSearchCriteria().getStatus())){
@@ -445,9 +520,8 @@ public class InboxServiceV2 {
         Map<String, Object> finalQueryBody = queryBuilder.getESQuery(inboxRequest, Boolean.TRUE);
         try {
             String q = mapper.writeValueAsString(finalQueryBody);
-            log.info("Query: "+q);
-        }
-        catch (Exception e){
+            log.info("Query: " + q);
+        } catch (Exception e) {
             e.printStackTrace();
         }
         StringBuilder uri = getURI(indexName, SEARCH_PATH);
@@ -458,9 +532,9 @@ public class InboxServiceV2 {
     }
 
     private List<Inbox> parseIndexItemsFromSearchResponse(Object result) {
-        Map<String, Object> hits = (Map<String, Object>)((Map<String, Object>) result).get(HITS);
+        Map<String, Object> hits = (Map<String, Object>) ((Map<String, Object>) result).get(HITS);
         List<Map<String, Object>> nestedHits = (List<Map<String, Object>>) hits.get(HITS);
-        if(CollectionUtils.isEmpty(nestedHits)){
+        if (CollectionUtils.isEmpty(nestedHits)) {
             return new ArrayList<>();
         }
 
@@ -476,10 +550,10 @@ public class InboxServiceV2 {
 //        });
 
         List<Inbox> inboxItemList = new ArrayList<>();
-        nestedHits.forEach(hit ->{
+        nestedHits.forEach(hit -> {
             Inbox inbox = new Inbox();
             Map<String, Object> businessObject = (Map<String, Object>) hit.get(SOURCE_KEY);
-            inbox.setBusinessObject((Map<String, Object>)businessObject.get(DATA_KEY));
+            inbox.setBusinessObject((Map<String, Object>) businessObject.get(DATA_KEY));
 //            Long serviceSla = getApplicationServiceSla(businessServiceSlaMap, stateUuidVsSlaMap, inbox.getBusinessObject());
 //            inbox.getBusinessObject().put(SERVICESLA_KEY, serviceSla);
             inboxItemList.add(inbox);

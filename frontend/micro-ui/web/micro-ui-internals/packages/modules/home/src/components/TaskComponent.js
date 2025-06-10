@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CardLabel, Dropdown } from "@egovernments/digit-ui-components";
-import { Button, LabelFieldPair } from "@egovernments/digit-ui-react-components";
+import { Button, LabelFieldPair, Card } from "@egovernments/digit-ui-react-components";
 import { Loader } from "@egovernments/digit-ui-react-components";
 import { useGetPendingTask } from "../hooks/useGetPendingTask";
 import { useTranslation } from "react-i18next";
@@ -39,6 +39,7 @@ const TasksComponent = ({
   isApplicationCompositeOrder = false,
   compositeOrderObj,
   pendingSignOrderList,
+  tableView = false,
 }) => {
   const JoinCasePayment = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCasePayment"), []);
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
@@ -53,10 +54,12 @@ const TasksComponent = ({
   const [totalPendingTask, setTotalPendingTask] = useState(0);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const isJudgeOrBenchClerk = userInfo?.roles?.some((role) => role.code === "JUDGE_ROLE" || role.code === "BENCH_CLERK");
+  const isScrutiny = userInfo?.roles.some((role) => role.code === "CASE_REVIEWER");
   const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
   const [responsePendingTask, setResponsePendingTask] = useState({});
   const [responseDoc, setResponseDoc] = useState({});
   const [isResponseApiCalled, setIsResponseApiCalled] = useState(false);
+  const courtId = localStorage.getItem("courtId");
   const [{ joinCaseConfirmModal, joinCasePaymentModal, data }, setPendingTaskActionModals] = useState({
     joinCaseConfirmModal: false,
     joinCasePaymentModal: false,
@@ -85,13 +88,14 @@ const TasksComponent = ({
           ...(!isLitigant && { assignedRole: [...roles] }),
           ...(inCase && { filingNumber: filingNumber }),
           screenType: isDiary ? ["Adiary"] : isApplicationCompositeOrder ? ["applicationCompositeOrder"] : ["home", "applicationCompositeOrder"],
+          ...(!isLitigant && courtId && !isScrutiny && { courtId }),
         },
         limit: 10000,
         offset: 0,
       },
     },
     params: { tenantId },
-    key: `${filingNumber}-${isDiary}-${isApplicationCompositeOrder}`,
+    key: `${filingNumber}-${isDiary}-${isApplicationCompositeOrder}-${isScrutiny}-${courtId}`,
     config: { enabled: Boolean(tenantId) },
   });
 
@@ -132,14 +136,14 @@ const TasksComponent = ({
           filingNumber,
           tenantId,
           applicationNumber,
-          courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+          ...(courtId && { courtId }),
         },
         tenantId,
       });
       setSearchCaseLoading(false);
       return applicationData?.applicationList?.[0] || {};
     },
-    [filingNumber, tenantId]
+    [filingNumber, tenantId, courtId]
   );
 
   const getOrderDetail = useCallback(
@@ -151,14 +155,14 @@ const TasksComponent = ({
           filingNumber,
           tenantId,
           orderNumber,
-          courtId: window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52",
+          ...(courtId && { courtId }),
         },
         tenantId,
       });
       setSearchCaseLoading(false);
       return orderData?.list?.[0] || {};
     },
-    [filingNumber, tenantId]
+    [courtId, filingNumber, tenantId]
   );
 
   const handleReviewOrder = useCallback(
@@ -239,7 +243,7 @@ const TasksComponent = ({
   );
 
   const handleCreateOrder = useCallback(
-    async ({ cnrNumber, filingNumber, orderType, referenceId, caseId, caseTitle }) => {
+    async ({ cnrNumber, filingNumber, orderType, referenceId, caseId, caseTitle, pendingTaskForDraft = true }) => {
       let reqBody = {
         order: {
           createdDate: null,
@@ -276,9 +280,9 @@ const TasksComponent = ({
       };
       try {
         const res = await HomeService.customApiService(Urls.orderCreate, reqBody, { tenantId });
-        HomeService.customApiService(Urls.pendingTask, {
+        pendingTaskForDraft && HomeService.customApiService(Urls.pendingTask, {
           pendingTask: {
-            name: "Order Created",
+            name: t("ORDER_CREATED"),
             entityType: "order-default",
             referenceId: `MANUAL_${referenceId}`,
             status: "SAVE_DRAFT",
@@ -325,6 +329,7 @@ const TasksComponent = ({
       const screenType = data?.fields?.find((field) => field.key === "screenType")?.value;
       const dateOfApplication = data?.fields?.find((field) => field.key === "additionalDetails.dateOfApplication")?.value;
       const uniqueId = data?.fields?.find((field) => field.key === "additionalDetails.uniqueId")?.value;
+      const createdTime = data?.fields?.find((field) => field.key === "createdTime")?.value;
 
       const updateReferenceId = referenceId.split("_").pop();
       const defaultObj = { referenceId: updateReferenceId, id: caseId, cnrNumber, filingNumber, caseTitle };
@@ -335,10 +340,17 @@ const TasksComponent = ({
         : dueInSec
         ? Math.abs(Math.ceil(dueInSec / dayInMillisecond))
         : null;
-      const additionalDetails = pendingTaskActions?.[status]?.additionalDetailsKeys?.reduce((result, current) => {
+      let additionalDetails = pendingTaskActions?.[status]?.additionalDetailsKeys?.reduce((result, current) => {
         result[current] = data?.fields?.find((field) => field.key === `additionalDetails.${current}`)?.value;
         return result;
       }, {});
+      if (actionName === "order for scheduling next hearing") {
+        additionalDetails = {
+          orderType: "SCHEDULE_OF_HEARING_DATE",
+          caseTitle: caseTitle,
+          pendingTaskForDraft: false,
+        };
+      }
       const searchParams = new URLSearchParams();
       pendingTaskActions?.[status]?.redirectDetails?.params?.forEach((item) => {
         searchParams.set(item?.key, item?.value ? defaultObj?.[item?.value] : item?.defaultValue);
@@ -355,7 +367,9 @@ const TasksComponent = ({
         caseTitle,
         filingNumber: filingNumber,
         caseType: "NIA S138",
+        stateSla,
         due: due,
+        createdTime,
         dayCount: dayCount ? dayCount : dayCount === 0 ? 0 : Infinity,
         isCompleted,
         dueDateColor: due === "Due today" ? "#9E400A" : "",
@@ -412,6 +426,7 @@ const TasksComponent = ({
           criteria: [
             {
               filingNumber: pendingTask?.filingNumber,
+              ...(pendingTask?.courtId && { courtId: pendingTask?.courtId }),
             },
           ],
           tenantId,
@@ -640,7 +655,7 @@ const TasksComponent = ({
   .digit-dropdown-select-wrap .digit-dropdown-options-card span {
     height:unset !important;
   }`;
-  return (
+  return !tableView ? (
     <div className="tasks-component">
       <React.Fragment>
         <h2>{!isLitigant ? t("YOUR_TASK") : t("ALL_PENDING_TASK_TEXT")}</h2>
@@ -765,6 +780,39 @@ const TasksComponent = ({
       {showSubmitResponseModal && <DocumentModal config={sumbitResponseConfig} />}
       {joinCaseConfirmModal && <DocumentModal config={joinCaseConfirmConfig} />}
       {joinCasePaymentModal && <DocumentModal config={joinCasePaymentConfig} />}
+    </div>
+  ) : (
+    <div className="tasks-component-table-view">
+      {isLoading || isOptionsLoading ? (
+        <Loader />
+      ) : totalPendingTask !== undefined && totalPendingTask > 0 ? (
+        <React.Fragment>
+          {searchCaseLoading && <Loader />}
+          {!searchCaseLoading && (
+            <React.Fragment>
+              {pendingTasks?.length > 0 && (
+                <div>
+                  <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none" }}>
+                    <PendingTaskAccordion
+                      pendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+                      allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+                      accordionHeader={"ALL_OTHER_TASKS"}
+                      t={t}
+                      totalCount={allOtherPendingTask?.length}
+                      setShowSubmitResponseModal={setShowSubmitResponseModal}
+                      setResponsePendingTask={setResponsePendingTask}
+                      setPendingTaskActionModals={setPendingTaskActionModals}
+                      tableView={true}
+                    />
+                  </Card>
+                </div>
+              )}
+            </React.Fragment>
+          )}
+        </React.Fragment>
+      ) : (
+        <React.Fragment></React.Fragment>
+      )}
     </div>
   );
 };

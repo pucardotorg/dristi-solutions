@@ -23,6 +23,11 @@ public class ServiceConstants {
    public static final String SEARCHER_SERVICE_EXCEPTION = "Exception while fetching from searcher: ";
    public static final String COURT_CASE_JSON_PATH="$.criteria[0].responseList[0]";
    public static final String COMPOSITE = "COMPOSITE";
+   public static final String ERROR_WHILE_FETCHING_FROM_MDMS = "ERROR_WHILE_FETCHING_FROM_MDMS";
+   public static final String DEFAULT_COURT_MODULE_NAME = "court";
+   public static final String DEFAULT_HEARING_MASTER_NAME = "hearings";
+   public static final String HEARING_MODULE_NAME = "Hearing";
+   public static final String HEARING_STATUS_MASTER_NAME = "HearingStatus";
 
    public static final String INTERNALMICROSERVICEROLE_NAME = "Internal Microservice Role";
 

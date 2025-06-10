@@ -1,5 +1,6 @@
 package digit.repository.rowmapper;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.models.coremodels.AuditDetails;
 import digit.web.models.JudgeCalendarRule;
 import digit.web.models.enums.JudgeRuleType;
@@ -8,13 +9,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.core.RowMapper;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
@@ -24,6 +21,9 @@ public class CalendarRowMapperTest {
 
     @InjectMocks
     private CalendarRowMapper mapper;
+
+    @Mock
+    private ObjectMapper objectMapper;
 
     @Mock
     private ResultSet resultSet;
@@ -42,6 +42,7 @@ public class CalendarRowMapperTest {
         when(resultSet.getString("last_modified_by")).thenReturn("admin");
         when(resultSet.getLong("last_modified_time")).thenReturn(System.currentTimeMillis());
         when(resultSet.getInt("row_version")).thenReturn(1);
+        when(resultSet.getString("court_ids")).thenReturn("[\"C001\", \"C002\"]");
 
         // Call mapRow and validate
         JudgeCalendarRule calendarRule = mapper.mapRow(resultSet, 1);
