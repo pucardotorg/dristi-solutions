@@ -11,6 +11,8 @@ import WitnessModal from "../../../../../hearings/src/components/WitnessModal";
 import { Urls } from "../../../hooks";
 import { getFilingType } from "../../../Utils";
 import { hearingService } from "../../../../../hearings/src/hooks/services";
+import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/caseUtils";
+import { constructFullName, removeInvalidNameParts } from "@egovernments/digit-ui-module-orders/src/utils";
 
 const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDetails, hearing, hearingId, setAddPartyModal }) => {
   const { t } = useTranslation();
@@ -23,7 +25,9 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
   const [hearingData, setHearingData] = useState(hearing);
   const [witnessModalOpen, setWitnessModalOpen] = useState(false);
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState("");
+  const [additionalDetails, setAdditionalDetails] = useState({});
   const userInfo = Digit?.UserService?.getUser?.()?.info;
+  const isInitialLoad = useRef(true);
 
   const { mutateAsync: _updateTranscriptRequest } = Digit.Hooks.useCustomAPIMutationHook({
     url: Urls.hearing.hearingUpdateTranscript,
@@ -54,35 +58,174 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
     };
   }, [isOpen]);
 
+  const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
+
+  const complainants = useMemo(() => {
+    return (
+      caseDetails?.litigants
+        ?.filter((item) => item?.partyType?.includes("complainant"))
+        ?.map((item) => {
+          const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
+          const poaHolder = caseDetails?.poaHolders?.find((poa) => poa?.individualId === item?.individualId);
+          if (poaHolder) {
+            return {
+              code: fullName,
+              name: `${fullName} (Complainant, PoA Holder)`,
+              uuid: allAdvocates[item?.additionalDetails?.uuid],
+              partyUuid: item?.additionalDetails?.uuid,
+              individualId: item?.individualId,
+              isJoined: true,
+              partyType: "complainant",
+              representingLitigants: poaHolder?.representingLitigants?.map((lit) => lit?.individualId),
+            };
+          }
+          return {
+            code: fullName,
+            name: `${fullName} (Complainant)`,
+            uuid: allAdvocates[item?.additionalDetails?.uuid],
+            partyUuid: item?.additionalDetails?.uuid,
+            individualId: item?.individualId,
+            isJoined: true,
+            partyType: "complainant",
+          };
+        }) || []
+    );
+  }, [caseDetails, allAdvocates]);
+
+  const poaHolders = useMemo(() => {
+    const complainantIds = new Set(complainants?.map((c) => c?.individualId));
+    return (
+      caseDetails?.poaHolders
+        ?.filter((item) => !complainantIds.has(item?.individualId))
+        ?.map((item) => {
+          const fullName = removeInvalidNameParts(item?.name);
+          return {
+            code: fullName,
+            name: `${fullName} (PoA Holder)`,
+            representingLitigants: item?.representingLitigants?.map((lit) => lit?.individualId),
+            individualId: item?.individualId,
+            isJoined: true,
+            partyType: "poaHolder",
+          };
+        }) || []
+    );
+  }, [caseDetails, complainants]);
+
+  const respondents = useMemo(() => {
+    return (
+      caseDetails?.litigants
+        ?.filter((item) => item?.partyType?.includes("respondent"))
+        .map((item) => {
+          const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
+          const uniqueId = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
+            (obj) => obj?.data?.respondentVerification?.individualDetails?.individualId === item?.individualId
+          )?.uniqueId;
+          return {
+            code: fullName,
+            name: `${fullName} (Accused)`,
+            uuid: allAdvocates[item?.additionalDetails?.uuid],
+            partyUuid: item?.additionalDetails?.uuid,
+            individualId: item?.individualId,
+            isJoined: true,
+            partyType: "respondent",
+            uniqueId,
+          };
+        }) || []
+    );
+  }, [caseDetails, allAdvocates]);
+
+  const unJoinedLitigant = useMemo(() => {
+    return (
+      caseDetails?.additionalDetails?.respondentDetails?.formdata
+        ?.filter((data) => !data?.data?.respondentVerification?.individualDetails?.individualId)
+        ?.map((data) => {
+          const fullName = constructFullName(data?.data?.respondentFirstName, data?.data?.respondentMiddleName, data?.data?.respondentLastName);
+          return {
+            code: fullName,
+            name: `${fullName} (Accused)`,
+            uuid: data?.data?.uuid,
+            isJoined: false,
+            partyType: "respondent",
+            uniqueId: data?.uniqueId,
+          };
+        }) || []
+    );
+  }, [caseDetails]);
+
+  const allParties = useMemo(() => [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant], [
+    complainants,
+    poaHolders,
+    respondents,
+    unJoinedLitigant,
+  ]);
+
   useEffect(() => {
     if (caseDetails) {
-      setOptions(
+      setAdditionalDetails(caseDetails?.additionalDetails);
+      const witnessOptions =
         caseDetails?.additionalDetails?.witnessDetails?.formdata?.map((witness) => ({
           label: getFormattedName(witness?.data?.firstName, witness?.data?.middleName, witness?.data?.lastName, witness?.data?.witnessDesignation),
           value: witness.data.uuid,
-        }))
-      );
-      const selectedWitnessDefault = caseDetails?.additionalDetails?.witnessDetails?.formdata?.[0]?.data || {};
-      setSelectedWitness(selectedWitnessDefault);
-      setWitnessDepositionText(
-        hearingData?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDefault?.uuid)?.deposition
-      );
+        })) || [];
+
+      const advocateOptions =
+        hearingData?.attendees
+          ?.filter((attendee) => attendee?.type === "Advocate")
+          ?.map((attendee, index) => ({
+            label: attendee?.name,
+            value: attendee?.individualId,
+          })) || [];
+      const partiesOption =
+        allParties
+          ?.filter((party) => party?.isJoined === true)
+          .map((party) => ({
+            label: party?.name,
+            value: party?.partyType === "poaHolder" ? party?.individualId : party?.partyUuid,
+          })) || [];
+
+      const combinedOptions = [...witnessOptions, ...advocateOptions, ...partiesOption];
+      setOptions(combinedOptions);
+      if (isInitialLoad.current) {
+        const selectedWitnessDefault = caseDetails?.additionalDetails?.witnessDetails?.formdata?.[0]?.data || {};
+        setSelectedWitness(selectedWitnessDefault);
+        setWitnessDepositionText(
+          hearingData?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDefault?.uuid)?.deposition
+        );
+        isInitialLoad.current = false;
+      }
     }
-  }, [caseDetails, hearingData?.additionalDetails?.witnessDepositions]);
+  }, [caseDetails, hearingData, allParties]);
 
   const isDepositionSaved = useMemo(() => {
     return (
+      hearingData?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitness?.uuid)?.isDepositionSaved === true ||
       hearingData?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitness?.uuid)?.isDepositionSaved === true
     );
   }, [selectedWitness, hearingData]);
 
   const handleDropdownChange = (selectedWitnessOption) => {
     const selectedUUID = selectedWitnessOption.value;
-    const selectedWitnessDeposition = caseDetails?.additionalDetails?.witnessDetails?.formdata?.find((w) => w.data.uuid === selectedUUID)?.data || {};
-    setSelectedWitness(selectedWitnessDeposition);
-    setWitnessDepositionText(
-      hearingData?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDeposition.uuid)?.deposition || ""
-    );
+    let selectedData = additionalDetails?.witnessDetails?.formdata?.find((w) => w.data.uuid === selectedUUID)?.data;
+    if (!selectedData) {
+      const attendee = hearingData?.attendees?.find((a) => a.individualId === selectedUUID);
+      if (attendee) {
+        selectedData = {
+          ...attendee,
+          uuid: attendee.individualId,
+        };
+      }
+    }
+    if (!selectedData) {
+      const party = allParties?.find((p) => p.partyUuid === selectedUUID);
+      if (party) {
+        selectedData = {
+          ...party,
+          uuid: party.partyUuid,
+        };
+      }
+    }
+    setSelectedWitness(selectedData || {});
+    setWitnessDepositionText(hearingData?.additionalDetails?.witnessDepositions?.find((w) => w.uuid === selectedUUID)?.deposition || "");
   };
 
   const IsSelectedWitness = useMemo(() => {
@@ -238,7 +381,7 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
                   IsSelectedWitness
                     ? {
                         label: getFormattedName(
-                          selectedWitness?.firstName,
+                          selectedWitness?.firstName || selectedWitness?.name,
                           selectedWitness?.middleName,
                           selectedWitness?.lastName,
                           selectedWitness?.witnessDesignation
