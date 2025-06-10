@@ -280,24 +280,25 @@ const TasksComponent = ({
       };
       try {
         const res = await HomeService.customApiService(Urls.orderCreate, reqBody, { tenantId });
-        pendingTaskForDraft && HomeService.customApiService(Urls.pendingTask, {
-          pendingTask: {
-            name: t("ORDER_CREATED"),
-            entityType: "order-default",
-            referenceId: `MANUAL_${referenceId}`,
-            status: "SAVE_DRAFT",
-            assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
-            cnrNumber,
-            filingNumber: filingNumber,
-            caseId,
-            caseTitle,
-            isCompleted: true,
-            stateSla: null,
-            additionalDetails: {},
-            tenantId,
-          },
-        });
+        pendingTaskForDraft &&
+          HomeService.customApiService(Urls.pendingTask, {
+            pendingTask: {
+              name: t("ORDER_CREATED"),
+              entityType: "order-default",
+              referenceId: `MANUAL_${referenceId}`,
+              status: "SAVE_DRAFT",
+              assignedTo: [],
+              assignedRole: ["JUDGE_ROLE"],
+              cnrNumber,
+              filingNumber: filingNumber,
+              caseId,
+              caseTitle,
+              isCompleted: true,
+              stateSla: null,
+              additionalDetails: {},
+              tenantId,
+            },
+          });
         history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res.order.orderNumber}`);
       } catch (error) {}
     },
@@ -809,6 +810,9 @@ const TasksComponent = ({
               )}
             </React.Fragment>
           )}
+          {showSubmitResponseModal && <DocumentModal config={sumbitResponseConfig} />}
+          {joinCaseConfirmModal && <DocumentModal config={joinCaseConfirmConfig} />}
+          {joinCasePaymentModal && <DocumentModal config={joinCasePaymentConfig} />}
         </React.Fragment>
       ) : (
         <React.Fragment></React.Fragment>
