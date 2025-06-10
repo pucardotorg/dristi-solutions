@@ -588,7 +588,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
           onCancel={handleAddParty}
           onDismiss={handleAddParty}
           tenantId={tenantId}
-          caseData={caseData}
+          caseDetails={caseDetails}
           onAddSuccess={() => {
             handleAddParty();
             refetch();
