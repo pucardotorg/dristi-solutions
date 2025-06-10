@@ -65,24 +65,23 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
       const selectedWitnessDefault = caseDetails?.additionalDetails?.witnessDetails?.formdata?.[0]?.data || {};
       setSelectedWitness(selectedWitnessDefault);
       setWitnessDepositionText(
-        hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDefault?.uuid)?.deposition
+        hearingData?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDefault?.uuid)?.deposition
       );
     }
-  }, [caseDetails, hearing?.additionalDetails?.witnessDepositions]);
+  }, [caseDetails, hearingData?.additionalDetails?.witnessDepositions]);
 
   const isDepositionSaved = useMemo(() => {
     return (
-      hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitness?.uuid)?.isDepositionSaved === true ||
       hearingData?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitness?.uuid)?.isDepositionSaved === true
     );
-  }, [selectedWitness, hearing, hearingData]);
+  }, [selectedWitness, hearingData]);
 
   const handleDropdownChange = (selectedWitnessOption) => {
     const selectedUUID = selectedWitnessOption.value;
     const selectedWitnessDeposition = caseDetails?.additionalDetails?.witnessDetails?.formdata?.find((w) => w.data.uuid === selectedUUID)?.data || {};
     setSelectedWitness(selectedWitnessDeposition);
     setWitnessDepositionText(
-      hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDeposition.uuid)?.deposition || ""
+      hearingData?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDeposition.uuid)?.deposition || ""
     );
   };
 
@@ -91,11 +90,11 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
   }, [selectedWitness]);
 
   const saveWitnessDeposition = async () => {
-    if (!hearing) return;
+    if (!hearingData) return;
 
     setWitnessModalOpen(true);
 
-    const updatedHearing = structuredClone(hearing || {});
+    const updatedHearing = structuredClone(hearingData || {});
     updatedHearing.additionalDetails = updatedHearing.additionalDetails || {};
     updatedHearing.additionalDetails.witnessDepositions = updatedHearing.additionalDetails.witnessDepositions || [];
     // Find the index of the selected witness in witnessDepositions
@@ -154,7 +153,7 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
           }
         });
       }
-      const documents = Array.isArray(hearing?.documents) ? hearing.documents : [];
+      const documents = Array.isArray(hearingData?.documents) ? hearingData.documents : [];
       const documentsFile =
         signedDocumentUploadID !== ""
           ? {
@@ -165,7 +164,7 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
 
       const reqBody = {
         hearing: {
-          ...hearing,
+          ...hearingData,
           documents: documentsFile ? [...documents, documentsFile] : documents,
         },
       };
