@@ -409,7 +409,10 @@ public class InboxServiceV2 {
         List<Data> resultData = getDataFromSimpleSearch(searchRequest, config.getIndex());
         List<Data> filteredData = deduplicateByFilingNumber(resultData);
 
-        criteria.setCount(filteredData.size());
+        List<Data> totalResultData = getTotalCountFromSimpleSearch(searchRequest, config.getIndex());
+        List<Data> totalFilteredData = deduplicateByFilingNumber(totalResultData);
+
+        criteria.setCount(totalFilteredData.size());
 
         if (!criteria.getIsOnlyCountRequired()) {
             criteria.setData(filteredData);
@@ -448,6 +451,20 @@ public class InboxServiceV2 {
 
     private List<Data> getDataFromSimpleSearch(SearchRequest searchRequest, String index) {
         Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE);
+        try {
+            String q = mapper.writeValueAsString(finalQueryBody);
+            log.info("Query: " + q);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        StringBuilder uri = getURI(index, SEARCH_PATH);
+        Object result = serviceRequestRepository.fetchESResult(uri, finalQueryBody);
+        List<Data> dataList = parseSearchResponseForSimpleSearch(result);
+        return dataList;
+    }
+
+    private List<Data> getTotalCountFromSimpleSearch(SearchRequest searchRequest, String index) {
+        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.FALSE);
         try {
             String q = mapper.writeValueAsString(finalQueryBody);
             log.info("Query: " + q);
