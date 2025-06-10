@@ -3006,7 +3006,12 @@ const AdmittedCases = () => {
         </div>
       )}
       {tabData?.filter((tab) => tab.label === "caseFileOverview")?.[0]?.active && (
-        <div className="view-case-file-new-wrapper">
+        <div
+          className="view-case-file-new-wrapper"
+          style={{
+            ...(showActionBar && { paddingBottom: "60px" }),
+          }}
+        >
           <CaseBundleView caseDetails={caseDetails} tenantId={tenantId} filingNumber={filingNumber} />
         </div>
       )}
