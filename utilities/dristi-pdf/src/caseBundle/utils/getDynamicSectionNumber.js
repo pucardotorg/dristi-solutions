@@ -1,4 +1,4 @@
-export function getDynamicSectionNumber(indexCopy, sectionPosition) {
+function getDynamicSectionNumber(indexCopy, sectionPosition) {
   return (
     indexCopy.sections
       .slice(0, sectionPosition)
