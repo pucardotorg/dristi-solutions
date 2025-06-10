@@ -1232,7 +1232,6 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     return mainStructure;
   };
 
-  debugger;
   useEffect(() => {
     const handleClickOutside = () => setContextMenu(null);
     window?.addEventListener("click", handleClickOutside);
