@@ -39,7 +39,7 @@ public class HearingsEnrichmentTest {
 
         when(mdmsDataConfig.getCourtHolidays()).thenReturn(List.of());
 
-        List<HearingSearchResponse> result = hearingsEnrichment.enrichHearings(List.of(hearing), List.of());
+        List<HearingSearchResponse> result = hearingsEnrichment.enrichHearings(List.of(hearing));
 
         assertEquals(1, result.size());
         HearingSearchResponse response = result.get(0);
@@ -61,28 +61,9 @@ public class HearingsEnrichmentTest {
 
         when(mdmsDataConfig.getCourtHolidays()).thenReturn(List.of(today));
 
-        List<HearingSearchResponse> result = hearingsEnrichment.enrichHearings(List.of(hearing), List.of());
+        List<HearingSearchResponse> result = hearingsEnrichment.enrichHearings(List.of(hearing));
 
         assertEquals(HearingSlotStatus.COURT_NON_WORKING.getValue(), result.get(0).getDayStatus());
-    }
-
-    @Test
-    public void testEnrichHearings_optedOutDay() {
-        String today = LocalDate.now().toString();
-
-        long startTime = LocalDate.now().atStartOfDay(ZoneId.of("Asia/Kolkata")).toInstant().toEpochMilli();
-
-        Hearing hearing = Hearing.builder()
-                .hearingType("TYPE1")
-                .startTime(startTime)
-                .endTime(startTime + 3600000)
-                .build();
-
-        when(mdmsDataConfig.getCourtHolidays()).thenReturn(List.of());
-
-        List<HearingSearchResponse> result = hearingsEnrichment.enrichHearings(List.of(hearing), List.of(today));
-
-        assertEquals(HearingSlotStatus.OPTED_OUT.getValue(), result.get(0).getDayStatus());
     }
 
     @Test
@@ -95,7 +76,7 @@ public class HearingsEnrichmentTest {
 
         when(mdmsDataConfig.getCourtHolidays()).thenReturn(List.of());
 
-        List<HearingSearchResponse> result = hearingsEnrichment.enrichHearings(List.of(hearing), List.of());
+        List<HearingSearchResponse> result = hearingsEnrichment.enrichHearings(List.of(hearing));
 
         assertEquals(0, result.size()); // hearing is filtered out due to null startTime
     }

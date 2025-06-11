@@ -47,10 +47,7 @@ public class HearingService {
             List<HearingSearchResponse> hearingSearchResponseList = new ArrayList<>();
 
             if (hearingListResponse != null && hearingListResponse.getHearingList() != null) {
-                String judgeId= getJudgeIdFromHearing(hearingListResponse.getHearingList());
-                List<String> optOutDates = getOptOutDates(hearingSearchRequest,judgeId);
-
-                hearingSearchResponseList = hearingsEnrichment.enrichHearings(hearingListResponse.getHearingList(),optOutDates);
+                hearingSearchResponseList = hearingsEnrichment.enrichHearings(hearingListResponse.getHearingList());
                 return HearingSearchListResponse.builder()
                         .totalCount(hearingListResponse.getTotalCount())
                         .hearingList(hearingSearchResponseList)
