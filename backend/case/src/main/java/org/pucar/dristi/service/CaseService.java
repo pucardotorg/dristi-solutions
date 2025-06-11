@@ -2629,10 +2629,9 @@ public class CaseService {
                                 Address address = individual.getAddress().get(0);
                                 addressDetailsObj.put("pincode",address.getPincode());
                                 addressDetailsObj.put("city", address.getCity());
-                                addressDetailsObj.put("locality", address.getLocality().getName());
-                                //  addressDetailsObj.put("state", address);
-                                //  addressDetailsObj.put("district", address);
-
+                                 if (address.getLocality() != null && address.getLocality().getName() != null) {
+                                     addressDetailsObj.put("locality", address.getLocality().getName());
+                                 }
                                 newAddressDetails.set("addressDetails", addressDetailsObj);
                                 newAddressDetails.put("id", UUID.randomUUID().toString());
 
