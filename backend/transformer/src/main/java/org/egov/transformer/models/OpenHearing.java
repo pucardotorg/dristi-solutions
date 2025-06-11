@@ -71,4 +71,8 @@ public class OpenHearing {
     @JsonProperty("hearingTypeOrder")
     private Integer hearingTypeOrder = null;
 
+    @JsonProperty("hearingDurationInMillis")
+    private Long hearingDurationInMillis = null;
+
+
 }
