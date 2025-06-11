@@ -407,18 +407,6 @@ public class InboxServiceV2 {
         }
 
         PaginatedDataResponse resultData = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
-       // List<Data> filteredData = deduplicateByFilingNumber(resultData);
-//
-//        Integer limit = searchRequest.getIndexSearchCriteria().getLimit();
-//        Integer offset = searchRequest.getIndexSearchCriteria().getOffset();
-//        searchRequest.getIndexSearchCriteria().setLimit(10000);
-//        searchRequest.getIndexSearchCriteria().setOffset(0);
-//
-//        List<Data> totalResultData = getDataFromSimpleSearch(searchRequest, config.getIndex(),true);
-//       // List<Data> totalFilteredData = deduplicateByFilingNumber(totalResultData);
-//
-//        searchRequest.getIndexSearchCriteria().setLimit(limit);
-//        searchRequest.getIndexSearchCriteria().setOffset(offset);
 
         criteria.setCount(resultData.getTotalSize());
 
@@ -428,34 +416,6 @@ public class InboxServiceV2 {
 
         setter.accept(criteria);
     }
-
-
-    public static List<Data> deduplicateByFilingNumber(List<Data> dataList) {
-        Map<String, Data> uniqueMap = new LinkedHashMap<>();
-
-        for (Data data : dataList) {
-            String filingNumber = extractFilingNumber(data);
-            if (filingNumber != null && !uniqueMap.containsKey(filingNumber)) {
-                uniqueMap.put(filingNumber, data);
-            }
-        }
-
-        return new ArrayList<>(uniqueMap.values());
-    }
-
-    // Helper method to extract filingNumber from the fields list
-    private static String extractFilingNumber(Data data) {
-        if (data.getFields() == null) return null;
-
-        for (Field field : data.getFields()) {
-            if ("filingNumber".equals(field.getKey())) {
-                return field.getValue() != null ? field.getValue().toString() : null;
-            }
-        }
-
-        return null;
-    }
-
 
     private List<Data> getDataFromSimpleSearch(SearchRequest searchRequest, String index) {
         Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, false);
@@ -488,16 +448,17 @@ public class InboxServiceV2 {
         PaginatedDataResponse paginatedDataResponse = new PaginatedDataResponse();
         Map<String, Object> hits = (Map<String, Object>) ((Map<String, Object>) result).get(HITS);
 
-        List<Map<String, Object>> nestedHits = (List<Map<String, Object>>) hits.get(HITS);
-        if (CollectionUtils.isEmpty(nestedHits)) {
-            return paginatedDataResponse;
-        }
-
         int totalSize = 0;
         Map<String, Object> aggregations = (Map<String, Object>) ((Map<String, Object>) result).get("aggregations");
         Map<String, Object> uniqueFilingNumbers = (Map<String, Object>) aggregations.get("unique_filing_numbers");
 
         totalSize = ((Number) uniqueFilingNumbers.get("value")).intValue();
+        paginatedDataResponse.setTotalSize(totalSize);
+
+        List<Map<String, Object>> nestedHits = (List<Map<String, Object>>) hits.get(HITS);
+        if (CollectionUtils.isEmpty(nestedHits)) {
+            return paginatedDataResponse;
+        }
 
         List<Data> dataList = new ArrayList<>();
         nestedHits.forEach(hit -> {
@@ -510,7 +471,6 @@ public class InboxServiceV2 {
         });
 
         paginatedDataResponse.setRecords(dataList);
-        paginatedDataResponse.setTotalSize(totalSize);
 
         return paginatedDataResponse;
     }
