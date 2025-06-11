@@ -75,10 +75,18 @@ public class SummonsService {
     public TaskResponse generateSummonsDocument(TaskRequest taskRequest) {
         String taskType = taskRequest.getTask().getTaskType();
         String docSubType = getDocSubType(taskType, taskRequest.getTask().getTaskDetails());
+        String templateType = getTemplateType(taskType, taskRequest.getTask().getTaskDetails());
         String noticeType = getNoticeType(taskRequest.getTask().getTaskDetails());
-        String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, false, noticeType);
+        String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, false, noticeType, templateType);
 
         return generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, false);
+    }
+
+    private String getTemplateType(String taskType, TaskDetails taskDetails) {
+        if(taskType.equals(WARRANT)){
+            return taskDetails.getWarrantDetails() != null ? taskDetails.getWarrantDetails().getTemplateType() : null;
+        }
+        return null; // For other task types, templateType is not applicable
     }
 
     private String getNoticeType(TaskDetails taskDetails) {
@@ -111,7 +119,7 @@ public class SummonsService {
         if (!taskType.equalsIgnoreCase(WARRANT)) {
             String docSubType = getDocSubType(taskType, task.getTaskDetails());
             String noticeType = getNoticeType(task.getTaskDetails());
-            String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, true, noticeType);
+            String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, true, noticeType, null);
 
             generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, true);
         }
@@ -301,7 +309,7 @@ public class SummonsService {
                 .orElse(null);
     }
 
-    private String getPdfTemplateKey(String taskType, String docSubType, boolean qrCode, String noticeType) {
+    private String getPdfTemplateKey(String taskType, String docSubType, boolean qrCode, String noticeType, String templateType) {
         switch (taskType) {
             case SUMMON -> {
                 if (docSubType.equals(ACCUSED)) {
@@ -313,13 +321,20 @@ public class SummonsService {
                 }
             }
             case WARRANT -> {
-                if (docSubType.equals(BAILABLE)) {
-                    return config.getBailableWarrantPdfTemplateKey();
-                } else if (docSubType.equals(NON_BAILABLE)) {
-                    return config.getNonBailableWarrantPdfTemplateKey();
+                if(templateType.equals(SPECIFIC)){
+                    if (docSubType.equals(BAILABLE)) {
+                        return config.getBailableWarrantPdfTemplateKey();
+                    } else if (docSubType.equals(NON_BAILABLE)) {
+                        return config.getNonBailableWarrantPdfTemplateKey();
+                    } else {
+                        throw new CustomException("INVALID_DOC_SUB_TYPE", "Document Sub-Type must be valid. Provided: " + docSubType);
+                    }
+                } else if(templateType.equals(GENERIC)) {
+                    return config.getTaskWarrantGenericPdfTemplateKey();
                 } else {
-                    throw new CustomException("INVALID_DOC_SUB_TYPE", "Document Sub-Type must be valid. Provided: " + docSubType);
-                }            }
+                    throw new CustomException("INVALID_TEMPLATE_TYPE", "Template Type must be valid. Provided: " + templateType);
+                }
+            }
             case NOTICE -> {
                 if(Objects.equals(noticeType, BNSS_NOTICE)){
                     return config.getTaskBnssNoticePdfTemplateKey();
