@@ -56,7 +56,14 @@ async function processAffidavitSection(
                   )
               )?.additionalDetails?.advocateName;
 
-              const documentPath = `${dynamicSectionNumber}.${index + 1} ${
+              const isComplaintAffidavit =
+                matchingDocs.length === 1 ? true : false;
+
+              const documentPath = `${
+                isComplaintAffidavit
+                  ? ""
+                  : `${dynamicSectionNumber}.${ind + 1}.${i + 1} in `
+              }${dynamicSectionNumber}.${ind + 1} ${
                 section.Items
               } in ${dynamicSectionNumber} ${section.section}`;
 
