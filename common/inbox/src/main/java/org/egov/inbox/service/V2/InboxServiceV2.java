@@ -361,7 +361,7 @@ public class InboxServiceV2 {
         validator.validateSearchCriteria(tenantId, moduleName, moduleSearchCriteria);
         InboxQueryConfiguration inboxQueryConfiguration = mdmsUtil.getConfigFromMDMS(tenantId, moduleName);
         hashParamsWhereverRequiredBasedOnConfiguration(moduleSearchCriteria, inboxQueryConfiguration);
-        List<Data> data = getDataFromSimpleSearch(searchRequest, inboxQueryConfiguration.getIndex());
+        List<Data> data = getDataFromSimpleSearch(searchRequest, inboxQueryConfiguration.getIndex(),false);
         SearchResponse searchResponse = SearchResponse.builder().data(data).build();
         return searchResponse;
     }
@@ -406,24 +406,24 @@ public class InboxServiceV2 {
             searchCriteria.remove("searchableFields");
         }
 
-        List<Data> resultData = getDataFromSimpleSearch(searchRequest, config.getIndex());
-        List<Data> filteredData = deduplicateByFilingNumber(resultData);
+        List<Data> resultData = getDataFromSimpleSearch(searchRequest, config.getIndex(),true);
+       // List<Data> filteredData = deduplicateByFilingNumber(resultData);
 
         Integer limit = searchRequest.getIndexSearchCriteria().getLimit();
         Integer offset = searchRequest.getIndexSearchCriteria().getOffset();
         searchRequest.getIndexSearchCriteria().setLimit(10000);
         searchRequest.getIndexSearchCriteria().setOffset(0);
 
-        List<Data> totalResultData = getDataFromSimpleSearch(searchRequest, config.getIndex());
-        List<Data> totalFilteredData = deduplicateByFilingNumber(totalResultData);
+        List<Data> totalResultData = getDataFromSimpleSearch(searchRequest, config.getIndex(),true);
+       // List<Data> totalFilteredData = deduplicateByFilingNumber(totalResultData);
 
         searchRequest.getIndexSearchCriteria().setLimit(limit);
         searchRequest.getIndexSearchCriteria().setOffset(offset);
 
-        criteria.setCount(totalFilteredData.size());
+        criteria.setCount(totalResultData.size());
 
         if (!criteria.getIsOnlyCountRequired()) {
-            criteria.setData(filteredData);
+            criteria.setData(resultData);
         }
 
         setter.accept(criteria);
@@ -457,8 +457,8 @@ public class InboxServiceV2 {
     }
 
 
-    private List<Data> getDataFromSimpleSearch(SearchRequest searchRequest, String index) {
-        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE);
+    private List<Data> getDataFromSimpleSearch(SearchRequest searchRequest, String index, Boolean isGroupByFilingNumber) {
+        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, isGroupByFilingNumber);
         try {
             String q = mapper.writeValueAsString(finalQueryBody);
             log.info("Query: " + q);

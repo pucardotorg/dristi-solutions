@@ -143,7 +143,7 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
         }
     }
 
-    public Map<String, Object> getESQueryForSimpleSearch(SearchRequest searchRequest, Boolean isPaginationRequired) {
+    public Map<String, Object> getESQueryForSimpleSearch(SearchRequest searchRequest, Boolean isPaginationRequired,Boolean isGroupByFilingNumber ) {
 
         InboxQueryConfiguration configuration = mdmsUtil.getConfigFromMDMS(searchRequest.getIndexSearchCriteria().getTenantId(), searchRequest.getIndexSearchCriteria().getModuleName());
         Map<String, Object> params = searchRequest.getIndexSearchCriteria().getModuleSearchCriteria();
@@ -158,6 +158,13 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
             // Adds source filter only when requesting for inbox items.
             List<String> sourceFilterPathList = configuration.getSourceFilterPathList();
             addSourceFilterToBaseQuery(baseEsQuery, sourceFilterPathList);
+        }
+
+        if (isGroupByFilingNumber) {
+            Map<String, Object> collapseClause = new HashMap<>();
+            collapseClause.put("field", "Data.filingNumber.keyword");
+
+            baseEsQuery.put("collapse", collapseClause);
         }
 
         Map<String, Object> innerBoolClause = (HashMap<String, Object>) ((HashMap<String, Object>) baseEsQuery.get(QUERY_KEY)).get(BOOL_KEY);
