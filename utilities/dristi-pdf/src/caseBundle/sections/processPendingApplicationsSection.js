@@ -139,7 +139,7 @@ async function processPendingApplicationsSection(
           let newApplicationFileStoreId = applicationFileStoreId;
 
           if (section.docketpagerequired === "yes") {
-            const sourceUuid = application.createdBy;
+            const sourceUuid = application.auditDetails.createdBy;
 
             const sourceLitigant = courtCase.litigants?.find(
               (litigant) => litigant.additionalDetails.uuid === sourceUuid
@@ -161,9 +161,7 @@ async function processPendingApplicationsSection(
               )
                 ? "COMPLAINANT"
                 : "ACCUSED";
-            }
-
-            if (sourceRepresentative) {
+            } else if (sourceRepresentative) {
               docketNameOfAdvocate =
                 sourceRepresentative.additionalDetails?.advocateName || "";
               docketNameOfFiling =
@@ -174,6 +172,17 @@ async function processPendingApplicationsSection(
                 )
                   ? "COMPLAINANT"
                   : "ACCUSED";
+            } else {
+              const complainant = courtCase.litigants?.find((litigant) =>
+                litigant.partyType.includes("complainant.primary")
+              );
+              docketNameOfFiling = complainant.additionalDetails.fullName;
+              docketNameOfAdvocate =
+                courtCase.representatives?.find((adv) =>
+                  adv.representing?.find(
+                    (party) => party.individualId === complainant.individualId
+                  )
+                )?.additionalDetails?.advocateName || docketNameOfFiling;
             }
 
             const documentPath = `${dynamicSectionNumber}.${index + 1}.1 ${

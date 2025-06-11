@@ -80,7 +80,7 @@ async function processBailDocuments(
             let newApplicationFileStoreId = combinedFileStore;
 
             if (section.docketpagerequired === "yes") {
-              const sourceUuid = application.createdBy;
+              const sourceUuid = application.auditDetails.createdBy;
 
               const sourceLitigant = courtCase.litigants?.find(
                 (litigant) => litigant.additionalDetails.uuid === sourceUuid
@@ -102,9 +102,7 @@ async function processBailDocuments(
                 )
                   ? "COMPLAINANT"
                   : "ACCUSED";
-              }
-
-              if (sourceRepresentative) {
+              } else if (sourceRepresentative) {
                 docketNameOfAdvocate =
                   sourceRepresentative.additionalDetails?.advocateName || "";
                 docketNameOfFiling =
@@ -115,6 +113,17 @@ async function processBailDocuments(
                   )
                     ? "COMPLAINANT"
                     : "ACCUSED";
+              } else {
+                const complainant = courtCase.litigants?.find((litigant) =>
+                  litigant.partyType.includes("complainant.primary")
+                );
+                docketNameOfFiling = complainant.additionalDetails.fullName;
+                docketNameOfAdvocate =
+                  courtCase.representatives?.find((adv) =>
+                    adv.representing?.find(
+                      (party) => party.individualId === complainant.individualId
+                    )
+                  )?.additionalDetails?.advocateName || docketNameOfFiling;
               }
 
               const documentPath = `${dynamicSectionNumber}.${
@@ -196,7 +205,8 @@ async function processBailDocuments(
                 let newFileStoreId = combinedFileStore;
 
                 if (section.docketpagerequired === "yes") {
-                  const sourceUuid = submitBailApplication.createdBy;
+                  const sourceUuid =
+                    submitBailApplication.auditDetails.createdBy;
 
                   const sourceLitigant = courtCase.litigants?.find(
                     (litigant) => litigant.additionalDetails.uuid === sourceUuid
@@ -218,9 +228,7 @@ async function processBailDocuments(
                     )
                       ? "COMPLAINANT"
                       : "ACCUSED";
-                  }
-
-                  if (sourceRepresentative) {
+                  } else if (sourceRepresentative) {
                     docketNameOfAdvocate =
                       sourceRepresentative.additionalDetails?.advocateName ||
                       "";
@@ -233,6 +241,18 @@ async function processBailDocuments(
                       )
                         ? "COMPLAINANT"
                         : "ACCUSED";
+                  } else {
+                    const complainant = courtCase.litigants?.find((litigant) =>
+                      litigant.partyType.includes("complainant.primary")
+                    );
+                    docketNameOfFiling = complainant.additionalDetails.fullName;
+                    docketNameOfAdvocate =
+                      courtCase.representatives?.find((adv) =>
+                        adv.representing?.find(
+                          (party) =>
+                            party.individualId === complainant.individualId
+                        )
+                      )?.additionalDetails?.advocateName || docketNameOfFiling;
                   }
 
                   const documentPath = `${dynamicSectionNumber}.${
