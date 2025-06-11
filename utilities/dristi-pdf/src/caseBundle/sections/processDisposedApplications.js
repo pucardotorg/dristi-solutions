@@ -65,9 +65,19 @@ async function processDisposedApplications(
     if (applicationList?.length !== 0) {
       const applicationLineItems = await Promise.all(
         applicationList?.map(async (application, index) => {
-          const applicationFileStoreId = application?.documents?.find(
+          let applicationFileStoreId = application?.documents?.find(
             (doc) => doc?.documentType === "SIGNED"
           )?.fileStore;
+
+          if (
+            application.applicationType === "DELAY_CONDONATION" &&
+            !applicationFileStoreId
+          ) {
+            applicationFileStoreId = application?.documents?.find(
+              (doc) => doc?.documentType === "CONDONATION_DOC"
+            )?.fileStore;
+          }
+
           if (!applicationFileStoreId) {
             return null;
           }
