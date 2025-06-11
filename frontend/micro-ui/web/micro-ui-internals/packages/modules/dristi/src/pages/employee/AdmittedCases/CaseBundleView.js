@@ -456,6 +456,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           pagination: {
             sortBy: "createdDate",
             order: "asc",
+            limit: 100,
           },
         });
 
@@ -805,9 +806,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       if (!disposedApplicationList?.length) return;
 
       setLoading(true);
-      const childrenItems = [];
-
-      await Promise.all(
+      const childrenItems = await Promise.all(
         disposedApplicationList?.map(async (application, index) => {
           const applicationNumber = application?.applicationNumber;
           const referenceId = application?.referenceId;
@@ -902,13 +901,13 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
             const childItems = [signedSubitem, objectionsSubitem, ordersSubitem]?.filter(Boolean);
 
-            childrenItems.push({
+            return {
               id: applicationNumber,
               title: application?.applicationType,
               hasChildren: childItems?.length > 0,
               number: `11.${index + 1}`,
               children: childItems,
-            });
+            };
           } catch (error) {
             console.error("Error fetching orders for:", applicationNumber, error);
           }
@@ -1072,6 +1071,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           pagination: {
             sortBy: "createdDate",
             order: "asc",
+            limit: 100,
           },
         });
         const orderData = response?.list || [];
