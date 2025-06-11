@@ -43,7 +43,16 @@ const MainHomeScreen = () => {
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
+  const today = new Date();
 
+  const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+
+  const [filters, setFilters] = useState({
+    date: todayStr,
+    status: "",
+    purpose: "",
+    caseQuery: "",
+  });
   const userType = useMemo(() => {
     if (!userInfo) return "employee";
     return userInfo?.type === "CITIZEN" ? "citizen" : "employee";
@@ -270,6 +279,8 @@ const MainHomeScreen = () => {
                   setLoader={setLoader}
                   setShowEndHearingModal={setShowEndHearingModal}
                   showEndHearingModal={showEndHearingModal}
+                  setFilters={setFilters}
+                  filters={filters}
                 />
               </div>
             ) : (

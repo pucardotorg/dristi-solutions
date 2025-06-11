@@ -19,7 +19,6 @@ const SidebarItem = ({ t, label, count, active, onClick, href }) => {
     background: active ? "#E8E8E8" : "#F9FAFB",
     textDecoration: "none",
   };
-  console.log(active, label);
 
   const content = (
     <React.Fragment>
