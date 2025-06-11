@@ -406,48 +406,19 @@ public class InboxServiceV2 {
             searchCriteria.remove("searchableFields");
         }
 
-        List<Data> resultData = getDataFromSimpleSearch(searchRequest, config.getIndex());
-        List<Data> filteredData = deduplicateByFilingNumber(resultData);
+        PaginatedDataResponse resultData = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
 
-        criteria.setCount(filteredData.size());
+        criteria.setCount(resultData.getTotalSize());
 
         if (!criteria.getIsOnlyCountRequired()) {
-            criteria.setData(filteredData);
+            criteria.setData(resultData.getRecords());
         }
 
         setter.accept(criteria);
     }
 
-
-    public static List<Data> deduplicateByFilingNumber(List<Data> dataList) {
-        Map<String, Data> uniqueMap = new LinkedHashMap<>();
-
-        for (Data data : dataList) {
-            String filingNumber = extractFilingNumber(data);
-            if (filingNumber != null && !uniqueMap.containsKey(filingNumber)) {
-                uniqueMap.put(filingNumber, data);
-            }
-        }
-
-        return new ArrayList<>(uniqueMap.values());
-    }
-
-    // Helper method to extract filingNumber from the fields list
-    private static String extractFilingNumber(Data data) {
-        if (data.getFields() == null) return null;
-
-        for (Field field : data.getFields()) {
-            if ("filingNumber".equals(field.getKey())) {
-                return field.getValue() != null ? field.getValue().toString() : null;
-            }
-        }
-
-        return null;
-    }
-
-
     private List<Data> getDataFromSimpleSearch(SearchRequest searchRequest, String index) {
-        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE);
+        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, false);
         try {
             String q = mapper.writeValueAsString(finalQueryBody);
             log.info("Query: " + q);
@@ -458,6 +429,50 @@ public class InboxServiceV2 {
         Object result = serviceRequestRepository.fetchESResult(uri, finalQueryBody);
         List<Data> dataList = parseSearchResponseForSimpleSearch(result);
         return dataList;
+    }
+
+    private PaginatedDataResponse getDataFromSimpleSearchGroupByFilingNumber(SearchRequest searchRequest, String index) {
+        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, true);
+        try {
+            String q = mapper.writeValueAsString(finalQueryBody);
+            log.info("Query: " + q);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        StringBuilder uri = getURI(index, SEARCH_PATH);
+        Object result = serviceRequestRepository.fetchESResult(uri, finalQueryBody);
+        return parseSearchResponseForSimpleSearchGroupByFilingNumber(result);
+    }
+
+    private PaginatedDataResponse parseSearchResponseForSimpleSearchGroupByFilingNumber(Object result) {
+        PaginatedDataResponse paginatedDataResponse = new PaginatedDataResponse();
+        Map<String, Object> hits = (Map<String, Object>) ((Map<String, Object>) result).get(HITS);
+
+        int totalSize = 0;
+        Map<String, Object> aggregations = (Map<String, Object>) ((Map<String, Object>) result).get("aggregations");
+        Map<String, Object> uniqueFilingNumbers = (Map<String, Object>) aggregations.get("unique_filing_numbers");
+
+        totalSize = ((Number) uniqueFilingNumbers.get("value")).intValue();
+        paginatedDataResponse.setTotalSize(totalSize);
+
+        List<Map<String, Object>> nestedHits = (List<Map<String, Object>>) hits.get(HITS);
+        if (CollectionUtils.isEmpty(nestedHits)) {
+            return paginatedDataResponse;
+        }
+
+        List<Data> dataList = new ArrayList<>();
+        nestedHits.forEach(hit -> {
+            Data data = new Data();
+            Map<String, Object> sourceObject = (Map<String, Object>) hit.get(SOURCE_KEY);
+            Map<String, Object> dataObject = (Map<String, Object>) sourceObject.get(DATA_KEY);
+            List<Field> fields = getFieldsFromDataObject(dataObject);
+            data.setFields(fields);
+            dataList.add(data);
+        });
+
+        paginatedDataResponse.setRecords(dataList);
+
+        return paginatedDataResponse;
     }
 
     private List<Data> parseSearchResponseForSimpleSearch(Object result) {
