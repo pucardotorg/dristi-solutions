@@ -1132,6 +1132,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       return doc ? doc?.fileStore : null;
     };
 
+    const affidavitChildren = generateAffidavitStructure(docs);
     const pendingApplicationChildren = generatePendingApplicationStructure(applicationList);
     const vakalatnamaChildren = generateVakalatnamaStructure(caseDetails);
     const complaintEvidenceChildren = generateCompliantEvidenceStructure(complaintEvidenceData);
@@ -1173,22 +1174,10 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       {
         id: "affidavits",
         title: "AFFIDAVITS_PDF",
-        hasChildren: true,
-        children: [
-          {
-            id: "affidavit-225bnss",
-            title: "AFFIDAVIT_UNDER_SECTION_255_BNSS",
-            fileStoreId: getFileStoreByType("case.affidavit.225bnss"),
-            hasChildren: false,
-          },
-          {
-            id: "affidavit-223bnss",
-            title: "AFFIDAVIT_UNDER_SECTION_223_BNSS",
-            fileStoreId: getFileStoreByType("case.affidavit.223bnss"),
-            hasChildren: false,
-          },
-        ].filter((child) => child?.fileStoreId),
+        hasChildren: affidavitChildren.length > 0,
+        children: affidavitChildren,
       },
+
       {
         id: "vakalatnama",
         title: "VAKALATS",
