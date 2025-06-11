@@ -467,33 +467,36 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   );
 
   const generateAffidavitStructure = (docs) => {
-    if (!Array.isArray(docs) || docs.length === 0) return [];
+    const affidavit225List = docs.filter((doc) => doc?.documentType === "case.affidavit.225bnss" && doc?.fileStore);
 
-    const createAffidavitGroup = (type, sectionId, sectionTitle) => {
-      const filteredDocs = docs.filter((doc) => doc?.documentType === type && doc?.fileStore);
+    const affidavit223 = docs.find((doc) => doc?.documentType === "case.affidavit.223bnss" && doc?.fileStore);
 
-      if (filteredDocs.length === 0) return null;
+    const structure = [];
 
-      const children = filteredDocs.map((doc, index) => ({
-        id: `${sectionId}-${index + 1}`,
-        title: `${t("AFFIDAVIT")} ${index + 1}`,
-        fileStoreId: doc.fileStore,
-        hasChildren: false,
-      }));
-
-      return {
-        id: sectionId,
-        title: sectionTitle,
+    if (affidavit225List.length > 0) {
+      structure.push({
+        id: "affidavit-225bnss",
+        title: "AFFIDAVIT_UNDER_225",
         hasChildren: true,
-        children,
-      };
-    };
+        children: affidavit225List.map((doc, index) => ({
+          id: `affidavit-225-${index + 1}`,
+          title: `${t("AFFIDAVIT")} ${index + 1}`,
+          fileStoreId: doc.fileStore,
+          hasChildren: false,
+        })),
+      });
+    }
 
-    const affidavit225 = createAffidavitGroup("case.affidavit.225bnss", "affidavit-225bnss", "AFFIDAVIT_UNDER_225");
+    if (affidavit223) {
+      structure.push({
+        id: "affidavit-223bnss",
+        title: "AFFIDAVIT_UNDER_SECTION_223_BNSS",
+        fileStoreId: affidavit223.fileStore,
+        hasChildren: false,
+      });
+    }
 
-    const affidavit223 = createAffidavitGroup("case.affidavit.223bnss", "affidavit-223bnss", "AFFIDAVIT_UNDER_SECTION_223_BNSS");
-
-    return [affidavit225, affidavit223].filter(Boolean);
+    return structure;
   };
 
   const generatePendingApplicationStructure = (applications) => {
