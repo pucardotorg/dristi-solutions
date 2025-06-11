@@ -14,7 +14,8 @@ async function processMandatorySubmissions(
   tenantId,
   requestInfo,
   TEMP_FILES_DIR,
-  indexCopy
+  indexCopy,
+  messagesMap
 ) {
   const mandatorySubmissionsSection = filterCaseBundleBySection(
     caseBundleMaster,
@@ -144,7 +145,7 @@ async function processMandatorySubmissions(
 
                     const documentPath = `${dynamicSectionNumber}.${
                       index + 1
-                    } ${application.applicationType} ${
+                    } ${messagesMap[application.applicationType]} ${
                       index + 1
                     } in ${dynamicSectionNumber} ${section.section}`;
 

@@ -14,7 +14,8 @@ async function processComplainantEvidence(
   tenantId,
   requestInfo,
   TEMP_FILES_DIR,
-  indexCopy
+  indexCopy,
+  messagesMap
 ) {
   const complainantEvidenceSection = filterCaseBundleBySection(
     caseBundleMaster,
@@ -97,7 +98,7 @@ async function processComplainantEvidence(
             }
 
             const documentPath = `${dynamicSectionNumber}.${index + 1} ${
-              evidence.artifactType
+              messagesMap[evidence.artifactType]
             } in ${dynamicSectionNumber} ${section.section}`;
 
             newEvidenceFileStoreId = await applyDocketToDocument(

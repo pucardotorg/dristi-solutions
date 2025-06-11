@@ -136,11 +136,33 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     Boolean(filingNumber)
   );
 
+  const {
+    data: pendingDocUploadApplicationData,
+    isLoading: isPendingDocUploadApplicationLoading,
+  } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        status: "DOCUMENT_UPLOAD",
+        courtId: courtId,
+        filingNumber: filingNumber,
+        tenantId,
+      },
+      pagination: {
+        sortBy: "applicationCMPNumber",
+        order: "asc",
+      },
+    },
+    {},
+    `${filingNumber}-DOCUMENT_UPLOAD-application`,
+    Boolean(filingNumber)
+  );
+
   const applicationList = useMemo(() => {
     const pendingReviewList = pendingReviewApplicationData?.applicationList || [];
     const pendingApprovalList = pendingApprovalApplicationData?.applicationList || [];
+    const pendingDocUploadList = pendingDocUploadApplicationData?.applicationList || [];
 
-    const applicationList = [...pendingReviewList, ...pendingApprovalList]?.sort((a, b) => {
+    const applicationList = [...pendingReviewList, ...pendingApprovalList, ...pendingDocUploadList]?.sort((a, b) => {
       if (!a?.applicationCMPNumber && !b?.applicationCMPNumber) return 0;
       if (!a?.applicationCMPNumber) return 1;
       if (!b?.applicationCMPNumber) return -1;
@@ -151,7 +173,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       return aNum - bNum;
     });
     return applicationList;
-  }, [pendingReviewApplicationData, pendingApprovalApplicationData]);
+  }, [pendingReviewApplicationData, pendingApprovalApplicationData, pendingDocUploadApplicationData]);
 
   const {
     data: directEvidenceData,
@@ -203,10 +225,14 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     filingNumber
   );
 
-  const directEvidenceList = directEvidenceData?.artifacts;
-  const applicationEvidenceList = applicationEvidenceData?.artifacts;
-  const newEvidenceList = [...(directEvidenceList || []), ...(applicationEvidenceList || [])];
-  const combinedEvidenceList = newEvidenceList?.sort((a, b) => a?.auditDetails?.createdTime - b?.auditDetails?.createdTime);
+  const combinedEvidenceList = useMemo(() => {
+    const directEvidenceList = directEvidenceData?.artifacts || [];
+    const applicationEvidenceList = applicationEvidenceData?.artifacts || [];
+
+    const newEvidenceList = [...directEvidenceList, ...applicationEvidenceList];
+
+    return newEvidenceList.sort((a, b) => a?.auditdetails?.createdTime - b?.auditdetails?.createdTime);
+  }, [directEvidenceData, applicationEvidenceData]);
 
   const { data: ordersData, isLoading: isMandatoryOrdersLoading } = Digit.Hooks.dristi.useGetOrders(
     {
@@ -329,7 +355,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     filingNumber
   );
 
-  const { data: disposedApplicationData, isLoading: isDisposedApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+  const { data: completedApplicationData, isLoading: isCompletedApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
         status: "COMPLETED",
@@ -347,7 +373,40 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     Boolean(filingNumber)
   );
 
-  const disposedApplicationList = useMemo(() => disposedApplicationData?.applicationList, [disposedApplicationData]);
+  const { data: rejectedApplicationData, isLoading: isRejectedApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        status: "REJECTED",
+        courtId: courtId,
+        filingNumber: filingNumber,
+        tenantId,
+      },
+      pagination: {
+        sortBy: "applicationCMPNumber",
+        order: "asc",
+      },
+    },
+    {},
+    `${filingNumber}-REJECTED-application`,
+    Boolean(filingNumber)
+  );
+
+  const disposedApplicationList = useMemo(() => {
+    const completedList = completedApplicationData?.applicationList || [];
+    const rejectedList = rejectedApplicationData?.applicationList || [];
+
+    const applicationList = [...completedList, ...rejectedList]?.sort((a, b) => {
+      if (!a?.applicationCMPNumber && !b?.applicationCMPNumber) return 0;
+      if (!a?.applicationCMPNumber) return 1;
+      if (!b?.applicationCMPNumber) return -1;
+
+      const aNum = extractNumber(a?.applicationCMPNumber);
+      const bNum = extractNumber(b?.applicationCMPNumber);
+
+      return aNum - bNum;
+    });
+    return applicationList;
+  }, [completedApplicationData, rejectedApplicationData]);
 
   const { data: bailApplicationsData, isLoading: isBailApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
@@ -1280,12 +1339,13 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     isApplicationEvidenceLoading ||
     isBailApplicationLoading ||
     isComplaintEvidenceLoading ||
-    isDisposedApplicationLoading ||
+    isCompletedApplicationLoading ||
+    isRejectedApplicationLoading ||
+    isPendingDocUploadApplicationLoading ||
     isAccusedEvidenceLoading ||
     isComplaintEvidenceLoading ||
     isCourtEvidenceLoading ||
     isCourtDepositionEvidenceLoading ||
-    isDisposedApplicationLoading ||
     isBailApplicationLoading ||
     isHearingLoading ||
     isPendingReviewApplicationLoading ||

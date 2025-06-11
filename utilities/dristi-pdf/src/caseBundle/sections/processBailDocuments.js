@@ -14,7 +14,8 @@ async function processBailDocuments(
   tenantId,
   requestInfo,
   TEMP_FILES_DIR,
-  indexCopy
+  indexCopy,
+  messagesMap
 ) {
   const bailDocumentSection = filterCaseBundleBySection(
     caseBundleMaster,
@@ -120,7 +121,7 @@ async function processBailDocuments(
                 index + 1
               }.1 Application and Other Documents in ${dynamicSectionNumber}.${
                 index + 1
-              } ${application.applicationType} ${
+              } ${messagesMap[application.applicationType]} ${
                 index + 1
               } in ${dynamicSectionNumber} ${section.section}`;
 
@@ -237,9 +238,9 @@ async function processBailDocuments(
                   const documentPath = `${dynamicSectionNumber}.${
                     index + 1
                   }.3 ${
-                    submitBailApplication.applicationType
+                    messagesMap[submitBailApplication.applicationType]
                   } in ${dynamicSectionNumber}.${index + 1} ${
-                    application.applicationType
+                    messagesMap[application.applicationType]
                   } ${index + 1} in ${dynamicSectionNumber} ${section.section}`;
 
                   newFileStoreId = await applyDocketToDocument(
