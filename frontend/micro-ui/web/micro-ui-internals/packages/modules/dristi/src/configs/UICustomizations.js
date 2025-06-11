@@ -1443,7 +1443,7 @@ export const UICustomizations = {
 
         case "ASSOCIATED_WITH":
           const associatedWith = row?.partyType === "ADVOCATE" || ["poa.regular"]?.includes(row?.partyType) ? row?.representingList : "";
-          return associatedWith;
+          return associatedWith || "";
         case "STATUS":
           const caseJoinStatus = ["respondent.primary", "respondent.additional"].includes(row?.partyType)
             ? t("JOINED")
