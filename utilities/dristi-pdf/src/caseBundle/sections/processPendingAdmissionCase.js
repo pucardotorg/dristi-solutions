@@ -1,5 +1,5 @@
 const cloneDeep = require("lodash.clonedeep");
-const { search_mdms, search_case_v2 } = require("../../api");
+const { search_mdms, search_case_v2, search_message } = require("../../api");
 const { logger } = require("../../logger");
 const { processTitlePageSection } = require("./processTitlePageSection");
 const { processComplaintSection } = require("./processComplaintSection");
@@ -55,6 +55,19 @@ async function processPendingAdmissionCase({
 
   console.debug(caseBundleMaster);
 
+  const resMessage = await search_message(
+    tenantId,
+    "rainmaker-case,rainmaker-orders,rainmaker-submissions,rainmaker-hearings,rainmaker-home,rainmaker-common",
+    "en_IN",
+    requestInfo
+  );
+
+  const messages = resMessage?.data?.messages || [];
+  const messagesMap =
+    messages?.length > 0
+      ? Object.fromEntries(messages.map(({ code, message }) => [code, message]))
+      : {};
+
   await processTitlePageSection(
     courtCase,
     caseBundleMaster,
@@ -69,7 +82,8 @@ async function processPendingAdmissionCase({
     tenantId,
     requestInfo,
     TEMP_FILES_DIR,
-    indexCopy
+    indexCopy,
+    messagesMap
   );
   await processComplaintSection(
     courtCase,
@@ -109,7 +123,8 @@ async function processPendingAdmissionCase({
     tenantId,
     requestInfo,
     TEMP_FILES_DIR,
-    indexCopy
+    indexCopy,
+    messagesMap
   );
   await processMandatorySubmissions(
     courtCase,
@@ -117,7 +132,8 @@ async function processPendingAdmissionCase({
     tenantId,
     requestInfo,
     TEMP_FILES_DIR,
-    indexCopy
+    indexCopy,
+    messagesMap
   );
   await processComplainantEvidence(
     courtCase,
@@ -125,7 +141,8 @@ async function processPendingAdmissionCase({
     tenantId,
     requestInfo,
     TEMP_FILES_DIR,
-    indexCopy
+    indexCopy,
+    messagesMap
   );
   await processAccusedEvidence(
     courtCase,
@@ -133,7 +150,8 @@ async function processPendingAdmissionCase({
     tenantId,
     requestInfo,
     TEMP_FILES_DIR,
-    indexCopy
+    indexCopy,
+    messagesMap
   );
   await processCourtEvidence(
     courtCase,
@@ -149,7 +167,8 @@ async function processPendingAdmissionCase({
     tenantId,
     requestInfo,
     TEMP_FILES_DIR,
-    indexCopy
+    indexCopy,
+    messagesMap
   );
   await processBailDocuments(
     courtCase,
@@ -157,7 +176,8 @@ async function processPendingAdmissionCase({
     tenantId,
     requestInfo,
     TEMP_FILES_DIR,
-    indexCopy
+    indexCopy,
+    messagesMap
   );
   await processTaskProcesses(
     courtCase,
