@@ -85,6 +85,7 @@ public class HearingService {
         openHearing.setAdvocate(advocate);
         openHearing.setHearingType(hearing.getHearingType());
         openHearing.setSearchableFields(getSearchableFields(advocate, hearing, courtCase));
+        openHearing.setHearingDurationInMillis(hearing.getHearingDurationInMillis());
 
         enrichOrderFields(requestInfo,openHearing);
 
