@@ -115,7 +115,8 @@ async function processPendingAdmissionCase({
     tenantId,
     requestInfo,
     TEMP_FILES_DIR,
-    indexCopy
+    indexCopy,
+    messagesMap
   );
   await processAdditionalFilings(
     courtCase,
