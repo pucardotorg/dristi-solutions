@@ -417,34 +417,6 @@ public class InboxServiceV2 {
         setter.accept(criteria);
     }
 
-
-    public static List<Data> deduplicateByFilingNumber(List<Data> dataList) {
-        Map<String, Data> uniqueMap = new LinkedHashMap<>();
-
-        for (Data data : dataList) {
-            String filingNumber = extractFilingNumber(data);
-            if (filingNumber != null && !uniqueMap.containsKey(filingNumber)) {
-                uniqueMap.put(filingNumber, data);
-            }
-        }
-
-        return new ArrayList<>(uniqueMap.values());
-    }
-
-    // Helper method to extract filingNumber from the fields list
-    private static String extractFilingNumber(Data data) {
-        if (data.getFields() == null) return null;
-
-        for (Field field : data.getFields()) {
-            if ("filingNumber".equals(field.getKey())) {
-                return field.getValue() != null ? field.getValue().toString() : null;
-            }
-        }
-
-        return null;
-    }
-
-
     private List<Data> getDataFromSimpleSearch(SearchRequest searchRequest, String index) {
         Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE,false);
         try {
