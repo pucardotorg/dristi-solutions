@@ -83,7 +83,7 @@ public class SummonsService {
     }
 
     private String getTemplateType(String taskType, TaskDetails taskDetails) {
-        if(taskType.equals(WARRANT)){
+        if(WARRANT.equals(taskType)){
             return taskDetails.getWarrantDetails() != null ? taskDetails.getWarrantDetails().getTemplateType() : null;
         }
         return null; // For other task types, templateType is not applicable
@@ -312,24 +312,24 @@ public class SummonsService {
     private String getPdfTemplateKey(String taskType, String docSubType, boolean qrCode, String noticeType, String templateType) {
         switch (taskType) {
             case SUMMON -> {
-                if (docSubType.equals(ACCUSED)) {
+                if (ACCUSED.equals(docSubType)) {
                     return qrCode ? config.getSummonsAccusedQrPdfTemplateKey() : config.getSummonsAccusedPdfTemplateKey();
-                } else if (docSubType.equals(WITNESS)) {
+                } else if (WITNESS.equals(docSubType)) {
                     return qrCode ? config.getBailableWarrantPdfTemplateKey() : config.getSummonsIssuePdfTemplateKey();
                 } else {
                     throw new CustomException("INVALID_DOC_SUB_TYPE", "Document Sub-Type must be valid. Provided: " + docSubType);
                 }
             }
             case WARRANT -> {
-                if(SPECIFIC.equals(templateType)){
-                    if (docSubType.equals(BAILABLE)) {
+                if (SPECIFIC.equals(templateType)) {
+                    if (BAILABLE.equals(docSubType)) {
                         return config.getBailableWarrantPdfTemplateKey();
-                    } else if (docSubType.equals(NON_BAILABLE)) {
+                    } else if (NON_BAILABLE.equals(docSubType)) {
                         return config.getNonBailableWarrantPdfTemplateKey();
                     } else {
                         throw new CustomException("INVALID_DOC_SUB_TYPE", "Document Sub-Type must be valid. Provided: " + docSubType);
                     }
-                } else if(GENERIC.equals(templateType)) {
+                } else if (GENERIC.equals(templateType)) {
                     return config.getTaskWarrantGenericPdfTemplateKey();
                 } else {
                     throw new CustomException("INVALID_TEMPLATE_TYPE", "Template Type must be valid. Provided: " + templateType);
