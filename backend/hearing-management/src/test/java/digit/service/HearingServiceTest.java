@@ -64,14 +64,6 @@ public class HearingServiceTest {
         // Mock getHearings returns response with one hearing
         when(hearingUtil.getHearings(request)).thenReturn(hearingListResponse);
 
-        // Mock schedulerUtil to return judge calendar response with one rule date
-        JudgeRuleResponse judgeRuleResponse = new JudgeRuleResponse();
-        JudgeRuleResponse rule = new JudgeRuleResponse();
-        rule.setJudgeCalendarRules(null);
-        judgeRuleResponse.setJudgeCalendarRules(null);
-
-        when(schedulerUtil.searchJudgeCalender(any(JudgeCalenderSearchRequest.class))).thenReturn(judgeRuleResponse);
-
         // Mock hearingsEnrichment.enrichHearings to return enriched list
         List<HearingSearchResponse> enrichedList = new ArrayList<>();
         enrichedList.add(HearingSearchResponse.builder()
@@ -79,17 +71,13 @@ public class HearingServiceTest {
                 .dayStatus("SomeStatus")
                 .noOfHearing(1)
                 .build());
-        when(hearingsEnrichment.enrichHearings(anyList(), anyList())).thenReturn(enrichedList);
+        when(hearingsEnrichment.enrichHearings(anyList())).thenReturn(enrichedList);
 
         HearingSearchListResponse result = hearingService.searchHearings(request);
 
         assertEquals(1, result.getTotalCount());
         assertEquals(1, result.getHearingList().size());
 
-        // Verify that schedulerUtil.searchJudgeCalender was called with correct judgeId
-        ArgumentCaptor<JudgeCalenderSearchRequest> captor = ArgumentCaptor.forClass(JudgeCalenderSearchRequest.class);
-        verify(schedulerUtil).searchJudgeCalender(captor.capture());
-        assertEquals("judge1", captor.getValue().getCriteria().getJudgeId());
     }
 
     @Test
