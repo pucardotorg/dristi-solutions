@@ -13,7 +13,8 @@ async function processVakalatSection(
   tenantId,
   requestInfo,
   TEMP_FILES_DIR,
-  indexCopy
+  indexCopy,
+  messagesMap
 ) {
   // update vakalatnamas
   const vakalatnamaSection = filterCaseBundleBySection(
@@ -55,6 +56,7 @@ async function processVakalatSection(
             isActive: litigant.isActive,
             partyType: litigant.partyType,
             fileStoreId: fileStoreId,
+            heading: messagesMap["PIP_AFFIDAVIT_HEADING"],
             docketApplicationType: "PIP AFFIDAVIT",
             representingFullName: litigant.additionalDetails.fullName,
             advocateFullName: litigant.additionalDetails.fullName,
@@ -73,6 +75,7 @@ async function processVakalatSection(
               isActive: litigant.isActive,
               partyType: litigant.partyType,
               fileStoreId,
+              heading: section.Items,
               docketApplicationType: `${section.section.toUpperCase()} - ${
                 section.Items
               }`,
@@ -100,7 +103,7 @@ async function processVakalatSection(
       vakalats.map(async (vakalat, index) => {
         if (section.docketpagerequired === "yes") {
           const documentPath = `${dynamicSectionNumber}.${index + 1} ${
-            section.Items
+            vakalat.heading
           } in ${dynamicSectionNumber} ${section.section}`;
           const mergedVakalatDocumentFileStoreId = await applyDocketToDocument(
             vakalat.fileStoreId,
