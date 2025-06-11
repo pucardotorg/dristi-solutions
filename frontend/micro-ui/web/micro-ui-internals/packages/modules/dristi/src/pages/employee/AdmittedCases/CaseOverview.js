@@ -14,6 +14,7 @@ import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import JudgementViewCard from "./JudgementViewCard";
 import ShowAllTranscriptModal from "../../../components/ShowAllTranscriptModal";
+import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 const CaseOverview = ({
   caseData,
   openHearingModule,
@@ -102,9 +103,9 @@ const CaseOverview = ({
     Boolean(filingNumber && caseCourtId)
   );
 
-  const previousHearing = hearingRes?.HearingList?.filter((hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status)).sort(
-    (hearing1, hearing2) => hearing2.endTime - hearing1.endTime
-  );
+  const previousHearing = hearingRes?.HearingList?.filter((hearing) =>
+    [HearingWorkflowState?.COMPLETED, HearingWorkflowState?.ABANDONED].includes(hearing?.status)
+  ).sort((hearing1, hearing2) => hearing2.endTime - hearing1.endTime);
 
   const navigateOrdersGenerate = () => {
     history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}`);
@@ -168,9 +169,11 @@ const CaseOverview = ({
                     lineHeight: "24px",
                   }}
                 >
-                  {previousHearing?.[0]?.transcript?.length
-                    ? previousHearing?.[0]?.transcript?.map((transcript) => <div>{transcript}</div>)
-                    : "No Transcript available for this hearing"}
+                  {previousHearing?.[0]?.hearingSummary ? (
+                    <div>{previousHearing?.[0]?.hearingSummary}</div>
+                  ) : (
+                    "No Transcript available for this hearing"
+                  )}
                 </div>
               </Card>
             )}
@@ -263,8 +266,8 @@ const CaseOverview = ({
                     lineHeight: "24px",
                   }}
                 >
-                  {previousHearing?.[0]?.transcript?.length
-                    ? previousHearing?.[0]?.transcript?.map((transcript) => <div>{transcript}</div>)
+                  {previousHearing?.[0]?.hearingSummary
+                ? <div>{previousHearing?.[0]?.hearingSummary}</div>
                     : "No Transcript available for this hearing"}
                 </div>
               </Card>

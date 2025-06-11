@@ -162,7 +162,7 @@ const AdmittedCaseJudge = () => {
   const { pathname, search, hash } = location;
   const { path } = useRouteMatch();
   const urlParams = new URLSearchParams(location.search);
-  const { hearingId, taskOrderType, artifactNumber } = Digit.Hooks.useQueryParams();
+  const { hearingId, taskOrderType, artifactNumber, fromHome } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
   const roles = Digit.UserService.getUser()?.info?.roles;
   const isFSO = roles.some((role) => role.code === "FSO_ROLE");
@@ -2814,7 +2814,7 @@ const AdmittedCaseJudge = () => {
       {
         path: `/${window?.contextPath}/employee/home/home-pending-task`,
         content: t("OPEN_ALL_CASES"),
-        show: true,
+        show: fromHome ? false : true,
         isLast: false,
       },
       {
@@ -2824,7 +2824,7 @@ const AdmittedCaseJudge = () => {
         isLast: true,
       },
     ],
-    [path, t]
+    [path, t, fromHome]
   );
 
   const advocateName = useMemo(() => {
