@@ -14,7 +14,8 @@ async function processBailDocuments(
   tenantId,
   requestInfo,
   TEMP_FILES_DIR,
-  indexCopy
+  indexCopy,
+  messagesMap
 ) {
   const bailDocumentSection = filterCaseBundleBySection(
     caseBundleMaster,
@@ -79,7 +80,7 @@ async function processBailDocuments(
             let newApplicationFileStoreId = combinedFileStore;
 
             if (section.docketpagerequired === "yes") {
-              const sourceUuid = application.createdBy;
+              const sourceUuid = application.auditDetails.createdBy;
 
               const sourceLitigant = courtCase.litigants?.find(
                 (litigant) => litigant.additionalDetails.uuid === sourceUuid
@@ -101,9 +102,7 @@ async function processBailDocuments(
                 )
                   ? "COMPLAINANT"
                   : "ACCUSED";
-              }
-
-              if (sourceRepresentative) {
+              } else if (sourceRepresentative) {
                 docketNameOfAdvocate =
                   sourceRepresentative.additionalDetails?.advocateName || "";
                 docketNameOfFiling =
@@ -114,13 +113,24 @@ async function processBailDocuments(
                   )
                     ? "COMPLAINANT"
                     : "ACCUSED";
+              } else {
+                const complainant = courtCase.litigants?.find((litigant) =>
+                  litigant.partyType.includes("complainant.primary")
+                );
+                docketNameOfFiling = complainant.additionalDetails.fullName;
+                docketNameOfAdvocate =
+                  courtCase.representatives?.find((adv) =>
+                    adv.representing?.find(
+                      (party) => party.individualId === complainant.individualId
+                    )
+                  )?.additionalDetails?.advocateName || docketNameOfFiling;
               }
 
               const documentPath = `${dynamicSectionNumber}.${
                 index + 1
               }.1 Application and Other Documents in ${dynamicSectionNumber}.${
                 index + 1
-              } ${application.applicationType} ${
+              } ${messagesMap[application.applicationType]} ${
                 index + 1
               } in ${dynamicSectionNumber} ${section.section}`;
 
@@ -195,7 +205,8 @@ async function processBailDocuments(
                 let newFileStoreId = combinedFileStore;
 
                 if (section.docketpagerequired === "yes") {
-                  const sourceUuid = submitBailApplication.createdBy;
+                  const sourceUuid =
+                    submitBailApplication.auditDetails.createdBy;
 
                   const sourceLitigant = courtCase.litigants?.find(
                     (litigant) => litigant.additionalDetails.uuid === sourceUuid
@@ -217,9 +228,7 @@ async function processBailDocuments(
                     )
                       ? "COMPLAINANT"
                       : "ACCUSED";
-                  }
-
-                  if (sourceRepresentative) {
+                  } else if (sourceRepresentative) {
                     docketNameOfAdvocate =
                       sourceRepresentative.additionalDetails?.advocateName ||
                       "";
@@ -232,14 +241,26 @@ async function processBailDocuments(
                       )
                         ? "COMPLAINANT"
                         : "ACCUSED";
+                  } else {
+                    const complainant = courtCase.litigants?.find((litigant) =>
+                      litigant.partyType.includes("complainant.primary")
+                    );
+                    docketNameOfFiling = complainant.additionalDetails.fullName;
+                    docketNameOfAdvocate =
+                      courtCase.representatives?.find((adv) =>
+                        adv.representing?.find(
+                          (party) =>
+                            party.individualId === complainant.individualId
+                        )
+                      )?.additionalDetails?.advocateName || docketNameOfFiling;
                   }
 
                   const documentPath = `${dynamicSectionNumber}.${
                     index + 1
                   }.3 ${
-                    submitBailApplication.applicationType
+                    messagesMap[submitBailApplication.applicationType]
                   } in ${dynamicSectionNumber}.${index + 1} ${
-                    application.applicationType
+                    messagesMap[application.applicationType]
                   } ${index + 1} in ${dynamicSectionNumber} ${section.section}`;
 
                   newFileStoreId = await applyDocketToDocument(

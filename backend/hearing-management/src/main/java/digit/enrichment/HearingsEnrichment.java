@@ -29,7 +29,7 @@ public class HearingsEnrichment {
         this.mdmsDataConfig = mdmsDataConfig;
     }
 
-    public List<HearingSearchResponse> enrichHearings(List<Hearing> hearingList, List<String> optOutDates) {
+    public List<HearingSearchResponse> enrichHearings(List<Hearing> hearingList) {
 
         try {
             log.info("Enriching hearings, result= IN_PROGRESS, request = {}", hearingList);
@@ -53,7 +53,7 @@ public class HearingsEnrichment {
             List<HearingSearchResponse> responseList = groupedByDate.entrySet().stream()
                     .map(entry -> HearingSearchResponse.builder()
                             .hearingDate(entry.getKey())
-                            .dayStatus(checkDayType(entry.getKey(), optOutDates))
+                            .dayStatus(checkDayType(entry.getKey()))
                             .noOfHearing(entry.getValue().size())
                             .hearingList(entry.getValue())
                             .build())
@@ -68,16 +68,11 @@ public class HearingsEnrichment {
         }
     }
 
-    private String checkDayType(String key, List<String> optOutDates) {
+    private String checkDayType(String key) {
         ;
         //check holiday
         if(mdmsDataConfig != null && mdmsDataConfig.getCourtHolidays().contains(key)){
             return HearingSlotStatus.COURT_NON_WORKING.getValue();
-        }
-
-        //check opted out day
-        if(optOutDates.contains(key)){
-            return HearingSlotStatus.OPTED_OUT.getValue();
         }
 
         return null;

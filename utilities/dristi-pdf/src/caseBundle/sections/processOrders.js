@@ -30,6 +30,7 @@ async function processOrders(
       {
         sortBy: section.sorton,
         order: "asc",
+        limit: 100,
       }
     );
 

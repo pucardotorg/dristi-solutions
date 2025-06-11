@@ -48,6 +48,7 @@ async function processTaskProcesses(
       {
         sortBy: "createdDate",
         order: "asc",
+        limit: 100,
       }
     );
 

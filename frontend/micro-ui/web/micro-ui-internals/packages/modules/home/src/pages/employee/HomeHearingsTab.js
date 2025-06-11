@@ -228,7 +228,7 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
                 if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
                   if (response?.HearingList[0]?.status === "SCHEDULED" || response?.HearingList[0]?.status === "PASSED_OVER") {
                     hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
-                      window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
+                      window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview&fromHome=true`;
                     });
                   } else {
                     showToast("error", t("ISSUE_IN_NEXT_START_HEARING"), 5000);
@@ -241,13 +241,13 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
               });
           } else {
             history.push(
-              `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
+              `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview&fromHome=true`
             );
           }
         }
       }
     },
-    [history, userType, tableData]
+    [tableData, history, userType, t]
   );
 
   const handleEditClick = useCallback(
@@ -257,11 +257,11 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
       if (isJudge || isTypist) {
         if (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") {
           history.push(
-            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
+            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`
           );
         } else {
           history.push(
-            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`,
+            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
             { openOrder: true }
           );
         }
@@ -284,7 +284,7 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
                 if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
                   hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
                     history.push(
-                      `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
+                      `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`
                     );
                   });
                   setLoader(false);
@@ -363,7 +363,7 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
                   if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
                     hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
                       history.push(
-                        `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
+                        `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`
                       );
                       setLoader(false);
                     });
@@ -505,7 +505,7 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
           <td>{idx + 1}</td>
           <td>
             <Link
-              to={`/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`}
+              to={`/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`}
             >
               <span className="case-link">{hearingDetails?.caseTitle || "-"}</span>
             </Link>

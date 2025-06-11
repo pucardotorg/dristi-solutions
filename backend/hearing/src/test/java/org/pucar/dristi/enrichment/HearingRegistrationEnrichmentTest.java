@@ -1,6 +1,7 @@
 package org.pucar.dristi.enrichment;
 
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
@@ -11,17 +12,17 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.IdgenUtil;
-import org.pucar.dristi.web.models.Document;
-import org.pucar.dristi.web.models.Hearing;
-import org.pucar.dristi.web.models.HearingRequest;
-import org.pucar.dristi.web.models.WorkflowObject;
+import org.pucar.dristi.util.WorkflowUtil;
+import org.pucar.dristi.web.models.*;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.pucar.dristi.config.ServiceConstants.CLOSE;
 
 class HearingRegistrationEnrichmentTest {
 
@@ -33,6 +34,9 @@ class HearingRegistrationEnrichmentTest {
 
     @Mock
     private Configuration configuration;
+
+    @Mock
+    private WorkflowUtil workflowUtil;
 
     @BeforeEach
     void setUp() {
@@ -153,5 +157,136 @@ class HearingRegistrationEnrichmentTest {
         assertThrows(CustomException.class, () -> {
             hearingRegistrationEnrichment.enrichHearingApplicationUponUpdate(hearingRequest);
         });
+    }
+
+
+
+    @Test
+    void shouldSetHearingDurationForValidWorkflow() throws Exception {
+        long now = System.currentTimeMillis();
+        List<ProcessInstance> mockInstances = Arrays.asList(
+
+                ProcessInstance.builder()
+                        .action("START")
+                        .auditDetails(new org.egov.tracer.model.AuditDetails(
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                1749634905635L,
+                                1749634905635L))
+                        .build(),
+
+                ProcessInstance.builder()
+                        .action("PASS_OVER")
+                        .auditDetails(new org.egov.tracer.model.AuditDetails(
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                1749634833883L,
+                                1749634833883L))
+                        .build(),
+
+                ProcessInstance.builder()
+                        .action("START")
+                        .auditDetails(new org.egov.tracer.model.AuditDetails(
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                1749634770796L,
+                                1749634770796L))
+                        .build(),
+
+                ProcessInstance.builder()
+                        .action("PASS_OVER")
+                        .auditDetails(new org.egov.tracer.model.AuditDetails(
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                1749634642831L,
+                                1749634642831L))
+                        .build(),
+
+                ProcessInstance.builder()
+                        .action("START")
+                        .auditDetails(new org.egov.tracer.model.AuditDetails(
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                1749634504050L,
+                                1749634504050L))
+                        .build()
+        );
+
+        HearingRequest mockHearingRequest = createMockHearingRequest();
+        WorkflowObject workflow = new WorkflowObject();
+        workflow.setAction(CLOSE);
+        mockHearingRequest.getHearing().setWorkflow(workflow);
+
+        when(workflowUtil.getProcessInstance(any(), any(), any()))
+                .thenReturn(mockInstances);
+
+        hearingRegistrationEnrichment.enrichHearingApplicationUponUpdate(mockHearingRequest);
+
+        assertNotNull(mockHearingRequest.getHearing().getHearingDurationInMillis());
+    }
+
+
+    @Test
+    void shouldSetHearingDurationNullIfAbandon() throws Exception {
+        long now = System.currentTimeMillis();
+        List<ProcessInstance> mockInstances = Arrays.asList(
+
+                ProcessInstance.builder()
+                        .action("START")
+                        .auditDetails(new org.egov.tracer.model.AuditDetails(
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                1749634905635L,
+                                1749634905635L))
+                        .build(),
+
+                ProcessInstance.builder()
+                        .action("PASS_OVER")
+                        .auditDetails(new org.egov.tracer.model.AuditDetails(
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                1749634833883L,
+                                1749634833883L))
+                        .build(),
+
+                ProcessInstance.builder()
+                        .action("ABANDON")
+                        .auditDetails(new org.egov.tracer.model.AuditDetails(
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                1749634770796L,
+                                1749634770796L))
+                        .build(),
+
+                ProcessInstance.builder()
+                        .action("PASS_OVER")
+                        .auditDetails(new org.egov.tracer.model.AuditDetails(
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                1749634642831L,
+                                1749634642831L))
+                        .build(),
+
+                ProcessInstance.builder()
+                        .action("START")
+                        .auditDetails(new org.egov.tracer.model.AuditDetails(
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                "a6a374d5-1a20-4577-9533-8c0f03705b8a",
+                                1749634504050L,
+                                1749634504050L))
+                        .build()
+        );
+
+        HearingRequest mockHearingRequest = createMockHearingRequest();
+        WorkflowObject workflow = new WorkflowObject();
+        workflow.setAction(CLOSE);
+        mockHearingRequest.getHearing().setWorkflow(workflow);
+
+        when(workflowUtil.getProcessInstance(any(), any(), any()))
+                .thenReturn(mockInstances);
+
+        hearingRegistrationEnrichment.enrichHearingApplicationUponUpdate(mockHearingRequest);
+
+        assertNull(mockHearingRequest.getHearing().getHearingDurationInMillis());
     }
 }

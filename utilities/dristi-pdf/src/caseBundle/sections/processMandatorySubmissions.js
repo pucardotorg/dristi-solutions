@@ -14,7 +14,8 @@ async function processMandatorySubmissions(
   tenantId,
   requestInfo,
   TEMP_FILES_DIR,
-  indexCopy
+  indexCopy,
+  messagesMap
 ) {
   const mandatorySubmissionsSection = filterCaseBundleBySection(
     caseBundleMaster,
@@ -101,7 +102,7 @@ async function processMandatorySubmissions(
                     TEMP_FILES_DIR
                   );
                   if (section.docketpagerequired === "yes") {
-                    const sourceUuid = application.createdBy;
+                    const sourceUuid = application.auditDetails.createdBy;
 
                     const sourceLitigant = courtCase.litigants?.find(
                       (litigant) =>
@@ -125,9 +126,7 @@ async function processMandatorySubmissions(
                       )
                         ? "COMPLAINANT"
                         : "ACCUSED";
-                    }
-
-                    if (sourceRepresentative) {
+                    } else if (sourceRepresentative) {
                       docketNameOfAdvocate =
                         sourceRepresentative.additionalDetails?.advocateName ||
                         "";
@@ -140,11 +139,26 @@ async function processMandatorySubmissions(
                         )
                           ? "COMPLAINANT"
                           : "ACCUSED";
+                    } else {
+                      const complainant = courtCase.litigants?.find(
+                        (litigant) =>
+                          litigant.partyType.includes("complainant.primary")
+                      );
+                      docketNameOfFiling =
+                        complainant.additionalDetails.fullName;
+                      docketNameOfAdvocate =
+                        courtCase.representatives?.find((adv) =>
+                          adv.representing?.find(
+                            (party) =>
+                              party.individualId === complainant.individualId
+                          )
+                        )?.additionalDetails?.advocateName ||
+                        docketNameOfFiling;
                     }
 
                     const documentPath = `${dynamicSectionNumber}.${
                       index + 1
-                    } ${application.applicationType} ${
+                    } ${messagesMap[application.applicationType]} ${
                       index + 1
                     } in ${dynamicSectionNumber} ${section.section}`;
 

@@ -12,6 +12,7 @@ import org.pucar.dristi.web.models.HearingRequest;
 import org.pucar.dristi.web.models.ProcessInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import java.util.List;
 import java.util.UUID;
@@ -68,7 +69,7 @@ public class HearingRegistrationEnrichment {
                 });
             }
 
-            if(null != hearing.getCourtCaseNumber())
+            if (null != hearing.getCourtCaseNumber())
                 hearing.setCaseReferenceNumber(hearing.getCourtCaseNumber());
             else
                 hearing.setCaseReferenceNumber(hearing.getCmpNumber());
@@ -109,6 +110,10 @@ public class HearingRegistrationEnrichment {
 
     private void enrichHearingDuration(HearingRequest hearingRequest) {
 
+        if (hearingRequest.getHearing().getWorkflow() == null || ObjectUtils.isEmpty(hearingRequest.getHearing().getWorkflow())) {
+            return;
+        }
+
         String workflowAction = hearingRequest.getHearing().getWorkflow().getAction();
 
         if (!CLOSE.equalsIgnoreCase(workflowAction)) {
@@ -117,6 +122,8 @@ public class HearingRegistrationEnrichment {
         try {
             // if hearing status moves to complete then, we need to calculate the duration
             List<ProcessInstance> processInstance = workflowUtil.getProcessInstance(hearingRequest.getRequestInfo(), hearingRequest.getHearing().getTenantId(), hearingRequest.getHearing().getHearingId());
+
+            log.info("ProcessInstance :: {}", processInstance.size());
             Long hearingDuration = 0L;
             for (int i = processInstance.size() - 1; i >= 0; i--) {
                 if (processInstance.get(i) != null) {
@@ -129,6 +136,8 @@ public class HearingRegistrationEnrichment {
                                     Long passOverTime = processInstance.get(j).getAuditDetails().getCreatedTime();
                                     Long startTime = processInstance.get(i).getAuditDetails().getCreatedTime();
                                     hearingDuration = hearingDuration + (passOverTime - startTime);
+                                    i--;
+                                    break;
 
                                 } else if (ABANDON.equalsIgnoreCase(otherAction)) {
                                     hearingDuration = null;
@@ -141,14 +150,18 @@ public class HearingRegistrationEnrichment {
                             break;
                         }
                     }
+                    else if (ABANDON.equalsIgnoreCase(action)) {
+                        hearingDuration = null;
+                        break;
+                    }
 
                 }
             }
 
-            if (hearingDuration != null ) {
+            if (hearingDuration != null) {
                 String action = processInstance.get(0).getAction();
                 if (START.equalsIgnoreCase(action)) {
-                    hearingDuration = hearingDuration + System.currentTimeMillis() - processInstance.get(0).getAuditDetails().getCreatedTime();
+                    hearingDuration = hearingDuration + (System.currentTimeMillis() - processInstance.get(0).getAuditDetails().getCreatedTime());
                 }
             }
 

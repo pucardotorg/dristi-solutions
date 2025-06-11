@@ -22,7 +22,8 @@ async function processPendingApplicationsSection(
   tenantId,
   requestInfo,
   TEMP_FILES_DIR,
-  indexCopy
+  indexCopy,
+  messagesMap
 ) {
   const pendingReviewApplicationSection = filterCaseBundleBySection(
     caseBundleMaster,
@@ -76,14 +77,32 @@ async function processPendingApplicationsSection(
       }
     );
 
+    const pendingDocUploadApplications = await search_application_v2(
+      tenantId,
+      requestInfo,
+      {
+        status: "DOCUMENT_UPLOAD",
+        courtId: courtCase.courtId,
+        filingNumber: courtCase.filingNumber,
+        tenantId,
+      },
+      {
+        sortBy: section.sorton,
+        order: "asc",
+      }
+    );
+
     // Combine both application lists
     const pendingReviewList =
       pendingReviewApplications?.data?.applicationList || [];
     const pendingApprovalList =
       pendingApprovalApplications?.data?.applicationList || [];
+    const pendingDocUploadList =
+      pendingDocUploadApplications?.data?.applicationList || [];
     const combinedApplicationList = [
       ...pendingReviewList,
       ...pendingApprovalList,
+      ...pendingDocUploadList,
     ];
 
     // Sort the combined list by applicationCMPNumber
@@ -102,9 +121,17 @@ async function processPendingApplicationsSection(
     if (applicationList?.length !== 0) {
       const pendingApplicationLineItems = await Promise.all(
         applicationList?.map(async (application, index) => {
-          const applicationFileStoreId = application?.documents?.find(
+          let applicationFileStoreId = application?.documents?.find(
             (doc) => doc?.documentType === "SIGNED"
           )?.fileStore;
+          if (
+            application.applicationType === "DELAY_CONDONATION" &&
+            !applicationFileStoreId
+          ) {
+            applicationFileStoreId = application?.documents?.find(
+              (doc) => doc?.documentType === "CONDONATION_DOC"
+            )?.fileStore;
+          }
           if (!applicationFileStoreId) {
             return null;
           }
@@ -112,7 +139,7 @@ async function processPendingApplicationsSection(
           let newApplicationFileStoreId = applicationFileStoreId;
 
           if (section.docketpagerequired === "yes") {
-            const sourceUuid = application.createdBy;
+            const sourceUuid = application.auditDetails.createdBy;
 
             const sourceLitigant = courtCase.litigants?.find(
               (litigant) => litigant.additionalDetails.uuid === sourceUuid
@@ -134,9 +161,7 @@ async function processPendingApplicationsSection(
               )
                 ? "COMPLAINANT"
                 : "ACCUSED";
-            }
-
-            if (sourceRepresentative) {
+            } else if (sourceRepresentative) {
               docketNameOfAdvocate =
                 sourceRepresentative.additionalDetails?.advocateName || "";
               docketNameOfFiling =
@@ -147,12 +172,23 @@ async function processPendingApplicationsSection(
                 )
                   ? "COMPLAINANT"
                   : "ACCUSED";
+            } else {
+              const complainant = courtCase.litigants?.find((litigant) =>
+                litigant.partyType.includes("complainant.primary")
+              );
+              docketNameOfFiling = complainant.additionalDetails.fullName;
+              docketNameOfAdvocate =
+                courtCase.representatives?.find((adv) =>
+                  adv.representing?.find(
+                    (party) => party.individualId === complainant.individualId
+                  )
+                )?.additionalDetails?.advocateName || docketNameOfFiling;
             }
 
             const documentPath = `${dynamicSectionNumber}.${index + 1}.1 ${
               section.Items
             } in ${dynamicSectionNumber}.${index + 1} ${
-              application.applicationType
+              messagesMap[application.applicationType]
             } in ${dynamicSectionNumber} ${section.section}`;
 
             newApplicationFileStoreId = await applyDocketToDocument(
