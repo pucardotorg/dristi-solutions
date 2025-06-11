@@ -374,7 +374,7 @@ const GenerateOrders = () => {
     [caseData]
   );
 
-  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
+  const caseCourtId = useMemo(() => caseDetails?.courtId || localStorage.getItem("courtId"), [caseDetails]);
 
   const { data: applicationData, isLoading: isApplicationDetailsLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
     {

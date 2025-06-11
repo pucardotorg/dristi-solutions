@@ -487,6 +487,8 @@ export const UICustomizations = {
             limit: requestCriteria?.state?.tableForm?.limit,
             offSet: requestCriteria?.state?.tableForm?.offset,
             ...(isIssueDate && filterList?.sortCaseListByDate),
+            sortBy: "lastmodifiedtime",
+            order: "desc",
           },
         },
         config: {
