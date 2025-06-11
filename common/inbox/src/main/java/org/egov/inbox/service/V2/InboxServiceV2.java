@@ -361,7 +361,7 @@ public class InboxServiceV2 {
         validator.validateSearchCriteria(tenantId, moduleName, moduleSearchCriteria);
         InboxQueryConfiguration inboxQueryConfiguration = mdmsUtil.getConfigFromMDMS(tenantId, moduleName);
         hashParamsWhereverRequiredBasedOnConfiguration(moduleSearchCriteria, inboxQueryConfiguration);
-        List<Data> data = getDataFromSimpleSearch(searchRequest, inboxQueryConfiguration.getIndex(),false);
+        List<Data> data = getDataFromSimpleSearch(searchRequest, inboxQueryConfiguration.getIndex());
         SearchResponse searchResponse = SearchResponse.builder().data(data).build();
         return searchResponse;
     }
@@ -406,24 +406,24 @@ public class InboxServiceV2 {
             searchCriteria.remove("searchableFields");
         }
 
-        List<Data> resultData = getDataFromSimpleSearch(searchRequest, config.getIndex(),true);
+        PaginatedDataResponse resultData = getDataFromSimpleSearchGroupByFilingNumber(searchRequest, config.getIndex());
        // List<Data> filteredData = deduplicateByFilingNumber(resultData);
+//
+//        Integer limit = searchRequest.getIndexSearchCriteria().getLimit();
+//        Integer offset = searchRequest.getIndexSearchCriteria().getOffset();
+//        searchRequest.getIndexSearchCriteria().setLimit(10000);
+//        searchRequest.getIndexSearchCriteria().setOffset(0);
+//
+//        List<Data> totalResultData = getDataFromSimpleSearch(searchRequest, config.getIndex(),true);
+//       // List<Data> totalFilteredData = deduplicateByFilingNumber(totalResultData);
+//
+//        searchRequest.getIndexSearchCriteria().setLimit(limit);
+//        searchRequest.getIndexSearchCriteria().setOffset(offset);
 
-        Integer limit = searchRequest.getIndexSearchCriteria().getLimit();
-        Integer offset = searchRequest.getIndexSearchCriteria().getOffset();
-        searchRequest.getIndexSearchCriteria().setLimit(10000);
-        searchRequest.getIndexSearchCriteria().setOffset(0);
-
-        List<Data> totalResultData = getDataFromSimpleSearch(searchRequest, config.getIndex(),true);
-       // List<Data> totalFilteredData = deduplicateByFilingNumber(totalResultData);
-
-        searchRequest.getIndexSearchCriteria().setLimit(limit);
-        searchRequest.getIndexSearchCriteria().setOffset(offset);
-
-        criteria.setCount(totalResultData.size());
+        criteria.setCount(resultData.getTotalSize());
 
         if (!criteria.getIsOnlyCountRequired()) {
-            criteria.setData(resultData);
+            criteria.setData(resultData.getRecords());
         }
 
         setter.accept(criteria);
@@ -457,8 +457,8 @@ public class InboxServiceV2 {
     }
 
 
-    private List<Data> getDataFromSimpleSearch(SearchRequest searchRequest, String index, Boolean isGroupByFilingNumber) {
-        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, isGroupByFilingNumber);
+    private List<Data> getDataFromSimpleSearch(SearchRequest searchRequest, String index) {
+        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, false);
         try {
             String q = mapper.writeValueAsString(finalQueryBody);
             log.info("Query: " + q);
@@ -469,6 +469,50 @@ public class InboxServiceV2 {
         Object result = serviceRequestRepository.fetchESResult(uri, finalQueryBody);
         List<Data> dataList = parseSearchResponseForSimpleSearch(result);
         return dataList;
+    }
+
+    private PaginatedDataResponse getDataFromSimpleSearchGroupByFilingNumber(SearchRequest searchRequest, String index) {
+        Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, true);
+        try {
+            String q = mapper.writeValueAsString(finalQueryBody);
+            log.info("Query: " + q);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        StringBuilder uri = getURI(index, SEARCH_PATH);
+        Object result = serviceRequestRepository.fetchESResult(uri, finalQueryBody);
+        return parseSearchResponseForSimpleSearchGroupByFilingNumber(result);
+    }
+
+    private PaginatedDataResponse parseSearchResponseForSimpleSearchGroupByFilingNumber(Object result) {
+        PaginatedDataResponse paginatedDataResponse = new PaginatedDataResponse();
+        Map<String, Object> hits = (Map<String, Object>) ((Map<String, Object>) result).get(HITS);
+
+        List<Map<String, Object>> nestedHits = (List<Map<String, Object>>) hits.get(HITS);
+        if (CollectionUtils.isEmpty(nestedHits)) {
+            return paginatedDataResponse;
+        }
+
+        int totalSize = 0;
+        Map<String, Object> aggregations = (Map<String, Object>) ((Map<String, Object>) result).get("aggregations");
+        Map<String, Object> uniqueFilingNumbers = (Map<String, Object>) aggregations.get("unique_filing_numbers");
+
+        totalSize = ((Number) uniqueFilingNumbers.get("value")).intValue();
+
+        List<Data> dataList = new ArrayList<>();
+        nestedHits.forEach(hit -> {
+            Data data = new Data();
+            Map<String, Object> sourceObject = (Map<String, Object>) hit.get(SOURCE_KEY);
+            Map<String, Object> dataObject = (Map<String, Object>) sourceObject.get(DATA_KEY);
+            List<Field> fields = getFieldsFromDataObject(dataObject);
+            data.setFields(fields);
+            dataList.add(data);
+        });
+
+        paginatedDataResponse.setRecords(dataList);
+        paginatedDataResponse.setTotalSize(totalSize);
+
+        return paginatedDataResponse;
     }
 
     private List<Data> parseSearchResponseForSimpleSearch(Object result) {

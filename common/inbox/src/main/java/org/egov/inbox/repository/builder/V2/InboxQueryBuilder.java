@@ -161,10 +161,16 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
         }
 
         if (isGroupByFilingNumber) {
-            Map<String, Object> collapseClause = new HashMap<>();
-            collapseClause.put("field", "Data.filingNumber.keyword");
+            Map<String, Object> cardinalityAgg = new HashMap<>();
+            cardinalityAgg.put("field", "Data.filingNumber.keyword");
 
-            baseEsQuery.put("collapse", collapseClause);
+            Map<String, Object> uniqueFilingNumbersAgg = new HashMap<>();
+            uniqueFilingNumbersAgg.put("cardinality", cardinalityAgg);
+
+            Map<String, Object> aggs = new HashMap<>();
+            aggs.put("unique_filing_numbers", uniqueFilingNumbersAgg);
+
+            baseEsQuery.put("aggs", aggs);
         }
 
         Map<String, Object> innerBoolClause = (HashMap<String, Object>) ((HashMap<String, Object>) baseEsQuery.get(QUERY_KEY)).get(BOOL_KEY);
