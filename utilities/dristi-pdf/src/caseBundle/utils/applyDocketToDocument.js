@@ -42,19 +42,37 @@ async function applyDocketToDocument(
     litigant.partyType.includes("complainant")
   );
 
-  const respondents = courtCase.litigants.filter((litigant) =>
-    litigant.partyType.includes("respondent")
-  );
+  const filteredRespondents =
+    courtCase.litigants?.filter((litigant) =>
+      litigant.partyType.includes("respondent")
+    ) || [];
+
+  const respondents =
+    filteredRespondents.length > 0
+      ? filteredRespondents
+      : courtCase?.additionalDetails?.respondentDetails?.formdata?.map(
+          (item) => item?.data
+        ) || [];
 
   const docketComplainantName = complainants
     .map((lit) => lit.additionalDetails.fullName)
     .filter(Boolean)
     .join(", ");
 
-  const docketAccusedName = respondents
-    .map((lit) => lit.additionalDetails.fullName)
-    .filter(Boolean)
-    .join(", ");
+  const docketAccusedName =
+    respondents
+      ?.map((lit) => lit?.additionalDetails?.fullName)
+      ?.filter(Boolean)
+      ?.join(", ") ||
+    respondents
+      ?.map(
+        ({ respondentFirstName, respondentMiddleName, respondentLastName }) =>
+          [respondentFirstName, respondentMiddleName, respondentLastName]
+            ?.filter(Boolean)
+            ?.join(" ")
+      )
+      ?.filter(Boolean)
+      ?.join(", ");
 
   const response = await search_mdms(
     courtCase.courtId,

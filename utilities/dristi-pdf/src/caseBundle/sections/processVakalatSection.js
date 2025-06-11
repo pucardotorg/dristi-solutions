@@ -21,6 +21,8 @@ async function processVakalatSection(
     "vakalat"
   );
 
+  const section = vakalatnamaSection[0];
+
   const sectionPosition = indexCopy.sections.findIndex(
     (s) => s.name === "vakalat"
   );
@@ -53,6 +55,7 @@ async function processVakalatSection(
             isActive: litigant.isActive,
             partyType: litigant.partyType,
             fileStoreId: fileStoreId,
+            docketApplicationType: "PIP AFFIDAVIT",
             representingFullName: litigant.additionalDetails.fullName,
             advocateFullName: litigant.additionalDetails.fullName,
             dateOfAddition: litigant.auditDetails.createdTime,
@@ -70,6 +73,9 @@ async function processVakalatSection(
               isActive: litigant.isActive,
               partyType: litigant.partyType,
               fileStoreId,
+              docketApplicationType: `${section.section.toUpperCase()} - ${
+                section.Items
+              }`,
               representingFullName: litigant.additionalDetails.fullName,
               advocateFullName: representative.additionalDetails.advocateName,
               dateOfAddition: representative.auditDetails.createdTime,
@@ -77,7 +83,7 @@ async function processVakalatSection(
           } else {
             // If already exists, append advocateFullName (avoid duplicates)
             const existing = vakalatMap.get(fileStoreId);
-            const newName = representative.additionalDetails.fullName;
+            const newName = representative.additionalDetails.advocateName;
             if (!existing.advocateFullName.includes(newName)) {
               existing.advocateFullName += `, ${newName}`;
             }
@@ -90,8 +96,6 @@ async function processVakalatSection(
 
     vakalats.sort((a, b) => b.dateOfAddition - a.dateOfAddition);
 
-    const section = vakalatnamaSection[0];
-
     const vakalatLineItems = await Promise.all(
       vakalats.map(async (vakalat, index) => {
         if (section.docketpagerequired === "yes") {
@@ -101,9 +105,7 @@ async function processVakalatSection(
           const mergedVakalatDocumentFileStoreId = await applyDocketToDocument(
             vakalat.fileStoreId,
             {
-              docketApplicationType: `${section.section.toUpperCase()} - ${
-                section.Items
-              }`,
+              docketApplicationType: vakalat.docketApplicationType,
               docketCounselFor: vakalat.partyType.includes("complainant")
                 ? "COMPLAINANT"
                 : "ACCUSED",
