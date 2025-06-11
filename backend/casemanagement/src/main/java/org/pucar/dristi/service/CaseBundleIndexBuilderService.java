@@ -311,6 +311,7 @@ public class CaseBundleIndexBuilderService {
 
                         Object pdfResponse =null;
                         try {
+                            Thread.sleep(5000);
                             pdfResponse = serviceRequestRepository.fetchResult(url, processCaseBundlePdfRequest);
                         } catch (Exception e) {
                             log.error("Error generating PDF", e);
