@@ -473,6 +473,15 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
     const structure = [];
 
+    if (affidavit223) {
+      structure.push({
+        id: "affidavit-223bnss",
+        title: "AFFIDAVIT_UNDER_SECTION_223_BNSS",
+        fileStoreId: affidavit223.fileStore,
+        hasChildren: false,
+      });
+    }
+
     if (affidavit225List.length > 0) {
       structure.push({
         id: "affidavit-225bnss",
@@ -484,15 +493,6 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           fileStoreId: doc.fileStore,
           hasChildren: false,
         })),
-      });
-    }
-
-    if (affidavit223) {
-      structure.push({
-        id: "affidavit-223bnss",
-        title: "AFFIDAVIT_UNDER_SECTION_223_BNSS",
-        fileStoreId: affidavit223.fileStore,
-        hasChildren: false,
       });
     }
 
@@ -544,7 +544,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const generateVakalatnamaStructure = (caseDetails) => {
     if (!caseDetails?.litigants) return [];
 
-    const fileStoreIds = new Set();
+    const fileStoreRecords = [];
 
     const litigants = caseDetails?.litigants?.map((litigant) => ({
       ...litigant,
@@ -552,24 +552,31 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         caseDetails?.representatives?.filter((rep) => rep?.representing?.some((c) => c?.individualId === litigant?.individualId)) || [],
     }));
 
+    const addedFileStoreIds = new Set();
+
     litigants?.forEach((litigant) => {
       const litigantFileStoreId = litigant?.documents?.[0]?.fileStore;
-      if (!litigant?.representatives?.length && litigantFileStoreId) {
-        fileStoreIds?.add(litigantFileStoreId);
+      if (!litigant?.representatives?.length && litigantFileStoreId && !addedFileStoreIds.has(litigantFileStoreId)) {
+        fileStoreRecords?.push({ fileStoreId: litigantFileStoreId, isPip: true });
+        addedFileStoreIds?.add(litigantFileStoreId);
       }
 
       for (const rep of litigant.representatives) {
         const updatedLitigant = rep?.representing?.find((lit) => lit?.individualId === litigant?.individualId);
         const repFileStoreId = updatedLitigant?.documents?.[0]?.fileStore;
-        if (repFileStoreId) {
-          fileStoreIds?.add(repFileStoreId);
+        if (repFileStoreId && !addedFileStoreIds?.has(repFileStoreId)) {
+          fileStoreRecords?.push({ fileStoreId: repFileStoreId, isPip: false });
+          addedFileStoreIds?.add(repFileStoreId);
         }
       }
     });
 
-    return Array.from(fileStoreIds)?.map((fileStoreId, index) => ({
+    let vakalatnamaCounter = 1;
+    let pipCounter = 1;
+
+    return fileStoreRecords.map(({ fileStoreId, isPip }, index) => ({
       id: `vakalatnama-${index}`,
-      title: `${t("VAKALATNAMA_HEADING")} ${index + 1}`,
+      title: isPip ? `${t("PIP_AFFIDAVIT_HEADING")} ${pipCounter++}` : `${t("VAKALATNAMA_HEADING")} ${vakalatnamaCounter++}`,
       fileStoreId,
       hasChildren: false,
     }));
@@ -713,20 +720,25 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           }))
       : [];
 
-    return [
-      {
+    const result = [];
+
+    if (depositions.length > 0) {
+      result.push({
         id: "court-depositions",
         title: "DEPOSITIONS_PDF_HEADING",
-        hasChildren: depositions?.length > 0,
+        hasChildren: true,
         children: depositions,
-      },
-      {
-        id: "court-evidences",
-        title: "EVIDENCES_PDF_HEADING",
-        hasChildren: evidences?.length > 0,
-        children: evidences,
-      },
-    ];
+      });
+    }
+
+    result.push({
+      id: "court-evidences",
+      title: "EVIDENCES_PDF_HEADING",
+      hasChildren: evidences.length > 0,
+      children: evidences,
+    });
+
+    return result;
   };
 
   useEffect(() => {
