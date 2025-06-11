@@ -1409,7 +1409,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
                 isEvidence: item?.isEvidence,
                 artifactNumber: item?.artifactNumber,
                 artifactList: item?.artifactList,
-                isEvidenceMenu: parentNumber?.startsWith("6") || false,
+                isEvidenceMenu: item?.id?.startsWith("evidence") || false,
               });
             }
           }}
