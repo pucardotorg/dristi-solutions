@@ -22,7 +22,8 @@ async function processPendingApplicationsSection(
   tenantId,
   requestInfo,
   TEMP_FILES_DIR,
-  indexCopy
+  indexCopy,
+  messagesMap
 ) {
   const pendingReviewApplicationSection = filterCaseBundleBySection(
     caseBundleMaster,
@@ -76,14 +77,32 @@ async function processPendingApplicationsSection(
       }
     );
 
+    const pendingDocUploadApplications = await search_application_v2(
+      tenantId,
+      requestInfo,
+      {
+        status: "DOCUMENT_UPLOAD",
+        courtId: courtCase.courtId,
+        filingNumber: courtCase.filingNumber,
+        tenantId,
+      },
+      {
+        sortBy: section.sorton,
+        order: "asc",
+      }
+    );
+
     // Combine both application lists
     const pendingReviewList =
       pendingReviewApplications?.data?.applicationList || [];
     const pendingApprovalList =
       pendingApprovalApplications?.data?.applicationList || [];
+    const pendingDocUploadList =
+      pendingDocUploadApplications?.data?.applicationList || [];
     const combinedApplicationList = [
       ...pendingReviewList,
       ...pendingApprovalList,
+      ...pendingDocUploadList,
     ];
 
     // Sort the combined list by applicationCMPNumber
@@ -160,7 +179,7 @@ async function processPendingApplicationsSection(
             const documentPath = `${dynamicSectionNumber}.${index + 1}.1 ${
               section.Items
             } in ${dynamicSectionNumber}.${index + 1} ${
-              application.applicationType
+              messagesMap[application.applicationType]
             } in ${dynamicSectionNumber} ${section.section}`;
 
             newApplicationFileStoreId = await applyDocketToDocument(
