@@ -14,6 +14,7 @@ import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import JudgementViewCard from "./JudgementViewCard";
 import ShowAllTranscriptModal from "../../../components/ShowAllTranscriptModal";
+import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 const CaseOverviewJudge = ({
   caseData,
   openHearingModule,
@@ -107,7 +108,7 @@ const CaseOverviewJudge = ({
     Boolean(filingNumber)
   );
 
-  const previousHearing = hearingRes?.HearingList?.filter((hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status)).sort(
+  const previousHearing = hearingRes?.HearingList?.filter((hearing) => [HearingWorkflowState?.COMPLETED, HearingWorkflowState?.ABANDONED].includes(hearing?.status)).sort(
     (hearing1, hearing2) => hearing2.endTime - hearing1.endTime
   );
 

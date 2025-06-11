@@ -9,6 +9,7 @@ const {
 const {
   duplicateExistingFileStore,
 } = require("../utils/duplicateExistingFileStore");
+const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
 
 async function processDisposedApplications(
   courtCase,
@@ -31,6 +32,15 @@ async function processDisposedApplications(
   const applicationOrderSection = filterCaseBundleBySection(
     caseBundleMaster,
     "applicationsorders"
+  );
+
+  const sectionPosition = indexCopy.sections.findIndex(
+    (s) => s.name === "applications"
+  );
+
+  const dynamicSectionNumber = getDynamicSectionNumber(
+    indexCopy,
+    sectionPosition
   );
 
   if (applicationSection?.length !== 0) {
@@ -102,9 +112,11 @@ async function processDisposedApplications(
                   : "ACCUSED";
             }
 
-            const documentPath = `11.${index + 1}.1 ${section.Items} in 11.${
-              index + 1
-            } ${application.applicationType} in 11 ${section.section}`;
+            const documentPath = `${dynamicSectionNumber}.${index + 1}.1 ${
+              section.Items
+            } in ${dynamicSectionNumber}.${index + 1} ${
+              application.applicationType
+            } in ${dynamicSectionNumber} ${section.section}`;
 
             newApplicationFileStoreId = await applyDocketToDocument(
               applicationFileStoreId,
@@ -196,11 +208,15 @@ async function processDisposedApplications(
                     docketCounselFor = "COMPLAINANT";
                   }
 
-                  const documentPath = `11.${index + 1}.2.${i + 1} Objection ${
-                    i + 1
-                  } in 11.${index + 1}.2 ${objectionSection.Items} in 11.${
+                  const documentPath = `${dynamicSectionNumber}.${
                     index + 1
-                  } ${application.applicationType} in 11 ${section.section}`;
+                  }.2.${i + 1} Objection ${i + 1} in ${dynamicSectionNumber}.${
+                    index + 1
+                  }.2 ${objectionSection.Items} in ${dynamicSectionNumber}.${
+                    index + 1
+                  } ${application.applicationType} in ${dynamicSectionNumber} ${
+                    section.section
+                  }`;
 
                   newObjectionDocumentFileStoreId = await applyDocketToDocument(
                     objectionDocumentFileStoreId,

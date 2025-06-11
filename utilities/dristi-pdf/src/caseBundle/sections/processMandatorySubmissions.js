@@ -6,6 +6,7 @@ const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
 const {
   combineMultipleFilestores,
 } = require("../utils/combineMultipleFilestores");
+const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
 
 async function processMandatorySubmissions(
   courtCase,
@@ -18,6 +19,15 @@ async function processMandatorySubmissions(
   const mandatorySubmissionsSection = filterCaseBundleBySection(
     caseBundleMaster,
     "mandatorysubmissions"
+  );
+
+  const sectionPosition = indexCopy.sections.findIndex(
+    (s) => s.name === "mandatorysubmissions"
+  );
+
+  const dynamicSectionNumber = getDynamicSectionNumber(
+    indexCopy,
+    sectionPosition
   );
 
   if (mandatorySubmissionsSection?.length !== 0) {
@@ -132,9 +142,11 @@ async function processMandatorySubmissions(
                           : "ACCUSED";
                     }
 
-                    const documentPath = `7.${index + 1} ${
-                      application.applicationType
-                    } ${index + 1} in 7 ${section.section}`;
+                    const documentPath = `${dynamicSectionNumber}.${
+                      index + 1
+                    } ${application.applicationType} ${
+                      index + 1
+                    } in ${dynamicSectionNumber} ${section.section}`;
 
                     const mandatorySubmissionsFileStoreId =
                       await applyDocketToDocument(

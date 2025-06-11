@@ -1,53 +1,25 @@
 import { InfoCard } from "@egovernments/digit-ui-components";
 import ButtonSelector from "@egovernments/digit-ui-module-dristi/src/components/ButtonSelector";
-import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
-import { taskService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import usePaymentProcess from "../../../../../home/src/hooks/usePaymentProcess";
 
-const JoinCasePayment = ({ filingNumber, taskNumber, setPendingTaskActionModals, refetch, type }) => {
+const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type }) => {
   const { t } = useTranslation();
 
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
-  const toast = useToast();
   const [isApiCalled, setIsApiCalled] = useState(false);
-
-  const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
-    {
-      criteria: [
-        {
-          filingNumber: filingNumber,
-        },
-      ],
-      tenantId,
-    },
-    {},
-    `case-details-${filingNumber}`,
-    filingNumber,
-    Boolean(filingNumber)
-  );
-
-  const caseDetails = useMemo(
-    () => ({
-      ...caseData?.criteria?.[0]?.responseList?.[0],
-    }),
-    [caseData]
-  );
-
-  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
   const { data: tasksData } = Digit.Hooks.hearings.useGetTaskList(
     {
       criteria: {
         tenantId: tenantId,
         taskNumber: taskNumber,
-        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
     taskNumber,
-    Boolean(taskNumber && caseCourtId)
+    Boolean(taskNumber)
   );
 
   const task = useMemo(() => tasksData?.list?.[0], [tasksData]);

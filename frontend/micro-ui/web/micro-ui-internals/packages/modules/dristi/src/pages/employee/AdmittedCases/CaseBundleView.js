@@ -77,6 +77,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     });
   };
 
+  const extractNumber = (cmpNumber) => {
+    const parts = cmpNumber.split("/");
+    return parts.length > 1 ? parseInt(parts[1], 10) : cmpNumber;
+  };
+
   const handleDocumentSelect = (docId, fileStoreId) => {
     setSelectedDocument(docId);
     setSelectedFileStoreId(fileStoreId);
@@ -95,7 +100,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     Boolean(filingNumber && courtId)
   );
 
-  const { data: applicationData, isLoading: isPendingReviewApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+  const { data: pendingReviewApplicationData, isLoading: isPendingReviewApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
       criteria: {
         status: "PENDINGREVIEW",
@@ -109,11 +114,44 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       },
     },
     {},
-    filingNumber + "allApplications",
-    filingNumber
+    `${filingNumber}-PENDINGREVIEW-application`,
+    Boolean(filingNumber)
   );
 
-  const applicationList = useMemo(() => applicationData?.applicationList, [applicationData]);
+  const { data: pendingApprovalApplicationData, isLoading: isPendingApprovalApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
+    {
+      criteria: {
+        status: "PENDINGAPPROVAL",
+        courtId: courtId,
+        filingNumber: filingNumber,
+        tenantId,
+      },
+      pagination: {
+        sortBy: "applicationCMPNumber",
+        order: "asc",
+      },
+    },
+    {},
+    `${filingNumber}-PENDINGAPPROVAL-application`,
+    Boolean(filingNumber)
+  );
+
+  const applicationList = useMemo(() => {
+    const pendingReviewList = pendingReviewApplicationData?.applicationList || [];
+    const pendingApprovalList = pendingApprovalApplicationData?.applicationList || [];
+
+    const applicationList = [...pendingReviewList, ...pendingApprovalList]?.sort((a, b) => {
+      if (!a?.applicationCMPNumber && !b?.applicationCMPNumber) return 0;
+      if (!a?.applicationCMPNumber) return 1;
+      if (!b?.applicationCMPNumber) return -1;
+
+      const aNum = extractNumber(a?.applicationCMPNumber);
+      const bNum = extractNumber(b?.applicationCMPNumber);
+
+      return aNum - bNum;
+    });
+    return applicationList;
+  }, [pendingReviewApplicationData, pendingApprovalApplicationData]);
 
   const {
     data: directEvidenceData,
@@ -305,8 +343,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       },
     },
     {},
-    filingNumber + "allApplications",
-    filingNumber
+    `${filingNumber}-COMPLETED-application`,
+    Boolean(filingNumber)
   );
 
   const disposedApplicationList = useMemo(() => disposedApplicationData?.applicationList, [disposedApplicationData]);
@@ -327,7 +365,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     },
     {},
     filingNumber + "bailApplicationsData",
-    filingNumber
+    Boolean(filingNumber)
   );
 
   const bailApplicationsList = useMemo(() => bailApplicationsData?.applicationList, [bailApplicationsData]);
@@ -1019,7 +1057,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         }
 
         groupedDocs[parentKey].push({
-          id: doc?.documentUid,
+          id: doc?.id,
           title: groupedDocs[parentKey]?.length > 0 ? `${title} ${groupedDocs[parentKey]?.length + 1}` : title,
           fileStoreId: doc?.fileStore,
           hasChildren: false,
@@ -1054,33 +1092,42 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     const accusedEvidenceChildren = generateAccusedEvidenceStructure(accusedEvidenceData);
     const courtEvidenceChildren = generateCourtEvidenceStructure(courtEvidenceData, courtEvidenceDepositionData);
 
-    const mainStructure = [
-      {
-        id: "pending-application",
-        title: "PENDING_APPLICATION",
-        hasChildren: pendingApplicationChildren?.length > 0,
-        number: 1,
-        children: pendingApplicationChildren,
-      },
+    const casePaymentFilestoreId = getFileStoreByType("PAYMENT_RECEIPT");
+
+    const paymentReceiptsChildren = casePaymentFilestoreId
+      ? [
+          {
+            id: "PAYMENT_RECEIPT",
+            title: "CASE_FILING_PAYMENT_RECEIPT",
+            fileStoreId: casePaymentFilestoreId,
+            hasChildren: false,
+          },
+        ]
+      : [];
+
+    const mainStructureRaw = [
       {
         id: "complaint",
         title: "COMPLAINT_PDF",
         fileStoreId: getFileStoreByType("case.complaint.signed"),
         hasChildren: false,
-        number: 2,
+      },
+      {
+        id: "pending-application",
+        title: "PENDING_APPLICATION",
+        hasChildren: pendingApplicationChildren?.length > 0,
+        children: pendingApplicationChildren,
       },
       {
         id: "initial-filing",
         title: "INITIAL_FILINGS",
-        hasChildren: true,
-        number: 3,
+        hasChildren: initialFilingChildren?.length > 0,
         children: initialFilingChildren,
       },
       {
         id: "affidavits",
         title: "AFFIDAVITS_PDF",
         hasChildren: true,
-        number: 4,
         children: [
           {
             id: "affidavit-225bnss",
@@ -1094,89 +1141,97 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
             fileStoreId: getFileStoreByType("case.affidavit.223bnss"),
             hasChildren: false,
           },
-        ].filter((child) => child?.fileStoreId), // Only include if fileStoreId exists
+        ].filter((child) => child?.fileStoreId),
       },
       {
         id: "vakalatnama",
         title: "VAKALATS",
         hasChildren: vakalatnamaChildren?.length > 0,
-        number: 5,
         children: vakalatnamaChildren,
       },
       {
         id: "evidence",
         title: "ADDITIONAL_FILINGS",
         hasChildren: evidenceChildren?.length > 0,
-        number: 6,
         children: evidenceChildren,
       },
       {
         id: "mandatory-submissions-responses",
         title: "MANDATORY_SUBMISSIONS",
         hasChildren: ordersData?.list?.length > 0,
-        number: 7,
         children: mandatorySubmissionsChildren,
       },
       {
         id: "complaint-evidence",
         title: "EVIDENCE_OF_COMPLAINANT",
         hasChildren: complaintEvidenceData?.artifacts?.length > 0,
-        number: 8,
         children: complaintEvidenceChildren,
       },
       {
         id: "accused-evidence",
         title: "EVIDENCE_OF_ACCUSED",
         hasChildren: accusedEvidenceData?.artifacts?.length > 0,
-        number: 9,
         children: accusedEvidenceChildren,
       },
       {
         id: "court-evidence",
         title: "COURT_EVIDENCE",
         hasChildren: courtEvidenceData?.artifacts?.length > 0,
-        number: 10,
         children: courtEvidenceChildren,
       },
       {
         id: "disposed-applications",
         title: "DISPOSED_APPLICATIONS_PDF",
         hasChildren: disposedApplicationList?.length > 0,
-        number: 11,
         children: disposedApplicationChildren,
       },
       {
         id: "bail-applications",
         title: "BAIL_APPLICATIONS_PDF",
         hasChildren: bailApplicationsList?.length > 0,
-        number: 12,
         children: bailApplicationChildren,
       },
       {
         id: "processes",
         title: "PROCESSES_CASE_PDF",
         hasChildren: processChildren?.length > 0,
-        number: 13,
         children: processChildren,
       },
       {
         id: "payment-receipt",
         title: "PAYMENT_RECEIPT_CASE_PDF",
-        fileStoreId: getFileStoreByType("PAYMENT_RECEIPT"),
-        hasChildren: false,
-        number: 14,
+        hasChildren: paymentReceiptsChildren?.length > 0,
+        children: paymentReceiptsChildren,
       },
       {
         id: "orders",
         title: "ORDERS_CASE_PDF",
         hasChildren: publishedOrderData?.length > 0,
-        number: 15,
         children: publishedOrderChildren,
       },
     ];
 
+    // Filter and assign correct numbers
+    const mainStructure = mainStructureRaw
+      ?.filter((item) => {
+        // If it has children, make sure they exist
+        if (item?.hasChildren && Array.isArray(item?.children)) {
+          return item?.children?.length > 0;
+        }
+        // For leaf nodes, check fileStoreId
+        if (!item?.hasChildren && item?.fileStoreId) {
+          return true;
+        }
+        return false;
+      })
+      ?.map((item, index) => ({
+        ...item,
+        number: index + 1,
+      }));
+
     return mainStructure;
   };
+
   useEffect(() => {
     const handleClickOutside = () => setContextMenu(null);
     window?.addEventListener("click", handleClickOutside);
@@ -1200,6 +1255,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     isBailApplicationLoading ||
     isHearingLoading ||
     isPendingReviewApplicationLoading ||
+    isPendingApprovalApplicationLoading ||
     isMandatoryOrdersLoading
   ) {
     return (
@@ -1288,7 +1344,14 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
       {/* Right Content Area - Independent scrolling */}
       <div className="doc-viewer-container">
-        <MemoDocViewerWrapper tenantId={tenantId} fileStoreId={selectedFileStoreId} showDownloadOption={false} docHeight="100%" docWidth="100%" />
+        <MemoDocViewerWrapper
+          tenantId={tenantId}
+          fileStoreId={selectedFileStoreId}
+          showDownloadOption={false}
+          docHeight="100%"
+          docWidth="100%"
+          docViewerStyle={{ maxWidth: "100%" }}
+        />
       </div>
       {contextMenu && (
         <div

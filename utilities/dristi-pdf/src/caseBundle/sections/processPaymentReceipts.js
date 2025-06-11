@@ -2,6 +2,7 @@ const {
   filterCaseBundleBySection,
 } = require("../utils/filterCaseBundleBySection");
 const { applyDocketToDocument } = require("../utils/applyDocketToDocument");
+const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
 
 async function processPaymentReceipts(
   courtCase,
@@ -14,6 +15,15 @@ async function processPaymentReceipts(
   const paymentReceiptSection = filterCaseBundleBySection(
     caseBundleMaster,
     "paymentreceipts"
+  );
+
+  const sectionPosition = indexCopy.sections.findIndex(
+    (s) => s.name === "paymentreceipts"
+  );
+
+  const dynamicSectionNumber = getDynamicSectionNumber(
+    indexCopy,
+    sectionPosition
   );
 
   if (paymentReceiptSection?.length !== 0) {
@@ -46,7 +56,7 @@ async function processPaymentReceipts(
             docketDateOfSubmission: new Date(
               courtCase.registrationDate
             ).toLocaleDateString("en-IN"),
-            documentPath: `14 ${section.section}`,
+            documentPath: `${dynamicSectionNumber}.1 Case Filing Payment in ${dynamicSectionNumber} ${section.section}`,
           },
           courtCase,
           tenantId,
