@@ -86,13 +86,15 @@ function useInboxSearch({ limit = 300, offset = 0 } = {}) {
 const today = new Date();
 const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
 
-const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHearingCount = () => {}, setLoader = () => {} }) => {
-  const [filters, setFilters] = useState({
-    date: todayStr,
-    status: "",
-    purpose: "",
-    caseQuery: "",
-  });
+const HomeHearingsTab = ({
+  t,
+  showEndHearingModal,
+  setShowEndHearingModal,
+  setHearingCount = () => {},
+  setLoader = () => {},
+  setFilters = () => {},
+  filters,
+}) => {
   const history = useHistory();
 
   const { data: tableData, loading, error, fetchInbox } = useInboxSearch();
@@ -148,7 +150,7 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
   const statusOptions = useMemo(() => {
     return (
       hearingTypeOptions?.Hearing?.HearingStatus?.map((status) => ({
-        id: status?.id, // include id for sorting
+        id: status?.id,
         code: status?.code,
         name: status?.code !== "IN_PROGRESS" ? status?.code : "ON_GOING_HEARING",
       }))?.sort((a, b) => a.id - b.id) || []
@@ -227,7 +229,9 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
               .then((response) => {
                 if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
                   if (response?.HearingList[0]?.status === "SCHEDULED" || response?.HearingList[0]?.status === "PASSED_OVER") {
-                    hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
+                    hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
+                      //need to fetch latest and avoid navigation
+                      // if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
                       window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
                     });
                   } else {
@@ -282,12 +286,14 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
               )
               .then((response) => {
                 if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
-                  hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
-                    history.push(
-                      `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
-                    );
+                  hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
+                    if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+
+                    // history.push(
+                    //   `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
+                    // );
+                    setLoader(false);
                   });
-                  setLoader(false);
                 } else {
                   setLoader(false);
                   showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
@@ -361,10 +367,12 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
                 )
                 .then((response) => {
                   if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
-                    hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
-                      history.push(
-                        `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
-                      );
+                    hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
+                      if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+
+                      // history.push(
+                      //   `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
+                      // );
                       setLoader(false);
                     });
                   } else {
