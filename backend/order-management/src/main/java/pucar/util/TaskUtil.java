@@ -256,6 +256,12 @@ public class TaskUtil {
             TaskDetails taskDetailsClone = objectMapper.convertValue(taskDetails, TaskDetails.class);
             String channelType = channel.get("type").toString();
             String channelValue = channel.get("code").toString();
+            Object valueObject = channel.get("value");
+
+            if (valueObject instanceof Map) {
+                Address address = objectMapper.convertValue(valueObject, Address.class);
+                taskPaymentCriteria.setReceiverPincode(address.getPinCode());
+            }
 
             taskPaymentCriteria.setChannelId(channelValue);
 
