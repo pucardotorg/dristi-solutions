@@ -8,7 +8,6 @@ import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import { Loader } from "@egovernments/digit-ui-react-components";
-const MemoDocViewerWrapper = React.memo(DocViewerWrapper);
 
 function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const [expandedItems, setExpandedItems] = useState({
@@ -26,6 +25,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     },
   };
 
+  const userInfo = Digit.UserService.getUser()?.info;
+  const isJudge = useMemo(() => userInfo?.roles?.some((role) => ["JUDGE_ROLE"].includes(role?.code)), [userInfo?.roles]);
   const [selectedDocument, setSelectedDocument] = useState("complaint");
   const [selectedFileStoreId, setSelectedFileStoreId] = useState(null);
   const [disposedApplicationChildren, setDisposedApplicationChildren] = useState([]);
@@ -1282,6 +1283,20 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     window?.addEventListener("click", handleClickOutside);
     return () => window?.removeEventListener("click", handleClickOutside);
   }, []);
+  const MemoDocViewerWrapper = useMemo(
+    () => (
+      <DocViewerWrapper
+        key={"selectedFileStoreId"}
+        tenantId={tenantId}
+        fileStoreId={selectedFileStoreId}
+        showDownloadOption={false}
+        docHeight="100%"
+        docWidth="100%"
+        docViewerStyle={{ maxWidth: "100%" }}
+      />
+    ),
+    [selectedFileStoreId, tenantId]
+  );
 
   const dynamicCaseFileStructure = generateCaseFileStructure(caseDetails?.documents || []);
 
@@ -1388,16 +1403,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       </div>
 
       {/* Right Content Area - Independent scrolling */}
-      <div className="doc-viewer-container">
-        <MemoDocViewerWrapper
-          tenantId={tenantId}
-          fileStoreId={selectedFileStoreId}
-          showDownloadOption={false}
-          docHeight="100%"
-          docWidth="100%"
-          docViewerStyle={{ maxWidth: "100%" }}
-        />
-      </div>
+      <div className="doc-viewer-container">{MemoDocViewerWrapper}</div>
       {contextMenu && (
         <div
           className="context-menu"
@@ -1416,7 +1422,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           >
             {t("DOWNLOAD_PDF")}
           </div>
-          {contextMenu?.isEvidenceMenu && contextMenu?.isEvidence === false && (
+          {isJudge && contextMenu?.isEvidenceMenu && contextMenu?.isEvidence === false && (
             <div style={{ padding: "10px", cursor: "pointer" }} onClick={handleMarkAsEvidence}>
               {t("MARK_AS_EVIDENCE")}
             </div>
