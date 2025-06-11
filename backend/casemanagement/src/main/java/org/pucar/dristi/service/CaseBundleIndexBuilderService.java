@@ -320,6 +320,9 @@ public class CaseBundleIndexBuilderService {
                         processCaseBundlePdfRequest.setRequestInfo(requestInfo);
                         processCaseBundlePdfRequest.setCaseId(caseID);
                         processCaseBundlePdfRequest.setIndex(indexJson);
+                        if (stateName == null) {
+                            stateName = "default";
+                        }
                         processCaseBundlePdfRequest.setState(stateName);
                         processCaseBundlePdfRequest.setTenantId(tenantId);
                         StringBuilder url = new StringBuilder();
