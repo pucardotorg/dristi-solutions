@@ -86,6 +86,7 @@ public class EvidenceEnrichment {
         CaseSearchRequest caseSearchRequest = createCaseSearchRequest(
                 evidenceRequest.getRequestInfo(), evidenceRequest.getArtifact().getFilingNumber());
 
+        caseSearchRequest.getRequestInfo().getUserInfo().setType(EMPLOYEE_UPPER);
         JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
 
         if (caseDetails == null || caseDetails.isEmpty()) {

@@ -233,6 +233,7 @@ const HomeHearingsTab = ({
                       //need to fetch latest and avoid navigation
                       // if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
                       window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
+
                     });
                   } else {
                     showToast("error", t("ISSUE_IN_NEXT_START_HEARING"), 5000);
@@ -245,13 +246,13 @@ const HomeHearingsTab = ({
               });
           } else {
             history.push(
-              `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
+              `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview&fromHome=true`
             );
           }
         }
       }
     },
-    [history, userType, tableData]
+    [tableData, history, userType, t]
   );
 
   const handleEditClick = useCallback(
@@ -261,11 +262,11 @@ const HomeHearingsTab = ({
       if (isJudge || isTypist) {
         if (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") {
           history.push(
-            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
+            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`
           );
         } else {
           history.push(
-            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`,
+            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
             { openOrder: true }
           );
         }
@@ -293,6 +294,7 @@ const HomeHearingsTab = ({
                     //   `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
                     // );
                     setLoader(false);
+
                   });
                 } else {
                   setLoader(false);
@@ -373,6 +375,7 @@ const HomeHearingsTab = ({
                       // history.push(
                       //   `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
                       // );
+
                       setLoader(false);
                     });
                   } else {
@@ -513,7 +516,7 @@ const HomeHearingsTab = ({
           <td>{idx + 1}</td>
           <td>
             <Link
-              to={`/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`}
+              to={`/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`}
             >
               <span className="case-link">{hearingDetails?.caseTitle || "-"}</span>
             </Link>
