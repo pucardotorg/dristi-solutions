@@ -198,7 +198,6 @@ export const documentLabels = {
 
 export const caseFileLabels = {
   "case.authorizationproof.complainant": "COMPLAINANT_AUTHORIZATION_PROOF",
-  "case.affidavit.225bnss": "INQUIRY_AFFIDAVIT",
   "case.authorizationproof.accused": "ACCUSED_AUTHORIZATION_PROOF",
   "case.cheque": "DISHONORED_CHEQUE",
   "case.cheque.depositslip": "PROOF_OF_DEPOSIT_OF_CHEQUE",

@@ -466,6 +466,39 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     }))
   );
 
+  const generateAffidavitStructure = (docs) => {
+    const affidavit225List = docs.filter((doc) => doc?.documentType === "case.affidavit.225bnss" && doc?.fileStore);
+
+    const affidavit223 = docs.find((doc) => doc?.documentType === "case.affidavit.223bnss" && doc?.fileStore);
+
+    const structure = [];
+
+    if (affidavit225List.length > 0) {
+      structure.push({
+        id: "affidavit-225bnss",
+        title: "AFFIDAVIT_UNDER_225",
+        hasChildren: true,
+        children: affidavit225List.map((doc, index) => ({
+          id: `affidavit-225-${index + 1}`,
+          title: `${t("AFFIDAVIT")} ${index + 1}`,
+          fileStoreId: doc.fileStore,
+          hasChildren: false,
+        })),
+      });
+    }
+
+    if (affidavit223) {
+      structure.push({
+        id: "affidavit-223bnss",
+        title: "AFFIDAVIT_UNDER_SECTION_223_BNSS",
+        fileStoreId: affidavit223.fileStore,
+        hasChildren: false,
+      });
+    }
+
+    return structure;
+  };
+
   const generatePendingApplicationStructure = (applications) => {
     return applications?.map((application) => {
       const signedDoc = application?.documents?.find((doc) => doc?.documentType === "SIGNED" || doc?.documentType === "CONDONATION_DOC");
@@ -1086,6 +1119,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       return doc ? doc?.fileStore : null;
     };
 
+    const affidavitChildren = generateAffidavitStructure(docs);
     const pendingApplicationChildren = generatePendingApplicationStructure(applicationList);
     const vakalatnamaChildren = generateVakalatnamaStructure(caseDetails);
     const complaintEvidenceChildren = generateCompliantEvidenceStructure(complaintEvidenceData);
@@ -1127,22 +1161,10 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       {
         id: "affidavits",
         title: "AFFIDAVITS_PDF",
-        hasChildren: true,
-        children: [
-          {
-            id: "affidavit-225bnss",
-            title: "AFFIDAVIT_UNDER_SECTION_255_BNSS",
-            fileStoreId: getFileStoreByType("case.affidavit.225bnss"),
-            hasChildren: false,
-          },
-          {
-            id: "affidavit-223bnss",
-            title: "AFFIDAVIT_UNDER_SECTION_223_BNSS",
-            fileStoreId: getFileStoreByType("case.affidavit.223bnss"),
-            hasChildren: false,
-          },
-        ].filter((child) => child?.fileStoreId),
+        hasChildren: affidavitChildren.length > 0,
+        children: affidavitChildren,
       },
+
       {
         id: "vakalatnama",
         title: "VAKALATS",
