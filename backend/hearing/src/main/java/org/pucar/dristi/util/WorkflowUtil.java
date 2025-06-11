@@ -204,7 +204,7 @@ public class WorkflowUtil {
         url.append(configs.getWfProcessInstanceSearchPath());
         url.append("?tenantId=").append(tenantId);
         url.append("&businessIds=").append(businessService);
-        url.append("&isHistory=true");
+        url.append("&history=true");
         return url;
     }
 }
