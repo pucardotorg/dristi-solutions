@@ -29,7 +29,6 @@ public class ProcessCaseBundlePdfRequest {
     private String tenantId = null;
 
     @JsonProperty("state")
-    @NonNull
     private String state = null;
 
     @JsonProperty("caseId")
