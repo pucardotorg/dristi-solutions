@@ -15,6 +15,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.common.models.individual.AdditionalFields;
+import org.egov.common.models.individual.Address;
 import org.egov.common.models.individual.Field;
 import org.egov.common.models.individual.Identifier;
 import org.egov.tracer.model.CustomException;
@@ -2618,17 +2619,78 @@ public class CaseService {
                         List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, joinCaseLitigant.getIndividualId());
                         Individual individual = individualsList.get(0);
 
-                        dataNode.put("respondentFirstName", individual.getName().getGivenName() == null ? "" : individual.getName().getGivenName());
-                        dataNode.put("respondentMiddleName", individual.getName().getOtherNames() == null ? "" : individual.getName().getOtherNames());
-                        dataNode.put("respondentLastName", individual.getName().getFamilyName() == null ? "" : individual.getName().getFamilyName());
+                        if (dataNode.has("addressDetails") && dataNode.get("addressDetails").isArray()) {
+                            ArrayNode addressDetailsArray = (ArrayNode) dataNode.get("addressDetails");
+
+                            ObjectNode newAddressDetails = objectMapper.createObjectNode();
+
+                            if(individual.getAddress()!=null && !individual.getAddress().isEmpty()) {
+                                ObjectNode addressDetailsObj = objectMapper.createObjectNode();
+                                Address address = individual.getAddress().get(0);
+                                addressDetailsObj.put("pincode",address.getPincode());
+                                addressDetailsObj.put("city", address.getCity());
+                                 if (address.getLocality() != null && address.getLocality().getName() != null) {
+                                     addressDetailsObj.put("locality", address.getLocality().getName());
+                                 }
+                                newAddressDetails.set("addressDetails", addressDetailsObj);
+                                newAddressDetails.put("id", UUID.randomUUID().toString());
+
+                                addressDetailsArray.add(newAddressDetails);
+                            }
+                        }
+                        updateMobilenumber(dataNode,individual);
 
                         // Insert respondentVerification into the dataNode
                         dataNode.set("respondentVerification", respondentVerificationNode);
+
                     }
                 }
             }
         }
         return objectMapper.convertValue(additionalDetailsNode, additionalDetails.getClass());
+    }
+
+    private void updateMobilenumber(ObjectNode dataNode, Individual individual) {
+        if (dataNode.has("phonenumbers")) {
+            ObjectNode phonenumbersNode = (ObjectNode) dataNode.get("phonenumbers");
+
+            if (phonenumbersNode.has("mobileNumber") && phonenumbersNode.get("mobileNumber").isArray()) {
+                ArrayNode mobileNumberArray = (ArrayNode) phonenumbersNode.get("mobileNumber");
+
+                boolean numberExists = false;
+                for (JsonNode numberNode : mobileNumberArray) {
+                    if (numberNode.asText().equals(individual.getMobileNumber())) {
+                        numberExists = true;
+                        break;
+                    }
+                }
+
+                if (!numberExists) {
+                    mobileNumberArray.add(individual.getMobileNumber());
+                    log.info("Mobile number added to mobileNumber array.");
+                } else {
+                    log.info("Mobile number already exists.");
+                }
+
+            } else {
+                // Create mobileNumber array and add the number
+                ArrayNode mobileNumberArray = objectMapper.createArrayNode();
+                mobileNumberArray.add(individual.getMobileNumber());
+                phonenumbersNode.set("mobileNumber", mobileNumberArray);
+                log.info("mobileNumber array created and mobile number added.");
+            }
+
+        } else {
+            // Create phonenumbers object and add mobileNumber array
+            ObjectNode phonenumbersNode = objectMapper.createObjectNode();
+            ArrayNode mobileNumberArray = objectMapper.createArrayNode();
+            mobileNumberArray.add(individual.getMobileNumber());
+
+            phonenumbersNode.set("mobileNumber", mobileNumberArray);
+            dataNode.set("phonenumbers", phonenumbersNode);
+            log.info("phonenumbers object created with mobile number.");
+        }
+
     }
 
     public void mapAndSetLitigants(JoinCaseDataV2 joinCaseData, CourtCase caseObj, CourtCase courtCase, RequestInfo requestInfo) {
