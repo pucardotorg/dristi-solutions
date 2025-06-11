@@ -456,6 +456,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           pagination: {
             sortBy: "createdDate",
             order: "asc",
+            limit: 100,
           },
         });
 
