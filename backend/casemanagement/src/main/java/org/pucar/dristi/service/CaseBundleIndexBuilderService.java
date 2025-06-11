@@ -65,6 +65,21 @@ public class CaseBundleIndexBuilderService {
         return !mdmsData.isEmpty();
     }
 
+    public Boolean isDelayRequired(String moduleName, String businessService, String state,String tenantID, RequestInfo requestInfo){
+
+        Map<String, String> filters = new HashMap<>();
+        filters.put("state", state);
+        filters.put("moduleName",moduleName);
+        filters.put("businessservice",businessService);
+
+        List<Mdms> mdmsData = mdmsV2Util.fetchMdmsV2Data(requestInfo,tenantID,null,null,configuration.getStateMasterSchema(),true,filters);
+
+        JsonNode dataNode = mdmsData.get(0).getData();
+
+        return dataNode != null && dataNode.has("isDelayRequired") && dataNode.get("isDelayRequired").asBoolean();
+
+    }
+
     public String getCaseNumber(RequestInfo requestInfo, String filingNumber, String tenantId) {
         String caseId=null;
         CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
@@ -188,8 +203,9 @@ public class CaseBundleIndexBuilderService {
 
         Boolean isValid = isValidState(moduleName, businessService, stateName, tenantId,requestInfo);
         if(isValid){
+            boolean isDelayRequired = isDelayRequired(moduleName, businessService, stateName, tenantId, requestInfo);
             filingNumber = getFilingNumberFromBusinessId(businessId, moduleName);
-            enrichCaseBundlePdfIndex(requestInfo, filingNumber, tenantId, stateName);
+            enrichCaseBundlePdfIndex(requestInfo, filingNumber, tenantId, stateName, isDelayRequired);
         }
 
 
@@ -228,7 +244,7 @@ public class CaseBundleIndexBuilderService {
         String stateName = extractStatus(record);
 
         if (canCaseBundleEnrich) {
-            enrichCaseBundlePdfIndex(requestInfo, filingNumber, tenantId, stateName);
+            enrichCaseBundlePdfIndex(requestInfo, filingNumber, tenantId, stateName, false);
         }
 
 
@@ -276,7 +292,7 @@ public class CaseBundleIndexBuilderService {
     }
 
 
-    private void enrichCaseBundlePdfIndex(RequestInfo requestInfo, String businessId, String tenantId, String stateName) {
+    private void enrichCaseBundlePdfIndex(RequestInfo requestInfo, String businessId, String tenantId, String stateName , boolean isDelayRequired) {
 
             String caseID = getCaseNumber(requestInfo,businessId,tenantId);
             if(caseID!=null){
@@ -311,7 +327,9 @@ public class CaseBundleIndexBuilderService {
 
                         Object pdfResponse =null;
                         try {
-                            Thread.sleep(5000);
+                            if (isDelayRequired) {
+                                Thread.sleep(5000);
+                            }
                             pdfResponse = serviceRequestRepository.fetchResult(url, processCaseBundlePdfRequest);
                         } catch (Exception e) {
                             log.error("Error generating PDF", e);
