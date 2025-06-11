@@ -142,8 +142,8 @@ public class EvidenceService {
                 case EMPLOYEE_UPPER -> {
                     searchCriteria.setIsCourtEmployee(true);
                     searchCriteria.setUserUuid(userInfo.getUuid());
-                    if(requestInfo.getUserInfo().getRoles().contains(Role.builder().name(BENCH_CLERK).code(BENCH_CLERK).tenantId(searchCriteria.getTenantId()).build())) {
-                        searchCriteria.setBenchClerk(true);
+                    if(canCourtEmployeeSign(searchCriteria, requestInfo)) {
+                        searchCriteria.setCourtEmployeeCanSign(true);
                     }
                 }
             }
