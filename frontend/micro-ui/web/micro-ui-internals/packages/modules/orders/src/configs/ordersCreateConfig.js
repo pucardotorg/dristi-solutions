@@ -3500,6 +3500,55 @@ export const configsCreateOrderWarrant = [
       },
       {
         isMandatory: true,
+        key: "warrantSubType",
+        type: "dropdown",
+        label: "WARRANT_SUB_TYPE",
+        disable: false,
+        populators: {
+          name: "warrantSubType",
+          optionsKey: "subType",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%" },
+          optionsCustomStyle: {
+            height: "30vh",
+            marginTop: "42px",
+            overflowY: "auto",
+          },
+          mdmsConfig: {
+            moduleName: "Order",
+            masterName: "warrantSubType",
+            select: `(data) => {
+              const list = data?.Order?.warrantSubType || [];
+              return list.sort((a, b) => {
+                const getPriority = (val) => {
+                  if (val === "NO") return 0;
+                  if (val === "YES") return 2;
+                  return 1;
+                };
+                return getPriority(a.belowOthers) - getPriority(b.belowOthers);
+              });
+            }`,
+          },
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "warrantText",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "warrantText",
+              textAreaSubHeader: "Warrant Text",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        isMandatory: true,
         type: "component",
         component: "SelectUserTypeComponent",
         key: "bailInfo",
