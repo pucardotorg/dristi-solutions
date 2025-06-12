@@ -783,7 +783,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
     const result = [];
 
-    if (depositions.length > 0) {
+    if (depositions?.length > 0) {
       result.push({
         id: "court-depositions",
         title: "DEPOSITIONS_PDF_HEADING",
@@ -792,12 +792,14 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       });
     }
 
-    result.push({
-      id: "court-evidences",
-      title: "EVIDENCES_PDF_HEADING",
-      hasChildren: evidences.length > 0,
-      children: evidences,
-    });
+    if (evidences?.length > 0) {
+      result.push({
+        id: "court-evidences",
+        title: "EVIDENCES_PDF_HEADING",
+        hasChildren: evidences?.length > 0,
+        children: evidences,
+      });
+    }
 
     return result;
   };
@@ -1270,7 +1272,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       {
         id: "court-evidence",
         title: "COURT_EVIDENCE",
-        hasChildren: courtEvidenceData?.artifacts?.length > 0,
+        hasChildren: courtEvidenceData?.artifacts?.length > 0 || courtEvidenceDepositionData?.artifacts?.length > 0,
         children: courtEvidenceChildren,
       },
       {
