@@ -262,7 +262,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
             await ordersService.updateOrder(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
             setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
           } catch (error) {
-            console.log("error", error);
+            console.error("error", error);
           }
         } else {
           const payload = {
@@ -311,7 +311,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
             await ordersService.createOrder(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
             setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
           } catch (error) {
-            console.log("error", error);
+            console.error("error", error);
           }
         }
       } else if (type === "add-other-items") {
@@ -342,7 +342,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
               `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
             );
           } catch (error) {
-            console.log("error", error);
+            console.error("error", error);
           }
         } else {
           const payload = {
@@ -393,7 +393,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
               `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
             );
           } catch (error) {
-            console.log("error", error);
+            console.error("error", error);
           }
         }
       }

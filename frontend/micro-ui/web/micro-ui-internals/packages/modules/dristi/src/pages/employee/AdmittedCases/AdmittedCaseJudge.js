@@ -332,7 +332,7 @@ const AdmittedCaseJudge = () => {
       const res = await HomeService.InboxSearch(payload, { tenantId: "kl" });
       setData(res?.items || []);
     } catch (err) {
-      console.log("error", err);
+      console.error("error", err);
     } finally {
     }
   }, []);
