@@ -22,9 +22,9 @@ const Inbox = ({ tenants, parentRoute }) => {
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
-  const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   let homePath = `/${window?.contextPath}/${userInfoType}/home/home-pending-task`;
   if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userInfoType}/home/home-screen`;
   const history = useHistory();
@@ -41,7 +41,9 @@ const Inbox = ({ tenants, parentRoute }) => {
     userType: defaultType,
     ulb: tenants?.find((tenant) => tenant?.code === tenantId),
   });
-  const hasApprovalRoles = ["ADVOCATE_APPROVER", "ADVOCATE_CLERK_APPROVER"].every((requiredRole) => roles.some((role) => role.code === requiredRole));
+  const hasApprovalRoles = ["ADVOCATE_APPROVER", "ADVOCATE_CLERK_APPROVER"].every((requiredRole) =>
+    roles?.some((role) => role.code === requiredRole)
+  );
 
   if (!hasApprovalRoles) {
     history.push(homePath);

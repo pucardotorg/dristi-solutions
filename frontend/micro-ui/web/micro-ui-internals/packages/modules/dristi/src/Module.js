@@ -81,15 +81,15 @@ export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const tenantID = tenants?.[0]?.code?.split(".")?.[0];
   const language = Digit.StoreData.getCurrentLanguage();
   const { isLoading } = Digit.Services.useStore({ stateCode, moduleCode, language });
-  const userInfo = useMemo(() => Digit?.UserService?.getUser()?.info, [Digit]);
+  const userInfo = useMemo(() => Digit?.UserService?.getUser()?.info, [Digit]); //here
   const hasCitizenRoute = useMemo(() => path?.includes(`/${window?.contextPath}/citizen`), [path]);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
 
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
-  const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   if (isLoading) {
     return <Loader />;
   }

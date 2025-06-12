@@ -157,9 +157,9 @@ const AdmittedCases = () => {
   const { hearingId, taskOrderType, artifactNumber } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
   const roles = Digit.UserService.getUser()?.info?.roles;
-  const isFSO = roles.some((role) => role.code === "FSO_ROLE");
-  const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
-  const isBenchClerk = roles.some((role) => role.code === "BENCH_CLERK");
+  const isFSO = roles?.some((role) => role.code === "FSO_ROLE");
+  const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
+  const isBenchClerk = roles?.some((role) => role.code === "BENCH_CLERK");
   const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
   const applicationNumber = urlParams.get("applicationNumber");
@@ -211,10 +211,9 @@ const AdmittedCases = () => {
   const isCitizen = userRoles.includes("CITIZEN");
   const isCourtStaff = userRoles.includes("COURT_ROOM_MANAGER");
 
-  const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
-  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+
   const OrderWorkflowAction = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {}, []);
   const ordersService = useMemo(() => Digit.ComponentRegistryService.getComponent("OrdersService") || {}, []);
   const OrderReviewModal = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderReviewModal") || {}, []);
@@ -224,6 +223,8 @@ const AdmittedCases = () => {
   );
   const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const todayDate = new Date().getTime();
   const { downloadPdf } = useDownloadCasePdf();
   const [isShow, setIsShow] = useState(false);

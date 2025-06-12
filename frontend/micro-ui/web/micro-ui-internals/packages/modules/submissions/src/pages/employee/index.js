@@ -14,13 +14,13 @@ const bredCrumbStyle = { maxWidth: "min-content" };
 const ProjectBreadCrumb = ({ location }) => {
   const userInfo = Digit?.UserService?.getUser()?.info;
   const roles = userInfo?.roles;
-  const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
   // Access the breadcrumb context to get case navigation data
   const { BreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { caseId, filingNumber } = BreadCrumbsParamsData;
 
-  const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
 
   let userType = "employee";
   if (userInfo) {
