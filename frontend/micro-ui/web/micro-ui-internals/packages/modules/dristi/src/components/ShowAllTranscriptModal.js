@@ -76,7 +76,7 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, hearingList, judgeView =
           variation="primary"
           onSubmit={() => setShowAllTranscript(false)}
           className="primary-label-btn"
-          label={t("CS_COMMON_CANCEL")}
+          label={t("CS_COMMON_BACK")}
         ></SubmitBar>
       </div>
     </Modal>
