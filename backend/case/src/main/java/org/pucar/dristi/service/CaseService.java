@@ -2616,29 +2616,33 @@ public class CaseService {
                         individualDetailsNode.put("individualId", joinCaseLitigant.getIndividualId());
                         respondentVerificationNode.set("individualDetails", individualDetailsNode);
 
-                        List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, joinCaseLitigant.getIndividualId());
-                        Individual individual = individualsList.get(0);
-
-                        if (dataNode.has("addressDetails") && dataNode.get("addressDetails").isArray()) {
-                            ArrayNode addressDetailsArray = (ArrayNode) dataNode.get("addressDetails");
-
-                            ObjectNode newAddressDetails = objectMapper.createObjectNode();
-
-                            if(individual.getAddress()!=null && !individual.getAddress().isEmpty()) {
-                                ObjectNode addressDetailsObj = objectMapper.createObjectNode();
-                                Address address = individual.getAddress().get(0);
-                                addressDetailsObj.put("pincode",address.getPincode());
-                                addressDetailsObj.put("city", address.getCity());
-                                 if (address.getLocality() != null && address.getLocality().getName() != null) {
-                                     addressDetailsObj.put("locality", address.getLocality().getName());
-                                 }
-                                newAddressDetails.set("addressDetails", addressDetailsObj);
-                                newAddressDetails.put("id", UUID.randomUUID().toString());
-
-                                addressDetailsArray.add(newAddressDetails);
-                            }
-                        }
-                        updateMobilenumber(dataNode,individual);
+//                        List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, joinCaseLitigant.getIndividualId());
+//                        Individual individual = individualsList.get(0);
+//
+//                        if (dataNode.has("addressDetails") && dataNode.get("addressDetails").isArray()) {
+//                            ArrayNode addressDetailsArray = (ArrayNode) dataNode.get("addressDetails");
+//
+//                            ObjectNode newAddressDetails = objectMapper.createObjectNode();
+//
+//                            if(individual.getAddress()!=null && !individual.getAddress().isEmpty()) {
+//                                ObjectNode addressDetailsObj = objectMapper.createObjectNode();
+//                                Address address = individual.getAddress().get(0);
+//                                addressDetailsObj.put("pincode",address.getPincode());
+//                                addressDetailsObj.put("state",address.getAddressLine1());
+//                                addressDetailsObj.put("district",address.getAddressLine2());
+//                                addressDetailsObj.put("city", address.getCity());
+//                                 if (address.getLocality() != null && address.getLocality().getName() != null) {
+//                                     addressDetailsObj.put("locality", address.getLocality().getName());
+//                                 }
+//                                newAddressDetails.set("addressDetails", addressDetailsObj);
+//                                newAddressDetails.put("id", UUID.randomUUID().toString());
+//
+//                                addressDetailsArray.add(newAddressDetails);
+//                            }
+//                        }
+//                        if(individual.getMobileNumber()!=null && !individual.getMobileNumber().isEmpty()) {
+//                            updateMobilenumber(dataNode,individual);
+//                        }
 
                         // Insert respondentVerification into the dataNode
                         dataNode.set("respondentVerification", respondentVerificationNode);
