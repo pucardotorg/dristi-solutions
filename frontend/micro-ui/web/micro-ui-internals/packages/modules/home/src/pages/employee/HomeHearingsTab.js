@@ -589,7 +589,7 @@ const HomeHearingsTab = ({
           >
             <div style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "space-around" }}>
               <div style={{ width: "50%" }}>
-                {["IN_PROGRESS", "PASSED_OVER"].includes(hearingDetails?.status) && (
+                {["IN_PROGRESS"].includes(hearingDetails?.status) && (
                   <div
                     style={{ position: "relative", cursor: "pointer", justifyContent: "space-around", maxWidth: "80px" }}
                     onClick={() => {
@@ -608,7 +608,7 @@ const HomeHearingsTab = ({
                     )}
                   </div>
                 )}
-                {["SCHEDULED"].includes(hearingDetails?.status) && isBenchClerk && (
+                {["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status) && isBenchClerk && (
                   <div
                     style={{ position: "relative", cursor: "pointer", justifyContent: "space-around", maxWidth: "80px" }}
                     onClick={() => {
