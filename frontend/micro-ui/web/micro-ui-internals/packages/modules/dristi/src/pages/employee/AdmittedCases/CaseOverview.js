@@ -41,6 +41,11 @@ const CaseOverview = ({
   const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const userRoles = useMemo(() => userInfo?.roles?.map((role) => role.code), [userInfo]);
+  const isJudge = useMemo(() => userRoles.some((role) => role.code === "CASE_APPROVER"), [userRoles]);
+  const isBenchClerk = useMemo(() => userRoles.some((role) => role.code === "BENCH_CLERK"), [userRoles]);
+  const isTypist = useMemo(() => userRoles.some((role) => role.code === "TYPIST_ROLE"), [userRoles]);
+  let homePath = `/${window?.contextPath}/${userInfoType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userInfoType}/home/home-screen`;
   const advocateIds = caseData?.case?.representatives?.map((representative) => {
     return {
       id: representative?.advocateId,
@@ -266,9 +271,11 @@ const CaseOverview = ({
                     lineHeight: "24px",
                   }}
                 >
-                  {previousHearing?.[0]?.hearingSummary
-                ? <div>{previousHearing?.[0]?.hearingSummary}</div>
-                    : "No Transcript available for this hearing"}
+                  {previousHearing?.[0]?.hearingSummary ? (
+                    <div>{previousHearing?.[0]?.hearingSummary}</div>
+                  ) : (
+                    "No Transcript available for this hearing"
+                  )}
                 </div>
               </Card>
             )}
@@ -326,7 +333,7 @@ const CaseOverview = ({
                               `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${order?.orderNumber}`
                             );
                           } else if (order?.status === OrderWorkflowState.PENDING_BULK_E_SIGN) {
-                            history.push(`/${window.contextPath}/employee/home/home-pending-task`, { isBulkEsignSelected: true });
+                            history.push(homePath, { isBulkEsignSelected: true });
                           } else {
                             setShowReviewModal(true);
                             setCurrentOrder(order);

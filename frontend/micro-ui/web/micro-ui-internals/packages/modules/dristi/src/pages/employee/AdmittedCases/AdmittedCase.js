@@ -210,6 +210,11 @@ const AdmittedCases = () => {
   const history = useHistory();
   const isCitizen = userRoles.includes("CITIZEN");
   const isCourtStaff = userRoles.includes("COURT_ROOM_MANAGER");
+
+  const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const OrderWorkflowAction = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {}, []);
   const ordersService = useMemo(() => Digit.ComponentRegistryService.getComponent("OrdersService") || {}, []);
   const OrderReviewModal = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderReviewModal") || {}, []);
@@ -2425,7 +2430,7 @@ const AdmittedCases = () => {
 
   const handleActionModal = () => {
     updateCaseDetails("REJECT").then(() => {
-      history.push(`/${window.contextPath}/employee/home/home-pending-task`);
+      history.push(homePath);
     });
   };
 
@@ -2663,7 +2668,7 @@ const AdmittedCases = () => {
     caseData?.cases?.status &&
     !judgeReviewStages.includes(caseData.cases.status)
   ) {
-    history.push(`/${window.contextPath}/employee/home/home-pending-task`);
+    history.push(homePath);
   }
 
   return (
