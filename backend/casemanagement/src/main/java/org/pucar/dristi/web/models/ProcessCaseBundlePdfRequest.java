@@ -29,6 +29,8 @@ public class ProcessCaseBundlePdfRequest {
     private String tenantId = null;
 
     @JsonProperty("state")
+    // currently removing non null as per discussion with team
+    //TODO : need to have proper validation
     private String state = null;
 
     @JsonProperty("caseId")
