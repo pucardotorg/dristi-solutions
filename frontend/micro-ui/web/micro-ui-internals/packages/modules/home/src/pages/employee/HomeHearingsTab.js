@@ -828,6 +828,13 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
         .date-arrow-btn:hover:not(:disabled) {
           background: #f5f5f5;
         }
+          .filter-fields .select-wrap {
+  width: 180px !important;
+}
+          #jk-dropdown-unique{
+      max-height: 300px;
+    overflow-y: auto;
+      }
 `}</style>
       <div className="filter-bar">
         <div className="filter-fields">
