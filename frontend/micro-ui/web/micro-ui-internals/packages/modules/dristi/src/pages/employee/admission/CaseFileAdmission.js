@@ -1086,7 +1086,13 @@ function CaseFileAdmission({ t, path }) {
   };
 
   if (!caseId || (caseDetails && caseDetails?.status === CaseWorkflowState.CASE_ADMITTED)) {
-    return <Redirect to="/" />;
+    return caseId ? (
+      <Redirect
+        to={`/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${caseDetails?.filingNumber}&tab=Overview`}
+      />
+    ) : (
+      <Redirect to="/" />
+    );
   }
 
   if (isLoading || isWorkFlowLoading || isLoader || caseAdmitLoader) {

@@ -43,7 +43,16 @@ const MainHomeScreen = () => {
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
+  const today = new Date();
 
+  const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+
+  const [filters, setFilters] = useState({
+    date: todayStr,
+    status: "",
+    purpose: "",
+    caseQuery: "",
+  });
   const userType = useMemo(() => {
     if (!userInfo) return "employee";
     return userInfo?.type === "CITIZEN" ? "citizen" : "employee";
@@ -111,13 +120,50 @@ const MainHomeScreen = () => {
         SearchCriteria: {
           moduleName: "Pending Tasks Service",
           tenantId: tenantId,
-          limit: 10,
-          offset: 0,
           moduleSearchCriteria: {
             screenType: ["home", "applicationCompositeOrder"],
             isCompleted: false,
             courtId: localStorage.getItem("courtId"),
+            assignedRole: [
+              "DIARY_APPROVER",
+              "HEARING_VIEWER",
+              "WORKFLOW_ABANDON",
+              "ORDER_ESIGN",
+              "WORKFLOW_ADMIN",
+              "APPLICATION_CREATOR",
+              "DEPOSITION_PUBLISHER",
+              "HEARING_APPROVER",
+              "SUBMISSION_RESPONDER",
+              "ORDER_VIEWER",
+              "ORDER_REASSIGN",
+              "CASE_EDITOR",
+              "TASK_CREATOR",
+              "APPLICATION_APPROVER",
+              "DIARY_VIEWER",
+              "EMPLOYEE",
+              "ORDER_DELETE",
+              "NOTIFICATION_APPROVER",
+              "CASE_VIEWER",
+              "TASK_EDITOR",
+              "APPLICATION_REJECTOR",
+              "HEARING_EDITOR",
+              "DIARY_EDITOR",
+              "ORDER_APPROVER",
+              "NOTIFICATION_CREATOR",
+              "HEARING_CREATOR",
+              "EVIDENCE_CREATOR",
+              "ORDER_CREATOR",
+              "CALCULATION_VIEWER",
+              "JUDGE_ROLE",
+              "EVIDENCE_EDITOR",
+              "CASE_APPROVER",
+              "SUBMISSION_APPROVER",
+              "TASK_VIEWER",
+              "HEARING_SCHEDULER",
+            ],
           },
+          limit: 10,
+          offset: 0,
           searchReviewProcess: {
             date: toDate,
             isOnlyCountRequired: true,
@@ -270,6 +316,8 @@ const MainHomeScreen = () => {
                   setLoader={setLoader}
                   setShowEndHearingModal={setShowEndHearingModal}
                   showEndHearingModal={showEndHearingModal}
+                  setFilters={setFilters}
+                  filters={filters}
                 />
               </div>
             ) : (
