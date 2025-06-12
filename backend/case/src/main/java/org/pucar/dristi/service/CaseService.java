@@ -2616,7 +2616,7 @@ public class CaseService {
                         individualDetailsNode.put("individualId", joinCaseLitigant.getIndividualId());
                         respondentVerificationNode.set("individualDetails", individualDetailsNode);
 
-// TO DO -- To be implemented later after discussion
+// TO DO -- When accused joins the case, adding address, and mobile number in respondent details along wih old details, To be implemented later after discussion
 
 //                        List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, joinCaseLitigant.getIndividualId());
 //                        Individual individual = individualsList.get(0);
