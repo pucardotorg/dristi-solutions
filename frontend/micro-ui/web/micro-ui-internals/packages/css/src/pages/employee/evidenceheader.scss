@@ -557,6 +557,17 @@
 
           .custom-date-picker {
             margin-bottom: 0px !important;
+            .order-date-picker {
+              .text-input {
+                input {
+                  font-family: Roboto;
+                  font-weight: 400;
+                  font-size: 16px;
+                  line-height: 24px;
+                  letter-spacing: 0px;
+                }
+              }
+            }
           }
         }
       }
