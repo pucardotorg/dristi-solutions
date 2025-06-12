@@ -318,6 +318,7 @@ export const UICustomizations = {
                   statusChangeDate: taskDetail?.deliveryChannels?.statusChangeDate,
                   taskType: data?.taskType,
                   documents: data?.documents,
+                  feePaidDate: taskDetail?.deliveryChannels?.feePaidDate,
                 };
               });
             return { list: taskData };
@@ -343,6 +344,8 @@ export const UICustomizations = {
           return t(value);
         case "DELIEVRY_DATE":
           return formatNoticeDeliveryDate(value) || "N/A";
+        case "PROCESS_FEE_PAID_ON":
+          return value || '-';
         default:
           return t("ES_COMMON_NA");
       }
