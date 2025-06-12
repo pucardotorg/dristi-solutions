@@ -618,7 +618,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     litigants?.forEach((litigant) => {
       const litigantFileStoreId = litigant?.documents?.[0]?.fileStore;
       if (!litigant?.representatives?.length && litigantFileStoreId && !addedFileStoreIds.has(litigantFileStoreId)) {
-        fileStoreRecords?.push({ fileStoreId: litigantFileStoreId, isPip: true });
+        fileStoreRecords?.push({ fileStoreId: litigantFileStoreId, isPip: true, dateOfAddition: litigant?.auditDetails?.createdTime });
         addedFileStoreIds?.add(litigantFileStoreId);
       }
 
@@ -626,11 +626,13 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         const updatedLitigant = rep?.representing?.find((lit) => lit?.individualId === litigant?.individualId);
         const repFileStoreId = updatedLitigant?.documents?.[0]?.fileStore;
         if (repFileStoreId && !addedFileStoreIds?.has(repFileStoreId)) {
-          fileStoreRecords?.push({ fileStoreId: repFileStoreId, isPip: false });
+          fileStoreRecords?.push({ fileStoreId: repFileStoreId, isPip: false, dateOfAddition: rep?.auditDetails?.createdTime });
           addedFileStoreIds?.add(repFileStoreId);
         }
       }
     });
+
+    fileStoreRecords.sort((a, b) => a?.dateOfAddition - b?.dateOfAddition);
 
     let vakalatnamaCounter = 1;
     let pipCounter = 1;
