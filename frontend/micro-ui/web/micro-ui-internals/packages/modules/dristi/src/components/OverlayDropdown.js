@@ -5,7 +5,7 @@ import { CustomThreeDots, ThreeDots } from "../icons/svgIndex";
 
 export const Context = React.createContext();
 
-const OverlayDropdown = ({ column, row, master, module, cutomDropdownItems = [], position = "absolute" }) => {
+const OverlayDropdown = ({ column, row, master, module, cutomDropdownItems = [], position = "absolute", textStyle = {} }) => {
   const { t } = useTranslation();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const history = useHistory();
@@ -47,7 +47,7 @@ const OverlayDropdown = ({ column, row, master, module, cutomDropdownItems = [],
           {filteredDropdownItems.map((item) => (
             <li
               key={item.id}
-              style={{ padding: "10px", cursor: "pointer", color: item.disabled ? "grey" : "black" }}
+              style={{ padding: "10px", cursor: "pointer", color: item.disabled ? "grey" : "black", ...textStyle }}
               onClick={() => {
                 setIsDropdownOpen(false);
                 return !item.disabled && item.action(history, column, row, item);

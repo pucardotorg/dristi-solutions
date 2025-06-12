@@ -28,9 +28,15 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
   const userInfoType = Digit.UserService.getType();
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
 
   const moduleCode = "DRISTI";
-  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   if (isUserLoggedIn && userInfo) {
     const user = {
       access_token: token,
@@ -50,6 +56,10 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     userInfo?.uuid && isUserLoggedIn
   );
 
+  const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
+
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const individualId = useMemo(() => data?.Individual?.[0]?.individualId, [data?.Individual]);
 
   const isLitigantPartialRegistered = useMemo(() => {
@@ -63,7 +73,6 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     return !address || (Array.isArray(address) && address.length === 0);
   }, [data?.Individual, userInfoType]);
 
-  const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
   const { data: searchData, isLoading: isSearchLoading } = Digit.Hooks.dristi.useGetAdvocateClerk(
     {
       criteria: [{ individualId }],
@@ -96,7 +105,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
 
   const citizenCrumb = [
     {
-      path: `/${window?.contextPath}/citizen/home/home-pending-task`,
+      path: homePath,
       content: t("ES_COMMON_HOME"),
       show: !hideHomeCrumb.includes(location.pathname),
       isLast: false,
