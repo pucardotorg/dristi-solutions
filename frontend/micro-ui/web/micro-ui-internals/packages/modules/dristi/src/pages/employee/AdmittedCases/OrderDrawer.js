@@ -523,7 +523,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
             <div className="drawer-sub-section">
               <h3 className="drawer-sub-section-title">{t("CS_NEXT_HEARING")}</h3>
             </div>
-            <div className="drawer-sub-section">
+            {/* <div className="drawer-sub-section">
               <LabelFieldPair className="case-label-field-pair">
                 <RadioButtons
                   selectedOption={orderData?.isCaseDisposed}
@@ -549,7 +549,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
                   }}
                 />
               </LabelFieldPair>
-            </div>
+            </div> */}
             <div className="drawer-sub-section">
               <LabelFieldPair className={`case-label-field-pair ${orderData?.isCaseDisposed?.value === "CASE_DISPOSED" ? "disabled" : ""}`}>
                 <CardLabel className="case-input-label">{`${t("HEARING_TYPE")}`}</CardLabel>
