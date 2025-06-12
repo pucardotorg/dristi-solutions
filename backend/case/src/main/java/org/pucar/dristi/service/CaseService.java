@@ -4296,7 +4296,7 @@ public class CaseService {
                 boolean isReasonDocumentAlreadySubmitted = evidenceValidator.validateReasonDocumentCreation(courtCase, requestInfo, joinCaseRequest.getReasonDocument());
 
                 if (!isReasonDocumentAlreadySubmitted) {
-                    EvidenceRequest evidenceRequest = enrichEvidenceCreateRequestForReasonDocument(courtCase, joinCaseRequest.getReasonDocument(), requestInfo);
+                    EvidenceRequest evidenceRequest = enrichEvidenceCreateRequestForReasonDocument(courtCase, joinCaseRequest, requestInfo);
                     evidenceUtil.createEvidence(evidenceRequest);
                 }
             }
@@ -4790,7 +4790,11 @@ public class CaseService {
                         .build()).build();
     }
 
-    private EvidenceRequest enrichEvidenceCreateRequestForReasonDocument(CourtCase courtCase, ReasonDocument reasonDocument, RequestInfo requestInfo) {
+    private EvidenceRequest enrichEvidenceCreateRequestForReasonDocument(CourtCase courtCase, JoinCaseTaskRequest joinCaseTaskRequest, RequestInfo requestInfo) {
+
+        ReasonDocument reasonDocument = joinCaseTaskRequest.getReasonDocument();
+
+        String sourceType = joinCaseTaskRequest.getReplacementDetails().isEmpty() ? null : joinCaseTaskRequest.getReplacementDetails().get(0).getLitigantDetails().getPartyType();
 
         Document document = Document.builder()
                 .fileStore(reasonDocument.getFileStore())
@@ -4807,6 +4811,7 @@ public class CaseService {
                         .artifactType(REASON_DOCUMENT)
                         .filingType("CASE_FILING")
                         .filingNumber(courtCase.getFilingNumber())
+                        .sourceType(sourceType)
                         .comments(new ArrayList<>())
                         .isEvidence(false)
                         .caseId(courtCase.getId().toString())
