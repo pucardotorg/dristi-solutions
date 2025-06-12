@@ -56,10 +56,19 @@
             },
             {
               "action": "ABANDON",
-              "nextState": "ABATED",
+              // this need to be changed to ABANDONED from ABATED
+              "nextState": "ABANDONED",
               "roles": [
                 "SYSTEM",
                 "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              // this action need to be added
+              "action": "PASS_OVER",
+              "nextState": "PASSED_OVER",
+              "roles": [
+                "HEARING_EDITOR"
               ]
             }
           ]
@@ -85,7 +94,8 @@
             },
             {
               "action": "ABANDON",
-              "nextState": "ABATED",
+              // this need to be changed to ABANDONED from ABATED
+              "nextState": "ABANDONED",
               "roles": [
                 "SYSTEM",
                 "SYSTEM_ADMIN"
@@ -118,10 +128,19 @@
             },
             {
               "action": "ABANDON",
-              "nextState": "ABATED",
+              // this need to be changed to ABANDONED from ABATED
+              "nextState": "ABANDONED",
               "roles": [
                 "SYSTEM",
                 "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              // this action need to be added
+              "action": "PASS_OVER",
+              "nextState": "PASSED_OVER",
+              "roles": [
+                "HEARING_EDITOR"
               ]
             }
           ]
@@ -153,6 +172,7 @@
           "isStartState": false,
           "isTerminateState": true
         },
+        // these are new states
         {
           "sla": null,
           "state": "PASSED_OVER",
@@ -160,7 +180,31 @@
           "isStateUpdatable": false,
           "docUploadRequired": false,
           "isStartState": false,
-          "isTerminateState": true
+          "isTerminateState": true,
+          "actions": [
+            {
+              "action": "ABANDON",
+              "nextState": "ABANDONED",
+              "roles": [
+                "SYSTEM",
+                "SYSTEM_ADMIN"
+              ]
+            },
+            {
+              "action": "START",
+              "nextState": "IN_PROGRESS",
+              "roles": [
+                "HEARING_EDITOR"
+              ]
+            },
+            {
+              "action": "CLOSE",
+              "nextState": "COMPLETED",
+              "roles": [
+                "HEARING_EDITOR"
+              ]
+            }
+          ]
         },
         {
           "sla": null,
@@ -169,7 +213,16 @@
           "isStateUpdatable": false,
           "docUploadRequired": false,
           "isStartState": false,
-          "isTerminateState": true
+          "isTerminateState": true,
+          "actions": [
+            {
+              "action": "CLOSE",
+              "nextState": "COMPLETED",
+              "roles": [
+                "HEARING_EDITOR"
+              ]
+            }
+          ]
         }
       ]
     }
