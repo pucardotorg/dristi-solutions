@@ -899,8 +899,6 @@ const GenerateOrders = () => {
     }));
   }, [hearingDetails?.attendees]);
 
-  console.log("attendeeOptions", attendeeOptions);
-
   const isHearingScheduled = useMemo(() => {
     const isPresent = (hearingsData?.HearingList || []).some((hearing) => hearing?.status === HearingWorkflowState.SCHEDULED);
     return isPresent;
