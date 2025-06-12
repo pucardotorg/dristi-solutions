@@ -66,7 +66,7 @@ router.post(
     const { tenantId, caseId, index, state, requestInfo, isRebuild } = req.body;
 
     // Validate required inputs
-    if (!tenantId || !caseId || !index || !state || !requestInfo) {
+    if (!tenantId || !caseId || !index || !requestInfo) {
       return res.status(400).json({
         message:
           "Missing required fields: 'tenantId', 'caseId', 'index', 'state', or 'requestInfo'.",
