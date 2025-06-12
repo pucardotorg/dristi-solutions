@@ -111,9 +111,11 @@ const InsideHearingMainPage = () => {
   };
   const { data: hearingsData, refetch: refetchHearing = () => {} } = Digit.Hooks.hearings.useGetHearings(
     reqBody,
-    { applicationNumber: "", cnrNumber: "", hearingId, ...(caseCourtId && { courtId: caseCourtId }) },
+    { applicationNumber: "", cnrNumber: "", hearingId,
+      //  ...(caseCourtId && { courtId: caseCourtId }) 
+      },
     "dristi",
-    Boolean(caseCourtId),
+    true,
     refetchTime
   );
 
@@ -202,7 +204,7 @@ const InsideHearingMainPage = () => {
       // hearing data with particular id will always give array of one object
       if (hearingData) {
         setHearing(hearingData);
-        setTranscriptText(hearingData?.transcript?.[0] || "");
+        setTranscriptText(hearingData?.hearingSummary || "");
         setFilingNumber(hearingData?.filingNumber?.[0]);
       }
     }
