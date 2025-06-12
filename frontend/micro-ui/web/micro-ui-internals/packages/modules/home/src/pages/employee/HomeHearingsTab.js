@@ -910,7 +910,7 @@ const HomeHearingsTab = ({
           background: #f5f5f5;
         }
           .select-wrap {
-          width : 180px !important;}
+          width : 160px !important;}
           #jk-dropdown-unique{
       max-height: 300px;
     overflow-y: auto;
