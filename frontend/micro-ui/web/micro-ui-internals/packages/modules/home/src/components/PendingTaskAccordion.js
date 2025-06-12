@@ -222,7 +222,7 @@ function PendingTaskAccordion({
                       {item?.stateSla ? getFormattedDate(item?.stateSla) : t("NO_DUE_DATE")}
                     </div>
                     <div className="tasks-component-table-row-cell" style={{ width: "30%", color: "#3D3C3C" }}>
-                      {item?.createdTime ? getFormattedDate(item?.createdTime) : t("DATE_NOT_AVAILABLE")}
+                      {item?.createdTime ? getFormattedDate(item?.createdTime) : t("NO_DATE_AVAILABLE")}
                     </div>
                   </div>
                 );
