@@ -1135,6 +1135,8 @@ const HomeHearingsTab = ({
                     });
                 } else {
                   setLoader(false);
+                  setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+
                   showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
                 }
               });
@@ -1175,6 +1177,7 @@ const HomeHearingsTab = ({
                 } else {
                   setLoader(false);
                   showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
+                  setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
                 }
               });
           }}
