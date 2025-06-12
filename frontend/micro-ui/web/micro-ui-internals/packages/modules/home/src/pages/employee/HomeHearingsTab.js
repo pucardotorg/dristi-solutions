@@ -909,8 +909,10 @@ const HomeHearingsTab = ({
         .date-arrow-btn:hover:not(:disabled) {
           background: #f5f5f5;
         }
-          .select-wrap {
-          width : 160px !important;}
+
+          .filter-fields .select-wrap {
+  width: 180px !important;
+}
           #jk-dropdown-unique{
       max-height: 300px;
     overflow-y: auto;
