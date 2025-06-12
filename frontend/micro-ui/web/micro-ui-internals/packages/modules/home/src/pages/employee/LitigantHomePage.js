@@ -455,11 +455,21 @@ const LitigantHomePage = ({ isApprovalPending }) => {
   const history = useHistory();
   const curHr = today.getHours();
   const userType = Digit.UserService.getType();
+  const userInfo = window?.Digit?.UserService?.getUser?.()?.info;
+
   const [callRefetch, SetCallRefetch] = useState(false);
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+
+  const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  let homePath = `/${window?.contextPath}/${userInfoType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userInfoType}/home/home-screen`;
 
   const refreshInbox = () => {
     SetCallRefetch(true);
-    history.push(`/${window?.contextPath}/${userType}/home/home-pending-task`);
+    history.push(homePath);
   };
   const name = userName?.info?.name
     .split(" ")

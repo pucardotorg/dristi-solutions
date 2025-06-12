@@ -2054,6 +2054,8 @@ export const UICustomizations = {
               </p>
             </div>
           );
+        case "STAGE":
+          return t(value);
         default:
           return value ? value : "-";
       }
