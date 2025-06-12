@@ -2616,6 +2616,8 @@ public class CaseService {
                         individualDetailsNode.put("individualId", joinCaseLitigant.getIndividualId());
                         respondentVerificationNode.set("individualDetails", individualDetailsNode);
 
+// TO DO -- To be implemented later after discussion
+
 //                        List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, joinCaseLitigant.getIndividualId());
 //                        Individual individual = individualsList.get(0);
 //
