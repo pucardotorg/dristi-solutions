@@ -589,7 +589,7 @@ const HomeHearingsTab = ({
           >
             <div style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "space-around" }}>
               <div style={{ width: "50%" }}>
-                {["IN_PROGRESS", "PASSED_OVER"].includes(hearingDetails?.status) && (
+                {["IN_PROGRESS"].includes(hearingDetails?.status) && (
                   <div
                     style={{ position: "relative", cursor: "pointer", justifyContent: "space-around", maxWidth: "80px" }}
                     onClick={() => {
@@ -608,7 +608,7 @@ const HomeHearingsTab = ({
                     )}
                   </div>
                 )}
-                {["SCHEDULED"].includes(hearingDetails?.status) && isBenchClerk && (
+                {["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status) && isBenchClerk && (
                   <div
                     style={{ position: "relative", cursor: "pointer", justifyContent: "space-around", maxWidth: "80px" }}
                     onClick={() => {
@@ -650,6 +650,7 @@ const HomeHearingsTab = ({
         .home-input input {
           margin-bottom: 0px !important;
           border: 1px solid black;
+         font-family: 'Roboto';
         }
 
         .full-height-container {
@@ -670,8 +671,22 @@ const HomeHearingsTab = ({
           padding: 16px 18px;
           margin-bottom: 8px;
           justify-content: space-between;
+          padding: 16px 18px 0px 18px;
           flex-shrink: 0;
         }
+          .search-bar{
+           display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          align-items: center;
+          background: #fff;
+          border-radius: 8px;
+          box-shadow: 0 1px 4px rgba(44,62,80,0.06);
+          margin-bottom: 8px;
+          justify-content: end;
+          padding: 0px 18px;
+          flex-shrink: 0;
+          }
 
         .filter-bar .filter-fields {
           display: flex;
@@ -704,7 +719,7 @@ const HomeHearingsTab = ({
           }
         }
 
-        .filter-bar button.search-btn {
+        .search-bar button.search-btn {
           background: #007E7E;
           color: #fff;
           font-size: 16px;
@@ -717,15 +732,15 @@ const HomeHearingsTab = ({
           margin: 0;
           box-shadow: 0 2px 4px rgba(0,0,0,0.04);
           transition: background 0.2s;
-          min-width: 210px;
+          min-width: 212px;
           cursor: pointer;
         }
 
-        .filter-bar button.search-btn:hover {
+        .search-bar button.search-btn:hover {
           background: #159392;
         }
 
-        .filter-bar button.clear-btn {
+        .search-bar button.clear-btn {
           background: #fff;
           color: #007E7E;
           border: none !important;
@@ -737,7 +752,7 @@ const HomeHearingsTab = ({
           transition: background 0.2s, color 0.2s;
         }
 
-        .filter-bar button.clear-btn:hover {
+        .search-bar button.clear-btn:hover {
           background: transparent;
         }
 
@@ -893,7 +908,14 @@ const HomeHearingsTab = ({
 
         .date-arrow-btn:hover:not(:disabled) {
           background: #f5f5f5;
-          }
+        }
+             .filter-fields .select-wrap {
+  width: 160px !important;
+}
+          #jk-dropdown-unique{
+      max-height: 300px;
+    overflow-y: auto;
+      }
 `}</style>
       <div className="filter-bar">
         <div className="filter-fields">
@@ -991,6 +1013,36 @@ const HomeHearingsTab = ({
           </LabelFieldPair>
         </div>
         <div className="filter-actions">
+          <Button
+            variation={"tertiary"}
+            label={t("JOIN_VIDEO_CONFERENCE")}
+            onClick={() => {
+              window.open(hearingLink, "_blank");
+            }}
+            style={{
+              backgroundColor: "#007E7E",
+              width: "212px",
+              height: "40px",
+              paddingTop: "8px",
+              paddingRight: "24px",
+              paddingBottom: "8px",
+              paddingLeft: "24px",
+              gap: "4px",
+            }}
+            textStyles={{
+              fontSize: "16px",
+              fontWeight: 700,
+              fontFamily: "Roboto",
+              lineHeight: "19.2px",
+              textAlign: "left",
+              margin: "0px",
+              color: "white",
+            }}
+          ></Button>
+        </div>
+      </div>
+      <div className="search-bar">
+        <div className="filter-actions">
           <button className="clear-btn" onClick={handleClear} disabled={loading}>
             {t("ES_COMMON_CLEAR_SEARCH")}
           </button>
@@ -1084,6 +1136,8 @@ const HomeHearingsTab = ({
                     });
                 } else {
                   setLoader(false);
+                  setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+
                   showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
                 }
               });
@@ -1124,6 +1178,7 @@ const HomeHearingsTab = ({
                 } else {
                   setLoader(false);
                   showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
+                  setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
                 }
               });
           }}
