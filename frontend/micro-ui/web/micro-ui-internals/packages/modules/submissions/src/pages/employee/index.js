@@ -14,20 +14,24 @@ const bredCrumbStyle = { maxWidth: "min-content" };
 const ProjectBreadCrumb = ({ location }) => {
   const userInfo = Digit?.UserService?.getUser()?.info;
   const roles = userInfo?.roles;
-  const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
   // Access the breadcrumb context to get case navigation data
   const { BreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { caseId, filingNumber } = BreadCrumbsParamsData;
+
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
 
   let userType = "employee";
   if (userInfo) {
     userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
   }
   const { t } = useTranslation();
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const crumbs = [
     {
-      path: `/${window?.contextPath}/${userType}/home/home-pending-task`,
+      path: homePath,
       content: t("CS_HOME"),
       show: true,
     },

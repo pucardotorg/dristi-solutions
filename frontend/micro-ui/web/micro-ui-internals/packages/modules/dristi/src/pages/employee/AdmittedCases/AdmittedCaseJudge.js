@@ -165,10 +165,10 @@ const AdmittedCaseJudge = () => {
   const { hearingId, taskOrderType, artifactNumber, fromHome } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
   const roles = Digit.UserService.getUser()?.info?.roles;
-  const isFSO = roles.some((role) => role.code === "FSO_ROLE");
-  const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
-  const isBenchClerk = roles.some((role) => role.code === "BENCH_CLERK");
-  const isTypist = roles.some((role) => role.code === "TYPIST_ROLE");
+  const isFSO = roles?.some((role) => role.code === "FSO_ROLE");
+  const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
+  const isBenchClerk = roles?.some((role) => role.code === "BENCH_CLERK");
+  const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
   const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
   const applicationNumber = urlParams.get("applicationNumber");
@@ -245,7 +245,8 @@ const AdmittedCaseJudge = () => {
   const openOrder = location?.state?.openOrder;
   const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
   const courtId = localStorage.getItem("courtId");
-
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const reqEvidenceUpdate = {
     url: Urls.dristi.evidenceUpdate,
     params: {},
@@ -2608,7 +2609,7 @@ const AdmittedCaseJudge = () => {
 
   const handleActionModal = () => {
     updateCaseDetails("REJECT").then(() => {
-      history.push(`/${window.contextPath}/employee/home/home-pending-task`);
+      history.push(homePath);
     });
   };
 
@@ -2941,7 +2942,7 @@ const AdmittedCaseJudge = () => {
     caseData?.cases?.status &&
     !judgeReviewStages.includes(caseData.cases.status)
   ) {
-    history.push(`/${window.contextPath}/employee/home/home-pending-task`);
+    history.push(homePath);
   }
 
   return (

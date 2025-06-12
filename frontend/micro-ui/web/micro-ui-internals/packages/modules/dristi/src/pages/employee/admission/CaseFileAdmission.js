@@ -100,8 +100,8 @@ function CaseFileAdmission({ t, path }) {
   const userInfo = Digit?.UserService?.getUser()?.info;
   const roles = userInfo?.roles;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const isCaseApprover = roles.some((role) => role.code === "CASE_APPROVER");
-  const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
+  const isCaseApprover = roles?.some((role) => role.code === "CASE_APPROVER");
+  const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
   const moduleCode = "case-default";
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
   const [isLoader, setLoader] = useState(false);
@@ -1086,7 +1086,13 @@ function CaseFileAdmission({ t, path }) {
   };
 
   if (!caseId || (caseDetails && caseDetails?.status === CaseWorkflowState.CASE_ADMITTED)) {
-    return <Redirect to="/" />;
+    return caseId ? (
+      <Redirect
+        to={`/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${caseDetails?.filingNumber}&tab=Overview`}
+      />
+    ) : (
+      <Redirect to="/" />
+    );
   }
 
   if (isLoading || isWorkFlowLoading || isLoader || caseAdmitLoader) {

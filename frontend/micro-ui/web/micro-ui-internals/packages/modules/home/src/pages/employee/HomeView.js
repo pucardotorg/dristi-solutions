@@ -19,6 +19,7 @@ import OrderIssueBulkSuccesModal from "@egovernments/digit-ui-module-orders/src/
 import isEqual from "lodash/isEqual";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import useSearchCaseListService from "@egovernments/digit-ui-module-dristi/src/hooks/dristi/useSearchCaseListService";
+import { BreadCrumb } from "@egovernments/digit-ui-react-components";
 
 const defaultSearchValues = {
   caseSearchText: "",
@@ -33,6 +34,37 @@ const linkStyle = {
   padding: 12,
   borderRadius: "8px",
   display: "inline-block",
+};
+const bredCrumbStyle = { maxWidth: "min-content" };
+
+const ProjectBreadCrumb = ({ location, t }) => {
+  const userInfo = window?.Digit?.UserService?.getUser()?.info;
+  let userType = "employee";
+  if (userInfo) {
+    userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
+  }
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  const crumbs = [
+    {
+      path: homePath,
+      content: t("ES_COMMON_HOME"),
+      show: true,
+      isLast: false,
+    },
+    {
+      path: `/${window?.contextPath}/employee/home/home-pending-task`,
+      content: t("OPEN_ALL_CASES"),
+      show: true,
+      isLast: false,
+    },
+  ];
+  return <BreadCrumb crumbs={crumbs} spanStyle={bredCrumbStyle} />;
 };
 
 const HomeView = () => {
@@ -59,13 +91,14 @@ const HomeView = () => {
   });
   const userInfo = useMemo(() => Digit?.UserService?.getUser()?.info, [Digit.UserService]);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
+  const isScrutiny = roles?.some((role) => role.code === "CASE_REVIEWER");
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
 
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
-  const isNyayMitra = roles.some((role) => role.code === "NYAY_MITRA_ROLE");
-  const isClerk = roles.some((role) => role.code === "BENCH_CLERK");
+  const isNyayMitra = roles?.some((role) => role.code === "NYAY_MITRA_ROLE");
+  const isClerk = roles?.some((role) => role.code === "BENCH_CLERK");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [toastMsg, setToastMsg] = useState(null);
@@ -216,7 +249,7 @@ const HomeView = () => {
         rolesToConfigMapping?.find((item) =>
           item.roles?.reduce((res, curr) => {
             if (!res) return res;
-            res = roles.some((role) => role.code === curr);
+            res = roles?.some((role) => role.code === curr);
             return res;
           }, true)
         ) || (userInfoType === "citizen" ? TabLitigantSearchConfig : null)
@@ -444,125 +477,128 @@ const HomeView = () => {
     }, duration);
   };
   return (
-    <div className="home-view-hearing-container">
-      {individualId && userType && userInfoType === "citizen" && !isCitizenReferredInAnyCase ? (
-        <LitigantHomePage isApprovalPending={isApprovalPending} />
-      ) : (
-        <React.Fragment>
-          <div
-            className="left-side"
-            style={{ width: individualId && userType && userInfoType === "citizen" && !isCitizenReferredInAnyCase ? "100vw" : "70vw" }}
-          >
-            <div className="home-header-wrapper">
-              <UpcomingHearings
-                handleNavigate={handleNavigate}
-                individualData={individualData}
-                attendeeIndividualId={individualId}
-                userInfoType={userInfoType}
-                advocateId={advocateId}
-                t={t}
-              />
-              {(isJudge || isClerk || isTypist) && (
-                <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start" }}>
-                  {isJudge && (
-                    <React.Fragment>
-                      <Link to={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle}>
-                        {t("OPEN_DASHBOARD")}
-                      </Link>
-                      <Link to={`/${window.contextPath}/employee/home/dashboard?select=2`} style={linkStyle}>
-                        {t("OPEN_REPORTS")}
-                      </Link>
-                    </React.Fragment>
-                  )}
-                  <Link to={`/${window.contextPath}/employee/home/dashboard/adiary`} style={linkStyle}>
-                    {t("OPEN_A_DIARY")}
-                  </Link>
-                </div>
-              )}
-              {showReviewSummonsWarrantNotice && <ReviewCard data={data} userInfoType={userInfoType} />}
-            </div>
-            <div className="content-wrapper">
-              <div className="header-class">
-                <div className="header">{t("CS_YOUR_CASE")}</div>
-                {individualId && userType && userInfoType === "citizen" && (
-                  <div className="button-field" style={{ width: "50%" }}>
-                    <React.Fragment>
-                      <JoinCaseHome refreshInbox={refreshInbox} />
-                      <Button
-                        className={"tertiary-button-selector"}
-                        label={t("FILE_A_CASE")}
-                        labelClassName={"tertiary-label-selector"}
-                        onButtonClick={() => {
-                          history.push(`/${window?.contextPath}/citizen/dristi/home/file-case`);
-                        }}
-                      />
-                    </React.Fragment>
+    <React.Fragment>
+      {(isJudge || isBenchClerk || isTypist) && <ProjectBreadCrumb location={window.location} t={t} />}
+      <div className="home-view-hearing-container">
+        {individualId && userType && userInfoType === "citizen" && !isCitizenReferredInAnyCase ? (
+          <LitigantHomePage isApprovalPending={isApprovalPending} />
+        ) : (
+          <React.Fragment>
+            <div
+              className="left-side"
+              style={{ width: individualId && userType && userInfoType === "citizen" && !isCitizenReferredInAnyCase ? "100vw" : "70vw" }}
+            >
+              <div className="home-header-wrapper">
+                <UpcomingHearings
+                  handleNavigate={handleNavigate}
+                  individualData={individualData}
+                  attendeeIndividualId={individualId}
+                  userInfoType={userInfoType}
+                  advocateId={advocateId}
+                  t={t}
+                />
+                {(isJudge || isClerk || isTypist) && (
+                  <div className="hearingCard" style={{ backgroundColor: "white", justifyContent: "flex-start" }}>
+                    {isJudge && (
+                      <React.Fragment>
+                        <Link to={`/${window.contextPath}/employee/home/dashboard`} style={linkStyle}>
+                          {t("OPEN_DASHBOARD")}
+                        </Link>
+                        <Link to={`/${window.contextPath}/employee/home/dashboard?select=2`} style={linkStyle}>
+                          {t("OPEN_REPORTS")}
+                        </Link>
+                      </React.Fragment>
+                    )}
+                    <Link to={`/${window.contextPath}/employee/home/dashboard/adiary`} style={linkStyle}>
+                      {t("OPEN_A_DIARY")}
+                    </Link>
                   </div>
                 )}
+                {showReviewSummonsWarrantNotice && <ReviewCard data={data} userInfoType={userInfoType} />}
               </div>
-              <div className="inbox-search-wrapper pucar-home home-view">
-                {config ? (
-                  <InboxSearchComposer
-                    key={`InboxSearchComposer-${callRefetch}`}
-                    configs={{
-                      ...config,
-                      ...{
-                        additionalDetails: {
-                          ...config?.additionalDetails,
-                          ...additionalDetails,
+              <div className="content-wrapper">
+                <div className="header-class">
+                  <div className="header">{t("CS_YOUR_CASE")}</div>
+                  {individualId && userType && userInfoType === "citizen" && (
+                    <div className="button-field" style={{ width: "50%" }}>
+                      <React.Fragment>
+                        <JoinCaseHome refreshInbox={refreshInbox} />
+                        <Button
+                          className={"tertiary-button-selector"}
+                          label={t("FILE_A_CASE")}
+                          labelClassName={"tertiary-label-selector"}
+                          onButtonClick={() => {
+                            history.push(`/${window?.contextPath}/citizen/dristi/home/file-case`);
+                          }}
+                        />
+                      </React.Fragment>
+                    </div>
+                  )}
+                </div>
+                <div className="inbox-search-wrapper pucar-home home-view">
+                  {config ? (
+                    <InboxSearchComposer
+                      key={`InboxSearchComposer-${callRefetch}`}
+                      configs={{
+                        ...config,
+                        ...{
+                          additionalDetails: {
+                            ...config?.additionalDetails,
+                            ...additionalDetails,
+                          },
                         },
-                      },
-                    }}
-                    defaultValues={defaultValues}
-                    showTab={true}
-                    tabData={tabData}
-                    onTabChange={onTabChange}
-                    additionalConfig={{
-                      resultsTable: {
-                        onClickRow: onRowClick,
-                      },
-                    }}
-                  />
-                ) : (
-                  <Loader />
-                )}
+                      }}
+                      defaultValues={defaultValues}
+                      showTab={true}
+                      tabData={tabData}
+                      onTabChange={onTabChange}
+                      additionalConfig={{
+                        resultsTable: {
+                          onClickRow: onRowClick,
+                        },
+                      }}
+                    />
+                  ) : (
+                    <Loader />
+                  )}
+                </div>
               </div>
             </div>
+          </React.Fragment>
+        )}
+        {((individualId && userType && userInfoType === "citizen" && isCitizenReferredInAnyCase) || userInfoType === "employee") && (
+          <div className="right-side" style={{ width: "30vw" }}>
+            <TasksComponent
+              taskType={taskType}
+              setTaskType={setTaskType}
+              caseType={caseType}
+              setCaseType={setCaseType}
+              isLitigant={Boolean(individualId && userType && userInfoType === "citizen")}
+              uuid={userInfo?.uuid}
+              userInfoType={userInfoType}
+              pendingSignOrderList={ordersNotificationData}
+            />
           </div>
-        </React.Fragment>
-      )}
-      {((individualId && userType && userInfoType === "citizen" && isCitizenReferredInAnyCase) || userInfoType === "employee") && (
-        <div className="right-side" style={{ width: "30vw" }}>
-          <TasksComponent
-            taskType={taskType}
-            setTaskType={setTaskType}
-            caseType={caseType}
-            setCaseType={setCaseType}
-            isLitigant={Boolean(individualId && userType && userInfoType === "citizen")}
-            uuid={userInfo?.uuid}
-            userInfoType={userInfoType}
-            pendingSignOrderList={ordersNotificationData}
+        )}
+        {issueBulkSuccessData.show && (
+          <OrderIssueBulkSuccesModal
+            t={t}
+            history={history}
+            bulkSignOrderListLength={issueBulkSuccessData.bulkSignOrderListLength}
+            setIssueBulkSuccessData={setIssueBulkSuccessData}
           />
-        </div>
-      )}
-      {issueBulkSuccessData.show && (
-        <OrderIssueBulkSuccesModal
-          t={t}
-          history={history}
-          bulkSignOrderListLength={issueBulkSuccessData.bulkSignOrderListLength}
-          setIssueBulkSuccessData={setIssueBulkSuccessData}
-        />
-      )}
-      {toastMsg && (
-        <Toast
-          error={toastMsg.key === "error"}
-          label={t(toastMsg.action)}
-          onClose={() => setToastMsg(null)}
-          isDleteBtn={true}
-          style={{ maxWidth: "500px" }}
-        />
-      )}
-    </div>
+        )}
+        {toastMsg && (
+          <Toast
+            error={toastMsg.key === "error"}
+            label={t(toastMsg.action)}
+            onClose={() => setToastMsg(null)}
+            isDleteBtn={true}
+            style={{ maxWidth: "500px" }}
+          />
+        )}
+      </div>
+    </React.Fragment>
   );
 };
 export default HomeView;

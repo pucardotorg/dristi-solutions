@@ -26,13 +26,13 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
   const Inbox = window?.Digit?.ComponentRegistryService?.getComponent("Inbox");
   const hideHomeCrumb = [`${path}/cases`];
   const roles = window?.Digit.UserService.getUser()?.info?.roles;
-  const isJudge = roles.some((role) => role.code === "CASE_APPROVER");
+  const isJudge = roles?.some((role) => role.code === "CASE_APPROVER");
   const token = window.localStorage.getItem("token");
   const isUserLoggedIn = Boolean(token);
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = JSON.parse(eSignWindowObject);
 
-  const isJudgeView = roles.some((role) => ["CASE_APPROVER", "BENCH_CLERK", "COURT_ROOM_MANAGER", "TYPIST_ROLE"].includes(role.code));
+  const isJudgeView = roles?.some((role) => ["CASE_APPROVER", "BENCH_CLERK", "COURT_ROOM_MANAGER", "TYPIST_ROLE"].includes(role.code));
 
   const employeeCrumbs = [
     {
