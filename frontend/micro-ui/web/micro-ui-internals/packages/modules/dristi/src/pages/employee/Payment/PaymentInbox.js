@@ -15,7 +15,6 @@ const sectionsParentStyle = {
 
 function PaymentInbox() {
   const { t } = useTranslation();
-  const roles = Digit.UserService.getUser()?.info?.roles;
   const history = useHistory();
   const [config, setConfig] = useState(paymentTabInboxConfig?.TabSearchConfig?.[0]);
   const [tabData, setTabData] = useState(
@@ -25,6 +24,15 @@ function PaymentInbox() {
       active: index === 0 ? true : false,
     }))
   );
+  const userInfo = window?.Digit?.UserService?.getUser()?.info;
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+
+  const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
   const isNyayMitra = roles.some((role) => role.code === "NYAY_MITRA_ROLE");
 
@@ -72,7 +80,7 @@ function PaymentInbox() {
   };
 
   if (!isNyayMitra) {
-    history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+    history.push(homePath);
   }
 
   return (

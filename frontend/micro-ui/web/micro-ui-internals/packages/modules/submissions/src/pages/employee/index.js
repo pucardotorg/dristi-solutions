@@ -20,14 +20,18 @@ const ProjectBreadCrumb = ({ location }) => {
   const { BreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { caseId, filingNumber } = BreadCrumbsParamsData;
 
+  const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+
   let userType = "employee";
   if (userInfo) {
     userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
   }
   const { t } = useTranslation();
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const crumbs = [
     {
-      path: `/${window?.contextPath}/${userType}/home/home-pending-task`,
+      path: homePath,
       content: t("CS_HOME"),
       show: true,
     },

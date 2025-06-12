@@ -50,6 +50,13 @@ const InsideHearingMainPage = () => {
   const courtId = localStorage.getItem("courtId");
   const { t } = useTranslation();
   const isInitialLoad = useRef(true);
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+
+  const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
   const onCancel = () => {
     setAddPartyModal(false);
@@ -474,7 +481,7 @@ const InsideHearingMainPage = () => {
   };
 
   const handleExitHearing = () => {
-    history.push(`/${window.contextPath}/${userType}/home/home-pending-task`);
+    history.push(homePath);
   };
 
   const handleClose = () => {
