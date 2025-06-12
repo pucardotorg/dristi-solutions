@@ -242,6 +242,7 @@ const HomeHearingsTab = ({
                       if (isJudge || isTypist) {
                         window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
                       } else {
+                        setLoader(false);
                         if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
                       }
                     });
