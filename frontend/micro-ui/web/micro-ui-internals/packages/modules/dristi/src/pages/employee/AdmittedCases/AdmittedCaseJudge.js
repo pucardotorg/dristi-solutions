@@ -165,10 +165,10 @@ const AdmittedCaseJudge = () => {
   const { hearingId, taskOrderType, artifactNumber, fromHome } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
   const roles = Digit.UserService.getUser()?.info?.roles;
-  const isFSO = roles.some((role) => role.code === "FSO_ROLE");
-  const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
-  const isBenchClerk = roles.some((role) => role.code === "BENCH_CLERK");
-  const isTypist = roles.some((role) => role.code === "TYPIST_ROLE");
+  const isFSO = roles?.some((role) => role.code === "FSO_ROLE");
+  const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
+  const isBenchClerk = roles?.some((role) => role.code === "BENCH_CLERK");
+  const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
   const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
   const applicationNumber = urlParams.get("applicationNumber");

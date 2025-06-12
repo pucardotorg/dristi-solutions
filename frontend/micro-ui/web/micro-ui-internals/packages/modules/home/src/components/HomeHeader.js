@@ -25,7 +25,7 @@ const HomeHeader = ({ t }) => {
 
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
-  const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
 
   const { data: hearingLink } = useGetHearingLink();
 
@@ -46,32 +46,6 @@ const HomeHeader = ({ t }) => {
                 {t("OPEN_ALL_CASES")}
               </a>
             </div>
-            <Button
-              variation={"tertiary"}
-              label={t("JOIN_VIDEO_CONFERENCE")}
-              onClick={() => {
-                window.open(hearingLink, "_blank");
-              }}
-              style={{
-                backgroundColor: "#007E7E",
-                width: "212px",
-                height: "40px",
-                paddingTop: "8px",
-                paddingRight: "24px",
-                paddingBottom: "8px",
-                paddingLeft: "24px",
-                gap: "4px",
-              }}
-              textStyles={{
-                fontSize: "16px",
-                fontWeight: 700,
-                fontFamily: "Roboto",
-                lineHeight: "19.2px",
-                textAlign: "left",
-                margin: "0px",
-                color: "white",
-              }}
-            ></Button>
           </div>
         )}
       </div>

@@ -50,13 +50,13 @@ const InsideHearingMainPage = () => {
   const courtId = localStorage.getItem("courtId");
   const { t } = useTranslation();
   const isInitialLoad = useRef(true);
+  const userInfo = Digit?.UserService?.getUser?.()?.info;
+
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
-  const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
-  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
 
   const onCancel = () => {
     setAddPartyModal(false);
@@ -67,7 +67,8 @@ const InsideHearingMainPage = () => {
   };
 
   const userType = Digit?.UserService?.getType?.();
-  const userInfo = Digit?.UserService?.getUser?.()?.info;
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];

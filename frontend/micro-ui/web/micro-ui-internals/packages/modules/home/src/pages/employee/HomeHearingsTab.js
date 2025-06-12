@@ -9,6 +9,8 @@ import { CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
 import { ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
 import { Toast } from "@egovernments/digit-ui-react-components";
+import useGetHearingLink from "@egovernments/digit-ui-module-hearings/src/hooks/hearings/useGetHearingLink";
+import { Button } from "@egovernments/digit-ui-components";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -640,6 +642,8 @@ const HomeHearingsTab = ({
     });
   }, [history, t, tableData, handleEditClick]);
 
+  const { data: hearingLink } = useGetHearingLink();
+
   return (
     <div className="full-height-container">
       <style>{`
@@ -889,7 +893,7 @@ const HomeHearingsTab = ({
 
         .date-arrow-btn:hover:not(:disabled) {
           background: #f5f5f5;
-        }
+          }
 `}</style>
       <div className="filter-bar">
         <div className="filter-fields">
@@ -1100,7 +1104,7 @@ const HomeHearingsTab = ({
                 if (
                   Array.isArray(response?.HearingList) &&
                   response?.HearingList?.length > 0 &&
-                  (response?.HearingList?.[0]?.status === "SCHEDULED" || response?.HearingList?.[0]?.status === "PASSED_OVER")
+                  response?.HearingList?.[0]?.status === "IN_PROGRESS"
                 ) {
                   hearingService
                     ?.updateHearings(

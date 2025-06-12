@@ -45,9 +45,9 @@ const ProjectBreadCrumb = ({ location, t }) => {
   }
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
-  const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const crumbs = [
@@ -91,13 +91,14 @@ const HomeView = () => {
   });
   const userInfo = useMemo(() => Digit?.UserService?.getUser()?.info, [Digit.UserService]);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
+  const isScrutiny = roles?.some((role) => role.code === "CASE_REVIEWER");
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
 
   const showReviewSummonsWarrantNotice = useMemo(() => roles?.some((role) => role?.code === "TASK_EDITOR"), [roles]);
-  const isNyayMitra = roles.some((role) => role.code === "NYAY_MITRA_ROLE");
-  const isClerk = roles.some((role) => role.code === "BENCH_CLERK");
+  const isNyayMitra = roles?.some((role) => role.code === "NYAY_MITRA_ROLE");
+  const isClerk = roles?.some((role) => role.code === "BENCH_CLERK");
   const tenantId = useMemo(() => window?.Digit.ULBService.getCurrentTenantId(), []);
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [toastMsg, setToastMsg] = useState(null);
@@ -248,7 +249,7 @@ const HomeView = () => {
         rolesToConfigMapping?.find((item) =>
           item.roles?.reduce((res, curr) => {
             if (!res) return res;
-            res = roles.some((role) => role.code === curr);
+            res = roles?.some((role) => role.code === curr);
             return res;
           }, true)
         ) || (userInfoType === "citizen" ? TabLitigantSearchConfig : null)
@@ -477,7 +478,7 @@ const HomeView = () => {
   };
   return (
     <React.Fragment>
-      <ProjectBreadCrumb location={window.location} t={t} />
+      {(isJudge || isBenchClerk || isTypist) && <ProjectBreadCrumb location={window.location} t={t} />}
       <div className="home-view-hearing-container">
         {individualId && userType && userInfoType === "citizen" && !isCitizenReferredInAnyCase ? (
           <LitigantHomePage isApprovalPending={isApprovalPending} />
