@@ -432,7 +432,7 @@
     right: 0;
     background: #fff;
     border-radius: 16px 16px 0 0;
-    padding: 24px 0px 24px 24px;
+    padding: 24px 0px 16px 24px;
     max-height: calc(100vh - 90px);
     opacity: 0;
     visibility: hidden;
@@ -476,7 +476,7 @@
       gap: 32px;
       display: flex;
       flex-direction: column;
-      margin: 0px 0px 16px 0px;
+      margin: 0px;
       padding-right: 16px;
       max-height: calc(100vh - 264px);
       overflow-y: auto;
@@ -516,6 +516,13 @@
           .case-label-field-pair {
             flex: 1;
             width: 100%;
+            .select-wrap {
+              .options-card {
+                top: 40px;
+                max-height: 250px;
+                overflow-y: auto;
+              }
+            }
 
             &.disabled {
               .select-wrap {
@@ -559,7 +566,7 @@
       display: flex;
       justify-content: flex-end;
       gap: 16px;
-      padding-top: 32px;
+      padding-top: 16px;
       padding-right: 32px;
 
       .order-drawer-save-btn {
