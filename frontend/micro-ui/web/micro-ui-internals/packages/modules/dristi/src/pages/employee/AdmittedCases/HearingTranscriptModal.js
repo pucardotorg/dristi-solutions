@@ -41,7 +41,7 @@ function HearingTranscriptModal({ t, hearing, setShowHearingTranscriptModal }) {
     >
       <div>
         <h2 className="transcript-header">{t("HEARING_TRANSCRIPT_SUMMARY_HEADING")}</h2>
-        <TextArea style={{ width: "100%", height: "25vh", border: "solid 1px #3d3c3c", resize: "none", fontSize: "large" }} value={hearing?.transcript || ""} />
+        <TextArea style={{ width: "100%", height: "25vh", border: "solid 1px #3d3c3c", resize: "none", fontSize: "large" }} value={hearing?.hearingSummary || ""} />
       </div>
       <div className="submit-bar-div">
         <SubmitBar
