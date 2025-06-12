@@ -300,8 +300,6 @@ const InsideHearingMainPage = () => {
     unJoinedLitigant,
   ]);
 
-  console.log("allParties", allParties);
-
   useEffect(() => {
     if (caseDataResponse) {
       setCaseData(caseDataResponse);

@@ -154,7 +154,7 @@ const JoinCasePayment = ({ taskNumber, setPendingTaskActionModals, refetch, type
                 }
                 refetch();
               } catch (error) {
-                console.log("error", error);
+                console.error("error", error);
               }
               setIsApiCalled(false);
             }}

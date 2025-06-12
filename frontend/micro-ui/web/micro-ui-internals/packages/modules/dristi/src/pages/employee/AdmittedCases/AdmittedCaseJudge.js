@@ -332,7 +332,7 @@ const AdmittedCaseJudge = () => {
       const res = await HomeService.InboxSearch(payload, { tenantId: "kl" });
       setData(res?.items || []);
     } catch (err) {
-      console.log("error", err);
+      console.error("error", err);
     } finally {
     }
   }, []);
@@ -2339,53 +2339,62 @@ const AdmittedCaseJudge = () => {
     history.push(`/${window?.contextPath}/employee/submissions/submit-document?filingNumber=${filingNumber}`);
   }, [filingNumber, history]);
 
-  const nextHearing = useCallback(() => {
-    if (data?.length === 0) {
-      history.push(`/${window?.contextPath}/employee/home/home-screen`);
-    } else {
-      const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
-      const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentInProgressHearing?.hearingId);
-      if (index === -1 || validData?.length === 1) {
+  const nextHearing = useCallback(
+    (isStartHearing) => {
+      if (data?.length === 0) {
         history.push(`/${window?.contextPath}/employee/home/home-screen`);
       } else {
-        const row = validData[(index + 1) % validData?.length];
-        if (["SCHEDULED", "PASSED_OVER"].includes(row?.businessObject?.hearingDetails?.status)) {
-          hearingService
-            .searchHearings(
-              {
-                criteria: {
-                  hearingId: row?.businessObject?.hearingDetails?.hearingNumber,
-                  tenantId: row?.businessObject?.hearingDetails?.tenantId,
-                  ...(row?.businessObject?.hearingDetails?.courtId &&
-                    userType === "employee" && { courtId: row?.businessObject?.hearingDetails?.courtId }),
-                },
-              },
-              { tenantId: row?.businessObject?.hearingDetails?.tenantId }
-            )
-            .then((response) => {
-              hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
-                window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
-              });
-            })
-            .catch((error) => {
-              console.error("Error starting hearing", error);
-              history.push(`/${window?.contextPath}/employee/home/home-screen`);
-            });
+        const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
+        const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentInProgressHearing?.hearingId);
+        if (index === -1 || validData?.length === 1) {
+          history.push(`/${window?.contextPath}/employee/home/home-screen`);
         } else {
-          history.push(
-            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
-          );
+          const row = validData[(index + 1) % validData?.length];
+          if (["SCHEDULED", "PASSED_OVER"].includes(row?.businessObject?.hearingDetails?.status)) {
+            if (isStartHearing) {
+              hearingService
+                .searchHearings(
+                  {
+                    criteria: {
+                      hearingId: row?.businessObject?.hearingDetails?.hearingNumber,
+                      tenantId: row?.businessObject?.hearingDetails?.tenantId,
+                      ...(row?.businessObject?.hearingDetails?.courtId &&
+                        userType === "employee" && { courtId: row?.businessObject?.hearingDetails?.courtId }),
+                    },
+                  },
+                  { tenantId: row?.businessObject?.hearingDetails?.tenantId }
+                )
+                .then((response) => {
+                  hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
+                    window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
+                  });
+                })
+                .catch((error) => {
+                  console.error("Error starting hearing", error);
+                  history.push(`/${window?.contextPath}/employee/home/home-screen`);
+                });
+            } else {
+              history.push(
+                `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
+              );
+            }
+          } else {
+            history.push(
+              `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
+            );
+          }
         }
       }
-    }
-  }, [currentInProgressHearing?.hearingId, data, history, userType]);
+    },
+    [currentInProgressHearing?.hearingId, data, history, userType]
+  );
 
   const handleEmployeeAction = useCallback(
     async (option) => {
       if (option.value === "DOWNLOAD_CASE_FILE") {
         handleDownloadPDF();
       } else if (option.value === "NEXT_HEARING") {
-        nextHearing();
+        nextHearing(false);
       } else if (option.value === "VIEW_CALENDAR") {
         setShowCalendarModal(true);
       } else if (option.value === "GENERATE_ORDER") {
@@ -3531,7 +3540,7 @@ const AdmittedCaseJudge = () => {
               )
               .then(() => {
                 setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: false });
-                nextHearing();
+                nextHearing(true);
               });
           }}
           actionCustomLabelSubmit={async () => {
