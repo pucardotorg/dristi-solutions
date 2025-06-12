@@ -1932,11 +1932,32 @@ const GenerateOrders = () => {
     }
 
     if (orderType && ["WARRANT"].includes(orderType)) {
-      if (formData?.bailInfo?.isBailable && Object.keys(formState?.errors).includes("isBailable")) {
+      if (
+        formData?.warrantSubType?.templateType === "SPECIFIC" &&
+        formData?.bailInfo?.isBailable &&
+        Object.keys(formState?.errors).includes("isBailable")
+      ) {
         clearFormErrors?.current?.[index]?.("isBailable");
-      } else if (formState?.submitCount && !formData?.bailInfo?.isBailable && !Object.keys(formState?.errors).includes("isBailable")) {
+      } else if (
+        formState?.submitCount &&
+        formData?.warrantSubType?.templateType === "SPECIFIC" &&
+        !formData?.bailInfo?.isBailable &&
+        !Object.keys(formState?.errors).includes("isBailable")
+      ) {
         setFormErrors?.current?.[index]?.("isBailable", { message: t("CORE_REQUIRED_FIELD_ERROR") });
       }
+
+      if (formData?.warrantSubType?.templateType === "GENERIC" && formData?.warrantText && Object.keys(formState?.errors).includes("warrantText")) {
+        clearFormErrors?.current?.[index]?.("warrantText");
+      } else if (
+        formState?.submitCount &&
+        formData?.warrantSubType?.templateType === "GENERIC" &&
+        !formData?.warrantText &&
+        !Object.keys(formState?.errors).includes("warrantText")
+      ) {
+        setFormErrors?.current?.[index]?.("warrantText", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      }
+
       if (formData?.bailInfo?.noOfSureties && Object.keys(formState?.errors).includes("noOfSureties")) {
         clearFormErrors?.current?.[index]?.("noOfSureties");
       } else if (formData?.bailInfo?.isBailable?.code === false && Object.keys(formState?.errors).includes("noOfSureties")) {
@@ -1976,6 +1997,8 @@ const GenerateOrders = () => {
       const warrantType = formData?.warrantSubType?.templateType;
       if (warrantType !== "GENERIC" && formData?.bailInfo?.warrantText) {
         setValue("bailInfo", undefined);
+      } else if (warrantType === "GENERIC" && formData?.warrantText?.isBailable) {
+        setValue("warrantText", undefined);
       }
     }
 
@@ -2889,8 +2912,8 @@ const GenerateOrders = () => {
             docSubType: orderFormValue.bailInfo?.isBailable?.code ? "BAILABLE" : "NON_BAILABLE",
             surety: orderFormValue.bailInfo?.noOfSureties?.code,
             bailableAmount: orderFormValue.bailInfo?.bailableAmount,
-            templateType : orderFormValue?.warrantSubType?.templateType || "GENERIC",
-            warrantText : orderFormValue?.warrantText?.warrantText || "",
+            templateType: orderFormValue?.warrantSubType?.templateType || "GENERIC",
+            warrantText: orderFormValue?.warrantText?.warrantText || "",
           },
           respondentDetails: {
             name: respondentName,
