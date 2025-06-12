@@ -4794,7 +4794,11 @@ public class CaseService {
 
         ReasonDocument reasonDocument = joinCaseTaskRequest.getReasonDocument();
 
-        String sourceType = joinCaseTaskRequest.getReplacementDetails().isEmpty() ? null : joinCaseTaskRequest.getReplacementDetails().get(0).getLitigantDetails().getPartyType();
+        String sourceType = (joinCaseTaskRequest.getReplacementDetails().isEmpty()
+                ? null
+                : (joinCaseTaskRequest.getReplacementDetails().get(0).getLitigantDetails().getPartyType().contains("complainant")
+                ? COMPLAINANT
+                : ACCUSED));
 
         Document document = Document.builder()
                 .fileStore(reasonDocument.getFileStore())
@@ -4809,7 +4813,7 @@ public class CaseService {
         return EvidenceRequest.builder().requestInfo(requestInfo)
                 .artifact(Artifact.builder()
                         .artifactType(REASON_DOCUMENT)
-                        .filingType("CASE_FILING")
+                        .filingType(DIRECT)
                         .filingNumber(courtCase.getFilingNumber())
                         .sourceType(sourceType)
                         .comments(new ArrayList<>())
