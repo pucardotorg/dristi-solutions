@@ -18,6 +18,11 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
   const [rescheduleAll, setRescheduleAll] = useState(false);
   const [stepper, setStepper] = useState(0);
   const courtId = localStorage.getItem("courtId");
+  const userInfo = Digit?.UserService?.getUser()?.info;
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
+    const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
+    const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
 
   const DateFormat = "DD-MM-YYYY";
 
@@ -37,9 +42,23 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
     setPurposeModalData(caseDetails);
     setPurposeModalOpen(true);
   };
+  
+  const updatedPreHearingConfig = useMemo(() => {
+    const configCopy = structuredClone(preHearingConfig);
+    
+    // Filter out Actions column for judge, bench clerk, and typist
+    if (isJudge || isBenchClerk || isTypist) {
+      configCopy.sections.searchResult.uiConfig.columns = configCopy.sections.searchResult.uiConfig.columns?.filter(
+        column => column.label !== "Actions"
+      );
+    }
+    
+    return configCopy;
+  }, [isJudge, isBenchClerk, isTypist]);
+
 
   const updatedConfig = useMemo(() => {
-    const configCopy = structuredClone(preHearingConfig);
+    const configCopy = structuredClone(updatedPreHearingConfig);
     configCopy.apiDetails.requestParam = {
       ...configCopy.apiDetails.requestParam,
       fromDate: hearingData.fromDate,
@@ -65,7 +84,7 @@ function PreHearingModal({ onCancel, hearingData, courtData, individualId, userT
       }),
     ];
     return configCopy;
-  }, [hearingData.fromDate, hearingData.toDate, hearingData.slot, tenantId, userType, individualId, courtId]);
+  }, [updatedPreHearingConfig, hearingData.fromDate, hearingData.toDate, hearingData.slot, tenantId, courtId, userType, individualId]);
 
   // const getTotalCount = useCallback(
   //   async function () {
