@@ -97,7 +97,7 @@ async function processVakalatSection(
 
     const vakalats = Array.from(vakalatMap.values());
 
-    vakalats.sort((a, b) => b.dateOfAddition - a.dateOfAddition);
+    vakalats.sort((a, b) => a.dateOfAddition - b.dateOfAddition);
 
     const vakalatLineItems = await Promise.all(
       vakalats.map(async (vakalat, index) => {
