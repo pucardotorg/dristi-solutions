@@ -4228,7 +4228,7 @@ public class CaseService {
                 boolean isReasonDocumentAlreadySubmitted = evidenceValidator.validateReasonDocumentCreation(courtCase, requestInfo, joinCaseRequest.getReasonDocument());
 
                 if (!isReasonDocumentAlreadySubmitted) {
-                    EvidenceRequest evidenceRequest = enrichEvidenceCreateRequestForReasonDocument(courtCase, joinCaseRequest.getReasonDocument(), requestInfo);
+                    EvidenceRequest evidenceRequest = enrichEvidenceCreateRequestForReasonDocument(courtCase, joinCaseRequest, requestInfo);
                     evidenceUtil.createEvidence(evidenceRequest);
                 }
             }
@@ -4722,29 +4722,32 @@ public class CaseService {
                         .build()).build();
     }
 
-    private EvidenceRequest enrichEvidenceCreateRequestForReasonDocument(CourtCase courtCase, ReasonDocument reasonDocument, RequestInfo requestInfo) {
+    private EvidenceRequest enrichEvidenceCreateRequestForReasonDocument(CourtCase courtCase, JoinCaseTaskRequest joinCaseTaskRequest, RequestInfo requestInfo) {
+
+        ReasonDocument reasonDocument = joinCaseTaskRequest.getReasonDocument();
+
+        String sourceType = (joinCaseTaskRequest.getReplacementDetails().isEmpty()
+                ? null
+                : (joinCaseTaskRequest.getReplacementDetails().get(0).getLitigantDetails().getPartyType().contains("complainant")
+                ? COMPLAINANT
+                : ACCUSED));
 
         Document document = Document.builder()
                 .fileStore(reasonDocument.getFileStore())
                 .build();
         org.egov.common.contract.models.Document workflowDocument = objectMapper.convertValue(document, org.egov.common.contract.models.Document.class);
 
-
-        WorkflowObject workflowObject = new WorkflowObject();
-        workflowObject.setAction("TYPE DEPOSITION");
-        workflowObject.setDocuments(Collections.singletonList(workflowDocument));
-
         return EvidenceRequest.builder().requestInfo(requestInfo)
                 .artifact(Artifact.builder()
                         .artifactType(REASON_DOCUMENT)
-                        .filingType("CASE_FILING")
+                        .filingType(DIRECT)
                         .filingNumber(courtCase.getFilingNumber())
+                        .sourceType(sourceType)
                         .comments(new ArrayList<>())
                         .isEvidence(false)
                         .caseId(courtCase.getId().toString())
                         .tenantId(courtCase.getTenantId())
                         .file(document)
-                        .workflow(workflowObject)
                         .build()).build();
     }
 
