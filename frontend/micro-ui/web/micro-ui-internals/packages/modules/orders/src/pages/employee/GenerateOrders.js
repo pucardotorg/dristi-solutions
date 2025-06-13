@@ -2973,18 +2973,14 @@ const GenerateOrders = () => {
     }
     if (Object.keys(payload || {}).length > 0 && !Array.isArray(selectedChannel)) return [payload];
     else if (Object.keys(payload || {}).length > 0 && Array.isArray(selectedChannel)) {
-      const channelMap = new Map();
       const channelPayloads = await Promise.all(
         selectedChannel?.map(async (item) => {
           let clonedPayload = JSON.parse(JSON.stringify(payload));
 
-          let courtFees = await getCourtFee(item?.code, clonedPayload?.respondentDetails?.address?.pincode, orderType);
+          const pincode = ["e-Post", "Registered Post", "Via Police"].includes(item?.type) ? item?.value?.pincode : clonedPayload?.respondentDetails?.address?.pincode;
 
-          if (channelMap.get(item?.type)) {
-            channelMap.set(item?.type, channelMap.get(item?.type) + 1);
-          } else {
-            channelMap.set(item?.type, 1);
-          }
+          let courtFees = await getCourtFee(item?.code, pincode, orderType);
+
           if ("deliveryChannels" in clonedPayload) {
             clonedPayload.deliveryChannels = {
               ...clonedPayload.deliveryChannels,
@@ -2994,7 +2990,7 @@ const GenerateOrders = () => {
             };
 
             let address = {};
-            if (orderType === "WARRANT") {
+            if (orderType === "WARRANT" || item?.type === "Via Police") {
               address = {
                 ...item?.value,
                 locality: item?.value?.locality || "",
@@ -3003,92 +2999,38 @@ const GenerateOrders = () => {
                   latitude: item?.value?.geoLocationDetails?.latitude,
                 },
               };
-            } else {
-              address = ["Via Police"].includes(item?.type)
-                ? {
-                    ...item?.value,
-                    locality: item?.value?.locality || "",
-                    coordinate: {
-                      longitude: item?.value?.geoLocationDetails?.longitude,
-                      latitude: item?.value?.geoLocationDetails?.latitude,
-                    },
-                  }
-                : ["e-Post", "Registered Post"].includes(item?.type)
-                ? respondentAddress[channelMap.get(item?.type) - 1]
-                : respondentAddress[0];
-            }
-            const sms = ["SMS"].includes(item?.type) ? respondentPhoneNo[channelMap.get(item?.type) - 1] : respondentPhoneNo[0];
-            const email = ["E-mail"].includes(item?.type) ? respondentEmail[channelMap.get(item?.type) - 1] : respondentEmail[0];
-
-            let resolvedAddress = {};
-            if (orderType === "WARRANT" || ["Via Police"].includes(item?.type)) {
-              resolvedAddress = address;
             } else if (["e-Post", "Registered Post"].includes(item?.type)) {
-              resolvedAddress = {
-                ...address,
-                locality: item?.value?.locality || address?.locality,
-                coordinate: item?.value?.coordinates || address?.coordinates,
+              const baseAddress = item?.value || {};
+              address = {
+                ...baseAddress,
+                locality: item?.value?.locality || baseAddress?.locality || "",
+                coordinate: item?.value?.coordinates || baseAddress?.coordinates || {},
               };
             } else {
-              resolvedAddress = { ...address, coordinate: address?.coordinates } || "";
+              const baseAddress = respondentAddress[0] || {};
+              address = {
+                ...baseAddress,
+                coordinate: baseAddress?.coordinates || {},
+              };
             }
+
+            const phone = item?.type === "SMS" ? item?.value : (respondentPhoneNo?.[0] || "");
+            const email = item?.type === "E-mail" ? item?.value : (respondentEmail?.[0] || "");
+            const commonDetails = { address, phone, email, age: "", gender: "" };
 
             clonedPayload.respondentDetails = {
               ...clonedPayload.respondentDetails,
-              address: resolvedAddress,
-              phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
-              email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
-              age: "",
-              gender: "",
+              ...commonDetails,
             };
 
             if (clonedPayload?.witnessDetails) {
               clonedPayload.witnessDetails = {
                 ...clonedPayload.witnessDetails,
-                address: ["Via Police"].includes(item?.type)
-                  ? address
-                  : ["e-Post", "Registered Post"].includes(item?.type)
-                  ? {
-                      ...address,
-                      locality: item?.value?.locality || address?.locality,
-                      coordinate: item?.value?.coordinates || address?.coordinates,
-                    }
-                  : { ...address, coordinate: address?.coordinates } || "",
-                phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
-                email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
-                age: "",
-                gender: "",
+                ...commonDetails,
               };
             }
           }
-          if ("deliveryChannel" in clonedPayload) {
-            const channelDetailsEnum = {
-              SMS: "phone",
-              "E-mail": "email",
-              "e-Post": "address",
-              "Via Police": "address",
-              "Registered Post": "address",
-            };
-            clonedPayload.deliveryChannel = {
-              ...clonedPayload.deliveryChannel,
-              channelName: channelTypeEnum?.[item?.type]?.type,
-              [channelDetailsEnum?.[item?.type]]: item?.value || "",
-            };
 
-            const address = respondentAddress[channelMap.get(item?.type) - 1];
-
-            const sms = respondentPhoneNo[channelMap.get(item?.type) - 1];
-            const email = respondentEmail[channelMap.get(item?.type) - 1];
-
-            clonedPayload.respondentDetails = {
-              ...clonedPayload.respondentDetails,
-              address: ["e-Post", "Via Police", "Registered Post"].includes(item?.type) ? item?.value : address || "",
-              phone: ["SMS"].includes(item?.type) ? item?.value : sms || "",
-              email: ["E-mail"].includes(item?.type) ? item?.value : email || "",
-              age: "",
-              gender: "",
-            };
-          }
           return clonedPayload;
         })
       );
