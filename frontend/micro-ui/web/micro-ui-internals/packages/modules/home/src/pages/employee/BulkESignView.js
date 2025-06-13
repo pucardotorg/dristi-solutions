@@ -404,16 +404,18 @@ function BulkESignView() {
             <div className="header">{t("BULK_SIGN_ORDERS")}</div>
             <InboxSearchComposer customStyle={sectionsParentStyle} configs={config} onFormValueChange={onFormValueChange}></InboxSearchComposer>{" "}
           </div>
-          <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
-            <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
-              <SubmitBar
-                label={t("SIGN_SELECTED_ORDERS")}
-                submit="submit"
-                disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
-                onSubmit={() => setShowBulkSignConfirmModal(true)}
-              />
-            </div>
-          </ActionBar>
+          {isJudge && (
+            <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
+              <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
+                <SubmitBar
+                  label={t("SIGN_SELECTED_ORDERS")}
+                  submit="submit"
+                  disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
+                  onSubmit={() => setShowBulkSignConfirmModal(true)}
+                />
+              </div>
+            </ActionBar>
+          )}
         </React.Fragment>
       )}
       {showBulkSignAllModal && <OrderBulkReviewModal t={t} history={history} orderDetails={orderDetails} />}
