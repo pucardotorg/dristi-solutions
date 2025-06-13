@@ -16,6 +16,7 @@ import org.pucar.dristi.repository.HearingRepository;
 import org.pucar.dristi.util.*;
 import org.pucar.dristi.validator.HearingRegistrationValidator;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.inbox.InboxRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +30,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
-import static org.pucar.dristi.config.ServiceConstants.HEARING_TYPE_MODULE_CODE;
 
 @Service
 @Slf4j
@@ -49,6 +49,9 @@ public class HearingService {
     private final DateUtil dateUtil;
     private final SchedulerUtil schedulerUtil;
     private final FileStoreUtil fileStoreUtil;
+    private final InboxUtil inboxUtil;
+    private final JsonUtil jsonUtil;
+    private final EsUtil esUtil;
 
     @Autowired
     public HearingService(
@@ -57,7 +60,7 @@ public class HearingService {
             WorkflowService workflowService,
             HearingRepository hearingRepository,
             Producer producer,
-            Configuration config, CaseUtil caseUtil, ObjectMapper objectMapper, IndividualService individualService, SmsNotificationService notificationService, MdmsUtil mdmsUtil, DateUtil dateUtil, SchedulerUtil schedulerUtil, FileStoreUtil fileStoreUtil) {
+            Configuration config, CaseUtil caseUtil, ObjectMapper objectMapper, IndividualService individualService, SmsNotificationService notificationService, MdmsUtil mdmsUtil, DateUtil dateUtil, SchedulerUtil schedulerUtil, FileStoreUtil fileStoreUtil, InboxUtil inboxUtil, JsonUtil jsonUtil, EsUtil esUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.workflowService = workflowService;
@@ -72,6 +75,9 @@ public class HearingService {
         this.dateUtil = dateUtil;
         this.schedulerUtil = schedulerUtil;
         this.fileStoreUtil = fileStoreUtil;
+        this.inboxUtil = inboxUtil;
+        this.jsonUtil = jsonUtil;
+        this.esUtil = esUtil;
     }
 
     public Hearing createHearing(HearingRequest body) {
@@ -146,6 +152,8 @@ public class HearingService {
 
             if (hearing.getWorkflow() != null) {
                 workflowService.updateWorkflowStatus(hearingRequest);
+                // update status entry in es, if this will break need to handle other so that process should complete
+                updateOpenHearingStatus(hearingRequest);
             }
 
             producer.push(config.getHearingUpdateTopic(), hearingRequest);
@@ -169,6 +177,57 @@ public class HearingService {
             throw new CustomException(HEARING_UPDATE_EXCEPTION, "Error occurred while updating hearing: " + e.getMessage());
         }
 
+    }
+
+    private void updateOpenHearingStatus(HearingRequest hearingRequest) {
+
+        // search for open hearing
+        try {
+            String tenantId = hearingRequest.getHearing().getTenantId();
+            RequestInfo requestInfo = hearingRequest.getRequestInfo();
+            String hearingNumber = hearingRequest.getHearing().getHearingId();
+            InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(tenantId, requestInfo, hearingNumber);
+            List<OpenHearing> openHearings = inboxUtil.getOpenHearings(inboxRequest);
+
+            if (!(openHearings == null || openHearings.isEmpty())) {
+                OpenHearing openHearing = openHearings.get(0);
+                openHearing.setStatus(hearingRequest.getHearing().getStatus());
+                enrichStatusOrderInOpenHearing(requestInfo, openHearing);
+
+                try {
+                    String request = esUtil.buildPayload(openHearing);
+                    String uri = config.getEsHostUrl() + config.getBulkPath();
+                    esUtil.manualIndex(uri, request);
+                } catch (Exception e) {
+                    log.error("Error occurred while updating open hearing status in es");
+                    log.error("ERROR_FROM_ES: {}", e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            log.error("Something went wrong while updating status of open hearing with hearing number {}", hearingRequest.getHearing().getHearingId());
+            log.error("ERROR: {}", e.getMessage());
+        }
+
+
+    }
+
+    private void enrichStatusOrderInOpenHearing(RequestInfo requestInfo, OpenHearing openHearing) {
+
+        Map<String, Map<String, JSONArray>> hearingStatusData =
+                mdmsUtil.fetchMdmsData(requestInfo, openHearing.getTenantId(),
+                        HEARING_MODULE_NAME,
+                        Collections.singletonList(HEARING_STATUS_MASTER_NAME));
+        JSONArray hearingStatusJsonArray = hearingStatusData.get(HEARING_MODULE_NAME).get(HEARING_STATUS_MASTER_NAME);
+
+        for (Object hearingStatusObject : hearingStatusJsonArray) {
+
+            String status = jsonUtil.getNestedValue(hearingStatusObject, List.of("status"), String.class);
+            if (openHearing.getStatus().equalsIgnoreCase(status)) {
+                Integer priority = jsonUtil.getNestedValue(hearingStatusObject, List.of("priority"), Integer.class);
+                openHearing.setStatusOrder(priority);
+                break;
+            }
+        }
     }
 
     private <T> void filterDocuments(List<T> entities,
@@ -559,8 +618,7 @@ public class HearingService {
                 hearingType.equalsIgnoreCase(REPORTS) || hearingType.equalsIgnoreCase(ARGUMENTS) || hearingType.equalsIgnoreCase(PLEA) ||
                 hearingType.equalsIgnoreCase(EXECUTION) || hearingType.equalsIgnoreCase(EXAMINATION_UNDER_S351_BNSS) ||
                 hearingType.equalsIgnoreCase(EVIDENCE_COMPLAINANT) || hearingType.equalsIgnoreCase(EVIDENCE_ACCUSED) ||
-                hearingType.equalsIgnoreCase(APPEARANCE) || hearingType.equalsIgnoreCase(ADMISSION) || hearingType.equalsIgnoreCase(JUDGEMENT))
-        {
+                hearingType.equalsIgnoreCase(APPEARANCE) || hearingType.equalsIgnoreCase(ADMISSION) || hearingType.equalsIgnoreCase(JUDGEMENT)) {
             return VARIABLE_HEARING_SCHEDULED;
         }
         return null;
