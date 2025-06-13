@@ -1,5 +1,5 @@
-import { AppContainer, BreadCrumb, PrivateRoute } from "@egovernments/digit-ui-react-components";
-import React, { useMemo } from "react";
+import { AppContainer, PrivateRoute } from "@egovernments/digit-ui-react-components";
+import React, { useContext, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Switch } from "react-router-dom";
 import AdjournHearing from "./AdjournHearing";
@@ -7,6 +7,8 @@ import MonthlyCalendar from "./CalendarView";
 import EndHearing from "./EndHearing";
 import InsideHearingMainPage from "./InsideHearingMainPage";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
+import BreadCrumbHearings from "../../components/BreadCrumbHearings";
 
 const bredCrumbStyle = { maxWidth: "min-content" };
 
@@ -21,10 +23,18 @@ const ProjectBreadCrumb = ({ location }) => {
   const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+    const { BreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
+    const { caseId, filingNumber } = BreadCrumbsParamsData;
+  
   const crumbs = [
     {
       path: homePath,
       content: t("ES_COMMON_HOME"),
+      show: true,
+    },
+    {
+      path: `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`,
+      content: t("VIEW_CASE"),
       show: true,
     },
     {
@@ -33,7 +43,7 @@ const ProjectBreadCrumb = ({ location }) => {
       show: true,
     },
   ];
-  return <BreadCrumb crumbs={crumbs} spanStyle={bredCrumbStyle} style={{ color: "rgb(0, 126, 126)" }} />;
+  return <BreadCrumbHearings crumbs={crumbs} spanStyle={bredCrumbStyle} />;
 };
 
 const App = ({ path }) => {

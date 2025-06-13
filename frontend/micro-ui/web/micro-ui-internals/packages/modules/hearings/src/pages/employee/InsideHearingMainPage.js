@@ -23,6 +23,7 @@ import { getFormattedName } from "../../utils";
 import { getFilingType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/caseUtils";
 import { constructFullName, removeInvalidNameParts } from "@egovernments/digit-ui-module-orders/src/utils";
+import { Loader } from "@egovernments/digit-ui-react-components";
 
 const SECOND = 1000;
 
@@ -32,7 +33,6 @@ const InsideHearingMainPage = () => {
   const [transcriptText, setTranscriptText] = useState("");
   const [hearing, setHearing] = useState({});
   const [witnessDepositionText, setWitnessDepositionText] = useState("");
-  const [caseData, setCaseData] = useState(null);
   const [options, setOptions] = useState([]);
   const [additionalDetails, setAdditionalDetails] = useState({});
   const [selectedWitness, setSelectedWitness] = useState({});
@@ -42,8 +42,7 @@ const InsideHearingMainPage = () => {
   const textAreaRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const { hearingId } = Digit.Hooks.useQueryParams();
-  const [filingNumber, setFilingNumber] = useState("");
+  const { hearingId, filingNumber } = Digit.Hooks.useQueryParams();
   const [witnessModalOpen, setWitnessModalOpen] = useState(false);
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState("");
   const [isItemPending, setIsItemPending] = useState(false);
@@ -69,6 +68,22 @@ const InsideHearingMainPage = () => {
   const userType = Digit?.UserService?.getType?.();
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+
+  const { data: caseData, isLoading: isCaseLoading, refetch: refetchCase } = Digit.Hooks.dristi.useSearchCaseService(
+    {
+      criteria: [
+        {
+          filingNumber,
+          ...(courtId && userType === "employee" && { courtId }),
+        },
+      ],
+      tenantId,
+    },
+    {},
+    `case-details-${filingNumber}`,
+    filingNumber,
+    Boolean(filingNumber)
+  );
 
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];
@@ -111,11 +126,9 @@ const InsideHearingMainPage = () => {
   };
   const { data: hearingsData, refetch: refetchHearing = () => {} } = Digit.Hooks.hearings.useGetHearings(
     reqBody,
-    { applicationNumber: "", cnrNumber: "", hearingId,
-      //  ...(caseCourtId && { courtId: caseCourtId }) 
-      },
+    { applicationNumber: "", cnrNumber: "", hearingId, ...(caseCourtId && { courtId: caseCourtId }) },
     "dristi",
-    true,
+    Boolean(hearingId && caseCourtId),
     refetchTime
   );
 
@@ -138,22 +151,6 @@ const InsideHearingMainPage = () => {
         1000
       ),
     [_updateTranscriptRequest]
-  );
-
-  const { data: caseDataResponse, refetch: refetchCase } = Digit.Hooks.dristi.useSearchCaseService(
-    {
-      criteria: [
-        {
-          filingNumber,
-          ...(courtId && userType === "employee" && { courtId }),
-        },
-      ],
-      tenantId,
-    },
-    {},
-    `case-details-${filingNumber}`,
-    filingNumber,
-    Boolean(filingNumber)
   );
 
   const { data: applicationData, isLoading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
@@ -191,12 +188,10 @@ const InsideHearingMainPage = () => {
   );
 
   const isCaseInRegistrationStage = useMemo(() => {
-    return caseData?.criteria?.[0]?.responseList?.[0]?.substage === "REGISTRATION";
-  }, [caseData]);
+    return caseDetails?.substage === "REGISTRATION";
+  }, [caseDetails]);
 
-  const delayCondonationData = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0]?.caseDetails?.delayApplications?.formdata?.[0]?.data, [
-    caseData,
-  ]);
+  const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
   useEffect(() => {
     if (hearingsData) {
@@ -205,7 +200,6 @@ const InsideHearingMainPage = () => {
       if (hearingData) {
         setHearing(hearingData);
         setTranscriptText(hearingData?.hearingSummary || "");
-        setFilingNumber(hearingData?.filingNumber?.[0]);
       }
     }
   }, [hearingsData]);
@@ -311,46 +305,42 @@ const InsideHearingMainPage = () => {
   ]);
 
   useEffect(() => {
-    if (caseDataResponse) {
-      setCaseData(caseDataResponse);
-      const responseList = caseDataResponse?.criteria?.[0]?.responseList?.[0];
-      setAdditionalDetails(responseList?.additionalDetails);
-      const witnessOptions =
-        responseList?.additionalDetails?.witnessDetails?.formdata?.map((witness) => ({
-          label: getFormattedName(witness?.data?.firstName, witness?.data?.middleName, witness?.data?.lastName, witness?.data?.witnessDesignation),
-          value: witness?.data?.uuid,
+    setAdditionalDetails(caseDetails?.additionalDetails);
+    const witnessOptions =
+      caseDetails?.additionalDetails?.witnessDetails?.formdata?.map((witness) => ({
+        label: getFormattedName(witness?.data?.firstName, witness?.data?.middleName, witness?.data?.lastName, witness?.data?.witnessDesignation),
+        value: witness?.data?.uuid,
+      })) || [];
+
+    const advocateOptions =
+      hearingsData?.HearingList?.flatMap((hearingItem) =>
+        hearingItem?.attendees
+          ?.filter((attendee) => attendee?.type === "Advocate")
+          .map((attendee, index) => ({
+            label: attendee?.name,
+            value: attendee?.individualId,
+          }))
+      ) || [];
+    const partiesOption =
+      allParties
+        ?.filter((party) => party?.isJoined === true)
+        .map((party) => ({
+          label: party?.name,
+          value: party?.partyType === "poaHolder" ? party?.individualId : party?.partyUuid,
         })) || [];
 
-      const advocateOptions =
-        hearingsData?.HearingList?.flatMap((hearingItem) =>
-          hearingItem?.attendees
-            ?.filter((attendee) => attendee?.type === "Advocate")
-            .map((attendee, index) => ({
-              label: attendee?.name,
-              value: attendee?.individualId,
-            }))
-        ) || [];
-      const partiesOption =
-        allParties
-          ?.filter((party) => party?.isJoined === true)
-          .map((party) => ({
-            label: party?.name,
-            value: party?.partyType === "poaHolder" ? party?.individualId : party?.partyUuid,
-          })) || [];
+    const combinedOptions = [...witnessOptions, ...advocateOptions, ...partiesOption];
+    setOptions(combinedOptions);
 
-      const combinedOptions = [...witnessOptions, ...advocateOptions, ...partiesOption];
-      setOptions(combinedOptions);
-
-      if (isInitialLoad.current) {
-        const selectedWitnessDefault = responseList?.additionalDetails?.witnessDetails?.formdata?.[0]?.data || {};
-        setSelectedWitness(selectedWitnessDefault);
-        setWitnessDepositionText(
-          hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDefault?.uuid)?.deposition || ""
-        );
-        isInitialLoad.current = false;
-      }
+    if (isInitialLoad.current) {
+      const selectedWitnessDefault = caseDetails?.additionalDetails?.witnessDetails?.formdata?.[0]?.data || {};
+      setSelectedWitness(selectedWitnessDefault);
+      setWitnessDepositionText(
+        hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDefault?.uuid)?.deposition || ""
+      );
+      isInitialLoad.current = false;
     }
-  }, [caseDataResponse, hearing?.additionalDetails?.witnessDepositions, hearingsData, allParties]);
+  }, [caseDetails, hearing?.additionalDetails?.witnessDepositions, hearingsData, allParties]);
 
   const handleModal = () => {
     setIsOpen(!isOpen);
@@ -573,12 +563,16 @@ const InsideHearingMainPage = () => {
     return !isEmpty(selectedWitness);
   }, [selectedWitness]);
 
+  if (isCaseLoading || isApplicationLoading || isFilingTypeLoading) {
+    return <Loader />;
+  }
+
   return (
     <div className="admitted-case" style={{ display: "flex" }}>
       <div className="left-side" style={{ padding: "24px 40px" }}>
         <React.Fragment>
           <EvidenceHearingHeader
-            caseData={caseData?.criteria?.[0]?.responseList?.[0]}
+            caseData={caseDetails}
             hearing={hearing}
             setActiveTab={setActiveTab}
             activeTab={activeTab}
@@ -740,7 +734,7 @@ const InsideHearingMainPage = () => {
         </div>
       </div>
       <div className="right-side" style={{ borderLeft: "1px solid lightgray" }}>
-        <HearingSideCard hearingId={hearingId} caseId={caseData?.criteria?.[0]?.responseList?.[0]?.id} filingNumber={filingNumber}></HearingSideCard>
+        <HearingSideCard hearingId={hearingId} caseId={caseDetails?.id} filingNumber={filingNumber}></HearingSideCard>
         {adjournHearing && (
           <AdjournHearing
             hearing={hearing}
