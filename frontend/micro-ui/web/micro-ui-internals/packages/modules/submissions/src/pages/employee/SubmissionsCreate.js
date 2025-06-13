@@ -354,18 +354,23 @@ const SubmissionsCreate = ({ path }) => {
     return formdata?.submissionType?.code;
   }, [formdata?.submissionType?.code]);
 
-  const submissionFormConfig = useMemo(() => {
-    const submissionConfigKeys = {
-      APPLICATION: applicationTypeConfig,
-    };
-    if (caseDetails && Array.isArray(submissionConfigKeys[submissionType])) {
-      const isDelayApplicationPending = Boolean(
+  const isDelayApplicationPending = useMemo(
+    () =>
+      Boolean(
         delayCondonationData?.applicationList?.some(
           (item) =>
             item?.applicationType === "DELAY_CONDONATION" &&
             [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(item?.status)
         )
-      );
+      ),
+    [delayCondonationData?.applicationList]
+  );
+
+  const submissionFormConfig = useMemo(() => {
+    const submissionConfigKeys = {
+      APPLICATION: applicationTypeConfig,
+    };
+    if (caseDetails && Array.isArray(submissionConfigKeys[submissionType])) {
       if (orderNumber || (hearingId && applicationTypeUrl) || !isCitizen) {
         const tempData = submissionConfigKeys[submissionType]?.map((item) => {
           return {
@@ -401,7 +406,7 @@ const SubmissionsCreate = ({ path }) => {
       }
     }
     return [];
-  }, [caseDetails, submissionType, orderNumber, hearingId, applicationTypeUrl, isCitizen, delayCondonationData]);
+  }, [caseDetails, submissionType, isDelayApplicationPending, orderNumber, hearingId, applicationTypeUrl, isCitizen]);
 
   const applicationType = useMemo(() => {
     return formdata?.applicationType?.type || applicationTypeUrl;
@@ -807,10 +812,10 @@ const SubmissionsCreate = ({ path }) => {
     compositeMandatorySubmissionItem,
   ]);
 
-  const formKey = useMemo(() => applicationType + (defaultFormValue?.initialSubmissionDate || "" + defaultFormValue?.selectComplainant?.name), [
-    applicationType,
-    defaultFormValue,
-  ]);
+  const formKey = useMemo(
+    () => applicationType + (defaultFormValue?.initialSubmissionDate || "" + defaultFormValue?.selectComplainant?.name) + isDelayApplicationPending,
+    [applicationType, defaultFormValue?.initialSubmissionDate, defaultFormValue?.selectComplainant?.name, isDelayApplicationPending]
+  );
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (
