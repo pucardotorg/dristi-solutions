@@ -87,6 +87,39 @@ public class ServiceConstants {
     public static final String START = "START";
     public static final String PASS_OVER = "PASS_OVER";
     public static final String ABANDON = "ABANDON";
+    public static final String HEARING_MODULE_NAME = "Hearing";
+    public static final String HEARING_STATUS_MASTER_NAME = "HearingStatus";
+    public static final String ERRORS_PATH = "$.errors";
+    public static final String ES_INDEX_HEADER_FORMAT = "{\"index\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
+    public static final String ES_INDEX_DOCUMENT_FORMAT = "{"
+            + "\"Data\": {"
+            + "\"hearingDetails\": {"
+            + "\"hearingUuid\": \"%s\","
+            + "\"tenantId\": \"%s\","
+            + "\"filingNumber\": \"%s\","
+            + "\"caseTitle\": \"%s\","
+            + "\"caseUuid\": \"%s\","
+            + "\"hearingNumber\": \"%s\","
+            + "\"caseNumber\": \"%s\","
+            + "\"stage\": \"%s\","
+            + "\"status\": \"%s\","
+            + "\"fromDate\": %d,"
+            + "\"toDate\": %d,"
+            + "\"subStage\": \"%s\","
+            + "\"courtId\": \"%s\","
+            + "\"advocate\": {"
+            + "\"accused\": %s,"
+            + "\"complainant\": %s"
+            + "},"
+            + "\"searchableFields\": %s,"
+            + "\"hearingType\": \"%s\","
+            + "\"caseFilingDate\": %d,"
+            + "\"statusOrder\": %d,"
+            + "\"hearingTypeOrder\": %d"
+            + "}"
+            + "}"
+            + "}\n";
+
 
     // module for localized hearing types
     public static final String HEARING_TYPE_MODULE_CODE = "hearingTypes";
