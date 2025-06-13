@@ -4813,6 +4813,8 @@ public class CaseService {
                         .sourceType(sourceType)
                         .comments(new ArrayList<>())
                         .isEvidence(false)
+                        .isVoid(false)
+                        .status(SUBMITTED)
                         .caseId(courtCase.getId().toString())
                         .tenantId(courtCase.getTenantId())
                         .file(document)
