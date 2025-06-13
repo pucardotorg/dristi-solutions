@@ -143,7 +143,7 @@ function CaseFileAdmission({ t, path }) {
     moduleCode,
     config: {
       enabled: Boolean(caseDetails?.filingNumber && tenantId),
-      cacheTime: 0,
+      cacheTime: 10,
     },
   });
 

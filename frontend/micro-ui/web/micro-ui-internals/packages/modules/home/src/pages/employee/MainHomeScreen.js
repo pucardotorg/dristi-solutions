@@ -318,6 +318,7 @@ const MainHomeScreen = () => {
                   showEndHearingModal={showEndHearingModal}
                   setFilters={setFilters}
                   filters={filters}
+                  showToast={showToast}
                 />
               </div>
             ) : (
