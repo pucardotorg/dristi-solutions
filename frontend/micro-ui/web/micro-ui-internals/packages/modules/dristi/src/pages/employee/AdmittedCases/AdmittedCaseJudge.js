@@ -1682,7 +1682,7 @@ const AdmittedCaseJudge = () => {
               statuteSection: {
                 tenantId,
               },
-              orderTitle: orderType,
+              orderTitle: t(orderType),
               orderCategory: "INTERMEDIATE",
               orderType,
               status: "",
