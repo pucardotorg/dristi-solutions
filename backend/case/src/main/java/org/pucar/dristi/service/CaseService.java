@@ -4805,11 +4805,6 @@ public class CaseService {
                 .build();
         org.egov.common.contract.models.Document workflowDocument = objectMapper.convertValue(document, org.egov.common.contract.models.Document.class);
 
-
-        WorkflowObject workflowObject = new WorkflowObject();
-        workflowObject.setAction("TYPE DEPOSITION");
-        workflowObject.setDocuments(Collections.singletonList(workflowDocument));
-
         return EvidenceRequest.builder().requestInfo(requestInfo)
                 .artifact(Artifact.builder()
                         .artifactType(REASON_DOCUMENT)
@@ -4821,7 +4816,6 @@ public class CaseService {
                         .caseId(courtCase.getId().toString())
                         .tenantId(courtCase.getTenantId())
                         .file(document)
-                        .workflow(workflowObject)
                         .build()).build();
     }
 
