@@ -190,6 +190,10 @@ public class Configuration {
 	@Value("${generate.vc.code}")
 	private String vcCode;
 
+	// delay time for calling process case bundle
+	@Value("${casemanagement.delay.time}")
+	private Integer delayTime;
+
 	@Value("${case.allowed.status}")
 	private String caseAllowedStatuses;
 	private List<String> caseAllowedStatusesList = new ArrayList<>();

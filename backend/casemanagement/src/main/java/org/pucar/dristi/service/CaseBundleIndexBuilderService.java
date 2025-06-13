@@ -244,7 +244,7 @@ public class CaseBundleIndexBuilderService {
         String stateName = extractStatus(record);
 
         if (canCaseBundleEnrich) {
-            enrichCaseBundlePdfIndex(requestInfo, filingNumber, tenantId, stateName, false);
+            enrichCaseBundlePdfIndex(requestInfo, filingNumber, tenantId, stateName, true);
         }
 
 
@@ -328,9 +328,13 @@ public class CaseBundleIndexBuilderService {
                         Object pdfResponse =null;
                         try {
                             if (isDelayRequired) {
-                                Thread.sleep(5000);
+                                Integer delayTime = configuration.getDelayTime();
+                                log.info("delay time: {}", delayTime);
+                                Thread.sleep(delayTime);
                             }
+                            log.info("process case bundle started for caseID {}", caseID);
                             pdfResponse = serviceRequestRepository.fetchResult(url, processCaseBundlePdfRequest);
+                            log.info("process case bundle ended  for caseID {}", caseID);
                         } catch (Exception e) {
                             log.error("Error generating PDF", e);
                         }
@@ -339,7 +343,9 @@ public class CaseBundleIndexBuilderService {
                         Map<String, Object> indexMap = (Map<String, Object>) pdfResponseMap.get("index");
                         JsonNode updateIndexJson = objectMapper.valueToTree(indexMap);
                         List<String> fileStoreIds = extractFileStore(updateIndexJson);
+                        log.info("removing file started for case {} ", caseID);
                         removeFileStore(curFileStore, fileStoreIds, tenantId);
+                        log.info("removing file ended  for case {} ", caseID);
 
                         String esUpdateUrl = configuration.getEsHostUrl() + configuration.getCaseBundleIndex() + "/_update/" + caseID;
                         String esRequest;
@@ -352,7 +358,7 @@ public class CaseBundleIndexBuilderService {
 
                     }
                 }catch(Exception e){
-                    log.error("Not able to parse json body");
+                    log.error("Not able to parse json body : {} ", e.getMessage());
                 }
 
             }
