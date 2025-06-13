@@ -1020,32 +1020,51 @@ const HomeHearingsTab = ({
           </LabelFieldPair>
         </div>
         <div className="filter-actions">
-          <Button
-            variation={"tertiary"}
-            label={t("JOIN_VIDEO_CONFERENCE")}
-            onClick={() => {
-              window.open(hearingLink, "_blank");
-            }}
+          <button
+            className="digit-button-tertiary large"
+            type="button"
             style={{
-              backgroundColor: "#007E7E",
-              width: "212px",
+              backgroundColor: "rgb(0, 126, 126)",
+              width: "230px",
               height: "40px",
-              paddingTop: "8px",
-              paddingRight: "24px",
-              paddingBottom: "8px",
-              paddingLeft: "24px",
-              gap: "4px",
+              padding: "8px 8px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
-            textStyles={{
-              fontSize: "16px",
-              fontWeight: 700,
-              fontFamily: "Roboto",
-              lineHeight: "19.2px",
-              textAlign: "left",
-              margin: "0px",
-              color: "white",
-            }}
-          ></Button>
+          >
+            <div
+              className="icon-label-container tertiary large"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <svg height="30px" width="34px" viewBox="0 0 32 32" style={{ fill: "#ffffff" }}>
+                <path
+                  d="M30,6h-0.887c-0.525,0-1.029,0.207-1.404,0.576L25,9.248V8c0-1.657-1.344-3-3-3H3
+       C1.346,5,0,6.345,0,8v6.972V24c0,1.656,1.343,3,3,3h19c1.656,0,3-1.344,3-3v-1.221l2.709,2.672
+       c0.375,0.369,0.879,0.576,1.404,0.576H30c1.104,0,2-0.895,2-2V8C32,6.895,31.104,6,30,6z 
+       M3,25c-0.552,0-1-0.449-1-1V8c0-0.553,0.447-1,1-1h19c0.551,0,1,0.448,1,1v16
+       c0,0.551-0.449,1-1,1H3z 
+       M30,24.027h-0.887H29l-4-4V20l-1-1v-6l5-5h0.113H30V24.027z"
+                />
+              </svg>
+
+              <span
+                className="digit-button-label"
+                style={{
+                  fontSize: "16px",
+                  fontWeight: 700,
+                  fontFamily: "Roboto",
+                  color: "white",
+                }}
+              >
+                {t("JOIN_VIDEO_CONFERENCE")}
+              </span>
+            </div>
+          </button>
         </div>
       </div>
       <div className="search-bar">
