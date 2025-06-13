@@ -15,6 +15,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.common.models.individual.AdditionalFields;
+import org.egov.common.models.individual.Address;
 import org.egov.common.models.individual.Field;
 import org.egov.common.models.individual.Identifier;
 import org.egov.tracer.model.CustomException;
@@ -2615,13 +2616,35 @@ public class CaseService {
                         individualDetailsNode.put("individualId", joinCaseLitigant.getIndividualId());
                         respondentVerificationNode.set("individualDetails", individualDetailsNode);
 
-                        List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, joinCaseLitigant.getIndividualId());
-                        Individual individual = individualsList.get(0);
+// TO DO -- When accused joins the case, adding address, and mobile number in respondent details along wih old details, To be implemented later after discussion
 
-                        dataNode.put("respondentFirstName", individual.getName().getGivenName() == null ? "" : individual.getName().getGivenName());
-                        dataNode.put("respondentMiddleName", individual.getName().getOtherNames() == null ? "" : individual.getName().getOtherNames());
-                        dataNode.put("respondentLastName", individual.getName().getFamilyName() == null ? "" : individual.getName().getFamilyName());
-
+//                        List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, joinCaseLitigant.getIndividualId());
+//                        Individual individual = individualsList.get(0);
+//
+//                        if (dataNode.has("addressDetails") && dataNode.get("addressDetails").isArray()) {
+//                            ArrayNode addressDetailsArray = (ArrayNode) dataNode.get("addressDetails");
+//
+//                            ObjectNode newAddressDetails = objectMapper.createObjectNode();
+//
+//                            if(individual.getAddress()!=null && !individual.getAddress().isEmpty()) {
+//                                ObjectNode addressDetailsObj = objectMapper.createObjectNode();
+//                                Address address = individual.getAddress().get(0);
+//                                addressDetailsObj.put("pincode",address.getPincode());
+//                                addressDetailsObj.put("state",address.getAddressLine1());
+//                                addressDetailsObj.put("district",address.getAddressLine2());
+//                                addressDetailsObj.put("city", address.getCity());
+//                                 if (address.getLocality() != null && address.getLocality().getName() != null) {
+//                                     addressDetailsObj.put("locality", address.getLocality().getName());
+//                                 }
+//                                newAddressDetails.set("addressDetails", addressDetailsObj);
+//                                newAddressDetails.put("id", UUID.randomUUID().toString());
+//
+//                                addressDetailsArray.add(newAddressDetails);
+//                            }
+//                        }
+//                        if(individual.getMobileNumber()!=null && !individual.getMobileNumber().isEmpty()) {
+//                            updateMobilenumber(dataNode,individual);
+//                        }
                         // Insert respondentVerification into the dataNode
                         dataNode.set("respondentVerification", respondentVerificationNode);
                     }
