@@ -50,6 +50,7 @@ public class ServiceConstants {
     public static final String PENDING_TASK_ENTITY_TYPE = "order-managelifecycle";
     public static final String PENDING_TASK_NAME = "Create Order for rescheduling the hearing";
     public static final String PENDING_TASK_STATUS = "RESCHEDULE_HEARING";
+    public static final String SCHEDULE_HEARING_ACTION_CATEGORY = "Schedule Hearing";
 
     public static final String STATUS_RESCHEDULE = "RESCHEDULE";
 
@@ -83,5 +84,32 @@ public class ServiceConstants {
     public static final String CAUSE_LIST_HEARING_MESSAGE = "CAUSE_LIST_HEARING_MESSAGE";
 
     public static final String SCREEN_TYPE = "home";
+
+    public static final String CAUSE_LIST_EMAIL_BODY =
+            "Please find attached the cause list for of the 24X7 ON Court located in the Kollam District Court Complex. " +
+                    "We kindly request the Bar Association to share the causelist in the relevant channels with concerned advocates.<br><br>" +
+                    "Regards,";
+
+    // Other constants can be added here
+    public static final String EMAIL_SEND_ERROR = "EMAIL_SEND_ERROR";
+    public static final String EMAIL_SEND_ERROR_MESSAGE = "Failed to send cause list email: ";
+
+    // File name pattern
+    public static final String CAUSE_LIST_FILE_NAME_PATTERN = "CauseList_%s.pdf";
+
+    public static final String CAUSE_LIST_EMAIL_TEMPLATE_CODE = "CAUSELIST_EMAIL";
+
+    public static final String PASSED_OVER = "PASSED_OVER";
+
+    public static final String SCHEDULED = "SCHEDULED";
+
+    public static final String ABANDON = "ABANDON";
+
+    public static final String WORKFLOW_ABANDON = "WORKFLOW_ABANDON";
+
+
+    public static final String IN_PROGRESS = "IN_PROGRESS";
+
+    public static final String EMPLOYEE = "EMPLOYEE";
 
 }

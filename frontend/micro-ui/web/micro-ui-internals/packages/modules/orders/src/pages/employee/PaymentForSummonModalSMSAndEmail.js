@@ -156,6 +156,8 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
+
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const fetchCaseLockStatus = useCallback(async () => {
     try {
       const status = await DRISTIService.getCaseLockStatus(
@@ -204,20 +206,21 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
       criteria: {
         tenantId: tenantId,
         taskNumber: taskNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     {},
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const filteredTasks = useMemo(() => tasksData?.list, [tasksData]);
 
   const { data: orderData, isloading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
-    { tenantId, criteria: { id: filteredTasks?.[0]?.orderId } },
+    { tenantId, criteria: { id: filteredTasks?.[0]?.orderId, ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filteredTasks?.[0]?.orderId,
-    Boolean(filteredTasks?.[0]?.orderId)
+    Boolean(filteredTasks?.[0]?.orderId && caseCourtId)
   );
   const orderDetails = useMemo(() => orderData?.list?.[0] || {}, [orderData]);
   const summonsPincode = useMemo(() => filteredTasks?.[0]?.taskDetails?.respondentDetails?.address?.pincode, [filteredTasks]);
@@ -240,11 +243,12 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
         tenantID: tenantId,
         filingNumber: filingNumber,
         hearingId: orderDetails?.hearingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },
     orderDetails?.hearingNumber,
-    Boolean(orderDetails?.hearingNumber)
+    Boolean(orderDetails?.hearingNumber && caseCourtId)
   );
 
   const getBusinessService = (orderType) => {

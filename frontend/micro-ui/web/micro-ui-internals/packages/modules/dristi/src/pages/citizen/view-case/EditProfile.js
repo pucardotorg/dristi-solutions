@@ -10,7 +10,7 @@ import { RightArrow } from "../../../icons/svgIndex";
 import isEqual from "lodash/isEqual";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 import { useToast } from "../../../components/Toast/useToast";
-import { documentLabels } from "../../../Utils";
+import { documentLabels, getFilingType } from "../../../Utils";
 import {
   editCheckDuplicateMobileEmailValidation,
   editCheckNameValidation,
@@ -21,6 +21,9 @@ import {
 } from "./editProfileValidationUtils";
 import { editComplainantDetailsConfig } from "./Config/editComplainantDetailsConfig";
 import { editRespondentConfig } from "./Config/editRespondentConfig";
+import { getAdvocates } from "../FileCase/EfilingValidationUtils";
+import { DRISTIService } from "../../../services";
+import { Urls } from "../../../hooks";
 
 const CloseBtn = (props) => {
   return (
@@ -59,6 +62,8 @@ const EditProfile = ({ path }) => {
   const isAdvocate = urlParams.get("isAdvocate") === "true";
   const editorUuid = urlParams.get("editorUuid");
   const uniqueId = urlParams.get("uniqueId");
+  const userInfo = Digit.UserService.getUser()?.info;
+  const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo]);
 
   const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
     {
@@ -82,6 +87,42 @@ const EditProfile = ({ path }) => {
     }),
     [caseData, caseId, selected, uniqueId]
   );
+
+  const { data: individualData } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+    {
+      Individual: {
+        userUuid: [userInfo?.uuid],
+      },
+    },
+    { tenantId, limit: 1000, offset: 0 },
+    "Home",
+    "",
+    userInfo?.uuid
+  );
+  const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData]);
+  const userTypeCitizen = useMemo(() => individualData?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [
+    individualData?.Individual,
+  ]);
+
+  const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
+  const onBehalfOfuuid = useMemo(() => Object.keys(allAdvocates)?.find((key) => allAdvocates[key].includes(userInfo?.uuid)), [
+    allAdvocates,
+    userInfo?.uuid,
+  ]);
+  const onBehalfOfLitigent = useMemo(() => caseDetails?.litigants?.find((item) => item?.additionalDetails?.uuid === onBehalfOfuuid), [
+    caseDetails,
+    onBehalfOfuuid,
+  ]);
+  const sourceType = useMemo(
+    () => (onBehalfOfLitigent?.partyType?.toLowerCase()?.includes("complainant") ? "COMPLAINANT" : !isCitizen ? "COURT" : "ACCUSED"),
+    [onBehalfOfLitigent, isCitizen]
+  );
+
+  const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
+    { name: "FilingType" },
+  ]);
+
+  const filingType = useMemo(() => getFilingType(filingTypeData?.FilingType, "Application"), [filingTypeData?.FilingType]);
 
   // useEffect(() => {
   // if (selected === "complainantDetails") {
@@ -179,9 +220,9 @@ const EditProfile = ({ path }) => {
   const multiUploadList = useMemo(
     () =>
       formConfig?.flatMap((config) =>
-        config.body
-          .filter((item) => ["SelectCustomDragDrop"].includes(item.component))
-          .map((item) => {
+        config?.body
+          ?.filter((item) => ["SelectCustomDragDrop"].includes(item.component))
+          ?.map((item) => {
             const { key } = item;
             const fieldType = item?.populators?.inputs?.[0]?.name;
             return { key, fieldType };
@@ -333,7 +374,7 @@ const EditProfile = ({ path }) => {
           }
           return {
             ...config,
-            body: config?.body.map((body) => {
+            body: config?.body?.map((body) => {
               body.state = state;
               if (body?.addUUID && body?.uuid !== index) {
                 body.uuid = index;
@@ -621,6 +662,25 @@ const EditProfile = ({ path }) => {
     )?.data;
   }, [caseDetails, uniqueId]);
 
+  const getOnBehalfOfUuid = async () => {
+    try {
+      const response = await window?.Digit.DRISTIService.searchIndividualUser(
+        {
+          Individual: {
+            individualId: uniqueId,
+          },
+        },
+        { tenantId, limit: 1000, offset: 0 }
+      );
+  
+      const individual = response?.Individual?.[0];
+      return individual?.userUuid || uniqueId;
+    } catch (error) {
+      console.error("Failed to fetch individual:", error);
+      return uniqueId;
+    }
+  };
+
   const getDefaultValues = useMemo(() => {
     if (selected === "complainantDetails") {
       if (currentComplainant) {
@@ -644,6 +704,28 @@ const EditProfile = ({ path }) => {
 
   const onFormSubmit = () => {
     setShowConfirmSubmission(true);
+  };
+
+  const createPendingTask = async ({ name, status, isCompleted = false, refId, stateSla = null, isAssignedRole = false, assignedRole = [] }) => {
+    const assignes = !isAssignedRole ? [userInfo?.uuid] || [] : [];
+    await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+      pendingTask: {
+        name,
+        entityType: "application-voluntary-submission",
+        referenceId: `MANUAL_${refId}`,
+        status,
+        assignedTo: assignes?.map((uuid) => ({ uuid })),
+        assignedRole: assignedRole,
+        cnrNumber: caseDetails?.cnrNumber,
+        filingNumber: caseDetails?.filingNumber,
+        caseId: caseDetails?.id,
+        caseTitle: caseDetails?.caseTitle,
+        isCompleted,
+        stateSla,
+        additionalDetails: {},
+        tenantId,
+      },
+    });
   };
 
   const onSubmit = async (action, isCaseLocked = false, isWarning = false) => {
@@ -692,7 +774,8 @@ const EditProfile = ({ path }) => {
     } else {
       setIsLoader(true);
       try {
-        await updateProfileData({
+        const onBehalfOfUuid = await getOnBehalfOfUuid();
+        const res = await updateProfileData({
           t,
           isCompleted: true,
           caseDetails: caseDetails,
@@ -711,7 +794,29 @@ const EditProfile = ({ path }) => {
           action,
           history,
           currentComplainant,
+          individualId,
+          userTypeCitizen,
+          userInfo,
+          sourceType,
+          onBehalfOfUuid,
+          filingType,
         });
+        const newapplicationNumber = res?.application?.applicationNumber;
+        const todayDate = new Date().getTime();
+        if (newapplicationNumber) {
+          if (isCitizen) {
+            await createPendingTask({
+              name: t("ESIGN_THE_SUBMISSION"),
+              status: "ESIGN_THE_SUBMISSION",
+              refId: newapplicationNumber,
+              stateSla: todayDate + 2 * 24 * 3600 * 1000,
+            });
+          }
+        }
+        setIsLoader(false);
+        history.push(
+          `/${window.contextPath}/citizen/submissions/submissions-create?filingNumber=${caseDetails?.filingNumber}&applicationNumber=${newapplicationNumber}`
+        );
       } catch (error) {
         let message = t("SOMETHING_WENT_WRONG");
         if (error instanceof DocumentUploadError) {

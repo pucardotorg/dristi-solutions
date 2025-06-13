@@ -239,7 +239,7 @@ export const TabFSOSearchConfig = {
               },
               {
                 label: "CS_DAYS_FILING",
-                jsonPath: "filingDate",
+                jsonPath: "lastModifiedTime",
                 additionalCustomization: true,
               },
             ],
@@ -388,7 +388,7 @@ export const TabFSOSearchConfig = {
               },
               {
                 label: "CS_DAYS_FILING",
-                jsonPath: "filingDate",
+                jsonPath: "lastModifiedTime",
                 additionalCustomization: true,
               },
             ],

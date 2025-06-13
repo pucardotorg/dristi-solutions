@@ -46,7 +46,11 @@ const ReviewLitigantDetails = ({ path }) => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const caseId = urlParams.get("caseId");
   const referenceId = urlParams.get("referenceId");
+  const refApplicationNUmber = urlParams.get("refApplicationId");
   const [showDocModal, setShowDocModal] = useState(false);
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const courtId = localStorage.getItem("courtId");
 
   const { data: caseData, refetch: refetchCaseData, isLoading } = useSearchCaseService(
     {
@@ -54,6 +58,7 @@ const ReviewLitigantDetails = ({ path }) => {
         {
           caseId: caseId,
           defaultFields: false,
+          ...(courtId && userType === "employee" && { courtId }),
         },
       ],
       tenantId,
@@ -215,6 +220,7 @@ const ReviewLitigantDetails = ({ path }) => {
             documents: [{}],
           },
           documents: [],
+          applicationNumber: [refApplicationNUmber],
           additionalDetails: {
             formdata: {
               orderType: {
@@ -226,6 +232,7 @@ const ReviewLitigantDetails = ({ path }) => {
                 code: action === "ACCEPT" ? "GRANTED" : "REJECTED",
                 name: action === "ACCEPT" ? "GRANTED" : "REJECTED",
               },
+              refApplicationId: refApplicationNUmber,
               reasonForLitigantDetailsChange: { text: profileRequest?.reason || "" },
             },
             dateOfApplication: location?.state?.dateOfApplication,
@@ -233,6 +240,7 @@ const ReviewLitigantDetails = ({ path }) => {
             applicantPartyUuid: profileRequest?.editorDetails?.uuid,
             applicantType: profileRequest?.editorDetails?.isAdvocate ? "ADVOCATE" : "COMPLAINANT",
             pendingTaskRefId: referenceId,
+            applicationStatus: action === "ACCEPT" ? "APPROVED" : "REJECTED",
           },
         },
       };

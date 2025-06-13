@@ -1,0 +1,320 @@
+[
+  {
+    "moduleName": "INBOX",
+    "tenantId": "kl",
+    "masterName": "InboxQueryConfiguration",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "INBOX.InboxQueryConfiguration",
+        "uniqueIdentifier": "open-hearing-index",
+        "data": {
+          "index": "open-hearing-index",
+          "module": "Hearing Service",
+          "sortBy": {
+            "path": "Data.hearingDetails.caseNumber.keyword",
+            "defaultOrder": "DESC"
+          },
+          "sourceFilterPathList": [
+            "Data"
+          ],
+          "allowedSearchCriteria": [
+            {
+              "name": "filingNumber",
+              "path": "Data.hearingDetails.filingNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "caseTitle",
+              "path": "Data.hearingDetails.caseTitle.keyword",
+              "operator": "WILDCARD",
+              "isMandatory": false
+            },
+            {
+              "name": "caseId",
+              "path": "Data.hearingDetails.caseId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "hearingNumber",
+              "path": "Data.hearingDetails.hearingNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "caseNumber",
+              "path": "Data.hearingDetails.caseNumber.keyword",
+              "operator": "WILDCARD",
+              "isMandatory": false
+            },
+            {
+              "name": "hearingUuid",
+              "path": "Data.hearingDetails.hearingUuid.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "stage",
+              "path": "Data.hearingDetails.stage.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "status",
+              "path": "Data.hearingDetails.status.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "tenantId",
+              "path": "Data.hearingDetails.tenantId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "fromDate",
+              "path": "Data.hearingDetails.fromDate",
+              "operator": "GTE",
+              "isMandatory": false
+            },
+            {
+              "name": "toDate",
+              "path": "Data.hearingDetails.toDate",
+              "operator": "LTE",
+              "isMandatory": false
+            },
+            {
+              "name": "subStage",
+              "path": "Data.hearingDetails.subStage.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "courtId",
+              "path": "Data.hearingDetails.courtId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "searchableFields",
+              "path": "Data.hearingDetails.searchableFields.keyword",
+              "operator": "WILDCARD",
+              "isMandatory": false
+            },
+            {
+              "name": "hearingType",
+              "path": "Data.hearingDetails.hearingType.keyword",
+              "isMandatory": false
+            }
+          ]
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "INBOX.InboxQueryConfiguration",
+        "uniqueIdentifier": "order-notification-view",
+        "data": {
+          "index": "order-notification-view",
+          "module": "Transformer service",
+          "sortBy": {
+            "path": "Data.orderNotification.createdTime",
+            "defaultOrder": "DESC"
+          },
+          "sourceFilterPathList": [
+            "Data"
+          ],
+          "allowedSearchCriteria": [
+            {
+              "name": "id",
+              "path": "Data.orderNotification.id.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "tenantId",
+              "path": "Data.orderNotification.tenantId.keyword",
+              "operator": "EQUAL",
+              "isMandatory": true
+            },
+            {
+              "name": "type",
+              "path": "Data.orderNotification.type.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "partyName",
+              "path": "Data.orderNotification.parties.partyName.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "status",
+              "path": "Data.orderNotification.status.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "entityType",
+              "path": "Data.orderNotification.entityType.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "title",
+              "path": "Data.orderNotification.title.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "filingNumbers",
+              "path": "Data.orderNotification.filingNumbers.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "caseNumbers",
+              "path": "Data.orderNotification.caseNumbers.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "caseTitle",
+              "path": "Data.orderNotification.caseTitle.keyword",
+              "operator": "WILDCARD",
+              "isMandatory": false
+            },
+            {
+              "name": "startOfTheDay",
+              "path": "Data.orderNotification.createdTime",
+              "operator": "GTE",
+              "isMandatory": false
+            },
+            {
+              "name": "endOfTheDay",
+              "path": "Data.orderNotification.createdTime",
+              "operator": "LTE",
+              "isMandatory": false
+            },
+            {
+              "name": "caseSTNumber",
+              "path": "Data.orderNotification.caseSTNumber",
+              "isMandatory": false
+            },
+            {
+              "name": "courtId",
+              "path": "Data.orderNotification.courtId.keyword",
+              "isMandatory": false
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "40dceade-992d-4a8f-8243-19dda76a4171",
+          "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+          "createdTime": 1741325570977,
+          "lastModifiedTime": 1748340291219
+        }
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "INBOX.InboxQueryConfiguration",
+        "uniqueIdentifier": "pending-tasks-index",
+        "data": {
+          "index": "pending-tasks-index",
+          "module": "Pending Tasks Service",
+          "sortBy": {
+            "path": "Data.isCompleted",
+            "defaultOrder": "ASC"
+          },
+          "sourceFilterPathList": [
+            "Data"
+          ],
+          "allowedSearchCriteria": [
+            {
+              "name": "id",
+              "path": "Data.id.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "entityType",
+              "path": "Data.entityType.keyword",
+              "operator": "EQUAL",
+              "isMandatory": false
+            },
+            {
+              "name": "referenceId",
+              "path": "Data.referenceId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "status",
+              "path": "Data.status.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "assignedTo",
+              "path": "Data.assignedTo.uuid.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "assignedRole",
+              "path": "Data.assignedRole.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "cnrNumber",
+              "path": "Data.cnrNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "filingNumber",
+              "path": "Data.filingNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "isCompleted",
+              "path": "Data.isCompleted",
+              "isMandatory": false
+            },
+            {
+              "name": "stateSla",
+              "path": "Data.stateSla",
+              "operator": "LTE",
+              "isMandatory": false
+            },
+            {
+              "name": "businessServiceSla",
+              "path": "Data.businessServiceSla",
+              "isMandatory": false
+            },
+            {
+              "name": "isDiary",
+              "path": "Data.isDiary",
+              "isMandatory": false
+            },
+            {
+              "name": "screenType",
+              "path": "Data.screenType.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "courtId",
+              "path": "Data.courtId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "substage",
+              "path": "Data.substage.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "searchableFields",
+              "path": "Data.searchableFields.keyword",
+              "operator": "WILDCARD",
+              "isMandatory": false
+            },
+            {
+              "name": "actionCategory",
+              "path": "Data.actionCategory.keyword",
+              "isMandatory": false
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "3059806b-3059-4724-8ae1-d3f4e12686ff",
+          "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "createdTime": 1721905184083,
+          "lastModifiedTime": 1748841997678
+        }
+      }
+    ]
+  }
+]

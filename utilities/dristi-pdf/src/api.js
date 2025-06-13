@@ -35,7 +35,7 @@ const pool = new Pool({
 
 const auth_token = config.auth_token;
 
-async function search_task(taskNumber, tenantId, requestinfo) {
+async function search_task(taskNumber, tenantId, requestinfo, courtId) {
   try {
     return await axios({
       method: "post",
@@ -45,6 +45,7 @@ async function search_task(taskNumber, tenantId, requestinfo) {
         criteria: {
           tenantId: tenantId,
           taskNumber: taskNumber,
+          ...(courtId && { courtId: courtId }),
         },
       },
     });
@@ -54,7 +55,7 @@ async function search_task(taskNumber, tenantId, requestinfo) {
   }
 }
 
-async function search_case(cnrNumber, tenantId, requestinfo) {
+async function search_case(cnrNumber, tenantId, requestinfo, courtId) {
   try {
     return await axios({
       method: "post",
@@ -65,6 +66,7 @@ async function search_case(cnrNumber, tenantId, requestinfo) {
         criteria: [
           {
             cnrNumber: cnrNumber,
+            ...(courtId && { courtId: courtId }),
           },
         ],
       },
@@ -91,6 +93,7 @@ async function search_order(
   tenantId,
   orderId,
   requestinfo,
+  courtId,
   isOrderNumber = false,
   filingNumber,
   status,
@@ -109,12 +112,13 @@ async function search_order(
         ...(status && { status: status }),
         ...(filingNumber && { filingNumber: filingNumber }),
         ...(orderType && { orderType: orderType }),
+        ...(courtId && { courtId: courtId }),
       },
     },
   });
 }
 
-async function search_hearing(tenantId, cnrNumber, requestinfo) {
+async function search_hearing(tenantId, cnrNumber, requestinfo, courtId) {
   return await axios({
     method: "post",
     url: URL.resolve(config.host.hearing, config.paths.hearing_search),
@@ -123,6 +127,7 @@ async function search_hearing(tenantId, cnrNumber, requestinfo) {
       criteria: {
         tenantId: tenantId,
         cnrNumber: cnrNumber,
+        ...(courtId && { courtId: courtId }),
       },
       pagination: {
         limit: 10,
@@ -237,7 +242,12 @@ async function search_individual_uuid(tenantId, userUuid, requestinfo) {
   });
 }
 
-async function search_application(tenantId, applicationId, requestinfo) {
+async function search_application(
+  tenantId,
+  applicationId,
+  requestinfo,
+  courtId
+) {
   return await axios({
     method: "post",
     url: URL.resolve(config.host.application, config.paths.application_search),
@@ -247,6 +257,7 @@ async function search_application(tenantId, applicationId, requestinfo) {
       criteria: {
         tenantId: tenantId,
         applicationNumber: applicationId,
+        ...(courtId && { courtId: courtId }),
       },
     },
   });

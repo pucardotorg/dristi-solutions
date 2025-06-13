@@ -97,7 +97,7 @@ function groupOrdersByParty(filteredOrders) {
   return accusedWiseOrdersList;
 }
 
-const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseDetails }) => {
+const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseDetails, showModal = true }) => {
   const history = useHistory();
   const { t } = useTranslation();
   const { state } = useLocation();
@@ -113,20 +113,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
   const [showNoticeModal, setshowNoticeModal] = useState(false);
   const [rowData, setRowData] = useState({});
 
-  const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
-    {
-      criteria: [
-        {
-          filingNumber: filingNumber,
-        },
-      ],
-      tenantId,
-    },
-    {},
-    `dristi-${filingNumber}`,
-    filingNumber,
-    Boolean(filingNumber)
-  );
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
   const { data: hearingsData } = Digit.Hooks.hearings.useGetHearings(
     {
@@ -134,11 +121,12 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
       criteria: {
         tenantID: tenantId,
         filingNumber: filingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const hearingDetails = useMemo(() => {
@@ -171,10 +159,10 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
   };
 
   const { data: ordersData } = useSearchOrdersService(
-    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED" } },
+    { criteria: { tenantId: tenantId, filingNumber, status: "PUBLISHED", ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const [orderList, setOrderList] = useState([]);
@@ -322,50 +310,38 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     return partyName.replace(/\s*\(Accused\)$/, "");
   }
 
-  return (
-    <React.Fragment>
-      <Modal
-        isOpen={true}
-        headerBarEnd={<CloseButton onClick={handleCloseModal} />}
-        popupStyles={modalPopup}
-        popupModuleActionBarStyles={{
-          display: "none",
-        }}
-        formId="modal-action"
-        headerBarMain={<ModalHeading label={t("NOTICE_PROCESS_STATUS")} />}
-        popupModuleMianStyles={{
-          height: "calc(100% - 90px)",
-          overFlowY: "auto",
-          overflowX: "hidden",
-        }}
-      >
-        <div className="summon-modal" style={{ width: "100%" }}>
-          <div className="rounds-of-delivery" style={{ cursor: "pointer", marginLeft: "17px" }}>
-            {orderListFiltered.map((item, index) => (
-              <div
-                key={index}
-                onClick={() => {
-                  setActiveIndex({ partyIndex: index, orderIndex: 0 });
-                  setOrderLoading(true);
-                  setOrderList(item?.ordersList);
-                  setOrderNumber(item?.ordersList?.[0]?.orderNumber);
-                  setOrderType(item?.ordersList?.[0]?.orderType);
-                  setOrderId(item?.ordersList?.[0]?.id);
-                  setItemId(item?.ordersList?.[0]?.itemId);
-                  setTimeout(() => {
-                    setOrderLoading((prev) => !prev);
-                  }, 0);
-                }}
-                className={`round-item ${index === activeIndex?.partyIndex ? "active" : ""}`}
-              >
-                <div style={{ display: "flex", flexDirection: "column" }}>
-                  <span>{removeAccusedSuffix(item?.partyName)}</span>
-                  <span style={{ fontWeight: "400" }}>{item?.partyType}</span>
-                </div>
-              </div>
-            ))}
+  const modalContent = (
+    <div className="summon-modal" style={{ width: "100%" }}>
+      {!showModal && <h1 className="heading-m">{t("PROCESS_SUMMARY")}</h1>}
+      <div className="rounds-of-delivery" style={{ cursor: "pointer", marginLeft: "17px" }}>
+        {orderListFiltered.map((item, index) => (
+          <div
+            key={index}
+            onClick={() => {
+              setActiveIndex({ partyIndex: index, orderIndex: 0 });
+              setOrderLoading(true);
+              setOrderList(item?.ordersList);
+              setOrderNumber(item?.ordersList?.[0]?.orderNumber);
+              setOrderType(item?.ordersList?.[0]?.orderType);
+              setOrderId(item?.ordersList?.[0]?.id);
+              setItemId(item?.ordersList?.[0]?.itemId);
+              setTimeout(() => {
+                setOrderLoading((prev) => !prev);
+              }, 0);
+            }}
+            className={`round-item ${index === activeIndex?.partyIndex ? "active" : ""}`}
+          >
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <span>{removeAccusedSuffix(item?.partyName)}</span>
+              <span style={{ fontWeight: "400" }}>{item?.partyType}</span>
+            </div>
           </div>
-          {caseInfo}
+        ))}
+      </div>
+      {orderListFiltered?.length === 0 && <h1 style={{ marginLeft: "15px" }}>{t("NO_PROCESS_DONE_YET")}</h1>}
+      {showModal && caseInfo}
+      {orderListFiltered?.length > 0 && (
+        <React.Fragment>
           <h1 className="heading-m">{t("ROUND_OF_DELIEVERY")}</h1>
           <div className="rounds-of-delivery" style={{ cursor: "pointer", marginLeft: "17px" }}>
             {orderList.map((item, index) => (
@@ -433,7 +409,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
             />
           )}
           {isButtonVisible && currentHearingId && userType === "employee" && (
-            <div className="action-buttons" style={actionButtonStyle}>
+            <div className="action-buttons" style={{...(showModal ? actionButtonStyle : {})}}>
               <Button
                 label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : orderType === "NOTICE" ? "Notice" : "Warrant"}`)}
                 onButtonClick={() => {
@@ -448,8 +424,33 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
               />
             </div>
           )}
-        </div>
-      </Modal>
+        </React.Fragment>
+      )}
+    </div>
+  );
+
+  return (
+    <React.Fragment>
+      {showModal ? (
+        <Modal
+          isOpen={true}
+          headerBarEnd={<CloseButton onClick={handleCloseModal} />}
+          popupStyles={modalPopup}
+          popupModuleActionBarStyles={{ display: "none" }}
+          formId="modal-action"
+          headerBarMain={<ModalHeading label={t("NOTICE_PROCESS_STATUS")} />}
+          popupModuleMianStyles={{
+            height: "calc(100% - 90px)",
+            overFlowY: "auto",
+            overflowX: "hidden",
+          }}
+        >
+          {modalContent}
+        </Modal>
+      ) : (
+        <div>{modalContent}</div>
+      )}
+
       {showNoticeModal && <ReviewNoticeModal rowData={rowData} handleCloseNoticeModal={handleCloseNoticeModal} t={t} />}
     </React.Fragment>
   );

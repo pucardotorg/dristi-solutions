@@ -269,6 +269,10 @@ module.exports = {
       process.env.ORDER_CHANGE_ADVOCATE || "order-replace-advocate",
     order_change_advocate_qr:
       process.env.ORDER_CHANGE_ADVOCATE_QR || "order-replace-advocate-qr",
+    application_profile_edit:
+      process.env.APPLICATION_PROFILE_EDIT || "application-profile-edit",
+    application_profile_edit_qr:
+      process.env.APPLICATION_PROFILE_EDIT_QR || "application-profile-edit-qr",
   },
 
   app: {

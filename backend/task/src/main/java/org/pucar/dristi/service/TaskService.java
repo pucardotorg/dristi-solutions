@@ -23,6 +23,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -180,6 +183,13 @@ public class TaskService {
             }
 
             log.info("operation=updateTask, status=SUCCESS, BODY: {}", body);
+
+            filterDocuments(new ArrayList<>() {{
+                                add(body.getTask());
+                            }},
+                    Task::getDocuments,
+                    Task::setDocuments);
+
             return body.getTask();
 
         } catch (CustomException e) {
@@ -190,6 +200,22 @@ public class TaskService {
             throw new CustomException(UPDATE_TASK_ERR, "Error occurred while updating task: " + e.getMessage());
         }
 
+    }
+
+    private <T> void filterDocuments(List<T> entities,
+                                     Function<T, List<Document>> getDocs,
+                                     BiConsumer<T, List<Document>> setDocs) {
+        if (entities == null) return;
+
+        for (T entity : entities) {
+            List<Document> docs = getDocs.apply(entity);
+            if (docs != null) {
+                List<Document> activeDocs = docs.stream()
+                        .filter(Document::getIsActive)
+                        .collect(Collectors.toList());
+                setDocs.accept(entity, activeDocs); // ✅ set it back
+            }
+        }
     }
 
     private void updateAcknowledgementId(TaskRequest body, String acknowledgementId) {
@@ -277,7 +303,7 @@ public class TaskService {
             Object taskDetailsObject = taskRequest.getTask().getTaskDetails();
             JsonNode taskDetails = objectMapper.readTree(objectMapper.writeValueAsString(taskDetailsObject));
 
-            String accusedName = taskDetails.has("respondentDetails") ? taskDetails.path("respondentDetails").path("name").asText() : "";
+            String accusedName = taskDetails.has("respondentDetails") ? taskDetails.path("respondentDetails").path("name").textValue() : "";
 
             Set<String> individualIds = extractComplainantIndividualIds(caseDetails);
             extractPowerOfAttorneyIds(caseDetails, individualIds);
@@ -290,8 +316,8 @@ public class TaskService {
             Set<String> phoneNumbers = callIndividualService(taskRequest.getRequestInfo(), individualIds);
 
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
-                    .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
-                    .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
+                    .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "")
+                    .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").textValue() : "")
                     .accusedName(accusedName)
                     .tenantId(taskRequest.getTask().getTenantId()).build();
 

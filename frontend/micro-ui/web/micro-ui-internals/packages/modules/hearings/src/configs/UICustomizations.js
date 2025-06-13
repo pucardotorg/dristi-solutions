@@ -17,6 +17,7 @@ function normalizeData(input) {
 export const UICustomizations = {
   PreHearingsConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
+      const courtId = requestCriteria?.body?.courtId;
       const updatedCriteria = {
         processSearchCriteria: {
           businessService: ["hearing-default"],
@@ -27,6 +28,7 @@ export const UICustomizations = {
           fromDate: requestCriteria?.params.fromDate,
           toDate: requestCriteria?.params.toDate,
           tenantId: requestCriteria?.params?.tenantId,
+          ...(courtId && { courtId }),
         },
         tenantId: requestCriteria?.params?.tenantId,
         limit: requestCriteria?.state?.tableForm?.limit || 10,
@@ -43,6 +45,7 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
       const userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
+      const courtId = localStorage.getItem("courtId");
       const searchParams = new URLSearchParams();
       const showAction =
         userInfo?.roles.map((role) => role.code).includes("HEARING_EDITOR") || row.hearing.status === HearingWorkflowState?.INPROGRESS;
@@ -62,13 +65,14 @@ export const UICustomizations = {
                           criteria: {
                             hearingId: row?.hearingId,
                             tenantId: row?.tenantId,
+                            ...(courtId && userType === "employee" && { courtId }),
                           },
                         },
                         { tenantId: row?.tenantId }
                       )
                       .then((response) => {
                         hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
-                          window.location.href = `/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`;
+                          window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row.caseId}&filingNumber=${row.filingNumber}&tab=Overview`;
                         });
                       });
                   }}
@@ -90,7 +94,8 @@ export const UICustomizations = {
                   variation={"secondary"}
                   label={t("JOIN_HEARING")}
                   onButtonClick={() => {
-                    window.location.href = `/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`;
+                    const path = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row.caseId}&filingNumber=${row.filingNumber}&tab=Overview`;
+                    window.location = path;
                   }}
                   style={{ marginRight: "1rem" }}
                   textStyles={{
@@ -121,6 +126,8 @@ export const UICustomizations = {
               )}
             </div>
           );
+        case "CS_STAGE":
+          return t(value);
         default:
           return t("ES_COMMON_NA");
       }
@@ -313,6 +320,7 @@ export const UICustomizations = {
                   statusChangeDate: taskDetail?.deliveryChannels?.statusChangeDate,
                   taskType: data?.taskType,
                   documents: data?.documents,
+                  feePaidDate: taskDetail?.deliveryChannels?.feePaidDate,
                 };
               });
             return { list: taskData };
@@ -338,6 +346,8 @@ export const UICustomizations = {
           return t(value);
         case "DELIEVRY_DATE":
           return formatNoticeDeliveryDate(value) || "N/A";
+        case "PROCESS_FEE_PAID_ON":
+          return value || "-";
         default:
           return t("ES_COMMON_NA");
       }

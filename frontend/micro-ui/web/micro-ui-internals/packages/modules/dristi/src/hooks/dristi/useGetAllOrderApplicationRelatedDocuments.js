@@ -15,95 +15,98 @@ const extractOrderNumber = (orderItemId) => {
   return orderItemId?.includes("_") ? orderItemId?.split("_")?.pop() : orderItemId;
 };
 
-const useGetAllOrderApplicationRelatedDocuments = () => {
+const useGetAllOrderApplicationRelatedDocuments = ({ courtId }) => {
   const [documents, setDocuments] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchRecursiveData = useCallback(async (initialInput) => {
-    setIsLoading(true);
+  const fetchRecursiveData = useCallback(
+    async (initialInput) => {
+      setIsLoading(true);
 
-    let currentResponse = initialInput;
-    const collectedDocuments = [];
+      let currentResponse = initialInput;
+      const collectedDocuments = [];
 
-    const processDocuments = (docs) => {
-      if (docs) {
-        const sortedDocuments = _getSortedByOrder(docs);
-        collectedDocuments.push(...sortedDocuments);
-      }
-    };
-
-    const fetchApplicationDocuments = async (filingNumber, applicationNumber, tenantId) => {
-      const applicationData = await DRISTIService.searchSubmissions(
-        {
-          criteria: { filingNumber, applicationNumber, tenantId },
-          tenantId,
-        },
-        {}
-      );
-
-      const appDocuments = applicationData?.applicationList?.[0]?.documents;
-      processDocuments(appDocuments);
-      return applicationData?.applicationList?.[0];
-    };
-
-    const fetchOrderDocuments = async (filingNumber, orderNumber, tenantId) => {
-      const orderData = await DRISTIService.searchOrders(
-        {
-          tenantId,
-          criteria: { filingNumber, orderNumber, applicationNumber: "", cnrNumber: "" },
-        },
-        { tenantId }
-      );
-
-      const orderDocuments = orderData?.list?.[0]?.documents;
-      processDocuments(orderDocuments);
-      return orderData?.list?.[0];
-    };
-
-    if (currentResponse?.documents) {
-      processDocuments(currentResponse?.documents);
-    }
-
-    while (currentResponse) {
-      let nextResponse;
-      if (currentResponse?.orderCategory === "COMPOSITE") {
-        for (const item of currentResponse?.compositeItems || []) {
-          const refApplicationId = item?.orderSchema?.additionalDetails?.formdata?.refApplicationId;
-          if (refApplicationId) {
-            nextResponse = await fetchApplicationDocuments(currentResponse?.filingNumber, refApplicationId, currentResponse?.tenantId);
-          }
+      const processDocuments = (docs) => {
+        if (docs) {
+          const sortedDocuments = _getSortedByOrder(docs);
+          collectedDocuments.push(...sortedDocuments);
         }
-      } else if (currentResponse?.additionalDetails?.formdata?.refApplicationId) {
-        nextResponse = await fetchApplicationDocuments(
-          currentResponse?.filingNumber,
-          currentResponse?.additionalDetails?.formdata?.refApplicationId,
-          currentResponse?.tenantId
+      };
+
+      const fetchApplicationDocuments = async (filingNumber, applicationNumber, tenantId) => {
+        const applicationData = await DRISTIService.searchSubmissions(
+          {
+            criteria: { filingNumber, applicationNumber, tenantId, ...(courtId && { courtId }) },
+            tenantId,
+          },
+          {}
         );
-      } else if (currentResponse?.additionalDetails?.formdata?.refOrderId) {
-        nextResponse = await fetchOrderDocuments(
-          currentResponse?.filingNumber,
-          extractOrderNumber(currentResponse?.additionalDetails?.formdata?.refOrderId),
-          currentResponse?.tenantId
+
+        const appDocuments = applicationData?.applicationList?.[0]?.documents;
+        processDocuments(appDocuments);
+        return applicationData?.applicationList?.[0];
+      };
+
+      const fetchOrderDocuments = async (filingNumber, orderNumber, tenantId) => {
+        const orderData = await DRISTIService.searchOrders(
+          {
+            tenantId,
+            criteria: { filingNumber, orderNumber, applicationNumber: "", cnrNumber: "", ...(courtId && { courtId }) },
+          },
+          { tenantId }
         );
+
+        const orderDocuments = orderData?.list?.[0]?.documents;
+        processDocuments(orderDocuments);
+        return orderData?.list?.[0];
+      };
+
+      if (currentResponse?.documents) {
+        processDocuments(currentResponse?.documents);
       }
 
-      if (
-        !nextResponse ||
-        (nextResponse?.orderCategory !== "COMPOSITE" &&
-          !nextResponse?.additionalDetails?.formdata?.refApplicationId &&
-          !nextResponse?.additionalDetails?.formdata?.refOrderId) ||
-        (nextResponse?.orderCategory === "COMPOSITE" &&
-          !nextResponse?.compositeItems?.some((item) => item?.orderSchema?.additionalDetails?.formdata?.refApplicationId) &&
-          !nextResponse?.additionalDetails?.formdata?.refOrderId)
-      ) {
-        break;
-      }
-      currentResponse = nextResponse;
-    }
+      while (currentResponse) {
+        let nextResponse;
+        if (currentResponse?.orderCategory === "COMPOSITE") {
+          for (const item of currentResponse?.compositeItems || []) {
+            const refApplicationId = item?.orderSchema?.additionalDetails?.formdata?.refApplicationId;
+            if (refApplicationId) {
+              nextResponse = await fetchApplicationDocuments(currentResponse?.filingNumber, refApplicationId, currentResponse?.tenantId);
+            }
+          }
+        } else if (currentResponse?.additionalDetails?.formdata?.refApplicationId) {
+          nextResponse = await fetchApplicationDocuments(
+            currentResponse?.filingNumber,
+            currentResponse?.additionalDetails?.formdata?.refApplicationId,
+            currentResponse?.tenantId
+          );
+        } else if (currentResponse?.additionalDetails?.formdata?.refOrderId) {
+          nextResponse = await fetchOrderDocuments(
+            currentResponse?.filingNumber,
+            extractOrderNumber(currentResponse?.additionalDetails?.formdata?.refOrderId),
+            currentResponse?.tenantId
+          );
+        }
 
-    setDocuments(collectedDocuments);
-    setIsLoading(false);
-  }, []);
+        if (
+          !nextResponse ||
+          (nextResponse?.orderCategory !== "COMPOSITE" &&
+            !nextResponse?.additionalDetails?.formdata?.refApplicationId &&
+            !nextResponse?.additionalDetails?.formdata?.refOrderId) ||
+          (nextResponse?.orderCategory === "COMPOSITE" &&
+            !nextResponse?.compositeItems?.some((item) => item?.orderSchema?.additionalDetails?.formdata?.refApplicationId) &&
+            !nextResponse?.additionalDetails?.formdata?.refOrderId)
+        ) {
+          break;
+        }
+        currentResponse = nextResponse;
+      }
+
+      setDocuments(collectedDocuments);
+      setIsLoading(false);
+    },
+    [courtId]
+  );
 
   return { documents, isLoading, fetchRecursiveData };
 };

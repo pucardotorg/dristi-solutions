@@ -110,7 +110,7 @@ class BillingServiceTest {
         when(mdmsUtil.fetchMdmsData(requestInfo1,"kl","payment", List.of("paymentMode"))).thenReturn(outerMap);
 
 
-        StringBuilder result = billingService.buildBulkRequest(jsonArray, requestInfo,123456l);
+        StringBuilder result = billingService.buildBulkRequest(jsonArray, requestInfo,12345l);
 
         assertEquals("payload", result.toString());
     }

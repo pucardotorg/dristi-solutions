@@ -14,16 +14,18 @@ import org.springframework.web.client.HttpClientErrorException;
 import pucar.config.Configuration;
 import pucar.repository.ServiceRequestRepository;
 import pucar.web.models.Order;
+import pucar.web.models.OrderRequest;
 import pucar.web.models.WorkflowObject;
 import pucar.web.models.courtCase.AdvocateMapping;
+import pucar.web.models.courtCase.CaseCriteria;
+import pucar.web.models.courtCase.CaseSearchRequest;
 import pucar.web.models.courtCase.CourtCase;
 import pucar.web.models.hearing.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static pucar.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
-import static pucar.config.ServiceConstants.SEARCHER_SERVICE_EXCEPTION;
+import static pucar.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -36,8 +38,9 @@ public class HearingUtil {
     private final CacheUtil cacheUtil;
     private final JsonUtil jsonUtil;
     private final DateUtil dateUtil;
+    private final CaseUtil caseUtil;
 
-    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, AdvocateUtil advocateUtil, CacheUtil cacheUtil, JsonUtil jsonUtil, DateUtil dateUtil) {
+    public HearingUtil(ObjectMapper objectMapper, Configuration configuration, ServiceRequestRepository serviceRequestRepository, AdvocateUtil advocateUtil, CacheUtil cacheUtil, JsonUtil jsonUtil, DateUtil dateUtil, CaseUtil caseUtil) {
         this.objectMapper = objectMapper;
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
@@ -45,6 +48,7 @@ public class HearingUtil {
         this.cacheUtil = cacheUtil;
         this.jsonUtil = jsonUtil;
         this.dateUtil = dateUtil;
+        this.caseUtil = caseUtil;
     }
 
 
@@ -118,7 +122,7 @@ public class HearingUtil {
 //                .orElseThrow(() -> new CustomException("ERROR_IN_ADDITIONAL_DETAILS", "Hearing Purpose Type not found in additional details"));
     }
 
-    public List<Attendee> getAttendeesFromAdditionalDetails(Order order) {
+    public List<Attendee> getAttendeesFromAdditionalDetails(Order order, String attendeePath) {
 
         //todo: need to fetch from case all the adv ids and then find out individual ids of adv present in case
 
@@ -128,7 +132,7 @@ public class HearingUtil {
                 .map(map -> map.get("formdata"))
                 .filter(Map.class::isInstance)
                 .map(map -> (Map<?, ?>) map)
-                .map(map -> map.get("namesOfPartiesRequired"))
+                .map(map -> map.get(attendeePath))
                 .filter(List.class::isInstance)
                 .map(list -> (List<?>) list)
                 .map(list -> list.stream()
@@ -136,8 +140,10 @@ public class HearingUtil {
                             Map<String, Object> attendeeMap = (Map<String, Object>) attendee;
                             return Attendee.builder()
                                     .name((String) attendeeMap.get("name"))
+                                    .id((String) attendeeMap.get("id"))
                                     .individualId((String) attendeeMap.get("individualId"))
                                     .type((String) attendeeMap.get("partyType"))
+                                    .wasPresent((Boolean) attendeeMap.get("wasPresent"))
                                     .build();
                         })
                         .collect(Collectors.toList()))
@@ -152,10 +158,12 @@ public class HearingUtil {
 
     }
 
-    public List<Attendee> getAttendees(RequestInfo requestInfo, CourtCase courtCase, Order order) {
+    public List<Attendee> getAttendees(RequestInfo requestInfo, CourtCase courtCase, Order order, boolean isForNextHearing) {
+
+        String getAttendees = isForNextHearing ? GET_ATTENDEES_FOR_SCHEDULE_NEXT_HEARING : GET_ATTENDEES_OF_EXISTING_HEARING;
 
 
-        List<Attendee> litigantAndPOAHolders = getAttendeesFromAdditionalDetails(order);
+        List<Attendee> litigantAndPOAHolders = getAttendeesFromAdditionalDetails(order, getAttendees);
 
         List<String> advocateIds = courtCase.getRepresentatives() == null ?
                 Collections.emptyList() :
@@ -186,7 +194,7 @@ public class HearingUtil {
                 String modifiedName = addValueToBrackets(name, "Advocate");
                 attendee.setName(modifiedName);
 
-                assingee.add(index, attendee);
+                assingee.set(index, attendee);
 
             } else {
                 assingee.add(Attendee.builder()
@@ -214,15 +222,16 @@ public class HearingUtil {
                 .cmpNumber(courtCase.getCmpNumber())
                 .hearingType(getHearingTypeFromAdditionalDetails(order.getAdditionalDetails()))
                 .status("true") // this is not confirmed ui is sending true
-                .attendees(getAttendees(requestInfo, courtCase, order))
+                .attendees(getAttendees(requestInfo, courtCase, order , true))
                 .startTime(getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "hearingDate")))
                 .endTime(getCreateStartAndEndTime(order.getAdditionalDetails(), Arrays.asList("formdata", "hearingDate")))
+                .hearingSummary(order.getHearingSummary())
                 .workflow(workflowObject)
                 .applicationNumbers(new ArrayList<>())
                 .presidedBy(PresidedBy.builder()  // todo:this is hardcoded but needs to come from order
                         .benchID("BENCH_ID")
-                        .judgeID(Collections.singletonList("JUDGE_ID"))
-                        .courtID("KLKM52").build())
+                        .judgeID(Collections.singletonList(courtCase.getJudgeId()))
+                        .courtID(courtCase.getCourtId()).build())
 
                 .build();
 
@@ -261,17 +270,111 @@ public class HearingUtil {
             String insideBracket = text.substring(startIdx + 1, endIdx).trim();
             String afterBracket = text.substring(endIdx);
 
-            StringBuilder updatedBracket = new StringBuilder();
-            if (!insideBracket.isEmpty()) {
-                updatedBracket.append(insideBracket).append(", ").append(newValue);
-            } else {
-                updatedBracket.append(newValue);
+            // Check if newValue already exists (case-insensitive)
+            List<String> existingValues = Arrays.stream(insideBracket.split(","))
+                    .map(String::trim)
+                    .toList();
+
+            boolean alreadyPresent = existingValues.stream()
+                    .anyMatch(val -> val.equalsIgnoreCase(newValue));
+
+            if (!alreadyPresent) {
+                if (!insideBracket.isEmpty()) {
+                    insideBracket += ", " + newValue;
+                } else {
+                    insideBracket = newValue;
+                }
             }
 
-            return beforeBracket + updatedBracket + afterBracket;
+            return beforeBracket + insideBracket + afterBracket;
         } else {
             // No valid brackets found, append new brackets
             return text + " (" + newValue + ")";
+        }
+    }
+
+    public String getHearingSummary(Order order) {
+
+        return Optional.ofNullable(order.getAdditionalDetails())
+                .filter(Map.class::isInstance)
+                .map(details -> (Map<?, ?>) details)
+                .map(details -> details.get("formdata"))
+                .filter(Map.class::isInstance)
+                .map(formdata -> (Map<?, ?>) formdata)
+                .map(formdata -> formdata.get("hearingSummary"))
+                .filter(Map.class::isInstance)
+                .map(hearingSummary -> (Map<?, ?>) hearingSummary)
+                .map(hearingSummary -> hearingSummary.get("text"))
+                .filter(String.class::isInstance)
+                .map(String.class::cast)
+                .orElse(null);
+    }
+
+
+    public String getHearingNumberFormApplicationAdditionalDetails(Object additionalDetails) {
+        return Optional.ofNullable(additionalDetails)
+                .filter(Map.class::isInstance)
+                .map(details -> (Map<?, ?>) details)
+                .map(details -> details.get("refHearingId"))
+                .filter(String.class::isInstance)
+                .map(String.class::cast)
+                .orElse(null);
+    }
+
+    public void updateHearingSummary(OrderRequest orderRequest, Hearing hearing) {
+        log.info("updating hearing summary status IN_PROGRESS : {}", orderRequest);
+
+        RequestInfo requestInfo = orderRequest.getRequestInfo();
+        Order order = orderRequest.getOrder();
+
+        List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
+                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
+                .requestInfo(requestInfo).build());
+
+        hearing.setHearingSummary(getHearingSummary(order));
+        List<Attendee> attendeesPresent  = getAttendeesFromAdditionalDetails(order, GET_ATTENDEES_OF_EXISTING_HEARING);
+        List<Attendee> attendees = hearing.getAttendees();
+
+        attendees.forEach(attendee -> {
+            attendee.setWasPresent(attendeesPresent.stream().anyMatch(present -> present.getId().equalsIgnoreCase(attendee.getId())));
+        });
+
+        StringBuilder updateUri = new StringBuilder();
+        updateUri.append(configuration.getHearingHost()).append(configuration.getUpdateHearingSummaryEndPoint());
+
+        createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(orderRequest.getRequestInfo()).build(), updateUri);
+
+        log.info("updating hearing summary status SUCCESS : {}", hearing);
+    }
+
+    public void updateHearingStatus(OrderRequest orderRequest) {
+
+        log.info("updating hearing status based on order request: {}", orderRequest);
+
+        Order order = orderRequest.getOrder();
+        RequestInfo requestInfo = orderRequest.getRequestInfo();
+        String hearingNumber = getHearingNumberFormApplicationAdditionalDetails(order.getAdditionalDetails());
+
+        List<Hearing> hearings = fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
+                .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
+        Hearing hearing = hearings.get(0);
+
+        String hearingStatus = hearing.getStatus();
+
+        log.info("status of hearing: {}, hearingNumber: {}", hearingStatus, hearingNumber);
+
+        if ((IN_PROGRESS.equalsIgnoreCase(hearingStatus) || PASSED_OVER.equalsIgnoreCase(hearingStatus) || ABANDONED.equalsIgnoreCase(hearingStatus))) {
+
+            WorkflowObject workflowObject = new WorkflowObject();
+            workflowObject.setAction(CLOSE);
+            hearing.setWorkflow(workflowObject);
+
+            StringBuilder updateUri = new StringBuilder();
+            updateUri.append(configuration.getHearingHost()).append(configuration.getHearingUpdateEndPoint());
+
+            createOrUpdateHearing(HearingRequest.builder().hearing(hearing).requestInfo(orderRequest.getRequestInfo()).build(), updateUri);
+
+            log.info("updated hearing status to close for hearingNumber: {}", hearingNumber);
         }
 
     }

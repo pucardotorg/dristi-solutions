@@ -19,12 +19,11 @@ export const submissionService = {
       params,
     }),
   searchApplication: (data, params) =>
-    // Add courtId to criteria if it exists
     Request({
       url: Urls.application.applicationSearch,
       useCache: true,
       userService: true,
-      data:{...data,criteria:{...data?.criteria,courtId:window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52"}},
+      data,
       params,
     }),
   customApiService: (url, data, params, useCache = false, userService = true) =>
@@ -56,7 +55,7 @@ export const submissionService = {
       url: Urls.evidence.evidenceSearch,
       useCache: false,
       userService: false,
-      data: {...data,criteria:{...data?.criteria,courtId:window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52"}},
+      data,
       params,
     }),
 };

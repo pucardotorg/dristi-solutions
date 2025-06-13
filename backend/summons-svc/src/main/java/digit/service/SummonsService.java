@@ -82,7 +82,7 @@ public class SummonsService {
     }
 
     private String getNoticeType(TaskDetails taskDetails) {
-        return taskDetails.getNoticeDetails()!=null ? taskDetails.getNoticeDetails().getNoticeType() : null;
+        return taskDetails.getNoticeDetails() != null ? taskDetails.getNoticeDetails().getNoticeType() : null;
     }
 
     private TaskResponse generateDocumentAndUpdateTask(TaskRequest taskRequest, String pdfTemplateKey, boolean qrCode) {
@@ -167,14 +167,23 @@ public class SummonsService {
         if (task.getTaskType().equalsIgnoreCase(SUMMON)) {
             if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED)) {
                 workflow = Workflow.builder().action("SERVED").build();
-            } else {
+            } else if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.IN_TRANSIT)) {
+                workflow = Workflow.builder().action("TRANSIT").build();
+            } else if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED_ICOPS)) {
+                workflow = Workflow.builder().action("DELIVERED").build();
+            } else if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.NOT_DELIVERED_ICOPS)) {
+                workflow = Workflow.builder().action("NOT_DELIVERED").build();
+            }else {
                 workflow = Workflow.builder().action("NOT_SERVED").build();
             }
         } else if (task.getTaskType().equalsIgnoreCase(WARRANT)) {
             if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED)) {
-                workflow = Workflow.builder().action("DELIVERED").build();
-            } else {
-                workflow = Workflow.builder().action("NOT_DELIVERED").build();
+            workflow = Workflow.builder().action("DELIVERED").build();
+            } else if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.IN_TRANSIT)) {
+                workflow = Workflow.builder().action("TRANSIT").build();
+            }
+            else {
+                workflow = Workflow.builder().action("NOT_SERVED").build();
             }
         } else if (task.getTaskType().equalsIgnoreCase(NOTICE)) {
             if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED)) {
@@ -185,7 +194,6 @@ public class SummonsService {
         }
         task.setWorkflow(workflow);
         enrichPoliceStationReport(task, request.getSummonsDelivery());
-
         Role role = Role.builder().code(config.getSystemAdmin()).tenantId(config.getEgovStateTenantId()).build();
         request.getRequestInfo().getUserInfo().getRoles().add(role);
         TaskRequest taskRequest = TaskRequest.builder()
@@ -196,7 +204,7 @@ public class SummonsService {
                 .orElse(Collections.emptyList())
                 .stream().filter(doc -> POLICE_REPORT.equals(doc.getDocumentType()))
                 .toList();
-        if(!documents.isEmpty()) {
+        if (!documents.isEmpty()) {
             createEvidenceForPoliceReport(taskRequest, documents.get(0));
         }
     }
@@ -228,7 +236,7 @@ public class SummonsService {
     }
 
     private String getFilingType(@Valid RequestInfo requestInfo, @Valid Task task) {
-        Map<String, Map<String, JSONArray>> mdmsData =  mdmsUtil.fetchMdmsData(requestInfo, task.getTenantId(), "common-masters", Collections.singletonList("FilingType"));
+        Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(requestInfo, task.getTenantId(), "common-masters", Collections.singletonList("FilingType"));
         JSONArray filingTypeArray = mdmsData.get("common-masters").get("FilingType");
         for (Object o : filingTypeArray) {
             Map<String, Object> filingType = (Map<String, Object>) o;
@@ -267,9 +275,10 @@ public class SummonsService {
         }
         return null;
     }
+
     private void enrichPoliceStationReport(Task task, @Valid SummonsDelivery summonsDelivery) {
         String fileStoreId = extractFileStoreId(summonsDelivery);
-        if(fileStoreId != null) {
+        if (fileStoreId != null) {
             Document document = Document.builder()
                     .fileStore(fileStoreId)
                     .documentType(POLICE_REPORT)

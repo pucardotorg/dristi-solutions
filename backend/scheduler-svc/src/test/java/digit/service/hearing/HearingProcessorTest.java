@@ -80,11 +80,11 @@ class HearingProcessorTest {
         when(dateUtil.getEPochFromLocalDate(any())).thenReturn(12345L, 67890L);
         when(hearingService.schedule(any())).thenReturn(Collections.singletonList(new ScheduleHearing()));
         when(caseUtil.getCases(any())).thenReturn(null);
-        hearingProcessor.processCreateHearingRequest(hearingRequest);
+        hearingProcessor.processCreateHearingRequest(hearingRequest, Boolean.FALSE);
 
         // Assert
         verify(hearingService, times(1)).schedule(any(ScheduleHearingRequest.class));
-        verify(hearingUtil, times(1)).callHearing(any(HearingUpdateBulkRequest.class));
+        verify(hearingUtil, times(1)).callHearing(any(HearingUpdateBulkRequest.class), eq(Boolean.FALSE));
         verify(producer, times(1)).push(anyString(), any(Object.class));
 
         ArgumentCaptor<ScheduleHearingRequest> requestCaptor = ArgumentCaptor.forClass(ScheduleHearingRequest.class);

@@ -34,6 +34,8 @@ import { getAdvocates } from "@egovernments/digit-ui-module-dristi/src/pages/cit
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import { getSuffixByBusinessCode, getTaxPeriodByBusinessService, getCourtFeeAmountByPaymentType } from "../../utils";
 import { combineMultipleFiles, getFilingType } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editRespondentConfig";
+import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -69,6 +71,27 @@ const BAIL_APPLICATION_EXCLUDED_STATUSES = [
 const _getApplicationAmount = (applicationTypeAmountList, applicationType) => {
   const applicationTypeAmount = applicationTypeAmountList?.find((amount) => amount?.type === applicationType);
   return applicationTypeAmount?.totalAmount || 20;
+};
+
+const getModifiedForm = (formConfig, formData) => {
+  const updatedConfig = formConfig?.filter((config) => {
+    const dependentKeys = config?.dependentKey;
+    if (!dependentKeys) {
+      return config;
+    }
+    let show = true;
+    for (const key in dependentKeys) {
+      const nameArray = dependentKeys[key];
+      for (const name of nameArray) {
+        if (Array.isArray(formData?.[key]?.[name]) && formData?.[key]?.[name]?.length === 0) {
+          show = false;
+        } else show = show && Boolean(formData?.[key]?.[name]);
+      }
+    }
+    return show && config;
+  });
+
+  return updatedConfig;
 };
 
 const SubmissionsCreate = ({ path }) => {
@@ -212,6 +235,8 @@ const SubmissionsCreate = ({ path }) => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
 
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
+
   // filtering out litigants which are part in person.
   const pipComplainants = useMemo(() => {
     return caseDetails?.litigants
@@ -276,12 +301,13 @@ const SubmissionsCreate = ({ path }) => {
         filingNumber,
         applicationNumber,
         tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
     {},
     applicationNumber + filingNumber,
-    Boolean(applicationNumber && filingNumber)
+    Boolean(applicationNumber && filingNumber && caseCourtId)
   );
 
   const { data: delayCondonationData } = Digit.Hooks.submissions.useSearchSubmissionService(
@@ -290,12 +316,13 @@ const SubmissionsCreate = ({ path }) => {
         filingNumber,
         applicationType: "DELAY_CONDONATION",
         tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
     {},
     filingNumber,
-    Boolean(filingNumber)
+    Boolean(filingNumber && caseCourtId)
   );
 
   const fullName = useMemo(() => {
@@ -311,22 +338,39 @@ const SubmissionsCreate = ({ path }) => {
   ]);
   const referenceId = useMemo(() => applicationData?.applicationList?.[0]?.referenceId, [applicationData]);
 
+  const applicationDetails = useMemo(
+    () =>
+      applicationNumber
+        ? applicationData?.applicationList?.[0]
+        : "DELAY_CONDONATION" === formdata?.applicationType?.type
+        ? delayCondonationData?.applicationList?.find(
+            (application) => !["REJECTED", "COMPLETED"].includes(application?.status) && "DELAY_CONDONATION" === application?.applicationType
+          )
+        : undefined,
+    [applicationData?.applicationList, delayCondonationData?.applicationList, formdata?.applicationType?.type]
+  );
+
   const submissionType = useMemo(() => {
     return formdata?.submissionType?.code;
   }, [formdata?.submissionType?.code]);
+
+  const isDelayApplicationPending = useMemo(
+    () =>
+      Boolean(
+        delayCondonationData?.applicationList?.some(
+          (item) =>
+            item?.applicationType === "DELAY_CONDONATION" &&
+            [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(item?.status)
+        )
+      ),
+    [delayCondonationData?.applicationList]
+  );
 
   const submissionFormConfig = useMemo(() => {
     const submissionConfigKeys = {
       APPLICATION: applicationTypeConfig,
     };
     if (caseDetails && Array.isArray(submissionConfigKeys[submissionType])) {
-      const isDelayApplicationPending = Boolean(
-        delayCondonationData?.applicationList?.some(
-          (item) =>
-            item?.applicationType === "DELAY_CONDONATION" &&
-            [SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(item?.status)
-        )
-      );
       if (orderNumber || (hearingId && applicationTypeUrl) || !isCitizen) {
         const tempData = submissionConfigKeys[submissionType]?.map((item) => {
           return {
@@ -348,7 +392,7 @@ const SubmissionsCreate = ({ path }) => {
                   ...input.populators,
                   mdmsConfig: {
                     ...input.populators.mdmsConfig,
-                    select: `(data) => {return data['Application'].ApplicationType?.filter((item)=>!["EXTENSION_SUBMISSION_DEADLINE","DOCUMENT","RE_SCHEDULE","CHECKOUT_REQUEST", "SUBMIT_BAIL_DOCUMENTS",${
+                    select: `(data) => {return data['Application'].ApplicationType?.filter((item)=>!["EXTENSION_SUBMISSION_DEADLINE","DOCUMENT","RE_SCHEDULE","CHECKOUT_REQUEST", "SUBMIT_BAIL_DOCUMENTS", "CORRECTION_IN_COMPLAINANT_DETAILS",${
                       isDelayApplicationPending ? `"DELAY_CONDONATION",` : ""
                     }${
                       !BAIL_APPLICATION_EXCLUDED_STATUSES.includes(caseDetails?.status) ? `"REQUEST_FOR_BAIL",` : ""
@@ -362,7 +406,7 @@ const SubmissionsCreate = ({ path }) => {
       }
     }
     return [];
-  }, [caseDetails, submissionType, orderNumber, hearingId, applicationTypeUrl, isCitizen, delayCondonationData]);
+  }, [caseDetails, submissionType, isDelayApplicationPending, orderNumber, hearingId, applicationTypeUrl, isCitizen]);
 
   const applicationType = useMemo(() => {
     return formdata?.applicationType?.type || applicationTypeUrl;
@@ -383,6 +427,10 @@ const SubmissionsCreate = ({ path }) => {
       SUBMIT_BAIL_DOCUMENTS: submitDocsForBail,
       DELAY_CONDONATION: submitDelayCondonation,
       OTHERS: configsOthers, // need to chnage here
+      CORRECTION_IN_COMPLAINANT_DETAILS:
+        applicationDetails?.additionalDetails?.profileEditType === "respondentDetails"
+          ? getModifiedForm(editRespondentConfig.formconfig, formdata)
+          : getModifiedForm(editComplainantDetailsConfig.formconfig, formdata),
     };
     const applicationConfigKeysForEmployee = {
       DOCUMENT: configsDocumentSubmission,
@@ -390,10 +438,10 @@ const SubmissionsCreate = ({ path }) => {
     let newConfig = isCitizen ? applicationConfigKeys?.[applicationType] || [] : applicationConfigKeysForEmployee?.[applicationType] || [];
 
     if (newConfig.length > 0) {
-      const updatedConfig = newConfig.map((config) => {
+      const updatedConfig = newConfig?.map((config) => {
         return {
           ...config,
-          body: config?.body.map((body) => {
+          body: config?.body?.map((body) => {
             if (body?.populators?.validation?.customValidationFn) {
               const customValidations =
                 Digit.Customizations[body.populators.validation.customValidationFn.moduleName][
@@ -453,23 +501,12 @@ const SubmissionsCreate = ({ path }) => {
         tenantID: tenantId,
         filingNumber: filingNumber,
         hearingId: hearingId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
     },
     { applicationNumber: "", cnrNumber: "" },
     "dristi",
-    true
-  );
-
-  const applicationDetails = useMemo(
-    () =>
-      applicationNumber
-        ? applicationData?.applicationList?.[0]
-        : "DELAY_CONDONATION" === formdata?.applicationType?.type
-        ? delayCondonationData?.applicationList?.find(
-            (application) => !["REJECTED", "COMPLETED"].includes(application?.status) && "DELAY_CONDONATION" === application?.applicationType
-          )
-        : undefined,
-    [applicationData?.applicationList, delayCondonationData?.applicationList, formdata?.applicationType?.type]
+    Boolean(filingNumber && caseCourtId)
   );
 
   useEffect(() => {
@@ -508,10 +545,19 @@ const SubmissionsCreate = ({ path }) => {
   );
 
   const { data: orderData, isloading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
-    { tenantId, criteria: { filingNumber, applicationNumber: "", cnrNumber: caseDetails?.cnrNumber, orderNumber: orderNumber || orderRefNumber } },
+    {
+      tenantId,
+      criteria: {
+        filingNumber,
+        applicationNumber: "",
+        cnrNumber: caseDetails?.cnrNumber,
+        orderNumber: orderNumber || orderRefNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
+      },
+    },
     { tenantId },
     filingNumber + caseDetails?.cnrNumber,
-    Boolean(filingNumber && caseDetails?.cnrNumber && (orderNumber || orderRefNumber))
+    Boolean(filingNumber && caseDetails?.cnrNumber && (orderNumber || orderRefNumber) && caseCourtId)
   );
   const orderDetails = useMemo(() => orderData?.list?.[0], [orderData]);
   const isComposite = useMemo(() => orderDetails?.orderCategory === "COMPOSITE", [orderDetails]);
@@ -531,11 +577,17 @@ const SubmissionsCreate = ({ path }) => {
   const { data: allOrdersData, isloading: isAllOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
     {
       tenantId,
-      criteria: { filingNumber, applicationNumber: "", cnrNumber: caseDetails?.cnrNumber, orderType: "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE" },
+      criteria: {
+        filingNumber,
+        applicationNumber: "",
+        cnrNumber: caseDetails?.cnrNumber,
+        orderType: "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE",
+        ...(caseCourtId && { courtId: caseCourtId }),
+      },
     },
     { tenantId },
     filingNumber + caseDetails?.cnrNumber + "allOrdersData",
-    Boolean(filingNumber && caseDetails?.cnrNumber)
+    Boolean(filingNumber && caseDetails?.cnrNumber && caseCourtId)
   );
   const allOrdersList = useMemo(() => allOrdersData?.list, [allOrdersData]);
   const extensionOrders = useMemo(
@@ -760,15 +812,17 @@ const SubmissionsCreate = ({ path }) => {
     compositeMandatorySubmissionItem,
   ]);
 
-  const formKey = useMemo(() => applicationType + (defaultFormValue?.initialSubmissionDate || "" + defaultFormValue?.selectComplainant?.name), [
-    applicationType,
-    defaultFormValue,
-  ]);
+  const formKey = useMemo(
+    () => applicationType + (defaultFormValue?.initialSubmissionDate || "" + defaultFormValue?.selectComplainant?.name) + isDelayApplicationPending,
+    [applicationType, defaultFormValue?.initialSubmissionDate, defaultFormValue?.selectComplainant?.name, isDelayApplicationPending]
+  );
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (
       applicationType &&
-      !["OTHERS", "DOCUMENT", "REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType) &&
+      !["OTHERS", "DOCUMENT", "REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION", "CORRECTION_IN_COMPLAINANT_DETAILS"].includes(
+        applicationType
+      ) &&
       !formData?.applicationDate
     ) {
       setValue("applicationDate", formatDate(new Date()));
@@ -1457,6 +1511,7 @@ const SubmissionsCreate = ({ path }) => {
           handleBack={handleBack}
           documents={applicationDetails?.documents || []}
           setApplicationPdfFileStoreId={setApplicationPdfFileStoreId}
+          courtId={caseCourtId}
         />
       )}
       {showsignatureModal && (

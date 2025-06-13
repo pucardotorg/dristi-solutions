@@ -49,6 +49,7 @@ const EvidenceModal = ({
   const history = useHistory();
   const filingNumber = useMemo(() => caseData?.filingNumber, [caseData]);
   const cnrNumber = useMemo(() => caseData?.cnrNumber, [caseData]);
+  const caseCourtId = useMemo(() => caseData?.case?.courtId, [caseData]);
   const allAdvocates = useMemo(() => getAdvocates(caseData?.case), [caseData]);
   const createdBy = useMemo(() => documentSubmission?.[0]?.details?.auditDetails?.createdBy, [documentSubmission]);
   const applicationStatus = useMemo(() => documentSubmission?.[0]?.status, [documentSubmission]);
@@ -66,7 +67,7 @@ const EvidenceModal = ({
   const [formData, setFormData] = useState({});
   const [showFileIcon, setShowFileIcon] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
-  const { documents: allCombineDocs, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments();
+  const { documents: allCombineDocs, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments({ caseCourtId });
   const [isDisabled, setIsDisabled] = useState();
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
@@ -104,6 +105,8 @@ const EvidenceModal = ({
   useEffect(() => {
     setBusinessOfTheDay(computeDefaultBOTD);
   }, [computeDefaultBOTD, setBusinessOfTheDay]);
+
+  const documentApplicationType = useMemo(() => documentSubmission?.[0]?.applicationList?.applicationType, [documentSubmission]);
 
   const respondingUuids = useMemo(() => {
     return documentSubmission?.[0]?.details?.additionalDetails?.respondingParty?.map((party) => party?.uuid?.map((uuid) => uuid))?.flat() || [];
@@ -146,7 +149,8 @@ const EvidenceModal = ({
     let label = "";
     if (modalType === "Submissions") {
       if (userType === "employee") {
-        label = t("Approve");
+        const applicationType = documentSubmission?.[0]?.applicationList?.applicationType;
+        label = applicationType === "CORRECTION_IN_COMPLAINANT_DETAILS" ? t("REVIEW_CHANGES") : t("Approve");
       } else {
         if (userInfo?.uuid === createdBy) {
           label = t("DOWNLOAD_SUBMISSION");
@@ -532,12 +536,13 @@ const EvidenceModal = ({
         filingNumber,
         artifactNumber,
         tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
     {},
     artifactNumber,
-    Boolean(artifactNumber)
+    Boolean(artifactNumber && caseCourtId)
   );
 
   const evidenceDetails = useMemo(() => evidenceData?.artifacts?.[0], [evidenceData]);
@@ -550,12 +555,13 @@ const EvidenceModal = ({
           criteria: {
             tenantId: Digit.ULBService.getCurrentTenantId(),
             filingNumber: filingNumber,
+            ...(caseCourtId && { courtId: caseCourtId }),
           },
         },
         {}
       );
       const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
-      const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+      const courtId = localStorage.getItem("courtId");
       let evidenceReqBody = {};
       let evidence = {};
       evidenceReqBody = {
@@ -980,7 +986,14 @@ const EvidenceModal = ({
           const res = await ordersService.createOrder(reqbody, { tenantId });
           const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType, isBail ? type : showConfirmationModal?.type);
           DRISTIService.customApiService(Urls.dristi.pendingTask, {
+            //need to add actioncategory for ORDER_EXTENSION_SUBMISSION_DEADLINE , ORDER_FOR_INITIATING_RESCHEDULING_OF_HEARING_DATE
             pendingTask: {
+              actionCategory:
+                name === "ORDER_EXTENSION_SUBMISSION_DEADLINE"
+                  ? "View Application"
+                  : name === "ORDER_FOR_INITIATING_RESCHEDULING_OF_HEARING_DATE"
+                  ? "Schedule Hearing"
+                  : null,
               name: t(name),
               entityType: "order-default",
               referenceId: `MANUAL_${res?.order?.orderNumber}`,
@@ -1054,6 +1067,17 @@ const EvidenceModal = ({
       return;
     }
     if (userType === "employee") {
+      if (documentApplicationType === "CORRECTION_IN_COMPLAINANT_DETAILS") {
+        const refApplicationId = documentSubmission?.[0]?.applicationList?.applicationNumber;
+        history.push(
+          `/${window.contextPath}/employee/dristi/home/view-case/review-litigant-details?caseId=${caseId}&referenceId=${documentSubmission?.[0]?.details?.additionalDetails?.pendingTaskRefId}&refApplicationId=${refApplicationId}`,
+          {
+            dateOfApplication: documentSubmission?.[0]?.applicationList?.additionalDetails?.dateOfApplication,
+            uniqueId: documentSubmission?.[0]?.applicationList?.additionalDetails?.uniqueId,
+          }
+        );
+        return;
+      }
       if (isBail) {
         await handleApplicationAction(true, "accept");
       } else if (modalType === "Submissions" && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION") {
@@ -1226,7 +1250,9 @@ const EvidenceModal = ({
           actionSaveLabel={actionSaveLabel}
           actionSaveOnSubmit={actionSaveOnSubmit}
           hideSubmit={currentDiaryEntry || !showSubmit} // Not allowing submit action for court room manager
-          actionCancelLabel={currentDiaryEntry || !isJudge ? false : actionCancelLabel} // Not allowing cancel action for court room manager
+          actionCancelLabel={
+            documentApplicationType === "CORRECTION_IN_COMPLAINANT_DETAILS" || currentDiaryEntry || !isJudge ? false : actionCancelLabel
+          } // Not allowing cancel action for court room manager
           actionCustomLabel={!customLabelShow ? false : actionCustomLabel} // Not allowing cancel action for court room manager
           actionCancelOnSubmit={actionCancelOnSubmit}
           actionCustomLabelSubmit={actionCustomLabelSubmit}

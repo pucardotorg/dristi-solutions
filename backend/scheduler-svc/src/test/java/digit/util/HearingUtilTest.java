@@ -67,7 +67,7 @@ public class HearingUtilTest {
         when(configuration.getHearingUpdateEndPoint()).thenReturn("/hearing/_update");
         when(serviceRequestRepository.fetchResult(any(), any())).thenReturn(null);
 
-        hearingUtil.callHearing(updateBulkRequest);
+        hearingUtil.callHearing(updateBulkRequest, Boolean.FALSE);
 
         verify(objectMapper).configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         verify(serviceRequestRepository, times(1)).fetchResult(any(), any());
@@ -82,7 +82,7 @@ public class HearingUtilTest {
         when(configuration.getHearingUpdateEndPoint()).thenReturn("/hearing/_update");
         when(serviceRequestRepository.fetchResult(any(), any())).thenThrow(new ServiceCallException("ServiceCallException"));
 
-        hearingUtil.callHearing(updateBulkRequest);
+        hearingUtil.callHearing(updateBulkRequest, Boolean.FALSE);
     }
 
     @Test

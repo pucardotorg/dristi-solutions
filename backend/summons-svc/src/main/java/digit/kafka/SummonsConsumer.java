@@ -14,9 +14,10 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.stereotype.Component;
-import static digit.config.ServiceConstants.*;
 
 import java.util.HashMap;
+
+import static digit.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -77,9 +78,12 @@ public class SummonsConsumer {
             SummonsRequest request = objectMapper.convertValue(record, SummonsRequest.class);
             log.info(request.toString());
             if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED)
-                || request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.NOT_DELIVERED)
-                || request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.EXECUTED)
-                    || request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.NOT_EXECUTED) ) {
+                    || request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.NOT_DELIVERED)
+                    || request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.EXECUTED)
+                    || request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.NOT_EXECUTED)
+                    || request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED_ICOPS)
+                    || request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.NOT_DELIVERED_ICOPS)
+                    || request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.IN_TRANSIT)) {
                 summonsService.updateTaskStatus(request);
             }
         } catch (final Exception e) {

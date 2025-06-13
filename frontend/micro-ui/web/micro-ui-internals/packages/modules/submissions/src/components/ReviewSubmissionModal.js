@@ -41,6 +41,7 @@ const SubmissionPreviewSubmissionTypeMap = {
   REQUEST_FOR_BAIL: "application-bail-bond",
   SUBMIT_BAIL_DOCUMENTS: "application-submit-bail-documents",
   DELAY_CONDONATION: "application-delay-condonation",
+  CORRECTION_IN_COMPLAINANT_DETAILS: "application-profile-edit",
 };
 
 const onDocumentUpload = async (fileData, filename) => {
@@ -60,6 +61,7 @@ function ReviewSubmissionModal({
   handleBack,
   documents = [],
   setApplicationPdfFileStoreId,
+  courtId,
 }) {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
@@ -96,6 +98,7 @@ function ReviewSubmissionModal({
           cnrNumber: application?.cnrNumber,
           qrCode: false,
           applicationType: SubmissionPreviewSubmissionTypeMap[application?.applicationType],
+          courtId: courtId,
         },
         data: {
           RequestInfo: {
