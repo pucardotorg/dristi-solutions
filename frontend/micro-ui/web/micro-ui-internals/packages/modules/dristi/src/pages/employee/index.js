@@ -32,7 +32,7 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = JSON.parse(eSignWindowObject);
 
-  const isJudgeView = roles?.some((role) => ["CASE_APPROVER", "BENCH_CLERK", "COURT_ROOM_MANAGER", "TYPIST_ROLE"].includes(role.code));
+  const isJudgeView = roles?.some((role) => ["JUDGE_ROLE", "BENCH_CLERK", "TYPIST_ROLE"].includes(role.code));
 
   const employeeCrumbs = [
     {
