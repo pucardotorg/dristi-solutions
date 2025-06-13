@@ -63,6 +63,7 @@ async function processDisposedApplications(
       {
         sortBy: section.sorton,
         order: "asc",
+        limit: 100,
       }
     );
 
@@ -78,6 +79,7 @@ async function processDisposedApplications(
       {
         sortBy: section.sorton,
         order: "asc",
+        limit: 100,
       }
     );
 

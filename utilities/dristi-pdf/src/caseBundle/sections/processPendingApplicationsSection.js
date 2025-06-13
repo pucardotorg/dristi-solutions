@@ -58,6 +58,7 @@ async function processPendingApplicationsSection(
       {
         sortBy: section.sorton,
         order: "asc",
+        limit: 100,
       }
     );
 
@@ -74,6 +75,7 @@ async function processPendingApplicationsSection(
       {
         sortBy: section.sorton,
         order: "asc",
+        limit: 100,
       }
     );
 
@@ -89,6 +91,7 @@ async function processPendingApplicationsSection(
       {
         sortBy: section.sorton,
         order: "asc",
+        limit: 100,
       }
     );
 
@@ -282,11 +285,15 @@ async function processPendingApplicationsSection(
                     docketCounselFor = "COMPLAINANT";
                   }
 
-                  const documentPath = `1.${index + 1}.2.${i + 1} Objection ${
-                    i + 1
-                  } in 1.${index + 1}.2 ${objectionSection.Items} in 1.${
+                  const documentPath = `${dynamicSectionNumber}.${
                     index + 1
-                  } ${application.applicationType} in 1 ${section.section}`;
+                  }.2.${i + 1} Objection ${i + 1} in ${dynamicSectionNumber}.${
+                    index + 1
+                  }.2 ${objectionSection.Items} in ${dynamicSectionNumber}.${
+                    index + 1
+                  } ${
+                    messagesMap[application.applicationType]
+                  } in ${dynamicSectionNumber} ${section.section}`;
 
                   newObjectionDocumentFileStoreId = await applyDocketToDocument(
                     objectionDocumentFileStoreId,
