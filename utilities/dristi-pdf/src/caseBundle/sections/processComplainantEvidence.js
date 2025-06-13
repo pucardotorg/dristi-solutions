@@ -97,9 +97,16 @@ async function processComplainantEvidence(
                 )?.additionalDetails?.advocateName || docketNameOfFiling;
             }
 
-            const documentPath = `${dynamicSectionNumber}.${index + 1} ${
-              messagesMap[evidence.artifactType]
-            } in ${dynamicSectionNumber} ${section.section}`;
+            const artifactName =
+              evidence?.file?.additionalDetails?.documentTitle ||
+              messagesMap[
+                evidence?.file?.additionalDetails?.documentType ||
+                  evidence?.artifactType
+              ];
+
+            const documentPath = `${dynamicSectionNumber}.${
+              index + 1
+            } ${artifactName} in ${dynamicSectionNumber} ${section.section}`;
 
             newEvidenceFileStoreId = await applyDocketToDocument(
               evidenceFileStoreId,

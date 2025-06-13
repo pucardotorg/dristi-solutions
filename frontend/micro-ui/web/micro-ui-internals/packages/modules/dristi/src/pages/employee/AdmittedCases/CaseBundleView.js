@@ -664,7 +664,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
         return {
           id: `evidence-${index}`,
-          title: t(evidence?.artifactType),
+          title: evidence?.file?.additionalDetails?.documentTitle || evidence?.file?.additionalDetails?.documentType || evidence?.artifactType,
           fileStoreId: evidenceFileStoreId,
           hasChildren: false,
           isEvidence: evidence?.isEvidence,
@@ -713,7 +713,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           if (otherDocument?.length > 0) {
             const otherChildren = otherDocument?.map((doc, idx) => ({
               id: `${application?.applicationNumber}-other-${idx}`,
-              title: doc?.additionalDetails?.name?.split(".")[0],
+              title: doc?.additionalDetails?.documentTitle || doc?.additionalDetails?.documentType || doc?.additionalDetails?.name?.split(".")[0],
               fileStoreId: doc?.fileStore,
               hasChildren: false,
             }));
@@ -748,7 +748,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       ?.filter((artifact) => artifact?.file?.fileStore)
       ?.map((artifact, idx) => ({
         id: `complaint-evidence-${idx}`,
-        title: t(artifact?.artifactType),
+        title: artifact?.file?.additionalDetails?.documentTitle || artifact?.file?.additionalDetails?.documentType || artifact?.artifactType,
         fileStoreId: artifact?.file?.fileStore,
         hasChildren: false,
       }));
@@ -760,7 +760,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       ?.filter((evidence) => evidence?.file?.fileStore)
       ?.map((evidence, idx) => ({
         id: `accused-evidence-${idx}`,
-        title: t(evidence?.artifactType),
+        title: evidence?.file?.additionalDetails?.documentTitle || evidence?.file?.additionalDetails?.documentType || evidence?.artifactType,
         fileStoreId: evidence?.file?.fileStore,
         hasChildren: false,
       }));
@@ -773,7 +773,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           ?.filter((artifact) => artifact?.file?.fileStore)
           ?.map((artifact, idx) => ({
             id: `court-deposition-${idx}`,
-            title: artifact?.artifactType,
+            title: artifact?.file?.additionalDetails?.documentTitle || artifact?.file?.additionalDetails?.documentType || artifact?.artifactType,
             fileStoreId: artifact?.file?.fileStore,
             hasChildren: false,
           }))
@@ -785,7 +785,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           ?.filter((artifact) => artifact?.file?.fileStore)
           ?.map((artifact, idx) => ({
             id: `court-evidence-${idx}`,
-            title: artifact?.artifactType,
+            title: artifact?.file?.additionalDetails?.documentTitle || artifact?.file?.additionalDetails?.documentType || artifact?.artifactType,
             fileStoreId: artifact?.file?.fileStore,
             hasChildren: false,
           }))
@@ -960,7 +960,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
           const otherDocsChildren = otherDocument?.map((doc, i) => ({
             id: `${application?.applicationNumber}-other-${i}`,
-            title: doc?.additionalDetails?.name?.split(".")[0],
+            title: doc?.additionalDetails?.documentTitle || doc?.additionalDetails?.documentType || doc?.additionalDetails?.name?.split(".")[0],
             fileStoreId: doc?.fileStore,
             hasChildren: false,
           }));
@@ -1027,7 +1027,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
                 if (submitOtherDocument.length > 0) {
                   const othersChildren = submitOtherDocument?.map((doc, j) => ({
                     id: `${application?.applicationNumber}-submit-other-${j}`,
-                    title: doc?.additionalDetails?.name?.split(".")[0],
+                    title:
+                      doc?.additionalDetails?.documentTitle || doc?.additionalDetails?.documentType || doc?.additionalDetails?.name?.split(".")[0],
                     fileStoreId: doc?.fileStore,
                     hasChildren: false,
                   }));
