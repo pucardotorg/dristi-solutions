@@ -245,6 +245,7 @@ public class ServiceConstants {
     public static final String DIRECT = "DIRECT";
     public static final String COMPLAINANT = "COMPLAINANT";
     public static final String ACCUSED = "ACCUSED";
+    public static final String SUBMITTED = "SUBMITTED";
     private ServiceConstants() {
     }
 }
