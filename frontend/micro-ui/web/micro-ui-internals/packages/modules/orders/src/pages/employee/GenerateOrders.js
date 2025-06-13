@@ -3611,6 +3611,34 @@ const GenerateOrders = () => {
           }
         }
 
+        if (orderType === "NOTICE") {
+          if(formData?.noticeOrder?.selectedChannels?.length === 0){
+            setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_NOTICE_ORDER"), error: true });
+            hasError = true;
+            break;
+          }
+        }
+
+        if (orderType === "SUMMONS") {
+          if(formData?.SummonsOrder?.selectedChannels?.length === 0){
+            setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_SUMMONS_ORDER"), error: true });
+            hasError = true;
+            break;
+          }
+
+          else if (
+            formData?.SummonsOrder?.selectedChannels?.some(
+              (channel) =>
+                (channel?.code === "POLICE") &&
+                (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
+            )
+          ) {
+            setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
+            hasError = true;
+            break;
+          }
+        }
+
         if (orderType === "WARRANT") {
           if (!formData?.bailInfo?.noOfSureties && formData?.bailInfo?.isBailable?.code === true) {
             setFormErrors?.current?.[index]?.("noOfSureties", { message: t("CORE_REQUIRED_FIELD_ERROR") });
