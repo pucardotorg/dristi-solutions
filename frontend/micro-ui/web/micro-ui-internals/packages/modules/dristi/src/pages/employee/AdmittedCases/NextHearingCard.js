@@ -12,7 +12,7 @@ function timeInMillisFromDateAndTime(date, hhmmssms) {
   return startOfDate.getTime() + millis;
 }
 
-const NextHearingCard = ({ caseData, width }) => {
+const NextHearingCard = ({ caseData, width, minWidth }) => {
   const filingNumber = caseData.filingNumber;
   const cnr = caseData.cnrNumber;
   const caseCourtId = useMemo(() => caseData?.case?.courtId, [caseData]);
@@ -88,6 +88,7 @@ const NextHearingCard = ({ caseData, width }) => {
     const userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
     const searchParams = new URLSearchParams();
     searchParams.set("hearingId", scheduledHearing?.hearingId);
+    searchParams.set("filingNumber", scheduledHearing?.filingNumber);
     if (userType === "citizen") {
       history.push(`/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`);
     } else if (scheduledHearing?.status === "SCHEDULED") {
@@ -128,6 +129,7 @@ const NextHearingCard = ({ caseData, width }) => {
     <Card
       style={{
         width: width,
+        minWidth: minWidth,
         marginTop: "10px",
       }}
     >
