@@ -47,6 +47,7 @@ async function processMandatorySubmissions(
       {
         sortBy: "createdDate",
         order: "asc",
+        limit: 100,
       }
     );
 
@@ -70,6 +71,7 @@ async function processMandatorySubmissions(
             {
               sortBy: section.sorton,
               order: "asc",
+              limit: 100,
             }
           );
 

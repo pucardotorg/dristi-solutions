@@ -112,6 +112,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       pagination: {
         sortBy: "applicationCMPNumber",
         order: "asc",
+        limit: 100,
       },
     },
     {},
@@ -130,6 +131,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       pagination: {
         sortBy: "applicationCMPNumber",
         order: "asc",
+        limit: 100,
       },
     },
     {},
@@ -151,6 +153,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       pagination: {
         sortBy: "applicationCMPNumber",
         order: "asc",
+        limit: 100,
       },
     },
     {},
@@ -247,6 +250,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       pagination: {
         sortBy: "createdTime",
         order: "asc",
+        limit: 100,
       },
     },
     {},
@@ -367,6 +371,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       pagination: {
         sortBy: "applicationCMPNumber",
         order: "asc",
+        limit: 100,
       },
     },
     {},
@@ -385,6 +390,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       pagination: {
         sortBy: "applicationCMPNumber",
         order: "asc",
+        limit: 100,
       },
     },
     {},
@@ -421,6 +427,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       pagination: {
         sortBy: "applicationCMPNumber",
         order: "asc",
+        limit: 100,
       },
     },
     {},
@@ -521,6 +528,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           pagination: {
             sortBy: "createdTime",
             order: "asc",
+            limit: 100,
           },
         }),
       enabled: !!order?.id,
