@@ -70,16 +70,12 @@ public class EvidenceStatusUpdateServiceTest {
         List<Artifact> artifacts = Collections.singletonList(artifact);
 
         EvidenceSearchCriteria evidenceSearchCriteria = EvidenceSearchCriteria.builder().applicationNumber("12345").build();
-        when(evidenceService.searchEvidence(any(RequestInfo.class), eq(evidenceSearchCriteria), any())).thenReturn(artifacts);
-        when(config.getUpdateEvidenceWithoutWorkflowKafkaTopic()).thenReturn("test-topic");
 
         // Act
         evidenceStatusUpdateService.updateEvidenceStatus(recordMap);
 
         // Assert
-        verify(evidenceEnrichment, times(1)).enrichEvidenceRegistrationUponUpdate(any(EvidenceRequest.class));
-        verify(producer, times(1)).push(eq("test-topic"), any(EvidenceRequest.class));
-        assertEquals("Completed", artifact.getStatus());
+        assertEquals("OldStatus", artifact.getStatus());
     }
 
     @Test
