@@ -1200,7 +1200,7 @@ export const createIndividualUser = async ({ data, documentData, tenantId, isCom
     : {};
   const identifierType = documentData
     ? isComplainant
-      ? data?.complainantId?.complainantId?.selectIdTypeType?.type
+      ? data?.complainantId?.complainantId?.selectIdTypeType?.type || data?.complainantId?.complainantId?.complainantId?.selectIdTypeType?.type
       : data?.poaComplainantId?.poaComplainantId?.selectIdTypeType?.type
     : "AADHAR";
   let Individual = {
@@ -1627,6 +1627,25 @@ export const updateCaseDetails = async ({
     }
   };
 
+  function transformFileData(inputArray, tenantId = "kl", fileType = "application/pdf") {
+    if (!Array.isArray(inputArray) || inputArray.length === 0) return null;
+
+    const { fileStore, documentName } = inputArray[0];
+
+    return {
+      file: {
+        files: [
+          {
+            fileStoreId: fileStore,
+            tenantId,
+          },
+        ],
+      },
+      fileType,
+      filename: documentName,
+    };
+  }
+
   if (selected === "complainantDetails") {
     let litigants = [];
     let poaHolders = [];
@@ -1641,7 +1660,10 @@ export const updateCaseDetails = async ({
         updatedFormData
           .filter((item) => item.isenabled)
           .map(async (data, index) => {
-            if (data?.data?.complainantVerification?.individualDetails?.document) {
+            if (
+              data?.data?.complainantVerification?.individualDetails?.document &&
+              data?.data?.complainantVerification?.individualDetails?.individualId
+            ) {
               const Individual = await DRISTIService.searchIndividualUser(
                 {
                   Individual: {
@@ -1712,12 +1734,19 @@ export const updateCaseDetails = async ({
             } else {
               if (data?.data?.complainantId?.complainantId && data?.data?.complainantVerification?.isUserVerified) {
                 if (data?.data?.complainantId?.verificationType !== "AADHAR") {
-                  const documentData = await onDocumentUpload(
-                    documentsTypeMapping["complainantId"],
-                    data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
-                    data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
-                    tenantId
-                  );
+                  let documentData = {};
+
+                  if (data?.data?.complainantVerification?.individualDetails?.document) {
+                    documentData = transformFileData(data?.data?.complainantVerification?.individualDetails?.document);
+                  } else {
+                    documentData = await onDocumentUpload(
+                      documentsTypeMapping["complainantId"],
+                      data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
+                      data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
+                      tenantId
+                    );
+                  }
+
                   litigantFilestoreIds[index] = documentData;
                   !!setFormDataValue &&
                     setFormDataValue("complainantVerification", {
@@ -2159,6 +2188,8 @@ export const updateCaseDetails = async ({
           const poaIdProof = {
             poaComplainantId: { poaComplainantId: { poaComplainantId: {} } },
           };
+
+          const userSelectedIdType = isCompleted ? null : data?.data?.complainantId?.complainantId?.selectIdTypeType;
           const individualDetails = {};
           const poaIndividualDetails = {};
           if (data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file) {
@@ -2189,6 +2220,7 @@ export const updateCaseDetails = async ({
                   },
                 ],
               ],
+              ...(userSelectedIdType && { selectIdTypeType: userSelectedIdType }),
             };
             docList.push(doc);
             individualDetails.document = [uploadedData];
