@@ -2969,9 +2969,146 @@ const AdmittedCaseJudge = () => {
       )}
       <div
         className="admitted-case-header"
-        style={{ position: showJoinCase ? "" : "", top: "72px", width: "100%", zIndex: 150, background: "white" }}
+        style={{ position: showJoinCase ? "" : "", top: "72px", width: "100%", zIndex: 150, background: "white", gap: "0px" }}
       >
-        {caseDetails?.caseTitle && <Header styles={{ marginBottom: "-30px" }}>{caseDetails?.caseTitle}</Header>}
+        <div className="admitted-case-title" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          {caseDetails?.caseTitle && <Header styles={{ marginBottom: "0px" }}>{caseDetails?.caseTitle}</Header>}
+          <div className="make-submission-action" style={{ display: "flex", gap: 20, justifyContent: "space-between", alignItems: "center" }}>
+            {(showMakeSubmission || isCitizen) && (
+              <div className="evidence-header-wrapper">
+                <div className="evidence-hearing-header" style={{ background: "transparent", padding: "0px" }}>
+                  <div className="evidence-actions" style={{ ...(isTabDisabled ? { pointerEvents: "none" } : {}) }}>
+                    {showMakeSubmission && (
+                      <React.Fragment>
+                        <ActionButton
+                          variation={"primary"}
+                          label={t("CS_CASE_MAKE_FILINGS")}
+                          icon={showMenu ? "ExpandLess" : "ExpandMore"}
+                          isSuffix={true}
+                          onClick={handleTakeAction}
+                          className={"take-action-btn-class"}
+                        ></ActionButton>
+                        {showMenu && (
+                          <Menu
+                            t={t}
+                            optionKey={"label"}
+                            localeKeyPrefix={"CS_CASE"}
+                            options={citizenActionOptions}
+                            onSelect={(option) => handleCitizenAction(option)}
+                          ></Menu>
+                        )}
+                      </React.Fragment>
+                    )}
+
+                    <div
+                      onClick={() => {
+                        setShowCitizenMenu((prev) => !prev);
+                        if (showMenu) {
+                          setShowMenu(false);
+                        }
+                      }}
+                      style={{ cursor: "pointer", height: "40px" }}
+                    >
+                      <CustomThreeDots />
+                      {showCitizenMenu && (
+                        <Menu
+                          options={["MANAGE_CASE_ACCESS", "DOWNLOAD_CASE_FILE"]}
+                          t={t}
+                          localeKeyPrefix={"CS_CASE"}
+                          onSelect={(option) => {
+                            if (option === "MANAGE_CASE_ACCESS") {
+                              setShowJoinCase(true);
+                              setShowCitizenMenu(false);
+                            } else if (option === "DOWNLOAD_CASE_FILE") {
+                              handleDownloadPDF();
+                            }
+                          }}
+                        ></Menu>
+                      )}
+                      <JoinCaseHome
+                        setShowJoinCase={setShowJoinCase}
+                        showJoinCase={showJoinCase}
+                        type={"external"}
+                        data={{ caseDetails: caseDetails }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            {showTakeAction && (
+              <div className="judge-action-block" style={{ display: "flex", gap: "20px" }}>
+                {!isCourtRoomManager && (
+                  <div className="evidence-header-wrapper">
+                    <div className="evidence-hearing-header" style={{ background: "transparent", padding: "0px" }}>
+                      <div className="evidence-actions" style={{ ...(isTabDisabled ? { pointerEvents: "none" } : {}) }}>
+                        {currentInProgressHearing ? (
+                          <React.Fragment>
+                            <Button
+                              variation={"outlined"}
+                              label={t(isTypist ? "CS_GENERATE_ORDER" : "CS_CASE_VIEW_CALENDAR")}
+                              onButtonClick={() => handleEmployeeAction({ value: isTypist ? "GENERATE_ORDER" : "VIEW_CALENDAR" })}
+                              style={{ boxShadow: "none" }}
+                            ></Button>
+                            <Button
+                              variation={"primary"}
+                              label={t(isBenchClerk ? "CS_CASE_END_HEARING" : isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : "")}
+                              children={isBenchClerk ? null : isJudge || isTypist ? <RightArrow /> : null}
+                              isSuffix={true}
+                              onButtonClick={() =>
+                                handleEmployeeAction({ value: isBenchClerk ? "END_HEARING" : isJudge || isTypist ? "NEXT_HEARING" : "" })
+                              }
+                              style={{ boxShadow: "none", ...(isBenchClerk ? { backgroundColor: "#BB2C2F", border: "none" } : {}) }}
+                            ></Button>
+                          </React.Fragment>
+                        ) : (
+                          <React.Fragment>
+                            <ActionButton
+                              variation={"primary"}
+                              label={t("TAKE_ACTION_LABEL")}
+                              icon={showMenu ? "ExpandLess" : "ExpandMore"}
+                              isSuffix={true}
+                              onClick={handleTakeAction}
+                              className={"take-action-btn-class"}
+                            ></ActionButton>
+                            {showMenu && (
+                              <Menu textStyles={{ cursor: "pointer" }} options={takeActionOptions} onSelect={(option) => handleSelect(option)}></Menu>
+                            )}
+                          </React.Fragment>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div className="evidence-header-wrapper">
+                  <div className="evidence-hearing-header" style={{ background: "transparent", padding: "0px" }}>
+                    <div className="evidence-actions">
+                      <div
+                        className="custom-icon-wrapper"
+                        onClick={() => {
+                          setShowOtherMenu((prev) => !prev);
+                          setShowMenu(false);
+                          setShowMenuFilings(false);
+                        }}
+                      >
+                        <CustomThreeDots />
+                        {showOtherMenu && (
+                          <Menu
+                            t={t}
+                            localeKeyPrefix={"CS_CASE"}
+                            options={employeeActionOptions}
+                            optionKey={"label"}
+                            onSelect={handleEmployeeAction}
+                          ></Menu>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
         <div className="admitted-case-details" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px" }}>
           <div className="case-details-title" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <div className="sub-details-text">{caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber}</div>
@@ -2999,150 +3136,8 @@ const AdmittedCaseJudge = () => {
               </div>
             )}
           </div>
-          {isCitizen && (
-            <div className="make-submission-action" style={{ display: "flex", gap: 20, justifyContent: "space-between", alignItems: "center" }}>
-              {(isCitizen || isCourtStaff) && (
-                <Button
-                  variation={"outlined"}
-                  label={t("DOWNLOAD_CASE_FILE")}
-                  isDisabled={!caseDetails?.additionalDetails?.signedCaseDocument}
-                  onButtonClick={handleDownloadPDF}
-                />
-              )}
-              {(showMakeSubmission || isCitizen) && (
-                <div className="evidence-header-wrapper">
-                  <div className="evidence-hearing-header" style={{ background: "transparent" }}>
-                    <div className="evidence-actions" style={{ ...(isTabDisabled ? { pointerEvents: "none" } : {}) }}>
-                      {showMakeSubmission && (
-                        <React.Fragment>
-                          <ActionButton
-                            variation={"primary"}
-                            label={t("CS_CASE_MAKE_FILINGS")}
-                            icon={showMenu ? "ExpandLess" : "ExpandMore"}
-                            isSuffix={true}
-                            onClick={handleTakeAction}
-                            className={"take-action-btn-class"}
-                          ></ActionButton>
-                          {showMenu && (
-                            <Menu
-                              t={t}
-                              optionKey={"label"}
-                              localeKeyPrefix={"CS_CASE"}
-                              options={citizenActionOptions}
-                              onSelect={(option) => handleCitizenAction(option)}
-                            ></Menu>
-                          )}
-                        </React.Fragment>
-                      )}
-
-                      <div
-                        onClick={() => {
-                          setShowCitizenMenu((prev) => !prev);
-                          if (showMenu) {
-                            setShowMenu(false);
-                          }
-                        }}
-                        style={{ cursor: "pointer" }}
-                      >
-                        <CustomThreeDots />
-                        {showCitizenMenu && (
-                          <Menu
-                            options={["MANAGE_CASE_ACCESS"]}
-                            t={t}
-                            onSelect={(option) => {
-                              if (option === "MANAGE_CASE_ACCESS") {
-                                setShowJoinCase(true);
-                                setShowCitizenMenu(false);
-                              }
-                            }}
-                          ></Menu>
-                        )}
-                        <JoinCaseHome
-                          setShowJoinCase={setShowJoinCase}
-                          showJoinCase={showJoinCase}
-                          type={"external"}
-                          data={{ caseDetails: caseDetails }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-          {showTakeAction && (
-            <div className="judge-action-block" style={{ display: "flex" }}>
-              {!isCourtRoomManager && (
-                <div className="evidence-header-wrapper">
-                  <div className="evidence-hearing-header" style={{ background: "transparent" }}>
-                    <div className="evidence-actions" style={{ ...(isTabDisabled ? { pointerEvents: "none" } : {}) }}>
-                      {currentInProgressHearing ? (
-                        <React.Fragment>
-                          <Button
-                            variation={"outlined"}
-                            label={t(isTypist ? "CS_GENERATE_ORDER" : "CS_CASE_VIEW_CALENDAR")}
-                            onButtonClick={() => handleEmployeeAction({ value: isTypist ? "GENERATE_ORDER" : "VIEW_CALENDAR" })}
-                            style={{ boxShadow: "none" }}
-                          ></Button>
-                          <Button
-                            variation={"primary"}
-                            label={t(isBenchClerk ? "CS_CASE_END_HEARING" : isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : "")}
-                            children={isBenchClerk ? null : isJudge || isTypist ? <RightArrow /> : null}
-                            isSuffix={true}
-                            onButtonClick={() =>
-                              handleEmployeeAction({ value: isBenchClerk ? "END_HEARING" : isJudge || isTypist ? "NEXT_HEARING" : "" })
-                            }
-                            style={{ boxShadow: "none", ...(isBenchClerk ? { backgroundColor: "#BB2C2F", border: "none" } : {}) }}
-                          ></Button>
-                        </React.Fragment>
-                      ) : (
-                        <React.Fragment>
-                          <ActionButton
-                            variation={"primary"}
-                            label={t("TAKE_ACTION_LABEL")}
-                            icon={showMenu ? "ExpandLess" : "ExpandMore"}
-                            isSuffix={true}
-                            onClick={handleTakeAction}
-                            className={"take-action-btn-class"}
-                          ></ActionButton>
-                          {showMenu && (
-                            <Menu textStyles={{ cursor: "pointer" }} options={takeActionOptions} onSelect={(option) => handleSelect(option)}></Menu>
-                          )}
-                        </React.Fragment>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-              <div className="evidence-header-wrapper">
-                <div className="evidence-hearing-header" style={{ background: "transparent" }}>
-                  <div className="evidence-actions">
-                    <div
-                      className="custom-icon-wrapper"
-                      onClick={() => {
-                        setShowOtherMenu((prev) => !prev);
-                        setShowMenu(false);
-                        setShowMenuFilings(false);
-                      }}
-                    >
-                      <CustomThreeDots />
-                      {showOtherMenu && (
-                        <Menu
-                          t={t}
-                          localeKeyPrefix={"CS_CASE"}
-                          options={employeeActionOptions}
-                          optionKey={"label"}
-                          onSelect={handleEmployeeAction}
-                        ></Menu>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
-        {/* {hasAnyRelevantOrderType && (
+        {hasAnyRelevantOrderType && isCitizen && (
           <div
             style={{
               backgroundColor: "#FFF6EA",
@@ -3151,6 +3146,7 @@ const AdmittedCaseJudge = () => {
               display: "inline-block",
               fontSize: "14px",
               color: "#333",
+              marginTop: "24px",
             }}
           >
             {t("VIEW_NOTICE_SUMMONS")}{" "}
@@ -3166,9 +3162,8 @@ const AdmittedCaseJudge = () => {
               {t("NOTICE_CLICK_HERE")}
             </span>
           </div>
-        )} */}
-
-        <div className="search-tabs-container">
+        )}
+        <div className="search-tabs-container" style={{ marginTop: "24px" }}>
           <div>
             {tabData?.map((i, num) => (
               <button
@@ -3255,33 +3250,24 @@ const AdmittedCaseJudge = () => {
           )}
         </div>
       )}
-      <div
-        className={`inbox-search-wrapper orders-tab-inbox-wrapper`}
-        style={{
-          paddingBottom: tabData?.find((tab) => tab.label === "caseFileOverview")?.active ? "0px" : showActionBar ? "60px" : undefined,
-        }}
-      >
-        {inboxComposer}
-      </div>
+      {!tabData?.filter((tab) => tab.label === "Overview")?.[0]?.active && !tabData?.filter((tab) => tab.label === "Complaint")?.[0]?.active && (
+        <div
+          className={`inbox-search-wrapper orders-tab-inbox-wrapper`}
+          style={{
+            paddingBottom: tabData?.find((tab) => tab.label === "caseFileOverview")?.active ? "0px" : showActionBar ? "60px" : undefined,
+          }}
+        >
+          {inboxComposer}
+        </div>
+      )}
       {tabData?.filter((tab) => tab.label === "Overview")?.[0]?.active && (
         <div className="case-overview-wrapper" style={{ ...(viewActionBar ? { marginBottom: "60px" } : {}) }}>
           <CaseOverviewJudge
-            handleDownload={handleDownload}
-            handleExtensionRequest={handleExtensionRequest}
-            handleSubmitDocument={handleSubmitDocument}
-            openHearingModule={openHearingModule}
             caseData={caseRelatedData}
-            setUpdateCounter={setUpdateCounter}
-            showToast={showToast}
-            t={t}
-            order={currentOrder}
-            caseStatus={caseStatus}
-            extensionApplications={extensionApplications}
-            productionOfDocumentApplications={productionOfDocumentApplications}
-            submitBailDocumentsApplications={submitBailDocumentsApplications}
             filingNumber={filingNumber}
             currentHearingId={currentHearingId}
             caseDetails={caseDetails}
+            showNoticeProcessModal={!isCitizen}
           />
         </div>
       )}
