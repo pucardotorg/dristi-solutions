@@ -169,12 +169,11 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
         })) || [];
 
       const advocateOptions =
-        hearingData?.attendees
-          ?.filter((attendee) => attendee?.type === "Advocate")
-          ?.map((attendee, index) => ({
-            label: attendee?.name,
-            value: attendee?.individualId,
-          })) || [];
+        caseDetails?.representatives?.map((rep) => ({
+          label: rep?.additionalDetails?.advocateName,
+          value: rep?.advocateId,
+        })) || [];
+
       const partiesOption =
         allParties
           ?.filter((party) => party?.isJoined === true)
@@ -221,6 +220,15 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
         selectedData = {
           ...party,
           uuid: party.partyUuid,
+        };
+      }
+    }
+    if (!selectedData) {
+      const advocate = caseDetails?.representatives?.find((adv) => adv?.advocateId === selectedUUID);
+      if (advocate) {
+        selectedData = {
+          ...advocate,
+          uuid: advocate?.advocateId,
         };
       }
     }
@@ -381,7 +389,7 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
                   IsSelectedWitness
                     ? {
                         label: getFormattedName(
-                          selectedWitness?.firstName || selectedWitness?.name,
+                          selectedWitness?.firstName || selectedWitness?.name || selectedWitness?.additionalDetails?.advocateName,
                           selectedWitness?.middleName,
                           selectedWitness?.lastName,
                           selectedWitness?.witnessDesignation
