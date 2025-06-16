@@ -494,3 +494,36 @@
     }
   }
 }
+
+.payment-demand-modal {
+  .select-wrap {
+    width: unset !important;
+  }
+  .payment-demand-modal-main {
+    padding: 16px 24px !important;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .payment-demand-modal-body-main {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .add-link {
+    color: #007e7e;
+    font-size: 16px;
+    font-weight: 700;
+    background: transparent;
+  }
+  .payment-item {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .disabled {
+    background-color: #d9d9d9;
+  }
+  .text-input input {
+    margin: 0px !important;
+  }
+}

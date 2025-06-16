@@ -52,7 +52,7 @@ import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/servic
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import CaseBundleView from "./CaseBundleView";
 import CaseOverviewV2 from "./CaseOverviewV2";
-
+import PaymentDemandModal from "./PaymentDemandModal";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -221,6 +221,8 @@ const AdmittedCaseV2 = () => {
   const [showCitizenMenu, setShowCitizenMenu] = useState(false);
   const [showJoinCase, setShowJoinCase] = useState(false);
   const [shouldRefetchCaseData, setShouldRefetchCaseData] = useState(false);
+  const [showPaymentDemandModal, setShowPaymentDemandModal] = useState(false);
+  const [showPaymentConfirmationModal, setShowPaymentConfirmationModal] = useState(false);
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
@@ -2559,6 +2561,10 @@ const AdmittedCaseV2 = () => {
             showToast({ isError: true, message: "ORDER_CREATION_FAILED" });
           });
         return;
+      } else if (option === t("GENERATE_PAYMENT_DEMAND")) {
+        setShowPaymentDemandModal(true);
+        setShowMenu(false);
+        return;
       }
       history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}`, { caseId: caseId, tab: "Orders" });
     },
@@ -2811,7 +2817,7 @@ const AdmittedCaseV2 = () => {
     []
   );
 
-  const takeActionOptions = useMemo(() => [t("CS_GENERATE_ORDER"), t("SUBMIT_DOCUMENTS")], [t]);
+  const takeActionOptions = useMemo(() => [t("CS_GENERATE_ORDER"), t("SUBMIT_DOCUMENTS"), t("GENERATE_PAYMENT_DEMAND")], [t]);
 
   const employeeCrumbs = useMemo(
     () => [
@@ -3591,7 +3597,6 @@ const AdmittedCaseV2 = () => {
           setUpdateCounter={setUpdateCounter}
         />
       )}
-
       {showWitnessModal && (
         <WitnessDrawer
           isOpen={showWitnessModal}
@@ -3630,6 +3635,38 @@ const AdmittedCaseV2 = () => {
           hearing={currentActiveHearing}
           refetchHearing={() => {}}
         ></AddParty>
+      )}
+      {showPaymentDemandModal && (
+        <PaymentDemandModal
+          t={t}
+          setShowPaymentDemandModal={setShowPaymentDemandModal}
+          setShowPaymentConfirmationModal={setShowPaymentConfirmationModal}
+          joinedLitigants={finalLitigantsData}
+        />
+      )}{" "}
+      {showPaymentConfirmationModal && (
+        <Modal
+          headerBarMain={<Heading label={t("CONFIRM_CREATION")} />}
+          headerBarEnd={
+            <CloseBtn
+              onClick={() => {
+                setShowPaymentConfirmationModal(false);
+                setShowPaymentDemandModal(true);
+              }}
+            />
+          }
+          actionSaveLabel={t("EDIT_CONFIRM")}
+          actionCancelLabel={t("CS_EDIT_BACK")}
+          actionCancelOnSubmit={() => {
+            setShowPaymentConfirmationModal(false);
+            setShowPaymentDemandModal(true);
+          }}
+          style={{
+            backgroundColor: "#007E7E",
+          }}
+          children={<div style={{ margin: "16px 0px" }}>{t("CONFIRMATION_MSG1")}</div>}
+          actionSaveOnSubmit={() => {}}
+        ></Modal>
       )}
     </div>
   );
