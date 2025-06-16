@@ -99,28 +99,36 @@ async function processAdditionalFilings(
               (rep) => rep.additionalDetails.uuid === sourceUuid
             );
             let docketNameOfFiling;
-            let docketNameOfAdvocate;
+            let docketCounselFor;
 
             if (sourceLitigant) {
               docketNameOfFiling =
                 sourceLitigant.additionalDetails?.fullName || "";
-              docketNameOfAdvocate = "";
+              docketCounselFor = "";
             } else if (sourceRepresentative) {
-              docketNameOfAdvocate =
-                sourceRepresentative.additionalDetails?.advocateName || "";
+              const docketNameOfComplainants = sourceRepresentative.representing
+                ?.map((lit) => lit.additionalDetails.fullName)
+                .filter(Boolean)
+                .join(", ");
               docketNameOfFiling =
                 sourceRepresentative.additionalDetails?.advocateName || "";
+              docketCounselFor = `COUNSEL FOR THE ${evidence.sourceType} - ${docketNameOfComplainants}`;
             } else {
               const complainant = courtCase.litigants?.find((litigant) =>
                 litigant.partyType.includes("complainant.primary")
               );
-              docketNameOfFiling = complainant.additionalDetails.fullName;
-              docketNameOfAdvocate =
+              const docketNameOfComplainants =
+                complainant.additionalDetails.fullName;
+              docketNameOfFiling =
                 courtCase.representatives?.find((adv) =>
                   adv.representing?.find(
                     (party) => party.individualId === complainant.individualId
                   )
-                )?.additionalDetails?.advocateName || docketNameOfFiling;
+                )?.additionalDetails?.advocateName || docketNameOfComplainants;
+              docketCounselFor =
+                docketNameOfFiling === docketNameOfComplainants
+                  ? ""
+                  : `COUNSEL FOR THE COMPLAINANT - ${docketNameOfComplainants}`;
             }
 
             const artifactName =
@@ -140,9 +148,8 @@ async function processAdditionalFilings(
                 docketApplicationType: `${section.section.toUpperCase()} - ${
                   section.Items
                 }`,
-                docketCounselFor: evidence.sourceType,
+                docketCounselFor: docketCounselFor,
                 docketNameOfFiling: docketNameOfFiling,
-                docketNameOfAdvocate: docketNameOfAdvocate,
                 docketDateOfSubmission: new Date(
                   evidence.createdDate
                 ).toLocaleDateString("en-IN"),

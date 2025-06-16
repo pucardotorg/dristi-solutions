@@ -46,13 +46,16 @@ async function processPaymentReceipts(
           )
         )?.additionalDetails?.advocateName;
 
+        const docketCounselFor = docketNameOfAdvocate
+          ? `COUNSEL FOR THE COMPLAINANT - ${docketComplainantName}`
+          : "";
+
         newFileStoreId = await applyDocketToDocument(
           paymentReceiptFileStoreId,
           {
             docketApplicationType: section.section.toUpperCase(),
-            docketCounselFor: "COMPLAINANT",
-            docketNameOfFiling: docketComplainantName,
-            docketNameOfAdvocate: docketNameOfAdvocate || docketComplainantName,
+            docketCounselFor: docketCounselFor,
+            docketNameOfFiling: docketNameOfAdvocate || docketComplainantName,
             docketDateOfSubmission: new Date(
               courtCase.registrationDate
             ).toLocaleDateString("en-IN"),

@@ -49,13 +49,16 @@ async function processComplaintSection(
         )
       )?.additionalDetails?.advocateName;
 
+      const docketCounselFor = docketNameOfAdvocate
+        ? `COUNSEL FOR THE COMPLAINANT - ${docketComplainantName}`
+        : "";
+
       complaintNewFileStoreId = await applyDocketToDocument(
         complaintFileStoreId,
         {
           docketApplicationType: section.section.toUpperCase(),
-          docketCounselFor: "COMPLAINANT",
-          docketNameOfFiling: docketComplainantName,
-          docketNameOfAdvocate: docketNameOfAdvocate || docketComplainantName,
+          docketCounselFor: docketCounselFor,
+          docketNameOfFiling: docketNameOfAdvocate || docketComplainantName,
           docketDateOfSubmission: new Date(
             courtCase.registrationDate
           ).toLocaleDateString("en-IN"),
