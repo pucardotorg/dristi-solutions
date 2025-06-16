@@ -9,9 +9,7 @@ const asyncMiddleware = require("../utils/asyncMiddleware");
 const buildCasePdf = require("../caseBundle/buildCasePdf");
 const processCaseBundle = require("../caseBundle/generateIndex");
 const { logger } = require("../logger");
-
-const A4_WIDTH = 595.28; // A4 width in points
-const A4_HEIGHT = 841.89; // A4 height in points
+const { A4_WIDTH, A4_HEIGHT } = require("../caseBundle/utils/size");
 
 router.post(
   "/case-bundle",
@@ -68,7 +66,7 @@ router.post(
     const { tenantId, caseId, index, state, requestInfo, isRebuild } = req.body;
 
     // Validate required inputs
-    if (!tenantId || !caseId || !index || !state || !requestInfo) {
+    if (!tenantId || !caseId || !index || !requestInfo) {
       return res.status(400).json({
         message:
           "Missing required fields: 'tenantId', 'caseId', 'index', 'state', or 'requestInfo'.",

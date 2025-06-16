@@ -51,6 +51,7 @@ import AddParty from "../../../../../hearings/src/pages/employee/AddParty";
 import CaseOverviewJudge from "./CaseOverviewJudge";
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 import { hearingService } from "../../../../../hearings/src/hooks/services";
+import CaseBundleView from "./CaseBundleView";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -1681,7 +1682,7 @@ const AdmittedCaseJudge = () => {
               statuteSection: {
                 tenantId,
               },
-              orderTitle: orderType,
+              orderTitle: t(orderType),
               orderCategory: "INTERMEDIATE",
               orderType,
               status: "",
@@ -3193,7 +3194,7 @@ const AdmittedCaseJudge = () => {
           openSubmissionsViewModal={openSubmissionViewModal}
         />
       )}
-      {config?.label !== "Overview" && config?.label !== "Complaint" && config?.label !== "History" && (
+      {config?.label !== "Overview" && config?.label !== "caseFileOverview" && config?.label !== "Complaint" && config?.label !== "History" && (
         <div style={{ width: "100%", background: "white", padding: "10px", display: "flex", justifyContent: "space-between", marginTop: "10px" }}>
           <div style={{ fontWeight: 700, fontSize: "24px", lineHeight: "28.8px" }}>{t(`All_${config?.label.toUpperCase()}_TABLE_HEADER`)}</div>
           {/* {(!userRoles.includes("CITIZENS") || userRoles.includes("ADVOCATE_ROLE")) &&
@@ -3254,7 +3255,14 @@ const AdmittedCaseJudge = () => {
           )}
         </div>
       )}
-      <div className={`inbox-search-wrapper orders-tab-inbox-wrapper`}>{inboxComposer}</div>
+      <div
+        className={`inbox-search-wrapper orders-tab-inbox-wrapper`}
+        style={{
+          paddingBottom: tabData?.find((tab) => tab.label === "caseFileOverview")?.active ? "0px" : showActionBar ? "60px" : undefined,
+        }}
+      >
+        {inboxComposer}
+      </div>
       {tabData?.filter((tab) => tab.label === "Overview")?.[0]?.active && (
         <div className="case-overview-wrapper" style={{ ...(viewActionBar ? { marginBottom: "60px" } : {}) }}>
           <CaseOverviewJudge
@@ -3280,6 +3288,16 @@ const AdmittedCaseJudge = () => {
       {tabData?.filter((tab) => tab.label === "Complaint")?.[0]?.active && (
         <div className="view-case-file-wrapper">
           <ViewCaseFile t={t} inViewCase={true} caseDetailsAdmitted={caseDetails} />
+        </div>
+      )}
+      {tabData?.filter((tab) => tab.label === "caseFileOverview")?.[0]?.active && (
+        <div
+          className="view-case-file-new-wrapper"
+          style={{
+            ...(showActionBar && { paddingBottom: "60px" }),
+          }}
+        >
+          <CaseBundleView caseDetails={caseDetails} tenantId={tenantId} filingNumber={filingNumber} />
         </div>
       )}
       {show && (

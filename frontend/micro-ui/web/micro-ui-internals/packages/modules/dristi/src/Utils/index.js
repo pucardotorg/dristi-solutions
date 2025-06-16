@@ -196,6 +196,20 @@ export const documentLabels = {
   COMPLAINANT_PIP_AFFIDAVIT: "COMPLAINANT_PIP_AFFIDAVIT",
 };
 
+export const caseFileLabels = {
+  "case.authorizationproof.complainant": "COMPLAINANT_AUTHORIZATION_PROOF",
+  "case.authorizationproof.accused": "ACCUSED_AUTHORIZATION_PROOF",
+  "case.cheque": "DISHONORED_CHEQUE",
+  "case.cheque.depositslip": "PROOF_OF_DEPOSIT_OF_CHEQUE",
+  "case.cheque.returnmemo": "CHEQUE_RETURN_MEMO",
+  "case.demandnotice": "LEGAL_DEMAND_NOTICE",
+  "case.demandnotice.proof": "PROOF_OF_DISPATCH_OF_LEGAL_DEMAND_NOTICE",
+  "case.demandnotice.serviceproof": "PROOF_OF_ACKNOWLEDGMENT",
+  "case.replynotice": "PROOF_OF_REPLY",
+  "case.liabilityproof": "PROOF_OF_DEBT_LIABILITY",
+  "case.docs": "OTHERS_DOCUMENT",
+};
+
 export const getFileByFileStoreId = async (uri) => {
   const token = localStorage.getItem("token");
   try {

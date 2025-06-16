@@ -961,12 +961,20 @@ const SubmissionsCreate = ({ path }) => {
         ? formdata?.supportingDocuments?.map((supportDocs) => ({
             fileType: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.documentType,
             fileStore: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.fileStore,
-            additionalDetails: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.additionalDetails,
+            additionalDetails: {
+              ...supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.additionalDetails,
+              documentType: supportDocs?.documentType?.code,
+              documentTitle: supportDocs?.documentTitle,
+            },
           })) || []
         : formdata?.submissionDocuments?.submissionDocuments?.map((item) => ({
             fileType: item?.document?.documentType,
             fileStore: item?.document?.fileStore,
-            additionalDetails: item?.document?.additionalDetails,
+            additionalDetails: {
+              ...item?.document?.additionalDetails,
+              documentType: item?.documentType?.code,
+              documentTitle: item?.documentTitle,
+            },
           })) || [];
 
       const documentres = (await Promise.all(documentsList?.map((doc) => onDocumentUpload(doc, doc?.name)))) || [];
@@ -981,7 +989,11 @@ const SubmissionsCreate = ({ path }) => {
           documentType: res?.fileType,
           fileStore: res?.fileStore || res?.file?.files?.[0]?.fileStoreId,
           documentOrder: index,
-          additionalDetails: { name: res?.filename || res?.additionalDetails?.name },
+          additionalDetails: {
+            name: res?.filename || res?.additionalDetails?.name,
+            documentType: res?.additionalDetails?.documentType,
+            documentTitle: res?.additionalDetails?.documentTitle,
+          },
         };
         documents.push(file);
       });
