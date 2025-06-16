@@ -52,6 +52,9 @@ async function processFilingsSection(
         )
       )?.additionalDetails?.advocateName;
 
+      const docketCounselFor = docketNameOfAdvocate
+        ? `COUNSEL FOR THE COMPLAINANT - ${docketComplainantName}`
+        : "";
       const documentPath = `${dynamicSectionNumber}.${validIndex} ${section.Items} in ${dynamicSectionNumber} ${section.section}`;
 
       newFileStoreId = await applyDocketToDocument(
@@ -60,9 +63,8 @@ async function processFilingsSection(
           docketApplicationType: `${section.section.toUpperCase()} - ${
             section.Items
           }`,
-          docketCounselFor: "COMPLAINANT",
-          docketNameOfFiling: docketComplainantName,
-          docketNameOfAdvocate: docketNameOfAdvocate || docketComplainantName,
+          docketCounselFor: docketCounselFor,
+          docketNameOfFiling: docketNameOfAdvocate || docketComplainantName,
           docketDateOfSubmission: new Date(
             courtCase.registrationDate
           ).toLocaleDateString("en-IN"),
