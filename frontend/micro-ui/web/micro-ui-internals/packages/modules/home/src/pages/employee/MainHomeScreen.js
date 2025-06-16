@@ -9,6 +9,7 @@ import { HomeService } from "../../hooks/services";
 import { Loader } from "@egovernments/digit-ui-react-components";
 import { useHistory } from "react-router-dom";
 import { Toast } from "@egovernments/digit-ui-react-components";
+import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -21,16 +22,14 @@ const sectionsParentStyle = {
 const MainHomeScreen = () => {
   const { t } = useTranslation();
   const history = useHistory();
+  const location = useLocation();
+  const homeFilteredData = location?.state?.homeFilteredData;
 
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [activeTab, setActiveTab] = useState("HEARINGS_TAB");
   const [updateCounter, setUpdateCounter] = useState(0);
   const [hearingCount, setHearingCount] = useState(0);
   const [config, setConfig] = useState(structuredClone(pendingTaskConfig));
-  const [registerCount, setRegisterCount] = useState(0);
-  const [reviewCount, setReviewCount] = useState(0);
-  const [applicationCount, setApplicationCount] = useState(0);
-  const [scheduleCount, setScheduleCount] = useState(0);
   const [activeTabTitle, setActiveTabTitle] = useState("HEARINGS_TAB");
   const [pendingTaskCount, setPendingTaskCount] = useState({ REGISTRATION: 0, REVIEW_PROCESS: 0, VIEW_APPLICATION: 0, SCHEDULE_HEARING: 0 });
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
@@ -47,12 +46,14 @@ const MainHomeScreen = () => {
 
   const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
 
-  const [filters, setFilters] = useState({
-    date: todayStr,
-    status: "",
-    purpose: "",
-    caseQuery: "",
-  });
+  const [filters, setFilters] = useState(
+    homeFilteredData || {
+      date: todayStr,
+      status: "",
+      purpose: "",
+      caseQuery: "",
+    }
+  );
   const userType = useMemo(() => {
     if (!userInfo) return "employee";
     return userInfo?.type === "CITIZEN" ? "citizen" : "employee";
