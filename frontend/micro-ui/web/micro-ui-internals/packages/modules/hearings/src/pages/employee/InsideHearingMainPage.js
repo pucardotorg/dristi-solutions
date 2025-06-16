@@ -313,14 +313,11 @@ const InsideHearingMainPage = () => {
       })) || [];
 
     const advocateOptions =
-      hearingsData?.HearingList?.flatMap((hearingItem) =>
-        hearingItem?.attendees
-          ?.filter((attendee) => attendee?.type === "Advocate")
-          .map((attendee, index) => ({
-            label: attendee?.name,
-            value: attendee?.individualId,
-          }))
-      ) || [];
+      caseDetails?.representatives?.map((rep) => ({
+        label: rep?.additionalDetails?.advocateName,
+        value: rep?.advocateId,
+      })) || [];
+
     const partiesOption =
       allParties
         ?.filter((party) => party?.isJoined === true)
@@ -451,16 +448,34 @@ const InsideHearingMainPage = () => {
   const handleDropdownChange = (selectedWitnessOption) => {
     const selectedUUID = selectedWitnessOption.value;
 
-    // Try to find in witnesses first
     let selectedData = additionalDetails?.witnessDetails?.formdata?.find((w) => w.data.uuid === selectedUUID)?.data;
 
     if (!selectedData) {
-      // If not in witness list, search in attendees
-      const attendee = hearingsData?.HearingList?.flatMap((h) => h.attendees)?.find((a) => a.individualId === selectedUUID);
+      const attendee = hearing?.attendees?.find((a) => a.individualId === selectedUUID);
       if (attendee) {
         selectedData = {
           ...attendee,
-          uuid: attendee.individualId, // Use individualId as uuid for consistency
+          uuid: attendee.individualId,
+        };
+      }
+    }
+
+    if (!selectedData) {
+      const party = allParties?.find((p) => p.partyUuid === selectedUUID);
+      if (party) {
+        selectedData = {
+          ...party,
+          uuid: party.partyUuid,
+        };
+      }
+    }
+
+    if (!selectedData) {
+      const advocate = caseDetails?.representatives?.find((adv) => adv?.advocateId === selectedUUID);
+      if (advocate) {
+        selectedData = {
+          ...advocate,
+          uuid: advocate?.advocateId,
         };
       }
     }
@@ -602,7 +617,7 @@ const InsideHearingMainPage = () => {
                   IsSelectedWitness
                     ? {
                         label: getFormattedName(
-                          selectedWitness?.firstName || selectedWitness?.name,
+                          selectedWitness?.firstName || selectedWitness?.name || selectedWitness?.additionalDetails?.advocateName,
                           selectedWitness?.middleName,
                           selectedWitness?.lastName,
                           selectedWitness?.witnessDesignation
