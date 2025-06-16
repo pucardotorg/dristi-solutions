@@ -116,46 +116,47 @@ async function processMandatorySubmissions(
                       );
 
                     let docketNameOfFiling;
-                    let docketNameOfAdvocate;
                     let docketCounselFor;
 
                     if (sourceLitigant) {
                       docketNameOfFiling =
                         sourceLitigant.additionalDetails?.fullName || "";
-                      docketNameOfAdvocate = "";
-                      docketCounselFor = sourceLitigant.partyType.includes(
-                        "complainant"
-                      )
-                        ? "COMPLAINANT"
-                        : "ACCUSED";
+                      docketCounselFor = "";
                     } else if (sourceRepresentative) {
-                      docketNameOfAdvocate =
-                        sourceRepresentative.additionalDetails?.advocateName ||
-                        "";
-                      docketNameOfFiling =
-                        sourceRepresentative.additionalDetails?.advocateName ||
-                        "";
-                      docketCounselFor =
+                      const docketNameOfComplainants =
+                        sourceRepresentative.representing
+                          ?.map((lit) => lit.additionalDetails.fullName)
+                          .filter(Boolean)
+                          .join(", ");
+                      const partyType =
                         sourceRepresentative.representing[0].partyType.includes(
                           "complainant"
                         )
                           ? "COMPLAINANT"
                           : "ACCUSED";
+                      docketNameOfFiling =
+                        sourceRepresentative.additionalDetails?.advocateName ||
+                        "";
+                      docketCounselFor = `COUNSEL FOR THE ${partyType} - ${docketNameOfComplainants}`;
                     } else {
                       const complainant = courtCase.litigants?.find(
                         (litigant) =>
                           litigant.partyType.includes("complainant.primary")
                       );
-                      docketNameOfFiling =
+                      const docketNameOfComplainants =
                         complainant.additionalDetails.fullName;
-                      docketNameOfAdvocate =
+                      docketNameOfFiling =
                         courtCase.representatives?.find((adv) =>
                           adv.representing?.find(
                             (party) =>
                               party.individualId === complainant.individualId
                           )
                         )?.additionalDetails?.advocateName ||
-                        docketNameOfFiling;
+                        docketNameOfComplainants;
+                      docketCounselFor =
+                        docketNameOfFiling === docketNameOfComplainants
+                          ? ""
+                          : `COUNSEL FOR THE COMPLAINANT - ${docketNameOfComplainants}`;
                     }
 
                     const documentPath = `${dynamicSectionNumber}.${
@@ -171,7 +172,6 @@ async function processMandatorySubmissions(
                           docketApplicationType: section.section.toUpperCase(),
                           docketCounselFor: docketCounselFor,
                           docketNameOfFiling: docketNameOfFiling,
-                          docketNameOfAdvocate: docketNameOfAdvocate,
                           docketDateOfSubmission: new Date(
                             application.createdDate
                           ).toLocaleDateString("en-IN"),

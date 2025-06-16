@@ -56,6 +56,10 @@ async function processAffidavitSection(
                   )
               )?.additionalDetails?.advocateName;
 
+              const docketCounselFor = docketNameOfAdvocate
+                ? `COUNSEL FOR THE COMPLAINANT - ${docketComplainantName}`
+                : "";
+
               const isComplaintAffidavit =
                 matchingDocs.length === 1 ? true : false;
 
@@ -74,9 +78,8 @@ async function processAffidavitSection(
                     docketApplicationType: `${section.section.toUpperCase()} - ${
                       section.Items
                     }`,
-                    docketCounselFor: "COMPLAINANT",
-                    docketNameOfFiling: docketComplainantName,
-                    docketNameOfAdvocate:
+                    docketCounselFor: docketCounselFor,
+                    docketNameOfFiling:
                       docketNameOfAdvocate || docketComplainantName,
                     docketDateOfSubmission: new Date(
                       courtCase.registrationDate
