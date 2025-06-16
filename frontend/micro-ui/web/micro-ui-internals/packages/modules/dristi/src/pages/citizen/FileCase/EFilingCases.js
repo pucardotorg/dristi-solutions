@@ -736,6 +736,16 @@ function EFilingCases({ path }) {
         );
       }
 
+      if (caseDetails?.status === "DRAFT_IN_PROGRESS" && selected === "complainantDetails") {
+        if ("transferredPOA" in formdata?.[index].data && !formdata?.[index]?.data?.transferredPOA) {
+          setFormDataValue.current?.("transferredPOA", {
+            code: "NO",
+            name: "NO",
+            showPoaDetails: false,
+          });
+        }
+      }
+
       if (caseDetails?.status === "DRAFT_IN_PROGRESS" && selected === "delayApplications") {
         if (isDelayCondonation) {
           const data = {
