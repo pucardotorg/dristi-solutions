@@ -44,14 +44,14 @@ import NoticeAccordion from "../../../components/NoticeAccordion";
 import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
 import Breadcrumb from "../../../components/BreadCrumb";
 import Button from "../../../components/Button";
-import MonthlyCalendar from "../../../../../hearings/src/pages/employee/CalendarView";
+import MonthlyCalendar from "@egovernments/digit-ui-module-hearings/src/pages/employee/CalendarView";
 import OrderDrawer from "./OrderDrawer";
 import WitnessDrawer from "./WitnessDrawer";
-import AddParty from "../../../../../hearings/src/pages/employee/AddParty";
-import CaseOverviewJudge from "./CaseOverviewJudge";
+import AddParty from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddParty";
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
-import { hearingService } from "../../../../../hearings/src/hooks/services";
+import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import CaseBundleView from "./CaseBundleView";
+import CaseOverviewV2 from "./CaseOverviewV2";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -156,7 +156,7 @@ const formatDate = (date) => {
   return "";
 };
 
-const AdmittedCaseJudge = () => {
+const AdmittedCaseV2 = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const { pathname, search, hash } = location;
@@ -3262,7 +3262,7 @@ const AdmittedCaseJudge = () => {
       )}
       {tabData?.filter((tab) => tab.label === "Overview")?.[0]?.active && (
         <div className="case-overview-wrapper" style={{ ...(viewActionBar ? { marginBottom: "60px" } : {}) }}>
-          <CaseOverviewJudge
+          <CaseOverviewV2
             caseData={caseRelatedData}
             filingNumber={filingNumber}
             currentHearingId={currentHearingId}
@@ -3635,4 +3635,4 @@ const AdmittedCaseJudge = () => {
   );
 };
 
-export default AdmittedCaseJudge;
+export default AdmittedCaseV2;

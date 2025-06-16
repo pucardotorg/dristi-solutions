@@ -3,12 +3,12 @@ import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch } from "react-router-dom";
 import useGetOrders from "../../../hooks/dristi/useGetOrders";
-import TasksComponent from "../../../../../home/src/components/TaskComponent";
+import TasksComponent from "@egovernments/digit-ui-module-home/src/components/TaskComponent";
 import { PreviousHearingIcon } from "../../../icons/svgIndex";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import ShowAllTranscriptModal from "../../../components/ShowAllTranscriptModal";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
-const CaseOverviewJudge = ({ caseData, filingNumber, currentHearingId, caseDetails, showNoticeProcessModal = true }) => {
+const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails, showNoticeProcessModal = true }) => {
   const { t } = useTranslation();
   //   const filingNumber = caseData.filingNumber;
   const history = useHistory();
@@ -140,4 +140,4 @@ const CaseOverviewJudge = ({ caseData, filingNumber, currentHearingId, caseDetai
   );
 };
 
-export default CaseOverviewJudge;
+export default CaseOverviewV2;
