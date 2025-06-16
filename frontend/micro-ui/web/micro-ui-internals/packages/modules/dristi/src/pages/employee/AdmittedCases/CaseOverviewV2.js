@@ -1,40 +1,18 @@
-import { Button, Card, Loader, Modal } from "@egovernments/digit-ui-react-components";
+import { Card, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch } from "react-router-dom";
-import useGetIndividualAdvocate from "../../../hooks/dristi/useGetIndividualAdvocate";
 import useGetOrders from "../../../hooks/dristi/useGetOrders";
-import { OrderWorkflowState } from "../../../Utils/orderWorkflow";
-import PublishedOrderModal from "./PublishedOrderModal";
 import TasksComponent from "@egovernments/digit-ui-module-home/src/components/TaskComponent";
-import NextHearingCard from "./NextHearingCard";
-import EmptyStates from "@egovernments/digit-ui-module-home/src/components/EmptyStates";
-import { PreviousHearingIcon, RecentOrdersIcon } from "../../../icons/svgIndex";
-import { CaseWorkflowState } from "../../../Utils/caseWorkflow";
+import { PreviousHearingIcon } from "../../../icons/svgIndex";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
-import JudgementViewCard from "./JudgementViewCard";
 import ShowAllTranscriptModal from "../../../components/ShowAllTranscriptModal";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
-import WorkflowTimeline from "../../../components/WorkflowTimeline";
-const CaseOverviewV2 = ({
-  caseData,
-  openHearingModule,
-  handleDownload,
-  handleSubmitDocument,
-  handleExtensionRequest,
-  extensionApplications,
-  caseStatus,
-  productionOfDocumentApplications,
-  submitBailDocumentsApplications,
-  filingNumber,
-  currentHearingId,
-  caseDetails,
-}) => {
+const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails, showNoticeProcessModal = true }) => {
   const { t } = useTranslation();
   //   const filingNumber = caseData.filingNumber;
   const history = useHistory();
   const cnrNumber = caseData.cnrNumber;
-  const caseId = caseData.caseId;
   const { path } = useRouteMatch();
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [showReviewModal, setShowReviewModal] = useState(false);
@@ -45,11 +23,6 @@ const CaseOverviewV2 = ({
   const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const userRoles = useMemo(() => userInfo?.roles?.map((role) => role.code), [userInfo]);
-  const advocateIds = caseData?.case?.representatives?.map((representative) => {
-    return {
-      id: representative?.advocateId,
-    };
-  });
 
   const NoticeProcessModal = useMemo(
     () => Digit.ComponentRegistryService.getComponent("NoticeProcessModal") || <React.Fragment></React.Fragment>,
@@ -61,20 +34,6 @@ const CaseOverviewV2 = ({
     () => (userInfo?.roles?.some((role) => role?.code === "ADVOCATE_ROLE") ? true : allAdvocates?.includes(userInfo?.uuid)),
     [allAdvocates, userInfo?.roles, userInfo?.uuid]
   );
-
-  const showMakeSubmission = useMemo(() => {
-    return (
-      isAdvocatePresent &&
-      userRoles?.includes("SUBMISSION_CREATOR") &&
-      [
-        CaseWorkflowState.PENDING_ADMISSION_HEARING,
-        CaseWorkflowState.PENDING_NOTICE,
-        CaseWorkflowState.PENDING_RESPONSE,
-        CaseWorkflowState.PENDING_ADMISSION,
-        CaseWorkflowState.CASE_ADMITTED,
-      ].includes(caseStatus)
-    );
-  }, [userRoles, caseStatus, isAdvocatePresent]);
 
   // const { data: advocateDetails, isLoading: isAdvocatesLoading } = useGetIndividualAdvocate(
   //   {
@@ -114,84 +73,49 @@ const CaseOverviewV2 = ({
     [HearingWorkflowState?.COMPLETED, HearingWorkflowState?.ABANDONED].includes(hearing?.status)
   ).sort((hearing1, hearing2) => hearing2.endTime - hearing1.endTime);
 
-  const navigateOrdersGenerate = () => {
-    history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}`);
-  };
-
-  const orderList = useMemo(
-    () =>
-      userRoles.includes("CITIZEN")
-        ? ordersRes?.list.filter((order) => order.status === "PUBLISHED")
-        : ordersRes?.list?.filter((order) => order.status !== "DRAFT_IN_PROGRESS"),
-    [userRoles, ordersRes?.list]
-  );
-
-  const handleMakeSubmission = () => {
-    history.push(`/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
-  };
-
   if (isHearingsLoading || isOrdersLoading) {
     return <Loader />;
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-      <div style={{ display: "flex", flexDirection: "row", gap: "1rem", justifyContent: "space-between" }}>
-        <div className="hearing-summary-container" style={{ width: "72%" }}>
-          {hearingRes?.HearingList?.find(
-            (hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status) && Boolean(hearing?.hearingSummary)
-          ) && (
-            <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none" }}>
-              <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
-                <div
-                  style={{
-                    fontWeight: 700,
-                    fontSize: "16px",
-                    lineHeight: "18.75px",
-                    color: "#231F20",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <PreviousHearingIcon />
-                  <span style={{ lineHeight: "normal", marginLeft: "12px" }}>{t("PREVIOUS_HEARING_SUMMARY")}</span>
-                </div>
-                <div
-                  style={{ color: "#007E7E", cursor: "pointer", fontWeight: 700, fontSize: "16px", lineHeight: "18.75px" }}
-                  onClick={() => setShowAllTranscript(true)}
-                >
-                  {t("VIEW_ALL_SUMMARIES")}
-                </div>
-              </div>
-              <hr style={{ borderTop: "1px solid #E8E8E8", margin: "10px -15px 0px -15px" }} />
+      <div className="hearing-summary-container">
+        {hearingRes?.HearingList?.find((hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status) && Boolean(hearing?.hearingSummary)) && (
+          <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none", maxWidth: "100%" }}>
+            <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
               <div
                 style={{
-                  padding: "10px",
-                  color: "#505A5F",
-                  fontWeight: 400,
+                  fontWeight: 700,
                   fontSize: "16px",
-                  lineHeight: "24px",
+                  lineHeight: "18.75px",
+                  color: "#231F20",
+                  display: "flex",
+                  alignItems: "center",
                 }}
               >
-                {previousHearing?.[0]?.hearingSummary ? (
-                  <div>{previousHearing?.[0]?.hearingSummary}</div>
-                ) : (
-                  "No Transcript available for this hearing"
-                )}
+                <PreviousHearingIcon />
+                <span style={{ lineHeight: "normal", marginLeft: "12px" }}>{t("PREVIOUS_HEARING_SUMMARY")}</span>
               </div>
-            </Card>
-          )}
-        </div>
-        <div className="case-timeline-container" style={{ width: "27%" }}>
-          <WorkflowTimeline
-            t={t}
-            applicationNo={caseDetails?.filingNumber}
-            tenantId={tenantId}
-            businessService="case-default"
-            onViewCasePage={true}
-            setShowAllStagesModal={setShowAllStagesModal}
-            modalView={false}
-          />
-        </div>
+              <div
+                style={{ color: "#007E7E", cursor: "pointer", fontWeight: 700, fontSize: "16px", lineHeight: "18.75px" }}
+                onClick={() => setShowAllTranscript(true)}
+              >
+                {t("VIEW_ALL_SUMMARIES")}
+              </div>
+            </div>
+            <hr style={{ borderTop: "1px solid #E8E8E8", margin: "10px -15px 0px -15px" }} />
+            <div
+              style={{
+                padding: "10px",
+                color: "#505A5F",
+                fontWeight: 400,
+                fontSize: "16px",
+                lineHeight: "24px",
+              }}
+            >
+              {previousHearing?.[0]?.hearingSummary ? <div>{previousHearing?.[0]?.hearingSummary}</div> : t("CS_CASE_NO_TRANSCRIPT_FOR_HEARING")}
+            </div>
+          </Card>
+        )}
       </div>
       <div className="pending-actions-container">
         <TasksComponent
@@ -205,11 +129,13 @@ const CaseOverviewV2 = ({
           tableView={true}
         />
       </div>
-      <div className="process-summary-container">
-        <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none" }}>
-          {<NoticeProcessModal showModal={false} filingNumber={filingNumber} currentHearingId={currentHearingId} caseDetails={caseDetails} />}
-        </Card>
-      </div>
+      {showNoticeProcessModal && (
+        <div className="process-summary-container">
+          <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none" }}>
+            {<NoticeProcessModal showModal={false} filingNumber={filingNumber} currentHearingId={currentHearingId} caseDetails={caseDetails} />}
+          </Card>
+        </div>
+      )}
       {showAllTranscript && <ShowAllTranscriptModal setShowAllTranscript={setShowAllTranscript} hearingList={previousHearing} judgeView={true} />}
       {showAllStagesModal && (
         <Modal popupStyles={{}} hideSubmit={true} popmoduleClassName={"workflow-timeline-modal"}>
