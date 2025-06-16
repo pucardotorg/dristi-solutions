@@ -242,6 +242,8 @@ const AdmittedCaseV2 = () => {
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const historyCaseData = location?.state?.caseData;
   const historyOrderData = location?.state?.orderData;
+  const homeFilterData = location?.state?.homeFilteredData;
+
   const openOrder = location?.state?.openOrder;
   const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
   const courtId = localStorage.getItem("courtId");
@@ -2820,6 +2822,7 @@ const AdmittedCaseV2 = () => {
         content: t("ES_COMMON_HOME"),
         show: true,
         isLast: false,
+        homeFilteredData: homeFilterData,
       },
       {
         path: `/${window?.contextPath}/employee/home/home-pending-task`,

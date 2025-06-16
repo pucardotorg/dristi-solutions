@@ -37,7 +37,7 @@ const TopBar = ({
       if (usersResponse && usersResponse.user && usersResponse.user.length) {
         const userDetails = usersResponse.user[0];
         const thumbs = userDetails?.photo?.split(",");
-        setProfilePic(thumbs?.at(0) || null); 
+        setProfilePic(thumbs?.at(0) || null);
       }
     }
   }, [profilePic !== null, userDetails?.info?.uuid]);
@@ -45,7 +45,7 @@ const TopBar = ({
   const CitizenHomePageTenantId = Digit.ULBService.getCitizenCurrentTenant(true);
 
   let history = useHistory();
-  const { pathname } = useLocation();
+  const { pathname, state } = useLocation();
 
   const conditionsToDisableNotificationCountTrigger = () => {
     if (Digit.UserService?.getUser()?.info?.type === "EMPLOYEE") return false;

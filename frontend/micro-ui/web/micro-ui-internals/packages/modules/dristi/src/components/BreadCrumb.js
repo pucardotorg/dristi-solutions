@@ -25,7 +25,9 @@ const Breadcrumb = (props) => {
             {isLast || !crumb?.path ? (
               <span style={props?.spanStyle ? { ...props?.spanStyle } : {}}>{crumb.content}</span>
             ) : (
-              <Link to={{ pathname: crumb.path, state: { count: crumb?.count }, search: crumb?.query }}>{crumb.content}</Link>
+              <Link to={{ pathname: crumb.path, state: { count: crumb?.count, homeFilteredData: crumb?.homeFilteredData }, search: crumb?.query }}>
+                {crumb.content}
+              </Link>
             )}
           </li>
         );
