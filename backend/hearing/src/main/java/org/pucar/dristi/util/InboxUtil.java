@@ -41,7 +41,7 @@ public class InboxUtil {
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         StringBuilder uri = new StringBuilder(configuration.getInboxHost()).append(configuration.getIndexSearchEndPoint());
         Object response = serviceRequestRepository.fetchResult(uri, request);
-        InboxResponse openHearingSearchResponse = null;
+        InboxResponse openHearingSearchResponse ;
         List<OpenHearing> openHearingList = new ArrayList<>();
         try {
             JsonNode jsonNode = objectMapper.valueToTree(response);
@@ -50,7 +50,9 @@ public class InboxUtil {
 
             for (Inbox inbox : items) {
                 OpenHearing openHearing = new OpenHearing();
-                mapValuesToOpenHearing(openHearing, inbox.getBusinessObject());
+                Map<String, Object> businessObject = inbox.getBusinessObject();
+                Map hearingDetails = (Map) businessObject.get("hearingDetails");
+                mapValuesToOpenHearing(openHearing,hearingDetails );
                 openHearingList.add(openHearing);
             }
 
