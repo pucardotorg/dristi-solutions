@@ -100,6 +100,8 @@ jobs:
             echo "WORKFLOW_FILE=solutions-dev.yaml" >> $GITHUB_ENV
           elif [ "${{ github.ref }}" == "refs/heads/uat-backend" ]; then
             echo "WORKFLOW_FILE=solutions-uat.yaml" >> $GITHUB_ENV
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "WORKFLOW_FILE=solutions-uat.yaml" >> $GITHUB_ENV
           elif [ "${{ github.ref }}" == "refs/heads/release-0.5" ]; then
             echo "WORKFLOW_FILE=solutions-dpg-dev.yaml" >> $GITHUB_ENV
           fi
