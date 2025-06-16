@@ -2020,7 +2020,7 @@ export const UICustomizations = {
           ) : (
             <Link
               style={{ color: "black", textDecoration: "underline" }}
-              to={`/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview`}
+              to={`/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview&fromHome=true`}
             >
               {value ? value : "-"}
             </Link>
