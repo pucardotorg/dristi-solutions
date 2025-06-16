@@ -76,6 +76,14 @@ async function orderWarrant(
       "";
     const additionalComments = order.comments || "";
 
+    let isBailable = "";
+
+    if (bailinfo?.isBailable?.code === true) {
+      isBailable = "bailable";
+    } else if (bailinfo?.isBailable?.code === false) {
+      isBailable = "nonbailable";
+    }
+
     // Handle QR code if enabled
     let base64Url = "";
     if (qrCode === "true") {
@@ -117,6 +125,7 @@ async function orderWarrant(
           orderName: order.orderNumber,
           date: formattedToday,
           reasonForWarrant: reasonForWarrant,
+          isBailable: isBailable,
           isTemplateType: bailinfo?.isBailable?.code,
           bailAmount: formatToIndianCurrency(bailinfo?.bailableAmount) || "",
           noOfSurety: bailinfo?.noOfSureties?.name || "",
