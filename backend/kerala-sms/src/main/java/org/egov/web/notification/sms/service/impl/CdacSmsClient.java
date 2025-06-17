@@ -4,6 +4,8 @@ package org.egov.web.notification.sms.service.impl;
  *
  */
 
+import io.netty.handler.ssl.SslContext;
+import io.netty.handler.ssl.SslContextBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.egov.web.notification.sms.config.SMSProperties;
@@ -18,12 +20,9 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
-import reactor.netty.tcp.SslProvider;
 
-import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.security.KeyManagementException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.StringTokenizer;
@@ -144,12 +143,12 @@ public class CdacSmsClient {
 
         try
         {
-            SSLContext context = SSLContext.getInstance("TLSv1.2");
-            context.init(null, null, null);
-
+            SslContext nettySslContext = SslContextBuilder.forClient()
+                    .protocols("TLSv1.2")
+                    .build();
 // Create Reactor Netty HttpClient with custom SSL context
             HttpClient httpClient = HttpClient.create()
-                    .secure(sslSpec -> sslSpec.sslContext((SslProvider.ProtocolSslContextSpec) context));
+                    .secure(sslSpec -> sslSpec.sslContext( nettySslContext));
 
 // Initialize WebClient with this HttpClient
             webClient = createWebClient(httpClient);
@@ -191,7 +190,7 @@ public class CdacSmsClient {
                 log.error(e.getMessage(), e);
             }
         }
-        catch (NoSuchAlgorithmException | KeyManagementException |IOException e)
+        catch (NoSuchAlgorithmException | IOException e)
         {
             // TODO Auto-generated catch block
             e.printStackTrace();
