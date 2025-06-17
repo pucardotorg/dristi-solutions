@@ -227,8 +227,10 @@ const HomeHearingsTab = ({
                       if (isJudge || isTypist) {
                         window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
                       } else {
-                        setLoader(false);
-                        if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                        setTimeout(() => {
+                          setLoader(false);
+                          if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                        }, 100);
                       }
                     });
                   } else {
@@ -252,8 +254,10 @@ const HomeHearingsTab = ({
                 { homeFilteredData: filters }
               );
             } else {
-              setLoader(false);
-              fetchInbox(filters, setHearingCount);
+              setTimeout(() => {
+                setLoader(false);
+                fetchInbox(filters, setHearingCount);
+              }, 100);
             }
           }
         }
@@ -297,8 +301,10 @@ const HomeHearingsTab = ({
                 if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
                   if (response?.HearingList[0].status === "SCHEDULED" || response?.HearingList[0].status === "PASSED_OVER") {
                     hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
-                      setLoader(false);
-                      if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                      setTimeout(() => {
+                        setLoader(false);
+                        if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                      }, 100);
                     });
                   } else {
                     setLoader(false);
@@ -495,8 +501,10 @@ const HomeHearingsTab = ({
                             { applicationNumber: "", cnrNumber: "" }
                           )
                           .then((res) => {
-                            setLoader(false);
-                            if (res?.hearing?.status === "PASSED_OVER") fetchInbox(filters, setHearingCount);
+                            setTimeout(() => {
+                              setLoader(false);
+                              if (res?.hearing?.status === "PASSED_OVER") fetchInbox(filters, setHearingCount);
+                            }, 100);
                           });
                       } else {
                         setLoader(false);
@@ -1105,6 +1113,7 @@ const HomeHearingsTab = ({
             <CloseBtn
               onClick={() => {
                 setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+                setPassOver(false);
               }}
             />
           }
@@ -1154,6 +1163,8 @@ const HomeHearingsTab = ({
             } catch (e) {
               setLoader(false);
               showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
+            } finally {
+              setPassOver(false);
             }
           }}
           actionCustomLabelSubmit={async () => {
@@ -1183,9 +1194,11 @@ const HomeHearingsTab = ({
                           { applicationNumber: "", cnrNumber: "" }
                         )
                         .then((res) => {
-                          setLoader(false);
-                          setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
-                          if (res?.hearing?.status === "PASSED_OVER" || res?.hearing?.status === "COMPLETED") fetchInbox(filters, setHearingCount);
+                          setTimeout(() => {
+                            setLoader(false);
+                            setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+                            if (res?.hearing?.status === "PASSED_OVER" || res?.hearing?.status === "COMPLETED") fetchInbox(filters, setHearingCount);
+                          }, 100);
                         });
                     } else {
                       setLoader(false);
@@ -1202,10 +1215,13 @@ const HomeHearingsTab = ({
               setLoader(false);
               showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
               setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+            } finally {
+              setPassOver(false);
             }
           }}
           actionCancelOnSubmit={() => {
             setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+            setPassOver(false);
           }}
           actionCancelLabel={t("CS_COMMON_CANCEL")}
           actionCustomLabel={t(passOver ? "CS_CASE_PASS_OVER_HEARING" : "CS_CASE_END_HEARING")}
