@@ -212,7 +212,7 @@ const CaseOverviewV2 = ({
       </div>
       {showAllTranscript && <ShowAllTranscriptModal setShowAllTranscript={setShowAllTranscript} hearingList={previousHearing} judgeView={true} />}
       {showAllStagesModal && (
-        <Modal popupStyles={{}} hideSubmit={true}>
+        <Modal popupStyles={{}} hideSubmit={true} popmoduleClassName={"workflow-timeline-modal"}>
           <WorkflowTimeline
             t={t}
             applicationNo={caseDetails?.filingNumber}
