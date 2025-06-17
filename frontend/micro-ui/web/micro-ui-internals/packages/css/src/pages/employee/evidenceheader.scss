@@ -183,6 +183,24 @@
   }
   .case-overview-wrapper {
     padding: 24px 24px 24px 40px;
+    .case-timeline-container {
+      .checkpoint-connect-wrap {
+        height: 70px;
+        padding-bottom: 0px !important;
+        .checkpoint-done {
+          h2 {
+            width: 48px !important;
+          }
+        }
+      }
+      .workflow-timeline-checkpoint {
+        height: 70px;
+
+      }
+      .checkpoint-connect {
+        height: 70px;
+      }
+    }
   }
   .view-case-file-wrapper {
     .case-and-admission {
