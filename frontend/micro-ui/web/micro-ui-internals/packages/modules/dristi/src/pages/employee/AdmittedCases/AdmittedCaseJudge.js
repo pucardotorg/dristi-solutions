@@ -2956,7 +2956,7 @@ const AdmittedCaseJudge = () => {
           style={{
             width: "100vw",
             height: "100vh",
-            zIndex: "9999",
+            zIndex: "10001",
             position: "fixed",
             right: "0",
             display: "flex",
