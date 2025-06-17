@@ -86,4 +86,7 @@ public class ServiceConstants {
     public static final String DIRECT = "DIRECT";
     public static final String ICOPS ="ICOPS";
     public static final String COURT ="COURT";
+
+    public static final String SPECIFIC = "SPECIFIC";
+    public static final String GENERIC = "GENERIC";
 }
