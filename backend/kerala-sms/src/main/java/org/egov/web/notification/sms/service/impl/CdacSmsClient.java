@@ -19,6 +19,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
 import java.io.IOException;
@@ -50,32 +51,29 @@ public class CdacSmsClient {
 
     /**
      * Send Single text SMS
-     * @return {@link String} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
+     * @return {@link Mono<String>} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
      * @see
      */
 
-    public String sendSingleSMS(Sms sms, SMSProperties smsProperties)
-    {
-        return sendSMS(sms, smsProperties,false, "singlemsg");
+    public Mono<String> sendSingleSMS(Sms sms, SMSProperties smsProperties) {
+        return sendSMS(sms, smsProperties, false, "singlemsg");
     }
 
     /**
      * Send Bulk text SMS
-     * @return {@link String} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
+     * @return {@link Mono<String>} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
      * @see
      */
-    public String sendBulkSMS(Sms sms, SMSProperties smsProperties)
-    {
+    public Mono<String> sendBulkSMS(Sms sms, SMSProperties smsProperties) {
         return sendSMS(sms, smsProperties, true, "bulkmsg");
     }
 
     /**
      * Send Unicode text SMS
-     * @return {@link String} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
+     * @return {@link Mono<String>} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
      * @see
      */
-    public String sendUnicodeSMS(Sms sms, SMSProperties smsProperties)
-    {
+    public Mono<String> sendUnicodeSMS(Sms sms, SMSProperties smsProperties) {
         String message = sms.getMessage();
         String finalmessage = "";
         for (int i = 0; i < message.length(); i++) {
@@ -95,21 +93,19 @@ public class CdacSmsClient {
      * Use only in case of OTP related message
      * <p>
      * Messages other than OTP will not be delivered to the users
-     * @return {@link String} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
+     * @return {@link Mono<String>} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
      * @see
      */
-    public String sendOtpSMS(Sms sms, SMSProperties smsProperties)
-    {
-        return sendSMS(sms, smsProperties,false, "otpmsg");
+    public Mono<String> sendOtpSMS(Sms sms, SMSProperties smsProperties) {
+        return sendSMS(sms, smsProperties, false, "otpmsg");
     }
 
     /**
      * Send Single Unicode OTP text SMS
-     * @return {@link String} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
+     * @return {@link Mono<String>} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
      * @see
      */
-    public String sendUnicodeOtpSMS(Sms sms, SMSProperties smsProperties)
-    {
+    public Mono<String> sendUnicodeOtpSMS(Sms sms, SMSProperties smsProperties) {
         String message = sms.getMessage();
         String finalmessage = "";
         for (int i = 0; i < message.length(); i++) {
@@ -124,7 +120,7 @@ public class CdacSmsClient {
     }
 
 
-    public String sendSMS(Sms sms, SMSProperties smsProperties, boolean isBulk, String smsServiceType)
+    public Mono<String> sendSMS(Sms sms, SMSProperties smsProperties, boolean isBulk, String smsServiceType)
     {
         String smsProviderURL = smsProperties.getUrl();
         String username = smsProperties.getUsername();
@@ -177,14 +173,15 @@ public class CdacSmsClient {
             log.info("Request Url: {}", smsProviderURL);
 
             try {
-                responseString = webClient.post()
+                // Non-blocking WebClient usage: return a Mono<String>
+                return webClient.post()
                     .uri(smsProviderURL)
                     .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                     .body(BodyInserters.fromFormData(requestBodyMap))
                     .retrieve()
                     .bodyToMono(String.class)
-                    .block();
-                log.info(responseString);
+                    .doOnNext(body -> log.info(body))
+                    .doOnError(e -> log.error(e.getMessage(), e));
             } catch (Exception e) {
                 e.printStackTrace();
                 log.error(e.getMessage(), e);
@@ -197,7 +194,7 @@ public class CdacSmsClient {
             log.error(e.getMessage(), e);
         }
 
-        return responseString;
+        return Mono.just(responseString);
     }
 
     protected String hashGenerator(String userName, String senderId, String content, String secureKey) {
