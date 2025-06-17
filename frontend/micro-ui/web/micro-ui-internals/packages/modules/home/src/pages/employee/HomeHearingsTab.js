@@ -8,9 +8,7 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
 import { ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
-import { Toast } from "@egovernments/digit-ui-react-components";
 import useGetHearingLink from "@egovernments/digit-ui-module-hearings/src/hooks/hearings/useGetHearingLink";
-import { Button } from "@egovernments/digit-ui-components";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -96,6 +94,7 @@ const HomeHearingsTab = ({
   setLoader = () => {},
   setFilters = () => {},
   filters,
+  showToast = () => {},
 }) => {
   const history = useHistory();
 
@@ -114,14 +113,6 @@ const HomeHearingsTab = ({
   const [passOver, setPassOver] = useState(false);
   //   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false, currentHearing: {} });
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
-  const [toastMsg, setToastMsg] = useState(null);
-
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
 
   const handleClear = useCallback(() => {
     const cleared = { date: todayStr, status: "", purpose: "", caseQuery: "" };
@@ -212,8 +203,7 @@ const HomeHearingsTab = ({
         const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentHearing?.hearingNumber);
         if (index === -1 || validData?.length === 1) {
           setLoader(false);
-          showToast("error", t("NO_MORE_HEARINGS"), 5000);
-          // history.push(`/${window?.contextPath}/employee/home/home-screen`);
+          showToast("error", t("NO_MORE_HEARINGS_TO_START"), 5000);
           return;
         } else {
           const row = validData[(index + 1) % validData?.length];
@@ -231,14 +221,9 @@ const HomeHearingsTab = ({
                 { tenantId: row?.businessObject?.hearingDetails?.tenantId }
               )
               .then((response) => {
-                if (
-                  Array.isArray(response?.HearingList) &&
-                  response?.HearingList?.length > 0 &&
-                  (response?.HearingList?.[0]?.status === "SCHEDULED" || response?.HearingList?.[0]?.status === "PASSED_OVER")
-                ) {
+                if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
                   if (response?.HearingList[0]?.status === "SCHEDULED" || response?.HearingList[0]?.status === "PASSED_OVER") {
                     hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
-                      //need to fetch latest and avoid navigation
                       if (isJudge || isTypist) {
                         window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
                       } else {
@@ -247,7 +232,7 @@ const HomeHearingsTab = ({
                     });
                   } else {
                     setLoader(false);
-                    showToast("error", t("ISSUE_IN_NEXT_START_HEARING"), 5000);
+                    showToast("error", t("NEXT_HEARING_ALREADY_STARTED"), 5000);
                   }
                 } else {
                   setLoader(false);
@@ -256,6 +241,7 @@ const HomeHearingsTab = ({
               })
               .catch((error) => {
                 setLoader(false);
+                showToast("error", t("ISSUE_IN_NEXT_START_HEARING"), 5000);
                 console.error("Error starting hearing", error);
               });
           } else {
@@ -307,19 +293,16 @@ const HomeHearingsTab = ({
                 { tenantId: hearingDetails?.tenantId }
               )
               .then((response) => {
-                if (
-                  Array.isArray(response?.HearingList) &&
-                  response?.HearingList?.length > 0 &&
-                  (response?.HearingList[0].status === "SCHEDULED" || response?.HearingList[0].status === "PASSED_OVER")
-                ) {
-                  hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
-                    if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
-
-                    // history.push(
-                    //   `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
-                    // );
+                if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
+                  if (response?.HearingList[0].status === "SCHEDULED" || response?.HearingList[0].status === "PASSED_OVER") {
+                    hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
+                      setLoader(false);
+                      if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                    });
+                  } else {
                     setLoader(false);
-                  });
+                    showToast("error", t("HEARING_STATUS_ALREADY_CHANGED"), 5000);
+                  }
                 } else {
                   setLoader(false);
                   showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
@@ -498,25 +481,26 @@ const HomeHearingsTab = ({
                     { tenantId: hearingDetails?.tenantId }
                   )
                   .then((response) => {
-                    if (
-                      Array.isArray(response?.HearingList) &&
-                      response?.HearingList?.length > 0 &&
-                      (response?.HearingList?.[0]?.status === "SCHEDULED" || response?.HearingList?.[0]?.status === "IN_PROGRESS")
-                    ) {
-                      hearingService
-                        ?.updateHearings(
-                          {
-                            tenantId: Digit.ULBService.getCurrentTenantId(),
-                            hearing: { ...response?.HearingList?.[0], workflow: { action: "PASS_OVER" } },
-                            hearingType: "",
-                            status: "",
-                          },
-                          { applicationNumber: "", cnrNumber: "" }
-                        )
-                        .then((res) => {
-                          setLoader(false);
-                          if (res?.hearing?.status === "PASSED_OVER") fetchInbox(filters, setHearingCount);
-                        });
+                    if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
+                      if (response?.HearingList?.[0]?.status === "SCHEDULED" || response?.HearingList?.[0]?.status === "IN_PROGRESS") {
+                        hearingService
+                          ?.updateHearings(
+                            {
+                              tenantId: Digit.ULBService.getCurrentTenantId(),
+                              hearing: { ...response?.HearingList?.[0], workflow: { action: "PASS_OVER" } },
+                              hearingType: "",
+                              status: "",
+                            },
+                            { applicationNumber: "", cnrNumber: "" }
+                          )
+                          .then((res) => {
+                            setLoader(false);
+                            if (res?.hearing?.status === "PASSED_OVER") fetchInbox(filters, setHearingCount);
+                          });
+                      } else {
+                        setLoader(false);
+                        showToast("error", t("HEARING_STATUS_ALREADY_CHANGED"), 5000);
+                      }
                     } else {
                       setLoader(false);
                       showToast("error", t("ISSUE_IN_PASS_OVER"), 5000);
@@ -1023,6 +1007,9 @@ const HomeHearingsTab = ({
           <button
             className="digit-button-tertiary large"
             type="button"
+            onClick={() => {
+              window.open(hearingLink, "_blank");
+            }}
             style={{
               backgroundColor: "rgb(0, 126, 126)",
               width: "230px",
@@ -1124,84 +1111,98 @@ const HomeHearingsTab = ({
           actionSaveLabel={t(passOver ? "CS_CASE_PASS_OVER_START_NEXT_HEARING" : "CS_CASE_END_START_NEXT_HEARING")}
           hideModalActionbar={!showEndHearingModal.isNextHearingDrafted}
           actionSaveOnSubmit={async () => {
-            setLoader(true);
-            hearingService
-              ?.searchHearings(
-                {
-                  criteria: {
-                    hearingId: showEndHearingModal?.currentHearing?.hearingNumber,
-                    tenantId: showEndHearingModal?.currentHearing?.tenantId,
+            try {
+              setLoader(true);
+              hearingService
+                ?.searchHearings(
+                  {
+                    criteria: {
+                      hearingId: showEndHearingModal?.currentHearing?.hearingNumber,
+                      tenantId: showEndHearingModal?.currentHearing?.tenantId,
+                    },
                   },
-                },
-                { tenantId: showEndHearingModal?.currentHearing?.tenantId }
-              )
-              .then((response) => {
-                if (
-                  Array.isArray(response?.HearingList) &&
-                  response?.HearingList?.length > 0 &&
-                  response?.HearingList?.[0]?.status === "IN_PROGRESS"
-                ) {
-                  hearingService
-                    ?.updateHearings(
-                      {
-                        tenantId: Digit.ULBService.getCurrentTenantId(),
-                        hearing: { ...response?.HearingList?.[0], workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
-                        hearingType: "",
-                        status: "",
-                      },
-                      { applicationNumber: "", cnrNumber: "" }
-                    )
-                    .then(() => {
-                      setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
-                      nextHearing(showEndHearingModal?.currentHearing);
-                    });
-                } else {
-                  setLoader(false);
-                  setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
-
-                  showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
-                }
-              });
-          }}
-          actionCustomLabelSubmit={async () => {
-            setLoader(true);
-            hearingService
-              ?.searchHearings(
-                {
-                  criteria: {
-                    hearingId: showEndHearingModal?.currentHearing?.hearingNumber,
-                    tenantId: showEndHearingModal?.currentHearing?.tenantId,
-                  },
-                },
-                { tenantId: showEndHearingModal?.currentHearing?.tenantId }
-              )
-              .then((response) => {
-                if (
-                  Array.isArray(response?.HearingList) &&
-                  response?.HearingList?.length > 0 &&
-                  response?.HearingList?.[0]?.status === "IN_PROGRESS"
-                ) {
-                  hearingService
-                    ?.updateHearings(
-                      {
-                        tenantId: Digit.ULBService.getCurrentTenantId(),
-                        hearing: { ...response?.HearingList?.[0], workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
-                        hearingType: "",
-                        status: "",
-                      },
-                      { applicationNumber: "", cnrNumber: "" }
-                    )
-                    .then((res) => {
+                  { tenantId: showEndHearingModal?.currentHearing?.tenantId }
+                )
+                .then((response) => {
+                  if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
+                    if (response?.HearingList?.[0]?.status === "IN_PROGRESS") {
+                      hearingService
+                        ?.updateHearings(
+                          {
+                            tenantId: Digit.ULBService.getCurrentTenantId(),
+                            hearing: { ...response?.HearingList?.[0], workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
+                            hearingType: "",
+                            status: "",
+                          },
+                          { applicationNumber: "", cnrNumber: "" }
+                        )
+                        .then(() => {
+                          setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+                          nextHearing(showEndHearingModal?.currentHearing);
+                        });
+                    } else {
                       setLoader(false);
                       setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
-                      if (res?.hearing?.status === "PASSED_OVER" || res?.hearing?.status === "COMPLETED") fetchInbox(filters, setHearingCount);
-                    });
-                } else {
-                  setLoader(false);
-                  showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
-                  setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
-                }
-              });
+                      showToast("error", t("HEARING_STATUS_ALREADY_CHANGED"), 5000);
+                    }
+                  } else {
+                    setLoader(false);
+                    setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+                    showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
+                  }
+                });
+            } catch (e) {
+              setLoader(false);
+              showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
+            }
+          }}
+          actionCustomLabelSubmit={async () => {
+            try {
+              setLoader(true);
+              hearingService
+                ?.searchHearings(
+                  {
+                    criteria: {
+                      hearingId: showEndHearingModal?.currentHearing?.hearingNumber,
+                      tenantId: showEndHearingModal?.currentHearing?.tenantId,
+                    },
+                  },
+                  { tenantId: showEndHearingModal?.currentHearing?.tenantId }
+                )
+                .then((response) => {
+                  if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
+                    if (response?.HearingList?.[0]?.status === "IN_PROGRESS") {
+                      hearingService
+                        ?.updateHearings(
+                          {
+                            tenantId: Digit.ULBService.getCurrentTenantId(),
+                            hearing: { ...response?.HearingList?.[0], workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
+                            hearingType: "",
+                            status: "",
+                          },
+                          { applicationNumber: "", cnrNumber: "" }
+                        )
+                        .then((res) => {
+                          setLoader(false);
+                          setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+                          if (res?.hearing?.status === "PASSED_OVER" || res?.hearing?.status === "COMPLETED") fetchInbox(filters, setHearingCount);
+                        });
+                    } else {
+                      setLoader(false);
+                      showToast("error", t("HEARING_STATUS_ALREADY_CHANGED"), 5000);
+                      setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+                    }
+                  } else {
+                    setLoader(false);
+                    showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
+                    setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+                  }
+                });
+            } catch (e) {
+              setLoader(false);
+              showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
+              setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+            }
           }}
           actionCancelOnSubmit={() => {
             setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
@@ -1227,15 +1228,6 @@ const HomeHearingsTab = ({
             )}
           </div>
         </Modal>
-      )}
-      {toastMsg && (
-        <Toast
-          error={toastMsg.key === "error"}
-          label={t(toastMsg.action)}
-          onClose={() => setToastMsg(null)}
-          isDleteBtn={true}
-          style={{ maxWidth: "500px" }}
-        />
       )}
     </div>
   );
