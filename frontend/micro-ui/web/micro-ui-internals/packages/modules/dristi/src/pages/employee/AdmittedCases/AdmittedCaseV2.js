@@ -2034,12 +2034,12 @@ const AdmittedCaseV2 = () => {
 
   const onTabChange = useCallback(
     (_, i) => {
-      history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${i?.label}`, {
+      history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${i?.label}${fromHome ? `&fromHome=${fromHome}` : ""}`, {
         caseData,
         orderData: ordersData,
       });
     },
-    [caseData, caseId, filingNumber, history, ordersData, path]
+    [caseData, caseId, filingNumber, history, ordersData, path, fromHome]
   );
 
   const hasAnyRelevantOrderType = useMemo(() => {
@@ -2818,16 +2818,16 @@ const AdmittedCaseV2 = () => {
   const employeeCrumbs = useMemo(
     () => [
       {
-        path: `/${window?.contextPath}/employee/home/home-screen`,
+        path: `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/home/home-screen`,
         content: t("ES_COMMON_HOME"),
         show: true,
         isLast: false,
         homeFilteredData: homeFilterData,
       },
       {
-        path: `/${window?.contextPath}/employee/home/home-pending-task`,
+        path: `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/home/home-pending-task`,
         content: t("OPEN_ALL_CASES"),
-        show: fromHome ? false : true,
+        show: fromHome || isCitizen ? false : true,
         isLast: false,
       },
       {
@@ -2837,7 +2837,7 @@ const AdmittedCaseV2 = () => {
         isLast: true,
       },
     ],
-    [path, t, fromHome]
+    [t, homeFilterData, fromHome, isCitizen, path]
   );
 
   const advocateName = useMemo(() => {
