@@ -106,6 +106,7 @@ async function processComplainantEvidence(
             }
 
             const artifactName =
+              evidence?.additionalDetails?.formdata?.documentTitle ||
               evidence?.file?.additionalDetails?.documentTitle ||
               messagesMap[
                 evidence?.file?.additionalDetails?.documentType ||

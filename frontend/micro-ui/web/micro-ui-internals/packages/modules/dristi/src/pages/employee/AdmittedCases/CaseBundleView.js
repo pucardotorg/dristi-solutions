@@ -664,7 +664,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
         return {
           id: `evidence-${index}`,
-          title: evidence?.file?.additionalDetails?.documentTitle || evidence?.file?.additionalDetails?.documentType || evidence?.artifactType,
+          title:
+            evidence?.additionalDetails?.formdata?.documentTitle ||
+            evidence?.file?.additionalDetails?.documentTitle ||
+            evidence?.file?.additionalDetails?.documentType ||
+            evidence?.artifactType,
           fileStoreId: evidenceFileStoreId,
           hasChildren: false,
           isEvidence: evidence?.isEvidence,
@@ -748,7 +752,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       ?.filter((artifact) => artifact?.file?.fileStore)
       ?.map((artifact, idx) => ({
         id: `complaint-evidence-${idx}`,
-        title: artifact?.file?.additionalDetails?.documentTitle || artifact?.file?.additionalDetails?.documentType || artifact?.artifactType,
+        title:
+          artifact?.additionalDetails?.formdata?.documentTitle ||
+          artifact?.file?.additionalDetails?.documentTitle ||
+          artifact?.file?.additionalDetails?.documentType ||
+          artifact?.artifactType,
         fileStoreId: artifact?.file?.fileStore,
         hasChildren: false,
       }));
@@ -760,7 +768,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       ?.filter((evidence) => evidence?.file?.fileStore)
       ?.map((evidence, idx) => ({
         id: `accused-evidence-${idx}`,
-        title: evidence?.file?.additionalDetails?.documentTitle || evidence?.file?.additionalDetails?.documentType || evidence?.artifactType,
+        title:
+          evidence?.additionalDetails?.formdata?.documentTitle ||
+          evidence?.file?.additionalDetails?.documentTitle ||
+          evidence?.file?.additionalDetails?.documentType ||
+          evidence?.artifactType,
         fileStoreId: evidence?.file?.fileStore,
         hasChildren: false,
       }));
@@ -773,7 +785,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           ?.filter((artifact) => artifact?.file?.fileStore)
           ?.map((artifact, idx) => ({
             id: `court-deposition-${idx}`,
-            title: artifact?.file?.additionalDetails?.documentTitle || artifact?.file?.additionalDetails?.documentType || artifact?.artifactType,
+            title:
+              artifact?.additionalDetails?.formdata?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentType ||
+              artifact?.artifactType,
             fileStoreId: artifact?.file?.fileStore,
             hasChildren: false,
           }))
@@ -785,7 +801,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           ?.filter((artifact) => artifact?.file?.fileStore)
           ?.map((artifact, idx) => ({
             id: `court-evidence-${idx}`,
-            title: artifact?.file?.additionalDetails?.documentTitle || artifact?.file?.additionalDetails?.documentType || artifact?.artifactType,
+            title:
+              artifact?.additionalDetails?.formdata?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentType ||
+              artifact?.artifactType,
             fileStoreId: artifact?.file?.fileStore,
             hasChildren: false,
           }))
