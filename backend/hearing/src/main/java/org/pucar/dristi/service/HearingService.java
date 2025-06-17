@@ -191,13 +191,20 @@ public class HearingService {
 
             if (!(openHearings == null || openHearings.isEmpty())) {
                 OpenHearing openHearing = openHearings.get(0);
-                openHearing.setStatus(hearingRequest.getHearing().getStatus());
+                String status = hearingRequest.getHearing().getStatus();
+                openHearing.setStatus(status);
                 enrichStatusOrderInOpenHearing(requestInfo, openHearing);
 
                 try {
                     String request = esUtil.buildPayload(openHearing);
                     String uri = config.getEsHostUrl() + config.getBulkPath();
                     esUtil.manualIndex(uri, request);
+                    // search the open hearing index here for confirmation
+                    InboxRequest confirmationRequest = inboxUtil.getInboxRequestForOpenHearing(tenantId, requestInfo, hearingNumber,status);
+                   List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(confirmationRequest);
+                   if (openHearingList == null || openHearingList.isEmpty()) {
+                       log.error("Update of status is not reflected yet in ES");
+                   }
                 } catch (Exception e) {
                     log.error("Error occurred while updating open hearing status in es");
                     log.error("ERROR_FROM_ES: {}", e.getMessage());

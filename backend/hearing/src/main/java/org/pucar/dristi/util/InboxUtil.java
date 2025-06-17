@@ -158,4 +158,29 @@ public class InboxUtil {
                 .inbox(inboxSearchCriteria)
                 .build();
     }
+
+    public InboxRequest getInboxRequestForOpenHearing(String tenantId, RequestInfo requestInfo, String hearingNumber,String status) {
+
+        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
+
+        moduleSearchCriteria.put("hearingNumber", hearingNumber);
+        moduleSearchCriteria.put("status", status);
+        ProcessInstanceSearchCriteria processSearchCriteria = ProcessInstanceSearchCriteria.builder()
+                .moduleName("Hearing Service")
+                .tenantId(tenantId)
+                .businessService(Collections.singletonList("hearing-default"))
+                .build();
+        InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
+                .processSearchCriteria(processSearchCriteria)
+                .moduleSearchCriteria(moduleSearchCriteria)
+                .tenantId(tenantId)
+                .limit(1)
+                .offset(0)
+                .build();
+
+        return InboxRequest.builder()
+                .RequestInfo(requestInfo)
+                .inbox(inboxSearchCriteria)
+                .build();
+    }
 }
