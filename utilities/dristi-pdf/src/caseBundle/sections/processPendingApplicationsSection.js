@@ -39,6 +39,10 @@ async function processPendingApplicationsSection(
     (s) => s.name === "pendingapplications"
   );
 
+  const pendingApplicationsIndexSection = indexCopy.sections.find(
+    (section) => section.name === "pendingapplications"
+  );
+
   const dynamicSectionNumber = getDynamicSectionNumber(
     indexCopy,
     sectionPosition
@@ -333,11 +337,10 @@ async function processPendingApplicationsSection(
           };
         })
       );
-      const pendingApplicationsIndexSection = indexCopy.sections.find(
-        (section) => section.name === "pendingapplications"
-      );
       pendingApplicationsIndexSection.lineItems =
         pendingApplicationLineItems.filter(Boolean);
+    } else {
+      pendingApplicationsIndexSection.lineItems = [];
     }
   }
 }
