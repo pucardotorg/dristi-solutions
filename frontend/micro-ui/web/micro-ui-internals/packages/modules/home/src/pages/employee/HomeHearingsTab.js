@@ -195,7 +195,7 @@ const HomeHearingsTab = ({
     (currentHearing) => {
       if (tableData?.length === 0) {
         setLoader(false);
-        history.push(`/${window?.contextPath}/employee/home/home-screen`);
+        history.push(`/${window?.contextPath}/employee/home/home-screen`, { homeFilteredData: filters });
       } else {
         const validData = tableData?.filter((item) =>
           ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status)
@@ -248,7 +248,8 @@ const HomeHearingsTab = ({
           } else {
             if (isJudge || isTypist) {
               history.push(
-                `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview&fromHome=true`
+                `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
+                { homeFilteredData: filters }
               );
             } else {
               setLoader(false);
@@ -268,12 +269,13 @@ const HomeHearingsTab = ({
       if (isJudge || isTypist) {
         if (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") {
           history.push(
-            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`
+            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
+            { homeFilteredData: filters }
           );
         } else {
           history.push(
             `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
-            { openOrder: true }
+            { openOrder: true, homeFilteredData: filters }
           );
         }
         return;
@@ -378,7 +380,8 @@ const HomeHearingsTab = ({
                     if (response?.HearingList?.[0]?.status === "SCHEDULED" || response?.HearingList?.[0]?.status === "PASSED_OVER") {
                       hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
                         history.push(
-                          `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`
+                          `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`,
+                          { homeFilteredData: filters }
                         );
                         setLoader(false);
                       });
@@ -528,7 +531,11 @@ const HomeHearingsTab = ({
           <td>{idx + 1}</td>
           <td>
             <Link
-              to={`/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`}
+              to={{
+                pathname: `/${window?.contextPath}/employee/dristi/home/view-case`,
+                search: `?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
+                state: { homeFilteredData: filters },
+              }}
             >
               <span className="case-link">{hearingDetails?.caseTitle || "-"}</span>
             </Link>
@@ -1065,12 +1072,7 @@ const HomeHearingsTab = ({
                 <th style={{ width: "10px" }}>S.No.</th>
                 <th>{t("CS_CASE_NAME")}</th>
                 <th>{t("CS_CASE_NUMBER_HOME")}</th>
-                <th className="advocate-header">
-                  {t("CS_COMMON_ADVOCATES")}{" "}
-                  <span className="info-icon" title="Advocate details">
-                    &#9432;
-                  </span>
-                </th>
+                <th className="advocate-header">{t("CS_COMMON_ADVOCATES")} </th>
                 <th>{t("STATUS")}</th>
                 <th>{t("PURPOSE")}</th>
                 <th>{t("ACTIONS")}</th>
