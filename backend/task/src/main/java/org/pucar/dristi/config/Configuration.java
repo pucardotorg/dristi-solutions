@@ -143,10 +143,10 @@ public class Configuration {
     @Value("${egov.workflow.task.warrant.business.service.name}")
     private String taskWarrantBusinessServiceName;
 
-    @Value("${task.generic.business.service.name}")
+    @Value("${egov.workflow.task.generic.business.service.name}")
     private String taskGenericBusinessServiceName;
 
-    @Value("${task.generic.business.name}")
+    @Value("${egov.workflow.task.generic.business.name}")
     private String taskGenericBusinessName;
 
     @Value("${task.join.case.approved.topic}")
@@ -282,5 +282,5 @@ public class Configuration {
     private String etreasuryDemandCreateEndPoint;
 
     @Value("${etreasury.payment.receipt.endpoint}")
-    private String treasuryPaymentReceiptEndPoint;
+    private String etreasuryPaymentReceiptEndPoint;
 }

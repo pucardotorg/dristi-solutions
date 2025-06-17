@@ -63,7 +63,7 @@ public class EtreasuryUtil {
 
 	public JsonNode getPaymentReceipt(@Valid RequestInfo requestInfo, String id) {
 		StringBuilder uri = new StringBuilder();
-		uri.append(configs.getEtreasuryHost()).append(configs.getTreasuryPaymentReceiptEndPoint())
+		uri.append(configs.getEtreasuryHost()).append(configs.getEtreasuryPaymentReceiptEndPoint())
 				.append("?billId=").append(id);
 
 		log.info("Payment Receipt uri :: {}", uri);

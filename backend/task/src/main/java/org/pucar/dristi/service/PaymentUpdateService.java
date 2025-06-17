@@ -234,8 +234,12 @@ public class PaymentUpdateService {
 
     private Document getPaymentReceipt(RequestInfo requestInfo, Task task) {
         try {
-            Map<String, Object> genericTaskDetails = (Map<String, Object>) mapper.convertValue(task.getTaskDetails(), JsonNode.class).get("genericTaskDetails");
-            String consumerCode = genericTaskDetails.get("consumerCode").toString();
+            JsonNode taskDetails = mapper.convertValue(task.getTaskDetails(), JsonNode.class);
+            JsonNode genericTaskDetails = taskDetails.get("genericTaskDetails");
+            if (genericTaskDetails == null || genericTaskDetails.isNull()) {
+                throw new CustomException("INVALID_TASK_DETAILS", "genericTaskDetails missing");
+            }
+            String consumerCode = genericTaskDetails.get("consumerCode").textValue();
             BillResponse response = getBill(requestInfo, task.getTenantId(), Set.of(consumerCode), config.getTaskGenericBusinessServiceName());
             if (response == null || response.getBill() == null || response.getBill().isEmpty()) {
                 throw new CustomException("BILL_NOT_FOUND", "No bill found for consumer code: " + consumerCode);
