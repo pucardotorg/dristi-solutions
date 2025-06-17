@@ -10,6 +10,18 @@ const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { handleApiCall } = require("../utils/handleApiCall");
 
+function formatToIndianCurrency(number) {
+  if (!number) return "";
+
+  const numStr = number.toString();
+  const lastThree = numStr.slice(-3);
+  const otherNumbers = numStr.slice(0, -3);
+
+  const formattedOther = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",");
+
+  return otherNumbers ? formattedOther + "," + lastThree : lastThree;
+}
+
 async function orderWarrant(
   req,
   res,
@@ -54,12 +66,23 @@ async function orderWarrant(
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
     const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
-    const reasonForWarrant = order.orderDetails.warrantType;
+    const bailinfo = order?.additionalDetails?.formdata?.bailInfo;
+
+    const reasonForWarrant =
+      order?.additionalDetails?.formdata?.warrantSubType?.subType || "";
     const personName =
       order?.orderDetails?.respondentName?.name ||
       order?.orderDetails?.respondentName ||
       "";
     const additionalComments = order.comments || "";
+
+    let isBailable = "";
+
+    if (bailinfo?.isBailable?.code === true) {
+      isBailable = "bailable";
+    } else if (bailinfo?.isBailable?.code === false) {
+      isBailable = "nonbailable";
+    }
 
     // Handle QR code if enabled
     let base64Url = "";
@@ -102,6 +125,10 @@ async function orderWarrant(
           orderName: order.orderNumber,
           date: formattedToday,
           reasonForWarrant: reasonForWarrant,
+          isBailable: isBailable,
+          isTemplateType: bailinfo?.isBailable?.code,
+          bailAmount: formatToIndianCurrency(bailinfo?.bailableAmount) || "",
+          noOfSurety: bailinfo?.noOfSureties?.name || "",
           personName: personName,
           additionalComments: additionalComments,
           judgeSignature: judgeDetails.judgeSignature,
