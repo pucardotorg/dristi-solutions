@@ -4,41 +4,29 @@ package org.egov.web.notification.sms.service.impl;
  *
  */
 
-import java.io.BufferedReader;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.egov.web.notification.sms.config.SMSProperties;
+import org.egov.web.notification.sms.models.Sms;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.tcp.SslProvider;
+
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.security.KeyManagementException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.StringTokenizer;
-
-import javax.net.ssl.SSLContext;
-
-import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
-import org.egov.web.notification.sms.config.SMSProperties;
-import org.egov.web.notification.sms.models.Sms;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
-import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.stereotype.Component;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
 /**
  * @author Mobile Seva < msdp@cdac.in >
@@ -55,9 +43,11 @@ import org.springframework.web.client.RestTemplate;
 @Component
 @Slf4j
 public class CdacSmsClient {
-
+    
     @Autowired
-    private RestTemplate restTemplate;
+    private  WebClient webClient;
+
+
 
     /**
      * Send Single text SMS
@@ -149,21 +139,23 @@ public class CdacSmsClient {
 
         String responseString = "";
         SSLConnectionSocketFactory scf;
-        SSLContext context = null;
+
         String encryptedPassword = "";
 
         try
         {
-            context = SSLContext.getInstance("TLSv1.2"); // Use this line for Java version 7 and above
+            SSLContext context = SSLContext.getInstance("TLSv1.2");
             context.init(null, null, null);
-            scf = new SSLConnectionSocketFactory(context);
 
-            HttpClient httpClient = HttpClients.custom()
-                    .setSSLSocketFactory(scf)
-                    .build();
+// Create Reactor Netty HttpClient with custom SSL context
+            HttpClient httpClient = HttpClient.create()
+                    .secure(sslSpec -> sslSpec.sslContext((SslProvider.ProtocolSslContextSpec) context));
 
-            restTemplate = createRestTemplate(httpClient);
+// Initialize WebClient with this HttpClient
+            webClient = createWebClient(httpClient);
 
+           
+            
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -185,13 +177,21 @@ public class CdacSmsClient {
             log.info("Request Body Map: {}", requestBodyMap);
             log.info("Request Url: {}", smsProviderURL);
 
-            HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(requestBodyMap, httpHeaders);
-            ResponseEntity<String> responseEntity = restTemplate.exchange(smsProviderURL, HttpMethod.POST, requestEntity, String.class);
-
-            log.info(responseEntity.getBody().toString());
-            responseString = responseEntity.getBody().toString();
+            try {
+                responseString = webClient.post()
+                    .uri(smsProviderURL)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(BodyInserters.fromFormData(requestBodyMap))
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+                log.info(responseString);
+            } catch (Exception e) {
+                e.printStackTrace();
+                log.error(e.getMessage(), e);
+            }
         }
-        catch (NoSuchAlgorithmException | KeyManagementException | IOException e)
+        catch (NoSuchAlgorithmException | KeyManagementException |IOException e)
         {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -359,10 +359,11 @@ public class CdacSmsClient {
         }
         return buf.toString();
     }
-
-    public RestTemplate createRestTemplate(HttpClient httpClient) {
-        ClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
-        return new RestTemplate(requestFactory);
-    }
+    public WebClient createWebClient(HttpClient httpClient) {
+        return WebClient.builder()
+                .clientConnector(new ReactorClientHttpConnector(httpClient))
+                .build();
+    }   
+    
 
 }
