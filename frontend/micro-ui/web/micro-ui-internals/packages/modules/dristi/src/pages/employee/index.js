@@ -16,7 +16,7 @@ import Home from "./home";
 import ViewCaseFile from "./scrutiny/ViewCaseFile";
 import ReviewLitigantDetails from "./AdmittedCases/ReviewLitigantDetails";
 import EmployeeProfileEdit from "../../components/EmployeeProfileEdit/EmployeeProfileEdit";
-import AdmittedCaseJudge from "./AdmittedCases/AdmittedCaseJudge";
+import AdmittedCaseV2 from "./AdmittedCases/AdmittedCaseV2";
 
 const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileStoreId }) => {
   const { t } = useTranslation();
@@ -129,7 +129,7 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
           <PrivateRoute
             exact
             path={`${path}/home/view-case`}
-            component={isJudgeView ? (props) => <AdmittedCaseJudge /> : (props) => <AdmittedCases />}
+            component={isJudgeView ? (props) => <AdmittedCaseV2 /> : (props) => <AdmittedCases />}
           />
           <PrivateRoute exact path={`${path}/home/view-case/review-litigant-details`} component={(props) => <ReviewLitigantDetails />} />
           <PrivateRoute exact path={`${path}/case`} component={(props) => <ViewCaseFile {...props} t={t} />} />
