@@ -48,7 +48,7 @@ import MonthlyCalendar from "../../../../../hearings/src/pages/employee/Calendar
 import OrderDrawer from "./OrderDrawer";
 import WitnessDrawer from "./WitnessDrawer";
 import AddParty from "../../../../../hearings/src/pages/employee/AddParty";
-import CaseOverviewJudge from "./CaseOverviewJudge";
+import CaseOverviewV2 from "./CaseOverviewV2";
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 import { hearingService } from "../../../../../hearings/src/hooks/services";
 import CaseBundleView from "./CaseBundleView";
@@ -156,7 +156,7 @@ const formatDate = (date) => {
   return "";
 };
 
-const AdmittedCaseJudge = () => {
+const AdmittedCaseV2 = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const { pathname, search, hash } = location;
@@ -2034,12 +2034,12 @@ const AdmittedCaseJudge = () => {
 
   const onTabChange = useCallback(
     (_, i) => {
-      history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${i?.label}`, {
+      history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${i?.label}${fromHome ? `&fromHome=${fromHome}` : ""}`, {
         caseData,
         orderData: ordersData,
       });
     },
-    [caseData, caseId, filingNumber, history, ordersData, path]
+    [caseData, caseId, filingNumber, history, ordersData, path, fromHome]
   );
 
   const hasAnyRelevantOrderType = useMemo(() => {
@@ -3268,7 +3268,7 @@ const AdmittedCaseJudge = () => {
       </div>
       {tabData?.filter((tab) => tab.label === "Overview")?.[0]?.active && (
         <div className="case-overview-wrapper" style={{ ...(viewActionBar ? { marginBottom: "60px" } : {}) }}>
-          <CaseOverviewJudge
+          <CaseOverviewV2
             handleDownload={handleDownload}
             handleExtensionRequest={handleExtensionRequest}
             handleSubmitDocument={handleSubmitDocument}
@@ -3621,10 +3621,8 @@ const AdmittedCaseJudge = () => {
           onSubmit={(action) => {
             if (action === "end-hearing") {
               // Handle end hearing action
-              console.log("End hearing and schedule next");
             } else if (action === "view-cause-list") {
               // Handle view cause list action
-              console.log("View cause list");
             }
             setShowOrderModal(false);
           }}
@@ -3646,10 +3644,8 @@ const AdmittedCaseJudge = () => {
           onSubmit={(action) => {
             if (action === "end-hearing") {
               // Handle end hearing action
-              console.log("End hearing and schedule next");
             } else if (action === "view-cause-list") {
               // Handle view cause list action
-              console.log("View cause list");
             }
             setShowWitnessModal(false);
           }}
@@ -3678,4 +3674,4 @@ const AdmittedCaseJudge = () => {
   );
 };
 
-export default AdmittedCaseJudge;
+export default AdmittedCaseV2;
