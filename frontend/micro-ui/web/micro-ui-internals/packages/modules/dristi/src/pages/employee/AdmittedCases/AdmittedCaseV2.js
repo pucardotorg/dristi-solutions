@@ -2956,7 +2956,7 @@ const AdmittedCaseV2 = () => {
           style={{
             width: "100vw",
             height: "100vh",
-            zIndex: "9999",
+            zIndex: "10001",
             position: "fixed",
             right: "0",
             display: "flex",
@@ -3517,7 +3517,11 @@ const AdmittedCaseV2 = () => {
           }
           actionSaveLabel={t(passOver ? "CS_CASE_PASS_OVER_START_NEXT_HEARING" : "CS_CASE_END_START_NEXT_HEARING")}
           hideModalActionbar={!showEndHearingModal.isNextHearingDrafted}
+          isBackButtonDisabled={apiCalled}
+          isCustomButtonDisabled={apiCalled}
+          isDisabled={apiCalled}
           actionSaveOnSubmit={async () => {
+            setApiCalled(true);
             hearingService
               .updateHearings(
                 {
@@ -3531,9 +3535,18 @@ const AdmittedCaseV2 = () => {
               .then(() => {
                 setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: false });
                 nextHearing(true);
+                setApiCalled(false);
+              })
+              .catch((error) => {
+                console.error("Error while updating hearings", error);
+                setApiCalled(false);
+              })
+              .finally(() => {
+                setApiCalled(false);
               });
           }}
           actionCustomLabelSubmit={async () => {
+            setApiCalled(true);
             hearingService
               .updateHearings(
                 {
@@ -3545,8 +3558,21 @@ const AdmittedCaseV2 = () => {
                 { applicationNumber: "", cnrNumber: "" }
               )
               .then(() => {
-                setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: false });
-                history.push(`/${window?.contextPath}/employee/home/home-screen`);
+                setTimeout(() => {
+                  setShowEndHearingModal({
+                    isNextHearingDrafted: false,
+                    openEndHearingModal: false,
+                  });
+                  setApiCalled(false);
+                  history.push(`/${window?.contextPath}/employee/home/home-screen`);
+                }, 100);
+              })
+              .catch((error) => {
+                console.error("Error while updating hearings", error);
+                setApiCalled(false);
+              })
+              .finally(() => {
+                setApiCalled(false);
               });
           }}
           actionCancelOnSubmit={() => {
