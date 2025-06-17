@@ -48,7 +48,7 @@ import MonthlyCalendar from "../../../../../hearings/src/pages/employee/Calendar
 import OrderDrawer from "./OrderDrawer";
 import WitnessDrawer from "./WitnessDrawer";
 import AddParty from "../../../../../hearings/src/pages/employee/AddParty";
-import CaseOverviewJudge from "./CaseOverviewJudge";
+import CaseOverviewV2 from "./CaseOverviewV2";
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 import { hearingService } from "../../../../../hearings/src/hooks/services";
 import CaseBundleView from "./CaseBundleView";
@@ -156,7 +156,7 @@ const formatDate = (date) => {
   return "";
 };
 
-const AdmittedCaseJudge = () => {
+const AdmittedCaseV2 = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const { pathname, search, hash } = location;
@@ -242,6 +242,8 @@ const AdmittedCaseJudge = () => {
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const historyCaseData = location?.state?.caseData;
   const historyOrderData = location?.state?.orderData;
+  const homeFilterData = location?.state?.homeFilteredData;
+
   const openOrder = location?.state?.openOrder;
   const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
   const courtId = localStorage.getItem("courtId");
@@ -2032,12 +2034,12 @@ const AdmittedCaseJudge = () => {
 
   const onTabChange = useCallback(
     (_, i) => {
-      history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${i?.label}`, {
+      history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${i?.label}${fromHome ? `&fromHome=${fromHome}` : ""}`, {
         caseData,
         orderData: ordersData,
       });
     },
-    [caseData, caseId, filingNumber, history, ordersData, path]
+    [caseData, caseId, filingNumber, history, ordersData, path, fromHome]
   );
 
   const hasAnyRelevantOrderType = useMemo(() => {
@@ -2820,6 +2822,7 @@ const AdmittedCaseJudge = () => {
         content: t("ES_COMMON_HOME"),
         show: true,
         isLast: false,
+        homeFilteredData: homeFilterData,
       },
       {
         path: `/${window?.contextPath}/employee/home/home-pending-task`,
@@ -2953,7 +2956,7 @@ const AdmittedCaseJudge = () => {
           style={{
             width: "100vw",
             height: "100vh",
-            zIndex: "9999",
+            zIndex: "10001",
             position: "fixed",
             right: "0",
             display: "flex",
@@ -3265,7 +3268,7 @@ const AdmittedCaseJudge = () => {
       </div>
       {tabData?.filter((tab) => tab.label === "Overview")?.[0]?.active && (
         <div className="case-overview-wrapper" style={{ ...(viewActionBar ? { marginBottom: "60px" } : {}) }}>
-          <CaseOverviewJudge
+          <CaseOverviewV2
             handleDownload={handleDownload}
             handleExtensionRequest={handleExtensionRequest}
             handleSubmitDocument={handleSubmitDocument}
@@ -3528,7 +3531,11 @@ const AdmittedCaseJudge = () => {
           }
           actionSaveLabel={t(passOver ? "CS_CASE_PASS_OVER_START_NEXT_HEARING" : "CS_CASE_END_START_NEXT_HEARING")}
           hideModalActionbar={!showEndHearingModal.isNextHearingDrafted}
+          isBackButtonDisabled={apiCalled}
+          isCustomButtonDisabled={apiCalled}
+          isDisabled={apiCalled}
           actionSaveOnSubmit={async () => {
+            setApiCalled(true);
             hearingService
               .updateHearings(
                 {
@@ -3542,9 +3549,18 @@ const AdmittedCaseJudge = () => {
               .then(() => {
                 setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: false });
                 nextHearing(true);
+                setApiCalled(false);
+              })
+              .catch((error) => {
+                console.error("Error while updating hearings", error);
+                setApiCalled(false);
+              })
+              .finally(() => {
+                setApiCalled(false);
               });
           }}
           actionCustomLabelSubmit={async () => {
+            setApiCalled(true);
             hearingService
               .updateHearings(
                 {
@@ -3556,8 +3572,21 @@ const AdmittedCaseJudge = () => {
                 { applicationNumber: "", cnrNumber: "" }
               )
               .then(() => {
-                setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: false });
-                history.push(`/${window?.contextPath}/employee/home/home-screen`);
+                setTimeout(() => {
+                  setShowEndHearingModal({
+                    isNextHearingDrafted: false,
+                    openEndHearingModal: false,
+                  });
+                  setApiCalled(false);
+                  history.push(`/${window?.contextPath}/employee/home/home-screen`);
+                }, 100);
+              })
+              .catch((error) => {
+                console.error("Error while updating hearings", error);
+                setApiCalled(false);
+              })
+              .finally(() => {
+                setApiCalled(false);
               });
           }}
           actionCancelOnSubmit={() => {
@@ -3592,10 +3621,8 @@ const AdmittedCaseJudge = () => {
           onSubmit={(action) => {
             if (action === "end-hearing") {
               // Handle end hearing action
-              console.log("End hearing and schedule next");
             } else if (action === "view-cause-list") {
               // Handle view cause list action
-              console.log("View cause list");
             }
             setShowOrderModal(false);
           }}
@@ -3617,10 +3644,8 @@ const AdmittedCaseJudge = () => {
           onSubmit={(action) => {
             if (action === "end-hearing") {
               // Handle end hearing action
-              console.log("End hearing and schedule next");
             } else if (action === "view-cause-list") {
               // Handle view cause list action
-              console.log("View cause list");
             }
             setShowWitnessModal(false);
           }}
@@ -3649,4 +3674,4 @@ const AdmittedCaseJudge = () => {
   );
 };
 
-export default AdmittedCaseJudge;
+export default AdmittedCaseV2;
