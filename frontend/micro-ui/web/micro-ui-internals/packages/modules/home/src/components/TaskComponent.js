@@ -786,7 +786,7 @@ const TasksComponent = ({
             <React.Fragment>
               {pendingTasks?.length > 0 && (
                 <div>
-                  <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none" }}>
+                  <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none", maxWidth: "100%" }}>
                     <PendingTaskAccordion
                       pendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
                       allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
