@@ -112,17 +112,22 @@ public class TaskService {
     }
 
     public void createDemandForPayment(TaskRequest body) {
-        Map<String, Object> taskDetails = (Map<String, Object>) body.getTask().getTaskDetails();
-        Map<String, Object> genericTaskDetails = (Map<String, Object>) taskDetails.get("genericTaskDetails");
+        try {
+            Map<String, Object> taskDetails = (Map<String, Object>) body.getTask().getTaskDetails();
+            Map<String, Object> genericTaskDetails = (Map<String, Object>) taskDetails.get("genericTaskDetails");
 
-        if (genericTaskDetails == null) {
-            throw new IllegalArgumentException("genericTaskDetails not found in taskDetails");
+            if (genericTaskDetails == null) {
+                throw new IllegalArgumentException("genericTaskDetails not found in taskDetails");
+            }
+            String consumerCode = getConsumerCode(body);
+            genericTaskDetails.put("consumerCode", consumerCode);
+            Object feeBreakDown = genericTaskDetails.get("feeBreakDown");
+            Calculation calculation = objectMapper.convertValue(feeBreakDown, Calculation.class);
+            etreasuryUtil.createDemand(body, consumerCode, calculation);
+        } catch (Exception e) {
+            log.error("Error occurred while creating demand for payment :: {}", e.toString());
+            throw new CustomException("ERROR_CREATING_DEMAND_FOR_PAYMENT", e.getMessage());
         }
-        String consumerCode = getConsumerCode(body);
-        genericTaskDetails.put("consumerCode", consumerCode);
-        Object feeBreakDown = genericTaskDetails.get("feeBreakDown");
-        Calculation calculation = objectMapper.convertValue(feeBreakDown, Calculation.class);
-        etreasuryUtil.createDemand(body, consumerCode, calculation);
     }
 
     private String getConsumerCode(TaskRequest body) {

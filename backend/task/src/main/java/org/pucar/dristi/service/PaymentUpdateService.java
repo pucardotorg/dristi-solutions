@@ -234,17 +234,15 @@ public class PaymentUpdateService {
 
     private Document getPaymentReceipt(RequestInfo requestInfo, Task task) {
         try {
-            JsonNode taskDetails = mapper.convertValue(task.getTaskDetails(), JsonNode.class);
-            JsonNode genericTaskDetails = taskDetails.get("genericTaskDetails");
-            if (genericTaskDetails == null || genericTaskDetails.isNull()) {
-                throw new CustomException("INVALID_TASK_DETAILS", "genericTaskDetails missing");
-            }
-            String consumerCode = genericTaskDetails.get("consumerCode").textValue();
-            BillResponse response = getBill(requestInfo, task.getTenantId(), Set.of(consumerCode), config.getTaskGenericBusinessServiceName());
-            if (response == null || response.getBill() == null || response.getBill().isEmpty()) {
-                throw new CustomException("BILL_NOT_FOUND", "No bill found for consumer code: " + consumerCode);
-            }
-            JsonNode paymentReceipt = etreasuryUtil.getPaymentReceipt(requestInfo, response.getBill().get(0).getId());
+            JsonNode genericTaskDetails = extractGenericTaskDetails(task);
+            String consumerCode = extractConsumerCode(genericTaskDetails);
+
+            String billId = getValidBillResponse(requestInfo, task.getTenantId(), consumerCode);
+
+            JsonNode paymentReceipt = Optional.ofNullable(etreasuryUtil.getPaymentReceipt(requestInfo, billId))
+                    .filter(node -> !node.isNull())
+                    .orElseThrow(() -> new CustomException("RECEIPT_NOT_FOUND", "Payment receipt not found for billId: " + billId));
+
             return mapper.convertValue(paymentReceipt, Document.class);
         } catch (CustomException e) {
             log.error("Error fetching payment receipt for task: {}", task.getTaskNumber(), e);
@@ -252,6 +250,30 @@ public class PaymentUpdateService {
         }
     }
 
+    private JsonNode extractGenericTaskDetails(Task task) {
+        return Optional.ofNullable(mapper.convertValue(task.getTaskDetails(), JsonNode.class))
+                .map(details -> details.get("genericTaskDetails"))
+                .filter(node -> !node.isNull())
+                .orElseThrow(() -> new CustomException("INVALID_TASK_DETAILS", "genericTaskDetails missing"));
+    }
+
+    private String extractConsumerCode(JsonNode genericTaskDetails) {
+        return Optional.ofNullable(genericTaskDetails.get("consumerCode"))
+                .map(JsonNode::textValue)
+                .filter(text -> !text.isBlank())
+                .orElseThrow(() -> new CustomException("INVALID_CONSUMER_CODE", "Consumer code missing or blank in genericTaskDetails"));
+    }
+
+    private String getValidBillResponse(RequestInfo requestInfo, String tenantId, String consumerCode) {
+        BillResponse response = getBill(requestInfo, tenantId, Set.of(consumerCode), config.getTaskGenericBusinessServiceName());
+
+        List<Bill> bills = Optional.ofNullable(response)
+                .map(BillResponse::getBill)
+                .filter(list -> !list.isEmpty())
+                .orElseThrow(() -> new CustomException("BILL_NOT_FOUND", "No bill found for consumer code: " + consumerCode));
+
+        return bills.get(0).getId();
+    }
     public BillResponse getBill(RequestInfo requestInfo, String tenantId, Set<String> consumerCodes, String businessService) {
         String uri = buildSearchBillURI(tenantId, consumerCodes, businessService);
 
