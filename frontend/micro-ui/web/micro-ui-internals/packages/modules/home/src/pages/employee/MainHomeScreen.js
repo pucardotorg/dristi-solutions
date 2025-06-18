@@ -27,11 +27,11 @@ const MainHomeScreen = () => {
 
   const homeActiveTab = location?.state?.homeActiveTab || null;
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const [activeTab, setActiveTab] = useState(homeActiveTab || "HEARINGS_TAB");
+  const [activeTab, setActiveTab] = useState("HEARINGS_TAB");
   const [updateCounter, setUpdateCounter] = useState(0);
   const [hearingCount, setHearingCount] = useState(0);
   const [config, setConfig] = useState(structuredClone(pendingTaskConfig));
-  const [activeTabTitle, setActiveTabTitle] = useState(homeActiveTab || "HEARINGS_TAB");
+  const [activeTabTitle, setActiveTabTitle] = useState("HEARINGS_TAB");
   const [pendingTaskCount, setPendingTaskCount] = useState({ REGISTRATION: 0, REVIEW_PROCESS: 0, VIEW_APPLICATION: 0, SCHEDULE_HEARING: 0 });
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const [loader, setLoader] = useState(false);

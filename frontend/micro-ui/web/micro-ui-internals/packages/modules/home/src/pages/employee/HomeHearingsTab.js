@@ -227,14 +227,18 @@ const HomeHearingsTab = ({
                 if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
                   if (response?.HearingList[0]?.status === "SCHEDULED" || response?.HearingList[0]?.status === "PASSED_OVER") {
                     hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
-                      if (isJudge || isTypist) {
-                        window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
-                      } else {
-                        setTimeout(() => {
-                          setLoader(false);
-                          if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
-                        }, 100);
-                      }
+                      // if (isJudge || isTypist) {
+                      //   window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
+                      // } else {
+                      //   setTimeout(() => {
+                      //     setLoader(false);
+                      //     if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                      //   }, 100);
+                      // }
+                      setTimeout(() => {
+                        setLoader(false);
+                        if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                      }, 100);
                     });
                   } else {
                     setLoader(false);
@@ -251,17 +255,17 @@ const HomeHearingsTab = ({
                 console.error("Error starting hearing", error);
               });
           } else {
-            if (isJudge || isTypist) {
-              history.push(
-                `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
-                { homeFilteredData: filters }
-              );
-            } else {
-              setTimeout(() => {
-                setLoader(false);
-                fetchInbox(filters, setHearingCount);
-              }, 100);
-            }
+            // if (isJudge || isTypist) {
+            //   history.push(
+            //     `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
+            //     { homeFilteredData: filters }
+            //   );
+            // } else {
+            setTimeout(() => {
+              setLoader(false);
+              fetchInbox(filters, setHearingCount);
+            }, 100);
+            // }
           }
         }
       }
@@ -311,6 +315,7 @@ const HomeHearingsTab = ({
                     });
                   } else {
                     setLoader(false);
+                    fetchInbox(filters, setHearingCount);
                     showToast("error", t("HEARING_STATUS_ALREADY_CHANGED"), 5000);
                   }
                 } else {
@@ -388,14 +393,18 @@ const HomeHearingsTab = ({
                   if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
                     if (response?.HearingList?.[0]?.status === "SCHEDULED" || response?.HearingList?.[0]?.status === "PASSED_OVER") {
                       hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
-                        history.push(
-                          `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`,
-                          { homeFilteredData: filters }
-                        );
-                        setLoader(false);
+                        // history.push(
+                        //   `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`,
+                        //   { homeFilteredData: filters }
+                        // );
+                        setTimeout(() => {
+                          if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                          setLoader(false);
+                        }, 100);
                       });
                     } else {
                       setLoader(false);
+                      fetchInbox(filters, setHearingCount);
                       showToast("error", t("HEARING_ALREADY_STARTED"), 5000);
                     }
                   } else {
@@ -480,7 +489,7 @@ const HomeHearingsTab = ({
               ) {
                 setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: false, currentHearing: hearingDetails });
 
-                hearingService
+                await hearingService
                   ?.searchHearings(
                     {
                       criteria: {
@@ -511,6 +520,7 @@ const HomeHearingsTab = ({
                           });
                       } else {
                         setLoader(false);
+                        fetchInbox(filters, setHearingCount);
                         showToast("error", t("HEARING_STATUS_ALREADY_CHANGED"), 5000);
                       }
                     } else {
@@ -524,9 +534,10 @@ const HomeHearingsTab = ({
               }
             } catch (e) {
               console.log(e);
+              setLoader(false);
               showToast("error", t("ISSUE_IN_PASS_OVER"), 5000);
             } finally {
-              setLoader(false);
+              // setLoader(false);
             }
           },
         });
@@ -1129,7 +1140,7 @@ const HomeHearingsTab = ({
           actionSaveOnSubmit={async () => {
             try {
               setLoader(true);
-              hearingService
+              await hearingService
                 ?.searchHearings(
                   {
                     criteria: {
@@ -1159,6 +1170,7 @@ const HomeHearingsTab = ({
                     } else {
                       setLoader(false);
                       setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+                      fetchInbox(filters, setHearingCount);
                       showToast("error", t("HEARING_STATUS_ALREADY_CHANGED"), 5000);
                     }
                   } else {
@@ -1177,7 +1189,7 @@ const HomeHearingsTab = ({
           actionCustomLabelSubmit={async () => {
             try {
               setLoader(true);
-              hearingService
+              await hearingService
                 ?.searchHearings(
                   {
                     criteria: {
@@ -1209,6 +1221,7 @@ const HomeHearingsTab = ({
                         });
                     } else {
                       setLoader(false);
+                      fetchInbox(filters, setHearingCount);
                       showToast("error", t("HEARING_STATUS_ALREADY_CHANGED"), 5000);
                       setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
                     }

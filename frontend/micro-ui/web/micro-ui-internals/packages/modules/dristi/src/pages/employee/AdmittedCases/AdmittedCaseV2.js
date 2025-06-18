@@ -347,20 +347,19 @@ const AdmittedCaseV2 = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    const unlisten = history.listen((location, action) => {
-      console.log("History action:", action);
-      if (action === "POP") {
-        debugger;
-        // This is a back or forward action
-        // Restore your filterData here
-      }
-    });
+  // useEffect(() => {
+  //   const unlisten = history.listen((location, action) => {
+  //     console.log("History action:", action);
+  //     if (action === "POP") {
+  //       // This is a back or forward action
+  //       // Restore your filterData here
+  //     }
+  //   });
 
-    return () => {
-      unlisten();
-    };
-  }, [history]);
+  //   return () => {
+  //     unlisten();
+  //   };
+  // }, [history]);
 
   const primaryAction = useMemo(() => {
     return casePrimaryActions?.find((action) => nextActions?.some((data) => data.action === action?.action)) || { action: "", label: "" };
