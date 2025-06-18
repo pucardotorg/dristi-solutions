@@ -1187,7 +1187,6 @@ export const configsScheduleNextHearingDate = [
       },
       {
         label: "CS_CASE_ATTENDEES",
-        isMandatory: true,
         schemaKeyPath: "orderDetails.partyName",
         transformer: "customDropdown",
         key: "attendees",
@@ -1197,8 +1196,6 @@ export const configsScheduleNextHearingDate = [
           allowMultiSelect: true,
           optionsKey: "label",
           error: "CORE_REQUIRED_FIELD_ERROR",
-          required: true,
-          isMandatory: true,
           selectedText: "party(s)",
           options: [
             {
