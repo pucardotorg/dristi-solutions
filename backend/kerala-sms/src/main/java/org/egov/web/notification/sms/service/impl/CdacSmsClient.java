@@ -4,8 +4,6 @@ package org.egov.web.notification.sms.service.impl;
  *
  */
 
-import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.egov.web.notification.sms.config.SMSProperties;
@@ -13,14 +11,12 @@ import org.egov.web.notification.sms.models.Sms;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import reactor.netty.http.client.HttpClient;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -353,11 +349,6 @@ public class CdacSmsClient {
         }
         return buf.toString();
     }
-    public WebClient createWebClient(HttpClient httpClient) {
-        return WebClient.builder()
-                .clientConnector(new ReactorClientHttpConnector(httpClient))
-                .build();
-    }   
-    
+
 
 }
