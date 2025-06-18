@@ -89,6 +89,9 @@ public class PdfServiceUtil {
                         summonsPdf.setOneSuretyAmount(String.valueOf(bailableAmount));
                     }
                 }
+                if(GENERIC.equals(warrantDetails.getTemplateType())){
+                    summonsPdf.setWarrantText(warrantDetails.getWarrantText());
+                }
             }
 
             if (taskRequest.getTask().getTaskType().equalsIgnoreCase(SUMMON) || taskRequest.getTask().getTaskType().equalsIgnoreCase(NOTICE) || taskRequest.getTask().getTaskType().equalsIgnoreCase(WARRANT)) {
