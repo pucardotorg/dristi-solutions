@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { submissionDocumentDetailsConfig } from "../../configs/submitDocumentConfig";
 import { FormComposerV2, Header, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
@@ -13,6 +13,7 @@ import useSearchEvidenceService from "../../hooks/submissions/useSearchEvidenceS
 import downloadPdfFromFile from "@egovernments/digit-ui-module-dristi/src/Utils/downloadPdfFromFile";
 import { SubmissionDocumentWorkflowAction, SubmissionDocumentWorkflowState } from "../../utils/submissionDocumentsWorkflow";
 import { Urls } from "../../hooks/services/Urls";
+import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -51,6 +52,8 @@ const SubmissionDocuments = ({ path }) => {
   const todayDate = new Date().getTime();
   const [loader, setLoader] = useState(false);
   const entityType = "voluntary-document-submission";
+  const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
+  const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
   const isEmployee = useMemo(() => userInfo?.roles?.some((role) => ["BENCH_CLERK", "JUDGE_ROLE", "TYPIST_ROLE"].includes(role?.code)), [
     userInfo?.roles,
   ]);
@@ -74,20 +77,62 @@ const SubmissionDocuments = ({ path }) => {
   );
   const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData]);
 
-  const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
-    {
-      criteria: [
-        {
-          filingNumber: filingNumber,
-        },
-      ],
-      tenantId,
-    },
-    {},
-    `case-details-${filingNumber}`,
-    filingNumber,
-    Boolean(filingNumber)
-  );
+  // const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
+  //   {
+  //     criteria: [
+  //       {
+  //         filingNumber: filingNumber,
+  //       },
+  //     ],
+  //     tenantId,
+  //   },
+  //   {},
+  //   `case-details-${filingNumber}`,
+  //   filingNumber,
+  //   Boolean(filingNumber)
+  // );
+  const [caseData, setCaseData] = useState(undefined);
+  const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
+  const [caseApiError, setCaseApiError] = useState(undefined);
+  const isBreadCrumbsParamsDataSet = useRef(false);
+
+  useEffect(() => {
+    const fetchCaseDetails = async () => {
+      try {
+        setIsCaseDetailsLoading(true);
+        const caseData = await DRISTIService.searchCaseService(
+          {
+            criteria: [
+              {
+                filingNumber: filingNumber,
+              },
+            ],
+            tenantId,
+          },
+          {},
+          `case-details-${filingNumber}`,
+          filingNumber,
+          Boolean(filingNumber)
+        );
+        const caseId = caseData?.criteria?.[0]?.responseList?.[0]?.id;
+        setCaseData(caseData);
+        // Only update breadcrumb data if it's different from current and hasn't been set yet
+        if (!(caseIdFromBreadCrumbs === caseId && filingNumberFromBreadCrumbs === filingNumber) && !isBreadCrumbsParamsDataSet.current) {
+          setBreadCrumbsParamsData({
+            caseId,
+            filingNumber,
+          });
+          isBreadCrumbsParamsDataSet.current = true;
+        }
+      } catch (err) {
+        setCaseApiError(err);
+      } finally {
+        setIsCaseDetailsLoading(false);
+      }
+    };
+
+    fetchCaseDetails();
+  }, [caseIdFromBreadCrumbs, filingNumber, filingNumberFromBreadCrumbs, setBreadCrumbsParamsData, tenantId]);
 
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];
