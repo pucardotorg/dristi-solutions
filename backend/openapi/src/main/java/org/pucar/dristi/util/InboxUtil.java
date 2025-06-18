@@ -18,8 +18,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.util.*;
 
-import static org.pucar.dristi.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
-import static org.pucar.dristi.config.ServiceConstants.SEARCHER_SERVICE_EXCEPTION;
+import static org.pucar.dristi.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -41,7 +40,7 @@ public class InboxUtil {
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         StringBuilder uri = new StringBuilder(configuration.getInboxHost()).append(configuration.getIndexSearchEndPoint());
         Object response = serviceRequestRepository.fetchResult(uri, request);
-        InboxResponse openHearingSearchResponse ;
+        InboxResponse openHearingSearchResponse;
         List<OpenHearing> openHearingList = new ArrayList<>();
         try {
             JsonNode jsonNode = objectMapper.valueToTree(response);
@@ -52,7 +51,7 @@ public class InboxUtil {
                 OpenHearing openHearing = new OpenHearing();
                 Map<String, Object> businessObject = inbox.getBusinessObject();
                 Map hearingDetails = (Map) businessObject.get("hearingDetails");
-                mapValuesToOpenHearing(openHearing,hearingDetails );
+                mapValuesToOpenHearing(openHearing, hearingDetails);
                 openHearingList.add(openHearing);
             }
 
@@ -134,22 +133,29 @@ public class InboxUtil {
         return value; // Return as is if no conversion logic is provided
     }
 
-    public InboxRequest getInboxRequestForOpenHearing(String tenantId, String searchText) {
+    public InboxRequest getInboxRequestForOpenHearing(String tenantId, Long fromDate, Long toDate, String searchText) {
 
         HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
 
-        moduleSearchCriteria.put("searchableFields", searchText);
+        if (searchText != null) {
+            moduleSearchCriteria.put("searchableFields", searchText);
+        }
+        moduleSearchCriteria.put("fromDate", fromDate);
+        moduleSearchCriteria.put("toDate", toDate);
+        moduleSearchCriteria.put("tenantId", tenantId);
+
         ProcessInstanceSearchCriteria processSearchCriteria = ProcessInstanceSearchCriteria.builder()
                 .moduleName("Hearing Service")
                 .tenantId(tenantId)
-                .businessService(Collections.singletonList("hearing-default"))
+                .businessService(Collections.singletonList(HEARING_BUSINESS_SERVICE))
                 .build();
+
         InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
                 .processSearchCriteria(processSearchCriteria)
                 .moduleSearchCriteria(moduleSearchCriteria)
-                .tenantId(tenantId)
-                .limit(1)
+                .limit(300)
                 .offset(0)
+                .tenantId(tenantId)
                 .build();
 
         return InboxRequest.builder()

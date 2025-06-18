@@ -1,11 +1,6 @@
 package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -141,8 +136,13 @@ public class OpenApiService {
         return CaseType.equals(CASE_TYPE_CMP) || CaseType.equals(CASE_TYPE_ST);
     }
 
-    public List<OpenHearing> getHearings(String tenantId, String searchText) {
-        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(tenantId, searchText);
+    public List<OpenHearing> getHearings(OpenAPiHearingRequest body) {
+        String tenantId = body.getTenantId();
+        String searchText = body.getSearchText();
+        Long fromDate = body.getFromDate();
+        Long toDate = body.getToDate();
+
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(tenantId, fromDate, toDate, searchText);
         return inboxUtil.getOpenHearings(inboxRequest);
     }
 }

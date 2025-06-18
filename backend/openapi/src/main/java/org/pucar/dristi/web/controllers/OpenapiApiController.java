@@ -2,21 +2,16 @@ package org.pucar.dristi.web.controllers;
 
 
 import org.pucar.dristi.service.OpenApiService;
-import org.pucar.dristi.web.models.CaseListResponse;
-import org.pucar.dristi.web.models.CaseSummaryResponse;
+import org.pucar.dristi.web.models.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
-import org.pucar.dristi.web.models.OpenHearing;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.constraints.*;
 import jakarta.validation.Valid;
@@ -61,9 +56,12 @@ public class OpenapiApiController {
         return new ResponseEntity<>(caseList, HttpStatus.OK);
     }
 
-    @RequestMapping(value = "/openapi/v1/case/{year}/{caseType}", method = RequestMethod.GET)
-    public ResponseEntity<CaseListResponse> getHearingsForDisplayBoard(@Pattern(regexp = "^[a-zA-Z]{2}$") @Size(min = 2, max = 2) @Parameter(in = ParameterIn.PATH, description = "tenant ID", required = true, schema = @Schema()) @PathVariable("tenantId") String tenantId, @Min(2024) @Parameter(in = ParameterIn.PATH, description = "if type= CMP, then year in which the case was registered. Can check based on registration date also. If type = CC/ST, then check against CourtCase.courtCaseNumber(year). The minimum year is set to 2024 as this is the year the system has gone live and the first case in the system is from 2024. No earlier cases exist.", required = true, schema = @Schema(allowableValues = "")) @PathVariable("year") Integer year, @Parameter(in = ParameterIn.PATH, description = "the type of the case CMP/CC/ST", required = true, schema = @Schema(allowableValues = "")) @PathVariable("caseType") String caseType, @Min(0) @Parameter(in = ParameterIn.QUERY, description = "Page number to retrieve (0-based index)", schema = @Schema(allowableValues = "", defaultValue = "0")) @Valid @RequestParam(value = "offset", required = false, defaultValue = "0") Integer offset, @Min(1) @Max(100) @Parameter(in = ParameterIn.QUERY, description = "Number of items per page", schema = @Schema(allowableValues = "", defaultValue = "10")) @Valid @RequestParam(value = "limit", required = false, defaultValue = "10") Integer limit, @Pattern(regexp = "^(registrationDate|filingDate),(asc|desc)$") @Parameter(in = ParameterIn.QUERY, description = "Sorting criteria in the format `field,asc` or `field,desc`", schema = @Schema()) @Valid @RequestParam(value = "sort", required = false , defaultValue = "registrationDate,desc") String sort) {
-        String searchText = "";
-        List<OpenHearing> hearingList = openApiService.getHearings(tenantId, searchText);
+    @PostMapping("/openapi/v1/hearings")
+    public ResponseEntity<OpenApiHearingsResponse> getHearingsForDisplayBoard(@Parameter(description = "Details for fetching hearings in landing page", required = true)
+                                                                        @Valid @RequestBody OpenAPiHearingRequest body) {
+
+        List<OpenHearing> hearingList = openApiService.getHearings(body);
+        OpenApiHearingsResponse response = OpenApiHearingsResponse.builder().openHearings(hearingList).build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }
