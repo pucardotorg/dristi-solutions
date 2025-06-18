@@ -9,6 +9,7 @@ import InsideHearingMainPage from "./InsideHearingMainPage";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import BreadCrumbHearings from "../../components/BreadCrumbHearings";
+import { useLocation } from "react-router-dom";
 
 const bredCrumbStyle = { maxWidth: "min-content" };
 
@@ -25,8 +26,9 @@ const ProjectBreadCrumb = ({ location }) => {
   if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const { BreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { caseId, filingNumber } = BreadCrumbsParamsData;
-  const { fromHome } = Digit.Hooks.useQueryParams();
-  const isFromHome = fromHome === "true";
+
+  const locationHome = useLocation();
+  const isFromHome = locationHome.state?.fromHome;
 
   const crumbs = [
     {
