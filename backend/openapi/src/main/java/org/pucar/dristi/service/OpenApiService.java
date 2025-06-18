@@ -6,7 +6,9 @@ import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.DateUtil;
+import org.pucar.dristi.util.InboxUtil;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.inbox.InboxRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,11 +27,14 @@ public class OpenApiService {
 
     private final DateUtil dateUtil;
 
-    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil) {
+    private final InboxUtil inboxUtil;
+
+    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil) {
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
         this.objectMapper = objectMapper;
         this.dateUtil = dateUtil;
+        this.inboxUtil = inboxUtil;
     }
 
     public CaseSummaryResponse getCaseByCnrNumber(String tenantId, String cnrNumber) {
@@ -129,5 +134,15 @@ public class OpenApiService {
 
     public boolean validCaseType(String CaseType) {
         return CaseType.equals(CASE_TYPE_CMP) || CaseType.equals(CASE_TYPE_ST);
+    }
+
+    public List<OpenHearing> getHearings(OpenAPiHearingRequest body) {
+        String tenantId = body.getTenantId();
+        String searchText = body.getSearchText();
+        Long fromDate = body.getFromDate();
+        Long toDate = body.getToDate();
+
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(tenantId, fromDate, toDate, searchText);
+        return inboxUtil.getOpenHearings(inboxRequest);
     }
 }

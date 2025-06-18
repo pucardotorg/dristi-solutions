@@ -2,8 +2,7 @@ package org.pucar.dristi.web.controllers;
 
 
 import org.pucar.dristi.service.OpenApiService;
-import org.pucar.dristi.web.models.CaseListResponse;
-import org.pucar.dristi.web.models.CaseSummaryResponse;
+import org.pucar.dristi.web.models.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
@@ -12,14 +11,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.constraints.*;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
+
+import java.util.List;
 
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-12-03T13:11:23.212020900+05:30[Asia/Calcutta]")
 @Controller
@@ -58,4 +56,12 @@ public class OpenapiApiController {
         return new ResponseEntity<>(caseList, HttpStatus.OK);
     }
 
+    @PostMapping("/openapi/v1/hearings")
+    public ResponseEntity<OpenApiHearingsResponse> getHearingsForDisplayBoard(@Parameter(description = "Details for fetching hearings in landing page", required = true)
+                                                                        @Valid @RequestBody OpenAPiHearingRequest body) {
+
+        List<OpenHearing> hearingList = openApiService.getHearings(body);
+        OpenApiHearingsResponse response = OpenApiHearingsResponse.builder().openHearings(hearingList).build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }
