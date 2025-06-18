@@ -605,9 +605,9 @@ const EvidenceModal = ({
       case "WITHDRAWAL":
         return type === "reject" ? "WITHDRAWAL_REJECT" : "WITHDRAWAL_ACCEPT";
       case "TRANSFER":
-        return "CASE_TRANSFER";
+        return type === "reject" ? "CASE_TRANSFER_REJECT" : "CASE_TRANSFER_ACCEPT";
       case "SETTLEMENT":
-        return "SETTLEMENT";
+        return type === "reject" ? "SETTLEMENT_REJECT" : "SETTLEMENT_ACCEPT";
       case "BAIL_BOND":
         return "BAIL";
       case "SURETY":
@@ -633,9 +633,9 @@ const EvidenceModal = ({
       case "WITHDRAWAL":
         return type === "reject" ? "ORDER_FOR_ACCEPT_WITHDRAWAL" : "ORDER_FOR_REJECT_WITHDRAWAL";
       case "TRANSFER":
-        return "ORDER_FOR_CASE_TRANSFER";
+        return type === "reject" ? "ORDER_FOR_CASE_TRANSFER_REJECT" : "ORDER_FOR_CASE_TRANSFER_ACCEPT";
       case "SETTLEMENT":
-        return "ORDER_FOR_SETTLEMENT";
+        return type === "reject" ? "ORDER_FOR_REJECT_SETTLEMENT" : "ORDER_FOR_ACCEPT_SETTLEMENT";
       case "BAIL_BOND":
         return "ORDER_FOR_BAIL";
       case "SURETY":
