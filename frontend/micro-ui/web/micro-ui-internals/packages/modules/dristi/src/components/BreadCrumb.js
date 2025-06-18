@@ -23,10 +23,17 @@ const Breadcrumb = (props) => {
         return (
           <li key={ci} style={isLast ? { color: "#0B0C0C" } : { color: "#007E7E" }} className="bread-crumb--item">
             {isLast || !crumb?.path ? (
-              <span style={props?.spanStyle ? { ...props?.spanStyle } : {}}>{crumb.content}</span>
+              <span style={props?.spanStyle ? { ...props?.spanStyle } : {}}>{crumb.content}"dgdg"</span>
             ) : (
-              <Link to={{ pathname: crumb.path, state: { count: crumb?.count, homeFilteredData: crumb?.homeFilteredData }, search: crumb?.query }}>
+              <Link
+                to={{
+                  pathname: crumb.path,
+                  state: { count: crumb?.count, homeFilteredData: crumb?.homeFilteredData, homeActiveTab: crumb?.homeActiveTab },
+                  search: crumb?.query,
+                }}
+              >
                 {crumb.content}
+                {crumb?.homeActiveTab}
               </Link>
             )}
           </li>
