@@ -44,9 +44,12 @@ import java.util.StringTokenizer;
 @Slf4j
 public class CdacSmsClient {
     
-    @Autowired
-    private  WebClient webClient;
+    private  final WebClient webClient;
 
+    @Autowired
+    public CdacSmsClient(WebClient webClient) {
+        this.webClient = webClient;
+    }
 
 
     /**
@@ -139,15 +142,10 @@ public class CdacSmsClient {
 
         try
         {
-            SslContext nettySslContext = SslContextBuilder.forClient()
-                    .protocols("TLSv1.2")
-                    .build();
-// Create Reactor Netty HttpClient with custom SSL context
-            HttpClient httpClient = HttpClient.create()
-                    .secure(sslSpec -> sslSpec.sslContext( nettySslContext));
+
 
 // Initialize WebClient with this HttpClient
-            webClient = createWebClient(httpClient);
+
 
            
             
