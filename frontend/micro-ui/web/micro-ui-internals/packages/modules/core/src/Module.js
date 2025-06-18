@@ -1,5 +1,5 @@
 import { Body, Loader } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, createContext } from "react"; // Added createContext for breadcrumb implementation
+import React, { useMemo, createContext, useEffect } from "react"; // Added createContext for breadcrumb implementation
 import { getI18n } from "react-i18next";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { Provider } from "react-redux";
@@ -74,7 +74,15 @@ const DigitUIWrapper = ({ stateCode, enabledModules, moduleReducers, defaultLand
 export const DigitUI = ({ stateCode, registry, enabledModules, moduleReducers, defaultLanding }) => {
   const [privacy, setPrivacy] = useState(Digit.Utils.getPrivacyObject() || {});
   // State to manage breadcrumb parameters across the application
-const [BreadCrumbsParamsData, setBreadCrumbsParamsData] = useState(initialBreadCrumbParamsData);
+  const [BreadCrumbsParamsData, setBreadCrumbsParamsData] = useState(() => {
+    const stored = sessionStorage.getItem("breadcrumbData");
+    return stored ? JSON.parse(stored) : initialBreadCrumbParamsData;
+  });
+  useEffect(() => {
+    if (BreadCrumbsParamsData?.caseId && BreadCrumbsParamsData?.filingNumber) {
+      sessionStorage.setItem("breadcrumbData", JSON.stringify(BreadCrumbsParamsData));
+    }
+  }, [BreadCrumbsParamsData]);
 
   const { isLoading: isGetAccessToken } = useGetAccessToken("refresh-token");
 
@@ -143,9 +151,14 @@ const [BreadCrumbsParamsData, setBreadCrumbsParamsData] = useState(initialBreadC
                 },
               }}
             >
-                            {/* Provide breadcrumb context to all child components */}
+              {/* Provide breadcrumb context to all child components */}
               <BreadCrumbsParamsDataContext.Provider value={{ BreadCrumbsParamsData, setBreadCrumbsParamsData }}>
-                <DigitUIWrapper stateCode={stateCode} enabledModules={enabledModules} moduleReducers={moduleReducers} defaultLanding={defaultLanding} />
+                <DigitUIWrapper
+                  stateCode={stateCode}
+                  enabledModules={enabledModules}
+                  moduleReducers={moduleReducers}
+                  defaultLanding={defaultLanding}
+                />
               </BreadCrumbsParamsDataContext.Provider>
             </PrivacyProvider.Provider>
           </ComponentProvider.Provider>
