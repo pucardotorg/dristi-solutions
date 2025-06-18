@@ -184,9 +184,10 @@ public class TreasuryEnrichment {
                     case COURT_FEE -> data.setCourtFee(breakDown.getAmount());
                     case ADVOCATE_WELFARE_FUND -> data.setAdvocateWelfareFund(breakDown.getAmount());
                     case ADVOCATE_CLERK_WELFARE_FUND -> data.setAdvocateClerkWelfareFund(breakDown.getAmount());
+                    case LEGAL_BENEFIT_FEE -> data.setLegalBenefitFee(breakDown.getAmount());
                 }
             }
-            double totalAmount = data.getCourtFee() + data.getAdvocateWelfareFund() + data.getAdvocateClerkWelfareFund();
+            double totalAmount = data.getCourtFee() + data.getAdvocateWelfareFund() + data.getAdvocateClerkWelfareFund() + data.getLegalBenefitFee();
             data.setTotalAmount(totalAmount);
             log.info("operation=enrichTreasuryPaymentData, result=SUCCESS");
         } catch (Exception e) {
