@@ -4,41 +4,25 @@ package org.egov.web.notification.sms.service.impl;
  *
  */
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
-import java.security.KeyManagementException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
-
-import javax.net.ssl.SSLContext;
-
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.conn.ssl.SSLSocketFactory;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.message.BasicNameValuePair;
 import org.egov.web.notification.sms.config.SMSProperties;
 import org.egov.web.notification.sms.models.Sms;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
-import org.springframework.http.client.ClientHttpRequestFactory;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.StringTokenizer;
 
 /**
  * @author Mobile Seva < msdp@cdac.in >
@@ -55,38 +39,40 @@ import org.springframework.web.client.RestTemplate;
 @Component
 @Slf4j
 public class CdacSmsClient {
+    
+    private  final WebClient webClient;
 
     @Autowired
-    private RestTemplate restTemplate;
+    public CdacSmsClient(WebClient webClient) {
+        this.webClient = webClient;
+    }
+
 
     /**
      * Send Single text SMS
-     * @return {@link String} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
+     * @return {@link Mono<String>} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
      * @see
      */
 
-    public String sendSingleSMS(Sms sms, SMSProperties smsProperties)
-    {
-        return sendSMS(sms, smsProperties,false, "singlemsg");
+    public Mono<String> sendSingleSMS(Sms sms, SMSProperties smsProperties) {
+        return sendSMS(sms, smsProperties, false, "singlemsg");
     }
 
     /**
      * Send Bulk text SMS
-     * @return {@link String} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
+     * @return {@link Mono<String>} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
      * @see
      */
-    public String sendBulkSMS(Sms sms, SMSProperties smsProperties)
-    {
+    public Mono<String> sendBulkSMS(Sms sms, SMSProperties smsProperties) {
         return sendSMS(sms, smsProperties, true, "bulkmsg");
     }
 
     /**
      * Send Unicode text SMS
-     * @return {@link String} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
+     * @return {@link Mono<String>} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
      * @see
      */
-    public String sendUnicodeSMS(Sms sms, SMSProperties smsProperties)
-    {
+    public Mono<String> sendUnicodeSMS(Sms sms, SMSProperties smsProperties) {
         String message = sms.getMessage();
         String finalmessage = "";
         for (int i = 0; i < message.length(); i++) {
@@ -106,21 +92,19 @@ public class CdacSmsClient {
      * Use only in case of OTP related message
      * <p>
      * Messages other than OTP will not be delivered to the users
-     * @return {@link String} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
+     * @return {@link Mono<String>} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
      * @see
      */
-    public String sendOtpSMS(Sms sms, SMSProperties smsProperties)
-    {
-        return sendSMS(sms, smsProperties,false, "otpmsg");
+    public Mono<String> sendOtpSMS(Sms sms, SMSProperties smsProperties) {
+        return sendSMS(sms, smsProperties, false, "otpmsg");
     }
 
     /**
      * Send Single Unicode OTP text SMS
-     * @return {@link String} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
+     * @return {@link Mono<String>} response from Mobile Seva Gateway e.g. '402,MsgID = 150620161466003974245msdgsms'
      * @see
      */
-    public String sendUnicodeOtpSMS(Sms sms, SMSProperties smsProperties)
-    {
+    public Mono<String> sendUnicodeOtpSMS(Sms sms, SMSProperties smsProperties) {
         String message = sms.getMessage();
         String finalmessage = "";
         for (int i = 0; i < message.length(); i++) {
@@ -135,7 +119,7 @@ public class CdacSmsClient {
     }
 
 
-    public String sendSMS(Sms sms, SMSProperties smsProperties, boolean isBulk, String smsServiceType)
+    public Mono<String> sendSMS(Sms sms, SMSProperties smsProperties, boolean isBulk, String smsServiceType)
     {
         String smsProviderURL = smsProperties.getUrl();
         String username = smsProperties.getUsername();
@@ -149,21 +133,18 @@ public class CdacSmsClient {
 
         String responseString = "";
         SSLConnectionSocketFactory scf;
-        SSLContext context = null;
+
         String encryptedPassword = "";
 
         try
         {
-            context = SSLContext.getInstance("TLSv1.2"); // Use this line for Java version 7 and above
-            context.init(null, null, null);
-            scf = new SSLConnectionSocketFactory(context);
 
-            HttpClient httpClient = HttpClients.custom()
-                    .setSSLSocketFactory(scf)
-                    .build();
 
-            restTemplate = createRestTemplate(httpClient);
+// Initialize WebClient with this HttpClient
 
+
+           
+            
             HttpHeaders httpHeaders = new HttpHeaders();
             httpHeaders.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
@@ -185,20 +166,29 @@ public class CdacSmsClient {
             log.info("Request Body Map: {}", requestBodyMap);
             log.info("Request Url: {}", smsProviderURL);
 
-            HttpEntity<MultiValueMap<String, String>> requestEntity = new HttpEntity<>(requestBodyMap, httpHeaders);
-            ResponseEntity<String> responseEntity = restTemplate.exchange(smsProviderURL, HttpMethod.POST, requestEntity, String.class);
-
-            log.info(responseEntity.getBody().toString());
-            responseString = responseEntity.getBody().toString();
+            try {
+                // Non-blocking WebClient usage: return a Mono<String>
+                return webClient.post()
+                    .uri(smsProviderURL)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(BodyInserters.fromFormData(requestBodyMap))
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .doOnNext(body -> log.info(body))
+                    .doOnError(e -> log.error(e.getMessage(), e));
+            } catch (Exception e) {
+                e.printStackTrace();
+                log.error(e.getMessage(), e);
+            }
         }
-        catch (NoSuchAlgorithmException | KeyManagementException | IOException e)
+        catch (NoSuchAlgorithmException | IOException e)
         {
             // TODO Auto-generated catch block
             e.printStackTrace();
             log.error(e.getMessage(), e);
         }
 
-        return responseString;
+        return Mono.just(responseString);
     }
 
     protected String hashGenerator(String userName, String senderId, String content, String secureKey) {
@@ -360,9 +350,5 @@ public class CdacSmsClient {
         return buf.toString();
     }
 
-    public RestTemplate createRestTemplate(HttpClient httpClient) {
-        ClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory(httpClient);
-        return new RestTemplate(requestFactory);
-    }
 
 }
