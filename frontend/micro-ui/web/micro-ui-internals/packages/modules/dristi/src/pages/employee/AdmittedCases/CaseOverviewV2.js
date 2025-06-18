@@ -1,4 +1,4 @@
-import { Card, Loader } from "@egovernments/digit-ui-react-components";
+import { Card, Loader, Modal } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch } from "react-router-dom";
@@ -8,6 +8,8 @@ import { PreviousHearingIcon } from "../../../icons/svgIndex";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import ShowAllTranscriptModal from "../../../components/ShowAllTranscriptModal";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
+import WorkflowTimeline from "../../../components/WorkflowTimeline";
+
 const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails, showNoticeProcessModal = true }) => {
   const { t } = useTranslation();
   //   const filingNumber = caseData.filingNumber;
@@ -78,44 +80,59 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-      <div className="hearing-summary-container">
-        {hearingRes?.HearingList?.find((hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status) && Boolean(hearing?.hearingSummary)) && (
-          <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none", maxWidth: "100%" }}>
-            <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
+      <div style={{ display: "flex", flexDirection: "row", gap: "1rem", justifyContent: "space-between" }}>
+        <div className="hearing-summary-container" style={{ width: "72%" }}>
+          {hearingRes?.HearingList?.find(
+            (hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status) && Boolean(hearing?.hearingSummary)
+          ) && (
+            <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none" }}>
+              <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
+                <div
+                  style={{
+                    fontWeight: 700,
+                    fontSize: "16px",
+                    lineHeight: "18.75px",
+                    color: "#231F20",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <PreviousHearingIcon />
+                  <span style={{ lineHeight: "normal", marginLeft: "12px" }}>{t("PREVIOUS_HEARING_SUMMARY")}</span>
+                </div>
+                <div
+                  style={{ color: "#007E7E", cursor: "pointer", fontWeight: 700, fontSize: "16px", lineHeight: "18.75px" }}
+                  onClick={() => setShowAllTranscript(true)}
+                >
+                  {t("VIEW_ALL_SUMMARIES")}
+                </div>
+              </div>
+              <hr style={{ borderTop: "1px solid #E8E8E8", margin: "10px -15px 0px -15px" }} />
               <div
                 style={{
-                  fontWeight: 700,
+                  padding: "10px",
+                  color: "#505A5F",
+                  fontWeight: 400,
                   fontSize: "16px",
-                  lineHeight: "18.75px",
-                  color: "#231F20",
-                  display: "flex",
-                  alignItems: "center",
+                  lineHeight: "24px",
                 }}
               >
-                <PreviousHearingIcon />
-                <span style={{ lineHeight: "normal", marginLeft: "12px" }}>{t("PREVIOUS_HEARING_SUMMARY")}</span>
+                {previousHearing?.[0]?.hearingSummary ? <div>{previousHearing?.[0]?.hearingSummary}</div> : t("CS_CASE_NO_TRANSCRIPT_FOR_HEARING")}
               </div>
-              <div
-                style={{ color: "#007E7E", cursor: "pointer", fontWeight: 700, fontSize: "16px", lineHeight: "18.75px" }}
-                onClick={() => setShowAllTranscript(true)}
-              >
-                {t("VIEW_ALL_SUMMARIES")}
-              </div>
-            </div>
-            <hr style={{ borderTop: "1px solid #E8E8E8", margin: "10px -15px 0px -15px" }} />
-            <div
-              style={{
-                padding: "10px",
-                color: "#505A5F",
-                fontWeight: 400,
-                fontSize: "16px",
-                lineHeight: "24px",
-              }}
-            >
-              {previousHearing?.[0]?.hearingSummary ? <div>{previousHearing?.[0]?.hearingSummary}</div> : t("CS_CASE_NO_TRANSCRIPT_FOR_HEARING")}
-            </div>
-          </Card>
-        )}
+            </Card>
+          )}
+        </div>
+        <div className="case-timeline-container" style={{ width: "27%" }}>
+          <WorkflowTimeline
+            t={t}
+            applicationNo={caseDetails?.filingNumber}
+            tenantId={tenantId}
+            businessService="case-default"
+            onViewCasePage={true}
+            setShowAllStagesModal={setShowAllStagesModal}
+            modalView={false}
+          />
+        </div>
       </div>
       <div className="pending-actions-container">
         <TasksComponent
