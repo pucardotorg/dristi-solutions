@@ -307,7 +307,7 @@ const MainHomeScreen = () => {
         </div>
       )}
       <HomeHeader t={t} />
-      <div className="main-home-screen" style={{ display: "flex", borderTop: "1px #e8e8e8 solid", width: "100vw", height: "calc(100vh - 252px)" }}>
+      <div className="main-home-screen" style={{ display: "flex", width: "100vw", height: "calc(100vh - 173px)" }}>
         <HomeSidebar
           t={t}
           onTabChange={handleTabChange}
@@ -332,7 +332,7 @@ const MainHomeScreen = () => {
             />
           </div>
         ) : (
-          <div className="inbox-search-wrapper" style={{ width: "100%", maxHeight: "calc(100vh - 252px)", overflowY: "auto" }}>
+          <div className="inbox-search-wrapper" style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
             {inboxSearchComposer}
           </div>
         )}

@@ -52,6 +52,7 @@ import CaseOverviewV2 from "./CaseOverviewV2";
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import CaseBundleView from "./CaseBundleView";
+import WorkflowTimeline from "../../../components/WorkflowTimeline";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -221,6 +222,7 @@ const AdmittedCaseV2 = () => {
   const [showCitizenMenu, setShowCitizenMenu] = useState(false);
   const [showJoinCase, setShowJoinCase] = useState(false);
   const [shouldRefetchCaseData, setShouldRefetchCaseData] = useState(false);
+  const [showAllStagesModal, setShowAllStagesModal] = useState(false);
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
@@ -2450,6 +2452,8 @@ const AdmittedCaseV2 = () => {
         setShowWitnessModal(true);
       } else if (option.value === "SUBMIT_DOCUMENTS") {
         handleCourtAction();
+      } else if (option.value === "SHOW_TIMELINE") {
+        setShowAllStagesModal(true);
       }
     },
     [
@@ -2754,6 +2758,10 @@ const AdmittedCaseV2 = () => {
           value: "DOWNLOAD_CASE_FILE",
           label: "DOWNLOAD_CASE_FILE",
         },
+        {
+          value: "SHOW_TIMELINE",
+          label: "SHOW_TIMELINE",
+        },
       ];
     else if (isBenchClerk) {
       return currentInProgressHearing
@@ -2778,11 +2786,19 @@ const AdmittedCaseV2 = () => {
               value: "DOWNLOAD_CASE_FILE",
               label: "DOWNLOAD_CASE_FILE",
             },
+            {
+              value: "SHOW_TIMELINE",
+              label: "SHOW_TIMELINE",
+            },
           ]
         : [
             {
               value: "DOWNLOAD_CASE_FILE",
               label: "DOWNLOAD_CASE_FILE",
+            },
+            {
+              value: "SHOW_TIMELINE",
+              label: "SHOW_TIMELINE",
             },
           ];
     } else if (isTypist) {
@@ -2808,11 +2824,19 @@ const AdmittedCaseV2 = () => {
               value: "DOWNLOAD_CASE_FILE",
               label: "DOWNLOAD_CASE_FILE",
             },
+            {
+              value: "SHOW_TIMELINE",
+              label: "SHOW_TIMELINE",
+            },
           ]
         : [
             {
               value: "DOWNLOAD_CASE_FILE",
               label: "DOWNLOAD_CASE_FILE",
+            },
+            {
+              value: "SHOW_TIMELINE",
+              label: "SHOW_TIMELINE",
             },
           ];
     }
@@ -2952,6 +2976,20 @@ const AdmittedCaseV2 = () => {
     return <InboxSearchComposer key={`${config?.label}-${updateCounter}`} configs={config} showTab={false}></InboxSearchComposer>;
   }, [config, activeTab, updateCounter]);
 
+  const caseTimeLine = useMemo(() => {
+    return (
+      <WorkflowTimeline
+        t={t}
+        applicationNo={caseDetails?.filingNumber}
+        tenantId={tenantId}
+        businessService="case-default"
+        onViewCasePage={true}
+        setShowAllStagesModal={setShowAllStagesModal}
+        modalView={true}
+      />
+    );
+  }, [t, caseDetails?.filingNumber, tenantId]);
+
   if (caseApiLoading || isWorkFlowLoading || isApplicationLoading || isCaseFetching) {
     return <Loader />;
   }
@@ -3030,7 +3068,7 @@ const AdmittedCaseV2 = () => {
                       <CustomThreeDots />
                       {showCitizenMenu && (
                         <Menu
-                          options={["MANAGE_CASE_ACCESS", "DOWNLOAD_CASE_FILE"]}
+                          options={["MANAGE_CASE_ACCESS", "DOWNLOAD_CASE_FILE", "SHOW_TIMELINE"]}
                           t={t}
                           localeKeyPrefix={"CS_CASE"}
                           onSelect={(option) => {
@@ -3039,6 +3077,8 @@ const AdmittedCaseV2 = () => {
                               setShowCitizenMenu(false);
                             } else if (option === "DOWNLOAD_CASE_FILE") {
                               handleDownloadPDF();
+                            } else if (option === "SHOW_TIMELINE") {
+                              setShowAllStagesModal(true);
                             }
                           }}
                         ></Menu>
@@ -3131,6 +3171,12 @@ const AdmittedCaseV2 = () => {
           <div className="case-details-title" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <div className="sub-details-text">{caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber}</div>
             <hr className="vertical-line" />
+            {(caseDetails?.courtCaseNumber || caseDetails?.cmpNumber) && (
+              <React.Fragment>
+                {" "}
+                <div className="sub-details-text">{t(caseDetails?.filingNumber)}</div> <hr className="vertical-line" />
+              </React.Fragment>
+            )}
             <div className="sub-details-text">{t(caseDetails?.substage)}</div>
             {caseDetails?.outcome && (
               <React.Fragment>
@@ -3367,7 +3413,7 @@ const AdmittedCaseV2 = () => {
       {toast && toastDetails && (
         <Toast error={toastDetails?.isError} label={t(toastDetails?.message)} onClose={() => setToast(false)} style={{ maxWidth: "670px" }} />
       )}
-      {viewActionBar && (
+      {/* {viewActionBar && (
         <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
           <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
             {currentHearingStatus === HearingWorkflowState.SCHEDULED && tertiaryAction.action && (
@@ -3398,7 +3444,7 @@ const AdmittedCaseV2 = () => {
             />
           )}
         </ActionBar>
-      )}
+      )} */}
       {isOpenDCA && <DocumentModal config={dcaConfirmModalConfig} />}
       {showModal && (
         <AdmissionActionModal
@@ -3670,6 +3716,11 @@ const AdmittedCaseV2 = () => {
           hearing={currentActiveHearing}
           refetchHearing={() => {}}
         ></AddParty>
+      )}
+      {showAllStagesModal && (
+        <Modal popupStyles={{}} hideSubmit={true} popmoduleClassName={"workflow-timeline-modal"}>
+          {caseTimeLine}
+        </Modal>
       )}
     </div>
   );

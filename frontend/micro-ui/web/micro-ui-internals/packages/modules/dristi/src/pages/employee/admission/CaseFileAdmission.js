@@ -1118,7 +1118,7 @@ function CaseFileAdmission({ t, path }) {
   };
   return (
     <div className={"case-and-admission"}>
-      <Breadcrumb crumbs={employeeCrumbs} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb>
+      {/* <Breadcrumb crumbs={employeeCrumbs} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb> */}
 
       <div className="view-case-file">
         <div className="file-case">

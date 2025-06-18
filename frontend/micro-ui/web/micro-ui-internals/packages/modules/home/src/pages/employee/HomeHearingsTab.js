@@ -31,6 +31,22 @@ const CloseBtn = (props) => {
     </div>
   );
 };
+
+const SearchIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g clip-path="url(#clip0_36_7167)">
+      <path
+        d="M11.625 10.5H11.0325L10.8225 10.2975C11.5575 9.4425 12 8.3325 12 7.125C12 4.4325 9.8175 2.25 7.125 2.25C4.4325 2.25 2.25 4.4325 2.25 7.125C2.25 9.8175 4.4325 12 7.125 12C8.3325 12 9.4425 11.5575 10.2975 10.8225L10.5 11.0325V11.625L14.25 15.3675L15.3675 14.25L11.625 10.5ZM7.125 10.5C5.2575 10.5 3.75 8.9925 3.75 7.125C3.75 5.2575 5.2575 3.75 7.125 3.75C8.9925 3.75 10.5 5.2575 10.5 7.125C10.5 8.9925 8.9925 10.5 7.125 10.5Z"
+        fill="#505A5F"
+      />
+    </g>
+    <defs>
+      <clipPath id="clip0_36_7167">
+        <rect width="18" height="18" fill="white" />
+      </clipPath>
+    </defs>
+  </svg>
+);
 function useInboxSearch({ limit = 300, offset = 0 } = {}) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -560,12 +576,12 @@ const HomeHearingsTab = ({
               </p>
             </div>
           </td>
+          <td style={{ maxWidth: "150px" }}>{t(hearingDetails?.hearingType) || "-"}</td>
           <td>
             <span className={`status-badge ${statusClass(hearingDetails?.status)}`}>
               {hearingDetails?.status === "IN_PROGRESS" ? t("ONGOING") : t(hearingDetails?.status) || "-"}
             </span>
           </td>
-          <td style={{ maxWidth: "150px" }}>{t(hearingDetails?.hearingType) || "-"}</td>
           <td
             style={{
               textAlign: "center",
@@ -577,7 +593,13 @@ const HomeHearingsTab = ({
               <div style={{ width: "50%" }}>
                 {["IN_PROGRESS"].includes(hearingDetails?.status) && (
                   <div
-                    style={{ position: "relative", cursor: "pointer", justifyContent: "space-around", maxWidth: "80px" }}
+                    style={{
+                      position: "relative",
+                      cursor: "pointer",
+                      maxWidth: "80px",
+                      display: "flex",
+                      justifyContent: "start",
+                    }}
                     onClick={() => {
                       handleEditClick(row);
                     }}
@@ -596,7 +618,7 @@ const HomeHearingsTab = ({
                 )}
                 {["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status) && isBenchClerk && (
                   <div
-                    style={{ position: "relative", cursor: "pointer", justifyContent: "space-around", maxWidth: "80px" }}
+                    style={{ position: "relative", cursor: "pointer", display: "flex", justifyContent: "start", maxWidth: "80px" }}
                     onClick={() => {
                       handleEditClick(row);
                     }}
@@ -657,7 +679,7 @@ const HomeHearingsTab = ({
           padding: 16px 18px;
           margin-bottom: 8px;
           justify-content: space-between;
-          padding: 16px 18px 0px 18px;
+          padding: 0px 18px 0px 18px;
           flex-shrink: 0;
         }
           .search-bar{
@@ -685,7 +707,7 @@ const HomeHearingsTab = ({
         .filter-bar .filter-actions {
           display: flex;
           flex-direction: row;
-          gap: 8px;
+          gap: 24px;
           align-items: center;
           margin-left: 12px;
         }
@@ -705,42 +727,10 @@ const HomeHearingsTab = ({
           }
         }
 
-        .search-bar button.search-btn {
-          background: #007E7E;
-          color: #fff;
-          font-size: 16px;
-          font-weight: 700;
-          font-family: Roboto, sans-serif;
-          line-height: 24px;
-          border-radius: 0px;
-          border: none;
-          padding: 8px 24px;
-          margin: 0;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-          transition: background 0.2s;
-          min-width: 212px;
-          cursor: pointer;
-        }
+      
+  
+      
 
-        .search-bar button.search-btn:hover {
-          background: #159392;
-        }
-
-        .search-bar button.clear-btn {
-          background: #fff;
-          color: #007E7E;
-          border: none !important;
-          cursor: pointer;
-          padding: 8px 18px;
-          font-size: 16px;
-          font-weight: 500;
-          margin-right: 4px;
-          transition: background 0.2s, color 0.2s;
-        }
-
-        .search-bar button.clear-btn:hover {
-          background: transparent;
-        }
 
         .main-table-card {
           background: #fff;
@@ -786,7 +776,7 @@ const HomeHearingsTab = ({
         }
 
         .custom-table-row td {
-          padding: 0px 8px;
+          padding: 12px 8px;
           border-bottom: 1px solid #e8e8e8;
           font-size: 15px;
           background: #fff;
@@ -818,8 +808,8 @@ const HomeHearingsTab = ({
         }
 
         .status-ongoing {
-          background: #E4F2E4;
-          color: #00703C;
+          background: #FFF8E1;
+          color: #574406;
         }
 
         .status-passed {
@@ -833,8 +823,8 @@ const HomeHearingsTab = ({
         }
 
         .status-scheduled {
-          background: #E4F2E4;
-          color: #00703C;
+          background: #E5E4F2;
+          color: #28264B;
         }
 
         .status-abated {
@@ -902,13 +892,56 @@ const HomeHearingsTab = ({
       max-height: 300px;
     overflow-y: auto;
       }
+
+      .filter-actions .home-search-btn{
+        font-weight: 700;
+        padding: 8px 24px;
+        border: 1px solid #77787B;
+        font-size: 14px;
+        background: white;
+        height: 40px;
+      }
+
+     .filter-actions .home-clear-btn{
+     border: 0;
+    background: white;
+      color: #222222
+      }
+      .filter-actions .home-input input {
+      border:0;
+      }
+
+      .filter-actions .search-input{
+      display: flex;
+    align-items: center;
+    border: 1px solid #77787B;
+    padding: 0 8px;
+    height: 40px;
+}
+    .filter-actions   .home-input {
+    border: 0px;
+    outline: none; 
+  }
+
+ .filter-actions  .home-input:focus {
+    border: 0px;
+  }
+    @media screen and (max-width: 1330px) {
+  .filter-actions .home-input {
+    width: 90px;
+  }
+    .filter-bar .filter-actions{
+    gap: 8px
+    }
+}
 `}</style>
       <div className="filter-bar">
         <div className="filter-fields">
           <LabelFieldPair className={`case-label-field-pair `} style={{ marginTop: "1px" }}>
-            <CardLabel className="case-input-label">{`${t("STATUS")}`}</CardLabel>
+            {/* <CardLabel className="case-input-label"></CardLabel> */}
             <Dropdown
               t={t}
+              placeholder={`${t("STATUS")}`}
               option={statusOptions ? statusOptions : []}
               selected={filters?.status}
               optionKey={"name"}
@@ -923,9 +956,10 @@ const HomeHearingsTab = ({
             />
           </LabelFieldPair>
           <LabelFieldPair className={`case-label-field-pair `}>
-            <CardLabel className="case-input-label">{`${t("PURPOSE")}`}</CardLabel>
+            {/* <CardLabel className="case-input-label">{`${t("PURPOSE")}`}</CardLabel> */}
             <Dropdown
               t={t}
+              placeholder={`${t("PURPOSE")}`}
               option={hearingTypeOptions?.Hearing?.HearingType ? hearingTypeOptions?.Hearing?.HearingType : []}
               selected={filters?.purpose}
               optionKey={"code"}
@@ -940,9 +974,9 @@ const HomeHearingsTab = ({
             />
           </LabelFieldPair>
           <LabelFieldPair className={`case-label-field-pair `}>
-            <CardLabel className="case-input-label" style={{ paddingLeft: "30px" }}>{`${t("Date")}`}</CardLabel>
+            {/* <CardLabel className="case-input-label" style={{ paddingLeft: "30px" }}>{`${t("Date")}`}</CardLabel> */}
             <div className="date-arrow-group">
-              <button
+              {/* <button
                 type="button"
                 className="date-arrow-btn"
                 aria-label="Previous Day"
@@ -956,7 +990,7 @@ const HomeHearingsTab = ({
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M15 19L8 12L15 5" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
-              </button>
+              </button> */}
               <TextInput
                 className="home-input"
                 key={"status"}
@@ -966,9 +1000,9 @@ const HomeHearingsTab = ({
                   setFilters((prev) => ({ ...prev, date: e.target.value }));
                 }}
                 style={{ minWidth: 120, textAlign: "center" }}
-                disabled={loading}
+                // disabled={loading}
               />
-              <button
+              {/* <button
                 type="button"
                 className="date-arrow-btn"
                 aria-label="Next Day"
@@ -982,23 +1016,43 @@ const HomeHearingsTab = ({
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M9 5L16 12L9 19" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
-              </button>
+              </button> */}
             </div>
           </LabelFieldPair>
         </div>
         <div className="filter-actions">
-          <LabelFieldPair className={`case-label-field-pair `}>
-            <CardLabel className="case-input-label">{`${t("CASE_NAME")}`}</CardLabel>
-            <TextInput
+          <div className={`case-label-field-pair search-input`}>
+            <input
               className="home-input"
-              key={"caseQuery"}
-              type={"text"}
+              placeholder="Search here..."
+              type="text"
               value={filters?.caseQuery}
               onChange={(e) => {
                 setFilters((prev) => ({ ...prev, caseQuery: e.target.value }));
               }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !loading) {
+                  fetchInbox(filters, setHearingCount);
+                }
+              }}
             />
-          </LabelFieldPair>
+            <span
+              style={{ cursor: "pointer" }}
+              onClick={() => {
+                if (!loading) {
+                  fetchInbox(filters, setHearingCount);
+                }
+              }}
+            >
+              <SearchIcon />
+            </span>
+          </div>
+          <button className="home-search-btn" onClick={handleSearch} disabled={loading}>
+            {t("ES_COMMON_SEARCH")}
+          </button>
+          <button className="home-clear-btn" onClick={handleClear} disabled={loading}>
+            {t("CLEAR")}
+          </button>
           <button
             className="digit-button-tertiary large"
             type="button"
@@ -1006,56 +1060,22 @@ const HomeHearingsTab = ({
               window.open(hearingLink, "_blank");
             }}
             style={{
-              backgroundColor: "rgb(0, 126, 126)",
-              width: "230px",
+              backgroundColor: "#007E7E",
               height: "40px",
-              padding: "8px 8px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              padding: "8px 24px",
             }}
           >
-            <div
-              className="icon-label-container tertiary large"
+            <span
+              className="digit-button-label"
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "8px",
+                fontSize: "14px",
+                fontWeight: 700,
+                fontFamily: "Roboto",
+                color: "#FFFFFF",
               }}
             >
-              <svg height="30px" width="34px" viewBox="0 0 32 32" style={{ fill: "#ffffff" }}>
-                <path
-                  d="M30,6h-0.887c-0.525,0-1.029,0.207-1.404,0.576L25,9.248V8c0-1.657-1.344-3-3-3H3
-       C1.346,5,0,6.345,0,8v6.972V24c0,1.656,1.343,3,3,3h19c1.656,0,3-1.344,3-3v-1.221l2.709,2.672
-       c0.375,0.369,0.879,0.576,1.404,0.576H30c1.104,0,2-0.895,2-2V8C32,6.895,31.104,6,30,6z 
-       M3,25c-0.552,0-1-0.449-1-1V8c0-0.553,0.447-1,1-1h19c0.551,0,1,0.448,1,1v16
-       c0,0.551-0.449,1-1,1H3z 
-       M30,24.027h-0.887H29l-4-4V20l-1-1v-6l5-5h0.113H30V24.027z"
-                />
-              </svg>
-
-              <span
-                className="digit-button-label"
-                style={{
-                  fontSize: "16px",
-                  fontWeight: 700,
-                  fontFamily: "Roboto",
-                  color: "white",
-                }}
-              >
-                {t("JOIN_VIDEO_CONFERENCE")}
-              </span>
-            </div>
-          </button>
-        </div>
-      </div>
-      <div className="search-bar">
-        <div className="filter-actions">
-          <button className="clear-btn" onClick={handleClear} disabled={loading}>
-            {t("ES_COMMON_CLEAR_SEARCH")}
-          </button>
-          <button className="search-btn" onClick={handleSearch} disabled={loading}>
-            {t("ES_COMMON_SEARCH")}
+              {t("JOIN_VC")}
+            </span>
           </button>
         </div>
       </div>
@@ -1068,8 +1088,8 @@ const HomeHearingsTab = ({
                 <th>{t("CS_CASE_NAME")}</th>
                 <th>{t("CS_CASE_NUMBER_HOME")}</th>
                 <th className="advocate-header">{t("CS_COMMON_ADVOCATES")} </th>
-                <th>{t("STATUS")}</th>
                 <th>{t("PURPOSE")}</th>
+                <th>{t("STATUS")}</th>
                 <th>{t("ACTIONS")}</th>
               </tr>
             </thead>

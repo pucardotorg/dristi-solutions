@@ -21,7 +21,7 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
   const [currentOrder, setCurrentOrder] = useState({});
   const [taskType, setTaskType] = useState({});
   const [showAllTranscript, setShowAllTranscript] = useState(false);
-  const [showAllStagesModal, setShowAllStagesModal] = useState(false);
+  // const [showAllStagesModal, setShowAllStagesModal] = useState(false);
   const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const userRoles = useMemo(() => userInfo?.roles?.map((role) => role.code), [userInfo]);
@@ -81,7 +81,7 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
       <div style={{ display: "flex", flexDirection: "row", gap: "1rem", justifyContent: "space-between" }}>
-        <div className="hearing-summary-container" style={{ width: "72%" }}>
+        <div className="hearing-summary-container" style={{ width: "100%" }}>
           {hearingRes?.HearingList?.find(
             (hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status) && Boolean(hearing?.hearingSummary)
           ) && (
@@ -122,7 +122,7 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
             </Card>
           )}
         </div>
-        <div className="case-timeline-container" style={{ width: "27%" }}>
+        {/* <div className="case-timeline-container" style={{ width: "27%" }}>
           <WorkflowTimeline
             t={t}
             applicationNo={caseDetails?.filingNumber}
@@ -132,7 +132,7 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
             setShowAllStagesModal={setShowAllStagesModal}
             modalView={false}
           />
-        </div>
+        </div> */}
       </div>
       <div className="pending-actions-container">
         <TasksComponent
@@ -154,7 +154,7 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
         </div>
       )}
       {showAllTranscript && <ShowAllTranscriptModal setShowAllTranscript={setShowAllTranscript} hearingList={previousHearing} judgeView={true} />}
-      {showAllStagesModal && (
+      {/* {showAllStagesModal && (
         <Modal popupStyles={{}} hideSubmit={true} popmoduleClassName={"workflow-timeline-modal"}>
           <WorkflowTimeline
             t={t}
@@ -166,7 +166,7 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
             modalView={true}
           />
         </Modal>
-      )}
+      )} */}
     </div>
   );
 };
