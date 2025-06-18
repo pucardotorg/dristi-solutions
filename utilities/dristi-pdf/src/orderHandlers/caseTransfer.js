@@ -124,11 +124,11 @@ async function caseTransfer(
       order?.additionalDetails?.formdata?.caseTransferredTo || "";
     const groundsForTransfer = order?.orderDetails?.grounds || "";
     const grantStatus =
-      order?.additionalDetails?.applicationStatus === "Rejected"
+      order?.additionalDetails?.applicationStatus === "REJECTED"
         ? "REJECTED"
         : "GRANTED";
     const reasonForRejection =
-      order?.additionalDetails?.applicationStatus === "Rejected"
+      order?.additionalDetails?.applicationStatus === "REJECTED"
         ? additionalComments
         : "";
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";

@@ -12,7 +12,8 @@ import {
   configsAssignNewHearingDate,
   configsBail,
   configsCaseSettlement,
-  configsCaseTransfer,
+  configsCaseTransferAccept,
+  configsCaseTransferReject,
   configsCaseWithdrawalAccept,
   configsCaseWithdrawalReject,
   configsCreateOrderWarrant,
@@ -70,8 +71,8 @@ import { getFullName } from "../../../../cases/src/utils/joinCaseUtils";
 export const compositeOrderAllowedTypes = [
   {
     key: "finalStageOrders",
-    orderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL_ACCEPT", "SETTLEMENT", "CASE_TRANSFER", "DISMISS_CASE"],
-    unAllowedOrderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL_ACCEPT", "SETTLEMENT", "CASE_TRANSFER", ""],
+    orderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL_ACCEPT", "SETTLEMENT_ACCEPT", "TRANSFER_ACCEPT", "DISMISS_CASE"],
+    unAllowedOrderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL_ACCEPT", "SETTLEMENT_ACCEPT", "TRANSFER_ACCEPT", ""],
   },
   {
     key: "schedule_Reschedule",
@@ -109,8 +110,10 @@ const configKeys = {
   INITIATING_RESCHEDULING_OF_HEARING_DATE: configsInitiateRescheduleHearingDate,
   ASSIGNING_DATE_RESCHEDULED_HEARING: configsAssignDateToRescheduledHearing,
   ASSIGNING_NEW_HEARING_DATE: configsAssignNewHearingDate,
-  CASE_TRANSFER: configsCaseTransfer,
-  SETTLEMENT: configsCaseSettlement,
+  CASE_TRANSFER_ACCEPT: configsCaseTransferAccept,
+  CASE_TRANSFER_REJECT: configsCaseTransferReject,
+  SETTLEMENT_ACCEPT: configsCaseSettlement,
+  SETTLEMENT_REJECT: configsCaseSettlement,
   SUMMONS: configsIssueSummons,
   NOTICE: configsIssueNotice,
   BAIL: configsBail,
@@ -189,8 +192,10 @@ const stateSlaMap = {
   INITIATING_RESCHEDULING_OF_HEARING_DATE: 1,
   ASSIGNING_DATE_RESCHEDULED_HEARING: 3,
   ASSIGNING_NEW_HEARING_DATE: 3,
-  CASE_TRANSFER: 3,
-  SETTLEMENT: 3,
+  CASE_TRANSFER_ACCEPT: 3,
+  CASE_TRANSFER_REJECT: 3,
+  SETTLEMENT_ACCEPT: 3,
+  SETTLEMENT_REJECT: 3,
   SUMMONS: 3,
   NOTICE: 3,
   BAIL: 3,
@@ -2243,12 +2248,14 @@ const GenerateOrders = () => {
         return `For ${t(
           currentOrder?.orderDetails?.purposeOfHearing || currentOrder?.additionalDetails?.formdata?.hearingPurpose?.code
         )} on ${formatDate(new Date(currentOrder?.additionalDetails?.formdata?.hearingDate), "DD-MM-YYYY")}`;
-      case "CASE_TRANSFER":
+      case "CASE_TRANSFER_ACCEPT":
         return "The case is transferred to another court for further proceedings";
-      case "SETTLEMENT":
-        return currentOrder?.orderDetails?.applicationStatus === "APPROVED"
-          ? "The settlement records have been accepted by the court. Case closed."
-          : "The settlement records have been dismissed by the court";
+      case "CASE_TRANSFER_REJECT":
+        return `The request to transfer the case to another court has been rejected`;
+      case "SETTLEMENT_ACCEPT":
+        return "The settlement records have been accepted by the court. Case closed.";
+      case "SETTLEMENT_REJECT":
+        return "The settlement records have been dismissed by the court";
       case "SUMMONS":
         return `Issue Summons to ${currentOrder?.orderDetails?.parties?.[0]?.partyName}`;
       case "NOTICE":
@@ -2977,7 +2984,9 @@ const GenerateOrders = () => {
         selectedChannel?.map(async (item) => {
           let clonedPayload = JSON.parse(JSON.stringify(payload));
 
-          const pincode = ["e-Post", "Registered Post", "Via Police"].includes(item?.type) ? item?.value?.pincode : clonedPayload?.respondentDetails?.address?.pincode;
+          const pincode = ["e-Post", "Registered Post", "Via Police"].includes(item?.type)
+            ? item?.value?.pincode
+            : clonedPayload?.respondentDetails?.address?.pincode;
 
           let courtFees = await getCourtFee(item?.code, pincode, orderType);
 
@@ -3014,8 +3023,8 @@ const GenerateOrders = () => {
               };
             }
 
-            const phone = item?.type === "SMS" ? item?.value : (respondentPhoneNo?.[0] || "");
-            const email = item?.type === "E-mail" ? item?.value : (respondentEmail?.[0] || "");
+            const phone = item?.type === "SMS" ? item?.value : respondentPhoneNo?.[0] || "";
+            const email = item?.type === "E-mail" ? item?.value : respondentEmail?.[0] || "";
             const commonDetails = { address, phone, email, age: "", gender: "" };
 
             clonedPayload.respondentDetails = {
@@ -3627,7 +3636,7 @@ const GenerateOrders = () => {
         }
 
         if (orderType === "NOTICE") {
-          if(formData?.noticeOrder?.selectedChannels?.length === 0){
+          if (formData?.noticeOrder?.selectedChannels?.length === 0) {
             setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_NOTICE_ORDER"), error: true });
             hasError = true;
             break;
@@ -3635,17 +3644,13 @@ const GenerateOrders = () => {
         }
 
         if (orderType === "SUMMONS") {
-          if(formData?.SummonsOrder?.selectedChannels?.length === 0){
+          if (formData?.SummonsOrder?.selectedChannels?.length === 0) {
             setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_SUMMONS_ORDER"), error: true });
             hasError = true;
             break;
-          }
-
-          else if (
+          } else if (
             formData?.SummonsOrder?.selectedChannels?.some(
-              (channel) =>
-                (channel?.code === "POLICE") &&
-                (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
+              (channel) => channel?.code === "POLICE" && (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
             )
           ) {
             setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
