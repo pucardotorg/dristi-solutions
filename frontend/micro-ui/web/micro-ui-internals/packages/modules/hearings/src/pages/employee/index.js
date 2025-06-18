@@ -23,20 +23,26 @@ const ProjectBreadCrumb = ({ location }) => {
   const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
-    const { BreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
-    const { caseId, filingNumber } = BreadCrumbsParamsData;
-  
+  const { BreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
+  const { caseId, filingNumber } = BreadCrumbsParamsData;
+  const { fromHome } = Digit.Hooks.useQueryParams();
+  const isFromHome = fromHome === "true";
+
   const crumbs = [
     {
       path: homePath,
       content: t("ES_COMMON_HOME"),
       show: true,
     },
-    {
-      path: `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`,
-      content: t("VIEW_CASE"),
-      show: true,
-    },
+    ...(!isFromHome
+      ? [
+          {
+            path: `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`,
+            content: t("VIEW_CASE"),
+            show: true,
+          },
+        ]
+      : []),
     {
       path: `/${window?.contextPath}/${userType}`,
       content: t(location.pathname.split("/").filter(Boolean).pop()),
