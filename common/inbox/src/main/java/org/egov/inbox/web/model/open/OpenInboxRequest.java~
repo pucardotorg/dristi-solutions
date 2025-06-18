@@ -16,6 +16,9 @@ public class OpenInboxRequest {
     @JsonProperty("filingNumber")
     private String filingNumber;
 
+    @JsonProperty("caseNumber")
+    private String caseNumber;
+
     @JsonProperty("tenantId")
     private String tenantId;
 

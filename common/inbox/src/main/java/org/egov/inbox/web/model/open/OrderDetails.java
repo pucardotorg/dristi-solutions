@@ -9,7 +9,7 @@ public class OrderDetails {
     @JsonProperty("date")
     private Long date;
 
-    @JsonProperty("businessOfDay")
-    private String businessOfDay;
+    @JsonProperty("businessOfTheDay")
+    private String businessOfTheDay;
 
 }

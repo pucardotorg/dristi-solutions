@@ -551,10 +551,14 @@ public class InboxServiceV2 {
         criteria.setModuleName("Pending Tasks Service");
         criteria.setLimit(openInboxRequest.getLimit());
         criteria.setOffset(openInboxRequest.getOffset());
+        criteria.setTenantId(openInboxRequest.getTenantId());
 
         HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
         moduleSearchCriteria.put("filingNumber", openInboxRequest.getFilingNumber());
         moduleSearchCriteria.put("courtId", openInboxRequest.getCourtId());
+        moduleSearchCriteria.put("isCompleted", false);
+        moduleSearchCriteria.put("status", "PENDING_PAYMENT");
+        moduleSearchCriteria.put("entityType", Arrays.asList("task-notice","task-summons", "task-warrant"));
 
         criteria.setModuleSearchCriteria(moduleSearchCriteria);
 
@@ -621,8 +625,9 @@ public class InboxServiceV2 {
         criteria.setProcessSearchCriteria(processCriteria);
 
         HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
-        moduleSearchCriteria.put("caseNumbers", Collections.singletonList(openInboxRequest.getCaseNumber()));
+        moduleSearchCriteria.put("caseNumbers", Collections.singletonList(openInboxRequest.getFilingNumber()));
         moduleSearchCriteria.put("tenantId", openInboxRequest.getTenantId());
+        moduleSearchCriteria.put("status", Arrays.asList("DRAFT_IN_PROGRESS", "PENDING_BULK_E-SIGN","PUBLISHED","ABATED","PENDING_E-SIGN"));
 
         criteria.setModuleSearchCriteria(moduleSearchCriteria);
 
@@ -648,12 +653,12 @@ public class InboxServiceV2 {
                         Map<String, Object> orderNotification = (Map<String, Object>) orderNotificationObj;
 
                         Object dateObj = orderNotification.get("date");
-                        Object businessOfDayObj = orderNotification.get("businessOfDay");
+                        Object businessOfDayObj = orderNotification.get("businessOfTheDay");
 
                         if (dateObj != null) {
                             OrderDetails orderDetails = new OrderDetails();
                             orderDetails.setDate(Long.parseLong(dateObj.toString()));
-                            orderDetails.setBusinessOfDay(businessOfDayObj != null ? businessOfDayObj.toString() : null);
+                            orderDetails.setBusinessOfTheDay(businessOfDayObj != null ? businessOfDayObj.toString() : null);
                             orderDetailsList.add(orderDetails);
                         }
                     }
