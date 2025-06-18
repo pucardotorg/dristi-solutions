@@ -109,6 +109,12 @@ const MainHomeScreen = () => {
       };
       const res = await HomeService.InboxSearch(payload, { tenantId: tenantId });
       setHearingCount(res?.totalCount || 0);
+      setFilters({
+        date: todayStr,
+        status: "",
+        purpose: "",
+        caseQuery: "",
+      });
     } catch (err) {
       showToast("error", t("ISSUE_IN_FETCHING"), 5000);
       console.log(err);
