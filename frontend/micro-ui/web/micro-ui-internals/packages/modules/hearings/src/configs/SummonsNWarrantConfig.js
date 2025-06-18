@@ -67,7 +67,7 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
             {
               label: "PROCESS_FEE_PAID_ON",
               jsonPath: "feePaidDate",
-              additionalCustomization: true
+              additionalCustomization: true,
             },
           ],
 
