@@ -12,7 +12,7 @@ function timeInMillisFromDateAndTime(date, hhmmssms) {
   return startOfDate.getTime() + millis;
 }
 
-const NextHearingCard = ({ caseData, width, minWidth }) => {
+const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
   const filingNumber = caseData.filingNumber;
   const cnr = caseData.cnrNumber;
   const caseCourtId = useMemo(() => caseData?.case?.courtId, [caseData]);
@@ -43,7 +43,7 @@ const NextHearingCard = ({ caseData, width, minWidth }) => {
   );
 
   const scheduledHearing = hearingRes?.HearingList?.filter(
-    (hearing) => ![HearingWorkflowState.COMPLETED, HearingWorkflowState?.OPTOUT, HearingWorkflowState?.ABATED].includes(hearing?.status)
+    (hearing) => ![HearingWorkflowState.COMPLETED, HearingWorkflowState?.OPTOUT, HearingWorkflowState?.ABATED,HearingWorkflowState?.ABANDONED].includes(hearing?.status)
   ).sort((hearing1, hearing2) => hearing1.startTime - hearing2.startTime)[0];
 
   const hiddenOutcomes = [
@@ -127,11 +127,11 @@ const NextHearingCard = ({ caseData, width, minWidth }) => {
 
   return (
     <Card
-      style={{
+      style={{ ...(cardStyle ? cardStyle : {
         width: width,
         minWidth: minWidth,
         marginTop: "10px",
-      }}
+      })}}
     >
       <div
         style={{
@@ -144,7 +144,7 @@ const NextHearingCard = ({ caseData, width, minWidth }) => {
         {t("NEXT_HEARING")}
       </div>
       <hr style={{ border: "1px solid #FFF6E880" }} />
-      <div style={{ display: "flex", justifyContent: "space-between", padding: "10px" }}>
+      <div style={{ display: "flex", justifyContent: "start", gap: "10vw", alignItems: "center", padding: "10px" }}>
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
           <div className="hearingCard">
             <div className="hearingDate">
@@ -184,7 +184,7 @@ const NextHearingCard = ({ caseData, width, minWidth }) => {
             variation={"outlined"}
             onButtonClick={handleButtonClick}
             isDisabled={isCourtRoomManager || (roles.includes("CITIZEN") && scheduledHearing?.status === "SCHEDULED")}
-            label={scheduledHearing?.status === "SCHEDULED" ? t("AWAIT_START_HEARING") : t("JOIN_HEARING")}
+            label={scheduledHearing?.status === "SCHEDULED" ? t("AWAIT_START_HEARING") : scheduledHearing?.status === "IN_PROGRESS" ? t("JOIN_HEARING") : t("PASSED_OVER")}
           />
         )}
       </div>

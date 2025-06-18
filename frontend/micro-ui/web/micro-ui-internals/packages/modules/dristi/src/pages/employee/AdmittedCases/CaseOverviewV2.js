@@ -9,6 +9,7 @@ import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import ShowAllTranscriptModal from "../../../components/ShowAllTranscriptModal";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
+import NextHearingCard from "./NextHearingCard";
 
 const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails, showNoticeProcessModal = true }) => {
   const { t } = useTranslation();
@@ -80,11 +81,15 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      {userInfoType === "citizen" && (
+        <div style={{ width: "100%" }}>
+          <NextHearingCard caseData={caseData} width={"100%"} minWidth={"100%"}
+           cardStyle={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none", maxWidth: "100%" }} />
+        </div>
+      )}
       <div style={{ display: "flex", flexDirection: "row", gap: "1rem", justifyContent: "space-between" }}>
         <div className="hearing-summary-container" style={{ width: "100%" }}>
-          {hearingRes?.HearingList?.find(
-            (hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status) && Boolean(hearing?.hearingSummary)
-          ) && (
+          {
             <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none", maxWidth: "100%" }}>
               <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
                 <div
@@ -117,10 +122,10 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
                   lineHeight: "24px",
                 }}
               >
-                {previousHearing?.[0]?.hearingSummary ? <div>{previousHearing?.[0]?.hearingSummary}</div> : t("CS_CASE_NO_TRANSCRIPT_FOR_HEARING")}
+                {previousHearing?.[0]?.hearingSummary ? <div>{previousHearing?.[0]?.hearingSummary}</div> : t("NO_HEARING_SUMMARY_AVAILABLE")}
               </div>
             </Card>
-          )}
+          }
         </div>
         {/* <div className="case-timeline-container" style={{ width: "27%" }}>
           <WorkflowTimeline
