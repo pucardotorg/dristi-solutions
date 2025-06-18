@@ -69,8 +69,16 @@ async function processPendingAdmissionCase({
       : {};
 
   // Create an array of promises for all processing functions
-  const processingPromises = [
+  const complaintPromises = [
     processTitlePageSection(
+      courtCase,
+      caseBundleMaster,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR,
+      indexCopy
+    ),
+    processComplaintSection(
       courtCase,
       caseBundleMaster,
       tenantId,
@@ -87,14 +95,11 @@ async function processPendingAdmissionCase({
       indexCopy,
       messagesMap
     ),
-    processComplaintSection(
-      courtCase,
-      caseBundleMaster,
-      tenantId,
-      requestInfo,
-      TEMP_FILES_DIR,
-      indexCopy
-    ),
+  ];
+
+  await Promise.all(complaintPromises);
+
+  const filingPromises = [
     processFilingsSection(
       courtCase,
       caseBundleMaster,
@@ -129,6 +134,11 @@ async function processPendingAdmissionCase({
       indexCopy,
       messagesMap
     ),
+  ];
+
+  await Promise.all(filingPromises);
+
+  const processingPromises = [
     processMandatorySubmissions(
       courtCase,
       caseBundleMaster,
@@ -208,7 +218,6 @@ async function processPendingAdmissionCase({
     ),
   ];
 
-  // Wait for all promises to resolve
   await Promise.all(processingPromises);
 
   indexCopy.isRegistered = true;
