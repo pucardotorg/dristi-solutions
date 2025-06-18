@@ -349,7 +349,7 @@ const HomeView = () => {
 
   const handleNavigate = () => {
     const contextPath = window?.contextPath || "";
-    history.push(`/${contextPath}/${userInfoType}/hearings/`);
+    history.push(`/${contextPath}/${userInfoType}/hearings?fromHome=true`);
   };
   const JoinCaseHome = Digit?.ComponentRegistryService?.getComponent("JoinCaseHome");
 
