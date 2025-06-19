@@ -69,4 +69,7 @@ public class TransformerProperties {
 
     @Value("${egov.mdms.search.endpoint}")
     private String mdmsEndPoint;
+
+    @Value("${transformer.producer.case.search.topic}")
+    private String caseSearchTopic;
 }

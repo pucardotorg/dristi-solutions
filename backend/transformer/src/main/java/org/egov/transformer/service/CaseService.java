@@ -116,4 +116,26 @@ public class CaseService {
             throw new CustomException("Error fetching case: ", ServiceConstants.ERROR_CASE_SEARCH);
         }
     }
+
+    private CaseSearch getCourtCase(CaseRequest caseRequest) {
+        CourtCase courtCase = caseRequest.getCases();
+        CaseSearch caseSearch = new CaseSearch();
+        caseSearch.setCaseTitle(courtCase.getCaseTitle());
+        caseSearch.setFilingNumber(courtCase.getFilingNumber());
+        caseSearch.setTenantId(courtCase.getTenantId());
+        courtCase.setCmpNumber(courtCase.getCmpNumber());
+        caseSearch.setCaseType(courtCase.getCaseType());
+        caseSearch.setCnrNumber(courtCase.getCnrNumber());
+        caseSearch.setCaseStage(courtCase.getStage());
+        caseSearch.setCaseStatus(courtCase.getStatus());
+        caseSearch.setYearOfFiling(String.valueOf(courtCase.getFilingDate()));
+
+        return caseSearch;
+
+    }
+
+    public void enrichCaseSearch(CaseRequest caseRequest) {
+        CaseSearch caseSearch = getCourtCase(caseRequest);
+        producer.push(properties.getCaseSearchTopic(), caseSearch);
+    }
 }

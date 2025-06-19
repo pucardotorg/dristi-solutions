@@ -1,5 +1,6 @@
 package org.egov.transformer.consumer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -198,5 +199,35 @@ public class CaseConsumer {
         caseCriteriaList.add(caseCriteria);
         caseResponse.setCriteria(caseCriteriaList);
         producer.push("case-legacy-topic", caseResponse);
+    }
+
+    @KafkaListener(topics = {"${transformer.consumer.create.case.topic}"})
+    public void consumeCreateCaseApplication(ConsumerRecord<String, Object> payload,
+                         @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+       publishCaseSearch(payload, transformerProperties.getCaseSearchTopic());
+    }
+
+    @KafkaListener(topics = {"${transformer.consumer.update.case.topic}"})
+    public void consumeUpdateCaseApplication(ConsumerRecord<String, Object> payload,
+                                        @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        publishCaseSearch(payload, transformerProperties.getCaseSearchTopic());
+    }
+
+    @KafkaListener(topics = {"${transformer.consumer.case.status.update.topic}"})
+    public void consumeUpdateCaseStatusApplication(ConsumerRecord<String, Object> payload,
+                                             @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        publishCaseSearch(payload, transformerProperties.getCaseSearchTopic());
+    }
+
+    public void publishCaseSearch(ConsumerRecord<String, Object> payload,
+                                  @Header(KafkaHeaders.RECEIVED_TOPIC) String topic){
+        try {
+            CaseRequest caseRequest = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseRequest>() {
+            }));
+            caseService.enrichCaseSearch(caseRequest);
+
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
