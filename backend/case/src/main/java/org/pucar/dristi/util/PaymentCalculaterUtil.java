@@ -28,33 +28,21 @@ public class PaymentCalculaterUtil {
     }
 
     public CalculationRes callPaymentCalculator(JoinCasePaymentRequest request) {
-         try {
-            StringBuilder uri = new StringBuilder();
-            uri.append(config.getPaymentCalculatorHost()).append(config.getPaymentCalculatorEndpoint());
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<JoinCasePaymentRequest> requestEntity = new HttpEntity<>(request, headers);
-
-            ResponseEntity<CalculationRes> responseEntity = restTemplate.postForEntity(uri.toString(),
-                    requestEntity, CalculationRes.class);
-            log.info("Response of payment calculator :: {}",requestEntity.getBody());
-
-            return responseEntity.getBody();
-        } catch (Exception e) {
-            log.error("Error getting response from payment calculator service", e);
-            throw new CustomException("PAYMENT_CALCULATOR_ERROR", "Error getting response from payment calculator service");
-        }
+        return callPaymentCalculatorInternal(request, config.getPaymentCalculatorEndpoint());
     }
 
     public CalculationRes callPaymentCalculator(EFillingCalculationRequest calculationRequest) {
+        return callPaymentCalculatorInternal(calculationRequest, config.getCaseFilingPaymentCalculatorEndpoint());
+    }
+
+    public <T> CalculationRes callPaymentCalculatorInternal(T request, String endpoint) {
         try {
             StringBuilder uri = new StringBuilder();
-            uri.append(config.getPaymentCalculatorHost()).append(config.getCaseFilingPaymentCalculatorEndpoint());
+            uri.append(config.getPaymentCalculatorHost()).append(endpoint);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<EFillingCalculationRequest> requestEntity = new HttpEntity<>(calculationRequest, headers);
+            HttpEntity<T> requestEntity = new HttpEntity<>(request, headers);
 
             ResponseEntity<CalculationRes> responseEntity = restTemplate.postForEntity(uri.toString(),
                     requestEntity, CalculationRes.class);
