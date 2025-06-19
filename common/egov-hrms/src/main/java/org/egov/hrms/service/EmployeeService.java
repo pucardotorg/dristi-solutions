@@ -138,13 +138,13 @@ public class EmployeeService {
 		idGenService.setIds(employeeRequest);
 		employeeRequest.getEmployees().stream().forEach(employee -> {
 			enrichCreateRequest(employee, requestInfo);
-			createUser(employee, requestInfo);
-			pwdMap.put(employee.getUuid(), employee.getUser().getPassword());
+//			createUser(employee, requestInfo);
+//			pwdMap.put(employee.getUuid(), employee.getUser().getPassword());
 			employee.getUser().setPassword(null);
 		});
 		String hrmsCreateTopic = propertiesManager.getSaveEmployeeTopic();
 		hrmsProducer.push(tenantId, hrmsCreateTopic, employeeRequest);
-		notificationService.sendNotification(employeeRequest, pwdMap);
+//		notificationService.sendNotification(employeeRequest, pwdMap);
 		return generateResponse(employeeRequest);
 	}
 
