@@ -315,7 +315,7 @@ public class CaseServiceTest {
         // Verify key interactions
         verify(caseRepository, times(1)).getCases(anyList(), eq(requestInfo));
         verify(validator, times(1)).validateRepresentativeJoinCase(joinCaseV2Request);
-        verify(paymentCalculaterUtil, times(1)).callPaymentCalculator(any());
+        verify(paymentCalculaterUtil, times(1)).callPaymentCalculator((JoinCasePaymentRequest) any());
         verify(taskUtil, never()).callCreateTask(any()); // No task creation
         verify(etreasuryUtil, never()).createDemand(any(), anyString(), anyList()); // No demand creation
     }
@@ -359,7 +359,7 @@ public class CaseServiceTest {
         // Verify key interactions
         verify(caseRepository, times(1)).getCases(anyList(), eq(requestInfo));
         verify(validator, times(1)).validateRepresentativeJoinCase(joinCaseV2Request);
-        verify(paymentCalculaterUtil, times(1)).callPaymentCalculator(any());
+        verify(paymentCalculaterUtil, times(1)).callPaymentCalculator((JoinCasePaymentRequest) any());
         verify(taskUtil, times(1)).callCreateTask(any(TaskRequest.class));
         verify(etreasuryUtil, times(1)).createDemand(any(), eq(FILING_NUMBER + "_JOIN"), anyList());
         verify(producer, never()).push(eq(config.getRepresentativeJoinCaseTopic()), any()); // Shouldn't push advocate data yet
@@ -472,7 +472,7 @@ public class CaseServiceTest {
         verify(caseRepository, times(1)).getCases(anyList(), eq(requestInfo));
         verify(encryptionDecryptionUtil, times(1)).decryptObject(any(), any(), any(), any());
         verify(validator, times(1)).validateRepresentativeJoinCase(joinCaseV2Request);
-        verify(paymentCalculaterUtil, never()).callPaymentCalculator(any()); // Should fail before payment calc
+        verify(paymentCalculaterUtil, never()).callPaymentCalculator((JoinCasePaymentRequest) any()); // Should fail before payment calc
     }
 
     CaseCriteria setupTestCaseCriteria(CourtCase courtCase) {

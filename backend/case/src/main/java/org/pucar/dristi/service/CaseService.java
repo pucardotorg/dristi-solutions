@@ -295,7 +295,7 @@ public class CaseService {
 
     public CourtCase createCase(CaseRequest body) {
         try {
-//            validator.validateCaseRegistration(body);
+            validator.validateCaseRegistration(body);
 
             enrichmentUtil.enrichCaseRegistrationOnCreate(body);
 
