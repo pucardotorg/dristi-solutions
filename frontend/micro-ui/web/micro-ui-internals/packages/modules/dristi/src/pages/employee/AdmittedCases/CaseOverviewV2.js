@@ -9,6 +9,7 @@ import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import ShowAllTranscriptModal from "../../../components/ShowAllTranscriptModal";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
+import NextHearingCard from "./NextHearingCard";
 
 const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails, showNoticeProcessModal = true }) => {
   const { t } = useTranslation();
@@ -21,7 +22,7 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
   const [currentOrder, setCurrentOrder] = useState({});
   const [taskType, setTaskType] = useState({});
   const [showAllTranscript, setShowAllTranscript] = useState(false);
-  const [showAllStagesModal, setShowAllStagesModal] = useState(false);
+  // const [showAllStagesModal, setShowAllStagesModal] = useState(false);
   const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const userRoles = useMemo(() => userInfo?.roles?.map((role) => role.code), [userInfo]);
@@ -80,11 +81,15 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
   }
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+      {userInfoType === "citizen" && (
+        <div style={{ width: "100%" }}>
+          <NextHearingCard caseData={caseData} width={"100%"} minWidth={"100%"}
+           cardStyle={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none", maxWidth: "100%" }} />
+        </div>
+      )}
       <div style={{ display: "flex", flexDirection: "row", gap: "1rem", justifyContent: "space-between" }}>
-        <div className="hearing-summary-container" style={{ width: "72%" }}>
-          {hearingRes?.HearingList?.find(
-            (hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status) && Boolean(hearing?.hearingSummary)
-          ) && (
+        <div className="hearing-summary-container" style={{ width: "100%" }}>
+          {
             <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none", maxWidth: "100%" }}>
               <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
                 <div
@@ -117,12 +122,12 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
                   lineHeight: "24px",
                 }}
               >
-                {previousHearing?.[0]?.hearingSummary ? <div>{previousHearing?.[0]?.hearingSummary}</div> : t("CS_CASE_NO_TRANSCRIPT_FOR_HEARING")}
+                {previousHearing?.[0]?.hearingSummary ? <div>{previousHearing?.[0]?.hearingSummary}</div> : t("NO_HEARING_SUMMARY_AVAILABLE")}
               </div>
             </Card>
-          )}
+          }
         </div>
-        <div className="case-timeline-container" style={{ width: "27%" }}>
+        {/* <div className="case-timeline-container" style={{ width: "27%" }}>
           <WorkflowTimeline
             t={t}
             applicationNo={caseDetails?.filingNumber}
@@ -132,7 +137,7 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
             setShowAllStagesModal={setShowAllStagesModal}
             modalView={false}
           />
-        </div>
+        </div> */}
       </div>
       <div className="pending-actions-container">
         <TasksComponent
@@ -154,7 +159,7 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
         </div>
       )}
       {showAllTranscript && <ShowAllTranscriptModal setShowAllTranscript={setShowAllTranscript} hearingList={previousHearing} judgeView={true} />}
-      {showAllStagesModal && (
+      {/* {showAllStagesModal && (
         <Modal popupStyles={{}} hideSubmit={true} popmoduleClassName={"workflow-timeline-modal"}>
           <WorkflowTimeline
             t={t}
@@ -166,7 +171,7 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
             modalView={true}
           />
         </Modal>
-      )}
+      )} */}
     </div>
   );
 };
