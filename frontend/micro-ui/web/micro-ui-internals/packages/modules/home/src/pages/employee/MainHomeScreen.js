@@ -25,6 +25,7 @@ const MainHomeScreen = () => {
   const location = useLocation();
   const homeFilteredData = location?.state?.homeFilteredData;
 
+  const homeActiveTab = location?.state?.homeActiveTab || null;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [activeTab, setActiveTab] = useState("HEARINGS_TAB");
   const [updateCounter, setUpdateCounter] = useState(0);
@@ -108,6 +109,12 @@ const MainHomeScreen = () => {
       };
       const res = await HomeService.InboxSearch(payload, { tenantId: tenantId });
       setHearingCount(res?.totalCount || 0);
+      setFilters({
+        date: todayStr,
+        status: "",
+        purpose: "",
+        caseQuery: "",
+      });
     } catch (err) {
       showToast("error", t("ISSUE_IN_FETCHING"), 5000);
       console.log(err);
@@ -283,61 +290,68 @@ const MainHomeScreen = () => {
     [activeTab, updateCounter, modifiedConfig]
   );
 
-  if (loader) {
-    return <Loader />;
-  }
-
   return (
     <React.Fragment>
-      {loader ? (
-        <Loader />
-      ) : (
-        <React.Fragment>
-          {" "}
-          <HomeHeader t={t} />
-          <div
-            className="main-home-screen"
-            style={{ display: "flex", borderTop: "1px #e8e8e8 solid", width: "100vw", height: "calc(100vh - 252px)" }}
-          >
-            <HomeSidebar
+      {" "}
+      {loader && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "10001",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
+      <HomeHeader t={t} />
+      <div className="main-home-screen" style={{ display: "flex", width: "100vw", height: "calc(100vh - 173px)" }}>
+        <HomeSidebar
+          t={t}
+          onTabChange={handleTabChange}
+          activeTab={activeTab}
+          options={options}
+          isOptionsLoading={false}
+          hearingCount={hearingCount}
+          pendingTaskCount={pendingTaskCount}
+          showToast={showToast}
+        />
+        {activeTab === "HEARINGS_TAB" ? (
+          <div style={{ width: "100%" }}>
+            <HomeHearingsTab
               t={t}
-              onTabChange={handleTabChange}
-              activeTab={activeTab}
-              options={options}
-              isOptionsLoading={false}
-              hearingCount={hearingCount}
-              pendingTaskCount={pendingTaskCount}
+              setHearingCount={setHearingCount}
+              setLoader={setLoader}
+              setShowEndHearingModal={setShowEndHearingModal}
+              showEndHearingModal={showEndHearingModal}
+              setFilters={setFilters}
+              filters={filters}
               showToast={showToast}
             />
-            {activeTab === "HEARINGS_TAB" ? (
-              <div style={{ width: "100%" }}>
-                <HomeHearingsTab
-                  t={t}
-                  setHearingCount={setHearingCount}
-                  setLoader={setLoader}
-                  setShowEndHearingModal={setShowEndHearingModal}
-                  showEndHearingModal={showEndHearingModal}
-                  setFilters={setFilters}
-                  filters={filters}
-                />
-              </div>
-            ) : (
-              <div className="inbox-search-wrapper" style={{ width: "100%", maxHeight: "calc(100vh - 252px)", overflowY: "auto" }}>
-                {inboxSearchComposer}
-              </div>
-            )}
-            {toastMsg && (
-              <Toast
-                error={toastMsg.key === "error"}
-                label={t(toastMsg.action)}
-                onClose={() => setToastMsg(null)}
-                isDleteBtn={true}
-                style={{ maxWidth: "500px" }}
-              />
-            )}
-          </div>{" "}
-        </React.Fragment>
-      )}
+          </div>
+        ) : (
+          <div className="inbox-search-wrapper" style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
+            {inboxSearchComposer}
+          </div>
+        )}
+        {toastMsg && (
+          <Toast
+            error={toastMsg.key === "error"}
+            label={t(toastMsg.action)}
+            onClose={() => setToastMsg(null)}
+            isDleteBtn={true}
+            style={{ maxWidth: "500px" }}
+          />
+        )}
+      </div>{" "}
     </React.Fragment>
   );
 };

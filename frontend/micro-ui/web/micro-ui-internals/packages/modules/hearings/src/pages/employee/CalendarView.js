@@ -9,10 +9,12 @@ import PreHearingModal from "../../components/PreHearingModal";
 import TasksComponent from "../../components/TaskComponentCalander";
 import { Button, Loader } from "@egovernments/digit-ui-react-components";
 import BulkReschedule from "./BulkReschedule";
+import { useLocation } from "react-router-dom";
 
 const tenantId = window?.Digit.ULBService.getCurrentTenantId();
 const MonthlyCalendar = ({ hideRight }) => {
   const history = useHistory();
+  const location = useLocation();
   const { t } = useTranslation();
   const calendarRef = useRef(null);
   const getCurrentViewType = () => {
@@ -242,8 +244,15 @@ const MonthlyCalendar = ({ hideRight }) => {
     setSlot(arg.event.extendedProps.slot);
     setSlotId(arg.event.extendedProps.slotId);
     setInitialView(getCurrentViewType());
+    const updatedState = location?.state?.fromHome ? { ...location.state, fromHome: true } : location?.state;
+
     setCount(count);
-    if (!hideRight) history.replace({ search: searchParams.toString() });
+    if (!hideRight) {
+      history.replace({
+        search: searchParams.toString(),
+        state: updatedState,
+      });
+    }
   };
 
   const closeModal = () => {
@@ -255,7 +264,13 @@ const MonthlyCalendar = ({ hideRight }) => {
       searchParams.delete("slotId");
       searchParams.delete("view");
       searchParams.delete("count");
-      history.replace({ search: searchParams.toString() });
+
+      const updatedState = location?.state?.fromHome ? { ...location.state, fromHome: true } : location?.state;
+
+      history.replace({
+        search: searchParams.toString(),
+        state: updatedState,
+      });
     } else {
       setFromDate(null);
       setToDate(null);

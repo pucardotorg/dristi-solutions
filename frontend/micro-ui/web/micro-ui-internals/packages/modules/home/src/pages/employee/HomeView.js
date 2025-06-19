@@ -349,8 +349,12 @@ const HomeView = () => {
 
   const handleNavigate = () => {
     const contextPath = window?.contextPath || "";
-    history.push(`/${contextPath}/${userInfoType}/hearings/`);
+    history.push({
+      pathname: `/${contextPath}/${userInfoType}/hearings`,
+      state: { fromHome: true },
+    });
   };
+
   const JoinCaseHome = Digit?.ComponentRegistryService?.getComponent("JoinCaseHome");
 
   const getRedirectUrl = (status, caseId, filingNumber) => {

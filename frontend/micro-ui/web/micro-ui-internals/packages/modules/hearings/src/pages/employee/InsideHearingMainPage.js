@@ -1,7 +1,7 @@
 import { TextArea } from "@egovernments/digit-ui-components";
 import { ActionBar, CardLabel, Dropdown, LabelFieldPair, Button } from "@egovernments/digit-ui-react-components";
 import debounce from "lodash/debounce";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import { Urls } from "../../hooks/services/Urls";
@@ -24,6 +24,7 @@ import { getFilingType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/caseUtils";
 import { constructFullName, removeInvalidNameParts } from "@egovernments/digit-ui-module-orders/src/utils";
 import { Loader } from "@egovernments/digit-ui-react-components";
+import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 
 const SECOND = 1000;
 
@@ -50,6 +51,8 @@ const InsideHearingMainPage = () => {
   const { t } = useTranslation();
   const isInitialLoad = useRef(true);
   const userInfo = Digit?.UserService?.getUser?.()?.info;
+  const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
+  const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
 
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
@@ -84,6 +87,25 @@ const InsideHearingMainPage = () => {
     filingNumber,
     Boolean(filingNumber)
   );
+  const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
+  const [caseApiError, setCaseApiError] = useState(undefined);
+  const isBreadCrumbsParamsDataSet = useRef(false);
+  const caseId = caseData?.criteria?.[0]?.responseList?.[0]?.id;
+
+  useEffect(() => {
+    if (
+      caseId &&
+      filingNumber &&
+      !isBreadCrumbsParamsDataSet.current &&
+      (caseId !== caseIdFromBreadCrumbs || filingNumber !== filingNumberFromBreadCrumbs)
+    ) {
+      isBreadCrumbsParamsDataSet.current = true;
+      setBreadCrumbsParamsData({
+        caseId,
+        filingNumber,
+      });
+    }
+  }, [caseId, caseIdFromBreadCrumbs, filingNumber, filingNumberFromBreadCrumbs, setBreadCrumbsParamsData]);
 
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];
