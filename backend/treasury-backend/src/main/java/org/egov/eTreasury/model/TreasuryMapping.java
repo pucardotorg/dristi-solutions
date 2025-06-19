@@ -32,7 +32,7 @@ public class TreasuryMapping {
     private Long lastModifiedTime;
 
     @JsonProperty("reSubmissionBreakDown")
-    private List<Calculation> reSubmissionBreakDown;
+    private Calculation reSubmissionBreakDown;
 
     @JsonProperty("lastSubmissionConsumerCode")
     private String lastSubmissionConsumerCode;

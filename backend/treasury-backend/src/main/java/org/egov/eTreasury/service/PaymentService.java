@@ -396,24 +396,38 @@ public class PaymentService {
     private void updateTreasuryMapping(DemandCreateRequest demandRequest) {
         try {
             TreasuryMapping existingMapping = treasuryMappingRepository.getTreasuryMapping(demandRequest.getConsumerCode());
-            if(existingMapping != null) {
-                String consumerCode = getNextConsumerCode(existingMapping.getLastSubmissionConsumerCode());
-                demandRequest.setConsumerCode(consumerCode);
-                existingMapping.setLastSubmissionConsumerCode(consumerCode);
 
-                Calculation calculation = compareOldAndNewBreakDown(existingMapping.getCalculation(), demandRequest.getCalculation().get(0));
-                demandRequest.setCalculation(List.of(calculation));
-                if (existingMapping.getReSubmissionBreakDown() == null) {
-                    existingMapping.setReSubmissionBreakDown(new ArrayList<>());
-                }
-                existingMapping.getReSubmissionBreakDown().add(calculation);
-                existingMapping.setLastModifiedTime(System.currentTimeMillis());
-                producer.push(config.getTreasuryMappingSaveTopic(), existingMapping);
-            }
+            if (existingMapping == null) return;
+
+            String lastConsumerCode = existingMapping.getLastSubmissionConsumerCode();
+            String newConsumerCode = getNextConsumerCode(lastConsumerCode != null ? lastConsumerCode : demandRequest.getConsumerCode());
+            demandRequest.setConsumerCode(newConsumerCode);
+
+            Calculation latestCalculation = demandRequest.getCalculation().get(0);
+
+            Calculation differenceCalculation = compareOldAndNewBreakDown(existingMapping.getCalculation(), latestCalculation);
+
+            //update head breakup for existing mapping
+            updateHeadMapping(existingMapping, demandRequest);
+            demandRequest.setCalculation(List.of(differenceCalculation));
+
+            // Add to resubmission breakdown
+            existingMapping.setReSubmissionBreakDown(differenceCalculation);
+            existingMapping.setLastModifiedTime(System.currentTimeMillis());
+            existingMapping.setLastSubmissionConsumerCode(newConsumerCode);
+            producer.push(config.getTreasuryMappingUpdateTopic(), existingMapping);
+
         } catch (Exception e) {
             log.error("Error occurred while updating treasury mapping: ", e);
             throw new CustomException("TREASURY_MAPPING_UPDATE_ERROR", "Error occurred while updating treasury mapping");
         }
+    }
+
+
+    private void updateHeadMapping(TreasuryMapping existingMapping, DemandCreateRequest demandCreateRequest) {
+        TreasuryMapping newTreasuryMapping = generateTreasuryMapping(demandCreateRequest);
+        existingMapping.setHeadAmountMapping(newTreasuryMapping.getHeadAmountMapping());
+        existingMapping.setCalculation(newTreasuryMapping.getCalculation());
     }
 
     private Calculation compareOldAndNewBreakDown(Calculation existingCalculation, Calculation newCalculation) {
@@ -423,20 +437,24 @@ public class PaymentService {
         }
         Map<String, BreakDown> existingMap = existingCalculation.getBreakDown().stream()
             .collect(Collectors.toMap(BreakDown::getCode, Function.identity()));
-            
-        newCalculation.getBreakDown().stream()
-            .filter(newBreakDown -> existingMap.containsKey(newBreakDown.getCode()))
-            .filter(newBreakDown -> newBreakDown.getAmount() > existingMap.get(newBreakDown.getCode()).getAmount())
-            .forEach(newBreakDown -> {
-                BreakDown existingBreakDown = existingMap.get(newBreakDown.getCode());
-                calculation.getBreakDown().add(new BreakDown(
-                    newBreakDown.getType(), 
-                    newBreakDown.getCode(), 
-                    newBreakDown.getAmount() - existingBreakDown.getAmount(), 
-                    null
-                ));
-            });
-            
+
+        for (BreakDown newBreakDown : newCalculation.getBreakDown()) {
+            BreakDown existingBreakDown = existingMap.get(newBreakDown.getCode());
+            if (existingBreakDown != null) {
+                double newAmount = newBreakDown.getAmount();
+                double oldAmount = existingBreakDown.getAmount();
+                if (newAmount > oldAmount) {
+                    double difference = newAmount - oldAmount;
+                    calculation.setTotalAmount(calculation.getTotalAmount()+difference);
+                    calculation.getBreakDown().add(new BreakDown(
+                            newBreakDown.getType(),
+                            newBreakDown.getCode(),
+                            difference,
+                            null
+                    ));
+                }
+            }
+        }
         return calculation;
     }
 
@@ -581,11 +599,11 @@ public class PaymentService {
         ObjectNode objectNode = objectMapper.createObjectNode();
         objectNode.put("filingNumber", courtCase.getFilingNumber());
         objectNode.put("cnrNumber", courtCase.getCnrNumber());
-        objectNode.put("payer", objectMapper.convertValue(courtCase.getLitigants().get(0).getAdditionalDetails(), JsonNode.class).get("fullName"));
+//        objectNode.put("payer", objectMapper.convertValue(courtCase.getLitigants().get(0).getAdditionalDetails(), JsonNode.class).get("fullName"));
         objectNode.put("payerMobileNo", objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class).get("payerMobileNo"));
         if(entityType.equalsIgnoreCase("case-default")){
             objectNode.put("isDelayCondonation",  getIsDelayCondonation(calculation));
-            objectNode.put("chequeDetails", addChequeDetails(courtCase));
+//            objectNode.put("chequeDetails", addChequeDetails(courtCase));
         }
         return objectNode;
     }
@@ -709,6 +727,10 @@ public class PaymentService {
             return matcher.group(1);
         }
         return null;
+    }
+
+    public TreasuryMapping getHeadBreakDown(String consumerCode) {
+        return treasuryMappingRepository.getTreasuryMapping(consumerCode);
     }
 //    public Payload doubleVerifyPayment(VerificationData verificationData, RequestInfo requestInfo) {
 //        try {

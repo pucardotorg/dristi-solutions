@@ -72,6 +72,14 @@ public class PaymentController {
                 .document(document).build();
     }
 
+    @PostMapping("/v1/_getHeadBreakDown")
+    public ResponseEntity<TreasuryMappingResponse> getHeadBreakDown(@RequestParam String consumerCode, @RequestBody RequestInfo requestInfo) {
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true);
+        TreasuryMapping treasuryMapping = paymentService.getHeadBreakDown(consumerCode);
+        TreasuryMappingResponse response = TreasuryMappingResponse.builder().responseInfo(responseInfo).treasuryMapping(treasuryMapping).build();
+        return ResponseEntity.ok(response);
+    }
+
 //    @PostMapping("/v1/_doubleVerification")
 //    public HtmlResponse verifyDetails(@RequestBody VerificationRequest request) {
 //        log.info("Performing double verification for request: {}", request);
