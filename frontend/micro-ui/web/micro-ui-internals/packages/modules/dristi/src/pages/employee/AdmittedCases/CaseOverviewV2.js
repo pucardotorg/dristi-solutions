@@ -84,16 +84,18 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
       {userInfoType === "citizen" && (
         <div style={{ width: "100%" }}>
-          <NextHearingCard caseData={caseData} width={"100%"} minWidth={"100%"}
-           cardStyle={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none", maxWidth: "100%" }} />
+          <NextHearingCard
+            caseData={caseData}
+            width={"100%"}
+            minWidth={"100%"}
+            cardStyle={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none", maxWidth: "100%" }}
+          />
         </div>
       )}
       <div style={{ display: "flex", flexDirection: "row", gap: "1rem", justifyContent: "space-between" }}>
-        <div className="hearing-summary-container" style={{ width: "72%" }}>
-          {hearingRes?.HearingList?.find(
-            (hearing) => !["SCHEDULED", "IN_PROGRESS"].includes(hearing?.status) && Boolean(hearing?.hearingSummary)
-          ) && (
-            <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none" }}>
+        <div className="hearing-summary-container" style={{ width: "100%" }}>
+          {
+            <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none", maxWidth: "100%" }}>
               <div style={{ width: "100%", display: "flex", justifyContent: "space-between" }}>
                 <div
                   style={{
@@ -125,11 +127,7 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
                   lineHeight: "24px",
                 }}
               >
-                {previousHearing?.[0]?.hearingSummary ? (
-                  <div>{previousHearing?.[0]?.hearingSummary}</div>
-                ) : (
-                  "No Transcript available for this hearing"
-                )}
+                {previousHearing?.[0]?.hearingSummary ? <div>{previousHearing?.[0]?.hearingSummary}</div> : t("NO_HEARING_SUMMARY_AVAILABLE")}
               </div>
             </Card>
           }
