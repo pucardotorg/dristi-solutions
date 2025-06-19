@@ -51,7 +51,6 @@ import AddParty from "@egovernments/digit-ui-module-hearings/src/pages/employee/
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import CaseBundleView from "./CaseBundleView";
-import CaseOverviewV2 from "./CaseOverviewV2";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
 
 const stateSla = {
