@@ -131,5 +131,13 @@ public class EmployeeController {
 		return new ResponseEntity<>(response,HttpStatus.OK);
 	}
 
+	@PostMapping(value = "/_createnovalidate")
+	@ResponseBody
+	public ResponseEntity<?> createForExistingUsers(@RequestBody @Valid EmployeeRequest employeeRequest) {
+		EmployeeResponse employeeResponse = employeeService.createForExistingUsers(employeeRequest);
+		return new ResponseEntity<>(employeeResponse, HttpStatus.ACCEPTED);
+	}
+
+
 
 }
