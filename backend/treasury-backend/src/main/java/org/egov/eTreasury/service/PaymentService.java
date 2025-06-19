@@ -374,7 +374,7 @@ public class PaymentService {
     public DemandResponse createDemand(DemandCreateRequest demandRequest) {
         try {
             log.info("operation=createDemand, status=IN_PROGRESS, consumerCode={}", demandRequest.getConsumerCode());
-            if(demandRequest.getEntityType().equals("case-default")) {
+            if(CASE_DEFAULT_ENTITY_TYPE.equals(demandRequest.getEntityType())) {
                 updateTreasuryMapping(demandRequest);
             }
             TreasuryMapping treasuryMapping = generateTreasuryMapping(demandRequest);
@@ -403,6 +403,9 @@ public class PaymentService {
 
                 Calculation calculation = compareOldAndNewBreakDown(existingMapping.getCalculation(), demandRequest.getCalculation().get(0));
                 demandRequest.setCalculation(List.of(calculation));
+                if (existingMapping.getReSubmissionBreakDown() == null) {
+                    existingMapping.setReSubmissionBreakDown(new ArrayList<>());
+                }
                 existingMapping.getReSubmissionBreakDown().add(calculation);
                 existingMapping.setLastModifiedTime(System.currentTimeMillis());
                 producer.push(config.getTreasuryMappingSaveTopic(), existingMapping);
@@ -415,7 +418,9 @@ public class PaymentService {
 
     private Calculation compareOldAndNewBreakDown(Calculation existingCalculation, Calculation newCalculation) {
         Calculation calculation = new Calculation();
-        
+        if(calculation.getBreakDown() == null) {
+            calculation.setBreakDown(new ArrayList<>());
+        }
         Map<String, BreakDown> existingMap = existingCalculation.getBreakDown().stream()
             .collect(Collectors.toMap(BreakDown::getCode, Function.identity()));
             
