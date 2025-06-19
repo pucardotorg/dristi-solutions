@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FormComposerV2, Header, Loader } from "@egovernments/digit-ui-react-components";
 import {
@@ -36,6 +36,7 @@ import { getSuffixByBusinessCode, getTaxPeriodByBusinessService, getCourtFeeAmou
 import { combineMultipleFiles, getFilingType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editRespondentConfig";
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
+import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -133,6 +134,8 @@ const SubmissionsCreate = ({ path }) => {
   const resetFormData = useRef(null);
   const setFormDataValue = useRef(null);
   const clearFormDataErrors = useRef(null);
+  const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
+  const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
 
   const hasSubmissionRole = useMemo(
     () =>
@@ -216,20 +219,62 @@ const SubmissionsCreate = ({ path }) => {
     },
   });
 
-  const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
-    {
-      criteria: [
-        {
-          filingNumber: filingNumber,
-        },
-      ],
-      tenantId,
-    },
-    {},
-    `case-details-${filingNumber}`,
-    filingNumber,
-    Boolean(filingNumber)
-  );
+  // const { data: caseData } = Digit.Hooks.dristi.useSearchCaseService(
+  //   {
+  //     criteria: [
+  //       {
+  //         filingNumber: filingNumber,
+  //       },
+  //     ],
+  //     tenantId,
+  //   },
+  //   {},
+  //   `case-details-${filingNumber}`,
+  //   filingNumber,
+  //   Boolean(filingNumber)
+  // );
+  const [caseData, setCaseData] = useState(undefined);
+  const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
+  const [caseApiError, setCaseApiError] = useState(undefined);
+  const isBreadCrumbsParamsDataSet = useRef(false);
+
+  useEffect(() => {
+    const fetchCaseDetails = async () => {
+      try {
+        setIsCaseDetailsLoading(true);
+        const caseData = await DRISTIService.searchCaseService(
+          {
+            criteria: [
+              {
+                filingNumber: filingNumber,
+              },
+            ],
+            tenantId,
+          },
+          {},
+          `case-details-${filingNumber}`,
+          filingNumber,
+          Boolean(filingNumber)
+        );
+        const caseId = caseData?.criteria?.[0]?.responseList?.[0]?.id;
+        setCaseData(caseData);
+        // Only update breadcrumb data if it's different from current and hasn't been set yet
+        if (!(caseIdFromBreadCrumbs === caseId && filingNumberFromBreadCrumbs === filingNumber) && !isBreadCrumbsParamsDataSet.current) {
+          setBreadCrumbsParamsData({
+            caseId,
+            filingNumber,
+          });
+          isBreadCrumbsParamsDataSet.current = true;
+        }
+      } catch (err) {
+        setCaseApiError(err);
+      } finally {
+        setIsCaseDetailsLoading(false);
+      }
+    };
+
+    fetchCaseDetails();
+  }, [caseIdFromBreadCrumbs, filingNumber, filingNumberFromBreadCrumbs, setBreadCrumbsParamsData, tenantId]);
 
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];
