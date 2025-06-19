@@ -369,6 +369,9 @@ public class Configuration {
 	@Value("${egov.payment.calculator.endpoint}")
 	private String paymentCalculatorEndpoint;
 
+	@Value("${egov.case.filing.payment.calculator.endpoint}")
+	private String caseFilingPaymentCalculatorEndpoint;
+
 	@Value("${egov.task.service.host}")
 	private String taskServiceHost;
 
