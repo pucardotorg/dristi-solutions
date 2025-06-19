@@ -624,7 +624,7 @@ public class InboxServiceV2 {
         HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
         moduleSearchCriteria.put("caseNumbers", Collections.singletonList(openInboxRequest.getFilingNumber()));
         moduleSearchCriteria.put("tenantId", openInboxRequest.getTenantId());
-        moduleSearchCriteria.put("status", Arrays.asList("DRAFT_IN_PROGRESS", "PENDING_BULK_E-SIGN", "PUBLISHED", "ABATED", "PENDING_E-SIGN"));
+        moduleSearchCriteria.put("status", Collections.singletonList("PUBLISHED"));
 
         criteria.setModuleSearchCriteria(moduleSearchCriteria);
 
