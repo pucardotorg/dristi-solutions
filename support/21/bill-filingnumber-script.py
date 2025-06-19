@@ -9,8 +9,8 @@ elasticsearch_update_url = "http://localhost:9200/billing-data-index/_update_by_
 case_search_endpoint = "/case/v1/_search"
 
 auth_token = "1620ada3-fed8-46de-93d6-d6d77ddb8aa6"
-es_username = "elastic"
-es_password = "8fwbD6HbJh6HU0oddsHm8TEI"
+es_username = <<ES_USERNAME>>
+es_password = <<PASSWORD>>
 
 headers = {
     "accept": "application/json",

@@ -8,8 +8,8 @@ elasticsearch_update_url = "http://localhost:9200/pending-tasks-index/_update_by
 case_search_endpoint = "/case/v1/_search"
 
 auth_token = "7b32e3ee-1375-4469-ad04-5c33312a88ae"
-es_username = "elastic"
-es_password = "8fwbD6HbJh6HU0oddsHm8TEI"
+es_username = <<ES_USERNAME>>
+es_password = <<PASSWORD>>
 
 headers = {
     "accept": "application/json",
