@@ -22,7 +22,7 @@ request_info = {
     "authToken": auth_token,
     "userInfo": {
         "id": 2177,
-        "userName": "On247SysAdmin",
+        "userName": <<USERNAME>>,
         "type": "EMPLOYEE",
         "tenantId": "kl",
         "roles": [{"code": "CASE_EDITOR", "name": "CASE_EDITOR", "tenantId": "kl"}]
