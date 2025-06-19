@@ -3,8 +3,6 @@ package org.egov.eTreasury.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
-import java.util.List;
-import java.util.Map;
 
 @Getter
 @Setter

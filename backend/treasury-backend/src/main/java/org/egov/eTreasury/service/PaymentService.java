@@ -599,11 +599,11 @@ public class PaymentService {
         ObjectNode objectNode = objectMapper.createObjectNode();
         objectNode.put("filingNumber", courtCase.getFilingNumber());
         objectNode.put("cnrNumber", courtCase.getCnrNumber());
-//        objectNode.put("payer", objectMapper.convertValue(courtCase.getLitigants().get(0).getAdditionalDetails(), JsonNode.class).get("fullName"));
+        objectNode.put("payer", objectMapper.convertValue(courtCase.getLitigants().get(0).getAdditionalDetails(), JsonNode.class).get("fullName"));
         objectNode.put("payerMobileNo", objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class).get("payerMobileNo"));
         if(entityType.equalsIgnoreCase("case-default")){
             objectNode.put("isDelayCondonation",  getIsDelayCondonation(calculation));
-//            objectNode.put("chequeDetails", addChequeDetails(courtCase));
+            objectNode.put("chequeDetails", addChequeDetails(courtCase));
         }
         return objectNode;
     }
