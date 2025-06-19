@@ -37,7 +37,7 @@ public class PaymentController {
     }
 
     @PostMapping("/v1/_createDemand")
-    public ResponseEntity<?> createDemand(@RequestBody DemandCreateRequest request) {
+    public ResponseEntity<DemandResponse> createDemand(@RequestBody DemandCreateRequest request) {
         log.info("Creating demand for request: {}", request);
         DemandResponse demandResponse = paymentService.createDemand(request);
         log.info("Demand created successfully for request: {}", request);

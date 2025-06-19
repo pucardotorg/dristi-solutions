@@ -3,6 +3,7 @@ package org.egov.eTreasury.model;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
+import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -26,4 +27,13 @@ public class TreasuryMapping {
 
     @JsonProperty("createdTime")
     private Long createdTime;
+
+    @JsonProperty("lastModifiedTime")
+    private Long lastModifiedTime;
+
+    @JsonProperty("reSubmissionBreakDown")
+    private List<Calculation> reSubmissionBreakDown;
+
+    @JsonProperty("lastSubmissionConsumerCode")
+    private String lastSubmissionConsumerCode;
 }
