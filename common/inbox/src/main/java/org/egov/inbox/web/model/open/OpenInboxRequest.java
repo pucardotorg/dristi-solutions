@@ -2,6 +2,7 @@ package org.egov.inbox.web.model.open;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import lombok.NonNull;
 
 
 @Data
@@ -14,9 +15,11 @@ public class OpenInboxRequest {
     private Boolean forPaymentTask = false;
 
     @JsonProperty("filingNumber")
+    @NonNull
     private String filingNumber;
 
     @JsonProperty("tenantId")
+    @NonNull
     private String tenantId;
 
     @JsonProperty("courtId")

@@ -66,7 +66,7 @@ public class InboxV2Controller {
         return new ResponseEntity<>(inboxResponse, HttpStatus.OK);
     }
 
-    @PostMapping(value = "/open/index/search")
+    @PostMapping(value = "/open/_search")
     public ResponseEntity<OpenInboxResponse> searchOpenIndex(@Valid @RequestBody OpenInboxRequest openIndexRequest) {
         OpenInboxResponse openInboxResponse = inboxService.getOpenIndexResponse(openIndexRequest);
         return new ResponseEntity<>(openInboxResponse, HttpStatus.OK);
