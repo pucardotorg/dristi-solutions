@@ -4968,9 +4968,7 @@ public class CaseService {
 
     private void createDemandForCase(@Valid CaseRequest body, Calculation calculation) {
         try {
-            if(calculation == null) {
-                log.info("No changes in calculation for caseId: {}", body.getCases().getId());
-            }
+            body.getCases().getWorkflow().setAction(UPLOAD_WITH_PAYMENT);
             DemandCreateRequest demandCreateRequest  = DemandCreateRequest.builder()
                     .requestInfo(body.getRequestInfo())
                     .consumerCode(getConsumerCode(body.getCases().getFilingNumber()))
@@ -4980,7 +4978,6 @@ public class CaseService {
                     .build();
 
             etreasuryUtil.createDemand(demandCreateRequest);
-            body.getCases().getWorkflow().setAction(UPLOAD_WITH_PAYMENT);
         } catch (Exception e) {
             log.error("Error while creating demand for caseId: {}, error: {}", body.getCases().getId(), e.getMessage());
             throw new CustomException("ERROR_CREATING_DEMAND", "Error while creating demand for caseId: " + body.getCases().getId() + ", error: " + e.getMessage());
@@ -4991,37 +4988,6 @@ public class CaseService {
         return filingNumber + "_CASE_FILING";
     }
 
-    private Calculation compareCalculations(@Valid List<Calculation> calculation, @Valid List<Calculation> calculation1) {
-        Calculation existingCalculation = calculation.get(0);
-        Calculation newCalculation = calculation1.get(0);
-
-        if (!Objects.equals(existingCalculation.getTotalAmount(), newCalculation.getTotalAmount())) {
-            return Calculation.builder()
-                    .totalAmount(newCalculation.getTotalAmount()- existingCalculation.getTotalAmount())
-                    .breakDown(getBreakDown(newCalculation.getBreakDown(), existingCalculation.getBreakDown()))
-                    .build();
-        }
-        return null;
-    }
-
-    private List<BreakDown> getBreakDown(List<BreakDown> newBreakDown, List<BreakDown> existingBreakDown) {
-        List<BreakDown> updatedBreakDown = new ArrayList<>();
-        for(BreakDown breakDown : newBreakDown) {
-            for(BreakDown existingBreak : existingBreakDown) {
-                if(breakDown.getCode().equals(existingBreak.getCode())) {
-                    if(existingBreak.getAmount() < breakDown.getAmount()) {
-                        updatedBreakDown.add(BreakDown.builder()
-                                .code(breakDown.getCode())
-                                .type(breakDown.getType())
-                                .amount(breakDown.getAmount() - existingBreak.getAmount())
-                                .build());
-                    }
-                }
-            }
-        }
-        return updatedBreakDown;
-    }
-
     private Boolean isDelayCondonation(CourtCase existingCase) {
         JsonNode caseDetails = objectMapper.convertValue(existingCase.getCaseDetails(), JsonNode.class);
         if(caseDetails == null || caseDetails.get("delayApplications") == null) {
@@ -5030,7 +4996,7 @@ public class CaseService {
         return !caseDetails.get("delayApplications").get("formdata").get(0).get("data").get("delayCondonationType").get("code").textValue().equals("YES");
     }
 
-    private @NotNull(message = "Check amount cannot be null") Double getChequeAmount(CourtCase courtCase) {
+    private Double getChequeAmount(CourtCase courtCase) {
         JsonNode caseDetails = objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
         if(caseDetails == null || caseDetails.get("chequeDetails") == null){
             return 0.0;

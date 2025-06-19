@@ -30,7 +30,7 @@ public class EFillingCalculationCriteria {
 
     @JsonProperty("filingNumber")
     @NotNull(message = "Filing number cannot be null")
-    private String filingNumber = null;
+    private String filingNumber;
 
     @JsonProperty("delayCondonation")
     private Long delayCondonation = 0L;
