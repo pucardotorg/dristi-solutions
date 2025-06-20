@@ -153,6 +153,9 @@ public class TaskService {
                     }
                 }
             }
+            if(!assignedToList.isEmpty()){
+                body.getTask().getWorkflow().setAssignes(assignedToList.stream().map(assignedTo -> assignedTo.getUuid().toString()).toList());
+            }
         } catch (Exception e) {
             log.error("Error occurred while updating assignedTo list :: {}", e.toString());
             throw new CustomException("ERROR_UPDATING_ASSIGNED_TO_LIST",e.getMessage());
