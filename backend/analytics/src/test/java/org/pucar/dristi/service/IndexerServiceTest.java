@@ -64,7 +64,7 @@ public class IndexerServiceTest {
         when(config.getBulkPath()).thenReturn("/_bulk");
 
         // Invoke the method
-        indexerService.esIndexer(topic, kafkaJson);
+        indexerService.esIndexer(kafkaJson);
 
         // Verify interactions
         verify(indexerUtils, times(1)).buildString(any());
@@ -81,7 +81,7 @@ public class IndexerServiceTest {
         when(util.constructArray(kafkaJson, PROCESS_INSTANCE_PATH)).thenThrow(new RuntimeException("Test Exception"));
 
         // Invoke the method and check for logging of errors
-        indexerService.esIndexer(topic, kafkaJson);
+        indexerService.esIndexer(kafkaJson);
 
         // No interactions with indexerUtils or restTemplate
         verify(indexerUtils, times(0)).buildString(any());
