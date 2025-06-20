@@ -101,7 +101,7 @@ public class EvidenceQueryBuilder {
         StringBuilder queryBuilder = new StringBuilder();
         String loggedInUserUuid = searchCriteria.getUserUuid();
 
-        if(searchCriteria.isBenchClerk()){
+        if(searchCriteria.isCourtEmployeeCanSign()){
             if (searchCriteria.getOwner() == null) {
                 queryBuilder.append(" AND ( ");
                 queryBuilder.append(addUserCriteria(loggedInUserUuid, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));

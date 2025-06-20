@@ -46,7 +46,7 @@ public class EvidenceSearchCriteria {
     private boolean isCourtEmployee = false;
 
     @JsonIgnore
-    private boolean isBenchClerk = false;
+    private boolean isCourtEmployeeCanSign = false;
     // Getters and setters
 
     public String getId() {

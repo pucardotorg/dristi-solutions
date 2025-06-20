@@ -5,6 +5,7 @@ import org.egov.common.utils.MultiStateInstanceUtil;
 import org.egov.inbox.repository.builder.V2.InboxQueryBuilder;
 import org.egov.inbox.service.V2.InboxServiceV2;
 import org.egov.inbox.util.ResponseInfoFactory;
+import org.egov.inbox.web.model.ActionCategorySearchResponse;
 import org.egov.inbox.web.model.InboxRequest;
 import org.egov.inbox.web.model.InboxResponse;
 import org.egov.inbox.web.model.V2.SearchRequest;
@@ -47,6 +48,12 @@ public class InboxV2Controller {
     @PostMapping(value = "/_getFields")
     public ResponseEntity<SearchResponse> searchFields(@Valid @RequestBody SearchRequest searchRequest) {
         SearchResponse searchResponse = inboxService.getSpecificFieldsFromESIndex(searchRequest);
+        return new ResponseEntity<>(searchResponse, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/_getFields/actionCategory")
+    public ResponseEntity<ActionCategorySearchResponse> searchFieldsByActionCategory(@Valid @RequestBody SearchRequest searchRequest) {
+        ActionCategorySearchResponse searchResponse = inboxService.getSpecificFieldsActionFromESIndex(searchRequest);
         return new ResponseEntity<>(searchResponse, HttpStatus.OK);
     }
 

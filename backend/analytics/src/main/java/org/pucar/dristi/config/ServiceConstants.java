@@ -11,10 +11,9 @@ public class ServiceConstants {
     public static final String SEARCHER_SERVICE_EXCEPTION = "Error while fetching result from URL: {} with request: {}";
     public static final String ERROR_WHILE_FETCHING_FROM_MDMS = "Exception occurred while fetching category lists from mdms: ";
 
-
     //Consumer
     public static final String ES_INDEX_HEADER_FORMAT = "{\"index\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
-    public static final String ES_INDEX_DOCUMENT_FORMAT = "{\"Data\": {\"id\":\"%s\",\"name\":\"%s\",\"entityType\":\"%s\",\"referenceId\":\"%s\",\"status\":\"%s\",\"assignedTo\":%s,\"assignedRole\":%s,\"cnrNumber\":\"%s\",\"filingNumber\":\"%s\",\"caseId\":\"%s\",\"caseTitle\":\"%s\",\"isCompleted\":%b,\"stateSla\":%d,\"businessServiceSla\":%d,\"additionalDetails\":%s,\"screenType\":\"%s\"}}\n";
+    public static final String ES_INDEX_DOCUMENT_FORMAT = "{\"Data\": {\"id\":\"%s\",\"name\":\"%s\",\"entityType\":\"%s\",\"referenceId\":\"%s\",\"status\":\"%s\",\"caseNumber\":\"%s\",\"substage\":\"%s\",\"advocateDetails\":%s,\"actionCategory\":\"%s\",\"searchableFields\":%s,\"assignedTo\":%s,\"assignedRole\":%s,\"cnrNumber\":\"%s\",\"filingNumber\":\"%s\",\"caseId\":\"%s\",\"caseTitle\":\"%s\",\"isCompleted\":%b,\"stateSla\":%d,\"businessServiceSla\":%d,\"additionalDetails\":%s,\"screenType\":\"%s\",\"courtId\":\"%s\",\"createdTime\":%d}}\n";
     public static final String TENANTID_MDC_STRING = "TENANTID";
 
 
@@ -33,7 +32,9 @@ public class ServiceConstants {
                     + "\"amount\": %f,"
                     + "\"billStatus\": \"%s\","
                     + "\"consumerCode\": \"%s\","
-                    + "\"service\": \"%s\""
+                    + "\"filingNumber\": \"%s\","
+                    + "\"service\": \"%s\","
+                    + "\"courtId\": \"%s\""
                     + "},"
                     + "\"auditDetails\": %s"  // auditDetails as a JSON string
                     + "}}\n";
@@ -84,11 +85,13 @@ public class ServiceConstants {
     public static final String CASE_TITLE_PATH = "$.caseTitle";
     public static final String CASE_CMPNUMBER_PATH = "$.cmpNumber";
     public static final String CASE_COURTCASENUMBER_PATH = "$.courtCaseNumber";
+    public static final String CASE_COURTID_PATH = "$.courtId";
     public static final String CASEID_PATH = "$.id";
 
     public static final String CASE_STAGE_PATH = "$.stage";
     public static final String CASE_ID_PATH = "$.caseId";
     public static final String CASE_STATUTES_AND_SECTIONS = "$.statutesAndSections";
+    public static final String CASE_REPRESENTATIVES = "$.representatives";
     public static final String FILING_NUMBER_PATH = "$.filingNumber";
     public static final String ERRORS_PATH = "$.errors";
     public static final String ORDER_TYPE_PATH = "$.orderType";
@@ -96,7 +99,6 @@ public class ServiceConstants {
     public static final String ORDER_CATEGORY_PATH = "$.orderCategory";
     public static final String ORDER_COMPOSITE_ITEMS_PATH = "$.compositeItems.*";
     public static final String APPLICATION_TYPE_PATH = "$.applicationType";
-
 
     public static final String RES_MSG_ID = "uief87324";
     public static final String SUCCESSFUL = "successful";
@@ -243,5 +245,19 @@ public class ServiceConstants {
     public static final String LITIGANT = "litigant";
 
     public static final String FLOW_JAC = "flow_jac";
+
+    public static final String INTERNALMICROSERVICEROLE_NAME = "Internal Microservice Role";
+
+    public static final String INTERNALMICROSERVICEROLE_CODE = "INTERNAL_MICROSERVICE_ROLE";
+
+    public static final String INTERNALMICROSERVICEUSER_NAME = "Internal Microservice User";
+
+    public static final String INTERNALMICROSERVICEUSER_USERNAME = "INTERNAL_USER";
+
+    public static final String INTERNALMICROSERVICEUSER_MOBILENO = "9999999999";
+
+    public static final String INTERNALMICROSERVICEUSER_TYPE = "SYSTEM";
+
+    public static final String msgId = "1730882648558|en_IN";
 
 }

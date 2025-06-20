@@ -23,6 +23,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -118,12 +121,14 @@ public class OrderRegistrationService {
             workflowUpdate(body);
 
             deleteFileStoreDocumentsIfInactive(body.getOrder());
-            
+
             String updatedState = body.getOrder().getStatus();
             String orderType = body.getOrder().getOrderType();
             producer.push(config.getUpdateOrderKafkaTopic(), body);
 
             callNotificationService(body, updatedState, orderType);
+
+            filterDocuments(new ArrayList<>() {{ add(body.getOrder());}}, Order::getDocuments, Order::setDocuments);
 
             return body.getOrder();
 
@@ -137,26 +142,37 @@ public class OrderRegistrationService {
 
     }
 
-      private void deleteFileStoreDocumentsIfInactive(Order order){
+    private <T> void filterDocuments(List<T> entities,
+                                     Function<T, List<Document>> getDocs,
+                                     BiConsumer<T, List<Document>> setDocs) {
+        if (entities == null) return;
 
+        for (T entity : entities) {
+            List<Document> docs = getDocs.apply(entity);
+            if (docs != null) {
+                List<Document> activeDocs = docs.stream()
+                        .filter(Document::getIsActive)
+                        .collect(Collectors.toList());
+                setDocs.accept(entity, activeDocs); // ✅ set it back
+            }
+        }
+    }
 
-        if (order.getDocuments() != null){
+    private void deleteFileStoreDocumentsIfInactive(Order order) {
 
-         List<String> fileStoreIds = new ArrayList<>();
+        if (order.getDocuments() != null) {
+            List<String> fileStoreIds = new ArrayList<>();
 
-
-        for (Document document : order.getDocuments()) {
+            for (Document document : order.getDocuments()) {
                 if (!document.getIsActive()) {
                     fileStoreIds.add(document.getFileStore());
                 }
             }
-        if(!fileStoreIds.isEmpty()){
+            if (!fileStoreIds.isEmpty()) {
                 fileStoreUtil.deleteFilesByFileStore(fileStoreIds, order.getTenantId());
                 log.info("Deleted files from filestore: {}", fileStoreIds);
             }
         }
-
-
     }
 
     public Order addItem(OrderRequest body) {

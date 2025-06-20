@@ -1186,6 +1186,26 @@ export const configsScheduleNextHearingDate = [
         populators: { name: "judgeDesignation", hideInForm: true },
       },
       {
+        label: "CS_CASE_ATTENDEES",
+        schemaKeyPath: "orderDetails.partyName",
+        transformer: "customDropdown",
+        key: "attendees",
+        type: "dropdown",
+        populators: {
+          name: "attendees",
+          allowMultiSelect: true,
+          optionsKey: "label",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          selectedText: "party(s)",
+          options: [
+            {
+              code: "PARTY_1",
+              name: "PARTY_1",
+            },
+          ],
+        },
+      },
+      {
         label: "NAMES_OF_PARTIES_REQUIRED",
         isMandatory: true,
         schemaKeyPath: "orderDetails.partyName",
@@ -1250,6 +1270,26 @@ export const configsScheduleNextHearingDate = [
   //     },
   //   ],
   // },
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "hearingSummary",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "HEARING_SUMMARY",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+    ],
+  },
   {
     body: [
       {
@@ -3453,6 +3493,55 @@ export const configsCreateOrderWarrant = [
             masterName: "WarrantType",
             select: "(data) => {return data['Order'].WarrantType?.map((item) => {return item;});}",
           },
+        },
+      },
+      {
+        isMandatory: true,
+        key: "warrantSubType",
+        type: "dropdown",
+        label: "WARRANT_SUB_TYPE",
+        disable: false,
+        populators: {
+          name: "warrantSubType",
+          optionsKey: "subType",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%" },
+          optionsCustomStyle: {
+            height: "30vh",
+            marginTop: "42px",
+            overflowY: "auto",
+          },
+          mdmsConfig: {
+            moduleName: "Order",
+            masterName: "warrantSubType",
+            select: `(data) => {
+              const list = data?.Order?.warrantSubType || [];
+              return list.sort((a, b) => {
+                const getPriority = (val) => {
+                  if (val === "NO") return 0;
+                  if (val === "YES") return 2;
+                  return 1;
+                };
+                return getPriority(a.belowOthers) - getPriority(b.belowOthers);
+              });
+            }`,
+          },
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "warrantText",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "warrantText",
+              textAreaSubHeader: "Warrant Text",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
         },
       },
       {

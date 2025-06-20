@@ -4,7 +4,7 @@ on:
     branches:
       - develop
       - main
-      - release-**
+      - release**
     tags:
       - 'v*'
     paths:
@@ -13,7 +13,7 @@ on:
     branches:
       - develop
       - main
-      - release-**
+      - release**
     paths:
       - 'backend/icops_integration-kerala/**'
   workflow_dispatch:
@@ -79,20 +79,20 @@ jobs:
         run: docker login -u pucarsolutionsdev -p ${{ secrets.ACR_PASSWORD }} pucarsolutionsdev.azurecr.io
 
       - name: Build and Push Docker image for integration
-        if: (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/develop') || startsWith(github.ref, 'refs/heads/release-') || startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v'))) || github.event_name == 'workflow_dispatch'
+        if: (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/develop') || startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v'))) || github.event_name == 'workflow_dispatch'
         run: |
           docker build --build-arg WORK_DIR="backend/icops_integration-kerala" -t pucarsolutionsdev.azurecr.io/integration:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
           docker push pucarsolutionsdev.azurecr.io/integration:${{ env.VERSION }}-${{ env.commit_hash }}
 
       - name: Build and Push Docker image for integration_DB
-        if: (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/develop') || startsWith(github.ref, 'refs/heads/release-') || startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v'))) || github.event_name == 'workflow_dispatch'
+        if: (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/develop') || startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v'))) || github.event_name == 'workflow_dispatch'
         run: |
           docker build -t pucarsolutionsdev.azurecr.io/integration_db:${{ env.VERSION }}-${{ env.commit_hash }}  .
           docker push pucarsolutionsdev.azurecr.io/integration_db:${{ env.VERSION }}-${{ env.commit_hash }}
         working-directory: backend/icops_integration-kerala/src/main/resources/db
 
   Workflow_Trigger:
-    if: (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/develop') || startsWith(github.ref, 'refs/heads/release-') || startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v'))) || github.event_name == 'workflow_dispatch'
+    if: (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/develop') || startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v'))) || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     needs: docker_image-build
     steps:
@@ -103,6 +103,8 @@ jobs:
             echo "WORKFLOW_FILE=solutions-dev.yaml" >> $GITHUB_ENV
           elif [ "${{ github.ref }}" == "refs/heads/release-0.4" ]; then
             echo "WORKFLOW_FILE=solutions-qa.yaml" >> $GITHUB_ENV
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "WORKFLOW_FILE=solutions-uat.yaml" >> $GITHUB_ENV
           elif [ "${{ github.ref }}" == "refs/heads/release-0.5" ]; then
             echo "WORKFLOW_FILE=solutions-dpg-dev.yaml" >> $GITHUB_ENV
           fi

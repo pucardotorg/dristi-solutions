@@ -44,6 +44,8 @@ public class ServiceConstants {
 	public static final String RESPONDENT = "RESPONDENT";
 	public static final String ACCUSED = "ACCUSED";
 	public static final String COURT = "COURT";
+	public static final String JUDGE_ROLE = "JUDGE_ROLE";
+	public static final String TYPIST_ROLE = "TYPIST_ROLE";
 
 	public static final String PARSING_ERROR = "PARSING ERROR";
 	public static final String FAILED_TO_PARSE_BUSINESS_SERVICE_SEARCH = "Failed to parse response of workflow business service search";

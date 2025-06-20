@@ -1,6 +1,7 @@
 package digit.task;
 
 import digit.service.CauseListService;
+import digit.service.HearingService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -13,12 +14,14 @@ import org.springframework.stereotype.Component;
 @EnableScheduling
 public class ScheduledTask {
 
-    private CauseListService causeListService;
+    private final CauseListService causeListService;
+
+    private final HearingService hearingService;
 
     @Autowired
-    public ScheduledTask(CauseListService causeListService) {
+    public ScheduledTask(CauseListService causeListService, HearingService hearingService) {
         this.causeListService = causeListService;
-
+        this.hearingService = hearingService;
     }
 
     @Async
@@ -27,6 +30,14 @@ public class ScheduledTask {
         log.info("Starting Cron Job For Generating CauseList");
         causeListService.updateCauseListForTomorrow();
         log.info("Completed Cron Job For Generating CauseList");
+    }
+
+    @Async
+    @Scheduled(cron = "${config.hearing.abort}", zone = "Asia/Kolkata")
+    public void abortCauseList() {
+        log.info("Starting Cron Job For Abating Hearing");
+        hearingService.abatHearings();
+        log.info("Completed Cron Job For Abating Hearing");
     }
 
 }

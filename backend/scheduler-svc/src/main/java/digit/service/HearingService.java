@@ -6,24 +6,28 @@ import digit.config.ServiceConstants;
 import digit.enrichment.HearingEnrichment;
 import digit.kafka.producer.Producer;
 import digit.repository.HearingRepository;
+import digit.util.DateUtil;
 import digit.util.HearingUtil;
 import digit.util.MasterDataUtil;
 import digit.web.models.*;
-import digit.web.models.hearing.Hearing;
-import digit.web.models.hearing.HearingListSearchRequest;
-import digit.web.models.hearing.HearingSearchCriteria;
-import digit.web.models.hearing.HearingUpdateBulkRequest;
+import digit.web.models.hearing.*;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
+import org.egov.common.contract.request.User;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static digit.config.ServiceConstants.SCHEDULE;
+import static digit.config.ServiceConstants.*;
 
 
 @Service
@@ -38,9 +42,11 @@ public class HearingService {
     private final ServiceConstants serviceConstants;
     private final MasterDataUtil helper;
     private final HearingUtil hearingUtil;
+    private final DateUtil dateUtil;
+    private final UserService userService;
 
     @Autowired
-    public HearingService(HearingEnrichment hearingEnrichment, Producer producer, Configuration config, HearingRepository hearingRepository, ServiceConstants serviceConstants, MasterDataUtil helper, HearingUtil hearingUtil) {
+    public HearingService(HearingEnrichment hearingEnrichment, Producer producer, Configuration config, HearingRepository hearingRepository, ServiceConstants serviceConstants, MasterDataUtil helper, HearingUtil hearingUtil, DateUtil dateUtil, UserService userService) {
         this.hearingEnrichment = hearingEnrichment;
         this.producer = producer;
         this.config = config;
@@ -48,6 +54,8 @@ public class HearingService {
         this.serviceConstants = serviceConstants;
         this.helper = helper;
         this.hearingUtil = hearingUtil;
+        this.dateUtil = dateUtil;
+        this.userService = userService;
     }
 
 
@@ -225,4 +233,91 @@ public class HearingService {
 
         return scheduleHearing;
     }
+
+    public void abatHearings() {
+        try {
+            log.info("operation=abatHeatings, result=IN_PROGRESS");
+
+            HearingSearchCriteria criteria = HearingSearchCriteria.builder()
+                    .fromDate(getFromDate())
+                    .toDate(getToDate())
+                    .build();
+
+            RequestInfo requestInfo = createInternalRequestInfo();
+
+            HearingListSearchRequest searchRequest = HearingListSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .criteria(criteria)
+                    .build();
+
+            List<Hearing> hearings = hearingUtil.fetchHearing(searchRequest);
+
+            // Filter hearings with statuses: PASSED_OVER or SCHEDULED
+            hearings = hearings.stream()
+                    .filter(hearing -> PASSED_OVER.equals(hearing.getStatus()) || SCHEDULED.equals(hearing.getStatus()) || IN_PROGRESS.equals(hearing.getStatus()))
+                    .toList();
+
+            if (hearings.isEmpty()) {
+                log.info("operation=abating, result=NO_HEARINGS_FOUND");
+                return;
+            }
+
+            updateHearingsToAbondenState(hearings, requestInfo);
+
+            log.info("operation=abating, result=SUCCESS");
+        } catch (Exception e) {
+            log.error("operation=abating, result=FAILURE, message={}", e.getMessage(), e);
+            throw new CustomException("ABATING_HEARING_ERROR", "Error while abating hearing for the given date range");
+        }
+    }
+
+    private Long getFromDate() {
+        return dateUtil.getEpochFromLocalDateTime(LocalDate.now(ZoneId.of(config.getZoneId())).minusDays(1).atStartOfDay());
+    }
+
+    private Long getToDate() {
+        return dateUtil.getEpochFromLocalDateTime(LocalDate.now(ZoneId.of(config.getZoneId())).minusDays(1).atTime(LocalTime.MAX));
+    }
+
+    public void updateHearingsToAbondenState(List<Hearing> hearings, RequestInfo requestInfo) {
+        try {
+            log.info("operation=updateHearingsToAbated, result=IN_PROGRESS, hearingsCount={}", hearings.size());
+
+            for (Hearing hearing : hearings) {
+                WorkflowObject workflow = new WorkflowObject();
+                workflow.setAction(ABANDON);
+
+                hearing.setWorkflow(workflow);
+
+                HearingRequest hearingRequest = HearingRequest.builder()
+                        .requestInfo(requestInfo)
+                        .hearing(hearing)
+                        .build();
+
+                hearingUtil.updateHearings(hearingRequest);
+
+                log.info("operation=updateHearingsToAbated, result=SUCCESS, hearingId={}", hearing.getHearingId());
+            }
+
+            log.info("operation=updateHearingsToAbated, result=SUCCESS");
+        } catch (Exception e) {
+            log.error("operation=updateHearingsToAbated, result=FAILURE, message={}", e.getMessage(), e);
+            throw new CustomException("UPDATE_HEARING_ERROR", "Error while updating abated hearings");
+        }
+    }
+
+    private RequestInfo createInternalRequestInfo() {
+        org.egov.common.contract.request.User userInfo = new User();
+        userInfo.setUuid(userService.internalMicroserviceRoleUuid);
+        userInfo.setRoles(userService.internalMicroserviceRoles);
+        userInfo.getRoles().add(Role.builder().code(WORKFLOW_ABANDON)
+                        .name(WORKFLOW_ABANDON)
+                        .tenantId(config.getEgovStateTenantId())
+                .build());
+        userInfo.setType(EMPLOYEE);
+        userInfo.setTenantId(config.getEgovStateTenantId());
+        return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
+    }
+
+
 }

@@ -34,22 +34,22 @@ public class CaseApiController {
 
     private final CaseService caseService;
 
+    private final CaseServiceV2 caseServiceV2;
+
     private final WitnessService witnessService;
 
     private final ResponseInfoFactory responseInfoFactory;
 
     private final CasePdfService casePdfService;
 
-    private final CaseServiceV2 caseServiceV2;
-
 
     @Autowired
-    public CaseApiController(CaseService caseService, WitnessService witnessService, ResponseInfoFactory responseInfoFactory, CasePdfService casePdfService, CaseServiceV2 caseServiceV2) {
+    public CaseApiController(CaseService caseService, CaseServiceV2 caseServiceV2, WitnessService witnessService, ResponseInfoFactory responseInfoFactory, CasePdfService casePdfService) {
         this.caseService = caseService;
+        this.caseServiceV2 = caseServiceV2;
         this.witnessService = witnessService;
         this.responseInfoFactory = responseInfoFactory;
         this.casePdfService = casePdfService;
-        this.caseServiceV2 = caseServiceV2;
     }
 
     @PostMapping(value = "/v1/_create")
