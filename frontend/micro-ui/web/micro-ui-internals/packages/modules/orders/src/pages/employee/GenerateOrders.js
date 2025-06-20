@@ -2079,7 +2079,10 @@ const GenerateOrders = () => {
     if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(type)) {
       parties = orderSchema?.orderDetails.partyName;
     } else if (type === "MANDATORY_SUBMISSIONS_RESPONSES") {
-      parties = [...orderSchema?.orderDetails?.partyDetails?.partiesToRespond, ...orderSchema?.orderDetails?.partyDetails?.partyToMakeSubmission];
+      parties = [
+        ...(orderSchema?.orderDetails?.partyDetails?.partiesToRespond || []),
+        ...(orderSchema?.orderDetails?.partyDetails?.partyToMakeSubmission || []),
+      ];
     } else if (["WARRANT", "SUMMONS", "NOTICE"].includes(type)) {
       parties = orderSchema?.orderDetails?.respondentName?.name
         ? [orderSchema?.orderDetails?.respondentName?.name]
@@ -2097,12 +2100,12 @@ const GenerateOrders = () => {
       parties = allParties?.map((party) => ({ partyName: party.name, partyType: party?.partyType }));
       return parties;
     }
-    parties = parties?.map((party) => {
-      const matchingParty = allParties.find((p) => p.code.trim() === party.trim());
+    const updatedParties = parties?.map((party) => {
+      const matchingParty = allParties?.find((p) => p?.code?.trim() === party?.trim());
       if (matchingParty) {
         return {
-          partyName: matchingParty.name,
-          partyType: matchingParty.partyType,
+          partyName: matchingParty?.name,
+          partyType: matchingParty?.partyType,
         };
       } else {
         return {
@@ -2111,7 +2114,7 @@ const GenerateOrders = () => {
         };
       }
     });
-    return parties;
+    return updatedParties;
   };
 
   const getPartyNamesString = (parties) => {
