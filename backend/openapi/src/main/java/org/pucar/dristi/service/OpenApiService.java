@@ -181,8 +181,80 @@ public class OpenApiService {
             Integer limit,
             List<OrderBy> sortOrder
     ) {
-        // Will construct inbox request here
-        return null;
+        Map<String, Object> moduleSearchCriteria = new HashMap<>();
+
+        if (searchCaseCriteria != null && searchCaseCriteria.getSearchType() != null) {
+            switch (searchCaseCriteria.getSearchType()) {
+                case FILING_NUMBER:
+                    FilingNumberCriteria f = searchCaseCriteria.getFilingNumberCriteria();
+                    if (f != null) {
+                        moduleSearchCriteria.put("filingNumber", String.join("-", f.getCode(), f.getCaseNumber(), f.getYear()));
+                        if (f.getCourtName() != null) moduleSearchCriteria.put("courtName", f.getCourtName());
+                    }
+                    break;
+                case CASE_NUMBER:
+                    CaseNumberCriteria c = searchCaseCriteria.getCaseNumberCriteria();
+                    if (c != null) {
+                        moduleSearchCriteria.put("caseNumber", String.join("/", c.getCaseType(), c.getCaseNumber(), c.getYear()));
+                        if (c.getCourtName() != null) moduleSearchCriteria.put("courtName", c.getCourtName());
+                    }
+                    break;
+                case CNR_NUMBER:
+                    if (searchCaseCriteria.getCnrNumberCriteria() != null) {
+                        moduleSearchCriteria.put("cnrNumber", searchCaseCriteria.getCnrNumberCriteria().getCnrNumber());
+                    }
+                    break;
+                case ADVOCATE:
+                    AdvocateCriteria advocate = searchCaseCriteria.getAdvocateCriteria();
+                    if (advocate != null) {
+                        if (advocate.getAdvocateSearchType() == AdvocateSearchType.BARCODE) {
+                            BarCodeDetails bc = advocate.getBarCodeDetails();
+                            if (bc != null) {
+                                moduleSearchCriteria.put("barCode", String.join("-", bc.getStateCode(), bc.getBarCode(), bc.getYear()));
+                            }
+                        } else if (advocate.getAdvocateSearchType() == AdvocateSearchType.ADVOCATE_NAME) {
+                            moduleSearchCriteria.put("advocateName", Collections.singletonList(advocate.getAdvocateName()));
+                        }
+                    }
+                    break;
+                case LITIGANT:
+                    LitigantCriteria litigantCriteria = searchCaseCriteria.getLitigantCriteria();
+                    if (litigantCriteria != null && litigantCriteria.getLitigantName() != null) {
+                        moduleSearchCriteria.put("litigantName", Collections.singletonList(litigantCriteria.getLitigantName()));
+                    }
+                    break;
+                case ALL:
+                    // No criteria to apply
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if (filterCriteria != null) {
+            if (filterCriteria.getCourtName() != null) moduleSearchCriteria.put("courtName", filterCriteria.getCourtName());
+            if (filterCriteria.getCaseType() != null) moduleSearchCriteria.put("caseType", filterCriteria.getCaseType());
+            if (filterCriteria.getHearingDateFrom() != null) moduleSearchCriteria.put("hearingDateFrom", filterCriteria.getHearingDateFrom().toString());
+            if (filterCriteria.getHearingDateTo() != null) moduleSearchCriteria.put("hearingDateTo", filterCriteria.getHearingDateTo().toString());
+            if (filterCriteria.getCaseStage() != null) moduleSearchCriteria.put("caseStage", filterCriteria.getCaseStage());
+            if (filterCriteria.getCaseStatus() != null) moduleSearchCriteria.put("caseStatus", filterCriteria.getCaseStatus());
+            if (filterCriteria.getYearOfFiling() != null) moduleSearchCriteria.put("yearOfFiling", filterCriteria.getYearOfFiling());
+        }
+
+        InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
+                .tenantId(tenantId)
+                .moduleSearchCriteria((HashMap<String, Object>) moduleSearchCriteria)
+                .offset(offset)
+                .limit(limit != null ? limit : 50)
+                .sortOrder(sortOrder)
+                .processSearchCriteria(ProcessInstanceSearchCriteria.builder()
+                        .moduleName("Case Search")
+                        .businessService(Collections.singletonList("CASE_BUSINESS_SERVICE"))
+                        .tenantId(tenantId)
+                        .build())
+                .build();
+
+        return InboxRequest.builder().inbox(inboxSearchCriteria).build();
     }
 
 
