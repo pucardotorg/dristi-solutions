@@ -25,17 +25,22 @@ public class TreasuryMappingRowMapper implements RowMapper<TreasuryMapping> {
             return TreasuryMapping.builder()
                     .consumerCode(rs.getString("consumer_code"))
                     .tenantId(rs.getString("tenant_id"))
-                    .headAmountMapping(rs.getObject("head_mapping"))
-                    .calculation(getCalculation(rs))
+                    .headAmountMapping(mapper.readTree(rs.getString("head_mapping")))
+                    .calculation(getCalculation(rs.getObject("calculation")))
                     .createdTime(rs.getLong("createdtime"))
+                    .lastModifiedTime(rs.getLong("lastmodifiedtime"))
+                    .reSubmissionBreakDown(getCalculation(rs.getObject("resubmissionbreakdown")))
+                    .lastSubmissionConsumerCode(rs.getString("lastsubmissionconsumercode"))
                     .build();
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private Calculation getCalculation(ResultSet rs) throws SQLException, JsonProcessingException {
-        Object calculationObj = rs.getObject("calculation");
-        return mapper.convertValue(mapper.readTree(rs.getObject("calculation").toString()), Calculation.class);
+    private Calculation getCalculation(Object calculation) throws JsonProcessingException {
+        if (calculation!=null){
+            return mapper.convertValue(mapper.readTree(calculation.toString()), Calculation.class);
+        }
+        return null;
     }
 }

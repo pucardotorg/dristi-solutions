@@ -11,6 +11,7 @@ import org.egov.eTreasury.config.PaymentConfiguration;
 import org.egov.eTreasury.enrichment.TreasuryEnrichment;
 import org.egov.eTreasury.kafka.Producer;
 import org.egov.eTreasury.model.demand.*;
+import org.egov.eTreasury.repository.TreasuryMappingRepository;
 import org.egov.eTreasury.repository.TreasuryPaymentRepository;
 import org.egov.eTreasury.util.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,8 +36,10 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.egov.eTreasury.config.ServiceConstants.*;
 
@@ -72,11 +75,13 @@ public class PaymentService {
 
     private final DemandUtil demandUtil;
 
+    private final TreasuryMappingRepository treasuryMappingRepository;
+
     @Autowired
     public PaymentService(PaymentConfiguration config, ETreasuryUtil treasuryUtil,
                           ObjectMapper objectMapper, EncryptionUtil encryptionUtil,
                           Producer producer, AuthSekRepository repository, CollectionsUtil collectionsUtil,
-                          FileStorageUtil fileStorageUtil, TreasuryPaymentRepository treasuryPaymentRepository, PdfServiceUtil pdfServiceUtil, TreasuryEnrichment treasuryEnrichment, MdmsUtil mdmsUtil, CaseUtil caseUtil, DemandUtil demandUtil) {
+                          FileStorageUtil fileStorageUtil, TreasuryPaymentRepository treasuryPaymentRepository, PdfServiceUtil pdfServiceUtil, TreasuryEnrichment treasuryEnrichment, MdmsUtil mdmsUtil, CaseUtil caseUtil, DemandUtil demandUtil, TreasuryMappingRepository treasuryMappingRepository) {
         this.config = config;
         this.treasuryUtil = treasuryUtil;
         this.objectMapper = objectMapper;
@@ -91,6 +96,7 @@ public class PaymentService {
         this.mdmsUtil = mdmsUtil;
         this.caseUtil = caseUtil;
         this.demandUtil = demandUtil;
+        this.treasuryMappingRepository = treasuryMappingRepository;
     }
 
     public ConnectionStatus verifyConnection() {
@@ -368,8 +374,10 @@ public class PaymentService {
     public DemandResponse createDemand(DemandCreateRequest demandRequest) {
         try {
             log.info("operation=createDemand, status=IN_PROGRESS, consumerCode={}", demandRequest.getConsumerCode());
+            if(CASE_DEFAULT_ENTITY_TYPE.equals(demandRequest.getEntityType())) {
+                updateTreasuryMapping(demandRequest);
+            }
             TreasuryMapping treasuryMapping = generateTreasuryMapping(demandRequest);
-
             CourtCase courtCase = fetchCourtCase(demandRequest);
             Demand demand = createDemandObject(demandRequest, courtCase);
             DemandResponse demandResponse = demandUtil.createDemand(DemandRequest.builder()
@@ -384,6 +392,83 @@ public class PaymentService {
             throw new CustomException(DEMAND_CREATION_ERROR, "Error occurred during demand creation");
         }
     }
+
+    private void updateTreasuryMapping(DemandCreateRequest demandRequest) {
+        try {
+            TreasuryMapping existingMapping = treasuryMappingRepository.getTreasuryMapping(demandRequest.getConsumerCode());
+
+            if (existingMapping == null) return;
+
+            String lastConsumerCode = existingMapping.getLastSubmissionConsumerCode();
+            String newConsumerCode = getNextConsumerCode(lastConsumerCode != null ? lastConsumerCode : demandRequest.getConsumerCode());
+            demandRequest.setConsumerCode(newConsumerCode);
+
+            Calculation latestCalculation = demandRequest.getCalculation().get(0);
+
+            Calculation differenceCalculation = compareOldAndNewBreakDown(existingMapping.getCalculation(), latestCalculation);
+
+            //update head breakup for existing mapping
+            updateHeadMapping(existingMapping, demandRequest);
+            demandRequest.setCalculation(List.of(differenceCalculation));
+
+            // Add to resubmission breakdown
+            existingMapping.setReSubmissionBreakDown(differenceCalculation);
+            existingMapping.setLastModifiedTime(System.currentTimeMillis());
+            existingMapping.setLastSubmissionConsumerCode(newConsumerCode);
+            producer.push(config.getTreasuryMappingUpdateTopic(), existingMapping);
+
+        } catch (Exception e) {
+            log.error("Error occurred while updating treasury mapping: ", e);
+            throw new CustomException("TREASURY_MAPPING_UPDATE_ERROR", "Error occurred while updating treasury mapping");
+        }
+    }
+
+
+    private void updateHeadMapping(TreasuryMapping existingMapping, DemandCreateRequest demandCreateRequest) {
+        TreasuryMapping newTreasuryMapping = generateTreasuryMapping(demandCreateRequest);
+        existingMapping.setHeadAmountMapping(newTreasuryMapping.getHeadAmountMapping());
+        existingMapping.setCalculation(newTreasuryMapping.getCalculation());
+    }
+
+    private Calculation compareOldAndNewBreakDown(Calculation existingCalculation, Calculation newCalculation) {
+        Calculation calculation = new Calculation();
+        if(calculation.getBreakDown() == null) {
+            calculation.setBreakDown(new ArrayList<>());
+        }
+        Map<String, BreakDown> existingMap = existingCalculation.getBreakDown().stream()
+            .collect(Collectors.toMap(BreakDown::getCode, Function.identity()));
+
+        for (BreakDown newBreakDown : newCalculation.getBreakDown()) {
+            BreakDown existingBreakDown = existingMap.get(newBreakDown.getCode());
+            if (existingBreakDown != null) {
+                double newAmount = newBreakDown.getAmount();
+                double oldAmount = existingBreakDown.getAmount();
+                if (newAmount > oldAmount) {
+                    double difference = newAmount - oldAmount;
+                    calculation.setTotalAmount(calculation.getTotalAmount()+difference);
+                    calculation.getBreakDown().add(new BreakDown(
+                            newBreakDown.getType(),
+                            newBreakDown.getCode(),
+                            difference,
+                            null
+                    ));
+                }
+            }
+        }
+        return calculation;
+    }
+
+    private String getNextConsumerCode(String lastConsumerCode) {
+        Matcher matcher = Pattern.compile("-(\\d+)$").matcher(lastConsumerCode);
+        if (matcher.find()) {
+            int suffix = Integer.parseInt(matcher.group(1));
+            return lastConsumerCode.replaceFirst("-(\\d+)$", "-" + (suffix + 1));
+        } else {
+            return lastConsumerCode + "-1";
+        }
+    }
+
+
     private Map<String, String> getTaxHeadMasterCodes(Map<String, Map<String, JSONArray>> mdmsData, String taskBusinessService, String deliveryChannel) {
         if (mdmsData != null && mdmsData.containsKey("payment") && mdmsData.get("payment").containsKey(PAYMENTMASTERCODE)) {
             JSONArray masterCode = mdmsData.get("payment").get(PAYMENTMASTERCODE);
@@ -492,6 +577,7 @@ public class PaymentService {
                     .headAmountMapping(objectMapper.convertValue(headAmountMapping, Object.class))
                     .calculation(demandRequest.getCalculation().get(0))
                     .createdTime(System.currentTimeMillis())
+                    .lastModifiedTime(System.currentTimeMillis())
                     .build();
         } catch (JsonProcessingException | IllegalArgumentException | CustomException e) {
             log.error("Error occurred during treasury mapping generation: ", e);
@@ -635,12 +721,16 @@ public class PaymentService {
     }
 
     private String getPaymentType(String consumerCode) {
-        Pattern pattern = Pattern.compile("_([\\w]+)$");
+        Pattern pattern = Pattern.compile("_([A-Z_]+)(?:-[0-9]+)?$");
         Matcher matcher = pattern.matcher(consumerCode);
         if (matcher.find()) {
             return matcher.group(1);
         }
         return null;
+    }
+
+    public TreasuryMapping getHeadBreakDown(String consumerCode) {
+        return treasuryMappingRepository.getTreasuryMapping(consumerCode);
     }
 //    public Payload doubleVerifyPayment(VerificationData verificationData, RequestInfo requestInfo) {
 //        try {

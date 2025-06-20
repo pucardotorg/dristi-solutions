@@ -175,6 +175,9 @@ public class PaymentConfiguration {
     @Value("${treasury.mapping.save.topic}")
     private String treasuryMappingSaveTopic;
 
+    @Value("${treasury.mapping.update.topic}")
+    private String treasuryMappingUpdateTopic;
+
     @PostConstruct
     public void init() {
         headsList = Arrays.asList(heads.split(","));

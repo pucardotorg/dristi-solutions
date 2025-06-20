@@ -26,7 +26,7 @@ public class Calculation {
     private String tenantId = null;
 
     @JsonProperty("totalAmount")
-    private Double totalAmount = null;
+    private Double totalAmount = 0.0;
 
     @JsonProperty("breakDown")
     private List<BreakDown> breakDown = null;
