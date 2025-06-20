@@ -9,9 +9,15 @@ import org.pucar.dristi.util.DateUtil;
 import org.pucar.dristi.util.InboxUtil;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.inbox.InboxRequest;
+import org.pucar.dristi.web.models.inbox.InboxSearchCriteria;
+import org.pucar.dristi.web.models.inbox.OrderBy;
+import org.pucar.dristi.web.models.inbox.ProcessInstanceSearchCriteria;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -145,4 +151,39 @@ public class OpenApiService {
         InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(tenantId, fromDate, toDate, searchText);
         return inboxUtil.getOpenHearings(inboxRequest);
     }
+
+    public LandingPageCaseListResponse getLandingPageCaseList(String tenantId, LandingPageCaseListRequest request) {
+        if (configuration.getIsElasticSearchEnabled()) {
+            log.info("Fetching landing page cases from ElasticSearch");
+            throw new RuntimeException("Fetching from ElasticSearch is not yet implemented for landing page");
+        } else {
+            log.info("Fetching landing page cases from Case Service");
+
+            InboxRequest inboxRequest = buildInboxRequestFromSearchCriteria(
+                    tenantId,
+                    request.getSearchCaseCriteria(),
+                    request.getFilterCriteria(),
+                    request.getOffset(),
+                    request.getLimit(),
+                    request.getSortOrder()
+            );
+
+            return inboxUtil.getLandingPageCaseListResponse(inboxRequest);
+        }
+    }
+
+
+    private InboxRequest buildInboxRequestFromSearchCriteria(
+            String tenantId,
+            SearchCaseCriteria searchCaseCriteria,
+            FilterCriteria filterCriteria,
+            Integer offset,
+            Integer limit,
+            List<OrderBy> sortOrder
+    ) {
+        // Will construct inbox request here
+        return null;
+    }
+
+
 }
