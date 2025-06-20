@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import jakarta.servlet.http.Part;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +14,6 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.common.models.individual.AdditionalFields;
-import org.egov.common.models.individual.Address;
 import org.egov.common.models.individual.Field;
 import org.egov.common.models.individual.Identifier;
 import org.egov.tracer.model.CustomException;
@@ -4917,5 +4915,100 @@ public class CaseService {
         }
 
         return responseMap;
+    }
+
+    public CourtCase reSubmitCase(@Valid CaseRequest body) {
+        try {
+            log.info("operation=reSubmitCase, status=IN_PROGRESS, caseId: {}", body.getCases().getId());
+            CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                    .requestInfo(body.getRequestInfo())
+                    .flow(FLOW_JAC)
+                    .criteria(Collections.singletonList(CaseCriteria.builder()
+                            .caseId(body.getCases().getId().toString())
+                            .defaultFields(false)
+                            .build()))
+                    .build();
+            searchCases(caseSearchRequest);
+            CourtCase existingCase = caseSearchRequest.getCriteria().get(0).getResponseList().get(0);
+
+            if(isChequeAmountChanged(existingCase, body.getCases()) || isDelayCondonationChanged(existingCase, body.getCases())) {
+                EFillingCalculationCriteria calculationCriteria = EFillingCalculationCriteria.builder()
+                        .tenantId(body.getCases().getTenantId())
+                        .caseId(existingCase.getId().toString())
+                        .filingNumber(existingCase.getFilingNumber())
+                        .build();
+
+                calculationCriteria.setCheckAmount(getChequeAmount(body.getCases()));
+                calculationCriteria.setIsDelayCondonation(isDelayCondonation(body.getCases()));
+                CalculationRes newCalculation = paymentCalculaterUtil.callPaymentCalculator(EFillingCalculationRequest.builder()
+                        .requestInfo(body.getRequestInfo())
+                        .calculationCriteria(Collections.singletonList(calculationCriteria))
+                        .build());
+                createDemandForCase(body, newCalculation.getCalculation().get(0));
+            }
+            workflowService.updateWorkflowStatus(body);
+
+            encryptionDecryptionUtil.encryptObject(body.getCases(), config.getCourtCaseEncrypt(), CourtCase.class);
+            log.info("operation=reSubmitCase, status=SUCCESS, caseId: {}", body.getCases().getId());
+            producer.push(config.getCaseUpdateTopic(), body);
+            return body.getCases();
+        } catch (Exception e) {
+            log.error("operation=reSubmitCase, status=ERROR, caseId: {}, error: {}", body.getCases().getId(), e.getMessage());
+            throw new CustomException("ERROR_RESUBMIT_CASE", "Error while resubmitting case with id: " + body.getCases().getId() + ", error: " + e.getMessage());
+        }
+    }
+
+    private boolean isDelayCondonationChanged(CourtCase existingCase, @Valid CourtCase cases) {
+        return !isDelayCondonation(existingCase).equals(isDelayCondonation(cases));
+    }
+
+    private boolean isChequeAmountChanged(CourtCase existingCase, @Valid CourtCase cases) {
+        return getChequeAmount(existingCase) < getChequeAmount(cases);
+    }
+
+    private void createDemandForCase(@Valid CaseRequest body, Calculation calculation) {
+        try {
+            body.getCases().getWorkflow().setAction(UPLOAD_WITH_PAYMENT);
+            DemandCreateRequest demandCreateRequest  = DemandCreateRequest.builder()
+                    .requestInfo(body.getRequestInfo())
+                    .consumerCode(getConsumerCode(body.getCases().getFilingNumber()))
+                    .tenantId(body.getCases().getTenantId())
+                    .entityType(config.getCaseBusinessServiceName())
+                    .calculation(Collections.singletonList(calculation))
+                    .build();
+
+            etreasuryUtil.createDemand(demandCreateRequest);
+        } catch (Exception e) {
+            log.error("Error while creating demand for caseId: {}, error: {}", body.getCases().getId(), e.getMessage());
+            throw new CustomException("ERROR_CREATING_DEMAND", "Error while creating demand for caseId: " + body.getCases().getId() + ", error: " + e.getMessage());
+        }
+    }
+
+    private String getConsumerCode(String filingNumber) {
+        return filingNumber + "_CASE_FILING";
+    }
+
+    private Boolean isDelayCondonation(CourtCase existingCase) {
+        JsonNode caseDetails = objectMapper.convertValue(existingCase.getCaseDetails(), JsonNode.class);
+        if(caseDetails == null || caseDetails.get("delayApplications") == null) {
+            return false;
+        }
+        return !caseDetails.get("delayApplications").get("formdata").get(0).get("data").get("delayCondonationType").get("code").textValue().equals("YES");
+    }
+
+    private Double getChequeAmount(CourtCase courtCase) {
+        JsonNode caseDetails = objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
+        if(caseDetails == null || caseDetails.get("chequeDetails") == null){
+            return 0.0;
+        }
+        JsonNode amountNode = caseDetails.get("chequeDetails")
+                .get("formdata")
+                .get(0)
+                .get("data")
+                .get("chequeAmount");
+
+        return amountNode != null && amountNode.isTextual()
+                ? Double.parseDouble(amountNode.asText())
+                : 0.0;
     }
 }

@@ -75,4 +75,18 @@ public class EtreasuryUtil {
 			throw new CustomException("Error while fetching payment receipt", e.getMessage());
 		}
 	}
+
+	public void createDemand(DemandCreateRequest demandCreateRequest) {
+		StringBuilder uri = new StringBuilder();
+		uri.append(configs.getEtreasuryHost()).append(configs.getEtreasuryDemandCreateEndPoint());
+		log.info("Demand create request :: {}", demandCreateRequest);
+		Object response;
+		try {
+			response = restTemplate.postForObject(uri.toString(), demandCreateRequest, Map.class);
+			log.info("Demand create response :: {}", response);
+		} catch (Exception e) {
+			log.error(ERROR_WHILE_CREATING_DEMAND_FOR_CASE, e);
+			throw new CustomException(ERROR_WHILE_CREATING_DEMAND_FOR_CASE, e.getMessage());
+		}
+	}
 }
