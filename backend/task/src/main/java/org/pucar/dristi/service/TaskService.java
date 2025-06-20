@@ -12,10 +12,7 @@ import org.pucar.dristi.enrichment.TaskRegistrationEnrichment;
 import org.pucar.dristi.enrichment.TopicBasedOnStatus;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.TaskRepository;
-import org.pucar.dristi.util.CaseUtil;
-import org.pucar.dristi.util.FileStoreUtil;
-import org.pucar.dristi.util.SummonUtil;
-import org.pucar.dristi.util.WorkflowUtil;
+import org.pucar.dristi.util.*;
 import org.pucar.dristi.validators.TaskRegistrationValidator;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +43,7 @@ public class TaskService {
     private final TopicBasedOnStatus topicBasedOnStatus;
     private final SummonUtil summonUtil;
     private final FileStoreUtil fileStoreUtil;
+    private final EtreasuryUtil etreasuryUtil;
 
     @Autowired
     public TaskService(TaskRegistrationValidator validator,
@@ -53,7 +51,7 @@ public class TaskService {
                        TaskRepository taskRepository,
                        WorkflowUtil workflowUtil,
                        Configuration config,
-                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus, SummonUtil summonUtil, FileStoreUtil fileStoreUtil) {
+                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus, SummonUtil summonUtil, FileStoreUtil fileStoreUtil, EtreasuryUtil etreasuryUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.taskRepository = taskRepository;
@@ -67,6 +65,7 @@ public class TaskService {
         this.topicBasedOnStatus = topicBasedOnStatus;
         this.summonUtil = summonUtil;
         this.fileStoreUtil = fileStoreUtil;
+        this.etreasuryUtil = etreasuryUtil;
     }
 
     @Autowired
@@ -81,6 +80,10 @@ public class TaskService {
 
             enrichmentUtil.enrichTaskRegistration(body);
 
+            if(body.getTask().getTaskType().equalsIgnoreCase(GENERIC)) {
+                updateAssignedToList(body);
+                createDemandForPayment(body);
+            }
             workflowUpdate(body);
 
             if(body.getTask().getTaskType().equalsIgnoreCase("SUMMONS")
@@ -105,6 +108,57 @@ public class TaskService {
         } catch (Exception e) {
             log.error("Error occurred while creating task :: {}", e.toString());
             throw new CustomException(CREATE_TASK_ERR, e.getMessage());
+        }
+    }
+
+    public void createDemandForPayment(TaskRequest body) {
+        try {
+            Map<String, Object> taskDetails = (Map<String, Object>) body.getTask().getTaskDetails();
+            Map<String, Object> genericTaskDetails = (Map<String, Object>) taskDetails.get("genericTaskDetails");
+
+            if (genericTaskDetails == null) {
+                throw new IllegalArgumentException("genericTaskDetails not found in taskDetails");
+            }
+            String consumerCode = getConsumerCode(body);
+            genericTaskDetails.put("consumerCode", consumerCode);
+            Object feeBreakDown = genericTaskDetails.get("feeBreakDown");
+            Calculation calculation = objectMapper.convertValue(feeBreakDown, Calculation.class);
+            etreasuryUtil.createDemand(body, consumerCode, calculation);
+        } catch (Exception e) {
+            log.error("Error occurred while creating demand for payment :: {}", e.toString());
+            throw new CustomException("ERROR_CREATING_DEMAND_FOR_PAYMENT", e.getMessage());
+        }
+    }
+
+    private String getConsumerCode(TaskRequest body) {
+        return body.getTask().getTaskNumber() + "_GENERIC";
+    }
+
+    public void updateAssignedToList(TaskRequest body) {
+        try {
+            List<AssignedTo> assignedToList = body.getTask().getAssignedTo();
+            List<AssignedTo> newAssignedToList = new ArrayList<>(assignedToList); // Create a new list to avoid ConcurrentModificationException
+            List<CourtCase> courtCases = caseUtil.getCaseDetails(body);
+
+            for(AssignedTo assignedTo : newAssignedToList) {
+                String uuid = assignedTo.getUuid().toString();
+                List<AdvocateMapping> representatives = courtCases.get(0).getRepresentatives();
+                for (AdvocateMapping advocateMapping : representatives){
+                    List<Party> parties = advocateMapping.getRepresenting();
+                    List<String> individualIds = parties.stream().filter(party -> uuid.equalsIgnoreCase(objectMapper.convertValue(party.getAdditionalDetails(), JsonNode.class).get("uuid").textValue()))
+                            .map(Party::getIndividualId)
+                            .toList();
+                    if(!individualIds.isEmpty()) {
+                        assignedToList.add(AssignedTo.builder().uuid(UUID.fromString(objectMapper.convertValue(advocateMapping.getAdditionalDetails(), JsonNode.class).get("uuid").textValue())).build());
+                    }
+                }
+            }
+            if(!assignedToList.isEmpty()){
+                body.getTask().getWorkflow().setAssignes(assignedToList.stream().map(assignedTo -> assignedTo.getUuid().toString()).toList());
+            }
+        } catch (Exception e) {
+            log.error("Error occurred while updating assignedTo list :: {}", e.toString());
+            throw new CustomException("ERROR_UPDATING_ASSIGNED_TO_LIST",e.getMessage());
         }
     }
 
@@ -259,6 +313,8 @@ public class TaskService {
                     config.getTaskJoinCaseBusinessServiceName(), workflow, config.getTaskjoinCaseBusinessName());
             case JOIN_CASE_PAYMENT -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskPaymentBusinessName());
+            case GENERIC -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
+                    config.getTaskGenericBusinessServiceName(), workflow, config.getTaskGenericBusinessName());
             default -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskBusinessServiceName(), workflow, config.getTaskBusinessName());
         };

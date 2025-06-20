@@ -52,6 +52,7 @@ import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/servic
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import CaseBundleView from "./CaseBundleView";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
+import CaseOverviewV2 from "./CaseOverviewV2";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,

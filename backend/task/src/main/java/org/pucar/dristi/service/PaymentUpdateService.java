@@ -18,6 +18,7 @@ import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.repository.TaskRepository;
 import org.pucar.dristi.util.DemandUtil;
+import org.pucar.dristi.util.EtreasuryUtil;
 import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.util.WorkflowUtil;
 import org.pucar.dristi.web.models.*;
@@ -48,11 +49,12 @@ public class PaymentUpdateService {
     private final MdmsUtil mdmsUtil;
     private final ObjectMapper objectMapper;
     private final DemandUtil demandUtil;
+    private final EtreasuryUtil etreasuryUtil;
 
     private ServiceRequestRepository serviceRequestRepository;
 
     @Autowired
-    public PaymentUpdateService(WorkflowUtil workflowUtil, ObjectMapper mapper, TaskRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository, DemandUtil demandUtil) {
+    public PaymentUpdateService(WorkflowUtil workflowUtil, ObjectMapper mapper, TaskRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository, DemandUtil demandUtil, EtreasuryUtil etreasuryUtil) {
         this.workflowUtil = workflowUtil;
         this.mapper = mapper;
         this.repository = repository;
@@ -62,6 +64,7 @@ public class PaymentUpdateService {
         this.objectMapper = objectMapper;
         this.serviceRequestRepository = serviceRequestRepository;
         this.demandUtil = demandUtil;
+        this.etreasuryUtil = etreasuryUtil;
     }
 
     public void process(Map<String, Object> record) {
@@ -214,10 +217,63 @@ public class PaymentUpdateService {
                     updatePaymentStatusOfRemainingPendingPaymentTasks(taskRequest, tenantId, task.getFilingNumber());
 
                 }
+                case GENERIC -> {
+                    WorkflowObject workflow = new WorkflowObject();
+                    workflow.setAction(MAKE_PAYMENT);
+                    task.setWorkflow(workflow);
+                    String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
+                            config.getTaskGenericBusinessServiceName(), workflow, config.getTaskGenericBusinessName());
+                    task.setStatus(status);
+                    task.getDocuments().add(getPaymentReceipt(requestInfo, task));
+                    TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
+                    producer.push(config.getTaskUpdateTopic(), taskRequest);
+                }
             }
         }
     }
 
+    private Document getPaymentReceipt(RequestInfo requestInfo, Task task) {
+        try {
+            JsonNode genericTaskDetails = extractGenericTaskDetails(task);
+            String consumerCode = extractConsumerCode(genericTaskDetails);
+
+            String billId = getValidBillResponse(requestInfo, task.getTenantId(), consumerCode);
+
+            JsonNode paymentReceipt = Optional.ofNullable(etreasuryUtil.getPaymentReceipt(requestInfo, billId))
+                    .filter(node -> !node.isNull())
+                    .orElseThrow(() -> new CustomException("RECEIPT_NOT_FOUND", "Payment receipt not found for billId: " + billId));
+
+            return mapper.convertValue(paymentReceipt, Document.class);
+        } catch (CustomException e) {
+            log.error("Error fetching payment receipt for task: {}", task.getTaskNumber(), e);
+            throw new CustomException("PAYMENT_RECEIPT_ERROR", "Error fetching payment receipt for task: " + task.getTaskNumber());
+        }
+    }
+
+    private JsonNode extractGenericTaskDetails(Task task) {
+        return Optional.ofNullable(mapper.convertValue(task.getTaskDetails(), JsonNode.class))
+                .map(details -> details.get("genericTaskDetails"))
+                .filter(node -> !node.isNull())
+                .orElseThrow(() -> new CustomException("INVALID_TASK_DETAILS", "genericTaskDetails missing"));
+    }
+
+    private String extractConsumerCode(JsonNode genericTaskDetails) {
+        return Optional.ofNullable(genericTaskDetails.get("consumerCode"))
+                .map(JsonNode::textValue)
+                .filter(text -> !text.isBlank())
+                .orElseThrow(() -> new CustomException("INVALID_CONSUMER_CODE", "Consumer code missing or blank in genericTaskDetails"));
+    }
+
+    private String getValidBillResponse(RequestInfo requestInfo, String tenantId, String consumerCode) {
+        BillResponse response = getBill(requestInfo, tenantId, Set.of(consumerCode), config.getTaskGenericBusinessServiceName());
+
+        List<Bill> bills = Optional.ofNullable(response)
+                .map(BillResponse::getBill)
+                .filter(list -> !list.isEmpty())
+                .orElseThrow(() -> new CustomException("BILL_NOT_FOUND", "No bill found for consumer code: " + consumerCode));
+
+        return bills.get(0).getId();
+    }
     public BillResponse getBill(RequestInfo requestInfo, String tenantId, Set<String> consumerCodes, String businessService) {
         String uri = buildSearchBillURI(tenantId, consumerCodes, businessService);
 
