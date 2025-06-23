@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -76,9 +77,9 @@ public class TaskService {
 
     public Task createTask(TaskRequest body) {
         try {
-            validator.validateTaskRegistration(body);
+//            validator.validateTaskRegistration(body);
 
-            enrichmentUtil.enrichTaskRegistration(body);
+//            enrichmentUtil.enrichTaskRegistration(body);
 
             if(body.getTask().getTaskType().equalsIgnoreCase(GENERIC)) {
                 updateAssignedToList(body);
@@ -155,11 +156,18 @@ public class TaskService {
             }
             if(!assignedToList.isEmpty()){
                 body.getTask().getWorkflow().setAssignes(assignedToList.stream().map(assignedTo -> assignedTo.getUuid().toString()).toList());
+                body.getTask().getWorkflow().setAdditionalDetails(getAdditionalDetails(body.getTask()));
             }
         } catch (Exception e) {
             log.error("Error occurred while updating assignedTo list :: {}", e.toString());
             throw new CustomException("ERROR_UPDATING_ASSIGNED_TO_LIST",e.getMessage());
         }
+    }
+
+    private Object getAdditionalDetails(@Valid Task task) {
+        Map<String, Object> additionalDetails = new HashMap<>();
+        additionalDetails.put("dueDate", task.getDuedate());
+        return additionalDetails;
     }
 
     public List<Task> searchTask(TaskSearchRequest request) {

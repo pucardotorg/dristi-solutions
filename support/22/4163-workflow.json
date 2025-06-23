@@ -41,6 +41,7 @@
                 "action": "MAKE_PAYMENT",
                 "nextState": "COMPLETED",
                 "roles": [
+                  "CITIZEN",
                   "TASK_EDITOR",
                   "SYSTEM",
                   "SYSTEM_ADMIN"
