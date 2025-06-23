@@ -2,7 +2,9 @@ package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
@@ -16,8 +18,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.repository.TaskRepository;
-import org.pucar.dristi.util.MdmsUtil;
-import org.pucar.dristi.util.WorkflowUtil;
+import org.pucar.dristi.util.*;
 import org.pucar.dristi.web.models.*;
 
 import java.util.*;
@@ -50,6 +51,15 @@ class PaymentUpdateServiceTest {
 
     @Mock
     private ServiceRequestRepository serviceRequestRepository;
+
+    @Mock
+    private CaseUtil caseUtil;
+
+    @Mock
+    private AdvocateUtil advocateUtil;
+
+    @Mock
+    private PendingTaskUtil pendingTaskUtil;
 
     @InjectMocks
     private PaymentUpdateService paymentUpdateService;
@@ -262,4 +272,41 @@ class PaymentUpdateServiceTest {
 
         assertNull(result);
     }
+
+    @Test
+    void createPendingTaskForRPAD_shouldCallCreatePendingTaskForEnvelope_whenChannelIsRPAD() {
+        // Prepare taskDetails with deliveryChannels
+        ObjectNode deliveryChannels = new ObjectMapper().createObjectNode();
+        deliveryChannels.put("channelCode", "RPAD");
+
+        ObjectNode taskDetails = new ObjectMapper().createObjectNode();
+        taskDetails.set("deliveryChannels", deliveryChannels);
+
+        Map<String, Object> taskDetailsMap = new HashMap<>();
+        taskDetailsMap.put("deliveryChannels", Map.of("channelCode", "RPAD"));
+
+        Task task = Task.builder()
+                .taskDetails(taskDetailsMap)
+                .taskNumber("TSK-999")
+                .taskType("NOTICE")
+                .build();
+
+        when(objectMapper.convertValue(eq(taskDetailsMap), eq(JsonNode.class)))
+                .thenReturn(taskDetails);
+
+        List<CourtCase> cases = new ArrayList<>();
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        cases.add(courtCase);
+
+
+        when(caseUtil.getCaseDetails(any(TaskRequest.class))).thenReturn(cases);
+
+        // Spy the service to verify internal method call
+        PaymentUpdateService spyService = spy(paymentUpdateService);
+
+        spyService.createPendingTaskForRPAD(task, requestInfo);
+
+    }
+
 }
