@@ -8,11 +8,8 @@ import org.egov.inbox.util.ResponseInfoFactory;
 import org.egov.inbox.web.model.ActionCategorySearchResponse;
 import org.egov.inbox.web.model.InboxRequest;
 import org.egov.inbox.web.model.InboxResponse;
-import org.egov.inbox.web.model.InboxSearchCriteria;
 import org.egov.inbox.web.model.V2.SearchRequest;
 import org.egov.inbox.web.model.V2.SearchResponse;
-import org.egov.inbox.web.model.open.OpenInboxRequest;
-import org.egov.inbox.web.model.open.OpenInboxResponse;
 import org.egov.tracer.config.TracerConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Import;
@@ -64,12 +61,6 @@ public class InboxV2Controller {
     public ResponseEntity<InboxResponse> searchIndex(@Valid @RequestBody  InboxRequest inboxRequest) {
         InboxResponse inboxResponse = inboxService.getIndexResponse(inboxRequest);
         return new ResponseEntity<>(inboxResponse, HttpStatus.OK);
-    }
-
-    @PostMapping(value = "/open/_search")
-    public ResponseEntity<OpenInboxResponse> searchOpenIndex(@Valid @RequestBody OpenInboxRequest openIndexRequest) {
-        OpenInboxResponse openInboxResponse = inboxService.getOpenIndexResponse(openIndexRequest);
-        return new ResponseEntity<>(openInboxResponse, HttpStatus.OK);
     }
 
 }

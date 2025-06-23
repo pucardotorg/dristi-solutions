@@ -8,10 +8,11 @@ import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.DateUtil;
 import org.pucar.dristi.util.InboxUtil;
 import org.pucar.dristi.web.models.*;
-import org.pucar.dristi.web.models.inbox.InboxRequest;
+import org.pucar.dristi.web.models.inbox.*;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
-import java.util.List;
+import java.util.*;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -144,5 +145,141 @@ public class OpenApiService {
 
         InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(tenantId, fromDate, toDate, searchText);
         return inboxUtil.getOpenHearings(inboxRequest);
+    }
+
+    public OpenInboxResponse getOrdersAndPaymentTasks(OpenInboxRequest openInboxRequest) {
+        OpenInboxResponse openInboxResponse = new OpenInboxResponse();
+
+        if (openInboxRequest.getForOrders()) {
+            getOrderIndexResponse(openInboxRequest, openInboxResponse);
+        } else if (openInboxRequest.getForPaymentTask()) {
+            getPendingTaskIndexResponse(openInboxRequest, openInboxResponse);
+        }
+
+        return openInboxResponse;
+    }
+
+    private void getPendingTaskIndexResponse(OpenInboxRequest openInboxRequest, OpenInboxResponse openInboxResponse) {
+        SearchRequest searchRequest = new SearchRequest();
+        IndexSearchCriteria criteria = new IndexSearchCriteria();
+
+        criteria.setTenantId(openInboxRequest.getTenantId());
+        criteria.setModuleName("Pending Tasks Service");
+        criteria.setLimit(openInboxRequest.getLimit());
+        criteria.setOffset(openInboxRequest.getOffset());
+        criteria.setTenantId(openInboxRequest.getTenantId());
+
+        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
+        moduleSearchCriteria.put("filingNumber", openInboxRequest.getFilingNumber());
+        moduleSearchCriteria.put("courtId", openInboxRequest.getCourtId());
+        moduleSearchCriteria.put("isCompleted", false);
+        moduleSearchCriteria.put("status", "PENDING_PAYMENT");
+        moduleSearchCriteria.put("entityType", Arrays.asList("task-notice", "task-summons", "task-warrant"));
+
+        criteria.setModuleSearchCriteria(moduleSearchCriteria);
+
+        searchRequest.setIndexSearchCriteria(criteria);
+
+        SearchResponse searchResponse = inboxUtil.getPaymentTask(searchRequest);
+        List<PaymentTask> paymentTasks = getPendingPaymentTasks(searchResponse);
+
+        openInboxResponse.setPaymentTasks(paymentTasks);
+
+        searchRequest.getIndexSearchCriteria().setLimit(10000);
+        searchRequest.getIndexSearchCriteria().setOffset(0);
+        openInboxResponse.setTotalCount(inboxUtil.getPaymentTask(searchRequest).getData().size());
+    }
+
+    private List<PaymentTask> getPendingPaymentTasks(SearchResponse searchResponse) {
+        List<PaymentTask> paymentTasks = new ArrayList<>();
+
+        if (!CollectionUtils.isEmpty(searchResponse.getData())) {
+            for (Data data : searchResponse.getData()) {
+                Long dueDate = null;
+                String taskName = null;
+
+                for (Field field : data.getFields()) {
+                    if ("stateSla".equals(field.getKey()) && field.getValue() != null) {
+                        dueDate = Long.parseLong(field.getValue().toString());
+                    } else if ("name".equals(field.getKey()) && field.getValue() != null) {
+                        taskName = field.getValue().toString();
+                    }
+                }
+
+                if (dueDate != null && taskName != null) {
+                    PaymentTask paymentTask = new PaymentTask();
+                    paymentTask.setDueDate(dueDate);
+                    paymentTask.setTask(taskName);
+
+                    // Optional: Calculate days remaining
+                    long currentTime = System.currentTimeMillis();
+                    int daysRemaining = (int) ((dueDate - currentTime) / (1000 * 60 * 60 * 24));
+                    paymentTask.setDaysRemaining(daysRemaining);
+
+                    paymentTasks.add(paymentTask);
+                }
+            }
+        }
+
+        return paymentTasks;
+    }
+
+
+    private void getOrderIndexResponse(OpenInboxRequest openInboxRequest, OpenInboxResponse openInboxResponse) {
+        InboxRequest inboxRequest = new InboxRequest();
+        InboxSearchCriteria criteria = new InboxSearchCriteria();
+
+        criteria.setTenantId(openInboxRequest.getTenantId());
+        criteria.setLimit(openInboxRequest.getLimit());
+        criteria.setOffset(openInboxRequest.getOffset());
+
+        ProcessInstanceSearchCriteria processCriteria = new ProcessInstanceSearchCriteria();
+        processCriteria.setBusinessService(Collections.singletonList("notification"));
+        processCriteria.setModuleName("Transformer service");
+        criteria.setProcessSearchCriteria(processCriteria);
+
+        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
+        moduleSearchCriteria.put("caseNumbers", Collections.singletonList(openInboxRequest.getFilingNumber()));
+        moduleSearchCriteria.put("tenantId", openInboxRequest.getTenantId());
+        moduleSearchCriteria.put("status", Collections.singletonList("PUBLISHED"));
+
+        criteria.setModuleSearchCriteria(moduleSearchCriteria);
+
+        inboxRequest.setInbox(criteria);
+
+        InboxResponse inboxResponse = inboxUtil.getOrders(inboxRequest);
+        List<OrderDetails> orderDetailsList = getOrdersDetails(inboxResponse);
+        openInboxResponse.setOrderDetailsList(orderDetailsList);
+        openInboxResponse.setTotalCount(inboxResponse.getTotalCount());
+    }
+
+    private List<OrderDetails> getOrdersDetails(InboxResponse inboxResponse) {
+        List<OrderDetails> orderDetailsList = new ArrayList<>();
+
+        if (!CollectionUtils.isEmpty(inboxResponse.getItems())) {
+            for (Inbox inbox : inboxResponse.getItems()) {
+                Map<String, Object> businessObject = inbox.getBusinessObject();
+
+                if (businessObject != null && businessObject.containsKey("orderNotification")) {
+                    Object orderNotificationObj = businessObject.get("orderNotification");
+
+                    if (orderNotificationObj instanceof Map) {
+                        Map<String, Object> orderNotification = (Map<String, Object>) orderNotificationObj;
+
+                        Object dateObj = orderNotification.get("date");
+                        Object businessOfDayObj = orderNotification.get("businessOfTheDay");
+
+                        if (dateObj != null) {
+                            OrderDetails orderDetails = new OrderDetails();
+                            orderDetails.setDate(Long.parseLong(dateObj.toString()));
+                            orderDetails.setBusinessOfTheDay(businessOfDayObj != null ? businessOfDayObj.toString() : null);
+                            orderDetailsList.add(orderDetails);
+                        }
+                    }
+                }
+            }
+        }
+
+        return orderDetailsList;
     }
 }

@@ -120,4 +120,7 @@ public class Configuration {
 
     @Value("${egov.inbox.search.endpoint}")
     private String indexSearchEndPoint;
+
+    @Value("${egov.inbox.getfield.search.endpoint}")
+    private String indexGetFieldEndPoint;
 }

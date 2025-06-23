@@ -1,4 +1,4 @@
-package org.egov.inbox.web.model.open;
+package org.pucar.dristi.web.models;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
