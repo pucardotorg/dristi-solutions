@@ -1,21 +1,14 @@
 package org.pucar.dristi.web.models;
 
-import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.UUID;
 
+import lombok.*;
 import org.egov.common.contract.request.RequestInfo;
 
-import org.pucar.dristi.web.models.Task;
 import org.springframework.validation.annotation.Validated;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.Data;
-import lombok.Builder;
 
 /**
  * TaskRequest
@@ -41,4 +34,29 @@ public class TaskRequest   {
         private Task task = null;
 
 
+        @Builder
+        @Getter
+        @Setter
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class Document {
+
+            @JsonProperty("id")
+            private String id = null;
+
+            @JsonProperty("documentType")
+            private String documentType = null;
+
+            @JsonProperty("fileStore")
+            private String fileStore = null;
+
+            @JsonProperty("documentUid")
+            private String documentUid = null;
+
+            @JsonProperty("isActive")
+            private Boolean isActive = true;
+
+            @JsonProperty("additionalDetails")
+            private Object additionalDetails = null;
+        }
 }

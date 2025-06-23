@@ -283,4 +283,22 @@ public class Configuration {
 
     @Value("${etreasury.payment.receipt.endpoint}")
     private String etreasuryPaymentReceiptEndPoint;
+
+    // Analytics Config
+    @Value("${dristi.analytics.host}")
+    private String analyticsHost;
+
+    @Value("${dristi.analytics.create.pendingtask}")
+    private String createPendingTaskEndPoint;
+
+    // Advocate Config
+    @Value("${dristi.advocate.host}")
+    private String advocateHost;
+
+    @Value("${dristi.advocate.search.endpoint}")
+    private String advocateSearchEndPoint;
+
+    // Sla values
+    @Value("${sla.envelope.sla.value}")
+    private Long envelopeSlaValue;
 }
