@@ -165,66 +165,6 @@ public class InboxUtil {
                 .build();
     }
 
-    public InboxRequest getInboxRequestForOrders(String tenantId, Long fromDate, Long toDate, String searchText) {
-
-        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
-
-        if (searchText != null) {
-            moduleSearchCriteria.put("searchableFields", searchText);
-        }
-        moduleSearchCriteria.put("fromDate", fromDate);
-        moduleSearchCriteria.put("toDate", toDate);
-        moduleSearchCriteria.put("tenantId", tenantId);
-
-        ProcessInstanceSearchCriteria processSearchCriteria = ProcessInstanceSearchCriteria.builder()
-                .moduleName("Hearing Service")
-                .tenantId(tenantId)
-                .businessService(Collections.singletonList(HEARING_BUSINESS_SERVICE))
-                .build();
-
-        InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
-                .processSearchCriteria(processSearchCriteria)
-                .moduleSearchCriteria(moduleSearchCriteria)
-                .limit(300)
-                .offset(0)
-                .tenantId(tenantId)
-                .build();
-
-        return InboxRequest.builder()
-                .inbox(inboxSearchCriteria)
-                .build();
-    }
-
-    public InboxRequest getInboxRequestForPaymentTasks(String tenantId, Long fromDate, Long toDate, String searchText) {
-
-        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
-
-        if (searchText != null) {
-            moduleSearchCriteria.put("searchableFields", searchText);
-        }
-        moduleSearchCriteria.put("fromDate", fromDate);
-        moduleSearchCriteria.put("toDate", toDate);
-        moduleSearchCriteria.put("tenantId", tenantId);
-
-        ProcessInstanceSearchCriteria processSearchCriteria = ProcessInstanceSearchCriteria.builder()
-                .moduleName("Hearing Service")
-                .tenantId(tenantId)
-                .businessService(Collections.singletonList(HEARING_BUSINESS_SERVICE))
-                .build();
-
-        InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
-                .processSearchCriteria(processSearchCriteria)
-                .moduleSearchCriteria(moduleSearchCriteria)
-                .limit(300)
-                .offset(0)
-                .tenantId(tenantId)
-                .build();
-
-        return InboxRequest.builder()
-                .inbox(inboxSearchCriteria)
-                .build();
-    }
-
     public InboxResponse getOrders(InboxRequest request) {
 
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
