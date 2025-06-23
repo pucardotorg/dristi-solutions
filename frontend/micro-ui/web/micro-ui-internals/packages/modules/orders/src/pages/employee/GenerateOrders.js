@@ -298,6 +298,38 @@ const GenerateOrders = () => {
   );
   const summonsCourtFee = useMemo(() => courtFeeAmount?.find((p) => p?.paymentCode === "SUMMONS_COURT_FEE")?.amount || 0, [courtFeeAmount]);
 
+  const { data: warrantSubType, isLoading: isWarrantSubType } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "Order",
+    [{ name: "warrantSubType" }],
+    {
+      select: (data) => {
+        return data?.Order?.warrantSubType || [];
+      },
+    }
+  );
+
+  const groupedWarrantOptions = useMemo(() => {
+    if (!Array.isArray(warrantSubType)) return [];
+
+    const specific = [];
+    const others = [];
+
+    for (const item of warrantSubType) {
+      if (item?.belowOthers === "YES") {
+        others.push(item);
+      } else {
+        specific.push(item);
+      }
+    }
+
+    const result = [];
+    if (specific.length) result.push({ options: specific });
+    if (others.length) result.push({ label: "Others", options: others });
+
+    return result;
+  }, [warrantSubType]);
+
   // Replaced React Query implementation with direct API call for better control over breadcrumb data
   // const { data: caseData, isLoading: isCaseDetailsLoading, refetch: refetchCaseData } = Digit.Hooks.dristi.useSearchCaseService(
   //   {
@@ -1171,25 +1203,34 @@ const GenerateOrders = () => {
           if (orderType === "WARRANT") {
             const warrantSubtypeCode = item?.orderSchema?.additionalDetails?.formdata?.warrantSubType?.templateType;
             orderTypeForm = orderTypeForm?.map((section) => {
-              return {
-                ...section,
-                body: section.body.filter((field) => {
+              const updatedBody = section.body
+                .map((field) => {
+                  if (field.key === "warrantSubType") {
+                    return {
+                      ...field,
+                      populators: {
+                        ...field.populators,
+                        options: [...groupedWarrantOptions],
+                      },
+                    };
+                  }
+                  return field;
+                })
+                .filter((field) => {
                   if (field.key === "warrantText" || field.key === "bailInfo") {
-                    if (warrantSubtypeCode === "GENERIC" && field.key === "warrantText") {
-                      return {
-                        ...field,
-                        isMandatory: true,
-                      };
-                    } else if (warrantSubtypeCode === "SPECIFIC" && field.key === "bailInfo") {
-                      return {
-                        ...field,
-                        isMandatory: true,
-                      };
+                    if (warrantSubtypeCode === "GENERIC") {
+                      return field.key === "warrantText";
+                    } else if (warrantSubtypeCode === "SPECIFIC") {
+                      return field.key === "bailInfo";
                     }
                     return false;
                   }
                   return true;
-                }),
+                });
+
+              return {
+                ...section,
+                body: updatedBody,
               };
             });
           }
@@ -1436,9 +1477,20 @@ const GenerateOrders = () => {
         if (orderType === "WARRANT") {
           const warrantSubtypeCode = currentOrder?.additionalDetails?.formdata?.warrantSubType?.templateType;
           orderTypeForm = orderTypeForm?.map((section) => {
-            return {
-              ...section,
-              body: section.body.filter((field) => {
+            const updatedBody = section.body
+              .map((field) => {
+                if (field.key === "warrantSubType") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...groupedWarrantOptions],
+                    },
+                  };
+                }
+                return field;
+              })
+              .filter((field) => {
                 if (field.key === "warrantText" || field.key === "bailInfo") {
                   if (warrantSubtypeCode === "GENERIC") {
                     return field.key === "warrantText";
@@ -1448,7 +1500,11 @@ const GenerateOrders = () => {
                   return false;
                 }
                 return true;
-              }),
+              });
+
+            return {
+              ...section,
+              body: updatedBody,
             };
           });
         }
@@ -1510,6 +1566,7 @@ const GenerateOrders = () => {
     caseDetails?.id,
     caseDetails?.filingNumber,
     t,
+    groupedWarrantOptions,
   ]);
 
   const multiSelectDropdownKeys = useMemo(() => {

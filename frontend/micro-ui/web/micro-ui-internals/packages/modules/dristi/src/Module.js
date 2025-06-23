@@ -72,6 +72,7 @@ import WorkflowTimeline from "./components/WorkflowTimeline";
 import ImageModal from "./components/ImageModal";
 import SelectCustomFormatterTextArea from "./components/SelectCustomFormatterTextArea";
 import CustomCalendarV2 from "./components/CustomCalendarV2";
+import SelectCustomGroupedDropdown from "./components/SelectCustomGroupedDropdown";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -208,6 +209,7 @@ const componentsToRegister = {
   SearchableDropdown,
   WorkflowTimeline,
   SelectCustomFormatterTextArea,
+  SelectCustomGroupedDropdown
 };
 
 const overrideHooks = () => {
