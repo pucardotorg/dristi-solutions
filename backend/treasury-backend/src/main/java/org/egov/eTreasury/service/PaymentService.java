@@ -395,26 +395,17 @@ public class PaymentService {
 
     private void updateTreasuryMapping(DemandCreateRequest demandRequest) {
         try {
-            TreasuryMapping existingMapping = treasuryMappingRepository.getTreasuryMapping(demandRequest.getConsumerCode());
+            TreasuryMapping existingMapping = treasuryMappingRepository.getTreasuryMapping(getConsumerCodeForFiling(demandRequest.getConsumerCode()));
 
             if (existingMapping == null) return;
 
-            String lastConsumerCode = existingMapping.getLastSubmissionConsumerCode();
-            String newConsumerCode = getNextConsumerCode(lastConsumerCode != null ? lastConsumerCode : demandRequest.getConsumerCode());
-            demandRequest.setConsumerCode(newConsumerCode);
-
-            Calculation latestCalculation = demandRequest.getCalculation().get(0);
-
-            Calculation differenceCalculation = compareOldAndNewBreakDown(existingMapping.getCalculation(), latestCalculation);
-
             //update head breakup for existing mapping
             updateHeadMapping(existingMapping, demandRequest);
-            demandRequest.setCalculation(List.of(differenceCalculation));
 
             // Add to resubmission breakdown
-            existingMapping.setReSubmissionBreakDown(differenceCalculation);
+            existingMapping.setReSubmissionBreakDown(demandRequest.getCalculation().get(0));
             existingMapping.setLastModifiedTime(System.currentTimeMillis());
-            existingMapping.setLastSubmissionConsumerCode(newConsumerCode);
+            existingMapping.setLastSubmissionConsumerCode(demandRequest.getConsumerCode());
             producer.push(config.getTreasuryMappingUpdateTopic(), existingMapping);
 
         } catch (Exception e) {
@@ -423,51 +414,21 @@ public class PaymentService {
         }
     }
 
+    private String getConsumerCodeForFiling(String consumerCode) {
+        String[] parts = consumerCode.split("-");
+        if (parts.length < 4) {
+            return consumerCode;
+        }
+        return String.join("-", parts[0], parts[1], parts[2]) + "_CASE_FILING";
+    }
+
+
 
     private void updateHeadMapping(TreasuryMapping existingMapping, DemandCreateRequest demandCreateRequest) {
         TreasuryMapping newTreasuryMapping = generateTreasuryMapping(demandCreateRequest);
         existingMapping.setHeadAmountMapping(newTreasuryMapping.getHeadAmountMapping());
         existingMapping.setCalculation(newTreasuryMapping.getCalculation());
     }
-
-    private Calculation compareOldAndNewBreakDown(Calculation existingCalculation, Calculation newCalculation) {
-        Calculation calculation = new Calculation();
-        if(calculation.getBreakDown() == null) {
-            calculation.setBreakDown(new ArrayList<>());
-        }
-        Map<String, BreakDown> existingMap = existingCalculation.getBreakDown().stream()
-            .collect(Collectors.toMap(BreakDown::getCode, Function.identity()));
-
-        for (BreakDown newBreakDown : newCalculation.getBreakDown()) {
-            BreakDown existingBreakDown = existingMap.get(newBreakDown.getCode());
-            if (existingBreakDown != null) {
-                double newAmount = newBreakDown.getAmount();
-                double oldAmount = existingBreakDown.getAmount();
-                if (newAmount > oldAmount) {
-                    double difference = newAmount - oldAmount;
-                    calculation.setTotalAmount(calculation.getTotalAmount()+difference);
-                    calculation.getBreakDown().add(new BreakDown(
-                            newBreakDown.getType(),
-                            newBreakDown.getCode(),
-                            difference,
-                            null
-                    ));
-                }
-            }
-        }
-        return calculation;
-    }
-
-    private String getNextConsumerCode(String lastConsumerCode) {
-        Matcher matcher = Pattern.compile("-(\\d+)$").matcher(lastConsumerCode);
-        if (matcher.find()) {
-            int suffix = Integer.parseInt(matcher.group(1));
-            return lastConsumerCode.replaceFirst("-(\\d+)$", "-" + (suffix + 1));
-        } else {
-            return lastConsumerCode + "-1";
-        }
-    }
-
 
     private Map<String, String> getTaxHeadMasterCodes(Map<String, Map<String, JSONArray>> mdmsData, String taskBusinessService, String deliveryChannel) {
         if (mdmsData != null && mdmsData.containsKey("payment") && mdmsData.get("payment").containsKey(PAYMENTMASTERCODE)) {
