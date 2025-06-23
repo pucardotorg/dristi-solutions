@@ -77,9 +77,9 @@ public class TaskService {
 
     public Task createTask(TaskRequest body) {
         try {
-//            validator.validateTaskRegistration(body);
+            validator.validateTaskRegistration(body);
 
-//            enrichmentUtil.enrichTaskRegistration(body);
+            enrichmentUtil.enrichTaskRegistration(body);
 
             if(body.getTask().getTaskType().equalsIgnoreCase(GENERIC)) {
                 updateAssignedToList(body);
@@ -164,7 +164,7 @@ public class TaskService {
         }
     }
 
-    private Object getAdditionalDetails(@Valid Task task) {
+    private Object getAdditionalDetails(Task task) {
         Map<String, Object> additionalDetails = new HashMap<>();
         additionalDetails.put("dueDate", task.getDuedate());
         return additionalDetails;
