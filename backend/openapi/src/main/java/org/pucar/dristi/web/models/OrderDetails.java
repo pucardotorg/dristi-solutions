@@ -12,4 +12,7 @@ public class OrderDetails {
     @JsonProperty("businessOfTheDay")
     private String businessOfTheDay;
 
+    @JsonProperty("fileStore")
+    private String fileStore;
+
 }

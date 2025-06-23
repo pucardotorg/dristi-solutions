@@ -45,7 +45,7 @@ public class OpenApiService {
         } else {
             log.info("Fetching cases from Case Service");
             StringBuilder uri = new StringBuilder(configuration.getCaseServiceHost()).append(configuration.getCaseServiceSearchByCnrNumberEndpoint());
-             OpenApiCaseSummaryRequest request = OpenApiCaseSummaryRequest.builder().tenantId(tenantId).cnrNumber(cnrNumber).build();
+            OpenApiCaseSummaryRequest request = OpenApiCaseSummaryRequest.builder().tenantId(tenantId).cnrNumber(cnrNumber).build();
             Object response = serviceRequestRepository.fetchResult(uri, request);
             CaseSummaryResponse caseSummaryResponse = objectMapper.convertValue(response, CaseSummaryResponse.class);
             CaseSummary caseSummary = caseSummaryResponse.getCaseSummary();
@@ -73,16 +73,15 @@ public class OpenApiService {
                 if (sortList.size() == 2) {
                     pagination.setSortBy(sortList.get(0));
                     pagination.setOrder(Order.fromValue(sortList.get(1)));
-                }
-                else {
+                } else {
                     pagination.setSortBy(REGISTRATION_DATE);
                     pagination.setOrder(Order.DESC);
                 }
-           }
+            }
             OpenApiCaseSummaryRequest request = OpenApiCaseSummaryRequest.builder().tenantId(tenantId).year(year).caseType(caseType).pagination(pagination).build();
             List<Long> years = dateUtil.getYearInSeconds(year);
-                request.setStartYear(years.get(0));
-                request.setEndYear(years.get(1));
+            request.setStartYear(years.get(0));
+            request.setEndYear(years.get(1));
             Object response = serviceRequestRepository.fetchResult(uri, request);
             return objectMapper.convertValue(response, CaseListResponse.class);
         }
@@ -123,11 +122,10 @@ public class OpenApiService {
                 if (hearings.size() == 1) {
                     return hearings.get(0).getStartTime();
                 } else {
-                    throw new CustomException(HEARING_SERVICE_EXCEPTION,"Multiple scheduled hearings found for the case");
+                    throw new CustomException(HEARING_SERVICE_EXCEPTION, "Multiple scheduled hearings found for the case");
                 }
             }
-        }
-        else {
+        } else {
             log.info("No hearings found for the case");
         }
         return null;
@@ -273,6 +271,16 @@ public class OpenApiService {
                             OrderDetails orderDetails = new OrderDetails();
                             orderDetails.setDate(Long.parseLong(dateObj.toString()));
                             orderDetails.setBusinessOfTheDay(businessOfDayObj != null ? businessOfDayObj.toString() : null);
+
+                            List<Map<String, Object>> documents = (List<Map<String, Object>>) orderNotification.get("documents");
+                            if (documents != null) {
+                                for (Map<String, Object> doc : documents) {
+                                    String fileStore = (String) doc.get("fileStore");
+                                    orderDetails.setFileStore(fileStore);
+                                    break;
+                                }
+                            }
+
                             orderDetailsList.add(orderDetails);
                         }
                     }
