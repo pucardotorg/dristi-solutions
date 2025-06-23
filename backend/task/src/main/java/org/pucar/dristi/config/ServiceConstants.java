@@ -130,4 +130,7 @@ public class ServiceConstants {
     public static final String ERROR_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE_SERVICE";
     public static final String GEOLOCATION = "geoLocationDetails";
 
+    public static final String GENERIC = "GENERIC";
+    public static final String ERROR_WHILE_CREATING_DEMAND_FOR_GENERIC_TASK = "Error while creating demand for generic task: ";
+
 }
