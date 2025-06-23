@@ -145,31 +145,31 @@ public class OpenApiService {
         return inboxUtil.getOpenHearings(inboxRequest);
     }
 
-    public OpenInboxResponse getOrdersAndPaymentTasks(OpenInboxRequest openInboxRequest) {
-        OpenInboxResponse openInboxResponse = new OpenInboxResponse();
+    public OpenApiOrderTaskResponse getOrdersAndPaymentTasks(OpenApiOrdersTaskIRequest openApiOrdersTaskIRequest) {
+        OpenApiOrderTaskResponse openApiOrderTaskResponse = new OpenApiOrderTaskResponse();
 
-        if (openInboxRequest.getForOrders()) {
-            getOrderIndexResponse(openInboxRequest, openInboxResponse);
-        } else if (openInboxRequest.getForPaymentTask()) {
-            getPendingTaskIndexResponse(openInboxRequest, openInboxResponse);
+        if (openApiOrdersTaskIRequest.getForOrders()) {
+            getOrderIndexResponse(openApiOrdersTaskIRequest, openApiOrderTaskResponse);
+        } else if (openApiOrdersTaskIRequest.getForPaymentTask()) {
+            getPendingTaskIndexResponse(openApiOrdersTaskIRequest, openApiOrderTaskResponse);
         }
 
-        return openInboxResponse;
+        return openApiOrderTaskResponse;
     }
 
-    private void getPendingTaskIndexResponse(OpenInboxRequest openInboxRequest, OpenInboxResponse openInboxResponse) {
+    private void getPendingTaskIndexResponse(OpenApiOrdersTaskIRequest openApiOrdersTaskIRequest, OpenApiOrderTaskResponse openApiOrderTaskResponse) {
         SearchRequest searchRequest = new SearchRequest();
         IndexSearchCriteria criteria = new IndexSearchCriteria();
 
-        criteria.setTenantId(openInboxRequest.getTenantId());
+        criteria.setTenantId(openApiOrdersTaskIRequest.getTenantId());
         criteria.setModuleName("Pending Tasks Service");
-        criteria.setLimit(openInboxRequest.getLimit());
-        criteria.setOffset(openInboxRequest.getOffset());
-        criteria.setTenantId(openInboxRequest.getTenantId());
+        criteria.setLimit(openApiOrdersTaskIRequest.getLimit());
+        criteria.setOffset(openApiOrdersTaskIRequest.getOffset());
+        criteria.setTenantId(openApiOrdersTaskIRequest.getTenantId());
 
         HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
-        moduleSearchCriteria.put("filingNumber", openInboxRequest.getFilingNumber());
-        moduleSearchCriteria.put("courtId", openInboxRequest.getCourtId());
+        moduleSearchCriteria.put("filingNumber", openApiOrdersTaskIRequest.getFilingNumber());
+        moduleSearchCriteria.put("courtId", openApiOrdersTaskIRequest.getCourtId());
         moduleSearchCriteria.put("isCompleted", false);
         moduleSearchCriteria.put("status", "PENDING_PAYMENT");
         moduleSearchCriteria.put("entityType", Arrays.asList("task-notice", "task-summons", "task-warrant"));
@@ -181,11 +181,11 @@ public class OpenApiService {
         SearchResponse searchResponse = inboxUtil.getPaymentTask(searchRequest);
         List<PaymentTask> paymentTasks = getPendingPaymentTasks(searchResponse);
 
-        openInboxResponse.setPaymentTasks(paymentTasks);
+        openApiOrderTaskResponse.setPaymentTasks(paymentTasks);
 
         searchRequest.getIndexSearchCriteria().setLimit(10000);
         searchRequest.getIndexSearchCriteria().setOffset(0);
-        openInboxResponse.setTotalCount(inboxUtil.getPaymentTask(searchRequest).getData().size());
+        openApiOrderTaskResponse.setTotalCount(inboxUtil.getPaymentTask(searchRequest).getData().size());
     }
 
     private List<PaymentTask> getPendingPaymentTasks(SearchResponse searchResponse) {
@@ -223,13 +223,13 @@ public class OpenApiService {
     }
 
 
-    private void getOrderIndexResponse(OpenInboxRequest openInboxRequest, OpenInboxResponse openInboxResponse) {
+    private void getOrderIndexResponse(OpenApiOrdersTaskIRequest openApiOrdersTaskIRequest, OpenApiOrderTaskResponse openApiOrderTaskResponse) {
         InboxRequest inboxRequest = new InboxRequest();
         InboxSearchCriteria criteria = new InboxSearchCriteria();
 
-        criteria.setTenantId(openInboxRequest.getTenantId());
-        criteria.setLimit(openInboxRequest.getLimit());
-        criteria.setOffset(openInboxRequest.getOffset());
+        criteria.setTenantId(openApiOrdersTaskIRequest.getTenantId());
+        criteria.setLimit(openApiOrdersTaskIRequest.getLimit());
+        criteria.setOffset(openApiOrdersTaskIRequest.getOffset());
 
         ProcessInstanceSearchCriteria processCriteria = new ProcessInstanceSearchCriteria();
         processCriteria.setBusinessService(Collections.singletonList("notification"));
@@ -237,8 +237,8 @@ public class OpenApiService {
         criteria.setProcessSearchCriteria(processCriteria);
 
         HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
-        moduleSearchCriteria.put("caseNumbers", Collections.singletonList(openInboxRequest.getFilingNumber()));
-        moduleSearchCriteria.put("tenantId", openInboxRequest.getTenantId());
+        moduleSearchCriteria.put("caseNumbers", Collections.singletonList(openApiOrdersTaskIRequest.getFilingNumber()));
+        moduleSearchCriteria.put("tenantId", openApiOrdersTaskIRequest.getTenantId());
         moduleSearchCriteria.put("status", Collections.singletonList("PUBLISHED"));
 
         criteria.setModuleSearchCriteria(moduleSearchCriteria);
@@ -247,8 +247,8 @@ public class OpenApiService {
 
         InboxResponse inboxResponse = inboxUtil.getOrders(inboxRequest);
         List<OrderDetails> orderDetailsList = getOrdersDetails(inboxResponse);
-        openInboxResponse.setOrderDetailsList(orderDetailsList);
-        openInboxResponse.setTotalCount(inboxResponse.getTotalCount());
+        openApiOrderTaskResponse.setOrderDetailsList(orderDetailsList);
+        openApiOrderTaskResponse.setTotalCount(inboxResponse.getTotalCount());
     }
 
     private List<OrderDetails> getOrdersDetails(InboxResponse inboxResponse) {

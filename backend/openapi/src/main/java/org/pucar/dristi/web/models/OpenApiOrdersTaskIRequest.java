@@ -6,7 +6,7 @@ import lombok.NonNull;
 
 
 @Data
-public class OpenInboxRequest {
+public class OpenApiOrdersTaskIRequest {
 
     @JsonProperty("forOrders")
     private Boolean forOrders = false;

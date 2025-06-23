@@ -66,8 +66,8 @@ public class OpenapiApiController {
     }
 
     @PostMapping("/openapi/v1/orders_tasks")
-    public ResponseEntity<OpenInboxResponse> getOrdersAndPaymentTaskForCaseDetails(@Parameter(description = "Details for fetching orders and payment tasks in case details page", required = true) @Valid @RequestBody OpenInboxRequest body) {
-        OpenInboxResponse response = openApiService.getOrdersAndPaymentTasks(body);
+    public ResponseEntity<OpenApiOrderTaskResponse> getOrdersAndPaymentTaskForCaseDetails(@Parameter(description = "Details for fetching orders and payment tasks in case details page", required = true) @Valid @RequestBody OpenApiOrdersTaskIRequest body) {
+        OpenApiOrderTaskResponse response = openApiService.getOrdersAndPaymentTasks(body);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

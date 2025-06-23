@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class OpenInboxResponse {
+public class OpenApiOrderTaskResponse {
 
     @JsonProperty("paymentTasks")
     private List<PaymentTask> paymentTasks = new ArrayList<>();
