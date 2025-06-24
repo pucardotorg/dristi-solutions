@@ -9,6 +9,7 @@ import { CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
 import { ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
 import useGetHearingLink from "@egovernments/digit-ui-module-hearings/src/hooks/hearings/useGetHearingLink";
+import useInboxSearch from "../../hooks/useInboxSearch";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -47,57 +48,6 @@ const SearchIcon = () => (
     </defs>
   </svg>
 );
-function useInboxSearch({ limit = 300, offset = 0 } = {}) {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-
-  const fetchInbox = useCallback(
-    async (filters, setHearingCount) => {
-      setLoading(true);
-      setError(null);
-      try {
-        let fromDate, toDate;
-        if (filters.date) {
-          const dateObj = new Date(filters.date);
-          fromDate = new Date(dateObj.setHours(0, 0, 0, 0)).getTime();
-          toDate = new Date(dateObj.setHours(23, 59, 59, 999)).getTime();
-        }
-        const payload = {
-          inbox: {
-            processSearchCriteria: {
-              businessService: ["hearing-default"],
-              moduleName: "Hearing Service",
-              tenantId: Digit.ULBService.getCurrentTenantId(),
-            },
-            moduleSearchCriteria: {
-              tenantId: Digit.ULBService.getCurrentTenantId(),
-              courtId: localStorage.getItem("courtId"),
-              ...(fromDate && toDate ? { fromDate, toDate } : {}),
-            },
-            tenantId: Digit.ULBService.getCurrentTenantId(),
-            limit,
-            offset,
-          },
-        };
-        if (filters?.status?.code) payload.inbox.moduleSearchCriteria.status = filters?.status?.code;
-        if (filters?.purpose) payload.inbox.moduleSearchCriteria.hearingType = filters.purpose?.code;
-        if (filters?.caseQuery) payload.inbox.moduleSearchCriteria.searchableFields = filters.caseQuery;
-
-        const res = await HomeService.InboxSearch(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
-        setData(res?.items || []);
-        setHearingCount(res?.totalCount || 0);
-      } catch (err) {
-        setError(err);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [limit, offset]
-  );
-
-  return { data, loading, error, fetchInbox };
-}
 
 const today = new Date();
 const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
@@ -111,10 +61,12 @@ const HomeHearingsTab = ({
   setFilters = () => {},
   filters,
   showToast = () => {},
+  hearingCount,
 }) => {
   const history = useHistory();
-
-  const { data: tableData, loading, error, fetchInbox } = useInboxSearch();
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const { data: tableData, loading, error, fetchInbox } = useInboxSearch({ limit: rowsPerPage, offset: page * rowsPerPage });
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
@@ -133,16 +85,20 @@ const HomeHearingsTab = ({
   const handleClear = useCallback(() => {
     const cleared = { date: todayStr, status: "", purpose: "", caseQuery: "" };
     setFilters(cleared);
+    setPage(0);
+    setRowsPerPage(10);
     fetchInbox(cleared, setHearingCount);
   }, [fetchInbox, setHearingCount]);
 
   const handleSearch = useCallback(() => {
+    setPage(0);
+    setRowsPerPage(10);
     fetchInbox(filters, setHearingCount);
   }, [fetchInbox, filters, setHearingCount]);
 
   useEffect(() => {
     fetchInbox(filters, setHearingCount);
-  }, []);
+  }, [page, rowsPerPage]);
 
   const stateId = React.useMemo(() => Digit.ULBService.getStateId(), []);
 
@@ -529,8 +485,41 @@ const HomeHearingsTab = ({
                     }
                   });
               } else {
-                setLoader(false);
-                setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: {} });
+                const response = await hearingService.searchHearings(
+                  {
+                    criteria: {
+                      hearingId: hearingDetails?.hearingNumber,
+                      tenantId: hearingDetails?.tenantId,
+                    },
+                  },
+                  { tenantId: hearingDetails?.tenantId }
+                );
+                if (Array.isArray(response?.HearingList) && response?.HearingList.length > 0) {
+                  const currentHearing = response.HearingList[0];
+
+                  await hearingService
+                    ?.updateHearings(
+                      {
+                        tenantId: Digit.ULBService.getCurrentTenantId(),
+                        hearing: { ...currentHearing, workflow: { action: "PASS_OVER" } },
+                        hearingType: "",
+                        status: "",
+                      },
+                      { applicationNumber: "", cnrNumber: "" }
+                    )
+                    .then((res) => {
+                      setTimeout(() => {
+                        setLoader(false);
+                        if (res?.hearing?.status === "PASSED_OVER") {
+                          fetchInbox(filters, setHearingCount);
+                        }
+                      }, 100);
+                    })
+                    .catch(() => {
+                      setLoader(false);
+                      showToast("error", t("ISSUE_IN_PASS_OVER"), 5000);
+                    });
+                }
               }
             } catch (e) {
               console.log(e);
@@ -665,288 +654,6 @@ const HomeHearingsTab = ({
 
   return (
     <div className="full-height-container">
-      <style>{`
-        .home-input input {
-          margin-bottom: 0px !important;
-          border: 1px solid black;
-         font-family: 'Roboto';
-        }
-
-        .full-height-container {
-          display: flex;
-          flex-direction: column;
-          height: calc(100vh - 260px);
-          padding-bottom: 10px;
-        }
-
-        .filter-bar {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 12px;
-          align-items: center;
-          background: #fff;
-          border-radius: 8px;
-          box-shadow: 0 1px 4px rgba(44,62,80,0.06);
-          padding: 16px 18px;
-          margin-bottom: 8px;
-          justify-content: space-between;
-          padding: 0px 18px 0px 18px;
-          flex-shrink: 0;
-        }
-          .search-bar{
-           display: flex;
-          flex-wrap: wrap;
-          gap: 12px;
-          align-items: center;
-          background: #fff;
-          border-radius: 8px;
-          box-shadow: 0 1px 4px rgba(44,62,80,0.06);
-          margin-bottom: 8px;
-          justify-content: end;
-          padding: 0px 18px;
-          flex-shrink: 0;
-          }
-
-        .filter-bar .filter-fields {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 12px;
-          flex: 1 1 300px;
-          min-width: 0;
-        }
-
-        .filter-bar .filter-actions {
-          display: flex;
-          flex-direction: row;
-          gap: 24px;
-          align-items: center;
-          margin-left: 12px;
-        }
-
-        @media (max-width: 900px) {
-          .filter-bar {
-            flex-direction: column;
-            align-items: stretch;
-          }
-          .filter-bar .filter-fields {
-            width: 100%;
-          }
-          .filter-bar .filter-actions {
-            margin-left: 0;
-            margin-top: 12px;
-            justify-content: flex-start;
-          }
-        }
-
-      
-  
-      
-
-
-        .main-table-card {
-          background: #fff;
-          border-radius: 12px;
-          box-shadow: 0 2px 8px rgba(44,62,80,0.07);
-          padding: 0px 18px 18px 18px;
-          position: relative;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-          flex: 1;
-          min-height: 0;
-        }
-
-        .table-scroll {
-          flex: 1;
-          overflow: auto;
-          min-height: 0;
-        }
-
-        .main-table {
-          width: 100%;
-          border-collapse: separate;
-          border-spacing: 0;
-          position: relative;
-        }
-
-        .main-table thead {
-          position: sticky;
-          top: 0;
-          z-index: 10;
-        }
-
-        .main-table th {
-          font-weight: 600;
-          font-size: 15px;
-          background: #fff;
-          padding: 12px 8px;
-          border-bottom: 2px solid #e8e8e8;
-          position: relative;
-          box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
-          text-align: left;
-        }
-
-        .custom-table-row td {
-          padding: 12px 8px;
-          border-bottom: 1px solid #e8e8e8;
-          font-size: 15px;
-          background: #fff;
-          text-align: left;
-        }
-
-        .custom-table-row:hover {
-          background: #f6fafd;
-        }
-
-        .case-link {
-          cursor: pointer;
-          color: #0A0A0A;
-          text-decoration: underline;
-          font-weight: 500;
-        }
-
-        .status-badge {
-          display: inline-block;
-          padding: 2px 14px;
-          border-radius: 12px;
-          font-size: 16px;
-          font-weight: 500;
-        }
-
-        .status-completed {
-          background: #E8E8E8;
-          color: #3D3C3C;
-        }
-
-        .status-ongoing {
-          background: #FFF8E1;
-          color: #574406;
-        }
-
-        .status-passed {
-          background: #FFF6E8;
-          color: #9E400A;
-        }
-
-        .status-passed-over {
-          background: #FFF6E8;
-          color: #9E400A;
-        }
-
-        .status-scheduled {
-          background: #E5E4F2;
-          color: #28264B;
-        }
-
-        .status-abated {
-          background: #E8E8E8;
-          color: #3D3C3C;
-        }
-
-        .status-default {
-          background: #f5f5f5;
-          color: #333;
-        }
-
-        .advocate-header {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-
-        .advocate-header .info-icon {
-          font-size: 15px;
-          color: #888;
-          cursor: pointer;
-        }
-
-        .jk-dropdown-unique {
-          max-height: 300px;
-          overflow-y: auto;
-        }
-
-        .date-arrow-group {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-
-        .date-arrow-btn {
-          background: transparent;
-          border: none;
-          color: #007E7E;
-          font-size: 18px;
-          font-weight: bold;
-          border-radius: 4px;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: background 0.2s, color 0.2s;
-          padding: 0;
-        }
-
-        .date-arrow-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .date-arrow-btn:hover:not(:disabled) {
-          background: #f5f5f5;
-        }
-
-          .filter-fields .select-wrap {
-  width: 180px !important;
-}
-          #jk-dropdown-unique{
-      max-height: 300px;
-    overflow-y: auto;
-      }
-
-      .filter-actions .home-search-btn{
-        font-weight: 700;
-        padding: 8px 24px;
-        border: 1px solid #77787B;
-        font-size: 14px;
-        background: white;
-        height: 40px;
-      }
-
-     .filter-actions .home-clear-btn{
-     border: 0;
-    background: white;
-      color: #222222
-      }
-      .filter-actions .home-input input {
-      border:0;
-      }
-
-      .filter-actions .search-input{
-      display: flex;
-    align-items: center;
-    border: 1px solid #77787B;
-    padding: 0 8px;
-    height: 40px;
-}
-    .filter-actions   .home-input {
-    border: 0px;
-    outline: none; 
-  }
-
- .filter-actions  .home-input:focus {
-    border: 0px;
-  }
-    @media screen and (max-width: 1330px) {
-  .filter-actions .home-input {
-    width: 90px;
-  }
-    .filter-bar .filter-actions{
-    gap: 8px
-    }
-}
-`}</style>
       <div className="filter-bar">
         <div className="filter-fields">
           <LabelFieldPair className={`case-label-field-pair `} style={{ marginTop: "1px" }}>
@@ -1123,6 +830,27 @@ const HomeHearingsTab = ({
               )}
             </tbody>
           </table>
+          <div className="table-pagination">
+            <div className="pagination-info">
+              <span style={{ color: "#505a5f" }}>Rows per page:</span>
+              <select
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setPage(0);
+                }}
+              >
+                {[10, 20, 30, 40, 50].map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <span style={{ color: "#505a5f" }}>
+                {hearingCount === 0 ? "0 of 0" : `${page * rowsPerPage + 1}–${Math.min((page + 1) * rowsPerPage, hearingCount)} of ${hearingCount}`}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
       {showEndHearingModal.openEndHearingModal && (
