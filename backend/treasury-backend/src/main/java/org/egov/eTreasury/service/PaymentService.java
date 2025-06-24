@@ -395,6 +395,7 @@ public class PaymentService {
 
     private void updateTreasuryMapping(DemandCreateRequest demandRequest) {
         try {
+            log.info("operation=updateTreasuryMapping, status=IN_PROGRESS, consumerCode={}", demandRequest.getConsumerCode());
             TreasuryMapping existingMapping = treasuryMappingRepository.getTreasuryMapping(getConsumerCodeForFiling(demandRequest.getConsumerCode()));
 
             if (existingMapping == null) return;
@@ -407,9 +408,9 @@ public class PaymentService {
             existingMapping.setLastModifiedTime(System.currentTimeMillis());
             existingMapping.setLastSubmissionConsumerCode(demandRequest.getConsumerCode());
             producer.push(config.getTreasuryMappingUpdateTopic(), existingMapping);
-
+            log.info("operation=updateTreasuryMapping, status=SUCCESS, consumerCode={}", demandRequest.getConsumerCode());
         } catch (Exception e) {
-            log.error("Error occurred while updating treasury mapping: ", e);
+            log.error("operation=updateTreasuryMapping, status=FAILED, consumerCode={}", demandRequest.getConsumerCode());
             throw new CustomException("TREASURY_MAPPING_UPDATE_ERROR", "Error occurred while updating treasury mapping");
         }
     }
@@ -425,9 +426,42 @@ public class PaymentService {
 
 
     private void updateHeadMapping(TreasuryMapping existingMapping, DemandCreateRequest demandCreateRequest) {
-        TreasuryMapping newTreasuryMapping = generateTreasuryMapping(demandCreateRequest);
-        existingMapping.setHeadAmountMapping(newTreasuryMapping.getHeadAmountMapping());
-        existingMapping.setCalculation(newTreasuryMapping.getCalculation());
+        try {
+            log.info("operation=updateHeadMapping, status=IN_PROGRESS, consumerCode={}", demandCreateRequest.getConsumerCode());
+            Calculation existingCalculation = existingMapping.getCalculation();
+            Calculation newCalculation = demandCreateRequest.getCalculation().get(0);
+            existingCalculation.setTotalAmount(existingCalculation.getTotalAmount()+ newCalculation.getTotalAmount());
+            existingCalculation.setBreakDown(mergeBreakDowns(existingCalculation.getBreakDown(), newCalculation.getBreakDown()));
+            TreasuryMapping updatedMapping = generateTreasuryMapping(DemandCreateRequest.builder()
+                    .calculation(List.of(existingCalculation))
+                    .filingNumber(demandCreateRequest.getFilingNumber())
+                    .entityType(demandCreateRequest.getEntityType())
+                    .tenantId(demandCreateRequest.getTenantId())
+                    .consumerCode(getConsumerCodeForFiling(demandCreateRequest.getConsumerCode())).build());
+
+            existingMapping.setCalculation(existingCalculation);
+            existingMapping.setHeadAmountMapping(updatedMapping.getHeadAmountMapping());
+            log.info("operation=updateHeadMapping, status=SUCCESS, consumerCode={}", demandCreateRequest.getConsumerCode());
+        } catch (CustomException e) {
+            log.error("operation=updateHeadMapping, status=FAILED, consumerCode={}", demandCreateRequest.getConsumerCode());
+            throw new CustomException("ERROR_UPDATING_HEAD_MAPPING", "Error occurred while updating head mapping: " + e.getMessage());
+        }
+    }
+
+    private List<BreakDown> mergeBreakDowns(List<BreakDown> existingBreakDown, List<BreakDown> newBreakDown) {
+        Map<String, BreakDown> breakDownMap = new HashMap<>();
+        for (BreakDown breakDown : existingBreakDown) {
+            breakDownMap.put(breakDown.getCode(), breakDown);
+        }
+        for (BreakDown breakDown : newBreakDown) {
+            if (breakDownMap.containsKey(breakDown.getCode())) {
+                BreakDown existingBreakdown = breakDownMap.get(breakDown.getCode());
+                existingBreakdown.setAmount(existingBreakdown.getAmount() + breakDown.getAmount());
+            } else {
+                breakDownMap.put(breakDown.getCode(), breakDown);
+            }
+        }
+        return new ArrayList<>(breakDownMap.values());
     }
 
     private Map<String, String> getTaxHeadMasterCodes(Map<String, Map<String, JSONArray>> mdmsData, String taskBusinessService, String deliveryChannel) {
