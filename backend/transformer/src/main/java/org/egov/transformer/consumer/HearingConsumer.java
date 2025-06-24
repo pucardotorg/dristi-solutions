@@ -5,9 +5,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.egov.transformer.config.TransformerProperties;
+import org.egov.transformer.models.CaseSearch;
+import org.egov.transformer.models.CourtCase;
 import org.egov.transformer.models.Hearing;
 import org.egov.transformer.models.HearingBulkRequest;
 import org.egov.transformer.models.HearingRequest;
+import org.egov.transformer.service.CaseService;
 import org.egov.transformer.service.HearingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,12 +30,14 @@ public class HearingConsumer {
 
     private final HearingService hearingService;
     private final TransformerProperties transformerProperties;
+    private final CaseService caseService;
 
     @Autowired
-    public HearingConsumer(ObjectMapper objectMapper, HearingService hearingService, TransformerProperties transformerProperties) {
+    public HearingConsumer(ObjectMapper objectMapper, HearingService hearingService, TransformerProperties transformerProperties, CaseService caseService) {
         this.objectMapper = objectMapper;
         this.hearingService = hearingService;
         this.transformerProperties = transformerProperties;
+        this.caseService = caseService;
     }
 
     @KafkaListener(topics = {"${transformer.consumer.create.hearing.topic}"})
@@ -68,6 +73,8 @@ public class HearingConsumer {
             logger.info(objectMapper.writeValueAsString(hearing));
             hearingService.addCaseDetailsToHearing(hearing, topic);
             hearingService.enrichOpenHearings(hearingRequest);
+
+            publishCaseSearchFromHearing(hearing);
         } catch (Exception exception) {
             logger.error("error in saving hearing", exception);
         }
@@ -85,9 +92,19 @@ public class HearingConsumer {
                         .hearing(hearing).build();
                 hearingService.addCaseDetailsToHearing(hearing, topic);
                 hearingService.enrichOpenHearings(request);
+
+                publishCaseSearchFromHearing(hearing);
             }
         }catch (Exception exception) {
             logger.error("error in saving hearing", exception);
         }
+    }
+
+    public void publishCaseSearchFromHearing(Hearing hearing) {
+        String tenantId = hearing.getTenantId();
+        String filingNumber = hearing.getFilingNumber().get(0);
+        CourtCase courtCase = caseService.getCase(filingNumber, tenantId, null);
+        CaseSearch caseSearch = caseService.getCaseSearchFromCourtCase(courtCase);
+        caseService.publishToCaseSearchIndexer(caseSearch);
     }
 }

@@ -22,6 +22,10 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <!-- This creates both fat JAR and plain JAR -->
+                    <classifier>boot</classifier>
+                </configuration>
                 <executions>
                     <execution>
                         <goals>

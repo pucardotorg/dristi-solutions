@@ -72,4 +72,11 @@ public class TransformerProperties {
 
     @Value("${transformer.producer.case.search.topic}")
     private String caseSearchTopic;
+
+    // Hearing
+    @Value("${dristi.hearing.host}")
+    private String HearingHost;
+
+    @Value("${dristi.hearing.search.endpoint}")
+    private String hearingSearchEndPoint;
 }

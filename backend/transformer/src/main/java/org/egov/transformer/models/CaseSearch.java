@@ -42,8 +42,9 @@ public class CaseSearch {
     @JsonProperty("cnrNumber")
     private String cnrNumber = null;
 
-    @JsonProperty("litigant")
-    private Litigant litigant = null;
+//    list of string
+//    @JsonProperty("litigant")
+//    private Litigant litigant = null;
 
     @JsonProperty("nextHearingDate")
     private LocalDate nextHearingDate = null;
@@ -62,7 +63,7 @@ public class CaseSearch {
 
 
     /*
-
+    list
     advocate
         -- name
         -- barcode --- statecode case insensitive  /code / 	   year

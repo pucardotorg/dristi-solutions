@@ -1,21 +1,45 @@
 package org.egov.transformer.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.tracer.model.ServiceCallException;
 import org.egov.transformer.config.TransformerProperties;
-import org.egov.transformer.models.*;
+import org.egov.transformer.models.Advocate;
+import org.egov.transformer.models.AdvocateMapping;
+import org.egov.transformer.models.CourtCase;
+import org.egov.transformer.models.Hearing;
+import org.egov.transformer.models.HearingRequest;
+import org.egov.transformer.models.HearingResponse;
+import org.egov.transformer.models.HearingSearchRequest;
+import org.egov.transformer.models.OpenHearing;
+import org.egov.transformer.models.Party;
 import org.egov.transformer.producer.TransformerProducer;
+import org.egov.transformer.repository.ServiceRequestRepository;
 import org.egov.transformer.util.JsonUtil;
 import org.egov.transformer.util.MdmsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-import static org.egov.transformer.config.ServiceConstants.*;
+import static org.egov.transformer.config.ServiceConstants.DEFAULT_COURT_MODULE_NAME;
+import static org.egov.transformer.config.ServiceConstants.DEFAULT_HEARING_MASTER_NAME;
+import static org.egov.transformer.config.ServiceConstants.HEARING_MODULE_NAME;
+import static org.egov.transformer.config.ServiceConstants.HEARING_STATUS_MASTER_NAME;
+import static pucar.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
+import static pucar.config.ServiceConstants.SEARCHER_SERVICE_EXCEPTION;
 
 @Slf4j
 @Service
@@ -26,14 +50,16 @@ public class HearingService {
     private final TransformerProperties properties;
     private final JsonUtil jsonUtil;
     private final MdmsUtil mdmsUtil;
+    private final ServiceRequestRepository serviceRequestRepository;
 
     @Autowired
-    public HearingService(TransformerProducer producer, CaseService caseService, TransformerProperties properties, JsonUtil jsonUtil, MdmsUtil mdmsUtil) {
+    public HearingService(TransformerProducer producer, CaseService caseService, TransformerProperties properties, JsonUtil jsonUtil, MdmsUtil mdmsUtil, org.egov.transformer.repository.ServiceRequestRepository serviceRequestRepository) {
         this.producer = producer;
         this.caseService = caseService;
         this.properties = properties;
         this.jsonUtil = jsonUtil;
         this.mdmsUtil = mdmsUtil;
+        this.serviceRequestRepository = serviceRequestRepository;
     }
 
     public void addCaseDetailsToHearing(Hearing hearing, String topic) throws IOException {
@@ -199,6 +225,27 @@ public class HearingService {
         hearingList.add(hearingRequest.getHearing());
         hearingResponse.setHearingList(hearingList);
         producer.push("hearing-legacy-topic", hearingResponse);
+    }
+
+    public List<Hearing> fetchHearing(HearingSearchRequest request) {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        StringBuilder uri = new StringBuilder(properties.getHearingHost().concat(properties.getHearingSearchEndPoint()));
+
+        Object response = serviceRequestRepository.fetchResult(uri, request);
+        List<Hearing> hearingList = null;
+        try {
+            JsonNode jsonNode = objectMapper.valueToTree(response);
+            JsonNode hearingListNode = jsonNode.get("HearingList");
+            hearingList = objectMapper.readValue(hearingListNode.toString(), new TypeReference<>() {
+            });
+        } catch (HttpClientErrorException e) {
+            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
+            throw new ServiceCallException(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error(SEARCHER_SERVICE_EXCEPTION, e);
+        }
+        return hearingList;
     }
 
 }
