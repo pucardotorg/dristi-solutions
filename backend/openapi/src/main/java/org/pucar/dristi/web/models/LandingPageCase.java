@@ -24,17 +24,14 @@ public class LandingPageCase {
     private String purpose;
 
     @JsonProperty("nextHearingDate")
-    private String nextHearingDate;
+    private Long nextHearingDate;
 
     @JsonProperty("lastHearingDate")
-    private String lastHearingDate;
+    private Long lastHearingDate;
 
     @JsonProperty("filingDate")
-    private String filingDate;
+    private Long filingDate;
 
     @JsonProperty("registrationDate")
-    private String registrationDate;
-
-    @JsonProperty("magistrateName")
-    private String magistrateName;
+    private Long registrationDate;
 }

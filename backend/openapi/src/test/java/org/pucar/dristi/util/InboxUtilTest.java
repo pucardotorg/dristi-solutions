@@ -55,7 +55,7 @@ class InboxUtilTest {
         caseDetails.put("cmpNumber", "1234");
         caseDetails.put("stNumber", "5678");
         caseDetails.put("hearingType", "Final");
-        caseDetails.put("nextHearingDate", "2024-06-23");
+        caseDetails.put("nextHearingDate",13214343l);
 
         businessObjectMap = new HashMap<>();
         businessObjectMap.put("caseDetails", caseDetails);
@@ -89,7 +89,7 @@ class InboxUtilTest {
         assertEquals("1234", mappedCase.getCmpNumber());
         assertEquals("5678", mappedCase.getStNumber());
         assertEquals("Final", mappedCase.getPurpose());
-        assertEquals("2024-06-23", mappedCase.getNextHearingDate());
+        assertEquals(13214343l, mappedCase.getNextHearingDate());
     }
 
     @Test
