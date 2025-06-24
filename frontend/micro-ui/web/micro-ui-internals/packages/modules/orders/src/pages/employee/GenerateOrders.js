@@ -251,6 +251,7 @@ const GenerateOrders = () => {
   const [currentFormData, setCurrentFormData] = useState(null);
   const roles = Digit.UserService.getUser()?.info?.roles;
   const canESign = roles?.some((role) => role.code === "ORDER_ESIGN");
+  const canSaveSignLater = roles?.some((role) => role.code === "ORDER_APPROVER");
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const judgeName = localStorage.getItem("judgeName");
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
@@ -4220,6 +4221,7 @@ const GenerateOrders = () => {
           setShowsignatureModal={setShowsignatureModal}
           setOrderPdfFileStoreID={setOrderPdfFileStoreID}
           showActions={canESign && !currentDiaryEntry}
+          saveSignLater={canSaveSignLater}
           setBusinessOfTheDay={setBusinessOfTheDay}
           currentDiaryEntry={currentDiaryEntry}
           handleUpdateBusinessOfDayEntry={handleUpdateBusinessOfDayEntry}
