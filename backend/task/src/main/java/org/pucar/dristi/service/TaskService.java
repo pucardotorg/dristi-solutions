@@ -44,6 +44,7 @@ public class TaskService {
     private final SummonUtil summonUtil;
     private final FileStoreUtil fileStoreUtil;
     private final EtreasuryUtil etreasuryUtil;
+    private final PendingTaskUtil pendingTaskUtil;
 
     @Autowired
     public TaskService(TaskRegistrationValidator validator,
@@ -51,7 +52,7 @@ public class TaskService {
                        TaskRepository taskRepository,
                        WorkflowUtil workflowUtil,
                        Configuration config,
-                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus, SummonUtil summonUtil, FileStoreUtil fileStoreUtil, EtreasuryUtil etreasuryUtil) {
+                       Producer producer, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, TopicBasedOnStatus topicBasedOnStatus, SummonUtil summonUtil, FileStoreUtil fileStoreUtil, EtreasuryUtil etreasuryUtil, PendingTaskUtil pendingTaskUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.taskRepository = taskRepository;
@@ -66,6 +67,7 @@ public class TaskService {
         this.summonUtil = summonUtil;
         this.fileStoreUtil = fileStoreUtil;
         this.etreasuryUtil = etreasuryUtil;
+        this.pendingTaskUtil = pendingTaskUtil;
     }
 
     @Autowired
@@ -332,6 +334,8 @@ public class TaskService {
             enrichmentUtil.enrichCaseApplicationUponUpdate(taskRequest);
 
             producer.push(config.getTaskUpdateTopic(), taskRequest);
+            
+            closeEnvelopePendingTaskOfRpad(taskRequest);
 
             return taskRequest.getTask();
 
@@ -342,6 +346,41 @@ public class TaskService {
             log.error("Error occurred while uploading document into task :: {}", e.toString());
             throw new CustomException(DOCUMENT_UPLOAD_QUERY_EXCEPTION, "Error occurred while uploading document into task: " + e.getMessage());
         }
+    }
+
+    public void closeEnvelopePendingTaskOfRpad(TaskRequest taskRequest) {
+        Task task = taskRequest.getTask();
+        if ((task.getTaskType().equalsIgnoreCase(SUMMON) || task.getTaskType().equalsIgnoreCase(WARRANT)
+                || task.getTaskType().equalsIgnoreCase(NOTICE)) && (isRPADdeliveryChannel(task))) {
+            closeEnvelopePendingTask(taskRequest);
+        }
+    }
+
+    private void closeEnvelopePendingTask(TaskRequest taskRequest) {
+        Task task = taskRequest.getTask();
+        String referenceId = MANUAL + task.getTaskNumber() + PENDING_ENVELOPE_SUBMISSION;
+        pendingTaskUtil.closeManualPendingTask(referenceId, taskRequest.getRequestInfo(), task.getFilingNumber(),
+                task.getCnrNumber(), task.getCaseId(), task.getCaseTitle(), task.getTaskType());
+    }
+
+    private boolean isRPADdeliveryChannel(Task task) {
+        JsonNode taskDetails = objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
+
+        // Check if deliveryChannels exists
+        ObjectNode deliveryChannels = null;
+        if (taskDetails.has("deliveryChannels") && !taskDetails.get("deliveryChannels").isNull()) {
+            deliveryChannels = (ObjectNode) taskDetails.get("deliveryChannels");
+        }
+
+        if (deliveryChannels == null) {
+            return false;
+        }
+
+        if (deliveryChannels.has(CHANNEL_CODE) && !deliveryChannels.get(CHANNEL_CODE).isNull()) {
+            String channelCode = deliveryChannels.get(CHANNEL_CODE).textValue();
+            return channelCode != null && channelCode.equalsIgnoreCase(RPAD);
+        }
+        return false;
     }
 
     public List<TaskCase> searchCaseTask(TaskCaseSearchRequest request) {

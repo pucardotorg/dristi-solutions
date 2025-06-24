@@ -1,9 +1,7 @@
 package org.pucar.dristi.web.models.orders;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.validation.annotation.Validated;
 
 @Validated
@@ -11,6 +9,8 @@ import org.springframework.validation.annotation.Validated;
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class OrderCriteria {
 
     @JsonProperty("id")

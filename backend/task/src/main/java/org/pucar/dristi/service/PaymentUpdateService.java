@@ -442,7 +442,7 @@ public class PaymentUpdateService {
 
         if (deliveryChannels != null && (deliveryChannels.has(CHANNEL_CODE)) && !deliveryChannels.get(CHANNEL_CODE).isNull()) {
             String channelCode = deliveryChannels.get(CHANNEL_CODE).textValue();
-            if (channelCode == null || !channelCode.equalsIgnoreCase(RPAD)) {
+            if (!RPAD.equalsIgnoreCase(channelCode)) {
                 return;
             }
             createPendingTaskForEnvelope(task, requestInfo);

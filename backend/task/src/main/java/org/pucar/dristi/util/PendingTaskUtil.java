@@ -25,8 +25,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static org.pucar.dristi.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
-import static org.pucar.dristi.config.ServiceConstants.SEARCHER_SERVICE_EXCEPTION;
+import static org.pucar.dristi.config.ServiceConstants.*;
+import static org.pucar.dristi.config.ServiceConstants.NOTICE;
+import static org.pucar.dristi.config.ServiceConstants.WARRANT;
 
 @Component
 @Slf4j
@@ -130,16 +131,26 @@ public class PendingTaskUtil {
     }
 
     public void closeManualPendingTask(String referenceNo, RequestInfo requestInfo, String filingNumber, @NotNull String
-            cnrNumber, @NotNull String caseId, @NotNull String caseTitle) {
+            cnrNumber, @NotNull String caseId, @NotNull String caseTitle,String taskType) {
         // here data will be lost , we need to search first then update the pending task , this is as per ui
         createPendingTask(PendingTaskRequest.builder()
                 .pendingTask(PendingTask.builder().referenceId("MANUAL" + referenceNo)
                         .name("Completed")
-                        .entityType("order-default")
-                        .status("DRAFT_IN_PROGRESS")
+                        .entityType(getEntityType(taskType))
+                        .status("COMPLETED")
                         .filingNumber(filingNumber)
                         .caseId(caseId).caseTitle(caseTitle)
                         .cnrNumber(cnrNumber).isCompleted(true).build()).requestInfo(requestInfo).build());
+    }
+
+    private String getEntityType(String taskType) {
+
+        return switch (taskType) {
+            case SUMMON -> "task-summons";
+            case WARRANT -> "task-warrant";
+            case NOTICE -> "task-notice";
+            default -> null;
+        };
     }
 
     public List<String> getUniqueAssignees(Map<String, List<String>> allAdvocates) {

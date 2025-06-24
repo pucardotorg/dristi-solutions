@@ -307,6 +307,10 @@ class PaymentUpdateServiceTest {
 
         spyService.createPendingTaskForRPAD(task, requestInfo);
 
+        // Verify expected interactions
+        verify(objectMapper).convertValue(any(), eq(JsonNode.class));
+        verify(caseUtil).getCaseDetails(any(TaskRequest.class));
+
     }
 
 }
