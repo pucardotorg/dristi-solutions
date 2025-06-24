@@ -175,16 +175,16 @@ public class TransformerProperties {
 
     //Hearing config
     @Value("${dristi.hearing.host}")
-    private String HearingHost;
+    private String hearingHost;
 
     @Value("${dristi.hearing.update.endpoint}")
-    private String HearingUpdateEndPoint;
+    private String hearingUpdateEndPoint;
 
     @Value("${dristi.hearing.summary.update.endpoint}")
     private String updateHearingSummaryEndPoint;
 
     @Value("${dristi.hearing.create.endpoint}")
-    private String HearingCreateEndPoint;
+    private String hearingCreateEndPoint;
 
     @Value("${dristi.hearing.search.endpoint}")
     private String hearingSearchEndPoint;

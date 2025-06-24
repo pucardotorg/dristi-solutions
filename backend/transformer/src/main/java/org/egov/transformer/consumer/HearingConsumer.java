@@ -101,7 +101,11 @@ public class HearingConsumer {
         }
     }
 
-    public void publishCaseSearchFromHearing(Hearing hearing, RequestInfo requestInfo) {
+    private void publishCaseSearchFromHearing(Hearing hearing, RequestInfo requestInfo) {
+        if (hearing.getFilingNumber() == null || hearing.getFilingNumber().isEmpty()) {
+            logger.warn("No filing number found for hearing with ID: {}", hearing.getHearingId());
+            return;
+        }
         String tenantId = hearing.getTenantId();
         String filingNumber = hearing.getFilingNumber().get(0);
         CourtCase courtCase = caseService.getCase(filingNumber, tenantId, requestInfo);

@@ -14,9 +14,5 @@ public class Representing extends Party {
 
     @JsonProperty("isAdvocateReplacing")
     private boolean isAdvocateReplacing = false;
-
-    public boolean getIsAdvocateReplacing() {
-        return this.isAdvocateReplacing;
-    }
 }
 

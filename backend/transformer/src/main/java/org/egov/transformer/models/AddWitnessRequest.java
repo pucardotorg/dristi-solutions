@@ -2,6 +2,7 @@ package org.egov.transformer.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -24,7 +25,7 @@ public class AddWitnessRequest {
     private RequestInfo requestInfo = null;
 
     @JsonProperty("caseFilingNumber")
-    @NotNull
+    @NotBlank
     private String caseFilingNumber = null;
 
     @JsonProperty("additionalDetails")

@@ -2,6 +2,7 @@ package org.egov.transformer.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import org.egov.common.contract.models.AuditDetails;
 import org.springframework.validation.annotation.Validated;
@@ -30,6 +31,7 @@ public class Representative{
 
     @JsonProperty("representing")
     @Valid
+    @NotEmpty
     private List<Representing> representing = null;
 
     @JsonProperty("isActive")
@@ -37,6 +39,7 @@ public class Representative{
 
     @JsonProperty("documents")
     @Valid
+    @NotEmpty
     private List<Document> documents = null;
 
     @JsonProperty("auditDetails")

@@ -51,15 +51,17 @@ public class HearingService {
     private final JsonUtil jsonUtil;
     private final MdmsUtil mdmsUtil;
     private final ServiceRequestRepository serviceRequestRepository;
+    private final ObjectMapper objectMapper;
 
     @Autowired
-    public HearingService(TransformerProducer producer, CaseService caseService, TransformerProperties properties, JsonUtil jsonUtil, MdmsUtil mdmsUtil, org.egov.transformer.repository.ServiceRequestRepository serviceRequestRepository) {
+    public HearingService(TransformerProducer producer, CaseService caseService, TransformerProperties properties, JsonUtil jsonUtil, MdmsUtil mdmsUtil, org.egov.transformer.repository.ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper) {
         this.producer = producer;
         this.caseService = caseService;
         this.properties = properties;
         this.jsonUtil = jsonUtil;
         this.mdmsUtil = mdmsUtil;
         this.serviceRequestRepository = serviceRequestRepository;
+        this.objectMapper = objectMapper;
     }
 
     public void addCaseDetailsToHearing(Hearing hearing, String topic) throws IOException {
@@ -227,18 +229,18 @@ public class HearingService {
         producer.push("hearing-legacy-topic", hearingResponse);
     }
 
-    public List<Hearing> fetchHearing(HearingSearchRequest request) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        StringBuilder uri = new StringBuilder(properties.getHearingHost().concat(properties.getHearingSearchEndPoint()));
 
-        Object response = serviceRequestRepository.fetchResult(uri, request);
-        List<Hearing> hearingList = null;
+    public List<Hearing> fetchHearing(HearingSearchRequest request) {
+        String uri = properties.getHearingHost() + properties.getHearingSearchEndPoint();
+
+        Object response = serviceRequestRepository.fetchResult(new StringBuilder(uri), request);
+        List<Hearing> hearingList = Collections.emptyList();
         try {
             JsonNode jsonNode = objectMapper.valueToTree(response);
             JsonNode hearingListNode = jsonNode.get("HearingList");
-            hearingList = objectMapper.readValue(hearingListNode.toString(), new TypeReference<>() {
-            });
+            if(hearingListNode!=null){
+                hearingList = objectMapper.readValue(hearingListNode.toString(), new TypeReference<>() {});
+            }
         } catch (HttpClientErrorException e) {
             log.error(EXTERNAL_SERVICE_EXCEPTION, e);
             throw new ServiceCallException(e.getResponseBodyAsString());
