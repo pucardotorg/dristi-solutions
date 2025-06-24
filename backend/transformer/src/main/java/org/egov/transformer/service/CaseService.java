@@ -22,6 +22,7 @@ import org.egov.transformer.models.HearingSearchRequest;
 import org.egov.transformer.models.Order;
 import org.egov.transformer.producer.TransformerProducer;
 import org.egov.transformer.repository.ServiceRequestRepository;
+import org.egov.transformer.util.HearingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,14 +33,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static org.egov.transformer.config.ServiceConstants.COURT_CASE_JSON_PATH;
+import static org.egov.transformer.config.ServiceConstants.HEARING_COMPLETED_STATUS;
 
 @Slf4j
 @Service
@@ -52,16 +49,18 @@ public class CaseService {
     private final TransformerProperties properties;
     private final TransformerProducer producer;
     private final ObjectMapper objectMapper;
+    private final HearingUtil hearingUtil;
     private final ServiceRequestRepository repository;
     private final HearingService hearingService;
     private final RestTemplate restTemplate;
 
     @Autowired
-    public CaseService(ElasticSearchService elasticSearchService, TransformerProperties properties, TransformerProducer producer, ObjectMapper objectMapper, ServiceRequestRepository repository, HearingService hearingService, RestTemplate restTemplate) {
+    public CaseService(ElasticSearchService elasticSearchService, TransformerProperties properties, TransformerProducer producer, ObjectMapper objectMapper, HearingUtil hearingUtil, ServiceRequestRepository repository, HearingService hearingService, RestTemplate restTemplate) {
         this.elasticSearchService = elasticSearchService;
         this.properties = properties;
         this.producer = producer;
         this.objectMapper = objectMapper;
+        this.hearingUtil = hearingUtil;
         this.repository = repository;
         this.hearingService = hearingService;
         this.restTemplate = restTemplate;
@@ -151,6 +150,9 @@ public class CaseService {
         courtCase.setCmpNumber(courtCase.getCmpNumber());
         caseSearch.setCaseType(courtCase.getCaseType());
         caseSearch.setCnrNumber(courtCase.getCnrNumber());
+        caseSearch.setFilingDate(courtCase.getFilingDate());
+        caseSearch.setRegistrationDate(courtCase.getRegistrationDate());
+        enrichHearingDate(courtCase.getFilingNumber(), caseSearch);
         // next hearing date?
         caseSearch.setCaseStage(courtCase.getStage());
         caseSearch.setCaseStatus(courtCase.getStatus());
@@ -165,6 +167,22 @@ public class CaseService {
         caseSearch.setHearingType(hearing.getHearingType());
         return caseSearch;
 
+    }
+
+    public void enrichHearingDate(String filingNumber, CaseSearch caseSearch) {
+        HearingCriteria criteria = HearingCriteria.builder().filingNumber(filingNumber).build();
+        HearingSearchRequest request = HearingSearchRequest.builder().criteria(criteria).build();
+        List<Hearing> hearingList = hearingUtil.fetchHearingDetails(request);
+
+        if (hearingList != null && !hearingList.isEmpty()) {
+            Optional<Hearing> mostRecentCompletedHearing = hearingList.stream()
+                    .filter(hearing -> HEARING_COMPLETED_STATUS.equalsIgnoreCase(hearing.getStatus()))
+                    .filter(hearing -> hearing.getEndTime() != null).max(Comparator.comparing(Hearing::getEndTime));
+            mostRecentCompletedHearing.ifPresent(hearing -> caseSearch.setLastHearingDate(hearing.getEndTime()));
+        }
+        else {
+            log.info("No hearings found for the case");
+        }
     }
 
     public void publishToCaseSearchIndexer(CaseSearch caseSearch) {

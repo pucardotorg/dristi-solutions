@@ -61,6 +61,15 @@ public class CaseSearch {
     @JsonProperty("hearingType")
     private String hearingType = null;
 
+    @JsonProperty("lastHearingDate")
+    private Long lastHearingDate;
+
+    @JsonProperty("filingDate")
+    private Long filingDate;
+
+    @JsonProperty("registrationDate")
+    private Long registrationDate;
+
 
     /*
     list
