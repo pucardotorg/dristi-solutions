@@ -420,7 +420,7 @@ public class PaymentService {
         if (parts.length < 4) {
             return consumerCode;
         }
-        return String.join("-", parts[0], parts[1], parts[2]) + "_CASE_FILING";
+        return String.join("-", parts[0], parts[1], parts[2]);
     }
 
 
