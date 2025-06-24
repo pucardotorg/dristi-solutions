@@ -407,7 +407,7 @@ public class CaseService {
             enrichmentService.enrichCourtCase(caseRequest);
             String previousStatus = caseRequest.getCases().getStatus();
             if(PENDING_RE_SIGN.equals(previousStatus)) {
-                Calculation calculation = compareCalculationAndCreateDemand(caseRequest);
+                Calculation calculation = compareCalculationAndCreateDemand(caseRequest, existingApplications.get(0).getResponseList().get(0));
                 if(calculation != null) {
                     caseRequest.getCases().getWorkflow().setAction(UPLOAD_WITH_PAYMENT);
                 }
@@ -426,7 +426,7 @@ public class CaseService {
 
             if (lastSigned) {
                 log.info("Last e-sign for case {}", caseRequest.getCases().getId());
-                Calculation calculation = compareCalculationAndCreateDemand(caseRequest);
+                Calculation calculation = compareCalculationAndCreateDemand(caseRequest, existingApplications.get(0).getResponseList().get(0));
                 caseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(caseRequest.getCases().getTenantId()).build());
                 if(calculation != null){
                     caseRequest.getCases().getWorkflow().setAction(E_SIGN_COMPLETE_WITH_PAYMENT);
@@ -4928,23 +4928,11 @@ public class CaseService {
         return responseMap;
     }
 
-    public Calculation compareCalculationAndCreateDemand(@Valid CaseRequest body) {
+    public Calculation compareCalculationAndCreateDemand(@Valid CaseRequest body, CourtCase existingCase) {
         try {
             log.info("operation=compareCalculationAndCreateDemand, status=IN_PROGRESS, caseId: {}", body.getCases().getId());
-            CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
-                    .requestInfo(body.getRequestInfo())
-                    .flow(FLOW_JAC)
-                    .criteria(Collections.singletonList(CaseCriteria.builder()
-                            .caseId(body.getCases().getId().toString())
-                            .defaultFields(false)
-                            .build()))
-                    .build();
-            searchCases(caseSearchRequest);
-            CourtCase existingCase = caseSearchRequest.getCriteria().get(0).getResponseList().get(0);
-
             CalculationRes newCalculation = getCalculation(body.getCases(), body.getRequestInfo());
             CalculationRes oldCalculation = getCalculation(existingCase, body.getRequestInfo());
-
 
             Calculation calculation = getCalculationDifference(newCalculation, oldCalculation);
 
