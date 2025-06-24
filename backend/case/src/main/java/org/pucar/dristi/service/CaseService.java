@@ -407,7 +407,7 @@ public class CaseService {
             enrichmentService.enrichCourtCase(caseRequest);
             String previousStatus = caseRequest.getCases().getStatus();
             if(PENDING_RE_SIGN.equals(previousStatus)) {
-                Calculation calculation = compareCalculationAndCreateDemand(caseRequest, existingApplications.get(0).getResponseList().get(0));
+                Calculation calculation = compareCalculationAndCreateDemand(caseRequest);
                 if(calculation != null) {
                     caseRequest.getCases().getWorkflow().setAction(UPLOAD_WITH_PAYMENT);
                 }
@@ -426,7 +426,7 @@ public class CaseService {
 
             if (lastSigned) {
                 log.info("Last e-sign for case {}", caseRequest.getCases().getId());
-                Calculation calculation = compareCalculationAndCreateDemand(caseRequest, existingApplications.get(0).getResponseList().get(0));
+                Calculation calculation = compareCalculationAndCreateDemand(caseRequest);
                 caseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(caseRequest.getCases().getTenantId()).build());
                 if(calculation != null){
                     caseRequest.getCases().getWorkflow().setAction(E_SIGN_COMPLETE_WITH_PAYMENT);
@@ -4928,11 +4928,11 @@ public class CaseService {
         return responseMap;
     }
 
-    public Calculation compareCalculationAndCreateDemand(@Valid CaseRequest body, CourtCase existingCase) {
+    public Calculation compareCalculationAndCreateDemand(@Valid CaseRequest body) {
         try {
             log.info("operation=compareCalculationAndCreateDemand, status=IN_PROGRESS, caseId: {}", body.getCases().getId());
             CalculationRes newCalculation = getCalculation(body.getCases(), body.getRequestInfo());
-            CalculationRes oldCalculation = getCalculation(existingCase, body.getRequestInfo());
+            Calculation oldCalculation = etreasuryUtil.getHeadBreakupCalculation(body.getCases().getFilingNumber()+"_CASE_FILING", body.getRequestInfo());
 
             Calculation calculation = getCalculationDifference(newCalculation, oldCalculation);
 
@@ -4967,14 +4967,13 @@ public class CaseService {
     }
 
 
-    private Calculation getCalculationDifference(CalculationRes newCalculation, CalculationRes oldCalculation) {
+    private Calculation getCalculationDifference(CalculationRes newCalculation, Calculation oldCalculation) {
         Calculation newCalc = newCalculation.getCalculation().get(0);
-        Calculation oldCalc = oldCalculation.getCalculation().get(0);
 
         List<BreakDown> newBreakDowns = newCalc.getBreakDown();
-        List<BreakDown> oldBreakDowns = oldCalc.getBreakDown();
+        List<BreakDown> oldBreakDowns = oldCalculation.getBreakDown();
 
-        if(newCalc.getTotalAmount()>oldCalc.getTotalAmount()) {
+        if(newCalc.getTotalAmount()> oldCalculation.getTotalAmount()) {
 
             Map<String, BreakDown> oldBreakDownMap = oldBreakDowns.stream()
                     .collect(Collectors.toMap(BreakDown::getCode, Function.identity()));
@@ -4996,7 +4995,7 @@ public class CaseService {
             if (!differenceBreakDowns.isEmpty()) {
                 Calculation difference = new Calculation();
                 difference.setTenantId(newCalc.getTenantId());
-                difference.setTotalAmount(newCalc.getTotalAmount() - oldCalc.getTotalAmount());
+                difference.setTotalAmount(newCalc.getTotalAmount() - oldCalculation.getTotalAmount());
                 difference.setBreakDown(differenceBreakDowns);
                 return difference;
             }

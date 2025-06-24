@@ -89,4 +89,24 @@ public class EtreasuryUtil {
 			throw new CustomException(ERROR_WHILE_CREATING_DEMAND_FOR_CASE, e.getMessage());
 		}
 	}
+
+	public Calculation getHeadBreakupCalculation(String consumerCode, RequestInfo requestInfo) {
+		StringBuilder uri = new StringBuilder();
+		uri.append(configs.getEtreasuryHost()).append(configs.getEtreasuryCalculationEndPoint())
+				.append("?consumerCode=").append(consumerCode)
+				.append("&tenantId=").append(configs.getTenantId());
+
+		log.info("Head Breakup Calculation URI: {}", uri);
+		Object response;
+		try {
+			response = restTemplate.postForObject(uri.toString(), requestInfo, Object.class);
+			log.info("Head Breakup Calculation Response: {}", response);
+			Object headMapping = mapper.convertValue(response, Map.class).get("TreasuryHeadMapping");
+			JsonNode calculationNode = mapper.convertValue(headMapping, JsonNode.class).get("calculation");
+			return mapper.convertValue(calculationNode, Calculation.class);
+		} catch (Exception e) {
+			log.error("Error while fetching head breakup calculation", e);
+			throw new CustomException("Error while fetching head breakup calculation", e.getMessage());
+		}
+	}
 }
