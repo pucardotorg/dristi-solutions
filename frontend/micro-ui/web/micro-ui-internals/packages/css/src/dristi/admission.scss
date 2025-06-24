@@ -501,19 +501,23 @@
   }
   .payment-demand-modal-main {
     padding: 16px 24px !important;
-    max-height: 85vh;
+    max-height: calc(100vh - 90px);
     overflow-y: auto;
   }
   .payment-demand-modal-body-main {
     display: flex;
     flex-direction: column;
     gap: 24px;
+    border-bottom: 1px solid #0000001a;
+    padding-bottom: 12px;
+    margin-bottom: 12px;
   }
   .add-link {
     color: #007e7e;
     font-size: 16px;
     font-weight: 700;
     background: transparent;
+    display: flex;
   }
   .payment-item {
     display: flex;
@@ -526,4 +530,26 @@
   .text-input input {
     margin: 0px !important;
   }
+
+  .payment-item-header {
+    display: "flex";
+    justify-content: "space-between";
+    align-items: "center";
+    margin-bottom: "0px";
+    border-bottom: "1px solid #BBBBBD";
+  }
+  .item-delete-icon {
+    cursor: "pointer";
+    color: "red";
+    display: "flex";
+    align-items: "center";
+  }
+  .card-textarea {
+    margin: 0px;
+    margin-bottom: 5px;
+  }
+}
+
+.evidence-header-wrapper .evidence-hearing-header .evidence-actions .menu-wrap div {
+  height: auto !important;
 }

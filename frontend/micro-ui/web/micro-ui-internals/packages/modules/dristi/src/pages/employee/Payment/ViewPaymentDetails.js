@@ -42,7 +42,7 @@ const paymentOptionConfig = {
 };
 
 const handleTaskSearch = async (businessService, consumerCodeWithoutSuffix, tenantId, courtId) => {
-  if (["task-summons", "task-notice", "task-warrant", "task-payment"].includes(businessService)) {
+  if (["task-summons", "task-notice", "task-warrant", "task-payment", "task-generic"].includes(businessService)) {
     const {
       list: [tasksData],
     } = await Digit.HearingService.searchTaskList({
@@ -83,12 +83,15 @@ const ViewPaymentDetails = ({ location, match }) => {
 
   const consumerCodeWithoutSuffix = consumerCode.split("_")[0];
   const [tasksData, setTasksData] = useState(null);
+  const [genericTaskData, setGenericTaskData] = useState(null);
 
   useEffect(() => {
     const fetchTaskData = async () => {
       const { tasksData = {} } = await handleTaskSearch(businessService, consumerCodeWithoutSuffix, tenantId, courtId);
-      setTasksData(tasksData);
+      if (businessService === "task-generic") setGenericTaskData(tasksData);
+      else setTasksData(tasksData);
     };
+
     fetchTaskData();
   }, [businessService, consumerCode, consumerCodeWithoutSuffix, tenantId, courtId]);
   const summonsPincode = useMemo(() => tasksData?.taskDetails?.respondentDetails?.address?.pincode, [tasksData]);
@@ -187,12 +190,15 @@ const ViewPaymentDetails = ({ location, match }) => {
 
   const paymentCalculation = useMemo(() => {
     if (paymentType === "Join Case Advocate Fee" && !tasksData?.taskDetails?.paymentBreakdown) return [];
+    if (paymentType === "Generic Task Fees" && !genericTaskData?.taskDetails?.genericTaskDetails?.feeBreakDown?.breakDown) return [];
     const breakdown =
-      paymentType === "Join Case Advocate Fee"
+      paymentType === "Generic Task Fees"
+        ? genericTaskData?.taskDetails?.genericTaskDetails?.feeBreakDown?.breakDown || []
+        : paymentType === "Join Case Advocate Fee"
         ? tasksData?.taskDetails?.paymentBreakdown
         : calculationResponse?.Calculation?.[0]?.breakDown || (paymentType?.includes("Court") ? courtFeeBreakup : processFeeBreakup) || [];
     const updatedCalculation = breakdown?.map((item) => ({
-      key: item?.type,
+      key: item?.type || item?.code,
       value: item?.amount,
       currency: "Rs",
     }));
@@ -205,7 +211,15 @@ const ViewPaymentDetails = ({ location, match }) => {
     });
 
     return updatedCalculation;
-  }, [calculationResponse?.Calculation, courtFeeBreakup, paymentType, processFeeBreakup, tasksData?.taskDetails?.paymentBreakdown, totalAmount]);
+  }, [
+    calculationResponse?.Calculation,
+    courtFeeBreakup,
+    paymentType,
+    processFeeBreakup,
+    tasksData?.taskDetails?.paymentBreakdown,
+    totalAmount,
+    genericTaskData?.taskDetails?.genericTaskDetails?.feeBreakDown,
+  ]);
   const payerName = useMemo(() => demandBill?.additionalDetails?.payer, [demandBill?.additionalDetails?.payer]);
   const bill = paymentDetails?.Bill ? paymentDetails?.Bill[0] : null;
 
@@ -269,7 +283,7 @@ const ViewPaymentDetails = ({ location, match }) => {
           instrumentDate: new Date().getTime(),
         },
       });
-      if (isDeliveryPartnerPaid) {
+      if (isDeliveryPartnerPaid && businessService !== "task-generic") {
         await DRISTIService.customApiService(Urls.dristi.pendingTask, {
           pendingTask: {
             name: "Pending Payment",

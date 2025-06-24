@@ -815,8 +815,22 @@ const ComplainantSignature = ({ path }) => {
                 tenantId,
               },
             });
-            const calculation = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
-            setCalculationResponse(calculation);
+            let calculation = null;
+            if (!res?.cases?.[0]?.additionalDetails?.lastSubmissionConsumerCode) {
+              calculation = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
+            } else {
+              const suffix = getSuffixByBusinessCode(paymentTypeData, "case-default");
+              calculation = await DRISTIService.getTreasuryPaymentBreakup(
+                {
+                  tenantId: tenantId,
+                },
+                { consumerCode: res?.cases?.[0]?.additionalDetails?.lastSubmissionConsumerCode },
+                "dristi",
+                Boolean(caseDetails?.filingNumber && suffix)
+              );
+              calculation = { Calculation: [calculation?.TreasuryHeadMapping?.calculation] };
+            }
+            setCalculationResponse();
             setLoader(false);
             if (isSelectedUploadDoc) {
               history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse: calculation } });
