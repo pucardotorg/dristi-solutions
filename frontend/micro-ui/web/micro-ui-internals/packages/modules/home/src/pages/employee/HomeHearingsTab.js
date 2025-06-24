@@ -485,8 +485,41 @@ const HomeHearingsTab = ({
                     }
                   });
               } else {
-                setLoader(false);
-                setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: {} });
+                const response = await hearingService.searchHearings(
+                  {
+                    criteria: {
+                      hearingId: hearingDetails?.hearingNumber,
+                      tenantId: hearingDetails?.tenantId,
+                    },
+                  },
+                  { tenantId: hearingDetails?.tenantId }
+                );
+                if (Array.isArray(response?.HearingList) && response?.HearingList.length > 0) {
+                  const currentHearing = response.HearingList[0];
+
+                  await hearingService
+                    ?.updateHearings(
+                      {
+                        tenantId: Digit.ULBService.getCurrentTenantId(),
+                        hearing: { ...currentHearing, workflow: { action: "PASS_OVER" } },
+                        hearingType: "",
+                        status: "",
+                      },
+                      { applicationNumber: "", cnrNumber: "" }
+                    )
+                    .then((res) => {
+                      setTimeout(() => {
+                        setLoader(false);
+                        if (res?.hearing?.status === "PASSED_OVER") {
+                          fetchInbox(filters, setHearingCount);
+                        }
+                      }, 100);
+                    })
+                    .catch(() => {
+                      setLoader(false);
+                      showToast("error", t("ISSUE_IN_PASS_OVER"), 5000);
+                    });
+                }
               }
             } catch (e) {
               console.log(e);
