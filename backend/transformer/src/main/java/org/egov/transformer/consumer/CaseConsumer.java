@@ -240,7 +240,9 @@ public class CaseConsumer {
     public void consumeJoinCaseRequest(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
             JoinCaseRequest joinCaseRequest = objectMapper.readValue((String) payload.value(), new TypeReference<>() {});
-            // use filing number to fetch case
+            CourtCase courtCase = caseService.getCase(joinCaseRequest.getCaseFilingNumber(), joinCaseRequest.getRepresentative().getTenantId(), joinCaseRequest.getRequestInfo());
+            CaseSearch caseSearch = caseService.getCaseSearchFromCourtCase(courtCase);
+            caseService.publishToCaseSearchIndexer(caseSearch);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -250,7 +252,10 @@ public class CaseConsumer {
     public void consumeAddWitnessRequest(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
             AddWitnessRequest addWitnessRequest = objectMapper.readValue((String) payload.value(), new TypeReference<>() {});
-            // use filing number to fetch case
+            // how to get tenantId
+            CourtCase courtCase = caseService.getCase(addWitnessRequest.getCaseFilingNumber(), null, addWitnessRequest.getRequestInfo());
+            CaseSearch caseSearch = caseService.getCaseSearchFromCourtCase(courtCase);
+            caseService.publishToCaseSearchIndexer(caseSearch);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
@@ -260,7 +265,10 @@ public class CaseConsumer {
     public void consumeCaseStageSubstage(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
             CaseStageSubStage caseStageSubStage = objectMapper.readValue((String) payload.value(), new TypeReference<>() {});
-            // use filing number to fetch case
+            CourtCase courtCase = caseService.getCase(caseStageSubStage.getCaseOverallStatus().getFilingNumber(),
+                    caseStageSubStage.getCaseOverallStatus().getTenantId(), caseStageSubStage.getRequestInfo());
+            CaseSearch caseSearch = caseService.getCaseSearchFromCourtCase(courtCase);
+            caseService.publishToCaseSearchIndexer(caseSearch);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

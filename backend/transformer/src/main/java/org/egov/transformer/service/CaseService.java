@@ -1,15 +1,15 @@
 package org.egov.transformer.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.egov.transformer.config.ServiceConstants;
 import org.egov.transformer.config.TransformerProperties;
+import org.egov.transformer.models.AdvocateMapping;
 import org.egov.transformer.models.CaseCriteria;
 import org.egov.transformer.models.CaseData;
 import org.egov.transformer.models.CaseRequest;
@@ -20,19 +20,28 @@ import org.egov.transformer.models.Hearing;
 import org.egov.transformer.models.HearingCriteria;
 import org.egov.transformer.models.HearingSearchRequest;
 import org.egov.transformer.models.Order;
+import org.egov.transformer.models.Pagination;
+import org.egov.transformer.models.Participant;
+import org.egov.transformer.models.Party;
 import org.egov.transformer.producer.TransformerProducer;
 import org.egov.transformer.repository.ServiceRequestRepository;
+import org.egov.transformer.util.DateUtil;
+import org.egov.transformer.util.JsonUtil;
+import org.egov.transformer.util.MdmsUtil;
 import org.egov.transformer.util.HearingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.*;
 
 import static org.egov.transformer.config.ServiceConstants.COURT_CASE_JSON_PATH;
@@ -53,9 +62,13 @@ public class CaseService {
     private final ServiceRequestRepository repository;
     private final HearingService hearingService;
     private final RestTemplate restTemplate;
+    private final DateUtil dateUtil;
+    private final MdmsUtil mdmsUtil;
+    private final ServiceConstants serviceConstants;
+    private final JsonUtil jsonUtil;
 
     @Autowired
-    public CaseService(ElasticSearchService elasticSearchService, TransformerProperties properties, TransformerProducer producer, ObjectMapper objectMapper, HearingUtil hearingUtil, ServiceRequestRepository repository, HearingService hearingService, RestTemplate restTemplate) {
+    public CaseService(ElasticSearchService elasticSearchService, TransformerProperties properties, TransformerProducer producer, ObjectMapper objectMapper, HearingUtil hearingUtil, ServiceRequestRepository repository, HearingService hearingService, RestTemplate restTemplate, DateUtil dateUtil, MdmsUtil mdmsUtil, ServiceConstants serviceConstants, JsonUtil jsonUtil) {
         this.elasticSearchService = elasticSearchService;
         this.properties = properties;
         this.producer = producer;
@@ -64,6 +77,10 @@ public class CaseService {
         this.repository = repository;
         this.hearingService = hearingService;
         this.restTemplate = restTemplate;
+        this.dateUtil = dateUtil;
+        this.mdmsUtil = mdmsUtil;
+        this.serviceConstants = serviceConstants;
+        this.jsonUtil = jsonUtil;
     }
 
     public CourtCase fetchCase(String fieldValue) throws IOException {
@@ -144,11 +161,16 @@ public class CaseService {
         CaseSearch caseSearch = new CaseSearch();
         caseSearch.setCaseTitle(courtCase.getCaseTitle());
         caseSearch.setFilingNumber(courtCase.getFilingNumber());
-        caseSearch.setCourtName(getCourtName(courtCase.getCourtId()));
+        caseSearch.setCourtName(getCourtName(courtCase.getTenantId(), courtCase.getCourtId()));
         caseSearch.setCourtId(courtCase.getCourtId());
         caseSearch.setTenantId(courtCase.getTenantId());
-        courtCase.setCmpNumber(courtCase.getCmpNumber());
-        caseSearch.setCaseType(courtCase.getCaseType());
+        String stNumber = courtCase.getCourtCaseNumber();
+        String cmpNumber = courtCase.getCmpNumber();
+        caseSearch.setStNumber(stNumber);
+        caseSearch.setCmpNumber(cmpNumber);
+        caseSearch.setCaseType(getCaseType(stNumber, cmpNumber));
+        enrichLitigants(caseSearch, courtCase);
+        enrichAdvocates(caseSearch, courtCase);
         caseSearch.setCnrNumber(courtCase.getCnrNumber());
         caseSearch.setFilingDate(courtCase.getFilingDate());
         caseSearch.setRegistrationDate(courtCase.getRegistrationDate());
@@ -161,10 +183,22 @@ public class CaseService {
         HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder()
                 .criteria(HearingCriteria.builder()
                         .tenantId(courtCase.getTenantId())
+                        .filingNumber(courtCase.getFilingNumber())
+                        .build())
+                .pagination(Pagination.builder()
+                        .sortBy("createdTime")
                         .build())
                 .build();
-        Hearing hearing = hearingService.fetchHearing(hearingSearchRequest).get(0);
-        caseSearch.setHearingType(hearing.getHearingType());
+        List<Hearing> hearings = hearingService.fetchHearing(hearingSearchRequest);
+        Hearing latestHearing = null;
+        if(hearings != null && hearings.size() > 0) {
+            latestHearing = hearings.get(0);
+        }
+        caseSearch.setNextHearingDate(latestHearing!=null? latestHearing.getStartTime(): null);
+        caseSearch.setCaseStage(courtCase.getStage());
+        caseSearch.setCaseStatus(courtCase.getStatus());
+        caseSearch.setYearOfFiling(dateUtil.getYearFromDate(latestHearing!=null? latestHearing.getFilingDate(): null));
+        caseSearch.setHearingType(latestHearing!=null? latestHearing.getHearingType(): null);
         return caseSearch;
 
     }
@@ -185,36 +219,85 @@ public class CaseService {
         }
     }
 
+    private String getCaseType(String stNumber, String cmpNumber) {
+        if(stNumber!=null) return stNumber;
+        else if(cmpNumber!=null) return cmpNumber;
+        else return null;
+    }
+
+    private void enrichAdvocates(CaseSearch caseSearch, CourtCase courtCase) {
+        List<Participant> advocates = new ArrayList<>();
+        List<AdvocateMapping> representatives = courtCase.getRepresentatives();
+        if (representatives != null) {
+            for (AdvocateMapping representative : representatives) {
+                Participant participant = Participant.builder().build();
+                if (representative != null && representative.getAdditionalDetails() != null) {
+                    Object additionalDetails = representative.getAdditionalDetails();
+                    String advocateName = jsonUtil.getNestedValue(additionalDetails, List.of("advocateName"), String.class);
+                    participant.setName(advocateName);
+                    participant.setId(representative.getAdvocateId());
+                    if (advocateName != null && !advocateName.isEmpty()) {
+                        List<Party> representingList = Optional.ofNullable(representative.getRepresenting())
+                                .orElse(Collections.emptyList());
+                        if (!representingList.isEmpty()) {
+                            Party first = representingList.get(0);
+                            if (first.getPartyType() != null && first.getPartyType().contains("complainant")) {
+                                participant.setEntityType("complainant");
+                            } else {
+                                participant.setEntityType("accused");
+                            }
+                        }
+                    }
+                }
+                advocates.add(participant);
+            }
+        }
+
+        caseSearch.setAdvocates(advocates);
+    }
+
+    private void enrichLitigants(CaseSearch caseSearch, CourtCase courtCase) {
+        List<Participant> litigants = new ArrayList<>();
+        List<Party> parties = courtCase.getLitigants();
+
+        if (parties != null) {
+            for (Party litigant : parties) {
+                Participant participant = Participant.builder().build();
+                if (litigant != null && litigant.getAdditionalDetails() != null) {
+                    Object additionalDetails = litigant.getAdditionalDetails();
+                    String litigantName = jsonUtil.getNestedValue(additionalDetails, List.of("fullName"), String.class);
+                    participant.setName(litigantName);
+                    participant.setId(String.valueOf(litigant.getId()));
+                    if (litigant.getPartyType() != null && litigant.getPartyType().contains("complainant")) {
+                        participant.setEntityType("complainant");
+                    } else {
+                        participant.setEntityType("accused");
+                    }
+                litigants.add(participant);
+                }
+            }
+        }
+
+        caseSearch.setLitigants(litigants);
+
+    }
+
     public void publishToCaseSearchIndexer(CaseSearch caseSearch) {
         producer.push(properties.getCaseSearchTopic(), caseSearch);
     }
 
-    public String getCourtName(String courtId) {
-        String url = "https://dristi-kerala-dev.pucar.org/egov-mdms-service/v2/_search";
-
-        String jsonBody = """
-        {"MdmsCriteria":{"tenantId":"kl","filters":{},"schemaCode":"common-masters.Court_Rooms","limit":10,"offset":0},"RequestInfo":{"apiId":"Rainmaker","authToken":"9a8b370e-484e-4443-8153-0bb219bc6d78","userInfo":{"id":498,"uuid":"d4308cee-8733-41c0-8059-26c2c7050b92","userName":"mdmsv2Super","name":"mdms","mobileNumber":"7012345622","emailId":"","locale":null,"type":"EMPLOYEE","roles":[{"name":"HRMS_ADMIN","code":"HRMS_ADMIN","tenantId":"kl"},{"name":"Localisation admin","code":"LOC_ADMIN","tenantId":"kl"},{"name":"MDMS ADMIN","code":"MDMS_ADMIN","tenantId":"kl"},{"name":"Employee","code":"EMPLOYEE","tenantId":"kl"}],"active":true,"tenantId":"kl","permanentCity":"KOLLAM"},"msgId":"1750678375540|en_IN","plainAccessRequest":{}}}
-        """;
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        HttpEntity<String> requestEntity = new HttpEntity<>(jsonBody, headers);
-        String response =  restTemplate.postForObject(url, requestEntity, String.class);
-
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonNode root = null;
-        try {
-            root = objectMapper.readTree(response);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
-        for (JsonNode node : root.path("mdms")) {
-            JsonNode data = node.path("data");
-            if (data.path("code").asText().equals(courtId)) {
-                return data.path("name").asText();
-            }
-        }
-        return null;
+    public String getCourtName(String tenantId, String courtId) {
+        Map<String, Map<String, JSONArray>> mdmsResponse =
+                mdmsUtil.fetchMdmsData(RequestInfo.builder().build(), tenantId, serviceConstants.COURT_MASTERS_MODULE , Collections.singletonList("Rooms"));
+        Map<String, JSONArray> mdmsObject = mdmsResponse.get("mdms");
+        if(mdmsObject==null) return null;
+        return mdmsObject.values().stream()
+                .flatMap(array -> array.stream())
+                .map(obj -> (JSONObject) obj)
+                .map(json -> (JSONObject) json.get("data"))
+                .filter(data -> courtId.equals(data.getAsString("code")))
+                .map(data -> data.getAsString("name"))
+                .findFirst()
+                .orElse(null);
     }
 }

@@ -28,5 +28,6 @@ public class ServiceConstants {
    public static final String DEFAULT_HEARING_MASTER_NAME = "hearings";
    public static final String HEARING_MODULE_NAME = "Hearing";
    public static final String HEARING_STATUS_MASTER_NAME = "HearingStatus";
+   public static final String COURT_MASTERS_MODULE = "Court Masters Master";
    public static final String HEARING_COMPLETED_STATUS = "COMPLETED";
 }

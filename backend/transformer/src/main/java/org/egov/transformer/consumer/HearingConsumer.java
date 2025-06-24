@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.models.CaseSearch;
 import org.egov.transformer.models.CourtCase;
@@ -74,7 +75,7 @@ public class HearingConsumer {
             hearingService.addCaseDetailsToHearing(hearing, topic);
             hearingService.enrichOpenHearings(hearingRequest);
 
-            publishCaseSearchFromHearing(hearing);
+            publishCaseSearchFromHearing(hearing, hearingRequest.getRequestInfo());
         } catch (Exception exception) {
             logger.error("error in saving hearing", exception);
         }
@@ -93,17 +94,17 @@ public class HearingConsumer {
                 hearingService.addCaseDetailsToHearing(hearing, topic);
                 hearingService.enrichOpenHearings(request);
 
-                publishCaseSearchFromHearing(hearing);
+                publishCaseSearchFromHearing(hearing, request.getRequestInfo());
             }
         }catch (Exception exception) {
             logger.error("error in saving hearing", exception);
         }
     }
 
-    public void publishCaseSearchFromHearing(Hearing hearing) {
+    public void publishCaseSearchFromHearing(Hearing hearing, RequestInfo requestInfo) {
         String tenantId = hearing.getTenantId();
         String filingNumber = hearing.getFilingNumber().get(0);
-        CourtCase courtCase = caseService.getCase(filingNumber, tenantId, null);
+        CourtCase courtCase = caseService.getCase(filingNumber, tenantId, requestInfo);
         CaseSearch caseSearch = caseService.getCaseSearchFromCourtCase(courtCase);
         caseService.publishToCaseSearchIndexer(caseSearch);
     }

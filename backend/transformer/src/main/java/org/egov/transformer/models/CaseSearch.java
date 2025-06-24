@@ -7,7 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 
-import java.time.LocalDate;
+import java.util.List;
 
 @Validated
 @Data
@@ -42,12 +42,14 @@ public class CaseSearch {
     @JsonProperty("cnrNumber")
     private String cnrNumber = null;
 
-//    list of string
-//    @JsonProperty("litigant")
-//    private Litigant litigant = null;
+    @JsonProperty("advocates")
+    private List<Participant> advocates = null;
+
+    @JsonProperty("litigants")
+    private List<Participant> litigants = null;
 
     @JsonProperty("nextHearingDate")
-    private LocalDate nextHearingDate = null;
+    private Long nextHearingDate = null;
 
     @JsonProperty("caseStage")
     private String caseStage = null;
@@ -69,13 +71,4 @@ public class CaseSearch {
 
     @JsonProperty("registrationDate")
     private Long registrationDate;
-
-
-    /*
-    list
-    advocate
-        -- name
-        -- barcode --- statecode case insensitive  /code / 	   year
-        -- fone no
-     */
 }
