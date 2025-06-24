@@ -25,4 +25,16 @@ public class LandingPageCase {
 
     @JsonProperty("nextHearingDate")
     private String nextHearingDate;
+
+    @JsonProperty("lastHearingDate")
+    private String lastHearingDate;
+
+    @JsonProperty("filingDate")
+    private String filingDate;
+
+    @JsonProperty("registrationDate")
+    private String registrationDate;
+
+    @JsonProperty("magistrateName")
+    private String magistrateName;
 }
