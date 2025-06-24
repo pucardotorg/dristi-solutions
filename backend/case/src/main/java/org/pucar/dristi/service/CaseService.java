@@ -4949,7 +4949,7 @@ public class CaseService {
             Calculation calculation = getCalculationDifference(newCalculation, oldCalculation);
 
             if(calculation != null) {
-                createDemandForCase(body, newCalculation.getCalculation().get(0));
+                createDemandForCase(body, calculation);
                 return calculation;
             }
             log.info("operation=compareCalculationAndCreateDemand, status=SUCCESS, caseId: {}", body.getCases().getId());
