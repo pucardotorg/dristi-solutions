@@ -6,6 +6,7 @@ import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.DateUtil;
+import org.pucar.dristi.util.HrmsUtil;
 import org.pucar.dristi.util.InboxUtil;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.inbox.*;
@@ -30,12 +31,15 @@ public class OpenApiService {
 
     private final InboxUtil inboxUtil;
 
-    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil) {
+    private final HrmsUtil hrmsUtil;
+
+    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, HrmsUtil hrmsUtil) {
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
         this.objectMapper = objectMapper;
         this.dateUtil = dateUtil;
         this.inboxUtil = inboxUtil;
+        this.hrmsUtil = hrmsUtil;
     }
 
     public CaseSummaryResponse getCaseByCnrNumber(String tenantId, String cnrNumber) {
@@ -143,6 +147,10 @@ public class OpenApiService {
 
         InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(tenantId, fromDate, toDate, searchText);
         return inboxUtil.getOpenHearings(inboxRequest);
+    }
+
+    public String getMagistrateName(String courtId, String tenantId) {
+       return hrmsUtil.getJudgeName(tenantId,courtId);
     }
 
     public OpenApiOrderTaskResponse getOrdersAndPaymentTasks(OpenApiOrdersTaskIRequest openApiOrdersTaskIRequest) {
