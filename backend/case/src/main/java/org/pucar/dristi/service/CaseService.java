@@ -5008,6 +5008,7 @@ public class CaseService {
         try {
             DemandCreateRequest demandCreateRequest  = DemandCreateRequest.builder()
                     .requestInfo(body.getRequestInfo())
+                    .filingNumber(body.getCases().getFilingNumber())
                     .consumerCode(updateAndGetConsumerCode(body))
                     .tenantId(body.getCases().getTenantId())
                     .entityType(config.getCaseBusinessServiceName())
