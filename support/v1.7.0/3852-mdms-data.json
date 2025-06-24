@@ -4,21 +4,6 @@
   "masterName": "warrantSubType",
   "mdmsPayload": [
     {
-      "id": "4f5aa576-113e-4948-ab97-4aedbae113e0",
-      "tenantId": "kl",
-      "schemaCode": "Order.warrantSubType",
-      "uniqueIdentifier": "2000045",
-      "data": {
-        "code": "2000045",
-        "subType": "Blank Process template",
-        "belowOthers": "YES",
-        "docCaseType": "Criminal",
-        "docTypeCode": "1",
-        "templateType": "GENERIC"
-      },
-      "isActive": true
-    },
-    {
       "id": "4eafbc5c-cb13-4444-9a84-aa990513529d",
       "tenantId": "kl",
       "schemaCode": "Order.warrantSubType",

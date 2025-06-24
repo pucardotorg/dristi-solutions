@@ -12,7 +12,8 @@ import {
   configsAssignNewHearingDate,
   configsBail,
   configsCaseSettlement,
-  configsCaseTransfer,
+  configsCaseTransferAccept,
+  configsCaseTransferReject,
   configsCaseWithdrawalAccept,
   configsCaseWithdrawalReject,
   configsCreateOrderWarrant,
@@ -70,8 +71,8 @@ import { getFullName } from "../../../../cases/src/utils/joinCaseUtils";
 export const compositeOrderAllowedTypes = [
   {
     key: "finalStageOrders",
-    orderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL_ACCEPT", "SETTLEMENT", "CASE_TRANSFER", "DISMISS_CASE"],
-    unAllowedOrderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL_ACCEPT", "SETTLEMENT", "CASE_TRANSFER", ""],
+    orderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL_ACCEPT", "SETTLEMENT_ACCEPT", "CASE_TRANSFER_ACCEPT", "DISMISS_CASE"],
+    unAllowedOrderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL_ACCEPT", "SETTLEMENT_ACCEPT", "CASE_TRANSFER_ACCEPT", ""],
   },
   {
     key: "schedule_Reschedule",
@@ -109,8 +110,10 @@ const configKeys = {
   INITIATING_RESCHEDULING_OF_HEARING_DATE: configsInitiateRescheduleHearingDate,
   ASSIGNING_DATE_RESCHEDULED_HEARING: configsAssignDateToRescheduledHearing,
   ASSIGNING_NEW_HEARING_DATE: configsAssignNewHearingDate,
-  CASE_TRANSFER: configsCaseTransfer,
-  SETTLEMENT: configsCaseSettlement,
+  CASE_TRANSFER_ACCEPT: configsCaseTransferAccept,
+  CASE_TRANSFER_REJECT: configsCaseTransferReject,
+  SETTLEMENT_ACCEPT: configsCaseSettlement,
+  SETTLEMENT_REJECT: configsCaseSettlement,
   SUMMONS: configsIssueSummons,
   NOTICE: configsIssueNotice,
   BAIL: configsBail,
@@ -189,8 +192,10 @@ const stateSlaMap = {
   INITIATING_RESCHEDULING_OF_HEARING_DATE: 1,
   ASSIGNING_DATE_RESCHEDULED_HEARING: 3,
   ASSIGNING_NEW_HEARING_DATE: 3,
-  CASE_TRANSFER: 3,
-  SETTLEMENT: 3,
+  CASE_TRANSFER_ACCEPT: 3,
+  CASE_TRANSFER_REJECT: 3,
+  SETTLEMENT_ACCEPT: 3,
+  SETTLEMENT_REJECT: 3,
   SUMMONS: 3,
   NOTICE: 3,
   BAIL: 3,
@@ -246,6 +251,7 @@ const GenerateOrders = () => {
   const [currentFormData, setCurrentFormData] = useState(null);
   const roles = Digit.UserService.getUser()?.info?.roles;
   const canESign = roles?.some((role) => role.code === "ORDER_ESIGN");
+  const canSaveSignLater = roles?.some((role) => role.code === "ORDER_APPROVER");
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const judgeName = localStorage.getItem("judgeName");
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
@@ -297,6 +303,38 @@ const GenerateOrders = () => {
     }
   );
   const summonsCourtFee = useMemo(() => courtFeeAmount?.find((p) => p?.paymentCode === "SUMMONS_COURT_FEE")?.amount || 0, [courtFeeAmount]);
+
+  const { data: warrantSubType, isLoading: isWarrantSubType } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "Order",
+    [{ name: "warrantSubType" }],
+    {
+      select: (data) => {
+        return data?.Order?.warrantSubType || [];
+      },
+    }
+  );
+
+  const groupedWarrantOptions = useMemo(() => {
+    if (!Array.isArray(warrantSubType)) return [];
+
+    const specific = [];
+    const others = [];
+
+    for (const item of warrantSubType) {
+      if (item?.belowOthers === "YES") {
+        others.push(item);
+      } else {
+        specific.push(item);
+      }
+    }
+
+    const result = [];
+    if (specific.length) result.push({ options: specific });
+    if (others.length) result.push({ label: "Others", options: others });
+
+    return result;
+  }, [warrantSubType]);
 
   // Replaced React Query implementation with direct API call for better control over breadcrumb data
   // const { data: caseData, isLoading: isCaseDetailsLoading, refetch: refetchCaseData } = Digit.Hooks.dristi.useSearchCaseService(
@@ -1171,25 +1209,34 @@ const GenerateOrders = () => {
           if (orderType === "WARRANT") {
             const warrantSubtypeCode = item?.orderSchema?.additionalDetails?.formdata?.warrantSubType?.templateType;
             orderTypeForm = orderTypeForm?.map((section) => {
-              return {
-                ...section,
-                body: section.body.filter((field) => {
+              const updatedBody = section.body
+                .map((field) => {
+                  if (field.key === "warrantSubType") {
+                    return {
+                      ...field,
+                      populators: {
+                        ...field.populators,
+                        options: [...groupedWarrantOptions],
+                      },
+                    };
+                  }
+                  return field;
+                })
+                .filter((field) => {
                   if (field.key === "warrantText" || field.key === "bailInfo") {
-                    if (warrantSubtypeCode === "GENERIC" && field.key === "warrantText") {
-                      return {
-                        ...field,
-                        isMandatory: true,
-                      };
-                    } else if (warrantSubtypeCode === "SPECIFIC" && field.key === "bailInfo") {
-                      return {
-                        ...field,
-                        isMandatory: true,
-                      };
+                    if (warrantSubtypeCode === "GENERIC") {
+                      return field.key === "warrantText";
+                    } else if (warrantSubtypeCode === "SPECIFIC") {
+                      return field.key === "bailInfo";
                     }
                     return false;
                   }
                   return true;
-                }),
+                });
+
+              return {
+                ...section,
+                body: updatedBody,
               };
             });
           }
@@ -1436,9 +1483,20 @@ const GenerateOrders = () => {
         if (orderType === "WARRANT") {
           const warrantSubtypeCode = currentOrder?.additionalDetails?.formdata?.warrantSubType?.templateType;
           orderTypeForm = orderTypeForm?.map((section) => {
-            return {
-              ...section,
-              body: section.body.filter((field) => {
+            const updatedBody = section.body
+              .map((field) => {
+                if (field.key === "warrantSubType") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...groupedWarrantOptions],
+                    },
+                  };
+                }
+                return field;
+              })
+              .filter((field) => {
                 if (field.key === "warrantText" || field.key === "bailInfo") {
                   if (warrantSubtypeCode === "GENERIC") {
                     return field.key === "warrantText";
@@ -1448,7 +1506,11 @@ const GenerateOrders = () => {
                   return false;
                 }
                 return true;
-              }),
+              });
+
+            return {
+              ...section,
+              body: updatedBody,
             };
           });
         }
@@ -1510,6 +1572,7 @@ const GenerateOrders = () => {
     caseDetails?.id,
     caseDetails?.filingNumber,
     t,
+    groupedWarrantOptions,
   ]);
 
   const multiSelectDropdownKeys = useMemo(() => {
@@ -2079,7 +2142,10 @@ const GenerateOrders = () => {
     if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(type)) {
       parties = orderSchema?.orderDetails.partyName;
     } else if (type === "MANDATORY_SUBMISSIONS_RESPONSES") {
-      parties = [...orderSchema?.orderDetails?.partyDetails?.partiesToRespond, ...orderSchema?.orderDetails?.partyDetails?.partyToMakeSubmission];
+      parties = [
+        ...(orderSchema?.orderDetails?.partyDetails?.partiesToRespond || []),
+        ...(orderSchema?.orderDetails?.partyDetails?.partyToMakeSubmission || []),
+      ];
     } else if (["WARRANT", "SUMMONS", "NOTICE"].includes(type)) {
       parties = orderSchema?.orderDetails?.respondentName?.name
         ? [orderSchema?.orderDetails?.respondentName?.name]
@@ -2097,12 +2163,12 @@ const GenerateOrders = () => {
       parties = allParties?.map((party) => ({ partyName: party.name, partyType: party?.partyType }));
       return parties;
     }
-    parties = parties?.map((party) => {
-      const matchingParty = allParties.find((p) => p.code.trim() === party.trim());
+    const updatedParties = parties?.map((party) => {
+      const matchingParty = allParties?.find((p) => p?.code?.trim() === party?.trim());
       if (matchingParty) {
         return {
-          partyName: matchingParty.name,
-          partyType: matchingParty.partyType,
+          partyName: matchingParty?.name,
+          partyType: matchingParty?.partyType,
         };
       } else {
         return {
@@ -2111,7 +2177,7 @@ const GenerateOrders = () => {
         };
       }
     });
-    return parties;
+    return updatedParties;
   };
 
   const getPartyNamesString = (parties) => {
@@ -2243,12 +2309,14 @@ const GenerateOrders = () => {
         return `For ${t(
           currentOrder?.orderDetails?.purposeOfHearing || currentOrder?.additionalDetails?.formdata?.hearingPurpose?.code
         )} on ${formatDate(new Date(currentOrder?.additionalDetails?.formdata?.hearingDate), "DD-MM-YYYY")}`;
-      case "CASE_TRANSFER":
+      case "CASE_TRANSFER_ACCEPT":
         return "The case is transferred to another court for further proceedings";
-      case "SETTLEMENT":
-        return currentOrder?.orderDetails?.applicationStatus === "APPROVED"
-          ? "The settlement records have been accepted by the court. Case closed."
-          : "The settlement records have been dismissed by the court";
+      case "CASE_TRANSFER_REJECT":
+        return `The request to transfer the case to another court has been rejected`;
+      case "SETTLEMENT_ACCEPT":
+        return "The settlement records have been accepted by the court. Case closed.";
+      case "SETTLEMENT_REJECT":
+        return "The settlement records have been dismissed by the court";
       case "SUMMONS":
         return `Issue Summons to ${currentOrder?.orderDetails?.parties?.[0]?.partyName}`;
       case "NOTICE":
@@ -2977,7 +3045,9 @@ const GenerateOrders = () => {
         selectedChannel?.map(async (item) => {
           let clonedPayload = JSON.parse(JSON.stringify(payload));
 
-          const pincode = ["e-Post", "Registered Post", "Via Police"].includes(item?.type) ? item?.value?.pincode : clonedPayload?.respondentDetails?.address?.pincode;
+          const pincode = ["e-Post", "Registered Post", "Via Police"].includes(item?.type)
+            ? item?.value?.pincode
+            : clonedPayload?.respondentDetails?.address?.pincode;
 
           let courtFees = await getCourtFee(item?.code, pincode, orderType);
 
@@ -3014,8 +3084,8 @@ const GenerateOrders = () => {
               };
             }
 
-            const phone = item?.type === "SMS" ? item?.value : (respondentPhoneNo?.[0] || "");
-            const email = item?.type === "E-mail" ? item?.value : (respondentEmail?.[0] || "");
+            const phone = item?.type === "SMS" ? item?.value : respondentPhoneNo?.[0] || "";
+            const email = item?.type === "E-mail" ? item?.value : respondentEmail?.[0] || "";
             const commonDetails = { address, phone, email, age: "", gender: "" };
 
             clonedPayload.respondentDetails = {
@@ -3627,7 +3697,7 @@ const GenerateOrders = () => {
         }
 
         if (orderType === "NOTICE") {
-          if(formData?.noticeOrder?.selectedChannels?.length === 0){
+          if (formData?.noticeOrder?.selectedChannels?.length === 0) {
             setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_NOTICE_ORDER"), error: true });
             hasError = true;
             break;
@@ -3635,17 +3705,13 @@ const GenerateOrders = () => {
         }
 
         if (orderType === "SUMMONS") {
-          if(formData?.SummonsOrder?.selectedChannels?.length === 0){
+          if (formData?.SummonsOrder?.selectedChannels?.length === 0) {
             setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_SUMMONS_ORDER"), error: true });
             hasError = true;
             break;
-          }
-
-          else if (
+          } else if (
             formData?.SummonsOrder?.selectedChannels?.some(
-              (channel) =>
-                (channel?.code === "POLICE") &&
-                (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
+              (channel) => channel?.code === "POLICE" && (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
             )
           ) {
             setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
@@ -4155,6 +4221,7 @@ const GenerateOrders = () => {
           setShowsignatureModal={setShowsignatureModal}
           setOrderPdfFileStoreID={setOrderPdfFileStoreID}
           showActions={canESign && !currentDiaryEntry}
+          saveSignLater={canSaveSignLater}
           setBusinessOfTheDay={setBusinessOfTheDay}
           currentDiaryEntry={currentDiaryEntry}
           handleUpdateBusinessOfDayEntry={handleUpdateBusinessOfDayEntry}

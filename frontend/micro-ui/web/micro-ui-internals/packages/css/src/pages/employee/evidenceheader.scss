@@ -183,6 +183,42 @@
   }
   .case-overview-wrapper {
     padding: 24px 24px 24px 40px;
+    .case-timeline-container {
+      .checkpoint-connect-wrap {
+        padding-bottom: 0px !important;
+        .checkpoint-done {
+          h2 {
+            min-width: 24px !important;
+          }
+        }
+      }
+      .workflow-timeline-checkpoint {
+        .checkpoint-done {
+          h2 {
+            min-width: 24px !important;
+          }
+        }
+        .checkpoint {
+          h2 {
+            min-width: 24px !important;
+          }
+        }
+      }
+    }
+  }
+  .workflow-timeline-modal {
+    .workflow-timeline {
+      .checkpoint-done {
+        h2 {
+          min-width: 24px !important;
+        }
+      }
+      .checkpoint {
+        h2 {
+          min-width: 24px !important;
+        }
+      }
+    }
   }
   .view-case-file-wrapper {
     .case-and-admission {

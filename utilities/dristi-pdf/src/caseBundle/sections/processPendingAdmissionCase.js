@@ -68,142 +68,157 @@ async function processPendingAdmissionCase({
       ? Object.fromEntries(messages.map(({ code, message }) => [code, message]))
       : {};
 
-  await processTitlePageSection(
-    courtCase,
-    caseBundleMaster,
-    tenantId,
-    requestInfo,
-    TEMP_FILES_DIR,
-    indexCopy
-  );
-  await processPendingApplicationsSection(
-    courtCase,
-    caseBundleMaster,
-    tenantId,
-    requestInfo,
-    TEMP_FILES_DIR,
-    indexCopy,
-    messagesMap
-  );
-  await processComplaintSection(
-    courtCase,
-    caseBundleMaster,
-    tenantId,
-    requestInfo,
-    TEMP_FILES_DIR,
-    indexCopy
-  );
-  await processFilingsSection(
-    courtCase,
-    caseBundleMaster,
-    tenantId,
-    requestInfo,
-    TEMP_FILES_DIR,
-    indexCopy
-  );
-  await processAffidavitSection(
-    courtCase,
-    caseBundleMaster,
-    tenantId,
-    requestInfo,
-    TEMP_FILES_DIR,
-    indexCopy
-  );
-  await processVakalatSection(
-    courtCase,
-    caseBundleMaster,
-    tenantId,
-    requestInfo,
-    TEMP_FILES_DIR,
-    indexCopy,
-    messagesMap
-  );
-  await processAdditionalFilings(
-    courtCase,
-    caseBundleMaster,
-    tenantId,
-    requestInfo,
-    TEMP_FILES_DIR,
-    indexCopy,
-    messagesMap
-  );
-  await processMandatorySubmissions(
-    courtCase,
-    caseBundleMaster,
-    tenantId,
-    requestInfo,
-    TEMP_FILES_DIR,
-    indexCopy,
-    messagesMap
-  );
-  await processComplainantEvidence(
-    courtCase,
-    caseBundleMaster,
-    tenantId,
-    requestInfo,
-    TEMP_FILES_DIR,
-    indexCopy,
-    messagesMap
-  );
-  await processAccusedEvidence(
-    courtCase,
-    caseBundleMaster,
-    tenantId,
-    requestInfo,
-    TEMP_FILES_DIR,
-    indexCopy,
-    messagesMap
-  );
-  await processCourtEvidence(
-    courtCase,
-    caseBundleMaster,
-    tenantId,
-    requestInfo,
-    TEMP_FILES_DIR,
-    indexCopy
-  );
-  await processDisposedApplications(
-    courtCase,
-    caseBundleMaster,
-    tenantId,
-    requestInfo,
-    TEMP_FILES_DIR,
-    indexCopy,
-    messagesMap
-  );
-  await processBailDocuments(
-    courtCase,
-    caseBundleMaster,
-    tenantId,
-    requestInfo,
-    TEMP_FILES_DIR,
-    indexCopy,
-    messagesMap
-  );
-  await processTaskProcesses(
-    courtCase,
-    caseBundleMaster,
-    tenantId,
-    requestInfo,
-    TEMP_FILES_DIR,
-    indexCopy
-  );
-  await processPaymentReceipts(
-    courtCase,
-    caseBundleMaster,
-    tenantId,
-    requestInfo,
-    TEMP_FILES_DIR,
-    indexCopy
-  );
-  await processOrders(
-    courtCase,
-    caseBundleMaster,
-    tenantId,
-    requestInfo,
-    TEMP_FILES_DIR,
-    indexCopy
-  );
+  // Create an array of promises for all processing functions
+  const complaintPromises = [
+    processTitlePageSection(
+      courtCase,
+      caseBundleMaster,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR,
+      indexCopy
+    ),
+    processComplaintSection(
+      courtCase,
+      caseBundleMaster,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR,
+      indexCopy
+    ),
+    processPendingApplicationsSection(
+      courtCase,
+      caseBundleMaster,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR,
+      indexCopy,
+      messagesMap
+    ),
+  ];
+
+  await Promise.all(complaintPromises);
+
+  const filingPromises = [
+    processFilingsSection(
+      courtCase,
+      caseBundleMaster,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR,
+      indexCopy
+    ),
+    processAffidavitSection(
+      courtCase,
+      caseBundleMaster,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR,
+      indexCopy
+    ),
+    processVakalatSection(
+      courtCase,
+      caseBundleMaster,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR,
+      indexCopy,
+      messagesMap
+    ),
+    processAdditionalFilings(
+      courtCase,
+      caseBundleMaster,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR,
+      indexCopy,
+      messagesMap
+    ),
+  ];
+
+  await Promise.all(filingPromises);
+
+  const processingPromises = [
+    processMandatorySubmissions(
+      courtCase,
+      caseBundleMaster,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR,
+      indexCopy,
+      messagesMap
+    ),
+    processComplainantEvidence(
+      courtCase,
+      caseBundleMaster,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR,
+      indexCopy,
+      messagesMap
+    ),
+    processAccusedEvidence(
+      courtCase,
+      caseBundleMaster,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR,
+      indexCopy,
+      messagesMap
+    ),
+    processCourtEvidence(
+      courtCase,
+      caseBundleMaster,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR,
+      indexCopy
+    ),
+    processDisposedApplications(
+      courtCase,
+      caseBundleMaster,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR,
+      indexCopy,
+      messagesMap
+    ),
+    processBailDocuments(
+      courtCase,
+      caseBundleMaster,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR,
+      indexCopy,
+      messagesMap
+    ),
+    processTaskProcesses(
+      courtCase,
+      caseBundleMaster,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR,
+      indexCopy
+    ),
+    processPaymentReceipts(
+      courtCase,
+      caseBundleMaster,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR,
+      indexCopy
+    ),
+    processOrders(
+      courtCase,
+      caseBundleMaster,
+      tenantId,
+      requestInfo,
+      TEMP_FILES_DIR,
+      indexCopy
+    ),
+  ];
+
+  await Promise.all(processingPromises);
 
   indexCopy.isRegistered = true;
   indexCopy.contentLastModified = Date.now();

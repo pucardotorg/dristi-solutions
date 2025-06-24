@@ -51,6 +51,7 @@ import AddParty from "@egovernments/digit-ui-module-hearings/src/pages/employee/
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import CaseBundleView from "./CaseBundleView";
+import WorkflowTimeline from "../../../components/WorkflowTimeline";
 import CaseOverviewV2 from "./CaseOverviewV2";
 import PaymentDemandModal from "./PaymentDemandModal";
 const stateSla = {
@@ -223,6 +224,7 @@ const AdmittedCaseV2 = () => {
   const [shouldRefetchCaseData, setShouldRefetchCaseData] = useState(false);
   const [showPaymentDemandModal, setShowPaymentDemandModal] = useState(false);
   const [showPaymentConfirmationModal, setShowPaymentConfirmationModal] = useState(false);
+  const [showAllStagesModal, setShowAllStagesModal] = useState(false);
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
@@ -244,6 +246,8 @@ const AdmittedCaseV2 = () => {
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const historyCaseData = location?.state?.caseData;
   const historyOrderData = location?.state?.orderData;
+  const homeFilterData = location?.state?.homeFilteredData;
+
   const openOrder = location?.state?.openOrder;
   const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
   const courtId = localStorage.getItem("courtId");
@@ -344,6 +348,20 @@ const AdmittedCaseV2 = () => {
     fetchInbox();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const unlisten = history.listen((location, action) => {
+      if (action === "POP" && location.pathname.includes("home-screen")) {
+        history.replace(location.pathname, {
+          homeFilterData: homeFilterData,
+        });
+      }
+    });
+
+    return () => {
+      unlisten();
+    };
+  }, [history]);
 
   const primaryAction = useMemo(() => {
     return casePrimaryActions?.find((action) => nextActions?.some((data) => data.action === action?.action)) || { action: "", label: "" };
@@ -2092,12 +2110,12 @@ const AdmittedCaseV2 = () => {
 
   const onTabChange = useCallback(
     (_, i) => {
-      history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${i?.label}`, {
+      history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${i?.label}${fromHome ? `&fromHome=${fromHome}` : ""}`, {
         caseData,
         orderData: ordersData,
       });
     },
-    [caseData, caseId, filingNumber, history, ordersData, path]
+    [caseData, caseId, filingNumber, history, ordersData, path, fromHome]
   );
 
   const hasAnyRelevantOrderType = useMemo(() => {
@@ -2493,8 +2511,13 @@ const AdmittedCaseV2 = () => {
         setShowWitnessModal(true);
       } else if (option.value === "SUBMIT_DOCUMENTS") {
         handleCourtAction();
+
       } else if (option.value === "GENERATE_PAYMENT_DEMAND") {
         setShowPaymentDemandModal(true);
+
+      } else if (option.value === "SHOW_TIMELINE") {
+        setShowAllStagesModal(true);
+
       }
     },
     [
@@ -2807,6 +2830,10 @@ const AdmittedCaseV2 = () => {
           value: "DOWNLOAD_CASE_FILE",
           label: "DOWNLOAD_CASE_FILE",
         },
+        {
+          value: "SHOW_TIMELINE",
+          label: "SHOW_TIMELINE",
+        },
       ];
     else if (isBenchClerk) {
       return currentInProgressHearing
@@ -2832,14 +2859,23 @@ const AdmittedCaseV2 = () => {
               label: "DOWNLOAD_CASE_FILE",
             },
             {
+
               value: "GENERATE_PAYMENT_DEMAND",
               label: "GENERATE_PAYMENT_DEMAND",
+            },{
+              value: "SHOW_TIMELINE",
+              label: "SHOW_TIMELINE",
+
             },
           ]
         : [
             {
               value: "DOWNLOAD_CASE_FILE",
               label: "DOWNLOAD_CASE_FILE",
+            },
+            {
+              value: "SHOW_TIMELINE",
+              label: "SHOW_TIMELINE",
             },
           ];
     } else if (isTypist) {
@@ -2866,14 +2902,22 @@ const AdmittedCaseV2 = () => {
               label: "DOWNLOAD_CASE_FILE",
             },
             {
+
               value: "GENERATE_PAYMENT_DEMAND",
               label: "GENERATE_PAYMENT_DEMAND",
+            },{
+              value: "SHOW_TIMELINE",
+              label: "SHOW_TIMELINE",
             },
           ]
         : [
             {
               value: "DOWNLOAD_CASE_FILE",
               label: "DOWNLOAD_CASE_FILE",
+            },
+            {
+              value: "SHOW_TIMELINE",
+              label: "SHOW_TIMELINE",
             },
           ];
     }
@@ -2894,15 +2938,16 @@ const AdmittedCaseV2 = () => {
   const employeeCrumbs = useMemo(
     () => [
       {
-        path: `/${window?.contextPath}/employee/home/home-screen`,
+        path: `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/home/home-screen`,
         content: t("ES_COMMON_HOME"),
         show: true,
         isLast: false,
+        homeFilteredData: homeFilterData,
       },
       {
-        path: `/${window?.contextPath}/employee/home/home-pending-task`,
+        path: `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/home/home-pending-task`,
         content: t("OPEN_ALL_CASES"),
-        show: fromHome ? false : true,
+        show: fromHome || isCitizen ? false : true,
         isLast: false,
       },
       {
@@ -2912,7 +2957,7 @@ const AdmittedCaseV2 = () => {
         isLast: true,
       },
     ],
-    [path, t, fromHome]
+    [t, homeFilterData, fromHome, isCitizen, path]
   );
 
   const advocateName = useMemo(() => {
@@ -3012,6 +3057,20 @@ const AdmittedCaseV2 = () => {
     return <InboxSearchComposer key={`${config?.label}-${updateCounter}`} configs={config} showTab={false}></InboxSearchComposer>;
   }, [config, activeTab, updateCounter]);
 
+  const caseTimeLine = useMemo(() => {
+    return (
+      <WorkflowTimeline
+        t={t}
+        applicationNo={caseDetails?.filingNumber}
+        tenantId={tenantId}
+        businessService="case-default"
+        onViewCasePage={true}
+        setShowAllStagesModal={setShowAllStagesModal}
+        modalView={true}
+      />
+    );
+  }, [t, caseDetails?.filingNumber, tenantId]);
+
   if (caseApiLoading || isWorkFlowLoading || isApplicationLoading || isCaseFetching) {
     return <Loader />;
   }
@@ -3031,7 +3090,7 @@ const AdmittedCaseV2 = () => {
           style={{
             width: "100vw",
             height: "100vh",
-            zIndex: "9999",
+            zIndex: "10001",
             position: "fixed",
             right: "0",
             display: "flex",
@@ -3090,7 +3149,7 @@ const AdmittedCaseV2 = () => {
                       <CustomThreeDots />
                       {showCitizenMenu && (
                         <Menu
-                          options={["MANAGE_CASE_ACCESS", "DOWNLOAD_CASE_FILE"]}
+                          options={["MANAGE_CASE_ACCESS", "DOWNLOAD_CASE_FILE", "SHOW_TIMELINE"]}
                           t={t}
                           localeKeyPrefix={"CS_CASE"}
                           onSelect={(option) => {
@@ -3099,6 +3158,8 @@ const AdmittedCaseV2 = () => {
                               setShowCitizenMenu(false);
                             } else if (option === "DOWNLOAD_CASE_FILE") {
                               handleDownloadPDF();
+                            } else if (option === "SHOW_TIMELINE") {
+                              setShowAllStagesModal(true);
                             }
                           }}
                         ></Menu>
@@ -3191,6 +3252,12 @@ const AdmittedCaseV2 = () => {
           <div className="case-details-title" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
             <div className="sub-details-text">{caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber}</div>
             <hr className="vertical-line" />
+            {(caseDetails?.courtCaseNumber || caseDetails?.cmpNumber) && (
+              <React.Fragment>
+                {" "}
+                <div className="sub-details-text">{t(caseDetails?.filingNumber)}</div> <hr className="vertical-line" />
+              </React.Fragment>
+            )}
             <div className="sub-details-text">{t(caseDetails?.substage)}</div>
             {caseDetails?.outcome && (
               <React.Fragment>
@@ -3427,7 +3494,7 @@ const AdmittedCaseV2 = () => {
       {toast && toastDetails && (
         <Toast error={toastDetails?.isError} label={t(toastDetails?.message)} onClose={() => setToast(false)} style={{ maxWidth: "670px" }} />
       )}
-      {viewActionBar && (
+      {/* {viewActionBar && (
         <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
           <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
             {currentHearingStatus === HearingWorkflowState.SCHEDULED && tertiaryAction.action && (
@@ -3458,7 +3525,7 @@ const AdmittedCaseV2 = () => {
             />
           )}
         </ActionBar>
-      )}
+      )} */}
       {isOpenDCA && <DocumentModal config={dcaConfirmModalConfig} />}
       {showModal && (
         <AdmissionActionModal
@@ -3592,7 +3659,11 @@ const AdmittedCaseV2 = () => {
           }
           actionSaveLabel={t(passOver ? "CS_CASE_PASS_OVER_START_NEXT_HEARING" : "CS_CASE_END_START_NEXT_HEARING")}
           hideModalActionbar={!showEndHearingModal.isNextHearingDrafted}
+          isBackButtonDisabled={apiCalled}
+          isCustomButtonDisabled={apiCalled}
+          isDisabled={apiCalled}
           actionSaveOnSubmit={async () => {
+            setApiCalled(true);
             hearingService
               .updateHearings(
                 {
@@ -3606,9 +3677,18 @@ const AdmittedCaseV2 = () => {
               .then(() => {
                 setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: false });
                 nextHearing(true);
+                setApiCalled(false);
+              })
+              .catch((error) => {
+                console.error("Error while updating hearings", error);
+                setApiCalled(false);
+              })
+              .finally(() => {
+                setApiCalled(false);
               });
           }}
           actionCustomLabelSubmit={async () => {
+            setApiCalled(true);
             hearingService
               .updateHearings(
                 {
@@ -3620,8 +3700,21 @@ const AdmittedCaseV2 = () => {
                 { applicationNumber: "", cnrNumber: "" }
               )
               .then(() => {
-                setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: false });
-                history.push(`/${window?.contextPath}/employee/home/home-screen`);
+                setTimeout(() => {
+                  setShowEndHearingModal({
+                    isNextHearingDrafted: false,
+                    openEndHearingModal: false,
+                  });
+                  setApiCalled(false);
+                  history.push(`/${window?.contextPath}/employee/home/home-screen`);
+                }, 100);
+              })
+              .catch((error) => {
+                console.error("Error while updating hearings", error);
+                setApiCalled(false);
+              })
+              .finally(() => {
+                setApiCalled(false);
               });
           }}
           actionCancelOnSubmit={() => {
@@ -3708,6 +3801,7 @@ const AdmittedCaseV2 = () => {
           refetchHearing={() => {}}
         ></AddParty>
       )}
+
       {(showPaymentDemandModal || showPaymentConfirmationModal) && (
         <PaymentDemandModal
           t={t}
@@ -3720,6 +3814,13 @@ const AdmittedCaseV2 = () => {
           tenantId={tenantId}
         />
       )}{" "}
+
+      {showAllStagesModal && (
+        <Modal popupStyles={{}} hideSubmit={true} popmoduleClassName={"workflow-timeline-modal"}>
+          {caseTimeLine}
+        </Modal>
+      )}
+
     </div>
   );
 };

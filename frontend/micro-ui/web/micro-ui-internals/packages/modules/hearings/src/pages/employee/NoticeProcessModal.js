@@ -312,8 +312,12 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
 
   const modalContent = (
     <div className="summon-modal" style={{ width: "100%" }}>
-      {!showModal && <h1 className="heading-m">{t("PROCESS_SUMMARY")}</h1>}
-      <div className="rounds-of-delivery" style={{ cursor: "pointer", marginLeft: "17px" }}>
+      {!showModal && (
+        <h1 className="heading-m" style={{ margin: 0 }}>
+          {t("PROCESS_SUMMARY")}
+        </h1>
+      )}
+      <div className="rounds-of-delivery" style={{ cursor: "pointer", margin: "24px 0px" }}>
         {orderListFiltered.map((item, index) => (
           <div
             key={index}
@@ -330,10 +334,28 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
               }, 0);
             }}
             className={`round-item ${index === activeIndex?.partyIndex ? "active" : ""}`}
+            style={{
+              fontWeight: index === activeIndex?.partyIndex ? "700" : "400",
+              margin: 0,
+              paddingRight: index === orderListFiltered?.length - 1 ? "0px" : "16px",
+              paddingBottom: 0,
+              paddingLeft: "0px",
+              borderBottom: "1px solid #6F767E",
+            }}
           >
-            <div style={{ display: "flex", flexDirection: "column" }}>
-              <span>{removeAccusedSuffix(item?.partyName)}</span>
-              <span style={{ fontWeight: "400" }}>{item?.partyType}</span>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "row",
+                gap: "8px",
+                paddingBottom: "1rem",
+                borderBottom: index === activeIndex?.partyIndex ? "3px solid #0A5757" : "",
+              }}
+            >
+              <span style={{ color: index === activeIndex?.partyIndex ? "#0A5757" : "#6F767E" }}>
+                {item?.partyType} {item?.partyType === "Accused" && index + 1}
+              </span>
+              <span style={{ color: index === activeIndex?.partyIndex ? "#0A5757" : "#6F767E" }}>{`(${removeAccusedSuffix(item?.partyName)})`}</span>
             </div>
           </div>
         ))}
@@ -342,8 +364,8 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
       {showModal && caseInfo}
       {orderListFiltered?.length > 0 && (
         <React.Fragment>
-          <h1 className="heading-m">{t("ROUND_OF_DELIEVERY")}</h1>
-          <div className="rounds-of-delivery" style={{ cursor: "pointer", marginLeft: "17px" }}>
+          {/* <h1 className="heading-m">{t("ROUND_OF_DELIEVERY")}</h1> */}
+          <div className="rounds-of-delivery" style={{ cursor: "pointer", margin: "24px 0px" }}>
             {orderList.map((item, index) => (
               <div
                 key={index}
@@ -359,6 +381,21 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
                   }, 0);
                 }}
                 className={`round-item ${index === activeIndex?.orderIndex ? "active" : ""}`}
+                style={{
+                  gap: "4px",
+                  fontWeight: "400",
+                  height: "40px",
+                  paddingTop: "12px",
+                  paddingRight: "16px",
+                  paddingBottom: "12px",
+                  paddingLeft: "16px",
+                  borderWidth: "1px",
+                  borderRadius: "4px",
+                  backgroundColor: index === activeIndex?.orderIndex ? "#59A9A91A" : "white",
+                  borderColor: index === activeIndex?.orderIndex ? "#007E7E" : "#B5B5B5",
+                  marginRight: "18px",
+                  color: "black",
+                }}
               >
                 <div style={{ display: "flex", flexDirection: "row", alignItems: "center", width: "auto", whiteSpace: "nowrap" }}>
                   <span>{item?.displayTitle || `${orderList?.length - index} (${item?.orderType})`}</span>
@@ -368,14 +405,15 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
           </div>
 
           {orderList?.[activeIndex?.orderIndex] && (
-            <div className="case-info" style={{ height: "auto" }}>
-              <div className="case-info-column" style={{ justifyContent: "flex-start", gap: "10px" }}>
-                <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
-                  <span>{t("ORDER_ISSUED_ON")}</span>
+            <div className="case-info" style={{ height: "auto", padding: "16px 12px", fontSize: "16px", margin: "24px 0px", width: "100%" }}>
+              <div className="case-info-column" style={{ justifyContent: "flex-start", gap: "10px", flexDirection: "row" }}>
+                <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
+                  <span style={{ fontWeight: "700", color: "black", fontSize: "16px" }}>{t("ORDER_ISSUED_ON")}:</span>
                   <span>{formatDate(new Date(orderList[activeIndex.orderIndex]?.createdDate), "DD-MM-YYYY")}</span>
                 </div>
-                <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "20px" }}>
-                  <span style={{ minWidth: "50%" }}>{t("HEARING_DATE")}</span>
+                <hr className="vertical-line" />
+                <div className="case-info-row" style={{ display: "flex", flexDirection: "row", gap: "8px" }}>
+                  <span style={{ fontWeight: "700", color: "black", fontSize: "16px" }}>{t("HEARING_DATE")}:</span>
                   <span>{formatDate(new Date(orderList[activeIndex.orderIndex]?.orderDetails?.hearingDate), "DD-MM-YYYY")}</span>
                 </div>
               </div>
@@ -383,7 +421,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
                 <a
                   href={`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`}
                   className="case-info-link"
-                  style={{ color: "black" }}
+                  style={{ color: "#0A7E7E", fontWeight: "600" }}
                 >
                   {t("View Order")}
                 </a>
@@ -409,7 +447,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
             />
           )}
           {isButtonVisible && currentHearingId && userType === "employee" && (
-            <div className="action-buttons" style={{...(showModal ? actionButtonStyle : {})}}>
+            <div className="action-buttons" style={{ ...(showModal ? actionButtonStyle : {}) }}>
               <Button
                 label={t(`Re-Issue ${orderType === "SUMMONS" ? "Summon" : orderType === "NOTICE" ? "Notice" : "Warrant"}`)}
                 onButtonClick={() => {

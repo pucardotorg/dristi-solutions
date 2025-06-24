@@ -40,12 +40,15 @@ const ShowAllTranscriptModal = ({ setShowAllTranscript, hearingList, judgeView =
       className={"view-hearing-transcript-modal"}
     >
       <div style={{ height: "50vh", overflowY: "auto" }}>
-        {hearingList?.map((hearing, index) => (
+        {hearingList?.length === 0 ? (
+          <div style={{ marginTop: "20px" }}>
+            {t("NO_HEARING_SUMMARY_AVAILABLE")}
+          </div>
+        ) :
+        hearingList?.map((hearing, index) => (
           <div key={index} style={{ paddingRight: "20px", marginTop: "15px" }}>
             <div className="transcript-header" style={{ display: "flex", justifyContent: "space-between" }}>
-              <div style={{ marginLeft: "4px" }}>{`${hearing?.hearingType.charAt(0).toUpperCase()}${hearing?.hearingType
-                .slice(1)
-                .toLowerCase()} Hearing`}</div>
+              <div style={{ marginLeft: "4px" }}>{`${t(hearing?.hearingType)} Hearing`}</div>
               <div style={{ marginRight: "8px" }}>{`${formatDate(hearing?.startTime)}`}</div>
             </div>
             <div>

@@ -206,7 +206,6 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
   const validateOrderData = useCallback((orderData, type) => {
     const errors = {};
     if (!orderData?.botdText?.trim() && !orderData?.botdText?.trim()?.length < 2) errors.botdText = "CORE_REQUIRED_FIELD_ERROR";
-    if (!orderData?.attendees?.length) errors.attendees = "CORE_REQUIRED_FIELD_ERROR";
     if (type === "add-other-items") {
       if (!orderData?.hearingType?.code) errors.hearingType = "CORE_REQUIRED_FIELD_ERROR";
       if (!orderData?.hearingDate) errors.hearingDate = "CORE_REQUIRED_FIELD_ERROR";

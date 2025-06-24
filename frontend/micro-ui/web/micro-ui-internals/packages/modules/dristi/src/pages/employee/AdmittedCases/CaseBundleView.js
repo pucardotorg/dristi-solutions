@@ -8,6 +8,7 @@ import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import { Loader } from "@egovernments/digit-ui-react-components";
+import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 
 function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const [expandedItems, setExpandedItems] = useState({
@@ -34,9 +35,12 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const [processChildren, setProcessChildren] = useState([]);
   const [loading, setLoading] = useState(true);
   const [publishedOrderData, setPublishedOrderData] = useState([]);
-  const [contextMenu, setContextMenu] = useState(null);
+  const [contextMenu, setContextMenu] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
   const evidenceUpdateMutation = Digit.Hooks.useCustomAPIMutationHook(reqEvidenceUpdate);
+  const [showEvidenceConfirmationModal, setShowEvidenceConfirmationModal] = useState(false);
+  const [isEvidenceSubmitDisabled, setIsEvidenceSubmitDisabled] = useState(false);
+  const [menuData, setMenuData] = useState(null);
 
   const { t } = useTranslation();
 
@@ -664,7 +668,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
         return {
           id: `evidence-${index}`,
-          title: evidence?.file?.additionalDetails?.documentTitle || evidence?.file?.additionalDetails?.documentType || evidence?.artifactType,
+          title:
+            evidence?.additionalDetails?.formdata?.documentTitle ||
+            evidence?.file?.additionalDetails?.documentTitle ||
+            evidence?.file?.additionalDetails?.documentType ||
+            evidence?.artifactType,
           fileStoreId: evidenceFileStoreId,
           hasChildren: false,
           isEvidence: evidence?.isEvidence,
@@ -748,7 +756,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       ?.filter((artifact) => artifact?.file?.fileStore)
       ?.map((artifact, idx) => ({
         id: `complaint-evidence-${idx}`,
-        title: artifact?.file?.additionalDetails?.documentTitle || artifact?.file?.additionalDetails?.documentType || artifact?.artifactType,
+        title:
+          artifact?.additionalDetails?.formdata?.documentTitle ||
+          artifact?.file?.additionalDetails?.documentTitle ||
+          artifact?.file?.additionalDetails?.documentType ||
+          artifact?.artifactType,
         fileStoreId: artifact?.file?.fileStore,
         hasChildren: false,
       }));
@@ -760,7 +772,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       ?.filter((evidence) => evidence?.file?.fileStore)
       ?.map((evidence, idx) => ({
         id: `accused-evidence-${idx}`,
-        title: evidence?.file?.additionalDetails?.documentTitle || evidence?.file?.additionalDetails?.documentType || evidence?.artifactType,
+        title:
+          evidence?.additionalDetails?.formdata?.documentTitle ||
+          evidence?.file?.additionalDetails?.documentTitle ||
+          evidence?.file?.additionalDetails?.documentType ||
+          evidence?.artifactType,
         fileStoreId: evidence?.file?.fileStore,
         hasChildren: false,
       }));
@@ -773,7 +789,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           ?.filter((artifact) => artifact?.file?.fileStore)
           ?.map((artifact, idx) => ({
             id: `court-deposition-${idx}`,
-            title: artifact?.file?.additionalDetails?.documentTitle || artifact?.file?.additionalDetails?.documentType || artifact?.artifactType,
+            title:
+              artifact?.additionalDetails?.formdata?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentType ||
+              artifact?.artifactType,
             fileStoreId: artifact?.file?.fileStore,
             hasChildren: false,
           }))
@@ -785,7 +805,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           ?.filter((artifact) => artifact?.file?.fileStore)
           ?.map((artifact, idx) => ({
             id: `court-evidence-${idx}`,
-            title: artifact?.file?.additionalDetails?.documentTitle || artifact?.file?.additionalDetails?.documentType || artifact?.artifactType,
+            title:
+              artifact?.additionalDetails?.formdata?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentType ||
+              artifact?.artifactType,
             fileStoreId: artifact?.file?.fileStore,
             hasChildren: false,
           }))
@@ -1101,13 +1125,14 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
   const handleMarkAsEvidence = async () => {
     try {
+      setIsEvidenceSubmitDisabled(true);
       await evidenceUpdateMutation
         .mutateAsync({
           url: Urls.dristi.evidenceUpdate,
           params: {},
           body: {
             artifact: {
-              ...contextMenu?.artifactList,
+              ...menuData?.artifactList,
               isEvidence: true,
             },
           },
@@ -1121,11 +1146,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           await DRISTIService.addADiaryEntry({
             diaryEntry: {
               courtId,
-              businessOfDay: `${contextMenu?.artifactNumber} marked as evidence`,
+              businessOfDay: `${menuData?.artifactNumber} marked as evidence`,
               tenantId,
               entryDate: new Date().setHours(0, 0, 0, 0),
               caseNumber: caseDetails?.cmpNumber,
-              referenceId: contextMenu?.artifactNumber,
+              referenceId: menuData?.artifactNumber,
               referenceType: "Documents",
               hearingDate: (Array.isArray(nextHearing) && nextHearing?.length > 0 && nextHearing[0]?.startTime) || null,
               additionalDetails: {
@@ -1142,9 +1167,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         });
     } catch (error) {
       console.error("error: ", error);
+    } finally {
+      setIsEvidenceSubmitDisabled(false);
+      setShowEvidenceConfirmationModal(false);
+      setMenuData(null);
     }
-
-    setContextMenu(null);
   };
 
   const generatePublishedOrderChildren = (publishedOrderList) => {
@@ -1340,7 +1367,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   };
 
   useEffect(() => {
-    const handleClickOutside = () => setContextMenu(null);
+    const handleClickOutside = () => setContextMenu(false);
     window?.addEventListener("click", handleClickOutside);
     return () => window?.removeEventListener("click", handleClickOutside);
   }, []);
@@ -1415,7 +1442,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           onContextMenu={(e) => {
             e.preventDefault();
             if (item.fileStoreId) {
-              setContextMenu({
+              setContextMenu(true);
+              setMenuData({
                 mouseX: e.clientX + 2,
                 mouseY: e.clientY - 6,
                 fileStoreId: item?.fileStoreId,
@@ -1470,26 +1498,42 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         <div
           className="context-menu"
           style={{
-            top: contextMenu.mouseY,
-            left: contextMenu.mouseX,
+            top: menuData.mouseY,
+            left: menuData.mouseX,
           }}
-          onMouseLeave={() => setContextMenu(null)}
+          onMouseLeave={() => setContextMenu(false)}
         >
           <div
             style={{ padding: "10px", cursor: "pointer" }}
             onClick={() => {
-              downloadPdf(tenantId, contextMenu.fileStoreId);
-              setContextMenu(null);
+              downloadPdf(tenantId, menuData.fileStoreId);
+              setContextMenu(false);
             }}
           >
             {t("DOWNLOAD_PDF")}
           </div>
-          {isJudge && contextMenu?.isEvidenceMenu && contextMenu?.isEvidence === false && (
-            <div style={{ padding: "10px", cursor: "pointer" }} onClick={handleMarkAsEvidence}>
+          {isJudge && menuData?.isEvidenceMenu && menuData?.isEvidence === false && (
+            <div
+              style={{ padding: "10px", cursor: "pointer" }}
+              onClick={() => {
+                setShowEvidenceConfirmationModal(true);
+              }}
+            >
               {t("MARK_AS_EVIDENCE")}
             </div>
           )}
         </div>
+      )}
+      {showEvidenceConfirmationModal && (
+        <ConfirmEvidenceAction
+          t={t}
+          setShowConfirmationModal={setShowEvidenceConfirmationModal}
+          handleAction={handleMarkAsEvidence}
+          isDisabled={isEvidenceSubmitDisabled}
+          isBackButtonDisabled={isEvidenceSubmitDisabled}
+          isFromActions={true}
+          setMenuData={setMenuData}
+        />
       )}
     </React.Fragment>
   );

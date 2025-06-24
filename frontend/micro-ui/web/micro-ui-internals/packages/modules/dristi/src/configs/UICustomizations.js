@@ -2013,14 +2013,18 @@ export const UICustomizations = {
           return row?.tab === "REGISTRATION" ? (
             <Link
               style={{ color: "black", textDecoration: "underline" }}
-              to={`/${window?.contextPath}/employee/dristi/admission?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview`}
+              to={{
+                pathname: `/${window?.contextPath}/employee/dristi/admission`,
+                search: `?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview`,
+                state: { homeActiveTab: row?.tab },
+              }}
             >
               {value ? value : "-"}
             </Link>
           ) : (
             <Link
               style={{ color: "black", textDecoration: "underline" }}
-              to={`/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview`}
+              to={`/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview&fromHome=true`}
             >
               {value ? value : "-"}
             </Link>

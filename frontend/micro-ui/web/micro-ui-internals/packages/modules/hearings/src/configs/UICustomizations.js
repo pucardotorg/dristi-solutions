@@ -4,6 +4,7 @@ import OverlayDropdown from "../components/HearingOverlayDropdown";
 import { hearingService } from "../hooks/services";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import { formatNoticeDeliveryDate } from "@egovernments/digit-ui-module-home/src/utils";
+import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 
 function normalizeData(input) {
   try {
@@ -341,7 +342,13 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       switch (key) {
         case "Status":
-          return t(value);
+          return (
+            <CustomChip
+              text={t(value)}
+              shade={value === "DELIVERED" ? "green" : value === "UNDELIVERED" ? "red" : value === "pending" ? "grey" : "orange"}
+            />
+          );
+        // return t(value);
         case "DELIEVRY_DATE":
           return formatNoticeDeliveryDate(value) || "N/A";
         case "PROCESS_FEE_PAID_ON":

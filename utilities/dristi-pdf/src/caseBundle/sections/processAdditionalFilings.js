@@ -26,6 +26,10 @@ async function processAdditionalFilings(
     (s) => s.name === "additionalfilings"
   );
 
+  const additionalFilingsIndexSection = indexCopy.sections.find(
+    (section) => section.name === "additionalfilings"
+  );
+
   const dynamicSectionNumber = getDynamicSectionNumber(
     indexCopy,
     sectionPosition
@@ -132,6 +136,7 @@ async function processAdditionalFilings(
             }
 
             const artifactName =
+              evidence?.additionalDetails?.formdata?.documentTitle ||
               evidence?.file?.additionalDetails?.documentTitle ||
               messagesMap[
                 evidence?.file?.additionalDetails?.documentType ||
@@ -177,11 +182,10 @@ async function processAdditionalFilings(
           };
         })
       );
-      const additionalFilingsIndexSection = indexCopy.sections.find(
-        (section) => section.name === "additionalfilings"
-      );
       additionalFilingsIndexSection.lineItems =
         additionalFilingsLineItems.filter(Boolean);
+    } else {
+      additionalFilingsIndexSection.lineItems = [];
     }
   }
 }
