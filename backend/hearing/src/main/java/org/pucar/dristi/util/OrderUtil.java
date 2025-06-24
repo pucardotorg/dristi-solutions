@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.models.project.TaskResponse;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.kafka.Producer;
@@ -136,26 +137,13 @@ public class OrderUtil {
     private void expireTaskWorkflow(Task task, String tenantId, RequestInfo requestInfo) {
         WorkflowObject workflow = new WorkflowObject();
         workflow.setAction(EXPIRE);
-
         task.setWorkflow(workflow);
-        String businessService = getBusinessServiceName(task.getTaskType());
-
-        log.info("Updating workflow for Task: {}, BusinessService: {}", task.getTaskNumber(), businessService);
-
-        String updatedStatus = workflowUtil.updateWorkflowStatus(
-                requestInfo,
-                tenantId,
-                task.getTaskNumber(),
-                businessService,
-                workflow,
-                configuration.getTaskBusinessName()
-        );
-
-        task.setStatus(updatedStatus);
-        log.info("Task {} status updated to {}", task.getTaskNumber(), updatedStatus);
-
-        producer.push(configuration.getTaskUpdateTopic(), TaskRequest.builder().requestInfo(requestInfo).task(task).build());
-        log.info("Task update pushed to Kafka topic: {}", configuration.getTaskUpdateTopic());
+        TaskRequest taskRequest = TaskRequest.builder()
+                .requestInfo(requestInfo)
+                .task(task)
+                .build();
+        TaskResponse response = taskUtil.updateTask(taskRequest);
+        log.info("Updated task: {} with response: {}", task.getTaskNumber(), response);
     }
 
     private void cancelRelatedDemands(String tenantId, List<Task> tasks, RequestInfo requestInfo) {
@@ -187,15 +175,6 @@ public class OrderUtil {
 
         demandUtil.updateDemand(demandRequest);
         log.info("Updated demand status to CANCELLED for consumer codes: {}", consumerCodes);
-    }
-
-    private String getBusinessServiceName(String taskType) {
-        return switch (taskType) {
-            case SUMMONS -> configuration.getTaskSummonBusinessServiceName();
-            case WARRANT -> configuration.getTaskWarrantBusinessServiceName();
-            case NOTICE -> configuration.getTaskNoticeBusinessServiceName();
-            default -> null;
-        };
     }
 
     private OrderListResponse getOrders(OrderSearchRequest searchRequest) {

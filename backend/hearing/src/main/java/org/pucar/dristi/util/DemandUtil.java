@@ -40,7 +40,7 @@ public class DemandUtil {
 
         DemandResponse demandResponse = restTemplate.postForObject(url.toString(), requestInfoWrapper, DemandResponse.class);
         if (demandResponse == null || demandResponse.getDemands() == null || demandResponse.getDemands().isEmpty()) {
-            throw new CustomException();
+            throw new CustomException("DEMAND_SEARCH_FAILED", "No demands found for the given criteria");
         }
         return demandResponse;
     }

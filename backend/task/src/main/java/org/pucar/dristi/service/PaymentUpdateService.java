@@ -427,7 +427,13 @@ public class PaymentUpdateService {
     }
 
     public void createPendingTaskForRPAD(Task task, RequestInfo requestInfo) {
+        if ((task.getTaskType().equalsIgnoreCase(SUMMON) || task.getTaskType().equalsIgnoreCase(WARRANT)
+                || task.getTaskType().equalsIgnoreCase(NOTICE)) && (isRPADdeliveryChannel(task))) {
+            createPendingTaskForEnvelope(task, requestInfo);
+        }
+    }
 
+    public boolean isRPADdeliveryChannel(Task task) {
         JsonNode taskDetails = objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
 
         // Check if deliveryChannels exists
@@ -437,18 +443,14 @@ public class PaymentUpdateService {
         }
 
         if (deliveryChannels == null) {
-            log.error("Error while creating pending task for RPAD, deliveryChannels not found in taskDetails");
+            return false;
         }
 
-        if (deliveryChannels != null && (deliveryChannels.has(CHANNEL_CODE)) && !deliveryChannels.get(CHANNEL_CODE).isNull()) {
+        if (deliveryChannels.has(CHANNEL_CODE) && !deliveryChannels.get(CHANNEL_CODE).isNull()) {
             String channelCode = deliveryChannels.get(CHANNEL_CODE).textValue();
-            if (!RPAD.equalsIgnoreCase(channelCode)) {
-                return;
-            }
-            createPendingTaskForEnvelope(task, requestInfo);
+            return channelCode != null && channelCode.equalsIgnoreCase(RPAD);
         }
-
-
+        return false;
     }
 
     private void createPendingTaskForEnvelope(Task task, RequestInfo requestInfo) {

@@ -225,20 +225,8 @@ public class Configuration {
     @Value("${dristi.task.search.endpoint}")
     private String taskSearchEndpoint;
 
-    @Value("${egov.workflow.task.summon.business.service.name}")
-    private String taskSummonBusinessServiceName;
-
-    @Value("${egov.workflow.task.warrant.business.service.name}")
-    private String taskWarrantBusinessServiceName;
-
-    @Value("${egov.workflow.task.notice.business.service.name}")
-    private String taskNoticeBusinessServiceName;
-
-    @Value("${egov.workflow.task.business.name}")
-    private String taskBusinessName;
-
-    @Value("${task.kafka.update.topic}")
-    private String taskUpdateTopic;
+    @Value("${dristi.task.update.endpoint}")
+    private String taskUpdateEndpoint;
 
     // Billing Config
     @Value("${egov.billingservice.host}")
