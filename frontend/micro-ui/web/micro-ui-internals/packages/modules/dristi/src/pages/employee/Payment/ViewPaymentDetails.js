@@ -137,29 +137,59 @@ const ViewPaymentDetails = ({ location, match }) => {
     ePostBillResponse,
   ]);
 
-  const { data: calculationResponse, isLoading: isPaymentLoading } = Digit.Hooks.dristi.usePaymentCalculator(
-    {
-      EFillingCalculationCriteria: [
-        {
-          checkAmount: demandBill?.additionalDetails?.chequeDetails?.totalAmount,
-          numberOfApplication: 1,
-          tenantId: tenantId,
-          caseId: caseId,
-          filingNumber: filingNumber,
-          isDelayCondonation: !demandBill?.additionalDetails?.delayCondonation
-            ? demandBill?.additionalDetails?.isDelayCondonation
-            : Boolean(demandBill?.additionalDetails?.delayCondonation > 31 * 24 * 60 * 60 * 1000),
-        },
-      ],
-    },
-    {},
-    "dristi",
-    Boolean(
-      demandBill?.additionalDetails?.chequeDetails?.totalAmount &&
-        demandBill?.additionalDetails?.chequeDetails.totalAmount !== "0" &&
+  // const { data: calculationResponse, isLoading: isPaymentLoading } = Digit.Hooks.dristi.usePaymentCalculator(
+  //   {
+  //     EFillingCalculationCriteria: [
+  //       {
+  //         checkAmount: demandBill?.additionalDetails?.chequeDetails?.totalAmount,
+  //         numberOfApplication: 1,
+  //         tenantId: tenantId,
+  //         caseId: caseId,
+  //         filingNumber: filingNumber,
+  //         isDelayCondonation: !demandBill?.additionalDetails?.delayCondonation
+  //           ? demandBill?.additionalDetails?.isDelayCondonation
+  //           : Boolean(demandBill?.additionalDetails?.delayCondonation > 31 * 24 * 60 * 60 * 1000),
+  //       },
+  //     ],
+  //   },
+  //   {},
+  //   "dristi",
+  //   Boolean(
+  //     demandBill?.additionalDetails?.chequeDetails?.totalAmount &&
+  //       demandBill?.additionalDetails?.chequeDetails.totalAmount !== "0" &&
+  //       paymentType?.toLowerCase()?.includes("case")
+  //   )
+  // );
+
+  const [calculationResponse, setCalculationResponse] = useState(null);
+  const [isPaymentLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchCalculation = async () => {
+      setIsLoading(true);
+      debugger;
+      if (
+        consumerCode &&
+        demandBill?.additionalDetails?.chequeDetails?.totalAmount &&
+        demandBill?.additionalDetails?.chequeDetails?.totalAmount !== "0" &&
         paymentType?.toLowerCase()?.includes("case")
-    )
-  );
+      ) {
+        const response = await DRISTIService.getTreasuryPaymentBreakup(
+          { tenantId: tenantId },
+          {
+            consumerCode: consumerCode,
+          },
+          "dristi",
+          true
+        );
+        setCalculationResponse({ Calculation: [response?.TreasuryHeadMapping?.calculation] });
+      }
+      setIsLoading(false);
+    };
+
+    fetchCalculation();
+  }, [consumerCode, demandBill?.additionalDetails?.chequeDetails?.totalAmount, paymentType, tenantId]);
+  debugger;
 
   const { data: breakupResponse, isLoading: isSummonsBreakUpLoading } = Digit.Hooks.dristi.useSummonsPaymentBreakUp(
     {
