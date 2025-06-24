@@ -36,10 +36,10 @@ import java.util.Optional;
 
 import static org.egov.transformer.config.ServiceConstants.DEFAULT_COURT_MODULE_NAME;
 import static org.egov.transformer.config.ServiceConstants.DEFAULT_HEARING_MASTER_NAME;
+import static org.egov.transformer.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
 import static org.egov.transformer.config.ServiceConstants.HEARING_MODULE_NAME;
 import static org.egov.transformer.config.ServiceConstants.HEARING_STATUS_MASTER_NAME;
-import static pucar.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
-import static pucar.config.ServiceConstants.SEARCHER_SERVICE_EXCEPTION;
+import static org.egov.transformer.config.ServiceConstants.SEARCHER_SERVICE_EXCEPTION;
 
 @Slf4j
 @Service
