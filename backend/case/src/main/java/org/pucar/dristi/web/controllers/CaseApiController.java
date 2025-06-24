@@ -267,12 +267,4 @@ public class CaseApiController {
         Map<String,AtomicBoolean> response = caseService.enrichAccessCode(body);
         return new ResponseEntity<>(response,HttpStatus.OK);
     }
-
-    @PostMapping(value = "/v1/_resubmit")
-    public ResponseEntity<CaseResponse> reSubmitCase(@Parameter(in = ParameterIn.DEFAULT, description = "Details for re-submitting a case + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseRequest body)  {
-        CourtCase cases = caseService.reSubmitCase(body);
-        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
-        CaseResponse caseResponse = CaseResponse.builder().cases(Collections.singletonList(cases)).responseInfo(responseInfo).build();
-        return new ResponseEntity<>(caseResponse, HttpStatus.OK);
-    }
 }

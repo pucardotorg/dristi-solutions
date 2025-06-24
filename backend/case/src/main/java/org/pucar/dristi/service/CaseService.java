@@ -406,6 +406,12 @@ public class CaseService {
             // conditional enrichment using strategy
             enrichmentService.enrichCourtCase(caseRequest);
             String previousStatus = caseRequest.getCases().getStatus();
+            if(PENDING_RE_SIGN.equals(previousStatus)) {
+                Calculation calculation = compareCalculationAndCreateDemand(caseRequest);
+                if(calculation != null) {
+                    caseRequest.getCases().getWorkflow().setAction(UPLOAD_WITH_PAYMENT);
+                }
+            }
             workflowService.updateWorkflowStatus(caseRequest);
 
 
@@ -420,8 +426,13 @@ public class CaseService {
 
             if (lastSigned) {
                 log.info("Last e-sign for case {}", caseRequest.getCases().getId());
+                Calculation calculation = compareCalculationAndCreateDemand(caseRequest);
                 caseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(caseRequest.getCases().getTenantId()).build());
-                caseRequest.getCases().getWorkflow().setAction(E_SIGN_COMPLETE);
+                if(calculation != null){
+                    caseRequest.getCases().getWorkflow().setAction(E_SIGN_COMPLETE_WITH_PAYMENT);
+                } else {
+                    caseRequest.getCases().getWorkflow().setAction(E_SIGN_COMPLETE);
+                }
                 log.info("Updating workflow status for case {} in last e-sign", caseRequest.getCases().getId());
                 workflowService.updateWorkflowStatus(caseRequest);
             }
@@ -4917,9 +4928,9 @@ public class CaseService {
         return responseMap;
     }
 
-    public CourtCase reSubmitCase(@Valid CaseRequest body) {
+    public Calculation compareCalculationAndCreateDemand(@Valid CaseRequest body) {
         try {
-            log.info("operation=reSubmitCase, status=IN_PROGRESS, caseId: {}", body.getCases().getId());
+            log.info("operation=compareCalculationAndCreateDemand, status=IN_PROGRESS, caseId: {}", body.getCases().getId());
             CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
                     .requestInfo(body.getRequestInfo())
                     .flow(FLOW_JAC)
@@ -4938,15 +4949,14 @@ public class CaseService {
             Calculation calculation = getCalculationDifference(newCalculation, oldCalculation);
 
             if(calculation != null) {
-                body.getCases().getWorkflow().setAction(UPLOAD_WITH_PAYMENT);
                 createDemandForCase(body, newCalculation.getCalculation().get(0));
+                return calculation;
             }
-            updateCase(body);
-            log.info("operation=reSubmitCase, status=SUCCESS, caseId: {}", body.getCases().getId());
-            return body.getCases();
+            log.info("operation=compareCalculationAndCreateDemand, status=SUCCESS, caseId: {}", body.getCases().getId());
+            return null;
         } catch (Exception e) {
-            log.error("operation=reSubmitCase, status=ERROR, caseId: {}, error: {}", body.getCases().getId(), e.getMessage());
-            throw new CustomException("ERROR_RESUBMIT_CASE", "Error while resubmitting case with id: " + body.getCases().getId() + ", error: " + e.getMessage());
+            log.error("operation=compareCalculationAndCreateDemand, status=ERROR, caseId: {}, error: {}", body.getCases().getId(), e.getMessage());
+            throw new CustomException("ERROR_CALCULATION_CASE", "Error while resubmitting case with id: " + body.getCases().getId() + ", error: " + e.getMessage());
         }
     }
 

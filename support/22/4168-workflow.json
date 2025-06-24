@@ -672,6 +672,17 @@
             "SYSTEM_ADMIN"
           ],
           "active": true
+        },
+        {
+          "currentState":"PENDING_RE_E-SIGN",
+          "nextState":"PENDING_PAYMENT",
+          "action":"E-SIGN_COMPLETE_WITH_PAYMENT",
+          "active":true,
+          "roles": [
+            "CASE_CREATOR",
+            "SYSTEM",
+            "SYSTEM_ADMIN"
+          ]
         }
       ]
     },
