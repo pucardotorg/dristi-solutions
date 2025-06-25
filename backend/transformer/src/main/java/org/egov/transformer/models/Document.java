@@ -23,7 +23,7 @@ public class Document {
     private String documentUid = null;
 
     @JsonProperty("isActive")
-    private Boolean isActive = true;
+    private boolean isActive = true;
 
     @JsonProperty("additionalDetails")
     private Object additionalDetails = null;

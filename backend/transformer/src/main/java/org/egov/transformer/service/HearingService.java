@@ -233,21 +233,21 @@ public class HearingService {
     public List<Hearing> fetchHearing(HearingSearchRequest request) {
         String uri = properties.getHearingHost() + properties.getHearingSearchEndPoint();
 
-        Object response = serviceRequestRepository.fetchResult(new StringBuilder(uri), request);
-        List<Hearing> hearingList = Collections.emptyList();
         try {
+            Object response = serviceRequestRepository.fetchResult(new StringBuilder(uri), request);
             JsonNode jsonNode = objectMapper.valueToTree(response);
             JsonNode hearingListNode = jsonNode.get("HearingList");
             if(hearingListNode!=null){
-                hearingList = objectMapper.readValue(hearingListNode.toString(), new TypeReference<>() {});
+                return objectMapper.readValue(hearingListNode.toString(), new TypeReference<>() {});
             }
+            return Collections.emptyList();
         } catch (HttpClientErrorException e) {
             log.error(EXTERNAL_SERVICE_EXCEPTION, e);
             throw new ServiceCallException(e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error(SEARCHER_SERVICE_EXCEPTION, e);
+            throw new ServiceCallException("Failed to fetch hearing data: " + e.getMessage());
         }
-        return hearingList;
     }
 
 }

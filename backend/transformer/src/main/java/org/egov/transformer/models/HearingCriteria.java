@@ -1,5 +1,6 @@
 package org.egov.transformer.models;
-
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import lombok.Getter;
@@ -22,6 +23,7 @@ public class HearingCriteria {
     @JsonProperty("filingNumber")
     private String filingNumber;
 
+    @NotBlank(message = "Tenant ID is required")
     @JsonProperty("tenantId")
     private String tenantId;
 
