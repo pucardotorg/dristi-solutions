@@ -3870,7 +3870,8 @@ export const configsCreateOrderWarrant = [
       {
         isMandatory: true,
         key: "warrantSubType",
-        type: "dropdown",
+        type: "component",
+        component: "SelectCustomGroupedDropdown",
         label: "WARRANT_SUB_TYPE",
         disable: false,
         populators: {
@@ -3883,21 +3884,22 @@ export const configsCreateOrderWarrant = [
             marginTop: "42px",
             overflowY: "auto",
           },
-          mdmsConfig: {
-            moduleName: "Order",
-            masterName: "warrantSubType",
-            select: `(data) => {
-              const list = data?.Order?.warrantSubType || [];
-              return list.sort((a, b) => {
-                const getPriority = (val) => {
-                  if (val === "NO") return 0;
-                  if (val === "YES") return 2;
-                  return 1;
-                };
-                return getPriority(a.belowOthers) - getPriority(b.belowOthers);
-              });
-            }`,
-          },
+          options: [],
+          // mdmsConfig: {
+          //   moduleName: "Order",
+          //   masterName: "warrantSubType",
+          //   select: `(data) => {
+          //     const list = data?.Order?.warrantSubType || [];
+          //     return list.sort((a, b) => {
+          //       const getPriority = (val) => {
+          //         if (val === "NO") return 0;
+          //         if (val === "YES") return 2;
+          //         return 1;
+          //       };
+          //       return getPriority(a.belowOthers) - getPriority(b.belowOthers);
+          //     });
+          //   }`,
+          // },
         },
       },
       {
