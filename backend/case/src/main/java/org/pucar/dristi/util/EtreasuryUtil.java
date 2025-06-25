@@ -102,7 +102,7 @@ public class EtreasuryUtil {
 			response = restTemplate.postForObject(uri.toString(), requestInfo, Object.class);
 			log.info("Head Breakup Calculation Response: {}", response);
 			Object headMapping = mapper.convertValue(response, Map.class).get("TreasuryHeadMapping");
-			JsonNode calculationNode = mapper.convertValue(headMapping, JsonNode.class).get("calculation");
+			JsonNode calculationNode = mapper.convertValue(headMapping, JsonNode.class).get("finalCalcPostResubmission");
 			return mapper.convertValue(calculationNode, Calculation.class);
 		} catch (Exception e) {
 			log.error("Error while fetching head breakup calculation", e);

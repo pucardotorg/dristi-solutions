@@ -4932,16 +4932,16 @@ public class CaseService {
         try {
             log.info("operation=compareCalculationAndCreateDemand, status=IN_PROGRESS, caseId: {}", body.getCases().getId());
             CalculationRes newCalculation = getCalculation(body.getCases(), body.getRequestInfo());
-            Calculation oldCalculation = etreasuryUtil.getHeadBreakupCalculation(body.getCases().getFilingNumber()+"_CASE_FILING", body.getRequestInfo());
+            String lastSubmissionConsumerCode = getLastSubmissionConsumerCode(body);
+            Calculation oldCalculation = etreasuryUtil.getHeadBreakupCalculation(lastSubmissionConsumerCode, body.getRequestInfo());
 
             Calculation calculation = getCalculationDifference(newCalculation, oldCalculation);
 
             if(calculation != null) {
-                createDemandForCase(body, calculation);
-                return calculation;
+                createDemandForCase(body, calculation, newCalculation.getCalculation().get(0), lastSubmissionConsumerCode);
             }
             log.info("operation=compareCalculationAndCreateDemand, status=SUCCESS, caseId: {}", body.getCases().getId());
-            return null;
+            return calculation;
         } catch (Exception e) {
             log.error("operation=compareCalculationAndCreateDemand, status=ERROR, caseId: {}, error: {}", body.getCases().getId(), e.getMessage());
             throw new CustomException("ERROR_CALCULATION_CASE", "Error while resubmitting case with id: " + body.getCases().getId() + ", error: " + e.getMessage());
@@ -5003,7 +5003,7 @@ public class CaseService {
         return null;
     }
 
-    private void createDemandForCase(@Valid CaseRequest body, Calculation calculation) {
+    private void createDemandForCase(@Valid CaseRequest body, Calculation calculation, Calculation finalCalculation, String lastSubmissionConsumerCode) {
         try {
             DemandCreateRequest demandCreateRequest  = DemandCreateRequest.builder()
                     .requestInfo(body.getRequestInfo())
@@ -5012,6 +5012,8 @@ public class CaseService {
                     .tenantId(body.getCases().getTenantId())
                     .entityType(config.getCaseBusinessServiceName())
                     .calculation(Collections.singletonList(calculation))
+                    .finalCalcPostResubmission(finalCalculation)
+                    .lastSubmissionConsumerCode(lastSubmissionConsumerCode)
                     .build();
 
             etreasuryUtil.createDemand(demandCreateRequest);
@@ -5019,6 +5021,15 @@ public class CaseService {
             log.error("Error while creating demand for caseId: {}, error: {}", body.getCases().getId(), e.getMessage());
             throw new CustomException("ERROR_CREATING_DEMAND", "Error while creating demand for caseId: " + body.getCases().getId() + ", error: " + e.getMessage());
         }
+    }
+
+    private String getLastSubmissionConsumerCode(CaseRequest body) {
+        JsonNode additionalDetails = objectMapper.convertValue(body.getCases().getAdditionalDetails(), JsonNode.class);
+
+        if (additionalDetails != null && additionalDetails.has("lastSubmissionConsumerCode")) {
+            return additionalDetails.get("lastSubmissionConsumerCode").textValue();
+        }
+        return null;
     }
 
     private String updateAndGetConsumerCode(CaseRequest body) {
