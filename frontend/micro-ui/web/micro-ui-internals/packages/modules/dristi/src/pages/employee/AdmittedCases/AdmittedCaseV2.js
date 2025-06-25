@@ -53,7 +53,7 @@ import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks
 import CaseBundleView from "./CaseBundleView";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
 import CaseOverviewV2 from "./CaseOverviewV2";
-
+import PaymentDemandModal from "./PaymentDemandModal";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -222,6 +222,8 @@ const AdmittedCaseV2 = () => {
   const [showCitizenMenu, setShowCitizenMenu] = useState(false);
   const [showJoinCase, setShowJoinCase] = useState(false);
   const [shouldRefetchCaseData, setShouldRefetchCaseData] = useState(false);
+  const [showPaymentDemandModal, setShowPaymentDemandModal] = useState(false);
+  const [showPaymentConfirmationModal, setShowPaymentConfirmationModal] = useState(false);
   const [showAllStagesModal, setShowAllStagesModal] = useState(false);
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
@@ -424,6 +426,64 @@ const AdmittedCaseV2 = () => {
   );
 
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
+
+  const complainants = useMemo(() => {
+    return (
+      caseDetails?.litigants
+        ?.filter((item) => item?.partyType?.includes("complainant"))
+        ?.map((item) => {
+          const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
+          const poaHolder = caseDetails?.poaHolders?.find((poa) => poa?.individualId === item?.individualId);
+          if (poaHolder) {
+            return {
+              additionalDetails: item?.additionalDetails,
+              code: fullName,
+              name: `${fullName} (Complainant, PoA Holder)`,
+              uuid: allAdvocates[item?.additionalDetails?.uuid],
+              partyUuid: item?.additionalDetails?.uuid,
+              individualId: item?.individualId,
+              isJoined: true,
+              partyType: "complainant",
+              representingLitigants: poaHolder?.representingLitigants?.map((lit) => lit?.individualId),
+            };
+          }
+          return {
+            additionalDetails: item?.additionalDetails,
+            code: fullName,
+            name: `${fullName} (Complainant)`,
+            uuid: allAdvocates[item?.additionalDetails?.uuid],
+            partyUuid: item?.additionalDetails?.uuid,
+            individualId: item?.individualId,
+            isJoined: true,
+            partyType: "complainant",
+          };
+        }) || []
+    );
+  }, [caseDetails, allAdvocates]);
+
+  const respondents = useMemo(() => {
+    return (
+      caseDetails?.litigants
+        ?.filter((item) => item?.partyType?.includes("respondent"))
+        .map((item) => {
+          const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
+          const uniqueId = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
+            (obj) => obj?.data?.respondentVerification?.individualDetails?.individualId === item?.individualId
+          )?.uniqueId;
+          return {
+            additionalDetails: item?.additionalDetails,
+            code: fullName,
+            name: `${fullName} (Accused)`,
+            uuid: allAdvocates[item?.additionalDetails?.uuid],
+            partyUuid: item?.additionalDetails?.uuid,
+            individualId: item?.individualId,
+            isJoined: true,
+            partyType: "respondent",
+            uniqueId,
+          };
+        }) || []
+    );
+  }, [caseDetails, allAdvocates]);
   const listAllAdvocates = useMemo(() => Object.values(allAdvocates || {}).flat(), [allAdvocates]);
   const isAdvocatePresent = useMemo(() => listAllAdvocates?.includes(userInfo?.uuid), [listAllAdvocates, userInfo?.uuid]);
 
@@ -2451,8 +2511,13 @@ const AdmittedCaseV2 = () => {
         setShowWitnessModal(true);
       } else if (option.value === "SUBMIT_DOCUMENTS") {
         handleCourtAction();
+
+      } else if (option.value === "GENERATE_PAYMENT_DEMAND") {
+        setShowPaymentDemandModal(true);
+
       } else if (option.value === "SHOW_TIMELINE") {
         setShowAllStagesModal(true);
+
       }
     },
     [
@@ -2578,6 +2643,10 @@ const AdmittedCaseV2 = () => {
           .catch((err) => {
             showToast({ isError: true, message: "ORDER_CREATION_FAILED" });
           });
+        return;
+      } else if (option === t("GENERATE_PAYMENT_DEMAND")) {
+        setShowPaymentDemandModal(true);
+        setShowMenu(false);
         return;
       }
       history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}`, { caseId: caseId, tab: "Orders" });
@@ -2751,6 +2820,10 @@ const AdmittedCaseV2 = () => {
                 value: "SUBMIT_DOCUMENTS",
                 label: "SUBMIT_DOCUMENTS",
               },
+              {
+                value: "GENERATE_PAYMENT_DEMAND",
+                label: "GENERATE_PAYMENT_DEMAND",
+              },
             ]
           : []),
         {
@@ -2786,8 +2859,13 @@ const AdmittedCaseV2 = () => {
               label: "DOWNLOAD_CASE_FILE",
             },
             {
+
+              value: "GENERATE_PAYMENT_DEMAND",
+              label: "GENERATE_PAYMENT_DEMAND",
+            },{
               value: "SHOW_TIMELINE",
               label: "SHOW_TIMELINE",
+
             },
           ]
         : [
@@ -2824,6 +2902,10 @@ const AdmittedCaseV2 = () => {
               label: "DOWNLOAD_CASE_FILE",
             },
             {
+
+              value: "GENERATE_PAYMENT_DEMAND",
+              label: "GENERATE_PAYMENT_DEMAND",
+            },{
               value: "SHOW_TIMELINE",
               label: "SHOW_TIMELINE",
             },
@@ -2851,7 +2933,7 @@ const AdmittedCaseV2 = () => {
     []
   );
 
-  const takeActionOptions = useMemo(() => [t("CS_GENERATE_ORDER"), t("SUBMIT_DOCUMENTS")], [t]);
+  const takeActionOptions = useMemo(() => [t("CS_GENERATE_ORDER"), t("SUBMIT_DOCUMENTS"), t("GENERATE_PAYMENT_DEMAND1")], [t]);
 
   const employeeCrumbs = useMemo(
     () => [
@@ -3680,7 +3762,6 @@ const AdmittedCaseV2 = () => {
           setUpdateCounter={setUpdateCounter}
         />
       )}
-
       {showWitnessModal && (
         <WitnessDrawer
           isOpen={showWitnessModal}
@@ -3720,11 +3801,26 @@ const AdmittedCaseV2 = () => {
           refetchHearing={() => {}}
         ></AddParty>
       )}
+
+      {(showPaymentDemandModal || showPaymentConfirmationModal) && (
+        <PaymentDemandModal
+          t={t}
+          setShowPaymentDemandModal={setShowPaymentDemandModal}
+          setShowPaymentConfirmationModal={setShowPaymentConfirmationModal}
+          joinedLitigants={[...complainants, ...respondents]}
+          showPaymentConfirmationModal={showPaymentConfirmationModal}
+          showPaymentDemandModal={showPaymentDemandModal}
+          caseDetails={latestCaseDetails}
+          tenantId={tenantId}
+        />
+      )}{" "}
+
       {showAllStagesModal && (
         <Modal popupStyles={{}} hideSubmit={true} popmoduleClassName={"workflow-timeline-modal"}>
           {caseTimeLine}
         </Modal>
       )}
+
     </div>
   );
 };

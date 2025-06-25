@@ -23,7 +23,7 @@ const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
 };
 
-function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
+function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
   const { t } = useTranslation();
   const location = useLocation();
   const history = useHistory();
@@ -34,25 +34,33 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
     }
   };
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+  const courtId = localStorage.getItem("courtId");
+
   const params = location?.state.state.params;
+  const taskNumber = params?.referenceId;
+
   const caseId = params?.caseId;
+  const filingNumber = params?.filingNumber;
   const toast = useToast();
-  const scenario = "EfillingCase";
+  const scenario = "EfillingCase"; //what is this
   const path = "";
   const [toastMsg, setToastMsg] = useState(null);
   const [isCaseLocked, setIsCaseLocked] = useState(false);
   const [payOnlineButtonTitle, setPayOnlineButtonTitle] = useState("CS_BUTTON_PAY_ONLINE_SOMEONE_PAYING");
-  const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
-    Digit.ULBService.getStateId(),
-    "payment",
-    [{ name: "paymentType" }],
-    {
-      select: (data) => {
-        return data?.payment?.paymentType || [];
-      },
-    }
-  );
-
+  const [paymentBreakDown, setPaymentBreakDown] = useState([]);
+  const [consumerCode, setConsumerCode] = useState(null);
+  const [totalAmount, setTotalAmount] = useState(0);
+  const [comments, setComments] = useState("");
+  // const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
+  //   Digit.ULBService.getStateId(),
+  //   "payment",
+  //   [{ name: "paymentType" }],
+  //   {
+  //     select: (data) => {
+  //       return data?.payment?.paymentType || [];
+  //     },
+  //   }
+  // );
   const { data: caseData, isLoading } = useSearchCaseService(
     {
       criteria: [
@@ -74,113 +82,16 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
     }),
     [caseData]
   );
-  const isDelayCondonation = useMemo(() => {
-    const dcaData = caseDetails?.caseDetails?.["delayApplications"]?.formdata[0]?.data;
-    if (
-      dcaData?.delayCondonationType?.code === "YES" ||
-      (dcaData?.delayCondonationType?.code === "NO" && dcaData?.isDcaSkippedInEFiling?.code === "YES")
-    ) {
-      return false;
-    }
-    return true;
-  }, [caseDetails]);
-  // check for partial Liability
-  const chequeDetails = useMemo(() => {
-    const debtLiability = caseDetails?.caseDetails?.debtLiabilityDetails?.formdata?.[0]?.data;
-    if (debtLiability?.liabilityType?.code === "PARTIAL_LIABILITY") {
-      return {
-        totalAmount: debtLiability?.totalAmount,
-      };
-    } else {
-      const chequeData = caseDetails?.caseDetails?.chequeDetails?.formdata || [];
-      const totalAmount = chequeData.reduce((sum, item) => {
-        return sum + parseFloat(item.data.chequeAmount);
-      }, 0);
-      return {
-        totalAmount: totalAmount.toString(),
-      };
-    }
-  }, [caseDetails]);
 
-  // const { data: calculationResponse1, isLoading: isPaymentLoading } = Digit.Hooks.dristi.usePaymentCalculator(
-  //   {
-  //     EFillingCalculationCriteria: [
-  //       {
-  //         checkAmount: chequeDetails?.totalAmount,
-  //         numberOfApplication: 1,
-  //         tenantId: tenantId,
-  //         caseId: caseId,
-  //         isDelayCondonation: isDelayCondonation,
-  //         filingNumber: caseDetails?.filingNumber,
-  //       },
-  //     ],
-  //   },
-  //   {},
-  //   "dristi",
-  //   Boolean(chequeDetails?.totalAmount && chequeDetails.totalAmount !== "0")
-  // );
-  const suffix = useMemo(() => getSuffixByBusinessCode(paymentTypeData, "case-default"), [paymentTypeData]);
-  const [calculationResponse, setCalculationResponse] = useState(null);
-  const [ispaymentLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchCalculation = async () => {
-      if (caseDetails?.filingNumber && suffix) {
-        setIsLoading(true);
-        try {
-          const response = await DRISTIService.getTreasuryPaymentBreakup(
-            { tenantId: tenantId },
-            {
-              consumerCode: caseDetails?.additionalDetails?.lastSubmissionConsumerCode
-                ? caseDetails?.additionalDetails?.lastSubmissionConsumerCode
-                : caseDetails?.filingNumber + `_${suffix}`,
-            },
-            "dristi",
-            true
-          );
-          setCalculationResponse({ Calculation: [response?.TreasuryHeadMapping?.calculation] });
-        } catch (error) {
-          console.error("Error fetching payment calculation:", error);
-          toast.error(t("CS_PAYMENT_CALCULATION_ERROR"));
-        } finally {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchCalculation();
-  }, [tenantId, caseDetails, suffix]);
-  const totalAmount = useMemo(() => {
-    const totalAmount = calculationResponse?.Calculation?.[0]?.totalAmount || 0;
-    return parseFloat(totalAmount).toFixed(2);
-  }, [calculationResponse?.Calculation]);
-  const paymentCalculation = useMemo(() => {
-    const breakdown = calculationResponse?.Calculation?.[0]?.breakDown || [];
-    const updatedCalculation = breakdown.map((item) => ({
-      key: item?.type,
-      value: item?.amount,
-      currency: "Rs",
-    }));
-
-    updatedCalculation.push({
-      key: "Total amount",
-      value: totalAmount,
-      currency: "Rs",
-      isTotalFee: true,
-    });
-
-    return updatedCalculation;
-  }, [calculationResponse?.Calculation]);
+  // const suffix = useMemo(() => getSuffixByBusinessCode(paymentTypeData, "task-generic"), [paymentTypeData]);
 
   const { fetchBill, openPaymentPortal, paymentLoader, showPaymentModal, setShowPaymentModal } = usePaymentProcess({
     tenantId,
-    consumerCode: caseDetails?.additionalDetails?.lastSubmissionConsumerCode
-      ? caseDetails?.additionalDetails?.lastSubmissionConsumerCode
-      : caseDetails?.filingNumber + `_${suffix}`,
-    service: "case-default",
+    consumerCode: consumerCode, //taskNumber + `_${suffix}`,
+    service: "task-generic",
     path,
-    caseDetails,
-    totalAmount: totalAmount,
+    // caseDetails,
+    // totalAmount: totalAmount,
     scenario,
   });
 
@@ -198,22 +109,57 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
       console.error("Error fetching case lock status", error);
     }
   });
-
   useEffect(() => {
     if (caseDetails?.filingNumber) {
       fetchCaseLockStatus();
     }
   }, [caseDetails?.filingNumber]);
 
+  const fetchTask = useCallback(async () => {
+    try {
+      const task = await DRISTIService.customApiService(Urls.case.searchTasks, {
+        criteria: {
+          tenantId: tenantId,
+          taskNumber: taskNumber,
+          courtId: courtId || "KLKM52",
+        },
+      });
+      const taskData = task?.list?.[0];
+
+      const breakdown = taskData?.taskDetails?.genericTaskDetails?.feeBreakDown?.breakDown || [];
+      const totalAmount = taskData?.taskDetails?.genericTaskDetails?.feeBreakDown?.totalAmount || 0;
+
+      const updatedBreakdown = breakdown.map((item) => ({
+        key: item?.code,
+        value: item?.amount,
+        currency: "Rs",
+      }));
+      setConsumerCode(task?.list?.[0]?.taskDetails?.genericTaskDetails?.consumerCode);
+      setTotalAmount(totalAmount);
+
+      updatedBreakdown.push({
+        key: "Total amount",
+        value: totalAmount,
+        currency: "Rs",
+        isTotalFee: true,
+      });
+      setComments(taskData?.taskDescription);
+
+      setPaymentBreakDown(updatedBreakdown);
+    } catch (error) {
+      console.error("Error fetching task data", error);
+    }
+  }, [taskNumber]);
+
+  useEffect(() => {
+    if (taskNumber) {
+      fetchTask();
+    }
+  }, [fetchTask, taskNumber]);
+
   const onSubmitCase = async () => {
     try {
-      const bill = await fetchBill(
-        caseDetails?.additionalDetails?.lastSubmissionConsumerCode
-          ? caseDetails?.additionalDetails?.lastSubmissionConsumerCode
-          : caseDetails?.filingNumber + `_${suffix}`,
-        tenantId,
-        "case-default"
-      );
+      const bill = await fetchBill(consumerCode, tenantId, "task-generic");
       if (!bill?.Bill?.length) {
         showToast("success", t("CS_NO_PENDING_PAYMENT"), 50000);
         setIsCaseLocked(true);
@@ -224,7 +170,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
       const caseLockStatus = await DRISTIService.getCaseLockStatus(
         {},
         {
-          uniqueId: caseDetails?.filingNumber,
+          uniqueId: filingNumber,
           tenantId: tenantId,
         }
       );
@@ -235,10 +181,10 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
         return;
       }
 
-      await DRISTIService.setCaseLock({ Lock: { uniqueId: caseDetails?.filingNumber, tenantId: tenantId, lockType: "PAYMENT" } }, {});
+      await DRISTIService.setCaseLock({ Lock: { uniqueId: filingNumber, tenantId: tenantId, lockType: "PAYMENT" } }, {});
 
       const paymentStatus = await openPaymentPortal(bill);
-      await DRISTIService.setCaseUnlock({}, { uniqueId: caseDetails?.filingNumber, tenantId: tenantId });
+      await DRISTIService.setCaseUnlock({}, { uniqueId: filingNumber, tenantId: tenantId });
       const success = Boolean(paymentStatus);
 
       const receiptData = {
@@ -255,22 +201,6 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
       };
 
       if (success) {
-        await DRISTIService.customApiService(Urls.dristi.pendingTask, {
-          pendingTask: {
-            name: "Pending Payment",
-            entityType: "case-default",
-            referenceId: `MANUAL_${caseDetails?.filingNumber}`,
-            status: "PENDING_PAYMENT",
-            cnrNumber: caseDetails?.cnrNumber,
-            filingNumber: caseDetails?.filingNumber,
-            caseId: caseDetails?.id,
-            caseTitle: caseDetails?.caseTitle,
-            isCompleted: true,
-            stateSla: null,
-            additionalDetails: {},
-            tenantId,
-          },
-        });
         const fileStoreId = await DRISTIService.fetchBillFileStoreId({}, { billId: bill?.Bill?.[0]?.id, tenantId });
         if (fileStoreId) {
           history.push(`e-filing-payment-response`, {
@@ -288,9 +218,9 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
     }
   };
 
-  if (isLoading || ispaymentLoading || isPaymentTypeLoading) {
-    return <Loader />;
-  }
+  // if (isPaymentTypeLoading) {
+  //   return <Loader />;
+  // }
   const showToast = (type, message, duration = 5000) => {
     setToastMsg({ key: type, action: message });
     setTimeout(() => {
@@ -299,6 +229,52 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
   };
   return (
     <div className="e-filing-payment">
+      <style>{`.tooltip {
+  position: relative;
+  display: inline-block;font-family: Roboto;
+font-weight: 700;
+font-size: 16px;
+line-height: 24px;
+letter-spacing: 0px;
+text-decoration: underline;
+text-decoration-style: solid;
+text-decoration-offset: 0%;
+text-decoration-thickness: 0%;
+color: #3D3C3C;
+
+}
+
+.tooltip .tooltip-text {
+  visibility: hidden;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  padding: 5px 0;
+  border-radius: 6px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip .tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: #555 transparent transparent transparent;
+}
+
+.tooltip:hover .tooltip-text {
+  visibility: visible;
+  opacity: 1;
+}`}</style>
       <Modal
         headerBarEnd={<CloseBtn onClick={onCancel} />}
         actionSaveLabel={t("CS_PAY_ONLINE")}
@@ -309,26 +285,13 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
         headerBarMain={<Heading label={t("CS_PAY_TO_FILE_CASE")} />}
       >
         <div className="payment-due-wrapper" style={{ maxHeight: "550px", display: "flex", flexDirection: "column", margin: "13px 0px" }}>
-          <InfoCard
-            variant={"default"}
-            label={t("CS_COMMON_NOTE")}
-            style={{ backgroundColor: "#ECF3FD", marginBottom: "8px" }}
-            additionalElements={[
-              <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                <span>{t("PLEASE_ALLOW_POPUP_PAYMENT")}</span>
-              </div>,
-            ]}
-            inline
-            textStyle={{}}
-            className={"adhaar-verification-info-card"}
-          />
           <div className="payment-due-text" style={{ fontSize: "18px" }}>
             {`${t("CS_DUE_PAYMENT")} `}
             <span style={{ fontWeight: 700 }}>Rs {totalAmount}/-.</span>
-            {` ${t("CS_MANDATORY_STEP_TO_FILE_CASE")}`}
+            <p style={{ margin: 0 }}> {` ${t("PAYMENT_ADDITIONAL_INFO")}: ${comments ? comments : "-"}`}</p>
           </div>
           <div className="payment-calculator-wrapper" style={{ display: "flex", flexDirection: "column", maxHeight: "150px", overflowY: "auto" }}>
-            {paymentCalculation
+            {paymentBreakDown
               .filter((item) => !item.isTotalFee)
               .map((item) => (
                 <div
@@ -339,7 +302,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
                     paddingRight: "16px",
                   }}
                 >
-                  <span>{item.key}</span>
+                  <span>{t(item.key)}</span>
                   <span>
                     {item.currency} {parseFloat(item.value).toFixed(2)}
                   </span>
@@ -347,7 +310,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
               ))}
           </div>
           <div className="payment-calculator-wrapper" style={{ display: "flex", flexDirection: "column" }}>
-            {paymentCalculation
+            {paymentBreakDown
               .filter((item) => item.isTotalFee)
               .map((item) => (
                 <div
@@ -359,7 +322,7 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
                     fontSize: "16px",
                     fontWeight: "700",
                     paddingTop: "12px",
-                    paddingRight: paymentCalculation.length > 6 ? "28px" : "16px",
+                    paddingRight: paymentBreakDown.length > 6 ? "28px" : "16px",
                   }}
                 >
                   <span>{item.key}</span>
@@ -372,11 +335,17 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
           <div>
             <InfoCard
               variant={"default"}
-              label={t("CS_COMMON_NOTE")}
+              label={t("CS_PAYMENT_NOTE")}
               style={{ backgroundColor: "#ECF3FD" }}
               additionalElements={[
                 <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                  <span>{t("CS_OFFLINE_PAYMENT_STEP_TEXT")}</span>
+                  <span className="learn-more-text" style={{ color: "#3D3C3C" }}>
+                    {t("PAYMENT_SUBTEXT")}{" "}
+                    <span class="tooltip">
+                      {t("LEARN_MORE")}
+                      <span class="tooltip-text">This is the tooltip message!</span>
+                    </span>
+                  </span>
                 </div>,
               ]}
               inline
@@ -393,4 +362,4 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
   );
 }
 
-export default EfilingPaymentBreakdown;
+export default GeneratePaymentDemandBreakdown;

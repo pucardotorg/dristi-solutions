@@ -164,7 +164,9 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
 
   const { fetchBill, openPaymentPortal, paymentLoader, showPaymentModal, setShowPaymentModal } = usePaymentProcess({
     tenantId,
-    consumerCode: caseDetails?.filingNumber + `_${suffix}`,
+    consumerCode: caseDetails?.additionalDetails?.lastSubmissionConsumerCode
+      ? caseDetails?.additionalDetails?.lastSubmissionConsumerCode
+      : caseDetails?.filingNumber + `_${suffix}`,
     service: "case-default",
     path,
     caseDetails,
@@ -176,7 +178,13 @@ function EFilingPayment({ t, submitModalInfo = mockSubmitModalInfo, path }) {
 
   const onSubmitCase = async () => {
     try {
-      const bill = await fetchBill(caseDetails?.filingNumber + `_${suffix}`, tenantId, "case-default");
+      const bill = await fetchBill(
+        caseDetails?.additionalDetails?.lastSubmissionConsumerCode
+          ? caseDetails?.additionalDetails?.lastSubmissionConsumerCode
+          : caseDetails?.filingNumber + `_${suffix}`,
+        tenantId,
+        "case-default"
+      );
       if (!bill?.Bill?.length) {
         showToast("success", t("CS_NO_PENDING_PAYMENT"), 50000);
         setIsCaseLocked(true);
