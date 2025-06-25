@@ -631,7 +631,7 @@
   input {
     margin-bottom: 0 !important;
     border: 1px solid black;
-    font-family: 'Roboto';
+    font-family: "Roboto";
   }
 }
 
@@ -756,7 +756,7 @@
 
 .case-link {
   cursor: pointer;
-  color: #0A0A0A !important;
+  color: #0a0a0a !important;
   text-decoration: underline !important;
   font-weight: 500;
 }
@@ -769,29 +769,29 @@
   font-weight: 500;
 
   &.status-completed {
-    background: #E8E8E8;
-    color: #3D3C3C;
+    background: #e8e8e8;
+    color: #3d3c3c;
   }
 
   &.status-ongoing {
-    background: #FFF8E1;
+    background: #fff8e1;
     color: #574406;
   }
 
   &.status-passed,
   &.status-passed-over {
-    background: #FFF6E8;
-    color: #9E400A;
+    background: #fff6e8;
+    color: #9e400a;
   }
 
   &.status-scheduled {
-    background: #E5E4F2;
-    color: #28264B;
+    background: #e5e4f2;
+    color: #28264b;
   }
 
   &.status-abated {
-    background: #E8E8E8;
-    color: #3D3C3C;
+    background: #e8e8e8;
+    color: #3d3c3c;
   }
 
   &.status-default {
@@ -827,7 +827,7 @@
 .date-arrow-btn {
   background: transparent;
   border: none;
-  color: #007E7E;
+  color: #007e7e;
   font-size: 18px;
   font-weight: bold;
   border-radius: 4px;
@@ -858,7 +858,7 @@
   .home-search-btn {
     font-weight: 700;
     padding: 8px 24px;
-    border: 1px solid #77787B;
+    border: 1px solid #77787b;
     font-size: 14px;
     background: white;
     height: 40px;
@@ -883,7 +883,7 @@
   .search-input {
     display: flex;
     align-items: center;
-    border: 1px solid #77787B;
+    border: 1px solid #77787b;
     padding: 0 8px;
     height: 40px;
   }
@@ -905,7 +905,7 @@
   align-items: center;
   padding: 16px 8px;
   gap: 24px;
-  font-family: 'Roboto', sans-serif;
+  font-family: "Roboto", sans-serif;
   font-size: 16px;
 
   .pagination-info {
@@ -920,3 +920,16 @@
   }
 }
 
+.pending-envelope-submission-modal {
+  .popup-module-main {
+    .popup-module-action-bar {
+      .selector-button-primary {
+        display: flex;
+        align-items: center;
+      }
+      h2 {
+        font-size: 18px !important;
+      }
+    }
+  }
+}
