@@ -65,7 +65,7 @@ public class DateUtil {
     }
 
 
-    public Long getCurrentTimeInMilis() {
+    public Long getCurrentTimeInMillis() {
         return ZonedDateTime.now(ZoneId.of(properties.getZoneId())).toInstant().toEpochMilli();
     }
 

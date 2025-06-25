@@ -36,9 +36,11 @@ public class JoinCaseRequest {
     private String caseFilingNumber = null;
 
     @JsonProperty("representative")
+    @Valid
     private Representative representative = null;
 
     @JsonProperty("litigant")
+    @Valid
     private List<Party> litigant = null;
 
     @JsonProperty("isLitigantPIP")

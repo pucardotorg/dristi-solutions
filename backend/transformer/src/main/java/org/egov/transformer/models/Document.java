@@ -3,6 +3,8 @@ package org.egov.transformer.models;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 
+import java.util.Map;
+
 @Builder
 @Getter
 @Setter
@@ -26,5 +28,5 @@ public class Document {
     private boolean isActive = true;
 
     @JsonProperty("additionalDetails")
-    private Object additionalDetails = null;
+    private Map<String, Object> additionalDetails;
 }

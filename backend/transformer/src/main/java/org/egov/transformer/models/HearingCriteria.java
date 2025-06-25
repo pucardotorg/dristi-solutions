@@ -10,13 +10,14 @@ import lombok.Setter;
 @Setter
 @Builder
 public class HearingCriteria {
-
+    @NotBlank(message = "Hearing ID is required")
     @JsonProperty("hearingId")
     private String hearingId;
 
     @JsonProperty("hearingType")
     private String hearingType;
 
+    @NotBlank(message = "CNR Number is required")
     @JsonProperty("cnrNumber")
     private String cnrNumber;
 
