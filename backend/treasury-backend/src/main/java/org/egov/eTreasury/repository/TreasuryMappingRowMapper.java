@@ -29,7 +29,7 @@ public class TreasuryMappingRowMapper implements RowMapper<TreasuryMapping> {
                     .calculation(getCalculation(rs.getObject("calculation")))
                     .createdTime(rs.getLong("createdtime"))
                     .lastModifiedTime(rs.getLong("lastmodifiedtime"))
-                    .reSubmissionBreakDown(getCalculation(rs.getObject("resubmissionbreakdown")))
+                    .finalCalcPostResubmission(getCalculation(rs.getObject("resubmissionbreakdown")))
                     .lastSubmissionConsumerCode(rs.getString("lastsubmissionconsumercode"))
                     .build();
         } catch (JsonProcessingException e) {

@@ -29,8 +29,8 @@ public class TreasuryMapping {
     @JsonProperty("lastModifiedTime")
     private Long lastModifiedTime;
 
-    @JsonProperty("reSubmissionBreakDown")
-    private Calculation reSubmissionBreakDown;
+    @JsonProperty("finalCalcPostResubmission")
+    private Calculation finalCalcPostResubmission;
 
     @JsonProperty("lastSubmissionConsumerCode")
     private String lastSubmissionConsumerCode;

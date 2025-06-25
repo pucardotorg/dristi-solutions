@@ -36,10 +36,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static org.egov.eTreasury.config.ServiceConstants.*;
 
@@ -374,10 +372,10 @@ public class PaymentService {
     public DemandResponse createDemand(DemandCreateRequest demandRequest) {
         try {
             log.info("operation=createDemand, status=IN_PROGRESS, consumerCode={}", demandRequest.getConsumerCode());
-            if(CASE_DEFAULT_ENTITY_TYPE.equals(demandRequest.getEntityType())) {
-                updateTreasuryMapping(demandRequest);
-            }
             TreasuryMapping treasuryMapping = generateTreasuryMapping(demandRequest);
+            if(CASE_DEFAULT_ENTITY_TYPE.equals(demandRequest.getEntityType())) {
+                enrichTreasuryMapping(demandRequest, treasuryMapping);
+            }
             CourtCase courtCase = fetchCourtCase(demandRequest);
             Demand demand = createDemandObject(demandRequest, courtCase);
             DemandResponse demandResponse = demandUtil.createDemand(DemandRequest.builder()
@@ -393,75 +391,9 @@ public class PaymentService {
         }
     }
 
-    private void updateTreasuryMapping(DemandCreateRequest demandRequest) {
-        try {
-            log.info("operation=updateTreasuryMapping, status=IN_PROGRESS, consumerCode={}", demandRequest.getConsumerCode());
-            TreasuryMapping existingMapping = treasuryMappingRepository.getTreasuryMapping(getConsumerCodeForFiling(demandRequest.getConsumerCode()));
-
-            if (existingMapping == null) return;
-
-            //update head breakup for existing mapping
-            updateHeadMapping(existingMapping, demandRequest);
-
-            // Add to resubmission breakdown
-            existingMapping.setReSubmissionBreakDown(demandRequest.getCalculation().get(0));
-            existingMapping.setLastModifiedTime(System.currentTimeMillis());
-            existingMapping.setLastSubmissionConsumerCode(demandRequest.getConsumerCode());
-            producer.push(config.getTreasuryMappingUpdateTopic(), existingMapping);
-            log.info("operation=updateTreasuryMapping, status=SUCCESS, consumerCode={}", demandRequest.getConsumerCode());
-        } catch (Exception e) {
-            log.error("operation=updateTreasuryMapping, status=FAILED, consumerCode={}", demandRequest.getConsumerCode());
-            throw new CustomException("TREASURY_MAPPING_UPDATE_ERROR", "Error occurred while updating treasury mapping");
-        }
-    }
-
-    private String getConsumerCodeForFiling(String consumerCode) {
-        String[] parts = consumerCode.split("-");
-        if (parts.length < 4) {
-            return consumerCode;
-        }
-        return String.join("-", parts[0], parts[1], parts[2]);
-    }
-
-
-
-    private void updateHeadMapping(TreasuryMapping existingMapping, DemandCreateRequest demandCreateRequest) {
-        try {
-            log.info("operation=updateHeadMapping, status=IN_PROGRESS, consumerCode={}", demandCreateRequest.getConsumerCode());
-            Calculation existingCalculation = existingMapping.getCalculation();
-            Calculation newCalculation = demandCreateRequest.getCalculation().get(0);
-            existingCalculation.setTotalAmount(existingCalculation.getTotalAmount()+ newCalculation.getTotalAmount());
-            existingCalculation.setBreakDown(mergeBreakDowns(existingCalculation.getBreakDown(), newCalculation.getBreakDown()));
-            TreasuryMapping updatedMapping = generateTreasuryMapping(DemandCreateRequest.builder()
-                    .calculation(List.of(existingCalculation))
-                    .filingNumber(demandCreateRequest.getFilingNumber())
-                    .entityType(demandCreateRequest.getEntityType())
-                    .tenantId(demandCreateRequest.getTenantId())
-                    .consumerCode(getConsumerCodeForFiling(demandCreateRequest.getConsumerCode())).build());
-
-            existingMapping.setCalculation(existingCalculation);
-            existingMapping.setHeadAmountMapping(updatedMapping.getHeadAmountMapping());
-            log.info("operation=updateHeadMapping, status=SUCCESS, consumerCode={}", demandCreateRequest.getConsumerCode());
-        } catch (CustomException e) {
-            log.error("operation=updateHeadMapping, status=FAILED, consumerCode={}", demandCreateRequest.getConsumerCode());
-            throw new CustomException("ERROR_UPDATING_HEAD_MAPPING", "Error occurred while updating head mapping: " + e.getMessage());
-        }
-    }
-
-    private List<BreakDown> mergeBreakDowns(List<BreakDown> existingBreakDown, List<BreakDown> newBreakDown) {
-        Map<String, BreakDown> breakDownMap = new HashMap<>();
-        for (BreakDown breakDown : existingBreakDown) {
-            breakDownMap.put(breakDown.getCode(), breakDown);
-        }
-        for (BreakDown breakDown : newBreakDown) {
-            if (breakDownMap.containsKey(breakDown.getCode())) {
-                BreakDown existingBreakdown = breakDownMap.get(breakDown.getCode());
-                existingBreakdown.setAmount(existingBreakdown.getAmount() + breakDown.getAmount());
-            } else {
-                breakDownMap.put(breakDown.getCode(), breakDown);
-            }
-        }
-        return new ArrayList<>(breakDownMap.values());
+    private void enrichTreasuryMapping(DemandCreateRequest demandRequest, TreasuryMapping treasuryMapping) {
+        treasuryMapping.setFinalCalcPostResubmission(demandRequest.getFinalCalcPostResubmission());
+        treasuryMapping.setLastSubmissionConsumerCode(demandRequest.getLastSubmissionConsumerCode());
     }
 
     private Map<String, String> getTaxHeadMasterCodes(Map<String, Map<String, JSONArray>> mdmsData, String taskBusinessService, String deliveryChannel) {

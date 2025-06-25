@@ -35,5 +35,10 @@ public class DemandCreateRequest {
     @JsonProperty("tenantId")
     private String tenantId = null;
 
+    @JsonProperty("finalCalcPostResubmission")
+    private Calculation finalCalcPostResubmission = null;
+
+    @JsonProperty("lastSubmissionConsumerCode")
+    private String lastSubmissionConsumerCode = null;
 
 }
