@@ -1,13 +1,14 @@
 package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.pucar.dristi.web.models.inbox.OrderBy;
 
-import javax.validation.Valid;
+
 import java.util.List;
 
 @Data
@@ -17,21 +18,21 @@ import java.util.List;
 public class LandingPageCaseListRequest {
     @JsonProperty("searchCaseCriteria")
     @Valid
-    private SearchCaseCriteria searchCaseCriteria;
+    private SearchCaseCriteria searchCaseCriteria = null;
 
     @JsonProperty("filterCriteria")
     @Valid
-    private FilterCriteria filterCriteria;
+    private FilterCriteria filterCriteria = null;
 
     @JsonProperty("offset")
     @Valid
-    private Integer offset;
+    private Integer offset = null;
 
     @JsonProperty("limit")
     @Valid
-    private Integer limit;
+    private Integer limit = null;
 
     @JsonProperty("sortOrder")
     @Valid
-    private List<OrderBy> sortOrder;
+    private List<OrderBy> sortOrder = null;
 }

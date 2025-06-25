@@ -1,12 +1,13 @@
 package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.Valid;
+
 
 @Data
 @NoArgsConstructor
@@ -15,5 +16,5 @@ import javax.validation.Valid;
 public class CnrNumberCriteria {
     @JsonProperty("cnrNumber")
     @Valid
-    private String cnrNumber;
+    private String cnrNumber = null;
 }

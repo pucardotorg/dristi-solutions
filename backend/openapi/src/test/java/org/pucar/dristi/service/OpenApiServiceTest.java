@@ -315,6 +315,7 @@ public class OpenApiServiceTest {
     void getLandingPageCaseList_ThrowsException_WhenElasticSearchEnabled() {
         when(configuration.getIsElasticSearchEnabled()).thenReturn(true);
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
+        request.setSearchCaseCriteria(validAllCriteria());
         assertThrows(RuntimeException.class, () ->
                 openApiService.getLandingPageCaseList(TENANT_ID, request));
     }
@@ -322,6 +323,7 @@ public class OpenApiServiceTest {
     @Test
     void getLandingPageCaseList_CallsInboxUtil_WhenElasticSearchDisabled() {
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
+        request.setSearchCaseCriteria(validAllCriteria());
         openApiService.getLandingPageCaseList(TENANT_ID, request);
         verify(inboxUtil).getLandingPageCaseListResponse(any(InboxRequest.class));
     }
@@ -330,6 +332,7 @@ public class OpenApiServiceTest {
     void getLandingPageCaseList_UsesDefaultLimit_WhenNotProvided() {
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
         request.setLimit(null);
+        request.setSearchCaseCriteria(validAllCriteria());
         openApiService.getLandingPageCaseList(TENANT_ID, request);
         ArgumentCaptor<InboxRequest> captor = ArgumentCaptor.forClass(InboxRequest.class);
         verify(inboxUtil).getLandingPageCaseListResponse(captor.capture());
@@ -347,6 +350,10 @@ public class OpenApiServiceTest {
         SearchCaseCriteria searchCriteria = new SearchCaseCriteria();
         searchCriteria.setSearchType(SearchType.FILING_NUMBER);
         searchCriteria.setFilingNumberCriteria(filingNumberCriteria);
+        searchCriteria.setCaseNumberCriteria(null);
+        searchCriteria.setCnrNumberCriteria(null);
+        searchCriteria.setAdvocateCriteria(null);
+        searchCriteria.setLitigantCriteria(null);
 
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
         request.setSearchCaseCriteria(searchCriteria);
@@ -370,6 +377,10 @@ public class OpenApiServiceTest {
         SearchCaseCriteria searchCriteria = new SearchCaseCriteria();
         searchCriteria.setSearchType(SearchType.FILING_NUMBER);
         searchCriteria.setFilingNumberCriteria(filingNumberCriteria);
+        searchCriteria.setCaseNumberCriteria(null);
+        searchCriteria.setCnrNumberCriteria(null);
+        searchCriteria.setAdvocateCriteria(null);
+        searchCriteria.setLitigantCriteria(null);
 
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
         request.setSearchCaseCriteria(searchCriteria);
@@ -394,6 +405,10 @@ public class OpenApiServiceTest {
         SearchCaseCriteria searchCriteria = new SearchCaseCriteria();
         searchCriteria.setSearchType(SearchType.CASE_NUMBER);
         searchCriteria.setCaseNumberCriteria(caseNumberCriteria);
+        searchCriteria.setFilingNumberCriteria(null);
+        searchCriteria.setCnrNumberCriteria(null);
+        searchCriteria.setAdvocateCriteria(null);
+        searchCriteria.setLitigantCriteria(null);
 
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
         request.setSearchCaseCriteria(searchCriteria);
@@ -415,6 +430,10 @@ public class OpenApiServiceTest {
         SearchCaseCriteria searchCriteria = new SearchCaseCriteria();
         searchCriteria.setSearchType(SearchType.CNR_NUMBER);
         searchCriteria.setCnrNumberCriteria(cnrNumberCriteria);
+        searchCriteria.setFilingNumberCriteria(null);
+        searchCriteria.setCaseNumberCriteria(null);
+        searchCriteria.setAdvocateCriteria(null);
+        searchCriteria.setLitigantCriteria(null);
 
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
         request.setSearchCaseCriteria(searchCriteria);
@@ -512,6 +531,10 @@ public class OpenApiServiceTest {
         SearchCaseCriteria searchCriteria = new SearchCaseCriteria();
         searchCriteria.setSearchType(SearchType.ADVOCATE);
         searchCriteria.setAdvocateCriteria(advocateCriteria);
+        searchCriteria.setFilingNumberCriteria(null);
+        searchCriteria.setCaseNumberCriteria(null);
+        searchCriteria.setCnrNumberCriteria(null);
+        searchCriteria.setLitigantCriteria(null);
 
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
         request.setSearchCaseCriteria(searchCriteria);
@@ -532,6 +555,10 @@ public class OpenApiServiceTest {
         SearchCaseCriteria searchCriteria = new SearchCaseCriteria();
         searchCriteria.setSearchType(SearchType.LITIGANT);
         searchCriteria.setLitigantCriteria(litigantCriteria);
+        searchCriteria.setFilingNumberCriteria(null);
+        searchCriteria.setCaseNumberCriteria(null);
+        searchCriteria.setCnrNumberCriteria(null);
+        searchCriteria.setAdvocateCriteria(null);
 
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
         request.setSearchCaseCriteria(searchCriteria);
@@ -560,6 +587,7 @@ public class OpenApiServiceTest {
         when(inboxUtil.getLandingPageCaseListResponse(any())).thenReturn(mockResponse);
 
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
+        request.setSearchCaseCriteria(validAllCriteria()); // ADD THIS LINE
         LandingPageCaseListResponse response = openApiService.getLandingPageCaseList(TENANT_ID, request);
 
         assertNotNull(response);
@@ -582,6 +610,7 @@ public class OpenApiServiceTest {
         when(inboxUtil.getLandingPageCaseListResponse(any())).thenReturn(mockResponse);
 
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
+        request.setSearchCaseCriteria(validAllCriteria()); // ADD THIS LINE
         LandingPageCaseListResponse response = openApiService.getLandingPageCaseList(TENANT_ID, request);
 
         assertNotNull(response);
@@ -595,6 +624,11 @@ public class OpenApiServiceTest {
     void buildInboxRequest_HandlesAllSearchType() {
         SearchCaseCriteria searchCriteria = new SearchCaseCriteria();
         searchCriteria.setSearchType(SearchType.ALL);
+        searchCriteria.setFilingNumberCriteria(null);
+        searchCriteria.setCaseNumberCriteria(null);
+        searchCriteria.setCnrNumberCriteria(null);
+        searchCriteria.setAdvocateCriteria(null);
+        searchCriteria.setLitigantCriteria(null);
 
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
         request.setSearchCaseCriteria(searchCriteria);
@@ -610,7 +644,7 @@ public class OpenApiServiceTest {
         assertEquals(TENANT_ID, moduleCriteria.get("tenantId"));
     }
 
-
+    // --- For all the following tests, provide a valid ALL criteria ---
     @Test
     void buildInboxRequest_HandlesFilterCriteria() {
         FilterCriteria filterCriteria = new FilterCriteria();
@@ -624,6 +658,7 @@ public class OpenApiServiceTest {
 
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
         request.setFilterCriteria(filterCriteria);
+        request.setSearchCaseCriteria(validAllCriteria());
 
         openApiService.getLandingPageCaseList(TENANT_ID, request);
 
@@ -648,6 +683,7 @@ public class OpenApiServiceTest {
 
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
         request.setFilterCriteria(filterCriteria);
+        request.setSearchCaseCriteria(validAllCriteria());
 
         openApiService.getLandingPageCaseList(TENANT_ID, request);
 
@@ -668,6 +704,7 @@ public class OpenApiServiceTest {
 
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
         request.setSortOrder(sortOrder);
+        request.setSearchCaseCriteria(validAllCriteria());
 
         openApiService.getLandingPageCaseList(TENANT_ID, request);
 
@@ -684,6 +721,7 @@ public class OpenApiServiceTest {
     void buildInboxRequest_HandlesNullSortOrder() {
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
         request.setSortOrder(null);
+        request.setSearchCaseCriteria(validAllCriteria());
 
         openApiService.getLandingPageCaseList(TENANT_ID, request);
 
@@ -698,6 +736,7 @@ public class OpenApiServiceTest {
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
         request.setOffset(10);
         request.setLimit(25);
+        request.setSearchCaseCriteria(validAllCriteria());
 
         openApiService.getLandingPageCaseList(TENANT_ID, request);
 
@@ -713,6 +752,7 @@ public class OpenApiServiceTest {
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
         request.setOffset(0);
         request.setLimit(null);
+        request.setSearchCaseCriteria(validAllCriteria());
 
         openApiService.getLandingPageCaseList(TENANT_ID, request);
 
@@ -725,6 +765,7 @@ public class OpenApiServiceTest {
     @Test
     void buildInboxRequest_SetsProcessSearchCriteria() {
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
+        request.setSearchCaseCriteria(validAllCriteria());
 
         openApiService.getLandingPageCaseList(TENANT_ID, request);
 
@@ -744,6 +785,7 @@ public class OpenApiServiceTest {
 
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
         request.setSortOrder(sortOrder);
+        request.setSearchCaseCriteria(validAllCriteria());
 
         openApiService.getLandingPageCaseList(TENANT_ID, request);
 
@@ -754,6 +796,19 @@ public class OpenApiServiceTest {
         assertNull(captor.getValue().getInbox().getSortOrder().get(0).getOrder());
         assertEquals(TENANT_ID, captor.getValue().getInbox().getModuleSearchCriteria().get("tenantId"));
     }
+
+
+    private SearchCaseCriteria validAllCriteria() {
+        SearchCaseCriteria criteria = new SearchCaseCriteria();
+        criteria.setSearchType(SearchType.ALL);
+        criteria.setFilingNumberCriteria(null);
+        criteria.setCaseNumberCriteria(null);
+        criteria.setCnrNumberCriteria(null);
+        criteria.setAdvocateCriteria(null);
+        criteria.setLitigantCriteria(null);
+        return criteria;
+    }
+
 
 
 }

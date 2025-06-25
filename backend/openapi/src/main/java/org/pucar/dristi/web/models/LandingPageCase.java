@@ -14,32 +14,32 @@ import java.util.List;
 @Builder
 public class LandingPageCase {
     @JsonProperty("caseTitle")
-    private String caseTitle;
+    private String caseTitle = null;
 
     @JsonProperty("cmpNumber")
-    private String cmpNumber;
+    private String cmpNumber = null;
 
     @JsonProperty("stNumber")
-    private String stNumber;
+    private String stNumber = null;
 
     @JsonProperty("purpose")
-    private String purpose;
+    private String purpose = null;
 
     @JsonProperty("nextHearingDate")
-    private Long nextHearingDate;
+    private Long nextHearingDate = null;
 
     @JsonProperty("lastHearingDate")
-    private Long lastHearingDate;
+    private Long lastHearingDate = null;
 
     @JsonProperty("filingDate")
-    private Long filingDate;
+    private Long filingDate = null;
 
     @JsonProperty("registrationDate")
-    private Long registrationDate;
+    private Long registrationDate = null;
 
     @JsonProperty("advocate")
-    private List<PartyInfo> advocate;
+    private List<PartyInfo> advocate = null;
 
     @JsonProperty("litigant")
-    private List<PartyInfo> litigant;
+    private List<PartyInfo> litigant = null;
 }

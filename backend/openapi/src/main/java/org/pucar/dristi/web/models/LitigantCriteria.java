@@ -13,5 +13,5 @@ import lombok.NoArgsConstructor;
 public class LitigantCriteria {
 
     @JsonProperty("litigantName")
-    private String litigantName;
+    private String litigantName = null;
 }

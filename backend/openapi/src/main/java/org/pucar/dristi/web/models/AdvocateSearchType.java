@@ -3,6 +3,8 @@ package org.pucar.dristi.web.models;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
+import java.util.Arrays;
+
 public enum AdvocateSearchType {
     BARCODE("barcode"),
     ADVOCATE_NAME("advocate_name");
@@ -15,12 +17,10 @@ public enum AdvocateSearchType {
 
     @JsonCreator
     public static AdvocateSearchType fromValue(String text) {
-        for (AdvocateSearchType b : AdvocateSearchType.values()) {
-            if (b.value.equalsIgnoreCase(text)) {
-                return b;
-            }
-        }
-        throw new IllegalArgumentException("Unexpected value: " + text);
+        return Arrays.stream(values())
+                .filter(t -> t.value.equalsIgnoreCase(text))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("Unexpected value: " + text));
     }
 
     @JsonValue

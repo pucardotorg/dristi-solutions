@@ -169,6 +169,11 @@ public class OpenApiService {
         } else {
             log.info("Fetching landing page cases from Case Service");
 
+            SearchCaseCriteria criteria = request.getSearchCaseCriteria();
+            if (!validateCaseSearchCriteria(criteria)) {
+                throw new CustomException(INVALID_SEARCH_CASE_CRITERIA_EXCEPTION, "SearchCaseCriteria is invalid for searchType: " + criteria.getSearchType());
+            }
+
             InboxRequest inboxRequest = buildInboxRequestFromSearchCriteria(
                     tenantId,
                     request.getSearchCaseCriteria(),
@@ -466,4 +471,48 @@ public class OpenApiService {
 
         return orderDetailsList;
     }
+
+    public static boolean validateCaseSearchCriteria(SearchCaseCriteria criteria) {
+        boolean isValid = false;
+        if (criteria == null || criteria.getSearchType() == null) {
+            return isValid;
+        }
+
+        isValid = switch (criteria.getSearchType()) {
+            case FILING_NUMBER -> criteria.getFilingNumberCriteria() != null &&
+                    criteria.getCaseNumberCriteria() == null &&
+                    criteria.getCnrNumberCriteria() == null &&
+                    criteria.getAdvocateCriteria() == null &&
+                    criteria.getLitigantCriteria() == null;
+
+            case CASE_NUMBER -> criteria.getCaseNumberCriteria() != null &&
+                    criteria.getFilingNumberCriteria() == null &&
+                    criteria.getCnrNumberCriteria() == null &&
+                    criteria.getAdvocateCriteria() == null &&
+                    criteria.getLitigantCriteria() == null;
+
+            case CNR_NUMBER -> criteria.getCnrNumberCriteria() != null &&
+                    criteria.getFilingNumberCriteria() == null &&
+                    criteria.getCaseNumberCriteria() == null &&
+                    criteria.getAdvocateCriteria() == null &&
+                    criteria.getLitigantCriteria() == null;
+
+            case ADVOCATE -> criteria.getAdvocateCriteria() != null &&
+                    criteria.getFilingNumberCriteria() == null &&
+                    criteria.getCaseNumberCriteria() == null &&
+                    criteria.getCnrNumberCriteria() == null &&
+                    criteria.getLitigantCriteria() == null;
+
+            case LITIGANT -> criteria.getLitigantCriteria() != null &&
+                    criteria.getFilingNumberCriteria() == null &&
+                    criteria.getCaseNumberCriteria() == null &&
+                    criteria.getCnrNumberCriteria() == null &&
+                    criteria.getAdvocateCriteria() == null;
+
+            case ALL -> true;
+        };
+
+        return isValid;
+    }
+
 }

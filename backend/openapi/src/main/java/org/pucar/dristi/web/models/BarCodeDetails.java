@@ -12,11 +12,11 @@ import lombok.NoArgsConstructor;
 @Builder
 public class BarCodeDetails {
     @JsonProperty("stateCode")
-    private String stateCode;
+    private String stateCode = null;
 
     @JsonProperty("barCode")
-    private String barCode;
+    private String barCode = null;
 
     @JsonProperty("year")
-    private String year;
+    private String year = null;
 }

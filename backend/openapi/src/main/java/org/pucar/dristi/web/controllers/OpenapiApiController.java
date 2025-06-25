@@ -75,7 +75,7 @@ public class OpenapiApiController {
             @Parameter(in = ParameterIn.PATH, description = "tenant ID", required = true)
             @PathVariable("tenantId") String tenantId,
 
-            @RequestBody LandingPageCaseListRequest landingPageCaseListRequest
+            @RequestBody @Valid LandingPageCaseListRequest landingPageCaseListRequest
     ) {
         LandingPageCaseListResponse landingPageCaseList = openApiService.getLandingPageCaseList(tenantId, landingPageCaseListRequest);
         return new ResponseEntity<>(landingPageCaseList, HttpStatus.OK);

@@ -1,12 +1,13 @@
 package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.Valid;
+
 
 @Data
 @NoArgsConstructor
@@ -15,12 +16,12 @@ import javax.validation.Valid;
 public class AdvocateCriteria {
     @JsonProperty("advocateSearchType")
     @Valid
-    private AdvocateSearchType advocateSearchType; // "BAR_CODE" or "NAME"
+    private AdvocateSearchType advocateSearchType = null; // "BAR_CODE" or "NAME"
 
     @JsonProperty("barCodeDetails")
     @Valid
-    private BarCodeDetails barCodeDetails;
+    private BarCodeDetails barCodeDetails = null;
 
     @JsonProperty("advocateName")
-    private String advocateName;
+    private String advocateName = null;
 }
