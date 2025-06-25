@@ -213,12 +213,12 @@ public class OrderUtil {
         List<String> consumerCodes = new ArrayList<>();
 
         for (Object obj : mdmsData) {
-            if (obj instanceof JSONObject entry) {
-                String channel = (String) entry.get("deliveryChannel");
-                if (channel != null && channel.equalsIgnoreCase(deliveryChannel)) {
-                    String suffix = (String) entry.get("suffix");
-                    if (suffix != null) {
-                        consumerCodes.add(taskNumber + "_" + suffix);
+            if (obj instanceof Map<?, ?> mapObj) {
+                Object channelObj = mapObj.get("deliveryChannel");
+                if (channelObj != null && channelObj.toString().equalsIgnoreCase(deliveryChannel)) {
+                    Object suffixObj = mapObj.get("suffix");
+                    if (suffixObj != null) {
+                        consumerCodes.add(taskNumber + "_" + suffixObj);
                     }
                 }
             }
