@@ -239,7 +239,7 @@ public class OpenApiService {
         OrderBy orderBy = new OrderBy();
         orderBy.setOrder(Order.DESC);
         orderBy.setCode("date");
-       // criteria.setSortOrder(List.of(orderBy));
+        criteria.setSortOrder(List.of(orderBy));
         criteria.setLimit(openApiOrdersTaskIRequest.getLimit());
         criteria.setOffset(openApiOrdersTaskIRequest.getOffset());
 
