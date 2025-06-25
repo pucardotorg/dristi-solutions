@@ -15,7 +15,7 @@ public class TreasuryMappingRepository {
 
     private final JdbcTemplate jdbcTemplate;
     private final TreasuryMappingRowMapper rowMapper;
-    private static final String BASE_QUERY = "SELECT * FROM treasury_head_breakup_data WHERE consumer_code = ?";
+    private static final String BASE_QUERY = "SELECT * FROM treasury_head_breakup_data WHERE consumer_code = ? ";
 
     public TreasuryMappingRepository(JdbcTemplate jdbcTemplate, TreasuryMappingRowMapper rowMapper) {
         this.jdbcTemplate = jdbcTemplate;

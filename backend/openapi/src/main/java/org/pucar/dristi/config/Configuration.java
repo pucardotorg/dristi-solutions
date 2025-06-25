@@ -131,4 +131,11 @@ public class Configuration {
 
     @Value("${egov.inbox.getfield.search.endpoint}")
     private String indexGetFieldEndPoint;
+
+    //FileStore Service
+    @Value("${egov.filestore.host}")
+    private String fileStoreHost;
+
+    @Value("${egov.file.store.get.endpoint}")
+    private String fileStoreGetEndPoint;
 }

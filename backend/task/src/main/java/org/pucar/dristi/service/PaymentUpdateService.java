@@ -236,7 +236,10 @@ public class PaymentUpdateService {
                     String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
                             config.getTaskGenericBusinessServiceName(), workflow, config.getTaskGenericBusinessName());
                     task.setStatus(status);
-                    task.getDocuments().add(getPaymentReceipt(requestInfo, task));
+                    Document document = getPaymentReceipt(requestInfo, task);
+                    if (document != null) {
+                        task.getDocuments().add(document);
+                    }
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
                 }
@@ -253,8 +256,10 @@ public class PaymentUpdateService {
 
             JsonNode paymentReceipt = Optional.ofNullable(etreasuryUtil.getPaymentReceipt(requestInfo, billId))
                     .filter(node -> !node.isNull())
-                    .orElseThrow(() -> new CustomException("RECEIPT_NOT_FOUND", "Payment receipt not found for billId: " + billId));
-
+                    .orElse(null);
+            if (paymentReceipt == null) {
+                return null;
+            }
             return mapper.convertValue(paymentReceipt, Document.class);
         } catch (CustomException e) {
             log.error("Error fetching payment receipt for task: {}", task.getTaskNumber(), e);

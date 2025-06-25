@@ -75,4 +75,47 @@ public class EtreasuryUtil {
 			throw new CustomException("Error while fetching payment receipt", e.getMessage());
 		}
 	}
+
+	public void createDemand(DemandCreateRequest demandCreateRequest) {
+		StringBuilder uri = new StringBuilder();
+		uri.append(configs.getEtreasuryHost()).append(configs.getEtreasuryDemandCreateEndPoint());
+		log.info("Demand create request :: {}", demandCreateRequest);
+		Object response;
+		try {
+			response = restTemplate.postForObject(uri.toString(), demandCreateRequest, Map.class);
+			log.info("Demand create response :: {}", response);
+		} catch (Exception e) {
+			log.error(ERROR_WHILE_CREATING_DEMAND_FOR_CASE, e);
+			throw new CustomException(ERROR_WHILE_CREATING_DEMAND_FOR_CASE, e.getMessage());
+		}
+	}
+
+	public Calculation getHeadBreakupCalculation(String consumerCode, RequestInfo requestInfo) {
+		StringBuilder uri = new StringBuilder();
+		uri.append(configs.getEtreasuryHost()).append(configs.getEtreasuryCalculationEndPoint())
+				.append("?consumerCode=").append(consumerCode)
+				.append("&tenantId=").append(configs.getTenantId());
+
+		log.info("Head Breakup Calculation URI: {}", uri);
+		Object response;
+		try {
+			response = restTemplate.postForObject(uri.toString(), requestInfo, Object.class);
+			log.info("Head Breakup Calculation Response: {}", response);
+			Object headMapping = mapper.convertValue(response, Map.class).get("TreasuryHeadMapping");
+			JsonNode calculationNode = getFinalCalcPostResubmission(headMapping);
+			return mapper.convertValue(calculationNode, Calculation.class);
+		} catch (Exception e) {
+			log.error("Error while fetching head breakup calculation", e);
+			throw new CustomException("Error while fetching head breakup calculation", e.getMessage());
+		}
+	}
+
+	private JsonNode getFinalCalcPostResubmission(Object headMapping) {
+		JsonNode headMappingNode = mapper.convertValue(headMapping, JsonNode.class);
+		JsonNode finalCalcPostResubmission = headMappingNode.get("finalCalcPostResubmission");
+		if (finalCalcPostResubmission == null) {
+			return headMappingNode.get("calculation");
+		}
+		return finalCalcPostResubmission;
+	}
 }

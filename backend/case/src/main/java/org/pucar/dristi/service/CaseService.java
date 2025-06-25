@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import jakarta.servlet.http.Part;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +14,6 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.common.models.individual.AdditionalFields;
-import org.egov.common.models.individual.Address;
 import org.egov.common.models.individual.Field;
 import org.egov.common.models.individual.Identifier;
 import org.egov.tracer.model.CustomException;
@@ -408,6 +406,12 @@ public class CaseService {
             // conditional enrichment using strategy
             enrichmentService.enrichCourtCase(caseRequest);
             String previousStatus = caseRequest.getCases().getStatus();
+            if(PENDING_RE_SIGN.equals(previousStatus)) {
+                Calculation calculation = compareCalculationAndCreateDemand(caseRequest);
+                if(calculation != null) {
+                    caseRequest.getCases().getWorkflow().setAction(UPLOAD_WITH_PAYMENT);
+                }
+            }
             workflowService.updateWorkflowStatus(caseRequest);
 
 
@@ -422,8 +426,13 @@ public class CaseService {
 
             if (lastSigned) {
                 log.info("Last e-sign for case {}", caseRequest.getCases().getId());
+                Calculation calculation = compareCalculationAndCreateDemand(caseRequest);
                 caseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(caseRequest.getCases().getTenantId()).build());
-                caseRequest.getCases().getWorkflow().setAction(E_SIGN_COMPLETE);
+                if(calculation != null){
+                    caseRequest.getCases().getWorkflow().setAction(E_SIGN_COMPLETE_WITH_PAYMENT);
+                } else {
+                    caseRequest.getCases().getWorkflow().setAction(E_SIGN_COMPLETE);
+                }
                 log.info("Updating workflow status for case {} in last e-sign", caseRequest.getCases().getId());
                 workflowService.updateWorkflowStatus(caseRequest);
             }
@@ -4917,5 +4926,173 @@ public class CaseService {
         }
 
         return responseMap;
+    }
+
+    public Calculation compareCalculationAndCreateDemand(@Valid CaseRequest body) {
+        try {
+            log.info("operation=compareCalculationAndCreateDemand, status=IN_PROGRESS, caseId: {}", body.getCases().getId());
+            CalculationRes newCalculation = getCalculation(body.getCases(), body.getRequestInfo());
+
+            String lastSubmissionConsumerCode = getLastSubmissionConsumerCode(body) != null ? getLastSubmissionConsumerCode(body) : body.getCases().getFilingNumber()+"_CASE_FILING";
+            Calculation oldCalculation = etreasuryUtil.getHeadBreakupCalculation(lastSubmissionConsumerCode, body.getRequestInfo());
+
+            Calculation calculation = getCalculationDifference(newCalculation, oldCalculation);
+
+            if(calculation != null) {
+                createDemandForCase(body, calculation, newCalculation.getCalculation().get(0), lastSubmissionConsumerCode);
+            }
+            log.info("operation=compareCalculationAndCreateDemand, status=SUCCESS, caseId: {}", body.getCases().getId());
+            return calculation;
+        } catch (Exception e) {
+            log.error("operation=compareCalculationAndCreateDemand, status=ERROR, caseId: {}, error: {}", body.getCases().getId(), e.getMessage());
+            throw new CustomException("ERROR_CALCULATION_CASE", "Error while resubmitting case with id: " + body.getCases().getId() + ", error: " + e.getMessage());
+        }
+    }
+
+    private CalculationRes getCalculation(CourtCase courtCase, RequestInfo requestInfo) {
+        EFillingCalculationCriteria calculationCriteria = EFillingCalculationCriteria.builder()
+                .tenantId(courtCase.getTenantId())
+                .caseId(courtCase.getId().toString())
+                .filingNumber(courtCase.getFilingNumber())
+                .build();
+
+        calculationCriteria.setCheckAmount(getChequeAmount(courtCase));
+        calculationCriteria.setIsDelayCondonation(isDelayCondonation(courtCase));
+
+        EFillingCalculationRequest calculationRequest = EFillingCalculationRequest.builder()
+                .requestInfo(requestInfo)
+                .calculationCriteria(Collections.singletonList(calculationCriteria))
+                .build();
+
+        return paymentCalculaterUtil.callPaymentCalculator(calculationRequest);
+    }
+
+
+    private Calculation getCalculationDifference(CalculationRes newCalculation, Calculation oldCalculation) {
+        Calculation newCalc = newCalculation.getCalculation().get(0);
+
+        List<BreakDown> newBreakDowns = newCalc.getBreakDown();
+        List<BreakDown> oldBreakDowns = oldCalculation.getBreakDown();
+
+        if(newCalc.getTotalAmount()> oldCalculation.getTotalAmount()) {
+
+            Map<String, BreakDown> oldBreakDownMap = oldBreakDowns.stream()
+                    .collect(Collectors.toMap(BreakDown::getCode, Function.identity()));
+            List<BreakDown> differenceBreakDowns = new ArrayList<>();
+
+            for (int i = 0; i < newBreakDowns.size(); i++) {
+                BreakDown newBreakDown = newBreakDowns.get(i);
+                BreakDown oldBreakDown = oldBreakDownMap.get(newBreakDown.getCode());
+
+                if (newBreakDown.getAmount() > oldBreakDown.getAmount()) {
+                    BreakDown differenceItem = new BreakDown();
+                    differenceItem.setCode(newBreakDown.getCode());
+                    differenceItem.setType(newBreakDown.getType());
+                    differenceItem.setAmount(newBreakDown.getAmount() - oldBreakDown.getAmount());
+                    differenceBreakDowns.add(differenceItem);
+                }
+            }
+
+            if (!differenceBreakDowns.isEmpty()) {
+                Calculation difference = new Calculation();
+                difference.setTenantId(newCalc.getTenantId());
+                difference.setTotalAmount(newCalc.getTotalAmount() - oldCalculation.getTotalAmount());
+                difference.setBreakDown(differenceBreakDowns);
+                return difference;
+            }
+        }
+        return null;
+    }
+
+    private void createDemandForCase(@Valid CaseRequest body, Calculation calculation, Calculation finalCalculation, String lastSubmissionConsumerCode) {
+        try {
+            DemandCreateRequest demandCreateRequest  = DemandCreateRequest.builder()
+                    .requestInfo(body.getRequestInfo())
+                    .filingNumber(body.getCases().getFilingNumber())
+                    .consumerCode(updateAndGetConsumerCode(body))
+                    .tenantId(body.getCases().getTenantId())
+                    .entityType(config.getCaseBusinessServiceName())
+                    .calculation(Collections.singletonList(calculation))
+                    .finalCalcPostResubmission(finalCalculation)
+                    .lastSubmissionConsumerCode(lastSubmissionConsumerCode)
+                    .build();
+
+            etreasuryUtil.createDemand(demandCreateRequest);
+        } catch (Exception e) {
+            log.error("Error while creating demand for caseId: {}, error: {}", body.getCases().getId(), e.getMessage());
+            throw new CustomException("ERROR_CREATING_DEMAND", "Error while creating demand for caseId: " + body.getCases().getId() + ", error: " + e.getMessage());
+        }
+    }
+
+    private String getLastSubmissionConsumerCode(CaseRequest body) {
+        JsonNode additionalDetails = objectMapper.convertValue(body.getCases().getAdditionalDetails(), JsonNode.class);
+
+        if (additionalDetails != null && additionalDetails.has("lastSubmissionConsumerCode")) {
+            return additionalDetails.get("lastSubmissionConsumerCode").textValue();
+        }
+        return null;
+    }
+
+    private String updateAndGetConsumerCode(CaseRequest body) {
+        JsonNode additionalDetails = objectMapper.convertValue(body.getCases().getAdditionalDetails(), JsonNode.class);
+        String baseConsumerCode = body.getCases().getFilingNumber() + "_CASE_FILING";
+
+        String newConsumerCode;
+        int nextSuffix = 1;
+
+        if (additionalDetails != null && additionalDetails.has("lastSubmissionConsumerCode")) {
+            String lastConsumerCode = getLastSubmissionConsumerCode(body);
+            if (lastConsumerCode != null && lastConsumerCode.startsWith(baseConsumerCode)) {
+                nextSuffix = getNextSuffix(lastConsumerCode, baseConsumerCode);
+            }
+        }
+        newConsumerCode = baseConsumerCode + "-" + nextSuffix;
+        ((ObjectNode) additionalDetails).put("lastSubmissionConsumerCode", newConsumerCode);
+
+        body.getCases().setAdditionalDetails(objectMapper.convertValue(additionalDetails, Map.class));
+        return newConsumerCode;
+    }
+
+
+    private static int getNextSuffix(String lastConsumerCode, String baseConsumerCode) {
+        String suffixPart = lastConsumerCode.substring(baseConsumerCode.length());
+
+        int nextSuffix = 1; // Default if no suffix found
+
+        if (suffixPart.startsWith("-")) {
+            try {
+                int currentSuffix = Integer.parseInt(suffixPart.substring(1));
+                nextSuffix = currentSuffix + 1;
+            } catch (NumberFormatException e) {
+                // If suffix is not a valid number, reset to 1
+                nextSuffix = 1;
+            }
+        }
+        return nextSuffix;
+    }
+
+
+    private Boolean isDelayCondonation(CourtCase existingCase) {
+        JsonNode caseDetails = objectMapper.convertValue(existingCase.getCaseDetails(), JsonNode.class);
+        if(caseDetails == null || caseDetails.get("delayApplications") == null) {
+            return false;
+        }
+        return !caseDetails.get("delayApplications").get("formdata").get(0).get("data").get("delayCondonationType").get("code").textValue().equals("YES");
+    }
+
+    private Double getChequeAmount(CourtCase courtCase) {
+        JsonNode caseDetails = objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
+        if(caseDetails == null || caseDetails.get("chequeDetails") == null){
+            return 0.0;
+        }
+        JsonNode amountNode = caseDetails.get("chequeDetails")
+                .get("formdata")
+                .get(0)
+                .get("data")
+                .get("chequeAmount");
+
+        return amountNode != null && amountNode.isTextual()
+                ? Double.parseDouble(amountNode.asText())
+                : 0.0;
     }
 }

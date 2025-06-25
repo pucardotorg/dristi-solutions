@@ -134,7 +134,7 @@ public class PendingTaskUtil {
             cnrNumber, @NotNull String caseId, @NotNull String caseTitle,String taskType) {
         // here data will be lost , we need to search first then update the pending task , this is as per ui
         createPendingTask(PendingTaskRequest.builder()
-                .pendingTask(PendingTask.builder().referenceId("MANUAL" + referenceNo)
+                .pendingTask(PendingTask.builder().referenceId(referenceNo)
                         .name("Completed")
                         .entityType(getEntityType(taskType))
                         .status("COMPLETED")
