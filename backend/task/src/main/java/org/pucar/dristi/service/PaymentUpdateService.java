@@ -257,16 +257,25 @@ public class PaymentUpdateService {
 
             String billId = getValidBillResponse(requestInfo, task.getTenantId(), consumerCode);
 
-            JsonNode paymentReceipt = Optional.ofNullable(etreasuryUtil.getPaymentReceipt(requestInfo, billId).get("Document"))
+            JsonNode paymentReceiptNode = Optional.ofNullable(etreasuryUtil.getPaymentReceipt(requestInfo, billId).get("Document"))
                     .filter(node -> !node.isNull())
                     .orElse(null);
-            if (paymentReceipt == null) {
+            if (paymentReceiptNode == null) {
                 return null;
             }
-            return mapper.convertValue(paymentReceipt, Document.class);
+            Document paymentReceipt = mapper.convertValue(paymentReceiptNode, Document.class);
+            enrichDocument(paymentReceipt);
+            return paymentReceipt;
         } catch (CustomException e) {
             log.error("Error fetching payment receipt for task: {}", task.getTaskNumber(), e);
             throw new CustomException("PAYMENT_RECEIPT_ERROR", "Error fetching payment receipt for task: " + task.getTaskNumber());
+        }
+    }
+
+    private void enrichDocument(Document document) {
+        if (document.getId() == null) {
+            document.setId(String.valueOf(UUID.randomUUID()));
+            document.setDocumentUid(document.getId());
         }
     }
 
