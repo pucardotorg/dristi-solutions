@@ -102,11 +102,19 @@ public class EtreasuryUtil {
 			response = restTemplate.postForObject(uri.toString(), requestInfo, Object.class);
 			log.info("Head Breakup Calculation Response: {}", response);
 			Object headMapping = mapper.convertValue(response, Map.class).get("TreasuryHeadMapping");
-			JsonNode calculationNode = mapper.convertValue(headMapping, JsonNode.class).get("finalCalcPostResubmission");
+			JsonNode calculationNode = getFinalCalcPostResubmission(headMapping);
 			return mapper.convertValue(calculationNode, Calculation.class);
 		} catch (Exception e) {
 			log.error("Error while fetching head breakup calculation", e);
 			throw new CustomException("Error while fetching head breakup calculation", e.getMessage());
 		}
+	}
+
+	private JsonNode getFinalCalcPostResubmission(Object headMapping) {
+		JsonNode finalCalcPostResubmission = mapper.convertValue(headMapping, JsonNode.class).get("finalCalcPostResubmission");
+		if (finalCalcPostResubmission == null) {
+			return mapper.convertValue(headMapping, JsonNode.class).get("calculation");
+		}
+		return finalCalcPostResubmission;
 	}
 }

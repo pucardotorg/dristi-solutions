@@ -4933,7 +4933,7 @@ public class CaseService {
             log.info("operation=compareCalculationAndCreateDemand, status=IN_PROGRESS, caseId: {}", body.getCases().getId());
             CalculationRes newCalculation = getCalculation(body.getCases(), body.getRequestInfo());
             String lastSubmissionConsumerCode = getLastSubmissionConsumerCode(body);
-            Calculation oldCalculation = etreasuryUtil.getHeadBreakupCalculation(lastSubmissionConsumerCode, body.getRequestInfo());
+            Calculation oldCalculation = etreasuryUtil.getHeadBreakupCalculation(lastSubmissionConsumerCode != null ? lastSubmissionConsumerCode : body.getCases().getFilingNumber()+"_CASE_FILING", body.getRequestInfo());
 
             Calculation calculation = getCalculationDifference(newCalculation, oldCalculation);
 
