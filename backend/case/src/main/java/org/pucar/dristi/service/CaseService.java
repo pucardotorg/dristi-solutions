@@ -4932,8 +4932,9 @@ public class CaseService {
         try {
             log.info("operation=compareCalculationAndCreateDemand, status=IN_PROGRESS, caseId: {}", body.getCases().getId());
             CalculationRes newCalculation = getCalculation(body.getCases(), body.getRequestInfo());
-            String lastSubmissionConsumerCode = getLastSubmissionConsumerCode(body);
-            Calculation oldCalculation = etreasuryUtil.getHeadBreakupCalculation(lastSubmissionConsumerCode != null ? lastSubmissionConsumerCode : body.getCases().getFilingNumber()+"_CASE_FILING", body.getRequestInfo());
+
+            String lastSubmissionConsumerCode = getLastSubmissionConsumerCode(body) != null ? getLastSubmissionConsumerCode(body) : body.getCases().getFilingNumber()+"_CASE_FILING";
+            Calculation oldCalculation = etreasuryUtil.getHeadBreakupCalculation(lastSubmissionConsumerCode, body.getRequestInfo());
 
             Calculation calculation = getCalculationDifference(newCalculation, oldCalculation);
 
@@ -5040,7 +5041,7 @@ public class CaseService {
         int nextSuffix = 1;
 
         if (additionalDetails != null && additionalDetails.has("lastSubmissionConsumerCode")) {
-            String lastConsumerCode = additionalDetails.get("lastSubmissionConsumerCode").asText();
+            String lastConsumerCode = getLastSubmissionConsumerCode(body);
             if (lastConsumerCode != null && lastConsumerCode.startsWith(baseConsumerCode)) {
                 nextSuffix = getNextSuffix(lastConsumerCode, baseConsumerCode);
             }

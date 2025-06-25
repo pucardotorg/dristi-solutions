@@ -111,9 +111,10 @@ public class EtreasuryUtil {
 	}
 
 	private JsonNode getFinalCalcPostResubmission(Object headMapping) {
-		JsonNode finalCalcPostResubmission = mapper.convertValue(headMapping, JsonNode.class).get("finalCalcPostResubmission");
+		JsonNode headMappingNode = mapper.convertValue(headMapping, JsonNode.class);
+		JsonNode finalCalcPostResubmission = headMappingNode.get("finalCalcPostResubmission");
 		if (finalCalcPostResubmission == null) {
-			return mapper.convertValue(headMapping, JsonNode.class).get("calculation");
+			return headMappingNode.get("calculation");
 		}
 		return finalCalcPostResubmission;
 	}
