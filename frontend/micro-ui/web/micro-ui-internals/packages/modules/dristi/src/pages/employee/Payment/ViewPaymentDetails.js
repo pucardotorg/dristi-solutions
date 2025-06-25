@@ -167,29 +167,32 @@ const ViewPaymentDetails = ({ location, match }) => {
   useEffect(() => {
     const fetchCalculation = async () => {
       setIsLoading(true);
-      debugger;
       if (
         consumerCode &&
         demandBill?.additionalDetails?.chequeDetails?.totalAmount &&
         demandBill?.additionalDetails?.chequeDetails?.totalAmount !== "0" &&
         paymentType?.toLowerCase()?.includes("case")
       ) {
-        const response = await DRISTIService.getTreasuryPaymentBreakup(
-          { tenantId: tenantId },
-          {
-            consumerCode: consumerCode,
-          },
-          "dristi",
-          true
-        );
-        setCalculationResponse({ Calculation: [response?.TreasuryHeadMapping?.calculation] });
+        try {
+          const response = await DRISTIService.getTreasuryPaymentBreakup(
+            { tenantId: tenantId },
+            {
+              consumerCode: consumerCode,
+            },
+            "dristi",
+            true
+          );
+          setCalculationResponse({ Calculation: [response?.TreasuryHeadMapping?.calculation] });
+        } catch (error) {
+          console.error("Error fetching payment calculation:", error);
+          toast.error(t("CS_PAYMENT_CALCULATION_ERROR"));
+        }
       }
       setIsLoading(false);
     };
 
     fetchCalculation();
   }, [consumerCode, demandBill?.additionalDetails?.chequeDetails?.totalAmount, paymentType, tenantId]);
-  debugger;
 
   const { data: breakupResponse, isLoading: isSummonsBreakUpLoading } = Digit.Hooks.dristi.useSummonsPaymentBreakUp(
     {

@@ -820,17 +820,21 @@ const ComplainantSignature = ({ path }) => {
               calculation = await callCreateDemandAndCalculation(caseDetails, tenantId, caseId);
             } else {
               const suffix = getSuffixByBusinessCode(paymentTypeData, "case-default");
-              calculation = await DRISTIService.getTreasuryPaymentBreakup(
-                {
-                  tenantId: tenantId,
-                },
-                { consumerCode: res?.cases?.[0]?.additionalDetails?.lastSubmissionConsumerCode },
-                "dristi",
-                Boolean(caseDetails?.filingNumber && suffix)
-              );
-              calculation = { Calculation: [calculation?.TreasuryHeadMapping?.calculation] };
+              try {
+                calculation = await DRISTIService.getTreasuryPaymentBreakup(
+                  {
+                    tenantId: tenantId,
+                  },
+                  { consumerCode: res?.cases?.[0]?.additionalDetails?.lastSubmissionConsumerCode },
+                  "dristi",
+                  Boolean(caseDetails?.filingNumber && suffix)
+                );
+                calculation = { Calculation: [calculation?.TreasuryHeadMapping?.calculation] };
+              } catch (error) {
+                console.error("Error fetching treasury payment breakup:", error);
+              }
             }
-            setCalculationResponse();
+            setCalculationResponse(calculation);
             setLoader(false);
             if (isSelectedUploadDoc) {
               history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse: calculation } });

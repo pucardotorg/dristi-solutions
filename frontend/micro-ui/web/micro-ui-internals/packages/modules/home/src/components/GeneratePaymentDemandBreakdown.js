@@ -34,8 +34,9 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
     }
   };
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+  const courtId = localStorage.getItem("courtId");
+
   const params = location?.state.state.params;
-  console.log("params", params);
   const taskNumber = params?.referenceId;
 
   const caseId = params?.caseId;
@@ -118,9 +119,9 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
     try {
       const task = await DRISTIService.customApiService(Urls.case.searchTasks, {
         criteria: {
-          tenantId: "kl",
+          tenantId: tenantId,
           taskNumber: taskNumber,
-          courtId: "KLKM52",
+          courtId: courtId || "KLKM52",
         },
       });
       const taskData = task?.list?.[0];

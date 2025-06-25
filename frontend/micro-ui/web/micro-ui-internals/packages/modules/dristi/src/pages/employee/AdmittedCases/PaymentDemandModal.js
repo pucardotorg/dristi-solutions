@@ -208,7 +208,7 @@ const PaymentDemandModal = ({
             genericTaskDetails: {
               feeBreakDown: {
                 applicationId: null,
-                tenantId: "kl",
+                tenantId: tenantId,
                 totalAmount,
                 breakDown,
               },

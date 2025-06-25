@@ -125,21 +125,27 @@ function EfilingPaymentBreakdown({ setShowModal, header, subHeader }) {
 
   useEffect(() => {
     const fetchCalculation = async () => {
-      setIsLoading(true);
       if (caseDetails?.filingNumber && suffix) {
-        const response = await DRISTIService.getTreasuryPaymentBreakup(
-          { tenantId: tenantId },
-          {
-            consumerCode: caseDetails?.additionalDetails?.lastSubmissionConsumerCode
-              ? caseDetails?.additionalDetails?.lastSubmissionConsumerCode
-              : caseDetails?.filingNumber + `_${suffix}`,
-          },
-          "dristi",
-          true
-        );
-        setCalculationResponse({ Calculation: [response?.TreasuryHeadMapping?.calculation] });
+        setIsLoading(true);
+        try {
+          const response = await DRISTIService.getTreasuryPaymentBreakup(
+            { tenantId: tenantId },
+            {
+              consumerCode: caseDetails?.additionalDetails?.lastSubmissionConsumerCode
+                ? caseDetails?.additionalDetails?.lastSubmissionConsumerCode
+                : caseDetails?.filingNumber + `_${suffix}`,
+            },
+            "dristi",
+            true
+          );
+          setCalculationResponse({ Calculation: [response?.TreasuryHeadMapping?.calculation] });
+        } catch (error) {
+          console.error("Error fetching payment calculation:", error);
+          toast.error(t("CS_PAYMENT_CALCULATION_ERROR"));
+        } finally {
+          setIsLoading(false);
+        }
       }
-      setIsLoading(false);
     };
 
     fetchCalculation();
