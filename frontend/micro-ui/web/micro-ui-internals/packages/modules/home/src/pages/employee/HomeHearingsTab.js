@@ -504,9 +504,10 @@ const HomeHearingsTab = ({
 
     return tableData.map((row, idx) => {
       const hearingDetails = row?.businessObject?.hearingDetails;
+      const offset = page * rowsPerPage;
       return (
         <tr key={row?.id || idx} className="custom-table-row">
-          <td>{idx + 1}</td>
+          <td>{offset + idx + 1}</td>
           <td>
             <Link
               to={{
@@ -718,14 +719,22 @@ const HomeHearingsTab = ({
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !loading) {
+                  setPage(0);
+                  setRowsPerPage(10);
                   fetchInbox(filters, setHearingCount);
                 }
+              }}
+              style={{
+                outline: "none",
+                border: "none",
               }}
             />
             <span
               style={{ cursor: "pointer" }}
               onClick={() => {
                 if (!loading) {
+                  setPage(0);
+                  setRowsPerPage(10);
                   fetchInbox(filters, setHearingCount);
                 }
               }}
