@@ -64,4 +64,16 @@ public class OpenapiApiController {
         OpenApiHearingsResponse response = OpenApiHearingsResponse.builder().openHearings(hearingList).build();
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @PostMapping("/openapi/v1/orders_tasks")
+    public ResponseEntity<OpenApiOrderTaskResponse> getOrdersAndPaymentTaskForCaseDetails(@Parameter(description = "Details for fetching orders and payment tasks in case details page", required = true) @Valid @RequestBody OpenApiOrdersTaskIRequest body) {
+        OpenApiOrderTaskResponse response = openApiService.getOrdersAndPaymentTasks(body);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/openapi/v1/magistrate_name/{tenantId}/{courtId}")
+    public ResponseEntity<String> getMagistrateName(@PathVariable("tenantId") String tenantId, @PathVariable("courtId") String courtId) {
+        String magistrateName = openApiService.getMagistrateName(tenantId,courtId);
+        return new ResponseEntity<>(magistrateName, HttpStatus.OK);
+    }
 }
