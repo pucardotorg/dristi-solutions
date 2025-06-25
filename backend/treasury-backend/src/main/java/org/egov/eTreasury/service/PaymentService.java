@@ -392,7 +392,7 @@ public class PaymentService {
     }
 
     private void enrichTreasuryMapping(DemandCreateRequest demandRequest, TreasuryMapping treasuryMapping) {
-        treasuryMapping.setFinalCalcPostResubmission(demandRequest.getFinalCalcPostResubmission());
+        treasuryMapping.setFinalCalcPostResubmission(demandRequest.getFinalCalcPostResubmission() != null ? demandRequest.getFinalCalcPostResubmission() : demandRequest.getCalculation().get(0));
         treasuryMapping.setLastSubmissionConsumerCode(demandRequest.getLastSubmissionConsumerCode());
     }
 
