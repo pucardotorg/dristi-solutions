@@ -307,8 +307,8 @@ public class OpenApiService {
                 .limit(limit != null ? limit : 50)
                 .sortOrder(sortOrder)
                 .processSearchCriteria(ProcessInstanceSearchCriteria.builder()
-                        .moduleName("Case Search")
-                        .businessService(Collections.singletonList(CASE_BUSINESS_SERVICE))
+                        .moduleName(OPENAPI_MODULE_NAME)
+                        .businessService(Collections.singletonList(OPENAPI_BUSINESS_SERVICE))
                         .tenantId(tenantId)
                         .build())
                 .build();

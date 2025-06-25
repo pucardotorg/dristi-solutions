@@ -731,8 +731,8 @@ public class OpenApiServiceTest {
         ArgumentCaptor<InboxRequest> captor = ArgumentCaptor.forClass(InboxRequest.class);
         verify(inboxUtil).getLandingPageCaseListResponse(captor.capture());
         ProcessInstanceSearchCriteria processCriteria = captor.getValue().getInbox().getProcessSearchCriteria();
-        assertEquals("Case Search", processCriteria.getModuleName());
-        assertEquals(Collections.singletonList("case-default"), processCriteria.getBusinessService());
+        assertEquals("Openapi Service", processCriteria.getModuleName());
+        assertEquals(Collections.singletonList("openapi"), processCriteria.getBusinessService());
         assertEquals(TENANT_ID, processCriteria.getTenantId());
         assertEquals(TENANT_ID, captor.getValue().getInbox().getModuleSearchCriteria().get("tenantId"));
     }
