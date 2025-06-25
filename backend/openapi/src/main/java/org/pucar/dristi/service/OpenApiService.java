@@ -13,7 +13,11 @@ import org.pucar.dristi.web.models.inbox.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -255,6 +259,21 @@ public class OpenApiService {
 
         InboxResponse inboxResponse = inboxUtil.getOrders(inboxRequest);
         List<OrderDetails> orderDetailsList = getOrdersDetails(inboxResponse);
+        if(openApiOrdersTaskIRequest.getDate() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+            String requestDateStr = openApiOrdersTaskIRequest.getDate(); // e.g., "03-12-2025"
+
+            orderDetailsList = orderDetailsList.stream()
+                    .filter(orderDetails -> {
+                        String orderDateStr = Instant.ofEpochMilli(orderDetails.getDate())
+                                .atZone(ZoneId.systemDefault())
+                                .toLocalDate()
+                                .format(formatter);
+                        return orderDateStr.equals(requestDateStr);
+                    })
+                    .collect(Collectors.toList());
+            openApiOrderTaskResponse.setOrderDetailsList(orderDetailsList);
+        }
         openApiOrderTaskResponse.setOrderDetailsList(orderDetailsList);
         openApiOrderTaskResponse.setTotalCount(inboxResponse.getTotalCount());
     }
@@ -283,9 +302,10 @@ public class OpenApiService {
                             List<Map<String, Object>> documents = (List<Map<String, Object>>) orderNotification.get("documents");
                             if (documents != null) {
                                 for (Map<String, Object> doc : documents) {
-                                    String fileStore = (String) doc.get("fileStore");
-                                    orderDetails.setFileStore(fileStore);
-                                    break;
+                                    if ("SIGNED".equals(doc.get("documentType"))) {
+                                        orderDetails.setFileStore((String) doc.get("fileStore"));
+                                        break;
+                                    }
                                 }
                             }
 

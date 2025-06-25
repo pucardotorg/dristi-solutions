@@ -25,6 +25,9 @@ public class OpenApiOrdersTaskIRequest {
     @JsonProperty("courtId")
     private String courtId;
 
+    @JsonProperty("date")
+    private String date;
+
     @JsonProperty("offset")
     private Integer offset;
 
