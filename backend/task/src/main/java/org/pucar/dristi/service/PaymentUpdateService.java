@@ -31,6 +31,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -529,6 +530,13 @@ public class PaymentUpdateService {
 
         String entityType = getEntityType(taskType);
 
+        ZoneId zoneId = ZoneId.of("Asia/Kolkata");
+        ZonedDateTime istTime = ZonedDateTime.now(zoneId);
+        long currentISTMillis = istTime.toInstant().toEpochMilli();
+
+        long sla = config.getEnvelopeSlaValue() + currentISTMillis;
+
+
         return PendingTask.builder()
                 .name(PENDING_ENVELOPE_SUBMISSION)
                 .referenceId(MANUAL + task.getTaskNumber() + PENDING_ENVELOPE_SUBMISSION)
@@ -540,7 +548,7 @@ public class PaymentUpdateService {
                 .caseId(courtCase.getId().toString())
                 .caseTitle(courtCase.getCaseTitle())
                 .isCompleted(false)
-                .stateSla(config.getEnvelopeSlaValue())
+                .stateSla(sla)
                 .screenType("home")
                 .build();
     }
