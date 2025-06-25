@@ -238,6 +238,9 @@ public class PaymentUpdateService {
                     task.setStatus(status);
                     Document document = getPaymentReceipt(requestInfo, task);
                     if (document != null) {
+                        if (task.getDocuments() == null) {
+                            task.setDocuments(new ArrayList<>());
+                        }
                         task.getDocuments().add(document);
                     }
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
@@ -254,7 +257,7 @@ public class PaymentUpdateService {
 
             String billId = getValidBillResponse(requestInfo, task.getTenantId(), consumerCode);
 
-            JsonNode paymentReceipt = Optional.ofNullable(etreasuryUtil.getPaymentReceipt(requestInfo, billId))
+            JsonNode paymentReceipt = Optional.ofNullable(etreasuryUtil.getPaymentReceipt(requestInfo, billId).get("Document"))
                     .filter(node -> !node.isNull())
                     .orElse(null);
             if (paymentReceipt == null) {
