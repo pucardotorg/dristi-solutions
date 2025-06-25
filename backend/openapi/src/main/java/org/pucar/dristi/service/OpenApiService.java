@@ -307,16 +307,6 @@ public class OpenApiService {
                             orderDetails.setBusinessOfTheDay(businessOfDayObj != null ? businessOfDayObj.toString() : null);
                             orderDetails.setOrderId(orderId != null ? orderId.toString() : null);
 
-//                            List<Map<String, Object>> documents = (List<Map<String, Object>>) orderNotification.get("documents");
-//                            if (documents != null) {
-//                                for (Map<String, Object> doc : documents) {
-//                                    if ("SIGNED".equals(doc.get("documentType"))) {
-//                                        orderDetails.setFileStore((String) doc.get("fileStore"));
-//                                        break;
-//                                    }
-//                                }
-//                            }
-
                             orderDetailsList.add(orderDetails);
                         }
                     }
