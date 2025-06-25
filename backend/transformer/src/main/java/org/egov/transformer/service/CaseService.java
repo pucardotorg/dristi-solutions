@@ -36,6 +36,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.time.Year;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -175,11 +178,7 @@ public class CaseService {
         caseSearch.setFilingDate(courtCase.getFilingDate());
         caseSearch.setRegistrationDate(courtCase.getRegistrationDate());
         enrichHearingDate(courtCase.getFilingNumber(), caseSearch);
-        // next hearing date?
         caseSearch.setCaseStage(courtCase.getStage());
-        caseSearch.setCaseStatus(courtCase.getStatus());
-        Date filingDate = new Date(courtCase.getFilingDate());
-        caseSearch.setYearOfFiling(String.valueOf(filingDate.getYear()));
         HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder()
                 .criteria(HearingCriteria.builder()
                         .tenantId(courtCase.getTenantId())
@@ -195,9 +194,10 @@ public class CaseService {
             latestHearing = hearings.get(0);
         }
         caseSearch.setNextHearingDate(latestHearing!=null? latestHearing.getStartTime(): null);
-        caseSearch.setCaseStage(courtCase.getStage());
         caseSearch.setCaseStatus(courtCase.getStatus());
-        caseSearch.setYearOfFiling(dateUtil.getYearFromDate(latestHearing!=null? latestHearing.getFilingDate(): null));
+        Year year = Year.from(Instant.ofEpochMilli(courtCase.getFilingDate())
+                .atZone(ZoneId.systemDefault()));
+        caseSearch.setYearOfFiling(String.valueOf(year.getValue()));
         caseSearch.setHearingType(latestHearing!=null? latestHearing.getHearingType(): null);
         return caseSearch;
 
@@ -220,8 +220,8 @@ public class CaseService {
     }
 
     private String getCaseType(String stNumber, String cmpNumber) {
-        if(stNumber!=null) return stNumber;
-        else if(cmpNumber!=null) return cmpNumber;
+        if(stNumber!=null) return "ST";
+        else if(cmpNumber!=null) return "CMP";
         else return null;
     }
 
@@ -273,8 +273,8 @@ public class CaseService {
                     } else {
                         participant.setEntityType("accused");
                     }
-                litigants.add(participant);
                 }
+                litigants.add(participant);
             }
         }
 
@@ -291,6 +291,10 @@ public class CaseService {
                 mdmsUtil.fetchMdmsData(RequestInfo.builder().build(), tenantId, serviceConstants.COURT_MASTERS_MODULE , Collections.singletonList("Rooms"));
         Map<String, JSONArray> mdmsObject = mdmsResponse.get("mdms");
         if(mdmsObject==null) return null;
+        return findCourtNameFromMdmsData(mdmsObject, courtId);
+    }
+
+    private String findCourtNameFromMdmsData(Map<String, JSONArray> mdmsObject, String courtId) {
         return mdmsObject.values().stream()
                 .flatMap(array -> array.stream())
                 .map(obj -> (JSONObject) obj)

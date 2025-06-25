@@ -91,7 +91,7 @@ public class TransformerProperties {
     @Value("${dristi.order.host}")
     private String orderHost;
 
-    @Value("${court.id}")
+    @Value("${dristi.court.id}")
     private String courtId;
 
 
@@ -226,7 +226,7 @@ public class TransformerProperties {
     @Value("${dristi.individual.search.endpoint}")
     private String individualSearchEndPoint;
 
-
+    // Redis timeout in milliseconds
     @Value("${spring.redis.timeout}")
     private Long redisTimeout;
 
@@ -234,9 +234,9 @@ public class TransformerProperties {
     @Value("${dristi.sms.notification.topic}")
     private String smsNotificationTopic;
 
-    // zone id
+    // Application timezone ID
     @Value("${app.zone.id}")
-    private String zoneId;
+    private String applicationZoneId;
 
     //HRMS
     @Value("${egov.hrms.host}")

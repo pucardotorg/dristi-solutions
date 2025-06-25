@@ -106,10 +106,22 @@ public class HearingConsumer {
             logger.warn("No filing number found for hearing with ID: {}", hearing.getHearingId());
             return;
         }
-        String tenantId = hearing.getTenantId();
-        String filingNumber = hearing.getFilingNumber().get(0);
-        CourtCase courtCase = caseService.getCase(filingNumber, tenantId, requestInfo);
-        CaseSearch caseSearch = caseService.getCaseSearchFromCourtCase(courtCase);
-        caseService.publishToCaseSearchIndexer(caseSearch);
+        try {
+            String tenantId = hearing.getTenantId();
+            String filingNumber = hearing.getFilingNumber().get(0);
+            logger.info("Publishing case search for hearing ID: {} with filing number: {}",
+                    hearing.getHearingId(), filingNumber);
+            CourtCase courtCase = caseService.getCase(filingNumber, tenantId, requestInfo);
+            if (courtCase == null) {
+                logger.warn("No court case found for filing number: {}", filingNumber);
+                return;
+            }
+            CaseSearch caseSearch = caseService.getCaseSearchFromCourtCase(courtCase);
+            caseService.publishToCaseSearchIndexer(caseSearch);
+            logger.info("Successfully published case search for hearing ID: {}", hearing.getHearingId());
+        } catch (Exception e) {
+            logger.error("Error publishing case search for hearing ID: {} - {}",
+                    hearing.getHearingId(), e.getMessage(), e);
+        }
     }
 }

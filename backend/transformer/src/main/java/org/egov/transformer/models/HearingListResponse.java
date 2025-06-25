@@ -27,7 +27,7 @@ public class HearingListResponse {
           @Valid
                 private ResponseInfo responseInfo = null;
 
-        @JsonProperty("TotalCount")
+        @JsonProperty("totalCount")
 
                 private Integer totalCount = null;
 
@@ -37,6 +37,9 @@ public class HearingListResponse {
 
 
         public HearingListResponse addHearingListItem(Hearing hearingListItem) {
+            if (hearingListItem == null) {
+                return this;
+            }
             if (this.hearingList == null) {
             this.hearingList = new ArrayList<>();
             }

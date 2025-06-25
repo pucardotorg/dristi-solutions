@@ -18,9 +18,16 @@ public class DateUtil {
 
     private final TransformerProperties properties;
 
+    private ZoneId getConfiguredZoneId() {
+        return ZoneId.of(properties.getApplicationZoneId());
+    }
+
 
     public LocalDateTime getLocalDateTimeFromEpoch(long startTime) {
-        return LocalDateTime.ofInstant(Instant.ofEpochMilli(startTime), ZoneId.of(properties.getZoneId()));
+        if (startTime < 0) {
+            throw new IllegalArgumentException("Start time cannot be negative");
+        }
+        return LocalDateTime.ofInstant(Instant.ofEpochMilli(startTime), ZoneId.of(properties.getApplicationZoneId()));
     }
 
     public LocalTime getLocalTime(String time, String pattern) {
@@ -41,20 +48,23 @@ public class DateUtil {
     }
 
     public LocalDate getLocalDateFromEpoch(long startTime) {
+        if (startTime < 0) {
+            throw new IllegalArgumentException("Start time cannot be negative");
+        }
         return Instant.ofEpochMilli(startTime)
-                .atZone(ZoneId.of(properties.getZoneId()))
+                .atZone(ZoneId.of(properties.getApplicationZoneId()))
                 .toLocalDate();
     }
 
     public Long getEpochFromLocalDate(LocalDate date) {
 
-        return date.atStartOfDay(ZoneId.of(properties.getZoneId())).toInstant().toEpochMilli();
+        return date.atStartOfDay(ZoneId.of(properties.getApplicationZoneId())).toInstant().toEpochMilli();
 
     }
 
 
     public Long getEpochFromLocalDateTime(LocalDateTime dateTime) {
-        return dateTime.atZone(ZoneId.of(properties.getZoneId())).toInstant().toEpochMilli();
+        return dateTime.atZone(ZoneId.of(properties.getApplicationZoneId())).toInstant().toEpochMilli();
     }
 
     public Long getStartOfTheDayForEpoch(Long date) {
@@ -66,14 +76,14 @@ public class DateUtil {
 
 
     public Long getCurrentTimeInMillis() {
-        return ZonedDateTime.now(ZoneId.of(properties.getZoneId())).toInstant().toEpochMilli();
+        return ZonedDateTime.now(ZoneId.of(properties.getApplicationZoneId())).toInstant().toEpochMilli();
     }
 
 
     public Long getEpochFromDateString(String date, String formatter) {
         DateTimeFormatter format = DateTimeFormatter.ofPattern(formatter);
         LocalDate localDate = LocalDate.parse(date, format);
-        return localDate.atStartOfDay(ZoneId.of(properties.getZoneId())).toInstant().toEpochMilli();
+        return localDate.atStartOfDay(ZoneId.of(properties.getApplicationZoneId())).toInstant().toEpochMilli();
     }
 
     public String getYearFromDate(Long date) {

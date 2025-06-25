@@ -1,14 +1,19 @@
 package org.egov.transformer.models;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class HearingCriteria {
     @NotBlank(message = "Hearing ID is required")
     @JsonProperty("hearingId")
@@ -42,6 +47,11 @@ public class HearingCriteria {
 
     @JsonProperty("courtId")
     private String courtId;
+
+    @AssertTrue(message = "fromDate must be less than or equal to toDate")
+    private boolean isValidDateRange() {
+        return fromDate == null || toDate == null || fromDate <= toDate;
+    }
 
 }
 

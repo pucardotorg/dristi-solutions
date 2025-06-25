@@ -9,6 +9,7 @@ import org.egov.transformer.models.HearingListResponse;
 import org.egov.transformer.models.HearingSearchRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.ArrayList;
@@ -33,19 +34,24 @@ public class HearingUtil {
     }
 
     public List<Hearing> fetchHearingDetails(HearingSearchRequest hearingSearchRequest) {
+        if (hearingSearchRequest == null) {
+            throw new IllegalArgumentException("HearingSearchRequest cannot be null");
+        }
+
         StringBuilder uri = new StringBuilder();
         uri.append(configs.getHearingHost()).append(configs.getHearingSearchEndPoint());
 
-        Object response = new HashMap<>();
         HearingListResponse hearingListResponse = new HearingListResponse();
         try {
-            response = restTemplate.postForObject(uri.toString(), hearingSearchRequest, Map.class);
-            hearingListResponse = mapper.convertValue(response, HearingListResponse.class);
-        } catch (Exception e) {
+            hearingListResponse = restTemplate.postForObject(uri.toString(), hearingSearchRequest, HearingListResponse.class);
+        } catch (RestClientException e) {
             log.error("ERROR_WHILE_FETCHING_FROM_HEARING", e);
             throw new CustomException("ERROR_WHILE_FETCHING_FROM_HEARING", e.getMessage());
+        } catch (Exception e) {
+            log.error("Unexpected error while fetching hearing details", e);
+            throw new CustomException("UNEXPECTED_ERROR_FETCHING_HEARINGS", e.getMessage());
         }
-        if(hearingListResponse==null){
+        if (hearingListResponse == null || hearingListResponse.getHearingList() == null) {
             return new ArrayList<>();
         }
         return hearingListResponse.getHearingList();
