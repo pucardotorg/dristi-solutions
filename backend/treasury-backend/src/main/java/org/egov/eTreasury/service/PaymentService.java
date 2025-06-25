@@ -319,7 +319,7 @@ public class PaymentService {
             return  Document.builder().fileStore(optionalPaymentData.get().getFileStoreId()).documentType("application/pdf").build();
         } else {
             log.error("No Payment data for given bill Id");
-            throw new CustomException(INVALID_BILL_ID, "Given Bill Id Has no Payment Data");
+            return null;
         }
     }
 
