@@ -10,6 +10,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.pucar.dristi.web.models.LandingPageCaseListRequest;
+import org.pucar.dristi.web.models.LandingPageCaseListResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -75,6 +77,21 @@ public class OpenapiApiController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+
+
+    @PostMapping(value = "/openapi/v1/{tenantId}/case")
+    public ResponseEntity<LandingPageCaseListResponse> getLandingPageCaseList(
+            @Pattern(regexp = "^[a-zA-Z]{2}$") @Size(min = 2, max = 2)
+            @Parameter(in = ParameterIn.PATH, description = "tenant ID", required = true)
+            @PathVariable("tenantId") String tenantId,
+
+            @RequestBody @Valid LandingPageCaseListRequest landingPageCaseListRequest
+    ) {
+        LandingPageCaseListResponse landingPageCaseList = openApiService.getLandingPageCaseList(tenantId, landingPageCaseListRequest);
+        return new ResponseEntity<>(landingPageCaseList, HttpStatus.OK);
+    }
+
+
     @PostMapping("/openapi/v1/orders_tasks")
     public ResponseEntity<OpenApiOrderTaskResponse> getOrdersAndPaymentTaskForCaseDetails(@Parameter(description = "Details for fetching orders and payment tasks in case details page", required = true) @Valid @RequestBody OpenApiOrdersTaskIRequest body) {
         OpenApiOrderTaskResponse response = openApiService.getOrdersAndPaymentTasks(body);
@@ -86,6 +103,7 @@ public class OpenapiApiController {
         String magistrateName = hrmsUtil.getJudgeName(courtId,tenantId);
         return new ResponseEntity<>(magistrateName, HttpStatus.OK);
     }
+
 
     @GetMapping("/openapi/v1/file/{tenantId}/{orderId}")
     public ResponseEntity<Resource> getFile(@PathVariable("tenantId") String tenantId, @PathVariable("orderId") String orderId) {
