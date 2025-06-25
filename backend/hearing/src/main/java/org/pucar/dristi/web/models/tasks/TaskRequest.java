@@ -1,4 +1,4 @@
-package org.pucar.dristi.web.models;
+package org.pucar.dristi.web.models.tasks;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -21,16 +21,16 @@ import jakarta.validation.Valid;
 @Builder
 public class TaskRequest   {
 
-        @JsonProperty("orderId")
-        @Valid
-        private UUID orderId = null;
+    @JsonProperty("orderId")
+    @Valid
+    private UUID orderId = null;
 
-        @JsonProperty("RequestInfo")
-        @Valid
-        private RequestInfo requestInfo = null;
+    @JsonProperty("RequestInfo")
+    @Valid
+    private RequestInfo requestInfo = null;
 
-        @JsonProperty("task")
-        @Valid
-        private Task task = null;
+    @JsonProperty("task")
+    @Valid
+    private Task task = null;
 
 }

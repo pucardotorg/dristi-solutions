@@ -160,4 +160,8 @@ public class CourtCase {
     @Valid
     private AuditDetails auditdetails = null;
 
+    @JsonProperty("poaHolders")
+    @Valid
+    private List<POAHolder> poaHolders = new ArrayList<>();
+
 }

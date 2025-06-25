@@ -133,4 +133,10 @@ public class ServiceConstants {
     public static final String GENERIC = "GENERIC";
     public static final String ERROR_WHILE_CREATING_DEMAND_FOR_GENERIC_TASK = "Error while creating demand for generic task: ";
 
+    public static final String CHANNEL_CODE = "channelCode";
+    public static final String RPAD = "RPAD";
+    public static final String PENDING_ENVELOPE_SUBMISSION = "PENDING_ENVELOPE_SUBMISSION";
+    public static final String MANUAL = "MANUAL_";
+    public static final String ERROR_WHILE_FETCHING_FROM_ADVOCATE = "ERROR_WHILE_FETCHING_FROM_ADVOCATE";
+
 }
