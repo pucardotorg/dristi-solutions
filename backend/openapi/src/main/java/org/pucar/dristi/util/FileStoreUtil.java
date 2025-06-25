@@ -30,7 +30,7 @@ public class FileStoreUtil {
     public ResponseEntity<Resource> getFilesByFileStore(String fileStoreId, String tenantId) {
         if (fileStoreId == null || fileStoreId.isEmpty()) {
             log.warn("No file store IDs provided");
-            return null;
+            throw new CustomException("INVALID_FILE_STORE_ID", "File store ID cannot be null or empty");
         }
         String url = configs.getFileStoreHost() + configs.getFileStoreGetEndPoint() + "?tenantId=" + tenantId + "&fileStoreId="+fileStoreId;
         try {

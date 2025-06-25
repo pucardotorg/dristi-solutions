@@ -38,18 +38,12 @@ public class OpenApiService {
 
     private final InboxUtil inboxUtil;
 
-    private final HrmsUtil hrmsUtil;
-
-    private final FileStoreUtil fileStoreUtil;
-
-    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, HrmsUtil hrmsUtil, FileStoreUtil fileStoreUtil) {
+    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil) {
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
         this.objectMapper = objectMapper;
         this.dateUtil = dateUtil;
         this.inboxUtil = inboxUtil;
-        this.hrmsUtil = hrmsUtil;
-        this.fileStoreUtil = fileStoreUtil;
     }
 
     public CaseSummaryResponse getCaseByCnrNumber(String tenantId, String cnrNumber) {
@@ -159,14 +153,6 @@ public class OpenApiService {
         return inboxUtil.getOpenHearings(inboxRequest);
     }
 
-    public String getMagistrateName(String courtId, String tenantId) {
-        return hrmsUtil.getJudgeName(courtId, tenantId);
-    }
-
-    public ResponseEntity<Resource> getFile(String fileStore, String tenantId) {
-        return fileStoreUtil.getFilesByFileStore(fileStore, tenantId);
-    }
-
     public OpenApiOrderTaskResponse getOrdersAndPaymentTasks(OpenApiOrdersTaskIRequest openApiOrdersTaskIRequest) {
         OpenApiOrderTaskResponse openApiOrderTaskResponse = new OpenApiOrderTaskResponse();
 
@@ -253,7 +239,7 @@ public class OpenApiService {
         OrderBy orderBy = new OrderBy();
         orderBy.setOrder(Order.DESC);
         orderBy.setCode("date");
-        criteria.setSortOrder(List.of(orderBy));
+       // criteria.setSortOrder(List.of(orderBy));
         criteria.setLimit(openApiOrdersTaskIRequest.getLimit());
         criteria.setOffset(openApiOrdersTaskIRequest.getOffset());
 
