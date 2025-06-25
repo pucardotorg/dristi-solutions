@@ -25,7 +25,7 @@ public class HrmsUtil {
         this.restTemplate = restTemplate;
     }
 
-    public String getJudgeName(String tenantId, String courtId) {
+    public String getJudgeName(String courtId, String tenantId) {
         String uri = configuration.getHrmsHost() + configuration.getHrmsEndPoint()
                 + "?tenantId=" + tenantId
                 + "&limit=10"

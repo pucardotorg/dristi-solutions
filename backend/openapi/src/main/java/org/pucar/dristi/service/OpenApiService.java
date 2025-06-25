@@ -6,10 +6,13 @@ import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.DateUtil;
+import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.HrmsUtil;
 import org.pucar.dristi.util.InboxUtil;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.inbox.*;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -37,13 +40,16 @@ public class OpenApiService {
 
     private final HrmsUtil hrmsUtil;
 
-    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, HrmsUtil hrmsUtil) {
+    private final FileStoreUtil fileStoreUtil;
+
+    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, HrmsUtil hrmsUtil, FileStoreUtil fileStoreUtil) {
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
         this.objectMapper = objectMapper;
         this.dateUtil = dateUtil;
         this.inboxUtil = inboxUtil;
         this.hrmsUtil = hrmsUtil;
+        this.fileStoreUtil = fileStoreUtil;
     }
 
     public CaseSummaryResponse getCaseByCnrNumber(String tenantId, String cnrNumber) {
@@ -154,7 +160,11 @@ public class OpenApiService {
     }
 
     public String getMagistrateName(String courtId, String tenantId) {
-       return hrmsUtil.getJudgeName(tenantId,courtId);
+        return hrmsUtil.getJudgeName(courtId, tenantId);
+    }
+
+    public ResponseEntity<Resource> getFile(String fileStore, String tenantId) {
+        return fileStoreUtil.getFilesByFileStore(fileStore, tenantId);
     }
 
     public OpenApiOrderTaskResponse getOrdersAndPaymentTasks(OpenApiOrdersTaskIRequest openApiOrdersTaskIRequest) {
@@ -240,6 +250,10 @@ public class OpenApiService {
         InboxSearchCriteria criteria = new InboxSearchCriteria();
 
         criteria.setTenantId(openApiOrdersTaskIRequest.getTenantId());
+        OrderBy orderBy = new OrderBy();
+        orderBy.setOrder(Order.DESC);
+        orderBy.setCode("date");
+        criteria.setSortOrder(List.of(orderBy));
         criteria.setLimit(openApiOrdersTaskIRequest.getLimit());
         criteria.setOffset(openApiOrdersTaskIRequest.getOffset());
 
@@ -259,20 +273,12 @@ public class OpenApiService {
 
         InboxResponse inboxResponse = inboxUtil.getOrders(inboxRequest);
         List<OrderDetails> orderDetailsList = getOrdersDetails(inboxResponse);
-        if(openApiOrdersTaskIRequest.getDate() != null) {
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-            String requestDateStr = openApiOrdersTaskIRequest.getDate(); // e.g., "03-12-2025"
-
-            orderDetailsList = orderDetailsList.stream()
-                    .filter(orderDetails -> {
-                        String orderDateStr = Instant.ofEpochMilli(orderDetails.getDate())
-                                .atZone(ZoneId.systemDefault())
-                                .toLocalDate()
-                                .format(formatter);
-                        return orderDateStr.equals(requestDateStr);
-                    })
-                    .collect(Collectors.toList());
-            openApiOrderTaskResponse.setOrderDetailsList(orderDetailsList);
+        if (openApiOrdersTaskIRequest.getLatestOrder()) {
+            if (!orderDetailsList.isEmpty()) {
+                orderDetailsList = orderDetailsList.stream()
+                        .limit(5)
+                        .collect(Collectors.toList());
+            }
         }
         openApiOrderTaskResponse.setOrderDetailsList(orderDetailsList);
         openApiOrderTaskResponse.setTotalCount(inboxResponse.getTotalCount());
@@ -293,21 +299,23 @@ public class OpenApiService {
 
                         Object dateObj = orderNotification.get("date");
                         Object businessOfDayObj = orderNotification.get("businessOfTheDay");
+                        Object orderId = orderNotification.get("id");
 
                         if (dateObj != null) {
                             OrderDetails orderDetails = new OrderDetails();
                             orderDetails.setDate(Long.parseLong(dateObj.toString()));
                             orderDetails.setBusinessOfTheDay(businessOfDayObj != null ? businessOfDayObj.toString() : null);
+                            orderDetails.setOrderId(orderId != null ? orderId.toString() : null);
 
-                            List<Map<String, Object>> documents = (List<Map<String, Object>>) orderNotification.get("documents");
-                            if (documents != null) {
-                                for (Map<String, Object> doc : documents) {
-                                    if ("SIGNED".equals(doc.get("documentType"))) {
-                                        orderDetails.setFileStore((String) doc.get("fileStore"));
-                                        break;
-                                    }
-                                }
-                            }
+//                            List<Map<String, Object>> documents = (List<Map<String, Object>>) orderNotification.get("documents");
+//                            if (documents != null) {
+//                                for (Map<String, Object> doc : documents) {
+//                                    if ("SIGNED".equals(doc.get("documentType"))) {
+//                                        orderDetails.setFileStore((String) doc.get("fileStore"));
+//                                        break;
+//                                    }
+//                                }
+//                            }
 
                             orderDetailsList.add(orderDetails);
                         }
@@ -317,5 +325,55 @@ public class OpenApiService {
         }
 
         return orderDetailsList;
+    }
+
+    public String getOrderByIdFromIndex(String tenantId, String orderId) {
+        InboxRequest inboxRequest = new InboxRequest();
+        InboxSearchCriteria criteria = new InboxSearchCriteria();
+
+        criteria.setTenantId(tenantId);
+        criteria.setLimit(1);
+        criteria.setOffset(0);
+
+        ProcessInstanceSearchCriteria processCriteria = new ProcessInstanceSearchCriteria();
+        processCriteria.setBusinessService(Collections.singletonList("notification"));
+        processCriteria.setModuleName("Transformer service");
+        criteria.setProcessSearchCriteria(processCriteria);
+
+        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
+        moduleSearchCriteria.put("id", orderId);
+        moduleSearchCriteria.put("tenantId", tenantId);
+
+        criteria.setModuleSearchCriteria(moduleSearchCriteria);
+
+        inboxRequest.setInbox(criteria);
+
+        InboxResponse inboxResponse = inboxUtil.getOrders(inboxRequest);
+        String fileStoreId = null;
+
+        if (!CollectionUtils.isEmpty(inboxResponse.getItems())) {
+            for (Inbox inbox : inboxResponse.getItems()) {
+                Map<String, Object> businessObject = inbox.getBusinessObject();
+
+                if (businessObject != null && businessObject.containsKey("orderNotification")) {
+                    Object orderNotificationObj = businessObject.get("orderNotification");
+
+                    if (orderNotificationObj instanceof Map) {
+                        Map<String, Object> orderNotification = (Map<String, Object>) orderNotificationObj;
+
+                        List<Map<String, Object>> documents = (List<Map<String, Object>>) orderNotification.get("documents");
+                        if (documents != null) {
+                            for (Map<String, Object> doc : documents) {
+                                if ("SIGNED".equals(doc.get("documentType"))) {
+                                    fileStoreId = (String) doc.get("fileStore");
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return fileStoreId;
     }
 }
