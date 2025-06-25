@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.web.models.CalculationRes;
+import org.pucar.dristi.web.models.EFillingCalculationCriteria;
+import org.pucar.dristi.web.models.EFillingCalculationRequest;
 import org.pucar.dristi.web.models.JoinCasePaymentRequest;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -26,13 +28,21 @@ public class PaymentCalculaterUtil {
     }
 
     public CalculationRes callPaymentCalculator(JoinCasePaymentRequest request) {
-         try {
+        return callPaymentCalculatorInternal(request, config.getPaymentCalculatorEndpoint());
+    }
+
+    public CalculationRes callPaymentCalculator(EFillingCalculationRequest calculationRequest) {
+        return callPaymentCalculatorInternal(calculationRequest, config.getCaseFilingPaymentCalculatorEndpoint());
+    }
+
+    public <T> CalculationRes callPaymentCalculatorInternal(T request, String endpoint) {
+        try {
             StringBuilder uri = new StringBuilder();
-            uri.append(config.getPaymentCalculatorHost()).append(config.getPaymentCalculatorEndpoint());
+            uri.append(config.getPaymentCalculatorHost()).append(endpoint);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<JoinCasePaymentRequest> requestEntity = new HttpEntity<>(request, headers);
+            HttpEntity<T> requestEntity = new HttpEntity<>(request, headers);
 
             ResponseEntity<CalculationRes> responseEntity = restTemplate.postForEntity(uri.toString(),
                     requestEntity, CalculationRes.class);
