@@ -241,4 +241,7 @@ public class Configuration {
     @Value("${egov.billingservice.demand.update.endpoint}")
     private String updateDemandEndpoint;
 
+    @Value("${egov.mdms.payment.business.service.name}")
+    private String paymentBusinessServiceName;
+
 }

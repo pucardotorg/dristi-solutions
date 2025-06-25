@@ -1,8 +1,11 @@
 package org.pucar.dristi.util;
 
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
 import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.models.project.TaskResponse;
@@ -19,9 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -37,10 +38,11 @@ public class OrderUtil {
     private final WorkflowUtil workflowUtil;
     private final Producer producer;
     private final DemandUtil demandUtil;
+    private final MdmsUtil mdmsUtil;
 
     @Autowired
     public OrderUtil(ServiceRequestRepository serviceRequestRepository, ObjectMapper mapper, Configuration configuration,
-                     TaskUtil taskUtil, WorkflowUtil workflowUtil, Producer producer, DemandUtil demandUtil) {
+                     TaskUtil taskUtil, WorkflowUtil workflowUtil, Producer producer, DemandUtil demandUtil, MdmsUtil mdmsUtil) {
         this.serviceRequestRepository = serviceRequestRepository;
         this.mapper = mapper;
         this.configuration = configuration;
@@ -48,6 +50,7 @@ public class OrderUtil {
         this.workflowUtil = workflowUtil;
         this.producer = producer;
         this.demandUtil = demandUtil;
+        this.mdmsUtil = mdmsUtil;
     }
 
     public void closeActivePaymentPendingTasks(HearingRequest hearingRequest) {
@@ -148,7 +151,7 @@ public class OrderUtil {
 
     private void cancelRelatedDemands(String tenantId, List<Task> tasks, RequestInfo requestInfo) {
         Set<String> consumerCodes = tasks.stream()
-                .map(this::extractConsumerCode)
+                .flatMap(task -> extractConsumerCode(task, requestInfo).stream())
                 .collect(Collectors.toSet());
 
         log.info("Fetching demands for consumer codes: {}", consumerCodes);
@@ -159,6 +162,11 @@ public class OrderUtil {
 
         RequestInfoWrapper wrapper = new RequestInfoWrapper();
         wrapper.setRequestInfo(requestInfo);
+
+        if (consumerCodes.isEmpty()) {
+            log.info("No consumer codes found for tasks");
+            return;
+        }
 
         DemandResponse demandResponse = demandUtil.searchDemand(criteria, wrapper);
         if (CollectionUtils.isEmpty(demandResponse.getDemands())) {
@@ -190,10 +198,53 @@ public class OrderUtil {
         }
     }
 
-    public String extractConsumerCode(Task task) {
-        Map<String, Object> detailsMap = mapper.convertValue(task.getTaskDetails(), new TypeReference<>() {
-        });
-        return (String) detailsMap.get("consumerCode");
+    public List<String> extractConsumerCode(Task task, RequestInfo requestInfo) {
+        String taskNumber = task.getTaskNumber();
+        String deliveryChannel = getDeliveryChannel(task);
+        String tenantId = task.getTenantId();
+
+        JSONArray mdmsData = mdmsUtil.fetchMdmsData(
+                requestInfo,
+                tenantId,
+                configuration.getPaymentBusinessServiceName(),
+                Collections.singletonList(PAYMENTTYPE)
+        ).get(configuration.getPaymentBusinessServiceName()).get(PAYMENTTYPE);
+
+        List<String> consumerCodes = new ArrayList<>();
+
+        for (Object obj : mdmsData) {
+            if (obj instanceof JSONObject entry) {
+                String channel = (String) entry.get("deliveryChannel");
+                if (channel != null && channel.equalsIgnoreCase(deliveryChannel)) {
+                    String suffix = (String) entry.get("suffix");
+                    if (suffix != null) {
+                        consumerCodes.add(taskNumber + "_" + suffix);
+                    }
+                }
+            }
+        }
+
+        return consumerCodes;
+    }
+
+
+
+    private String getDeliveryChannel(Task task) {
+        JsonNode taskDetails = mapper.convertValue(task.getTaskDetails(), JsonNode.class);
+
+        ObjectNode deliveryChannels = null;
+        if (taskDetails.has("deliveryChannels") && !taskDetails.get("deliveryChannels").isNull()) {
+            deliveryChannels = (ObjectNode) taskDetails.get("deliveryChannels");
+        }
+
+        if (deliveryChannels == null) {
+            return null;
+        }
+
+        if (deliveryChannels.has("channelName") && !deliveryChannels.get("channelName").isNull()) {
+            return deliveryChannels.get("channelName").textValue();
+        }
+        return null;
     }
 
 }
