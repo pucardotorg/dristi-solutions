@@ -199,7 +199,7 @@ public class OpenApiService {
             Integer limit,
             List<OrderBy> sortOrder
     ) {
-        Map<String, Object> moduleSearchCriteria = new HashMap<>();
+        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
         if(tenantId != null)
             moduleSearchCriteria.put("tenantId", tenantId);
 
@@ -303,7 +303,7 @@ public class OpenApiService {
 
         InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
                 .tenantId(tenantId)
-                .moduleSearchCriteria((HashMap<String, Object>) moduleSearchCriteria)
+                .moduleSearchCriteria(moduleSearchCriteria)
                 .offset(offset)
                 .limit(limit != null ? limit : 50)
                 .sortOrder(sortOrder)
