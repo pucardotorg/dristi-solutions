@@ -8,6 +8,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.DateUtil;
+import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.HrmsUtil;
 import org.pucar.dristi.util.InboxUtil;
 import org.pucar.dristi.util.ResponseInfoFactory;
@@ -15,10 +16,17 @@ import org.pucar.dristi.web.models.*;
 
 import org.pucar.dristi.web.models.inbox.*;
 
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
+
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -160,7 +168,6 @@ public class OpenApiService {
         InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(tenantId, fromDate, toDate, searchText);
         return inboxUtil.getOpenHearings(inboxRequest);
     }
-
 
     public LandingPageCaseListResponse getLandingPageCaseList(String tenantId, LandingPageCaseListRequest request) {
         if (configuration.getIsElasticSearchEnabled()) {
@@ -409,6 +416,10 @@ public class OpenApiService {
         InboxSearchCriteria criteria = new InboxSearchCriteria();
 
         criteria.setTenantId(openApiOrdersTaskIRequest.getTenantId());
+        OrderBy orderBy = new OrderBy();
+        orderBy.setOrder(Order.DESC);
+        orderBy.setCode("date");
+        criteria.setSortOrder(List.of(orderBy));
         criteria.setLimit(openApiOrdersTaskIRequest.getLimit());
         criteria.setOffset(openApiOrdersTaskIRequest.getOffset());
 
@@ -428,6 +439,13 @@ public class OpenApiService {
 
         InboxResponse inboxResponse = inboxUtil.getOrders(inboxRequest);
         List<OrderDetails> orderDetailsList = getOrdersDetails(inboxResponse);
+        if (openApiOrdersTaskIRequest.getLatestOrder()) {
+            if (!orderDetailsList.isEmpty()) {
+                orderDetailsList = orderDetailsList.stream()
+                        .limit(5)
+                        .collect(Collectors.toList());
+            }
+        }
         openApiOrderTaskResponse.setOrderDetailsList(orderDetailsList);
         openApiOrderTaskResponse.setTotalCount(inboxResponse.getTotalCount());
     }
@@ -447,20 +465,13 @@ public class OpenApiService {
 
                         Object dateObj = orderNotification.get("date");
                         Object businessOfDayObj = orderNotification.get("businessOfTheDay");
+                        Object orderId = orderNotification.get("id");
 
                         if (dateObj != null) {
                             OrderDetails orderDetails = new OrderDetails();
                             orderDetails.setDate(Long.parseLong(dateObj.toString()));
                             orderDetails.setBusinessOfTheDay(businessOfDayObj != null ? businessOfDayObj.toString() : null);
-
-                            List<Map<String, Object>> documents = (List<Map<String, Object>>) orderNotification.get("documents");
-                            if (documents != null) {
-                                for (Map<String, Object> doc : documents) {
-                                    String fileStore = (String) doc.get("fileStore");
-                                    orderDetails.setFileStore(fileStore);
-                                    break;
-                                }
-                            }
+                            orderDetails.setOrderId(orderId != null ? orderId.toString() : null);
 
                             orderDetailsList.add(orderDetails);
                         }
@@ -515,4 +526,53 @@ public class OpenApiService {
         return isValid;
     }
 
+    public String getOrderByIdFromIndex(String tenantId, String orderId) {
+        InboxRequest inboxRequest = new InboxRequest();
+        InboxSearchCriteria criteria = new InboxSearchCriteria();
+
+        criteria.setTenantId(tenantId);
+        criteria.setLimit(1);
+        criteria.setOffset(0);
+
+        ProcessInstanceSearchCriteria processCriteria = new ProcessInstanceSearchCriteria();
+        processCriteria.setBusinessService(Collections.singletonList("notification"));
+        processCriteria.setModuleName("Transformer service");
+        criteria.setProcessSearchCriteria(processCriteria);
+
+        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
+        moduleSearchCriteria.put("id", orderId);
+        moduleSearchCriteria.put("tenantId", tenantId);
+
+        criteria.setModuleSearchCriteria(moduleSearchCriteria);
+
+        inboxRequest.setInbox(criteria);
+
+        InboxResponse inboxResponse = inboxUtil.getOrders(inboxRequest);
+        String fileStoreId = null;
+
+        if (!CollectionUtils.isEmpty(inboxResponse.getItems())) {
+            for (Inbox inbox : inboxResponse.getItems()) {
+                Map<String, Object> businessObject = inbox.getBusinessObject();
+
+                if (businessObject != null && businessObject.containsKey("orderNotification")) {
+                    Object orderNotificationObj = businessObject.get("orderNotification");
+
+                    if (orderNotificationObj instanceof Map) {
+                        Map<String, Object> orderNotification = (Map<String, Object>) orderNotificationObj;
+
+                        List<Map<String, Object>> documents = (List<Map<String, Object>>) orderNotification.get("documents");
+                        if (documents != null) {
+                            for (Map<String, Object> doc : documents) {
+                                if ("SIGNED".equals(doc.get("documentType"))) {
+                                    fileStoreId = (String) doc.get("fileStore");
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return fileStoreId;
+    }
 }
