@@ -179,7 +179,7 @@ public class BillingService {
 
     private String[] splitConsumerCode(String consumerCode) {
         String[] temp = consumerCode.split("_", 2);
-        String suffix = temp[1].replaceFirst("-1$", "");
+        String suffix = temp[1].replaceFirst("-\\d+$", "");
         return new String[] { temp[0], suffix };
     }
 
