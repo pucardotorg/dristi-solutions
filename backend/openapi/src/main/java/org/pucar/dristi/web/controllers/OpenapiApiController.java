@@ -1,13 +1,17 @@
 package org.pucar.dristi.web.controllers;
 
 
+import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.service.OpenApiService;
+import org.pucar.dristi.util.FileStoreUtil;
+import org.pucar.dristi.util.HrmsUtil;
 import org.pucar.dristi.web.models.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -30,11 +34,17 @@ public class OpenapiApiController {
 
     private final OpenApiService openApiService;
 
+    private final HrmsUtil hrmsUtil;
+
+    private final FileStoreUtil fileStoreUtil;
+
     @Autowired
-    public OpenapiApiController(ObjectMapper objectMapper, HttpServletRequest request, OpenApiService openApiService) {
+    public OpenapiApiController(ObjectMapper objectMapper, HttpServletRequest request, OpenApiService openApiService, HrmsUtil hrmsUtil, FileStoreUtil fileStoreUtil) {
         this.objectMapper = objectMapper;
         this.request = request;
         this.openApiService = openApiService;
+        this.hrmsUtil = hrmsUtil;
+        this.fileStoreUtil = fileStoreUtil;
     }
 
     @RequestMapping(value = "/openapi/v1/{tenantId}/case/cnr/{cnrNumber}", method = RequestMethod.GET)
@@ -71,9 +81,15 @@ public class OpenapiApiController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @GetMapping("/openapi/v1/magistrate_name/{tenantId}/{courtId}")
-    public ResponseEntity<String> getMagistrateName(@PathVariable("tenantId") String tenantId, @PathVariable("courtId") String courtId) {
-        String magistrateName = openApiService.getMagistrateName(tenantId,courtId);
+    @GetMapping("/openapi/v1/magistrate_name/{courtId}/{tenantId}")
+    public ResponseEntity<String> getMagistrateName(@PathVariable("courtId") String courtId, @PathVariable("tenantId") String tenantId) {
+        String magistrateName = hrmsUtil.getJudgeName(courtId,tenantId);
         return new ResponseEntity<>(magistrateName, HttpStatus.OK);
+    }
+
+    @GetMapping("/openapi/v1/file/{tenantId}/{orderId}")
+    public ResponseEntity<Resource> getFile(@PathVariable("tenantId") String tenantId, @PathVariable("orderId") String orderId) {
+        String fileStoreId = openApiService.getOrderByIdFromIndex(tenantId,orderId);
+        return fileStoreUtil.getFilesByFileStore(fileStoreId, tenantId);
     }
 }
