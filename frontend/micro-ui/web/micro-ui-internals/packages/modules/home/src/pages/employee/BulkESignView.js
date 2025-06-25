@@ -36,9 +36,16 @@ const ProjectBreadCrumb = ({ location }) => {
     userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
   }
   const { t } = useTranslation();
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const crumbs = [
     {
-      path: `/${window?.contextPath}/${userType}/home/home-pending-task`,
+      path: homePath,
       content: t("ES_COMMON_HOME"),
       show: true,
     },
@@ -69,7 +76,13 @@ function BulkESignView() {
   const [showBulkSignAllModal, setShowBulkSignAllModal] = useState(false);
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
   const courtId = localStorage.getItem("courtId");
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
   };
@@ -131,7 +144,7 @@ function BulkESignView() {
       }
     }
     if (bulkOrdersData?.totalCount === 0) {
-      history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`);
+      history.replace(homePath);
     }
   }, [history, userType, deleteOrder, orderDetails, bulkOrdersData]);
 
@@ -365,7 +378,7 @@ function BulkESignView() {
           },
           {}
         );
-        history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`, {
+        history.replace(homePath, {
           bulkSignSuccess: {
             show: true,
             bulkSignOrderListLength: updateOrderResponse?.orders?.length,
@@ -391,16 +404,18 @@ function BulkESignView() {
             <div className="header">{t("BULK_SIGN_ORDERS")}</div>
             <InboxSearchComposer customStyle={sectionsParentStyle} configs={config} onFormValueChange={onFormValueChange}></InboxSearchComposer>{" "}
           </div>
-          <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
-            <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
-              <SubmitBar
-                label={t("SIGN_SELECTED_ORDERS")}
-                submit="submit"
-                disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
-                onSubmit={() => setShowBulkSignConfirmModal(true)}
-              />
-            </div>
-          </ActionBar>
+          {isJudge && (
+            <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
+              <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
+                <SubmitBar
+                  label={t("SIGN_SELECTED_ORDERS")}
+                  submit="submit"
+                  disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
+                  onSubmit={() => setShowBulkSignConfirmModal(true)}
+                />
+              </div>
+            </ActionBar>
+          )}
         </React.Fragment>
       )}
       {showBulkSignAllModal && <OrderBulkReviewModal t={t} history={history} orderDetails={orderDetails} />}

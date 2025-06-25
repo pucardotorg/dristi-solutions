@@ -45,6 +45,7 @@ import NoticeAccordion from "../../../components/NoticeAccordion";
 import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
 import CaseBundleView from "./CaseBundleView";
 import Breadcrumb from "../../../components/BreadCrumb";
+import PaymentDemandModal from "./PaymentDemandModal";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -158,9 +159,9 @@ const AdmittedCases = () => {
   const { hearingId, taskOrderType, artifactNumber } = Digit.Hooks.useQueryParams();
   const caseId = urlParams.get("caseId");
   const roles = Digit.UserService.getUser()?.info?.roles;
-  const isFSO = roles.some((role) => role.code === "FSO_ROLE");
-  const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
-  const isBenchClerk = roles.some((role) => role.code === "BENCH_CLERK");
+  const isFSO = roles?.some((role) => role.code === "FSO_ROLE");
+  const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
+  const isBenchClerk = roles?.some((role) => role.code === "BENCH_CLERK");
   const activeTab = isFSO ? "Complaints" : urlParams.get("tab") || "Overview";
   const filingNumber = urlParams.get("filingNumber");
   const applicationNumber = urlParams.get("applicationNumber");
@@ -206,11 +207,17 @@ const AdmittedCases = () => {
   const [selectedItem, setSelectedItem] = useState(null);
   const [showCitizenMenu, setShowCitizenMenu] = useState(false);
   const [showJoinCase, setShowJoinCase] = useState(false);
+  const [showPaymentDemandModal, setShowPaymentDemandModal] = useState(false);
+  const [showPaymentConfirmationModal, setShowPaymentConfirmationModal] = useState(false);
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
   const isCitizen = userRoles.includes("CITIZEN");
   const isCourtStaff = userRoles.includes("COURT_ROOM_MANAGER");
+
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+
   const OrderWorkflowAction = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {}, []);
   const ordersService = useMemo(() => Digit.ComponentRegistryService.getComponent("OrdersService") || {}, []);
   const OrderReviewModal = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderReviewModal") || {}, []);
@@ -220,6 +227,8 @@ const AdmittedCases = () => {
   );
   const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const todayDate = new Date().getTime();
   const { downloadPdf } = useDownloadCasePdf();
   const [isShow, setIsShow] = useState(false);
@@ -2426,7 +2435,7 @@ const AdmittedCases = () => {
 
   const handleActionModal = () => {
     updateCaseDetails("REJECT").then(() => {
-      history.push(`/${window.contextPath}/employee/home/home-pending-task`);
+      history.push(homePath);
     });
   };
 
@@ -2644,6 +2653,63 @@ const AdmittedCases = () => {
     ],
     [path, t]
   );
+  const complainants = useMemo(() => {
+    return (
+      caseDetails?.litigants
+        ?.filter((item) => item?.partyType?.includes("complainant"))
+        ?.map((item) => {
+          const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
+          const poaHolder = caseDetails?.poaHolders?.find((poa) => poa?.individualId === item?.individualId);
+          if (poaHolder) {
+            return {
+              additionalDetails: item?.additionalDetails,
+              code: fullName,
+              name: `${fullName} (Complainant, PoA Holder)`,
+              uuid: allAdvocates[item?.additionalDetails?.uuid],
+              partyUuid: item?.additionalDetails?.uuid,
+              individualId: item?.individualId,
+              isJoined: true,
+              partyType: "complainant",
+              representingLitigants: poaHolder?.representingLitigants?.map((lit) => lit?.individualId),
+            };
+          }
+          return {
+            additionalDetails: item?.additionalDetails,
+            code: fullName,
+            name: `${fullName} (Complainant)`,
+            uuid: allAdvocates[item?.additionalDetails?.uuid],
+            partyUuid: item?.additionalDetails?.uuid,
+            individualId: item?.individualId,
+            isJoined: true,
+            partyType: "complainant",
+          };
+        }) || []
+    );
+  }, [caseDetails, allAdvocates]);
+
+  const respondents = useMemo(() => {
+    return (
+      caseDetails?.litigants
+        ?.filter((item) => item?.partyType?.includes("respondent"))
+        .map((item) => {
+          const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
+          const uniqueId = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
+            (obj) => obj?.data?.respondentVerification?.individualDetails?.individualId === item?.individualId
+          )?.uniqueId;
+          return {
+            additionalDetails: item?.additionalDetails,
+            code: fullName,
+            name: `${fullName} (Accused)`,
+            uuid: allAdvocates[item?.additionalDetails?.uuid],
+            partyUuid: item?.additionalDetails?.uuid,
+            individualId: item?.individualId,
+            isJoined: true,
+            partyType: "respondent",
+            uniqueId,
+          };
+        }) || []
+    );
+  }, [caseDetails, allAdvocates]);
 
   const inboxComposer = useMemo(() => {
     if (
@@ -2664,7 +2730,7 @@ const AdmittedCases = () => {
     caseData?.cases?.status &&
     !judgeReviewStages.includes(caseData.cases.status)
   ) {
-    history.push(`/${window.contextPath}/employee/home/home-pending-task`);
+    history.push(homePath);
   }
 
   return (
@@ -2974,7 +3040,6 @@ const AdmittedCases = () => {
       >
         {inboxComposer}
       </div>
-
       {tabData?.filter((tab) => tab.label === "Overview")?.[0]?.active && (
         <div className="case-overview-wrapper">
           <CaseOverview
@@ -3107,7 +3172,6 @@ const AdmittedCases = () => {
           </ActionBar>
         )}
       {isOpenDCA && <DocumentModal config={dcaConfirmModalConfig} />}
-
       {showModal && (
         <AdmissionActionModal
           t={t}
@@ -3206,6 +3270,18 @@ const AdmittedCases = () => {
           isDisabled={isSubmitDisabled}
           isEvidence={documentSubmission?.[0]?.artifactList?.isEvidence}
           isFromActions={true}
+        />
+      )}{" "}
+      {(showPaymentDemandModal || showPaymentConfirmationModal) && (
+        <PaymentDemandModal
+          t={t}
+          setShowPaymentDemandModal={setShowPaymentDemandModal}
+          setShowPaymentConfirmationModal={setShowPaymentConfirmationModal}
+          joinedLitigants={[...complainants, ...respondents]}
+          showPaymentConfirmationModal={showPaymentConfirmationModal}
+          showPaymentDemandModal={showPaymentDemandModal}
+          caseDetails={updatedCaseDetails}
+          tenantId={tenantId}
         />
       )}
     </div>

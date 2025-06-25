@@ -36,6 +36,7 @@ function PendingTaskAccordion({
   const [isOpen, setIsOpen] = useState(isAccordionOpen);
   const [check, setCheck] = useState(false);
   const [showAllPendingTasksModal, setShowAllPendingTasksModal] = useState(false);
+  const [showOfflineStampEnvelopeModal, setShowOfflineStampEnvelopeModal] = useState(false);
 
   const roles = useMemo(() => Digit.UserService.getUser()?.info?.roles?.map((role) => role?.code) || [], []);
   const isJudge = roles.includes("JUDGE_ROLE");
@@ -155,6 +156,10 @@ function PendingTaskAccordion({
                       if (modalView) {
                         setShowAllPendingTasksModal(false);
                       }
+                      if (item?.actionName === "PENDING_ENVELOPE_SUBMISSION") {
+                        setShowOfflineStampEnvelopeModal(true);
+                        return;
+                      }
                       if (item?.actionName === "Pay Vakalatnama Fees") {
                         setPendingTaskActionModals((pendingTaskActionModals) => ({
                           ...pendingTaskActionModals,
@@ -210,7 +215,7 @@ function PendingTaskAccordion({
                     }}
                   >
                     <div className="tasks-component-table-row-cell" style={{ width: "40%", color: "#0A0A0A" }}>
-                      {item?.actionName}
+                      {t(item?.actionName)}
                     </div>
                     <div
                       className="tasks-component-table-row-cell"
@@ -222,7 +227,7 @@ function PendingTaskAccordion({
                       {item?.stateSla ? getFormattedDate(item?.stateSla) : t("NO_DUE_DATE")}
                     </div>
                     <div className="tasks-component-table-row-cell" style={{ width: "30%", color: "#3D3C3C" }}>
-                      {item?.createdTime ? getFormattedDate(item?.createdTime) : t("DATE_NOT_AVAILABLE")}
+                      {item?.createdTime ? getFormattedDate(item?.createdTime) : t("NO_DATE_AVAILABLE")}
                     </div>
                   </div>
                 );
@@ -235,149 +240,173 @@ function PendingTaskAccordion({
     [history, isJudge, redirectPendingTaskUrl, setPendingTaskActionModals, setResponsePendingTask, setShowSubmitResponseModal, t, sortedPendingTasks]
   );
 
-  return !tableView ? (
-    <div
-      key={`${accordionKey}-${pendingTasks?.map((task) => task.filingNumber).join(",")}`}
-      className="accordion-wrapper"
-      style={{ border: "1px solid #E8E8E8", padding: 16, borderRadius: 4 }}
-    >
-      <div
-        className={`accordion-title ${isOpen ? "open" : ""}`}
-        style={{ cursor: "default", marginBottom: isOpen && totalCount ? 16 : 0, transition: "margin-bottom 0.25s" }}
-        onClick={handleAccordionClick}
-      >
-        <span
-          style={{
-            color: isHighlighted ? "#9E400A" : "black",
-            fontFamily: "Roboto",
-            fontSize: "16px",
-            fontWeight: "700",
-            lineHeight: "18.75px",
-            textAlign: "left",
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-          }}
-          className="accordion-header"
+  return (
+    <React.Fragment>
+      {!tableView ? (
+        <div
+          key={`${accordionKey}-${pendingTasks?.map((task) => task.filingNumber).join(",")}`}
+          className="accordion-wrapper"
+          style={{ border: "1px solid #E8E8E8", padding: 16, borderRadius: 4 }}
         >
-          {isHighlighted && (
-            <span>
-              <InfoBannerIcon fill="#9E400A" />
+          <div
+            className={`accordion-title ${isOpen ? "open" : ""}`}
+            style={{ cursor: "default", marginBottom: isOpen && totalCount ? 16 : 0, transition: "margin-bottom 0.25s" }}
+            onClick={handleAccordionClick}
+          >
+            <span
+              style={{
+                color: isHighlighted ? "#9E400A" : "black",
+                fontFamily: "Roboto",
+                fontSize: "16px",
+                fontWeight: "700",
+                lineHeight: "18.75px",
+                textAlign: "left",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+              className="accordion-header"
+            >
+              {isHighlighted && (
+                <span>
+                  <InfoBannerIcon fill="#9E400A" />
+                </span>
+              )}
+              <span>{`${t(accordionHeader)}${totalCount ? ` (${totalCount})` : ""}`}</span>
             </span>
-          )}
-          <span>{`${t(accordionHeader)}${totalCount ? ` (${totalCount})` : ""}`}</span>
-        </span>
-        <div
-          className="icon"
-          style={{
-            marginRight: 4,
-          }}
-        >
-          <span className="reverse-arrow" style={{ cursor: "pointer" }} onClick={handleAccordionClick}>
-            <CustomArrowDownIcon />
-          </span>
-        </div>
-      </div>
-      <div className={`accordion-item ${!isOpen ? "collapsed" : ""}`}>
-        <div
-          className={`accordion-item ${!isOpen ? "collapsed" : ""}`}
-          style={{ overflowY: "auto", maxHeight: "40vh", paddingRight: "8px", "&::WebkitScrollbar": { width: 0 } }}
-        >
-          {pendingTasks?.map((item) => (
             <div
-              className={`task-item ${item?.due === "Due today" && "due-today"}`}
-              key={`${item?.filingNumber}-${item?.referenceId}`}
-              style={{ cursor: "pointer" }}
-              onClick={() => {
-                if (item?.actionName === "Pay Vakalatnama Fees") {
-                  setPendingTaskActionModals((pendingTaskActionModals) => ({
-                    ...pendingTaskActionModals,
-                    joinCasePaymentModal: true,
-                    data: {
-                      filingNumber: item?.filingNumber,
-                      taskNumber: item?.referenceId,
-                    },
-                  }));
-                  return;
-                }
-                if (item?.actionName === "Review Advocate Replace Request") {
-                  setPendingTaskActionModals((pendingTaskActionModals) => ({
-                    ...pendingTaskActionModals,
-                    joinCaseConfirmModal: true,
-                    data: {
-                      filingNumber: item?.filingNumber,
-                      taskNumber: item?.referenceId,
-                    },
-                  }));
-                  return;
-                }
-                if (item?.status === "PENDING_SIGN" && item?.screenType === "Adiary") {
-                  history.push(`/${window.contextPath}/employee/home/dashboard/adiary?date=${item?.params?.referenceId}`);
-                } else if (item?.status === "PROFILE_EDIT_REQUEST") {
-                  const caseId = item?.params?.caseId;
-                  const referenceId = item?.referenceId;
-                  const dateOfApplication = item?.params?.dateOfApplication;
-                  const uniqueId = item?.params?.uniqueId;
-
-                  history.push(
-                    `/${window.contextPath}/employee/dristi/home/view-case/review-litigant-details?caseId=${caseId}&referenceId=${referenceId}`,
-                    {
-                      dateOfApplication,
-                      uniqueId,
-                    }
-                  );
-                } else if (item?.status === "PENDING_RESPONSE") {
-                  if (isJudge) {
-                    const caseId = item?.params?.caseId;
-                    const filingNumber = item?.params?.filingNumber;
-                    history.push(`/${window.contextPath}/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`, {
-                      triggerAdmitCase: true,
-                    });
-                  } else {
-                    setResponsePendingTask(item);
-                    setShowSubmitResponseModal(true);
-                  }
-                } else redirectPendingTaskUrl(item?.redirectUrl, item?.isCustomFunction, item?.params);
+              className="icon"
+              style={{
+                marginRight: 4,
               }}
             >
-              <input type="checkbox" value={check} />
-              {item?.screenType === "Adiary" && item?.status === "PENDING_SIGN" ? (
-                <div className="task-details" style={{ display: "flex", flexDirection: "column", gap: 8, marginLeft: 8 }}>
-                  <span className="task-title">
-                    {item?.actionName} {formatDate(item?.params?.referenceId)}
-                  </span>
-                  <span className="task-info">
-                    {t("ADIARY_DUE_ON")} {getNextFormatDate(item?.params?.referenceId)}{" "}
-                  </span>
-                </div>
-              ) : (
-                <div className="task-details" style={{ display: "flex", flexDirection: "column", gap: 8, marginLeft: 8 }}>
-                  <span className="task-title">
-                    {t(item?.actionName)} : {item?.caseTitle}
-                  </span>
-                  <span className="task-info">
-                    {item?.caseType} - {item?.filingNumber} -{" "}
-                    <span style={{ ...(item?.dueDateColor && { color: item?.dueDateColor }) }}>{item?.due}</span>
-                  </span>
-                </div>
-              )}
+              <span className="reverse-arrow" style={{ cursor: "pointer" }} onClick={handleAccordionClick}>
+                <CustomArrowDownIcon />
+              </span>
             </div>
-          ))}
+          </div>
+          <div className={`accordion-item ${!isOpen ? "collapsed" : ""}`}>
+            <div
+              className={`accordion-item ${!isOpen ? "collapsed" : ""}`}
+              style={{ overflowY: "auto", maxHeight: "40vh", paddingRight: "8px", "&::WebkitScrollbar": { width: 0 } }}
+            >
+              {pendingTasks?.map((item) => (
+                <div
+                  className={`task-item ${item?.due === "Due today" && "due-today"}`}
+                  key={`${item?.filingNumber}-${item?.referenceId}`}
+                  style={{ cursor: "pointer" }}
+                  onClick={() => {
+                    if (item?.actionName === "PENDING_ENVELOPE_SUBMISSION") {
+                      setShowOfflineStampEnvelopeModal(true);
+                      return;
+                    }
+                    if (item?.actionName === "Pay Vakalatnama Fees") {
+                      setPendingTaskActionModals((pendingTaskActionModals) => ({
+                        ...pendingTaskActionModals,
+                        joinCasePaymentModal: true,
+                        data: {
+                          filingNumber: item?.filingNumber,
+                          taskNumber: item?.referenceId,
+                        },
+                      }));
+                      return;
+                    }
+                    if (item?.actionName === "Review Advocate Replace Request") {
+                      setPendingTaskActionModals((pendingTaskActionModals) => ({
+                        ...pendingTaskActionModals,
+                        joinCaseConfirmModal: true,
+                        data: {
+                          filingNumber: item?.filingNumber,
+                          taskNumber: item?.referenceId,
+                        },
+                      }));
+                      return;
+                    }
+                    if (item?.status === "PENDING_SIGN" && item?.screenType === "Adiary") {
+                      history.push(`/${window.contextPath}/employee/home/dashboard/adiary?date=${item?.params?.referenceId}`);
+                    } else if (item?.status === "PROFILE_EDIT_REQUEST") {
+                      const caseId = item?.params?.caseId;
+                      const referenceId = item?.referenceId;
+                      const dateOfApplication = item?.params?.dateOfApplication;
+                      const uniqueId = item?.params?.uniqueId;
+
+                      history.push(
+                        `/${window.contextPath}/employee/dristi/home/view-case/review-litigant-details?caseId=${caseId}&referenceId=${referenceId}`,
+                        {
+                          dateOfApplication,
+                          uniqueId,
+                        }
+                      );
+                    } else if (item?.status === "PENDING_RESPONSE") {
+                      if (isJudge) {
+                        const caseId = item?.params?.caseId;
+                        const filingNumber = item?.params?.filingNumber;
+                        history.push(
+                          `/${window.contextPath}/employee/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`,
+                          {
+                            triggerAdmitCase: true,
+                          }
+                        );
+                      } else {
+                        setResponsePendingTask(item);
+                        setShowSubmitResponseModal(true);
+                      }
+                    } else redirectPendingTaskUrl(item?.redirectUrl, item?.isCustomFunction, item?.params);
+                  }}
+                >
+                  <input type="checkbox" value={check} />
+                  {item?.screenType === "Adiary" && item?.status === "PENDING_SIGN" ? (
+                    <div className="task-details" style={{ display: "flex", flexDirection: "column", gap: 8, marginLeft: 8 }}>
+                      <span className="task-title">
+                        {item?.actionName} {formatDate(item?.params?.referenceId)}
+                      </span>
+                      <span className="task-info">
+                        {t("ADIARY_DUE_ON")} {getNextFormatDate(item?.params?.referenceId)}{" "}
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="task-details" style={{ display: "flex", flexDirection: "column", gap: 8, marginLeft: 8 }}>
+                      <span className="task-title">
+                        {t(item?.actionName)} : {item?.caseTitle}
+                      </span>
+                      <span className="task-info">
+                        {item?.caseType} - {item?.filingNumber} -{" "}
+                        <span style={{ ...(item?.dueDateColor && { color: item?.dueDateColor }) }}>{item?.due}</span>
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
-  ) : (
-    <React.Fragment>
-      {pendingTasksTableView()}
-      {showAllPendingTasksModal && (
+      ) : (
+        <React.Fragment>
+          {pendingTasksTableView()}
+          {showAllPendingTasksModal && (
+            <Modal
+              headerBarEnd={<CloseBtn onClick={() => setShowAllPendingTasksModal(false)} />}
+              formId="modal-action"
+              popupStyles={{ width: "70%", paddingBottom: "20px" }}
+              headerBarMain={<Heading label={t("")} />}
+              hideSubmit
+            >
+              {pendingTasksTableView(true)}
+            </Modal>
+          )}
+        </React.Fragment>
+      )}
+      {showOfflineStampEnvelopeModal && (
         <Modal
-          headerBarEnd={<CloseBtn onClick={() => setShowAllPendingTasksModal(false)} />}
+          headerBarEnd={<CloseBtn onClick={() => setShowOfflineStampEnvelopeModal(false)} />}
           formId="modal-action"
-          popupStyles={{ width: "70%", paddingBottom: "20px" }}
+          popupStyles={{ width: "40%" }}
           headerBarMain={<Heading label={t("")} />}
-          hideSubmit
+          actionSaveLabel={t("CS_CLOSE")}
+          actionSaveOnSubmit={() => setShowOfflineStampEnvelopeModal(false)}
+          className={"pending-envelope-submission-modal"}
         >
-          {pendingTasksTableView(true)}
+          <p style={{ marginBottom: "20px", marginTop: "20px" }}>{t("SUBMIT_STAMP_AND_ENVELOPE_IN_COURT")}</p>
         </Modal>
       )}
     </React.Fragment>

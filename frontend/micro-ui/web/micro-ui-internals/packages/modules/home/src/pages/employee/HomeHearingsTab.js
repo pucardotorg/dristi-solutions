@@ -8,7 +8,8 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
 import { ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
-import { Toast } from "@egovernments/digit-ui-react-components";
+import useGetHearingLink from "@egovernments/digit-ui-module-hearings/src/hooks/hearings/useGetHearingLink";
+import useInboxSearch from "../../hooks/useInboxSearch";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -31,71 +32,41 @@ const CloseBtn = (props) => {
     </div>
   );
 };
-function useInboxSearch({ limit = 300, offset = 0 } = {}) {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
 
-  const fetchInbox = useCallback(
-    async (filters, setHearingCount) => {
-      setLoading(true);
-      setError(null);
-      try {
-        let fromDate, toDate;
-        if (filters.date) {
-          const dateObj = new Date(filters.date);
-          fromDate = new Date(dateObj.setHours(0, 0, 0, 0)).getTime();
-          toDate = new Date(dateObj.setHours(23, 59, 59, 999)).getTime();
-        }
-        const payload = {
-          inbox: {
-            processSearchCriteria: {
-              businessService: ["hearing-default"],
-              moduleName: "Hearing Service",
-              tenantId: Digit.ULBService.getCurrentTenantId(),
-            },
-            moduleSearchCriteria: {
-              tenantId: Digit.ULBService.getCurrentTenantId(),
-              courtId: localStorage.getItem("courtId"),
-              ...(fromDate && toDate ? { fromDate, toDate } : {}),
-            },
-            tenantId: Digit.ULBService.getCurrentTenantId(),
-            limit,
-            offset,
-          },
-        };
-        if (filters?.status?.code) payload.inbox.moduleSearchCriteria.status = filters?.status?.code;
-        if (filters?.purpose) payload.inbox.moduleSearchCriteria.hearingType = filters.purpose?.code;
-        if (filters?.caseQuery) payload.inbox.moduleSearchCriteria.searchableFields = filters.caseQuery;
-
-        const res = await HomeService.InboxSearch(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
-        setData(res?.items || []);
-        setHearingCount(res?.totalCount || 0);
-      } catch (err) {
-        setError(err);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [limit, offset]
-  );
-
-  return { data, loading, error, fetchInbox };
-}
+const SearchIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g clip-path="url(#clip0_36_7167)">
+      <path
+        d="M11.625 10.5H11.0325L10.8225 10.2975C11.5575 9.4425 12 8.3325 12 7.125C12 4.4325 9.8175 2.25 7.125 2.25C4.4325 2.25 2.25 4.4325 2.25 7.125C2.25 9.8175 4.4325 12 7.125 12C8.3325 12 9.4425 11.5575 10.2975 10.8225L10.5 11.0325V11.625L14.25 15.3675L15.3675 14.25L11.625 10.5ZM7.125 10.5C5.2575 10.5 3.75 8.9925 3.75 7.125C3.75 5.2575 5.2575 3.75 7.125 3.75C8.9925 3.75 10.5 5.2575 10.5 7.125C10.5 8.9925 8.9925 10.5 7.125 10.5Z"
+        fill="#505A5F"
+      />
+    </g>
+    <defs>
+      <clipPath id="clip0_36_7167">
+        <rect width="18" height="18" fill="white" />
+      </clipPath>
+    </defs>
+  </svg>
+);
 
 const today = new Date();
 const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
 
-const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHearingCount = () => {}, setLoader = () => {} }) => {
-  const [filters, setFilters] = useState({
-    date: todayStr,
-    status: "",
-    purpose: "",
-    caseQuery: "",
-  });
+const HomeHearingsTab = ({
+  t,
+  showEndHearingModal,
+  setShowEndHearingModal,
+  setHearingCount = () => {},
+  setLoader = () => {},
+  setFilters = () => {},
+  filters,
+  showToast = () => {},
+  hearingCount,
+}) => {
   const history = useHistory();
-
-  const { data: tableData, loading, error, fetchInbox } = useInboxSearch();
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const { data: tableData, loading, error, fetchInbox } = useInboxSearch({ limit: rowsPerPage, offset: page * rowsPerPage });
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
@@ -110,28 +81,24 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
   const [passOver, setPassOver] = useState(false);
   //   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false, currentHearing: {} });
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
-  const [toastMsg, setToastMsg] = useState(null);
-
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
 
   const handleClear = useCallback(() => {
     const cleared = { date: todayStr, status: "", purpose: "", caseQuery: "" };
     setFilters(cleared);
+    setPage(0);
+    setRowsPerPage(10);
     fetchInbox(cleared, setHearingCount);
   }, [fetchInbox, setHearingCount]);
 
   const handleSearch = useCallback(() => {
+    setPage(0);
+    setRowsPerPage(10);
     fetchInbox(filters, setHearingCount);
   }, [fetchInbox, filters, setHearingCount]);
 
   useEffect(() => {
     fetchInbox(filters, setHearingCount);
-  }, []);
+  }, [page, rowsPerPage]);
 
   const stateId = React.useMemo(() => Digit.ULBService.getStateId(), []);
 
@@ -148,7 +115,7 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
   const statusOptions = useMemo(() => {
     return (
       hearingTypeOptions?.Hearing?.HearingStatus?.map((status) => ({
-        id: status?.id, // include id for sorting
+        id: status?.id,
         code: status?.code,
         name: status?.code !== "IN_PROGRESS" ? status?.code : "ON_GOING_HEARING",
       }))?.sort((a, b) => a.id - b.id) || []
@@ -168,28 +135,15 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
 
   const EditIcon = () => (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <g clip-path="url(#clip0_5427_18191)">
-        <path
-          fill-rule="evenodd"
-          clip-rule="evenodd"
-          d="M18.2246 0.198856C18.2942 0.129011 18.377 0.0735972 18.4681 0.0357875C18.5592 -0.00202217 18.6569 -0.0214844 18.7556 -0.0214844C18.8542 -0.0214844 18.9519 -0.00202217 19.043 0.0357875C19.1341 0.0735972 19.2169 0.129011 19.2866 0.198856L23.7866 4.69886C23.8564 4.76852 23.9118 4.85129 23.9496 4.94241C23.9874 5.03352 24.0069 5.13121 24.0069 5.22986C24.0069 5.32851 23.9874 5.42619 23.9496 5.51731C23.9118 5.60842 23.8564 5.69119 23.7866 5.76086L8.78657 20.7609C8.71459 20.8323 8.62886 20.8885 8.53457 20.9259L1.03457 23.9259C0.898273 23.9804 0.748962 23.9938 0.605148 23.9643C0.461333 23.9348 0.329339 23.8637 0.22553 23.7599C0.12172 23.6561 0.0506596 23.5241 0.0211584 23.3803C-0.00834277 23.2365 0.00501248 23.0872 0.0595685 22.9509L3.05957 15.4509C3.09696 15.3566 3.15309 15.2708 3.22457 15.1989L18.2246 0.198856ZM16.8161 3.72986L20.2556 7.16936L22.1951 5.22986L18.7556 1.79036L16.8161 3.72986ZM19.1951 8.22986L15.7556 4.79036L6.00557 14.5404V14.9799H6.75557C6.95448 14.9799 7.14525 15.0589 7.2859 15.1995C7.42655 15.3402 7.50557 15.5309 7.50557 15.7299V16.4799H8.25557C8.45448 16.4799 8.64525 16.5589 8.7859 16.6995C8.92655 16.8402 9.00557 17.0309 9.00557 17.2299V17.9799H9.44507L19.1951 8.22986ZM4.55357 15.9924L4.39457 16.1514L2.10257 21.8829L7.83407 19.5909L7.99307 19.4319C7.85 19.3784 7.72666 19.2825 7.63954 19.1571C7.55242 19.0316 7.50568 18.8826 7.50557 18.7299V17.9799H6.75557C6.55666 17.9799 6.36589 17.9008 6.22524 17.7602C6.08459 17.6195 6.00557 17.4288 6.00557 17.2299V16.4799H5.25557C5.10284 16.4797 4.95378 16.433 4.82833 16.3459C4.70289 16.2588 4.60702 16.1354 4.55357 15.9924Z"
-          fill="#00703C"
-        />
-        <path
-          fill-rule="evenodd"
-          clip-rule="evenodd"
-          d="M18.2246 0.198856C18.2942 0.129011 18.377 0.0735972 18.4681 0.0357875C18.5592 -0.00202217 18.6569 -0.0214844 18.7556 -0.0214844C18.8542 -0.0214844 18.9519 -0.00202217 19.043 0.0357875C19.1341 0.0735972 19.2169 0.129011 19.2866 0.198856L23.7866 4.69886C23.8564 4.76852 23.9118 4.85129 23.9496 4.94241C23.9874 5.03352 24.0069 5.13121 24.0069 5.22986C24.0069 5.32851 23.9874 5.42619 23.9496 5.51731C23.9118 5.60842 23.8564 5.69119 23.7866 5.76086L8.78657 20.7609C8.71459 20.8323 8.62886 20.8885 8.53457 20.9259L1.03457 23.9259C0.898273 23.9804 0.748962 23.9938 0.605148 23.9643C0.461333 23.9348 0.329339 23.8637 0.22553 23.7599C0.12172 23.6561 0.0506596 23.5241 0.0211584 23.3803C-0.00834277 23.2365 0.00501248 23.0872 0.0595685 22.9509L3.05957 15.4509C3.09696 15.3566 3.15309 15.2708 3.22457 15.1989L18.2246 0.198856ZM16.8161 3.72986L20.2556 7.16936L22.1951 5.22986L18.7556 1.79036L16.8161 3.72986ZM19.1951 8.22986L15.7556 4.79036L6.00557 14.5404V14.9799H6.75557C6.95448 14.9799 7.14525 15.0589 7.2859 15.1995C7.42655 15.3402 7.50557 15.5309 7.50557 15.7299V16.4799H8.25557C8.45448 16.4799 8.64525 16.5589 8.7859 16.6995C8.92655 16.8402 9.00557 17.0309 9.00557 17.2299V17.9799H9.44507L19.1951 8.22986ZM4.55357 15.9924L4.39457 16.1514L2.10257 21.8829L7.83407 19.5909L7.99307 19.4319C7.85 19.3784 7.72666 19.2825 7.63954 19.1571C7.55242 19.0316 7.50568 18.8826 7.50557 18.7299V17.9799H6.75557C6.55666 17.9799 6.36589 17.9008 6.22524 17.7602C6.08459 17.6195 6.00557 17.4288 6.00557 17.2299V16.4799H5.25557C5.10284 16.4797 4.95378 16.433 4.82833 16.3459C4.70289 16.2588 4.60702 16.1354 4.55357 15.9924Z"
-          fill="#00703C"
-        />
-        <path
-          fill-rule="evenodd"
-          clip-rule="evenodd"
-          d="M18.2246 0.198856C18.2942 0.129011 18.377 0.0735972 18.4681 0.0357875C18.5592 -0.00202217 18.6569 -0.0214844 18.7556 -0.0214844C18.8542 -0.0214844 18.9519 -0.00202217 19.043 0.0357875C19.1341 0.0735972 19.2169 0.129011 19.2866 0.198856L23.7866 4.69886C23.8564 4.76852 23.9118 4.85129 23.9496 4.94241C23.9874 5.03352 24.0069 5.13121 24.0069 5.22986C24.0069 5.32851 23.9874 5.42619 23.9496 5.51731C23.9118 5.60842 23.8564 5.69119 23.7866 5.76086L8.78657 20.7609C8.71459 20.8323 8.62886 20.8885 8.53457 20.9259L1.03457 23.9259C0.898273 23.9804 0.748962 23.9938 0.605148 23.9643C0.461333 23.9348 0.329339 23.8637 0.22553 23.7599C0.12172 23.6561 0.0506596 23.5241 0.0211584 23.3803C-0.00834277 23.2365 0.00501248 23.0872 0.0595685 22.9509L3.05957 15.4509C3.09696 15.3566 3.15309 15.2708 3.22457 15.1989L18.2246 0.198856ZM16.8161 3.72986L20.2556 7.16936L22.1951 5.22986L18.7556 1.79036L16.8161 3.72986ZM19.1951 8.22986L15.7556 4.79036L6.00557 14.5404V14.9799H6.75557C6.95448 14.9799 7.14525 15.0589 7.2859 15.1995C7.42655 15.3402 7.50557 15.5309 7.50557 15.7299V16.4799H8.25557C8.45448 16.4799 8.64525 16.5589 8.7859 16.6995C8.92655 16.8402 9.00557 17.0309 9.00557 17.2299V17.9799H9.44507L19.1951 8.22986ZM4.55357 15.9924L4.39457 16.1514L2.10257 21.8829L7.83407 19.5909L7.99307 19.4319C7.85 19.3784 7.72666 19.2825 7.63954 19.1571C7.55242 19.0316 7.50568 18.8826 7.50557 18.7299V17.9799H6.75557C6.55666 17.9799 6.36589 17.9008 6.22524 17.7602C6.08459 17.6195 6.00557 17.4288 6.00557 17.2299V16.4799H5.25557C5.10284 16.4797 4.95378 16.433 4.82833 16.3459C4.70289 16.2588 4.60702 16.1354 4.55357 15.9924Z"
-          fill="#00703C"
-        />
+      <g clip-path="url(#clip0_36_7213)">
+        <path d="M17 19.22H5V7H12V5H5C3.9 5 3 5.9 3 7V19C3 20.1 3.9 21 5 21H17C18.1 21 19 20.1 19 19V12H17V19.22Z" fill="#007E7E" />
+        <path d="M19 2H17V5H14C14.01 5.01 14 7 14 7H17V9.99C17.01 10 19 9.99 19 9.99V7H22V5H19V2Z" fill="#007E7E" />
+        <path d="M15 9H7V11H15V9Z" fill="#007E7E" />
+        <path d="M7 12V14H15V12H12H7Z" fill="#007E7E" />
+        <path d="M15 15H7V17H15V15Z" fill="#007E7E" />
       </g>
       <defs>
-        <clipPath id="clip0_5427_18191">
+        <clipPath id="clip0_36_7213">
           <rect width="24" height="24" fill="white" />
         </clipPath>
       </defs>
@@ -199,15 +153,16 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
   const nextHearing = useCallback(
     (currentHearing) => {
       if (tableData?.length === 0) {
-        history.push(`/${window?.contextPath}/employee/home/home-screen`);
+        setLoader(false);
+        history.push(`/${window?.contextPath}/employee/home/home-screen`, { homeFilteredData: filters });
       } else {
         const validData = tableData?.filter((item) =>
           ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status)
         );
         const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentHearing?.hearingNumber);
         if (index === -1 || validData?.length === 1) {
-          // showToast("error", t("NO_MORE_HEARINGS"), 5000);
-          // history.push(`/${window?.contextPath}/employee/home/home-screen`);
+          setLoader(false);
+          showToast("error", t("NO_MORE_HEARINGS_TO_START"), 5000);
           return;
         } else {
           const row = validData[(index + 1) % validData?.length];
@@ -227,22 +182,46 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
               .then((response) => {
                 if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
                   if (response?.HearingList[0]?.status === "SCHEDULED" || response?.HearingList[0]?.status === "PASSED_OVER") {
-                    hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
-                      window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview&fromHome=true`;
+                    hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
+                      // if (isJudge || isTypist) {
+                      //   window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
+                      // } else {
+                      //   setTimeout(() => {
+                      //     setLoader(false);
+                      //     if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                      //   }, 100);
+                      // }
+                      setTimeout(() => {
+                        setLoader(false);
+                        if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                      }, 100);
                     });
                   } else {
-                    showToast("error", t("ISSUE_IN_NEXT_START_HEARING"), 5000);
+                    setLoader(false);
+                    showToast("error", t("NEXT_HEARING_ALREADY_STARTED"), 5000);
                   }
+                } else {
+                  setLoader(false);
+                  showToast("error", t("ISSUE_IN_NEXT_START_HEARING"), 5000);
                 }
               })
               .catch((error) => {
+                setLoader(false);
+                showToast("error", t("ISSUE_IN_NEXT_START_HEARING"), 5000);
                 console.error("Error starting hearing", error);
-                history.push(`/${window?.contextPath}/employee/home/home-screen`);
               });
           } else {
-            history.push(
-              `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview&fromHome=true`
-            );
+            // if (isJudge || isTypist) {
+            //   history.push(
+            //     `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
+            //     { homeFilteredData: filters }
+            //   );
+            // } else {
+            setTimeout(() => {
+              setLoader(false);
+              fetchInbox(filters, setHearingCount);
+            }, 100);
+            // }
           }
         }
       }
@@ -257,12 +236,13 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
       if (isJudge || isTypist) {
         if (hearingDetails?.status === "SCHEDULED" || hearingDetails?.status === "PASSED_OVER") {
           history.push(
-            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`
+            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
+            { homeFilteredData: filters }
           );
         } else {
           history.push(
             `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
-            { openOrder: true }
+            { openOrder: true, homeFilteredData: filters }
           );
         }
         return;
@@ -282,12 +262,18 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
               )
               .then((response) => {
                 if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
-                  hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
-                    history.push(
-                      `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`
-                    );
-                  });
-                  setLoader(false);
+                  if (response?.HearingList[0].status === "SCHEDULED" || response?.HearingList[0].status === "PASSED_OVER") {
+                    hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
+                      setTimeout(() => {
+                        setLoader(false);
+                        if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                      }, 100);
+                    });
+                  } else {
+                    setLoader(false);
+                    fetchInbox(filters, setHearingCount);
+                    showToast("error", t("HEARING_STATUS_ALREADY_CHANGED"), 5000);
+                  }
                 } else {
                   setLoader(false);
                   showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
@@ -361,12 +347,22 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
                 )
                 .then((response) => {
                   if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
-                    hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
-                      history.push(
-                        `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`
-                      );
+                    if (response?.HearingList?.[0]?.status === "SCHEDULED" || response?.HearingList?.[0]?.status === "PASSED_OVER") {
+                      hearingService?.startHearing({ hearing: response?.HearingList?.[0] }).then((res) => {
+                        // history.push(
+                        //   `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview`,
+                        //   { homeFilteredData: filters }
+                        // );
+                        setTimeout(() => {
+                          if (res?.hearing?.status === "IN_PROGRESS") fetchInbox(filters, setHearingCount);
+                          setLoader(false);
+                        }, 100);
+                      });
+                    } else {
                       setLoader(false);
-                    });
+                      fetchInbox(filters, setHearingCount);
+                      showToast("error", t("HEARING_ALREADY_STARTED"), 5000);
+                    }
                   } else {
                     setLoader(false);
                     showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
@@ -449,7 +445,7 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
               ) {
                 setShowEndHearingModal({ isNextHearingDrafted: true, openEndHearingModal: false, currentHearing: hearingDetails });
 
-                hearingService
+                await hearingService
                   ?.searchHearings(
                     {
                       criteria: {
@@ -460,36 +456,77 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
                     { tenantId: hearingDetails?.tenantId }
                   )
                   .then((response) => {
-                    if (
-                      Array.isArray(response?.HearingList) &&
-                      response?.HearingList?.length > 0 &&
-                      (response?.HearingList?.[0]?.status === "SCHEDULED" || hearingDetails?.status === "IN_PROGRESS")
-                    ) {
-                      hearingService
-                        ?.updateHearings(
-                          {
-                            tenantId: Digit.ULBService.getCurrentTenantId(),
-                            hearing: { ...response?.HearingList?.[0], workflow: { action: "PASS_OVER" } },
-                            hearingType: "",
-                            status: "",
-                          },
-                          { applicationNumber: "", cnrNumber: "" }
-                        )
-                        .then((res) => {
-                          setLoader(false);
-                          if (res?.hearing?.status === "PASSED_OVER") fetchInbox(filters, setHearingCount);
-                        });
+                    if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
+                      if (response?.HearingList?.[0]?.status === "SCHEDULED" || response?.HearingList?.[0]?.status === "IN_PROGRESS") {
+                        hearingService
+                          ?.updateHearings(
+                            {
+                              tenantId: Digit.ULBService.getCurrentTenantId(),
+                              hearing: { ...response?.HearingList?.[0], workflow: { action: "PASS_OVER" } },
+                              hearingType: "",
+                              status: "",
+                            },
+                            { applicationNumber: "", cnrNumber: "" }
+                          )
+                          .then((res) => {
+                            setTimeout(() => {
+                              setLoader(false);
+                              if (res?.hearing?.status === "PASSED_OVER") fetchInbox(filters, setHearingCount);
+                            }, 100);
+                          });
+                      } else {
+                        setLoader(false);
+                        fetchInbox(filters, setHearingCount);
+                        showToast("error", t("HEARING_STATUS_ALREADY_CHANGED"), 5000);
+                      }
+                    } else {
+                      setLoader(false);
+                      showToast("error", t("ISSUE_IN_PASS_OVER"), 5000);
                     }
                   });
               } else {
-                setLoader(false);
-                setShowEndHearingModal({ isNextHearingDrafted: false, openEndHearingModal: true, currentHearing: {} });
+                const response = await hearingService.searchHearings(
+                  {
+                    criteria: {
+                      hearingId: hearingDetails?.hearingNumber,
+                      tenantId: hearingDetails?.tenantId,
+                    },
+                  },
+                  { tenantId: hearingDetails?.tenantId }
+                );
+                if (Array.isArray(response?.HearingList) && response?.HearingList.length > 0) {
+                  const currentHearing = response.HearingList[0];
+
+                  await hearingService
+                    ?.updateHearings(
+                      {
+                        tenantId: Digit.ULBService.getCurrentTenantId(),
+                        hearing: { ...currentHearing, workflow: { action: "PASS_OVER" } },
+                        hearingType: "",
+                        status: "",
+                      },
+                      { applicationNumber: "", cnrNumber: "" }
+                    )
+                    .then((res) => {
+                      setTimeout(() => {
+                        setLoader(false);
+                        if (res?.hearing?.status === "PASSED_OVER") {
+                          fetchInbox(filters, setHearingCount);
+                        }
+                      }, 100);
+                    })
+                    .catch(() => {
+                      setLoader(false);
+                      showToast("error", t("ISSUE_IN_PASS_OVER"), 5000);
+                    });
+                }
               }
             } catch (e) {
               console.log(e);
+              setLoader(false);
               showToast("error", t("ISSUE_IN_PASS_OVER"), 5000);
             } finally {
-              setLoader(false);
+              // setLoader(false);
             }
           },
         });
@@ -505,7 +542,11 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
           <td>{idx + 1}</td>
           <td>
             <Link
-              to={`/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`}
+              to={{
+                pathname: `/${window?.contextPath}/employee/dristi/home/view-case`,
+                search: `?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
+                state: { homeFilteredData: filters },
+              }}
             >
               <span className="case-link">{hearingDetails?.caseTitle || "-"}</span>
             </Link>
@@ -535,12 +576,12 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
               </p>
             </div>
           </td>
+          <td style={{ maxWidth: "150px" }}>{t(hearingDetails?.hearingType) || "-"}</td>
           <td>
             <span className={`status-badge ${statusClass(hearingDetails?.status)}`}>
               {hearingDetails?.status === "IN_PROGRESS" ? t("ONGOING") : t(hearingDetails?.status) || "-"}
             </span>
           </td>
-          <td>{t(hearingDetails?.hearingType) || "-"}</td>
           <td
             style={{
               textAlign: "center",
@@ -549,28 +590,59 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "10px", justifyContent: "space-around" }}>
-              {["SCHEDULED", "IN_PROGRESS", "PASSED_OVER"].includes(hearingDetails?.status) && (
-                <div
-                  style={{ position: "relative", cursor: "pointer", justifyContent: "space-around", maxWidth: "80px" }}
-                  onClick={() => {
-                    handleEditClick(row);
-                  }}
-                  className="edit-icon"
-                >
-                  {isBenchClerk ? (
-                    hearingDetails?.status === "PASSED_OVER" || hearingDetails?.status === "SCHEDULED" ? (
+              <div style={{ width: "50%" }}>
+                {["IN_PROGRESS"].includes(hearingDetails?.status) && (
+                  <div
+                    style={{
+                      position: "relative",
+                      cursor: "pointer",
+                      maxWidth: "80px",
+                      display: "flex",
+                      justifyContent: "start",
+                    }}
+                    onClick={() => {
+                      handleEditClick(row);
+                    }}
+                    className="edit-icon"
+                  >
+                    {isBenchClerk ? (
+                      hearingDetails?.status === "PASSED_OVER" || hearingDetails?.status === "SCHEDULED" ? (
+                        <span style={{ color: "green", fontWeight: "700", cursor: "pointer" }}>{t("START_HEARING")}</span>
+                      ) : (
+                        <span style={{ color: "red", fontWeight: "700", cursor: "pointer" }}>{t("END_HEARING")}</span>
+                      )
+                    ) : (
+                      <EditIcon />
+                    )}
+                  </div>
+                )}
+                {["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status) && isBenchClerk && (
+                  <div
+                    style={{ position: "relative", cursor: "pointer", display: "flex", justifyContent: "start", maxWidth: "80px" }}
+                    onClick={() => {
+                      handleEditClick(row);
+                    }}
+                    className="edit-icon"
+                  >
+                    {hearingDetails?.status === "PASSED_OVER" || hearingDetails?.status === "SCHEDULED" ? (
                       <span style={{ color: "green", fontWeight: "700", cursor: "pointer" }}>{t("START_HEARING")}</span>
                     ) : (
                       <span style={{ color: "red", fontWeight: "700", cursor: "pointer" }}>{t("END_HEARING")}</span>
-                    )
-                  ) : (
-                    <EditIcon />
-                  )}
-                </div>
-              )}
-              {["SCHEDULED", "IN_PROGRESS", "PASSED_OVER"].includes(hearingDetails?.status) && (
-                <AsyncOverlayDropdown style={{ position: "relative" }} row={row} getDropdownItems={getActionItems} position="relative" />
-              )}
+                    )}
+                  </div>
+                )}
+              </div>
+              <div style={{ width: "50%" }}>
+                {["SCHEDULED", "IN_PROGRESS", "PASSED_OVER"].includes(hearingDetails?.status) && (
+                  <AsyncOverlayDropdown
+                    style={{ position: "relative" }}
+                    textStyle={{ textAlign: "start" }}
+                    row={row}
+                    getDropdownItems={getActionItems}
+                    position="relative"
+                  />
+                )}
+              </div>
             </div>
           </td>
         </tr>
@@ -578,309 +650,17 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
     });
   }, [history, t, tableData, handleEditClick]);
 
+  const { data: hearingLink } = useGetHearingLink();
+
   return (
     <div className="full-height-container">
-      <style>{`
-        .home-input input {
-          margin-bottom: 0px !important;
-          border: 1px solid black;
-        }
-
-        .full-height-container {
-          display: flex;
-          flex-direction: column;
-          height: calc(100vh - 260px);
-          padding-bottom: 10px;
-        }
-
-        .filter-bar {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 12px;
-          align-items: center;
-          background: #fff;
-          border-radius: 8px;
-          box-shadow: 0 1px 4px rgba(44,62,80,0.06);
-          padding: 16px 18px;
-          margin-bottom: 8px;
-          justify-content: space-between;
-          flex-shrink: 0;
-        }
-
-        .filter-bar .filter-fields {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 12px;
-          flex: 1 1 300px;
-          min-width: 0;
-        }
-
-        .filter-bar .filter-actions {
-          display: flex;
-          flex-direction: row;
-          gap: 8px;
-          align-items: center;
-          margin-left: 12px;
-        }
-
-        @media (max-width: 900px) {
-          .filter-bar {
-            flex-direction: column;
-            align-items: stretch;
-          }
-          .filter-bar .filter-fields {
-            width: 100%;
-          }
-          .filter-bar .filter-actions {
-            margin-left: 0;
-            margin-top: 12px;
-            justify-content: flex-start;
-          }
-        }
-
-        .filter-bar button.search-btn {
-          background: #007E7E;
-          color: #fff;
-          font-size: 16px;
-          font-weight: 700;
-          font-family: Roboto, sans-serif;
-          line-height: 24px;
-          border-radius: 0px;
-          border: none;
-          padding: 8px 24px;
-          margin: 0;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.04);
-          transition: background 0.2s;
-          min-width: 210px;
-          cursor: pointer;
-        }
-
-        .filter-bar button.search-btn:hover {
-          background: #159392;
-        }
-
-        .filter-bar button.clear-btn {
-          background: #fff;
-          color: #007E7E;
-          border: none !important;
-          cursor: pointer;
-          padding: 8px 18px;
-          font-size: 16px;
-          font-weight: 500;
-          margin-right: 4px;
-          transition: background 0.2s, color 0.2s;
-        }
-
-        .filter-bar button.clear-btn:hover {
-          background: transparent;
-        }
-
-        .main-table-card {
-          background: #fff;
-          border-radius: 12px;
-          box-shadow: 0 2px 8px rgba(44,62,80,0.07);
-          padding: 0px 18px 18px 18px;
-          position: relative;
-          overflow: hidden;
-          display: flex;
-          flex-direction: column;
-          flex: 1;
-          min-height: 0;
-        }
-
-        .table-scroll {
-          flex: 1;
-          overflow: auto;
-          min-height: 0;
-        }
-
-        .main-table {
-          width: 100%;
-          border-collapse: separate;
-          border-spacing: 0;
-          position: relative;
-        }
-
-        .main-table thead {
-          position: sticky;
-          top: 0;
-          z-index: 10;
-        }
-
-        .main-table th {
-          font-weight: 600;
-          font-size: 15px;
-          background: #fff;
-          padding: 12px 8px;
-          border-bottom: 2px solid #e8e8e8;
-          position: relative;
-          box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
-          text-align: left;
-        }
-
-        .custom-table-row td {
-          padding: 0px 8px;
-          border-bottom: 1px solid #e8e8e8;
-          font-size: 15px;
-          background: #fff;
-          text-align: left;
-        }
-
-        .custom-table-row:hover {
-          background: #f6fafd;
-        }
-
-        .case-link {
-          cursor: pointer;
-          color: #0A0A0A;
-          text-decoration: underline;
-          font-weight: 500;
-        }
-
-        .status-badge {
-          display: inline-block;
-          padding: 2px 14px;
-          border-radius: 12px;
-          font-size: 14px;
-          font-weight: 500;
-        }
-
-        .status-completed {
-          background: #E8E8E8;
-          color: #3D3C3C;
-        }
-
-        .status-ongoing {
-          background: #E4F2E4;
-          color: #00703C;
-        }
-
-        .status-passed {
-          background: #FFF6E8;
-          color: #9E400A;
-        }
-
-        .status-passed-over {
-          background: #FFF6E8;
-          color: #9E400A;
-        }
-
-        .status-scheduled {
-          background: #E4F2E4;
-          color: #00703C;
-        }
-
-        .status-abated {
-          background: #E8E8E8;
-          color: #3D3C3C;
-        }
-
-        .status-default {
-          background: #f5f5f5;
-          color: #333;
-        }
-
-        .advocate-header {
-          display: flex;
-          align-items: center;
-          gap: 4px;
-        }
-
-        .advocate-header .info-icon {
-          font-size: 15px;
-          color: #888;
-          cursor: pointer;
-        }
-
-        .jk-dropdown-unique {
-          max-height: 300px;
-          overflow-y: auto;
-        }
-
-        .date-arrow-group {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-
-        .date-arrow-btn {
-          background: transparent;
-          border: none;
-          color: #007E7E;
-          font-size: 18px;
-          font-weight: bold;
-          border-radius: 4px;
-          width: 32px;
-          height: 32px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          transition: background 0.2s, color 0.2s;
-          padding: 0;
-        }
-
-        .date-arrow-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .date-arrow-btn:hover:not(:disabled) {
-          background: #f5f5f5;
-        }
-`}</style>
       <div className="filter-bar">
         <div className="filter-fields">
-          <LabelFieldPair className={`case-label-field-pair `}>
-            <CardLabel className="case-input-label" style={{ paddingLeft: "30px" }}>{`${t("Date")}`}</CardLabel>
-            <div className="date-arrow-group">
-              <button
-                type="button"
-                className="date-arrow-btn"
-                aria-label="Previous Day"
-                onClick={() => {
-                  const prevDate = new Date(filters?.date);
-                  prevDate.setDate(prevDate.getDate() - 1);
-                  setFilters((prev) => ({ ...prev, date: prevDate.toISOString().slice(0, 10) }));
-                }}
-                disabled={loading}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M15 19L8 12L15 5" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </button>
-              <TextInput
-                className="home-input"
-                key={"status"}
-                type={"date"}
-                value={filters?.date}
-                onChange={(e) => {
-                  setFilters((prev) => ({ ...prev, date: e.target.value }));
-                }}
-                style={{ minWidth: 120, textAlign: "center" }}
-                disabled={loading}
-              />
-              <button
-                type="button"
-                className="date-arrow-btn"
-                aria-label="Next Day"
-                onClick={() => {
-                  const nextDate = new Date(filters?.date);
-                  nextDate.setDate(nextDate.getDate() + 1);
-                  setFilters((prev) => ({ ...prev, date: nextDate.toISOString().slice(0, 10) }));
-                }}
-                disabled={loading}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 5L16 12L9 19" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </button>
-            </div>
-          </LabelFieldPair>
           <LabelFieldPair className={`case-label-field-pair `} style={{ marginTop: "1px" }}>
-            <CardLabel className="case-input-label">{`${t("STATUS")}`}</CardLabel>
+            {/* <CardLabel className="case-input-label"></CardLabel> */}
             <Dropdown
               t={t}
+              placeholder={`${t("STATUS")}`}
               option={statusOptions ? statusOptions : []}
               selected={filters?.status}
               optionKey={"name"}
@@ -895,9 +675,10 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
             />
           </LabelFieldPair>
           <LabelFieldPair className={`case-label-field-pair `}>
-            <CardLabel className="case-input-label">{`${t("PURPOSE")}`}</CardLabel>
+            {/* <CardLabel className="case-input-label">{`${t("PURPOSE")}`}</CardLabel> */}
             <Dropdown
               t={t}
+              placeholder={`${t("PURPOSE")}`}
               option={hearingTypeOptions?.Hearing?.HearingType ? hearingTypeOptions?.Hearing?.HearingType : []}
               selected={filters?.purpose}
               optionKey={"code"}
@@ -912,24 +693,108 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
             />
           </LabelFieldPair>
           <LabelFieldPair className={`case-label-field-pair `}>
-            <CardLabel className="case-input-label">{`${t("CASE_NAME")}`}</CardLabel>
-            <TextInput
+            {/* <CardLabel className="case-input-label" style={{ paddingLeft: "30px" }}>{`${t("Date")}`}</CardLabel> */}
+            <div className="date-arrow-group">
+              {/* <button
+                type="button"
+                className="date-arrow-btn"
+                aria-label="Previous Day"
+                onClick={() => {
+                  const prevDate = new Date(filters?.date);
+                  prevDate.setDate(prevDate.getDate() - 1);
+                  setFilters((prev) => ({ ...prev, date: prevDate.toISOString().slice(0, 10) }));
+                }}
+                disabled={loading}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 19L8 12L15 5" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button> */}
+              <TextInput
+                className="home-input"
+                key={"status"}
+                type={"date"}
+                value={filters?.date}
+                onChange={(e) => {
+                  setFilters((prev) => ({ ...prev, date: e.target.value }));
+                }}
+                style={{ minWidth: 120, textAlign: "center" }}
+                // disabled={loading}
+              />
+              {/* <button
+                type="button"
+                className="date-arrow-btn"
+                aria-label="Next Day"
+                onClick={() => {
+                  const nextDate = new Date(filters?.date);
+                  nextDate.setDate(nextDate.getDate() + 1);
+                  setFilters((prev) => ({ ...prev, date: nextDate.toISOString().slice(0, 10) }));
+                }}
+                disabled={loading}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 5L16 12L9 19" stroke="#000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button> */}
+            </div>
+          </LabelFieldPair>
+        </div>
+        <div className="filter-actions">
+          <div className={`case-label-field-pair search-input`}>
+            <input
               className="home-input"
-              key={"caseQuery"}
-              type={"text"}
+              placeholder="Search here..."
+              type="text"
               value={filters?.caseQuery}
               onChange={(e) => {
                 setFilters((prev) => ({ ...prev, caseQuery: e.target.value }));
               }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !loading) {
+                  fetchInbox(filters, setHearingCount);
+                }
+              }}
             />
-          </LabelFieldPair>
-        </div>
-        <div className="filter-actions">
-          <button className="clear-btn" onClick={handleClear} disabled={loading}>
-            {t("ES_COMMON_CLEAR_SEARCH")}
-          </button>
-          <button className="search-btn" onClick={handleSearch} disabled={loading}>
+            <span
+              style={{ cursor: "pointer" }}
+              onClick={() => {
+                if (!loading) {
+                  fetchInbox(filters, setHearingCount);
+                }
+              }}
+            >
+              <SearchIcon />
+            </span>
+          </div>
+          <button className="home-search-btn" onClick={handleSearch} disabled={loading}>
             {t("ES_COMMON_SEARCH")}
+          </button>
+          <button className="home-clear-btn" onClick={handleClear} disabled={loading}>
+            {t("CLEAR")}
+          </button>
+          <button
+            className="digit-button-tertiary large"
+            type="button"
+            onClick={() => {
+              window.open(hearingLink, "_blank");
+            }}
+            style={{
+              backgroundColor: "#007E7E",
+              height: "40px",
+              padding: "8px 24px",
+            }}
+          >
+            <span
+              className="digit-button-label"
+              style={{
+                fontSize: "14px",
+                fontWeight: 700,
+                fontFamily: "Roboto",
+                color: "#FFFFFF",
+              }}
+            >
+              {t("JOIN_VC")}
+            </span>
           </button>
         </div>
       </div>
@@ -941,14 +806,9 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
                 <th style={{ width: "10px" }}>S.No.</th>
                 <th>{t("CS_CASE_NAME")}</th>
                 <th>{t("CS_CASE_NUMBER_HOME")}</th>
-                <th className="advocate-header">
-                  {t("CS_COMMON_ADVOCATES")}{" "}
-                  <span className="info-icon" title="Advocate details">
-                    &#9432;
-                  </span>
-                </th>
-                <th>{t("STATUS")}</th>
+                <th className="advocate-header">{t("CS_COMMON_ADVOCATES")} </th>
                 <th>{t("PURPOSE")}</th>
+                <th>{t("STATUS")}</th>
                 <th>{t("ACTIONS")}</th>
               </tr>
             </thead>
@@ -970,6 +830,72 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
               )}
             </tbody>
           </table>
+          <div className="table-pagination">
+            <div className="pagination-info">
+              <span style={{ color: "#505a5f" }}>Rows per page:</span>
+              <select
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setPage(0);
+                }}
+              >
+                {[10, 20, 30, 40, 50].map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <span style={{ color: "#505a5f" }}>
+                  {hearingCount === 0 ? "0 of 0" : `${page * rowsPerPage + 1}–${Math.min((page + 1) * rowsPerPage, hearingCount)} of ${hearingCount}`}
+                </span>
+
+                {page > 0 && (
+                  <button
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      fontSize: "16px",
+                      cursor: "pointer",
+                      padding: 0,
+                      margin: 0,
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                    onClick={() => setPage((prev) => prev - 1)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#505a5f" class="cp" width="18px" height="18px">
+                      <path d="M0 0h24v24H0z" fill="none"></path>
+                      <path d="M11.67 3.87L9.9 2.1 0 12l9.9 9.9 1.77-1.77L3.54 12z"></path>
+                    </svg>
+                  </button>
+                )}
+
+                {(page + 1) * rowsPerPage < hearingCount && (
+                  <button
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      fontSize: "16px",
+                      cursor: "pointer",
+                      padding: 0,
+                      margin: 0,
+                      display: "flex",
+                      alignItems: "center",
+                    }}
+                    onClick={() => setPage((prev) => prev + 1)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#505a5f" width="18px" height="18px">
+                      <path d="M0 0h24v24H0z" fill="none" />
+                      <path d="M5.88 4.12 13.76 12l-7.88 7.88L8 22l10-10L8 2z" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       {showEndHearingModal.openEndHearingModal && (
@@ -979,74 +905,117 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
             <CloseBtn
               onClick={() => {
                 setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+                setPassOver(false);
               }}
             />
           }
           actionSaveLabel={t(passOver ? "CS_CASE_PASS_OVER_START_NEXT_HEARING" : "CS_CASE_END_START_NEXT_HEARING")}
           hideModalActionbar={!showEndHearingModal.isNextHearingDrafted}
           actionSaveOnSubmit={async () => {
-            //need to get hearing data
-            hearingService
-              ?.searchHearings(
-                {
-                  criteria: {
-                    hearingId: showEndHearingModal?.currentHearing?.hearingNumber,
-                    tenantId: showEndHearingModal?.currentHearing?.tenantId,
+            try {
+              setLoader(true);
+              await hearingService
+                ?.searchHearings(
+                  {
+                    criteria: {
+                      hearingId: showEndHearingModal?.currentHearing?.hearingNumber,
+                      tenantId: showEndHearingModal?.currentHearing?.tenantId,
+                    },
                   },
-                },
-                { tenantId: showEndHearingModal?.currentHearing?.tenantId }
-              )
-              .then((response) => {
-                if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
-                  hearingService
-                    ?.updateHearings(
-                      {
-                        tenantId: Digit.ULBService.getCurrentTenantId(),
-                        hearing: { ...response?.HearingList?.[0], workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
-                        hearingType: "",
-                        status: "",
-                      },
-                      { applicationNumber: "", cnrNumber: "" }
-                    )
-                    .then(() => {
+                  { tenantId: showEndHearingModal?.currentHearing?.tenantId }
+                )
+                .then((response) => {
+                  if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
+                    if (response?.HearingList?.[0]?.status === "IN_PROGRESS") {
+                      hearingService
+                        ?.updateHearings(
+                          {
+                            tenantId: Digit.ULBService.getCurrentTenantId(),
+                            hearing: { ...response?.HearingList?.[0], workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
+                            hearingType: "",
+                            status: "",
+                          },
+                          { applicationNumber: "", cnrNumber: "" }
+                        )
+                        .then(() => {
+                          setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+                          nextHearing(showEndHearingModal?.currentHearing);
+                        });
+                    } else {
+                      setLoader(false);
                       setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
-                      nextHearing(showEndHearingModal?.currentHearing);
-                    });
-                }
-              });
+                      fetchInbox(filters, setHearingCount);
+                      showToast("error", t("HEARING_STATUS_ALREADY_CHANGED"), 5000);
+                    }
+                  } else {
+                    setLoader(false);
+                    setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+                    showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
+                  }
+                });
+            } catch (e) {
+              setLoader(false);
+              showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
+            } finally {
+              setPassOver(false);
+            }
           }}
           actionCustomLabelSubmit={async () => {
-            hearingService
-              ?.searchHearings(
-                {
-                  criteria: {
-                    hearingId: showEndHearingModal?.currentHearing?.hearingNumber,
-                    tenantId: showEndHearingModal?.currentHearing?.tenantId,
+            try {
+              setLoader(true);
+              await hearingService
+                ?.searchHearings(
+                  {
+                    criteria: {
+                      hearingId: showEndHearingModal?.currentHearing?.hearingNumber,
+                      tenantId: showEndHearingModal?.currentHearing?.tenantId,
+                    },
                   },
-                },
-                { tenantId: showEndHearingModal?.currentHearing?.tenantId }
-              )
-              .then((response) => {
-                if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
-                  hearingService
-                    ?.updateHearings(
-                      {
-                        tenantId: Digit.ULBService.getCurrentTenantId(),
-                        hearing: { ...response?.HearingList?.[0], workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
-                        hearingType: "",
-                        status: "",
-                      },
-                      { applicationNumber: "", cnrNumber: "" }
-                    )
-                    .then((res) => {
+                  { tenantId: showEndHearingModal?.currentHearing?.tenantId }
+                )
+                .then((response) => {
+                  if (Array.isArray(response?.HearingList) && response?.HearingList?.length > 0) {
+                    if (response?.HearingList?.[0]?.status === "IN_PROGRESS") {
+                      hearingService
+                        ?.updateHearings(
+                          {
+                            tenantId: Digit.ULBService.getCurrentTenantId(),
+                            hearing: { ...response?.HearingList?.[0], workflow: { action: passOver ? "PASS_OVER" : "CLOSE" } },
+                            hearingType: "",
+                            status: "",
+                          },
+                          { applicationNumber: "", cnrNumber: "" }
+                        )
+                        .then((res) => {
+                          setTimeout(() => {
+                            setLoader(false);
+                            setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+                            if (res?.hearing?.status === "PASSED_OVER" || res?.hearing?.status === "COMPLETED") fetchInbox(filters, setHearingCount);
+                          }, 100);
+                        });
+                    } else {
+                      setLoader(false);
+                      fetchInbox(filters, setHearingCount);
+                      showToast("error", t("HEARING_STATUS_ALREADY_CHANGED"), 5000);
                       setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
-                      if (res?.hearing?.status === "PASSED_OVER" || res?.hearing?.status === "COMPLETED") fetchInbox(filters, setHearingCount);
-                    });
-                }
-              });
+                    }
+                  } else {
+                    setLoader(false);
+                    showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
+                    setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+                  }
+                });
+            } catch (e) {
+              setLoader(false);
+              showToast("error", t("ISSUE_IN_HEARING_UPDATE"), 5000);
+              setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+            } finally {
+              setPassOver(false);
+            }
           }}
           actionCancelOnSubmit={() => {
             setShowEndHearingModal({ ...showEndHearingModal, isNextHearingDrafted: false, openEndHearingModal: false });
+            setPassOver(false);
           }}
           actionCancelLabel={t("CS_COMMON_CANCEL")}
           actionCustomLabel={t(passOver ? "CS_CASE_PASS_OVER_HEARING" : "CS_CASE_END_HEARING")}
@@ -1069,15 +1038,6 @@ const HomeHearingsTab = ({ t, showEndHearingModal, setShowEndHearingModal, setHe
             )}
           </div>
         </Modal>
-      )}
-      {toastMsg && (
-        <Toast
-          error={toastMsg.key === "error"}
-          label={t(toastMsg.action)}
-          onClose={() => setToastMsg(null)}
-          isDleteBtn={true}
-          style={{ maxWidth: "500px" }}
-        />
       )}
     </div>
   );

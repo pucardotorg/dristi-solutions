@@ -26,6 +26,7 @@ import ScheduleHearing from "../AdmittedCases/ScheduleHearing";
 import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Utils/submissionWorkflow";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
+import Breadcrumb from "../../../components/BreadCrumb";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -100,13 +101,26 @@ function CaseFileAdmission({ t, path }) {
   const userInfo = Digit?.UserService?.getUser()?.info;
   const roles = userInfo?.roles;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const isCaseApprover = roles.some((role) => role.code === "CASE_APPROVER");
-  const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
+  const isCaseApprover = roles?.some((role) => role.code === "CASE_APPROVER");
+  const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
   const moduleCode = "case-default";
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
   const [isLoader, setLoader] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
   const courtId = localStorage.getItem("courtId");
+
+  const employeeCrumbs = useMemo(
+    () => [
+      {
+        path: `/${window?.contextPath}/employee/home/home-screen`,
+        content: t("ES_COMMON_HOME"),
+        show: true,
+        isLast: false,
+        homeActiveTab: location?.state?.homeActiveTab || null,
+      },
+    ],
+    [location?.state?.homeActiveTab, t]
+  );
   const { data: caseFetchResponse, isLoading, refetch } = useSearchCaseService(
     {
       criteria: [
@@ -143,7 +157,7 @@ function CaseFileAdmission({ t, path }) {
     moduleCode,
     config: {
       enabled: Boolean(caseDetails?.filingNumber && tenantId),
-      cacheTime: 0,
+      cacheTime: 10,
     },
   });
 
@@ -1086,7 +1100,13 @@ function CaseFileAdmission({ t, path }) {
   };
 
   if (!caseId || (caseDetails && caseDetails?.status === CaseWorkflowState.CASE_ADMITTED)) {
-    return <Redirect to="/" />;
+    return caseId ? (
+      <Redirect
+        to={`/${window?.contextPath}/${userInfoType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${caseDetails?.filingNumber}&tab=Overview`}
+      />
+    ) : (
+      <Redirect to="/" />
+    );
   }
 
   if (isLoading || isWorkFlowLoading || isLoader || caseAdmitLoader) {
@@ -1098,6 +1118,8 @@ function CaseFileAdmission({ t, path }) {
   };
   return (
     <div className={"case-and-admission"}>
+      {/* <Breadcrumb crumbs={employeeCrumbs} breadcrumbStyle={{ paddingLeft: 20 }}></Breadcrumb> */}
+
       <div className="view-case-file">
         <div className="file-case">
           <div className="file-case-side-stepper">

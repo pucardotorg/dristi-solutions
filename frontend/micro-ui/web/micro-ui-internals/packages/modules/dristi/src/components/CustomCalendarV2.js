@@ -92,7 +92,7 @@ function CustomCalendarV2({ config, t, handleSelect, onCalendarConfirm, selected
     const isDateFromCurrentMonth = date.getMonth() === currentMonth.getMonth() && date.getFullYear() === currentMonth.getFullYear();
     const isPastDate = date.getDate() < new Date().getDate();
     const hearingCount = hearingCounts[dateStr]?.noOfHearing || 0;
-    const dayStatus = hearingCounts[dateStr]?.dayStatus || "";
+    const dayStatus = hearingCounts[dateStr]?.dayStatus || "Slot Available";
     const isSelectedDate =
       selectedDate?.getDate() === date?.getDate() &&
       selectedDate?.getMonth() === date?.getMonth() &&
@@ -189,14 +189,14 @@ function CustomCalendarV2({ config, t, handleSelect, onCalendarConfirm, selected
               <span className="legend-color-indicator slot-available"></span>
               <span>{t("CS_COMMON_SLOT_AVAILABLE")}</span>
             </div>
-            <div className="legend-item">
+            {/* <div className="legend-item">
               <span className="legend-color-indicator opted-out"></span>
               <span>{t("CS_COMMON_OPTED_OUT")}</span>
-            </div>
-            <div className="legend-item">
+            </div> */}
+            {/* <div className="legend-item">
               <span className="legend-color-indicator slots-full"></span>
               <span>{t("CS_COMMON_SLOTS_FULL")}</span>
-            </div>
+            </div> */}
             <div className="legend-item">
               <span className="legend-color-indicator court-non-working"></span>
               <span>{t("CS_COMMON_COURT_NON_WORKING")}</span>

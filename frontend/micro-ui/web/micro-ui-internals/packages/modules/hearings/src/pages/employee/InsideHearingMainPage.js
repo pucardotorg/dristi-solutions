@@ -1,7 +1,7 @@
 import { TextArea } from "@egovernments/digit-ui-components";
 import { ActionBar, CardLabel, Dropdown, LabelFieldPair, Button } from "@egovernments/digit-ui-react-components";
 import debounce from "lodash/debounce";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import { Urls } from "../../hooks/services/Urls";
@@ -23,6 +23,8 @@ import { getFormattedName } from "../../utils";
 import { getFilingType } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/caseUtils";
 import { constructFullName, removeInvalidNameParts } from "@egovernments/digit-ui-module-orders/src/utils";
+import { Loader } from "@egovernments/digit-ui-react-components";
+import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 
 const SECOND = 1000;
 
@@ -32,7 +34,6 @@ const InsideHearingMainPage = () => {
   const [transcriptText, setTranscriptText] = useState("");
   const [hearing, setHearing] = useState({});
   const [witnessDepositionText, setWitnessDepositionText] = useState("");
-  const [caseData, setCaseData] = useState(null);
   const [options, setOptions] = useState([]);
   const [additionalDetails, setAdditionalDetails] = useState({});
   const [selectedWitness, setSelectedWitness] = useState({});
@@ -42,14 +43,22 @@ const InsideHearingMainPage = () => {
   const textAreaRef = useRef(null);
   const [isOpen, setIsOpen] = useState(false);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
-  const { hearingId } = Digit.Hooks.useQueryParams();
-  const [filingNumber, setFilingNumber] = useState("");
+  const { hearingId, filingNumber } = Digit.Hooks.useQueryParams();
   const [witnessModalOpen, setWitnessModalOpen] = useState(false);
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState("");
   const [isItemPending, setIsItemPending] = useState(false);
   const courtId = localStorage.getItem("courtId");
   const { t } = useTranslation();
   const isInitialLoad = useRef(true);
+  const userInfo = Digit?.UserService?.getUser?.()?.info;
+  const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
+  const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
+
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
 
   const onCancel = () => {
     setAddPartyModal(false);
@@ -60,7 +69,43 @@ const InsideHearingMainPage = () => {
   };
 
   const userType = Digit?.UserService?.getType?.();
-  const userInfo = Digit?.UserService?.getUser?.()?.info;
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+
+  const { data: caseData, isLoading: isCaseLoading, refetch: refetchCase } = Digit.Hooks.dristi.useSearchCaseService(
+    {
+      criteria: [
+        {
+          filingNumber,
+          ...(courtId && userType === "employee" && { courtId }),
+        },
+      ],
+      tenantId,
+    },
+    {},
+    `case-details-${filingNumber}`,
+    filingNumber,
+    Boolean(filingNumber)
+  );
+  const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
+  const [caseApiError, setCaseApiError] = useState(undefined);
+  const isBreadCrumbsParamsDataSet = useRef(false);
+  const caseId = caseData?.criteria?.[0]?.responseList?.[0]?.id;
+
+  useEffect(() => {
+    if (
+      caseId &&
+      filingNumber &&
+      !isBreadCrumbsParamsDataSet.current &&
+      (caseId !== caseIdFromBreadCrumbs || filingNumber !== filingNumberFromBreadCrumbs)
+    ) {
+      isBreadCrumbsParamsDataSet.current = true;
+      setBreadCrumbsParamsData({
+        caseId,
+        filingNumber,
+      });
+    }
+  }, [caseId, caseIdFromBreadCrumbs, filingNumber, filingNumberFromBreadCrumbs, setBreadCrumbsParamsData]);
 
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];
@@ -105,7 +150,7 @@ const InsideHearingMainPage = () => {
     reqBody,
     { applicationNumber: "", cnrNumber: "", hearingId, ...(caseCourtId && { courtId: caseCourtId }) },
     "dristi",
-    Boolean(caseCourtId),
+    Boolean(hearingId && caseCourtId),
     refetchTime
   );
 
@@ -128,22 +173,6 @@ const InsideHearingMainPage = () => {
         1000
       ),
     [_updateTranscriptRequest]
-  );
-
-  const { data: caseDataResponse, refetch: refetchCase } = Digit.Hooks.dristi.useSearchCaseService(
-    {
-      criteria: [
-        {
-          filingNumber,
-          ...(courtId && userType === "employee" && { courtId }),
-        },
-      ],
-      tenantId,
-    },
-    {},
-    `case-details-${filingNumber}`,
-    filingNumber,
-    Boolean(filingNumber)
   );
 
   const { data: applicationData, isLoading: isApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
@@ -181,12 +210,10 @@ const InsideHearingMainPage = () => {
   );
 
   const isCaseInRegistrationStage = useMemo(() => {
-    return caseData?.criteria?.[0]?.responseList?.[0]?.substage === "REGISTRATION";
-  }, [caseData]);
+    return caseDetails?.substage === "REGISTRATION";
+  }, [caseDetails]);
 
-  const delayCondonationData = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0]?.caseDetails?.delayApplications?.formdata?.[0]?.data, [
-    caseData,
-  ]);
+  const delayCondonationData = useMemo(() => caseDetails?.caseDetails?.delayApplications?.formdata?.[0]?.data, [caseDetails]);
 
   useEffect(() => {
     if (hearingsData) {
@@ -194,8 +221,7 @@ const InsideHearingMainPage = () => {
       // hearing data with particular id will always give array of one object
       if (hearingData) {
         setHearing(hearingData);
-        setTranscriptText(hearingData?.transcript?.[0] || "");
-        setFilingNumber(hearingData?.filingNumber?.[0]);
+        setTranscriptText(hearingData?.hearingSummary || "");
       }
     }
   }, [hearingsData]);
@@ -300,49 +326,40 @@ const InsideHearingMainPage = () => {
     unJoinedLitigant,
   ]);
 
-  console.log("allParties", allParties);
-
   useEffect(() => {
-    if (caseDataResponse) {
-      setCaseData(caseDataResponse);
-      const responseList = caseDataResponse?.criteria?.[0]?.responseList?.[0];
-      setAdditionalDetails(responseList?.additionalDetails);
-      const witnessOptions =
-        responseList?.additionalDetails?.witnessDetails?.formdata?.map((witness) => ({
-          label: getFormattedName(witness?.data?.firstName, witness?.data?.middleName, witness?.data?.lastName, witness?.data?.witnessDesignation),
-          value: witness?.data?.uuid,
+    setAdditionalDetails(caseDetails?.additionalDetails);
+    const witnessOptions =
+      caseDetails?.additionalDetails?.witnessDetails?.formdata?.map((witness) => ({
+        label: getFormattedName(witness?.data?.firstName, witness?.data?.middleName, witness?.data?.lastName, witness?.data?.witnessDesignation),
+        value: witness?.data?.uuid,
+      })) || [];
+
+    const advocateOptions =
+      caseDetails?.representatives?.map((rep) => ({
+        label: rep?.additionalDetails?.advocateName,
+        value: rep?.advocateId,
+      })) || [];
+
+    const partiesOption =
+      allParties
+        ?.filter((party) => party?.isJoined === true)
+        .map((party) => ({
+          label: party?.name,
+          value: party?.partyType === "poaHolder" ? party?.individualId : party?.partyUuid,
         })) || [];
 
-      const advocateOptions =
-        hearingsData?.HearingList?.flatMap((hearingItem) =>
-          hearingItem?.attendees
-            ?.filter((attendee) => attendee?.type === "Advocate")
-            .map((attendee, index) => ({
-              label: attendee?.name,
-              value: attendee?.individualId,
-            }))
-        ) || [];
-      const partiesOption =
-        allParties
-          ?.filter((party) => party?.isJoined === true)
-          .map((party) => ({
-            label: party?.name,
-            value: party?.partyType === "poaHolder" ? party?.individualId : party?.partyUuid,
-          })) || [];
+    const combinedOptions = [...witnessOptions, ...advocateOptions, ...partiesOption];
+    setOptions(combinedOptions);
 
-      const combinedOptions = [...witnessOptions, ...advocateOptions, ...partiesOption];
-      setOptions(combinedOptions);
-
-      if (isInitialLoad.current) {
-        const selectedWitnessDefault = responseList?.additionalDetails?.witnessDetails?.formdata?.[0]?.data || {};
-        setSelectedWitness(selectedWitnessDefault);
-        setWitnessDepositionText(
-          hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDefault?.uuid)?.deposition || ""
-        );
-        isInitialLoad.current = false;
-      }
+    if (isInitialLoad.current) {
+      const selectedWitnessDefault = caseDetails?.additionalDetails?.witnessDetails?.formdata?.[0]?.data || {};
+      setSelectedWitness(selectedWitnessDefault);
+      setWitnessDepositionText(
+        hearing?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDefault?.uuid)?.deposition || ""
+      );
+      isInitialLoad.current = false;
     }
-  }, [caseDataResponse, hearing?.additionalDetails?.witnessDepositions, hearingsData, allParties]);
+  }, [caseDetails, hearing?.additionalDetails?.witnessDepositions, hearingsData, allParties]);
 
   const handleModal = () => {
     setIsOpen(!isOpen);
@@ -453,16 +470,34 @@ const InsideHearingMainPage = () => {
   const handleDropdownChange = (selectedWitnessOption) => {
     const selectedUUID = selectedWitnessOption.value;
 
-    // Try to find in witnesses first
     let selectedData = additionalDetails?.witnessDetails?.formdata?.find((w) => w.data.uuid === selectedUUID)?.data;
 
     if (!selectedData) {
-      // If not in witness list, search in attendees
-      const attendee = hearingsData?.HearingList?.flatMap((h) => h.attendees)?.find((a) => a.individualId === selectedUUID);
+      const attendee = hearing?.attendees?.find((a) => a.individualId === selectedUUID);
       if (attendee) {
         selectedData = {
           ...attendee,
-          uuid: attendee.individualId, // Use individualId as uuid for consistency
+          uuid: attendee.individualId,
+        };
+      }
+    }
+
+    if (!selectedData) {
+      const party = allParties?.find((p) => p.partyUuid === selectedUUID);
+      if (party) {
+        selectedData = {
+          ...party,
+          uuid: party.partyUuid,
+        };
+      }
+    }
+
+    if (!selectedData) {
+      const advocate = caseDetails?.representatives?.find((adv) => adv?.advocateId === selectedUUID);
+      if (advocate) {
+        selectedData = {
+          ...advocate,
+          uuid: advocate?.advocateId,
         };
       }
     }
@@ -476,7 +511,7 @@ const InsideHearingMainPage = () => {
   };
 
   const handleExitHearing = () => {
-    history.push(`/${window.contextPath}/${userType}/home/home-pending-task`);
+    history.push(homePath);
   };
 
   const handleClose = () => {
@@ -565,12 +600,16 @@ const InsideHearingMainPage = () => {
     return !isEmpty(selectedWitness);
   }, [selectedWitness]);
 
+  if (isCaseLoading || isApplicationLoading || isFilingTypeLoading) {
+    return <Loader />;
+  }
+
   return (
     <div className="admitted-case" style={{ display: "flex" }}>
       <div className="left-side" style={{ padding: "24px 40px" }}>
         <React.Fragment>
           <EvidenceHearingHeader
-            caseData={caseData?.criteria?.[0]?.responseList?.[0]}
+            caseData={caseDetails}
             hearing={hearing}
             setActiveTab={setActiveTab}
             activeTab={activeTab}
@@ -600,7 +639,7 @@ const InsideHearingMainPage = () => {
                   IsSelectedWitness
                     ? {
                         label: getFormattedName(
-                          selectedWitness?.firstName || selectedWitness?.name,
+                          selectedWitness?.firstName || selectedWitness?.name || selectedWitness?.additionalDetails?.advocateName,
                           selectedWitness?.middleName,
                           selectedWitness?.lastName,
                           selectedWitness?.witnessDesignation
@@ -732,7 +771,7 @@ const InsideHearingMainPage = () => {
         </div>
       </div>
       <div className="right-side" style={{ borderLeft: "1px solid lightgray" }}>
-        <HearingSideCard hearingId={hearingId} caseId={caseData?.criteria?.[0]?.responseList?.[0]?.id} filingNumber={filingNumber}></HearingSideCard>
+        <HearingSideCard hearingId={hearingId} caseId={caseDetails?.id} filingNumber={filingNumber}></HearingSideCard>
         {adjournHearing && (
           <AdjournHearing
             hearing={hearing}

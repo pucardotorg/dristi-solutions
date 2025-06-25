@@ -839,7 +839,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
               });
             }
           } catch (error) {
-            console.log("error :>> ", error);
+            console.error("error :>> ", error);
           }
         } else {
           setStep(step + 1);
@@ -1205,7 +1205,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             setSuccess(true);
           }
         } catch (error) {
-          console.log("error", error);
+          console.error("error", error);
         }
         setIsApiCalled(false);
       }

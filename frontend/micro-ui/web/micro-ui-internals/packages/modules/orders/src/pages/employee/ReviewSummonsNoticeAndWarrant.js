@@ -84,8 +84,8 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [defaultValues, setDefaultValues] = useState(defaultSearchValues);
   const roles = Digit.UserService.getUser()?.info?.roles;
-  const isJudge = roles.some((role) => role.code === "JUDGE_ROLE");
-  const isTypist = roles.some((role) => role.code === "TYPIST_ROLE");
+  const isJudge = roles?.some((role) => role.code === "JUDGE_ROLE");
+  const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
   const courtId = localStorage.getItem("courtId");
   const [config, setConfig] = useState(isJudge ? getJudgeDefaultConfig(courtId)?.[0] : SummonsTabsConfig?.SummonsTabsConfig?.[0]);
   const [showActionModal, setShowActionModal] = useState(false);

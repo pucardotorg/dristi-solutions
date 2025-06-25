@@ -75,7 +75,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const userInfo = Digit?.UserService?.getUser()?.info;
   const roles = userInfo?.roles;
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
-  const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
+  const isScrutiny = roles?.some((role) => role.code === "CASE_REVIEWER");
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
   const caseId = searchParams.get("caseId");
@@ -90,6 +90,13 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   const [comment, setComment] = useState("");
   const [commentSendBack, setCommentSendBack] = useState("");
   const [toastMsg, setToastMsg] = useState(null);
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
   const { downloadPdf } = useDownloadCasePdf();
 
@@ -507,7 +514,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   };
 
   const handleScrutinyAndLock = async (filingNumber) => {
-    const isScrutiny = roles.some((role) => role.code === "CASE_REVIEWER");
+    const isScrutiny = roles?.some((role) => role.code === "CASE_REVIEWER");
     if (isScrutiny) {
       try {
         const response = await DRISTIService.getCaseLockStatus({}, { uniqueId: filingNumber, tenantId: tenantId });
@@ -677,7 +684,7 @@ function ViewCaseFile({ t, inViewCase = false, caseDetailsAdmitted }) {
   };
 
   if (caseDetails?.status !== "UNDER_SCRUTINY" && isScrutiny) {
-    history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+    history.push(homePath);
   }
 
   const Heading = (props) => {

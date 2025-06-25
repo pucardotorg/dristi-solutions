@@ -12,15 +12,20 @@ function timeInMillisFromDateAndTime(date, hhmmssms) {
   return startOfDate.getTime() + millis;
 }
 
-const NextHearingCard = ({ caseData, width }) => {
+const NextHearingCard = ({ caseData, width, minWidth, cardStyle }) => {
   const filingNumber = caseData.filingNumber;
   const cnr = caseData.cnrNumber;
   const caseCourtId = useMemo(() => caseData?.case?.courtId, [caseData]);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const history = useHistory();
   const { t } = useTranslation();
-  const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
-  const isCourtRoomManager = userRoles.includes("COURT_ROOM_MANAGER");
+  const userInfo = Digit?.UserService?.getUser()?.info;
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isCourtRoomManager = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+
   const { data: slotTime } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "court", [{ name: "slots" }]);
 
   const { data: hearingRes, isLoading: isHearingsLoading } = Digit.Hooks.hearings.useGetHearings(
@@ -38,7 +43,7 @@ const NextHearingCard = ({ caseData, width }) => {
   );
 
   const scheduledHearing = hearingRes?.HearingList?.filter(
-    (hearing) => ![HearingWorkflowState.COMPLETED, HearingWorkflowState?.OPTOUT, HearingWorkflowState?.ABATED].includes(hearing?.status)
+    (hearing) => ![HearingWorkflowState.COMPLETED, HearingWorkflowState?.OPTOUT, HearingWorkflowState?.ABATED,HearingWorkflowState?.ABANDONED].includes(hearing?.status)
   ).sort((hearing1, hearing2) => hearing1.startTime - hearing2.startTime)[0];
 
   const hiddenOutcomes = [
@@ -53,7 +58,7 @@ const NextHearingCard = ({ caseData, width }) => {
     "SETTLED",
   ];
 
-  const shouldShowButton = !hiddenOutcomes.includes(caseData?.case?.outcome);
+  const shouldShowButton = !hiddenOutcomes.includes(caseData?.case?.outcome) && !(isJudge || isBenchClerk || isTypist || isCourtRoomManager);
 
   const formattedTime = () => {
     const date1 = new Date(scheduledHearing?.startTime);
@@ -83,6 +88,7 @@ const NextHearingCard = ({ caseData, width }) => {
     const userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
     const searchParams = new URLSearchParams();
     searchParams.set("hearingId", scheduledHearing?.hearingId);
+    searchParams.set("filingNumber", scheduledHearing?.filingNumber);
     if (userType === "citizen") {
       history.push(`/${window.contextPath}/${userType}/hearings/inside-hearing?${searchParams.toString()}`);
     } else if (scheduledHearing?.status === "SCHEDULED") {
@@ -121,10 +127,11 @@ const NextHearingCard = ({ caseData, width }) => {
 
   return (
     <Card
-      style={{
+      style={{ ...(cardStyle ? cardStyle : {
         width: width,
+        minWidth: minWidth,
         marginTop: "10px",
-      }}
+      })}}
     >
       <div
         style={{
@@ -137,7 +144,7 @@ const NextHearingCard = ({ caseData, width }) => {
         {t("NEXT_HEARING")}
       </div>
       <hr style={{ border: "1px solid #FFF6E880" }} />
-      <div style={{ display: "flex", justifyContent: "space-between", padding: "10px" }}>
+      <div style={{ display: "flex", justifyContent: "start", gap: "10vw", alignItems: "center", padding: "10px" }}>
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
           <div className="hearingCard">
             <div className="hearingDate">
@@ -176,16 +183,8 @@ const NextHearingCard = ({ caseData, width }) => {
           <Button
             variation={"outlined"}
             onButtonClick={handleButtonClick}
-            isDisabled={isCourtRoomManager || (userRoles.includes("CITIZEN") && scheduledHearing?.status === "SCHEDULED")}
-            label={
-              userRoles.includes("CITIZEN")
-                ? scheduledHearing?.status === "SCHEDULED"
-                  ? t("AWAIT_START_HEARING")
-                  : t("JOIN_HEARING")
-                : scheduledHearing?.status === "SCHEDULED"
-                ? t("START_NOW")
-                : t("JOIN_HEARING")
-            }
+            isDisabled={isCourtRoomManager || (roles.includes("CITIZEN") && scheduledHearing?.status === "SCHEDULED")}
+            label={scheduledHearing?.status === "SCHEDULED" ? t("AWAIT_START_HEARING") : scheduledHearing?.status === "IN_PROGRESS" ? t("JOIN_HEARING") : t("PASSED_OVER")}
           />
         )}
       </div>

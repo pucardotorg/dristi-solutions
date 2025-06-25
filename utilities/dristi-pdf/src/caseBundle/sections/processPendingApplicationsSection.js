@@ -39,6 +39,10 @@ async function processPendingApplicationsSection(
     (s) => s.name === "pendingapplications"
   );
 
+  const pendingApplicationsIndexSection = indexCopy.sections.find(
+    (section) => section.name === "pendingapplications"
+  );
+
   const dynamicSectionNumber = getDynamicSectionNumber(
     indexCopy,
     sectionPosition
@@ -58,6 +62,7 @@ async function processPendingApplicationsSection(
       {
         sortBy: section.sorton,
         order: "asc",
+        limit: 100,
       }
     );
 
@@ -74,6 +79,7 @@ async function processPendingApplicationsSection(
       {
         sortBy: section.sorton,
         order: "asc",
+        limit: 100,
       }
     );
 
@@ -89,6 +95,7 @@ async function processPendingApplicationsSection(
       {
         sortBy: section.sorton,
         order: "asc",
+        limit: 100,
       }
     );
 
@@ -149,40 +156,42 @@ async function processPendingApplicationsSection(
             );
 
             let docketNameOfFiling;
-            let docketNameOfAdvocate;
             let docketCounselFor;
 
             if (sourceLitigant) {
               docketNameOfFiling =
                 sourceLitigant.additionalDetails?.fullName || "";
-              docketNameOfAdvocate = "";
-              docketCounselFor = sourceLitigant.partyType.includes(
-                "complainant"
-              )
-                ? "COMPLAINANT"
-                : "ACCUSED";
+              docketCounselFor = "";
             } else if (sourceRepresentative) {
-              docketNameOfAdvocate =
-                sourceRepresentative.additionalDetails?.advocateName || "";
-              docketNameOfFiling =
-                sourceRepresentative.additionalDetails?.advocateName || "";
-              docketCounselFor =
+              const docketNameOfComplainants = sourceRepresentative.representing
+                ?.map((lit) => lit.additionalDetails.fullName)
+                .filter(Boolean)
+                .join(", ");
+              const partyType =
                 sourceRepresentative.representing[0].partyType.includes(
                   "complainant"
                 )
                   ? "COMPLAINANT"
                   : "ACCUSED";
+              docketNameOfFiling =
+                sourceRepresentative.additionalDetails?.advocateName || "";
+              docketCounselFor = `COUNSEL FOR THE ${partyType} - ${docketNameOfComplainants}`;
             } else {
               const complainant = courtCase.litigants?.find((litigant) =>
                 litigant.partyType.includes("complainant.primary")
               );
-              docketNameOfFiling = complainant.additionalDetails.fullName;
-              docketNameOfAdvocate =
+              const docketNameOfComplainants =
+                complainant.additionalDetails.fullName;
+              docketNameOfFiling =
                 courtCase.representatives?.find((adv) =>
                   adv.representing?.find(
                     (party) => party.individualId === complainant.individualId
                   )
-                )?.additionalDetails?.advocateName || docketNameOfFiling;
+                )?.additionalDetails?.advocateName || docketNameOfComplainants;
+              docketCounselFor =
+                docketNameOfFiling === docketNameOfComplainants
+                  ? ""
+                  : `COUNSEL FOR THE COMPLAINANT - ${docketNameOfComplainants}`;
             }
 
             const documentPath = `${dynamicSectionNumber}.${index + 1}.1 ${
@@ -199,7 +208,6 @@ async function processPendingApplicationsSection(
                 }`,
                 docketCounselFor: docketCounselFor,
                 docketNameOfFiling: docketNameOfFiling,
-                docketNameOfAdvocate: docketNameOfAdvocate,
                 docketDateOfSubmission: new Date(
                   application.createdDate
                 ).toLocaleDateString("en-IN"),
@@ -251,42 +259,36 @@ async function processPendingApplicationsSection(
                   );
 
                   const docketNameOfFiling = doc.additionalDetails.author || "";
-                  let docketNameOfAdvocate;
                   let docketCounselFor;
 
                   if (sourceLitigant) {
-                    docketNameOfAdvocate =
-                      courtCase.representatives?.find((adv) =>
-                        adv.representing?.find(
-                          (party) =>
-                            party.individualId === sourceLitigant.individualId
-                        )
-                      )?.additionalDetails?.advocateName || "";
-                    docketCounselFor = sourceLitigant.partyType.includes(
-                      "complainant"
-                    )
-                      ? "COMPLAINANT"
-                      : "ACCUSED";
+                    docketCounselFor = "";
                   } else if (sourceRepresentative) {
-                    docketNameOfAdvocate =
-                      sourceRepresentative.additionalDetails?.advocateName ||
-                      "";
-                    docketCounselFor =
+                    const partyType =
                       sourceRepresentative.representing[0].partyType.includes(
                         "complainant"
                       )
                         ? "COMPLAINANT"
                         : "ACCUSED";
+                    const docketNameOfComplainants =
+                      sourceRepresentative.representing
+                        ?.map((lit) => lit.additionalDetails.fullName)
+                        .filter(Boolean)
+                        .join(", ");
+                    docketCounselFor = `COUNSEL FOR THE ${partyType} - ${docketNameOfComplainants}`;
                   } else {
-                    docketNameOfAdvocate = "";
-                    docketCounselFor = "COMPLAINANT";
+                    docketCounselFor = "";
                   }
 
-                  const documentPath = `1.${index + 1}.2.${i + 1} Objection ${
-                    i + 1
-                  } in 1.${index + 1}.2 ${objectionSection.Items} in 1.${
+                  const documentPath = `${dynamicSectionNumber}.${
                     index + 1
-                  } ${application.applicationType} in 1 ${section.section}`;
+                  }.2.${i + 1} Objection ${i + 1} in ${dynamicSectionNumber}.${
+                    index + 1
+                  }.2 ${objectionSection.Items} in ${dynamicSectionNumber}.${
+                    index + 1
+                  } ${
+                    messagesMap[application.applicationType]
+                  } in ${dynamicSectionNumber} ${section.section}`;
 
                   newObjectionDocumentFileStoreId = await applyDocketToDocument(
                     objectionDocumentFileStoreId,
@@ -296,7 +298,6 @@ async function processPendingApplicationsSection(
                       }`,
                       docketCounselFor: docketCounselFor,
                       docketNameOfFiling: docketNameOfFiling,
-                      docketNameOfAdvocate: docketNameOfAdvocate,
                       docketDateOfSubmission: new Date(
                         doc.auditdetails.createdTime
                       ).toLocaleDateString("en-IN"),
@@ -336,11 +337,10 @@ async function processPendingApplicationsSection(
           };
         })
       );
-      const pendingApplicationsIndexSection = indexCopy.sections.find(
-        (section) => section.name === "pendingapplications"
-      );
       pendingApplicationsIndexSection.lineItems =
         pendingApplicationLineItems.filter(Boolean);
+    } else {
+      pendingApplicationsIndexSection.lineItems = [];
     }
   }
 }

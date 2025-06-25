@@ -42,7 +42,7 @@ const paymentOptionConfig = {
 };
 
 const handleTaskSearch = async (businessService, consumerCodeWithoutSuffix, tenantId, courtId) => {
-  if (["task-summons", "task-notice", "task-warrant"].includes(businessService)) {
+  if (["task-summons", "task-notice", "task-warrant", "task-payment", "task-generic"].includes(businessService)) {
     const {
       list: [tasksData],
     } = await Digit.HearingService.searchTaskList({
@@ -83,12 +83,15 @@ const ViewPaymentDetails = ({ location, match }) => {
 
   const consumerCodeWithoutSuffix = consumerCode.split("_")[0];
   const [tasksData, setTasksData] = useState(null);
+  const [genericTaskData, setGenericTaskData] = useState(null);
 
   useEffect(() => {
     const fetchTaskData = async () => {
       const { tasksData = {} } = await handleTaskSearch(businessService, consumerCodeWithoutSuffix, tenantId, courtId);
-      setTasksData(tasksData);
+      if (businessService === "task-generic") setGenericTaskData(tasksData);
+      else setTasksData(tasksData);
     };
+
     fetchTaskData();
   }, [businessService, consumerCode, consumerCodeWithoutSuffix, tenantId, courtId]);
   const summonsPincode = useMemo(() => tasksData?.taskDetails?.respondentDetails?.address?.pincode, [tasksData]);
@@ -134,29 +137,62 @@ const ViewPaymentDetails = ({ location, match }) => {
     ePostBillResponse,
   ]);
 
-  const { data: calculationResponse, isLoading: isPaymentLoading } = Digit.Hooks.dristi.usePaymentCalculator(
-    {
-      EFillingCalculationCriteria: [
-        {
-          checkAmount: demandBill?.additionalDetails?.chequeDetails?.totalAmount,
-          numberOfApplication: 1,
-          tenantId: tenantId,
-          caseId: caseId,
-          filingNumber: filingNumber,
-          isDelayCondonation: !demandBill?.additionalDetails?.delayCondonation
-            ? demandBill?.additionalDetails?.isDelayCondonation
-            : Boolean(demandBill?.additionalDetails?.delayCondonation > 31 * 24 * 60 * 60 * 1000),
-        },
-      ],
-    },
-    {},
-    "dristi",
-    Boolean(
-      demandBill?.additionalDetails?.chequeDetails?.totalAmount &&
-        demandBill?.additionalDetails?.chequeDetails.totalAmount !== "0" &&
+  // const { data: calculationResponse, isLoading: isPaymentLoading } = Digit.Hooks.dristi.usePaymentCalculator(
+  //   {
+  //     EFillingCalculationCriteria: [
+  //       {
+  //         checkAmount: demandBill?.additionalDetails?.chequeDetails?.totalAmount,
+  //         numberOfApplication: 1,
+  //         tenantId: tenantId,
+  //         caseId: caseId,
+  //         filingNumber: filingNumber,
+  //         isDelayCondonation: !demandBill?.additionalDetails?.delayCondonation
+  //           ? demandBill?.additionalDetails?.isDelayCondonation
+  //           : Boolean(demandBill?.additionalDetails?.delayCondonation > 31 * 24 * 60 * 60 * 1000),
+  //       },
+  //     ],
+  //   },
+  //   {},
+  //   "dristi",
+  //   Boolean(
+  //     demandBill?.additionalDetails?.chequeDetails?.totalAmount &&
+  //       demandBill?.additionalDetails?.chequeDetails.totalAmount !== "0" &&
+  //       paymentType?.toLowerCase()?.includes("case")
+  //   )
+  // );
+
+  const [calculationResponse, setCalculationResponse] = useState(null);
+  const [isPaymentLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchCalculation = async () => {
+      setIsLoading(true);
+      if (
+        consumerCode &&
+        demandBill?.additionalDetails?.chequeDetails?.totalAmount &&
+        demandBill?.additionalDetails?.chequeDetails?.totalAmount !== "0" &&
         paymentType?.toLowerCase()?.includes("case")
-    )
-  );
+      ) {
+        try {
+          const response = await DRISTIService.getTreasuryPaymentBreakup(
+            { tenantId: tenantId },
+            {
+              consumerCode: consumerCode,
+            },
+            "dristi",
+            true
+          );
+          setCalculationResponse({ Calculation: [response?.TreasuryHeadMapping?.calculation] });
+        } catch (error) {
+          console.error("Error fetching payment calculation:", error);
+          toast.error(t("CS_PAYMENT_CALCULATION_ERROR"));
+        }
+      }
+      setIsLoading(false);
+    };
+
+    fetchCalculation();
+  }, [consumerCode, demandBill?.additionalDetails?.chequeDetails?.totalAmount, paymentType, tenantId]);
 
   const { data: breakupResponse, isLoading: isSummonsBreakUpLoading } = Digit.Hooks.dristi.useSummonsPaymentBreakUp(
     {
@@ -186,10 +222,16 @@ const ViewPaymentDetails = ({ location, match }) => {
   }, [calculationResponse?.Calculation, currentBillDetails]);
 
   const paymentCalculation = useMemo(() => {
+    if (paymentType === "Join Case Advocate Fee" && !tasksData?.taskDetails?.paymentBreakdown) return [];
+    if (paymentType === "Generic Task Fees" && !genericTaskData?.taskDetails?.genericTaskDetails?.feeBreakDown?.breakDown) return [];
     const breakdown =
-      calculationResponse?.Calculation?.[0]?.breakDown || (paymentType?.includes("Court") ? courtFeeBreakup : processFeeBreakup) || [];
-    const updatedCalculation = breakdown.map((item) => ({
-      key: item?.type,
+      paymentType === "Generic Task Fees"
+        ? genericTaskData?.taskDetails?.genericTaskDetails?.feeBreakDown?.breakDown || []
+        : paymentType === "Join Case Advocate Fee"
+        ? tasksData?.taskDetails?.paymentBreakdown
+        : calculationResponse?.Calculation?.[0]?.breakDown || (paymentType?.includes("Court") ? courtFeeBreakup : processFeeBreakup) || [];
+    const updatedCalculation = breakdown?.map((item) => ({
+      key: item?.type || item?.code,
       value: item?.amount,
       currency: "Rs",
     }));
@@ -202,7 +244,15 @@ const ViewPaymentDetails = ({ location, match }) => {
     });
 
     return updatedCalculation;
-  }, [calculationResponse?.Calculation, courtFeeBreakup, totalAmount]);
+  }, [
+    calculationResponse?.Calculation,
+    courtFeeBreakup,
+    paymentType,
+    processFeeBreakup,
+    tasksData?.taskDetails?.paymentBreakdown,
+    totalAmount,
+    genericTaskData?.taskDetails?.genericTaskDetails?.feeBreakDown,
+  ]);
   const payerName = useMemo(() => demandBill?.additionalDetails?.payer, [demandBill?.additionalDetails?.payer]);
   const bill = paymentDetails?.Bill ? paymentDetails?.Bill[0] : null;
 
@@ -266,7 +316,7 @@ const ViewPaymentDetails = ({ location, match }) => {
           instrumentDate: new Date().getTime(),
         },
       });
-      if (isDeliveryPartnerPaid) {
+      if (isDeliveryPartnerPaid && businessService !== "task-generic") {
         await DRISTIService.customApiService(Urls.dristi.pendingTask, {
           pendingTask: {
             name: "Pending Payment",

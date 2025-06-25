@@ -183,6 +183,42 @@
   }
   .case-overview-wrapper {
     padding: 24px 24px 24px 40px;
+    .case-timeline-container {
+      .checkpoint-connect-wrap {
+        padding-bottom: 0px !important;
+        .checkpoint-done {
+          h2 {
+            min-width: 24px !important;
+          }
+        }
+      }
+      .workflow-timeline-checkpoint {
+        .checkpoint-done {
+          h2 {
+            min-width: 24px !important;
+          }
+        }
+        .checkpoint {
+          h2 {
+            min-width: 24px !important;
+          }
+        }
+      }
+    }
+  }
+  .workflow-timeline-modal {
+    .workflow-timeline {
+      .checkpoint-done {
+        h2 {
+          min-width: 24px !important;
+        }
+      }
+      .checkpoint {
+        h2 {
+          min-width: 24px !important;
+        }
+      }
+    }
   }
   .view-case-file-wrapper {
     .case-and-admission {
@@ -432,7 +468,7 @@
     right: 0;
     background: #fff;
     border-radius: 16px 16px 0 0;
-    padding: 24px 0px 24px 24px;
+    padding: 24px 0px 16px 24px;
     max-height: calc(100vh - 90px);
     opacity: 0;
     visibility: hidden;
@@ -476,7 +512,7 @@
       gap: 32px;
       display: flex;
       flex-direction: column;
-      margin: 0px 0px 16px 0px;
+      margin: 0px;
       padding-right: 16px;
       max-height: calc(100vh - 264px);
       overflow-y: auto;
@@ -516,6 +552,13 @@
           .case-label-field-pair {
             flex: 1;
             width: 100%;
+            .select-wrap {
+              .options-card {
+                top: 40px;
+                max-height: 250px;
+                overflow-y: auto;
+              }
+            }
 
             &.disabled {
               .select-wrap {
@@ -550,6 +593,17 @@
 
           .custom-date-picker {
             margin-bottom: 0px !important;
+            .order-date-picker {
+              .text-input {
+                input {
+                  font-family: Roboto;
+                  font-weight: 400;
+                  font-size: 16px;
+                  line-height: 24px;
+                  letter-spacing: 0px;
+                }
+              }
+            }
           }
         }
       }
@@ -559,7 +613,7 @@
       display: flex;
       justify-content: flex-end;
       gap: 16px;
-      padding-top: 32px;
+      padding-top: 16px;
       padding-right: 32px;
 
       .order-drawer-save-btn {
@@ -596,4 +650,8 @@
 .end-and-view-causelist-submit-button {
   background: #bb2c2f !important;
   border: none !important;
+}
+
+.evidence-header-wrapper .evidence-hearing-header .evidence-actions .menu-wrap div {
+  height: auto;
 }

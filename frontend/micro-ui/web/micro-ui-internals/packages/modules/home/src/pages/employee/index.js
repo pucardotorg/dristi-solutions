@@ -17,6 +17,7 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import ADiaryPage from "./ADiaryPage";
 import BulkESignView from "./BulkESignView";
 import MainHomeScreen from "./MainHomeScreen";
+import GeneratePaymentDemandBreakdown from "../../components/GeneratePaymentDemandBreakdown";
 const bredCrumbStyle = { maxWidth: "min-content" };
 
 const ProjectBreadCrumb = ({ location }) => {
@@ -57,11 +58,18 @@ const App = ({ path, stateCode, userType, tenants }) => {
   const userInfo = Digit?.UserService?.getUser()?.info;
   const hasCitizenRoute = useMemo(() => path?.includes(`/${window?.contextPath}/citizen`), [path]);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
   if (isCitizen && !hasCitizenRoute && Boolean(userInfo)) {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
   } else if (!isCitizen && hasCitizenRoute && Boolean(userInfo)) {
-    history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+    history.push(homePath);
   }
 
   return (
@@ -74,6 +82,11 @@ const App = ({ path, stateCode, userType, tenants }) => {
           exact
           path={`${path}/home-pending-task/e-filing-payment-breakdown`}
           component={() => <EfilingPaymentBreakdown></EfilingPaymentBreakdown>}
+        />
+        <PrivateRoute
+          exact
+          path={`${path}/home-pending-task/case-payment-demand-breakdown`}
+          component={() => <GeneratePaymentDemandBreakdown></GeneratePaymentDemandBreakdown>}
         />
         <PrivateRoute
           exact

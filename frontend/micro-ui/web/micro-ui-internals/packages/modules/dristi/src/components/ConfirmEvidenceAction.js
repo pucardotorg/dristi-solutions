@@ -2,10 +2,22 @@ import React, { useState } from "react";
 import Modal from "./Modal";
 import { CheckBox, CloseSvg, TextArea } from "@egovernments/digit-ui-react-components";
 
-function ConfirmEvidenceAction({ t, setShowConfirmationModal, handleAction, isEvidence, isDisabled = false, isFromActions = false }) {
+function ConfirmEvidenceAction({
+  t,
+  setShowConfirmationModal,
+  handleAction,
+  isDisabled = false,
+  isBackButtonDisabled = false,
+  isFromActions = false,
+  setMenuData,
+}) {
   const CloseBtn = (props) => {
     return (
-      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
+      <div
+        onClick={props?.onClick}
+        disabled={props?.isDisabled}
+        style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}
+      >
         <CloseSvg />
       </div>
     );
@@ -26,15 +38,23 @@ function ConfirmEvidenceAction({ t, setShowConfirmationModal, handleAction, isEv
         <CloseBtn
           onClick={() => {
             setShowConfirmationModal(null);
+            if (setMenuData) {
+              setMenuData(null);
+            }
           }}
+          disabled={isBackButtonDisabled}
         />
       }
       headerBarMain={<Heading label={isFromActions ? t("ACTIONS_MARK_SUBMISSION_HEADER") : t("MARK_SUBMISSION_HEADER")} />}
       actionCancelLabel={t("CS_COMMON_BACK")}
       actionSaveLabel={actionSaveLabel}
       isDisabled={isDisabled}
+      isBackButtonDisabled={isBackButtonDisabled}
       actionCancelOnSubmit={() => {
         setShowConfirmationModal(null);
+        if (setMenuData) {
+          setMenuData(null);
+        }
       }}
       actionSaveOnSubmit={() => {
         handleAction(false);

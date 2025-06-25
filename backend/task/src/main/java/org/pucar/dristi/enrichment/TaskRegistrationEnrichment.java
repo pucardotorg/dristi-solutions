@@ -20,8 +20,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
-import static org.pucar.dristi.config.ServiceConstants.ENRICHMENT_EXCEPTION;
-import static org.pucar.dristi.config.ServiceConstants.JOIN_CASE_PAYMENT;
+import static org.pucar.dristi.config.ServiceConstants.*;
 
 @Component
 @Slf4j

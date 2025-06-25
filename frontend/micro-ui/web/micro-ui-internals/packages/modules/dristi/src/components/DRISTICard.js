@@ -10,15 +10,15 @@ const DRISTICard = () => {
   const Digit = useMemo(() => window?.Digit || {}, []);
   const history = useHistory();
   const roles = Digit.UserService.getUser()?.info?.roles;
-  const isJudge = useMemo(() => roles.some((role) => role.code === "CASE_APPROVER"), [roles]);
-  const isScrutiny = useMemo(() => roles.some((role) => role.code === "CASE_REVIEWER"), [roles]);
-  const isCourtOfficer = useMemo(() => roles.some((role) => role.code === "HEARING_CREATOR"), [roles]);
-  const isBenchClerk = useMemo(() => roles.some((role) => role.code === "BENCH_CLERK"), [roles]);
-  const isTypist = useMemo(() => roles.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isScrutiny = useMemo(() => roles?.some((role) => role.code === "CASE_REVIEWER"), [roles]);
+  const isCourtOfficer = useMemo(() => roles?.some((role) => role.code === "HEARING_CREATOR"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
   const isNyayMitra = ["ADVOCATE_APPLICATION_VIEWER", "ADVOCATE_APPROVER", "ADVOCATE_CLERK_APPROVER"].reduce((res, curr) => {
     if (!res) return res;
-    res = roles.some((role) => role.code === curr);
+    res = roles?.some((role) => role.code === curr);
     return res;
   }, true);
 

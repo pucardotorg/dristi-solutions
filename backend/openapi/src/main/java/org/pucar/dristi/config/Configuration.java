@@ -113,4 +113,14 @@ public class Configuration {
 
     @Value("${judge.name}")
     private String judgeName;
+
+    // inbox config
+    @Value("${egov.inbox.host}")
+    private String inboxHost;
+
+    @Value("${egov.inbox.search.endpoint}")
+    private String indexSearchEndPoint;
+
+    @Value("${egov.inbox.getfield.search.endpoint}")
+    private String indexGetFieldEndPoint;
 }

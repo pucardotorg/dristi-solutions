@@ -64,6 +64,11 @@ export const summonsConfig = ({ filingNumber, orderNumber, orderId, orderType, t
               label: "Remarks",
               jsonPath: "remarks",
             },
+            {
+              label: "PROCESS_FEE_PAID_ON",
+              jsonPath: "feePaidDate",
+              additionalCustomization: true,
+            },
           ],
 
           enableColumnSort: true,

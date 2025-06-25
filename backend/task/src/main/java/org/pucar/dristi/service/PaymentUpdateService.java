@@ -12,15 +12,16 @@ import net.minidev.json.JSONArray;
 import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
+import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.repository.TaskRepository;
-import org.pucar.dristi.util.DemandUtil;
-import org.pucar.dristi.util.MdmsUtil;
-import org.pucar.dristi.util.WorkflowUtil;
+import org.pucar.dristi.util.*;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.pendingtask.PendingTask;
+import org.pucar.dristi.web.models.pendingtask.PendingTaskRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -30,6 +31,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -48,11 +50,16 @@ public class PaymentUpdateService {
     private final MdmsUtil mdmsUtil;
     private final ObjectMapper objectMapper;
     private final DemandUtil demandUtil;
+    private final EtreasuryUtil etreasuryUtil;
+    private final PendingTaskUtil pendingTaskUtil;
+    private final CaseUtil caseUtil;
+    private final AdvocateUtil advocateUtil;
+    private final JsonUtil jsonUtil;
 
     private ServiceRequestRepository serviceRequestRepository;
 
     @Autowired
-    public PaymentUpdateService(WorkflowUtil workflowUtil, ObjectMapper mapper, TaskRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository, DemandUtil demandUtil) {
+    public PaymentUpdateService(WorkflowUtil workflowUtil, ObjectMapper mapper, TaskRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository, DemandUtil demandUtil, EtreasuryUtil etreasuryUtil, PendingTaskUtil pendingTaskUtil, CaseUtil caseUtil, AdvocateUtil advocateUtil, JsonUtil jsonUtil) {
         this.workflowUtil = workflowUtil;
         this.mapper = mapper;
         this.repository = repository;
@@ -62,6 +69,11 @@ public class PaymentUpdateService {
         this.objectMapper = objectMapper;
         this.serviceRequestRepository = serviceRequestRepository;
         this.demandUtil = demandUtil;
+        this.etreasuryUtil = etreasuryUtil;
+        this.pendingTaskUtil = pendingTaskUtil;
+        this.caseUtil = caseUtil;
+        this.advocateUtil = advocateUtil;
+        this.jsonUtil = jsonUtil;
     }
 
     public void process(Map<String, Object> record) {
@@ -75,7 +87,7 @@ public class PaymentUpdateService {
             String tenantId = paymentRequest.getPayment().getTenantId();
 
             for (PaymentDetail paymentDetail : paymentDetails) {
-                if (paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskPaymentBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskSummonBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskNoticeBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskWarrantBusinessServiceName())) {
+                if (paymentDetail.getBusinessService().equals(config.getTaskGenericBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskPaymentBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskSummonBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskNoticeBusinessServiceName()) || paymentDetail.getBusinessService().equalsIgnoreCase(config.getTaskWarrantBusinessServiceName())) {
                     updateWorkflowForTaskPayment(requestInfo, tenantId, paymentDetail);
                 }
             }
@@ -169,6 +181,7 @@ public class PaymentUpdateService {
                             config.getTaskSummonBusinessServiceName(), workflow, config.getTaskSummonBusinessName());
                     task.setStatus(status);
                     updateDeliveryChannels(task);
+                    createPendingTaskForRPAD(task, requestInfo);
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
@@ -181,6 +194,7 @@ public class PaymentUpdateService {
                             config.getTaskNoticeBusinessServiceName(), workflow, config.getTaskNoticeBusinessName());
                     task.setStatus(status);
                     updateDeliveryChannels(task);
+                    createPendingTaskForRPAD(task, requestInfo);
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
@@ -193,12 +207,13 @@ public class PaymentUpdateService {
                             config.getTaskWarrantBusinessServiceName(), workflow, config.getTaskWarrantBusinessName());
                     task.setStatus(status);
                     updateDeliveryChannels(task);
+                    createPendingTaskForRPAD(task, requestInfo);
 
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
                 }
                 case JOIN_CASE_PAYMENT -> {
-                    WorkflowObject  workflow = new WorkflowObject();
+                    WorkflowObject workflow = new WorkflowObject();
                     workflow.setAction(MAKE_PAYMENT);
                     task.setWorkflow(workflow);
 
@@ -214,14 +229,73 @@ public class PaymentUpdateService {
                     updatePaymentStatusOfRemainingPendingPaymentTasks(taskRequest, tenantId, task.getFilingNumber());
 
                 }
+                case GENERIC -> {
+                    WorkflowObject workflow = new WorkflowObject();
+                    workflow.setAction(MAKE_PAYMENT);
+                    task.setWorkflow(workflow);
+                    String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
+                            config.getTaskGenericBusinessServiceName(), workflow, config.getTaskGenericBusinessName());
+                    task.setStatus(status);
+                    Document document = getPaymentReceipt(requestInfo, task);
+                    if (document != null) {
+                        task.getDocuments().add(document);
+                    }
+                    TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
+                    producer.push(config.getTaskUpdateTopic(), taskRequest);
+                }
             }
         }
+    }
+
+    private Document getPaymentReceipt(RequestInfo requestInfo, Task task) {
+        try {
+            JsonNode genericTaskDetails = extractGenericTaskDetails(task);
+            String consumerCode = extractConsumerCode(genericTaskDetails);
+
+            String billId = getValidBillResponse(requestInfo, task.getTenantId(), consumerCode);
+
+            JsonNode paymentReceipt = Optional.ofNullable(etreasuryUtil.getPaymentReceipt(requestInfo, billId))
+                    .filter(node -> !node.isNull())
+                    .orElse(null);
+            if (paymentReceipt == null) {
+                return null;
+            }
+            return mapper.convertValue(paymentReceipt, Document.class);
+        } catch (CustomException e) {
+            log.error("Error fetching payment receipt for task: {}", task.getTaskNumber(), e);
+            throw new CustomException("PAYMENT_RECEIPT_ERROR", "Error fetching payment receipt for task: " + task.getTaskNumber());
+        }
+    }
+
+    private JsonNode extractGenericTaskDetails(Task task) {
+        return Optional.ofNullable(mapper.convertValue(task.getTaskDetails(), JsonNode.class))
+                .map(details -> details.get("genericTaskDetails"))
+                .filter(node -> !node.isNull())
+                .orElseThrow(() -> new CustomException("INVALID_TASK_DETAILS", "genericTaskDetails missing"));
+    }
+
+    private String extractConsumerCode(JsonNode genericTaskDetails) {
+        return Optional.ofNullable(genericTaskDetails.get("consumerCode"))
+                .map(JsonNode::textValue)
+                .filter(text -> !text.isBlank())
+                .orElseThrow(() -> new CustomException("INVALID_CONSUMER_CODE", "Consumer code missing or blank in genericTaskDetails"));
+    }
+
+    private String getValidBillResponse(RequestInfo requestInfo, String tenantId, String consumerCode) {
+        BillResponse response = getBill(requestInfo, tenantId, Set.of(consumerCode), config.getTaskGenericBusinessServiceName());
+
+        List<Bill> bills = Optional.ofNullable(response)
+                .map(BillResponse::getBill)
+                .filter(list -> !list.isEmpty())
+                .orElseThrow(() -> new CustomException("BILL_NOT_FOUND", "No bill found for consumer code: " + consumerCode));
+
+        return bills.get(0).getId();
     }
 
     public BillResponse getBill(RequestInfo requestInfo, String tenantId, Set<String> consumerCodes, String businessService) {
         String uri = buildSearchBillURI(tenantId, consumerCodes, businessService);
 
-        org.egov.common.contract.models.RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(requestInfo).build();
+        RequestInfoWrapper requestInfoWrapper = RequestInfoWrapper.builder().requestInfo(requestInfo).build();
 
         Object response = serviceRequestRepository.fetchResult(new StringBuilder(uri), requestInfoWrapper);
 
@@ -296,16 +370,16 @@ public class PaymentUpdateService {
 
         tasks.forEach(task -> {
 
-                WorkflowObject workflow = new WorkflowObject();
-                workflow.setAction(REJECT);
-                task.setWorkflow(workflow);
-                String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
-                        config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskPaymentBusinessName());
-                log.info("Rejecting remaining pending payment task for advocate by system :: {}", advocateUuid);
-                task.setStatus(status);
+            WorkflowObject workflow = new WorkflowObject();
+            workflow.setAction(REJECT);
+            task.setWorkflow(workflow);
+            String status = workflowUtil.updateWorkflowStatus(requestInfo, tenantId, task.getTaskNumber(),
+                    config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskPaymentBusinessName());
+            log.info("Rejecting remaining pending payment task for advocate by system :: {}", advocateUuid);
+            task.setStatus(status);
 
-                TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
-                producer.push(config.getTaskUpdateTopic(), taskRequest);
+            TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
+            producer.push(config.getTaskUpdateTopic(), taskRequest);
         });
         searchAndCancelTaskRelatedDemands(tenantId, tasks, requestInfo);
     }
@@ -321,13 +395,13 @@ public class PaymentUpdateService {
         if (demandResponse != null && !CollectionUtils.isEmpty(demandResponse.getDemands())) {
             for (Demand demand : demandResponse.getDemands()) {
                 demand.setStatus(Demand.StatusEnum.CANCELLED);
-                }
+            }
             DemandRequest demandRequest = new DemandRequest();
             demandRequest.setRequestInfo(requestInfo);
             demandRequest.setDemands(demandResponse.getDemands());
             DemandResponse updatedDemandResponse = demandUtil.updateDemand(demandRequest);
             log.info("Updating demand status to cancelled for consumer codes :: {}", consumerCodes);
-            }
+        }
     }
 
 
@@ -357,5 +431,142 @@ public class PaymentUpdateService {
         deliveryChannels.put("feePaidDate", todayDate);
         task.setTaskDetails(taskDetails);
     }
+
+    public void createPendingTaskForRPAD(Task task, RequestInfo requestInfo) {
+        if ((task.getTaskType().equalsIgnoreCase(SUMMON) || task.getTaskType().equalsIgnoreCase(WARRANT)
+                || task.getTaskType().equalsIgnoreCase(NOTICE)) && (isRPADdeliveryChannel(task))) {
+            createPendingTaskForEnvelope(task, requestInfo);
+        }
+    }
+
+    public boolean isRPADdeliveryChannel(Task task) {
+        JsonNode taskDetails = objectMapper.convertValue(task.getTaskDetails(), JsonNode.class);
+
+        // Check if deliveryChannels exists
+        ObjectNode deliveryChannels = null;
+        if (taskDetails.has("deliveryChannels") && !taskDetails.get("deliveryChannels").isNull()) {
+            deliveryChannels = (ObjectNode) taskDetails.get("deliveryChannels");
+        }
+
+        if (deliveryChannels == null) {
+            return false;
+        }
+
+        if (deliveryChannels.has(CHANNEL_CODE) && !deliveryChannels.get(CHANNEL_CODE).isNull()) {
+            String channelCode = deliveryChannels.get(CHANNEL_CODE).textValue();
+            return channelCode != null && channelCode.equalsIgnoreCase(RPAD);
+        }
+        return false;
+    }
+
+    private void createPendingTaskForEnvelope(Task task, RequestInfo requestInfo) {
+
+        try {
+            TaskRequest taskRequest = TaskRequest.builder()
+                    .requestInfo(requestInfo)
+                    .task(task)
+                    .build();
+
+            List<CourtCase> courtCases = caseUtil.getCaseDetails(taskRequest);
+            if (CollectionUtils.isEmpty(courtCases)) {
+                log.error("Error while creating pending task for envelope submission, courtCase not found");
+                return;
+            }
+
+            CourtCase courtCase = courtCases.get(0);
+            Map<String, List<String>> advocateMapping = advocateUtil.getLitigantAdvocateMapping(courtCase);
+            Map<String, List<POAHolder>> poaMapping = caseUtil.getLitigantPoaMapping(courtCase);
+
+            List<Party> complainants = caseUtil.getRespondentOrComplainant(courtCase, "complainant");
+            List<String> assigneeUUIDs = collectAssigneeUUIDs(complainants, advocateMapping, poaMapping);
+
+            List<User> uniqueAssignees = assigneeUUIDs.stream()
+                    .distinct()
+                    .map(uuid -> User.builder().uuid(uuid).build())
+                    .collect(Collectors.toList());
+
+            PendingTask pendingTask = buildPendingTask(task, courtCase, uniqueAssignees);
+            pendingTaskUtil.createPendingTask(
+                    PendingTaskRequest.builder()
+                            .requestInfo(requestInfo)
+                            .pendingTask(pendingTask)
+                            .build()
+            );
+        } catch (Exception e) {
+            log.error("Error while creating pending task for envelope submission", e);
+            throw new CustomException("CREATE_PENDING_TASK_ERROR", "Error while creating pending task for envelope submission");
+        }
+    }
+
+    private List<String> collectAssigneeUUIDs(
+            List<Party> complainants,
+            Map<String, List<String>> advocateMapping,
+            Map<String, List<POAHolder>> poaMapping
+    ) {
+        List<String> assigneeUUIDs = new ArrayList<>();
+
+        for (Party party : complainants) {
+            String litigantUUID = jsonUtil.getNestedValue(party.getAdditionalDetails(), List.of("uuid"), String.class);
+
+            // Add advocates and the party's own UUID
+            if (advocateMapping.containsKey(litigantUUID)) {
+                assigneeUUIDs.addAll(advocateMapping.get(litigantUUID));
+            }
+            assigneeUUIDs.add(litigantUUID);
+
+            // Add POA holders
+            List<POAHolder> poaHolders = poaMapping.get(party.getIndividualId());
+            if (poaHolders != null) {
+                for (POAHolder holder : poaHolders) {
+                    String poaUUID = jsonUtil.getNestedValue(holder.getAdditionalDetails(), List.of("uuid"), String.class);
+                    if (poaUUID != null) {
+                        assigneeUUIDs.add(poaUUID);
+                    }
+                }
+            }
+        }
+
+        return assigneeUUIDs;
+    }
+
+    private PendingTask buildPendingTask(Task task, CourtCase courtCase, List<User> assignees) {
+
+        String taskType = task.getTaskType();
+
+        String entityType = getEntityType(taskType);
+
+        ZoneId zoneId = ZoneId.of("Asia/Kolkata");
+        ZonedDateTime istTime = ZonedDateTime.now(zoneId);
+        long currentISTMillis = istTime.toInstant().toEpochMilli();
+
+        long sla = config.getEnvelopeSlaValue() + currentISTMillis;
+
+
+        return PendingTask.builder()
+                .name(PENDING_ENVELOPE_SUBMISSION)
+                .referenceId(MANUAL + task.getTaskNumber() + PENDING_ENVELOPE_SUBMISSION)
+                .entityType(entityType)
+                .status(PENDING_ENVELOPE_SUBMISSION)
+                .assignedTo(assignees)
+                .cnrNumber(courtCase.getCnrNumber())
+                .filingNumber(courtCase.getFilingNumber())
+                .caseId(courtCase.getId().toString())
+                .caseTitle(courtCase.getCaseTitle())
+                .isCompleted(false)
+                .stateSla(sla)
+                .screenType("home")
+                .build();
+    }
+
+    private String getEntityType(String taskType) {
+
+        return switch (taskType) {
+            case SUMMON -> "task-summons";
+            case WARRANT -> "task-warrant";
+            case NOTICE -> "task-notice";
+            default -> null;
+        };
+    }
+
 
 }

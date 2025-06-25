@@ -35,21 +35,30 @@ const ProjectBreadCrumb = ({ location }) => {
     userType = userInfo?.type === "CITIZEN" ? "citizen" : "employee";
   }
   const { t } = useTranslation();
+
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const crumbs = useMemo(
     () => [
       {
-        path: isEpostUser ? pathname : `/${window?.contextPath}/${userType}/home/home-pending-task`,
+        path: isEpostUser ? pathname : homePath,
         content: t("ES_COMMON_HOME"),
         show: true,
       },
-      
+
       // Conditionally add the View Case breadcrumb if case data is available in context
-      ...(caseId && filingNumber && !pathname.includes("Summons&Notice")?
-        [{
-        path: `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`,
-        content: t("VIEW_CASE"),
-        show: true,
-      }]:[]),
+      ...(caseId && filingNumber && !pathname.includes("Summons&Notice")
+        ? [
+            {
+              path: `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`,
+              content: t("VIEW_CASE"),
+              show: true,
+            },
+          ]
+        : []),
       {
         path: `/${window?.contextPath}/${userType}`,
         content: t(location.pathname.split("/").pop()),
@@ -68,11 +77,17 @@ const App = ({ path, stateCode, userType, tenants }) => {
   const userInfo = Digit?.UserService?.getUser()?.info;
   const hasCitizenRoute = useMemo(() => path?.includes(`/${window?.contextPath}/citizen`), [path]);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
 
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   if (isCitizen && !hasCitizenRoute && Boolean(userInfo)) {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
   } else if (!isCitizen && hasCitizenRoute && Boolean(userInfo)) {
-    history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+    if (isJudge || isTypist || isBenchClerk) {
+      history.push(`/${window?.contextPath}/employee/home/home-screen`);
+    } else history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
   }
 
   return (

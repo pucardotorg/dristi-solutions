@@ -54,5 +54,7 @@ public class ServiceConstants {
     public static final String CASE_TYPE_ST = "ST";
     public static final String CASE_TYPE_EXCEPTION = "CASE_TYPE_EXCEPTION";
 
+    public static final String HEARING_BUSINESS_SERVICE = "hearing-default";
+
 
 }

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import jakarta.servlet.http.Part;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +14,6 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.common.models.individual.AdditionalFields;
-import org.egov.common.models.individual.Address;
 import org.egov.common.models.individual.Field;
 import org.egov.common.models.individual.Identifier;
 import org.egov.tracer.model.CustomException;
@@ -408,6 +406,12 @@ public class CaseService {
             // conditional enrichment using strategy
             enrichmentService.enrichCourtCase(caseRequest);
             String previousStatus = caseRequest.getCases().getStatus();
+            if(PENDING_RE_SIGN.equals(previousStatus)) {
+                Calculation calculation = compareCalculationAndCreateDemand(caseRequest);
+                if(calculation != null) {
+                    caseRequest.getCases().getWorkflow().setAction(UPLOAD_WITH_PAYMENT);
+                }
+            }
             workflowService.updateWorkflowStatus(caseRequest);
 
 
@@ -422,8 +426,13 @@ public class CaseService {
 
             if (lastSigned) {
                 log.info("Last e-sign for case {}", caseRequest.getCases().getId());
+                Calculation calculation = compareCalculationAndCreateDemand(caseRequest);
                 caseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(caseRequest.getCases().getTenantId()).build());
-                caseRequest.getCases().getWorkflow().setAction(E_SIGN_COMPLETE);
+                if(calculation != null){
+                    caseRequest.getCases().getWorkflow().setAction(E_SIGN_COMPLETE_WITH_PAYMENT);
+                } else {
+                    caseRequest.getCases().getWorkflow().setAction(E_SIGN_COMPLETE);
+                }
                 log.info("Updating workflow status for case {} in last e-sign", caseRequest.getCases().getId());
                 workflowService.updateWorkflowStatus(caseRequest);
             }
@@ -2616,29 +2625,35 @@ public class CaseService {
                         individualDetailsNode.put("individualId", joinCaseLitigant.getIndividualId());
                         respondentVerificationNode.set("individualDetails", individualDetailsNode);
 
-                        List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, joinCaseLitigant.getIndividualId());
-                        Individual individual = individualsList.get(0);
+// TO DO -- When accused joins the case, adding address, and mobile number in respondent details along wih old details, To be implemented later after discussion
 
-                        if (dataNode.has("addressDetails") && dataNode.get("addressDetails").isArray()) {
-                            ArrayNode addressDetailsArray = (ArrayNode) dataNode.get("addressDetails");
-
-                            ObjectNode newAddressDetails = objectMapper.createObjectNode();
-
-                            if(individual.getAddress()!=null && !individual.getAddress().isEmpty()) {
-                                ObjectNode addressDetailsObj = objectMapper.createObjectNode();
-                                Address address = individual.getAddress().get(0);
-                                addressDetailsObj.put("pincode",address.getPincode());
-                                addressDetailsObj.put("city", address.getCity());
-                                 if (address.getLocality() != null && address.getLocality().getName() != null) {
-                                     addressDetailsObj.put("locality", address.getLocality().getName());
-                                 }
-                                newAddressDetails.set("addressDetails", addressDetailsObj);
-                                newAddressDetails.put("id", UUID.randomUUID().toString());
-
-                                addressDetailsArray.add(newAddressDetails);
-                            }
-                        }
-                        updateMobilenumber(dataNode,individual);
+//                        List<Individual> individualsList = individualService.getIndividualsByIndividualId(requestInfo, joinCaseLitigant.getIndividualId());
+//                        Individual individual = individualsList.get(0);
+//
+//                        if (dataNode.has("addressDetails") && dataNode.get("addressDetails").isArray()) {
+//                            ArrayNode addressDetailsArray = (ArrayNode) dataNode.get("addressDetails");
+//
+//                            ObjectNode newAddressDetails = objectMapper.createObjectNode();
+//
+//                            if(individual.getAddress()!=null && !individual.getAddress().isEmpty()) {
+//                                ObjectNode addressDetailsObj = objectMapper.createObjectNode();
+//                                Address address = individual.getAddress().get(0);
+//                                addressDetailsObj.put("pincode",address.getPincode());
+//                                addressDetailsObj.put("state",address.getAddressLine1());
+//                                addressDetailsObj.put("district",address.getAddressLine2());
+//                                addressDetailsObj.put("city", address.getCity());
+//                                 if (address.getLocality() != null && address.getLocality().getName() != null) {
+//                                     addressDetailsObj.put("locality", address.getLocality().getName());
+//                                 }
+//                                newAddressDetails.set("addressDetails", addressDetailsObj);
+//                                newAddressDetails.put("id", UUID.randomUUID().toString());
+//
+//                                addressDetailsArray.add(newAddressDetails);
+//                            }
+//                        }
+//                        if(individual.getMobileNumber()!=null && !individual.getMobileNumber().isEmpty()) {
+//                            updateMobilenumber(dataNode,individual);
+//                        }
 
                         // Insert respondentVerification into the dataNode
                         dataNode.set("respondentVerification", respondentVerificationNode);
@@ -4290,7 +4305,7 @@ public class CaseService {
                 boolean isReasonDocumentAlreadySubmitted = evidenceValidator.validateReasonDocumentCreation(courtCase, requestInfo, joinCaseRequest.getReasonDocument());
 
                 if (!isReasonDocumentAlreadySubmitted) {
-                    EvidenceRequest evidenceRequest = enrichEvidenceCreateRequestForReasonDocument(courtCase, joinCaseRequest.getReasonDocument(), requestInfo);
+                    EvidenceRequest evidenceRequest = enrichEvidenceCreateRequestForReasonDocument(courtCase, joinCaseRequest, requestInfo);
                     evidenceUtil.createEvidence(evidenceRequest);
                 }
             }
@@ -4784,29 +4799,34 @@ public class CaseService {
                         .build()).build();
     }
 
-    private EvidenceRequest enrichEvidenceCreateRequestForReasonDocument(CourtCase courtCase, ReasonDocument reasonDocument, RequestInfo requestInfo) {
+    private EvidenceRequest enrichEvidenceCreateRequestForReasonDocument(CourtCase courtCase, JoinCaseTaskRequest joinCaseTaskRequest, RequestInfo requestInfo) {
+
+        ReasonDocument reasonDocument = joinCaseTaskRequest.getReasonDocument();
+
+        String sourceType = (joinCaseTaskRequest.getReplacementDetails().isEmpty()
+                ? null
+                : (joinCaseTaskRequest.getReplacementDetails().get(0).getLitigantDetails().getPartyType().contains("complainant")
+                ? COMPLAINANT
+                : ACCUSED));
 
         Document document = Document.builder()
                 .fileStore(reasonDocument.getFileStore())
                 .build();
         org.egov.common.contract.models.Document workflowDocument = objectMapper.convertValue(document, org.egov.common.contract.models.Document.class);
 
-
-        WorkflowObject workflowObject = new WorkflowObject();
-        workflowObject.setAction("TYPE DEPOSITION");
-        workflowObject.setDocuments(Collections.singletonList(workflowDocument));
-
         return EvidenceRequest.builder().requestInfo(requestInfo)
                 .artifact(Artifact.builder()
                         .artifactType(REASON_DOCUMENT)
-                        .filingType("CASE_FILING")
+                        .filingType(DIRECT)
                         .filingNumber(courtCase.getFilingNumber())
+                        .sourceType(sourceType)
                         .comments(new ArrayList<>())
                         .isEvidence(false)
+                        .isVoid(false)
+                        .status(SUBMITTED)
                         .caseId(courtCase.getId().toString())
                         .tenantId(courtCase.getTenantId())
                         .file(document)
-                        .workflow(workflowObject)
                         .build()).build();
     }
 
@@ -4906,5 +4926,173 @@ public class CaseService {
         }
 
         return responseMap;
+    }
+
+    public Calculation compareCalculationAndCreateDemand(@Valid CaseRequest body) {
+        try {
+            log.info("operation=compareCalculationAndCreateDemand, status=IN_PROGRESS, caseId: {}", body.getCases().getId());
+            CalculationRes newCalculation = getCalculation(body.getCases(), body.getRequestInfo());
+
+            String lastSubmissionConsumerCode = getLastSubmissionConsumerCode(body) != null ? getLastSubmissionConsumerCode(body) : body.getCases().getFilingNumber()+"_CASE_FILING";
+            Calculation oldCalculation = etreasuryUtil.getHeadBreakupCalculation(lastSubmissionConsumerCode, body.getRequestInfo());
+
+            Calculation calculation = getCalculationDifference(newCalculation, oldCalculation);
+
+            if(calculation != null) {
+                createDemandForCase(body, calculation, newCalculation.getCalculation().get(0), lastSubmissionConsumerCode);
+            }
+            log.info("operation=compareCalculationAndCreateDemand, status=SUCCESS, caseId: {}", body.getCases().getId());
+            return calculation;
+        } catch (Exception e) {
+            log.error("operation=compareCalculationAndCreateDemand, status=ERROR, caseId: {}, error: {}", body.getCases().getId(), e.getMessage());
+            throw new CustomException("ERROR_CALCULATION_CASE", "Error while resubmitting case with id: " + body.getCases().getId() + ", error: " + e.getMessage());
+        }
+    }
+
+    private CalculationRes getCalculation(CourtCase courtCase, RequestInfo requestInfo) {
+        EFillingCalculationCriteria calculationCriteria = EFillingCalculationCriteria.builder()
+                .tenantId(courtCase.getTenantId())
+                .caseId(courtCase.getId().toString())
+                .filingNumber(courtCase.getFilingNumber())
+                .build();
+
+        calculationCriteria.setCheckAmount(getChequeAmount(courtCase));
+        calculationCriteria.setIsDelayCondonation(isDelayCondonation(courtCase));
+
+        EFillingCalculationRequest calculationRequest = EFillingCalculationRequest.builder()
+                .requestInfo(requestInfo)
+                .calculationCriteria(Collections.singletonList(calculationCriteria))
+                .build();
+
+        return paymentCalculaterUtil.callPaymentCalculator(calculationRequest);
+    }
+
+
+    private Calculation getCalculationDifference(CalculationRes newCalculation, Calculation oldCalculation) {
+        Calculation newCalc = newCalculation.getCalculation().get(0);
+
+        List<BreakDown> newBreakDowns = newCalc.getBreakDown();
+        List<BreakDown> oldBreakDowns = oldCalculation.getBreakDown();
+
+        if(newCalc.getTotalAmount()> oldCalculation.getTotalAmount()) {
+
+            Map<String, BreakDown> oldBreakDownMap = oldBreakDowns.stream()
+                    .collect(Collectors.toMap(BreakDown::getCode, Function.identity()));
+            List<BreakDown> differenceBreakDowns = new ArrayList<>();
+
+            for (int i = 0; i < newBreakDowns.size(); i++) {
+                BreakDown newBreakDown = newBreakDowns.get(i);
+                BreakDown oldBreakDown = oldBreakDownMap.get(newBreakDown.getCode());
+
+                if (newBreakDown.getAmount() > oldBreakDown.getAmount()) {
+                    BreakDown differenceItem = new BreakDown();
+                    differenceItem.setCode(newBreakDown.getCode());
+                    differenceItem.setType(newBreakDown.getType());
+                    differenceItem.setAmount(newBreakDown.getAmount() - oldBreakDown.getAmount());
+                    differenceBreakDowns.add(differenceItem);
+                }
+            }
+
+            if (!differenceBreakDowns.isEmpty()) {
+                Calculation difference = new Calculation();
+                difference.setTenantId(newCalc.getTenantId());
+                difference.setTotalAmount(newCalc.getTotalAmount() - oldCalculation.getTotalAmount());
+                difference.setBreakDown(differenceBreakDowns);
+                return difference;
+            }
+        }
+        return null;
+    }
+
+    private void createDemandForCase(@Valid CaseRequest body, Calculation calculation, Calculation finalCalculation, String lastSubmissionConsumerCode) {
+        try {
+            DemandCreateRequest demandCreateRequest  = DemandCreateRequest.builder()
+                    .requestInfo(body.getRequestInfo())
+                    .filingNumber(body.getCases().getFilingNumber())
+                    .consumerCode(updateAndGetConsumerCode(body))
+                    .tenantId(body.getCases().getTenantId())
+                    .entityType(config.getCaseBusinessServiceName())
+                    .calculation(Collections.singletonList(calculation))
+                    .finalCalcPostResubmission(finalCalculation)
+                    .lastSubmissionConsumerCode(lastSubmissionConsumerCode)
+                    .build();
+
+            etreasuryUtil.createDemand(demandCreateRequest);
+        } catch (Exception e) {
+            log.error("Error while creating demand for caseId: {}, error: {}", body.getCases().getId(), e.getMessage());
+            throw new CustomException("ERROR_CREATING_DEMAND", "Error while creating demand for caseId: " + body.getCases().getId() + ", error: " + e.getMessage());
+        }
+    }
+
+    private String getLastSubmissionConsumerCode(CaseRequest body) {
+        JsonNode additionalDetails = objectMapper.convertValue(body.getCases().getAdditionalDetails(), JsonNode.class);
+
+        if (additionalDetails != null && additionalDetails.has("lastSubmissionConsumerCode")) {
+            return additionalDetails.get("lastSubmissionConsumerCode").textValue();
+        }
+        return null;
+    }
+
+    private String updateAndGetConsumerCode(CaseRequest body) {
+        JsonNode additionalDetails = objectMapper.convertValue(body.getCases().getAdditionalDetails(), JsonNode.class);
+        String baseConsumerCode = body.getCases().getFilingNumber() + "_CASE_FILING";
+
+        String newConsumerCode;
+        int nextSuffix = 1;
+
+        if (additionalDetails != null && additionalDetails.has("lastSubmissionConsumerCode")) {
+            String lastConsumerCode = getLastSubmissionConsumerCode(body);
+            if (lastConsumerCode != null && lastConsumerCode.startsWith(baseConsumerCode)) {
+                nextSuffix = getNextSuffix(lastConsumerCode, baseConsumerCode);
+            }
+        }
+        newConsumerCode = baseConsumerCode + "-" + nextSuffix;
+        ((ObjectNode) additionalDetails).put("lastSubmissionConsumerCode", newConsumerCode);
+
+        body.getCases().setAdditionalDetails(objectMapper.convertValue(additionalDetails, Map.class));
+        return newConsumerCode;
+    }
+
+
+    private static int getNextSuffix(String lastConsumerCode, String baseConsumerCode) {
+        String suffixPart = lastConsumerCode.substring(baseConsumerCode.length());
+
+        int nextSuffix = 1; // Default if no suffix found
+
+        if (suffixPart.startsWith("-")) {
+            try {
+                int currentSuffix = Integer.parseInt(suffixPart.substring(1));
+                nextSuffix = currentSuffix + 1;
+            } catch (NumberFormatException e) {
+                // If suffix is not a valid number, reset to 1
+                nextSuffix = 1;
+            }
+        }
+        return nextSuffix;
+    }
+
+
+    private Boolean isDelayCondonation(CourtCase existingCase) {
+        JsonNode caseDetails = objectMapper.convertValue(existingCase.getCaseDetails(), JsonNode.class);
+        if(caseDetails == null || caseDetails.get("delayApplications") == null) {
+            return false;
+        }
+        return !caseDetails.get("delayApplications").get("formdata").get(0).get("data").get("delayCondonationType").get("code").textValue().equals("YES");
+    }
+
+    private Double getChequeAmount(CourtCase courtCase) {
+        JsonNode caseDetails = objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
+        if(caseDetails == null || caseDetails.get("chequeDetails") == null){
+            return 0.0;
+        }
+        JsonNode amountNode = caseDetails.get("chequeDetails")
+                .get("formdata")
+                .get(0)
+                .get("data")
+                .get("chequeAmount");
+
+        return amountNode != null && amountNode.isTextual()
+                ? Double.parseDouble(amountNode.asText())
+                : 0.0;
     }
 }

@@ -76,6 +76,14 @@ function AdmissionActionModal({
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const courtId = localStorage.getItem("courtId");
 
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+
   const closeToast = () => {
     setShowErrorToast(false);
   };
@@ -183,11 +191,11 @@ function AdmissionActionModal({
             `/${window?.contextPath}/employee/dristi/admission?filingNumber=${res?.criteria?.[0]?.responseList?.[0]?.filingNumber}&caseId=${res?.criteria?.[0]?.responseList?.[0]?.id}`
           );
         } else {
-          history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+          history.push(homePath);
         }
       })
       .catch(() => {
-        history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
+        history.push(homePath);
       });
   };
 

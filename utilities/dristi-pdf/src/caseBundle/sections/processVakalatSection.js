@@ -59,8 +59,9 @@ async function processVakalatSection(
             heading: messagesMap["PIP_AFFIDAVIT_HEADING"],
             docketApplicationType: "PIP AFFIDAVIT",
             representingFullName: litigant.additionalDetails.fullName,
-            advocateFullName: litigant.additionalDetails.fullName,
+            nameOfPartyFiling: litigant.additionalDetails.fullName,
             dateOfAddition: litigant.auditDetails.createdTime,
+            docketCounselFor: "",
           });
         }
         for (const representative of litigant.representatives) {
@@ -80,15 +81,20 @@ async function processVakalatSection(
                 section.Items
               }`,
               representingFullName: litigant.additionalDetails.fullName,
-              advocateFullName: representative.additionalDetails.advocateName,
+              nameOfPartyFiling: representative.additionalDetails.advocateName,
               dateOfAddition: representative.auditDetails.createdTime,
+              docketCounselFor: `COUNSEL FOR THE ${
+                litigant.partyType.includes("complainant")
+                  ? "COMPLAINANT"
+                  : "ACCUSED"
+              } - ${litigant.additionalDetails.fullName}`,
             });
           } else {
-            // If already exists, append advocateFullName (avoid duplicates)
+            // If already exists, append nameOfPartyFiling (avoid duplicates)
             const existing = vakalatMap.get(fileStoreId);
             const newName = representative.additionalDetails.advocateName;
-            if (!existing.advocateFullName.includes(newName)) {
-              existing.advocateFullName += `, ${newName}`;
+            if (!existing.nameOfPartyFiling.includes(newName)) {
+              existing.nameOfPartyFiling += `, ${newName}`;
             }
           }
         }
@@ -97,7 +103,7 @@ async function processVakalatSection(
 
     const vakalats = Array.from(vakalatMap.values());
 
-    vakalats.sort((a, b) => b.dateOfAddition - a.dateOfAddition);
+    vakalats.sort((a, b) => a.dateOfAddition - b.dateOfAddition);
 
     const vakalatLineItems = await Promise.all(
       vakalats.map(async (vakalat, index) => {
@@ -109,11 +115,8 @@ async function processVakalatSection(
             vakalat.fileStoreId,
             {
               docketApplicationType: vakalat.docketApplicationType,
-              docketCounselFor: vakalat.partyType.includes("complainant")
-                ? "COMPLAINANT"
-                : "ACCUSED",
-              docketNameOfFiling: vakalat.representingFullName,
-              docketNameOfAdvocate: vakalat.advocateFullName,
+              docketCounselFor: vakalat.docketCounselFor,
+              docketNameOfFiling: vakalat.nameOfPartyFiling,
               docketDateOfSubmission: new Date(
                 vakalat.dateOfAddition
               ).toLocaleDateString("en-IN"),

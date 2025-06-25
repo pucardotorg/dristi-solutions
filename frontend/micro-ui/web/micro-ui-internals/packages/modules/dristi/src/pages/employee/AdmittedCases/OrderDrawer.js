@@ -26,7 +26,6 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
     botdText: "",
     hearingType: {},
     hearingDate: "",
-    isCaseDisposed: {},
     partiesToAttendHearing: [],
   });
   const [orderError, setOrderError] = useState({
@@ -96,7 +95,6 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
         botdText: order?.additionalDetails?.formdata?.hearingSummary?.text,
         hearingType: order?.additionalDetails?.formdata?.hearingPurpose,
         hearingDate: hearingDate,
-        isCaseDisposed: {},
         partiesToAttendHearing: order?.additionalDetails?.formdata?.namesOfPartiesRequired,
       });
     }
@@ -205,11 +203,10 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
     );
   }, [caseDetails]);
 
-  const validateOrderData = useCallback((orderData) => {
+  const validateOrderData = useCallback((orderData, type) => {
     const errors = {};
     if (!orderData?.botdText?.trim() && !orderData?.botdText?.trim()?.length < 2) errors.botdText = "CORE_REQUIRED_FIELD_ERROR";
-    if (!orderData?.attendees?.length) errors.attendees = "CORE_REQUIRED_FIELD_ERROR";
-    if (orderData?.isCaseDisposed?.value !== "CASE_DISPOSED") {
+    if (type === "add-other-items") {
       if (!orderData?.hearingType?.code) errors.hearingType = "CORE_REQUIRED_FIELD_ERROR";
       if (!orderData?.hearingDate) errors.hearingDate = "CORE_REQUIRED_FIELD_ERROR";
       if (!orderData?.partiesToAttendHearing?.length) errors.partiesToAttendHearing = "CORE_REQUIRED_FIELD_ERROR";
@@ -219,7 +216,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
 
   const onSubmit = useCallback(
     async (type) => {
-      const errors = validateOrderData(orderData);
+      const errors = validateOrderData(orderData, type);
       if (Object.keys(errors).length && type === "add-other-items") {
         setOrderError(errors);
         return;
@@ -262,7 +259,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
             await ordersService.updateOrder(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
             setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
           } catch (error) {
-            console.log("error", error);
+            console.error("error", error);
           }
         } else {
           const payload = {
@@ -311,7 +308,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
             await ordersService.createOrder(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
             setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
           } catch (error) {
-            console.log("error", error);
+            console.error("error", error);
           }
         }
       } else if (type === "add-other-items") {
@@ -342,7 +339,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
               `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
             );
           } catch (error) {
-            console.log("error", error);
+            console.error("error", error);
           }
         } else {
           const payload = {
@@ -393,7 +390,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
               `/${window.contextPath}/${userType}/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${response?.order?.orderNumber}`
             );
           } catch (error) {
-            console.log("error", error);
+            console.error("error", error);
           }
         }
       }
@@ -524,34 +521,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
               <h3 className="drawer-sub-section-title">{t("CS_NEXT_HEARING")}</h3>
             </div>
             <div className="drawer-sub-section">
-              <LabelFieldPair className="case-label-field-pair">
-                <RadioButtons
-                  selectedOption={orderData?.isCaseDisposed}
-                  disabled={true}
-                  optionsKey={"label"}
-                  options={[{ label: `CS_CASE_DISPOSED_NEXT_HEARING_SCHEDULED`, value: "CASE_DISPOSED" }]}
-                  additionalWrapperClass={"radio-disabled"}
-                  onSelect={(value) => {
-                    setOrderData((orderData) => ({
-                      ...orderData,
-                      isCaseDisposed: orderData?.isCaseDisposed?.value === value?.value ? {} : value,
-                      hearingDate: null,
-                      hearingType: null,
-                      partiesToAttendHearing: [],
-                    }));
-                    setOrderError((orderError) => ({
-                      ...orderError,
-                      isCaseDisposed: null,
-                      hearingDate: null,
-                      hearingType: null,
-                      partiesToAttendHearing: null,
-                    }));
-                  }}
-                />
-              </LabelFieldPair>
-            </div>
-            <div className="drawer-sub-section">
-              <LabelFieldPair className={`case-label-field-pair ${orderData?.isCaseDisposed?.value === "CASE_DISPOSED" ? "disabled" : ""}`}>
+              <LabelFieldPair className={`case-label-field-pair`}>
                 <CardLabel className="case-input-label">{`${t("HEARING_TYPE")}`}</CardLabel>
                 <Dropdown
                   t={t}
@@ -570,21 +540,19 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
                   }}
                   freeze={true}
                   topbarOptionsClassName={"top-bar-option"}
-                  disable={orderData?.isCaseDisposed?.value === "CASE_DISPOSED"}
                   style={{
                     marginBottom: "1px",
                   }}
                 />
                 {orderError?.hearingType && <CardLabelError style={{ margin: 0, padding: 0 }}> {t(orderError?.hearingType)} </CardLabelError>}
               </LabelFieldPair>
-              <LabelFieldPair className={`case-label-field-pair ${orderData?.isCaseDisposed?.value === "CASE_DISPOSED" ? "disabled" : ""}`}>
+              <LabelFieldPair className={`case-label-field-pair`}>
                 <CardLabel className="case-input-label">{`${t("CS_CASE_SELECT_HEARING_DATE")}`}</CardLabel>
                 <CustomDatePickerV2
                   t={t}
                   config={{
                     type: "component",
                     component: "CustomDatePicker",
-                    disable: orderData?.isCaseDisposed?.value === "CASE_DISPOSED",
                     key: "hearingDate",
                     label: "CS_CASE_SELECT_HEARING_DATE",
                     className: "order-date-picker",
@@ -603,7 +571,7 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
                 />
                 {orderError?.hearingDate && <CardLabelError style={{ margin: 0, padding: 0 }}> {t(orderError?.hearingDate)} </CardLabelError>}
               </LabelFieldPair>
-              <LabelFieldPair className={`case-label-field-pair ${orderData?.isCaseDisposed?.value === "CASE_DISPOSED" ? "disabled" : ""}`}>
+              <LabelFieldPair className={`case-label-field-pair`}>
                 <CardLabel className="case-input-label">{`${t("CS_CASE_PARTIES_ATTEND_HEARING")}`}</CardLabel>
                 <MultiSelectDropdown
                   options={[...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses]}
@@ -623,7 +591,6 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
                   config={{
                     isSelectAll: true,
                   }}
-                  disable={orderData?.isCaseDisposed?.value === "CASE_DISPOSED"}
                   parentRef={targetRef}
                   isOpenAbove={true}
                 />

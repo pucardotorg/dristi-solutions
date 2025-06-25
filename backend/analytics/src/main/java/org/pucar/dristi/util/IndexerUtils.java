@@ -406,6 +406,8 @@ public class IndexerUtils {
                     excludeRolesList.forEach(assignedRoleSet::remove);
                     assignedRole = new JSONArray(assignedRoleSet).toString();
                 }
+            } if(additonalDetailsJsonNode != null && additonalDetailsJsonNode.has("dueDate")) {
+                stateSla = additonalDetailsJsonNode.get("dueDate").asLong();
             }
         } catch (Exception e) {
             log.error("Error while building listener payload");
