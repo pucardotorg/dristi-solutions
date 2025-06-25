@@ -15,8 +15,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-
-
 @Validated
 @Data
 @AllArgsConstructor
@@ -26,6 +24,7 @@ public class JoinCaseRequest {
 
     @JsonProperty("RequestInfo")
     @Valid
+    @NotNull
     private RequestInfo requestInfo = null;
 
     @JsonProperty("accessCode")

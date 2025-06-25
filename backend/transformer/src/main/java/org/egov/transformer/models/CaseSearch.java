@@ -1,6 +1,7 @@
 package org.egov.transformer.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,6 +20,7 @@ public class CaseSearch {
     private String caseTitle = null;
 
     @JsonProperty("filingNumber")
+    @NotBlank
     private String filingNumber = null;
 
     @JsonProperty("courtName")
@@ -28,6 +30,7 @@ public class CaseSearch {
     private String courtId = null;
 
     @JsonProperty("tenantId")
+    @NotBlank
     private String tenantId = null;
 
     @JsonProperty("stNumber")

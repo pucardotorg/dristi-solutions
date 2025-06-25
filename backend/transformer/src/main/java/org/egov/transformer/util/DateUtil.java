@@ -23,10 +23,13 @@ public class DateUtil {
         return LocalDateTime.ofInstant(Instant.ofEpochMilli(startTime), ZoneId.of(properties.getZoneId()));
     }
 
-    public LocalTime getLocalTime(String time) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
-        // Parse the time string into a LocalTime object
+    public LocalTime getLocalTime(String time, String pattern) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(pattern);
         return LocalTime.parse(time, formatter);
+    }
+
+    public LocalTime getLocalTime(String time) {
+        return getLocalTime(time, "HH:mm:ss");
     }
 
     public LocalDateTime getLocalDateTime(LocalDateTime dateTime, String newTime) {
@@ -43,7 +46,7 @@ public class DateUtil {
                 .toLocalDate();
     }
 
-    public Long getEPochFromLocalDate(LocalDate date) {
+    public Long getEpochFromLocalDate(LocalDate date) {
 
         return date.atStartOfDay(ZoneId.of(properties.getZoneId())).toInstant().toEpochMilli();
 
@@ -57,7 +60,7 @@ public class DateUtil {
     public Long getStartOfTheDayForEpoch(Long date) {
         LocalDate localDate = getLocalDateFromEpoch(date);
 
-        return getEPochFromLocalDate(localDate);
+        return getEpochFromLocalDate(localDate);
 
     }
 
@@ -74,8 +77,8 @@ public class DateUtil {
     }
 
     public String getYearFromDate(Long date) {
-        if(date==null) return null;
-        String dateString = String.valueOf(date);
-        return dateString.substring(0, 4);
+        if (date == null) return null;
+        LocalDate localDate = getLocalDateFromEpoch(date);
+        return String.valueOf(localDate.getYear());
     }
 }
