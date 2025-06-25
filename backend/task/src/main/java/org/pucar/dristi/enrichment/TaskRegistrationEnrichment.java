@@ -69,8 +69,6 @@ public class TaskRegistrationEnrichment {
 
             if(JOIN_CASE_PAYMENT.equalsIgnoreCase(task.getTaskType())){
                 enrichConsumerCodeInTaskDetails(task);
-            } if(GENERIC.equals(task.getTaskType())){
-                task.setReferenceId(task.getTaskNumber());
             }
 
         } catch (Exception e) {

@@ -90,7 +90,7 @@
           "id": "25",
           "actor": "Advocate/Litigant",
           "state": "PENDING_PAYMENT",
-          "isgeneric": true,
+          "isgeneric": false,
           "screenType": "home",
           "pendingTask": "Pending task for generic task",
           "workflowModule": "task-generic"
