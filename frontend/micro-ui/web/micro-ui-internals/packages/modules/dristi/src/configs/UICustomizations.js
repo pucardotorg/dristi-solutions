@@ -2024,7 +2024,11 @@ export const UICustomizations = {
           ) : (
             <Link
               style={{ color: "black", textDecoration: "underline" }}
-              to={`/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview&fromHome=true`}
+              to={{
+                pathname: `/${window?.contextPath}/employee/dristi/home/view-case`,
+                search: `?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview&fromHome=true`,
+                state: { homeActiveTab: row?.tab },
+              }}
             >
               {value ? value : "-"}
             </Link>
