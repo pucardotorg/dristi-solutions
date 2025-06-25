@@ -282,6 +282,14 @@ export const DRISTIService = {
       data,
       params,
     }),
+  getTreasuryPaymentBreakup: (data, params) =>
+    Request({
+      url: Urls.dristi.getTreasuryPaymentBreakup,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
   callFetchBill: (data, params) =>
     Request({
       url: Urls.dristi.fetchBill,

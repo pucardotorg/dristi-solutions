@@ -68,6 +68,7 @@ public class OpenapiApiController {
     }
 
 
+
     @PostMapping(value = "/openapi/v1/{tenantId}/case")
     public ResponseEntity<LandingPageCaseListResponse> getLandingPageCaseList(
             @Pattern(regexp = "^[a-zA-Z]{2}$") @Size(min = 2, max = 2)
@@ -78,6 +79,19 @@ public class OpenapiApiController {
     ) {
         LandingPageCaseListResponse landingPageCaseList = openApiService.getLandingPageCaseList(tenantId, landingPageCaseListRequest);
         return new ResponseEntity<>(landingPageCaseList, HttpStatus.OK);
+    }
+
+
+    @PostMapping("/openapi/v1/orders_tasks")
+    public ResponseEntity<OpenApiOrderTaskResponse> getOrdersAndPaymentTaskForCaseDetails(@Parameter(description = "Details for fetching orders and payment tasks in case details page", required = true) @Valid @RequestBody OpenApiOrdersTaskIRequest body) {
+        OpenApiOrderTaskResponse response = openApiService.getOrdersAndPaymentTasks(body);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/openapi/v1/magistrate_name/{tenantId}/{courtId}")
+    public ResponseEntity<String> getMagistrateName(@PathVariable("tenantId") String tenantId, @PathVariable("courtId") String courtId) {
+        String magistrateName = openApiService.getMagistrateName(tenantId,courtId);
+        return new ResponseEntity<>(magistrateName, HttpStatus.OK);
     }
 
 }

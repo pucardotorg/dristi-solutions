@@ -376,6 +376,7 @@ export const configsOrderSection202CRPC = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -539,6 +540,7 @@ export const configsOrderMandatorySubmissions = [
             placeholder: "TYPE_HERE_PLACEHOLDER",
             isOptional: true,
           },
+          hideInForm: true,
         },
       },
     ],
@@ -815,6 +817,7 @@ export const configsOrderSubmissionExtension = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -921,6 +924,7 @@ export const configsOrderTranferToADR = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -1084,6 +1088,7 @@ export const configsScheduleHearingDate = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -1307,6 +1312,7 @@ export const configsScheduleNextHearingDate = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -1355,6 +1361,7 @@ export const configsRejectRescheduleHeadingDate = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -1403,6 +1410,7 @@ export const configsRejectCheckout = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -1540,6 +1548,7 @@ export const configsRescheduleHearingDate = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -1677,6 +1686,7 @@ export const configCheckout = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -1796,6 +1806,7 @@ export const configsInitiateRescheduleHearingDate = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -1889,6 +1900,7 @@ export const configsAssignDateToRescheduledHearing = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -1983,6 +1995,7 @@ export const configsAssignNewHearingDate = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -2326,6 +2339,7 @@ export const configsCaseTransfer = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -2501,6 +2515,7 @@ export const configsCaseTransferAccept = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -2676,6 +2691,7 @@ export const configsCaseTransferReject = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -2837,6 +2853,7 @@ export const configsCaseSettlement = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -2966,6 +2983,7 @@ export const configsIssueSummons = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -3116,6 +3134,7 @@ export const configsIssueNotice = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -3228,6 +3247,7 @@ export const configsIssueOfWarrants = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -3390,6 +3410,7 @@ export const configsCaseWithdrawalAccept = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -3457,6 +3478,7 @@ export const configsCaseWithdrawalReject = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -3848,7 +3870,8 @@ export const configsCreateOrderWarrant = [
       {
         isMandatory: true,
         key: "warrantSubType",
-        type: "dropdown",
+        type: "component",
+        component: "SelectCustomGroupedDropdown",
         label: "WARRANT_SUB_TYPE",
         disable: false,
         populators: {
@@ -3861,21 +3884,22 @@ export const configsCreateOrderWarrant = [
             marginTop: "42px",
             overflowY: "auto",
           },
-          mdmsConfig: {
-            moduleName: "Order",
-            masterName: "warrantSubType",
-            select: `(data) => {
-              const list = data?.Order?.warrantSubType || [];
-              return list.sort((a, b) => {
-                const getPriority = (val) => {
-                  if (val === "NO") return 0;
-                  if (val === "YES") return 2;
-                  return 1;
-                };
-                return getPriority(a.belowOthers) - getPriority(b.belowOthers);
-              });
-            }`,
-          },
+          options: [],
+          // mdmsConfig: {
+          //   moduleName: "Order",
+          //   masterName: "warrantSubType",
+          //   select: `(data) => {
+          //     const list = data?.Order?.warrantSubType || [];
+          //     return list.sort((a, b) => {
+          //       const getPriority = (val) => {
+          //         if (val === "NO") return 0;
+          //         if (val === "YES") return 2;
+          //         return 1;
+          //       };
+          //       return getPriority(a.belowOthers) - getPriority(b.belowOthers);
+          //     });
+          //   }`,
+          // },
         },
       },
       {
@@ -4854,6 +4878,7 @@ export const configsAcceptRejectDelayCondonation = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -4949,6 +4974,7 @@ export const configsAdmitDismissCase = [
               isOptional: true,
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -5019,6 +5045,7 @@ export const replaceAdvocateConfig = [
               isOptional: true,
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -5088,6 +5115,7 @@ export const configsAdmitCase = [
               isOptional: true,
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -5157,6 +5185,7 @@ export const configsDismissCase = [
               isOptional: true,
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -5234,6 +5263,7 @@ export const configsApproveRejectLitigantDetailsChange = [
               isOptional: true,
             },
           ],
+          hideInForm: true,
         },
       },
     ],

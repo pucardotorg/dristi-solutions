@@ -24,6 +24,7 @@ function OrderReviewModal({
   order,
   setShowsignatureModal,
   showActions = true,
+  saveSignLater,
   setOrderPdfFileStoreID,
   setBusinessOfTheDay,
   currentDiaryEntry,
@@ -216,7 +217,7 @@ function OrderReviewModal({
         headerBarEnd={<CloseBtn onClick={handleReviewGoBack} />}
         actionCancelLabel={showActions && t("BULK_EDIT")}
         actionCustomLabel={showActions && t("ADD_SIGNATURE")}
-        actionSaveLabel={showActions && t("SAVE_FINALISE_AND_SIGN_LATER")}
+        actionSaveLabel={(showActions || saveSignLater) && t("SAVE_FINALISE_AND_SIGN_LATER")}
         isBackButtonDisabled={isLoading || isUpdateLoading || !businessDay}
         isCustomButtonDisabled={isLoading || isUpdateLoading || !businessDay}
         isDisabled={isLoading || isUpdateLoading || !businessDay}

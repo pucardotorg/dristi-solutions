@@ -251,6 +251,7 @@ const GenerateOrders = () => {
   const [currentFormData, setCurrentFormData] = useState(null);
   const roles = Digit.UserService.getUser()?.info?.roles;
   const canESign = roles?.some((role) => role.code === "ORDER_ESIGN");
+  const canSaveSignLater = roles?.some((role) => role.code === "ORDER_APPROVER");
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const judgeName = localStorage.getItem("judgeName");
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
@@ -302,6 +303,38 @@ const GenerateOrders = () => {
     }
   );
   const summonsCourtFee = useMemo(() => courtFeeAmount?.find((p) => p?.paymentCode === "SUMMONS_COURT_FEE")?.amount || 0, [courtFeeAmount]);
+
+  const { data: warrantSubType, isLoading: isWarrantSubType } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "Order",
+    [{ name: "warrantSubType" }],
+    {
+      select: (data) => {
+        return data?.Order?.warrantSubType || [];
+      },
+    }
+  );
+
+  const groupedWarrantOptions = useMemo(() => {
+    if (!Array.isArray(warrantSubType)) return [];
+
+    const specific = [];
+    const others = [];
+
+    for (const item of warrantSubType) {
+      if (item?.belowOthers === "YES") {
+        others.push(item);
+      } else {
+        specific.push(item);
+      }
+    }
+
+    const result = [];
+    if (specific.length) result.push({ options: specific });
+    if (others.length) result.push({ label: "Others", options: others });
+
+    return result;
+  }, [warrantSubType]);
 
   // Replaced React Query implementation with direct API call for better control over breadcrumb data
   // const { data: caseData, isLoading: isCaseDetailsLoading, refetch: refetchCaseData } = Digit.Hooks.dristi.useSearchCaseService(
@@ -1176,25 +1209,34 @@ const GenerateOrders = () => {
           if (orderType === "WARRANT") {
             const warrantSubtypeCode = item?.orderSchema?.additionalDetails?.formdata?.warrantSubType?.templateType;
             orderTypeForm = orderTypeForm?.map((section) => {
-              return {
-                ...section,
-                body: section.body.filter((field) => {
+              const updatedBody = section.body
+                .map((field) => {
+                  if (field.key === "warrantSubType") {
+                    return {
+                      ...field,
+                      populators: {
+                        ...field.populators,
+                        options: [...groupedWarrantOptions],
+                      },
+                    };
+                  }
+                  return field;
+                })
+                .filter((field) => {
                   if (field.key === "warrantText" || field.key === "bailInfo") {
-                    if (warrantSubtypeCode === "GENERIC" && field.key === "warrantText") {
-                      return {
-                        ...field,
-                        isMandatory: true,
-                      };
-                    } else if (warrantSubtypeCode === "SPECIFIC" && field.key === "bailInfo") {
-                      return {
-                        ...field,
-                        isMandatory: true,
-                      };
+                    if (warrantSubtypeCode === "GENERIC") {
+                      return field.key === "warrantText";
+                    } else if (warrantSubtypeCode === "SPECIFIC") {
+                      return field.key === "bailInfo";
                     }
                     return false;
                   }
                   return true;
-                }),
+                });
+
+              return {
+                ...section,
+                body: updatedBody,
               };
             });
           }
@@ -1441,9 +1483,20 @@ const GenerateOrders = () => {
         if (orderType === "WARRANT") {
           const warrantSubtypeCode = currentOrder?.additionalDetails?.formdata?.warrantSubType?.templateType;
           orderTypeForm = orderTypeForm?.map((section) => {
-            return {
-              ...section,
-              body: section.body.filter((field) => {
+            const updatedBody = section.body
+              .map((field) => {
+                if (field.key === "warrantSubType") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...groupedWarrantOptions],
+                    },
+                  };
+                }
+                return field;
+              })
+              .filter((field) => {
                 if (field.key === "warrantText" || field.key === "bailInfo") {
                   if (warrantSubtypeCode === "GENERIC") {
                     return field.key === "warrantText";
@@ -1453,7 +1506,11 @@ const GenerateOrders = () => {
                   return false;
                 }
                 return true;
-              }),
+              });
+
+            return {
+              ...section,
+              body: updatedBody,
             };
           });
         }
@@ -1515,6 +1572,7 @@ const GenerateOrders = () => {
     caseDetails?.id,
     caseDetails?.filingNumber,
     t,
+    groupedWarrantOptions,
   ]);
 
   const multiSelectDropdownKeys = useMemo(() => {
@@ -2084,7 +2142,10 @@ const GenerateOrders = () => {
     if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(type)) {
       parties = orderSchema?.orderDetails.partyName;
     } else if (type === "MANDATORY_SUBMISSIONS_RESPONSES") {
-      parties = [...orderSchema?.orderDetails?.partyDetails?.partiesToRespond, ...orderSchema?.orderDetails?.partyDetails?.partyToMakeSubmission];
+      parties = [
+        ...(orderSchema?.orderDetails?.partyDetails?.partiesToRespond || []),
+        ...(orderSchema?.orderDetails?.partyDetails?.partyToMakeSubmission || []),
+      ];
     } else if (["WARRANT", "SUMMONS", "NOTICE"].includes(type)) {
       parties = orderSchema?.orderDetails?.respondentName?.name
         ? [orderSchema?.orderDetails?.respondentName?.name]
@@ -2102,12 +2163,12 @@ const GenerateOrders = () => {
       parties = allParties?.map((party) => ({ partyName: party.name, partyType: party?.partyType }));
       return parties;
     }
-    parties = parties?.map((party) => {
-      const matchingParty = allParties.find((p) => p.code.trim() === party.trim());
+    const updatedParties = parties?.map((party) => {
+      const matchingParty = allParties?.find((p) => p?.code?.trim() === party?.trim());
       if (matchingParty) {
         return {
-          partyName: matchingParty.name,
-          partyType: matchingParty.partyType,
+          partyName: matchingParty?.name,
+          partyType: matchingParty?.partyType,
         };
       } else {
         return {
@@ -2116,7 +2177,7 @@ const GenerateOrders = () => {
         };
       }
     });
-    return parties;
+    return updatedParties;
   };
 
   const getPartyNamesString = (parties) => {
@@ -4160,6 +4221,7 @@ const GenerateOrders = () => {
           setShowsignatureModal={setShowsignatureModal}
           setOrderPdfFileStoreID={setOrderPdfFileStoreID}
           showActions={canESign && !currentDiaryEntry}
+          saveSignLater={canSaveSignLater}
           setBusinessOfTheDay={setBusinessOfTheDay}
           currentDiaryEntry={currentDiaryEntry}
           handleUpdateBusinessOfDayEntry={handleUpdateBusinessOfDayEntry}
