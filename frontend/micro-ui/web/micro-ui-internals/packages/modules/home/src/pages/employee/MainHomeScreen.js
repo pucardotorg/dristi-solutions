@@ -335,6 +335,7 @@ const MainHomeScreen = () => {
               setFilters={setFilters}
               filters={filters}
               showToast={showToast}
+              hearingCount={hearingCount}
             />
           </div>
         ) : (
