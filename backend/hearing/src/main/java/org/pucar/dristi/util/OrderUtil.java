@@ -39,10 +39,11 @@ public class OrderUtil {
     private final Producer producer;
     private final DemandUtil demandUtil;
     private final MdmsUtil mdmsUtil;
+    private final PendingTaskUtil pendingTaskUtil;
 
     @Autowired
     public OrderUtil(ServiceRequestRepository serviceRequestRepository, ObjectMapper mapper, Configuration configuration,
-                     TaskUtil taskUtil, WorkflowUtil workflowUtil, Producer producer, DemandUtil demandUtil, MdmsUtil mdmsUtil) {
+                     TaskUtil taskUtil, WorkflowUtil workflowUtil, Producer producer, DemandUtil demandUtil, MdmsUtil mdmsUtil, PendingTaskUtil pendingTaskUtil) {
         this.serviceRequestRepository = serviceRequestRepository;
         this.mapper = mapper;
         this.configuration = configuration;
@@ -51,6 +52,7 @@ public class OrderUtil {
         this.producer = producer;
         this.demandUtil = demandUtil;
         this.mdmsUtil = mdmsUtil;
+        this.pendingTaskUtil = pendingTaskUtil;
     }
 
     public void closeActivePaymentPendingTasks(HearingRequest hearingRequest) {
@@ -132,9 +134,15 @@ public class OrderUtil {
         for (Task task : taskList) {
             log.info("Expiring task: {}", task.getTaskNumber());
             expireTaskWorkflow(task, tenantId, requestInfo);
+            closePaymentPendingTask(task, requestInfo);
         }
 
         cancelRelatedDemands(tenantId, taskList, requestInfo);
+    }
+
+    private void closePaymentPendingTask(Task task, RequestInfo requestInfo) {
+        String referenceId = MANUAL + task.getTaskNumber();
+        pendingTaskUtil.closeManualPendingTask(referenceId, requestInfo, task.getFilingNumber(), task.getCnrNumber(), task.getCaseId(), task.getCaseTitle(), task.getTaskType());
     }
 
     private void expireTaskWorkflow(Task task, String tenantId, RequestInfo requestInfo) {
