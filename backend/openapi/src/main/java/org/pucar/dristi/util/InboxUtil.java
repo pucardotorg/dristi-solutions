@@ -10,6 +10,8 @@ import org.egov.tracer.model.ServiceCallException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
 import org.pucar.dristi.web.models.OpenHearing;
+import org.pucar.dristi.web.models.SearchRequest;
+import org.pucar.dristi.web.models.SearchResponse;
 import org.pucar.dristi.web.models.inbox.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
@@ -161,5 +163,47 @@ public class InboxUtil {
         return InboxRequest.builder()
                 .inbox(inboxSearchCriteria)
                 .build();
+    }
+
+    public InboxResponse getOrders(InboxRequest request) {
+
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        StringBuilder uri = new StringBuilder(configuration.getInboxHost()).append(configuration.getIndexSearchEndPoint());
+        Object response = serviceRequestRepository.fetchResult(uri, request);
+        InboxResponse inboxResponse = new InboxResponse();
+        try {
+            JsonNode jsonNode = objectMapper.valueToTree(response);
+            inboxResponse = objectMapper.readValue(jsonNode.toString(), InboxResponse.class);
+
+        } catch (HttpClientErrorException e) {
+            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
+            throw new ServiceCallException(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error(SEARCHER_SERVICE_EXCEPTION, e);
+        }
+
+        return inboxResponse;
+
+    }
+
+    public SearchResponse getPaymentTask(SearchRequest request) {
+
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        StringBuilder uri = new StringBuilder(configuration.getInboxHost()).append(configuration.getIndexGetFieldEndPoint());
+        Object response = serviceRequestRepository.fetchResult(uri, request);
+        SearchResponse searchResponse = new SearchResponse();
+        try {
+            JsonNode jsonNode = objectMapper.valueToTree(response);
+            searchResponse = objectMapper.readValue(jsonNode.toString(), SearchResponse.class);
+
+        } catch (HttpClientErrorException e) {
+            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
+            throw new ServiceCallException(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error(SEARCHER_SERVICE_EXCEPTION, e);
+        }
+
+        return searchResponse;
+
     }
 }
