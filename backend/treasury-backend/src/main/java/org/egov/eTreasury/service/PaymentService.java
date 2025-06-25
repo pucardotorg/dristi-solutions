@@ -11,6 +11,7 @@ import org.egov.eTreasury.config.PaymentConfiguration;
 import org.egov.eTreasury.enrichment.TreasuryEnrichment;
 import org.egov.eTreasury.kafka.Producer;
 import org.egov.eTreasury.model.demand.*;
+import org.egov.eTreasury.repository.TreasuryMappingRepository;
 import org.egov.eTreasury.repository.TreasuryPaymentRepository;
 import org.egov.eTreasury.util.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -72,11 +73,13 @@ public class PaymentService {
 
     private final DemandUtil demandUtil;
 
+    private final TreasuryMappingRepository treasuryMappingRepository;
+
     @Autowired
     public PaymentService(PaymentConfiguration config, ETreasuryUtil treasuryUtil,
                           ObjectMapper objectMapper, EncryptionUtil encryptionUtil,
                           Producer producer, AuthSekRepository repository, CollectionsUtil collectionsUtil,
-                          FileStorageUtil fileStorageUtil, TreasuryPaymentRepository treasuryPaymentRepository, PdfServiceUtil pdfServiceUtil, TreasuryEnrichment treasuryEnrichment, MdmsUtil mdmsUtil, CaseUtil caseUtil, DemandUtil demandUtil) {
+                          FileStorageUtil fileStorageUtil, TreasuryPaymentRepository treasuryPaymentRepository, PdfServiceUtil pdfServiceUtil, TreasuryEnrichment treasuryEnrichment, MdmsUtil mdmsUtil, CaseUtil caseUtil, DemandUtil demandUtil, TreasuryMappingRepository treasuryMappingRepository) {
         this.config = config;
         this.treasuryUtil = treasuryUtil;
         this.objectMapper = objectMapper;
@@ -91,6 +94,7 @@ public class PaymentService {
         this.mdmsUtil = mdmsUtil;
         this.caseUtil = caseUtil;
         this.demandUtil = demandUtil;
+        this.treasuryMappingRepository = treasuryMappingRepository;
     }
 
     public ConnectionStatus verifyConnection() {
@@ -369,7 +373,9 @@ public class PaymentService {
         try {
             log.info("operation=createDemand, status=IN_PROGRESS, consumerCode={}", demandRequest.getConsumerCode());
             TreasuryMapping treasuryMapping = generateTreasuryMapping(demandRequest);
-
+            if(CASE_DEFAULT_ENTITY_TYPE.equals(demandRequest.getEntityType())) {
+                enrichTreasuryMapping(demandRequest, treasuryMapping);
+            }
             CourtCase courtCase = fetchCourtCase(demandRequest);
             Demand demand = createDemandObject(demandRequest, courtCase);
             DemandResponse demandResponse = demandUtil.createDemand(DemandRequest.builder()
@@ -384,6 +390,12 @@ public class PaymentService {
             throw new CustomException(DEMAND_CREATION_ERROR, "Error occurred during demand creation");
         }
     }
+
+    private void enrichTreasuryMapping(DemandCreateRequest demandRequest, TreasuryMapping treasuryMapping) {
+        treasuryMapping.setFinalCalcPostResubmission(demandRequest.getFinalCalcPostResubmission() != null ? demandRequest.getFinalCalcPostResubmission() : demandRequest.getCalculation().get(0));
+        treasuryMapping.setLastSubmissionConsumerCode(demandRequest.getLastSubmissionConsumerCode());
+    }
+
     private Map<String, String> getTaxHeadMasterCodes(Map<String, Map<String, JSONArray>> mdmsData, String taskBusinessService, String deliveryChannel) {
         if (mdmsData != null && mdmsData.containsKey("payment") && mdmsData.get("payment").containsKey(PAYMENTMASTERCODE)) {
             JSONArray masterCode = mdmsData.get("payment").get(PAYMENTMASTERCODE);
@@ -492,6 +504,7 @@ public class PaymentService {
                     .headAmountMapping(objectMapper.convertValue(headAmountMapping, Object.class))
                     .calculation(demandRequest.getCalculation().get(0))
                     .createdTime(System.currentTimeMillis())
+                    .lastModifiedTime(System.currentTimeMillis())
                     .build();
         } catch (JsonProcessingException | IllegalArgumentException | CustomException e) {
             log.error("Error occurred during treasury mapping generation: ", e);
@@ -635,12 +648,16 @@ public class PaymentService {
     }
 
     private String getPaymentType(String consumerCode) {
-        Pattern pattern = Pattern.compile("_([\\w]+)$");
+        Pattern pattern = Pattern.compile("_([A-Z_]+)(?:-[0-9]+)?$");
         Matcher matcher = pattern.matcher(consumerCode);
         if (matcher.find()) {
             return matcher.group(1);
         }
         return null;
+    }
+
+    public TreasuryMapping getHeadBreakDown(String consumerCode) {
+        return treasuryMappingRepository.getTreasuryMapping(consumerCode);
     }
 //    public Payload doubleVerifyPayment(VerificationData verificationData, RequestInfo requestInfo) {
 //        try {
