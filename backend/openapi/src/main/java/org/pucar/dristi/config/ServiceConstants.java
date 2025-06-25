@@ -57,5 +57,5 @@ public class ServiceConstants {
     public static final String HEARING_BUSINESS_SERVICE = "hearing-default";
     public static final String CASE_BUSINESS_SERVICE = "case-default";
 
-
+    public static final String ERROR_WHILE_FETCHING_FROM_ADVOCATE = "ERROR_WHILE_FETCHING_FROM_ADVOCATE";
 }

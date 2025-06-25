@@ -2,11 +2,14 @@ package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.response.ResponseInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
+import org.pucar.dristi.util.AdvocateUtil;
 import org.pucar.dristi.util.DateUtil;
 import org.pucar.dristi.util.InboxUtil;
+import org.pucar.dristi.util.ResponseInfoFactory;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.inbox.InboxRequest;
 import org.pucar.dristi.web.models.inbox.InboxSearchCriteria;
@@ -35,12 +38,18 @@ public class OpenApiService {
 
     private final InboxUtil inboxUtil;
 
-    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil) {
+    private AdvocateUtil advocateUtil;
+
+    private final ResponseInfoFactory responseInfoFactory;
+
+    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateUtil advocateUtil, ResponseInfoFactory responseInfoFactory) {
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
         this.objectMapper = objectMapper;
         this.dateUtil = dateUtil;
         this.inboxUtil = inboxUtil;
+        this.advocateUtil = advocateUtil;
+        this.responseInfoFactory = responseInfoFactory;
     }
 
     public CaseSummaryResponse getCaseByCnrNumber(String tenantId, String cnrNumber) {
@@ -168,6 +177,14 @@ public class OpenApiService {
                     request.getSortOrder()
             );
 
+            if (inboxRequest == null) {
+                log.info("InboxRequest is null — returning empty response");
+                return new LandingPageCaseListResponse(
+                        responseInfoFactory.createResponseInfoFromRequestInfo(null, true),
+                        0, 0, Collections.emptyList(), Collections.emptyList()
+                );
+            }
+
             return inboxUtil.getLandingPageCaseListResponse(inboxRequest);
         }
     }
@@ -182,47 +199,82 @@ public class OpenApiService {
             List<OrderBy> sortOrder
     ) {
         Map<String, Object> moduleSearchCriteria = new HashMap<>();
+        if(tenantId != null)
+            moduleSearchCriteria.put("tenantId", tenantId);
 
         if (searchCaseCriteria != null && searchCaseCriteria.getSearchType() != null) {
             switch (searchCaseCriteria.getSearchType()) {
                 case FILING_NUMBER:
-                    FilingNumberCriteria f = searchCaseCriteria.getFilingNumberCriteria();
-                    if (f != null) {
-                        moduleSearchCriteria.put("filingNumber", String.join("-", f.getCode(), f.getCaseNumber(), f.getYear()));
-                        if (f.getCourtName() != null) moduleSearchCriteria.put("courtName", f.getCourtName());
+                    FilingNumberCriteria filingNumberCriteria = searchCaseCriteria.getFilingNumberCriteria();
+                    if (filingNumberCriteria == null ||
+                            filingNumberCriteria.getCode() == null ||
+                            filingNumberCriteria.getCaseNumber() == null ||
+                            filingNumberCriteria.getYear() == null) {
+                        return null;
                     }
+                    moduleSearchCriteria.put("filingNumber", String.join("-", filingNumberCriteria.getCode(), filingNumberCriteria.getCaseNumber(), filingNumberCriteria.getYear()));
+                    if (filingNumberCriteria.getCourtName() != null)
+                        moduleSearchCriteria.put("courtName", filingNumberCriteria.getCourtName());
                     break;
+
                 case CASE_NUMBER:
-                    CaseNumberCriteria c = searchCaseCriteria.getCaseNumberCriteria();
-                    if (c != null) {
-                        moduleSearchCriteria.put("caseNumber", String.join("/", c.getCaseType(), c.getCaseNumber(), c.getYear()));
-                        if (c.getCourtName() != null) moduleSearchCriteria.put("courtName", c.getCourtName());
+                    CaseNumberCriteria caseNumberCriteria = searchCaseCriteria.getCaseNumberCriteria();
+                    if (caseNumberCriteria == null ||
+                            caseNumberCriteria.getCaseType() == null ||
+                            caseNumberCriteria.getCaseNumber() == null ||
+                            caseNumberCriteria.getYear() == null) {
+                        return null;
                     }
+                    moduleSearchCriteria.put("caseNumber", String.join("/", caseNumberCriteria.getCaseType(), caseNumberCriteria.getCaseNumber(), caseNumberCriteria.getYear()));
+                    if (caseNumberCriteria.getCourtName() != null)
+                        moduleSearchCriteria.put("courtName", caseNumberCriteria.getCourtName());
                     break;
+
                 case CNR_NUMBER:
-                    if (searchCaseCriteria.getCnrNumberCriteria() != null) {
-                        moduleSearchCriteria.put("cnrNumber", searchCaseCriteria.getCnrNumberCriteria().getCnrNumber());
+                    CnrNumberCriteria cnrNumberCriteria = searchCaseCriteria.getCnrNumberCriteria();
+                    if (cnrNumberCriteria == null || cnrNumberCriteria.getCnrNumber() == null) {
+                        return null;
                     }
+                    moduleSearchCriteria.put("cnrNumber", cnrNumberCriteria.getCnrNumber());
                     break;
+
                 case ADVOCATE:
-                    AdvocateCriteria advocate = searchCaseCriteria.getAdvocateCriteria();
-                    if (advocate != null) {
-                        if (advocate.getAdvocateSearchType() == AdvocateSearchType.BARCODE) {
-                            BarCodeDetails bc = advocate.getBarCodeDetails();
-                            if (bc != null) {
-                                moduleSearchCriteria.put("barCode", String.join("-", bc.getStateCode(), bc.getBarCode(), bc.getYear()));
-                            }
-                        } else if (advocate.getAdvocateSearchType() == AdvocateSearchType.ADVOCATE_NAME) {
-                            moduleSearchCriteria.put("advocateName", Collections.singletonList(advocate.getAdvocateName()));
+                    AdvocateCriteria advocateCriteria = searchCaseCriteria.getAdvocateCriteria();
+                    if (advocateCriteria == null) {
+                        return null;
+                    }
+                    if (advocateCriteria.getAdvocateSearchType() == AdvocateSearchType.BARCODE) {
+                        BarCodeDetails barCodeDetails = advocateCriteria.getBarCodeDetails();
+                        if (barCodeDetails == null ||
+                                barCodeDetails.getStateCode() == null ||
+                                barCodeDetails.getBarCode() == null ||
+                                barCodeDetails.getYear() == null) {
+                            return null;
                         }
+                        String barCode = String.join("/", barCodeDetails.getStateCode(), barCodeDetails.getBarCode(), barCodeDetails.getYear());
+                        List<Advocate> advocates = advocateUtil.fetchAdvocatesByBarRegistrationNumber(barCode);
+                        if (advocates == null || advocates.isEmpty() || advocates.get(0).getId() == null) {
+                            return null;
+                        }
+                        moduleSearchCriteria.put("advocateId", Collections.singletonList(advocates.get(0).getId()));
+                    } else if (advocateCriteria.getAdvocateSearchType() == AdvocateSearchType.ADVOCATE_NAME) {
+                        if (advocateCriteria.getAdvocateName() == null) {
+                            return null;
+                        }
+                        moduleSearchCriteria.put("advocateName", Collections.singletonList(advocateCriteria.getAdvocateName()));
+                    } else {
+                        return null;
                     }
                     break;
+
                 case LITIGANT:
                     LitigantCriteria litigantCriteria = searchCaseCriteria.getLitigantCriteria();
-                    if (litigantCriteria != null && litigantCriteria.getLitigantName() != null) {
-                        moduleSearchCriteria.put("litigantName", Collections.singletonList(litigantCriteria.getLitigantName()));
+                    if (litigantCriteria == null || litigantCriteria.getLitigantName() == null) {
+                        return null;
                     }
+                    moduleSearchCriteria.put("litigantName", Collections.singletonList(litigantCriteria.getLitigantName()));
                     break;
+
                 case ALL:
                     // No criteria to apply
                     break;
@@ -232,13 +284,20 @@ public class OpenApiService {
         }
 
         if (filterCriteria != null) {
-            if (filterCriteria.getCourtName() != null) moduleSearchCriteria.put("courtName", filterCriteria.getCourtName());
-            if (filterCriteria.getCaseType() != null) moduleSearchCriteria.put("caseType", filterCriteria.getCaseType());
-            if (filterCriteria.getHearingDateFrom() != null) moduleSearchCriteria.put("hearingDateFrom", filterCriteria.getHearingDateFrom().toString());
-            if (filterCriteria.getHearingDateTo() != null) moduleSearchCriteria.put("hearingDateTo", filterCriteria.getHearingDateTo().toString());
-            if (filterCriteria.getCaseStage() != null) moduleSearchCriteria.put("caseStage", filterCriteria.getCaseStage());
-            if (filterCriteria.getCaseStatus() != null) moduleSearchCriteria.put("caseStatus", filterCriteria.getCaseStatus());
-            if (filterCriteria.getYearOfFiling() != null) moduleSearchCriteria.put("yearOfFiling", filterCriteria.getYearOfFiling());
+            if (filterCriteria.getCourtName() != null)
+                moduleSearchCriteria.put("courtName", filterCriteria.getCourtName());
+            if (filterCriteria.getCaseType() != null)
+                moduleSearchCriteria.put("caseType", filterCriteria.getCaseType());
+            if (filterCriteria.getHearingDateFrom() != null)
+                moduleSearchCriteria.put("hearingDateFrom", filterCriteria.getHearingDateFrom().toString());
+            if (filterCriteria.getHearingDateTo() != null)
+                moduleSearchCriteria.put("hearingDateTo", filterCriteria.getHearingDateTo().toString());
+            if (filterCriteria.getCaseStage() != null)
+                moduleSearchCriteria.put("caseStage", filterCriteria.getCaseStage());
+            if (filterCriteria.getCaseStatus() != null)
+                moduleSearchCriteria.put("caseStatus", filterCriteria.getCaseStatus());
+            if (filterCriteria.getYearOfFiling() != null)
+                moduleSearchCriteria.put("yearOfFiling", filterCriteria.getYearOfFiling());
         }
 
         InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
@@ -249,13 +308,11 @@ public class OpenApiService {
                 .sortOrder(sortOrder)
                 .processSearchCriteria(ProcessInstanceSearchCriteria.builder()
                         .moduleName("Case Search")
-                        .businessService(Collections.singletonList("CASE_BUSINESS_SERVICE"))
+                        .businessService(Collections.singletonList(CASE_BUSINESS_SERVICE))
                         .tenantId(tenantId)
                         .build())
                 .build();
 
         return InboxRequest.builder().inbox(inboxSearchCriteria).build();
     }
-
-
 }

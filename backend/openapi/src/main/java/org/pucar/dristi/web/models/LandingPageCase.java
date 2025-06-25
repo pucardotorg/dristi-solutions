@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -34,4 +36,10 @@ public class LandingPageCase {
 
     @JsonProperty("registrationDate")
     private Long registrationDate;
+
+    @JsonProperty("advocate")
+    private List<PartyInfo> advocate;
+
+    @JsonProperty("litigant")
+    private List<PartyInfo> litigant;
 }
