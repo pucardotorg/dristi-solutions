@@ -2511,13 +2511,10 @@ const AdmittedCaseV2 = () => {
         setShowWitnessModal(true);
       } else if (option.value === "SUBMIT_DOCUMENTS") {
         handleCourtAction();
-
       } else if (option.value === "GENERATE_PAYMENT_DEMAND") {
         setShowPaymentDemandModal(true);
-
       } else if (option.value === "SHOW_TIMELINE") {
         setShowAllStagesModal(true);
-
       }
     },
     [
@@ -2859,13 +2856,12 @@ const AdmittedCaseV2 = () => {
               label: "DOWNLOAD_CASE_FILE",
             },
             {
-
               value: "GENERATE_PAYMENT_DEMAND",
               label: "GENERATE_PAYMENT_DEMAND",
-            },{
+            },
+            {
               value: "SHOW_TIMELINE",
               label: "SHOW_TIMELINE",
-
             },
           ]
         : [
@@ -2902,10 +2898,10 @@ const AdmittedCaseV2 = () => {
               label: "DOWNLOAD_CASE_FILE",
             },
             {
-
               value: "GENERATE_PAYMENT_DEMAND",
               label: "GENERATE_PAYMENT_DEMAND",
-            },{
+            },
+            {
               value: "SHOW_TIMELINE",
               label: "SHOW_TIMELINE",
             },
@@ -2933,7 +2929,7 @@ const AdmittedCaseV2 = () => {
     []
   );
 
-  const takeActionOptions = useMemo(() => [t("CS_GENERATE_ORDER"), t("SUBMIT_DOCUMENTS"), t("GENERATE_PAYMENT_DEMAND1")], [t]);
+  const takeActionOptions = useMemo(() => [t("CS_GENERATE_ORDER"), t("SUBMIT_DOCUMENTS"), t("GENERATE_PAYMENT_DEMAND")], [t]);
 
   const employeeCrumbs = useMemo(
     () => [
@@ -3801,7 +3797,6 @@ const AdmittedCaseV2 = () => {
           refetchHearing={() => {}}
         ></AddParty>
       )}
-
       {(showPaymentDemandModal || showPaymentConfirmationModal) && (
         <PaymentDemandModal
           t={t}
@@ -3814,13 +3809,11 @@ const AdmittedCaseV2 = () => {
           tenantId={tenantId}
         />
       )}{" "}
-
       {showAllStagesModal && (
         <Modal popupStyles={{}} hideSubmit={true} popmoduleClassName={"workflow-timeline-modal"}>
           {caseTimeLine}
         </Modal>
       )}
-
     </div>
   );
 };

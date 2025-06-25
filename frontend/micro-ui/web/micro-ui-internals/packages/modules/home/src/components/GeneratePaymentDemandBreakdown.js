@@ -343,7 +343,9 @@ color: #3D3C3C;
                     {t("PAYMENT_SUBTEXT")}{" "}
                     <span class="tooltip">
                       {t("LEARN_MORE")}
-                      <span class="tooltip-text">This is the tooltip message!</span>
+                      <span class="tooltip-text" style={{ maxWidth: "300px", wordWrap: "break-word" }}>
+                        {t("PAYMENT_SUBTEXT_TOOLTIP")}
+                      </span>
                     </span>
                   </span>
                 </div>,

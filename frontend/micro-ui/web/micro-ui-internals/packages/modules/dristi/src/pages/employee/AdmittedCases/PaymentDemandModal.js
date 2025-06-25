@@ -119,18 +119,16 @@ const PaymentDemandModal = ({
   const stateId = useMemo(() => Digit.ULBService.getStateId(), []);
 
   const totalAmount = useMemo(() => paymentItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0), [paymentItems]);
-
-  const isFormValid = useMemo(() => selectedParty && dueDate && paymentItems.every((item) => item.type && parseFloat(item.amount) > MIN_AMOUNT), [
-    selectedParty,
-    dueDate,
-    paymentItems,
-  ]);
-
   const tomorrowDate = useMemo(() => {
     const date = new Date();
     date.setDate(date.getDate() + 1);
     return date.toISOString().split("T")[0];
   }, []);
+  const isFormValid = useMemo(() => {
+    const dueDateIsValid = dueDate && new Date(dueDate).getTime() >= new Date(tomorrowDate).getTime();
+    return selectedParty && dueDateIsValid && paymentItems.every((item) => item.type && parseFloat(item.amount) > MIN_AMOUNT);
+  }, [selectedParty, dueDate, paymentItems, tomorrowDate]);
+
   const { data: paymentTypeOptions, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(stateId, "payment", [{ name: "paymentDemandType" }], {
     select: (data) => data?.payment?.paymentDemandType || [],
   });
@@ -294,6 +292,9 @@ const PaymentDemandModal = ({
                   style={{ minWidth: 120, textAlign: "start" }}
                 />
               </div>
+              {dueDate && new Date(dueDate).getTime() < new Date(tomorrowDate).getTime() && (
+                <div style={{ color: "red", fontSize: "12px" }}>{t("INVALID_DATE")}</div>
+              )}
             </LabelFieldPair>
 
             <LabelFieldPair>
