@@ -47,7 +47,7 @@ public class HearingUpdateConsumer {
     public void updateHearingConsumer(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
             log.info("Received hearing details on topic: {}", topic);
-            HearingRequest hearingRequest = objectMapper.convertValue(payload, HearingRequest.class);
+            HearingRequest hearingRequest = objectMapper.convertValue(payload.value(), HearingRequest.class);
             String hearingStatus = hearingRequest.getHearing().getStatus();
             if (hearingStatus.equalsIgnoreCase(COMPLETED) || hearingStatus.equalsIgnoreCase(ABANDONED)) {
                 orderUtil.closeActivePaymentPendingTasks(hearingRequest);
