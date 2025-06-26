@@ -215,6 +215,7 @@ public class TaskService {
             if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status)){
                 String acknowledgementId = summonUtil.sendSummons(body);
                 updateAcknowledgementId(body, acknowledgementId);
+                closeEnvelopePendingTaskOfRpad(body);
             }
             List<String> fileStoreIds = new ArrayList<>();
             if(body.getTask().getDocuments() != null){
@@ -348,8 +349,6 @@ public class TaskService {
             enrichmentUtil.enrichCaseApplicationUponUpdate(taskRequest);
 
             producer.push(config.getTaskUpdateTopic(), taskRequest);
-
-            closeEnvelopePendingTaskOfRpad(taskRequest);
 
             return taskRequest.getTask();
 
