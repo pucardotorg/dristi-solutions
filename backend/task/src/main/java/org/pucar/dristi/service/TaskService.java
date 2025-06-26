@@ -301,7 +301,7 @@ public class TaskService {
         }
     }
 
-    private void workflowUpdate(TaskRequest taskRequest) {
+    private void workflowUpdate(TaskRequest taskRequest) throws JsonProcessingException {
         Task task = taskRequest.getTask();
         RequestInfo requestInfo = taskRequest.getRequestInfo();
 
@@ -309,7 +309,6 @@ public class TaskService {
         String tenantId = task.getTenantId();
         String taskNumber = task.getTaskNumber();
         WorkflowObject workflow = task.getWorkflow();
-
         String status = switch (taskType) {
             case BAIL -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskBailBusinessServiceName(), workflow, config.getTaskBailBusinessName());
@@ -323,8 +322,7 @@ public class TaskService {
                     config.getTaskJoinCaseBusinessServiceName(), workflow, config.getTaskjoinCaseBusinessName());
             case JOIN_CASE_PAYMENT -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskPaymentBusinessName());
-            case GENERIC -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
-                    config.getTaskGenericBusinessServiceName(), workflow, config.getTaskGenericBusinessName());
+            case GENERIC -> updateWorkflow(requestInfo, tenantId, taskNumber, workflow);
             default -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskBusinessServiceName(), workflow, config.getTaskBusinessName());
         };
@@ -332,7 +330,15 @@ public class TaskService {
         task.setStatus(status);
     }
 
+    private String updateWorkflow(RequestInfo requestInfo, String tenantId, String taskNumber, WorkflowObject workflow) throws JsonProcessingException {
+        workflow.setAdditionalDetails(getAdditionalDetailsForExcludingRoles());
+        return workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
+                config.getTaskGenericBusinessServiceName(), workflow, config.getTaskGenericBusinessName());
+    }
 
+    private Object getAdditionalDetailsForExcludingRoles() throws JsonProcessingException {
+        return objectMapper.readValue("{\"excludeRoles\":[\"TASK_CREATOR\"]}", Object.class);
+    }
     public Task uploadDocument(TaskRequest body) {
         try {
             Task task = validator.validateApplicationUploadDocumentExistence(body.getTask(), body.getRequestInfo());
