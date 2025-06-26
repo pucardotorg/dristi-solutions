@@ -2,6 +2,7 @@ package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.response.ResponseInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -171,14 +172,19 @@ public class OpenApiService {
 
     public LandingPageCaseListResponse getLandingPageCaseList(String tenantId, LandingPageCaseListRequest request) {
         if (configuration.getIsElasticSearchEnabled()) {
-            log.info("Fetching landing page cases from ElasticSearch");
+            log.info("ElasticSearch enabled — tenantId: {}, falling back with error", tenantId);
             throw new RuntimeException("Fetching from ElasticSearch is not yet implemented for landing page");
         } else {
-            log.info("Fetching landing page cases from Case Service");
+            log.info("Fetching landing page cases from Case Service for tenantId: {}", tenantId);
 
             SearchCaseCriteria criteria = request.getSearchCaseCriteria();
             if (!validateCaseSearchCriteria(criteria)) {
-                throw new CustomException(INVALID_SEARCH_CASE_CRITERIA_EXCEPTION, "SearchCaseCriteria is invalid for searchType: " + criteria.getSearchType());
+                log.warn("Invalid SearchCaseCriteria for searchType: {} | criteria: {}",
+                        criteria != null ? criteria.getSearchType() : "null",
+                        criteria);
+                throw new CustomException(INVALID_SEARCH_CASE_CRITERIA_EXCEPTION,
+                        "SearchCaseCriteria is invalid for searchType: " +
+                                (criteria != null ? criteria.getSearchType() : "null"));
             }
 
             InboxRequest inboxRequest = buildInboxRequestFromSearchCriteria(
@@ -191,7 +197,7 @@ public class OpenApiService {
             );
 
             if (inboxRequest == null) {
-                log.info("InboxRequest is null — returning empty response");
+                log.warn("InboxRequest could not be built — tenantId: {}, criteria: {}", tenantId, criteria);
                 return new LandingPageCaseListResponse(
                         responseInfoFactory.createResponseInfoFromRequestInfo(null, true),
                         0, 0, Collections.emptyList(), Collections.emptyList()
@@ -212,40 +218,47 @@ public class OpenApiService {
             List<OrderBy> sortOrder
     ) {
         HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
-        if(tenantId != null)
+        if (tenantId != null) {
             moduleSearchCriteria.put("tenantId", tenantId);
+        }
 
         if (searchCaseCriteria != null && searchCaseCriteria.getSearchType() != null) {
             switch (searchCaseCriteria.getSearchType()) {
+
                 case FILING_NUMBER:
                     FilingNumberCriteria filingNumberCriteria = searchCaseCriteria.getFilingNumberCriteria();
-                    if (filingNumberCriteria == null ||
-                            filingNumberCriteria.getCode() == null ||
-                            filingNumberCriteria.getCaseNumber() == null ||
-                            filingNumberCriteria.getYear() == null) {
+                    if (filingNumberCriteria == null || filingNumberCriteria.getCode() == null
+                            || filingNumberCriteria.getCaseNumber() == null || filingNumberCriteria.getYear() == null) {
+                        log.warn("Missing fields in FilingNumberCriteria: {}", filingNumberCriteria);
                         return null;
                     }
-                    moduleSearchCriteria.put("filingNumber", String.join("-", filingNumberCriteria.getCode(), filingNumberCriteria.getCaseNumber(), filingNumberCriteria.getYear()));
-                    if (filingNumberCriteria.getCourtName() != null)
+                    String filingNumber = String.join("-", filingNumberCriteria.getCode(),
+                            filingNumberCriteria.getCaseNumber(), filingNumberCriteria.getYear());
+                    moduleSearchCriteria.put("filingNumber", filingNumber);
+                    if (filingNumberCriteria.getCourtName() != null) {
                         moduleSearchCriteria.put("courtName", filingNumberCriteria.getCourtName());
+                    }
                     break;
 
                 case CASE_NUMBER:
                     CaseNumberCriteria caseNumberCriteria = searchCaseCriteria.getCaseNumberCriteria();
-                    if (caseNumberCriteria == null ||
-                            caseNumberCriteria.getCaseType() == null ||
-                            caseNumberCriteria.getCaseNumber() == null ||
-                            caseNumberCriteria.getYear() == null) {
+                    if (caseNumberCriteria == null || caseNumberCriteria.getCaseType() == null
+                            || caseNumberCriteria.getCaseNumber() == null || caseNumberCriteria.getYear() == null) {
+                        log.warn("Missing fields in CaseNumberCriteria: {}", caseNumberCriteria);
                         return null;
                     }
-                    moduleSearchCriteria.put("caseNumber", String.join("/", caseNumberCriteria.getCaseType(), caseNumberCriteria.getCaseNumber(), caseNumberCriteria.getYear()));
-                    if (caseNumberCriteria.getCourtName() != null)
+                    String caseNumber = String.join("/", caseNumberCriteria.getCaseType(),
+                            caseNumberCriteria.getCaseNumber(), caseNumberCriteria.getYear());
+                    moduleSearchCriteria.put("caseNumber", caseNumber);
+                    if (caseNumberCriteria.getCourtName() != null) {
                         moduleSearchCriteria.put("courtName", caseNumberCriteria.getCourtName());
+                    }
                     break;
 
                 case CNR_NUMBER:
                     CnrNumberCriteria cnrNumberCriteria = searchCaseCriteria.getCnrNumberCriteria();
                     if (cnrNumberCriteria == null || cnrNumberCriteria.getCnrNumber() == null) {
+                        log.warn("Missing or null CNR Number in CnrNumberCriteria: {}", cnrNumberCriteria);
                         return null;
                     }
                     moduleSearchCriteria.put("cnrNumber", cnrNumberCriteria.getCnrNumber());
@@ -254,28 +267,36 @@ public class OpenApiService {
                 case ADVOCATE:
                     AdvocateCriteria advocateCriteria = searchCaseCriteria.getAdvocateCriteria();
                     if (advocateCriteria == null) {
+                        log.warn("AdvocateCriteria is null");
                         return null;
                     }
+
                     if (advocateCriteria.getAdvocateSearchType() == AdvocateSearchType.BARCODE) {
                         BarCodeDetails barCodeDetails = advocateCriteria.getBarCodeDetails();
-                        if (barCodeDetails == null ||
-                                barCodeDetails.getStateCode() == null ||
-                                barCodeDetails.getBarCode() == null ||
-                                barCodeDetails.getYear() == null) {
+                        if (barCodeDetails == null || barCodeDetails.getStateCode() == null
+                                || barCodeDetails.getBarCode() == null || barCodeDetails.getYear() == null) {
+                            log.warn("Missing fields in BarCodeDetails: {}", barCodeDetails);
                             return null;
                         }
-                        String barCode = String.join("/", barCodeDetails.getStateCode(), barCodeDetails.getBarCode(), barCodeDetails.getYear());
+
+                        String barCode = String.join("/", barCodeDetails.getStateCode(),
+                                barCodeDetails.getBarCode(), barCodeDetails.getYear());
                         List<Advocate> advocates = advocateUtil.fetchAdvocatesByBarRegistrationNumber(barCode);
+
                         if (advocates == null || advocates.isEmpty() || advocates.get(0).getId() == null) {
+                            log.warn("No advocate found for barcode: {}", barCode);
                             return null;
                         }
-                        moduleSearchCriteria.put("advocateId", Collections.singletonList(advocates.get(0).getId()));
+                        moduleSearchCriteria.put("advocateId", advocates.get(0).getId());
+
                     } else if (advocateCriteria.getAdvocateSearchType() == AdvocateSearchType.ADVOCATE_NAME) {
                         if (advocateCriteria.getAdvocateName() == null) {
+                            log.warn("AdvocateName is null in AdvocateCriteria");
                             return null;
                         }
-                        moduleSearchCriteria.put("advocateName", Collections.singletonList(advocateCriteria.getAdvocateName()));
+                        moduleSearchCriteria.put("advocateName", advocateCriteria.getAdvocateName());
                     } else {
+                        log.warn("Unsupported AdvocateSearchType: {}", advocateCriteria.getAdvocateSearchType());
                         return null;
                     }
                     break;
@@ -283,34 +304,48 @@ public class OpenApiService {
                 case LITIGANT:
                     LitigantCriteria litigantCriteria = searchCaseCriteria.getLitigantCriteria();
                     if (litigantCriteria == null || litigantCriteria.getLitigantName() == null) {
+                        log.warn("Missing LitigantCriteria or litigantName: {}", litigantCriteria);
                         return null;
                     }
-                    moduleSearchCriteria.put("litigantName", Collections.singletonList(litigantCriteria.getLitigantName()));
+                    moduleSearchCriteria.put("litigantName", litigantCriteria.getLitigantName());
                     break;
 
                 case ALL:
-                    // No criteria to apply
+                    // No search criteria needed for ALL
+                    log.debug("SearchType is ALL — no specific search criteria provided");
                     break;
+
                 default:
-                    break;
+                    log.warn("Unsupported SearchType: {}", searchCaseCriteria.getSearchType());
+                    return null;
             }
+        } else {
+            log.warn("SearchCaseCriteria or searchType is null");
+            return null;
         }
 
         if (filterCriteria != null) {
-            if (filterCriteria.getCourtName() != null)
+            if (filterCriteria.getCourtName() != null) {
                 moduleSearchCriteria.put("courtName", filterCriteria.getCourtName());
-            if (filterCriteria.getCaseType() != null)
+            }
+            if (filterCriteria.getCaseType() != null) {
                 moduleSearchCriteria.put("caseType", filterCriteria.getCaseType());
-            if (filterCriteria.getHearingDateFrom() != null)
+            }
+            if (filterCriteria.getHearingDateFrom() != null) {
                 moduleSearchCriteria.put("hearingDateFrom", filterCriteria.getHearingDateFrom().toString());
-            if (filterCriteria.getHearingDateTo() != null)
+            }
+            if (filterCriteria.getHearingDateTo() != null) {
                 moduleSearchCriteria.put("hearingDateTo", filterCriteria.getHearingDateTo().toString());
-            if (filterCriteria.getCaseStage() != null)
+            }
+            if (filterCriteria.getCaseStage() != null) {
                 moduleSearchCriteria.put("caseStage", filterCriteria.getCaseStage());
-            if (filterCriteria.getCaseStatus() != null)
+            }
+            if (filterCriteria.getCaseStatus() != null) {
                 moduleSearchCriteria.put("caseStatus", filterCriteria.getCaseStatus());
-            if (filterCriteria.getYearOfFiling() != null)
+            }
+            if (filterCriteria.getYearOfFiling() != null) {
                 moduleSearchCriteria.put("yearOfFiling", filterCriteria.getYearOfFiling());
+            }
         }
 
         InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
@@ -326,7 +361,7 @@ public class OpenApiService {
                         .build())
                 .build();
 
-        return InboxRequest.builder().inbox(inboxSearchCriteria).build();
+        return InboxRequest.builder().inbox(inboxSearchCriteria).RequestInfo(RequestInfo.builder().build()).build();
     }
 
     public String getMagistrateName(String courtId, String tenantId) {

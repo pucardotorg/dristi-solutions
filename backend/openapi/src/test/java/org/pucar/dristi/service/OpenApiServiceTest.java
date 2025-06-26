@@ -474,7 +474,7 @@ public class OpenApiServiceTest {
         ArgumentCaptor<InboxRequest> captor = ArgumentCaptor.forClass(InboxRequest.class);
         verify(inboxUtil).getLandingPageCaseListResponse(captor.capture());
         Map<String, Object> moduleCriteria = captor.getValue().getInbox().getModuleSearchCriteria();
-        assertEquals(Collections.singletonList(advocateId), moduleCriteria.get("advocateId"));
+        assertEquals(advocateId, moduleCriteria.get("advocateId"));
         assertEquals(TENANT_ID, moduleCriteria.get("tenantId"));
     }
 
@@ -543,7 +543,7 @@ public class OpenApiServiceTest {
         ArgumentCaptor<InboxRequest> captor = ArgumentCaptor.forClass(InboxRequest.class);
         verify(inboxUtil).getLandingPageCaseListResponse(captor.capture());
         Map<String, Object> moduleCriteria = captor.getValue().getInbox().getModuleSearchCriteria();
-        assertEquals(Collections.singletonList("John Doe"), moduleCriteria.get("advocateName"));
+        assertEquals("John Doe", moduleCriteria.get("advocateName"));
         assertEquals(TENANT_ID, moduleCriteria.get("tenantId"));
     }
 
@@ -567,7 +567,7 @@ public class OpenApiServiceTest {
         ArgumentCaptor<InboxRequest> captor = ArgumentCaptor.forClass(InboxRequest.class);
         verify(inboxUtil).getLandingPageCaseListResponse(captor.capture());
         Map<String, Object> moduleCriteria = captor.getValue().getInbox().getModuleSearchCriteria();
-        assertEquals(Collections.singletonList("Jane Smith"), moduleCriteria.get("litigantName"));
+        assertEquals("Jane Smith", moduleCriteria.get("litigantName"));
         assertEquals(TENANT_ID, moduleCriteria.get("tenantId"));
     }
 

@@ -33,12 +33,13 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
   const retrievedObject = JSON.parse(eSignWindowObject);
 
   const isJudgeView = roles?.some((role) => ["JUDGE_ROLE", "BENCH_CLERK", "TYPIST_ROLE"].includes(role.code));
-
+  const homeActiveTab = location?.state?.homeActiveTab || "HEARINGS_TAB";
   const employeeCrumbs = [
     {
       path: `/${window?.contextPath}/employee`,
       content: t("ES_COMMON_HOME"),
       show: !hideHomeCrumb.includes(location.pathname),
+      homeActiveTab: homeActiveTab,
       isLast: false,
     },
     {
@@ -83,6 +84,8 @@ const EmployeeApp = ({ path, url, userType, tenants, parentRoute, result, fileSt
       location.pathname.includes("/review-litigant-details")
         ? true
         : location.pathname.includes("/view-case")
+        ? false
+        : location.pathname.includes("/admission")
         ? false
         : location.pathname.includes("/pending-payment-inbox") || location.pathname.includes("/view-case") || true,
     [location.pathname]
