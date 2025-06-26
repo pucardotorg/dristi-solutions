@@ -1,15 +1,18 @@
 package org.egov.transformer.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.tracer.model.ServiceCallException;
 import org.egov.transformer.config.TransformerProperties;
-import org.egov.transformer.models.*;
+import org.egov.transformer.models.Advocate;
+import org.egov.transformer.models.AdvocateMapping;
+import org.egov.transformer.models.CourtCase;
+import org.egov.transformer.models.Hearing;
+import org.egov.transformer.models.HearingRequest;
+import org.egov.transformer.models.HearingResponse;
+import org.egov.transformer.models.OpenHearing;
+import org.egov.transformer.models.Party;
 import org.egov.transformer.producer.TransformerProducer;
 import org.egov.transformer.repository.ServiceRequestRepository;
 import org.egov.transformer.util.JsonUtil;
@@ -17,12 +20,18 @@ import org.egov.transformer.util.MdmsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-import static org.egov.transformer.config.ServiceConstants.*;
+import static org.egov.transformer.config.ServiceConstants.DEFAULT_COURT_MODULE_NAME;
+import static org.egov.transformer.config.ServiceConstants.DEFAULT_HEARING_MASTER_NAME;
+import static org.egov.transformer.config.ServiceConstants.HEARING_MODULE_NAME;
+import static org.egov.transformer.config.ServiceConstants.HEARING_STATUS_MASTER_NAME;
 
 @Slf4j
 @Service
@@ -211,26 +220,4 @@ public class HearingService {
         hearingResponse.setHearingList(hearingList);
         producer.push("hearing-legacy-topic", hearingResponse);
     }
-
-
-    public List<Hearing> fetchHearing(HearingSearchRequest request) {
-        String uri = properties.getHearingHost() + properties.getHearingSearchEndPoint();
-
-        try {
-            Object response = serviceRequestRepository.fetchResult(new StringBuilder(uri), request);
-            JsonNode jsonNode = objectMapper.valueToTree(response);
-            JsonNode hearingListNode = jsonNode.get("HearingList");
-            if(hearingListNode!=null){
-                return objectMapper.readValue(hearingListNode.toString(), new TypeReference<>() {});
-            }
-            return Collections.emptyList();
-        } catch (HttpClientErrorException e) {
-            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
-            throw new ServiceCallException(e.getResponseBodyAsString());
-        } catch (Exception e) {
-            log.error(SEARCHER_SERVICE_EXCEPTION, e);
-            throw new ServiceCallException("Failed to fetch hearing data: " + e.getMessage());
-        }
-    }
-
 }
