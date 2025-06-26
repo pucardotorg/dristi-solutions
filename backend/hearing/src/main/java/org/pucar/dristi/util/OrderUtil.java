@@ -209,6 +209,10 @@ public class OrderUtil {
     public List<String> extractConsumerCode(Task task, RequestInfo requestInfo) {
         String taskNumber = task.getTaskNumber();
         String deliveryChannel = getDeliveryChannel(task);
+        if (deliveryChannel == null) {
+            log.info("delivery channel not found for task: {}", taskNumber);
+            return Collections.emptyList();
+        }
         String tenantId = task.getTenantId();
 
         JSONArray mdmsData = mdmsUtil.fetchMdmsData(
@@ -223,7 +227,7 @@ public class OrderUtil {
         for (Object obj : mdmsData) {
             if (obj instanceof Map<?, ?> mapObj) {
                 Object channelObj = mapObj.get("deliveryChannel");
-                if (channelObj != null && channelObj.toString().equalsIgnoreCase(deliveryChannel)) {
+                if (channelObj != null && channelObj.toString().toUpperCase().contains(deliveryChannel.toUpperCase())) {
                     Object suffixObj = mapObj.get("suffix");
                     if (suffixObj != null) {
                         consumerCodes.add(taskNumber + "_" + suffixObj);
