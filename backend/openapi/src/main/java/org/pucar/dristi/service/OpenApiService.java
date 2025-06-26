@@ -346,6 +346,9 @@ public class OpenApiService {
             if (filterCriteria.getYearOfFiling() != null) {
                 moduleSearchCriteria.put("yearOfFiling", filterCriteria.getYearOfFiling());
             }
+            if(filterCriteria.getCaseTitle() != null) {
+                moduleSearchCriteria.put("caseTitle", filterCriteria.getCaseTitle());
+            }
         }
 
         InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()

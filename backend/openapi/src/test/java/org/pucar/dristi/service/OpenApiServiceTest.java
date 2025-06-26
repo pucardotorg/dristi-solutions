@@ -655,6 +655,7 @@ public class OpenApiServiceTest {
         filterCriteria.setCaseStage("Trial");
         filterCriteria.setCaseStatus("Active");
         filterCriteria.setYearOfFiling("2022");
+        filterCriteria.setCaseTitle("Test1 vs Test2");
 
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
         request.setFilterCriteria(filterCriteria);
@@ -672,6 +673,7 @@ public class OpenApiServiceTest {
         assertEquals("Trial", moduleCriteria.get("caseStage"));
         assertEquals("Active", moduleCriteria.get("caseStatus"));
         assertEquals("2022", moduleCriteria.get("yearOfFiling"));
+        assertEquals("Test1 vs Test2", moduleCriteria.get("caseTitle"));
         assertEquals(TENANT_ID, moduleCriteria.get("tenantId"));
     }
 
