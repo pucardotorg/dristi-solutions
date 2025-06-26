@@ -270,6 +270,8 @@ public class CaseConsumer {
         } catch (JsonProcessingException e) {
             log.error("Failed to process AddWitnessRequest from payload: {}", payload.value(), e);
         }
+    }
+
     private RequestInfo createInternalRequestInfo() {
         User userInfo = new User();
         userInfo.setUuid(userService.internalMicroserviceRoleUuid);
@@ -314,6 +316,8 @@ public class CaseConsumer {
         catch (JsonProcessingException e){
             log.error("Failed to process CourtCase from payload: {}", payload.value(), e);
         }
+    }
+
     private CaseSearchRequest createCaseSearchRequest(String filingNumber, String tenantId, RequestInfo requestInfo) {
         CaseCriteria criteria = CaseCriteria.builder().filingNumber(filingNumber).defaultFields(false).build();
         return  CaseSearchRequest.builder()
