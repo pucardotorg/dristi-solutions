@@ -42,7 +42,7 @@
                 "nextState": "COMPLETED",
                 "roles": [
                   "CITIZEN",
-                  "TASK_EDITOR",
+                  "TASK_CREATOR",
                   "SYSTEM",
                   "SYSTEM_ADMIN"
                 ]
