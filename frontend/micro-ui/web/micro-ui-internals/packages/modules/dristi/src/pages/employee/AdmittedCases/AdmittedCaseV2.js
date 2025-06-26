@@ -348,12 +348,15 @@ const AdmittedCaseV2 = () => {
     fetchInbox();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "HEARINGS_TAB", [location?.state?.homeActiveTab]);
 
   useEffect(() => {
     const unlisten = history.listen((location, action) => {
       if (action === "POP" && location.pathname.includes("home-screen")) {
         history.replace(location.pathname, {
+          ...location.state,
           homeFilterData: homeFilterData,
+          homeActiveTab: homeActiveTab,
         });
       }
     });
@@ -2939,6 +2942,7 @@ const AdmittedCaseV2 = () => {
         show: true,
         isLast: false,
         homeFilteredData: homeFilterData,
+        homeActiveTab: homeActiveTab,
       },
       {
         path: `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/home/home-pending-task`,
