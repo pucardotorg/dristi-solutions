@@ -127,6 +127,8 @@ export const UICustomizations = {
               )}
             </div>
           );
+        case "CS_STAGE":
+          return t(value);
         default:
           return t("ES_COMMON_NA");
       }
@@ -352,7 +354,7 @@ export const UICustomizations = {
         case "DELIEVRY_DATE":
           return formatNoticeDeliveryDate(value) || "N/A";
         case "PROCESS_FEE_PAID_ON":
-          return value || '-';
+          return value || "-";
         default:
           return t("ES_COMMON_NA");
       }

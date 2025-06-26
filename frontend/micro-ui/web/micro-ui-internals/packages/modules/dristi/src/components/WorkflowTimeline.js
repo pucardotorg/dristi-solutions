@@ -118,7 +118,10 @@ const WorkflowTimeline = ({
       captionDetails.name = checkpoint?.assigner?.name;
       captionDetails.date = `${Digit.DateUtils?.ConvertTimestampToDate(checkpoint.auditDetails.lastModifiedEpoch)}`;
       captionDetails.mobileNumber = checkpoint?.assigner?.mobileNumber;
-      captionDetails.wfComment = checkpoint?.comment && checkpoint?.assigner?.roles?.some((role) => ["JUDGE_ROLE", "FSO_ROLE"]?.includes(role?.code)) ? [checkpoint?.comment] : [];
+      captionDetails.wfComment =
+        checkpoint?.comment && checkpoint?.assigner?.roles?.some((role) => ["JUDGE_ROLE", "FSO_ROLE"]?.includes(role?.code))
+          ? [checkpoint?.comment]
+          : [];
       captionDetails.additionalComment = additionalComment && checkpoint?.performedAction === "APPROVE";
       captionDetails.thumbnailsToShow = checkpoint?.thumbnailsToShow;
     }
@@ -168,36 +171,79 @@ const WorkflowTimeline = ({
           {workflowDetails?.breakLineRequired === undefined ? <BreakLine /> : workflowDetails?.breakLineRequired ? <BreakLine /> : null}
           {!workflowDetails?.isLoading && (
             <Fragment>
-              <CardSectionHeader style={{ fontWeight: "bold", ...((onViewCasePage && !modalView) ? { display: "flex", flexDirection: "row", justifyContent: "space-between", border: "solid 1px rgb(232, 232, 232)", padding: "13px 8px", borderRadius: "4px 4px 0px 0px" } 
-              : (onViewCasePage && modalView) ? { display: "flex", flexDirection: "row", justifyContent: "space-between", padding: "20px 0px" }
-              : {marginTop: "32px", marginBottom: "16px"}) }}>
+              <CardSectionHeader
+                style={{
+                  fontWeight: "bold",
+                  ...(onViewCasePage && !modalView
+                    ? {
+                        display: "flex",
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        border: "solid 1px rgb(232, 232, 232)",
+                        padding: "13px 8px",
+                        borderRadius: "4px 4px 0px 0px",
+                      }
+                    : onViewCasePage && modalView
+                    ? { display: "flex", flexDirection: "row", justifyContent: "space-between", padding: "20px 0px" }
+                    : { marginTop: "32px", marginBottom: "16px" }),
+                }}
+              >
                 {t("WORKS_WORKFLOW_TIMELINE")}
-                {(onViewCasePage && !modalView) && <span onClick={() => setShowAllStagesModal(true)} style={{ marginLeft: "120px", color: "#007E7E", cursor: "pointer", fontWeight: "bold" }}>{t("View All Stages")}</span>}
-                {(onViewCasePage && modalView) && <span onClick={() => setShowAllStagesModal(false)} style={{ marginLeft: "120px", color: "#007E7E", cursor: "pointer", fontWeight: "bold" }}>{t("Close")}</span>}
+                {onViewCasePage && !modalView && (
+                  <span
+                    onClick={() => setShowAllStagesModal(true)}
+                    style={{ marginLeft: "120px", color: "#007E7E", cursor: "pointer", fontWeight: "bold" }}
+                  >
+                    {t("View All Stages")}
+                  </span>
+                )}
+                {onViewCasePage && modalView && (
+                  <span
+                    onClick={() => setShowAllStagesModal(false)}
+                    style={{ marginLeft: "120px", color: "#007E7E", cursor: "pointer", fontWeight: "bold" }}
+                  >
+                    {t("Close")}
+                  </span>
+                )}
               </CardSectionHeader>
               {filteredTimeline && (
-                <div className={onViewCasePage ? "workflow-timeline" : ""} style={{ ...((onViewCasePage && !modalView) ? {paddingLeft: "10px", padding: "10px", border: "solid 1px rgb(232, 232, 232)", borderRadius: "0px 0px 4px 4px", borderTop: "none", maxHeight: "150px", overflow: "hidden"} : 
-                (onViewCasePage && modalView) ? {overflowY: "auto", maxHeight: "60vh"}
-                : {})}}>
-                <ConnectingCheckPoints>
-                  {filteredTimeline.map((checkpoint, index) => {
-                    const isFirst = index === 0;
-                    const isCompleted = isFirst && !checkpoint?.isTerminateState;
+                <div
+                  className={onViewCasePage ? "workflow-timeline" : ""}
+                  style={{
+                    ...(onViewCasePage && !modalView
+                      ? {
+                          paddingLeft: "10px",
+                          padding: "10px",
+                          border: "solid 1px rgb(232, 232, 232)",
+                          borderRadius: "0px 0px 4px 4px",
+                          borderTop: "none",
+                          maxHeight: "150px",
+                          overflow: "hidden",
+                        }
+                      : onViewCasePage && modalView
+                      ? { overflowY: "auto", maxHeight: "60vh" }
+                      : {}),
+                  }}
+                >
+                  <ConnectingCheckPoints>
+                    {filteredTimeline.map((checkpoint, index) => {
+                      const isFirst = index === 0;
+                      const isCompleted = isFirst && !checkpoint?.isTerminateState;
 
-                    return (
-                      <div className="workflow-timeline-checkpoint">
-                      <CheckPoint
-                        key={index}
-                        keyValue={index}
-                        isCompleted={isCompleted}
-                        label={t(Digit.Utils.locale.getTransformedLocale(`${timelineStatusPrefix}STATUS_${checkpoint?.state}`))}
-                        customChild={getTimelineCaptions(checkpoint, index)}
-                        style={{ width: "calc(100% - 40px)" }}
-                      />
-                      </div>
-                    );
-                  })}
-                </ConnectingCheckPoints>
+                      return (
+                        <div className="workflow-timeline-checkpoint">
+                          <CheckPoint
+                            key={index}
+                            keyValue={index}
+                            isCompleted={isCompleted}
+                            label={t(Digit.Utils.locale.getTransformedLocale(`${timelineStatusPrefix}STATUS_${checkpoint?.state}`))}
+                            customChild={getTimelineCaptions(checkpoint, index)}
+                            style={{ width: "calc(100% - 40px)" }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </ConnectingCheckPoints>
                 </div>
               )}
             </Fragment>
