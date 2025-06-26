@@ -1,0 +1,33 @@
+[
+  {
+    // can be added through work bench ui
+    "tenantId": "kl",
+    "masterName": "common-masters",
+    "moduleName": "PendingTaskType",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "21",
+    "data": {
+      "tenantId": "kl",
+      "schemaCode": "common-masters.PendingTaskType",
+      "uniqueIdentifier": "24",
+      "data": {
+        "id": "24",
+        "actor": "Judge",
+        "state": "ABANDONED",
+        "isgeneric": false,
+        "screenType": "home",
+        "pendingTask": "order for scheduling next hearing",
+        "closerAction": [
+          "CLOSE"
+        ],
+        "triggerAction": [
+          "ABANDON"
+        ],
+        "actionCategory": "Schedule Hearingq",
+        "workflowModule": "hearing-default"
+      },
+      "isActive": true
+    },
+    "isActive": true
+  }
+]

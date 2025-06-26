@@ -9,20 +9,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.egov.transformer.config.ServiceConstants;
 import org.egov.transformer.config.TransformerProperties;
-import org.egov.transformer.models.AdvocateMapping;
-import org.egov.transformer.models.CaseCriteria;
-import org.egov.transformer.models.CaseData;
-import org.egov.transformer.models.CaseRequest;
-import org.egov.transformer.models.CaseSearch;
-import org.egov.transformer.models.CaseSearchRequest;
-import org.egov.transformer.models.CourtCase;
-import org.egov.transformer.models.Hearing;
-import org.egov.transformer.models.HearingCriteria;
-import org.egov.transformer.models.HearingSearchRequest;
-import org.egov.transformer.models.Order;
-import org.egov.transformer.models.Pagination;
-import org.egov.transformer.models.Participant;
-import org.egov.transformer.models.Party;
+import org.egov.transformer.models.*;
 import org.egov.transformer.producer.TransformerProducer;
 import org.egov.transformer.repository.ServiceRequestRepository;
 import org.egov.transformer.util.DateUtil;
@@ -63,7 +50,6 @@ public class CaseService {
     private final ObjectMapper objectMapper;
     private final HearingUtil hearingUtil;
     private final ServiceRequestRepository repository;
-    private final HearingService hearingService;
     private final RestTemplate restTemplate;
     private final DateUtil dateUtil;
     private final MdmsUtil mdmsUtil;
@@ -71,14 +57,13 @@ public class CaseService {
     private final JsonUtil jsonUtil;
 
     @Autowired
-    public CaseService(ElasticSearchService elasticSearchService, TransformerProperties properties, TransformerProducer producer, ObjectMapper objectMapper, HearingUtil hearingUtil, ServiceRequestRepository repository, HearingService hearingService, RestTemplate restTemplate, DateUtil dateUtil, MdmsUtil mdmsUtil, ServiceConstants serviceConstants, JsonUtil jsonUtil) {
+    public CaseService(ElasticSearchService elasticSearchService, TransformerProperties properties, TransformerProducer producer, ObjectMapper objectMapper, HearingUtil hearingUtil, ServiceRequestRepository repository, RestTemplate restTemplate, DateUtil dateUtil, MdmsUtil mdmsUtil, ServiceConstants serviceConstants, JsonUtil jsonUtil) {
         this.elasticSearchService = elasticSearchService;
         this.properties = properties;
         this.producer = producer;
         this.objectMapper = objectMapper;
         this.hearingUtil = hearingUtil;
         this.repository = repository;
-        this.hearingService = hearingService;
         this.restTemplate = restTemplate;
         this.dateUtil = dateUtil;
         this.mdmsUtil = mdmsUtil;
@@ -188,7 +173,7 @@ public class CaseService {
                         .sortBy("createdTime")
                         .build())
                 .build();
-        List<Hearing> hearings = hearingService.fetchHearing(hearingSearchRequest);
+        List<Hearing> hearings = hearingUtil.fetchHearingDetails(hearingSearchRequest);
         Hearing latestHearing = null;
         if(hearings != null && hearings.size() > 0) {
             latestHearing = hearings.get(0);
@@ -288,7 +273,7 @@ public class CaseService {
 
     public String getCourtName(String tenantId, String courtId) {
         Map<String, Map<String, JSONArray>> mdmsResponse =
-                mdmsUtil.fetchMdmsData(RequestInfo.builder().build(), tenantId, serviceConstants.COURT_MASTERS_MODULE , Collections.singletonList("Rooms"));
+                mdmsUtil.fetchMdmsData(RequestInfo.builder().build(), tenantId, serviceConstants.COMMON_MASTERS_MASTER, Collections.singletonList(serviceConstants.COURT_ROOMS));
         Map<String, JSONArray> mdmsObject = mdmsResponse.get("mdms");
         if(mdmsObject==null) return null;
         return findCourtNameFromMdmsData(mdmsObject, courtId);
@@ -303,5 +288,15 @@ public class CaseService {
                 .map(data -> data.getAsString("name"))
                 .findFirst()
                 .orElse(null);
+    }
+
+    public CourtCase getCases(CaseSearchRequest searchCaseRequest) {
+        log.info("operation = getCases, result = IN_PROGRESS");
+
+        StringBuilder url = new StringBuilder(properties.getCaseSearchUrlHost() + properties.getCaseSearchUrlEndPoint());
+
+        Object response = repository.fetchResult(url, searchCaseRequest);
+        log.info("operation = getCases, result = SUCCESS");
+        return objectMapper.convertValue(JsonPath.read(response, COURT_CASE_JSON_PATH), CourtCase.class);
     }
 }

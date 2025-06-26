@@ -215,6 +215,7 @@ public class TaskService {
             if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status)){
                 String acknowledgementId = summonUtil.sendSummons(body);
                 updateAcknowledgementId(body, acknowledgementId);
+                closeEnvelopePendingTaskOfRpad(body);
             }
             List<String> fileStoreIds = new ArrayList<>();
             if(body.getTask().getDocuments() != null){
@@ -301,7 +302,7 @@ public class TaskService {
         }
     }
 
-    private void workflowUpdate(TaskRequest taskRequest) {
+    private void workflowUpdate(TaskRequest taskRequest) throws JsonProcessingException {
         Task task = taskRequest.getTask();
         RequestInfo requestInfo = taskRequest.getRequestInfo();
 
@@ -309,7 +310,6 @@ public class TaskService {
         String tenantId = task.getTenantId();
         String taskNumber = task.getTaskNumber();
         WorkflowObject workflow = task.getWorkflow();
-
         String status = switch (taskType) {
             case BAIL -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskBailBusinessServiceName(), workflow, config.getTaskBailBusinessName());
@@ -323,8 +323,7 @@ public class TaskService {
                     config.getTaskJoinCaseBusinessServiceName(), workflow, config.getTaskjoinCaseBusinessName());
             case JOIN_CASE_PAYMENT -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskPaymentBusinessName());
-            case GENERIC -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
-                    config.getTaskGenericBusinessServiceName(), workflow, config.getTaskGenericBusinessName());
+            case GENERIC -> updateWorkflow(requestInfo, tenantId, taskNumber, workflow);
             default -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskBusinessServiceName(), workflow, config.getTaskBusinessName());
         };
@@ -332,7 +331,15 @@ public class TaskService {
         task.setStatus(status);
     }
 
+    private String updateWorkflow(RequestInfo requestInfo, String tenantId, String taskNumber, WorkflowObject workflow) throws JsonProcessingException {
+        workflow.setAdditionalDetails(getAdditionalDetailsForExcludingRoles());
+        return workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
+                config.getTaskGenericBusinessServiceName(), workflow, config.getTaskGenericBusinessName());
+    }
 
+    private Object getAdditionalDetailsForExcludingRoles() throws JsonProcessingException {
+        return objectMapper.readValue("{\"excludeRoles\":[\"TASK_CREATOR\"]}", Object.class);
+    }
     public Task uploadDocument(TaskRequest body) {
         try {
             Task task = validator.validateApplicationUploadDocumentExistence(body.getTask(), body.getRequestInfo());
@@ -342,8 +349,6 @@ public class TaskService {
             enrichmentUtil.enrichCaseApplicationUponUpdate(taskRequest);
 
             producer.push(config.getTaskUpdateTopic(), taskRequest);
-            
-            closeEnvelopePendingTaskOfRpad(taskRequest);
 
             return taskRequest.getTask();
 
@@ -406,7 +411,7 @@ public class TaskService {
             Object taskDetailsObject = taskRequest.getTask().getTaskDetails();
             JsonNode taskDetails = objectMapper.readTree(objectMapper.writeValueAsString(taskDetailsObject));
 
-            String accusedName = taskDetails.has("respondentDetails") ? taskDetails.path("respondentDetails").path("name").asText() : "";
+            String accusedName = taskDetails.has("respondentDetails") ? taskDetails.path("respondentDetails").path("name").textValue() : "";
 
             Set<String> individualIds = extractComplainantIndividualIds(caseDetails);
             extractPowerOfAttorneyIds(caseDetails, individualIds);
@@ -419,8 +424,8 @@ public class TaskService {
             Set<String> phoneNumbers = callIndividualService(taskRequest.getRequestInfo(), individualIds);
 
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
-                    .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
-                    .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
+                    .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "")
+                    .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").textValue() : "")
                     .accusedName(accusedName)
                     .tenantId(taskRequest.getTask().getTenantId()).build();
 
