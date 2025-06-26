@@ -273,7 +273,7 @@ public class CaseService {
 
     public String getCourtName(String tenantId, String courtId) {
         Map<String, Map<String, JSONArray>> mdmsResponse =
-                mdmsUtil.fetchMdmsData(RequestInfo.builder().build(), tenantId, serviceConstants.COURT_MASTERS_MODULE , Collections.singletonList("Rooms"));
+                mdmsUtil.fetchMdmsData(RequestInfo.builder().build(), tenantId, serviceConstants.COMMON_MASTERS_MASTER, Collections.singletonList("Rooms"));
         Map<String, JSONArray> mdmsObject = mdmsResponse.get("mdms");
         if(mdmsObject==null) return null;
         return findCourtNameFromMdmsData(mdmsObject, courtId);
