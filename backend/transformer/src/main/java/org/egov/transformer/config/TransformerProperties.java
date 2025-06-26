@@ -62,9 +62,23 @@ public class TransformerProperties {
     @Value("${transformer.producer.order.notification.topic}")
     private String orderAndNotificationTopic;
 
+    //User Config
+    @Value("${egov.user.host}")
+    private String userHost;
+
+    @Value("${egov.user.search.path}")
+    private String userSearchEndpoint;
+
     //MDMS
     @Value("${egov.mdms.host}")
     private String mdmsHost;
+
+    @Value("${egov.user.create.path}")
+    private String userCreateEndpoint;
+
+    //Tenant Id
+    @Value("${egov-state-level-tenant-id}")
+    private String egovStateTenantId;
 
     @Value("${egov.mdms.search.endpoint}")
     private String mdmsEndPoint;
