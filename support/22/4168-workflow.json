@@ -592,6 +592,7 @@
           "currentState": "PENDING_RE_SIGN",
           "nextState": "PENDING_PAYMENT",
           "action": "UPLOAD_WITH_PAYMENT",
+          "active": true,
           "roles": [
             "ADVOCATE_ROLE",
             "SYSTEM",
