@@ -62,6 +62,5 @@ public class InboxV2Controller {
         InboxResponse inboxResponse = inboxService.getIndexResponse(inboxRequest);
         return new ResponseEntity<>(inboxResponse, HttpStatus.OK);
     }
-
 }
 

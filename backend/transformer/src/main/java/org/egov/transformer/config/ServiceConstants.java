@@ -30,4 +30,20 @@ public class ServiceConstants {
    public static final String HEARING_STATUS_MASTER_NAME = "HearingStatus";
    public static final String COURT_MASTERS_MODULE = "Court Masters Master";
    public static final String HEARING_COMPLETED_STATUS = "COMPLETED";
+
+   public static final String INTERNALMICROSERVICEROLE_NAME = "Internal Microservice Role";
+
+   public static final String INTERNALMICROSERVICEROLE_CODE = "INTERNAL_MICROSERVICE_ROLE";
+
+   public static final String INTERNALMICROSERVICEUSER_NAME = "Internal Microservice User";
+
+   public static final String INTERNALMICROSERVICEUSER_USERNAME = "INTERNAL_USER";
+
+   public static final String INTERNALMICROSERVICEUSER_MOBILENO = "9999999999";
+
+   public static final String INTERNALMICROSERVICEUSER_TYPE = "SYSTEM";
+
+   public static final String FLOW_JAC = "flow_jac";
+
+   public static final String msgId = "1730882648558|en_IN";
 }

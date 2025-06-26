@@ -234,25 +234,25 @@ public class InboxServiceV2 {
 
     private HashMap<String, Object> parseStatusCountMapFromAggregationResponse(Map<String, Object> response, Set<String> actionableStatuses) {
         List<HashMap<String, Object>> statusCountResponse = new ArrayList<>();
-        if (!CollectionUtils.isEmpty((Map<String, Object>) response.get(AGGREGATIONS_KEY))) {
+        if(!CollectionUtils.isEmpty((Map<String, Object>) response.get(AGGREGATIONS_KEY))){
             List<Map<String, Object>> statusCountBuckets = JsonPath.read(response, STATUS_COUNT_AGGREGATIONS_BUCKETS_PATH);
             HashMap<String, Object> statusCountMap = new HashMap<>();
             statusCountBuckets.forEach(bucket -> {
-                if (actionableStatuses.contains(bucket.get(KEY)))
-                    statusCountMap.put((String) bucket.get(KEY), bucket.get(DOC_COUNT_KEY));
+                if(actionableStatuses.contains(bucket.get(KEY)))
+                    statusCountMap.put((String)bucket.get(KEY), bucket.get(DOC_COUNT_KEY));
             });
             statusCountResponse.add(statusCountMap);
         }
-        if (CollectionUtils.isEmpty(statusCountResponse))
+        if(CollectionUtils.isEmpty(statusCountResponse))
             return null;
 
         return statusCountResponse.get(0);
     }
 
     private List<Inbox> parseInboxItemsFromSearchResponse(Object result, List<BusinessService> businessServices) {
-        Map<String, Object> hits = (Map<String, Object>) ((Map<String, Object>) result).get(HITS);
+        Map<String, Object> hits = (Map<String, Object>)((Map<String, Object>) result).get(HITS);
         List<Map<String, Object>> nestedHits = (List<Map<String, Object>>) hits.get(HITS);
-        if (CollectionUtils.isEmpty(nestedHits)) {
+        if(CollectionUtils.isEmpty(nestedHits)){
             return new ArrayList<>();
         }
 
@@ -260,18 +260,18 @@ public class InboxServiceV2 {
         Map<String, Long> stateUuidVsSlaMap = new HashMap<>();
 
         businessServices.forEach(businessService -> {
-            businessServiceSlaMap.put(businessService.getBusinessService(), businessService.getBusinessServiceSla());
+            businessServiceSlaMap.put(businessService.getBusinessService(),businessService.getBusinessServiceSla());
             businessService.getStates().forEach(state -> {
-                if (!ObjectUtils.isEmpty(state.getSla()))
+                if(!ObjectUtils.isEmpty(state.getSla()))
                     stateUuidVsSlaMap.put(state.getUuid(), state.getSla());
             });
         });
 
         List<Inbox> inboxItemList = new ArrayList<>();
-        nestedHits.forEach(hit -> {
+        nestedHits.forEach(hit ->{
             Inbox inbox = new Inbox();
             Map<String, Object> businessObject = (Map<String, Object>) hit.get(SOURCE_KEY);
-            inbox.setBusinessObject((Map<String, Object>) businessObject.get(DATA_KEY));
+            inbox.setBusinessObject((Map<String, Object>)businessObject.get(DATA_KEY));
             Long serviceSla = getApplicationServiceSla(businessServiceSlaMap, stateUuidVsSlaMap, inbox.getBusinessObject());
             inbox.getBusinessObject().put(SERVICESLA_KEY, serviceSla);
             inboxItemList.add(inbox);
@@ -289,7 +289,7 @@ public class InboxServiceV2 {
                 listOfUuids.add(state.getUuid());
             });
             businessServiceVsStateUuids.put(businessService.getBusinessService(), new HashSet<>(listOfUuids));
-            businessServiceSlaMap.put(businessService.getBusinessService(), businessService.getBusinessServiceSla());
+            businessServiceSlaMap.put(businessService.getBusinessService(),businessService.getBusinessServiceSla());
         });
 
         List<String> uuidsInSearchCriteria = inboxRequest.getInbox().getProcessSearchCriteria().getStatus();
@@ -379,7 +379,7 @@ public class InboxServiceV2 {
 
         populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchReviewProcess(), inboxQueryConfiguration, response::setReviewProcessData);
         populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchScheduleHearing(), inboxQueryConfiguration, response::setScheduleHearingData);
-        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchViewApplication(), inboxQueryConfiguration, response::setViewApplicationData);
+        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchViewApplication(),inboxQueryConfiguration, response::setViewApplicationData);
         populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRegisterCases(), inboxQueryConfiguration, response::setRegisterCasesData);
 
         return response;
@@ -395,13 +395,13 @@ public class InboxServiceV2 {
 
         if (criteria.getDate() != null) {
             searchCriteria.put("stateSla", criteria.getDate());
-        } else {
+        }else {
             searchCriteria.remove("stateSla");
         }
 
         if (criteria.getSearchableFields() != null) {
             searchCriteria.put("searchableFields", criteria.getSearchableFields());
-        } else {
+        }else{
             searchCriteria.remove("searchableFields");
         }
 
@@ -494,6 +494,25 @@ public class InboxServiceV2 {
         return paginatedDataResponse;
     }
 
+    private List<Data> parseSearchResponseForSimpleSearch(Object result) {
+        Map<String, Object> hits = (Map<String, Object>) ((Map<String, Object>) result).get(HITS);
+        List<Map<String, Object>> nestedHits = (List<Map<String, Object>>) hits.get(HITS);
+        if (CollectionUtils.isEmpty(nestedHits)) {
+            return new ArrayList<>();
+        }
+
+        List<Data> dataList = new ArrayList<>();
+        nestedHits.forEach(hit -> {
+            Data data = new Data();
+            Map<String, Object> sourceObject = (Map<String, Object>) hit.get(SOURCE_KEY);
+            Map<String, Object> dataObject = (Map<String, Object>) sourceObject.get(DATA_KEY);
+            List<Field> fields = getFieldsFromDataObject(dataObject);
+            data.setFields(fields);
+            dataList.add(data);
+        });
+
+        return dataList;
+    }
 
     private List<Field> getFieldsFromDataObject(Map<String, Object> dataObject) {
         List<Field> listOfFields = new ArrayList<>();

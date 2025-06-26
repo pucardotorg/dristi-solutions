@@ -48,7 +48,7 @@ public class OpenApiService {
     private AdvocateUtil advocateUtil;
 
     private final ResponseInfoFactory responseInfoFactory;
-  
+
     private final HrmsUtil hrmsUtil;
 
     public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateUtil advocateUtil, ResponseInfoFactory responseInfoFactory, HrmsUtil hrmsUtil) {
@@ -328,7 +328,7 @@ public class OpenApiService {
 
         return InboxRequest.builder().inbox(inboxSearchCriteria).build();
     }
-  
+
     public String getMagistrateName(String courtId, String tenantId) {
        return hrmsUtil.getJudgeName(tenantId,courtId);
     }

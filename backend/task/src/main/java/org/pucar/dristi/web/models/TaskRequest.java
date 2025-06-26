@@ -1,7 +1,7 @@
 package org.pucar.dristi.web.models;
 
+import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.UUID;
 
 import lombok.*;

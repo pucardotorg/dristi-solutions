@@ -315,7 +315,7 @@ public class EvidenceService {
                         .courtCaseNumber(caseDetails.has("courtCaseNumber") ? (caseDetails.get("courtCaseNumber").textValue() != null ? caseDetails.get("courtCaseNumber").textValue() : null) : null)
                         .cmpNumber(caseDetails.has("cmpNumber") ? (caseDetails.get("cmpNumber").textValue() != null ? caseDetails.get("cmpNumber").textValue() : null) : null)
                         .artifactNumber(artifact.getArtifactNumber())
-                        .filingNumber(caseDetails.has("filingNumber") ? caseDetails.get("filingNumber").asText() : "")
+                        .filingNumber(caseDetails.has("filingNumber") ? caseDetails.get("filingNumber").textValue() : "")
                         .tenantId(artifact.getTenantId()).build();
 
 

@@ -1,0 +1,180 @@
+[
+  [
+    // need to add these roles for judge
+    {
+      "name": "SUBMISSION_CREATOR",
+      "code": "SUBMISSION_CREATOR",
+      "tenantId": "kl"
+    },
+    {
+      "name": "PDF_CREATOR",
+      "code": "PDF_CREATOR",
+      "tenantId": "kl"
+    }
+  ],
+  [
+    // need to add roles to typist
+    [
+      {
+        "name": "HEARING_VIEWER",
+        "code": "HEARING_VIEWER",
+        "tenantId": "kl"
+      },
+      {
+        "name": "WORKFLOW_ABANDON",
+        "code": "WORKFLOW_ABANDON",
+        "tenantId": "kl"
+      },
+      {
+        "name": "Workflow Admin",
+        "code": "WORKFLOW_ADMIN",
+        "tenantId": "kl"
+      },
+      {
+        "name": "APPLICATION_CREATOR",
+        "code": "APPLICATION_CREATOR",
+        "tenantId": "kl"
+      },
+      {
+        "name": "DEPOSITION_PUBLISHER",
+        "code": "DEPOSITION_PUBLISHER",
+        "tenantId": "kl"
+      },
+      {
+        "name": "HEARING_APPROVER",
+        "code": "HEARING_APPROVER",
+        "tenantId": "kl"
+      },
+      {
+        "name": "APPLICATION_RESPONDER",
+        "code": "APPLICATION_RESPONDER",
+        "tenantId": "kl"
+      },
+      {
+        "name": "SUBMISSION_RESPONDER",
+        "code": "SUBMISSION_RESPONDER",
+        "tenantId": "kl"
+      },
+      {
+        "name": "ORDER_VIEWER",
+        "code": "ORDER_VIEWER",
+        "tenantId": "kl"
+      },
+      {
+        "name": "ORDER_REASSIGN",
+        "code": "ORDER_REASSIGN",
+        "tenantId": "kl"
+      },
+      {
+        "name": "CASE_EDITOR",
+        "code": "CASE_EDITOR",
+        "tenantId": "kl"
+      },
+      {
+        "name": "TASK_CREATOR",
+        "code": "TASK_CREATOR",
+        "tenantId": "kl"
+      },
+      {
+        "name": "APPLICATION_APPROVER",
+        "code": "APPLICATION_APPROVER",
+        "tenantId": "kl"
+      },
+      {
+        "name": "DIARY_VIEWER",
+        "code": "DIARY_VIEWER",
+        "tenantId": "kl"
+      },
+      {
+        "name": "TYPIST_ROLE",
+        "code": "TYPIST_ROLE",
+        "tenantId": "kl"
+      },
+      {
+        "name": "Employee",
+        "code": "EMPLOYEE",
+        "tenantId": "kl"
+      },
+      {
+        "name": "SUBMISSION_CREATOR",
+        "code": "SUBMISSION_CREATOR",
+        "tenantId": "kl"
+      },
+      {
+        "name": "NOTIFICATION_APPROVER",
+        "code": "NOTIFICATION_APPROVER",
+        "tenantId": "kl"
+      },
+      {
+        "name": "CASE_VIEWER",
+        "code": "CASE_VIEWER",
+        "tenantId": "kl"
+      },
+      {
+        "name": "PDF_CREATOR",
+        "code": "PDF_CREATOR",
+        "tenantId": "kl"
+      },
+      {
+        "name": "APPLICATION_REJECTOR",
+        "code": "APPLICATION_REJECTOR",
+        "tenantId": "kl"
+      },
+      {
+        "name": "HEARING_EDITOR",
+        "code": "HEARING_EDITOR",
+        "tenantId": "kl"
+      },
+      {
+        "name": "ORDER_APPROVER",
+        "code": "ORDER_APPROVER",
+        "tenantId": "kl"
+      },
+      {
+        "name": "DIARY_EDITOR",
+        "code": "DIARY_EDITOR",
+        "tenantId": "kl"
+      },
+      {
+        "name": "NOTIFICATION_CREATOR",
+        "code": "NOTIFICATION_CREATOR",
+        "tenantId": "kl"
+      },
+      {
+        "name": "HEARING_CREATOR",
+        "code": "HEARING_CREATOR",
+        "tenantId": "kl"
+      },
+      {
+        "name": "ORDER_CREATOR",
+        "code": "ORDER_CREATOR",
+        "tenantId": "kl"
+      },
+      {
+        "name": "EVIDENCE_CREATOR",
+        "code": "EVIDENCE_CREATOR",
+        "tenantId": "kl"
+      },
+      {
+        "name": "EVIDENCE_EDITOR",
+        "code": "EVIDENCE_EDITOR",
+        "tenantId": "kl"
+      },
+      {
+        "name": "SUBMISSION_APPROVER",
+        "code": "SUBMISSION_APPROVER",
+        "tenantId": "kl"
+      },
+      {
+        "name": "TASK_VIEWER",
+        "code": "TASK_VIEWER",
+        "tenantId": "kl"
+      },
+      {
+        "name": "HEARING_SCHEDULER",
+        "code": "HEARING_SCHEDULER",
+        "tenantId": "kl"
+      }
+    ]
+  ]
+]
