@@ -37,4 +37,7 @@ public class FilterCriteria {
 
     @JsonProperty("yearOfFiling")
     private String yearOfFiling = null;
+
+    @JsonProperty("caseTitle")
+    private String caseTitle = null;
 }
