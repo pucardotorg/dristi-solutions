@@ -33,6 +33,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const [disposedApplicationChildren, setDisposedApplicationChildren] = useState([]);
   const [bailApplicationChildren, setBailApplicationChildren] = useState([]);
   const [processChildren, setProcessChildren] = useState([]);
+  const [genericTaskList, setGenericTaskList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [publishedOrderData, setPublishedOrderData] = useState([]);
   const [contextMenu, setContextMenu] = useState(false);
@@ -445,6 +446,31 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     const fetchProcessData = async () => {
       try {
         setLoading(true);
+        const genericTasks = await DRISTIService.customApiService("/task/v1/search", {
+          criteria: {
+            tenantId: tenantId,
+            filingNumber: filingNumber,
+            taskType: "GENERIC",
+            courtId: courtId,
+            status: "COMPLETED",
+          },
+        });
+        const sortedGenericTasks = genericTasks?.list?.sort((a, b) => new Date(a.createdDate) - new Date(b.createdDate));
+        const combinedDocuments = sortedGenericTasks?.reduce((acc, current) => {
+          return acc.concat(current.documents?.filter((doc) => doc.documentType === "PAYMENT_RECEIPT"));
+        }, []);
+
+        const updatedCombinedDocuments = combinedDocuments?.map((doc, index) => {
+          return {
+            id: `GENRIC_PAYMENT_RECEIPT_${index}`,
+            title: "CASE_FILING_GENRIC_TASK_PAYMENT_RECEIPT",
+            fileStoreId: doc?.fileStore,
+            hasChildren: false,
+          };
+        });
+
+        setGenericTaskList(updatedCombinedDocuments);
+
         const resTask = await DRISTIService.customApiService("/task/v1/table/search", {
           criteria: {
             completeStatus: [
@@ -1238,18 +1264,19 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     const accusedEvidenceChildren = generateAccusedEvidenceStructure(accusedEvidenceData);
     const courtEvidenceChildren = generateCourtEvidenceStructure(courtEvidenceData, courtEvidenceDepositionData);
 
-    const casePaymentFilestoreId = getFileStoreByType("PAYMENT_RECEIPT");
+    // const casePaymentFilestoreId = getFileStoreByType("PAYMENT_RECEIPT");
 
-    const paymentReceiptsChildren = casePaymentFilestoreId
-      ? [
-          {
-            id: "PAYMENT_RECEIPT",
-            title: "CASE_FILING_PAYMENT_RECEIPT",
-            fileStoreId: casePaymentFilestoreId,
-            hasChildren: false,
-          },
-        ]
-      : [];
+    const casePaymentFile =
+      docs
+        ?.filter((doc) => doc?.documentType === "PAYMENT_RECEIPT")
+        .map((doc, index) => ({
+          id: `PAYMENT_RECEIPT_${index}`,
+          title: "CASE_FILING_PAYMENT_RECEIPT",
+          fileStoreId: doc?.fileStore,
+          hasChildren: false,
+        })) || [];
+
+    const paymentReceiptsChildren = [...casePaymentFile, ...genericTaskList];
 
     const mainStructureRaw = [
       {
