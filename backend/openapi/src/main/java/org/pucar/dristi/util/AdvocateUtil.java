@@ -47,6 +47,7 @@ public class AdvocateUtil {
         List<AdvocateSearchCriteria> criteriaList = new ArrayList<>();
         criteriaList.add(advocateSearchCriteria);
         advocateSearchRequest.setCriteria(criteriaList);
+        advocateSearchRequest.setRequestInfo(RequestInfo.builder().build());
 
         Object response;
         AdvocateListResponse advocateResponse;
