@@ -63,7 +63,6 @@ public class CaseService {
     private final ObjectMapper objectMapper;
     private final HearingUtil hearingUtil;
     private final ServiceRequestRepository repository;
-    private final HearingService hearingService;
     private final RestTemplate restTemplate;
     private final DateUtil dateUtil;
     private final MdmsUtil mdmsUtil;
@@ -71,14 +70,13 @@ public class CaseService {
     private final JsonUtil jsonUtil;
 
     @Autowired
-    public CaseService(ElasticSearchService elasticSearchService, TransformerProperties properties, TransformerProducer producer, ObjectMapper objectMapper, HearingUtil hearingUtil, ServiceRequestRepository repository, HearingService hearingService, RestTemplate restTemplate, DateUtil dateUtil, MdmsUtil mdmsUtil, ServiceConstants serviceConstants, JsonUtil jsonUtil) {
+    public CaseService(ElasticSearchService elasticSearchService, TransformerProperties properties, TransformerProducer producer, ObjectMapper objectMapper, HearingUtil hearingUtil, ServiceRequestRepository repository, RestTemplate restTemplate, DateUtil dateUtil, MdmsUtil mdmsUtil, ServiceConstants serviceConstants, JsonUtil jsonUtil) {
         this.elasticSearchService = elasticSearchService;
         this.properties = properties;
         this.producer = producer;
         this.objectMapper = objectMapper;
         this.hearingUtil = hearingUtil;
         this.repository = repository;
-        this.hearingService = hearingService;
         this.restTemplate = restTemplate;
         this.dateUtil = dateUtil;
         this.mdmsUtil = mdmsUtil;
@@ -188,7 +186,7 @@ public class CaseService {
                         .sortBy("createdTime")
                         .build())
                 .build();
-        List<Hearing> hearings = hearingService.fetchHearing(hearingSearchRequest);
+        List<Hearing> hearings = hearingUtil.fetchHearingDetails(hearingSearchRequest);
         Hearing latestHearing = null;
         if(hearings != null && hearings.size() > 0) {
             latestHearing = hearings.get(0);
