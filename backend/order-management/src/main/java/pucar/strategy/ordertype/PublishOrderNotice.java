@@ -214,7 +214,7 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
             uniqueSet.add(userUUID);
         }
 
-        Long sla = pendingTaskUtil.getStateSla(order.getOrderType());
+        Long sla = pendingTaskUtil.getStateSlaBasedOnOrderType(order.getOrderType());
         String applicationNumber = jsonUtil.getNestedValue(order.getAdditionalDetails(), Arrays.asList("formdata", "refApplicationId"), String.class);
 
         Map<String, Object> additionalDetails = new HashMap<>();
