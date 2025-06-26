@@ -1,15 +1,13 @@
-import { Button, Card, Loader, Modal } from "@egovernments/digit-ui-react-components";
+import { Card, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch } from "react-router-dom";
 import useGetOrders from "../../../hooks/dristi/useGetOrders";
 import TasksComponent from "@egovernments/digit-ui-module-home/src/components/TaskComponent";
-import EmptyStates from "@egovernments/digit-ui-module-home/src/components/EmptyStates";
-import { PreviousHearingIcon, RecentOrdersIcon } from "../../../icons/svgIndex";
+import { PreviousHearingIcon } from "../../../icons/svgIndex";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import ShowAllTranscriptModal from "../../../components/ShowAllTranscriptModal";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
-import WorkflowTimeline from "../../../components/WorkflowTimeline";
 import NextHearingCard from "./NextHearingCard";
 
 const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails, showNoticeProcessModal = true }) => {
@@ -156,11 +154,13 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
           tableView={true}
         />
       </div>
-      <div className="process-summary-container">
-        <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none" }}>
-          {<NoticeProcessModal showModal={false} filingNumber={filingNumber} currentHearingId={currentHearingId} caseDetails={caseDetails} />}
-        </Card>
-      </div>
+      {showNoticeProcessModal && (
+        <div className="process-summary-container">
+          <Card style={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none" }}>
+            {<NoticeProcessModal showModal={false} filingNumber={filingNumber} currentHearingId={currentHearingId} caseDetails={caseDetails} />}
+          </Card>
+        </div>
+      )}
       {showAllTranscript && <ShowAllTranscriptModal setShowAllTranscript={setShowAllTranscript} hearingList={previousHearing} judgeView={true} />}
       {/* {showAllStagesModal && (
         <Modal popupStyles={{}} hideSubmit={true} popmoduleClassName={"workflow-timeline-modal"}>

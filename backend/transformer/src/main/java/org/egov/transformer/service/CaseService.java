@@ -9,20 +9,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.egov.transformer.config.ServiceConstants;
 import org.egov.transformer.config.TransformerProperties;
-import org.egov.transformer.models.AdvocateMapping;
-import org.egov.transformer.models.CaseCriteria;
-import org.egov.transformer.models.CaseData;
-import org.egov.transformer.models.CaseRequest;
-import org.egov.transformer.models.CaseSearch;
-import org.egov.transformer.models.CaseSearchRequest;
-import org.egov.transformer.models.CourtCase;
-import org.egov.transformer.models.Hearing;
-import org.egov.transformer.models.HearingCriteria;
-import org.egov.transformer.models.HearingSearchRequest;
-import org.egov.transformer.models.Order;
-import org.egov.transformer.models.Pagination;
-import org.egov.transformer.models.Participant;
-import org.egov.transformer.models.Party;
+import org.egov.transformer.models.*;
 import org.egov.transformer.producer.TransformerProducer;
 import org.egov.transformer.repository.ServiceRequestRepository;
 import org.egov.transformer.util.DateUtil;
@@ -303,5 +290,15 @@ public class CaseService {
                 .map(data -> data.getAsString("name"))
                 .findFirst()
                 .orElse(null);
+    }
+
+    public CourtCase getCases(CaseSearchRequest searchCaseRequest) {
+        log.info("operation = getCases, result = IN_PROGRESS");
+
+        StringBuilder url = new StringBuilder(properties.getCaseSearchUrlHost() + properties.getCaseSearchUrlEndPoint());
+
+        Object response = repository.fetchResult(url, searchCaseRequest);
+        log.info("operation = getCases, result = SUCCESS");
+        return objectMapper.convertValue(JsonPath.read(response, COURT_CASE_JSON_PATH), CourtCase.class);
     }
 }

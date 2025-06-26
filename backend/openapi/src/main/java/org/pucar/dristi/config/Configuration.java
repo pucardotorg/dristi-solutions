@@ -121,7 +121,7 @@ public class Configuration {
     @Value("${egov.inbox.search.endpoint}")
     private String indexSearchEndPoint;
 
-  
+
     // Advocate Config
     @Value("${egov.advocate.host}")
     private String advocateHost;

@@ -342,7 +342,7 @@ public class TaskService {
             enrichmentUtil.enrichCaseApplicationUponUpdate(taskRequest);
 
             producer.push(config.getTaskUpdateTopic(), taskRequest);
-            
+
             closeEnvelopePendingTaskOfRpad(taskRequest);
 
             return taskRequest.getTask();
@@ -406,7 +406,7 @@ public class TaskService {
             Object taskDetailsObject = taskRequest.getTask().getTaskDetails();
             JsonNode taskDetails = objectMapper.readTree(objectMapper.writeValueAsString(taskDetailsObject));
 
-            String accusedName = taskDetails.has("respondentDetails") ? taskDetails.path("respondentDetails").path("name").asText() : "";
+            String accusedName = taskDetails.has("respondentDetails") ? taskDetails.path("respondentDetails").path("name").textValue() : "";
 
             Set<String> individualIds = extractComplainantIndividualIds(caseDetails);
             extractPowerOfAttorneyIds(caseDetails, individualIds);
@@ -419,8 +419,8 @@ public class TaskService {
             Set<String> phoneNumbers = callIndividualService(taskRequest.getRequestInfo(), individualIds);
 
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
-                    .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").asText() : "")
-                    .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").asText() : "")
+                    .courtCaseNumber(caseDetails.has("courtCaseNumber") ? caseDetails.get("courtCaseNumber").textValue() : "")
+                    .cmpNumber(caseDetails.has("cmpNumber") ? caseDetails.get("cmpNumber").textValue() : "")
                     .accusedName(accusedName)
                     .tenantId(taskRequest.getTask().getTenantId()).build();
 
