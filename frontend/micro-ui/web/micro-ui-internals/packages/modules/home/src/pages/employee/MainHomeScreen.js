@@ -25,13 +25,13 @@ const MainHomeScreen = () => {
   const location = useLocation();
   const homeFilteredData = location?.state?.homeFilteredData;
 
-  const homeActiveTab = location?.state?.homeActiveTab || null;
+  const homeActiveTab = location?.state?.homeActiveTab || "HEARINGS_TAB";
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const [activeTab, setActiveTab] = useState("HEARINGS_TAB");
+  const [activeTab, setActiveTab] = useState(homeActiveTab);
   const [updateCounter, setUpdateCounter] = useState(0);
   const [hearingCount, setHearingCount] = useState(0);
   const [config, setConfig] = useState(structuredClone(pendingTaskConfig));
-  const [activeTabTitle, setActiveTabTitle] = useState("HEARINGS_TAB");
+  const [activeTabTitle, setActiveTabTitle] = useState(homeActiveTab);
   const [pendingTaskCount, setPendingTaskCount] = useState({ REGISTRATION: 0, REVIEW_PROCESS: 0, VIEW_APPLICATION: 0, SCHEDULE_HEARING: 0 });
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const [loader, setLoader] = useState(false);
@@ -69,6 +69,15 @@ const MainHomeScreen = () => {
   useEffect(() => {
     setUpdateCounter((prev) => prev + 1);
   }, [config]);
+
+  // useEffect(() => {
+  //   if (activeTab !== homeActiveTab) {
+  //     history.replace(location.pathname, {
+  //       ...location.state,
+  //       homeActiveTab: activeTab,
+  //     });
+  //   }
+  // }, [activeTab, history, location.pathname, location.state, homeActiveTab]);
 
   const modifiedConfig = useMemo(() => {
     return { ...config };
@@ -213,6 +222,7 @@ const MainHomeScreen = () => {
 
   useEffect(() => {
     fetchPendingTaskCounts();
+    fetchHearingCount();
   }, []);
 
   const options = {
@@ -230,6 +240,40 @@ const MainHomeScreen = () => {
     },
   };
 
+  useEffect(() => {
+    let updatedConfig = { ...pendingTaskConfig };
+
+    if (activeTab === "REGISTRATION") {
+      updatedConfig.sections.search.uiConfig.fields = [
+        {
+          label: "CS_CASE_NAME_ADVOCATE",
+          type: "text",
+          key: "caseSearchText",
+          isMandatory: false,
+          disable: false,
+          populators: {
+            name: "caseSearchText",
+            error: "BR_PATTERN_ERR_MSG",
+            validation: {
+              pattern: {},
+              minlength: 2,
+            },
+          },
+        },
+      ];
+    } else {
+      updatedConfig.sections.search.uiConfig.fields = structuredClone(pendingTaskConfig?.sections?.search?.uiConfig?.fields);
+    }
+    updatedConfig = {
+      ...updatedConfig,
+      additionalDetails: {
+        setCount: setPendingTaskCount,
+        activeTab: activeTab,
+      },
+    };
+    setConfig(updatedConfig);
+  }, [activeTab]);
+
   const handleTabChange = (title, label) => {
     if (title !== activeTabTitle) {
       if (activeTabTitle === "HEARINGS_TAB") {
@@ -238,48 +282,8 @@ const MainHomeScreen = () => {
         fetchPendingTaskCounts();
       }
     }
-    let updatedConfig = { ...config };
-    if (label) {
-      setActiveTab(label);
-      if (label === "REGISTRATION") {
-        updatedConfig.sections.search.uiConfig.fields = [
-          {
-            label: "CS_CASE_NAME_ADVOCATE",
-            type: "text",
-            key: "caseSearchText",
-            isMandatory: false,
-            disable: false,
-            populators: {
-              name: "caseSearchText",
-              error: "BR_PATTERN_ERR_MSG",
-              validation: {
-                pattern: {},
-                minlength: 2,
-              },
-            },
-          },
-        ];
-        updatedConfig = {
-          ...updatedConfig,
-          additionalDetails: {
-            setCount: setPendingTaskCount,
-            activeTab: label,
-          },
-        };
-      } else {
-        updatedConfig.sections.search.uiConfig.fields = structuredClone(pendingTaskConfig?.sections?.search?.uiConfig?.fields);
-        updatedConfig = {
-          ...updatedConfig,
-          additionalDetails: {
-            setCount: setPendingTaskCount,
-            activeTab: label,
-          },
-        };
-      }
-    } else {
-      setActiveTab(title);
-    }
-    setConfig(updatedConfig);
+
+    setActiveTab(label || title);
     setActiveTabTitle(title);
   };
 
