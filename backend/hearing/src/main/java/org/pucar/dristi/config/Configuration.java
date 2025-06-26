@@ -265,4 +265,14 @@ public class Configuration {
     @Value("${egov.billingservice.demand.update.endpoint}")
     private String updateDemandEndpoint;
 
+    @Value("${egov.mdms.payment.business.service.name}")
+    private String paymentBusinessServiceName;
+
+    // Analytics Config
+    @Value("${dristi.analytics.host}")
+    private String analyticsHost;
+
+    @Value("${dristi.analytics.create.pendingtask}")
+    private String createPendingTaskEndPoint;
+
 }

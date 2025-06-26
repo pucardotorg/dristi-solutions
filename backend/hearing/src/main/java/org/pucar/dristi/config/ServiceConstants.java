@@ -155,4 +155,10 @@ public class ServiceConstants {
 
     public static final String ABANDONED = "ABANDONED";
 
+    public static final String PAYMENTTYPE = "paymentType";
+
+    public static final String SUMMON = "SUMMONS";
+
+    public static final String MANUAL = "MANUAL_";
+
 }
