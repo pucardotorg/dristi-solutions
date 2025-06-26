@@ -31,7 +31,8 @@ public class ServiceConstants {
    public static final String DEFAULT_HEARING_MASTER_NAME = "hearings";
    public static final String HEARING_MODULE_NAME = "Hearing";
    public static final String HEARING_STATUS_MASTER_NAME = "HearingStatus";
-   public static final String COMMON_MASTERS_MASTER = "Common Masters Master";
+   public static final String COMMON_MASTERS_MASTER = "common-masters";
+   public static final String COURT_ROOMS = "Court_Rooms";
    public static final String HEARING_COMPLETED_STATUS = "COMPLETED";
 
    public static final String INTERNALMICROSERVICEROLE_NAME = "Internal Microservice Role";
