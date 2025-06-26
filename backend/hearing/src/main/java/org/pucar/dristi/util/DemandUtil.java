@@ -35,7 +35,7 @@ public class DemandUtil {
         url.append("?").append("tenantId=").append(demandCriteria.getTenantId());
         if (demandCriteria.getConsumerCode() != null) {
             String joinedCodes = String.join(",", demandCriteria.getConsumerCode());
-            url.append("&consumerCode=").append(URLEncoder.encode(joinedCodes, StandardCharsets.UTF_8));
+            url.append("&consumerCode=").append(joinedCodes);
         }
 
         DemandResponse demandResponse = restTemplate.postForObject(url.toString(), requestInfoWrapper, DemandResponse.class);
