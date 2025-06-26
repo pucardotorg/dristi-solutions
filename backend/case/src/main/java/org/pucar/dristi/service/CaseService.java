@@ -4936,6 +4936,10 @@ public class CaseService {
             String lastSubmissionConsumerCode = getLastSubmissionConsumerCode(body) != null ? getLastSubmissionConsumerCode(body) : body.getCases().getFilingNumber()+"_CASE_FILING";
             Calculation oldCalculation = etreasuryUtil.getHeadBreakupCalculation(lastSubmissionConsumerCode, body.getRequestInfo());
 
+            if(oldCalculation == null) {
+                log.info("No previous calculation found for caseId: {}, for creating new demand", body.getCases().getId());
+                return null;
+            }
             Calculation calculation = getCalculationDifference(newCalculation, oldCalculation);
 
             if(calculation != null) {
