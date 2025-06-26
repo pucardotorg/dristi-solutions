@@ -37,9 +37,27 @@ public class LandingPageCase {
     @JsonProperty("registrationDate")
     private Long registrationDate = null;
 
-    @JsonProperty("advocate")
-    private List<PartyInfo> advocate = null;
+    @JsonProperty("advocates")
+    private List<PartyInfo> advocates = null;
 
-    @JsonProperty("litigant")
-    private List<PartyInfo> litigant = null;
+    @JsonProperty("litigants")
+    private List<PartyInfo> litigants = null;
+
+    @JsonProperty("courtId")
+    private String courtId = null;
+
+    @JsonProperty("filingNumber")
+    private String filingNumber = null;
+
+    @JsonProperty("cnrNumber")
+    private String cnrNumber = null;
+
+    @JsonProperty("courtName")
+    private String courtName = null;
+
+    @JsonProperty("caseStage")
+    private String caseStage = null;
+
+    @JsonProperty("caseStatus")
+    private String caseStatus = null;
 }
