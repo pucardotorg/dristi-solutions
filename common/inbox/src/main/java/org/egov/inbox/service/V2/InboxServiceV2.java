@@ -430,26 +430,6 @@ public class InboxServiceV2 {
         return dataList;
     }
 
-    private List<Data> parseSearchResponseForSimpleSearch(Object result) {
-        Map<String, Object> hits = (Map<String, Object>) ((Map<String, Object>) result).get(HITS);
-        List<Map<String, Object>> nestedHits = (List<Map<String, Object>>) hits.get(HITS);
-        if (CollectionUtils.isEmpty(nestedHits)) {
-            return new ArrayList<>();
-        }
-
-        List<Data> dataList = new ArrayList<>();
-        nestedHits.forEach(hit -> {
-            Data data = new Data();
-            Map<String, Object> sourceObject = (Map<String, Object>) hit.get(SOURCE_KEY);
-            Map<String, Object> dataObject = (Map<String, Object>) sourceObject.get(DATA_KEY);
-            List<Field> fields = getFieldsFromDataObject(dataObject);
-            data.setFields(fields);
-            dataList.add(data);
-        });
-
-        return dataList;
-    }
-
     private PaginatedDataResponse getDataFromSimpleSearchGroupByFilingNumber(SearchRequest searchRequest, String index) {
         Map<String, Object> finalQueryBody = queryBuilder.getESQueryForSimpleSearch(searchRequest, Boolean.TRUE, true);
         try {
