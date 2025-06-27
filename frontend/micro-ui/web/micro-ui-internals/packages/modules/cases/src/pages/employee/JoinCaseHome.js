@@ -47,7 +47,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
 
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+  const courtId = localStorage.getItem("courtId");
 
   const [show, setShow] = useState(false);
 
@@ -141,7 +141,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             {
               criteria: {
                 filingNumber: caseNumber,
-                courtId,
+                ...(courtId && { courtId }),
                 pagination: {
                   limit: 5,
                   offSet: 0,
@@ -758,6 +758,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                   litigants: [individual?.individualId],
                 },
                 tenantId,
+                courtId: caseDetails?.courtId,
               },
             });
           } catch (err) {
@@ -777,6 +778,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   }, [
     caseDetails?.caseTitle,
     caseDetails?.cnrNumber,
+    caseDetails?.courtId,
     caseDetails?.filingNumber,
     caseDetails?.id,
     caseDetails?.litigants,
@@ -837,7 +839,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
               });
             }
           } catch (error) {
-            console.log("error :>> ", error);
+            console.error("error :>> ", error);
           }
         } else {
           setStep(step + 1);
@@ -951,6 +953,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                         stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
                         additionalDetails: { individualId: individual?.individualId, caseId: caseDetails?.id, litigants: [individual?.individualId] },
                         tenantId,
+                        courtId: caseDetails?.courtId,
                       },
                     });
                   } catch (err) {
@@ -1162,6 +1165,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                           stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
                           additionalDetails: { individualId: user?.individualId, caseId: caseDetails?.id, litigants: [user?.individualId] },
                           tenantId,
+                          courtId: caseDetails?.courtId,
                         },
                       });
                     });
@@ -1201,7 +1205,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             setSuccess(true);
           }
         } catch (error) {
-          console.log("error", error);
+          console.error("error", error);
         }
         setIsApiCalled(false);
       }
@@ -1210,15 +1214,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       step,
       validationCode,
       isDisabled,
-      caseDetails?.cnrNumber,
-      caseDetails?.litigants,
-      caseDetails?.filingNumber,
-      caseDetails?.representatives,
-      caseDetails?.id,
-      caseDetails?.status,
-      caseDetails?.additionalDetails?.respondentDetails,
-      caseDetails?.caseTitle,
-      caseDetails?.poaHolders,
+      caseDetails,
       selectPartyData?.userType,
       selectPartyData?.partyInvolve?.value,
       selectPartyData?.isReplaceAdvocate?.value,
@@ -1349,7 +1345,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     },
     // 4
     {
-      modalMain: <JoinCasePayment type="join-case-flow" filingNumber={caseDetails?.filingNumber} taskNumber={taskNumber} />,
+      modalMain: <JoinCasePayment type="join-case-flow" taskNumber={taskNumber} />,
     },
     // 5
     {

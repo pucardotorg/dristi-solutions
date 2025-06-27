@@ -191,6 +191,9 @@ public class Configuration {
     @Value("${dristi.scheduler.create.endpoint}")
     private String schedulerCreateEndPoint;
 
+    @Value("${dristi.scheduler.calendar.update.endpoint}")
+    private String judgeCalendarUpdateEndPoint;
+
     @Value("${dristi.scheduler.bulk.reschedule.endpoint}")
     private String bulkRescheduleEndPoint;
 
@@ -202,6 +205,30 @@ public class Configuration {
 
     @Value("${bulk.reschedule.topic}")
     private String bulkRescheduleTopic;
+
+    // inbox config
+    @Value("${egov.inbox.host}")
+    private String inboxHost;
+
+    @Value("${egov.inbox.search.endpoint}")
+    private String indexSearchEndPoint;
+
+
+    @Value("${egov.indexer.es.username}")
+    private String esUsername;
+
+    @Value("${egov.indexer.es.password}")
+    private String esPassword;
+
+    @Value("${egov.bulk.index}")
+    private String index;
+
+    @Value("${egov.infra.indexer.host}")
+    private String esHostUrl;
+
+    @Value("${egov.bulk.index.path}")
+    private String bulkPath;
+
 
     // template for generic message of hearing types
     @Value("${egov.sms.notification.judge.scheduled.variable.hearing.template.id}")

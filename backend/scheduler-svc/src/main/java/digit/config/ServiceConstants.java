@@ -50,6 +50,7 @@ public class ServiceConstants {
     public static final String PENDING_TASK_ENTITY_TYPE = "order-managelifecycle";
     public static final String PENDING_TASK_NAME = "Create Order for rescheduling the hearing";
     public static final String PENDING_TASK_STATUS = "RESCHEDULE_HEARING";
+    public static final String SCHEDULE_HEARING_ACTION_CATEGORY = "Schedule Hearing";
 
     public static final String STATUS_RESCHEDULE = "RESCHEDULE";
 
@@ -97,5 +98,18 @@ public class ServiceConstants {
     public static final String CAUSE_LIST_FILE_NAME_PATTERN = "CauseList_%s.pdf";
 
     public static final String CAUSE_LIST_EMAIL_TEMPLATE_CODE = "CAUSELIST_EMAIL";
+
+    public static final String PASSED_OVER = "PASSED_OVER";
+
+    public static final String SCHEDULED = "SCHEDULED";
+
+    public static final String ABANDON = "ABANDON";
+
+    public static final String WORKFLOW_ABANDON = "WORKFLOW_ABANDON";
+
+
+    public static final String IN_PROGRESS = "IN_PROGRESS";
+
+    public static final String EMPLOYEE = "EMPLOYEE";
 
 }

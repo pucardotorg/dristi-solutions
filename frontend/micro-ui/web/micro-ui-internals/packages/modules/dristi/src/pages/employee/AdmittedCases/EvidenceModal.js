@@ -49,6 +49,7 @@ const EvidenceModal = ({
   const history = useHistory();
   const filingNumber = useMemo(() => caseData?.filingNumber, [caseData]);
   const cnrNumber = useMemo(() => caseData?.cnrNumber, [caseData]);
+  const caseCourtId = useMemo(() => caseData?.case?.courtId, [caseData]);
   const allAdvocates = useMemo(() => getAdvocates(caseData?.case), [caseData]);
   const createdBy = useMemo(() => documentSubmission?.[0]?.details?.auditDetails?.createdBy, [documentSubmission]);
   const applicationStatus = useMemo(() => documentSubmission?.[0]?.status, [documentSubmission]);
@@ -66,7 +67,7 @@ const EvidenceModal = ({
   const [formData, setFormData] = useState({});
   const [showFileIcon, setShowFileIcon] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
-  const { documents: allCombineDocs, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments();
+  const { documents: allCombineDocs, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments({ caseCourtId });
   const [isDisabled, setIsDisabled] = useState();
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
@@ -535,12 +536,13 @@ const EvidenceModal = ({
         filingNumber,
         artifactNumber,
         tenantId,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
     {},
     artifactNumber,
-    Boolean(artifactNumber)
+    Boolean(artifactNumber && caseCourtId)
   );
 
   const evidenceDetails = useMemo(() => evidenceData?.artifacts?.[0], [evidenceData]);
@@ -553,12 +555,13 @@ const EvidenceModal = ({
           criteria: {
             tenantId: Digit.ULBService.getCurrentTenantId(),
             filingNumber: filingNumber,
+            ...(caseCourtId && { courtId: caseCourtId }),
           },
         },
         {}
       );
       const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
-      const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+      const courtId = localStorage.getItem("courtId");
       let evidenceReqBody = {};
       let evidence = {};
       evidenceReqBody = {
@@ -602,9 +605,9 @@ const EvidenceModal = ({
       case "WITHDRAWAL":
         return type === "reject" ? "WITHDRAWAL_REJECT" : "WITHDRAWAL_ACCEPT";
       case "TRANSFER":
-        return "CASE_TRANSFER";
+        return type === "reject" ? "CASE_TRANSFER_REJECT" : "CASE_TRANSFER_ACCEPT";
       case "SETTLEMENT":
-        return "SETTLEMENT";
+        return type === "reject" ? "SETTLEMENT_REJECT" : "SETTLEMENT_ACCEPT";
       case "BAIL_BOND":
         return "BAIL";
       case "SURETY":
@@ -630,9 +633,9 @@ const EvidenceModal = ({
       case "WITHDRAWAL":
         return type === "reject" ? "ORDER_FOR_ACCEPT_WITHDRAWAL" : "ORDER_FOR_REJECT_WITHDRAWAL";
       case "TRANSFER":
-        return "ORDER_FOR_CASE_TRANSFER";
+        return type === "reject" ? "ORDER_FOR_CASE_TRANSFER_REJECT" : "ORDER_FOR_CASE_TRANSFER_ACCEPT";
       case "SETTLEMENT":
-        return "ORDER_FOR_SETTLEMENT";
+        return type === "reject" ? "ORDER_FOR_REJECT_SETTLEMENT" : "ORDER_FOR_ACCEPT_SETTLEMENT";
       case "BAIL_BOND":
         return "ORDER_FOR_BAIL";
       case "SURETY":
@@ -983,7 +986,14 @@ const EvidenceModal = ({
           const res = await ordersService.createOrder(reqbody, { tenantId });
           const name = getOrderActionName(documentSubmission?.[0]?.applicationList?.applicationType, isBail ? type : showConfirmationModal?.type);
           DRISTIService.customApiService(Urls.dristi.pendingTask, {
+            //need to add actioncategory for ORDER_EXTENSION_SUBMISSION_DEADLINE , ORDER_FOR_INITIATING_RESCHEDULING_OF_HEARING_DATE
             pendingTask: {
+              actionCategory:
+                name === "ORDER_EXTENSION_SUBMISSION_DEADLINE"
+                  ? "View Application"
+                  : name === "ORDER_FOR_INITIATING_RESCHEDULING_OF_HEARING_DATE"
+                  ? "Schedule Hearing"
+                  : null,
               name: t(name),
               entityType: "order-default",
               referenceId: `MANUAL_${res?.order?.orderNumber}`,

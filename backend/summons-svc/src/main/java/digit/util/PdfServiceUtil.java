@@ -89,6 +89,9 @@ public class PdfServiceUtil {
                         summonsPdf.setOneSuretyAmount(String.valueOf(bailableAmount));
                     }
                 }
+                if(GENERIC.equals(warrantDetails.getTemplateType())){
+                    summonsPdf.setWarrantText(warrantDetails.getWarrantText());
+                }
             }
 
             if (taskRequest.getTask().getTaskType().equalsIgnoreCase(SUMMON) || taskRequest.getTask().getTaskType().equalsIgnoreCase(NOTICE) || taskRequest.getTask().getTaskType().equalsIgnoreCase(WARRANT)) {
@@ -134,7 +137,7 @@ public class PdfServiceUtil {
     private String getExecutorName(TaskRequest taskRequest) {
 
         if(taskRequest.getTask().getTaskDetails().getRespondentDetails().getAddress().getGeoLocationDetails() != null &&
-        taskRequest.getTask().getTaskDetails().getRespondentDetails().getAddress().getGeoLocationDetails().getPoliceStationDetails() != null) {
+                taskRequest.getTask().getTaskDetails().getRespondentDetails().getAddress().getGeoLocationDetails().getPoliceStationDetails() != null) {
             return taskRequest.getTask().getTaskDetails().getRespondentDetails().getAddress().getGeoLocationDetails().getPoliceStationDetails().getName();
         }
         Coordinate coordinate = taskRequest.getTask().getTaskDetails().getRespondentDetails().getAddress().getCoordinate();

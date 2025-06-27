@@ -60,6 +60,7 @@ public class PendingTaskUtil {
         pendingTask.setName(PENDING_TASK_NAME);
         pendingTask.setReferenceId("MANUAL_"+reScheduleHearing.getRescheduledRequestId());
         pendingTask.setStatus(PENDING_TASK_STATUS);
+        pendingTask.setActionCategory(SCHEDULE_HEARING_ACTION_CATEGORY);
         pendingTask.setFilingNumber(reScheduleHearing.getCaseId());
         pendingTask.setAssignedRole(List.of("JUDGE_ROLE"));
         pendingTask.setScreenType(SCREEN_TYPE);

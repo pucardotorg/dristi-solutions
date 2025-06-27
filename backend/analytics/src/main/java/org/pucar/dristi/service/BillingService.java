@@ -123,7 +123,7 @@ public class BillingService {
     }
 
 
-    private void processDemand(String demands,Long paymentCompletedDate) {
+    private void processDemand(String demands, Long paymentCompletedDate) {
         try {
             JSONArray kafkaJsonArray = util.constructArray(demands, DEMAND_PATH);
 
@@ -157,14 +157,14 @@ public class BillingService {
         return bulkRequest;
     }
 
-    void processJsonObject(JSONObject jsonObject, StringBuilder bulkRequest, JSONObject requestInfo, Long paymentCompletedDate) {
+    void processJsonObject(JSONObject jsonObject, StringBuilder bulkRequest, JSONObject requestInfo,Long paymentCompletedDate) {
         try {
             String stringifiedObject = billingUtil.buildString(jsonObject);
             String consumerCode = JsonPath.read(stringifiedObject, CONSUMER_CODE_PATH);
             String[] consumerCodeSplitArray = consumerCode.split("_", 2);
 
             if (isOfflinePaymentAvailable(consumerCodeSplitArray[1])) {
-                String payload = billingUtil.buildPayload(stringifiedObject, requestInfo,paymentCompletedDate);
+                String payload = billingUtil.buildPayload(stringifiedObject, requestInfo, paymentCompletedDate);
                 if (payload != null && !payload.isEmpty())
                     bulkRequest.append(payload);
             } else {
