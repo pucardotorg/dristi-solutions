@@ -3,8 +3,8 @@ package org.pucar.dristi.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -215,6 +215,7 @@ public class TaskService {
             if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status)){
                 String acknowledgementId = summonUtil.sendSummons(body);
                 updateAcknowledgementId(body, acknowledgementId);
+                closeEnvelopePendingTaskOfRpad(body);
             }
             List<String> fileStoreIds = new ArrayList<>();
             if(body.getTask().getDocuments() != null){
@@ -330,15 +331,29 @@ public class TaskService {
         task.setStatus(status);
     }
 
-    private String updateWorkflow(RequestInfo requestInfo, String tenantId, String taskNumber, WorkflowObject workflow) throws JsonProcessingException {
-        workflow.setAdditionalDetails(getAdditionalDetailsForExcludingRoles());
+    private String updateWorkflow(RequestInfo requestInfo, String tenantId, String taskNumber, WorkflowObject workflow) {
+
+        ObjectNode additionalDetails = updateAdditionalDetails(workflow.getAdditionalDetails());
+        workflow.setAdditionalDetails(additionalDetails);
+
         return workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                 config.getTaskGenericBusinessServiceName(), workflow, config.getTaskGenericBusinessName());
     }
 
-    private Object getAdditionalDetailsForExcludingRoles() throws JsonProcessingException {
-        return objectMapper.readValue("{\"excludeRoles\":[\"TASK_CREATOR\"]}", Object.class);
+    private ObjectNode updateAdditionalDetails(Object existingDetails) {
+        ObjectNode detailsNode;
+        if (existingDetails == null) {
+            detailsNode = objectMapper.createObjectNode();
+        } else {
+            detailsNode = objectMapper.convertValue(existingDetails, ObjectNode.class);
+        }
+        ArrayNode excludeRolesArray = detailsNode.putArray("excludeRoles");
+        excludeRolesArray.add("TASK_CREATOR");
+        excludeRolesArray.add("SYSTEM_ADMIN");
+
+        return detailsNode;
     }
+
     public Task uploadDocument(TaskRequest body) {
         try {
             Task task = validator.validateApplicationUploadDocumentExistence(body.getTask(), body.getRequestInfo());
@@ -348,8 +363,6 @@ public class TaskService {
             enrichmentUtil.enrichCaseApplicationUponUpdate(taskRequest);
 
             producer.push(config.getTaskUpdateTopic(), taskRequest);
-
-            closeEnvelopePendingTaskOfRpad(taskRequest);
 
             return taskRequest.getTask();
 

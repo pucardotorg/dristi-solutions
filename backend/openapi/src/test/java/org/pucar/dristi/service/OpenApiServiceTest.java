@@ -17,6 +17,7 @@ import org.pucar.dristi.util.ResponseInfoFactory;
 import org.pucar.dristi.web.models.*;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -395,9 +396,34 @@ public class OpenApiServiceTest {
     }
 
     @Test
-    void buildInboxRequest_HandlesCaseNumberCriteria() {
+    void buildInboxRequest_HandlesCaseNumberCriteria_InvalidType() {
         CaseNumberCriteria caseNumberCriteria = new CaseNumberCriteria();
-        caseNumberCriteria.setCaseType("CIVIL");
+        caseNumberCriteria.setCaseType("CIVIL"); // Not ST or CMP
+        caseNumberCriteria.setCaseNumber("456");
+        caseNumberCriteria.setYear("2023");
+        caseNumberCriteria.setCourtName("District Court");
+
+        SearchCaseCriteria searchCriteria = new SearchCaseCriteria();
+        searchCriteria.setSearchType(SearchType.CASE_NUMBER);
+        searchCriteria.setCaseNumberCriteria(caseNumberCriteria);
+        searchCriteria.setFilingNumberCriteria(null);
+        searchCriteria.setCnrNumberCriteria(null);
+        searchCriteria.setAdvocateCriteria(null);
+        searchCriteria.setLitigantCriteria(null);
+
+        LandingPageCaseListRequest request = new LandingPageCaseListRequest();
+        request.setSearchCaseCriteria(searchCriteria);
+
+        LandingPageCaseListResponse response = openApiService.getLandingPageCaseList(TENANT_ID, request);
+        verify(inboxUtil, never()).getLandingPageCaseListResponse(any());
+        assertNotNull(response);
+        assertTrue(response.getItems().isEmpty());
+    }
+
+    @Test
+    void buildInboxRequest_HandlesCaseNumberCriteria_ST() {
+        CaseNumberCriteria caseNumberCriteria = new CaseNumberCriteria();
+        caseNumberCriteria.setCaseType("ST");
         caseNumberCriteria.setCaseNumber("456");
         caseNumberCriteria.setYear("2023");
         caseNumberCriteria.setCourtName("District Court");
@@ -417,10 +443,13 @@ public class OpenApiServiceTest {
         ArgumentCaptor<InboxRequest> captor = ArgumentCaptor.forClass(InboxRequest.class);
         verify(inboxUtil).getLandingPageCaseListResponse(captor.capture());
         Map<String, Object> moduleCriteria = captor.getValue().getInbox().getModuleSearchCriteria();
-        assertEquals("CIVIL/456/2023", moduleCriteria.get("caseNumber"));
+        assertEquals("ST/456/2023", moduleCriteria.get("stNumber"));
         assertEquals("District Court", moduleCriteria.get("courtName"));
         assertEquals(TENANT_ID, moduleCriteria.get("tenantId"));
+        assertFalse(moduleCriteria.containsKey("cmpNumber"));
     }
+
+
 
     @Test
     void buildInboxRequest_HandlesCnrNumberCriteria() {
@@ -445,6 +474,37 @@ public class OpenApiServiceTest {
         assertEquals("CNR-12345", moduleCriteria.get("cnrNumber"));
         assertEquals(TENANT_ID, moduleCriteria.get("tenantId"));
     }
+
+    @Test
+    void buildInboxRequest_HandlesCaseNumberCriteria_CMP() {
+        CaseNumberCriteria caseNumberCriteria = new CaseNumberCriteria();
+        caseNumberCriteria.setCaseType("CMP");
+        caseNumberCriteria.setCaseNumber("789");
+        caseNumberCriteria.setYear("2024");
+        caseNumberCriteria.setCourtName("High Court");
+
+        SearchCaseCriteria searchCriteria = new SearchCaseCriteria();
+        searchCriteria.setSearchType(SearchType.CASE_NUMBER);
+        searchCriteria.setCaseNumberCriteria(caseNumberCriteria);
+        searchCriteria.setFilingNumberCriteria(null);
+        searchCriteria.setCnrNumberCriteria(null);
+        searchCriteria.setAdvocateCriteria(null);
+        searchCriteria.setLitigantCriteria(null);
+
+        LandingPageCaseListRequest request = new LandingPageCaseListRequest();
+        request.setSearchCaseCriteria(searchCriteria);
+
+        openApiService.getLandingPageCaseList(TENANT_ID, request);
+        ArgumentCaptor<InboxRequest> captor = ArgumentCaptor.forClass(InboxRequest.class);
+        verify(inboxUtil).getLandingPageCaseListResponse(captor.capture());
+        Map<String, Object> moduleCriteria = captor.getValue().getInbox().getModuleSearchCriteria();
+        assertEquals("CMP/789/2024", moduleCriteria.get("cmpNumber"));
+        assertEquals("High Court", moduleCriteria.get("courtName"));
+        assertEquals(TENANT_ID, moduleCriteria.get("tenantId"));
+        assertFalse(moduleCriteria.containsKey("stNumber"));
+    }
+
+
 
     @Test
     void buildInboxRequest_HandlesAdvocateBarcodeCriteria_Found() {
@@ -580,8 +640,8 @@ public class OpenApiServiceTest {
         PartyInfo advocate2 = PartyInfo.builder().id("adv2").name("Advocate Two").entityType("ADVOCATE").build();
         PartyInfo litigant1 = PartyInfo.builder().id("lit1").name("Litigant One").entityType("LITIGANT").build();
         PartyInfo litigant2 = PartyInfo.builder().id("lit2").name("Litigant Two").entityType("LITIGANT").build();
-        caseObj.setAdvocate(Arrays.asList(advocate1, advocate2));
-        caseObj.setLitigant(Arrays.asList(litigant1, litigant2));
+        caseObj.setAdvocates(Arrays.asList(advocate1, advocate2));
+        caseObj.setLitigants(Arrays.asList(litigant1, litigant2));
         mockResponse.setItems(Collections.singletonList(caseObj));
 
         when(inboxUtil.getLandingPageCaseListResponse(any())).thenReturn(mockResponse);
@@ -593,18 +653,18 @@ public class OpenApiServiceTest {
         assertNotNull(response);
         assertFalse(response.getItems().isEmpty());
         LandingPageCase actualCase = response.getItems().get(0);
-        assertEquals(2, actualCase.getAdvocate().size());
-        assertEquals("Advocate One", actualCase.getAdvocate().get(0).getName());
-        assertEquals(2, actualCase.getLitigant().size());
-        assertEquals("Litigant Two", actualCase.getLitigant().get(1).getName());
+        assertEquals(2, actualCase.getAdvocates().size());
+        assertEquals("Advocate One", actualCase.getAdvocates().get(0).getName());
+        assertEquals(2, actualCase.getLitigants().size());
+        assertEquals("Litigant Two", actualCase.getLitigants().get(1).getName());
     }
 
     @Test
     void getLandingPageCaseListResponse_HandlesNullAndEmptyAdvocateLitigant() {
         LandingPageCaseListResponse mockResponse = new LandingPageCaseListResponse();
         LandingPageCase caseObj = new LandingPageCase();
-        caseObj.setAdvocate(null);
-        caseObj.setLitigant(Collections.emptyList());
+        caseObj.setAdvocates(null);
+        caseObj.setLitigants(Collections.emptyList());
         mockResponse.setItems(Collections.singletonList(caseObj));
 
         when(inboxUtil.getLandingPageCaseListResponse(any())).thenReturn(mockResponse);
@@ -616,9 +676,9 @@ public class OpenApiServiceTest {
         assertNotNull(response);
         assertFalse(response.getItems().isEmpty());
         LandingPageCase actualCase = response.getItems().get(0);
-        assertNull(actualCase.getAdvocate());
-        assertNotNull(actualCase.getLitigant());
-        assertTrue(actualCase.getLitigant().isEmpty());
+        assertNull(actualCase.getAdvocates());
+        assertNotNull(actualCase.getLitigants());
+        assertTrue(actualCase.getLitigants().isEmpty());
     }
     @Test
     void buildInboxRequest_HandlesAllSearchType() {
@@ -661,20 +721,32 @@ public class OpenApiServiceTest {
         request.setFilterCriteria(filterCriteria);
         request.setSearchCaseCriteria(validAllCriteria());
 
-        openApiService.getLandingPageCaseList(TENANT_ID, request);
+        // Mock the epoch conversion for the specific dates
+        when(dateUtil.getEpochFromLocalDate(LocalDate.of(2023, 1, 1)))
+                .thenReturn(1672501800000L);
+        lenient().when(dateUtil.getEpochFromLocalDate(LocalDate.of(2023, 12, 31)))
+                .thenReturn(1703961000000L);
 
+        // If your code uses config.getZoneId() elsewhere, mock it as well
+        when(configuration.getZoneId()).thenReturn("Asia/Kolkata");
+
+        // Act
+        openApiService.getLandingPageCaseList("tenantId", request);
+
+        // Assert
         ArgumentCaptor<InboxRequest> captor = ArgumentCaptor.forClass(InboxRequest.class);
         verify(inboxUtil).getLandingPageCaseListResponse(captor.capture());
         Map<String, Object> moduleCriteria = captor.getValue().getInbox().getModuleSearchCriteria();
         assertEquals("Supreme Court", moduleCriteria.get("courtName"));
         assertEquals("Criminal", moduleCriteria.get("caseType"));
-        assertEquals("2023-01-01", moduleCriteria.get("hearingDateFrom"));
-        assertEquals("2023-12-31", moduleCriteria.get("hearingDateTo"));
+        // Assert mocked epoch millis as String
+        assertEquals("1672501800000", moduleCriteria.get("hearingDateFrom"));
+        assertEquals("1704047399999", moduleCriteria.get("hearingDateTo"));
         assertEquals("Trial", moduleCriteria.get("caseStage"));
         assertEquals("Active", moduleCriteria.get("caseStatus"));
         assertEquals("2022", moduleCriteria.get("yearOfFiling"));
         assertEquals("Test1 vs Test2", moduleCriteria.get("caseTitle"));
-        assertEquals(TENANT_ID, moduleCriteria.get("tenantId"));
+        assertEquals("tenantId", moduleCriteria.get("tenantId"));
     }
 
     @Test
