@@ -1,5 +1,8 @@
 package org.egov.transformer.config;
 
+import org.springframework.stereotype.Component;
+
+@Component
 public class ServiceConstants {
    public static final String CASE_INDEX = "case-index";
    public static final String FILING_NUMBER = "Data.caseDetails.filingNumber";
