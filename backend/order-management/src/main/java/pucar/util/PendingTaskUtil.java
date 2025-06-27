@@ -218,6 +218,10 @@ public class PendingTaskUtil {
         return StateSlaMap.getStateSlaMap().get(INITIATING_RESCHEDULING_OF_HEARING_DATE) * ONE_DAY_TIME_IN_MILLIS + dateUtil.getCurrentTimeInMilis();
     }
 
+    public Long getStateSlaBasedOnOrderType(String orderType) {
+        return StateSlaMap.getStateSlaMap().get(orderType.toUpperCase()) * ONE_DAY_TIME_IN_MILLIS + dateUtil.getCurrentTimeInMilis();
+    }
+
 
     public ArrayNode getAssigneeDetailsForMakeMandatorySubmission(Object additionalDetailsObj) {
 
@@ -265,8 +269,8 @@ public class PendingTaskUtil {
         return switch (channelCode) {
             case "EMAIL" -> "Make Payment for Email " + orderType;
             case "SMS" -> "Make Payment for SMS " + orderType;
-            case "POLICE" -> "Make Payment for Police " + orderType;
-            case "RPAD" -> "Make Payment for RPAD " + orderType;
+            case "POLICE" -> "Pay online for police delivery";
+            case "RPAD" -> "Pay online & submit envelope offline for RPAD";
             case "POST" -> "Make Payment for Post " + orderType;
             default -> "Make Payment for " + orderType;
         };

@@ -6,6 +6,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.web.models.Advocate;
@@ -47,6 +48,7 @@ public class AdvocateUtil {
         List<AdvocateSearchCriteria> criteriaList = new ArrayList<>();
         criteriaList.add(advocateSearchCriteria);
         advocateSearchRequest.setCriteria(criteriaList);
+        advocateSearchRequest.setRequestInfo(RequestInfo.builder().userInfo(User.builder().build()).build());
 
         Object response;
         AdvocateListResponse advocateResponse;
