@@ -244,7 +244,6 @@ const AdmittedCaseV2 = () => {
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const historyCaseData = location?.state?.caseData;
   const historyOrderData = location?.state?.orderData;
-  const homeFilterData = location?.state?.homeFilteredData;
 
   const openOrder = location?.state?.openOrder;
   const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
@@ -347,13 +346,14 @@ const AdmittedCaseV2 = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "HEARINGS_TAB", [location?.state?.homeActiveTab]);
+  const homeFilteredData = useMemo(() => location?.state?.homeFilteredData || {}, [location?.state?.homeFilteredData]);
 
   useEffect(() => {
     const unlisten = history.listen((location, action) => {
       if (action === "POP" && location.pathname.includes("home-screen")) {
         history.replace(location.pathname, {
           ...location.state,
-          homeFilterData: homeFilterData,
+          homeFilteredData: homeFilteredData,
           homeActiveTab: homeActiveTab,
         });
       }
@@ -2863,7 +2863,7 @@ const AdmittedCaseV2 = () => {
         content: t("ES_COMMON_HOME"),
         show: true,
         isLast: false,
-        homeFilteredData: homeFilterData,
+        homeFilteredData: homeFilteredData,
         homeActiveTab: homeActiveTab,
       },
       {
@@ -2879,7 +2879,7 @@ const AdmittedCaseV2 = () => {
         isLast: true,
       },
     ],
-    [t, homeFilterData, fromHome, isCitizen, path]
+    [t, homeFilteredData, fromHome, isCitizen, path]
   );
 
   const advocateName = useMemo(() => {
