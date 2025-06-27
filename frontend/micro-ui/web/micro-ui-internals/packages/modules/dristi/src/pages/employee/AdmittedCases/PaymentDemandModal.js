@@ -288,6 +288,7 @@ const PaymentDemandModal = ({
                   className="home-input"
                   type="date"
                   min={tomorrowDate}
+                  defaultValue={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
                   style={{ minWidth: 120, textAlign: "start" }}
                 />
