@@ -97,7 +97,7 @@ const MainHomeScreen = () => {
   };
 
   const fetchHearingCount = async (filters, activeTab) => {
-    if (filters && activeTab === "HEARINGS_TAB") {
+    if (filters && activeTab === "HEARINGS_TAB" && filters.date) {
       try {
         let fromDate, toDate;
         if (filters.date) {
@@ -113,11 +113,11 @@ const MainHomeScreen = () => {
               tenantId: Digit.ULBService.getCurrentTenantId(),
             },
             moduleSearchCriteria: {
-              tenantId: Digit.ULBService.getCurrentTenantId(),
+              tenantId: tenantId,
               courtId: localStorage.getItem("courtId"),
               ...(fromDate && toDate ? { fromDate, toDate } : {}),
             },
-            tenantId: Digit.ULBService.getCurrentTenantId(),
+            tenantId: tenantId,
             limit: 300,
             offset: 0,
           },
@@ -154,12 +154,14 @@ const MainHomeScreen = () => {
         };
         const res = await HomeService.InboxSearch(payload, { tenantId: tenantId });
         setHearingCount(res?.totalCount || 0);
+        // if (!filters) {
         setFilters({
           date: todayStr,
           status: "",
           purpose: "",
           caseQuery: "",
         });
+        // }
       } catch (err) {
         showToast("error", t("ISSUE_IN_FETCHING"), 5000);
         console.log(err);
