@@ -138,4 +138,7 @@ public class Configuration {
 
     @Value("${egov.file.store.get.endpoint}")
     private String fileStoreGetEndPoint;
+
+    @Value("${app.zone.id}")
+    private String zoneId;
 }
