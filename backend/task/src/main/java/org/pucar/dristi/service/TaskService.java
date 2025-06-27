@@ -3,8 +3,8 @@ package org.pucar.dristi.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -215,6 +215,7 @@ public class TaskService {
             if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status)){
                 String acknowledgementId = summonUtil.sendSummons(body);
                 updateAcknowledgementId(body, acknowledgementId);
+                closeEnvelopePendingTaskOfRpad(body);
             }
             List<String> fileStoreIds = new ArrayList<>();
             if(body.getTask().getDocuments() != null){
@@ -301,7 +302,7 @@ public class TaskService {
         }
     }
 
-    private void workflowUpdate(TaskRequest taskRequest) {
+    private void workflowUpdate(TaskRequest taskRequest) throws JsonProcessingException {
         Task task = taskRequest.getTask();
         RequestInfo requestInfo = taskRequest.getRequestInfo();
 
@@ -309,7 +310,6 @@ public class TaskService {
         String tenantId = task.getTenantId();
         String taskNumber = task.getTaskNumber();
         WorkflowObject workflow = task.getWorkflow();
-
         String status = switch (taskType) {
             case BAIL -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskBailBusinessServiceName(), workflow, config.getTaskBailBusinessName());
@@ -323,8 +323,7 @@ public class TaskService {
                     config.getTaskJoinCaseBusinessServiceName(), workflow, config.getTaskjoinCaseBusinessName());
             case JOIN_CASE_PAYMENT -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskPaymentBusinessServiceName(), workflow, config.getTaskPaymentBusinessName());
-            case GENERIC -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
-                    config.getTaskGenericBusinessServiceName(), workflow, config.getTaskGenericBusinessName());
+            case GENERIC -> updateWorkflow(requestInfo, tenantId, taskNumber, workflow);
             default -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskBusinessServiceName(), workflow, config.getTaskBusinessName());
         };
@@ -332,6 +331,28 @@ public class TaskService {
         task.setStatus(status);
     }
 
+    private String updateWorkflow(RequestInfo requestInfo, String tenantId, String taskNumber, WorkflowObject workflow) {
+
+        ObjectNode additionalDetails = updateAdditionalDetails(workflow.getAdditionalDetails());
+        workflow.setAdditionalDetails(additionalDetails);
+
+        return workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
+                config.getTaskGenericBusinessServiceName(), workflow, config.getTaskGenericBusinessName());
+    }
+
+    private ObjectNode updateAdditionalDetails(Object existingDetails) {
+        ObjectNode detailsNode;
+        if (existingDetails == null) {
+            detailsNode = objectMapper.createObjectNode();
+        } else {
+            detailsNode = objectMapper.convertValue(existingDetails, ObjectNode.class);
+        }
+        ArrayNode excludeRolesArray = detailsNode.putArray("excludeRoles");
+        excludeRolesArray.add("TASK_CREATOR");
+        excludeRolesArray.add("SYSTEM_ADMIN");
+
+        return detailsNode;
+    }
 
     public Task uploadDocument(TaskRequest body) {
         try {
@@ -342,8 +363,6 @@ public class TaskService {
             enrichmentUtil.enrichCaseApplicationUponUpdate(taskRequest);
 
             producer.push(config.getTaskUpdateTopic(), taskRequest);
-
-            closeEnvelopePendingTaskOfRpad(taskRequest);
 
             return taskRequest.getTask();
 
