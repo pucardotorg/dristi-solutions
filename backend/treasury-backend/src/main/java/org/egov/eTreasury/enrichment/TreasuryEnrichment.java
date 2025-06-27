@@ -195,4 +195,8 @@ public class TreasuryEnrichment {
             throw new CustomException("ERROR_ENRICH_PAYMENT", "Error enriching payment data.");
         }
     }
+
+    public String enrichGrn(RequestInfo requestInfo) {
+        return idgenUtil.getIdList(requestInfo, config.getEgovStateTenantId(), config.getMockGrnName(), null, 1).get(0);
+    }
 }

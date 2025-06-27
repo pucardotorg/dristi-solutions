@@ -32,6 +32,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -141,11 +142,18 @@ public class PaymentService {
 
     public Payload processPayment(ChallanData challanData, RequestInfo requestInfo) {
         try {
-            // Authenticate and get secret map
-            Map<String, String> secretMap = authenticate();
-
-            // Decrypt the SEK using the appKey
-            String decryptedSek = encryptionUtil.decryptAES(secretMap.get("sek"), secretMap.get("appKey"));
+            Map<String, String> secretMap;
+            String decryptedSek;
+            if(config.isMockEnabled() && challanData.isMockEnabled()){
+                log.info("Treasury is in mock mode, using mock authentication.");
+                secretMap = mockAuthentication();
+                decryptedSek = secretMap.get("sek");
+            } else {
+                // Authenticate and get secret map
+                secretMap = authenticate();
+                // Decrypt the SEK using the appKey
+                decryptedSek = encryptionUtil.decryptAES(secretMap.get("sek"), secretMap.get("appKey"));
+            }
 
             // Prepare the request body
             ChallanDetails challanDetails  = treasuryEnrichment.generateChallanDetails(challanData, requestInfo);
@@ -153,7 +161,13 @@ public class PaymentService {
             AuthSek authSek = buildAuthSek(challanData, secretMap, decryptedSek, challanDetails.getDepartmentId());
             saveAuthTokenAndSek(requestInfo, authSek);
 
-            String postBody = generatePostBody(decryptedSek, objectMapper.writeValueAsString(challanDetails));
+            String postBody;
+            if(config.isMockEnabled() && challanData.isMockEnabled()) {
+                log.info("Treasury is in mock mode, generating post body without encryption.");
+                postBody = objectMapper.writeValueAsString(challanDetails);
+            } else {
+                postBody = generatePostBody(decryptedSek, objectMapper.writeValueAsString(challanDetails));
+            }
 
             // Prepare headers
             Headers headers = new Headers();
@@ -163,11 +177,29 @@ public class PaymentService {
 
             return Payload.builder()
                     .url(config.getChallanGenerateUrl())
-                    .data(postBody).headers(headersData).build();
+                    .data(postBody).headers(headersData).grn(treasuryEnrichment.enrichGrn(requestInfo)).build();
         } catch (Exception e) {
             log.error("Payment processing error: ", e);
             throw new CustomException(PAYMENT_PROCESSING_ERROR, "Error occurred during generation oF challan");
         }
+    }
+
+    private static Map<String, String> mockAuthentication() {
+        // Mock authentication for testing purposes
+        Map<String, String> secretMap;
+        secretMap = new HashMap<>();
+        SecureRandom random = new SecureRandom();
+        byte[] sekBytes = new byte[16];
+        random.nextBytes(sekBytes);
+        StringBuilder sekBuilder = new StringBuilder();
+        for (byte b : sekBytes) {
+            sekBuilder.append(String.format("%02x", b));
+        }
+        String sek = sekBuilder.toString();
+        String authToken = UUID.randomUUID().toString();
+        secretMap.put("sek", sek);
+        secretMap.put("authToken", authToken);
+        return secretMap;
     }
 
     private AuthSek buildAuthSek(ChallanData challanData, Map<String, String> secretMap, String decryptedSek, String departmentId) {
@@ -204,12 +236,17 @@ public class PaymentService {
                 log.error("No AuthSek found for authToken: {}", treasuryParams.getAuthToken());
                 throw new CustomException(AUTH_SEK_NOT_FOUND, "No AuthSek found for the provided authToken");
             }
-
             AuthSek authSek = optionalAuthSek.get();
-            String decryptedSek = authSek.getDecryptedSek();
-            String decryptedRek = encryptionUtil.decryptResponse(treasuryParams.getRek(), decryptedSek);
-            String decryptedData = encryptionUtil.decryptResponse(treasuryParams.getData(), decryptedRek);
-
+            String decryptedData;
+            if(config.isMockEnabled() && treasuryParams.isMockEnabled()) {
+                log.info("Treasury is in mock mode, using mock data.");
+                decryptedData = treasuryParams.getData();
+            }
+            else {
+                String decryptedSek = authSek.getDecryptedSek();
+                String decryptedRek = encryptionUtil.decryptResponse(treasuryParams.getRek(), decryptedSek);
+                decryptedData = encryptionUtil.decryptResponse(treasuryParams.getData(), decryptedRek);
+            }
             log.info("Decrypted data: {}", decryptedData);
 
             TransactionDetails transactionDetails = objectMapper.readValue(decryptedData, TransactionDetails.class);
