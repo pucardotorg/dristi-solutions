@@ -101,7 +101,7 @@ public class OrderUtil {
 
         OrderListResponse response = getOrders(searchRequest);
         List<Order> filteredOrders = response.getList().stream()
-                .filter(order -> List.of(SUMMONS, WARRANT, NOTICE).contains(order.getOrderType() != null ? order.getOrderType().toUpperCase() : getOrderTypeFromCompositeOrders(order)))
+                .filter(order -> List.of(SUMMONS, NOTICE).contains(order.getOrderType() != null ? order.getOrderType().toUpperCase() : getOrderTypeFromCompositeOrders(order)))
                 .collect(Collectors.toList());
 
         log.info("Found {} relevant orders (SUMMONS/WARRANT/NOTICE) for hearingId: {}", filteredOrders.size(), hearingId);
@@ -117,7 +117,7 @@ public class OrderUtil {
 
         for (JsonNode item : compositeItems) {
             String orderType = item.path("orderType").asText(null);
-            if (orderType != null && List.of(SUMMONS, WARRANT, NOTICE).contains(orderType)) {
+            if (orderType != null && List.of(SUMMONS, NOTICE).contains(orderType)) {
                 return orderType;
             }
         }
