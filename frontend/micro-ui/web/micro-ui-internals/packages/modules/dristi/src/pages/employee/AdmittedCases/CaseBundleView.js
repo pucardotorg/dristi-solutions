@@ -457,7 +457,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         });
         const sortedGenericTasks = genericTasks?.list?.sort((a, b) => new Date(a.createdDate) - new Date(b.createdDate));
         const combinedDocuments = sortedGenericTasks?.reduce((acc, current) => {
-          return acc.concat(current.documents?.filter((doc) => doc.documentType === "PAYMENT_RECEIPT"));
+          return acc.concat(current.documents);
         }, []);
 
         const updatedCombinedDocuments = combinedDocuments?.map((doc, index) => {
