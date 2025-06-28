@@ -38,11 +38,7 @@ public class DemandUtil {
             url.append("&consumerCode=").append(joinedCodes);
         }
 
-        DemandResponse demandResponse = restTemplate.postForObject(url.toString(), requestInfoWrapper, DemandResponse.class);
-        if (demandResponse == null || demandResponse.getDemands() == null || demandResponse.getDemands().isEmpty()) {
-            throw new CustomException("DEMAND_SEARCH_FAILED", "No demands found for the given criteria");
-        }
-        return demandResponse;
+        return restTemplate.postForObject(url.toString(), requestInfoWrapper, DemandResponse.class);
     }
 
     public DemandResponse updateDemand(DemandRequest demandRequest) {
