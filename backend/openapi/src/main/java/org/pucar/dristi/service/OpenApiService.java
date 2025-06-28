@@ -477,7 +477,7 @@ public class OpenApiService {
         criteria.setTenantId(openApiOrdersTaskIRequest.getTenantId());
         OrderBy orderBy = new OrderBy();
         orderBy.setOrder(Order.DESC);
-        orderBy.setCode("date");
+        orderBy.setCode("Data.orderNotification.date");
         criteria.setSortOrder(List.of(orderBy));
         criteria.setLimit(openApiOrdersTaskIRequest.getLimit());
         criteria.setOffset(openApiOrdersTaskIRequest.getOffset());
