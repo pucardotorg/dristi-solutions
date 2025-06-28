@@ -67,12 +67,10 @@ public class TaskUtil {
             return objectMapper.readValue(jsonNode.toString(), TaskResponse.class);
         } catch (HttpClientErrorException e) {
             log.error(EXTERNAL_SERVICE_EXCEPTION, e);
-            throw new ServiceCallException(e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error(SEARCHER_SERVICE_EXCEPTION, e);
-            throw new CustomException(); // add log and code
         }
-
+        return null;
     }
 
 }
