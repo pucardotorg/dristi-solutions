@@ -69,7 +69,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
     }
   };
 
-  const handleButtonClick = (url, data, header, billConsumerCode, billBusinessService, isMockEnabled, gateway) => {
+  const handleButtonClick = async (url, data, header, billConsumerCode, billBusinessService, isMockEnabled, gateway) => {
     if (isMockEnabled) {
       const apiUrl = `${window.location.origin}/epayments`;
       let jsonData = JSON.parse(data);
@@ -109,15 +109,11 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
       const popup = window.open("", "popupWindow", "width=1000,height=1000,scrollbars=yes");
       if (popup) {
         popup.document.body.innerHTML = `
-    <h2>Mock Payment in Progress</h2>
-    <p>Please wait while we process your payment.</p>
-  `;
+        <h2>Mock Payment in Progress</h2>
+        <p>Please wait while we process your payment.</p>
+      `;
         setPaymentLoader(true);
       }
-      debugger;
-
-      let retryCount = 0;
-      const maxRetries = 3;
 
       const checkBillStatus = async () => {
         try {
@@ -128,39 +124,58 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
             },
             body: JSON.stringify(apiData),
           });
-          const data = await response.json();
-          console.log(data);
-          setPaymentLoader(true);
-          const billAfterPayment = await DRISTIService.callSearchBill(
-            {},
-            { tenantId, consumerCode: consumerCode || billConsumerCode, service: service || billBusinessService }
-          );
-          if (billAfterPayment?.Bill?.[0]?.status === "PAID") {
-            setPaymentLoader(false);
-            popup.close();
-            return true;
-          } else {
-            retryCount++;
-            if (retryCount < maxRetries) {
-              setTimeout(checkBillStatus, 1000);
-            } else {
-              setPaymentLoader(false);
-              popup.close();
-              return false;
-            }
-          }
+
+          return new Promise((resolve) => {
+            let retryCount = 0;
+            const maxRetries = 6;
+
+            const intervalId = setInterval(async () => {
+              try {
+                const billAfterPayment = await DRISTIService.callSearchBill(
+                  {},
+                  { tenantId, consumerCode: consumerCode || billConsumerCode, service: service || billBusinessService }
+                );
+
+                if (billAfterPayment?.Bill?.[0]?.status === "PAID") {
+                  setPaymentLoader(false);
+                  popup?.close();
+                  clearInterval(intervalId);
+                  resolve(true);
+                } else {
+                  retryCount++;
+                  if (retryCount >= maxRetries) {
+                    setPaymentLoader(false);
+                    popup?.close();
+                    clearInterval(intervalId);
+                    resolve(false);
+                  }
+                }
+              } catch (error) {
+                console.error("Error checking bill status:", error);
+                retryCount++;
+                if (retryCount >= maxRetries) {
+                  setPaymentLoader(false);
+                  popup?.close();
+                  clearInterval(intervalId);
+                  resolve(false);
+                }
+              }
+            }, 10000);
+          });
         } catch (error) {
           console.error(error);
           setPaymentLoader(false);
-          popup.close();
+          popup?.close();
           return false;
         }
       };
 
-      checkBillStatus();
+      const status = await checkBillStatus();
+
       if (scenario !== "applicationSubmission") {
         setShowPaymentModal(false);
       }
+      return status;
     } else {
       return new Promise((resolve) => {
         const popup = window.open("", "popupWindow", "width=1000,height=1000,scrollbars=yes");
