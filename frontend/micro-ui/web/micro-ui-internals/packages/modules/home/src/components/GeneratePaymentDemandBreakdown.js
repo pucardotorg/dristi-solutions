@@ -51,6 +51,8 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
   const [consumerCode, setConsumerCode] = useState(null);
   const [totalAmount, setTotalAmount] = useState(0);
   const [comments, setComments] = useState("");
+  const [caseLockLoader, setLockLoader] = useState(false);
+  const [taskLoader, setTaskloader] = useState(null);
   // const { data: paymentTypeData, isLoading: isPaymentTypeLoading } = Digit.Hooks.useCustomMDMS(
   //   Digit.ULBService.getStateId(),
   //   "payment",
@@ -90,13 +92,14 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
     consumerCode: consumerCode, //taskNumber + `_${suffix}`,
     service: "task-generic",
     path,
-    // caseDetails,
-    // totalAmount: totalAmount,
+    caseDetails,
+    totalAmount: totalAmount,
     scenario,
   });
 
   const fetchCaseLockStatus = useCallback(async () => {
     try {
+      setLockLoader(true);
       const status = await DRISTIService.getCaseLockStatus(
         {},
         {
@@ -107,6 +110,8 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
       setIsCaseLocked(status?.Lock?.isLocked);
     } catch (error) {
       console.error("Error fetching case lock status", error);
+    } finally {
+      setLockLoader(false);
     }
   });
   useEffect(() => {
@@ -117,6 +122,7 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
 
   const fetchTask = useCallback(async () => {
     try {
+      setTaskloader(true);
       const task = await DRISTIService.customApiService(Urls.case.searchTasks, {
         criteria: {
           tenantId: tenantId,
@@ -148,6 +154,8 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
       setPaymentBreakDown(updatedBreakdown);
     } catch (error) {
       console.error("Error fetching task data", error);
+    } finally {
+      setTaskloader(false);
     }
   }, [taskNumber]);
 
@@ -281,84 +289,96 @@ color: #3D3C3C;
         formId="modal-action"
         actionSaveOnSubmit={() => onSubmitCase()}
         titleSaveButton={isCaseLocked ? t(payOnlineButtonTitle) : ""}
-        isDisabled={paymentLoader || isCaseLocked}
+        isDisabled={paymentLoader || isCaseLocked || taskLoader || caseLockLoader || isLoading}
         headerBarMain={<Heading label={t("CS_PAY_TO_FILE_CASE")} />}
       >
-        <div className="payment-due-wrapper" style={{ maxHeight: "550px", display: "flex", flexDirection: "column", margin: "13px 0px" }}>
-          <div className="payment-due-text" style={{ fontSize: "18px" }}>
-            {`${t("CS_DUE_PAYMENT")} `}
-            <span style={{ fontWeight: 700 }}>Rs {totalAmount}/-.</span>
-            <p style={{ margin: 0 }}> {` ${t("PAYMENT_ADDITIONAL_INFO")}: ${comments ? comments : "-"}`}</p>
-          </div>
-          <div className="payment-calculator-wrapper" style={{ display: "flex", flexDirection: "column", maxHeight: "150px", overflowY: "auto" }}>
-            {paymentBreakDown
-              .filter((item) => !item.isTotalFee)
-              .map((item) => (
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    paddingRight: "16px",
-                  }}
-                >
-                  <span>{t(item.key)}</span>
-                  <span>
-                    {item.currency} {parseFloat(item.value).toFixed(2)}
-                  </span>
+        <React.Fragment>
+          {isLoading || taskLoader || caseLockLoader ? (
+            <Loader />
+          ) : (
+            <React.Fragment>
+              {" "}
+              <div className="payment-due-wrapper" style={{ maxHeight: "550px", display: "flex", flexDirection: "column", margin: "13px 0px" }}>
+                <div className="payment-due-text" style={{ fontSize: "18px" }}>
+                  {`${t("CS_DUE_PAYMENT")} `}
+                  <span style={{ fontWeight: 700 }}>Rs {totalAmount}/-.</span>
+                  <p style={{ margin: 0 }}> {` ${t("PAYMENT_ADDITIONAL_INFO")}: ${comments ? comments : "-"}`}</p>
                 </div>
-              ))}
-          </div>
-          <div className="payment-calculator-wrapper" style={{ display: "flex", flexDirection: "column" }}>
-            {paymentBreakDown
-              .filter((item) => item.isTotalFee)
-              .map((item) => (
                 <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    borderTop: "1px solid #BBBBBD",
-                    fontSize: "16px",
-                    fontWeight: "700",
-                    paddingTop: "12px",
-                    paddingRight: paymentBreakDown.length > 6 ? "28px" : "16px",
-                  }}
+                  className="payment-calculator-wrapper"
+                  style={{ display: "flex", flexDirection: "column", maxHeight: "150px", overflowY: "auto" }}
                 >
-                  <span>{item.key}</span>
-                  <span>
-                    {item.currency} {parseFloat(item.value).toFixed(2)}
-                  </span>
+                  {paymentBreakDown
+                    .filter((item) => !item.isTotalFee)
+                    .map((item) => (
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          paddingRight: "16px",
+                        }}
+                      >
+                        <span>{t(item.key)}</span>
+                        <span>
+                          {item.currency} {parseFloat(item.value).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
                 </div>
-              ))}
-          </div>
-          <div>
-            <InfoCard
-              variant={"default"}
-              label={t("CS_PAYMENT_NOTE")}
-              style={{ backgroundColor: "#ECF3FD" }}
-              additionalElements={[
-                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                  <span className="learn-more-text" style={{ color: "#3D3C3C" }}>
-                    {t("PAYMENT_SUBTEXT")}{" "}
-                    <span class="tooltip">
-                      {t("LEARN_MORE")}
-                      <span class="tooltip-text" style={{ maxWidth: "300px", wordWrap: "break-word" }}>
-                        {t("PAYMENT_SUBTEXT_TOOLTIP")}
-                      </span>
-                    </span>
-                  </span>
-                </div>,
-              ]}
-              inline
-              textStyle={{}}
-              className={"adhaar-verification-info-card"}
-            />
-          </div>
-        </div>
-        {toastMsg && (
-          <Toast error={toastMsg.key === "error"} label={t(toastMsg.action)} onClose={() => setToastMsg(null)} style={{ maxWidth: "500px" }} />
-        )}
+                <div className="payment-calculator-wrapper" style={{ display: "flex", flexDirection: "column" }}>
+                  {paymentBreakDown
+                    .filter((item) => item.isTotalFee)
+                    .map((item) => (
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          borderTop: "1px solid #BBBBBD",
+                          fontSize: "16px",
+                          fontWeight: "700",
+                          paddingTop: "12px",
+                          paddingRight: paymentBreakDown.length > 6 ? "28px" : "16px",
+                        }}
+                      >
+                        <span>{item.key}</span>
+                        <span>
+                          {item.currency} {parseFloat(item.value).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+                <div>
+                  <InfoCard
+                    variant={"default"}
+                    label={t("CS_PAYMENT_NOTE")}
+                    style={{ backgroundColor: "#ECF3FD" }}
+                    additionalElements={[
+                      <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                        <span className="learn-more-text" style={{ color: "#3D3C3C" }}>
+                          {t("PAYMENT_SUBTEXT")}{" "}
+                          <span class="tooltip">
+                            {t("LEARN_MORE")}
+                            <span class="tooltip-text" style={{ maxWidth: "300px", wordWrap: "break-word", padding: "5px 10px" }}>
+                              {t("PAYMENT_SUBTEXT_TOOLTIP")}
+                            </span>
+                          </span>
+                        </span>
+                      </div>,
+                    ]}
+                    inline
+                    textStyle={{}}
+                    className={"adhaar-verification-info-card"}
+                  />
+                </div>
+              </div>
+              {toastMsg && (
+                <Toast error={toastMsg.key === "error"} label={t(toastMsg.action)} onClose={() => setToastMsg(null)} style={{ maxWidth: "500px" }} />
+              )}{" "}
+            </React.Fragment>
+          )}
+        </React.Fragment>
       </Modal>
     </div>
   );
