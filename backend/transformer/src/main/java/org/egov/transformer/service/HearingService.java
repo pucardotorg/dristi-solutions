@@ -155,6 +155,8 @@ public class HearingService {
         List<String> searchableFields = new ArrayList<>();
         searchableFields.addAll(advocate.getComplainant());
         searchableFields.addAll(advocate.getAccused());
+        searchableFields.addAll(advocate.getIndividualIds());
+        searchableFields.addAll(advocate.getAdvocateIds());
         searchableFields.add(courtCase.getCaseTitle());
         searchableFields.addAll(hearing.getFilingNumber());
         if (hearing.getCmpNumber() != null) searchableFields.add(hearing.getCmpNumber());
