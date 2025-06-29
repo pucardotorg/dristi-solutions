@@ -96,37 +96,76 @@ const MainHomeScreen = () => {
     }, duration);
   };
 
-  const fetchHearingCount = async () => {
-    const { fromDate, toDate } = getTodayRange();
-    try {
-      const payload = {
-        inbox: {
-          processSearchCriteria: {
-            businessService: ["hearing-default"],
-            moduleName: "Hearing Service",
+  const fetchHearingCount = async (filters, activeTab) => {
+    if (filters && activeTab === "HEARINGS_TAB" && filters.date) {
+      try {
+        let fromDate, toDate;
+        if (filters.date) {
+          const dateObj = new Date(filters.date);
+          fromDate = new Date(dateObj.setHours(0, 0, 0, 0)).getTime();
+          toDate = new Date(dateObj.setHours(23, 59, 59, 999)).getTime();
+        }
+        const payload = {
+          inbox: {
+            processSearchCriteria: {
+              businessService: ["hearing-default"],
+              moduleName: "Hearing Service",
+              tenantId: Digit.ULBService.getCurrentTenantId(),
+            },
+            moduleSearchCriteria: {
+              tenantId: tenantId,
+              courtId: localStorage.getItem("courtId"),
+              ...(fromDate && toDate ? { fromDate, toDate } : {}),
+            },
             tenantId: tenantId,
+            limit: 300,
+            offset: 0,
           },
-          moduleSearchCriteria: {
+        };
+        if (filters?.status?.code) payload.inbox.moduleSearchCriteria.status = filters?.status?.code;
+        if (filters?.purpose) payload.inbox.moduleSearchCriteria.hearingType = filters.purpose?.code;
+        if (filters?.caseQuery) payload.inbox.moduleSearchCriteria.searchableFields = filters.caseQuery;
+
+        const res = await HomeService.InboxSearch(payload, { tenantId: Digit.ULBService.getCurrentTenantId() });
+        setHearingCount(res?.totalCount || 0);
+      } catch (err) {
+        showToast("error", t("ISSUE_IN_FETCHING"), 5000);
+        console.log(err);
+      }
+    } else {
+      const { fromDate, toDate } = getTodayRange();
+      try {
+        const payload = {
+          inbox: {
+            processSearchCriteria: {
+              businessService: ["hearing-default"],
+              moduleName: "Hearing Service",
+              tenantId: tenantId,
+            },
+            moduleSearchCriteria: {
+              tenantId: tenantId,
+              courtId: localStorage.getItem("courtId"),
+              ...(fromDate && toDate ? { fromDate, toDate } : {}),
+            },
             tenantId: tenantId,
-            courtId: localStorage.getItem("courtId"),
-            ...(fromDate && toDate ? { fromDate, toDate } : {}),
+            limit: 300,
+            offset: 0,
           },
-          tenantId: tenantId,
-          limit: 300,
-          offset: 0,
-        },
-      };
-      const res = await HomeService.InboxSearch(payload, { tenantId: tenantId });
-      setHearingCount(res?.totalCount || 0);
-      setFilters({
-        date: todayStr,
-        status: "",
-        purpose: "",
-        caseQuery: "",
-      });
-    } catch (err) {
-      showToast("error", t("ISSUE_IN_FETCHING"), 5000);
-      console.log(err);
+        };
+        const res = await HomeService.InboxSearch(payload, { tenantId: tenantId });
+        setHearingCount(res?.totalCount || 0);
+        // if (!filters) {
+        setFilters({
+          date: todayStr,
+          status: "",
+          purpose: "",
+          caseQuery: "",
+        });
+        // }
+      } catch (err) {
+        showToast("error", t("ISSUE_IN_FETCHING"), 5000);
+        console.log(err);
+      }
     }
   };
 
@@ -222,7 +261,7 @@ const MainHomeScreen = () => {
 
   useEffect(() => {
     fetchPendingTaskCounts();
-    fetchHearingCount();
+    fetchHearingCount(filters, activeTab);
   }, []);
 
   const options = {
