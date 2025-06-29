@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -247,13 +248,26 @@ public class OpenApiService {
                         log.warn("Missing fields in CaseNumberCriteria: {}", caseNumberCriteria);
                         return null;
                     }
-                    String caseNumber = String.join("/", caseNumberCriteria.getCaseType(),
-                            caseNumberCriteria.getCaseNumber(), caseNumberCriteria.getYear());
-                    moduleSearchCriteria.put("caseNumber", caseNumber);
+
+                    String caseNumber = String.join("/",
+                            caseNumberCriteria.getCaseType(),
+                            caseNumberCriteria.getCaseNumber(),
+                            caseNumberCriteria.getYear());
+
+                    String caseType = caseNumberCriteria.getCaseType();
+                    if (caseType.equalsIgnoreCase("ST")) {
+                        moduleSearchCriteria.put("stNumber", caseNumber);
+                    } else if (caseType.equalsIgnoreCase("CMP")) {
+                        moduleSearchCriteria.put("cmpNumber", caseNumber);
+                    } else {
+                        return null;
+                    }
+
                     if (caseNumberCriteria.getCourtName() != null) {
                         moduleSearchCriteria.put("courtName", caseNumberCriteria.getCourtName());
                     }
                     break;
+
 
                 case CNR_NUMBER:
                     CnrNumberCriteria cnrNumberCriteria = searchCaseCriteria.getCnrNumberCriteria();
@@ -332,10 +346,17 @@ public class OpenApiService {
                 moduleSearchCriteria.put("caseType", filterCriteria.getCaseType());
             }
             if (filterCriteria.getHearingDateFrom() != null) {
-                moduleSearchCriteria.put("hearingDateFrom", filterCriteria.getHearingDateFrom().toString());
+                moduleSearchCriteria.put("hearingDateFrom", dateUtil.getEpochFromLocalDate(filterCriteria.getHearingDateFrom()).toString());
             }
             if (filterCriteria.getHearingDateTo() != null) {
-                moduleSearchCriteria.put("hearingDateTo", filterCriteria.getHearingDateTo().toString());
+                LocalDate toDate = filterCriteria.getHearingDateTo();
+                String zoneId = configuration.getZoneId();
+                long endOfDayEpochMillis = toDate
+                        .plusDays(1)
+                        .atStartOfDay(ZoneId.of(zoneId))
+                        .toInstant()
+                        .toEpochMilli() - 1;
+                moduleSearchCriteria.put("hearingDateTo", String.valueOf(endOfDayEpochMillis));
             }
             if (filterCriteria.getCaseStage() != null) {
                 moduleSearchCriteria.put("caseStage", filterCriteria.getCaseStage());
@@ -397,8 +418,9 @@ public class OpenApiService {
         moduleSearchCriteria.put("filingNumber", openApiOrdersTaskIRequest.getFilingNumber());
         moduleSearchCriteria.put("courtId", openApiOrdersTaskIRequest.getCourtId());
         moduleSearchCriteria.put("isCompleted", false);
-        moduleSearchCriteria.put("status", "PENDING_PAYMENT");
-        moduleSearchCriteria.put("entityType", Arrays.asList("task-notice", "task-summons", "task-warrant"));
+        moduleSearchCriteria.put("status", Arrays.asList("PAYMENT_PENDING_POST","PAYMENT_PENDING_EMAIL",
+                "PAYMENT_PENDING_RPAD", "PAYMENT_PENDING_POLICE", "PAYMENT_PENDING_SMS"));
+        moduleSearchCriteria.put("entityType", "order-default");
 
         criteria.setModuleSearchCriteria(moduleSearchCriteria);
 
