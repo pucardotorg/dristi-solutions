@@ -418,8 +418,9 @@ public class OpenApiService {
         moduleSearchCriteria.put("filingNumber", openApiOrdersTaskIRequest.getFilingNumber());
         moduleSearchCriteria.put("courtId", openApiOrdersTaskIRequest.getCourtId());
         moduleSearchCriteria.put("isCompleted", false);
-        moduleSearchCriteria.put("status", "PENDING_PAYMENT");
-        moduleSearchCriteria.put("entityType", Arrays.asList("task-notice", "task-summons", "task-warrant"));
+        moduleSearchCriteria.put("status", Arrays.asList("PAYMENT_PENDING_POST","PAYMENT_PENDING_EMAIL",
+                "PAYMENT_PENDING_RPAD", "PAYMENT_PENDING_POLICE", "PAYMENT_PENDING_SMS"));
+        moduleSearchCriteria.put("entityType", "order-default");
 
         criteria.setModuleSearchCriteria(moduleSearchCriteria);
 
