@@ -22,11 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.egov.transformer.config.ServiceConstants.DEFAULT_COURT_MODULE_NAME;
 import static org.egov.transformer.config.ServiceConstants.DEFAULT_HEARING_MASTER_NAME;
@@ -85,7 +82,7 @@ public class HearingService {
 
         List<AdvocateMapping> representatives = courtCase.getRepresentatives();
 
-        Advocate advocate = getAdvocates(representatives, hearing);
+        Advocate advocate = getAdvocates(representatives, hearing, courtCase.getLitigants());
 
         OpenHearing openHearing = new OpenHearing();
         openHearing.setHearingUuid(hearing.getId().toString());
@@ -166,10 +163,12 @@ public class HearingService {
 
     }
 
-    private Advocate getAdvocates(List<AdvocateMapping> representatives, Hearing hearing) {
+    private Advocate getAdvocates(List<AdvocateMapping> representatives, Hearing hearing, List<Party> litigants) {
 
         List<String> complainantNames = new ArrayList<>();
         List<String> accusedNames = new ArrayList<>();
+        Set<String> advocateIds = new HashSet<>();
+        Set<String> individualIds = new HashSet<>();
 
         Advocate advocate = Advocate.builder().build();
         advocate.setComplainant(complainantNames);
@@ -193,8 +192,22 @@ public class HearingService {
                         }
                     }
                 }
+
+                advocateIds =  representatives.stream()
+                                .map(AdvocateMapping::getAdvocateId)
+                                .collect(Collectors.toSet());
+
             }
         }
+
+        if (litigants != null) {
+            individualIds = litigants.stream()
+                    .map(Party::getIndividualId)
+                    .collect(Collectors.toSet());
+        }
+
+        advocate.setIndividualIds(new ArrayList<>(individualIds));
+        advocate.setAdvocateIds(new ArrayList<>(advocateIds));
 
         return advocate;
 

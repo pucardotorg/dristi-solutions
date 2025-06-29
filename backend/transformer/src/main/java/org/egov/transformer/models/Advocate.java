@@ -20,4 +20,10 @@ public class Advocate {
 
     @JsonProperty("complainant")
     private List<String> complainant = null;
+
+    @JsonProperty("individualIds")
+    private List<String> individualIds = null;
+
+    @JsonProperty("advocateIds")
+    private List<String> advocateIds = null;
 }
