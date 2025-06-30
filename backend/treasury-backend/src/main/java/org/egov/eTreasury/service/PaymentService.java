@@ -145,6 +145,7 @@ public class PaymentService {
             Map<String, String> secretMap;
             String decryptedSek;
             if(config.isMockEnabled() && challanData.isMockEnabled()){
+                //mocking the treasury for authentication
                 log.info("Treasury is in mock mode, using mock authentication.");
                 secretMap = mockAuthentication();
                 decryptedSek = secretMap.get("sek");
@@ -163,6 +164,7 @@ public class PaymentService {
 
             String postBody;
             if(config.isMockEnabled() && challanData.isMockEnabled()) {
+                //mocking the treasury for challan generation
                 log.info("Treasury is in mock mode, generating post body without encryption.");
                 postBody = objectMapper.writeValueAsString(challanDetails);
             } else {
@@ -239,6 +241,7 @@ public class PaymentService {
             AuthSek authSek = optionalAuthSek.get();
             String decryptedData;
             if(config.isMockEnabled() && treasuryParams.isMockEnabled()) {
+                //mocking the treasury for decryption
                 log.info("Treasury is in mock mode, using mock data.");
                 decryptedData = treasuryParams.getData();
             }
