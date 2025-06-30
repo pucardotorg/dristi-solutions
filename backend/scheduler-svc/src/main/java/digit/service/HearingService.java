@@ -314,8 +314,8 @@ public class HearingService {
                         .name(WORKFLOW_ABANDON)
                         .tenantId(config.getEgovStateTenantId())
                 .build());
-        userInfo.getRoles().add(Role.builder().code(EMPLOYEE)
-                        .name(EMPLOYEE)
+        userInfo.getRoles().add(Role.builder().code(PAYMENT_COLLECTOR)
+                        .name(PAYMENT_COLLECTOR)
                         .tenantId(config.getEgovStateTenantId())
                         .build());
         userInfo.getRoles().add(Role.builder().code(serviceConstants.SYSTEM_ADMIN)
