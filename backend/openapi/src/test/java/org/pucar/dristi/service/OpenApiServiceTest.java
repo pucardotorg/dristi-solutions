@@ -712,7 +712,7 @@ public class OpenApiServiceTest {
         filterCriteria.setCaseType("Criminal");
         filterCriteria.setHearingDateFrom(LocalDate.of(2023, 1, 1));
         filterCriteria.setHearingDateTo(LocalDate.of(2023, 12, 31));
-        filterCriteria.setCaseStage("Trial");
+        filterCriteria.setCaseSubStage("Appearance");
         filterCriteria.setCaseStatus("Active");
         filterCriteria.setYearOfFiling("2022");
         filterCriteria.setCaseTitle("Test1 vs Test2");
@@ -742,7 +742,7 @@ public class OpenApiServiceTest {
         // Assert mocked epoch millis as String
         assertEquals("1672501800000", moduleCriteria.get("hearingDateFrom"));
         assertEquals("1704047399999", moduleCriteria.get("hearingDateTo"));
-        assertEquals("Trial", moduleCriteria.get("caseStage"));
+        assertEquals("Appearance", moduleCriteria.get("caseSubStage"));
         assertEquals("Active", moduleCriteria.get("caseStatus"));
         assertEquals("2022", moduleCriteria.get("yearOfFiling"));
         assertEquals("Test1 vs Test2", moduleCriteria.get("caseTitle"));
