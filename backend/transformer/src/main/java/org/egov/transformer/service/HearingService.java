@@ -15,6 +15,7 @@ import org.egov.transformer.models.OpenHearing;
 import org.egov.transformer.models.Party;
 import org.egov.transformer.producer.TransformerProducer;
 import org.egov.transformer.repository.ServiceRequestRepository;
+import org.egov.transformer.util.AdvocateUtil;
 import org.egov.transformer.util.JsonUtil;
 import org.egov.transformer.util.MdmsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -41,9 +42,10 @@ public class HearingService {
     private final MdmsUtil mdmsUtil;
     private final ServiceRequestRepository serviceRequestRepository;
     private final ObjectMapper objectMapper;
+    private final AdvocateUtil advocateUtil;
 
     @Autowired
-    public HearingService(TransformerProducer producer, CaseService caseService, TransformerProperties properties, JsonUtil jsonUtil, MdmsUtil mdmsUtil, org.egov.transformer.repository.ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper) {
+    public HearingService(TransformerProducer producer, CaseService caseService, TransformerProperties properties, JsonUtil jsonUtil, MdmsUtil mdmsUtil, org.egov.transformer.repository.ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, AdvocateUtil advocateUtil) {
         this.producer = producer;
         this.caseService = caseService;
         this.properties = properties;
@@ -51,6 +53,7 @@ public class HearingService {
         this.mdmsUtil = mdmsUtil;
         this.serviceRequestRepository = serviceRequestRepository;
         this.objectMapper = objectMapper;
+        this.advocateUtil = advocateUtil;
     }
 
     public void addCaseDetailsToHearing(Hearing hearing, String topic) throws IOException {
@@ -82,7 +85,7 @@ public class HearingService {
 
         List<AdvocateMapping> representatives = courtCase.getRepresentatives();
 
-        Advocate advocate = getAdvocates(representatives, hearing, courtCase.getLitigants());
+        Advocate advocate = getAdvocates(representatives, hearing, courtCase.getLitigants(), requestInfo);
 
         OpenHearing openHearing = new OpenHearing();
         openHearing.setHearingUuid(hearing.getId().toString());
@@ -156,7 +159,6 @@ public class HearingService {
         searchableFields.addAll(advocate.getComplainant());
         searchableFields.addAll(advocate.getAccused());
         searchableFields.addAll(advocate.getIndividualIds());
-        searchableFields.addAll(advocate.getAdvocateIds());
         searchableFields.add(courtCase.getCaseTitle());
         searchableFields.addAll(hearing.getFilingNumber());
         if (hearing.getCmpNumber() != null) searchableFields.add(hearing.getCmpNumber());
@@ -165,12 +167,13 @@ public class HearingService {
 
     }
 
-    private Advocate getAdvocates(List<AdvocateMapping> representatives, Hearing hearing, List<Party> litigants) {
+    private Advocate getAdvocates(List<AdvocateMapping> representatives, Hearing hearing, List<Party> litigants, RequestInfo requestInfo) {
 
         List<String> complainantNames = new ArrayList<>();
         List<String> accusedNames = new ArrayList<>();
         Set<String> advocateIds = new HashSet<>();
         Set<String> individualIds = new HashSet<>();
+        Set<String> advocateIndividualIds = new HashSet<>();
 
         Advocate advocate = Advocate.builder().build();
         advocate.setComplainant(complainantNames);
@@ -195,11 +198,16 @@ public class HearingService {
                     }
                 }
 
-                advocateIds =  representatives.stream()
-                                .map(AdvocateMapping::getAdvocateId)
-                                .collect(Collectors.toSet());
-
             }
+
+            advocateIds =  representatives.stream()
+                    .map(AdvocateMapping::getAdvocateId)
+                    .collect(Collectors.toSet());
+
+            if (!advocateIds.isEmpty()) {
+                advocateIndividualIds = advocateUtil.getAdvocate(requestInfo, advocateIds.stream().toList());
+            }
+
         }
 
         if (litigants != null) {
@@ -208,8 +216,11 @@ public class HearingService {
                     .collect(Collectors.toSet());
         }
 
+        if (!advocateIndividualIds.isEmpty()) {
+            individualIds.addAll(advocateIndividualIds);
+        }
+
         advocate.setIndividualIds(new ArrayList<>(individualIds));
-        advocate.setAdvocateIds(new ArrayList<>(advocateIds));
 
         return advocate;
 
