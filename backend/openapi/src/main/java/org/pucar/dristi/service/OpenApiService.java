@@ -358,8 +358,8 @@ public class OpenApiService {
                         .toEpochMilli() - 1;
                 moduleSearchCriteria.put("hearingDateTo", String.valueOf(endOfDayEpochMillis));
             }
-            if (filterCriteria.getCaseStage() != null) {
-                moduleSearchCriteria.put("caseStage", filterCriteria.getCaseStage());
+            if (filterCriteria.getCaseSubStage() != null) {
+                moduleSearchCriteria.put("caseSubStage", filterCriteria.getCaseSubStage());
             }
             if (filterCriteria.getCaseStatus() != null) {
                 moduleSearchCriteria.put("caseStatus", filterCriteria.getCaseStatus());
