@@ -101,11 +101,29 @@ public class OrderUtil {
 
         OrderListResponse response = getOrders(searchRequest);
         List<Order> filteredOrders = response.getList().stream()
-                .filter(order -> List.of(SUMMONS, WARRANT, NOTICE).contains(order.getOrderType()))
+                .filter(order -> List.of(SUMMONS, WARRANT, NOTICE).contains(order.getOrderType() != null ? order.getOrderType().toUpperCase() : getOrderTypeFromCompositeOrders(order)))
                 .collect(Collectors.toList());
 
         log.info("Found {} relevant orders (SUMMONS/WARRANT/NOTICE) for hearingId: {}", filteredOrders.size(), hearingId);
         return filteredOrders;
+    }
+
+    private String getOrderTypeFromCompositeOrders(Order order) {
+        JsonNode compositeItems = mapper.convertValue(order.getCompositeItems(), JsonNode.class);
+        String orderType = null;
+        if (compositeItems == null || !compositeItems.isArray()) {
+            return null;
+        }
+
+        for (JsonNode item : compositeItems) {
+            orderType = item.path("orderType").textValue();
+            if (orderType != null && List.of(SUMMONS, WARRANT, NOTICE).contains(orderType)) {
+                orderType = orderType.toUpperCase();
+                break;
+            }
+        }
+
+        return orderType;
     }
 
     private void processTasksForOrder(Order order, String tenantId, RequestInfo requestInfo) {

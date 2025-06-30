@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
-import net.minidev.json.JSONObject;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.egov.transformer.config.ServiceConstants;
@@ -13,9 +12,9 @@ import org.egov.transformer.models.*;
 import org.egov.transformer.producer.TransformerProducer;
 import org.egov.transformer.repository.ServiceRequestRepository;
 import org.egov.transformer.util.DateUtil;
+import org.egov.transformer.util.HearingUtil;
 import org.egov.transformer.util.JsonUtil;
 import org.egov.transformer.util.MdmsUtil;
-import org.egov.transformer.util.HearingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,11 +27,11 @@ import java.time.Year;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.*;
 
 import static org.egov.transformer.config.ServiceConstants.COURT_CASE_JSON_PATH;
 import static org.egov.transformer.config.ServiceConstants.HEARING_COMPLETED_STATUS;
@@ -184,6 +183,7 @@ public class CaseService {
                 .atZone(ZoneId.systemDefault()));
         caseSearch.setYearOfFiling(String.valueOf(year.getValue()));
         caseSearch.setHearingType(latestHearing!=null? latestHearing.getHearingType(): null);
+        caseSearch.setCaseSubStage(courtCase.getSubstage());
         return caseSearch;
 
     }
@@ -274,20 +274,26 @@ public class CaseService {
     public String getCourtName(String tenantId, String courtId) {
         Map<String, Map<String, JSONArray>> mdmsResponse =
                 mdmsUtil.fetchMdmsData(RequestInfo.builder().build(), tenantId, serviceConstants.COMMON_MASTERS_MASTER, Collections.singletonList(serviceConstants.COURT_ROOMS));
-        Map<String, JSONArray> mdmsObject = mdmsResponse.get("mdms");
-        if(mdmsObject==null) return null;
-        return findCourtNameFromMdmsData(mdmsObject, courtId);
+        return findCourtNameFromMdmsData(mdmsResponse, courtId);
     }
 
-    private String findCourtNameFromMdmsData(Map<String, JSONArray> mdmsObject, String courtId) {
-        return mdmsObject.values().stream()
-                .flatMap(array -> array.stream())
-                .map(obj -> (JSONObject) obj)
-                .map(json -> (JSONObject) json.get("data"))
-                .filter(data -> courtId.equals(data.getAsString("code")))
-                .map(data -> data.getAsString("name"))
-                .findFirst()
-                .orElse(null);
+    private String findCourtNameFromMdmsData(Map<String, Map<String, JSONArray>> mdmsResponse, String courtId) {
+        try{
+            JSONArray courtRooms = mdmsResponse
+                    .get(serviceConstants.COMMON_MASTERS_MASTER)
+                    .get(serviceConstants.COURT_ROOMS);
+
+            for (int i = 0; i < courtRooms.size(); i++) {
+                Object courtRoom = courtRooms.get(i);
+                String code = jsonUtil.getNestedValue(courtRoom, List.of("code"), String.class);
+                if(courtId.equals(code)) return jsonUtil.getNestedValue(courtRoom, List.of("name"), String.class);
+            }
+
+        } catch (Exception e) {
+            log.error("Exception while fetching court name from mdms", e);
+        }
+
+        return null;
     }
 
     public CourtCase getCases(CaseSearchRequest searchCaseRequest) {

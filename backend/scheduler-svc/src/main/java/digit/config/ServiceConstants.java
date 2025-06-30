@@ -118,5 +118,6 @@ public class ServiceConstants {
 
     public static final String ES_UPDATE_DOCUMENT_FORMAT = "{\"doc\":{\"Data\":{\"hearingDetails\":{\"serialNumber\":%d}}}}\n";
 
+    public static final String PAYMENT_COLLECTOR = "PAYMENT_COLLECTOR";
 
 }
