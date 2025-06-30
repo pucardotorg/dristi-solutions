@@ -55,10 +55,9 @@ async function processPaymentReceipts(
     }
   );
 
-  const taskReceipts = genericTaskDocument.data.list.map(
-    (task) => task.documents[0]
-  );
-
+  const taskReceipts = genericTaskDocument.data.list
+    .filter((task) => task?.documents && task?.documents?.length > 0)
+    .map((task) => task?.documents?.[0]);
   const documentList = casePaymentReceipt.concat(taskReceipts);
 
   if (paymentReceiptSection?.length !== 0 && documentList?.length !== 0) {
