@@ -183,6 +183,7 @@ public class CaseService {
                 .atZone(ZoneId.systemDefault()));
         caseSearch.setYearOfFiling(String.valueOf(year.getValue()));
         caseSearch.setHearingType(latestHearing!=null? latestHearing.getHearingType(): null);
+        caseSearch.setCaseSubStage(courtCase.getSubstage());
         return caseSearch;
 
     }
