@@ -239,44 +239,25 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
     <div className="e-filing-payment">
       <style>{`.tooltip {
   position: relative;
-  display: inline-block;font-family: Roboto;
-font-weight: 700;
-font-size: 16px;
-line-height: 24px;
-letter-spacing: 0px;
-text-decoration: underline;
-text-decoration-style: solid;
-text-decoration-offset: 0%;
-text-decoration-thickness: 0%;
-color: #3D3C3C;
-
+  display: inline-block;
+  cursor: pointer;
 }
 
-.tooltip .tooltip-text {
+.tooltip-text {
   visibility: hidden;
-  background-color: #555;
+  width: auto; 
+  max-width: 300px;
+  background-color: rgba(0, 0, 0, 0.75);
   color: #fff;
   text-align: center;
-  padding: 5px 0;
-  border-radius: 6px;
+  border-radius: 5px;
+  padding: 5px;
   position: absolute;
   z-index: 1;
-  bottom: 125%;
-  left: 50%;
-  margin-left: -60px;
+  bottom: 125%; 
+  margin-left: 0px;
   opacity: 0;
   transition: opacity 0.3s;
-}
-
-.tooltip .tooltip-text::after {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  margin-left: -5px;
-  border-width: 5px;
-  border-style: solid;
-  border-color: #555 transparent transparent transparent;
 }
 
 .tooltip:hover .tooltip-text {
@@ -359,8 +340,11 @@ color: #3D3C3C;
                         <span className="learn-more-text" style={{ color: "#3D3C3C" }}>
                           {t("PAYMENT_SUBTEXT")}{" "}
                           <span class="tooltip">
-                            {t("LEARN_MORE")}
-                            <span class="tooltip-text" style={{ maxWidth: "300px", wordWrap: "break-word", padding: "5px 10px" }}>
+                            <span style={{ textDecoration: "underline", fontWeight: "bold" }}>{t("LEARN_MORE")}</span>
+                            <span
+                              class="tooltip-text"
+                              style={{ maxWidth: "400px", wordWrap: "break-word", padding: "5px 10px", width: "max-content", marginLeft: "-60px" }}
+                            >
                               {t("PAYMENT_SUBTEXT_TOOLTIP")}
                             </span>
                           </span>
