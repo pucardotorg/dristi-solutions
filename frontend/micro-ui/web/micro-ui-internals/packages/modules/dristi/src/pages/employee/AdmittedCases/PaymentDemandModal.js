@@ -96,7 +96,7 @@ const PaymentItem = React.memo(({ item, index, paymentItems, paymentTypeOptions,
           onKeyPress={handleAmountKeyPress}
           style={{ minWidth: 120, textAlign: "start" }}
         />
-        {amountError[index] && <div style={{ color: "red", fontSize: "12px" }}>Amount should be more than 0</div>}
+        {amountError[index] && <div style={{ color: "red", fontSize: "12px" }}>{t("CS_COMMON_AMOUNT_ERROR")}</div>}
       </LabelFieldPair>
     </div>
   );
