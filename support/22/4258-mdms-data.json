@@ -1,0 +1,16 @@
+[
+  {
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "common-masters.IdFormat",
+        "uniqueIdentifier": "treasury.grn",
+        "data": {
+          "format": "[TENANT_ID][SEQ_GRN_NUMBER][cy:yyyy]E",
+          "idname": "treasury.grn"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]
