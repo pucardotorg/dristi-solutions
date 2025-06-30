@@ -84,7 +84,7 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
 
         Map<String, List<POAHolder>> litigantPoaMapping = caseUtil.getLitigantPoaMapping(courtCase);
 
-        if (NOTICE.equalsIgnoreCase(order.getOrderType()) && SECTION_223.equalsIgnoreCase(section) && PENDING_NOTICE.equalsIgnoreCase(courtCase.getStatus())) {
+        if (NOTICE.equalsIgnoreCase(order.getOrderType()) && SECTION_223.equalsIgnoreCase(section)) {
 
             // update case with issue order
 
