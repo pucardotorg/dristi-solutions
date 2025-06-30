@@ -791,7 +791,7 @@
                 "tenantId": "kl",
                 "currentState": "144aa10a-0431-4256-9267-d09c49fa68c6",
                 "action": "SCHEDULE_ADMISSION_HEARING",
-                "nextState": "4db468d5-7c8a-4c7c-a0a2-7b75d1181f2b",
+                "nextState": "4db468d5-7c8a-4c7c-a0a2-7b75d1181f2b", // Mapped to PENDING_RESPONSE
                 "roles": [
                   "CASE_APPROVER"
                 ],
@@ -828,7 +828,7 @@
                 "tenantId": "kl",
                 "currentState": "adfb07a6-8be1-4dec-85cc-f0d5e8eaecb1",
                 "action": "ADMIT",
-                "nextState": "4db468d5-7c8a-4c7c-a0a2-7b75d1181f2b",
+                "nextState": "4db468d5-7c8a-4c7c-a0a2-7b75d1181f2b",  // Mapped to PENDING_RESPONSE
                 "roles": [
                   "CASE_APPROVER"
                 ],
@@ -853,42 +853,7 @@
             "isStartState": false,
             "isTerminateState": false,
             "isStateUpdatable": true,
-            "actions": [
-              {
-                "auditDetails": {
-                  "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
-                  "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
-                  "createdTime": 1732019444274,
-                  "lastModifiedTime": 1750938427951
-                },
-                "uuid": "aed140ec-ed8e-4a8e-9bd4-8724b0964839",
-                "tenantId": "kl",
-                "currentState": "078b1d01-8a1d-432f-8135-2d2dce5749b3",
-                "action": "REJECT",
-                "nextState": "154246eb-3030-44d8-9210-83ad7197ddbd",
-                "roles": [
-                  "CASE_APPROVER"
-                ],
-                "active": true
-              },
-              {
-                "auditDetails": {
-                  "createdBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
-                  "lastModifiedBy": "4f6cf5fa-bcb2-4a3a-9dff-9740c04e3a92",
-                  "createdTime": 1732019444274,
-                  "lastModifiedTime": 1750938427951
-                },
-                "uuid": "cf33ddc2-c95c-48db-b5e4-445df685e638",
-                "tenantId": "kl",
-                "currentState": "078b1d01-8a1d-432f-8135-2d2dce5749b3",
-                "action": "ISSUE_ORDER",
-                "nextState": "4db468d5-7c8a-4c7c-a0a2-7b75d1181f2b",
-                "roles": [
-                  "CASE_APPROVER"
-                ],
-                "active": true
-              }
-            ]
+            "actions": null
           },
           {
             "auditDetails": {
