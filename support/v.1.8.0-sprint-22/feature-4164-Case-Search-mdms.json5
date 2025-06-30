@@ -36,8 +36,8 @@
               "isMandatory": false
             },
             {
-              "name": "caseStage",
-              "path": "Data.caseDetails.caseStage.keyword",
+              "name": "caseSubStage",
+              "path": "Data.caseDetails.caseSubStage.keyword",
               "isMandatory": false
             },
             {
