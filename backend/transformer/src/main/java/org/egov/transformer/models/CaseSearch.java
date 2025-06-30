@@ -74,4 +74,7 @@ public class CaseSearch {
 
     @JsonProperty("registrationDate")
     private Long registrationDate;
+
+    @JsonProperty("caseSubStage")
+    private String caseSubStage = null;
 }
