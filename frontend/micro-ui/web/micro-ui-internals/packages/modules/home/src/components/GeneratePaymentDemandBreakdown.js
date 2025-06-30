@@ -191,7 +191,7 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
 
       await DRISTIService.setCaseLock({ Lock: { uniqueId: filingNumber, tenantId: tenantId, lockType: "PAYMENT" } }, {});
 
-      const paymentStatus = await openPaymentPortal(bill);
+      const paymentStatus = await openPaymentPortal(bill, totalAmount);
       await DRISTIService.setCaseUnlock({}, { uniqueId: filingNumber, tenantId: tenantId });
       const success = Boolean(paymentStatus);
 
