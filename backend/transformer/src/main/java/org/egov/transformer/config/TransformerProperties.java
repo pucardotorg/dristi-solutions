@@ -81,4 +81,11 @@ public class TransformerProperties {
     private String egovStateTenantId;
     @Value("${egov.mdms.search.endpoint}")
     private String mdmsEndPoint;
+
+    // Advocate Config
+    @Value("${egov.advocate.host}")
+    private String advocateHost;
+
+    @Value("${egov.advocate.path}")
+    private String advocatePath;
 }
