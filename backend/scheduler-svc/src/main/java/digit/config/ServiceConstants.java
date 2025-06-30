@@ -112,4 +112,6 @@ public class ServiceConstants {
 
     public static final String EMPLOYEE = "EMPLOYEE";
 
+    public static final String PAYMENT_COLLECTOR = "PAYMENT_COLLECTOR";
+
 }
