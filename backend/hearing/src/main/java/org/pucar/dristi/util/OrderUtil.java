@@ -110,19 +110,20 @@ public class OrderUtil {
 
     private String getOrderTypeFromCompositeOrders(Order order) {
         JsonNode compositeItems = mapper.convertValue(order.getCompositeItems(), JsonNode.class);
-
+        String orderType = null;
         if (compositeItems == null || !compositeItems.isArray()) {
             return null;
         }
 
         for (JsonNode item : compositeItems) {
-            String orderType = item.path("orderType").asText(null);
+            orderType = item.path("orderType").textValue();
             if (orderType != null && List.of(SUMMONS, WARRANT, NOTICE).contains(orderType)) {
-                return orderType;
+                orderType = orderType.toUpperCase();
+                break;
             }
         }
 
-        return null;
+        return orderType;
     }
 
     private void processTasksForOrder(Order order, String tenantId, RequestInfo requestInfo) {
