@@ -2,6 +2,7 @@ package org.pucar.dristi.enrichment;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
@@ -11,11 +12,7 @@ import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.service.IndividualService;
-import org.pucar.dristi.util.AdvocateUtil;
-import org.pucar.dristi.util.CaseUtil;
-import org.pucar.dristi.util.HrmsUtil;
-import org.pucar.dristi.util.EtreasuryUtil;
-import org.pucar.dristi.util.IdgenUtil;
+import org.pucar.dristi.util.*;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,9 +34,11 @@ public class CaseRegistrationEnrichment {
     private Configuration config;
     private HrmsUtil hrmsUtil;
     private final EtreasuryUtil etreasuryUtil;
+    private final BillingUtil billingUtil;
+    private final ObjectMapper mapper;
 
     @Autowired
-    public CaseRegistrationEnrichment(IndividualService individualService, AdvocateUtil advocateUtil, IdgenUtil idgenUtil, CaseUtil caseUtil, Configuration config, EtreasuryUtil etreasuryUtil, HrmsUtil hrmsUtil) {
+    public CaseRegistrationEnrichment(IndividualService individualService, AdvocateUtil advocateUtil, IdgenUtil idgenUtil, CaseUtil caseUtil, Configuration config, EtreasuryUtil etreasuryUtil, HrmsUtil hrmsUtil, BillingUtil billingUtil, ObjectMapper mapper) {
         this.individualService = individualService;
         this.advocateUtil = advocateUtil;
         this.idgenUtil = idgenUtil;
@@ -47,6 +46,8 @@ public class CaseRegistrationEnrichment {
         this.config = config;
         this.hrmsUtil = hrmsUtil;
         this.etreasuryUtil = etreasuryUtil;
+        this.billingUtil = billingUtil;
+        this.mapper = mapper;
     }
 
     private static void enrichDocumentsOnCreate(Document document) {
@@ -575,6 +576,7 @@ public class CaseRegistrationEnrichment {
                     .fileStore(paymentReceipt.get("Document").get("fileStore").textValue())
                     .documentType(PAYMENT_RECEIPT)
                     .isActive(true)
+                    .additionalDetails(getAdditionalDetails(caseRequest.getRequestInfo(), id))
                     .build();
             enrichDocumentsOnCreate(paymentReceiptDocument);
             caseRequest.getCases().getDocuments().add(paymentReceiptDocument);
@@ -583,5 +585,13 @@ public class CaseRegistrationEnrichment {
             log.error("Error enriching payment receipt: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching payment receipt: " + e.getMessage());
         }
+    }
+
+    private Object getAdditionalDetails(RequestInfo requestInfo, String id) {
+        JsonNode billResponse = billingUtil.searchBill(requestInfo, id);
+        Bill bill = mapper.convertValue(billResponse.get("Bill").get(0), Bill.class);
+        Map<String, Object> additionalDetails = new HashMap<>();
+        additionalDetails.put("consumerCode", bill.getConsumerCode());
+        return additionalDetails;
     }
 }
