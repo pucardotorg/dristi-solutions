@@ -460,14 +460,16 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           return acc.concat(current.documents);
         }, []);
 
-        const updatedCombinedDocuments = combinedDocuments?.map((doc, index) => {
-          return {
-            id: `GENRIC_PAYMENT_RECEIPT_${index}`,
-            title: "CASE_FILING_GENRIC_TASK_PAYMENT_RECEIPT",
-            fileStoreId: doc?.fileStore,
-            hasChildren: false,
-          };
-        });
+        const updatedCombinedDocuments = combinedDocuments
+          ?.filter((doc) => doc?.fileStore)
+          .map((doc, index) => {
+            return {
+              id: `GENRIC_PAYMENT_RECEIPT_${index}`,
+              title: "CASE_FILING_GENRIC_TASK_PAYMENT_RECEIPT",
+              fileStoreId: doc?.fileStore,
+              hasChildren: false,
+            };
+          });
 
         setGenericTaskList(updatedCombinedDocuments);
 
