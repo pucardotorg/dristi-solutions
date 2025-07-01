@@ -26,4 +26,8 @@ public class ChallanData {
 
     @JsonProperty("paidBy")
     private String paidBy;
+
+    //flag for treasury mock
+    @JsonProperty("mockEnabled")
+    private boolean mockEnabled;
 }
