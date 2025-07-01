@@ -34,10 +34,13 @@ async function processPaymentReceipts(
     sectionPosition
   );
 
-  const casePaymentReceipt = courtCase.documents.filter(
-    (doc) => doc.documentType === "PAYMENT_RECEIPT"
-  );
-
+  const casePaymentReceipt = courtCase.documents
+    .filter((doc) => doc.documentType === "PAYMENT_RECEIPT")
+    .sort((a, b) =>
+      (a?.additionalDetails?.consumerCode || "").localeCompare(
+        b?.additionalDetails?.consumerCode || ""
+      )
+    );
   const genericTaskDocument = await search_task_v2(
     tenantId,
     requestInfo,
