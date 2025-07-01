@@ -2,7 +2,6 @@ package org.pucar.dristi.enrichment;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
@@ -34,11 +33,9 @@ public class CaseRegistrationEnrichment {
     private Configuration config;
     private HrmsUtil hrmsUtil;
     private final EtreasuryUtil etreasuryUtil;
-    private final BillingUtil billingUtil;
-    private final ObjectMapper mapper;
 
     @Autowired
-    public CaseRegistrationEnrichment(IndividualService individualService, AdvocateUtil advocateUtil, IdgenUtil idgenUtil, CaseUtil caseUtil, Configuration config, EtreasuryUtil etreasuryUtil, HrmsUtil hrmsUtil, BillingUtil billingUtil, ObjectMapper mapper) {
+    public CaseRegistrationEnrichment(IndividualService individualService, AdvocateUtil advocateUtil, IdgenUtil idgenUtil, CaseUtil caseUtil, Configuration config, EtreasuryUtil etreasuryUtil, HrmsUtil hrmsUtil) {
         this.individualService = individualService;
         this.advocateUtil = advocateUtil;
         this.idgenUtil = idgenUtil;
@@ -46,8 +43,6 @@ public class CaseRegistrationEnrichment {
         this.config = config;
         this.hrmsUtil = hrmsUtil;
         this.etreasuryUtil = etreasuryUtil;
-        this.billingUtil = billingUtil;
-        this.mapper = mapper;
     }
 
     private static void enrichDocumentsOnCreate(Document document) {

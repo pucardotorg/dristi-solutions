@@ -166,9 +166,6 @@ public class Configuration {
 	@Value("${egov.demand.create.endpoint}")
 	private String demandCreateEndPoint;
 
-	@Value("${egov.bill.search.endpoint}")
-	private String searchBillEndPoint;
-
 	//Billing
 	@Value("${egov.etreasury.host}")
 	private String etreasuryHost;
