@@ -166,8 +166,11 @@ public class TaskService {
         }
     }
 
-    private Object getAdditionalDetails(Task task) {
-        Map<String, Object> additionalDetails = new HashMap<>();
+    private Map<String, Object> getAdditionalDetails(Task task) {
+        Map<String, Object> additionalDetails = (Map<String, Object>) task.getWorkflow().getAdditionalDetails();
+        if (additionalDetails == null) {
+            additionalDetails = new HashMap<>();
+        }
         additionalDetails.put("dueDate", task.getDuedate());
         return additionalDetails;
     }
