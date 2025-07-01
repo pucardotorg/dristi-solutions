@@ -11,8 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.jetbrains.annotations.NotNull;
 import org.pucar.dristi.config.Configuration;
@@ -21,8 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,13 +30,10 @@ public class BillingUtil {
 
 	private Configuration configs;
 
-	private final ObjectMapper mapper;
-
 	@Autowired
-	public BillingUtil(RestTemplate restTemplate, Configuration configs, ObjectMapper mapper) {
+	public BillingUtil(RestTemplate restTemplate, Configuration configs) {
 		this.restTemplate = restTemplate;
 		this.configs = configs;
-        this.mapper = mapper;
     }
 
 	public void createDemand(CaseRequest caseRequest) {
@@ -117,35 +110,4 @@ public class BillingUtil {
 		demand.addDemandDetailsItem(demandDetail);
 		return demand;
 	}
-
-	public JsonNode searchBill(RequestInfo requestInfo, String billId) {
-		StringBuilder uri = new StringBuilder();
-		uri.append(configs.getBillingHost())
-				.append(configs.getSearchBillEndPoint())
-				.append("?tenantId=").append(configs.getTenantId())
-				.append("&billId=").append(billId);
-
-		try {
-			Map<String, Object> requestPayload = new HashMap<>();
-			requestPayload.put("RequestInfo", requestInfo);
-			HttpHeaders headers = new HttpHeaders();
-			headers.setContentType(MediaType.APPLICATION_JSON);
-
-			HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestPayload, headers);
-			log.info("Calling Bill Search API :: {} with payload :: {}", uri, mapper.writeValueAsString(requestPayload));
-			ResponseEntity<JsonNode> response = restTemplate.exchange(
-					uri.toString(),
-					HttpMethod.POST,
-					entity,
-					JsonNode.class
-			);
-
-			log.info("Bill response :: {}", response.getBody());
-			return response.getBody();
-		} catch (Exception e) {
-			log.error("Error while fetching bill", e);
-			throw new CustomException("BILL_FETCH_ERROR", e.getMessage());
-		}
-	}
-
 }
