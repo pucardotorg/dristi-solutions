@@ -443,25 +443,29 @@ public class IndexerUtils {
 
     private ArrayNode litigantsIndividualIds(JsonNode representatives, String assignedTo) throws JsonProcessingException {
         ArrayNode litigantsIndividualIds = mapper.createArrayNode();
-        JsonNode assignedToNode =  mapper.readTree(assignedTo);
+        JsonNode assignedToNode = mapper.readTree(assignedTo);
         Set<String> assignedToUuid = new HashSet<>();
-        if(assignedToNode != null && assignedToNode.isArray()) {
-            for(JsonNode node : assignedToNode) {
+        Set<String> uniqueIndividualIds = new HashSet<>();
+        if (assignedToNode != null && assignedToNode.isArray()) {
+            for (JsonNode node : assignedToNode) {
                 String uuid = node.get("uuid").textValue();
                 assignedToUuid.add(uuid);
             }
         }
-        for(JsonNode representative : representatives) {
+        for (JsonNode representative : representatives) {
             String uuid = representative.get("additionalDetails").get("uuid").textValue();
-            if(assignedToUuid.contains(uuid)) {
-                for(JsonNode representing : representative.get("representing")) {
+            if (assignedToUuid.contains(uuid)) {
+                for (JsonNode representing : representative.get("representing")) {
                     String individualId = representing.get("individualId").textValue();
-                    litigantsIndividualIds.add(individualId);
+                    if (uniqueIndividualIds.add(individualId)) {
+                        litigantsIndividualIds.add(individualId);
+                    }
                 }
             }
         }
         return litigantsIndividualIds;
     }
+
 
     private AdvocateDetail getAdvocates(List<AdvocateMapping> representatives) {
 
