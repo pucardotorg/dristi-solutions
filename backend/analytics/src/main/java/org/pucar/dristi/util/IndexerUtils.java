@@ -325,7 +325,7 @@ public class IndexerUtils {
                     }
                     individualIds.addAll(representativeIds);
 
-                    // ✅ Populate additionalDetails with individualIds as litigants
+                    // ✅ Populate additionalDetails with individualIds of litigants
                     try {
                         Object additionalDetailsObj = JsonPath.read(jsonItem, "additionalDetails");
                         String additionalDetailsStr = additionalDetailsObj != null
@@ -333,7 +333,7 @@ public class IndexerUtils {
                                 : "{}";
 
                         ObjectNode additionalDetailsJson = (ObjectNode) mapper.readTree(additionalDetailsStr);
-                        ArrayNode litigantsArray = mapper.valueToTree(individualIds);
+                        ArrayNode litigantsArray = litigantsIndividualIds(representatives, assignedTo);
                         additionalDetailsJson.set("litigants", litigantsArray);
 
                         jsonItem = JsonPath.parse(jsonItem).set("additionalDetails", mapper.convertValue(additionalDetailsJson, Object.class)).jsonString();
@@ -441,6 +441,27 @@ public class IndexerUtils {
         );
     }
 
+    private ArrayNode litigantsIndividualIds(JsonNode representatives, String assignedTo) throws JsonProcessingException {
+        ArrayNode litigantsIndividualIds = mapper.createArrayNode();
+        JsonNode assignedToNode =  mapper.readTree(assignedTo);
+        Set<String> assignedToUuid = new HashSet<>();
+        if(assignedToNode != null && assignedToNode.isArray()) {
+            for(JsonNode node : assignedToNode) {
+                String uuid = node.get("uuid").textValue();
+                assignedToUuid.add(uuid);
+            }
+        }
+        for(JsonNode representative : representatives) {
+            String uuid = representative.get("additionalDetails").get("uuid").textValue();
+            if(assignedToUuid.contains(uuid)) {
+                for(JsonNode representing : representative.get("representing")) {
+                    String individualId = representing.get("individualId").textValue();
+                    litigantsIndividualIds.add(individualId);
+                }
+            }
+        }
+        return litigantsIndividualIds;
+    }
 
     private AdvocateDetail getAdvocates(List<AdvocateMapping> representatives) {
 
