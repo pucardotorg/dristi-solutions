@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
@@ -322,6 +324,25 @@ public class IndexerUtils {
                         representativeIds = advocateUtil.getAdvocate(request, representativeIds.stream().toList());
                     }
                     individualIds.addAll(representativeIds);
+
+                    // ✅ Populate additionalDetails with individualIds as litigants
+                    try {
+                        Object additionalDetailsObj = JsonPath.read(jsonItem, "additionalDetails");
+                        String additionalDetailsStr = additionalDetailsObj != null
+                                ? mapper.writeValueAsString(additionalDetailsObj)
+                                : "{}";
+
+                        ObjectNode additionalDetailsJson = (ObjectNode) mapper.readTree(additionalDetailsStr);
+                        ArrayNode litigantsArray = mapper.valueToTree(individualIds);
+                        additionalDetailsJson.set("litigants", litigantsArray);
+
+                        jsonItem = JsonPath.parse(jsonItem).set("additionalDetails", mapper.convertValue(additionalDetailsJson, Object.class)).jsonString();
+
+                    } catch (Exception e) {
+                        log.error("Error while enriching additionalDetails with litigants", e);
+                        throw new CustomException(Pending_Task_Exception, "Failed to enrich additionalDetails with litigants: " + e);
+                    }
+
                     SmsTemplateData smsTemplateData = enrichSmsTemplateData(details, tenantId);
                     List<String> phonenumbers = callIndividualService(request, new ArrayList<>(individualIds));
                     for (String number : phonenumbers) {
