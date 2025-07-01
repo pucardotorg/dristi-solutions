@@ -568,7 +568,7 @@ public class CaseRegistrationEnrichment {
 
     }
 
-    public Document enrichCasePaymentReceipt(CaseRequest caseRequest, String id){
+    public Document enrichCasePaymentReceipt(CaseRequest caseRequest, String id, String consumerCode){
         try {
             log.info("Enriching payment receipt for case with id: {}", id);
             JsonNode paymentReceipt = etreasuryUtil.getPaymentReceipt(caseRequest.getRequestInfo(), id);
@@ -576,7 +576,7 @@ public class CaseRegistrationEnrichment {
                     .fileStore(paymentReceipt.get("Document").get("fileStore").textValue())
                     .documentType(PAYMENT_RECEIPT)
                     .isActive(true)
-                    .additionalDetails(getAdditionalDetails(caseRequest.getRequestInfo(), id))
+                    .additionalDetails(getAdditionalDetails(consumerCode))
                     .build();
             enrichDocumentsOnCreate(paymentReceiptDocument);
             caseRequest.getCases().getDocuments().add(paymentReceiptDocument);
@@ -587,11 +587,9 @@ public class CaseRegistrationEnrichment {
         }
     }
 
-    private Object getAdditionalDetails(RequestInfo requestInfo, String id) {
-        JsonNode billResponse = billingUtil.searchBill(requestInfo, id);
-        Bill bill = mapper.convertValue(billResponse.get("Bill").get(0), Bill.class);
+    private Object getAdditionalDetails(String consumerCode) {
         Map<String, Object> additionalDetails = new HashMap<>();
-        additionalDetails.put("consumerCode", bill.getConsumerCode());
+        additionalDetails.put("consumerCode", consumerCode);
         return additionalDetails;
     }
 }
