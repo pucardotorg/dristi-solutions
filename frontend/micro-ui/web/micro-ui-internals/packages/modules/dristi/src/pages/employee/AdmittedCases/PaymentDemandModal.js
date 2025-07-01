@@ -198,7 +198,12 @@ const PaymentDemandModal = ({
 
       const response = await DRISTIService.customApiService(Urls.case.taskCreate, {
         task: {
-          workflow: { action: "CREATE" },
+          workflow: {
+            action: "CREATE",
+            additionalDetails: {
+              litigants: [selectedParty?.individualId],
+            },
+          },
           status: "",
           filingNumber: caseDetails?.filingNumber,
           cmpNumber: caseDetails?.cmpNumber,
