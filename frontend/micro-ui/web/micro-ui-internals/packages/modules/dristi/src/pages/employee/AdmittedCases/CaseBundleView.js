@@ -1268,15 +1268,17 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
     // const casePaymentFilestoreId = getFileStoreByType("PAYMENT_RECEIPT");
 
-    const casePaymentFile =
-      docs
-        ?.filter((doc) => doc?.documentType === "PAYMENT_RECEIPT")
-        .map((doc, index) => ({
-          id: `PAYMENT_RECEIPT_${index}`,
-          title: "CASE_FILING_PAYMENT_RECEIPT",
-          fileStoreId: doc?.fileStore,
-          hasChildren: false,
-        })) || [];
+    const casePaymentFile = docs
+      ? docs
+          .filter((doc) => doc?.documentType === "PAYMENT_RECEIPT")
+          .sort((a, b) => (a?.additionalDetails?.consumerCode || "").localeCompare(b?.additionalDetails?.consumerCode || ""))
+          .map((doc, index) => ({
+            id: `PAYMENT_RECEIPT_${index}`,
+            title: "CASE_FILING_PAYMENT_RECEIPT",
+            fileStoreId: doc?.fileStore,
+            hasChildren: false,
+          }))
+      : [];
 
     const paymentReceiptsChildren = [...casePaymentFile, ...genericTaskList];
 
