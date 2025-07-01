@@ -590,13 +590,35 @@
         },
         {
           "currentState": "PENDING_RE_SIGN",
-          "nextState": "PENDING_PAYMENT",
+          "nextState": "RE_PENDING_PAYMENT",
           "action": "UPLOAD_WITH_PAYMENT",
           "active": true,
           "roles": [
             "ADVOCATE_ROLE",
             "SYSTEM",
             "SYSTEM_ADMIN"
+          ]
+        }
+      ]
+    },
+    {
+      "businessServiceId": "d0450ce9-37a7-46cb-a97c-ff79b6d9225c",
+      "state": "RE_PENDING_PAYMENT",
+      "applicationStatus": "INWORKFLOW",
+      "docUploadRequired": false,
+      "isStartState": false,
+      "isTerminateState": false,
+      "isStateUpdatable": true,
+      "actions": [
+        {
+          "currentState": "RE_PENDING_PAYMENT",
+          "nextState": "UNDER_SCRUTINY",
+          "action": "MAKE_PAYMENT",
+          "active": true,
+          "roles": [
+            "SYSTEM",
+            "SYSTEM_ADMIN",
+            "CASE_CREATOR"
           ]
         }
       ]
@@ -676,7 +698,7 @@
         },
         {
           "currentState":"PENDING_RE_E-SIGN",
-          "nextState":"PENDING_PAYMENT",
+          "nextState":"RE_PENDING_PAYMENT",
           "action":"E-SIGN_COMPLETE_WITH_PAYMENT",
           "active":true,
           "roles": [
