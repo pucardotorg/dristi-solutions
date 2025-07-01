@@ -13,6 +13,7 @@ import digit.web.models.*;
 import digit.web.models.cases.CaseCriteria;
 import digit.web.models.cases.SearchCaseRequest;
 import digit.web.models.hearing.*;
+import digit.web.models.inbox.InboxRequest;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.models.Document;
@@ -58,6 +59,10 @@ public class CauseListService {
     private IndividualService individualService;
 
     private SmsNotificationService notificationService;
+
+    private InboxUtil inboxUtil;
+
+    private EsUtil esUtil;
 
     @Autowired
     public CauseListService(HearingRepository hearingRepository, CauseListRepository causeListRepository,
@@ -135,36 +140,11 @@ public class CauseListService {
     public void generateCauseList(String courtId, List<CauseList> causeLists, String hearingDate, String uuid) {
         log.info("operation = generateCauseListForJudge, result = IN_PROGRESS, judgeId = {}", courtId);
         try {
-            HearingSearchCriteria hearingSearchCriteria = HearingSearchCriteria.builder()
-                    .fromDate(getFromDate(hearingDate))
-                    .toDate(getToDate(hearingDate))
-                    .courtId(config.getCourtEnabled() ? courtId : null)
-                    .build();
-            List<Hearing> hearingList = getHearingsForCourt(hearingSearchCriteria);
-            if(hearingList.isEmpty()){
-                log.info("No hearings found for court: {}", courtId);
-                return;
-            }
+            InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtId, getFromDate(hearingDate),getToDate(hearingDate) );
+            List<OpenHearing> openHearings = inboxUtil.getOpenHearings(inboxRequest);
 
-            List<CauseList> causeList  = getCauseListFromHearings(hearingList);
+            List<CauseList> causeList  = getCauseListFromHearings(openHearings);
             enrichCauseList(causeList);
-
-            Map<String, Integer> hearingTypeMap = getHearingTypeMap(causeList);
-            List<CaseType> caseTypePriority = getCaseTypeMap();
-
-            causeList.sort(Comparator
-                    .comparing((CauseList a) -> {
-                        Integer hearingTypeId = hearingTypeMap.get(a.getHearingType());
-                        return hearingTypeId != null ? hearingTypeId : Integer.MAX_VALUE;
-                    }, Comparator.nullsLast(Integer::compareTo))
-                    .thenComparing(a -> {
-                        CaseType caseType = caseTypePriority.stream()
-                                .filter(b -> b.getCaseType().equalsIgnoreCase(a.getCaseType()))
-                                .findFirst()
-                                .orElse(null);
-                        return caseType != null ? caseType.getPriority() : Integer.MAX_VALUE;
-                    }, Comparator.nullsLast(Integer::compareTo))
-                    .thenComparing(CauseList::getCaseRegistrationDate, Comparator.nullsLast(Comparable::compareTo)));
 
             generateCauseListFromHearings(causeList);
             ByteArrayResource byteArrayResource = generateCauseListPdf(causeList);
@@ -199,12 +179,16 @@ public class CauseListService {
             }
 
 
-            for (Hearing hearing : hearingList) {
-                if (!hearing.getFilingNumber().isEmpty()) {
-                    callNotificationService(hearing.getFilingNumber().get(0),requestInfo,hearingDate);
+            for (OpenHearing hearing : openHearings) {
+                if (hearing.getFilingNumber()!=null) {
+                    callNotificationService(hearing.getFilingNumber(),requestInfo,hearingDate);
                 }
             }
             causeLists.addAll(causeList);
+
+            log.info("Update open hearing index with serialNumber");
+            esUtil.updateOpenHearingSerialNumber(openHearings);
+
             log.info("operation = generateCauseListForJudge, result = SUCCESS, judgeId = {}", courtId);
         } catch (Exception e) {
             log.error("operation = generateCauseListForJudge, result = FAILURE, judgeId = {}, error = {}", courtId, e.getMessage(), e);
@@ -483,37 +467,27 @@ public class CauseListService {
         return hearings;
     }
 
-    public List<CauseList> getCauseListFromHearings(List<Hearing> hearingList) {
+    public List<CauseList> getCauseListFromHearings(List<OpenHearing> hearingList) {
         List<CauseList> causeLists = new ArrayList<>();
-        for (Hearing hearing : hearingList) {
+        int serialNumber = 1;
+        for (OpenHearing hearing : hearingList) {
             CauseList causeList = CauseList.builder()
-                    .id(hearing.getId())
+                    .id(UUID.fromString(hearing.getHearingUuid()))
                     .tenantId(hearing.getTenantId())
-                    .hearingId(hearing.getHearingId())
-                    .filingNumber(hearing.getFilingNumber().get(0))
-                    .cnrNumbers(hearing.getCnrNumbers())
-                    .applicationNumbers(hearing.getApplicationNumbers())
+                    .hearingId(hearing.getHearingUuid())
+                    .filingNumber(hearing.getFilingNumber())
                     .hearingType(hearing.getHearingType())
                     .status(hearing.getStatus())
-                    .startTime(hearing.getStartTime())
-                    .endTime(hearing.getEndTime())
-                    .presidedBy(hearing.getPresidedBy())
-                    .attendees(hearing.getAttendees())
-                    .transcript(hearing.getTranscript())
-                    .vcLink(hearing.getVcLink())
-                    .isActive(hearing.getIsActive())
-                    .documents(hearing.getDocuments())
-                    .additionalDetails(hearing.getAdditionalDetails())
-                    .auditDetails(hearing.getAuditDetails())
-                    .workflow(hearing.getWorkflow())
-                    .notes(hearing.getNotes())
+                    .startTime(hearing.getFromDate())
+                    .endTime(hearing.getToDate())
                     .courtId(config.getCourtId())
                     .judgeName(config.getJudgeName())
                     .judgeDesignation(config.getJudgeDesignation())
-                    .hearingDate(dateUtil.getLocalDateFromEpoch(hearing.getStartTime()).format(DateTimeFormatter.ofPattern(DATE_FORMAT)))
+                    .hearingDate(dateUtil.getLocalDateFromEpoch(hearing.getFromDate()).format(DateTimeFormatter.ofPattern(DATE_FORMAT)))
                     .build();
 
             causeLists.add(causeList);
+            hearing.setSerialNumber(serialNumber++);
         }
         return causeLists;
     }

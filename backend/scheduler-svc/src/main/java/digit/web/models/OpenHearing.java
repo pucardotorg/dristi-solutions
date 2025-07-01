@@ -1,4 +1,4 @@
-package org.pucar.dristi.web.models;
+package digit.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
@@ -55,7 +55,7 @@ public class OpenHearing {
     private Long toDate = null;
 
     @JsonProperty("advocate")
-    private Advocate advocate = null;
+    private AdvocateDetails advocate = null;
 
     @JsonProperty("searchableFields")
     private List<String> searchableFields = null;
@@ -76,5 +76,6 @@ public class OpenHearing {
     private Long hearingDurationInMillis = null;
 
     @JsonProperty("serialNumber")
-    private int serialNumber;
+    private int serialNumber = 0;
+
 }
