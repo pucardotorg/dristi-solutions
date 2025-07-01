@@ -225,6 +225,13 @@ export const pendingTaskCaseActions = {
       url: "/home/home-pending-task/e-filing-payment-breakdown",
     },
   },
+  RE_PENDING_PAYMENT: {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "Make Payment",
+    redirectDetails: {
+      url: "/home/home-pending-task/e-filing-payment-breakdown",
+    },
+  },
   PENDING_RESPONSE: {
     actorName: ["LITIGANT/ADVOCATE"],
     actionName: "Pending Response",
