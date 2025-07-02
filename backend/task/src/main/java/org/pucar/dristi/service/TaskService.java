@@ -146,13 +146,15 @@ public class TaskService {
             for(AssignedTo assignedTo : newAssignedToList) {
                 String uuid = assignedTo.getUuid().toString();
                 List<AdvocateMapping> representatives = courtCases.get(0).getRepresentatives();
-                for (AdvocateMapping advocateMapping : representatives){
-                    List<Party> parties = advocateMapping.getRepresenting();
-                    List<String> individualIds = parties.stream().filter(party -> uuid.equalsIgnoreCase(objectMapper.convertValue(party.getAdditionalDetails(), JsonNode.class).get("uuid").textValue()))
-                            .map(Party::getIndividualId)
-                            .toList();
-                    if(!individualIds.isEmpty()) {
-                        assignedToList.add(AssignedTo.builder().uuid(UUID.fromString(objectMapper.convertValue(advocateMapping.getAdditionalDetails(), JsonNode.class).get("uuid").textValue())).build());
+                if(representatives != null) {
+                    for (AdvocateMapping advocateMapping : representatives) {
+                        List<Party> parties = advocateMapping.getRepresenting();
+                        List<String> individualIds = parties.stream().filter(party -> uuid.equalsIgnoreCase(objectMapper.convertValue(party.getAdditionalDetails(), JsonNode.class).get("uuid").textValue()))
+                                .map(Party::getIndividualId)
+                                .toList();
+                        if (!individualIds.isEmpty()) {
+                            assignedToList.add(AssignedTo.builder().uuid(UUID.fromString(objectMapper.convertValue(advocateMapping.getAdditionalDetails(), JsonNode.class).get("uuid").textValue())).build());
+                        }
                     }
                 }
             }
