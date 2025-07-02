@@ -358,8 +358,8 @@ public class OpenApiService {
                         .toEpochMilli() - 1;
                 moduleSearchCriteria.put("hearingDateTo", String.valueOf(endOfDayEpochMillis));
             }
-            if (filterCriteria.getCaseStage() != null) {
-                moduleSearchCriteria.put("caseStage", filterCriteria.getCaseStage());
+            if (filterCriteria.getCaseSubStage() != null) {
+                moduleSearchCriteria.put("caseSubStage", filterCriteria.getCaseSubStage());
             }
             if (filterCriteria.getCaseStatus() != null) {
                 moduleSearchCriteria.put("caseStatus", filterCriteria.getCaseStatus());
@@ -478,7 +478,7 @@ public class OpenApiService {
         criteria.setTenantId(openApiOrdersTaskIRequest.getTenantId());
         OrderBy orderBy = new OrderBy();
         orderBy.setOrder(Order.DESC);
-        orderBy.setCode("date");
+        orderBy.setCode("Data.orderNotification.date");
         criteria.setSortOrder(List.of(orderBy));
         criteria.setLimit(openApiOrdersTaskIRequest.getLimit());
         criteria.setOffset(openApiOrdersTaskIRequest.getOffset());

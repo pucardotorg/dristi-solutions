@@ -39,6 +39,9 @@ const PaymentItem = React.memo(({ item, index, paymentItems, paymentTypeOptions,
     if (!/[0-9]/.test(e.key) && e.key !== "Backspace") {
       e.preventDefault();
     }
+    if (e.target.value.length >= 10) {
+      e.preventDefault();
+    }
   }, []);
 
   return (
@@ -93,7 +96,7 @@ const PaymentItem = React.memo(({ item, index, paymentItems, paymentTypeOptions,
           onKeyPress={handleAmountKeyPress}
           style={{ minWidth: 120, textAlign: "start" }}
         />
-        {amountError[index] && <div style={{ color: "red", fontSize: "12px" }}>Amount should be more than 0</div>}
+        {amountError[index] && <div style={{ color: "red", fontSize: "12px" }}>{t("CS_COMMON_AMOUNT_ERROR")}</div>}
       </LabelFieldPair>
     </div>
   );
@@ -126,8 +129,10 @@ const PaymentDemandModal = ({
   }, []);
   const isFormValid = useMemo(() => {
     const dueDateIsValid = dueDate && new Date(dueDate).getTime() >= new Date(tomorrowDate).getTime();
-    return selectedParty && dueDateIsValid && paymentItems.every((item) => item.type && parseFloat(item.amount) > MIN_AMOUNT);
-  }, [selectedParty, dueDate, paymentItems, tomorrowDate]);
+    return (
+      selectedParty && dueDateIsValid && totalAmount <= 5000000000 && paymentItems.every((item) => item.type && parseFloat(item.amount) > MIN_AMOUNT)
+    );
+  }, [dueDate, tomorrowDate, selectedParty, totalAmount, paymentItems]);
 
   const { data: paymentTypeOptions, isLoading: isOptionsLoading } = Digit.Hooks.useCustomMDMS(stateId, "payment", [{ name: "paymentDemandType" }], {
     select: (data) => data?.payment?.paymentDemandType || [],
@@ -191,9 +196,14 @@ const PaymentDemandModal = ({
 
       const dueDateTimestamp = new Date(dueDate).setHours(0, 0, 0, 0);
 
-      await DRISTIService.customApiService(Urls.case.taskCreate, {
+      const response = await DRISTIService.customApiService(Urls.case.taskCreate, {
         task: {
-          workflow: { action: "CREATE" },
+          workflow: {
+            action: "CREATE",
+            additionalDetails: {
+              litigants: [selectedParty?.individualId],
+            },
+          },
           status: "",
           filingNumber: caseDetails?.filingNumber,
           cmpNumber: caseDetails?.cmpNumber,
@@ -279,6 +289,7 @@ const PaymentDemandModal = ({
             <LabelFieldPair>
               <CardLabel className="case-input-label">{t("TOTAL_AMOUNT_DUE")}</CardLabel>
               <TextInput className="disabled" type="text" value={totalAmount} disabled style={{ minWidth: 120, textAlign: "start" }} />
+              {totalAmount > 5000000000 && <div style={{ color: "red", fontSize: "12px" }}>{t("TOTAL_AMOUNT_EXCEEDS_LIMIT")}</div>}
             </LabelFieldPair>
 
             <LabelFieldPair className="case-label-field-pair">

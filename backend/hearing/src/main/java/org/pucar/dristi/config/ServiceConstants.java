@@ -115,7 +115,8 @@ public class ServiceConstants {
             + "\"hearingType\": \"%s\","
             + "\"caseFilingDate\": %d,"
             + "\"statusOrder\": %d,"
-            + "\"hearingTypeOrder\": %d"
+            + "\"hearingTypeOrder\": %d,"
+            + "\"serialNumber\": %d"
             + "}"
             + "}"
             + "}\n";

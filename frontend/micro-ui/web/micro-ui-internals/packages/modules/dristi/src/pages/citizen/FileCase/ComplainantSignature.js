@@ -178,6 +178,7 @@ const complainantWorkflowState = {
 
 const stateSla = {
   PENDING_PAYMENT: 2,
+  RE_PENDING_PAYMENT: 2,
 };
 
 const dayInMillisecond = 24 * 3600 * 1000;
@@ -718,7 +719,7 @@ const ComplainantSignature = ({ path }) => {
     if (isSelectedUploadDoc) {
       updateCase(state);
     } else {
-      if (isLastPersonSigned && state === "PENDING_PAYMENT") {
+      if (isLastPersonSigned && (state === "PENDING_PAYMENT" || state === "RE_PENDING_PAYMENT")) {
         history.replace(`${path}/e-filing-payment?caseId=${caseId}`, { state: { calculationResponse } });
       } else {
         history.replace(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
@@ -778,7 +779,7 @@ const ComplainantSignature = ({ path }) => {
               await Promise.all(promises);
             }
           }
-          if (res?.cases?.[0]?.status === "PENDING_PAYMENT") {
+          if (res?.cases?.[0]?.status === "PENDING_PAYMENT" || res?.cases?.[0]?.status === "RE_PENDING_PAYMENT") {
             // Extract UUIDs of litigants and representatives if available
             const uuids = [
               ...(Array.isArray(caseDetails?.litigants)
