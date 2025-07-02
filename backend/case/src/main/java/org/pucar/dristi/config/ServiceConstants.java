@@ -79,7 +79,6 @@ public class ServiceConstants {
     public static final String REGISTERED_STATUS = "REGISTERED";
     public static final String INWORKFLOW_STATUS = "INWORKFLOW";
     public static final String INVALID_LINKEDCASE_ID = "INVALID_LINKEDCASE_ID";
-    public static final String PENDING_ADMISSION_HEARING_STATUS = "PENDING_ADMISSION_HEARING";
     public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
     public static final String CASE_PDF_UTILITY_EXCEPTION = "CASE_PDF_UTILITY_EXCEPTION";
     public static final String FILE_STORE_UTILITY_EXCEPTION = "FILE_STORE_UTILITY_EXCEPTION";
@@ -143,8 +142,6 @@ public class ServiceConstants {
     public static final String JUDGE_SEND_BACK_E_SIGN_CODE = "JUDGE_SEND_BACK,ESIGN_PENDING";
 
     public static final String JUDGE_SEND_BACK = "JUDGE_SEND_BACK";
-
-    public static final String PENDING_ADMISSION_HEARING = "PENDING_ADMISSION_HEARING";
 
 
     public static final String CASE_REGISTERED = "CASE_REGISTERED";

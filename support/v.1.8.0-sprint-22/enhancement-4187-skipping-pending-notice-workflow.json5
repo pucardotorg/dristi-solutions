@@ -195,7 +195,7 @@
           "actions": [
             {
               "action": "REGISTER",
-              "nextState": "PENDING_ADMISSION_HEARING",
+              "nextState": "PENDING_RESPONSE",   // Update to PENDING_RESPONSE
               "roles": [
                 "CASE_APPROVER"
               ]
@@ -323,22 +323,7 @@
           "isStartState": false,
           "isTerminateState": false,
           "isStateUpdatable": true,
-          "actions": [
-            {
-              "action": "SCHEDULE_ADMISSION_HEARING",
-              "nextState": "PENDING_RESPONSE",           // Update the next state to PENDING_RESPONSE
-              "roles": [
-                "CASE_APPROVER"
-              ]
-            },
-            {
-              "action": "ISSUE_ORDER",
-              "nextState": "PENDING_RESPONSE",
-              "roles": [
-                "CASE_APPROVER"
-              ]
-            }
-          ]
+          "actions": null                   // INACTIVATE the actions from Db
         },
         {
           "sla": null,
