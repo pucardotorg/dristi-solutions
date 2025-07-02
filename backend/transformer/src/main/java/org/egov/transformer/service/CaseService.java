@@ -273,6 +273,10 @@ public class CaseService {
     }
 
     public String getCourtName(String tenantId, String courtId) {
+        if(tenantId==null || courtId==null){
+            log.error("Cannot fetch court name as tenant id or court id is null");
+            return null;
+        };
         Map<String, Map<String, JSONArray>> mdmsResponse =
                 mdmsUtil.fetchMdmsData(RequestInfo.builder().build(), tenantId, serviceConstants.COMMON_MASTERS_MASTER, Collections.singletonList(serviceConstants.COURT_ROOMS));
         return findCourtNameFromMdmsData(mdmsResponse, courtId);
