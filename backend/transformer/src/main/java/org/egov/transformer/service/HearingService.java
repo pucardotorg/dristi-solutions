@@ -13,8 +13,11 @@ import org.egov.transformer.models.HearingRequest;
 import org.egov.transformer.models.HearingResponse;
 import org.egov.transformer.models.OpenHearing;
 import org.egov.transformer.models.Party;
+import org.egov.transformer.models.inbox.InboxRequest;
 import org.egov.transformer.producer.TransformerProducer;
 import org.egov.transformer.repository.ServiceRequestRepository;
+import org.egov.transformer.util.AdvocateUtil;
+import org.egov.transformer.util.InboxUtil;
 import org.egov.transformer.util.JsonUtil;
 import org.egov.transformer.util.MdmsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,11 +25,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.egov.transformer.config.ServiceConstants.DEFAULT_COURT_MODULE_NAME;
 import static org.egov.transformer.config.ServiceConstants.DEFAULT_HEARING_MASTER_NAME;
@@ -44,9 +44,11 @@ public class HearingService {
     private final MdmsUtil mdmsUtil;
     private final ServiceRequestRepository serviceRequestRepository;
     private final ObjectMapper objectMapper;
+    private final AdvocateUtil advocateUtil;
+    private final InboxUtil inboxUtil;
 
     @Autowired
-    public HearingService(TransformerProducer producer, CaseService caseService, TransformerProperties properties, JsonUtil jsonUtil, MdmsUtil mdmsUtil, org.egov.transformer.repository.ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper) {
+    public HearingService(TransformerProducer producer, CaseService caseService, TransformerProperties properties, JsonUtil jsonUtil, MdmsUtil mdmsUtil, org.egov.transformer.repository.ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, AdvocateUtil advocateUtil, InboxUtil inboxUtil) {
         this.producer = producer;
         this.caseService = caseService;
         this.properties = properties;
@@ -54,6 +56,8 @@ public class HearingService {
         this.mdmsUtil = mdmsUtil;
         this.serviceRequestRepository = serviceRequestRepository;
         this.objectMapper = objectMapper;
+        this.advocateUtil = advocateUtil;
+        this.inboxUtil = inboxUtil;
     }
 
     public void addCaseDetailsToHearing(Hearing hearing, String topic) throws IOException {
@@ -85,7 +89,7 @@ public class HearingService {
 
         List<AdvocateMapping> representatives = courtCase.getRepresentatives();
 
-        Advocate advocate = getAdvocates(representatives, hearing);
+        Advocate advocate = getAdvocates(representatives, hearing, courtCase.getLitigants(), requestInfo);
 
         OpenHearing openHearing = new OpenHearing();
         openHearing.setHearingUuid(hearing.getId().toString());
@@ -106,6 +110,14 @@ public class HearingService {
         openHearing.setHearingType(hearing.getHearingType());
         openHearing.setSearchableFields(getSearchableFields(advocate, hearing, courtCase));
         openHearing.setHearingDurationInMillis(hearing.getHearingDurationInMillis());
+
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtCase.getCourtId(), hearing.getId().toString() );
+        List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(inboxRequest);
+        if(openHearingList != null && !openHearingList.isEmpty()) {
+            if(openHearingList.get(0).getSerialNumber() > 0) {
+                openHearing.setSerialNumber(openHearingList.get(0).getSerialNumber());
+            }
+        }
 
         enrichOrderFields(requestInfo,openHearing);
 
@@ -158,6 +170,7 @@ public class HearingService {
         List<String> searchableFields = new ArrayList<>();
         searchableFields.addAll(advocate.getComplainant());
         searchableFields.addAll(advocate.getAccused());
+        searchableFields.addAll(advocate.getIndividualIds());
         searchableFields.add(courtCase.getCaseTitle());
         searchableFields.addAll(hearing.getFilingNumber());
         if (hearing.getCmpNumber() != null) searchableFields.add(hearing.getCmpNumber());
@@ -166,10 +179,13 @@ public class HearingService {
 
     }
 
-    private Advocate getAdvocates(List<AdvocateMapping> representatives, Hearing hearing) {
+    private Advocate getAdvocates(List<AdvocateMapping> representatives, Hearing hearing, List<Party> litigants, RequestInfo requestInfo) {
 
         List<String> complainantNames = new ArrayList<>();
         List<String> accusedNames = new ArrayList<>();
+        Set<String> advocateIds = new HashSet<>();
+        Set<String> individualIds = new HashSet<>();
+        Set<String> advocateIndividualIds = new HashSet<>();
 
         Advocate advocate = Advocate.builder().build();
         advocate.setComplainant(complainantNames);
@@ -193,8 +209,30 @@ public class HearingService {
                         }
                     }
                 }
+
             }
+
+            advocateIds =  representatives.stream()
+                    .map(AdvocateMapping::getAdvocateId)
+                    .collect(Collectors.toSet());
+
+            if (!advocateIds.isEmpty()) {
+                advocateIndividualIds = advocateUtil.getAdvocate(requestInfo, advocateIds.stream().toList());
+            }
+
         }
+
+        if (litigants != null) {
+            individualIds = litigants.stream()
+                    .map(Party::getIndividualId)
+                    .collect(Collectors.toSet());
+        }
+
+        if (!advocateIndividualIds.isEmpty()) {
+            individualIds.addAll(advocateIndividualIds);
+        }
+
+        advocate.setIndividualIds(new ArrayList<>(individualIds));
 
         return advocate;
 

@@ -29,9 +29,6 @@ public class FilterCriteria {
     @Valid
     private LocalDate hearingDateTo = null;
 
-    @JsonProperty("caseStage")
-    private String caseStage = null;
-
     @JsonProperty("caseStatus")
     private String caseStatus = null;
 
@@ -40,4 +37,7 @@ public class FilterCriteria {
 
     @JsonProperty("caseTitle")
     private String caseTitle = null;
+
+    @JsonProperty("caseSubStage")
+    private String caseSubStage = null;
 }
