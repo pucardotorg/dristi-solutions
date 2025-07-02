@@ -283,7 +283,7 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
                 <div className="payment-due-text" style={{ fontSize: "18px" }}>
                   {`${t("CS_DUE_PAYMENT")} `}
                   <span style={{ fontWeight: 700 }}>Rs {totalAmount}/-.</span>
-                  <p style={{ margin: 0 }}> {` ${t("PAYMENT_ADDITIONAL_INFO")}: ${comments ? comments : "-"}`}</p>
+                  {comments && <p style={{ margin: 0 }}> {` ${t("PAYMENT_ADDITIONAL_INFO")}: ${comments}`}</p>}
                 </div>
                 <div
                   className="payment-calculator-wrapper"
