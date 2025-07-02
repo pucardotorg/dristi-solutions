@@ -6,6 +6,7 @@ import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.models.*;
+import org.egov.transformer.models.inbox.InboxRequest;
 import org.egov.transformer.producer.TransformerProducer;
 import org.egov.transformer.repository.ServiceRequestRepository;
 import org.egov.transformer.util.InboxUtil;
