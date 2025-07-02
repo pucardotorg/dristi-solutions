@@ -65,7 +65,7 @@ const HomeHearingsTab = ({
 }) => {
   const history = useHistory();
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [rowsPerPage, setRowsPerPage] = useState(30);
   const { data: tableData, loading, error, fetchInbox } = useInboxSearch({ limit: rowsPerPage, offset: page * rowsPerPage });
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
@@ -86,13 +86,13 @@ const HomeHearingsTab = ({
     const cleared = { date: todayStr, status: "", purpose: "", caseQuery: "" };
     setFilters(cleared);
     setPage(0);
-    setRowsPerPage(10);
+    setRowsPerPage(30);
     fetchInbox(cleared, setHearingCount);
   }, [fetchInbox, setHearingCount]);
 
   const handleSearch = useCallback(() => {
     setPage(0);
-    setRowsPerPage(10);
+    setRowsPerPage(30);
     fetchInbox(filters, setHearingCount);
   }, [fetchInbox, filters, setHearingCount]);
 
