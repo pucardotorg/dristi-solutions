@@ -95,6 +95,9 @@ public class TransformerProperties {
     // Application timezone ID
     @Value("${app.zone.id}")
     private String applicationZoneId;
+    // Advocate Config
+    @Value("${egov.advocate.host}")
+    private String advocateHost;
 
     // inbox config
     @Value("${egov.inbox.host}")
@@ -102,4 +105,6 @@ public class TransformerProperties {
 
     @Value("${egov.inbox.search.endpoint}")
     private String indexSearchEndPoint;
+    @Value("${egov.advocate.path}")
+    private String advocatePath;
 }
