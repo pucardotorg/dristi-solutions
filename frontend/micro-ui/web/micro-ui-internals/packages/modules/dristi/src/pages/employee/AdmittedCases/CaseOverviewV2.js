@@ -1,4 +1,4 @@
-import { Card, Loader, Modal } from "@egovernments/digit-ui-react-components";
+import { Card, Loader } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch } from "react-router-dom";
@@ -8,7 +8,6 @@ import { PreviousHearingIcon } from "../../../icons/svgIndex";
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import ShowAllTranscriptModal from "../../../components/ShowAllTranscriptModal";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
-import WorkflowTimeline from "../../../components/WorkflowTimeline";
 import NextHearingCard from "./NextHearingCard";
 
 const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails, showNoticeProcessModal = true }) => {
@@ -83,8 +82,12 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
     <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
       {userInfoType === "citizen" && (
         <div style={{ width: "100%" }}>
-          <NextHearingCard caseData={caseData} width={"100%"} minWidth={"100%"}
-           cardStyle={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none", maxWidth: "100%" }} />
+          <NextHearingCard
+            caseData={caseData}
+            width={"100%"}
+            minWidth={"100%"}
+            cardStyle={{ border: "solid 1px #E8E8E8", boxShadow: "none", webkitBoxShadow: "none", maxWidth: "100%" }}
+          />
         </div>
       )}
       <div style={{ display: "flex", flexDirection: "row", gap: "1rem", justifyContent: "space-between" }}>

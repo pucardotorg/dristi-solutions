@@ -82,10 +82,29 @@ public class TransformerProperties {
     @Value("${egov.mdms.search.endpoint}")
     private String mdmsEndPoint;
 
+    @Value("${transformer.producer.case.search.topic}")
+    private String caseSearchTopic;
+
+    //Hearing config
+    @Value("${dristi.hearing.host}")
+    private String hearingHost;
+
+    @Value("${dristi.hearing.search.endpoint}")
+    private String hearingSearchEndPoint;
+
+    // Application timezone ID
+    @Value("${app.zone.id}")
+    private String applicationZoneId;
     // Advocate Config
     @Value("${egov.advocate.host}")
     private String advocateHost;
 
+    // inbox config
+    @Value("${egov.inbox.host}")
+    private String inboxHost;
+
+    @Value("${egov.inbox.search.endpoint}")
+    private String indexSearchEndPoint;
     @Value("${egov.advocate.path}")
     private String advocatePath;
 }

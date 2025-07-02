@@ -920,3 +920,16 @@
   }
 }
 
+.pending-envelope-submission-modal {
+  .popup-module-main {
+    .popup-module-action-bar {
+      .selector-button-primary {
+        display: flex;
+        align-items: center;
+      }
+      h2 {
+        font-size: 18px !important;
+      }
+    }
+  }
+}

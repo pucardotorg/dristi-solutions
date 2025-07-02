@@ -4,6 +4,7 @@ import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -161,7 +162,7 @@ public class BillingService {
         try {
             String stringifiedObject = billingUtil.buildString(jsonObject);
             String consumerCode = JsonPath.read(stringifiedObject, CONSUMER_CODE_PATH);
-            String[] consumerCodeSplitArray = consumerCode.split("_", 2);
+            String[] consumerCodeSplitArray = splitConsumerCode(consumerCode);
 
             if (isOfflinePaymentAvailable(consumerCodeSplitArray[1])) {
                 String payload = billingUtil.buildPayload(stringifiedObject, requestInfo, paymentCompletedDate);
@@ -174,6 +175,12 @@ public class BillingService {
         } catch (Exception e) {
             log.error("Error while processing JSON object: {}", jsonObject, e);
         }
+    }
+
+    private String[] splitConsumerCode(String consumerCode) {
+        String[] temp = consumerCode.split("_", 2);
+        String suffix = temp[1].replaceFirst("-\\d+$", "");
+        return new String[] { temp[0], suffix };
     }
 
     private boolean isOfflinePaymentAvailable(String suffix) {

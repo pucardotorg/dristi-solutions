@@ -6,9 +6,7 @@ import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.inbox.util.ErrorConstants;
 import org.egov.inbox.util.MDMSUtil;
-import org.egov.inbox.web.model.InboxRequest;
-import org.egov.inbox.web.model.InboxSortConfiguration;
-import org.egov.inbox.web.model.SortOrder;
+import org.egov.inbox.web.model.*;
 import org.egov.inbox.web.model.V2.InboxQueryConfiguration;
 import org.egov.inbox.web.model.V2.SearchParam;
 import org.egov.inbox.web.model.V2.SearchRequest;
@@ -58,7 +56,20 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
                 addSortClauseToBaseQueryUsingConfig(baseEsQuery, inboxSortConfiguration.getSortOrder());
             }else if (configuration.getIndex().equals(ORDER_NOTIFICATION_INDEX) && PENDING_BULK_E_SIGN.equals(params.get("status"))){
                 addIndexSort(baseEsQuery, configuration.getIndex());
-            }else {
+            }else if (inboxRequest.getInbox().getSortOrder() != null && !inboxRequest.getInbox().getSortOrder().isEmpty()) {
+                List<OrderBy> sortOrders = inboxRequest.getInbox().getSortOrder();
+
+                for (OrderBy orderBy : sortOrders) {
+                    String sortField = orderBy.getCode();
+                    String sortDirection = orderBy.getOrder().toString(); // Expected to be "ASC" or "DESC"
+
+                    SortParam.Order orderEnum = SortParam.Order.fromValue(sortDirection);
+                    if (orderEnum != null && sortField != null && !sortField.isEmpty()) {
+                        addSortClauseToBaseQuery(baseEsQuery, sortField, orderEnum);
+                    }
+                }
+            }
+            else {
                 addSortClauseToBaseQuery(baseEsQuery, sortClauseFieldPath, sortOrder);
             }
 

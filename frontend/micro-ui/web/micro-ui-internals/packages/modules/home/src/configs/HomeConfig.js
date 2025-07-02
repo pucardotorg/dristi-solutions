@@ -225,6 +225,13 @@ export const pendingTaskCaseActions = {
       url: "/home/home-pending-task/e-filing-payment-breakdown",
     },
   },
+  RE_PENDING_PAYMENT: {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "Make Payment",
+    redirectDetails: {
+      url: "/home/home-pending-task/e-filing-payment-breakdown",
+    },
+  },
   PENDING_RESPONSE: {
     actorName: ["LITIGANT/ADVOCATE"],
     actionName: "Pending Response",
@@ -374,9 +381,7 @@ export const pendingTaskHearingActions = {
     // additionalDetailsKeys: ["orderType"],
     redirectDetails: {
       url: "/orders/generate-orders",
-      params: [
-        { key: "filingNumber", value: "filingNumber" },
-      ],
+      params: [{ key: "filingNumber", value: "filingNumber" }],
     },
   },
 };
@@ -800,6 +805,17 @@ export const pendingTaskVoluntarySubmissionBailActions = {
   },
 };
 
+export const pendingTaskCaseGeneratePaymentActions = {
+  PENDING_PAYMENT: {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "Make Payment",
+    redirectDetails: {
+      url: "/home/home-pending-task/case-payment-demand-breakdown",
+      params: [{ key: "taskNumber", value: "referenceId" }],
+    },
+  },
+};
+
 export const selectTaskType = {
   "case-default": pendingTaskCaseActions,
   "hearing-default": pendingTaskHearingActions,
@@ -814,4 +830,5 @@ export const selectTaskType = {
   "voluntary-document-submission": pendingTaskForDocumentSubmissionActions,
   "voluntary-application-submission-bail-documents": pendingTaskVoluntarySubmissionBailDocumentsActions,
   "voluntary-application-submission-bail": pendingTaskVoluntarySubmissionBailActions,
+  "task-generic": pendingTaskCaseGeneratePaymentActions,
 };

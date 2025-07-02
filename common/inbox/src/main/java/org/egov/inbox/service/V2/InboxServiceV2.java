@@ -79,15 +79,15 @@ public class InboxServiceV2 {
     private void hashParamsWhereverRequiredBasedOnConfiguration(Map<String, Object> moduleSearchCriteria, InboxQueryConfiguration inboxQueryConfiguration) {
 
         inboxQueryConfiguration.getAllowedSearchCriteria().forEach(searchParam -> {
-            if(!ObjectUtils.isEmpty(searchParam.getIsHashingRequired()) && searchParam.getIsHashingRequired()){
-                if(moduleSearchCriteria.containsKey(searchParam.getName())){
-                    if(moduleSearchCriteria.get(searchParam.getName()) instanceof List){
+            if (!ObjectUtils.isEmpty(searchParam.getIsHashingRequired()) && searchParam.getIsHashingRequired()) {
+                if (moduleSearchCriteria.containsKey(searchParam.getName())) {
+                    if (moduleSearchCriteria.get(searchParam.getName()) instanceof List) {
                         List<Object> hashedParams = new ArrayList<>();
                         ((List<?>) moduleSearchCriteria.get(searchParam.getName())).forEach(object -> {
                             hashedParams.add(hashService.getHashValue(object));
                         });
                         moduleSearchCriteria.put(searchParam.getName(), hashedParams);
-                    }else{
+                    } else {
                         Object hashedValue = hashService.getHashValue(moduleSearchCriteria.get(searchParam.getName()));
                         moduleSearchCriteria.put(searchParam.getName(), hashedValue);
                     }
@@ -102,7 +102,7 @@ public class InboxServiceV2 {
           done to avoid having redundant network calls which could hog the performance.
         */
         items.forEach(item -> {
-            if(item.getBusinessObject().containsKey(CURRENT_PROCESS_INSTANCE_CONSTANT)) {
+            if (item.getBusinessObject().containsKey(CURRENT_PROCESS_INSTANCE_CONSTANT)) {
                 // Set process instance object in the native process instance field declared in the model inbox class.
                 ProcessInstance processInstance = mapper.convertValue(item.getBusinessObject().get(CURRENT_PROCESS_INSTANCE_CONSTANT), ProcessInstance.class);
                 item.setProcessInstance(processInstance);
@@ -113,18 +113,17 @@ public class InboxServiceV2 {
         });
     }
 
-    private List<Inbox> getInboxItems(InboxRequest inboxRequest, String indexName){
+    private List<Inbox> getInboxItems(InboxRequest inboxRequest, String indexName) {
         List<BusinessService> businessServices = workflowService.getBusinessServices(inboxRequest);
         enrichActionableStatusesFromRole(inboxRequest, businessServices);
-        if(CollectionUtils.isEmpty(inboxRequest.getInbox().getProcessSearchCriteria().getStatus())){
+        if (CollectionUtils.isEmpty(inboxRequest.getInbox().getProcessSearchCriteria().getStatus())) {
             return new ArrayList<>();
         }
         Map<String, Object> finalQueryBody = queryBuilder.getESQuery(inboxRequest, Boolean.TRUE);
         try {
             String q = mapper.writeValueAsString(finalQueryBody);
-            log.info("Query: "+q);
-        }
-        catch (Exception e){
+            log.info("Query: " + q);
+        } catch (Exception e) {
             e.printStackTrace();
         }
         StringBuilder uri = getURI(indexName, SEARCH_PATH);
@@ -146,7 +145,7 @@ public class InboxServiceV2 {
         if (StatusIdNameMap.values().size() > 0) {
             if (!CollectionUtils.isEmpty(processCriteria.getStatus())) {
                 processCriteria.getStatus().forEach(statusUuid -> {
-                    if(StatusIdNameMap.keySet().contains(statusUuid)){
+                    if (StatusIdNameMap.keySet().contains(statusUuid)) {
                         actionableStatusUuid.add(statusUuid);
                     }
                 });
@@ -154,26 +153,26 @@ public class InboxServiceV2 {
             } else {
                 inboxRequest.getInbox().getProcessSearchCriteria().setStatus(new ArrayList<>(StatusIdNameMap.keySet()));
             }
-        }else{
+        } else {
             inboxRequest.getInbox().getProcessSearchCriteria().setStatus(new ArrayList<>());
         }
     }
 
-    public Integer getTotalApplicationCount(InboxRequest inboxRequest, String indexName){
+    public Integer getTotalApplicationCount(InboxRequest inboxRequest, String indexName) {
 
         Map<String, Object> finalQueryBody = queryBuilder.getESQuery(inboxRequest, Boolean.FALSE);
         StringBuilder uri = getURI(indexName, COUNT_PATH);
         Map<String, Object> response = (Map<String, Object>) serviceRequestRepository.fetchESResult(uri, finalQueryBody);
         Integer totalCount = 0;
-        if(response.containsKey(COUNT_CONSTANT)){
+        if (response.containsKey(COUNT_CONSTANT)) {
             totalCount = (Integer) response.get(COUNT_CONSTANT);
-        }else{
+        } else {
             throw new CustomException("INBOX_COUNT_ERR", "Error occurred while executing ES count query");
         }
         return totalCount;
     }
 
-    public List<HashMap<String, Object>> getStatusCountMap(InboxRequest inboxRequest, String indexName){
+    public List<HashMap<String, Object>> getStatusCountMap(InboxRequest inboxRequest, String indexName) {
         Map<String, Object> finalQueryBody = queryBuilder.getStatusCountQuery(inboxRequest);
         StringBuilder uri = getURI(indexName, SEARCH_PATH);
         Map<String, Object> response = (Map<String, Object>) serviceRequestRepository.fetchESResult(uri, finalQueryBody);
@@ -188,13 +187,13 @@ public class InboxServiceV2 {
         Long currentDate = System.currentTimeMillis(); //current time
         Map<String, Object> auditDetails = (Map<String, Object>) ((Map<String, Object>) data).get(AUDIT_DETAILS_KEY);
         String stateUuid = JsonPath.read(data, STATE_UUID_PATH);
-        if(stateUuidSlaMap.containsKey(stateUuid)){
+        if (stateUuidSlaMap.containsKey(stateUuid)) {
             if (!ObjectUtils.isEmpty(auditDetails.get(LAST_MODIFIED_TIME_KEY))) {
                 Long lastModifiedTime = ((Number) auditDetails.get(LAST_MODIFIED_TIME_KEY)).longValue();
 
                 return Long.valueOf(Math.round((stateUuidSlaMap.get(stateUuid) - (currentDate - lastModifiedTime)) / ((double) (24 * 60 * 60 * 1000))));
             }
-        }else {
+        } else {
             if (!ObjectUtils.isEmpty(auditDetails.get(CREATED_TIME_KEY))) {
                 Long createdTime = ((Number) auditDetails.get(CREATED_TIME_KEY)).longValue();
                 String businessService = JsonPath.read(data, BUSINESS_SERVICE_PATH);
@@ -206,28 +205,28 @@ public class InboxServiceV2 {
         return null;
     }
 
-    private List<HashMap<String,Object>> transformStatusMap(InboxRequest request,HashMap<String, Object> statusCountMap) {
+    private List<HashMap<String, Object>> transformStatusMap(InboxRequest request, HashMap<String, Object> statusCountMap) {
 
-        if(CollectionUtils.isEmpty(statusCountMap))
+        if (CollectionUtils.isEmpty(statusCountMap))
             return null;
 
         List<BusinessService> businessServices = workflowService.getBusinessServices(request);
 
-        Map<String,String> statusIdToBusinessServiceMap = workflowService.getStatusIdToBusinessServiceMap(businessServices);
+        Map<String, String> statusIdToBusinessServiceMap = workflowService.getStatusIdToBusinessServiceMap(businessServices);
         Map<String, String> statusIdToApplicationStatusMap = workflowService.getApplicationStatusIdToStatusMap(businessServices);
         Map<String, String> statusIdToApplicationStateMap = workflowService.getApplicationStatusIdToStateMap(businessServices);
 
-        List<HashMap<String,Object>> statusCountMapTransformed = new ArrayList<>();
+        List<HashMap<String, Object>> statusCountMapTransformed = new ArrayList<>();
 
-        for(Map.Entry<String, Object> entry : statusCountMap.entrySet()){
+        for (Map.Entry<String, Object> entry : statusCountMap.entrySet()) {
             String statusId = entry.getKey();
             Integer count = (Integer) entry.getValue();
             HashMap<String, Object> map = new HashMap<>();
             map.put(COUNT_CONSTANT, count);
-            map.put(APPLICATION_STATUS_KEY,statusIdToApplicationStatusMap.get(statusId));
-            map.put(BUSINESSSERVICE_KEY,statusIdToBusinessServiceMap.get(statusId));
+            map.put(APPLICATION_STATUS_KEY, statusIdToApplicationStatusMap.get(statusId));
+            map.put(BUSINESSSERVICE_KEY, statusIdToBusinessServiceMap.get(statusId));
             map.put(STATUSID_KEY, statusId);
-            map.put(STATE,statusIdToApplicationStateMap.get(statusId));
+            map.put(STATE, statusIdToApplicationStateMap.get(statusId));
             statusCountMapTransformed.add(map);
         }
         return statusCountMapTransformed;
