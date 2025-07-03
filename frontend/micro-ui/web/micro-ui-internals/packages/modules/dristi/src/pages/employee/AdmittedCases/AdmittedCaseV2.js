@@ -228,9 +228,9 @@ const AdmittedCaseV2 = () => {
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
-  const isCitizen = userRoles.includes("CITIZEN");
-  const isJudge = userRoles.includes("JUDGE_ROLE");
-  const isCourtStaff = userRoles.includes("COURT_ROOM_MANAGER");
+  const isCitizen = userRoles?.includes("CITIZEN");
+  const isJudge = userRoles?.includes("JUDGE_ROLE");
+  const isCourtStaff = userRoles?.includes("COURT_ROOM_MANAGER");
   const OrderWorkflowAction = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {}, []);
   const ordersService = useMemo(() => Digit.ComponentRegistryService.getComponent("OrdersService") || {}, []);
   const OrderReviewModal = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderReviewModal") || {}, []);
@@ -287,7 +287,7 @@ const AdmittedCaseV2 = () => {
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber || "", [caseDetails]);
 
-  const showTakeAction = useMemo(() => userRoles.includes("ORDER_CREATOR") && !isCitizen && relevantStatuses.includes(caseDetails?.status), [
+  const showTakeAction = useMemo(() => userRoles?.includes("ORDER_CREATOR") && !isCitizen && relevantStatuses.includes(caseDetails?.status), [
     caseDetails?.status,
     userRoles,
     isCitizen,
@@ -2413,6 +2413,9 @@ const AdmittedCaseV2 = () => {
       } else if (option.value === "SUBMIT_DOCUMENTS") {
         history.push(`/${window?.contextPath}/citizen/submissions/submit-document?filingNumber=${filingNumber}`);
       }
+      else if (option.value === "GENERATE_BAIL_BOND") {
+        history.push(`/${window?.contextPath}/citizen/submissions/bail-bond?filingNumber=${filingNumber}`);
+      }
     },
     [filingNumber, history]
   );
@@ -2794,6 +2797,10 @@ const AdmittedCaseV2 = () => {
       {
         value: "SUBMIT_DOCUMENTS",
         label: "Submit Documents",
+      },
+      {
+        value: "GENERATE_BAIL_BOND",
+        label: "Generate Bail Bond",
       },
     ],
     []
@@ -3343,7 +3350,7 @@ const AdmittedCaseV2 = () => {
                 {t("DOWNLOAD_ALL_LINK")}
               </div>
             )} */}
-          {userRoles.includes("ORDER_CREATOR") && config?.label === "Orders" && (
+          {userRoles?.includes("ORDER_CREATOR") && config?.label === "Orders" && (
             <div style={{ display: "flex", gap: "10px" }}>
               <div
                 onClick={() => handleSelect(t("GENERATE_ORDER_HOME"))}
@@ -3356,7 +3363,7 @@ const AdmittedCaseV2 = () => {
               </div> */}
             </div>
           )}
-          {userRoles.includes("ORDER_CREATOR") && config?.label === "Submissions" && (
+          {userRoles?.includes("ORDER_CREATOR") && config?.label === "Submissions" && (
             <div style={{ display: "flex", gap: "10px" }}>
               <div
                 onClick={() => handleSelect(t("MANDATORY_SUBMISSIONS_RESPONSES"))}

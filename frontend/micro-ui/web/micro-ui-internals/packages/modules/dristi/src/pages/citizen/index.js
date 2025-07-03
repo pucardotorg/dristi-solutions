@@ -23,6 +23,8 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const history = useHistory();
   const Registration = Digit?.ComponentRegistryService?.getComponent("DRISTIRegistration");
   const Response = Digit?.ComponentRegistryService?.getComponent("DRISTICitizenResponse");
+  const BailBondSignaturePage = Digit?.ComponentRegistryService?.getComponent("BailBondSignaturePage");
+  const BailBondLoginPage = Digit?.ComponentRegistryService?.getComponent("BailBondLoginPage");
   const Login = Digit?.ComponentRegistryService?.getComponent("DRISTILogin");
   const FileCase = Digit?.ComponentRegistryService?.getComponent("FileCase");
   const token = window.localStorage.getItem("token");
@@ -142,18 +144,21 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     `${path}/home/registration/additional-details`,
     `${path}/home/registration/upload-id`,
     `${path}/home/registration/terms-condition`,
+    `${path}/home/bail-bond-sign`,
+    `${path}/home/bail-bond-login`
   ];
+  const bailRoute = [`${path}/home/bail-bond-sign`]
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = JSON.parse(eSignWindowObject);
   if (!isUserLoggedIn && !whiteListedRoutes.includes(location.pathname)) {
     history.push(`${path}/home/login`);
   }
-  if (!isRejected && individualId && !isLitigantPartialRegistered && whiteListedRoutes.includes(location.pathname)) {
+  if (!isRejected && individualId && !isLitigantPartialRegistered && whiteListedRoutes.includes(location.pathname) && !bailRoute.includes(location.pathname)) {
     history.push(`${path}/home`);
   }
 
-  if (isUserLoggedIn && !location.pathname.includes(`${path}/home`)) {
+  if (isUserLoggedIn && !location.pathname.includes(`${path}/home`) && !bailRoute.includes(location.pathname)) {
     history.push(`${path}/home`);
   }
   if (isUserLoggedIn && registerScreenRoute.includes(location.pathname)) {
@@ -245,6 +250,14 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
 
           <Route path={`${path}/landing-page`}>
             <LandingPage />
+          </Route>
+
+          <Route path={`${path}/home/bail-bond-login`}>
+            <BailBondLoginPage setHideBack={setHideBack}/>
+          </Route>
+
+          <Route path={`${path}/home/bail-bond-sign`}>
+            <BailBondSignaturePage setHideBack={setHideBack}/>
           </Route>
         </React.Fragment>
       </Switch>

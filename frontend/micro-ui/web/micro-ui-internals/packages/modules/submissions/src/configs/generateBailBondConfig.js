@@ -1,0 +1,236 @@
+export const bailBondConfig = [
+  {
+    body: [
+      {
+        inline: true,
+        label: "LITIGANT_NAME",
+        isMandatory: true,
+        type: "dropdown",
+        key: "selectComplainant",
+        populators: {
+          optionsKey: "name",
+          styles: { maxWidth: "100%" },
+          options: [
+            {
+              code: "complainantOne",
+              name: "ComplainantOne",
+            },
+          ],
+        },
+      },
+      {
+        label: "FATHER_NAME",
+        isMandatory: true,
+        key: "fatherName",
+        type: "text",
+        populators: {
+          name: "fatherName",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          validation: {
+            pattern: {
+              message: "CORE_COMMON_APPLICANT_NAME_INVALID",
+              masterName: "commonUiConfig",
+              moduleName: "patternValidation",
+              patternType: "userName",
+            },
+            minLength: 1,
+            patternType: "Name",
+          },
+        },
+      },
+      {
+        type: "amount",
+        label: "BAIL_AMOUNT",
+        isMandatory: true,
+        key: "bailAmount",
+        populators: {
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          name: "bailAmount",
+          prefix: "",
+        },
+      },
+      {
+        isMandatory: true,
+        key: "bailType",
+        type: "dropdown",
+        label: "BAIL_TYPE",
+        populators: {
+          name: "bailType",
+          optionsKey: "code",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%" },
+          required: true,
+          isMandatory: true,
+          // need to chnage
+          options: [
+            {
+              code: "SURETY",
+              name: "surety",
+            },
+            {
+              code: "PERSONAL",
+              name: "personal",
+            },
+          ],
+          customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
+        },
+      },
+      {
+        type: "component",
+        key: "surety",
+        component: "SuretyComponent",
+        // schemaKeyPath: "applicationDetails.applicationDocuments",
+        // transformer: "applicationDocuments",
+        name: "Surety",
+        disable: false,
+        isMandatory: false,
+        populators: {
+          hideInForm: true,
+          inputs: [
+            {
+              label: "FULL_NAME",
+              isMandatory: true,
+              key: "fullName",
+              type: "text",
+              name: "fullName",
+              placeholder: "Ex: Raj Kumar Singh",
+              validation: {
+                isRequired: true,
+                pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+                errMsg: "CORE_COMMON_APPLICANT_NAME_INVALID",
+                minLength: 1,
+              },
+            },
+            {
+              label: "FATHER_NAME",
+              isMandatory: true,
+              key: "suretyFatherName",
+              type: "text",
+              name: "suretyFatherName",
+              placeholder: "Ex: Raj Kumar Singh",
+              validation: {
+                isRequired: true,
+                pattern: /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i,
+                errMsg: "CORE_COMMON_APPLICANT_NAME_INVALID",
+                minLength: 1,
+              },
+            },
+            {
+              name: "mobileNumber",
+              key: "mobileNumber",
+              type: "text",
+              error: "ERR_HRMS_INVALID_MOB_NO",
+              label: "PARTY_PHONE_NUMBER",
+              placeholder: "Ex: 1234567890",
+              validation: {
+                pattern: "^[6-9][0-9]{0,9}$",
+                isNumber: true,
+                isRequired: true,
+                maxLength: 10,
+                minLength: 10,
+              },
+              isMandatory: true,
+              componentInFront: "+91",
+            },
+            {
+              type: "infoBox",
+              name: "infoBox",
+              showTooltip: true,
+              infoHeader: "CS_PLEASE_COMMON_NOTE",
+              infoText: "BAIL_BOND_NOTE",
+            },
+            {
+              name: "emailId",
+              key: "emailId",
+              type: "text",
+              error: "ERR_HRMS_INVALID_MOB_NO",
+              label: "E-Mail Address",
+              isMandatory: false,
+              isOptional: true,
+              validation: {
+                isRequired: false,
+                pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9][a-zA-Z0-9.-]*\.[a-zA-Z]{2,}$/,
+                errMsg: "PLEASE_ENTER_VALID_EMAIL",
+              },
+            },
+            {
+              type: "component",
+              key: "identityProof",
+              component: "SelectMultiUpload",
+              disable: false,
+              populators: {
+                inputs: [
+                  {
+                    name: "identityProof",
+                    isMandatory: true,
+                    documentHeader: "IDENTITY_PROOF",
+                    fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
+                    uploadGuidelines: "UPLOAD_DOC_50",
+                    maxFileSize: 50,
+                    maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                    isMultipleUpload: true,
+                    textAreaStyle: {
+                      fontSize: "16px",
+                      fontWeight: 400,
+                      marginBottom: "8px",
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              type: "component",
+              key: "proofOfSolvency",
+              component: "SelectMultiUpload",
+              disable: false,
+              populators: {
+                inputs: [
+                  {
+                    name: "proofOfSolvency",
+                    isMandatory: true,
+                    documentHeader: `PROOF_OF_SOLVENCY`,
+                    fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
+                    uploadGuidelines: "UPLOAD_DOC_50",
+                    maxFileSize: 50,
+                    maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                    isMultipleUpload: true,
+                    textAreaStyle: {
+                      fontSize: "16px",
+                      fontWeight: 400,
+                      marginBottom: "8px",
+                    },
+                  },
+                ],
+              },
+            },
+            {
+              type: "component",
+              key: "otherDocuments",
+              component: "SelectMultiUpload",
+              disable: false,
+              populators: {
+                inputs: [
+                  {
+                    name: "otherDocuments",
+                    isMandatory: true,
+                    documentHeader: "OTHER_DOCUMENTS_HEADING",
+                    fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
+                    uploadGuidelines: "UPLOAD_DOC_50",
+                    maxFileSize: 50,
+                    maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+                    isMultipleUpload: true,
+                    textAreaStyle: {
+                      fontSize: "16px",
+                      fontWeight: 400,
+                      marginBottom: "8px",
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      },
+    ],
+  },
+];

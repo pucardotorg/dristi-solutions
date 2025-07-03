@@ -3,6 +3,8 @@ import React from "react";
 import { useRouteMatch } from "react-router-dom";
 import { default as EmployeeApp } from "./pages/employee";
 import SubmissionsCard from "./components/SubmissionsCard";
+import BailBondSignaturePage from "./pages/employee/BailBondSignaturePage";
+import BailBondLoginPage from "./pages/employee/BailBondLoginPage";
 import { overrideHooks, updateCustomConfigs } from "./utils";
 
 export const SubmissionsModule = ({ stateCode, userType, tenants }) => {
@@ -25,6 +27,8 @@ export const SubmissionsModule = ({ stateCode, userType, tenants }) => {
 const componentsToRegister = {
   SubmissionsModule,
   SubmissionsCard,
+  BailBondSignaturePage,
+  BailBondLoginPage
 };
 
 export const initSubmissionsComponents = () => {
