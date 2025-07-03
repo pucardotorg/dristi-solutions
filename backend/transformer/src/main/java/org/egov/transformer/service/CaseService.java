@@ -23,6 +23,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.Year;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -174,14 +175,14 @@ public class CaseService {
                 .build();
         List<Hearing> hearings = hearingUtil.fetchHearingDetails(hearingSearchRequest);
         Hearing latestHearing = null;
-        if(hearings != null && hearings.size() > 0) {
-            latestHearing = hearings.get(0);
+        List<Hearing> completedHearings = Optional.ofNullable(hearings).orElse(Collections.emptyList()).stream()
+                .filter(element -> HEARING_COMPLETED_STATUS.equalsIgnoreCase(element.getStatus())).toList();
+        if (!completedHearings.isEmpty()) {
+            latestHearing = completedHearings.get(0);
         }
         caseSearch.setNextHearingDate(latestHearing!=null? latestHearing.getStartTime(): null);
         caseSearch.setCaseStatus(courtCase.getStatus());
-        Year year = Year.from(Instant.ofEpochMilli(courtCase.getFilingDate())
-                .atZone(ZoneId.systemDefault()));
-        caseSearch.setYearOfFiling(String.valueOf(year.getValue()));
+        caseSearch.setYearOfFiling(dateUtil.getYearFromDate(courtCase.getFilingDate()));
         caseSearch.setHearingType(latestHearing!=null? latestHearing.getHearingType(): null);
         caseSearch.setCaseSubStage(courtCase.getSubstage());
         return caseSearch;
@@ -272,6 +273,10 @@ public class CaseService {
     }
 
     public String getCourtName(String tenantId, String courtId) {
+        if(tenantId==null || courtId==null){
+            log.error("Cannot fetch court name as tenant id or court id is null");
+            return null;
+        };
         Map<String, Map<String, JSONArray>> mdmsResponse =
                 mdmsUtil.fetchMdmsData(RequestInfo.builder().build(), tenantId, serviceConstants.COMMON_MASTERS_MASTER, Collections.singletonList(serviceConstants.COURT_ROOMS));
         return findCourtNameFromMdmsData(mdmsResponse, courtId);

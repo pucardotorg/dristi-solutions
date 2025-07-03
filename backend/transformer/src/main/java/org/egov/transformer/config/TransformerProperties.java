@@ -103,4 +103,11 @@ public class TransformerProperties {
     @Value("${egov.advocate.path}")
     private String advocatePath;
 
+    // inbox config
+    @Value("${egov.inbox.host}")
+    private String inboxHost;
+
+    @Value("${egov.inbox.search.endpoint}")
+    private String indexSearchEndPoint;
+
 }

@@ -13,9 +13,11 @@ import org.egov.transformer.models.HearingRequest;
 import org.egov.transformer.models.HearingResponse;
 import org.egov.transformer.models.OpenHearing;
 import org.egov.transformer.models.Party;
+import org.egov.transformer.models.inbox.InboxRequest;
 import org.egov.transformer.producer.TransformerProducer;
 import org.egov.transformer.repository.ServiceRequestRepository;
 import org.egov.transformer.util.AdvocateUtil;
+import org.egov.transformer.util.InboxUtil;
 import org.egov.transformer.util.JsonUtil;
 import org.egov.transformer.util.MdmsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,9 +45,10 @@ public class HearingService {
     private final ServiceRequestRepository serviceRequestRepository;
     private final ObjectMapper objectMapper;
     private final AdvocateUtil advocateUtil;
+    private final InboxUtil inboxUtil;
 
     @Autowired
-    public HearingService(TransformerProducer producer, CaseService caseService, TransformerProperties properties, JsonUtil jsonUtil, MdmsUtil mdmsUtil, org.egov.transformer.repository.ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, AdvocateUtil advocateUtil) {
+    public HearingService(TransformerProducer producer, CaseService caseService, TransformerProperties properties, JsonUtil jsonUtil, MdmsUtil mdmsUtil, org.egov.transformer.repository.ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, AdvocateUtil advocateUtil, InboxUtil inboxUtil) {
         this.producer = producer;
         this.caseService = caseService;
         this.properties = properties;
@@ -54,6 +57,7 @@ public class HearingService {
         this.serviceRequestRepository = serviceRequestRepository;
         this.objectMapper = objectMapper;
         this.advocateUtil = advocateUtil;
+        this.inboxUtil = inboxUtil;
     }
 
     public void addCaseDetailsToHearing(Hearing hearing, String topic) throws IOException {
@@ -106,6 +110,14 @@ public class HearingService {
         openHearing.setHearingType(hearing.getHearingType());
         openHearing.setSearchableFields(getSearchableFields(advocate, hearing, courtCase));
         openHearing.setHearingDurationInMillis(hearing.getHearingDurationInMillis());
+
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtCase.getCourtId(), hearing.getId().toString() );
+        List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(inboxRequest);
+        if(openHearingList != null && !openHearingList.isEmpty()) {
+            if(openHearingList.get(0).getSerialNumber() > 0) {
+                openHearing.setSerialNumber(openHearingList.get(0).getSerialNumber());
+            }
+        }
 
         enrichOrderFields(requestInfo,openHearing);
 
