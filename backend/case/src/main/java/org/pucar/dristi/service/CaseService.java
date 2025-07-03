@@ -448,11 +448,14 @@ public class CaseService {
             }
 
             boolean isAccessCodeGenerated = false;
-            if (PENDING_RESPONSE.equals(caseRequest.getCases().getStatus())) {
+            if(PENDING_REGISTRATION.equals(caseRequest.getCases().getStatus()) || PENDING_RESPONSE.equals(caseRequest.getCases().getStatus())) {
                 if (caseRequest.getCases().getAccessCode() == null) {
                     isAccessCodeGenerated = true;
                 }
                 enrichmentUtil.enrichAccessCode(caseRequest);
+            }
+
+            if (PENDING_RESPONSE.equals(caseRequest.getCases().getStatus())) {
                 enrichmentUtil.enrichCNRNumber(caseRequest);
                 enrichmentUtil.enrichCMPNumber(caseRequest);
                 enrichmentUtil.enrichRegistrationDate(caseRequest);
