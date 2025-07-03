@@ -317,23 +317,57 @@
         },
         {
           "sla": null,
-          "state": "PENDING_ADMISSION_HEARING",
+          "state": "PENDING_ADMISSION_HEARING",           // Orphaned stage
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": false,
           "isTerminateState": false,
           "isStateUpdatable": true,
-          "actions": null                   // INACTIVATE the actions from Db
+          "actions": [
+            {
+              "action": "SCHEDULE_ADMISSION_HEARING",
+              "nextState": "078b1d01-8a1d-432f-8135-2d2dce5749b3",
+              "roles": [
+                "CASE_APPROVER"
+              ],
+              "active": true
+            },
+            {
+              "action": "ISSUE_ORDER",
+              "nextState": "4db468d5-7c8a-4c7c-a0a2-7b75d1181f2b",
+              "roles": [
+                "CASE_APPROVER"
+              ],
+              "active": true
+            }
+          ]
         },
         {
           "sla": null,
-          "state": "PENDING_NOTICE",
+          "state": "PENDING_NOTICE",                     // Orphaned stage
           "applicationStatus": "INWORKFLOW",
           "docUploadRequired": false,
           "isStartState": false,
           "isTerminateState": false,
           "isStateUpdatable": true,
-          "actions": null                   // INACTIVATE the actions from Db
+          "actions": [
+            {
+              "action": "ISSUE_ORDER",
+              "nextState": "4db468d5-7c8a-4c7c-a0a2-7b75d1181f2b",
+              "roles": [
+                "CASE_APPROVER"
+              ],
+              "active": true
+            },
+            {
+              "action": "REJECT",
+              "nextState": "154246eb-3030-44d8-9210-83ad7197ddbd",
+              "roles": [
+                "CASE_APPROVER"
+              ],
+              "active": true
+            }
+          ]
         },
         {
           "sla": null,
