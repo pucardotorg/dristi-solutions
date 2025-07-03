@@ -145,6 +145,7 @@ public class CauseListService {
 
             List<CauseList> causeList  = getCauseListFromHearings(openHearings);
             enrichCauseList(causeList);
+            setHearingTime(causeList);
 
             generateCauseListFromHearings(causeList);
             ByteArrayResource byteArrayResource = generateCauseListPdf(causeList);
@@ -219,14 +220,10 @@ public class CauseListService {
         }
         return caseTypeList;
     }
-    private Map<String, Integer> getHearingTypeMap(List<CauseList> causeLists) {
+    private void setHearingTime(List<CauseList> causeLists) {
         log.info("operation = getHearingTypePriority, result = IN_PROGRESS");
-        Map<String, Integer> hearingTypePrioriyMap = new HashMap<>();
         try {
             List<MdmsHearing> mdmsHearings = getHearingDataFromMdms();
-            for (MdmsHearing mdmsHearing : mdmsHearings) {
-                hearingTypePrioriyMap.put(mdmsHearing.getHearingType(), mdmsHearing.getPriority());
-            }
 
             for(CauseList cause: causeLists){
                 Optional<MdmsHearing> optionalHearing = mdmsHearings.stream().filter(a -> a.getHearingType()
@@ -241,7 +238,6 @@ public class CauseListService {
         } catch (Exception e) {
             log.error("operation = getHearingTypePriority, result = FAILURE, error = {}", e.getMessage(), e);
         }
-        return hearingTypePrioriyMap;
     }
 
     private List<MdmsHearing> getHearingDataFromMdms() {
