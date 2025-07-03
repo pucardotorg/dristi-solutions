@@ -70,7 +70,7 @@ public class CauseListService {
                             MdmsUtil mdmsUtil, ServiceConstants serviceConstants, HearingUtil hearingUtil,
                             CaseUtil caseUtil, DateUtil dateUtil, ObjectMapper objectMapper, ApplicationUtil applicationUtil,
                             FileStoreUtil fileStoreUtil, UserService userService, IndividualService individualService, SmsNotificationService notificationService,
-                            CauseListEmailService causeListEmailService) {
+                            CauseListEmailService causeListEmailService, InboxUtil inboxUtil, EsUtil esUtil) {
         this.hearingRepository = hearingRepository;
         this.causeListRepository = causeListRepository;
         this.producer = producer;
@@ -88,6 +88,8 @@ public class CauseListService {
         this.individualService = individualService;
         this.notificationService = notificationService;
         this.causeListEmailService = causeListEmailService;
+        this.inboxUtil = inboxUtil;
+        this.esUtil = esUtil;
     }
 
     public void updateCauseListForTomorrow() {
