@@ -185,4 +185,32 @@ public class CaseUtil {
         log.info("operation = getLitigantsFromRepresentatives, result = SUCCESS");
         return litigants;
     }
+
+    public Integer getCaseCount(SearchCaseRequest searchCaseRequest) {
+        try {
+            log.info("operation = getCaseCount, result = IN_PROGRESS");
+
+            StringBuilder url = new StringBuilder(config.getCaseUrl() + config.getCaseCountEndpoint());
+
+            Object response = requestRepository.postMethod(url, searchCaseRequest);
+
+            if (response != null) {
+                try {
+                    // If response is a String containing the number, parse it
+                    Integer caseCount = Integer.valueOf(response.toString());
+                    log.info("operation = getCases, result = SUCCESS, caseCount = {}", caseCount);
+                    return caseCount;
+                } catch (NumberFormatException e) {
+                    log.error("operation = getCaseCount, result = FAILURE, reason = Unable to parse response to integer", e);
+                }
+            } else {
+                log.warn("operation = getCaseCount, result = FAILURE, reason = Null response");
+            }
+            return 0;
+        } catch (Exception e) {
+            log.error("operation = getCaseCount, result = FAILURE", e);
+            return null;
+        }
+    }
+
 }

@@ -267,4 +267,10 @@ public class CaseApiController {
         Map<String,AtomicBoolean> response = caseService.enrichAccessCode(body);
         return new ResponseEntity<>(response,HttpStatus.OK);
     }
+
+    @PostMapping(value = "/v1/_count")
+    public ResponseEntity<Integer> getCaseCount(@Parameter(in = ParameterIn.DEFAULT, description = "Search criteria + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseSearchRequest body) {
+        Integer count = caseService.getCaseCount(body);
+        return new ResponseEntity<>(count,HttpStatus.OK);
+    }
 }
