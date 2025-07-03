@@ -358,16 +358,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   }, [setShowJoinCase]);
 
   const onSelect = (option) => {
-    if (
-      [
-        "PENDING_RESPONSE",
-        "PENDING_ADMISSION_HEARING",
-        "ADMISSION_HEARING_SCHEDULED",
-        "PENDING_NOTICE",
-        "CASE_ADMITTED",
-        "PENDING_ADMISSION",
-      ].includes(option?.status)
-    ) {
+    if (["PENDING_RESPONSE", "ADMISSION_HEARING_SCHEDULED", "CASE_ADMITTED", "PENDING_ADMISSION"].includes(option?.status)) {
       setIsDisabled(false);
       setCaseDetails(option);
 

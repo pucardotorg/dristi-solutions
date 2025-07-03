@@ -379,9 +379,9 @@ const AdmittedCaseV2 = () => {
     [nextActions]
   );
 
-  const isPendingNoticeStatus = useMemo(() => {
-    return [CaseWorkflowState.PENDING_NOTICE].includes(caseDetails?.status) && primaryAction?.action === "ISSUE_ORDER";
-  }, [caseDetails?.status, primaryAction?.action]);
+  // const isPendingNoticeStatus = useMemo(() => {
+  //   return [CaseWorkflowState.PENDING_NOTICE].includes(caseDetails?.status) && primaryAction?.action === "ISSUE_ORDER";
+  // }, [caseDetails?.status, primaryAction?.action]);
 
   const isDelayCondonationApplicable = useMemo(() => {
     if (!caseDetails?.cnrNumber) return undefined;
