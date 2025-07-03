@@ -34,6 +34,7 @@ public class ServiceConstants {
    public static final String COMMON_MASTERS_MASTER = "common-masters";
    public static final String COURT_ROOMS = "Court_Rooms";
    public static final String HEARING_COMPLETED_STATUS = "COMPLETED";
+   public static final String HEARING_SCHEDULED_STATUS = "SCHEDULED";
 
    public static final String INTERNALMICROSERVICEROLE_NAME = "Internal Microservice Role";
 
