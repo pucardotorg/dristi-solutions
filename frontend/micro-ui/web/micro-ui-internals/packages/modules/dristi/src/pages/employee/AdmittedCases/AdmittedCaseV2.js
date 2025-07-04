@@ -225,6 +225,8 @@ const AdmittedCaseV2 = () => {
   const [showPaymentDemandModal, setShowPaymentDemandModal] = useState(false);
   const [showPaymentConfirmationModal, setShowPaymentConfirmationModal] = useState(false);
   const [showAllStagesModal, setShowAllStagesModal] = useState(false);
+  const [showBailBondModal, setShowBailBondModal] = useState(false);
+  const [isBailBondTaskExists, setIsBailBondTaskExists] = useState(false);
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
@@ -2368,7 +2370,7 @@ const AdmittedCaseV2 = () => {
     const caseId = caseDetails?.id;
     const caseStatus = caseDetails?.status;
 
-    if (["PENDING_PAYMENT", "UNDER_SCRUTINY", "PENDING_REGISTRATION"].includes(caseStatus)) {
+    if (["PENDING_PAYMENT", "RE_PENDING_PAYMENT", "UNDER_SCRUTINY", "PENDING_REGISTRATION"].includes(caseStatus)) {
       const fileStoreId =
         caseDetails?.documents?.find((doc) => doc?.key === "case.complaint.signed")?.fileStore || caseDetails?.additionalDetails?.signedCaseDocument;
       if (fileStoreId) {
@@ -2521,6 +2523,8 @@ const AdmittedCaseV2 = () => {
         setShowPaymentDemandModal(true);
       } else if (option.value === "SHOW_TIMELINE") {
         setShowAllStagesModal(true);
+      } else if (option.value === "CREATE_BAIL_BOND") {
+        setShowBailBondModal(true);
       }
     },
     [
@@ -2832,7 +2836,12 @@ const AdmittedCaseV2 = () => {
                 label: "GENERATE_PAYMENT_DEMAND",
               },
             ]
-          : []),
+          : [
+              {
+                value: "CREATE_BAIL_BOND",
+                label: "CREATE_BAIL_BOND",
+              },
+            ]),
         {
           value: "DOWNLOAD_CASE_FILE",
           label: "DOWNLOAD_CASE_FILE",
@@ -2883,6 +2892,10 @@ const AdmittedCaseV2 = () => {
               value: "SHOW_TIMELINE",
               label: "SHOW_TIMELINE",
             },
+            {
+              value: "CREATE_BAIL_BOND",
+              label: "CREATE_BAIL_BOND",
+            },
           ];
     } else if (isTypist) {
       return currentInProgressHearing
@@ -2924,6 +2937,10 @@ const AdmittedCaseV2 = () => {
             {
               value: "SHOW_TIMELINE",
               label: "SHOW_TIMELINE",
+            },
+            {
+              value: "CREATE_BAIL_BOND",
+              label: "CREATE_BAIL_BOND",
             },
           ];
     }
@@ -3767,6 +3784,8 @@ const AdmittedCaseV2 = () => {
           caseDetails={caseDetails}
           currentHearingId={currentInProgressHearingId}
           setUpdateCounter={setUpdateCounter}
+          isBailBondTaskExists={isBailBondTaskExists}
+          setIsBailBondTaskExists={setIsBailBondTaskExists}
         />
       )}
       {showWitnessModal && (
@@ -3825,6 +3844,34 @@ const AdmittedCaseV2 = () => {
           {caseTimeLine}
         </Modal>
       )}
+      {showBailBondModal &&
+        (!isBailBondTaskExists ? (
+          <Modal
+            headerBarEnd={<CloseBtn onClick={() => setShowBailBondModal(false)} />}
+            actionSaveLabel={t("Confirm")}
+            actionSaveOnSubmit={onSubmit}
+            actionCancelLabel={t("Cancel")}
+            actionCancelOnSubmit={() => setShowBailBondModal(false)}
+            formId="modal-action"
+            headerBarMain={<Heading label={t("Confirm Bail Bond")} />}
+            className="upload-signature-modal"
+            submitTextClassName="upload-signature-button"
+          >
+            <div style={{ margin: "16px 16px" }}>{t("This will create a task to confirm that the bail bond has been submitted")}</div>
+          </Modal>
+        ) : (
+          <Modal
+            headerBarEnd={<CloseBtn onClick={() => setShowBailBondModal(false)} />}
+            actionSaveLabel={t("close")}
+            actionSaveOnSubmit={() => setShowBailBondModal(false)}
+            formId="modal-action"
+            headerBarMain={<Heading label={t("Task Already Exists")} />}
+            className="upload-signature-modal"
+            submitTextClassName="upload-signature-button"
+          >
+            <div style={{ margin: "16px 16px" }}>{t("A pending task to Confirm Bond Submission is already present for this case")}</div>
+          </Modal>
+        ))}
     </div>
   );
 };

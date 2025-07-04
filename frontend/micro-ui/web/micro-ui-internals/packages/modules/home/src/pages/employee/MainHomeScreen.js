@@ -2,14 +2,13 @@ import React, { useMemo, useState, useEffect } from "react";
 import HomeHeader from "../../components/HomeHeader";
 import { useTranslation } from "react-i18next";
 import HomeSidebar from "../../components/HomeSidebar";
-import { InboxSearchComposer } from "@egovernments/digit-ui-react-components";
 import HomeHearingsTab from "./HomeHearingsTab";
 import { pendingTaskConfig } from "../../configs/PendingTaskConfig";
 import { HomeService } from "../../hooks/services";
-import { Loader } from "@egovernments/digit-ui-react-components";
 import { useHistory } from "react-router-dom";
-import { Toast } from "@egovernments/digit-ui-react-components";
+import { Loader, Toast, InboxSearchComposer, CloseSvg } from "@egovernments/digit-ui-react-components";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
+import BulkBailBondSignView from "./BulkBailBondSignView";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -17,6 +16,28 @@ const sectionsParentStyle = {
   flexDirection: "column",
   gridTemplateColumns: "20% 1fr",
   gap: "1rem",
+};
+
+const CloseBtn = (props) => {
+  return (
+    <div
+      onClick={props?.onClick}
+      style={{
+        height: "100%",
+        display: "flex",
+        alignItems: "center",
+        paddingRight: "20px",
+        cursor: "pointer",
+        ...(props?.backgroundColor && { backgroundColor: props.backgroundColor }),
+      }}
+    >
+      <CloseSvg />
+    </div>
+  );
+};
+
+const Heading = (props) => {
+  return <h1 className="heading-m">{props.label}</h1>;
 };
 
 const MainHomeScreen = () => {
@@ -37,8 +58,11 @@ const MainHomeScreen = () => {
   const [loader, setLoader] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false, currentHearing: {} });
   const [toastMsg, setToastMsg] = useState(null);
+  const [showBailModal, setShowBailModal] = useState(true);
+  const [showBailConfirmationModal, setShowBailConfirmationModal] = useState(false);
 
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
 
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
@@ -240,6 +264,11 @@ const MainHomeScreen = () => {
             isOnlyCountRequired: true,
             actionCategory: "Register cases",
           },
+          // searchBailBond: {
+          //   date: null,
+          //   isOnlyCountRequired: true,
+          //   actionCategory: "Bail Bond",
+          // },
         },
       };
       let res = await HomeService.pendingTaskSearch(payload, { tenantId: tenantId });
@@ -277,7 +306,37 @@ const MainHomeScreen = () => {
     SCHEDULE_HEARING: {
       name: "Schedule Hearing",
     },
+    BAIL_BOND_STATUS: {
+      name: "Bail Bonds Status",
+    },
   };
+  const bailBonds = [
+    {
+      name: "Bail Bond 1",
+      advocate: "Diwakar on behalf of Aparna",
+      date: "23 Mar 2024",
+    },
+    {
+      name: "Bail Bond 2",
+      advocate: "Diwakar on behalf of Aparna",
+      date: "23 Feb 2024",
+    },
+    {
+      name: "Bail Bond 3",
+      advocate: "Sharma on behalf of Gupta",
+      date: "15 Jan 2024",
+    },
+    {
+      name: "Bail Bond 4",
+      advocate: "Reddy on behalf of Patel",
+      date: "10 Dec 2023",
+    },
+    {
+      name: "Bail Bond 5",
+      advocate: "Mehta on behalf of Sharma",
+      date: "05 Nov 2023",
+    },
+  ];
 
   useEffect(() => {
     let updatedConfig = structuredClone(pendingTaskConfig);
@@ -378,6 +437,10 @@ const MainHomeScreen = () => {
               showToast={showToast}
               hearingCount={hearingCount}
             />
+          </div>
+        ) : activeTab === "BULK_BAIL_BOND_SIGN" ? (
+          <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
+            <BulkBailBondSignView />
           </div>
         ) : (
           <div className="inbox-search-wrapper" style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>

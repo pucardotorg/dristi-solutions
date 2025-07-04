@@ -8,6 +8,7 @@ import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/Cust
 import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
 import { BulkCheckBox } from "@egovernments/digit-ui-module-dristi/src/components/BulkCheckbox";
+import { BailBondSignModal } from "../pages/employee/BailBondSignModal";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
@@ -594,6 +595,78 @@ export const UICustomizations = {
           },
         },
       ];
+    },
+  },
+
+  bulkBailBondSignConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const entityType = "Order"; // "BailBond";
+      const caseTitle = requestCriteria?.state?.searchForm?.caseTitle;
+      const status = requestCriteria?.state?.searchForm?.status;
+      const startOfTheDay = requestCriteria?.state?.searchForm?.startOfTheDay;
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+      const setBulkSignList = additionalDetails?.setBulkSignList;
+      const moduleSearchCriteria = {
+        entityType,
+        tenantId,
+        ...(caseTitle && { caseTitle }),
+        status: status?.type,
+        ...(startOfTheDay && {
+          startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
+          endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
+        }),
+        ...(courtId && { courtId }),
+      };
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            limit: requestCriteria?.state?.tableForm?.limit,
+            offset: requestCriteria?.state?.tableForm?.offset,
+            tenantId: tenantId,
+            moduleSearchCriteria: moduleSearchCriteria,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            const bailBondItems = data?.items?.map((item) => {
+              return {
+                ...item,
+                isSelected: true,
+              };
+            });
+            if (setBulkSignList) setBulkSignList(bailBondItems);
+            const updatedData = { ...data, items: bailBondItems };
+            console.log(updatedData, "updatedData");
+
+            debugger;
+
+            return {
+              ...data,
+              items: bailBondItems,
+            };
+          },
+        },
+      };
+    },
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "CASE_NAME_AND_NUMBER":
+          return <BailBondSignModal rowData={row} colData={column} value={value} />;
+        case "LITIGANT":
+          return value;
+        case "NUMBER":
+          return <span>{value || "0"}</span>;
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} />;
+        default:
+          return "";
+      }
     },
   },
 };

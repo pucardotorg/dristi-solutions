@@ -15,6 +15,7 @@ import { constructFullName } from "@egovernments/digit-ui-module-orders/src/util
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
 import { OrderWorkflowState } from "../Utils/orderWorkflow";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
+import BailBondModal from "../../../home/src/pages/employee/BailBondModal";
 
 const businessServiceMap = {
   "muster roll": "MR",
@@ -1908,10 +1909,10 @@ export const UICustomizations = {
                 }),
             },
             searchViewApplication: {
-              date: activeTab === "VIEW_APPLICATION" ? selectedDateInMs : currentDateInMs,
-              isOnlyCountRequired: activeTab === "VIEW_APPLICATION" ? false : true,
+              date: activeTab === "VIEW_APPLICATION" || activeTab === "BAIL_BOND_STATUS" ? selectedDateInMs : currentDateInMs,
+              isOnlyCountRequired: activeTab === "VIEW_APPLICATION" || activeTab === "BAIL_BOND_STATUS" ? false : true,
               actionCategory: "View Application",
-              ...(activeTab === "VIEW_APPLICATION" &&
+              ...((activeTab === "VIEW_APPLICATION" || activeTab === "BAIL_BOND_STATUS") &&
                 requestCriteria?.state?.searchForm?.caseSearchText && {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
@@ -1988,7 +1989,7 @@ export const UICustomizations = {
                 TotalCount: data?.reviewProcessData?.count,
                 data: data?.reviewProcessData?.data?.map((item) => processFields(item.fields)) || [],
               };
-            } else if (activeTab === "VIEW_APPLICATION") {
+            } else if (activeTab === "VIEW_APPLICATION" || activeTab === "BAIL_BOND_STATUS") {
               return {
                 TotalCount: data?.viewApplicationData?.count,
                 data: data?.viewApplicationData?.data?.map((item) => processFields(item.fields)),
@@ -2021,6 +2022,8 @@ export const UICustomizations = {
             >
               {value ? value : "-"}
             </Link>
+          ) : row?.tab === "BAIL_BOND_STATUS" ? (
+            <BailBondModal style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="SearchIndividualConfig" />
           ) : (
             <Link
               style={{ color: "black", textDecoration: "underline" }}
