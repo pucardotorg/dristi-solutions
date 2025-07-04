@@ -188,6 +188,9 @@ public class Configuration {
     @Value("${drishti.hearing.update.endpoint}")
     private String hearingsUpdateEndPoint;
 
+    @Value("${drishti.no.of.days.to.hearing.endpoint}")
+    private String daysToHearingEndPoint;
+
     @Value("${app.zone.id}")
     private String zoneId;
 

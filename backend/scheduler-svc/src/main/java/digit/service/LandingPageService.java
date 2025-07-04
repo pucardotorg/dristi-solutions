@@ -62,7 +62,7 @@ public class LandingPageService {
 
             Integer averageDaysToHearings = getAverageDaysToHearings();
 
-            updateMdmsDashboardMetrics(totalFiledCases, totalDisposedCases, daysToCaseRegistration);
+            updateMdmsDashboardMetrics(totalFiledCases, totalDisposedCases, daysToCaseRegistration, averageDaysToHearings);
 
             log.info("operation = updateDashboardMetrics, result = SUCCESS");
         } catch (Exception e) {
@@ -73,12 +73,18 @@ public class LandingPageService {
     private Integer getAverageDaysToHearings() {
         try {
             log.info("operation = getAverageDaysToHearings, result = IN_PROGRESS");
-            hearingUtil.callHearing();
+            List<Integer> averageDaysToHearings = hearingUtil.getNoOfDaysToHearing();
+            if (averageDaysToHearings != null && !averageDaysToHearings.isEmpty()) {
+                Integer median = calculateMedian(averageDaysToHearings);
+                log.info("operation = getAverageDaysToHearings, result = SUCCESS, median = {}", median);
+                return median;
+            }
             log.info("operation = getAverageDaysToHearings, result = SUCCESS");
         } catch (Exception e) {
             log.error("operation = getAverageDaysToHearings, result = FAILURE", e);
             return null;
         }
+        return null;
     }
 
     private Integer getDaysToCaseRegistration() {
@@ -187,7 +193,7 @@ public class LandingPageService {
     }
 
 
-    private void updateMdmsDashboardMetrics(Integer totalCases, Integer totalDisposedCases, Integer daysToCaseRegistration) {
+    private void updateMdmsDashboardMetrics(Integer totalCases, Integer totalDisposedCases, Integer daysToCaseRegistration, Integer averageDaysToHearings) {
 
         try {
             log.info("operation = updateMdmsDashboardMetrics, result = IN_PROGRESS");
@@ -213,6 +219,11 @@ public class LandingPageService {
 
                 if (daysToCaseRegistration != null) {
                     jsonMap.put("daysToCaseRegistration", daysToCaseRegistration);
+                    mdms.setData(objectMapper.convertValue(jsonMap, JsonNode.class));
+                }
+
+                if (averageDaysToHearings != null) {
+                    jsonMap.put("averageDaysToHearings", averageDaysToHearings);
                     mdms.setData(objectMapper.convertValue(jsonMap, JsonNode.class));
                 }
 

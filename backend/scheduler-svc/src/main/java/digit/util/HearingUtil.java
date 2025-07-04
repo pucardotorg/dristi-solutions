@@ -88,4 +88,20 @@ public class HearingUtil {
             log.error(SEARCHER_SERVICE_EXCEPTION, e);
         }
     }
+
+    public List<Integer> getNoOfDaysToHearing() {
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS,false);
+        StringBuilder uri = new StringBuilder(configuration.getHearingHost().concat(configuration.getDaysToHearingEndPoint()));
+        try {
+            Object response = serviceRequestRepository.postMethod(uri, HearingRequest.builder().build());
+            return objectMapper.readValue(response.toString(), new TypeReference<>() {
+            });
+        } catch (HttpClientErrorException e) {
+            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
+            throw new ServiceCallException(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error(SEARCHER_SERVICE_EXCEPTION, e);
+            return null;
+        }
+    }
 }
