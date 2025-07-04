@@ -10,6 +10,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.service.HearingService;
+import org.pucar.dristi.util.OrderUtil;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.MessageHeaders;
 import org.slf4j.Logger;
@@ -30,11 +31,14 @@ class HearingUpdateConsumerTest {
     private ObjectMapper objectMapper;
 
     @Mock
+    private OrderUtil orderUtil;
+
+    @Mock
     private Logger log;
 
     @BeforeEach
     void setup() {
-        hearingUpdateConsumer = new HearingUpdateConsumer(hearingService, objectMapper);
+        hearingUpdateConsumer = new HearingUpdateConsumer(hearingService, objectMapper, orderUtil);
     }
 
     @Test

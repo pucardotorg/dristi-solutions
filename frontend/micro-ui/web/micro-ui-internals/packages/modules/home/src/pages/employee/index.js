@@ -17,6 +17,7 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import ADiaryPage from "./ADiaryPage";
 import BulkESignView from "./BulkESignView";
 import MainHomeScreen from "./MainHomeScreen";
+import GeneratePaymentDemandBreakdown from "../../components/GeneratePaymentDemandBreakdown";
 const bredCrumbStyle = { maxWidth: "min-content" };
 
 const ProjectBreadCrumb = ({ location }) => {
@@ -81,6 +82,11 @@ const App = ({ path, stateCode, userType, tenants }) => {
           exact
           path={`${path}/home-pending-task/e-filing-payment-breakdown`}
           component={() => <EfilingPaymentBreakdown></EfilingPaymentBreakdown>}
+        />
+        <PrivateRoute
+          exact
+          path={`${path}/home-pending-task/case-payment-demand-breakdown`}
+          component={() => <GeneratePaymentDemandBreakdown></GeneratePaymentDemandBreakdown>}
         />
         <PrivateRoute
           exact

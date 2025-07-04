@@ -113,4 +113,32 @@ public class Configuration {
 
     @Value("${judge.name}")
     private String judgeName;
+
+    // inbox config
+    @Value("${egov.inbox.host}")
+    private String inboxHost;
+
+    @Value("${egov.inbox.search.endpoint}")
+    private String indexSearchEndPoint;
+
+
+    // Advocate Config
+    @Value("${egov.advocate.host}")
+    private String advocateHost;
+
+    @Value("${egov.advocate.path}")
+    private String advocatePath;
+
+    @Value("${egov.inbox.getfield.search.endpoint}")
+    private String indexGetFieldEndPoint;
+
+    //FileStore Service
+    @Value("${egov.filestore.host}")
+    private String fileStoreHost;
+
+    @Value("${egov.file.store.get.endpoint}")
+    private String fileStoreGetEndPoint;
+
+    @Value("${app.zone.id}")
+    private String zoneId;
 }

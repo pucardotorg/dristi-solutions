@@ -105,10 +105,13 @@ class PaymentServiceTest {
     void getTreasuryPaymentData_notFound() {
         String testBillId = "nonExistentBillId";
 
-        when(treasuryPaymentRepository.getTreasuryPaymentData(testBillId))
-                .thenReturn(Collections.emptyList());
+        when(treasuryPaymentRepository.getTreasuryPaymentData(testBillId)).thenReturn(Collections.emptyList());
 
-        assertThrows(CustomException.class, () -> paymentService.getTreasuryPaymentData(testBillId));
+        Document result = paymentService.getTreasuryPaymentData(testBillId);
+        assertNull(result, "Expected null when no payment data is found");
+
+        verify(treasuryPaymentRepository, times(1)).getTreasuryPaymentData(testBillId);
+
     }
 
     @Test

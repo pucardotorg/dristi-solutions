@@ -1,5 +1,6 @@
 package org.egov.transformer.consumer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -53,21 +54,34 @@ public class CaseConsumer {
         this.userService = userService;
     }
 
+    public CaseRequest deserializeConsumerRecordIntoCaseRequest(ConsumerRecord<String, Object> payload){
+        try {
+            CaseRequest caseRequest = (objectMapper.readValue((String) payload.value(), new TypeReference<>() {
+            }));
+            return caseRequest;
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to parse CaseRequest from payload: {}", payload.value(), e);
+        }
+
+        return null;
+    }
+
     @KafkaListener(topics = {"${transformer.consumer.create.case.topic}"})
     public void saveCase(ConsumerRecord<String, Object> payload,
                          @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         publishCase(payload, transformerProperties.getSaveCaseTopic());
+        CaseRequest caseRequest = deserializeConsumerRecordIntoCaseRequest(payload);
+        publishCaseSearchFromCaseRequest(caseRequest);
     }
 
     @KafkaListener(topics = {"${transformer.consumer.update.case.topic}"})
     public void updateCase(ConsumerRecord<String, Object> payload,
                            @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         publishCase(payload, transformerProperties.getUpdateCaseTopic());
-
+        CaseRequest caseRequest = deserializeConsumerRecordIntoCaseRequest(payload);
         try {
             logger.info("Checking case status for enriching courtId");
-            CourtCase courtCase = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseRequest>() {
-            })).getCases();
+            CourtCase courtCase = caseRequest.getCases();
             logger.info("Current case status ::{}",courtCase.getStatus());
 
             if ("PENDING_REGISTRATION".equalsIgnoreCase(courtCase.getStatus())) {
@@ -76,12 +90,15 @@ public class CaseConsumer {
         } catch (Exception exception) {
             log.error("error in saving case", exception);
         }
+        publishCaseSearchFromCaseRequest(caseRequest);
     }
 
     @KafkaListener(topics = {"${transformer.consumer.case.status.update.topic}"})
     public void updateCaseStatus(ConsumerRecord<String, Object> payload,
                            @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         publishCase(payload, transformerProperties.getUpdateCaseTopic());
+        CaseRequest caseRequest = deserializeConsumerRecordIntoCaseRequest(payload);
+        publishCaseSearchFromCaseRequest(caseRequest);
     }
 
     @KafkaListener(topics = {"${transformer.consumer.join.case.kafka.topic}"})
@@ -105,6 +122,18 @@ public class CaseConsumer {
     public void updateCaseOutcome(ConsumerRecord<String, Object> payload,
                                   @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         fetchAndPublishCaseForOutcome(payload, transformerProperties.getUpdateCaseTopic());
+
+        try {
+            Outcome outcome = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseOutcome>() {
+            })).getOutcome();
+            CourtCase courtCase = caseService.fetchCase(outcome.getFilingNumber());
+            CaseRequest caseRequest = new CaseRequest();
+            caseRequest.setCases(courtCase);
+            publishCaseSearchFromCaseRequest(caseRequest);
+            pushToLegacyTopic(courtCase);
+        } catch (Exception exception) {
+            log.error("Error updating case outcome for payload: {}", payload.value(), exception);
+        }
     }
 
     private void publishCase(ConsumerRecord<String, Object> payload,
@@ -215,12 +244,85 @@ public class CaseConsumer {
         producer.push("case-legacy-topic", caseResponse);
     }
 
+    @KafkaListener(topics = {"${case.kafka.edit.topic}"})
+    public void consumeCaseRequest(ConsumerRecord<String, Object> payload,
+                                   @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        CaseRequest caseRequest = deserializeConsumerRecordIntoCaseRequest(payload);
+        publishCaseSearchFromCaseRequest(caseRequest);
+    }
+
+
+    @KafkaListener(topics = {"${egov.update.additional.join.case.kafka.topic}"})
+    public void consumeCourtCase(ConsumerRecord<String, Object> payload,
+                                 @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        publishCaseSearchFromCourtCase(payload, transformerProperties.getCaseSearchTopic());
+    }
+
+    @KafkaListener(topics = {"${egov.litigant.join.case.kafka.topic}",
+            "${egov.representative.join.case.kafka.topic}",
+            "${egov.update.representative.join.case.kafka.topic}"})
+    public void consumeJoinCaseRequest(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        try {
+            JoinCaseRequest joinCaseRequest = objectMapper.readValue((String) payload.value(), new TypeReference<>() {});
+            CourtCase courtCase = caseService.getCase(joinCaseRequest.getCaseFilingNumber(), joinCaseRequest.getRepresentative().getTenantId(), joinCaseRequest.getRequestInfo());
+            CaseSearch caseSearch = caseService.getCaseSearchFromCourtCase(courtCase);
+            caseService.publishToCaseSearchIndexer(caseSearch);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to process JoinCaseRequest from payload: {}", payload.value(), e);
+        }
+    }
+
+    @KafkaListener(topics = {"${egov.additional.join.case.kafka.topic}"})
+    public void consumeAddWitnessRequest(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        try {
+            AddWitnessRequest addWitnessRequest = objectMapper.readValue((String) payload.value(), new TypeReference<>() {});
+            // how to get tenantId
+            CourtCase courtCase = caseService.getCase(addWitnessRequest.getCaseFilingNumber(), null, addWitnessRequest.getRequestInfo());
+            CaseSearch caseSearch = caseService.getCaseSearchFromCourtCase(courtCase);
+            caseService.publishToCaseSearchIndexer(caseSearch);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to process AddWitnessRequest from payload: {}", payload.value(), e);
+        }
+    }
+
     private RequestInfo createInternalRequestInfo() {
         User userInfo = new User();
         userInfo.setUuid(userService.internalMicroserviceRoleUuid);
         userInfo.setRoles(userService.internalMicroserviceRoles);
         userInfo.setTenantId(transformerProperties.getEgovStateTenantId());
         return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
+    }
+
+    @KafkaListener(topics = {"${transformer.consumer.case.overall.status.topic}"})
+    public void consumeCaseStageSubstage(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        try {
+            CaseStageSubStage caseStageSubStage = objectMapper.readValue((String) payload.value(), new TypeReference<>() {});
+            CourtCase courtCase = caseService.getCase(caseStageSubStage.getCaseOverallStatus().getFilingNumber(),
+                    caseStageSubStage.getCaseOverallStatus().getTenantId(), caseStageSubStage.getRequestInfo());
+            CaseSearch caseSearch = caseService.getCaseSearchFromCourtCase(courtCase);
+            caseService.publishToCaseSearchIndexer(caseSearch);
+        } catch (JsonProcessingException e) {
+            log.error("Failed to process CaseStageSubStage from payload: {}", payload.value(), e);
+        }
+    }
+
+
+    public void publishCaseSearchFromCaseRequest(CaseRequest caseRequest){
+        CourtCase courtCase = caseRequest.getCases();
+        CaseSearch caseSearch = caseService.getCaseSearchFromCourtCase(courtCase);
+        caseService.publishToCaseSearchIndexer(caseSearch);
+    }
+
+    public void publishCaseSearchFromCourtCase(ConsumerRecord<String, Object> payload,
+                                               @Header(KafkaHeaders.RECEIVED_TOPIC) String topic){
+        try{
+            CourtCase courtCase = objectMapper.readValue((String) payload.value(), new TypeReference<>() {});
+            CaseSearch caseSearch = caseService.getCaseSearchFromCourtCase(courtCase);
+            caseService.publishToCaseSearchIndexer(caseSearch);
+        }
+        catch (JsonProcessingException e){
+            log.error("Failed to process CourtCase from payload: {}", payload.value(), e);
+        }
     }
 
     private CaseSearchRequest createCaseSearchRequest(String filingNumber, String tenantId, RequestInfo requestInfo) {

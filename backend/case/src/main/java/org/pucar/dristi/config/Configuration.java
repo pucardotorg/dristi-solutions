@@ -176,6 +176,9 @@ public class Configuration {
 	@Value("${etreasury.payment.receipt.endpoint}")
 	private String treasuryPaymentReceiptEndPoint;
 
+	@Value("${etreasury.head.breakup.calculation.endpoint}")
+	private String etreasuryCalculationEndPoint;
+
 	//Join a Case
 	@Value("${egov.litigant.join.case.kafka.topic}")
 	private String litigantJoinCaseTopic;
@@ -368,6 +371,9 @@ public class Configuration {
 
 	@Value("${egov.payment.calculator.endpoint}")
 	private String paymentCalculatorEndpoint;
+
+	@Value("${egov.case.filing.payment.calculator.endpoint}")
+	private String caseFilingPaymentCalculatorEndpoint;
 
 	@Value("${egov.task.service.host}")
 	private String taskServiceHost;

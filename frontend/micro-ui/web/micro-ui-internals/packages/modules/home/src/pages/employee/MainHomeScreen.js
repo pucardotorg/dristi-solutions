@@ -280,7 +280,7 @@ const MainHomeScreen = () => {
   };
 
   useEffect(() => {
-    let updatedConfig = { ...pendingTaskConfig };
+    let updatedConfig = structuredClone(pendingTaskConfig);
 
     if (activeTab === "REGISTRATION") {
       updatedConfig.sections.search.uiConfig.fields = [
@@ -300,8 +300,6 @@ const MainHomeScreen = () => {
           },
         },
       ];
-    } else {
-      updatedConfig.sections.search.uiConfig.fields = structuredClone(pendingTaskConfig?.sections?.search?.uiConfig?.fields);
     }
     updatedConfig = {
       ...updatedConfig,

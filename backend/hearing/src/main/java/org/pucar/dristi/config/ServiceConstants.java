@@ -115,7 +115,8 @@ public class ServiceConstants {
             + "\"hearingType\": \"%s\","
             + "\"caseFilingDate\": %d,"
             + "\"statusOrder\": %d,"
-            + "\"hearingTypeOrder\": %d"
+            + "\"hearingTypeOrder\": %d,"
+            + "\"serialNumber\": %d"
             + "}"
             + "}"
             + "}\n";
@@ -141,5 +142,24 @@ public class ServiceConstants {
     // generic message code for all hearing types
     public static final String VARIABLE_HEARING_SCHEDULED = "VARIABLE_HEARING_SCHEDULED";
 
+    public static final String ERROR_WHILE_FETCHING_FROM_ORDER = "ERROR_WHILE_FETCHING_FROM_ORDER";
+
+    public static final String PUBLISHED = "PUBLISHED";
+
+    public static final String NOTICE = "NOTICE";
+
+    public static final String SUMMONS = "SUMMONS";
+
+    public static final String PENDING_PAYMENT = "PENDING_PAYMENT";
+
+    public static final String EXPIRE = "EXPIRE";
+
+    public static final String ABANDONED = "ABANDONED";
+
+    public static final String PAYMENTTYPE = "paymentType";
+
+    public static final String SUMMON = "SUMMONS";
+
+    public static final String MANUAL = "MANUAL_";
 
 }

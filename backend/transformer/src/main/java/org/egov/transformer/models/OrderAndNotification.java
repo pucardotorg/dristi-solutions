@@ -49,6 +49,9 @@ public class OrderAndNotification {
     @JsonProperty("courtId")
     private String courtId;
 
+    @JsonProperty("businessOfTheDay")
+    private String businessOfTheDay;
+
     @JsonProperty("judgeIds")
     private List<String> judgeIds;
 

@@ -19,6 +19,7 @@ export const UICustomizations = {
   PreHearingsConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const courtId = requestCriteria?.body?.courtId;
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
       const updatedCriteria = {
         processSearchCriteria: {
           businessService: ["hearing-default"],
@@ -30,6 +31,7 @@ export const UICustomizations = {
           toDate: requestCriteria?.params.toDate,
           tenantId: requestCriteria?.params?.tenantId,
           ...(courtId && { courtId }),
+          ...(userInfo?.type === "CITIZEN" && { searchableFields: additionalDetails?.attendeeIndividualId }),
         },
         tenantId: requestCriteria?.params?.tenantId,
         limit: requestCriteria?.state?.tableForm?.limit || 10,
