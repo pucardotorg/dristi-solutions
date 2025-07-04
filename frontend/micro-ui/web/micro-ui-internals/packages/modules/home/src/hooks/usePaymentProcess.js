@@ -70,7 +70,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
   };
 
   const handleButtonClick = async (url, data, header, billConsumerCode, billBusinessService, isMockEnabled, gateway) => {
-    if (isMockEnabled) {
+    if (isMockEnabled === "true") {
       const apiUrl = `${window.location.origin}/epayments`;
       let jsonData = JSON.parse(data);
       const currentTimestamp = new Date().toISOString().replace(/\.(\d{3})Z$/, "Z");
