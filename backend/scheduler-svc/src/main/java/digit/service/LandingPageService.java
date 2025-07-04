@@ -60,9 +60,9 @@ public class LandingPageService {
 
             Integer daysToCaseRegistration = getDaysToCaseRegistration();
 
-            Integer averageDaysToHearings = getAverageDaysToHearings();
+            Integer averageNumberOfDaysBetweenHearingsForCase = getAverageDaysToHearings();
 
-            updateMdmsDashboardMetrics(totalFiledCases, totalDisposedCases, daysToCaseRegistration, averageDaysToHearings);
+            updateMdmsDashboardMetrics(totalFiledCases, totalDisposedCases, daysToCaseRegistration, averageNumberOfDaysBetweenHearingsForCase);
 
             log.info("operation = updateDashboardMetrics, result = SUCCESS");
         } catch (Exception e) {
@@ -193,7 +193,7 @@ public class LandingPageService {
     }
 
 
-    private void updateMdmsDashboardMetrics(Integer totalCases, Integer totalDisposedCases, Integer daysToCaseRegistration, Integer averageDaysToHearings) {
+    private void updateMdmsDashboardMetrics(Integer totalCases, Integer totalDisposedCases, Integer daysToCaseRegistration, Integer averageNumberOfDaysBetweenHearingsForCase) {
 
         try {
             log.info("operation = updateMdmsDashboardMetrics, result = IN_PROGRESS");
@@ -208,22 +208,26 @@ public class LandingPageService {
                 Map<String, Object> jsonMap = objectMapper.convertValue(mdms.getData(), new TypeReference<>() {
                 });
                 if (totalCases != null) {
+                    log.info("numberOfCasesFiled = {}", totalCases);
                     jsonMap.put("numberOfCasesFiled", totalCases);
                     mdms.setData(objectMapper.convertValue(jsonMap, JsonNode.class));
                 }
 
                 if (totalDisposedCases != null) {
+                    log.info("numberOfCasesDisposed = {}", totalDisposedCases);
                     jsonMap.put("numberOfCasesDisposed", totalDisposedCases);
                     mdms.setData(objectMapper.convertValue(jsonMap, JsonNode.class));
                 }
 
                 if (daysToCaseRegistration != null) {
+                    log.info("daysToCaseRegistration = {}", daysToCaseRegistration);
                     jsonMap.put("daysToCaseRegistration", daysToCaseRegistration);
                     mdms.setData(objectMapper.convertValue(jsonMap, JsonNode.class));
                 }
 
-                if (averageDaysToHearings != null) {
-                    jsonMap.put("averageDaysToHearings", averageDaysToHearings);
+                if (averageNumberOfDaysBetweenHearingsForCase != null) {
+                    log.info("averageNumberOfDaysBetweenHearingsForCase = {}", averageNumberOfDaysBetweenHearingsForCase);
+                    jsonMap.put("averageNumberOfDaysBetweenHearingsForCase", averageNumberOfDaysBetweenHearingsForCase);
                     mdms.setData(objectMapper.convertValue(jsonMap, JsonNode.class));
                 }
 

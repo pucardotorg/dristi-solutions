@@ -155,9 +155,9 @@ public class HearingApiController {
 
     @RequestMapping(value = "/v1/getNoOfDaysToHearing", method = RequestMethod.POST)
     public ResponseEntity<List<Integer>> getNoOfDaysToHearing(@Parameter(in = ParameterIn.DEFAULT, description = "Request Info", required = true, schema = @Schema()) @Valid @RequestBody HearingRequest request) {
-        log.info("api=/v1/getHearings, result=IN_PROGRESS");
+        log.info("api=/v1/getNoOfDaysToHearing, result=IN_PROGRESS");
         List<Integer> noOfDaysToHearingOfEachCase = hearingService.getAvgNoOfDaysToHearingForEachCase();
-        log.info("api=/v1/getHearings, result=SUCCESS");
+        log.info("api=/v1/getNoOfDaysToHearing, result=SUCCESS");
         return ResponseEntity.ok(noOfDaysToHearingOfEachCase);
     }
 

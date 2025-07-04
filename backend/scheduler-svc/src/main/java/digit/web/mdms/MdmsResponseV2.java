@@ -21,5 +21,6 @@ public class MdmsResponseV2 {
     private ResponseInfo responseInfo = null;
 
     @JsonProperty("mdms")
+    @Valid
     private List<Mdms> mdms = null;
 }

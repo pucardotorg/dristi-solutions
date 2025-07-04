@@ -198,7 +198,7 @@ public class CaseUtil {
                 try {
                     // If response is a String containing the number, parse it
                     Integer caseCount = Integer.valueOf(response.toString());
-                    log.info("operation = getCases, result = SUCCESS, caseCount = {}", caseCount);
+                    log.info("operation = getCaseCount, result = SUCCESS, caseCount = {}", caseCount);
                     return caseCount;
                 } catch (NumberFormatException e) {
                     log.error("operation = getCaseCount, result = FAILURE, reason = Unable to parse response to integer", e);
@@ -206,7 +206,7 @@ public class CaseUtil {
             } else {
                 log.warn("operation = getCaseCount, result = FAILURE, reason = Null response");
             }
-            return 0;
+            return null;
         } catch (Exception e) {
             log.error("operation = getCaseCount, result = FAILURE", e);
             return null;
