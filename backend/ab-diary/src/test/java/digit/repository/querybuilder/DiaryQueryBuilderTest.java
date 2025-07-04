@@ -63,7 +63,7 @@ class DiaryQueryBuilderTest {
         searchCriteria.setTenantId("tenant-1");
         searchCriteria.setDate(1627987200000L);
         searchCriteria.setCaseId("CASE123");
-        searchCriteria.setCourtId("JUDGE123");
+        searchCriteria.setCourtId("COURT123");
         searchCriteria.setDiaryType("TYPE1");
 
         String query = queryBuilder.getCaseDiaryQuery(searchCriteria, preparedStatementValues, preparedStatementTypeValues);

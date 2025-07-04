@@ -15,7 +15,7 @@ import lombok.Data;
 import lombok.Builder;
 
 /**
- * individual diary line item i.e. business of the day. A set of these are picked up to create the final A or B diary. If items are picked up using tenant, courtId and date, then it forms A diary. If they are picked up using tenant, JudgeId and caseId, then it forms B diary
+ * individual diary line item i.e. business of the day. A set of these are picked up to create the final A or B diary. If items are picked up using tenant, courtId and date, then it forms A diary. If they are picked up using tenant, courtId and caseId, then it forms B diary
  */
 @Schema(description = "individual diary line item i.e. business of the day. A set of these are picked up to create the final A or B diary. If items are picked up using tenant, courtId and date, then it forms A diary. If they are picked up using tenant, courtId and caseId, then it forms B diary")
 @Validated

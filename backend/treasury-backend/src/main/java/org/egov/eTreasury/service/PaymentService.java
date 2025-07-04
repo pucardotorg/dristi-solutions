@@ -11,6 +11,7 @@ import org.egov.eTreasury.config.PaymentConfiguration;
 import org.egov.eTreasury.enrichment.TreasuryEnrichment;
 import org.egov.eTreasury.kafka.Producer;
 import org.egov.eTreasury.model.demand.*;
+import org.egov.eTreasury.repository.TreasuryMappingRepository;
 import org.egov.eTreasury.repository.TreasuryPaymentRepository;
 import org.egov.eTreasury.util.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,6 +32,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
@@ -72,11 +74,13 @@ public class PaymentService {
 
     private final DemandUtil demandUtil;
 
+    private final TreasuryMappingRepository treasuryMappingRepository;
+
     @Autowired
     public PaymentService(PaymentConfiguration config, ETreasuryUtil treasuryUtil,
                           ObjectMapper objectMapper, EncryptionUtil encryptionUtil,
                           Producer producer, AuthSekRepository repository, CollectionsUtil collectionsUtil,
-                          FileStorageUtil fileStorageUtil, TreasuryPaymentRepository treasuryPaymentRepository, PdfServiceUtil pdfServiceUtil, TreasuryEnrichment treasuryEnrichment, MdmsUtil mdmsUtil, CaseUtil caseUtil, DemandUtil demandUtil) {
+                          FileStorageUtil fileStorageUtil, TreasuryPaymentRepository treasuryPaymentRepository, PdfServiceUtil pdfServiceUtil, TreasuryEnrichment treasuryEnrichment, MdmsUtil mdmsUtil, CaseUtil caseUtil, DemandUtil demandUtil, TreasuryMappingRepository treasuryMappingRepository) {
         this.config = config;
         this.treasuryUtil = treasuryUtil;
         this.objectMapper = objectMapper;
@@ -91,6 +95,7 @@ public class PaymentService {
         this.mdmsUtil = mdmsUtil;
         this.caseUtil = caseUtil;
         this.demandUtil = demandUtil;
+        this.treasuryMappingRepository = treasuryMappingRepository;
     }
 
     public ConnectionStatus verifyConnection() {
@@ -137,11 +142,19 @@ public class PaymentService {
 
     public Payload processPayment(ChallanData challanData, RequestInfo requestInfo) {
         try {
-            // Authenticate and get secret map
-            Map<String, String> secretMap = authenticate();
-
-            // Decrypt the SEK using the appKey
-            String decryptedSek = encryptionUtil.decryptAES(secretMap.get("sek"), secretMap.get("appKey"));
+            Map<String, String> secretMap;
+            String decryptedSek;
+            if(config.isMockEnabled() && challanData.isMockEnabled()){
+                //mocking the treasury for authentication
+                log.info("Treasury is in mock mode, using mock authentication.");
+                secretMap = mockAuthentication();
+                decryptedSek = secretMap.get("sek");
+            } else {
+                // Authenticate and get secret map
+                secretMap = authenticate();
+                // Decrypt the SEK using the appKey
+                decryptedSek = encryptionUtil.decryptAES(secretMap.get("sek"), secretMap.get("appKey"));
+            }
 
             // Prepare the request body
             ChallanDetails challanDetails  = treasuryEnrichment.generateChallanDetails(challanData, requestInfo);
@@ -149,7 +162,14 @@ public class PaymentService {
             AuthSek authSek = buildAuthSek(challanData, secretMap, decryptedSek, challanDetails.getDepartmentId());
             saveAuthTokenAndSek(requestInfo, authSek);
 
-            String postBody = generatePostBody(decryptedSek, objectMapper.writeValueAsString(challanDetails));
+            String postBody;
+            if(config.isMockEnabled() && challanData.isMockEnabled()) {
+                //mocking the treasury for challan generation
+                log.info("Treasury is in mock mode, generating post body without encryption.");
+                postBody = objectMapper.writeValueAsString(challanDetails);
+            } else {
+                postBody = generatePostBody(decryptedSek, objectMapper.writeValueAsString(challanDetails));
+            }
 
             // Prepare headers
             Headers headers = new Headers();
@@ -159,11 +179,29 @@ public class PaymentService {
 
             return Payload.builder()
                     .url(config.getChallanGenerateUrl())
-                    .data(postBody).headers(headersData).build();
+                    .data(postBody).headers(headersData).grn(treasuryEnrichment.enrichGrn(requestInfo)).build();
         } catch (Exception e) {
             log.error("Payment processing error: ", e);
             throw new CustomException(PAYMENT_PROCESSING_ERROR, "Error occurred during generation oF challan");
         }
+    }
+
+    private static Map<String, String> mockAuthentication() {
+        // Mock authentication for testing purposes
+        Map<String, String> secretMap;
+        secretMap = new HashMap<>();
+        SecureRandom random = new SecureRandom();
+        byte[] sekBytes = new byte[16];
+        random.nextBytes(sekBytes);
+        StringBuilder sekBuilder = new StringBuilder();
+        for (byte b : sekBytes) {
+            sekBuilder.append(String.format("%02x", b));
+        }
+        String sek = sekBuilder.toString();
+        String authToken = UUID.randomUUID().toString();
+        secretMap.put("sek", sek);
+        secretMap.put("authToken", authToken);
+        return secretMap;
     }
 
     private AuthSek buildAuthSek(ChallanData challanData, Map<String, String> secretMap, String decryptedSek, String departmentId) {
@@ -202,10 +240,17 @@ public class PaymentService {
             }
 
             AuthSek authSek = optionalAuthSek.get();
-            String decryptedSek = authSek.getDecryptedSek();
-            String decryptedRek = encryptionUtil.decryptResponse(treasuryParams.getRek(), decryptedSek);
-            String decryptedData = encryptionUtil.decryptResponse(treasuryParams.getData(), decryptedRek);
-
+            String decryptedData;
+            if(config.isMockEnabled() && treasuryParams.isMockEnabled()) {
+                //mocking the treasury for decryption
+                log.info("Treasury is in mock mode, using mock data.");
+                decryptedData = treasuryParams.getData();
+            }
+            else {
+                String decryptedSek = authSek.getDecryptedSek();
+                String decryptedRek = encryptionUtil.decryptResponse(treasuryParams.getRek(), decryptedSek);
+                decryptedData = encryptionUtil.decryptResponse(treasuryParams.getData(), decryptedRek);
+            }
             log.info("Decrypted data: {}", decryptedData);
 
             TransactionDetails transactionDetails = objectMapper.readValue(decryptedData, TransactionDetails.class);
@@ -315,7 +360,7 @@ public class PaymentService {
             return  Document.builder().fileStore(optionalPaymentData.get().getFileStoreId()).documentType("application/pdf").build();
         } else {
             log.error("No Payment data for given bill Id");
-            throw new CustomException(INVALID_BILL_ID, "Given Bill Id Has no Payment Data");
+            return null;
         }
     }
 
@@ -369,7 +414,9 @@ public class PaymentService {
         try {
             log.info("operation=createDemand, status=IN_PROGRESS, consumerCode={}", demandRequest.getConsumerCode());
             TreasuryMapping treasuryMapping = generateTreasuryMapping(demandRequest);
-
+            if(CASE_DEFAULT_ENTITY_TYPE.equals(demandRequest.getEntityType())) {
+                enrichTreasuryMapping(demandRequest, treasuryMapping);
+            }
             CourtCase courtCase = fetchCourtCase(demandRequest);
             Demand demand = createDemandObject(demandRequest, courtCase);
             DemandResponse demandResponse = demandUtil.createDemand(DemandRequest.builder()
@@ -384,6 +431,12 @@ public class PaymentService {
             throw new CustomException(DEMAND_CREATION_ERROR, "Error occurred during demand creation");
         }
     }
+
+    private void enrichTreasuryMapping(DemandCreateRequest demandRequest, TreasuryMapping treasuryMapping) {
+        treasuryMapping.setFinalCalcPostResubmission(demandRequest.getFinalCalcPostResubmission() != null ? demandRequest.getFinalCalcPostResubmission() : demandRequest.getCalculation().get(0));
+        treasuryMapping.setLastSubmissionConsumerCode(demandRequest.getLastSubmissionConsumerCode());
+    }
+
     private Map<String, String> getTaxHeadMasterCodes(Map<String, Map<String, JSONArray>> mdmsData, String taskBusinessService, String deliveryChannel) {
         if (mdmsData != null && mdmsData.containsKey("payment") && mdmsData.get("payment").containsKey(PAYMENTMASTERCODE)) {
             JSONArray masterCode = mdmsData.get("payment").get(PAYMENTMASTERCODE);
@@ -492,6 +545,7 @@ public class PaymentService {
                     .headAmountMapping(objectMapper.convertValue(headAmountMapping, Object.class))
                     .calculation(demandRequest.getCalculation().get(0))
                     .createdTime(System.currentTimeMillis())
+                    .lastModifiedTime(System.currentTimeMillis())
                     .build();
         } catch (JsonProcessingException | IllegalArgumentException | CustomException e) {
             log.error("Error occurred during treasury mapping generation: ", e);
@@ -635,12 +689,16 @@ public class PaymentService {
     }
 
     private String getPaymentType(String consumerCode) {
-        Pattern pattern = Pattern.compile("_([\\w]+)$");
+        Pattern pattern = Pattern.compile("_([A-Z_]+)(?:-[0-9]+)?$");
         Matcher matcher = pattern.matcher(consumerCode);
         if (matcher.find()) {
             return matcher.group(1);
         }
         return null;
+    }
+
+    public TreasuryMapping getHeadBreakDown(String consumerCode) {
+        return treasuryMappingRepository.getTreasuryMapping(consumerCode);
     }
 //    public Payload doubleVerifyPayment(VerificationData verificationData, RequestInfo requestInfo) {
 //        try {

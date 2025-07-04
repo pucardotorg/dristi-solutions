@@ -165,6 +165,9 @@ public class Configuration {
     @Value("${drishti.hearing.search.endpoint}")
     private String hearingSearchEndPoint;
 
+    @Value("${drishti.hearing.update.endpoint}")
+    private String hearingsUpdateEndPoint;
+
     @Value("${app.zone.id}")
     private String zoneId;
 
@@ -260,4 +263,27 @@ public class Configuration {
 
     @Value("${hearing.retry.delay.ms:60000}")
     private Long hearingRetryDelayMs;
+
+
+    @Value("${egov.indexer.es.username}")
+    private String esUsername;
+
+    @Value("${egov.indexer.es.password}")
+    private String esPassword;
+
+    @Value("${egov.bulk.index}")
+    private String index;
+
+    @Value("${egov.infra.indexer.host}")
+    private String esHostUrl;
+
+    @Value("${egov.bulk.index.path}")
+    private String bulkPath;
+
+    // inbox config
+    @Value("${egov.inbox.host}")
+    private String inboxHost;
+
+    @Value("${egov.inbox.search.endpoint}")
+    private String indexSearchEndPoint;
 }

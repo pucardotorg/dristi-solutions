@@ -125,6 +125,20 @@ export const rolesToConfigMapping = [
     },
   },
   {
+    roles: ["TYPIST_ROLE"],
+    config: TabJudgeSearchConfig,
+    isTypist: true,
+    onRowClickRoute: {
+      dependentUrl: "/dristi/admission",
+      urlDependentOn: "status",
+      urlDependentValue: "",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "caseId", value: "id" },
+      ],
+    },
+  },
+  {
     roles: ["CASE_VIEWER", "HEARING_CREATOR"],
     config: TabJudgeSearchConfig,
     isCourtOfficer: true,
@@ -205,6 +219,13 @@ export const taskTypes = [
 ];
 export const pendingTaskCaseActions = {
   PENDING_PAYMENT: {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "Make Payment",
+    redirectDetails: {
+      url: "/home/home-pending-task/e-filing-payment-breakdown",
+    },
+  },
+  RE_PENDING_PAYMENT: {
     actorName: ["LITIGANT/ADVOCATE"],
     actionName: "Make Payment",
     redirectDetails: {
@@ -351,6 +372,16 @@ export const pendingTaskHearingActions = {
         { key: "filingNumber", value: "filingNumber" },
         { key: "status", defaultValue: "OPTOUT" },
       ],
+    },
+  },
+  ABANDONED: {
+    actorName: ["JUDGE"],
+    actionName: "Schedule admission hearing",
+    customFunction: "handleCreateOrder",
+    // additionalDetailsKeys: ["orderType"],
+    redirectDetails: {
+      url: "/orders/generate-orders",
+      params: [{ key: "filingNumber", value: "filingNumber" }],
     },
   },
 };
@@ -774,6 +805,17 @@ export const pendingTaskVoluntarySubmissionBailActions = {
   },
 };
 
+export const pendingTaskCaseGeneratePaymentActions = {
+  PENDING_PAYMENT: {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "Make Payment",
+    redirectDetails: {
+      url: "/home/home-pending-task/case-payment-demand-breakdown",
+      params: [{ key: "taskNumber", value: "referenceId" }],
+    },
+  },
+};
+
 export const selectTaskType = {
   "case-default": pendingTaskCaseActions,
   "hearing-default": pendingTaskHearingActions,
@@ -788,4 +830,5 @@ export const selectTaskType = {
   "voluntary-document-submission": pendingTaskForDocumentSubmissionActions,
   "voluntary-application-submission-bail-documents": pendingTaskVoluntarySubmissionBailDocumentsActions,
   "voluntary-application-submission-bail": pendingTaskVoluntarySubmissionBailActions,
+  "task-generic": pendingTaskCaseGeneratePaymentActions,
 };

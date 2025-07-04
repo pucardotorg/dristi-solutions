@@ -43,6 +43,8 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
 
         CourtCase courtCase = caseService.getCase(event.getFilingNumber(), event.getTenantId(), requestInfo);
 
+        String businessOfTheDay = event.getAdditionalDetails() != null ? getBusinessOfTheDay(event.getAdditionalDetails()) : null;
+
         OrderAndNotification orderAndNotification = OrderAndNotification.builder()
                 .type(COMPOSITE.equalsIgnoreCase(event.getOrderCategory()) ? event.getOrderCategory() : event.getOrderType())  // if its composite then order type is order category
                 .id(event.getOrderNumber())
@@ -52,6 +54,7 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
                 .date((event.getCreatedDate() == null) ? null : Long.valueOf(event.getCreatedDate()))
                 .entityType("Order")
                 .title(event.getOrderTitle())
+                .businessOfTheDay(businessOfTheDay)
                 .tenantId(event.getTenantId())
                 .filingNumbers(event.getFilingNumber() != null ? Collections.singletonList(event.getFilingNumber()) : new ArrayList<>())
                 .caseNumbers(event.getFilingNumber() != null ? Collections.singletonList(event.getFilingNumber()) : new ArrayList<>())
@@ -133,4 +136,14 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
                 ? courtCase.getCaseTitle() + " , " + courtCase.getCourtCaseNumber()
                 : courtCase.getCaseTitle() + " , " + courtCase.getCmpNumber();
     }
+
+    private String getBusinessOfTheDay(Object additionalDetails) {
+        if (additionalDetails instanceof Map) {
+            Map<?, ?> detailsMap = (Map<?, ?>) additionalDetails;
+            Object botd = detailsMap.get("businessOfTheDay");
+            return botd != null ? botd.toString() : null;
+        }
+        return null;
+    }
+
 }

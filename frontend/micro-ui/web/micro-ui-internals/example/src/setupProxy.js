@@ -120,8 +120,10 @@ module.exports = function (app) {
     "/notification",
     "/kerala-icops",
     "/order-management",
-    "/hearing-management" 
-   ].forEach((location) => app.use(location, createProxy));
+    "/hearing-management",
+    "/inbox/v2/_getFields/actionCategory",
+    "/epayments",
+  ].forEach((location) => app.use(location, createProxy));
   ["/pb-egov-assets"].forEach((location) => app.use(location, assetsProxy));
   ["/mdms-v2/v2/_create"].forEach((location) => app.use(location, mdmsProxy));
 };

@@ -469,6 +469,7 @@ export const UICustomizations = {
       }
       const isCompleteStatus = Boolean(Object.keys(filterList?.completeStatus || {}).length);
       const isIssueDate = Boolean(Object.keys(filterList?.sortCaseListByDate || {}).length);
+      const courtId = requestCriteria?.body?.criteria?.courtId;
       return {
         ...requestCriteria,
         body: {
@@ -479,12 +480,15 @@ export const UICustomizations = {
             orderType: filterList?.orderType ? [filterList?.orderType?.code] : [],
             applicationStatus: filterList?.applicationStatus?.code || "",
             ...(isCompleteStatus && { completeStatus: [filterList?.completeStatus?.code] }),
+            ...(courtId && { courtId }),
           },
           tenantId,
           pagination: {
             limit: requestCriteria?.state?.tableForm?.limit,
             offSet: requestCriteria?.state?.tableForm?.offset,
             ...(isIssueDate && filterList?.sortCaseListByDate),
+            sortBy: "lastmodifiedtime",
+            order: "desc",
           },
         },
         config: {
@@ -529,6 +533,8 @@ export const UICustomizations = {
       const caseTitle = requestCriteria?.state?.searchForm?.caseTitle;
       const status = requestCriteria?.state?.searchForm?.status;
       const startOfTheDay = requestCriteria?.state?.searchForm?.startOfTheDay;
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+
       const moduleSearchCriteria = {
         entityType,
         tenantId,
@@ -538,6 +544,7 @@ export const UICustomizations = {
           startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
           endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
         }),
+        ...(courtId && { courtId }),
       };
 
       return {

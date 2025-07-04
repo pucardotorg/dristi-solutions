@@ -61,6 +61,7 @@ function ReviewSubmissionModal({
   handleBack,
   documents = [],
   setApplicationPdfFileStoreId,
+  courtId,
 }) {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
@@ -97,6 +98,7 @@ function ReviewSubmissionModal({
           cnrNumber: application?.cnrNumber,
           qrCode: false,
           applicationType: SubmissionPreviewSubmissionTypeMap[application?.applicationType],
+          courtId: courtId,
         },
         data: {
           RequestInfo: {
