@@ -93,6 +93,9 @@ components:
         litigantFatherName:
           type: string
           description: Father name of the litigant.
+        litigantSigned:
+          type: boolean
+          description: Whether the litigant has signed the bail.
         sureties:
           type: array
           items:
@@ -133,6 +136,9 @@ components:
         email:
           type: string
           description: Email of the surety.
+        hasSigned:
+          type: boolean
+          description: Whether the surety has signed or not.
         documents:
           type: array
           items:
