@@ -1,0 +1,201 @@
+openapi: 3.0.0
+info:
+  version: 0.1.0
+  title: Bail API
+  description: API for managing bails in the DRISTI system.
+paths:
+  /v1/_create:
+    post:
+      summary: Create a new bail.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BailRequest'
+      responses:
+        '200':
+          description: Bail created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BailResponse'
+  /v1/_update:
+    post:
+      summary: Update an existing bail.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BailRequest'
+      responses:
+        '200':
+          description: Bail updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BailResponse'
+  /v1/_search:
+    post:
+      summary: Search for bails.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BailSearchRequest'
+      responses:
+        '200':
+          description: Search results.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BailSearchResponse'
+components:
+  schemas:
+    Bail:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the bail.
+        tenantId:
+          type: string
+          description: Tenant ID of the bail.
+        caseId:
+          type: string
+          description: Identifier for the case.
+        bailAmount:
+          type: number
+          format: double
+          description: Amount for the bail.
+        bailType:
+          type: string
+          description: Type of bail (Personal or Surety).
+          enum:
+            - Personal
+            - Surety
+        startDate:
+          type: string
+          format: date-time
+          description: Start date of the bail.
+        endDate:
+          type: string
+          format: date-time
+          description: End date of the bail.
+        isActive:
+          type: boolean
+          description: Whether the bail is active or not.
+        litigantId:
+          type: string
+          description: Identifier for the litigant.
+        litigantName:
+          type: string
+          description: Name of the litigant.
+        litigantFatherName:
+          type: string
+          description: Father name of the litigant.
+        sureties:
+          type: array
+          items:
+            $ref: '#/components/schemas/Surety'
+          description: List of surety objects.
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        additionalDetails:
+          type: object
+        workflow:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Workflow'
+      required:
+        - tenantId
+        - caseId
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+        documentType:
+          type: string
+        fileStore:
+          type: string
+        documentUid:
+          type: string
+        additionalDetails:
+          type: object
+    Surety:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the surety.
+        tenantId:
+          type: string
+          description: Tenant ID of the surety.
+        name:
+          type: string
+          description: Name of the surety.
+        fatherName:
+          type: string
+          description: Father name of the surety.
+        mobileNumber:
+          type: string
+          description: Mobile number of the surety.
+        address:
+          type: object
+          description: Address of the surety.
+        email:
+          type: string
+          description: Email of the surety.
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/Document'
+        isActive:
+          type: boolean
+          description: Whether the surety is active or not.
+        additionalDetails:
+          type: object
+      required:
+        - tenantId
+        - name
+        - mobileNumber
+    BailRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/egov-services/master/docs/common-contract/v1/contract.json#/components/schemas/RequestInfo'
+        bail:
+          $ref: '#/components/schemas/Bail'
+    BailResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/egov-services/master/docs/common-contract/v1/contract.json#/components/schemas/ResponseInfo'
+        bails:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bail'
+    BailSearchRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/egov-services/master/docs/common-contract/v1/contract.json#/components/schemas/RequestInfo'
+        criteria:
+          type: object
+          properties:
+            tenantId:
+              type: string
+            ids:
+              type: array
+              items:
+                type: string
+    BailSearchResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/egov-services/master/docs/common-contract/v1/contract.json#/components/schemas/ResponseInfo'
+        bails:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bail'
+    
