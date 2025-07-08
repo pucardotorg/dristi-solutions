@@ -63,6 +63,15 @@ components:
         name:
           type: string
           description: Name of the surety.
+        fatherName:
+          type: string
+          description: Father name of the surety.
+        caseId:
+          type: string
+          description: Identifier for the case.
+        bailId:
+          type: string
+          description: Identifier for the bail.
         mobileNumber:
           type: string
           description: Mobile number of the surety.
@@ -82,7 +91,7 @@ components:
         additionalDetails:
           type: object
         workflow:
-          $ref: '#/components/schemas/Workflow'
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Workflow'
       required:
         - tenantId
         - name
@@ -100,17 +109,6 @@ components:
           type: string
         additionalDetails:
           type: object
-    Workflow:
-      type: object
-      properties:
-        action:
-          type: string
-        assignees:
-          type: array
-          items:
-            type: string
-        comments:
-          type: string
     SuretyRequest:
       type: object
       properties:
