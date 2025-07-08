@@ -101,6 +101,9 @@ components:
           items:
             $ref: '#/components/schemas/Surety'
           description: List of surety objects.
+        shortenedURL:
+          type: string
+          description: Shortened URL for the bail bond.
         documents:
           type: array
           items:
