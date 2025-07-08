@@ -101,7 +101,7 @@ components:
         documents:
           type: array
           items:
-            $ref: '#/components/schemas/Document'
+            $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Document'
         additionalDetails:
           type: object
         workflow:
@@ -109,19 +109,6 @@ components:
       required:
         - tenantId
         - caseId
-    Document:
-      type: object
-      properties:
-        id:
-          type: string
-        documentType:
-          type: string
-        fileStore:
-          type: string
-        documentUid:
-          type: string
-        additionalDetails:
-          type: object
     Surety:
       type: object
       properties:
@@ -149,7 +136,7 @@ components:
         documents:
           type: array
           items:
-            $ref: '#/components/schemas/Document'
+            $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Document'
         isActive:
           type: boolean
           description: Whether the surety is active or not.
@@ -198,4 +185,3 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Bail'
-    

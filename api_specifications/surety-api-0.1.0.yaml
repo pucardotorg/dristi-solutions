@@ -84,7 +84,7 @@ components:
         documents:
           type: array
           items:
-            $ref: '#/components/schemas/Document'
+            $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Document'
         isActive:
           type: boolean
           description: Whether the surety is active or not.
@@ -96,19 +96,6 @@ components:
         - tenantId
         - name
         - mobileNumber
-    Document:
-      type: object
-      properties:
-        id:
-          type: string
-        documentType:
-          type: string
-        fileStore:
-          type: string
-        documentUid:
-          type: string
-        additionalDetails:
-          type: object
     SuretyRequest:
       type: object
       properties:
