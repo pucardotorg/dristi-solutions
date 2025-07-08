@@ -74,13 +74,13 @@ components:
             - Personal
             - Surety
         startDate:
-          type: string
-          format: date-time
-          description: Start date of the bail.
+          type: integer
+          format: int64
+          description: Start date of the bail in epoch time (milliseconds).
         endDate:
-          type: string
-          format: date-time
-          description: End date of the bail.
+          type: integer
+          format: int64
+          description: End date of the bail in epoch time (milliseconds).
         isActive:
           type: boolean
           description: Whether the bail is active or not.
@@ -109,6 +109,8 @@ components:
           type: object
         workflow:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Workflow'
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
       required:
         - tenantId
         - caseId
