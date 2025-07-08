@@ -37,13 +37,14 @@ serviceMaps:
             - jsonPath: $.surety.auditDetails.createdTime
             - jsonPath: $.surety.auditDetails.lastModifiedTime
 
-        - query: INSERT INTO dristi_surety_document(id, fileStore, documentUid, documentType, surety_id, additionalDetails) VALUES (?, ?, ?, ?, ?, ?);
+        - query: INSERT INTO dristi_surety_document(id, fileStore, documentUid, documentType, isActive, surety_id, additionalDetails) VALUES (?, ?, ?, ?, ?, ?, ?);
           basePath: surety.documents.*
           jsonMaps:
             - jsonPath: $.surety.documents.*.id
             - jsonPath: $.surety.documents.*.fileStore
             - jsonPath: $.surety.documents.*.documentUid
             - jsonPath: $.surety.documents.*.documentType
+            - jsonPath: $.surety.documents.*.isActive
             - jsonPath: $.surety.id
             - jsonPath: $.surety.documents.*.additionalDetails
               type: JSON
@@ -82,13 +83,14 @@ serviceMaps:
             - jsonPath: $.surety.auditDetails.lastModifiedTime
             - jsonPath: $.surety.id
 
-        - query: INSERT INTO dristi_surety_document(id,fileStore,documentUid,documentType,isActive,surety_id, additionalDetails) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET fileStore = EXCLUDED.fileStore, documentUid = EXCLUDED.documentUid, documentType = EXCLUDED.documentType, isActive=EXCLUDED.isActive, case_id = EXCLUDED.case_id, additionalDetails = EXCLUDED.additionalDetails;
+        - query: INSERT INTO dristi_surety_document(id,fileStore,documentUid,documentType,isActive,surety_id, additionalDetails) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (id) DO UPDATE SET fileStore = EXCLUDED.fileStore, documentUid = EXCLUDED.documentUid, documentType = EXCLUDED.documentType, isActive=EXCLUDED.isActive, surety_id = EXCLUDED.surety_id, additionalDetails = EXCLUDED.additionalDetails;
           basePath: surety.documents.*
           jsonMaps:
             - jsonPath: $.surety.documents.*.id
             - jsonPath: $.surety.documents.*.fileStore
             - jsonPath: $.surety.documents.*.documentUid
             - jsonPath: $.surety.documents.*.documentType
+            - jsonPath: $.surety.documents.*.isActive
             - jsonPath: $.surety.id
             - jsonPath: $.surety.documents.*.additionalDetails
               type: JSON
