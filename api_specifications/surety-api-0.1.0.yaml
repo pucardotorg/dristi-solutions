@@ -76,7 +76,7 @@ components:
           type: string
           description: Mobile number of the surety.
         address:
-          type: string
+          type: object
           description: Address of the surety.
         email:
           type: string
