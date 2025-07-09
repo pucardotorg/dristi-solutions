@@ -58,11 +58,12 @@ public class LandingPageService {
 
             Integer totalDisposedCases = getTotalDisposedCases();
 
-            Integer daysToCaseRegistration = getDaysToCaseRegistration();
+            //TODO : commenting this code as it is not required now need to be uncommented when required and need to modify the logic and need to write a new api in case service
+//            Integer daysToCaseRegistration = getDaysToCaseRegistration();
 
             Integer averageNumberOfDaysBetweenHearingsForCase = getAverageDaysToHearings();
 
-            updateMdmsDashboardMetrics(totalFiledCases, totalDisposedCases, daysToCaseRegistration, averageNumberOfDaysBetweenHearingsForCase);
+            updateMdmsDashboardMetrics(totalFiledCases, totalDisposedCases, averageNumberOfDaysBetweenHearingsForCase);
 
             log.info("operation = updateDashboardMetrics, result = SUCCESS");
         } catch (Exception e) {
@@ -87,59 +88,59 @@ public class LandingPageService {
         return null;
     }
 
-    private Integer getDaysToCaseRegistration() {
-        try {
-            log.info("operation = getDaysToCaseRegistration, result = IN_PROGRESS");
-
-            CaseCriteria criteria = CaseCriteria.builder()
-                    .status(config.getCaseStatusesAfterRegistration())
-                    .build();
-
-            SearchCaseRequest searchCaseRequest = SearchCaseRequest.builder()
-                    .RequestInfo(createInternalRequestInfo())
-                    .tenantId(config.getEgovStateTenantId())
-                    .criteria(Collections.singletonList(criteria))
-                    .flow(FLOW_JAC)
-                    .build();
-
-            JsonNode caseList = caseUtil.getCases(searchCaseRequest);
-
-            if (caseList == null || !caseList.isArray() || caseList.isEmpty()) {
-                log.warn("operation = getDaysToCaseRegistration, result = NO_CASES_FOUND");
-                return null;
-            }
-
-            List<Integer> daysDifferences = new ArrayList<>();
-
-            for (JsonNode caseNode : caseList) {
-                if (caseNode.has("registrationDate") && !caseNode.get("registrationDate").isNull()
-                        && caseNode.has("filingDate") && !caseNode.get("filingDate").isNull()) {
-
-                    Integer registrationDate = caseNode.get("registrationDate").asInt();
-                    Integer filingDate = caseNode.get("filingDate").asInt();
-
-                    if (registrationDate >= filingDate) {
-                        long days = Duration.ofMillis(registrationDate - filingDate).toDays();
-                        daysDifferences.add((int) days);
-                    }
-                }
-            }
-
-            if (daysDifferences.isEmpty()) {
-                log.warn("operation = getDaysToCaseRegistration, result = NO_VALID_DATES");
-                return null;
-            }
-
-            Integer median = calculateMedian(daysDifferences);
-
-            log.info("operation = getDaysToCaseRegistration, result = SUCCESS, median = {}", median);
-            return median;
-
-        } catch (Exception e) {
-            log.error("operation = getDaysToCaseRegistration, result = FAILURE", e);
-            return null;
-        }
-    }
+//    private Integer getDaysToCaseRegistration() {
+//        try {
+//            log.info("operation = getDaysToCaseRegistration, result = IN_PROGRESS");
+//
+//            CaseCriteria criteria = CaseCriteria.builder()
+//                    .status(config.getCaseStatusesAfterRegistration())
+//                    .build();
+//
+//            SearchCaseRequest searchCaseRequest = SearchCaseRequest.builder()
+//                    .RequestInfo(createInternalRequestInfo())
+//                    .tenantId(config.getEgovStateTenantId())
+//                    .criteria(Collections.singletonList(criteria))
+//                    .flow(FLOW_JAC)
+//                    .build();
+//
+//            JsonNode caseList = caseUtil.getCases(searchCaseRequest);
+//
+//            if (caseList == null || !caseList.isArray() || caseList.isEmpty()) {
+//                log.warn("operation = getDaysToCaseRegistration, result = NO_CASES_FOUND");
+//                return null;
+//            }
+//
+//            List<Integer> daysDifferences = new ArrayList<>();
+//
+//            for (JsonNode caseNode : caseList) {
+//                if (caseNode.has("registrationDate") && !caseNode.get("registrationDate").isNull()
+//                        && caseNode.has("filingDate") && !caseNode.get("filingDate").isNull()) {
+//
+//                    Integer registrationDate = caseNode.get("registrationDate").asInt();
+//                    Integer filingDate = caseNode.get("filingDate").asInt();
+//
+//                    if (registrationDate >= filingDate) {
+//                        long days = Duration.ofMillis(registrationDate - filingDate).toDays();
+//                        daysDifferences.add((int) days);
+//                    }
+//                }
+//            }
+//
+//            if (daysDifferences.isEmpty()) {
+//                log.warn("operation = getDaysToCaseRegistration, result = NO_VALID_DATES");
+//                return null;
+//            }
+//
+//            Integer median = calculateMedian(daysDifferences);
+//
+//            log.info("operation = getDaysToCaseRegistration, result = SUCCESS, median = {}", median);
+//            return median;
+//
+//        } catch (Exception e) {
+//            log.error("operation = getDaysToCaseRegistration, result = FAILURE", e);
+//            return null;
+//        }
+//    }
 
 
     private Integer getTotalDisposedCases() {
@@ -193,7 +194,7 @@ public class LandingPageService {
     }
 
 
-    private void updateMdmsDashboardMetrics(Integer totalCases, Integer totalDisposedCases, Integer daysToCaseRegistration, Integer averageNumberOfDaysBetweenHearingsForCase) {
+    private void updateMdmsDashboardMetrics(Integer totalCases, Integer totalDisposedCases, Integer averageNumberOfDaysBetweenHearingsForCase) {
 
         try {
             log.info("operation = updateMdmsDashboardMetrics, result = IN_PROGRESS");
@@ -216,12 +217,6 @@ public class LandingPageService {
                 if (totalDisposedCases != null) {
                     log.info("numberOfCasesDisposed = {}", totalDisposedCases);
                     jsonMap.put("numberOfCasesDisposed", totalDisposedCases);
-                    mdms.setData(objectMapper.convertValue(jsonMap, JsonNode.class));
-                }
-
-                if (daysToCaseRegistration != null) {
-                    log.info("daysToCaseRegistration = {}", daysToCaseRegistration);
-                    jsonMap.put("daysToCaseRegistration", daysToCaseRegistration);
                     mdms.setData(objectMapper.convertValue(jsonMap, JsonNode.class));
                 }
 
