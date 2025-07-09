@@ -602,16 +602,22 @@ export const UICustomizations = {
     preProcess: (requestCriteria, additionalDetails) => {
       const tenantId = window?.Digit.ULBService.getStateId();
       const entityType = "Order"; // "BailBond";
-      const caseTitle = requestCriteria?.state?.searchForm?.caseTitle;
-      const status = requestCriteria?.state?.searchForm?.status;
-      const startOfTheDay = requestCriteria?.state?.searchForm?.startOfTheDay;
+
+      const effectiveSearchForm = requestCriteria?.state?.searchForm || {};
+      const caseTitle = effectiveSearchForm?.caseTitle;
+      const status = effectiveSearchForm?.status;
+      const startOfTheDay = effectiveSearchForm?.startOfTheDay;
       const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
-      const setBulkSignList = additionalDetails?.setBulkSignList;
+      const setbulkBailBondSignList = additionalDetails?.setbulkBailBondSignList;
+      const setBailBondPaginationData = additionalDetails?.setBailBondPaginationData;
+      const limit = parseInt(sessionStorage.getItem("bulkBailBondSignlimit")) || requestCriteria?.state?.tableForm?.limit;
+      const offset = parseInt(sessionStorage.getItem("bulkBailBondSignoffset")) || requestCriteria?.state?.tableForm?.offset;
+
       const moduleSearchCriteria = {
         entityType,
         tenantId,
         ...(caseTitle && { caseTitle }),
-        status: status?.type,
+        status: status?.type || "PENDING_BULK_E-SIGN",
         ...(startOfTheDay && {
           startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
           endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
@@ -625,8 +631,8 @@ export const UICustomizations = {
           ...requestCriteria?.body,
           inbox: {
             ...requestCriteria?.body?.inbox,
-            limit: requestCriteria?.state?.tableForm?.limit,
-            offset: requestCriteria?.state?.tableForm?.offset,
+            limit: limit,
+            offset: offset,
             tenantId: tenantId,
             moduleSearchCriteria: moduleSearchCriteria,
           },
@@ -640,11 +646,11 @@ export const UICustomizations = {
                 isSelected: true,
               };
             });
-            if (setBulkSignList) setBulkSignList(bailBondItems);
-            const updatedData = { ...data, items: bailBondItems };
-            console.log(updatedData, "updatedData");
+            sessionStorage.removeItem("bulkBailBondSignlimit");
+            sessionStorage.removeItem("bulkBailBondSignoffset");
 
-            debugger;
+            if (setbulkBailBondSignList) setbulkBailBondSignList(bailBondItems);
+            if (setBailBondPaginationData) setBailBondPaginationData({ limit: limit, offset: offset });
 
             return {
               ...data,
@@ -654,10 +660,12 @@ export const UICustomizations = {
         },
       };
     },
+
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       switch (key) {
         case "CASE_NAME_AND_NUMBER":
-          return <BailBondSignModal rowData={row} colData={column} value={value} />;
+          return <OrderName rowData={row} colData={column} value={value} />;
+        // return <BailBondSignModal rowData={row} colData={column} value={value} />;
         case "LITIGANT":
           return value;
         case "NUMBER":

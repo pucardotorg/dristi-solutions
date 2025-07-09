@@ -46,7 +46,17 @@ const MainHomeScreen = () => {
   const location = useLocation();
   const homeFilteredData = location?.state?.homeFilteredData;
 
-  const homeActiveTab = location?.state?.homeActiveTab || "HEARINGS_TAB";
+  // Get the initial active tab value
+  const initialActiveTab = sessionStorage.getItem("homeActiveTab") || location?.state?.homeActiveTab || "HEARINGS_TAB";
+  const [homeActiveTab] = useState(initialActiveTab);
+
+  // Clear sessionStorage on component mount
+  useEffect(() => {
+    if (sessionStorage.getItem("homeActiveTab")) {
+      console.log("Clearing homeActiveTab from sessionStorage after use");
+      // sessionStorage.removeItem("homeActiveTab");
+    }
+  }, []); // Run only on component mount
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [activeTab, setActiveTab] = useState(homeActiveTab);
   const [updateCounter, setUpdateCounter] = useState(0);
@@ -88,6 +98,7 @@ const MainHomeScreen = () => {
     if (!isJudge && !isBenchClerk && !isTypist) {
       history.push(`/${window?.contextPath}/${userType}/home/home-pending-task`);
     }
+    // sessionStorage.removeItem("homeActiveTab");
   }, [isJudge, isBenchClerk, userType, history, isTypist]);
 
   useEffect(() => {

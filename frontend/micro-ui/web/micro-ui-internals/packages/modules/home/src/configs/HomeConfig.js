@@ -816,6 +816,17 @@ export const pendingTaskCaseGeneratePaymentActions = {
   },
 };
 
+export const pendingTaskForBailBondActions = {
+  PENDING_SIGN: {
+    actorName: ["JUDGE"],
+    actionName: "Make Payment",
+    redirectDetails: {
+      url: "/home/bail-bond",
+      params: [{ key: "filingNumber", value: "filingNumber" }],
+    },
+  },
+};
+
 export const selectTaskType = {
   "case-default": pendingTaskCaseActions,
   "hearing-default": pendingTaskHearingActions,
@@ -831,4 +842,5 @@ export const selectTaskType = {
   "voluntary-application-submission-bail-documents": pendingTaskVoluntarySubmissionBailDocumentsActions,
   "voluntary-application-submission-bail": pendingTaskVoluntarySubmissionBailActions,
   "task-generic": pendingTaskCaseGeneratePaymentActions,
+  "bail bond": pendingTaskForBailBondActions,
 };

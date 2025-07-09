@@ -24,6 +24,7 @@ const OrderDrawer = ({
   setUpdateCounter,
   isBailBondTaskExists,
   setIsBailBondTaskExists,
+  setShowBailBondModal,
 }) => {
   const { t } = useTranslation();
   const targetRef = useRef(null);
@@ -615,20 +616,21 @@ const OrderDrawer = ({
               <LabelFieldPair className="case-label-field-pair">
                 <RadioButtons
                   selectedOption={isBailBondTaskExists ? { label: `Bail Bond Required`, value: "CASE_DISPOSED" } : orderData?.isCaseDisposed}
-                  disabled={false}
+                  disabled={isBailBondTaskExists}
                   optionsKey={"label"}
                   options={[{ label: `Bail Bond Required`, value: "CASE_DISPOSED" }]}
                   additionalWrapperClass={"radio-disabled"}
                   onSelect={(value) => {
-                    setIsBailBondTaskExists(true);
-                    setOrderData((orderData) => ({
-                      ...orderData,
-                      isCaseDisposed: orderData?.isCaseDisposed?.value === value?.value ? {} : value,
-                    }));
-                    setOrderError((orderError) => ({
-                      ...orderError,
-                      isCaseDisposed: null,
-                    }));
+                    setShowBailBondModal(true);
+                    // setIsBailBondTaskExists(true);
+                    // setOrderData((orderData) => ({
+                    //   ...orderData,
+                    //   isCaseDisposed: orderData?.isCaseDisposed?.value === value?.value ? {} : value,
+                    // }));
+                    // setOrderError((orderError) => ({
+                    //   ...orderError,
+                    //   isCaseDisposed: null,
+                    // }));
                   }}
                 />
               </LabelFieldPair>

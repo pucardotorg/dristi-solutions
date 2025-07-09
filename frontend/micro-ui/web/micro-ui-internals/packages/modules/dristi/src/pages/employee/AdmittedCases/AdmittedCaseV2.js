@@ -54,6 +54,7 @@ import CaseBundleView from "./CaseBundleView";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
 import CaseOverviewV2 from "./CaseOverviewV2";
 import PaymentDemandModal from "./PaymentDemandModal";
+import { create, set } from "lodash";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -227,6 +228,7 @@ const AdmittedCaseV2 = () => {
   const [showAllStagesModal, setShowAllStagesModal] = useState(false);
   const [showBailBondModal, setShowBailBondModal] = useState(false);
   const [isBailBondTaskExists, setIsBailBondTaskExists] = useState(false);
+  const [bailBondLoading, setBailBondLoading] = useState(false);
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
@@ -347,6 +349,30 @@ const AdmittedCaseV2 = () => {
 
   useEffect(() => {
     fetchInbox();
+    const isBailBondPendingTaskPresent = async () => {
+      const bailBondPendingTask = await HomeService.getPendingTaskService(
+        {
+          SearchCriteria: {
+            tenantId,
+            moduleName: "Pending Tasks Service",
+            moduleSearchCriteria: {
+              isCompleted: false,
+              assignedRole: [...roles],
+              filingNumber: filingNumber,
+              courtId: courtId,
+              entityType: "bail bond",
+            },
+            limit: 10000,
+            offset: 0,
+          },
+        },
+        { tenantId }
+      );
+      if (bailBondPendingTask?.data?.length > 0) {
+        setIsBailBondTaskExists(true);
+      }
+    };
+    isBailBondPendingTaskPresent();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "HEARINGS_TAB", [location?.state?.homeActiveTab]);
@@ -2414,8 +2440,7 @@ const AdmittedCaseV2 = () => {
         history.push(`/${window?.contextPath}/citizen/submissions/submissions-create?filingNumber=${filingNumber}`);
       } else if (option.value === "SUBMIT_DOCUMENTS") {
         history.push(`/${window?.contextPath}/citizen/submissions/submit-document?filingNumber=${filingNumber}`);
-      }
-      else if (option.value === "GENERATE_BAIL_BOND") {
+      } else if (option.value === "GENERATE_BAIL_BOND") {
         history.push(`/${window?.contextPath}/citizen/submissions/bail-bond?filingNumber=${filingNumber}`);
       }
     },
@@ -3069,6 +3094,62 @@ const AdmittedCaseV2 = () => {
     },
     [history, path, filingNumber, caseId, config]
   );
+
+  const createBailBondTask = async () => {
+    setBailBondLoading(true);
+    try {
+      const bailBondPendingTask = await HomeService.getPendingTaskService(
+        {
+          SearchCriteria: {
+            tenantId,
+            moduleName: "Pending Tasks Service",
+            moduleSearchCriteria: {
+              isCompleted: false,
+              assignedRole: [...roles],
+              filingNumber: filingNumber,
+              courtId: courtId,
+              entityType: "bail bond",
+            },
+            limit: 10000,
+            offset: 0,
+          },
+        },
+        { tenantId }
+      );
+      if (bailBondPendingTask?.data?.length > 0) {
+        setIsBailBondTaskExists(true);
+        showToast({
+          isError: true,
+          message: t("BAIL_BOND_TASK_ALREADY_EXISTS"),
+        });
+        return;
+      }
+      DRISTIService.customApiService(Urls.dristi.pendingTask, {
+        pendingTask: {
+          name: t("CS_COMMON_BAIL_BOND"),
+          entityType: "bail bond",
+          referenceId: `MANUAL_${filingNumber}`,
+          status: "PENDING_SIGN",
+          assignedTo: [],
+          assignedRole: ["JUDGE_ROLE"],
+          cnrNumber,
+          filingNumber,
+          caseId: caseDetails?.id,
+          caseTitle: caseDetails?.caseTitle,
+          isCompleted: false,
+          // stateSla: stateSla.DRAFT_IN_PROGRESS * dayInMillisecond + todayDate,
+          additionalDetails: {},
+          tenantId,
+        },
+      });
+      setIsBailBondTaskExists(true);
+      setShowBailBondModal(false);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setBailBondLoading(false);
+    }
+  };
 
   const inboxComposer = useMemo(() => {
     if (
@@ -3786,6 +3867,7 @@ const AdmittedCaseV2 = () => {
           setUpdateCounter={setUpdateCounter}
           isBailBondTaskExists={isBailBondTaskExists}
           setIsBailBondTaskExists={setIsBailBondTaskExists}
+          setShowBailBondModal={setShowBailBondModal}
         />
       )}
       {showWitnessModal && (
@@ -3847,10 +3929,12 @@ const AdmittedCaseV2 = () => {
       {showBailBondModal &&
         (!isBailBondTaskExists ? (
           <Modal
-            headerBarEnd={<CloseBtn onClick={() => setShowBailBondModal(false)} />}
+            headerBarEnd={<CloseBtn onClick={() => !bailBondLoading && setShowBailBondModal(false)} />}
             actionSaveLabel={t("Confirm")}
-            actionSaveOnSubmit={onSubmit}
+            actionSaveOnSubmit={createBailBondTask}
             actionCancelLabel={t("Cancel")}
+            isBackButtonDisabled={bailBondLoading}
+            isDisabled={bailBondLoading}
             actionCancelOnSubmit={() => setShowBailBondModal(false)}
             formId="modal-action"
             headerBarMain={<Heading label={t("Confirm Bail Bond")} />}

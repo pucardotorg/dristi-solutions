@@ -13,11 +13,11 @@ export const bulkBailBondSignConfig = {
   preProcess: {
     data: (data) => {
       // Process the data to mark items as selected based on your criteria
-      return data.map(item => ({
+      return data.map((item) => ({
         ...item,
         selected: item.businessObject?.pendingActions === "SIGN_BAIL_BOND",
       }));
-    }
+    },
   },
   apiDetails: {
     serviceName: "/inbox/v2/index/_search",

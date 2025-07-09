@@ -1,68 +1,79 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
-import { Button } from "@egovernments/digit-ui-react-components";
-import { FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
+import { Button, Loader } from "@egovernments/digit-ui-react-components";
+import { FileDownloadIcon, FileUploadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
-import { Urls } from "../../hooks";
+import { Banner, CardLabel } from "@egovernments/digit-ui-react-components";
 
-export const BailBondSignModal = ({ rowData, colData, value, onSigningComplete }) => {
-  // Check for stored session data and restore modal state
+export const clearBailBondSessionData = () => {
+  sessionStorage.removeItem("bailBondStepper");
+  sessionStorage.removeItem("bailBondPdf");
+  sessionStorage.removeItem("bailBondFileStoreId");
+  sessionStorage.removeItem("bailBondData");
+  sessionStorage.removeItem("bulkBailBondSelectedItem");
+};
+
+export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal, rowData, colData, value, onSigningComplete }) => {
+  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+  const courtId = localStorage.getItem("courtId");
+  const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
+  const selectedBailBondFilestoreid = "97060b57-eea9-405c-966c-0577c52224fe";
+
   const [stepper, setStepper] = useState(() => {
-    const savedStepper = sessionStorage.getItem("bailBondStepper");
-    return savedStepper ? parseInt(savedStepper) : 0;
+    const sessionRowData = sessionStorage.getItem("bailBondData");
+    if (sessionRowData && JSON.parse(sessionRowData)?.id === selectedBailBond?.businessObject?.orderNotification?.id) {
+      const savedStepper = sessionStorage.getItem("bailBondStepper");
+      return 0; // savedStepper ? parseInt(savedStepper) : 0;
+    }
+    return 0;
   });
-  
-  // Check if we need to restore row data from session storage
-  const [restoredRowData, setRestoredRowData] = useState(() => {
-    if (!rowData && sessionStorage.getItem("bailBondData")) {
+
+  const [restoredRowData] = useState(() => {
+    if (!selectedBailBond && sessionStorage.getItem("bailBondData")) {
       try {
         const savedData = JSON.parse(sessionStorage.getItem("bailBondData"));
-        return savedData.rowData;
+        return savedData.selectedBailBond;
       } catch (e) {
-        console.error("Error parsing saved bail bond data", e);
         return null;
       }
     }
     return null;
   });
-  
-  // Use restored row data if available, otherwise use props
-  const effectiveRowData = restoredRowData || rowData;
+
+  const effectiveRowData = restoredRowData || selectedBailBond || rowData;
 
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
   const { t } = useTranslation();
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
-  const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
+  const { checkSignStatus } = Digit.Hooks.orders.useESign();
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const [isSigned, setIsSigned] = useState(false);
 
   const [formData, setFormData] = useState({});
   const [bailBondPdf, setBailBondPdf] = useState(() => sessionStorage.getItem("bailBondPdf") || "");
-  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [loader, setLoader] = useState(false);
-  const [signedDocumentUploadID, setSignedDocumentUploadID] = useState(() => sessionStorage.getItem("bailBondFileStoreId") || "");
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
 
   const name = "Signature";
-  const pageModule = "en";
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
 
-  const CloseBtn = (props) => {
+  const CloseBtn = useCallback((props) => {
     return (
       <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
         <CloseSvg />
       </div>
     );
-  };
+  }, []);
 
-  const Heading = (props) => {
+  const Heading = useCallback((props) => {
     return (
       <div className="evidence-title">
         <h1 className="heading-m">{props.label}</h1>
       </div>
     );
-  };
+  }, []);
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -84,56 +95,7 @@ export const BailBondSignModal = ({ rowData, colData, value, onSigningComplete }
     };
   }, [name]);
 
-  const onUploadSubmit = async () => {
-    if (formData?.uploadSignature?.Signature?.length > 0) {
-      try {
-        setLoader(true);
-        const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
-        setSignedDocumentUploadID(uploadedFileId?.[0]?.fileStoreId);
-        setIsSigned(true);
-        setOpenUploadSignatureModal(false);
-      } catch (error) {
-        console.error("error", error);
-        setLoader(false);
-        setFormData({});
-        setIsSigned(false);
-      }
-      setLoader(false);
-    }
-  };
-
-  const handleCancel = () => {
-    if (parseInt(stepper) === 1) {
-      // Clear PDF and stepper storage when canceling from document view
-      sessionStorage.removeItem("bailBondPdf");
-      sessionStorage.removeItem("bailBondStepper");
-      sessionStorage.removeItem("bailBondData");
-      setStepper(0);
-    } else if (parseInt(stepper) === 2) {
-      if (isSigned) {
-        // Clear all bail bond storage when canceling from signed state
-        sessionStorage.removeItem("bailBondFileStoreId");
-        sessionStorage.removeItem("bailBondStepper");
-        sessionStorage.removeItem("bailBondPdf");
-        sessionStorage.removeItem("bailBondData");
-        setFormData({});
-        setIsSigned(false);
-        setSignedDocumentUploadID("");
-        setStepper(0); // Return to beginning, not to previous step
-      } else {
-        // Just remove file ID and go back one step
-        sessionStorage.removeItem("bailBondFileStoreId");
-        setFormData({});
-        setIsSigned(false);
-        const newStepper = parseInt(stepper) - 1;
-        setStepper(newStepper);
-      }
-    } else if (openUploadSignatureModal) {
-      setOpenUploadSignatureModal(false);
-    }
-  };
-
-  const onSelect = useCallback((key, value) => {
+  const onSelect = (key, value) => {
     if (value?.Signature === null) {
       setFormData({});
       setIsSigned(false);
@@ -143,141 +105,127 @@ export const BailBondSignModal = ({ rowData, colData, value, onSigningComplete }
         [key]: value,
       }));
     }
-  }, []);
+  };
 
-  const uploadSignedPdf = async () => {
-    try {
-      setLoader(true);
-      const localStorageID = sessionStorage.getItem("bailBondFileStoreId");
-      const docData = {
-        file: signedDocumentUploadID || localStorageID,
-        documentType: "BailBond",
-        fileType: "application/pdf",
-      };
-
-      // Use the existing uploadDocuments function
-      const pdfFile = await uploadDocuments(docData);
-      if (pdfFile?.signedFile?.fileStoreId) {
-        // Clear ALL session storage related to bail bond
-        sessionStorage.removeItem("bailBondFileStoreId");
+  const onUploadSubmit = useCallback(async () => {
+    if (formData?.uploadSignature?.Signature?.length > 0) {
+      try {
+        setLoader(true);
+        const uploadedFileId = await uploadDocuments(formData?.uploadSignature?.Signature, tenantId);
+        // Clear session storage on successful upload, but keep search state
         sessionStorage.removeItem("bailBondStepper");
         sessionStorage.removeItem("bailBondPdf");
+        sessionStorage.removeItem("bailBondFileStoreId");
         sessionStorage.removeItem("bailBondData");
-        
-        // Reset local state
-        setStepper(0);
-        setIsSigned(false);
-        setSignedDocumentUploadID("");
-        
-        // Trigger data refresh in parent component
-        if (onSigningComplete) {
-          onSigningComplete();
-        }
-      } else {
-        // Error handling
-        console.warn("Failed to upload signed PDF");
+        sessionStorage.removeItem("bulkBailBondSelectedItem");
+        setIsSigned(true);
+        setOpenUploadSignatureModal(false);
+      } catch (error) {
+        console.log("error", error);
+        setLoader(false);
       }
-    } catch (e) {
-      console.error("ERROR IN Upload Sign PDF: ", e);
-    } finally {
       setLoader(false);
     }
-  };
+  }, [formData, uploadDocuments, tenantId, onSigningComplete]);
+
+  const handleCancel = useCallback(() => {
+    if (parseInt(stepper) === 0) {
+      setShowBulkSignModal(false);
+    } else if (parseInt(stepper) === 1) {
+      if (!openUploadSignatureModal && !isSigned) {
+        clearBailBondSessionData();
+        setFormData({});
+        setStepper(0);
+      } else if (!openUploadSignatureModal && isSigned) {
+        setIsSigned(false);
+        setFormData({});
+        setStepper(1);
+      } else if (openUploadSignatureModal) {
+        setIsSigned(false);
+        setFormData({});
+        setStepper(1);
+        setOpenUploadSignatureModal(false);
+      }
+    } else if (openUploadSignatureModal) {
+      setOpenUploadSignatureModal(false);
+    }
+  }, [stepper, isSigned, openUploadSignatureModal]);
 
   useEffect(() => {
     checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
-  }, [checkSignStatus, name, formData, uploadModalConfig, onSelect]);
+  }, [checkSignStatus, name, formData, uploadModalConfig, setIsSigned]);
 
-  const onESignClick = async () => {
+  const onESignClick = useCallback(() => {
     try {
-      // Store all necessary data before redirect
-      sessionStorage.setItem("bailBondStepper", "2");
-      
-      // Save the complete row data for modal restoration
-      if (rowData?.businessObject?.orderNotification?.id) {
-        sessionStorage.setItem("bailBondData", JSON.stringify({
-          id: rowData?.businessObject?.orderNotification?.id,
-          rowData: rowData
-        }));
-      }
-      
-      // Store PDF data if available
-      if (bailBondPdf) {
-        sessionStorage.setItem("bailBondPdf", bailBondPdf);
-      }
-      
-      // Proceed with e-sign
-      await handleEsign(name, pageModule, bailBondPdf, "BailBond");
-    } catch (error) {
-      console.error("Error in e-sign process:", error);
-    }
-  };
+      setLoader(true);
 
-  const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${bailBondPdf}`;
+      // Build the e-sign URL with proper parameters
+      const url = `${bulkSignUrl}/bailbond/sign?bailBondId=${effectiveRowData?.businessObject?.orderNotification?.id}&tenantId=${tenantId}&courtId=${courtId}`;
+
+      // Store the current state in sessionStorage before redirecting
+      sessionStorage.setItem("bailBondStepper", stepper);
+      sessionStorage.setItem("bailBondData", JSON.stringify({ selectedBailBond: effectiveRowData }));
+
+      // Redirect to the e-sign URL
+      window.open(url, "_self");
+    } catch (error) {
+      console.log("E-sign navigation error:", error);
+      setLoader(false);
+    }
+  }, [bulkSignUrl, effectiveRowData, tenantId, courtId, stepper]);
+
+  // const uri = useMemo(() => {
+  //   const id = effectiveRowData?.businessObject?.orderNotification?.id;
+  //   return id ? Urls.formatPdfViewUrlForOrderId("CREATED", id, tenantId, courtId) : "";
+  // }, [effectiveRowData, tenantId, courtId]);
 
   useEffect(() => {
-    if (stepper === 1) {
-      const bailBondId = effectiveRowData?.businessObject?.orderNotification?.orderNotificationId;
-      const tenantId = effectiveRowData?.tenantId;
-      if (bailBondId && tenantId) {
-        // Fetch PDF logic
-        (async () => {
-          try {
-            setLoader(true);
-            const pdfRes = await Digit.Utils.pdf.getPDFData("BailBond", { bailBondId, tenantId });
-            if (pdfRes?.filestoreIds?.length > 0) {
-              const pdfKey = pdfRes?.filestoreIds[0];
-              let PDF_URL = `${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${pdfKey}`;
-              setBailBondPdf(PDF_URL);
-              sessionStorage.setItem("bailBondPdf", PDF_URL);
-            } else {
-              console.log("No PDF available");
-            }
-          } catch (e) {
-            console.log("Error fetching PDF", e);
-          } finally {
-            setLoader(false);
-          }
-        })();
-      }
+    const id = effectiveRowData?.businessObject?.orderNotification?.id;
+
+    if (stepper === 1 && id) {
+      // Store data to session storage for recovery after e-sign redirect
+      sessionStorage.setItem("bailBondData", JSON.stringify({ id: id, selectedBailBond: effectiveRowData }));
+      sessionStorage.setItem("bailBondStepper", stepper.toString());
     }
-  }, [stepper, effectiveRowData]);
+  }, [effectiveRowData, stepper]);
+
+  const MemoDocViewerWrapper = useMemo(
+    () => (
+      <DocViewerWrapper
+        key={"fdsfdsf"}
+        fileStoreId={selectedBailBondFilestoreid}
+        tenantId={"kl"}
+        docWidth="100%"
+        docHeight="70vh"
+        showDownloadOption={false}
+      />
+    ),
+    [selectedBailBondFilestoreid]
+  );
 
   return (
     <div>
-      <span
-        onClick={() => {
-          setStepper(1);
-        }}
-      >
-        {value}
-      </span>
-      {stepper === 1 && (
+      {loader && <Loader />}
+      {stepper === 0 && (
         <Modal
-          headerBarEnd={<CloseBtn onClick={handleCancel} />}
+          headerBarEnd={<CloseBtn onClick={() => setShowBulkSignModal(false)} />}
           headerBarMain={<Heading label={`${value} ${t("BAIL_BOND")}`} />}
           popupStyles={{ width: "70vw" }}
-          actionCancelLabel={t("CS_COMMON_CANCEL")}
-          actionCancelOnSubmit={handleCancel}
+          actionCancelLabel={t("REJECT")}
+          actionCancelOnSubmit={() => {
+            setIsRejectModalOpen(true);
+          }}
           actionSaveLabel={t("PROCEED_TO_SIGN")}
           actionSaveOnSubmit={() => {
-            // Just move to step 2 - no redirect yet so no need for session storage
-            setStepper(2);
+            setStepper(1);
           }}
           formId="modal-action"
           headerBarMainStyle={{ height: "50px" }}
         >
-          <DocViewerWrapper
-            key={"fdsfdsf"}
-            fileStoreId={"97060b57-eea9-405c-966c-0577c52224fe"}
-            tenantId={"kl"}
-            docWidth="100%"
-            docHeight="70vh"
-            showDownloadOption={false}
-          />
+          {MemoDocViewerWrapper}
         </Modal>
       )}
-      {stepper === 2 && !openUploadSignatureModal && !isSigned && (
+      {stepper === 1 && !openUploadSignatureModal && !isSigned && (
         <Modal
           headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
           headerBarEnd={<CloseBtn onClick={handleCancel} />}
@@ -316,7 +264,7 @@ export const BailBondSignModal = ({ rowData, colData, value, onSigningComplete }
               <div className="donwload-submission">
                 <h2>{t("DOWNLOAD_ADIARY_TEXT")}</h2>
                 <AuthenticatedLink
-                  uri={uri}
+                  // uri={uri}
                   style={{ color: "#007E7E", cursor: "pointer", textDecoration: "underline" }}
                   displayFilename={"CLICK_HERE"}
                   t={t}
@@ -327,7 +275,7 @@ export const BailBondSignModal = ({ rowData, colData, value, onSigningComplete }
           </div>
         </Modal>
       )}
-      {stepper === 2 && openUploadSignatureModal && (
+      {stepper === 1 && openUploadSignatureModal && (
         <UploadSignatureModal
           t={t}
           key={name}
@@ -338,17 +286,18 @@ export const BailBondSignModal = ({ rowData, colData, value, onSigningComplete }
           formData={formData}
           onSubmit={onUploadSubmit}
           isDisabled={loader}
-          onClose={handleCancel} // Add consistent cancel handling
         />
       )}
-      {stepper === 2 && !openUploadSignatureModal && isSigned && (
+      {stepper === 1 && !openUploadSignatureModal && isSigned && (
         <Modal
           headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
           headerBarEnd={<CloseBtn onClick={handleCancel} />}
           actionCancelLabel={t("CS_COMMON_BACK")}
           actionCancelOnSubmit={handleCancel}
           actionSaveLabel={t("SUBMIT_BUTTON")}
-          actionSaveOnSubmit={uploadSignedPdf}
+          actionSaveOnSubmit={() => {
+            setStepper(2);
+          }}
           className="add-signature-modal"
         >
           <div className="add-signature-main-div">
@@ -391,6 +340,47 @@ export const BailBondSignModal = ({ rowData, colData, value, onSigningComplete }
                 {t("SIGNED")}
               </h2>
             </div>
+          </div>
+        </Modal>
+      )}
+      {stepper === 2 && (
+        <Modal
+          actionCancelLabel={t("DOWNLOAD_ORDER")}
+          actionCancelOnSubmit={() => {}}
+          actionSaveLabel={"Close"}
+          actionSaveOnSubmit={() => setShowBulkSignModal(false)}
+          className={"orders-success-modal"}
+          cancelButtonBody={<FileDownloadIcon></FileDownloadIcon>}
+        >
+          <div style={{ padding: "8px 24px" }}>
+            <div>
+              <Banner
+                whichSvg={"tick"}
+                successful={true}
+                message={t("You have successfully signed the Bail Bonds.")}
+                headerStyles={{ fontSize: "32px" }}
+                style={{ minWidth: "100%", marginTop: "10px" }}
+              ></Banner>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {isRejectModalOpen && (
+        <Modal
+          headerBarMain={<Heading label={t("REJECT_BAIL_BOND")} />}
+          headerBarEnd={<CloseBtn onClick={() => setIsRejectModalOpen(false)} />}
+          actionCancelLabel={t("CS_COMMON_CANCEL")}
+          actionCancelOnSubmit={() => setIsRejectModalOpen(false)}
+          actionSaveLabel={t("REJECT")}
+          actionSaveOnSubmit={() => {
+            setIsRejectModalOpen(false);
+            setShowBulkSignModal(false);
+          }}
+          className="reject-modal"
+        >
+          <div className="reject-modal-content">
+            <p>{t("REJECT_BAIL_BOND_CONFIRMATION")}</p>
           </div>
         </Modal>
       )}

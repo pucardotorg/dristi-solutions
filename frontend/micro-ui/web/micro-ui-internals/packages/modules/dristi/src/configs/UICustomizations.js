@@ -1892,6 +1892,7 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           // ...requestCriteria.body,
+
           SearchCriteria: {
             ...requestCriteria.body.SearchCriteria,
             moduleSearchCriteria: {

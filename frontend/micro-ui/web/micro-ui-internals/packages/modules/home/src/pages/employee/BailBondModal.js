@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { useHistory } from "react-router-dom";
 import { Loader, CloseSvg } from "@egovernments/digit-ui-react-components";
+import { FileDownloadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 
 const CloseBtn = (props) => {
   return (
@@ -27,14 +28,18 @@ const Heading = (props) => {
 };
 
 const BailBondModal = ({ row }) => {
+  const queryStrings = Digit.Hooks.useQueryParams();
+
   const { t } = useTranslation();
   const history = useHistory();
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const [loader, setLoader] = useState(false);
   const [toastMsg, setToastMsg] = useState(null);
-  const [showBailModal, setShowBailModal] = useState(false);
+  const [showBailModal, setShowBailModal] = useState(queryStrings?.filingNumber ? true : false);
   const [showBailConfirmationModal, setShowBailConfirmationModal] = useState(false);
+  const [isDocviewOpened, setIsDocViewOpened] = useState(false);
+  const selectedBailBondFilestoreid = "97060b57-eea9-405c-966c-0577c52224fe";
 
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
@@ -43,8 +48,14 @@ const BailBondModal = ({ row }) => {
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
   const today = new Date();
-
+  const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
+  const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
+  const orderType = "WARRANT";
   const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+  const filingNumber = row?.filingNumber || queryStrings?.filingNumber;
+  const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
+
+  console.log(queryStrings, "queryStrings");
 
   const userType = useMemo(() => {
     if (!userInfo) return "employee";
@@ -63,6 +74,7 @@ const BailBondModal = ({ row }) => {
       setToastMsg(null);
     }, duration);
   };
+  console.log(row, "bond");
 
   const bailBonds = [
     {
@@ -93,10 +105,70 @@ const BailBondModal = ({ row }) => {
   ];
   console.log(row);
 
+  const createOrder = async () => {
+    const reqbody = {
+      order: {
+        createdDate: null,
+        tenantId,
+        // cnrNumber,
+        filingNumber,
+        statuteSection: {
+          tenantId,
+        },
+        orderTitle: orderType,
+        orderCategory: "INTERMEDIATE",
+        orderType,
+        status: "",
+        isActive: true,
+        workflow: {
+          action: OrderWorkflowAction.SAVE_DRAFT,
+          comments: "Creating order",
+          assignes: null,
+          rating: null,
+          documents: [{}],
+        },
+        additionalDetails: {
+          formdata: {
+            orderType: {
+              code: "WARRANT",
+              name: "ORDER_TYPE_WARRANT",
+              type: "WARRANT",
+              isactive: true,
+            },
+            "Order Type": {
+              code: "WARRANT",
+              name: "ORDER_TYPE_WARRANT",
+              type: "WARRANT",
+              isactive: true,
+            },
+          },
+        },
+        documents: [],
+      },
+    };
+    setLoader(true);
+    try {
+      const res = await ordersService.createOrder(reqbody, { tenantId });
+      //need to check
+      if (queryStrings?.filingNumber) {
+        history.replace(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
+      }
+      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${res?.order?.orderNumber}`);
+      setShowBailModal(false);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoader(false);
+    }
+    return;
+  };
+
   return (
     <React.Fragment>
       {" "}
-      <div onClick={() => setShowBailModal(true)}>{row?.caseTitle}</div>
+      <div style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowBailModal(true)}>
+        {row?.caseTitle}
+      </div>
       {loader && (
         <div
           style={{
@@ -121,7 +193,9 @@ const BailBondModal = ({ row }) => {
           headerBarEnd={
             <CloseBtn
               onClick={() => {
-                setShowBailModal(false);
+                if (queryStrings?.filingNumber) {
+                  history.goBack();
+                } else setShowBailModal(false);
               }}
             />
           }
@@ -134,7 +208,8 @@ const BailBondModal = ({ row }) => {
           actionCancelStyle={{ width: "50%" }}
           actionCancelLabel={t("Issue Warrant")}
           actionCancelOnSubmit={() => {
-            setShowBailModal(false);
+            // setShowBailModal(false);
+            createOrder();
           }}
           formId="modal-action"
           headerBarMain={<Heading label={t("View Bail Bonds")} />}
@@ -175,7 +250,7 @@ const BailBondModal = ({ row }) => {
                       </div>
                       <div>
                         {" "}
-                        <span style={{ fontWeight: "600", fontSize: "14px" }}>Litigant :</span> {bond?.litigant}
+                        <span style={{ fontWeight: "600", fontSize: "14px" }}>Litigant :</span> {bond?.advocate}
                       </div>
                       <div>
                         <span style={{ fontWeight: "600", fontSize: "14px" }}>Advocate: </span>
@@ -197,7 +272,7 @@ const BailBondModal = ({ row }) => {
                           fontSize: "16px",
                           fontFamily: "Roboto",
                         }}
-                        onClick={() => console.log("gfgdf")}
+                        onClick={() => setIsDocViewOpened(true)}
                       >
                         View
                       </button>
@@ -224,6 +299,32 @@ const BailBondModal = ({ row }) => {
           </div>{" "}
         </Modal>
       )}
+      {showBailModal && isDocviewOpened && (
+        <Modal
+          headerBarEnd={
+            <CloseBtn
+              onClick={() => {
+                setIsDocViewOpened(false);
+              }}
+            />
+          }
+          style={{ width: "50%" }}
+          formId="modal-action"
+          headerBarMain={true}
+          className="upload-signature-modal"
+          submitTextClassName="upload-signature-button"
+          popupModuleActionBarStyles={{ padding: "0 8px 8px 8px" }}
+        >
+          <DocViewerWrapper
+            key={"fdsfdsf"}
+            fileStoreId={selectedBailBondFilestoreid}
+            tenantId={"kl"}
+            docWidth="100%"
+            docHeight="70vh"
+            showDownloadOption={false}
+          />
+        </Modal>
+      )}
       {showBailConfirmationModal && (
         <Modal
           headerBarEnd={
@@ -236,6 +337,9 @@ const BailBondModal = ({ row }) => {
           }
           actionSaveLabel={t("CS_COMMON_CONFIRM")}
           actionSaveOnSubmit={() => {
+            if (queryStrings?.filingNumber) history.goBack();
+            else setShowBailConfirmationModal(false);
+
             console.log("actionSaveOnSubmit");
           }}
           // style={{ width: "50%" }}
