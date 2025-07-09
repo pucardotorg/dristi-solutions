@@ -132,6 +132,9 @@ components:
           enum:
             - ST
             - CMP
+        bailId:
+          type: string
+          description: Id gen formatted bail id.
       required:
         - tenantId
         - caseId
