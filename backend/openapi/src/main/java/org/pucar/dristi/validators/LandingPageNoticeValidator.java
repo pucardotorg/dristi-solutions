@@ -30,4 +30,26 @@ public class LandingPageNoticeValidator {
         }
     }
 
+    public void validateNoticeUpdate(LandingPageNoticeRequest landingPageNoticeRequest) {
+        LandingPageNotice landingPageNotice = landingPageNoticeRequest.getLandingPageNotice();
+
+        RequestInfo requestInfo = landingPageNoticeRequest.getRequestInfo();
+
+        if (ObjectUtils.isEmpty(landingPageNotice)) {
+            throw new CustomException("VALIDATION_EXCEPTION", "landingPageNotice can not be null");
+        }
+
+        if (requestInfo == null || requestInfo.getUserInfo() == null) {
+            throw new CustomException("VALIDATION_EXCEPTION", "request Info or user info can not be null");
+        }
+
+        if (!requestInfo.getUserInfo().getType().equals("EMPLOYEE")) {
+            throw new CustomException("VALIDATION_EXCEPTION", "user must be employee");
+        }
+
+        if (ObjectUtils.isEmpty(landingPageNotice.getId())) {
+            throw new CustomException("VALIDATION_EXCEPTION", "id can not be null");
+        }
+    }
+
 }

@@ -7,8 +7,11 @@ import org.pucar.dristi.repository.LandingPageNoticeRepository;
 import org.pucar.dristi.validators.LandingPageNoticeValidator;
 import org.pucar.dristi.web.models.landingpagenotices.LandingPageNotice;
 import org.pucar.dristi.web.models.landingpagenotices.LandingPageNoticeRequest;
+import org.pucar.dristi.web.models.landingpagenotices.LandingPageNoticeSearchCriteria;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @Slf4j
@@ -48,4 +51,41 @@ public class LandingPageNoticeService {
         }
     }
 
+    public LandingPageNotice updateNotices(LandingPageNoticeRequest landingPageNoticeRequest) {
+        try {
+            log.info("operation = updateNotices, status :: IN_PROGRESS {}", landingPageNoticeRequest);
+
+            landingPageNoticeValidator.validateNoticeUpdate(landingPageNoticeRequest);
+
+            landingPageNoticeEnrichment.enrichUpdateNotice(landingPageNoticeRequest);
+
+            LandingPageNotice landingPageNotice = landingPageNoticeRequest.getLandingPageNotice();
+
+            // save acts as upsert in JPA
+            landingPageNoticeRepository.save(landingPageNotice);
+            log.info("operation = updateNotices, status :: COMPLETED {}", landingPageNoticeRequest);
+            return landingPageNotice;
+        } catch (CustomException e) {
+            log.error("Error while updating notices: {}", e.getMessage(), e);
+            throw new CustomException("LANDING_PAGE_NOTICE_SERVICE_EXCEPTION", "Error occurred while updating notices");
+        }
+    }
+
+    public List<LandingPageNotice> searchNoticesPaginated(LandingPageNoticeSearchCriteria searchCriteria) {
+        int limit = searchCriteria.getLimit() != null ? searchCriteria.getLimit() : 10;
+        int offset = searchCriteria.getOffset() != null ? searchCriteria.getOffset() : 0;
+        if (searchCriteria.getSearchText() == null || searchCriteria.getSearchText().isEmpty()) {
+            return landingPageNoticeRepository.findAllWithPagination(limit, offset);
+        } else {
+            return landingPageNoticeRepository.findByTitleContainingIgnoreCaseWithPagination(searchCriteria.getSearchText(), limit, offset);
+        }
+    }
+
+    public long countAll() {
+        return landingPageNoticeRepository.count();
+    }
+
+    public long countByTitle(String title) {
+        return landingPageNoticeRepository.countByTitleContainingIgnoreCase(title);
+    }
 }

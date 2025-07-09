@@ -46,4 +46,15 @@ public class LandingPageNoticeEnrichment {
 
     }
 
+    public void enrichUpdateNotice(LandingPageNoticeRequest landingPageNoticeRequest) {
+
+        LandingPageNotice landingPageNotice = landingPageNoticeRequest.getLandingPageNotice();
+        RequestInfo requestInfo = landingPageNoticeRequest.getRequestInfo();
+        User user = requestInfo.getUserInfo();
+
+        landingPageNotice.setLastModifiedBy(user.getUuid());
+        landingPageNotice.setLastModifiedTime(landingPageNoticeUtil.getCurrentTimeInMilliSec());
+
+    }
+
 }
