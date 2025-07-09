@@ -38,8 +38,8 @@ public class LandingPageNoticeEnrichment {
             landingPageNotice.setLastModifiedTime(landingPageNoticeUtil.getCurrentTimeInMilliSec());
 
         } catch (CustomException e) {
-            log.error("Error occurred while enriching diary entry");
-            throw new CustomException("ENRICHMENT_EXCEPTION", "Error during enriching diary entry");
+            log.error("Error occurred while enriching landing page notice: {}", e.getMessage(), e);
+            throw new CustomException("ENRICHMENT_EXCEPTION", "Error during enriching landing page notice");
         }
 
         log.info("operation = enrichCreateNotice ,  result = SUCCESS , landingPageNoticeRequest : {} ", landingPageNoticeRequest);
