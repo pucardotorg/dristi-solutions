@@ -32,7 +32,7 @@ public class LandingPageNoticeService {
             log.info("operation = addNotices, status :: IN_PROGRESS {}", landingPageNoticeRequest);
 
             // validate request
-            landingPageNoticeValidator.validateSaveDiaryEntry(landingPageNoticeRequest);
+            landingPageNoticeValidator.validateNoticeCreate(landingPageNoticeRequest);
 
             // enrich request
             landingPageNoticeEnrichment.enrichCreateNotice(landingPageNoticeRequest);
