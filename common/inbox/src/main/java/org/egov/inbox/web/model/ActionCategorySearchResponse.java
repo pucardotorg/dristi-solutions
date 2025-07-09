@@ -26,4 +26,7 @@ public class ActionCategorySearchResponse {
     @JsonProperty("registerCasesData")
     private Criteria registerCasesData;
 
+    @JsonProperty("bailBondData")
+    private Criteria bailBondData;
+
 }
