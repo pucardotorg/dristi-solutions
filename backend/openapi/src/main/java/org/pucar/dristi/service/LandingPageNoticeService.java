@@ -7,8 +7,14 @@ import org.pucar.dristi.repository.LandingPageNoticeRepository;
 import org.pucar.dristi.validators.LandingPageNoticeValidator;
 import org.pucar.dristi.web.models.landingpagenotices.LandingPageNotice;
 import org.pucar.dristi.web.models.landingpagenotices.LandingPageNoticeRequest;
+import org.pucar.dristi.web.models.landingpagenotices.LandingPageNoticeSearchCriteria;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @Slf4j
@@ -48,4 +54,45 @@ public class LandingPageNoticeService {
         }
     }
 
+    public LandingPageNotice updateNotices(LandingPageNoticeRequest landingPageNoticeRequest) {
+        try {
+            log.info("operation = updateNotices, status :: IN_PROGRESS {}", landingPageNoticeRequest);
+            landingPageNoticeValidator.validateUpdateDiaryEntry(landingPageNoticeRequest);
+            landingPageNoticeEnrichment.enrichUpdateNotice(landingPageNoticeRequest);
+            LandingPageNotice landingPageNotice = landingPageNoticeRequest.getLandingPageNotice();
+            landingPageNoticeRepository.save(landingPageNotice); // save acts as upsert in JPA
+            log.info("operation = updateNotices, status :: COMPLETED {}", landingPageNoticeRequest);
+            return landingPageNotice;
+        } catch (CustomException e) {
+            log.error("Error while updating notices: {}", e.getMessage(), e);
+            throw new CustomException("LANDING_PAGE_NOTICE_SERVICE_EXCEPTION", "Error occurred while updating notices");
+        }
+    }
+
+    public List<LandingPageNotice> searchNotices(LandingPageNoticeSearchCriteria searchCriteria) {
+        log.info("operation = searchNotices, status :: IN_PROGRESS {}", searchCriteria);
+        if (searchCriteria.getSearchText() == null || searchCriteria.getSearchText().isEmpty()) {
+            return landingPageNoticeRepository.findAll();
+        } else {
+            return landingPageNoticeRepository.findByTitleContainingIgnoreCase(searchCriteria.getSearchText());
+        }
+    }
+
+    public List<LandingPageNotice> searchNoticesPaginated(LandingPageNoticeSearchCriteria searchCriteria) {
+        int limit = searchCriteria.getLimit() != null ? searchCriteria.getLimit() : 10;
+        int offset = searchCriteria.getOffset() != null ? searchCriteria.getOffset() : 0;
+        if (searchCriteria.getSearchText() == null || searchCriteria.getSearchText().isEmpty()) {
+            return landingPageNoticeRepository.findAllWithPagination(limit, offset);
+        } else {
+            return landingPageNoticeRepository.findByTitleContainingIgnoreCaseWithPagination(searchCriteria.getSearchText(), limit, offset);
+        }
+    }
+
+    public int countAll() {
+        return (int) landingPageNoticeRepository.count();
+    }
+
+    public int countByTitle(String title) {
+        return landingPageNoticeRepository.countByTitleContainingIgnoreCase(title);
+    }
 }

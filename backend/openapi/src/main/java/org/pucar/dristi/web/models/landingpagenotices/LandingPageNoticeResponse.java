@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import org.egov.common.contract.response.ResponseInfo;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.List;
+
 @Validated
 @Data
 @AllArgsConstructor
@@ -20,5 +22,17 @@ public class LandingPageNoticeResponse {
 
     @JsonProperty("LandingPageNotice")
     private LandingPageNotice landingPageNotice;
+
+    @JsonProperty("LandingPageNotices")
+    private List<LandingPageNotice> landingPageNotices;
+
+    @JsonProperty("totalCount")
+    private Integer totalCount;
+
+    @JsonProperty("page")
+    private Integer page;
+
+    @JsonProperty("size")
+    private Integer size;
 
 }
