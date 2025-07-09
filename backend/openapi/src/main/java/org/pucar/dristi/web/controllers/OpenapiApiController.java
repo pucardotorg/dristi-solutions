@@ -108,6 +108,14 @@ public class OpenapiApiController {
     @GetMapping("/openapi/v1/file/{tenantId}/{orderId}")
     public ResponseEntity<Resource> getFile(@PathVariable("tenantId") String tenantId, @PathVariable("orderId") String orderId) {
         String fileStoreId = openApiService.getOrderByIdFromIndex(tenantId,orderId);
-        return fileStoreUtil.getFilesByFileStore(fileStoreId, tenantId);
+        return fileStoreUtil.getFilesByFileStore(fileStoreId, tenantId, null);
+    }
+
+    @PostMapping("/openapi/v1/landing_page/file")
+    public ResponseEntity<Resource> getFiles(@RequestBody @Valid LandingPageFileRequest landingPageFileRequest) {
+        String tenantId = landingPageFileRequest.getTenantId();
+        String fileStoreId = landingPageFileRequest.getFileStoreId();
+        String moduleName = landingPageFileRequest.getModuleName();
+        return fileStoreUtil.getFilesByFileStore(fileStoreId, tenantId, moduleName);
     }
 }
