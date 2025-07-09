@@ -12,14 +12,14 @@ import org.springframework.util.ObjectUtils;
 @Slf4j
 public class LandingPageNoticeValidator {
 
-    public void validateSaveDiaryEntry(LandingPageNoticeRequest landingPageNoticeRequest) {
+    public void validateNoticeCreate(LandingPageNoticeRequest landingPageNoticeRequest) {
 
         LandingPageNotice landingPageNotice = landingPageNoticeRequest.getLandingPageNotice();
 
         RequestInfo requestInfo = landingPageNoticeRequest.getRequestInfo();
 
         if (ObjectUtils.isEmpty(landingPageNotice)) {
-            throw new CustomException("VALIDATION_EXCEPTION", "case diary entry is mandatory to create an entry");
+            throw new CustomException("VALIDATION_EXCEPTION", "landingPageNotice can not be null");
         }
         if (requestInfo == null || requestInfo.getUserInfo() == null) {
             throw new CustomException("VALIDATION_EXCEPTION", "request Info or user info can not be null");
