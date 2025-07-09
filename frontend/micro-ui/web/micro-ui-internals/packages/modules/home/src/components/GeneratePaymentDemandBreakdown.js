@@ -283,7 +283,7 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
                 <div className="payment-due-text" style={{ fontSize: "18px" }}>
                   {`${t("CS_DUE_PAYMENT")} `}
                   <span style={{ fontWeight: 700 }}>Rs {totalAmount}/-.</span>
-                  <p style={{ margin: 0 }}> {` ${t("PAYMENT_ADDITIONAL_INFO")}: ${comments ? comments : "-"}`}</p>
+                  {comments && <p style={{ margin: 0 }}> {` ${t("PAYMENT_ADDITIONAL_INFO")}: ${comments}`}</p>}
                 </div>
                 <div
                   className="payment-calculator-wrapper"
@@ -339,7 +339,7 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
                       <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                         <span className="learn-more-text" style={{ color: "#3D3C3C" }}>
                           {t("PAYMENT_SUBTEXT")}{" "}
-                          <span class="tooltip">
+                          {/* <span class="tooltip">
                             <span style={{ textDecoration: "underline", fontWeight: "bold" }}>{t("LEARN_MORE")}</span>
                             <span
                               class="tooltip-text"
@@ -347,7 +347,7 @@ function GeneratePaymentDemandBreakdown({ setShowModal, header, subHeader }) {
                             >
                               {t("PAYMENT_SUBTEXT_TOOLTIP")}
                             </span>
-                          </span>
+                          </span> */}
                         </span>
                       </div>,
                     ]}
