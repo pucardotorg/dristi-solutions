@@ -60,4 +60,5 @@ public class ServiceConstants {
     public static final String OPENAPI_MODULE_NAME = "Openapi Service";
 
     public static final String ERROR_WHILE_FETCHING_FROM_ADVOCATE = "ERROR_WHILE_FETCHING_FROM_ADVOCATE";
+    public static final String ERROR_WHILE_FETCHING_FROM_BAIL = "ERROR_WHILE_FETCHING_FROM_BAIL";
 }

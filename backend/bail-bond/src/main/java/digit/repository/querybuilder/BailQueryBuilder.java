@@ -1,13 +1,11 @@
 package digit.repository.querybuilder;
 
-import digit.web.models.Bail;
 import digit.web.models.BailCriteria;
 import digit.web.models.Pagination;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Component;
 import java.sql.Types;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,6 +21,7 @@ public class BailQueryBuilder {
 
     public String getBailSearchQuery(List<Object> preparedStmtList, List<BailCriteria> criteriaList, List<Integer> preparedStmtArgList) {
         StringBuilder query = new StringBuilder(BASE_BAIL_QUERY);
+
         for (BailCriteria criteria : criteriaList) {
             addCriteriaString(criteria.getId(), query, " AND id = ?", preparedStmtList, preparedStmtArgList, criteria.getId());
             addCriteriaString(criteria.getTenantId(), query, " AND tenantId = ?", preparedStmtList, preparedStmtArgList, criteria.getTenantId());
@@ -32,10 +31,20 @@ public class BailQueryBuilder {
             addCriteriaLong(criteria.getStartDate(), query, " AND startDate >= ?", preparedStmtList, preparedStmtArgList);
             addCriteriaLong(criteria.getEndDate(), query, " AND endDate <= ?", preparedStmtList, preparedStmtArgList);
             addCriteriaBoolean(criteria.getIsActive(), query, " AND isActive = ?", preparedStmtList, preparedStmtArgList);
-            addCriteriaString(criteria.getAccusedId(), query, " AND accusedId = ?", preparedStmtList, preparedStmtArgList, criteria.getAccusedId());
-            addCriteriaString(criteria.getAdvocateId(), query, " AND advocateId = ?", preparedStmtList, preparedStmtArgList, criteria.getAdvocateId());
-            addCriteriaSuretyIds(criteria.getSuretyIds(), query, " AND suretyIds && ? ", preparedStmtList, preparedStmtArgList);
+
+            addCriteriaString(criteria.getLitigantId(), query, " AND litigantId = ?", preparedStmtList, preparedStmtArgList, criteria.getLitigantId());
+            addCriteriaString(criteria.getLitigantName(), query, " AND litigantName = ?", preparedStmtList, preparedStmtArgList, criteria.getLitigantName());
+            addCriteriaString(criteria.getLitigantFatherName(), query, " AND litigantFatherName = ?", preparedStmtList, preparedStmtArgList, criteria.getLitigantFatherName());
+            addCriteriaBoolean(criteria.getLitigantSigned(), query, " AND litigantSigned = ?", preparedStmtList, preparedStmtArgList);
+
+            addCriteriaString(criteria.getCourtId(), query, " AND courtId = ?", preparedStmtList, preparedStmtArgList, criteria.getCourtId());
+            addCriteriaString(criteria.getCaseTitle(), query, " AND caseTitle = ?", preparedStmtList, preparedStmtArgList, criteria.getCaseTitle());
+            addCriteriaString(criteria.getCnrNumber(), query, " AND cnrNumber = ?", preparedStmtList, preparedStmtArgList, criteria.getCnrNumber());
+            addCriteriaString(criteria.getFilingNumber(), query, " AND filingNumber = ?", preparedStmtList, preparedStmtArgList, criteria.getFilingNumber());
+            addCriteriaString(criteria.getCaseType(), query, " AND caseType = ?", preparedStmtList, preparedStmtArgList, criteria.getCaseType());
+            addCriteriaString(criteria.getBailId(), query, " AND bailId = ?", preparedStmtList, preparedStmtArgList, criteria.getBailId());
         }
+
         return query.toString();
     }
 
@@ -46,7 +55,6 @@ public class BailQueryBuilder {
             preparedStmtArgList.add(Types.VARCHAR);
         }
     }
-
     void addCriteriaDouble(Double value, StringBuilder query, String clause, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         if (value != null) {
             query.append(clause);
@@ -54,7 +62,6 @@ public class BailQueryBuilder {
             preparedStmtArgList.add(Types.DOUBLE);
         }
     }
-
     void addCriteriaLong(Long value, StringBuilder query, String clause, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         if (value != null) {
             query.append(clause);
@@ -62,20 +69,11 @@ public class BailQueryBuilder {
             preparedStmtArgList.add(Types.BIGINT);
         }
     }
-
     void addCriteriaBoolean(Boolean value, StringBuilder query, String clause, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         if (value != null) {
             query.append(clause);
             preparedStmtList.add(value);
             preparedStmtArgList.add(Types.BOOLEAN);
-        }
-    }
-
-    void addCriteriaSuretyIds(List<String> suretyIds, StringBuilder query, String clause, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
-        if (suretyIds != null && !suretyIds.isEmpty()) {
-            query.append(clause);
-            preparedStmtList.add(suretyIds.toArray(new String[0]));
-            preparedStmtArgList.add(Types.ARRAY);
         }
     }
 
@@ -118,5 +116,3 @@ public class BailQueryBuilder {
         }
     }
 }
-
-

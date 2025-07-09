@@ -1,11 +1,9 @@
 package digit.validators;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.web.models.*;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
-import digit.config.Configuration;
 import digit.repository.BailRepository;
 import digit.service.IndividualService;
 import digit.util.CaseUtil;
@@ -39,6 +37,7 @@ public class BailRegistrationValidator {
     }
 
     /**
+     * Validates the bail registration request as per the new Bail model.
      * @param bailRequest bail application request
      * @throws CustomException VALIDATION_EXCEPTION -> if tenantId or caseId not present
      *                         ILLEGAL_ARGUMENT_EXCEPTION_CODE-> if individualId doesn't exist
@@ -50,7 +49,7 @@ public class BailRegistrationValidator {
         // Validate userInfo and tenantId
         baseValidations(requestInfo);
 
-        // Validate accusedId, advocateId, suretyIds
+        // Validate litigantId, sureties
         validateIndividualExistence(requestInfo, bail);
 
         // Validate case existence
@@ -65,19 +64,29 @@ public class BailRegistrationValidator {
             throw new CustomException(VALIDATION_EXCEPTION, "User info not found!!!");
     }
 
+
     private void validateIndividualExistence(RequestInfo requestInfo, Bail bail) {
-        if (ObjectUtils.isEmpty(bail.getAccusedId()))
-            throw new CustomException(ILLEGAL_ARGUMENT_EXCEPTION_CODE, "accusedId is mandatory for bail");
-        if (!individualService.searchIndividual(requestInfo, bail.getAccusedId(), new HashMap<>()))
-            throw new CustomException(INDIVIDUAL_NOT_FOUND, "Accused not found or does not exist. ID: " + bail.getAccusedId());
+        if (ObjectUtils.isEmpty(bail.getLitigantId()))
+            throw new CustomException(ILLEGAL_ARGUMENT_EXCEPTION_CODE, "litigantId is mandatory for bail");
+        if (!individualService.searchIndividual(requestInfo, bail.getLitigantId(), new HashMap<>()))
+            throw new CustomException(INDIVIDUAL_NOT_FOUND, "Litigant not found or does not exist. ID: " + bail.getLitigantId());
 
-        if (!ObjectUtils.isEmpty(bail.getAdvocateId())) {
-            if (!individualService.searchIndividual(requestInfo, bail.getAdvocateId(), new HashMap<>()))
-                throw new CustomException(INDIVIDUAL_NOT_FOUND, "Advocate not found or does not exist. ID: " + bail.getAdvocateId());
+        if (bail.getSureties() != null && !bail.getSureties().isEmpty()) {
+            for (Surety surety : bail.getSureties()) {
+                if (surety.getTenantId() == null || surety.getTenantId().isEmpty()) {
+                    throw new CustomException(ILLEGAL_ARGUMENT_EXCEPTION_CODE, "Surety tenantId is mandatory");
+                }
+                if (surety.getName() == null || surety.getName().isEmpty()) {
+                    throw new CustomException(ILLEGAL_ARGUMENT_EXCEPTION_CODE, "Surety name is mandatory");
+                }
+                if (surety.getMobileNumber() == null || surety.getMobileNumber().isEmpty()) {
+                    throw new CustomException(ILLEGAL_ARGUMENT_EXCEPTION_CODE, "Surety mobileNumber is mandatory");
+                }
+            }
         }
-
-        if (bail.getSuretyIds() != null && !bail.getSuretyIds().isEmpty()) {
-            // TODO:Validate suretyIds using Suretyutil
+        else
+        {
+            throw new CustomException(EMPTY_SURETY_ERROR, "Sureties can't be null or empty");
         }
     }
 
@@ -109,6 +118,7 @@ public class BailRegistrationValidator {
     }
 
     /**
+     * Validates the existence of a bail record.
      * @param bail bail details
      * @throws CustomException VALIDATION_EXCEPTION -> if bail is not present
      */
@@ -131,10 +141,6 @@ public class BailRegistrationValidator {
         }
     }
 
-
-
-
-
     public CaseExistsRequest createCaseExistsRequest(RequestInfo requestInfo, Bail bail) {
         CaseExistsRequest caseExistsRequest = new CaseExistsRequest();
         caseExistsRequest.setRequestInfo(requestInfo);
@@ -146,4 +152,3 @@ public class BailRegistrationValidator {
         return caseExistsRequest;
     }
 }
-

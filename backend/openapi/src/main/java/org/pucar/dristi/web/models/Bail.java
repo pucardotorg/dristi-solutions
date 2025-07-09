@@ -1,8 +1,9 @@
-package digit.web.models;
+package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
+import lombok.Data;
 import org.egov.common.contract.models.AuditDetails;
 import org.springframework.validation.annotation.Validated;
 
@@ -58,8 +59,6 @@ public class Bail {
 
     @JsonProperty("litigantSigned")
     private Boolean litigantSigned;
-
-    //Todo: If litigantMobileNumber is needed
 
     @JsonProperty("sureties")
     @Valid
@@ -118,3 +117,4 @@ public class Bail {
         return this;
     }
 }
+

@@ -1,10 +1,16 @@
-package digit.web.models;
+package org.pucar.dristi.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
+import java.util.List;
 
+@Validated
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -12,55 +18,33 @@ import lombok.*;
 public class BailCriteria {
     @JsonProperty("id")
     private String id;
-
     @JsonProperty("tenantId")
     @NotNull
     private String tenantId;
-
     @JsonProperty("caseId")
+    @NotNull
     private String caseId;
-
     @JsonProperty("bailAmount")
     private Double bailAmount;
-
     @JsonProperty("bailType")
     private String bailType;
-
     @JsonProperty("startDate")
+    @Valid
     private Long startDate;
-
     @JsonProperty("endDate")
+    @Valid
     private Long endDate;
-
     @JsonProperty("isActive")
     private Boolean isActive;
+    @JsonProperty("accusedId")
+    private String accusedId;
+    @JsonProperty("advocateId")
+    private String advocateId;
 
-    @JsonProperty("litigantId")
-    private String litigantId;
-
-    @JsonProperty("litigantName")
-    private String litigantName;
-
-    @JsonProperty("litigantFatherName")
-    private String litigantFatherName;
-
-    @JsonProperty("litigantSigned")
-    private Boolean litigantSigned;
-
-    @JsonProperty("courtId")
-    private String courtId;
-
-    @JsonProperty("caseTitle")
-    private String caseTitle;
-
-    @JsonProperty("cnrNumber")
-    private String cnrNumber;
-
-    @JsonProperty("filingNumber")
-    private String filingNumber;
-
-    @JsonProperty("caseType")
-    private String caseType;
+    @JsonProperty("mobileNumber")
+    private String mobileNumber;
+    @JsonProperty("suretyIds")
+    private List<String> suretyIds;
 
     @JsonProperty("bailId")
     private String bailId;

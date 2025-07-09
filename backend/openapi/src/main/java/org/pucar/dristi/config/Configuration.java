@@ -141,4 +141,20 @@ public class Configuration {
 
     @Value("${app.zone.id}")
     private String zoneId;
+
+    // Bail and Surety service configs
+    @Value("${egov.bail.service.host}")
+    private String bailServiceHost;
+    @Value("${egov.bail.service.search.endpoint}")
+    private String bailServiceSearchEndpoint;
+    @Value("${egov.surety.service.host}")
+    private String suretyServiceHost;
+    @Value("${egov.surety.service.search.endpoint}")
+    private String suretyServiceSearchEndpoint;
+
+    @Value("${esign.service.host}")
+    private String eSignHost;
+
+    @Value("${esign.service.endpoint}")
+    private String eSignEndpoint;
 }

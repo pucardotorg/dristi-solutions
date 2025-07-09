@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -99,6 +100,32 @@ public class V1ApiController {
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
         BailResponse bailResponse = BailResponse.builder().bail(bail).responseInfo(responseInfo).build();
         return new ResponseEntity<>(bailResponse, HttpStatus.OK);
+    }
+
+    @PostMapping("/v1/_getBailsToSign")
+    public ResponseEntity<BailsToSignResponse> getBailsToSign(
+            @Parameter(in = ParameterIn.DEFAULT, required = true, schema = @Schema())
+            @Valid @RequestBody BailsToSignRequest request) {
+
+        List<BailToSign>  bailToSignList = bailService.createBailToSignRequest(request);
+        BailsToSignResponse response = BailsToSignResponse.builder()
+                .responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true))
+                .bailList(bailToSignList)
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping("/v1/_updateSignedBails")
+    public ResponseEntity<UpdateSignedBailResponse> updateSignedBails(
+            @Parameter(in = ParameterIn.DEFAULT, required = true, schema = @Schema())
+            @Valid @RequestBody UpdateSignedBailRequest request) {
+
+        List<Bail> bails = bailService.updateBailWithSignDoc(request);
+        UpdateSignedBailResponse response = UpdateSignedBailResponse.builder()
+                .bails(bails)
+                .responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true))
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
 }

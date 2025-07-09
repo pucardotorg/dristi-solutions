@@ -1,6 +1,7 @@
 package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -11,9 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
-import org.pucar.dristi.util.AdvocateUtil;
-import org.pucar.dristi.util.DateUtil;
-import org.pucar.dristi.util.ResponseInfoFactory;
+import org.pucar.dristi.util.*;
 import org.pucar.dristi.web.models.*;
 
 import java.time.LocalDate;
@@ -25,7 +24,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-import org.pucar.dristi.util.InboxUtil;
 import org.pucar.dristi.web.models.inbox.InboxRequest;
 import org.pucar.dristi.web.models.inbox.OrderBy;
 import org.pucar.dristi.web.models.inbox.ProcessInstanceSearchCriteria;
@@ -60,6 +58,11 @@ public class OpenApiServiceTest {
     private ResponseInfoFactory responseInfoFactory;
 
     private static final String TENANT_ID = "tenant-1";
+    @Mock
+    private BailUtil bailUtil;
+
+    @Mock
+    private ESignUtil eSignUtil;
 
     @BeforeEach
     public void setup() {
@@ -882,6 +885,84 @@ public class OpenApiServiceTest {
         criteria.setLitigantCriteria(null);
         return criteria;
     }
+
+    @Test
+    void getBailByPartyMobile_ReturnsBail_WhenMobileMatches() {
+        String tenantId = "tenant-1";
+        String bailId = "bail-123";
+        String mobile = "9999999999";
+        Surety surety = new Surety();
+        surety.setMobileNumber(mobile);
+        Bail bail = new Bail();
+        bail.setSureties(List.of(surety));
+        BailListResponse bailListResponse = new BailListResponse(null, 1, List.of(bail));
+        when(bailUtil.fetchBails(any())).thenReturn(bailListResponse);
+
+        BailListResponse response = openApiService.getBailByPartyMobile(tenantId, bailId, mobile);
+
+        assertEquals(1, response.getTotalCount());
+        assertFalse(response.getBailList().isEmpty());
+    }
+
+    @Test
+    void getBailByPartyMobile_ReturnsEmpty_WhenNoMobileMatch() {
+        String tenantId = "tenant-1";
+        String bailId = "bail-123";
+        String mobile = "9999999999";
+        Surety surety = new Surety();
+        surety.setMobileNumber("8888888888");
+        Bail bail = new Bail();
+        bail.setSureties(List.of(surety));
+        BailListResponse bailListResponse = new BailListResponse(null, 1, List.of(bail));
+        when(bailUtil.fetchBails(any())).thenReturn(bailListResponse);
+
+        BailListResponse response = openApiService.getBailByPartyMobile(tenantId, bailId, mobile);
+
+        assertEquals(0, response.getTotalCount());
+        assertTrue(response.getBailList().isEmpty());
+    }
+
+
+    @Test
+    void eSignDocument_ReturnsESignResponse_OnSuccess() {
+        String tenantId = "tenant-1";
+        ESignParameter params = new ESignParameter();
+        HttpServletRequest servletRequest = mock(HttpServletRequest.class);
+        ESignResponse mockResponse = new ESignResponse();
+        when(eSignUtil.callESignService(any(), eq(servletRequest))).thenReturn(mockResponse);
+
+        ESignResponse response = openApiService.eSignDocument(tenantId, params, servletRequest);
+
+        assertNotNull(response);
+        assertEquals(mockResponse, response);
+    }
+
+    @Test
+    void eSignDocument_PassesCorrectParameters() {
+        String tenantId = "tenant-1";
+        ESignParameter params = new ESignParameter();
+        HttpServletRequest servletRequest = mock(HttpServletRequest.class);
+        when(eSignUtil.callESignService(any(), eq(servletRequest))).thenReturn(new ESignResponse());
+
+        openApiService.eSignDocument(tenantId, params, servletRequest);
+
+        ArgumentCaptor<ESignRequest> captor = ArgumentCaptor.forClass(ESignRequest.class);
+        verify(eSignUtil).callESignService(captor.capture(), eq(servletRequest));
+        assertEquals(params, captor.getValue().getESignParameter());
+    }
+
+    @Test
+    void eSignDocument_ReturnsNull_WhenESignUtilReturnsNull() {
+        String tenantId = "tenant-1";
+        ESignParameter params = new ESignParameter();
+        HttpServletRequest servletRequest = mock(HttpServletRequest.class);
+        when(eSignUtil.callESignService(any(), eq(servletRequest))).thenReturn(null);
+
+        ESignResponse response = openApiService.eSignDocument(tenantId, params, servletRequest);
+
+        assertNull(response);
+    }
+
 
 
 

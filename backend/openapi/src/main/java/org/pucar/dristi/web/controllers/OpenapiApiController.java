@@ -1,7 +1,5 @@
 package org.pucar.dristi.web.controllers;
 
-
-import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.service.OpenApiService;
 import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.HrmsUtil;
@@ -70,7 +68,7 @@ public class OpenapiApiController {
 
     @PostMapping("/openapi/v1/hearings")
     public ResponseEntity<OpenApiHearingsResponse> getHearingsForDisplayBoard(@Parameter(description = "Details for fetching hearings in landing page", required = true)
-                                                                        @Valid @RequestBody OpenAPiHearingRequest body) {
+                                                                              @Valid @RequestBody OpenAPiHearingRequest body) {
 
         List<OpenHearing> hearingList = openApiService.getHearings(body);
         OpenApiHearingsResponse response = OpenApiHearingsResponse.builder().openHearings(hearingList).build();
@@ -110,4 +108,29 @@ public class OpenapiApiController {
         String fileStoreId = openApiService.getOrderByIdFromIndex(tenantId,orderId);
         return fileStoreUtil.getFilesByFileStore(fileStoreId, tenantId);
     }
+
+    @RequestMapping(value = "/openapi/v1/bail/{tenantId}", method = RequestMethod.POST)
+    public ResponseEntity<BailListResponse> searchBailByPartyMobile(
+            @Valid @RequestBody BailSearchRequest request,
+            @RequestParam String bailId,
+            @RequestParam String mobileNumber,
+            @PathVariable String tenantId) {
+        BailListResponse response = openApiService.getBailByPartyMobile(tenantId, bailId, mobileNumber);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
+    @PostMapping(value = "/openapi/v1/{tenantId}/esign")
+    public ResponseEntity<ESignResponse> eSignDocument(
+            @Pattern(regexp = "^[a-zA-Z]{2}$") @Size(min = 2, max = 2)
+            @Parameter(in = ParameterIn.PATH, description = "tenant ID", required = true)
+            @PathVariable("tenantId") String tenantId,
+            @RequestBody @Valid ESignParameter eSignParameter,
+            HttpServletRequest servletRequest
+    ) {
+        ESignResponse response = openApiService.eSignDocument(tenantId, eSignParameter, servletRequest);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
 }

@@ -1,18 +1,15 @@
 package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.egov.common.contract.response.ResponseInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
-import org.pucar.dristi.util.AdvocateUtil;
-import org.pucar.dristi.util.DateUtil;
-import org.pucar.dristi.util.FileStoreUtil;
-import org.pucar.dristi.util.HrmsUtil;
-import org.pucar.dristi.util.InboxUtil;
-import org.pucar.dristi.util.ResponseInfoFactory;
+import org.pucar.dristi.util.*;
 import org.pucar.dristi.web.models.*;
 
 import org.pucar.dristi.web.models.inbox.*;
@@ -47,13 +44,17 @@ public class OpenApiService {
 
     private final InboxUtil inboxUtil;
 
-    private AdvocateUtil advocateUtil;
+    private final AdvocateUtil advocateUtil;
 
     private final ResponseInfoFactory responseInfoFactory;
 
     private final HrmsUtil hrmsUtil;
 
-    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateUtil advocateUtil, ResponseInfoFactory responseInfoFactory, HrmsUtil hrmsUtil) {
+    private final BailUtil bailUtil;
+
+    private final ESignUtil eSignUtil;
+
+    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateUtil advocateUtil, ResponseInfoFactory responseInfoFactory, HrmsUtil hrmsUtil, BailUtil bailUtil, ESignUtil eSignUtil) {
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
         this.objectMapper = objectMapper;
@@ -62,6 +63,8 @@ public class OpenApiService {
         this.advocateUtil = advocateUtil;
         this.responseInfoFactory = responseInfoFactory;
         this.hrmsUtil = hrmsUtil;
+        this.bailUtil = bailUtil;
+        this.eSignUtil = eSignUtil;
     }
 
     public CaseSummaryResponse getCaseByCnrNumber(String tenantId, String cnrNumber) {
@@ -389,7 +392,7 @@ public class OpenApiService {
     }
 
     public String getMagistrateName(String courtId, String tenantId) {
-       return hrmsUtil.getJudgeName(tenantId,courtId);
+        return hrmsUtil.getJudgeName(tenantId,courtId);
     }
 
     public OpenApiOrderTaskResponse getOrdersAndPaymentTasks(OpenApiOrdersTaskIRequest openApiOrdersTaskIRequest) {
@@ -635,4 +638,49 @@ public class OpenApiService {
         }
         return fileStoreId;
     }
+
+    public BailListResponse getBailByPartyMobile(String tenantId, String bailId, String mobileNumber) {
+        //Todo: Check if we need to check mobileNumber of litigant
+
+        BailCriteria bailSearchCriteria = new BailCriteria();
+        bailSearchCriteria.setTenantId(tenantId);
+        bailSearchCriteria.setBailId(bailId);
+
+        BailListResponse bailListResponse = bailUtil.fetchBails(bailSearchCriteria);
+
+        if (bailListResponse.getBailList() == null || bailListResponse.getBailList().isEmpty()) {
+            return new BailListResponse(
+                    responseInfoFactory.createResponseInfoFromRequestInfo(null, true),
+                    0, Collections.emptyList());
+        }
+
+        Bail bail = bailListResponse.getBailList().get(0);
+
+        boolean found = bail.getSureties() != null &&
+                bail.getSureties().stream()
+                        .anyMatch(surety -> mobileNumber.equals(surety.getMobileNumber()));
+
+        if (found) {
+            return new BailListResponse(
+                    responseInfoFactory.createResponseInfoFromRequestInfo(null, true),
+                    1, Collections.singletonList(bail));
+        } else {
+            return new BailListResponse(
+                    responseInfoFactory.createResponseInfoFromRequestInfo(null, true),
+                    0, Collections.emptyList());
+        }
+    }
+
+
+    public ESignResponse eSignDocument(String tenantId, ESignParameter params, HttpServletRequest servletRequest) {
+        log.info("Initiating eSign for tenantId: {}", tenantId);
+
+        ESignRequest eSignRequest = ESignRequest.builder()
+                .eSignParameter(params)
+                .requestInfo(RequestInfo.builder().userInfo(User.builder().build()).build())
+                .build();
+
+        return eSignUtil.callESignService(eSignRequest, servletRequest);
+    }
+
 }
