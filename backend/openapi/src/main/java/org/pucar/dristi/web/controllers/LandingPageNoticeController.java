@@ -5,10 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.response.ResponseInfo;
 import org.pucar.dristi.service.LandingPageNoticeService;
 import org.pucar.dristi.util.ResponseInfoFactory;
-import org.pucar.dristi.web.models.landingpagenotices.LandingPageNotice;
-import org.pucar.dristi.web.models.landingpagenotices.LandingPageNoticeRequest;
-import org.pucar.dristi.web.models.landingpagenotices.LandingPageNoticeResponse;
-import org.pucar.dristi.web.models.landingpagenotices.LandingPageNoticeSearchCriteria;
+import org.pucar.dristi.web.models.landingpagenotices.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -55,15 +52,13 @@ public class LandingPageNoticeController {
     }
 
     @PostMapping("/v1/search-notices")
-    public ResponseEntity<LandingPageNoticeResponse> searchNotices(@Valid @RequestBody LandingPageNoticeSearchCriteria searchCriteria) {
+    public ResponseEntity<LandingPageNoticeSearchResponse> searchNotices(@Valid @RequestBody LandingPageNoticeSearchCriteria searchCriteria) {
         log.info("Received request to search notices: status :: IN_PROGRESS {}", searchCriteria);
         List<LandingPageNotice> notices = landingPageNoticeService.searchNoticesPaginated(searchCriteria);
-        int totalCount = (searchCriteria.getSearchText() == null || searchCriteria.getSearchText().isEmpty())
+        long totalCount = (searchCriteria.getSearchText() == null || searchCriteria.getSearchText().isEmpty())
                 ? landingPageNoticeService.countAll()
                 : landingPageNoticeService.countByTitle(searchCriteria.getSearchText());
-        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(null, true);
-        LandingPageNoticeResponse response = LandingPageNoticeResponse.builder()
-                .responseInfo(responseInfo)
+        LandingPageNoticeSearchResponse response = LandingPageNoticeSearchResponse.builder()
                 .landingPageNotices(notices)
                 .totalCount(totalCount)
                 .page(searchCriteria.getOffset() != null ? searchCriteria.getOffset() : 0)
