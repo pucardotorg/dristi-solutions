@@ -84,25 +84,14 @@ public class PublishOrderNotice implements OrderUpdateStrategy {
 
         Map<String, List<POAHolder>> litigantPoaMapping = caseUtil.getLitigantPoaMapping(courtCase);
 
-        if (NOTICE.equalsIgnoreCase(order.getOrderType()) && SECTION_223.equalsIgnoreCase(section) && PENDING_NOTICE.equalsIgnoreCase(courtCase.getStatus())) {
+        if (NOTICE.equalsIgnoreCase(order.getOrderType()) && SECTION_223.equalsIgnoreCase(section)) {
 
-            // update case with issue order
-
-            WorkflowObject workflowObject = new WorkflowObject();
-            workflowObject.setAction(ISSUE_ORDER);
-            courtCase.setWorkflow(workflowObject);
-            log.info("case updated with issue order action,filingNumber:{}", order.getFilingNumber());
-            CaseResponse caseResponse = caseUtil.updateCase(CaseRequest.builder().requestInfo(requestInfo)
-                    .cases(courtCase).build());
-
-            CourtCase updatedCourtCase = caseResponse.getCases().get(0);
-
-            Optional<Party> respondent = updatedCourtCase.getLitigants().stream()
+            Optional<Party> respondent = courtCase.getLitigants().stream()
                     .filter(litigant -> litigant.getPartyType().contains("respondent"))
                     .findFirst();
 
             Optional<AdvocateMapping> advocate = respondent.flatMap(party ->
-                    updatedCourtCase.getRepresentatives().stream()
+                    courtCase.getRepresentatives().stream()
                             .filter(representative -> representative.getRepresenting() != null &&
                                     representative.getRepresenting().stream()
                                             .anyMatch(represent -> represent != null &&

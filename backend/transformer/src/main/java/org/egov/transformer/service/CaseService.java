@@ -22,10 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.Year;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -36,6 +32,7 @@ import java.util.Optional;
 
 import static org.egov.transformer.config.ServiceConstants.COURT_CASE_JSON_PATH;
 import static org.egov.transformer.config.ServiceConstants.HEARING_COMPLETED_STATUS;
+import static org.egov.transformer.config.ServiceConstants.HEARING_SCHEDULED_STATUS;
 
 @Slf4j
 @Service
@@ -162,7 +159,7 @@ public class CaseService {
         caseSearch.setCnrNumber(courtCase.getCnrNumber());
         caseSearch.setFilingDate(courtCase.getFilingDate());
         caseSearch.setRegistrationDate(courtCase.getRegistrationDate());
-        enrichHearingDate(courtCase.getFilingNumber(), caseSearch);
+        enrichLastHearingDate(courtCase.getFilingNumber(), caseSearch);
         caseSearch.setCaseStage(courtCase.getStage());
         HearingSearchRequest hearingSearchRequest = HearingSearchRequest.builder()
                 .criteria(HearingCriteria.builder()
@@ -171,25 +168,25 @@ public class CaseService {
                         .build())
                 .pagination(Pagination.builder()
                         .sortBy("createdTime")
+                        .order(org.egov.transformer.models.inbox.Order.DESC)
                         .build())
                 .build();
         List<Hearing> hearings = hearingUtil.fetchHearingDetails(hearingSearchRequest);
-        Hearing latestHearing = null;
-        List<Hearing> completedHearings = Optional.ofNullable(hearings).orElse(Collections.emptyList()).stream()
-                .filter(element -> HEARING_COMPLETED_STATUS.equalsIgnoreCase(element.getStatus())).toList();
-        if (!completedHearings.isEmpty()) {
-            latestHearing = completedHearings.get(0);
+        Hearing latestScheduledHearing = null;
+        List<Hearing> scheduledHearings = Optional.ofNullable(hearings).orElse(Collections.emptyList()).stream()
+                .filter(hearing -> HEARING_SCHEDULED_STATUS.equalsIgnoreCase(hearing.getStatus())).toList();
+        if (!scheduledHearings.isEmpty()) {
+            latestScheduledHearing = scheduledHearings.get(0);
         }
-        caseSearch.setNextHearingDate(latestHearing!=null? latestHearing.getStartTime(): null);
+        caseSearch.setNextHearingDate(latestScheduledHearing!=null? latestScheduledHearing.getStartTime(): null);
         caseSearch.setCaseStatus(courtCase.getStatus());
         caseSearch.setYearOfFiling(dateUtil.getYearFromDate(courtCase.getFilingDate()));
-        caseSearch.setHearingType(latestHearing!=null? latestHearing.getHearingType(): null);
+        caseSearch.setHearingType(latestScheduledHearing!=null? latestScheduledHearing.getHearingType(): null);
         caseSearch.setCaseSubStage(courtCase.getSubstage());
         return caseSearch;
-
     }
 
-    public void enrichHearingDate(String filingNumber, CaseSearch caseSearch) {
+    public void enrichLastHearingDate(String filingNumber, CaseSearch caseSearch) {
         HearingCriteria criteria = HearingCriteria.builder().filingNumber(filingNumber).build();
         HearingSearchRequest request = HearingSearchRequest.builder().criteria(criteria).build();
         List<Hearing> hearingList = hearingUtil.fetchHearingDetails(request);
@@ -273,6 +270,10 @@ public class CaseService {
     }
 
     public String getCourtName(String tenantId, String courtId) {
+        if(tenantId==null || courtId==null){
+            log.error("Cannot fetch court name as tenant id or court id is null");
+            return null;
+        }
         Map<String, Map<String, JSONArray>> mdmsResponse =
                 mdmsUtil.fetchMdmsData(RequestInfo.builder().build(), tenantId, serviceConstants.COMMON_MASTERS_MASTER, Collections.singletonList(serviceConstants.COURT_ROOMS));
         return findCourtNameFromMdmsData(mdmsResponse, courtId);

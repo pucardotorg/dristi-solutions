@@ -63,6 +63,7 @@
             {
               "name": "advocateName",
               "path": "Data.caseDetails.advocates.name.keyword",
+              "operator": "WILDCARD",
               "isMandatory": false
             },
             {
@@ -73,6 +74,7 @@
             {
               "name": "litigantName",
               "path": "Data.caseDetails.litigants.name.keyword",
+              "operator": "WILDCARD",
               "isMandatory": false
             },
             {

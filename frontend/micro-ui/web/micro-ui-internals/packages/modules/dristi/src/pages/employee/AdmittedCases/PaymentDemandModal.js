@@ -39,7 +39,7 @@ const PaymentItem = React.memo(({ item, index, paymentItems, paymentTypeOptions,
     if (!/[0-9]/.test(e.key) && e.key !== "Backspace") {
       e.preventDefault();
     }
-    if (e.target.value.length >= 10) {
+    if (e.target.value.length >= 8) {
       e.preventDefault();
     }
   }, []);
@@ -130,7 +130,7 @@ const PaymentDemandModal = ({
   const isFormValid = useMemo(() => {
     const dueDateIsValid = dueDate && new Date(dueDate).getTime() >= new Date(tomorrowDate).getTime();
     return (
-      selectedParty && dueDateIsValid && totalAmount <= 5000000000 && paymentItems.every((item) => item.type && parseFloat(item.amount) > MIN_AMOUNT)
+      selectedParty && dueDateIsValid && totalAmount < 100000000 && paymentItems.every((item) => item.type && parseFloat(item.amount) > MIN_AMOUNT)
     );
   }, [dueDate, tomorrowDate, selectedParty, totalAmount, paymentItems]);
 
@@ -289,7 +289,7 @@ const PaymentDemandModal = ({
             <LabelFieldPair>
               <CardLabel className="case-input-label">{t("TOTAL_AMOUNT_DUE")}</CardLabel>
               <TextInput className="disabled" type="text" value={totalAmount} disabled style={{ minWidth: 120, textAlign: "start" }} />
-              {totalAmount > 5000000000 && <div style={{ color: "red", fontSize: "12px" }}>{t("TOTAL_AMOUNT_EXCEEDS_LIMIT")}</div>}
+              {totalAmount >= 100000000 && <div style={{ color: "red", fontSize: "12px" }}>{t("TOTAL_AMOUNT_EXCEEDS_LIMIT")}</div>}
             </LabelFieldPair>
 
             <LabelFieldPair className="case-label-field-pair">
