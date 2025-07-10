@@ -53,7 +53,6 @@ public class PendingTaskUtil {
 
         } catch (HttpClientErrorException e) {
             log.error(EXTERNAL_SERVICE_EXCEPTION, e);
-            throw new ServiceCallException(e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error(SEARCHER_SERVICE_EXCEPTION, e);
         }
