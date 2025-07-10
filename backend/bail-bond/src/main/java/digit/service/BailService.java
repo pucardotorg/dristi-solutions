@@ -1,5 +1,6 @@
 package digit.service;
 
+import com.google.gson.Gson;
 import digit.repository.BailRepository;
 import digit.util.*;
 import digit.web.models.*;
@@ -9,6 +10,7 @@ import digit.config.Configuration;
 import digit.validators.BailRegistrationValidator;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.models.individual.Individual;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -21,6 +23,7 @@ import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static digit.config.ServiceConstants.*;
 import static org.postgresql.jdbc.EscapedFunctions.SIGN;
@@ -40,20 +43,22 @@ public class BailService {
     private final ESignUtil eSignUtil;
     private final XmlRequestGenerator xmlRequestGenerator;
     private final SuretyUtil suretyUtil;
+    private final IndividualService individualService;
+    private final NotificationService notificationService;
 
     @Autowired
     public BailService(BailRepository bailRepository,
-                      BailRegistrationEnrichment enrichmentUtil,
-                      Producer producer,
-                      Configuration config,
-                      WorkflowService workflowService,
-                      BailRegistrationValidator validator,
+                       BailRegistrationEnrichment enrichmentUtil,
+                       Producer producer,
+                       Configuration config,
+                       WorkflowService workflowService,
+                       BailRegistrationValidator validator,
                        FileStoreUtil fileStoreUtil,
                        CipherUtil cipherUtil,
                        Configuration configuration,
                        ESignUtil eSignUtil,
                        XmlRequestGenerator xmlRequestGenerator,
-                       SuretyUtil suretyUtil) {
+                       SuretyUtil suretyUtil, IndividualService individualService, NotificationService notificationService) {
         this.bailRepository = bailRepository;
         this.enrichmentUtil = enrichmentUtil;
         this.producer = producer;
@@ -66,6 +71,8 @@ public class BailService {
         this.eSignUtil = eSignUtil;
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.suretyUtil = suretyUtil;
+        this.individualService = individualService;
+        this.notificationService = notificationService;
     }
 
     public List<Bail> searchBail(BailSearchRequest request) {
@@ -90,7 +97,37 @@ public class BailService {
 
             producer.push(config.getBailCreateTopic(), body);
 
-            //TODO:Implement Notification
+            List<String> ids = body.getBail().getSureties().stream()
+                    .map(Surety::getId)
+                    .toList();
+
+            // Fetch individuals
+            List<Individual> recipients = individualService.getIndividuals(body.getRequestInfo(), ids);
+            List<String> recipientMobileNumbers = recipients.stream().map(Individual::getMobileNumber).toList();
+            Set<String> recipientEmailIds = recipients.stream().map(Individual::getEmail).collect(Collectors.toSet());
+
+            // Send SMS
+            //TODO: message
+            SMSTemplateData smsTemplateData = SMSTemplateData.builder()
+                    .tenantId(body.getBail().getTenantId())
+                    .caseId(body.getBail().getCaseId())
+                    .build();
+            notificationService.sendSMS(recipientMobileNumbers, body.getBail().getTenantId());
+            log.info("SMS sent for new Bail {}", body.getBail().getId());
+
+            String subject = String.format(BAIL_BOND_CREATED_SUBJECT, body.getBail().getId());
+            Map<String, Object> bodyMap = new HashMap<>();
+            bodyMap.put("emailBody", "");
+            String emailBody = new Gson().toJson(bodyMap);
+
+            // Send Email
+            //TODO: fileStoreId, templateCode, body
+            EmailTemplateData emailTemplateData = EmailTemplateData.builder()
+                    .subject(String.format(BAIL_BOND_CREATED_SUBJECT, body.getBail().getId()))
+                    .body(BAIL_BOND_CREATED_BODY)
+                    .build();
+            notificationService.sendEmail(body.getRequestInfo(), recipientEmailIds, subject, emailBody, body.getBail().getTenantId());
+            log.info("Email sent for new Bail {}", body.getBail().getId());
 
             return body.getBail();
         } catch (CustomException e) {
@@ -153,9 +190,32 @@ public class BailService {
 
             String updatedState = bailRequest.getBail().getStatus();
 
+            List<String> ids = bail.getSureties().stream().map(Surety::getId)
+                    .toList();
 
-            //TODO:Implement Notification
+            // Fetch individuals
+            List<Individual> recipients = individualService.getIndividuals(bailRequest.getRequestInfo(), ids);
+            List<String> recipientMobileNumbers = recipients.stream().map(Individual::getMobileNumber).toList();
+            Set<String> recipientEmailIds = recipients.stream().map(Individual::getEmail).collect(Collectors.toSet());
 
+            // Send SMS
+            notificationService.sendSMS(recipientMobileNumbers, bail.getTenantId());
+            log.info("SMS sent for updated Bail {}", bail.getId());
+
+            String subject = String.format(BAIL_BOND_UPDATED_SUBJECT, bailRequest.getBail().getId());
+            Map<String, Object> bodyMap = new HashMap<>();
+            bodyMap.put("emailBody", ""); //TODO
+            String emailBody = new Gson().toJson(bodyMap);
+
+            //Send Email
+            //TODO: fileStoreId, templateCode, body
+            EmailTemplateData emailTemplateData = EmailTemplateData.builder()
+                    .subject(String.format(BAIL_BOND_UPDATED_SUBJECT, bail.getId()))
+                    .body(BAIL_BOND_UPDATED_BODY)
+                    .tenantId(bail.getTenantId())
+                    .build();
+            notificationService.sendEmail(bailRequest.getRequestInfo(), recipientEmailIds, subject, emailBody, bailRequest.getBail().getTenantId());
+            log.info("Email sent for updated Bail {}", bailRequest.getBail().getId());
 
              filterDocuments(Collections.singletonList(bail), Bail::getDocuments, Bail::setDocuments);
 
