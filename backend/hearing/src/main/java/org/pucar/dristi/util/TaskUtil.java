@@ -48,12 +48,10 @@ public class TaskUtil {
             return objectMapper.readValue(jsonNode.toString(), TaskListResponse.class);
         } catch (HttpClientErrorException e) {
             log.error(EXTERNAL_SERVICE_EXCEPTION, e);
-            throw new ServiceCallException(e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error(SEARCHER_SERVICE_EXCEPTION, e);
-            throw new CustomException("Error while fetching search results", e.getMessage());
         }
-
+        return null;
     }
 
     public TaskResponse updateTask(TaskRequest request) {
