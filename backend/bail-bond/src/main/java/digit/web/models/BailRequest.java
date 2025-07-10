@@ -1,14 +1,9 @@
 package digit.web.models;
 
-import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import digit.web.models.Bail;
-import digit.web.models.RequestInfo;
-import io.swagger.v3.oas.annotations.media.Schema;
+import org.egov.common.contract.request.RequestInfo;
 import org.springframework.validation.annotation.Validated;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.Data;
@@ -23,16 +18,16 @@ import lombok.Builder;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class BailRequest   {
-        @JsonProperty("RequestInfo")
+public class BailRequest {
+    @JsonProperty("RequestInfo")
 
-          @Valid
-                private RequestInfo requestInfo = null;
+    @Valid
+    private RequestInfo requestInfo = null;
 
-        @JsonProperty("bail")
+    @JsonProperty("bail")
 
-          @Valid
-                private Bail bail = null;
+    @Valid
+    private Bail bail = null;
 
 
 }

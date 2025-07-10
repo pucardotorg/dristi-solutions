@@ -1,12 +1,10 @@
 package digit.web.models;
 
-import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import digit.web.models.Document;
-import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.util.ArrayList;
 import java.util.List;
+
 import org.springframework.validation.annotation.Validated;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -24,65 +22,65 @@ import lombok.Builder;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class Surety   {
-        @JsonProperty("id")
+public class Surety {
+    @JsonProperty("id")
 
-                private String id = null;
+    private String id = null;
 
-        @JsonProperty("tenantId")
-          @NotNull
+    @JsonProperty("tenantId")
+    @NotNull
 
-                private String tenantId = null;
+    private String tenantId = null;
 
-        @JsonProperty("name")
-          @NotNull
+    @JsonProperty("name")
+    @NotNull
 
-                private String name = null;
+    private String name = null;
 
-        @JsonProperty("fatherName")
+    @JsonProperty("fatherName")
 
-                private String fatherName = null;
+    private String fatherName = null;
 
-        @JsonProperty("mobileNumber")
-          @NotNull
+    @JsonProperty("mobileNumber")
+    @NotNull
 
-                private String mobileNumber = null;
+    private String mobileNumber = null;
 
-        @JsonProperty("address")
+    @JsonProperty("address")
 
-                private Object address = null;
+    private Object address = null;
 
-        @JsonProperty("email")
+    @JsonProperty("email")
 
-                private String email = null;
+    private String email = null;
 
-        @JsonProperty("hasSigned")
+    @JsonProperty("hasSigned")
 
-                private Boolean hasSigned = null;
+    private Boolean hasSigned = null;
 
-        @JsonProperty("isApproved")
+    @JsonProperty("isApproved")
 
-                private Boolean isApproved = null;
+    private Boolean isApproved = null;
 
-        @JsonProperty("documents")
-          @Valid
-                private List<Document> documents = null;
+    @JsonProperty("documents")
+    @Valid
+    private List<Document> documents = null;
 
-        @JsonProperty("isActive")
+    @JsonProperty("isActive")
 
-                private Boolean isActive = null;
+    private Boolean isActive = null;
 
-        @JsonProperty("additionalDetails")
+    @JsonProperty("additionalDetails")
 
-                private Object additionalDetails = null;
+    private Object additionalDetails = null;
 
 
-        public Surety addDocumentsItem(Document documentsItem) {
-            if (this.documents == null) {
+    public Surety addDocumentsItem(Document documentsItem) {
+        if (this.documents == null) {
             this.documents = new ArrayList<>();
-            }
+        }
         this.documents.add(documentsItem);
         return this;
-        }
+    }
 
 }
