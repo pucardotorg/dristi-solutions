@@ -34,7 +34,9 @@ function BulkBailBondSignView() {
   const [showErrorToast, setShowErrorToast] = useState(null);
   // State to track if search has been initialized from session storage
   const [searchInitialized, setSearchInitialized] = useState(false);
-  const [selectedBailBond, setSelectedBailBond] = useState(null);
+  const [selectedBailBond, setSelectedBailBond] = useState(
+    sessionStorage.getItem("bulkBailBondSelectedItem") ? JSON.parse(sessionStorage.getItem("bulkBailBondSelectedItem")) : null
+  );
   const [showBulkSignModal, setShowBulkSignModal] = useState(false);
   const [bailBondPaginationData, setBailBondPaginationData] = useState({});
 
@@ -265,7 +267,9 @@ function BulkBailBondSignView() {
   }, []);
 
   const MemoInboxSearchComposer = useMemo(() => {
-    return <InboxSearchComposer configs={config} customStyle={sectionsParentStyle} />;
+    return (
+      <InboxSearchComposer pageSizeLimit={sessionStorage.getItem("bulkBailBondSignlimit") || 10} configs={config} customStyle={sectionsParentStyle} />
+    );
   }, [config]);
 
   return (
@@ -338,6 +342,7 @@ function BulkBailBondSignView() {
           selectedBailBond={selectedBailBond}
           setShowBulkSignModal={setShowBulkSignModal}
           onSigningComplete={handleSigningComplete}
+          bailBondPaginationData={bailBondPaginationData}
         />
       )}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}

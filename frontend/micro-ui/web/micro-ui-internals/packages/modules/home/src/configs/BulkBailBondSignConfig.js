@@ -92,8 +92,13 @@ export const bulkBailBondSignConfig = {
           },
         ],
         resultsJsonPath: "items",
+        customDefaultPagination: {
+          limit: sessionStorage.getItem("bulkBailBondSignlimit") || 10,
+          offset: sessionStorage.getItem("bulkBailBondSignoffset") || 0,
+        },
         enableColumnSort: true,
       },
+
       show: true,
     },
   },

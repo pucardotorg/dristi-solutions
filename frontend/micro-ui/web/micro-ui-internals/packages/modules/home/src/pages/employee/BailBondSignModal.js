@@ -14,7 +14,7 @@ export const clearBailBondSessionData = () => {
   sessionStorage.removeItem("bulkBailBondSelectedItem");
 };
 
-export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal, rowData, colData, value, onSigningComplete }) => {
+export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal, rowData, colData, value, onSigningComplete, bailBondPaginationData }) => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const courtId = localStorage.getItem("courtId");
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
@@ -160,14 +160,18 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal, rowD
       setLoader(true);
 
       // Build the e-sign URL with proper parameters
-      const url = `${bulkSignUrl}/bailbond/sign?bailBondId=${effectiveRowData?.businessObject?.orderNotification?.id}&tenantId=${tenantId}&courtId=${courtId}`;
+      // const url = `${bulkSignUrl}/bailbond/sign?bailBondId=${effectiveRowData?.businessObject?.orderNotification?.id}&tenantId=${tenantId}&courtId=${courtId}`;
 
       // Store the current state in sessionStorage before redirecting
       sessionStorage.setItem("bailBondStepper", stepper);
       sessionStorage.setItem("bailBondData", JSON.stringify({ selectedBailBond: effectiveRowData }));
+      sessionStorage.setItem("bulkBailBondSignlimit", bailBondPaginationData?.limit);
+      sessionStorage.setItem("bulkBailBondSignoffset", bailBondPaginationData?.offset);
+      sessionStorage.setItem("homeActiveTab", "BULK_BAIL_BOND_SIGN");
+      sessionStorage.setItem("bulkBailBondSignSelectedItem", JSON.stringify(effectiveRowData));
 
       // Redirect to the e-sign URL
-      window.open(url, "_self");
+      // window.open(url, "_self");
     } catch (error) {
       console.log("E-sign navigation error:", error);
       setLoader(false);
