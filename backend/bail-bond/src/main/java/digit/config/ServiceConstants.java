@@ -212,6 +212,8 @@ public class ServiceConstants {
     private static final String FILES_KEY = "files";
     private static final String DOCUMENT_TYPE_PDF = "application/pdf";
 
+    public static final String TEXT = "TEXT";
+    public static final String NOTIFICATION = "NOTIFICATION";
 
     public static final String ERROR_WHILE_CREATING_SURETY = "ERROR_WHILE_CREATING_SURETY";
     public static final String ERROR_WHILE_FETCHING_FROM_SURETY = "ERROR_WHILE_FETCHING_FROM_SURETY";
@@ -219,4 +221,10 @@ public class ServiceConstants {
     public static final String EMPTY_SURETY_ERROR = "EMPTY_SURETY_ERROR";
 
 
+    public static final String BAIL_BOND_CREATED_SUBJECT = "BAIL BOND %s CREATED";
+    public static final String BAIL_BOND_UPDATED_SUBJECT = "BAIL BOND %s UPDATED";
+    public static final String BAIL_BOND_CREATED_BODY = "BAILBOND_CREATED_EMAIL_BODY";
+    public static final String BAIL_BOND_UPDATED_BODY = "BAILBOND_UPDATED_EMAIL_BODY";
+
+    public static final String BAIL_BOND_TEMPLATE_CODE = "BAILBOND_EMAIL";
 }

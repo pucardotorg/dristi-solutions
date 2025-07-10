@@ -96,6 +96,10 @@ public class Configuration {
     @Value("${egov.sms.notification.topic}")
     private String smsNotificationTopic;
 
+    //Email notification
+    @Value("${egov.mail.notification.topic}")
+    private String mailNotificationTopic;
+
     //Individual Service
     @Value("${egov.individual.host}")
     private String individualHost;
