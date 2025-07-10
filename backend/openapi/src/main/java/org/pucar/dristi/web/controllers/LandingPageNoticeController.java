@@ -61,8 +61,8 @@ public class LandingPageNoticeController {
         LandingPageNoticeSearchResponse response = LandingPageNoticeSearchResponse.builder()
                 .landingPageNotices(notices)
                 .totalCount(totalCount)
-                .page(searchCriteria.getOffset() != null ? searchCriteria.getOffset() : 0)
-                .size(searchCriteria.getLimit() != null ? searchCriteria.getLimit() : 10)
+                .offset(searchCriteria.getOffset() != null ? searchCriteria.getOffset() : 0)
+                .limit(searchCriteria.getLimit() != null ? searchCriteria.getLimit() : 10)
                 .build();
         log.info("Received request to search notices: status :: COMPLETED {}", searchCriteria);
         return ResponseEntity.ok(response);

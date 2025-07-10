@@ -33,6 +33,7 @@ public class LandingPageNoticeEnrichment {
             User user = requestInfo.getUserInfo();
 
             landingPageNotice.setCreatedBy(user.getUuid());
+            landingPageNotice.setNoticeNumber(landingPageNoticeUtil.getNoticeNumber());
             landingPageNotice.setCreatedTime(landingPageNoticeUtil.getCurrentTimeInMilliSec());
             landingPageNotice.setLastModifiedBy(user.getUuid());
             landingPageNotice.setLastModifiedTime(landingPageNoticeUtil.getCurrentTimeInMilliSec());

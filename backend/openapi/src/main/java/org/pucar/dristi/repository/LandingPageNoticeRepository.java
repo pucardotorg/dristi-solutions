@@ -14,10 +14,10 @@ public interface LandingPageNoticeRepository extends JpaRepository<LandingPageNo
     long countByTitleContainingIgnoreCase(String title);
 
     // Native queries for limit/offset pagination
-    @Query(value = "SELECT * FROM landing_page_notices LIMIT :limit OFFSET :offset", nativeQuery = true)
+    @Query(value = "SELECT * FROM landing_page_notice LIMIT :limit OFFSET :offset", nativeQuery = true)
     List<LandingPageNotice> findAllWithPagination(@Param("limit") int limit, @Param("offset") int offset);
 
-    @Query(value = "SELECT * FROM landing_page_notices WHERE LOWER(title) LIKE LOWER(CONCAT('%', :title, '%')) LIMIT :limit OFFSET :offset", nativeQuery = true)
+    @Query(value = "SELECT * FROM landing_page_notice WHERE LOWER(title) LIKE LOWER(CONCAT('%', :title, '%')) LIMIT :limit OFFSET :offset", nativeQuery = true)
     List<LandingPageNotice> findByTitleContainingIgnoreCaseWithPagination(@Param("title") String title, @Param("limit") int limit, @Param("offset") int offset);
 
 }

@@ -22,10 +22,10 @@ public class LandingPageNoticeSearchResponse {
     @JsonProperty("totalCount")
     private long totalCount;
 
-    @JsonProperty("page")
-    private Integer page;
+    @JsonProperty("offset")
+    private Integer offset;
 
-    @JsonProperty("size")
-    private Integer size;
+    @JsonProperty("limit")
+    private Integer limit;
 
 }

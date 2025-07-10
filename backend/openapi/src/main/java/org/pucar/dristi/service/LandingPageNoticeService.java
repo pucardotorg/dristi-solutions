@@ -47,7 +47,7 @@ public class LandingPageNoticeService {
             return landingPageNotice;
         } catch (CustomException e) {
             log.error("Error while adding notices: {}", e.getMessage(), e);
-            throw new CustomException("LANDING_PAGE_NOTICE_SERVICE_EXCEPTION", "Error occurred while adding notices");
+            throw new CustomException("LANDING_PAGE_NOTICE_SERVICE_EXCEPTION", "Error occurred while adding notices " + e.getMessage());
         }
     }
 
