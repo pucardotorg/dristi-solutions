@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class LandingPageNoticeSearchCriteria {
     private String searchText;
+    private String tenantId;
     private Integer limit;
     private Integer offset;
 }
