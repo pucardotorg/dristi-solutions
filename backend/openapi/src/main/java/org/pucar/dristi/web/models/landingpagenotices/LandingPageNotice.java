@@ -28,6 +28,11 @@ public class LandingPageNotice {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @JsonProperty("tenantId")
+    @Valid
+    @NotNull
+    private String tenantId;
+
     @JsonProperty("type")
     @Valid
     private String type;

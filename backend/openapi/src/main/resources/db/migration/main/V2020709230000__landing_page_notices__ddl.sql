@@ -1,5 +1,6 @@
 CREATE TABLE landing_page_notice (
     id BIGSERIAL PRIMARY KEY,
+    tenant_id VARCHAR(100) NOT NULL,
     type VARCHAR(100),
     title VARCHAR(255) NOT NULL,
     language VARCHAR(50),
