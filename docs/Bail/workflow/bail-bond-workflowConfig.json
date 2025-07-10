@@ -23,10 +23,10 @@
               ]
             },
             {
-              "action": "E-SIGN",
+              "action": "INITIATE_E-SIGN",
               "nextState": "PENDING_E-SIGN",
               "roles": [
-                "*"
+                "BAIL_BOND_CREATOR"
               ]
             },
             {
