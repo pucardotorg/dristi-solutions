@@ -165,6 +165,9 @@ components:
         hasSigned:
           type: boolean
           description: Whether the surety has signed or not.
+        isApproved:
+          type: boolean
+          description: Whether the surety is approved or not by Magistrate.
         documents:
           type: array
           items:
@@ -208,6 +211,27 @@ components:
               type: array
               items:
                 type: string
+            litigantIndividualId:
+              type: string
+              description: Individual ID of the litigant.
+            bailId:
+              type: string
+              description: Formatted Bail ID.
+            courtId:
+              type: string
+              description: Establishment ID for the court.
+            filingNumber:
+              type: string
+              description: Filing number of the case.
+            cnrNumber:
+              type: string
+              description: CNR number of the case.
+            suretyMobileNumber:
+              type: string
+              description: Mobile number of the surety.
+            litigantMobileNumber:
+              type: string
+              description: Mobile number of the litigant.
     BailSearchResponse:
       type: object
       properties:
