@@ -4,6 +4,9 @@ import { useTranslation } from "react-i18next";
 import BailEsignModal from "../../components/BailEsignModal";
 import SuccessBannerModal from "../../components/SuccessBannerModal";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { useQuery } from "react-query";
+import Axios from "axios";
+import { Urls } from "../../hooks/services/Urls";
 
 const getStyles = () => ({
   header: { fontSize: "26px", padding: "12px 40px", fontWeight: 700, borderBottom: "1px solid #E8E8E8" },
@@ -34,9 +37,20 @@ const getStyles = () => ({
   rightPanel: {
     flex: 1,
     padding: "24px",
-    overflow: "auto",
+    height: "100%",
+    boxSizing: "border-box",
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
   },
-  docViewer: { marginTop: "24px", border: "1px solid #e0e0e0", display: "flex", overflow: "hidden" },
+  docViewer: {
+    flex: 1,
+    marginTop: "24px",
+    border: "1px solid #e0e0e0",
+    overflow: "auto",
+    borderRadius: "8px",
+    background: "#fafafa",
+  },
   litigantDetails: {
     display: "flex",
     justifyContent: "space-between",
@@ -69,9 +83,9 @@ const getStyles = () => ({
   editCaseButton: { backgroundColor: "#fff", border: "#007E7E solid", color: "#007E7E", cursor: "pointer" },
 });
 
-const BailBondSignaturePage = ({ setHideBack }) => {
+const BailBondSignaturePage = () => {
   const { t } = useTranslation();
-  const { filingNumber } = Digit.Hooks.useQueryParams();
+  const { tenantId, bailbondId } = Digit.Hooks.useQueryParams();
   const styles = getStyles();
   const history = useHistory();
   const token = window.localStorage.getItem("token");
@@ -79,12 +93,12 @@ const BailBondSignaturePage = ({ setHideBack }) => {
   const isUserLoggedIn = Boolean(token);
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
-  const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const EditSendBackModal = Digit?.ComponentRegistryService?.getComponent("EditSendBackModal");
   const [isEditCaseModal, setEditCaseModal] = useState(false);
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const filingNumber = useMemo(() => bailbondId?.split("-")[0], [bailbondId]); // need to change this logic as per the requirement
 
   const dummyLitigants = [
     {
@@ -110,6 +124,23 @@ const BailBondSignaturePage = ({ setHideBack }) => {
     },
   ];
 
+  const { data: { file: orderPreviewPdf, fileName: orderPreviewFileName } = {}, isFetching: isLoading } = useQuery({
+    queryKey: ["bailBondSignaturePdf", tenantId, bailbondId, userInfo?.uuid],
+    retry: 3,
+    cacheTime: 0,
+    queryFn: async () => {
+      return Axios({
+        method: "GET",
+        url: `${Urls.FileFetchByFileStore}/${bailbondId}`, // change the application number as per the requirement
+        responseType: "blob",
+      }).then((res) => ({ file: res.data, fileName: res.headers["content-disposition"]?.split("filename=")[1] }));
+    },
+    onError: (error) => {
+      console.error("Failed to fetch order preview PDF:", error);
+    },
+    enabled: true,
+  });
+
   const handleSubmit = () => {
     // TODO : update APi Call
     setShowSignatureModal(true);
@@ -133,21 +164,22 @@ const BailBondSignaturePage = ({ setHideBack }) => {
   const handleEditBailBondSubmit = () => {
     // TODO : Update Api CAll
     sessionStorage.removeItem("isAuthorised");
-    if(isUserLoggedIn){
-      history.replace(`/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=KL-001625-2025`);
-    }
-    else{
+    if (isUserLoggedIn) {
+      history.replace(`/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}`);
+    } else {
       history.replace(`/${window?.contextPath}/citizen/dristi/home/login`);
     }
   };
 
-  useEffect(()=>{
-    setHideBack(true);
-
-    if(!isUserLoggedIn && !isAuthorised){
-      history.replace(`/${window?.contextPath}/citizen/dristi/home/bail-bond-login?filingNumber=${filingNumber}`)
+  useEffect(() => {
+    if (!isUserLoggedIn && !isAuthorised) {
+      history.replace(`/${window?.contextPath}/citizen/dristi/home/bail-bond-login?tenantId=${tenantId}&bailbondId=${bailbondId}`);
     }
-  },[])
+
+    if(!tenantId && !bailbondId) {
+      history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`);
+    }
+  }, []);
 
   return (
     <React.Fragment>
@@ -174,11 +206,11 @@ const BailBondSignaturePage = ({ setHideBack }) => {
         </div>
         <div style={styles.rightPanel}>
           <div style={styles.docViewer}>
-            {true ? (
+            {!isLoading ? (
               <DocViewerWrapper
-                docWidth={"100vh"}
-                docHeight={"70vh"}
-                fileStoreId={"620e3843-1f9c-4abb-92fe-af6bc30f0e6b"}
+                docWidth={"100%"}
+                docHeight={"100%"}
+                selectedDocs={[orderPreviewPdf]}
                 tenantId={tenantId}
                 docViewerCardClassName={"doc-card"}
                 showDownloadOption={false}

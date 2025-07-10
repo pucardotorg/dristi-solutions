@@ -15,4 +15,5 @@ export const Urls = {
     evidenceUpdate: "/evidence/v1/_update",
   },
   FileFetchById: "/filestore/v1/files/id",
+  FileFetchByFileStore: "/openapi/v1/file/kl",
 };

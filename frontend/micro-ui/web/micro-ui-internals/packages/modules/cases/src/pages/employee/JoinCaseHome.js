@@ -1,5 +1,5 @@
 import { Button, CloseSvg, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { DRISTIService } from "../../../../dristi/src/services";
 import { useTranslation } from "react-i18next";
 import { getFullName, registerIndividualWithNameAndMobileNumber, searchIndividualUserWithUuid, submitJoinCase } from "../../utils/joinCaseUtils";
@@ -1240,6 +1240,18 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     ]
   );
 
+  const isBailBondRequired = useMemo(() => {
+    // call search bail bond
+    /** 
+     * 1. If the user is an advocate for an Accused or is an Accused PiP --- if replace is no
+     * 2. They have already received Advocate rights, i.e. there is no approval request pending for them to get this access
+     * 3. No bail application has been filed for at least one of the litigants for whom the user has advocate rights
+     * 
+    */
+
+    return true; // TODO : Placeholder for actual logic to determine if bail bond is required
+  }, []);
+
   const handleKeyDown = useCallback(
     (event) => {
       if (event.key === "Enter") {
@@ -1350,6 +1362,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           successScreenData={successScreenData}
           isCaseViewDisabled={selectPartyData?.isReplaceAdvocate?.value === "YES" && !isAdvocateJoined}
           type={type}
+          isBailBondRequired={isBailBondRequired}
         />
       ),
     },

@@ -57,5 +57,6 @@ module.exports = function (app) {
     "/hearing-management",
     "/inbox/v2/_getFields/actionCategory",
     "/epayments",
+    "/openapi/v1/file/kl"
   ].forEach((location) => app.use(location, createProxy));
 };

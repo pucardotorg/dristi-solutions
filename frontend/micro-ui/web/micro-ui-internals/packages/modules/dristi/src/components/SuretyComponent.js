@@ -38,8 +38,8 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
     updatedFormInstances.splice(index, 1);
     setFormInstances(updatedFormInstances);
     updateFormData(updatedFormInstances);
-    clearErrors(`fullName_${index}`);
-    clearErrors(`suretyFatherName_${index}`);
+    clearErrors(`name_${index}`);
+    clearErrors(`fatherName_${index}`);
     clearErrors(`mobileNumber_${index}`);
     clearErrors(`identityProof_${index}`);
     clearErrors(`proofOfSolvency_${index}`);

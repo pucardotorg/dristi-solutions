@@ -117,7 +117,7 @@ const GenerateBailBond = () => {
       return {
         ...config,
         body: config?.body.map((body) => {
-          if (body?.key === "surety") {
+          if (body?.key === "sureties") {
             return {
               ...body,
               isMandatory: bailType !== "SURETY",
@@ -171,22 +171,22 @@ const GenerateBailBond = () => {
       clearErrors("bailAmount");
     }
     if (formData?.bailType?.code === "SURETY") {
-      if (!formData?.surety && !Object.keys(formState?.errors).includes("surety")) {
-        setValue("surety", [{}]);
-        setError("surety", { message: t("CORE_REQUIRED_FIELD_ERROR") });
-      } else if (formData?.surety?.length > 0 && !Object.keys(formState?.errors).includes("surety")) {
-        formData?.surety?.forEach((docs, index) => {
-          if (!docs?.fullName && !Object.keys(formState?.errors).includes(`fullName_${index}`)) {
-            setError(`fullName_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      if (!formData?.sureties && !Object.keys(formState?.errors).includes("sureties")) {
+        setValue("sureties", [{}]);
+        setError("sureties", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      } else if (formData?.sureties?.length > 0 && !Object.keys(formState?.errors).includes("sureties")) {
+        formData?.sureties?.forEach((docs, index) => {
+          if (!docs?.name && !Object.keys(formState?.errors).includes(`name_${index}`)) {
+            setError(`name_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
           }
-          else if (docs?.fullName && Object.keys(formState?.errors).includes(`fullName_${index}`)) {
-            clearErrors(`fullName_${index}`);
+          else if (docs?.name && Object.keys(formState?.errors).includes(`name_${index}`)) {
+            clearErrors(`name_${index}`);
           }
 
-          if (!docs?.suretyFatherName && !Object.keys(formState?.errors).includes(`suretyFatherName_${index}`)) {
-            setError(`suretyFatherName_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
-          } else if (docs?.suretyFatherName && Object.keys(formState?.errors).includes(`suretyFatherName_${index}`)) {
-            clearErrors(`suretyFatherName_${index}`);
+          if (!docs?.fatherName && !Object.keys(formState?.errors).includes(`fatherName_${index}`)) {
+            setError(`fatherName_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
+          } else if (docs?.fatherName && Object.keys(formState?.errors).includes(`fatherName_${index}`)) {
+            clearErrors(`fatherName_${index}`);
           }
 
           if (!docs?.mobileNumber && !Object.keys(formState?.errors).includes(`mobileNumber_${index}`)) {
@@ -213,8 +213,8 @@ const GenerateBailBond = () => {
             clearErrors(`otherDocuments_${index}`);
           }
         });
-      } else if (formData?.surety?.length > 0 && Object.keys(formState?.errors).includes("surety")) {
-        clearErrors("surety");
+      } else if (formData?.sureties?.length > 0 && Object.keys(formState?.errors).includes("sureties")) {
+        clearErrors("sureties");
       }
     }
 
@@ -257,6 +257,36 @@ const GenerateBailBond = () => {
 
   const handleSubmit = () => {
     // Todo : create and Update Api Call
+    console.log(formdata,"formdata");
+
+    const payload = { 
+      tenantId,
+      caseId: caseDetails?.id,
+      filingNumber: filingNumber,
+      complainant: formdata?.selectComplainant?.uuid,
+      bailType: formdata?.bailType?.code,
+      auditDetails: {
+        createdBy: userInfo?.uuid,
+        lastModifiedBy: userInfo?.uuid,
+      },
+      bailAmount: formdata?.bailAmount,
+      sureties: formdata?.sureties,
+      litigantId: formdata?.selectComplainant?.uuid,
+      litigantName: formdata?.selectComplainant?.name,
+      litigantFatherName: formdata?.selectComplainant?.fatherName,
+      courtId: caseDetails?.courtId,
+      caseTitle: caseDetails?.caseTitle,
+      cnrNumber: caseDetails?.cnrNumber,
+      caseType: caseDetails?.caseType,
+      documents:[],
+      additionalDetails: {
+        ...formdata
+      }
+    };
+
+    console.log(payload, "payload");
+    
+    
     setShowBailBondReview(true);
   };
 

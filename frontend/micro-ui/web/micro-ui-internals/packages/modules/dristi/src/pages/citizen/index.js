@@ -25,6 +25,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const Response = Digit?.ComponentRegistryService?.getComponent("DRISTICitizenResponse");
   const BailBondSignaturePage = Digit?.ComponentRegistryService?.getComponent("BailBondSignaturePage");
   const BailBondLoginPage = Digit?.ComponentRegistryService?.getComponent("BailBondLoginPage");
+  const BailBondLinkExpiredPage = Digit?.ComponentRegistryService?.getComponent("BailBondLinkExpiredPage");
   const Login = Digit?.ComponentRegistryService?.getComponent("DRISTILogin");
   const FileCase = Digit?.ComponentRegistryService?.getComponent("FileCase");
   const token = window.localStorage.getItem("token");
@@ -127,6 +128,8 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     },
   ];
 
+  const hideBackRoutes = ["/home/access-expired", "/home/bail-bond-login", "/home/bail-bond-sign", "/login", "/registration/email"];
+
   const whiteListedRoutes = [
     `${path}/home/register`,
     `${path}/home/register/otp`,
@@ -145,16 +148,23 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     `${path}/home/registration/upload-id`,
     `${path}/home/registration/terms-condition`,
     `${path}/home/bail-bond-sign`,
-    `${path}/home/bail-bond-login`
+    `${path}/home/bail-bond-login`,
+    `${path}/home/access-expired`,
   ];
-  const bailRoute = [`${path}/home/bail-bond-sign`]
+  const bailRoute = [`${path}/home/bail-bond-sign`];
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = JSON.parse(eSignWindowObject);
   if (!isUserLoggedIn && !whiteListedRoutes.includes(location.pathname)) {
     history.push(`${path}/home/login`);
   }
-  if (!isRejected && individualId && !isLitigantPartialRegistered && whiteListedRoutes.includes(location.pathname) && !bailRoute.includes(location.pathname)) {
+  if (
+    !isRejected &&
+    individualId &&
+    !isLitigantPartialRegistered &&
+    whiteListedRoutes.includes(location.pathname) &&
+    !bailRoute.includes(location.pathname)
+  ) {
     history.push(`${path}/home`);
   }
 
@@ -182,7 +192,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     <div className={"pt-citizen"}>
       <Switch>
         <React.Fragment>
-          {!hideBack && !(location.pathname.includes("/login") || location.pathname.includes("/registration/email") || individualId) && (
+          {!hideBack && !(hideBackRoutes.some((route) => location.pathname.includes(route)) || individualId) && (
             <div className="back-button-home">
               <BackButton />
             </div>
@@ -252,12 +262,16 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
             <LandingPage />
           </Route>
 
+          <Route path={`${path}/home/access-expired`}>
+            <BailBondLinkExpiredPage />
+          </Route>
+
           <Route path={`${path}/home/bail-bond-login`}>
-            <BailBondLoginPage setHideBack={setHideBack}/>
+            <BailBondLoginPage />
           </Route>
 
           <Route path={`${path}/home/bail-bond-sign`}>
-            <BailBondSignaturePage setHideBack={setHideBack}/>
+            <BailBondSignaturePage />
           </Route>
         </React.Fragment>
       </Switch>

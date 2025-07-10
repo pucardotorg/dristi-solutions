@@ -21,10 +21,10 @@ export const bailBondConfig = [
       {
         label: "FATHER_NAME",
         isMandatory: true,
-        key: "fatherName",
+        key: "litigantFatherName",
         type: "text",
         populators: {
-          name: "fatherName",
+          name: "litigantFatherName",
           error: "CORE_REQUIRED_FIELD_ERROR",
           validation: {
             pattern: {
@@ -77,11 +77,11 @@ export const bailBondConfig = [
       },
       {
         type: "component",
-        key: "surety",
+        key: "sureties",
         component: "SuretyComponent",
         // schemaKeyPath: "applicationDetails.applicationDocuments",
         // transformer: "applicationDocuments",
-        name: "Surety",
+        name: "sureties",
         disable: false,
         isMandatory: false,
         populators: {
@@ -90,9 +90,9 @@ export const bailBondConfig = [
             {
               label: "FULL_NAME",
               isMandatory: true,
-              key: "fullName",
+              key: "name",
               type: "text",
-              name: "fullName",
+              name: "name",
               placeholder: "Ex: Raj Kumar Singh",
               validation: {
                 isRequired: true,
@@ -104,9 +104,9 @@ export const bailBondConfig = [
             {
               label: "FATHER_NAME",
               isMandatory: true,
-              key: "suretyFatherName",
+              key: "fatherName",
               type: "text",
-              name: "suretyFatherName",
+              name: "fatherName",
               placeholder: "Ex: Raj Kumar Singh",
               validation: {
                 isRequired: true,
@@ -140,8 +140,8 @@ export const bailBondConfig = [
               infoText: "BAIL_BOND_NOTE",
             },
             {
-              name: "emailId",
-              key: "emailId",
+              name: "email",
+              key: "email",
               type: "text",
               error: "ERR_HRMS_INVALID_MOB_NO",
               label: "E-Mail Address",
@@ -161,7 +161,7 @@ export const bailBondConfig = [
               populators: {
                 inputs: [
                   {
-                    name: "identityProof",
+                    // name: "identityProof",
                     isMandatory: true,
                     documentHeader: "IDENTITY_PROOF",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
@@ -186,7 +186,7 @@ export const bailBondConfig = [
               populators: {
                 inputs: [
                   {
-                    name: "proofOfSolvency",
+                    // name: "proofOfSolvency",
                     isMandatory: true,
                     documentHeader: `PROOF_OF_SOLVENCY`,
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
@@ -211,7 +211,7 @@ export const bailBondConfig = [
               populators: {
                 inputs: [
                   {
-                    name: "otherDocuments",
+                    // name: "otherDocuments",
                     isMandatory: true,
                     documentHeader: "OTHER_DOCUMENTS_HEADING",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
