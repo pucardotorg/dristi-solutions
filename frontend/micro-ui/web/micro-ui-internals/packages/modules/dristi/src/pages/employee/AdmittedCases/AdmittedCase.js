@@ -307,9 +307,9 @@ const AdmittedCases = () => {
     [nextActions]
   );
 
-  const isPendingNoticeStatus = useMemo(() => {
-    return [CaseWorkflowState.PENDING_NOTICE].includes(caseDetails?.status) && primaryAction?.action === "ISSUE_ORDER";
-  }, [caseDetails?.status, primaryAction?.action]);
+  // const isPendingNoticeStatus = useMemo(() => {
+  //   return [CaseWorkflowState.PENDING_NOTICE].includes(caseDetails?.status) && primaryAction?.action === "ISSUE_ORDER";
+  // }, [caseDetails?.status, primaryAction?.action]);
 
   const isDelayCondonationApplicable = useMemo(() => {
     if (!caseDetails?.cnrNumber) return undefined;
@@ -3145,14 +3145,7 @@ const AdmittedCases = () => {
               {currentHearingStatus === HearingWorkflowState.SCHEDULED && tertiaryAction.action && (
                 <Button className="previous-button" variation="secondary" label={t(tertiaryAction.label)} onButtonClick={onSaveDraft} />
               )}
-              {primaryAction?.label && (
-                <SubmitBar
-                  label={t(isPendingNoticeStatus ? "ISSUE_BNSS_NOTICE" : primaryAction?.label)}
-                  submit="submit"
-                  disabled={""}
-                  onSubmit={onSubmit}
-                />
-              )}
+              {primaryAction?.label && <SubmitBar label={t(primaryAction?.label)} submit="submit" disabled={""} onSubmit={onSubmit} />}
             </div>
             {secondaryAction.action && (
               <Button
