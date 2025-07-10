@@ -33,7 +33,7 @@ public class FileStoreUtil {
             throw new CustomException("INVALID_FILE_STORE_ID", "File store ID cannot be null or empty");
         }
         String url = configs.getFileStoreHost() + configs.getFileStoreGetEndPoint() + "?tenantId=" + tenantId + "&fileStoreId="+fileStoreId;
-        if (moduleName != null && !moduleName.isEmpty() && (isModuleNameValid(moduleName))) {
+        if (moduleName != null && !moduleName.isEmpty()) {
             url += "&module=" + moduleName;
         }
         try {
@@ -42,11 +42,6 @@ public class FileStoreUtil {
             log.error("Error while fetching files from file store: {}", e.getMessage(), e);
             throw new CustomException("FILE_STORE_UTILITY_EXCEPTION", "Error occurred when fetching files from File Store");
         }
-    }
-
-    private boolean isModuleNameValid(String moduleName) {
-        return configs.getModuleNamesEnabled().stream()
-                .anyMatch(module -> module.equalsIgnoreCase(moduleName));
     }
 
 }

@@ -16,6 +16,7 @@ public class LandingPageFileRequest {
 
     @JsonProperty("fileStoreId")
     @Valid
+    @NotNull
     private String fileStoreId;
 
     @JsonProperty("tenantId")
