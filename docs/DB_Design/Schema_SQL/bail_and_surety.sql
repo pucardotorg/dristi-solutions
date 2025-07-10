@@ -8,6 +8,7 @@ CREATE TABLE dristi_bail (
     bail_status varchar(64),
     court_id varchar(64), -- Establishment ID for the court
     case_title varchar(512), -- Title of the case
+    case_number varchar(64), -- Case number
     cnr_number varchar(64), -- CNR number of the case
     filing_number varchar(64), -- Filing number of the case
     case_type varchar(16), -- Type of the case (ST, CMP)

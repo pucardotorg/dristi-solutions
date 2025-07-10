@@ -229,9 +229,19 @@ components:
             suretyMobileNumber:
               type: string
               description: Mobile number of the surety.
-            litigantMobileNumber:
+            status:
               type: string
-              description: Mobile number of the litigant.
+              description: Status of the bail.
+            caseType:
+              type: string
+              description: Type of the case.
+              enum:
+                - ST
+                - CMP
+            caseNumber:
+              type: string
+              description: Case number of the case.
+
     BailSearchResponse:
       type: object
       properties:
