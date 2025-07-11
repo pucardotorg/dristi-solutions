@@ -96,6 +96,9 @@ components:
         litigantSigned:
           type: boolean
           description: Whether the litigant has signed the bail.
+        litigantMobileNumber:
+          type: string
+          description: Mobile number of the litigant.
         sureties:
           type: array
           items:
