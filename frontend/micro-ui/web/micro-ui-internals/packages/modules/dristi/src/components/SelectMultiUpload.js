@@ -109,13 +109,38 @@ const SelectMultiUpload = ({ t, config, onSelect, formData = {}, errors, setErro
 
   function handleAddFiles(data, input, currentValue) {
     const maxFileSize = input?.maxFileSize * 1024 * 1024;
+    const mimeTypes = {
+      JPG: "image/jpeg",
+      JPEG: "image/jpeg",
+      PNG: "image/png",
+      PDF: "application/pdf",
+    };
+
     if (data.size > maxFileSize) {
       setShowErrorToast({ label: t("FILE_SIZE_EXCEEDS"), error: true });
       return;
     }
 
-    const updatedDocuments = [...currentValue, data];
-    setValue(updatedDocuments, input?.name);
+    const fileType = data.name.split(".").pop().toUpperCase();
+    const expectedMime = mimeTypes[fileType];
+    if (!expectedMime || data.type !== expectedMime) {
+      setShowErrorToast({ label: t("INVALID_FILE_TYPE"), error: true });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target.result;
+      if (content.includes("<?php") || content.includes("<script>")) {
+        setShowErrorToast({ label: t("MALICIOUS_CONTENT_DETECTED"), error: true });
+        return;
+      }
+
+      // If all validations pass, update the documents
+      const updatedDocuments = [...currentValue, data];
+      setValue(updatedDocuments, input?.name);
+    };
+    reader.readAsText(data);
   }
 
   const handleRemoveFile = (file, index, currentValue, input) => {
