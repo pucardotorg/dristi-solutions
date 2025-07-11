@@ -79,7 +79,6 @@ public class ServiceConstants {
     public static final String REGISTERED_STATUS = "REGISTERED";
     public static final String INWORKFLOW_STATUS = "INWORKFLOW";
     public static final String INVALID_LINKEDCASE_ID = "INVALID_LINKEDCASE_ID";
-    public static final String PENDING_ADMISSION_HEARING_STATUS = "PENDING_ADMISSION_HEARING";
     public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
     public static final String CASE_PDF_UTILITY_EXCEPTION = "CASE_PDF_UTILITY_EXCEPTION";
     public static final String FILE_STORE_UTILITY_EXCEPTION = "FILE_STORE_UTILITY_EXCEPTION";
@@ -144,8 +143,6 @@ public class ServiceConstants {
 
     public static final String JUDGE_SEND_BACK = "JUDGE_SEND_BACK";
 
-    public static final String PENDING_ADMISSION_HEARING = "PENDING_ADMISSION_HEARING";
-
 
     public static final String CASE_REGISTERED = "CASE_REGISTERED";
 
@@ -162,7 +159,6 @@ public class ServiceConstants {
     public static final String CASE_ADMITTED = "CASE_ADMITTED";
     public static final String CASE_DISMISSED = "CASE_DISMISSED";
     public static final String PENDING_RESPONSE = "PENDING_RESPONSE";
-    public static final String PENDING_NOTICE = "PENDING_NOTICE";
     public static final String HEARING_REJECTED = "HEARING_REJECTED";
     public static final String HIGH_COURT_LOCALIZATION_CODE = "HIGH_COURT_KERALA";
     public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";

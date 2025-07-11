@@ -448,11 +448,14 @@ public class CaseService {
             }
 
             boolean isAccessCodeGenerated = false;
-            if (PENDING_ADMISSION_HEARING_STATUS.equals(caseRequest.getCases().getStatus())) {
+            if(PENDING_REGISTRATION.equals(caseRequest.getCases().getStatus()) || PENDING_RESPONSE.equals(caseRequest.getCases().getStatus())) {
                 if (caseRequest.getCases().getAccessCode() == null) {
                     isAccessCodeGenerated = true;
                 }
                 enrichmentUtil.enrichAccessCode(caseRequest);
+            }
+
+            if (PENDING_RESPONSE.equals(caseRequest.getCases().getStatus())) {
                 enrichmentUtil.enrichCNRNumber(caseRequest);
                 enrichmentUtil.enrichCMPNumber(caseRequest);
                 enrichmentUtil.enrichRegistrationDate(caseRequest);
@@ -1179,12 +1182,10 @@ public class CaseService {
             return CASE_FORWARDED_TO_JUDGE;
         } else if (previousStatus.equalsIgnoreCase(UNDER_SCRUTINY) && updatedStatus.equalsIgnoreCase(CASE_REASSIGNED)) {
             return FSO_SEND_BACK;
-        } else if (previousStatus.equalsIgnoreCase(PENDING_REGISTRATION) && updatedStatus.equalsIgnoreCase(PENDING_ADMISSION_HEARING)) {
+        } else if (previousStatus.equalsIgnoreCase(PENDING_REGISTRATION) && updatedStatus.equalsIgnoreCase(PENDING_RESPONSE)) {
             return CASE_REGISTERED;
         } else if (previousStatus.equalsIgnoreCase(PENDING_REGISTRATION) && updatedStatus.equalsIgnoreCase(CASE_REASSIGNED)) {
             return JUDGE_SEND_BACK_E_SIGN_CODE;
-        } else if (previousStatus.equalsIgnoreCase(PENDING_ADMISSION_HEARING) && updatedStatus.equalsIgnoreCase(ADMISSION_HEARING_SCHEDULED)) {
-            return ADMISSION_HEARING_SCHEDULED;
         } else if (previousStatus.equalsIgnoreCase(PENDING_RESPONSE) && updatedStatus.equalsIgnoreCase(CASE_ADMITTED)) {
             return CASE_ADMITTED;
         }

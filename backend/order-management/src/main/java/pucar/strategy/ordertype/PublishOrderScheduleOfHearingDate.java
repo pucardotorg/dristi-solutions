@@ -100,18 +100,6 @@ public class PublishOrderScheduleOfHearingDate implements OrderUpdateStrategy {
 
         log.info("case status:{}", status);
 
-        // PENDING_ADMISSION_HEARING
-        if (PENDING_ADMISSION_HEARING.equalsIgnoreCase(status)) {
-
-            WorkflowObject workflow = new WorkflowObject();
-            workflow.setAction(SCHEDULE_ADMISSION_HEARING);
-            courtCase.setWorkflow(workflow);
-            CaseRequest request = CaseRequest.builder().requestInfo(requestInfo)
-                    .cases(courtCase).build();
-            log.info("case update for caseId:{},action:{}", courtCase.getId(), SCHEDULE_ADMISSION_HEARING);
-            caseUtil.updateCase(request);
-
-        }
 
         // if any abandon hearing is there close the hearing and close pending task for that hearing number
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder()

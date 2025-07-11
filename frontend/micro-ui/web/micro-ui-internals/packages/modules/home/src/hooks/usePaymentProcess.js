@@ -10,7 +10,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
   const [paymentLoader, setPaymentLoader] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [billPaymentStatus, setBillPaymentStatus] = useState();
-  const isMockEnabled = window?.globalConfigs?.getConfig("MOCKENABLED") || false;
+  const isMockEnabled = window?.globalConfigs?.getConfig("MOCKENABLED") === "true" ? true : false;
 
   const fetchBill = async (consumerCode, tenantId, service) => {
     return await DRISTIService.callFetchBill({}, { consumerCode: consumerCode, tenantId, businessService: service });

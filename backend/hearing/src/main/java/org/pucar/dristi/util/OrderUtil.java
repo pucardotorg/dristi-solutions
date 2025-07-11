@@ -8,6 +8,7 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.egov.common.models.project.TaskResponse;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -60,6 +61,11 @@ public class OrderUtil {
             String hearingId = hearingRequest.getHearing().getHearingId();
             String tenantId = hearingRequest.getHearing().getTenantId();
             RequestInfo requestInfo = hearingRequest.getRequestInfo();
+            Role role = Role.builder()
+                    .code(PAYMENT_COLLECTOR)
+                    .name(PAYMENT_COLLECTOR)
+                    .build();
+            requestInfo.getUserInfo().getRoles().add(role);
 
             if (hearingId == null) {
                 log.warn("Hearing ID is null. Skipping closing tasks.");
@@ -100,6 +106,10 @@ public class OrderUtil {
                 .build();
 
         OrderListResponse response = getOrders(searchRequest);
+        if (response == null || CollectionUtils.isEmpty(response.getList())) {
+            log.info("No orders found for Hearing ID: {}", hearingId);
+            return null;
+        }
         List<Order> filteredOrders = response.getList().stream()
                 .filter(order -> List.of(SUMMONS, WARRANT, NOTICE).contains(order.getOrderType() != null ? order.getOrderType().toUpperCase() : getOrderTypeFromCompositeOrders(order)))
                 .collect(Collectors.toList());
@@ -220,7 +230,7 @@ public class OrderUtil {
             return mapper.convertValue(response, OrderListResponse.class);
         } catch (Exception e) {
             log.error(ERROR_WHILE_FETCHING_FROM_ORDER, e);
-            throw new CustomException(ERROR_WHILE_FETCHING_FROM_ORDER, e.getMessage());
+            return null;
         }
     }
 
