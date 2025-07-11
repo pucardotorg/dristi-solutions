@@ -767,8 +767,7 @@ public class OpenApiService {
             bail.setWorkflow(workflowObject);
 
             BailRequest bailRequest = BailRequest.builder()
-                    //TODO
-                    .requestInfo(RequestInfo.builder().userInfo(User.builder().build()).build())
+                    .requestInfo(createInternalRequestInfo())
                     .bail(bail)
                     .build();
 
