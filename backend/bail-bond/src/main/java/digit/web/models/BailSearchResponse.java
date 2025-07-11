@@ -31,6 +31,10 @@ public class BailSearchResponse {
     @Valid
     private List<Bail> bails = null;
 
+    @JsonProperty("pagination")
+    @Valid
+    private Pagination pagination = null;
+
 
     public BailSearchResponse addBailsItem(Bail bailsItem) {
         if (this.bails == null) {
