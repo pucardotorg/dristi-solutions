@@ -104,6 +104,9 @@ public class Bail {
     @JsonProperty("shortenedURL")
     private String shortenedURL = null;
 
+    @JsonProperty("status")
+    private String status = null;
+
     @JsonProperty("documents")
     @Valid
     private List<Document> documents = null;
@@ -130,6 +133,9 @@ public class Bail {
 
     @JsonProperty("filingNumber")
     private String filingNumber = null;
+
+    @JsonProperty("caseNumber")
+    private String caseNumber = null;
 
     /**
      * Type of the case.
