@@ -250,6 +250,9 @@ components:
             caseNumber:
               type: string
               description: Case number of the case.
+            fuzzySearch:
+              type: boolean
+              description: Whether to perform fuzzy search or not on bail id.
         pagination:
           $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
 
