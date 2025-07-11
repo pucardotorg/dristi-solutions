@@ -5,14 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.transformer.config.TransformerProperties;
-import org.egov.transformer.models.Advocate;
-import org.egov.transformer.models.AdvocateMapping;
-import org.egov.transformer.models.CourtCase;
-import org.egov.transformer.models.Hearing;
-import org.egov.transformer.models.HearingRequest;
-import org.egov.transformer.models.HearingResponse;
-import org.egov.transformer.models.OpenHearing;
-import org.egov.transformer.models.Party;
+import org.egov.transformer.models.*;
 import org.egov.transformer.models.inbox.InboxRequest;
 import org.egov.transformer.producer.TransformerProducer;
 import org.egov.transformer.repository.ServiceRequestRepository;
@@ -28,10 +21,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.egov.transformer.config.ServiceConstants.DEFAULT_COURT_MODULE_NAME;
-import static org.egov.transformer.config.ServiceConstants.DEFAULT_HEARING_MASTER_NAME;
-import static org.egov.transformer.config.ServiceConstants.HEARING_MODULE_NAME;
-import static org.egov.transformer.config.ServiceConstants.HEARING_STATUS_MASTER_NAME;
+import static org.egov.transformer.config.ServiceConstants.*;
 
 @Slf4j
 @Service
