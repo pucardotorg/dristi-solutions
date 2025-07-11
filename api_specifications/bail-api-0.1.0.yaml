@@ -107,6 +107,9 @@ components:
         shortenedURL:
           type: string
           description: Shortened URL for the bail bond.
+        status:
+          type: string
+          description: Workflow Status of the bail.
         documents:
           type: array
           items:
