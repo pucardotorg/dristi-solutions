@@ -2,6 +2,7 @@ package pucar.util;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.tika.Tika;
+import org.egov.tracer.model.CustomException;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -10,6 +11,7 @@ import pucar.config.Configuration;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Base64;
 
 
@@ -41,7 +43,7 @@ public class CipherUtil {
         try (InputStream inputStream = resource.getInputStream()) {
             // Check file size first
             if (resource.contentLength() > configuration.getMaxFileSize()) {
-                throw new IllegalArgumentException("File size exceeds maximum allowed size of 10MB");
+                throw new CustomException("FILE_SIZE_EXCEEDED","File size exceeds maximum allowed size of: " + configuration.getMaxFileSize());
             }
 
             // Read file in chunks for memory efficiency
@@ -53,7 +55,7 @@ public class CipherUtil {
             while ((bytesRead = inputStream.read(data, 0, data.length)) != -1) {
                 totalBytesRead += bytesRead;
                 if (totalBytesRead > configuration.getMaxFileSize()) {
-                    throw new IllegalArgumentException("File size exceeds maximum allowed size of 10MB");
+                    throw new CustomException("FILE_SIZE_EXCEEDED","File size exceeds maximum allowed size of: " + configuration.getMaxFileSize());
                 }
                 buffer.write(data, 0, bytesRead);
             }
@@ -77,11 +79,11 @@ public class CipherUtil {
      */
     public MultipartFile decodeBase64ToPdf(String base64, String fileName) throws IOException {
         if (base64 == null || base64.trim().isEmpty()) {
-            throw new IllegalArgumentException("Base64 string cannot be null or empty");
+            throw new CustomException("INVALID_BASE64_STRING","Base64 string cannot be null or empty");
         }
 
         if (fileName == null || fileName.trim().isEmpty()) {
-            throw new IllegalArgumentException("File name cannot be null or empty");
+            throw new CustomException("INVALID_FILE_NAME","File name cannot be null or empty");
         }
 
         byte[] decodedBytes;
@@ -89,7 +91,7 @@ public class CipherUtil {
             // Decode and validate size before processing
             decodedBytes = Base64.getDecoder().decode(base64);
             if (decodedBytes.length > configuration.getMaxFileSize()) {
-                throw new IllegalArgumentException("Decoded file size exceeds maximum allowed size of 10MB");
+                throw new CustomException("FILE_SIZE_EXCEEDED","DecodedFile size exceeds maximum allowed size of: " + configuration.getMaxFileSize());
             }
 
             // Validate file type
@@ -97,8 +99,8 @@ public class CipherUtil {
 
             return new ByteArrayMultipartFile(fileName, decodedBytes);
 
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Invalid Base64 string or file format", e);
+        } catch (Exception e) {
+            throw new CustomException("Invalid Base64 string or file format.", e.getMessage());
         }
     }
 
@@ -109,21 +111,16 @@ public class CipherUtil {
      */
     private void validatePdfFile(byte[] fileData) {
         if (fileData == null || fileData.length == 0) {
-            throw new IllegalArgumentException("File data cannot be empty");
+            throw new CustomException("INVALID_FILE_DATA","File data cannot be empty");
         }
 
         String mimeType = tika.detect(fileData);
-        boolean isValidType = false;
-
-        for (String allowedType : configuration.getAllowedContentTypes()) {
-            if (allowedType.equalsIgnoreCase(mimeType)) {
-                isValidType = true;
-                break;
-            }
-        }
+        boolean isValidType = Arrays.stream(configuration.getAllowedContentTypes())
+                .map(String::toLowerCase)
+                .anyMatch(mime -> mime.equals(mimeType));
 
         if (!isValidType) {
-            throw new IllegalArgumentException("Invalid file type. Only PDF files are allowed. Detected type: " + mimeType);
+            throw new CustomException("INVALID_FILE_TYPE","Invalid file type. Only PDF files are allowed. Detected type: " + mimeType);
         }
     }
 }
