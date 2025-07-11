@@ -9,27 +9,30 @@ import lombok.NoArgsConstructor;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.validation.annotation.Validated;
 
-/**
- * BailSearchRequest
- */
+import java.util.ArrayList;
+import java.util.List;
+
 @Validated
-@jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2025-07-10T12:09:26.562015481+05:30[Asia/Kolkata]")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class BailSearchRequest {
-    @JsonProperty("RequestInfo")
+public class CaseSearchRequest {
 
+    @JsonProperty("RequestInfo")
     @Valid
     private RequestInfo requestInfo = null;
 
     @JsonProperty("criteria")
+    @Valid
+    private List<CaseCriteria> criteria = new ArrayList<>();
 
-    private BailCriteria criteria = null;
+    @JsonProperty("flow")
+    private String flow;
 
-    @JsonProperty("pagination")
-    private Pagination pagination = null;
-
+    public CaseSearchRequest addCriteriaItem(CaseCriteria criteriaItem) {
+        this.criteria.add(criteriaItem);
+        return this;
+    }
 
 }

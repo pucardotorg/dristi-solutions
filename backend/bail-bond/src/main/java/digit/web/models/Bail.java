@@ -94,6 +94,9 @@ public class Bail {
     @JsonProperty("litigantSigned")
     private Boolean litigantSigned = null;
 
+    @JsonProperty("litigantMobileNumber")
+    private String litigantMobileNumber = null;
+
     @JsonProperty("sureties")
     @Valid
     private List<Surety> sureties = null;
@@ -164,6 +167,9 @@ public class Bail {
 
     @JsonProperty("bailId")
     private String bailId = null;
+
+    @JsonProperty("status")
+    private String status = null;
 
 
     public Bail addSuretiesItem(Surety suretiesItem) {

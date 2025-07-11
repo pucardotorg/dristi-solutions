@@ -27,28 +27,28 @@ public class BailApiControllerTest {
     private MockMvc mockMvc;
 
     @Test
-    public void v1CreatePostSuccess() throws Exception {
+    public void bailv1CreatePostSuccess() throws Exception {
         mockMvc.perform(post("/v1/_create").contentType(MediaType
         .APPLICATION_JSON_UTF8))
         .andExpect(status().isOk());
     }
 
     @Test
-    public void v1CreatePostFailure() throws Exception {
+    public void bailV1CreatePostFailure() throws Exception {
         mockMvc.perform(post("/v1/_create").contentType(MediaType
         .APPLICATION_JSON_UTF8))
         .andExpect(status().isBadRequest());
     }
 
     @Test
-    public void v1SearchPostSuccess() throws Exception {
+    public void bailv1SearchPostSuccess() throws Exception {
         mockMvc.perform(post("/v1/_search").contentType(MediaType
         .APPLICATION_JSON_UTF8))
         .andExpect(status().isOk());
     }
 
     @Test
-    public void v1SearchPostFailure() throws Exception {
+    public void bailv1SearchPostFailure() throws Exception {
         mockMvc.perform(post("/v1/_search").contentType(MediaType
         .APPLICATION_JSON_UTF8))
         .andExpect(status().isBadRequest());

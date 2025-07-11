@@ -47,6 +47,12 @@ public class Configuration {
     @Value("${egov.idgen.path}")
     private String idGenPath;
 
+    @Value("${egov.idgen.bailConfig}")
+    private String bailConfig;
+
+    @Value("${egov.idgen.bailFormat}")
+    private String bailFormat;
+
 
     //Workflow Config
     @Value("${egov.workflow.host}")
@@ -89,4 +95,24 @@ public class Configuration {
     //SMSNotification
     @Value("${egov.sms.notification.topic}")
     private String smsNotificationTopic;
+
+    //Bail
+    @Value("${bail.kafka.create.topic}")
+    private String bailCreateTopic;
+
+    @Value("${bail.kafka.update.topic}")
+    private String bailUpdateTopic;
+
+    @Value("${egov.workflow.bail.business.name}")
+    private String bailBusinessName;
+
+    @Value("${egov.workflow.bail.business.service.name}")
+    private String bailBusinessServiceName;
+
+    //Case Config
+    @Value("${egov.case.host}")
+    private String caseHost;
+
+    @Value("${egov.case.search.endpoint}")
+    private String caseSearchPath;
 }
