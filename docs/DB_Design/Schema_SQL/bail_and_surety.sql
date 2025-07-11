@@ -25,7 +25,7 @@ CREATE TABLE dristi_bail (
     last_modified_by varchar(36),
     created_time int8,
     last_modified_time int8,
-    CONSTRAINT fk_bail_case FOREIGN KEY(case_id) REFERENCES dristi_case(id),
+    CONSTRAINT fk_bail_case FOREIGN KEY(case_id) REFERENCES dristi_case(id)
 );
 CREATE INDEX idx_dristi_bail_case_id ON dristi_bail(case_id);
 CREATE INDEX idx_dristi_bail_tenant_id ON dristi_bail(tenant_id);
