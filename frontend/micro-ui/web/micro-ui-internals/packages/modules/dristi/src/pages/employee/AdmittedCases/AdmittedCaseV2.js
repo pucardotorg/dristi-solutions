@@ -2116,6 +2116,8 @@ const AdmittedCaseV2 = () => {
       history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${i?.label}${fromHome ? `&fromHome=${fromHome}` : ""}`, {
         caseData,
         orderData: ordersData,
+        homeFilteredData: homeFilteredData,
+        homeActiveTab: homeActiveTab,
       });
     },
     [caseData, caseId, filingNumber, history, ordersData, path, fromHome]
@@ -2665,7 +2667,10 @@ const AdmittedCaseV2 = () => {
 
   const handleOrdersTab = useCallback(() => {
     if (history.location?.state?.orderObj) {
-      history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`);
+      history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Orders`, {
+        homeFilteredData: homeFilteredData,
+        homeActiveTab: homeActiveTab,
+      });
     } else {
       if (showOrderReviewModal) setShowOrderReviewModal(false);
       if (showNotificationModal) setShowNotificationModal(false);
