@@ -174,10 +174,6 @@ public class Bail {
     @JsonProperty("bailId")
     private String bailId = null;
 
-    @JsonProperty("status")
-    private String status = null;
-
-
     public Bail addSuretiesItem(Surety suretiesItem) {
         if (this.sureties == null) {
             this.sureties = new ArrayList<>();

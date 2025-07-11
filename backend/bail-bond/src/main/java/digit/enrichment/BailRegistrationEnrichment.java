@@ -14,6 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -48,11 +49,13 @@ public class BailRegistrationEnrichment {
         bail.setAuditDetails(auditDetails);
         bail.setId(String.valueOf(UUID.randomUUID()));
         bail.setBailId(bailRegistrationBailIdList.get(0));
+        enrichCaseDetails(bailRequest);
 
         bail.getDocuments().forEach(this::enrichDocument);
+        enrichSureties(bailRequest);
     }
 
-    private void enrichCaseDetails(BailRequest bailRequest) {
+    public void enrichCaseDetails(BailRequest bailRequest) {
         Bail bail = bailRequest.getBail();
         CaseCriteria criteria = CaseCriteria.builder()
                 .filingNumber(bail.getFilingNumber())
@@ -70,10 +73,22 @@ public class BailRegistrationEnrichment {
         bail.setCaseType(Bail.CaseTypeEnum.valueOf(caseType)) ;
     }
 
-    private void enrichDocument(Document document) {
+    public void enrichDocument(Document document) {
         if (document.getId() == null) {
             document.setId(String.valueOf(UUID.randomUUID()));
             document.setDocumentUid(document.getId());
         }
     }
+
+    public void enrichSureties(BailRequest bailRequest) {
+        if(!ObjectUtils.isEmpty(bailRequest.getBail().getSureties())) {
+            bailRequest.getBail().getSureties().forEach(surety -> {
+                if(surety.getId() == null) {
+                    surety.setId(String.valueOf(UUID.randomUUID()));
+                }
+            });
+        }
+    }
+
+
 }

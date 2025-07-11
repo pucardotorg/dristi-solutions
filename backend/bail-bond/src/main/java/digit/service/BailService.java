@@ -7,11 +7,15 @@ import digit.util.CaseUtil;
 import digit.validator.BailValidator;
 import digit.web.models.Bail;
 import digit.web.models.BailRequest;
+import digit.web.models.Surety;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import static digit.config.ServiceConstants.E_SIGN;
+import static digit.config.ServiceConstants.E_SIGN_COMPLETE;
+import static digit.config.ServiceConstants.PENDING_E_SIGN;
 
 @Service
 @Slf4j
@@ -47,10 +51,18 @@ public class BailService {
         // Check if bail exists
         validator.validateBailExists(bailRequest);
 
-        // Workflow update
-        workflowService.updateWorkflowStatus(bailRequest);
+        // Enrich new sureties if any
+        enrichmentUtil.enrichSureties(bailRequest);
+
 
         Boolean lastSigned = checkItsLastSign(bailRequest);
+        if (lastSigned) {
+            bailRequest.getBail().getWorkflow().setAction(E_SIGN_COMPLETE);
+        }
+
+
+        // Workflow update
+        workflowService.updateWorkflowStatus(bailRequest);
 
         producer.push(config.getBailUpdateTopic(), bailRequest);
 
@@ -58,14 +70,21 @@ public class BailService {
     }
 
     private Boolean checkItsLastSign(BailRequest bailRequest) {
-
-        if (E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction())) {
-
-
-            return true;
-
+        boolean allSuretiesSigned = false;
+        if(bailRequest.getBail()==null) return false;
+        if(!ObjectUtils.isEmpty(bailRequest.getBail().getSureties())){
+            allSuretiesSigned = bailRequest.getBail().getSureties().stream()
+                    .allMatch(Surety::getHasSigned);
         }
-        log.info("Method=checkItsLastSign, Result= SUCCESS, Not last e-sign for case {}", bailRequest.getBail().getId());
-        return false;
+        if(!allSuretiesSigned){
+            log.info("Some sureties have not signed");
+            return false;
+        }
+        if(!bailRequest.getBail().getLitigantSigned()){
+            log.info("Litigant has not signed");
+            return false;
+        }
+        log.info("All sureties and litigant have signed");
+        return true;
     }
 }

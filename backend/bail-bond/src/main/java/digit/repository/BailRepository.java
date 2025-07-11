@@ -1,7 +1,7 @@
 package digit.repository;
 
 import digit.web.models.Bail;
-import digit.web.models.BailCriteria;
+import digit.web.models.BailSearchCriteria;
 import digit.web.models.BailSearchRequest;
 import digit.web.models.Pagination;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +15,7 @@ import java.util.List;
 public class BailRepository {
 
     public List<Bail> checkBailExists(RequestInfo requestInfo, Bail bail) {
-        BailCriteria criteria = BailCriteria.builder()
+        BailSearchCriteria criteria = BailSearchCriteria.builder()
                 .bailId(bail.getId())
                 .tenantId(bail.getTenantId())
                 .build();

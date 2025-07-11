@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.Configuration;
 import digit.repository.ServiceRequestRepository;
 import digit.web.models.Bail;
-import digit.web.models.BailCriteria;
 import digit.web.models.BailRequest;
+import digit.web.models.BailSearchCriteria;
 import digit.web.models.BailSearchRequest;
 import digit.web.models.ProcessInstanceObject;
 import digit.web.models.RequestInfoWrapper;
@@ -143,7 +143,7 @@ public class WorkflowService {
 
     public ProcessInstanceRequest getProcessInstanceForCasePayment(BailSearchRequest updateRequest, String tenantId) {
 
-        BailCriteria bailCriteria = updateRequest.getCriteria();
+        BailSearchCriteria bailCriteria = updateRequest.getCriteria();
 
         ProcessInstance process = ProcessInstance.builder()
                 .businessService(config.getBailBusinessServiceName())
