@@ -241,6 +241,8 @@ components:
             caseNumber:
               type: string
               description: Case number of the case.
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
 
     BailSearchResponse:
       type: object
@@ -251,3 +253,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Bail'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+
