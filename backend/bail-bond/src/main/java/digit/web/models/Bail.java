@@ -95,6 +95,7 @@ public class Bail {
     private Boolean litigantSigned = null;
 
     @JsonProperty("litigantMobileNumber")
+    @NotNull
     private String litigantMobileNumber = null;
 
     @JsonProperty("sureties")

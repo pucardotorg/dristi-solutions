@@ -20,6 +20,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import static digit.config.ServiceConstants.EDIT;
+
 @Component
 @Slf4j
 @AllArgsConstructor
@@ -29,6 +31,7 @@ public class BailRegistrationEnrichment {
     private final CaseUtil caseUtil;
 
     public void enrichBailOnCreation(BailRequest bailRequest) {
+        log.info("Enriching Bail On Creation");
         String idName = config.getBailConfig();
         String idFormat = config.getBailFormat();
 
@@ -50,8 +53,9 @@ public class BailRegistrationEnrichment {
         bail.setId(String.valueOf(UUID.randomUUID()));
         bail.setBailId(bailRegistrationBailIdList.get(0));
         enrichCaseDetails(bailRequest);
-
-        bail.getDocuments().forEach(this::enrichDocument);
+        if(!ObjectUtils.isEmpty(bailRequest.getBail().getDocuments())){
+            bail.getDocuments().forEach(this::enrichDocument);
+        }
         enrichSureties(bailRequest);
     }
 
@@ -86,9 +90,25 @@ public class BailRegistrationEnrichment {
                 if(surety.getId() == null) {
                     surety.setId(String.valueOf(UUID.randomUUID()));
                 }
+                if(!ObjectUtils.isEmpty(surety.getDocuments())){
+                    surety.getDocuments().forEach(this::enrichDocument);
+                }
             });
         }
     }
 
 
+    public void enrichBailUponUpdate(BailRequest bailRequest) {
+        log.info("Enriching Bail Upon Update");
+        // If workflow action is edit, invalidate all the sign
+        if(bailRequest.getBail().getWorkflow().getAction().equalsIgnoreCase(EDIT)){
+            bailRequest.getBail().setLitigantSigned(false);
+            if(!ObjectUtils.isEmpty(bailRequest.getBail().getSureties())){
+                bailRequest.getBail().getSureties().forEach(surety -> {
+                    surety.setHasSigned(false);
+                });
+            }
+        }
+        enrichSureties(bailRequest);
+    }
 }

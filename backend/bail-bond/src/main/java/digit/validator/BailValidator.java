@@ -22,12 +22,9 @@ public class BailValidator {
     private final BailRepository repository;
 
     public void validateBailRegistration(BailRequest bailRequest) throws CustomException {
-
-        Bail bail = bailRequest.getBail();
-        RequestInfo requestInfo = bailRequest.getRequestInfo();
-
+        log.info("Validating Bail Registration");
         // Validate userInfo and tenantId
-        baseValidations(requestInfo);
+        baseValidations(bailRequest.getRequestInfo());
     }
 
     private void baseValidations(RequestInfo requestInfo){
@@ -39,10 +36,11 @@ public class BailValidator {
 
 
     public void validateBailExists(BailRequest bailRequest) throws CustomException {
+        log.info("Validating That Bail Exists");
         RequestInfo requestInfo = bailRequest.getRequestInfo();
         Bail bail = bailRequest.getBail();
         List<Bail> existingBails = repository.checkBailExists(requestInfo, bail);
-        if(!existingBails.isEmpty()){
+        if(existingBails.isEmpty()){
             throw new CustomException(VALIDATION_EXCEPTION, "Bail does not exist");
         }
     }
