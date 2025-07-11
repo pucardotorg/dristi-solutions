@@ -89,4 +89,8 @@ public class Configuration {
     //SMSNotification
     @Value("${egov.sms.notification.topic}")
     private String smsNotificationTopic;
+
+    // long url
+    @Value("${egov.long.url}")
+    private String longUrl;
 }

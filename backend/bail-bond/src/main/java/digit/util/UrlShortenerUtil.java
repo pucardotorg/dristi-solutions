@@ -2,6 +2,7 @@ package digit.util;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -34,6 +35,23 @@ public class UrlShortenerUtil {
         }
         else return res;
     }
+
+    public String createShortenedUrl(String tenantId, String bailBondId) {
+
+        try {
+            String baseUrl = configs.getLongUrl();
+
+            // Build the final long URL with query parameters
+            String longUrl = String.format("%s?tenant=%s&bailbondId=%s", baseUrl, tenantId, bailBondId);
+
+            // Return shortened version
+            return getShortenedUrl(longUrl);
+        } catch (CustomException e) {
+            log.error(URL_SHORTENING_ERROR_CODE + "{}", e.getMessage());
+            throw new CustomException(URL_SHORTENING_ERROR_CODE, URL_SHORTENING_ERROR_MESSAGE + e.getMessage());
+        }
+    }
+
 
 
 }
