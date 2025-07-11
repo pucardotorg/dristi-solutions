@@ -103,10 +103,14 @@ public class ArtifactRepository {
  * This api needs to be enhanced to pick right object .All repositories should implement cloudmanager and it should provide 
  * simple get api too
  */
-	public Resource find(String fileStoreId, String tenantId) throws IOException {
+	public Resource find(String fileStoreId, String tenantId, String module) throws IOException {
 		Artifact artifact = fileStoreJpaRepository.findByFileStoreIdAndTenantId(fileStoreId, tenantId);
 		if (artifact == null)
 			throw new CustomException("NOT_FOUND", "Invalid filestoreid or tenantid");
+
+		if (module != null && !module.isEmpty() && !module.equals(artifact.getModule())) {
+			throw new CustomException("module_mismatch", "Invalid module");
+		}
 
 		org.springframework.core.io.Resource resource = null;
 
