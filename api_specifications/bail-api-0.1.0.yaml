@@ -132,6 +132,9 @@ components:
         filingNumber:
           type: string
           description: Filing number of the case.
+        caseNumber:
+          type: string
+          description: Case number of the case.
         caseType:
           type: string
           description: Type of the case.
