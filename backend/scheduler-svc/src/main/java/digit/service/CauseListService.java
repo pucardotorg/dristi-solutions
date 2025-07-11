@@ -472,7 +472,7 @@ public class CauseListService {
             CauseList causeList = CauseList.builder()
                     .id(UUID.fromString(hearing.getHearingUuid()))
                     .tenantId(hearing.getTenantId())
-                    .hearingId(hearing.getHearingUuid())
+                    .hearingId(hearing.getHearingNumber())
                     .filingNumber(hearing.getFilingNumber())
                     .hearingType(hearing.getHearingType())
                     .status(hearing.getStatus())
