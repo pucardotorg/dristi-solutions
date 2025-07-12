@@ -20,6 +20,7 @@ import lombok.Builder;
 @NoArgsConstructor
 @Builder
 public class Document {
+
     @JsonProperty("id")
     @Size(max = 64)
     private String id = null;
@@ -30,6 +31,9 @@ public class Document {
     @JsonProperty("fileStore")
     private String fileStore = null;
 
+    @JsonProperty("tenantId")
+    private String tenantId = null;
+
     @JsonProperty("documentUid")
     @Size(max = 64)
     private String documentUid = null;
@@ -37,5 +41,13 @@ public class Document {
     @JsonProperty("additionalDetails")
     private Object additionalDetails = null;
 
+    @JsonProperty("auditDetails")
+    private AuditDetails auditDetails = null;
+
+    @JsonProperty("documentName")
+    private String documentName = null;
+
+    @JsonProperty("isActive")
+    private Boolean isActive = true;
 
 }
