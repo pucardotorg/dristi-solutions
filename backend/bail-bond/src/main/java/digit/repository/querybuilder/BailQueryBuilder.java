@@ -56,7 +56,7 @@ public class BailQueryBuilder {
 
 
     public String getPaginatedBailIdsQuery(BailSearchCriteria criteria, Pagination pagination, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
-        StringBuilder query = new StringBuilder("SELECT DISTINCT(bail.id)");
+        StringBuilder query = new StringBuilder("SELECT DISTINCT(bail.id), bail.created_time");
         query.append(FROM_QUERY);
 
         getWhereFields(criteria, query, preparedStmtList, preparedStmtArgList);
