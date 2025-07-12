@@ -35,7 +35,7 @@ public class BailRepository {
 
     public List<Bail> checkBailExists(RequestInfo requestInfo, Bail bail) {
         BailSearchCriteria criteria = BailSearchCriteria.builder()
-                .bailId(bail.getId())
+                .id(bail.getId())
                 .tenantId(bail.getTenantId())
                 .build();
         Pagination pagination = Pagination.builder().limit(1.0).offSet(0.0).build();
