@@ -13,10 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.sql.Types;
+import java.util.*;
 
 @Repository
 @Slf4j
@@ -54,38 +52,61 @@ public class BailRepository {
             List<Object> preparedStmtList = new ArrayList<>();
             List<Integer> preparedStmtArgList = new ArrayList<>();
 
-            String bailQuery = queryBuilder.getBailSearchQuery(bailSearchRequest.getCriteria(), preparedStmtList,preparedStmtArgList);
-            bailQuery = queryBuilder.addOrderByQuery(bailQuery, bailSearchRequest.getPagination());
-            log.info("Bail search query before pagination :: {}", bailQuery);
+            List<String> paginatedIds = getPaginatedBailIds(bailSearchRequest);
+            if (paginatedIds.isEmpty()) return Collections.emptyList();
+
             if(bailSearchRequest.getPagination() !=  null) {
-                Integer totalRecords = getTotalCountBail(bailQuery, preparedStmtList);
+                Integer totalRecords = getTotalCountBail(bailSearchRequest.getCriteria());
                 log.info("Total count without pagination :: {}", totalRecords);
                 bailSearchRequest.getPagination().setTotalCount(Double.valueOf(totalRecords));
-                bailQuery = queryBuilder.addPaginationQuery(bailQuery, bailSearchRequest.getPagination(), preparedStmtList,preparedStmtArgList);
             }
-            if(preparedStmtList.size()!=preparedStmtArgList.size()){
-                log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(),preparedStmtArgList.size());
+
+            String fullQuery = queryBuilder.getBailDetailsByIdsQuery(paginatedIds, bailSearchRequest.getPagination(), preparedStmtList, preparedStmtArgList);
+            if (preparedStmtList.size() != preparedStmtArgList.size()) {
+                log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(), preparedStmtArgList.size());
                 throw new CustomException("BAIL_SEARCH_ERR", "Arg and ArgType size mismatch");
             }
-            List<Bail> list = jdbcTemplate.query(bailQuery, preparedStmtList.toArray(),preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), rowMapper);
+            List<Bail> list = jdbcTemplate.query(fullQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), rowMapper);
             log.info("DB bail list :: {}", list);
             if (list != null) {
                 applicationList.addAll(list);
             }
             return applicationList;
-        }
-        catch (CustomException e){
+        } catch (CustomException e) {
             throw e;
-        }
-        catch (Exception e){
+        } catch (Exception e) {
             log.error("Error while fetching bail list {}", e.getMessage());
-            throw new CustomException("BAIL_SEARCH_ERR","Error while fetching bail list: "+e.getMessage());
+            throw new CustomException("BAIL_SEARCH_ERR", "Error while fetching bail list: " + e.getMessage());
         }
     }
 
-    public Integer getTotalCountBail(String baseQuery, List<Object> preparedStmtList) {
-        String countQuery = queryBuilder.getTotalCountQuery(baseQuery);
-        log.info("Final count query :: {}", countQuery);
-        return jdbcTemplate.queryForObject(countQuery, Integer.class, preparedStmtList.toArray());
+    public List<String> getPaginatedBailIds(BailSearchRequest request) {
+        List<Object> stmtList = new ArrayList<>();
+        List<Integer> argTypeList = new ArrayList<>();
+
+        String query = queryBuilder.getPaginatedBailIdsQuery(
+                request.getCriteria(), request.getPagination(), stmtList, argTypeList);
+
+        log.info("Paginated Bail ID query: {}", query);
+        return jdbcTemplate.query(query, stmtList.toArray(),
+                argTypeList.stream().mapToInt(Integer::intValue).toArray(),
+                (rs, rowNum) -> rs.getString("id"));
     }
+
+
+    public Integer getTotalCountBail(BailSearchCriteria criteria) {
+        List<Object> stmtList = new ArrayList<>();
+        List<Integer> argTypeList = new ArrayList<>();
+
+        String countQuery = queryBuilder.getTotalCountQuery(criteria, stmtList, argTypeList);
+        log.info("Final count query :: {}", countQuery);
+
+        return jdbcTemplate.queryForObject(
+                countQuery,
+                stmtList.toArray(),
+                argTypeList.stream().mapToInt(Integer::intValue).toArray(),
+                Integer.class
+        );
+    }
+
 }

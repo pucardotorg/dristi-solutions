@@ -3,7 +3,6 @@ package digit.repository.querybuilder;
 import digit.web.models.BailSearchCriteria;
 import digit.web.models.Pagination;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Component;
 
 import java.sql.Types;
@@ -45,58 +44,69 @@ public class BailQueryBuilder {
                     "surety_doc.document_name as suretyDocName, surety_doc.document_type as suretyDocType, " +
                     "surety_doc.additional_details as suretyDocAdditionalDetails, surety_doc.is_active as suretyDocIsActive, " +
                     "surety_doc.created_by as suretyDocCreatedBy, surety_doc.last_modified_by as suretyDocLastModifiedBy, " +
-                    "surety_doc.created_time as suretyDocCreatedTime, surety_doc.last_modified_time as suretyDocLastModifiedTime " +
+                    "surety_doc.created_time as suretyDocCreatedTime, surety_doc.last_modified_time as suretyDocLastModifiedTime ";
 
-                    "FROM dristi_bail bail " +
-                    "LEFT JOIN dristi_bail_document bail_doc ON bail.id = bail_doc.bail_id " +
-                    "LEFT JOIN dristi_surety srt ON bail.id = srt.bail_id " +
-                    "LEFT JOIN dristi_surety_document surety_doc ON srt.id = surety_doc.surety_id";
-
+    private static final String FROM_QUERY = " FROM dristi_bail bail" +
+            " LEFT JOIN dristi_bail_document bail_doc ON bail.id = bail_doc.bail_id" +
+            " LEFT JOIN dristi_surety srt ON bail.id = srt.bail_id" +
+            " LEFT JOIN dristi_surety_document surety_doc ON srt.id = surety_doc.surety_id ";
 
     private static final String ORDER_BY_CLAUSE = " ORDER BY {orderBy} {sortingOrder} ";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY bail.created_time DESC ";
-    private static final String PAGINATION_QUERY = " LIMIT ? OFFSET ? ";
 
-    public String getBailSearchQuery(BailSearchCriteria criteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
-        try {
-            StringBuilder query = new StringBuilder(BASE_BAIL_QUERY);
-            getWhereFields(criteria, query, preparedStmtList, preparedStmtArgList);
-            return query.toString();
-        } catch (Exception e) {
-            log.error("Error while building bail search query {}", e.getMessage());
-            throw new CustomException("BAIL_SEARCH_QUERY_EXCEPTION", "Error occurred while building the bail search query: " + e.getMessage());
+
+    public String getPaginatedBailIdsQuery(BailSearchCriteria criteria, Pagination pagination, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        StringBuilder query = new StringBuilder("SELECT DISTINCT(bail.id)");
+        query.append(FROM_QUERY);
+
+        getWhereFields(criteria, query, preparedStmtList, preparedStmtArgList);
+        query = new StringBuilder(addOrderByQuery(query.toString(), pagination));
+
+        if (pagination!=null) {
+            query.append(" LIMIT ? OFFSET ?");
+                preparedStmtList.add(pagination.getLimit().intValue());
+                preparedStmtList.add(pagination.getOffSet().intValue());
+
+                preparedStmtArgList.add(Types.INTEGER);
+                preparedStmtArgList.add(Types.INTEGER);
         }
+
+        return query.toString();
     }
 
-    public String addPaginationQuery(String query, Pagination pagination, List<Object> preparedStatementList,List<Integer> preparedStatementArgList) {
-        preparedStatementList.add(pagination.getLimit());
-        preparedStatementList.add(pagination.getOffSet());
+    public String getBailDetailsByIdsQuery(List<String> bailIds, Pagination pagination, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        StringBuilder query = new StringBuilder(BASE_BAIL_QUERY);
+        query.append(FROM_QUERY);
 
-        preparedStatementArgList.add(Types.INTEGER);
-        preparedStatementArgList.add(Types.INTEGER);
-        return query + PAGINATION_QUERY;
+        query.append(" WHERE bail.id IN (");
+        String placeholders = String.join(",", bailIds.stream().map(id -> "?").toList());
+        query.append(placeholders).append(")");
+
+        for (String id : bailIds) {
+            preparedStmtList.add(id);
+            preparedStmtArgList.add(Types.VARCHAR);
+        }
+        return addOrderByQuery(query.toString(), pagination);
     }
 
     public String addOrderByQuery(String query, Pagination pagination) {
-        if (isPaginationInvalid(pagination) || pagination.getSortBy().contains(";")) {
+        if (isPaginationInvalid(pagination)) {
             return query + DEFAULT_ORDERBY_CLAUSE;
         } else {
             query = query + ORDER_BY_CLAUSE;
+            return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
         }
-        return query.replace("{orderBy}", pagination.getSortBy()).replace("{sortingOrder}", pagination.getOrder().name());
     }
 
     private static boolean isPaginationInvalid(Pagination pagination) {
         return pagination == null || pagination.getSortBy() == null || pagination.getOrder() == null;
     }
 
-    public String getTotalCountQuery(String baseQuery) {
-        String lower = baseQuery.toLowerCase();
-        int orderByIndex = lower.lastIndexOf("order by");
-        String baseWithoutOrderBy = orderByIndex != -1 ? baseQuery.substring(0, orderByIndex) : baseQuery;
-        return "SELECT COUNT(*) FROM (SELECT DISTINCT(bail.id) " +
-                baseWithoutOrderBy.substring(baseWithoutOrderBy.toLowerCase().indexOf("from")) +
-                ") AS total_count";
+    public String getTotalCountQuery(BailSearchCriteria criteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        StringBuilder countQuery = new StringBuilder("SELECT COUNT(*) FROM (SELECT DISTINCT(bail.id)" + FROM_QUERY);
+        getWhereFields(criteria, countQuery, preparedStmtList, preparedStmtArgList);
+        countQuery.append(") as total_count");
+        return countQuery.toString();
     }
 
     private void getWhereFields(BailSearchCriteria criteria, StringBuilder query,
