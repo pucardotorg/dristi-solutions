@@ -8,12 +8,25 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @Slf4j
-public class CourtIdRepository {
+public class DBRepository {
     private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    public CourtIdRepository(JdbcTemplate jdbcTemplate) {
+    public DBRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
+    }
+
+    @Transactional
+    public void updateBailCaseNumberForFilingNumber(String caseNumber, String filingNumber) {
+        String countQuery = "SELECT COUNT(*) FROM dristi_bail WHERE filing_number = ?";
+        log.info("Final count query: {}", countQuery);
+
+        Integer count = jdbcTemplate.queryForObject(countQuery, Integer.class, filingNumber);
+        log.info("Total Bail count: {}", count);
+
+        String queryForBail = "update dristi_bail set case_number=? where filing_number=?";
+        int rowsUpdatedBail= jdbcTemplate.update(queryForBail, caseNumber, filingNumber);
+        log.warn("Number of bail rows updated :: {} for filingNumber {}",rowsUpdatedBail, filingNumber);
     }
 
     @Transactional

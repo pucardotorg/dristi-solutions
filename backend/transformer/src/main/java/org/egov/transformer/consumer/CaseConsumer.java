@@ -11,7 +11,7 @@ import org.egov.common.contract.request.User;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.models.*;
 import org.egov.transformer.producer.TransformerProducer;
-import org.egov.transformer.repository.CourtIdRepository;
+import org.egov.transformer.repository.DBRepository;
 import org.egov.transformer.service.CaseService;
 import org.egov.transformer.service.UserService;
 import org.slf4j.Logger;
@@ -39,18 +39,18 @@ public class CaseConsumer {
     private final TransformerProducer producer;
     private final TransformerProperties transformerProperties;
     private final CaseService caseService;
-    private final CourtIdRepository courtIdRepository;
+    private final DBRepository repository;
     private final UserService userService;
 
     @Autowired
     public CaseConsumer(ObjectMapper objectMapper,
                         TransformerProducer producer,
-                        TransformerProperties transformerProperties, CaseService caseService, CourtIdRepository courtIdRepository, UserService userService) {
+                        TransformerProperties transformerProperties, CaseService caseService, DBRepository repository, UserService userService) {
         this.objectMapper = objectMapper;
         this.producer = producer;
         this.transformerProperties = transformerProperties;
         this.caseService = caseService;
-        this.courtIdRepository = courtIdRepository;
+        this.repository = repository;
         this.userService = userService;
     }
 
@@ -85,7 +85,16 @@ public class CaseConsumer {
             logger.info("Current case status ::{}",courtCase.getStatus());
 
             if ("PENDING_REGISTRATION".equalsIgnoreCase(courtCase.getStatus())) {
-                courtIdRepository.updateCourtIdForFilingNumber(courtCase.getCourtId(), courtCase.getFilingNumber());
+                repository.updateCourtIdForFilingNumber(courtCase.getCourtId(), courtCase.getFilingNumber());
+            }
+            String caseNumber= courtCase.getFilingNumber();
+            if(courtCase.getCourtCaseNumber() != null && !courtCase.getCourtCaseNumber().isEmpty()) {
+                caseNumber = courtCase.getCourtCaseNumber();
+            } else if (courtCase.getCmpNumber()!=null && !courtCase.getCmpNumber().isEmpty()) {
+                caseNumber = courtCase.getCmpNumber();
+            }
+            if(caseNumber!=null && !caseNumber.isEmpty()) {
+                repository.updateBailCaseNumberForFilingNumber(caseNumber, courtCase.getFilingNumber());
             }
         } catch (Exception exception) {
             log.error("error in saving case", exception);
