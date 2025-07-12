@@ -53,9 +53,8 @@ public class BailQueryBuilder {
                     "LEFT JOIN dristi_surety_document surety_doc ON srt.id = surety_doc.surety_id";
 
 
-    private static final String TOTAL_COUNT_QUERY = " SELECT COUNT(*) FROM ({baseQuery}) AS total_count";
     private static final String ORDER_BY_CLAUSE = " ORDER BY {orderBy} {sortingOrder} ";
-    private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY bailCreatedTime DESC ";
+    private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY bail.created_time DESC ";
     private static final String PAGINATION_QUERY = " LIMIT ? OFFSET ? ";
 
     public String getBailSearchQuery(BailSearchCriteria criteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
@@ -69,9 +68,12 @@ public class BailQueryBuilder {
         }
     }
 
-    public String addPaginationQuery(String query, Pagination pagination, List<Object> preparedStatementList) {
+    public String addPaginationQuery(String query, Pagination pagination, List<Object> preparedStatementList,List<Integer> preparedStatementArgList) {
         preparedStatementList.add(pagination.getLimit());
         preparedStatementList.add(pagination.getOffSet());
+
+        preparedStatementArgList.add(Types.INTEGER);
+        preparedStatementArgList.add(Types.INTEGER);
         return query + PAGINATION_QUERY;
     }
 
@@ -89,7 +91,12 @@ public class BailQueryBuilder {
     }
 
     public String getTotalCountQuery(String baseQuery) {
-        return TOTAL_COUNT_QUERY.replace("{baseQuery}", baseQuery);
+        String lower = baseQuery.toLowerCase();
+        int orderByIndex = lower.lastIndexOf("order by");
+        String baseWithoutOrderBy = orderByIndex != -1 ? baseQuery.substring(0, orderByIndex) : baseQuery;
+        return "SELECT COUNT(*) FROM (SELECT DISTINCT(bail.id) " +
+                baseWithoutOrderBy.substring(baseWithoutOrderBy.toLowerCase().indexOf("from")) +
+                ") AS total_count";
     }
 
     private void getWhereFields(BailSearchCriteria criteria, StringBuilder query,
@@ -98,10 +105,13 @@ public class BailQueryBuilder {
         boolean firstCriteria = true;
 
         firstCriteria = addBailCriteria(criteria.getTenantId(), query, firstCriteria, "bail.tenant_id = ?", preparedStmtList, preparedStmtArgList);
+        firstCriteria = addBailCriteria(criteria.getId(), query, firstCriteria, "bail.id = ?", preparedStmtList, preparedStmtArgList);
+        firstCriteria = addBailCriteria(criteria.getLitigantIndividualId(), query, firstCriteria, "bail.litigant_id = ?", preparedStmtList, preparedStmtArgList);
+        firstCriteria = addBailCriteria(criteria.getSuretyMobileNumber(), query, firstCriteria, "srt.surety_mobile_number = ?", preparedStmtList, preparedStmtArgList);
         firstCriteria = addBailCriteria(criteria.getCourtId(), query, firstCriteria, "bail.court_id = ?", preparedStmtList, preparedStmtArgList);
         firstCriteria = addBailCriteria(criteria.getFilingNumber(), query, firstCriteria, "bail.filing_number = ?", preparedStmtList, preparedStmtArgList);
         firstCriteria = addBailCriteria(criteria.getCnrNumber(), query, firstCriteria, "bail.cnr_number = ?", preparedStmtList, preparedStmtArgList);
-        firstCriteria = addBailCriteria(criteria.getStatus(), query, firstCriteria, "bail.status = ?", preparedStmtList, preparedStmtArgList);
+        firstCriteria = addBailCriteria(criteria.getStatus(), query, firstCriteria, "bail.bail_status = ?", preparedStmtList, preparedStmtArgList);
         firstCriteria = addBailCriteria(criteria.getCaseType() != null ? criteria.getCaseType().name() : null, query, firstCriteria, "bail.case_type = ?", preparedStmtList, preparedStmtArgList);
         firstCriteria = addBailCriteria(criteria.getCaseNumber(), query, firstCriteria, "bail.case_number = ?", preparedStmtList, preparedStmtArgList);
 

@@ -54,20 +54,20 @@ public class BailRepository {
             List<Object> preparedStmtList = new ArrayList<>();
             List<Integer> preparedStmtArgList = new ArrayList<>();
 
-            String applicationQuery = queryBuilder.getBailSearchQuery(bailSearchRequest.getCriteria(), preparedStmtList,preparedStmtArgList);
-            applicationQuery = queryBuilder.addOrderByQuery(applicationQuery, bailSearchRequest.getPagination());
-            log.info("Final bail search query: {}", applicationQuery);
+            String bailQuery = queryBuilder.getBailSearchQuery(bailSearchRequest.getCriteria(), preparedStmtList,preparedStmtArgList);
+            bailQuery = queryBuilder.addOrderByQuery(bailQuery, bailSearchRequest.getPagination());
+            log.info("Bail search query before pagination :: {}", bailQuery);
             if(bailSearchRequest.getPagination() !=  null) {
-                Integer totalRecords = getTotalCountBail(applicationQuery, preparedStmtList);
+                Integer totalRecords = getTotalCountBail(bailQuery, preparedStmtList);
                 log.info("Total count without pagination :: {}", totalRecords);
                 bailSearchRequest.getPagination().setTotalCount(Double.valueOf(totalRecords));
-                applicationQuery = queryBuilder.addPaginationQuery(applicationQuery, bailSearchRequest.getPagination(), preparedStmtList);
+                bailQuery = queryBuilder.addPaginationQuery(bailQuery, bailSearchRequest.getPagination(), preparedStmtList,preparedStmtArgList);
             }
             if(preparedStmtList.size()!=preparedStmtArgList.size()){
                 log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(),preparedStmtArgList.size());
                 throw new CustomException("BAIL_SEARCH_ERR", "Arg and ArgType size mismatch");
             }
-            List<Bail> list = jdbcTemplate.query(applicationQuery, preparedStmtList.toArray(),preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), rowMapper);
+            List<Bail> list = jdbcTemplate.query(bailQuery, preparedStmtList.toArray(),preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), rowMapper);
             log.info("DB bail list :: {}", list);
             if (list != null) {
                 applicationList.addAll(list);

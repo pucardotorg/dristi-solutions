@@ -66,9 +66,11 @@ public class BailApiController {
         List<Bail> bails = bailService.searchBail(body);
         RequestInfo requestInfo = body.getRequestInfo();
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true);
+
         BailSearchResponse bailResponse = BailSearchResponse.builder()
                 .bails(bails)
                 .responseInfo(responseInfo)
+                .pagination(body.getPagination())
                 .build();
         return new ResponseEntity<BailSearchResponse>(bailResponse, HttpStatus.OK);
     }
