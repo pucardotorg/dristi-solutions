@@ -29,6 +29,7 @@ export const CustomisedHooks = {
 };
 
 export const Urls = {
+  pendingTask: "/analytics/pending_task/v1/create",
   Authenticate: "/user/oauth/token",
   FileFetchById: "/filestore/v1/files/id",
 };

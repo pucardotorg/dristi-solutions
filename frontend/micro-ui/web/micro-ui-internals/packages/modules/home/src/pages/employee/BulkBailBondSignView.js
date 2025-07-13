@@ -25,19 +25,16 @@ function BulkBailBondSignView() {
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const searchComposerRef = useRef(null);
 
-  // State management for bulk sign operations
   const [bulkSignList, setBulkSignList] = useState(null);
   const [showOrderDeleteModal, setShowOrderDeleteModal] = useState(false);
   const [showBulkSignConfirmModal, setShowBulkSignConfirmModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleteOrderLoading, setIsDeleteOrderLoading] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);
-  // State to track if search has been initialized from session storage
-  const [searchInitialized, setSearchInitialized] = useState(false);
   const [selectedBailBond, setSelectedBailBond] = useState(
-    sessionStorage.getItem("bulkBailBondSelectedItem") ? JSON.parse(sessionStorage.getItem("bulkBailBondSelectedItem")) : null
+    sessionStorage.getItem("bulkBailBondSignSelectedItem") ? JSON.parse(sessionStorage.getItem("bulkBailBondSignSelectedItem")) : null
   );
-  const [showBulkSignModal, setShowBulkSignModal] = useState(false);
+  const [showBulkSignModal, setShowBulkSignModal] = useState(sessionStorage.getItem("bulkBailBondSignSelectedItem") ? true : false);
   const [bailBondPaginationData, setBailBondPaginationData] = useState({});
 
   const { deleteBailBond } = Digit.Hooks.useQueryParams();
@@ -58,37 +55,6 @@ function BulkBailBondSignView() {
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
-  // Save selected items to session storage when they change
-  useEffect(() => {
-    if (bulkSignList && bulkSignList.length > 0) {
-      const selectedItems = bulkSignList.filter((item) => item.isSelected);
-      if (selectedItems.length > 0) {
-        sessionStorage.setItem("bulkBailBondSelectedItems", JSON.stringify(selectedItems.map((item) => item?.businessObject?.orderNotification?.id)));
-      }
-    }
-  }, [bulkSignList]);
-
-  // Function to manage adding or updating orders in the bulk sign list
-
-  useEffect(() => {
-    if (!searchInitialized) {
-      const savedSearchParams = sessionStorage.getItem("bulkBailBondSearchParams");
-      if (savedSearchParams) {
-        try {
-          // Parse and use saved parameters if needed
-          // const parsedParams = JSON.parse(savedSearchParams);
-          // We're just acknowledging that restoration was attempted
-          setSearchInitialized(true);
-          // Clean up session storage after restoration
-          sessionStorage.removeItem("bulkBailBondSearchParams");
-        } catch (error) {
-          console.error("Error parsing saved search params:", error);
-        }
-      }
-    }
-  }, [searchInitialized]);
-
-  // Memoized config for InboxSearchComposer
   const config = useMemo(() => {
     const setOrderFunc = async (order) => {
       setShowBulkSignModal(true);

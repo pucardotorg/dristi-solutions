@@ -3,7 +3,8 @@ import { useTranslation } from "react-i18next";
 
 import { useHistory } from "react-router-dom";
 import { Loader, CloseSvg } from "@egovernments/digit-ui-react-components";
-import { FileDownloadIcon } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { Urls } from "../../hooks";
 
 const CloseBtn = (props) => {
   return (
@@ -27,7 +28,7 @@ const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
 };
 
-const BailBondModal = ({ row }) => {
+const BailBondModal = ({ row, setIsBailBondTaskExists }) => {
   const queryStrings = Digit.Hooks.useQueryParams();
 
   const { t } = useTranslation();
@@ -53,6 +54,8 @@ const BailBondModal = ({ row }) => {
   const orderType = "WARRANT";
   const todayStr = new Date(today.getTime() - today.getTimezoneOffset() * 60000).toISOString().split("T")[0];
   const filingNumber = row?.filingNumber || queryStrings?.filingNumber;
+  const caseId = row?.caseId || queryStrings?.caseId;
+  const caseTitle = row?.caseTitle || queryStrings?.caseTitle;
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
 
   console.log(queryStrings, "queryStrings");
@@ -161,6 +164,43 @@ const BailBondModal = ({ row }) => {
       setLoader(false);
     }
     return;
+  };
+
+  const closePendingTask = async () => {
+    try {
+      await DRISTIService.customApiService(Urls.pendingTask, {
+        pendingTask: {
+          name: t("CS_COMMON_BAIL_BOND"),
+          entityType: "bail bond",
+          referenceId: `MANUAL_${filingNumber}`,
+          status: "PENDING_SIGN",
+          assignedTo: [],
+          assignedRole: ["JUDGE_ROLE"],
+          filingNumber,
+          isCompleted: true,
+          caseId: caseId,
+          caseTitle: caseTitle,
+          additionalDetails: {},
+          tenantId,
+        },
+      }).then((res) => {
+        // Update the parent component's state to indicate task no longer exists
+        if (typeof setIsBailBondTaskExists === "function") {
+          setIsBailBondTaskExists(false);
+        }
+        if (queryStrings?.filingNumber) history.goBack();
+        else {
+          setTimeout(() => {
+            setLoader(false);
+            setShowBailConfirmationModal(false);
+          }, 1000);
+        }
+      });
+    } catch (error) {
+      console.error("Error in closePendingTask:", error);
+      setLoader(false);
+    } finally {
+    }
   };
 
   return (
@@ -337,8 +377,7 @@ const BailBondModal = ({ row }) => {
           }
           actionSaveLabel={t("CS_COMMON_CONFIRM")}
           actionSaveOnSubmit={() => {
-            if (queryStrings?.filingNumber) history.goBack();
-            else setShowBailConfirmationModal(false);
+            closePendingTask();
 
             console.log("actionSaveOnSubmit");
           }}
@@ -350,7 +389,7 @@ const BailBondModal = ({ row }) => {
             setShowBailModal(true);
           }}
           formId="modal-action"
-          headerBarMain={<Heading label={t("View Bail Bonds")} />}
+          headerBarMain={<Heading label={t("Confirm Closure")} />}
           className="upload-signature-modal"
           submitTextClassName="upload-signature-button"
           popupModuleActionBarStyles={{ padding: "0 8px 8px 8px" }}
@@ -368,7 +407,7 @@ const BailBondModal = ({ row }) => {
               borderBottom: "1px solid #E8E8E8",
             }}
           >
-            <span style={{ fontSize: "16px" }}>There are no bail bonds present for this case. </span>
+            <span style={{ fontSize: "16px" }}>This action cannot be reversed.</span>
           </div>
         </Modal>
       )}

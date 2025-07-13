@@ -10,8 +10,7 @@ export const clearBailBondSessionData = () => {
   sessionStorage.removeItem("bailBondStepper");
   sessionStorage.removeItem("bailBondPdf");
   sessionStorage.removeItem("bailBondFileStoreId");
-  sessionStorage.removeItem("bailBondData");
-  sessionStorage.removeItem("bulkBailBondSelectedItem");
+  sessionStorage.removeItem("bulkBailBondSignSelectedItem");
 };
 
 export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal, rowData, colData, value, onSigningComplete, bailBondPaginationData }) => {
@@ -21,10 +20,13 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal, rowD
   const selectedBailBondFilestoreid = "97060b57-eea9-405c-966c-0577c52224fe";
 
   const [stepper, setStepper] = useState(() => {
-    const sessionRowData = sessionStorage.getItem("bailBondData");
-    if (sessionRowData && JSON.parse(sessionRowData)?.id === selectedBailBond?.businessObject?.orderNotification?.id) {
+    const bulkBailBondSignSelectedItem = sessionStorage.getItem("bulkBailBondSignSelectedItem");
+    if (
+      bulkBailBondSignSelectedItem &&
+      JSON.parse(bulkBailBondSignSelectedItem)?.businessObject?.orderNotification?.id === selectedBailBond?.businessObject?.orderNotification?.id
+    ) {
       const savedStepper = sessionStorage.getItem("bailBondStepper");
-      return 0; // savedStepper ? parseInt(savedStepper) : 0;
+      return savedStepper ? parseInt(savedStepper) : 0;
     }
     return 0;
   });
@@ -116,7 +118,6 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal, rowD
         sessionStorage.removeItem("bailBondStepper");
         sessionStorage.removeItem("bailBondPdf");
         sessionStorage.removeItem("bailBondFileStoreId");
-        sessionStorage.removeItem("bailBondData");
         sessionStorage.removeItem("bulkBailBondSelectedItem");
         setIsSigned(true);
         setOpenUploadSignatureModal(false);
@@ -188,7 +189,6 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal, rowD
 
     if (stepper === 1 && id) {
       // Store data to session storage for recovery after e-sign redirect
-      sessionStorage.setItem("bailBondData", JSON.stringify({ id: id, selectedBailBond: effectiveRowData }));
       sessionStorage.setItem("bailBondStepper", stepper.toString());
     }
   }, [effectiveRowData, stepper]);

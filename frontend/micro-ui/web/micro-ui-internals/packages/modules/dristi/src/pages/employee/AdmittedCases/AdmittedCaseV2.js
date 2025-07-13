@@ -3110,12 +3110,13 @@ const AdmittedCaseV2 = () => {
               courtId: courtId,
               entityType: "bail bond",
             },
-            limit: 10000,
+            limit: 10,
             offset: 0,
           },
         },
         { tenantId }
       );
+
       if (bailBondPendingTask?.data?.length > 0) {
         setIsBailBondTaskExists(true);
         showToast({
@@ -3123,31 +3124,39 @@ const AdmittedCaseV2 = () => {
           message: t("BAIL_BOND_TASK_ALREADY_EXISTS"),
         });
         return;
+      } else {
+        await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+          pendingTask: {
+            name: t("CS_COMMON_BAIL_BOND"),
+            entityType: "bail bond",
+            referenceId: `MANUAL_${filingNumber}`,
+            status: "PENDING_SIGN",
+            assignedTo: [],
+            assignedRole: ["JUDGE_ROLE"],
+            cnrNumber,
+            filingNumber,
+            caseId: caseDetails?.id,
+            caseTitle: caseDetails?.caseTitle,
+            isCompleted: false,
+            stateSla: todayDate,
+            additionalDetails: {},
+            tenantId,
+          },
+        });
+        setTimeout(() => {
+          setBailBondLoading(false);
+          setIsBailBondTaskExists(true);
+          setShowBailBondModal(false);
+        }, 1000);
       }
-      DRISTIService.customApiService(Urls.dristi.pendingTask, {
-        pendingTask: {
-          name: t("CS_COMMON_BAIL_BOND"),
-          entityType: "bail bond",
-          referenceId: `MANUAL_${filingNumber}`,
-          status: "PENDING_SIGN",
-          assignedTo: [],
-          assignedRole: ["JUDGE_ROLE"],
-          cnrNumber,
-          filingNumber,
-          caseId: caseDetails?.id,
-          caseTitle: caseDetails?.caseTitle,
-          isCompleted: false,
-          // stateSla: stateSla.DRAFT_IN_PROGRESS * dayInMillisecond + todayDate,
-          additionalDetails: {},
-          tenantId,
-        },
-      });
-      setIsBailBondTaskExists(true);
-      setShowBailBondModal(false);
     } catch (e) {
       console.log(e);
-    } finally {
       setBailBondLoading(false);
+
+      showToast({
+        isError: true,
+        message: "Failed to create bail bond task",
+      });
     }
   };
 
@@ -3175,6 +3184,19 @@ const AdmittedCaseV2 = () => {
       />
     );
   }, [t, caseDetails?.filingNumber, tenantId]);
+
+  const MemoCaseOverview = useMemo(() => {
+    return (
+      <CaseOverviewV2
+        caseData={caseRelatedData}
+        filingNumber={filingNumber}
+        currentHearingId={currentHearingId}
+        caseDetails={caseDetails}
+        showNoticeProcessModal={!isCitizen}
+        isBailBondTaskExists={isBailBondTaskExists}
+      />
+    );
+  }, [caseRelatedData, filingNumber, currentHearingId, caseDetails, isCitizen, isBailBondTaskExists]);
 
   if (caseApiLoading || isWorkFlowLoading || isApplicationLoading || isCaseFetching) {
     return <Loader />;
@@ -3512,13 +3534,7 @@ const AdmittedCaseV2 = () => {
       )}
       {tabData?.filter((tab) => tab.label === "Overview")?.[0]?.active && (
         <div className="case-overview-wrapper" style={{ ...(viewActionBar ? { marginBottom: "60px" } : {}) }}>
-          <CaseOverviewV2
-            caseData={caseRelatedData}
-            filingNumber={filingNumber}
-            currentHearingId={currentHearingId}
-            caseDetails={caseDetails}
-            showNoticeProcessModal={!isCitizen}
-          />
+          {MemoCaseOverview}
         </div>
       )}
       {tabData?.filter((tab) => tab.label === "Complaint")?.[0]?.active && (

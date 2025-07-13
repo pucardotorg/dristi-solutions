@@ -822,7 +822,11 @@ export const pendingTaskForBailBondActions = {
     actionName: "Make Payment",
     redirectDetails: {
       url: "/home/bail-bond",
-      params: [{ key: "filingNumber", value: "filingNumber" }],
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "caseTitle", value: "caseTitle" },
+        { key: "caseId", value: "id" },
+      ],
     },
   },
 };
