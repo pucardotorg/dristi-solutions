@@ -390,6 +390,9 @@ public class Configuration {
 	@Value("${hearing.case.reference.number.update}")
 	private String caseReferenceUpdateTopic;
 
+	@Value("${bail.case.number.update}")
+	private String caseNumberForBailUpdateTopic;
+
 	@Value("${egov.analytics.host}")
 	private String analyticsServiceHost;
 

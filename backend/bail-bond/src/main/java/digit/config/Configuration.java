@@ -2,6 +2,7 @@ package digit.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.*;
+import org.egov.encryption.config.EncProperties;
 import org.egov.tracer.config.TracerConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -115,4 +116,10 @@ public class Configuration {
 
     @Value("${egov.case.search.endpoint}")
     private String caseSearchPath;
+
+    @Value("${egov.enc.mdms.security.policy.bail.encrypt}")
+    private String bailEncrypt;
+
+    @Value("${egov.enc.mdms.security.policy.bail.decrypt}")
+    private String bailDecrypt;
 }
