@@ -14,6 +14,7 @@ import org.egov.transformer.producer.TransformerProducer;
 import org.egov.transformer.repository.DBRepository;
 import org.egov.transformer.service.CaseService;
 import org.egov.transformer.service.UserService;
+import org.egov.transformer.util.EsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.egov.transformer.config.ServiceConstants.FLOW_JAC;
 import static org.egov.transformer.config.ServiceConstants.msgId;
@@ -41,17 +43,19 @@ public class CaseConsumer {
     private final CaseService caseService;
     private final DBRepository repository;
     private final UserService userService;
+    private final EsUtil esUtil;
 
     @Autowired
     public CaseConsumer(ObjectMapper objectMapper,
                         TransformerProducer producer,
-                        TransformerProperties transformerProperties, CaseService caseService, DBRepository repository, UserService userService) {
+                        TransformerProperties transformerProperties, CaseService caseService, DBRepository repository, UserService userService, EsUtil esUtil) {
         this.objectMapper = objectMapper;
         this.producer = producer;
         this.transformerProperties = transformerProperties;
         this.caseService = caseService;
         this.repository = repository;
         this.userService = userService;
+        this.esUtil = esUtil;
     }
 
     public CaseRequest deserializeConsumerRecordIntoCaseRequest(ConsumerRecord<String, Object> payload){
@@ -89,14 +93,25 @@ public class CaseConsumer {
             }
             if ("PENDING_RESPONSE".equalsIgnoreCase(courtCase.getStatus()) || "CASE_ADMITTED".equalsIgnoreCase(courtCase.getStatus())) {
                 repository.updateCourtIdForFilingNumber(courtCase.getCourtId(), courtCase.getFilingNumber());
-                String caseNumber = courtCase.getFilingNumber();
+                String caseNumber;
                 if (courtCase.getCourtCaseNumber() != null && !courtCase.getCourtCaseNumber().isEmpty()) {
                     caseNumber = courtCase.getCourtCaseNumber();
                 } else if (courtCase.getCmpNumber() != null && !courtCase.getCmpNumber().isEmpty()) {
                     caseNumber = courtCase.getCmpNumber();
+                } else {
+                    caseNumber = courtCase.getFilingNumber();
                 }
                 if (caseNumber != null && !caseNumber.isEmpty()) {
-                    repository.updateBailCaseNumberForFilingNumber(caseNumber, courtCase.getCnrNumber(), courtCase.getFilingNumber());
+                    List<String> bailUuids = repository.getBailUuidsForFilingNumber(courtCase.getFilingNumber());
+                    if (bailUuids != null && !bailUuids.isEmpty()) {
+                        repository.updateBailCaseNumberForFilingNumber(caseNumber, courtCase.getCnrNumber(), bailUuids, courtCase.getFilingNumber());
+
+                        List<BailUpdateRequest> updates = bailUuids.stream()
+                                .map(bailUuid -> new BailUpdateRequest(bailUuid, caseNumber))
+                                .collect(Collectors.toList());
+                        esUtil.updateBailCaseNumbers(updates);
+                    }
+
                 }
             }
         } catch (Exception exception) {

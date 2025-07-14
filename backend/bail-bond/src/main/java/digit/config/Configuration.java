@@ -123,6 +123,23 @@ public class Configuration {
     @Value("${egov.enc.mdms.security.policy.bail.decrypt}")
     private String bailDecrypt;
 
+
+    @Value("${bail.bond.index}")
+    private String bailBondIndex;
+
+    @Value("${egov.indexer.es.username}")
+    private String esUsername;
+
+    @Value("${egov.indexer.es.password}")
+    private String esPassword;
+
+
+    @Value("${egov.infra.indexer.host}")
+    private String esHostUrl;
+
+    @Value("${egov.bulk.index.path}")
+    private String bulkPath;
+
     // long url
     @Value("${domain.url}")
     private String domainUrl;
@@ -132,4 +149,5 @@ public class Configuration {
 
     @Value("${egov.long.url}")
     private String longUrl;
+
 }

@@ -56,6 +56,27 @@ public class ServiceConstants {
     public static final String PENDING_E_SIGN = "PENDING_E-SIGN";
     public static final String EDIT = "EDIT";
     public static final String SYSTEM="SYSTEM";
+    public static final String PENDING_REVIEW = "PENDING_REVIEW";
+    public static final String BAIL_BOND_INDEX_EXCEPTION = "BAIL_BOND_INDEX_EXCEPTION";
+    public static final String ERRORS_PATH = "$.errors";
+
+    public static final String ES_INDEX_HEADER_FORMAT = "{\"index\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
+    public static final String ES_INDEX_BAIL_BOND_FORMAT =
+            "{\"Data\": {\"bailDetails\": {"
+                    + "\"tenantId\": \"%s\","
+                    + "\"status\": \"%s\","
+                    + "\"courtId\": \"%s\","
+                    + "\"caseTitle\": \"%s\","
+                    + "\"filingNumber\": \"%s\","
+                    + "\"caseNumber\": \"%s\","
+                    + "\"bailId\": \"%s\","
+                    + "\"isActive\": %b,"
+                    + "\"litigantName\": \"%s\","
+                    + "\"documents\": %s,"
+                    + "\"searchableFields\": %s"
+                    + "}}}\n";
+
+
 
 
 }
