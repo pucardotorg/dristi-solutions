@@ -110,4 +110,21 @@ public class TransformerProperties {
     @Value("${egov.inbox.search.endpoint}")
     private String indexSearchEndPoint;
 
+
+    @Value("${bail.bond.index}")
+    private String bailBondIndex;
+
+    @Value("${egov.indexer.es.username}")
+    private String esUsername;
+
+    @Value("${egov.indexer.es.password}")
+    private String esPassword;
+
+
+    @Value("${egov.infra.indexer.host}")
+    private String esHostUrl;
+
+    @Value("${egov.bulk.index.path}")
+    private String bulkPath;
+
 }
