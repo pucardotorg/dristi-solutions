@@ -6,6 +6,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Repository
 @Slf4j
 public class DBRepository {
@@ -17,17 +19,31 @@ public class DBRepository {
     }
 
     @Transactional
-    public void updateBailCaseNumberForFilingNumber(String caseNumber, String filingNumber) {
-        String countQuery = "SELECT COUNT(*) FROM dristi_bail WHERE filing_number = ?";
-        log.info("Final count query: {}", countQuery);
+    public void updateBailCaseNumberForFilingNumber(String caseNumber, String cnrNumber, String filingNumber) {
+        String selectBailIdsQuery = "SELECT bail_id FROM dristi_bail WHERE filing_number = ?";
 
-        Integer count = jdbcTemplate.queryForObject(countQuery, Integer.class, filingNumber);
-        log.info("Total Bail count: {}", count);
+        List<String> bailIds = jdbcTemplate.query(
+                selectBailIdsQuery,
+                new Object[]{filingNumber},
+                (rs, rowNum) -> rs.getString("bail_id")
+        );
 
-        String queryForBail = "update dristi_bail set case_number=? where filing_number=?";
-        int rowsUpdatedBail= jdbcTemplate.update(queryForBail, caseNumber, filingNumber);
-        log.warn("Number of bail rows updated :: {} for filingNumber {}",rowsUpdatedBail, filingNumber);
+        log.info("Total Bail records for filingNumber {}: {}", filingNumber, bailIds.size());
+
+        if (bailIds.isEmpty()) {
+            log.warn("No bail records found for filingNumber {}", filingNumber);
+            return;
+        }
+
+        bailIds.forEach(bailId -> log.info("Bail ID to update: {}", bailId));
+
+        String updateQuery = "UPDATE dristi_bail SET case_number = ?, cnr_number = ? WHERE filing_number = ?";
+        int rowsUpdated = jdbcTemplate.update(updateQuery, caseNumber, cnrNumber, filingNumber);
+
+        log.warn("Number of bail rows updated: {} for filingNumber {}", rowsUpdated, filingNumber);
     }
+
+
 
     @Transactional
     public void updateCourtIdForFilingNumber(String courtId, String filingNumber) {
