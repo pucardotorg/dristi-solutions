@@ -130,7 +130,6 @@ const MainHomeScreen = () => {
       setToastMsg(null);
     }, duration);
   };
-
   const fetchHearingCount = async (filters, activeTab) => {
     if (filters && activeTab === "HEARINGS_TAB" && filters.date) {
       try {
@@ -139,6 +138,7 @@ const MainHomeScreen = () => {
           const dateObj = new Date(filters.date);
           fromDate = new Date(dateObj.setHours(0, 0, 0, 0)).getTime();
           toDate = new Date(dateObj.setHours(23, 59, 59, 999)).getTime();
+        } else {
         }
         const payload = {
           inbox: {

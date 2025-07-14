@@ -5100,4 +5100,8 @@ public class CaseService {
                 ? Double.parseDouble(amountNode.asText())
                 : 0.0;
     }
+
+    public Integer getCaseCount(CaseSearchRequest caseSearchRequest) {
+        return caseRepository.getCaseCount(caseSearchRequest);
+    }
 }

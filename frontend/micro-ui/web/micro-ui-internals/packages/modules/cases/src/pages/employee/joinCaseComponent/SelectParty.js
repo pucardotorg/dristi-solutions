@@ -27,6 +27,21 @@ const SelectParty = ({
 
   const targetRef = useRef(null);
 
+  const pipAccuseds = useMemo(() => {
+    return caseDetails?.litigants
+      ?.filter((litigant) => litigant.partyType.includes("respondent"))
+      ?.filter(
+        (litigant) =>
+          !caseDetails?.representatives?.some((representative) =>
+            representative?.representing?.some((rep) => rep?.individualId === litigant?.individualId)
+          )
+      );
+  }, [caseDetails]);
+
+  const pipAccusedIds = useMemo(() => {
+    return new Set(pipAccuseds?.map((p) => p.individualId));
+  }, [pipAccuseds]);
+
   const advocateVakalatnamaConfig = useMemo(
     () => [
       {
@@ -87,7 +102,7 @@ const SelectParty = ({
       }
     });
     return partyWithAdvocate?.filter((party) =>
-      selectPartyData?.partyInvolve?.value === "RESPONDENTS" ? (party?.isPip && !party?.advocateId) || party?.advocateId : true
+      selectPartyData?.partyInvolve?.value === "RESPONDENTS" ? (pipAccusedIds.has(party?.individualId) && !party?.advocateId)  || party?.advocateId : true
     );
   }, [selectPartyData?.userType, party, caseDetails, searchLitigantInRepresentives, t, selectPartyData?.partyInvolve?.value]);
 
@@ -266,11 +281,15 @@ const SelectParty = ({
             selectPartyData?.isReplaceAdvocate?.value && (
               <MultiSelectDropdown
                 options={parties
-                  ?.filter((filterParty) =>
-                    selectPartyData?.partyInvolve?.value === "COMPLAINANTS"
-                      ? filterParty?.partyType?.includes("complainant")
-                      : filterParty?.partyType?.includes("respondent")
-                  )
+                  ?.filter((party) => {
+                    if (selectPartyData?.partyInvolve?.value === "COMPLAINANTS") {
+                      return party?.partyType?.includes("complainant");
+                    } else {
+                      const isRespondent = party?.partyType?.includes("respondent");
+                      const shouldExcludePip = selectPartyData?.isReplaceAdvocate?.value !== "YES" && pipAccusedIds.has(party?.individualId);
+                      return isRespondent && !shouldExcludePip;
+                    }
+                  })
                   ?.map((party) => ({
                     ...party,
                     isDisabled: party?.isAdvocateRepresenting,

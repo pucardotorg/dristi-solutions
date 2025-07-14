@@ -5,6 +5,7 @@ import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.service.OpenApiService;
 import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.HrmsUtil;
+import org.pucar.dristi.validator.FileStoreValidator;
 import org.pucar.dristi.web.models.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -40,13 +41,16 @@ public class OpenapiApiController {
 
     private final FileStoreUtil fileStoreUtil;
 
+    private final FileStoreValidator fileStoreValidator;
+
     @Autowired
-    public OpenapiApiController(ObjectMapper objectMapper, HttpServletRequest request, OpenApiService openApiService, HrmsUtil hrmsUtil, FileStoreUtil fileStoreUtil) {
+    public OpenapiApiController(ObjectMapper objectMapper, HttpServletRequest request, OpenApiService openApiService, HrmsUtil hrmsUtil, FileStoreUtil fileStoreUtil, FileStoreValidator fileStoreValidator) {
         this.objectMapper = objectMapper;
         this.request = request;
         this.openApiService = openApiService;
         this.hrmsUtil = hrmsUtil;
         this.fileStoreUtil = fileStoreUtil;
+        this.fileStoreValidator = fileStoreValidator;
     }
 
     @RequestMapping(value = "/openapi/v1/{tenantId}/case/cnr/{cnrNumber}", method = RequestMethod.GET)
@@ -108,6 +112,15 @@ public class OpenapiApiController {
     @GetMapping("/openapi/v1/file/{tenantId}/{orderId}")
     public ResponseEntity<Resource> getFile(@PathVariable("tenantId") String tenantId, @PathVariable("orderId") String orderId) {
         String fileStoreId = openApiService.getOrderByIdFromIndex(tenantId,orderId);
-        return fileStoreUtil.getFilesByFileStore(fileStoreId, tenantId);
+        return fileStoreUtil.getFilesByFileStore(fileStoreId, tenantId, null);
+    }
+
+    @PostMapping("/openapi/v1/landing_page/file")
+    public ResponseEntity<Resource> getFiles(@RequestBody @Valid LandingPageFileRequest landingPageFileRequest) {
+        String tenantId = landingPageFileRequest.getTenantId();
+        String fileStoreId = landingPageFileRequest.getFileStoreId();
+        String moduleName = landingPageFileRequest.getModuleName();
+        fileStoreValidator.validatePayLoad(landingPageFileRequest);
+        return fileStoreUtil.getFilesByFileStore(fileStoreId, tenantId, moduleName);
     }
 }

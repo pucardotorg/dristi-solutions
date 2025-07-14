@@ -1,0 +1,45 @@
+[
+  //TODO: need to delete this schema and create a new one
+  {
+    "tenantId": "kl",
+    "moduleName": "LandingPage",
+    "masterName": "DashboardMeterics",
+    "mdmsPayload": {
+      "tenantId": "kl",
+      "code": "LandingPage.DashboardMeterics",
+      "description": null,
+      "definition": {
+        "type": "object",
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "required": [
+          "id",
+          "numberOfCasesFiled",
+          "numberOfCasesDisposed",
+          "averageNumberOfDaysBetweenHearingsForCase"
+        ],
+        "x-unique": [
+          "id"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The unique identifier for the record"
+          },
+          "numberOfCasesFiled": {
+            "type": "integer",
+            "description": "The total number of cases filed"
+          },
+          "numberOfCasesDisposed": {
+            "type": "integer",
+            "description": "The total number of cases disposed"
+          },
+          "averageNumberOfDaysBetweenHearingsForCase": {
+            "type": "integer",
+            "description": "The average number of days between hearings for a case"
+          }
+        }
+      },
+      "isActive": true
+    }
+  }
+]

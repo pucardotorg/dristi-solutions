@@ -2,6 +2,7 @@ package digit.task;
 
 import digit.service.CauseListService;
 import digit.service.HearingService;
+import digit.service.LandingPageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -18,10 +19,13 @@ public class ScheduledTask {
 
     private final HearingService hearingService;
 
+    private final LandingPageService landingPageService;
+
     @Autowired
-    public ScheduledTask(CauseListService causeListService, HearingService hearingService) {
+    public ScheduledTask(CauseListService causeListService, HearingService hearingService, LandingPageService landingPageService) {
         this.causeListService = causeListService;
         this.hearingService = hearingService;
+        this.landingPageService = landingPageService;
     }
 
     @Async
@@ -38,6 +42,14 @@ public class ScheduledTask {
         log.info("Starting Cron Job For Abating Hearing");
         hearingService.abatHearings();
         log.info("Completed Cron Job For Abating Hearing");
+    }
+
+    @Async
+    @Scheduled(cron = "${config.landing.page.dashboard.update}", zone = "Asia/Kolkata")
+    public void updateDashboardMetrics() {
+        log.info("Starting Cron Job for updating dashboard metrics");
+        landingPageService.updateDashboardMetrics();
+        log.info("Completed Cron Job For updating dashboard metrics");
     }
 
 }
