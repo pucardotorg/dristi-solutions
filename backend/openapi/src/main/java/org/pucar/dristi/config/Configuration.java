@@ -11,6 +11,8 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.stereotype.Component;
 
 import jakarta.annotation.PostConstruct;
+
+import java.util.List;
 import java.util.TimeZone;
 
 @Component
@@ -141,4 +143,7 @@ public class Configuration {
 
     @Value("${app.zone.id}")
     private String zoneId;
+
+    @Value("${module.names.enabled}")
+    private List<String> moduleNamesEnabled;
 }

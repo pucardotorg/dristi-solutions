@@ -1,4 +1,4 @@
-import { FormComposerV2, Header, Loader } from "@egovernments/digit-ui-react-components";
+import { FormComposerV2, Header, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { bailBondConfig } from "../../configs/generateBailBondConfig";
@@ -9,6 +9,10 @@ import useDownloadCasePdf from "@egovernments/digit-ui-module-dristi/src/hooks/d
 import SuccessBannerModal from "../../components/SuccessBannerModal";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import BailBondEsignLockModal from "../../components/BailBondEsignLockModal";
+import { combineMultipleFiles, formatAddress } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { submissionService } from "../../hooks/services";
+import useSearchBailBondService from "../../hooks/submissions/useSearchBailBondService";
+import { bailBondWorkflowAction } from "../../../../dristi/src/Utils/submissionWorkflow";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -16,7 +20,7 @@ const GenerateBailBond = () => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { t } = useTranslation();
   const history = useHistory();
-  const { filingNumber } = Digit.Hooks.useQueryParams();
+  const { filingNumber, bailBondId } = Digit.Hooks.useQueryParams();
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo]);
@@ -34,6 +38,9 @@ const GenerateBailBond = () => {
   const setFormDataValue = useRef(null);
   const clearFormDataErrors = useRef(null);
   const [formdata, setFormdata] = useState({});
+  const [showErrorToast, setShowErrorToast] = useState(null);
+  const [bailBondFileStoreId, setBailBondFileStoreId] = useState("");
+  const [bailBondSignatureURL, setBailBondSignatureURL] = useState("");
 
   const { data: caseData, isLoading: isCaseLoading } = Digit.Hooks.dristi.useSearchCaseService(
     {
@@ -50,9 +57,29 @@ const GenerateBailBond = () => {
     Boolean(filingNumber)
   );
 
+  const { data: bailBond, isLoading: isBailBondLoading } = useSearchBailBondService(
+    {
+      criteria: [
+        {
+          bailId: bailBondId,
+        },
+      ],
+      tenantId,
+    },
+    {},
+    `bail-bond-details-${bailBondId}`,
+    Boolean(bailBondId && filingNumber)
+  );
+
   const caseDetails = useMemo(() => {
     return caseData?.criteria?.[0]?.responseList?.[0];
   }, [caseData]);
+
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
+
+  const bailBondDetails = useMemo(() => {
+    return bailBond?.criteria?.[0]?.responseList?.[0];
+  }, [bailBond]);
 
   const pipComplainants = useMemo(() => {
     return caseDetails?.litigants
@@ -162,9 +189,8 @@ const GenerateBailBond = () => {
     });
     return updatedConfig;
   }, [complainantsList, formdata]);
-  
-  const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
 
+  const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     if (formData?.bailAmount <= 0 && !Object.keys(formState?.errors).includes("bailAmount")) {
       setError("bailAmount", { message: t("Must be greater than zero") });
     } else if (formData?.bailAmount > 0 && Object.keys(formState?.errors).includes("bailAmount")) {
@@ -178,8 +204,7 @@ const GenerateBailBond = () => {
         formData?.sureties?.forEach((docs, index) => {
           if (!docs?.name && !Object.keys(formState?.errors).includes(`name_${index}`)) {
             setError(`name_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
-          }
-          else if (docs?.name && Object.keys(formState?.errors).includes(`name_${index}`)) {
+          } else if (docs?.name && Object.keys(formState?.errors).includes(`name_${index}`)) {
             clearErrors(`name_${index}`);
           }
 
@@ -255,43 +280,199 @@ const GenerateBailBond = () => {
     return defaultFormValue ? JSON.stringify(defaultFormValue) : "initial";
   }, [defaultFormValue]);
 
-  const handleSubmit = () => {
-    // Todo : create and Update Api Call
-    console.log(formdata,"formdata");
-
-    const payload = { 
-      tenantId,
-      caseId: caseDetails?.id,
-      filingNumber: filingNumber,
-      complainant: formdata?.selectComplainant?.uuid,
-      bailType: formdata?.bailType?.code,
-      auditDetails: {
-        createdBy: userInfo?.uuid,
-        lastModifiedBy: userInfo?.uuid,
-      },
-      bailAmount: formdata?.bailAmount,
-      sureties: formdata?.sureties,
-      litigantId: formdata?.selectComplainant?.uuid,
-      litigantName: formdata?.selectComplainant?.name,
-      litigantFatherName: formdata?.selectComplainant?.fatherName,
-      courtId: caseDetails?.courtId,
-      caseTitle: caseDetails?.caseTitle,
-      cnrNumber: caseDetails?.cnrNumber,
-      caseType: caseDetails?.caseType,
-      documents:[],
-      additionalDetails: {
-        ...formdata
-      }
-    };
-
-    console.log(payload, "payload");
-    
-    
-    setShowBailBondReview(true);
+  const onDocumentUpload = async (fileData, filename) => {
+    const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, Digit.ULBService.getCurrentTenantId());
+    return { file: fileUploadRes?.data, fileType: fileData.type, filename };
   };
 
-  const handleSaveDraft = () => {
+  const preProcessFormData = async (formData) => {
+    if (formData?.bailType?.code === "PERSONAL") {
+      return formData;
+    }
+    const updatedFormData = { ...formData };
+    if (Array.isArray(updatedFormData?.sureties)) {
+      updatedFormData.sureties = await Promise.all(
+        updatedFormData.sureties.map(async (surety) => {
+          const updatedSurety = { ...surety };
+
+          if (surety?.identityProof?.document?.length > 0) {
+            const combinedIdentityProof = await combineMultipleFiles(surety.identityProof.document);
+            const file = await onDocumentUpload(combinedIdentityProof?.[0], "identityProof.pdf");
+            updatedSurety.identityProof = {
+              document: [
+                {
+                  fileStore: file?.file?.files?.[0]?.fileStoreId,
+                  documentName: file?.filename,
+                  documentType: "IDENTITY_PROOF",
+                },
+              ],
+            };
+          }
+
+          if (surety?.proofOfSolvency?.document?.length > 0) {
+            const combinedProof = await combineMultipleFiles(surety.proofOfSolvency.document);
+            const file = await onDocumentUpload(combinedProof?.[0], "proofOfSolvency.pdf");
+            updatedSurety.proofOfSolvency = {
+              document: [
+                {
+                  fileStore: file?.file?.files?.[0]?.fileStoreId,
+                  documentName: file?.filename,
+                  documentType: "PROOF_OF_SOLVENCY",
+                },
+              ],
+            };
+          }
+
+          if (surety?.otherDocuments?.document?.length > 0) {
+            const combinedOtherDocs = await combineMultipleFiles(surety.otherDocuments.document);
+            const file = await onDocumentUpload(combinedOtherDocs?.[0], "otherDocuments.pdf");
+            updatedSurety.otherDocuments = {
+              document: [
+                {
+                  fileStore: file?.file?.files?.[0]?.fileStoreId,
+                  documentName: file?.filename,
+                  documentType: "OTHER_DOCUMENTS",
+                },
+              ],
+            };
+          }
+          return updatedSurety;
+        })
+      );
+    }
+    return updatedFormData;
+  };
+
+  const extractSureties = (formData) => {
+    return formData?.sureties?.map((surety) => {
+      return {
+        name: surety?.name,
+        fatherName: surety?.fatherName,
+        mobileNumber: surety?.mobileNumber,
+        document: [
+          ...(surety?.identityProof?.document || []),
+          ...(surety?.proofOfSolvency?.document || []),
+          ...(surety?.otherDocuments?.document || []),
+        ],
+      };
+    });
+  };
+
+  const createBailBond = async () => {
+    try {
+      const updatedFormData = await preProcessFormData(formdata);
+      const sureties = extractSureties(updatedFormData);
+
+      const payload = {
+        bail: {
+          tenantId,
+          caseId: caseDetails?.id,
+          filingNumber: filingNumber,
+          complainant: updatedFormData?.selectComplainant?.uuid,
+          bailType: updatedFormData?.bailType?.code,
+          bailAmount: updatedFormData?.bailAmount,
+          sureties: sureties,
+          litigantId: updatedFormData?.selectComplainant?.uuid,
+          litigantName: updatedFormData?.selectComplainant?.name,
+          litigantFatherName: updatedFormData?.selectComplainant?.fatherName,
+          courtId: caseDetails?.courtId,
+          caseTitle: caseDetails?.caseTitle,
+          cnrNumber: caseDetails?.cnrNumber,
+          caseType: caseDetails?.caseType,
+          documents: [],
+          additionalDetails: {
+            ...updatedFormData,
+          },
+          workflow: {
+            action: bailBondWorkflowAction.SAVEDRAFT,
+            documents: [{}],
+          },
+        },
+      };
+      const res = await submissionService.createBailBond(payload, { tenantId });
+      return res;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const updateBailBond = async (fileStoreId = null, action) => {
+    try {
+      const updatedFormData = await preProcessFormData(formdata);
+      const sureties = extractSureties(updatedFormData);
+      const documents = Array.isArray(bailBondDetails?.documents) ? bailBondDetails.documents : [];
+      const documentsFile = fileStoreId
+        ? [{ fileStore: fileStoreId, documentType: "BAIL_BOND", additionalDetails: { name: `${t("BAIL_BOND")}.pdf` } }]
+        : null;
+      const payload = {
+        bail: {
+          ...bailBondDetails,
+          complainant: updatedFormData?.selectComplainant?.uuid,
+          bailType: updatedFormData?.bailType?.code,
+          bailAmount: updatedFormData?.bailAmount,
+          sureties: sureties,
+          litigantId: updatedFormData?.selectComplainant?.uuid,
+          litigantName: updatedFormData?.selectComplainant?.name,
+          litigantFatherName: updatedFormData?.selectComplainant?.fatherName,
+          documents: documentsFile ? [...documents, ...documentsFile] : documents,
+          additionalDetails: {
+            ...updatedFormData,
+          },
+          workflow: { ...bailBondDetails.workflow, action, documents: [{}] },
+        },
+      };
+      const res = await submissionService.updateBailBond(payload, { tenantId });
+      return res;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  const handleSubmit = async () => {
+    // Todo : create and Update Api Call
+    try {
+      setLoader(true);
+      let bailBondResponse = null;
+      if (!bailBondId) {
+        bailBondResponse = await createBailBond();
+        history.replace(
+          `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondResponse?.bail?.id}`
+        );
+        setShowBailBondReview(true);
+      } else {
+        bailBondResponse = await updateBailBond(bailBondWorkflowAction.SAVEDRAFT);
+        setShowBailBondReview(true);
+      }
+    } catch (error) {
+      console.error("Error while creating bail bond:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setLoader(false);
+    }
+  };
+
+  const handleSaveDraft = async () => {
     // Todo : Create and Update Api Call
+    try {
+      setLoader(true);
+      let bailBondResponse = null;
+      if (!bailBondId) {
+        bailBondResponse = await createBailBond();
+        history.replace(
+          `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondResponse?.bail?.id}`
+        );
+        setShowBailBondReview(true);
+      } else {
+        bailBondResponse = await updateBailBond(bailBondWorkflowAction.SAVEDRAFT);
+        setShowBailBondReview(true);
+      }
+      setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
+    } catch (error) {
+      console.error("Error while creating bail bond:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setLoader(false);
+    }
   };
 
   const handleCloseSignatureModal = () => {
@@ -301,31 +482,48 @@ const GenerateBailBond = () => {
 
   const handleDownload = () => {
     // TODO : need to change
-    downloadPdf(tenantId, "620e3843-1f9c-4abb-92fe-af6bc30f0e6b");
+    downloadPdf(tenantId, bailBondFileStoreId);
   };
 
   const handleESign = () => {
     // TODO: call Api then close this modal and show next modal
-    setShowsignatureModal(false);
-    setShowBailBondEsign(true);
+    try {
+      const res = updateBailBond(bailBondWorkflowAction.ESIGN);
+      setBailBondSignatureURL(res?.bail?.shortenedURL);
+      setShowsignatureModal(false);
+      setShowBailBondEsign(true);
+    } catch (error) {
+      console.error("Error while updating bail bond:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    }
   };
 
   const handleSubmitSignature = async (fileStoreId) => {
     // TODO: api call with fileStoreID then
-    setLoader(false);
-    setShowsignatureModal(false);
-    setShowUploadSignature(false);
-    setShowSuccessModal(true);
+    try {
+      setLoader(false);
+      const res = await updateBailBond(fileStoreId, bailBondWorkflowAction.UPLOAD);
+      setShowsignatureModal(false);
+      setShowUploadSignature(false);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("Error while updating bail bond:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    }
   };
 
   const handleCloseSuccessModal = () => {
     history.replace(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Documents`);
   };
 
-  if (isCaseLoading || !caseDetails) {
+  const closeToast = () => {
+    setShowErrorToast(null);
+  };
+
+  if (isCaseLoading || !caseDetails || isBailBondLoading) {
     return <Loader />;
   }
-    
+
   return (
     <React.Fragment>
       <style>
@@ -374,6 +572,9 @@ const GenerateBailBond = () => {
             handleBack={() => setShowBailBondReview(false)}
             setShowBailBondReview={setShowBailBondReview}
             setShowsignatureModal={setShowsignatureModal}
+            bailBondDetails={bailBondDetails}
+            courtId={caseCourtId}
+            setBailBondFileStoreId={setBailBondFileStoreId}
           />
         )}
 
@@ -391,8 +592,17 @@ const GenerateBailBond = () => {
           />
         )}
 
-        {showBailBondEsign && <BailBondEsignLockModal t={t} handleSaveOnSubmit={handleCloseSuccessModal} userType={userType} filingNumber={filingNumber}/>}
+        {showBailBondEsign && (
+          <BailBondEsignLockModal
+            t={t}
+            handleSaveOnSubmit={handleCloseSuccessModal}
+            userType={userType}
+            filingNumber={filingNumber}
+            bailBondSignatureURL={bailBondSignatureURL}
+          />
+        )}
         {showSuccessModal && <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"SIGNED_BAIL_BOND_MESSAGE"} />}
+        {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
       </div>
     </React.Fragment>
   );

@@ -1,9 +1,9 @@
 import { CloseSvg } from "@egovernments/digit-ui-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import React, { useMemo, useState } from "react";
-// import { useQuery } from "react-query";
-// import Axios from "axios";
-// import { Urls } from "../hooks/services/Urls";
+import { useQuery } from "react-query";
+import Axios from "axios";
+import { Urls } from "../hooks/services/Urls";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -17,18 +17,17 @@ const CloseBtn = (props) => {
   );
 };
 
-// const onDocumentUpload = async (fileData, filename) => {
-//   const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, Digit.ULBService.getCurrentTenantId());
-//   return { file: fileUploadRes?.data, fileType: fileData.type, filename };
-// };
+const onDocumentUpload = async (fileData, filename) => {
+  const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, Digit.ULBService.getCurrentTenantId());
+  return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+};
 
 const BailBondReviewModal = ({
   t,
   handleBack,
-  application,
-  SubmissionPreviewSubmissionTypeMap,
+  bailBondDetails,
   documents = [],
-  setApplicationPdfFileStoreId,
+  setBailBondFileStoreId,
   setShowBailBondReview,
   setShowsignatureModal,
   courtId,
@@ -37,78 +36,64 @@ const BailBondReviewModal = ({
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [showErrorToast, setShowErrorToast] = useState(null);
 
-  // const {
-  //   data: { file: applicationPreviewPdf, fileName: applicationPreviewFileName } = {},
-  //   isFetching: isLoading,
-  // } = useQuery({
-  //   queryKey: [
-  //     "applicationPreviewPdf",
-  //     tenantId,
-  //     application?.applicationNumber,
-  //     application?.cnrNumber,
-  //     SubmissionPreviewSubmissionTypeMap[application?.applicationType],
-  //   ],
-  //   cacheTime: 0,
-  //   queryFn: async () => {
-  //     return Axios({
-  //       method: "POST",
-  //       url: Urls.application.submissionPreviewPdf,
-  //       params: {
-  //         tenantId: tenantId,
-  //         applicationNumber: application?.applicationNumber,
-  //         cnrNumber: application?.cnrNumber,
-  //         qrCode: false,
-  //         applicationType: SubmissionPreviewSubmissionTypeMap[application?.applicationType],
-  //         courtId: courtId,
-  //       },
-  //       data: {
-  //         RequestInfo: {
-  //           authToken: Digit.UserService.getUser().access_token,
-  //           userInfo: Digit.UserService.getUser()?.info,
-  //           msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
-  //           apiId: "Rainmaker",
-  //         },
-  //       },
-  //       responseType: "blob",
-  //     }).then((res) => ({
-  //       file: res.data,
-  //       fileName: res.headers["content-disposition"]?.split("filename=")[1],
-  //     }));
-  //   },
-  //   enabled: !!application?.applicationNumber && !!application?.cnrNumber && !!SubmissionPreviewSubmissionTypeMap[application?.applicationType],
-  // });
+  const {
+    data: { file: bailBondPreviewPdf, fileName: bailBondPreviewFileName } = {},
+    isFetching: isLoading,
+  } = useQuery({
+    queryKey: [
+      "bailBondPreviewPdf",
+      tenantId,
+      bailBondDetails?.applicationNumber,
+      bailBondDetails?.cnrNumber,
+    ],
+    cacheTime: 0,
+    queryFn: async () => {
+      return Axios({
+        method: "POST",
+        url: Urls.application.submissionPreviewPdf,
+        params: {
+          tenantId: tenantId,
+          applicationNumber: bailBondDetails?.applicationNumber,
+          cnrNumber: bailBondDetails?.cnrNumber,
+          qrCode: false,
+          courtId: courtId,
+        },
+        data: {
+          RequestInfo: {
+            authToken: Digit.UserService.getUser().access_token,
+            userInfo: Digit.UserService.getUser()?.info,
+            msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+            apiId: "Rainmaker",
+          },
+        },
+        responseType: "blob",
+      }).then((res) => ({
+        file: res.data,
+        fileName: res.headers["content-disposition"]?.split("filename=")[1],
+      }));
+    },
+    enabled: !!bailBondDetails?.bailId && !!bailBondDetails?.cnrNumber
+  });
 
-  //   const showDocument = useMemo(() => {
-  //     return (
-  //       <React.Fragment>
-  //         {applicationPreviewPdf ? (
-  //           <DocViewerWrapper
-  //             docWidth={"calc(100vw* 76/ 100)"}
-  //             docHeight={"60vh"}
-  //             selectedDocs={[applicationPreviewPdf]}
-  //             displayFilename={applicationPreviewFileName}
-  //             showDownloadOption={false}
-  //           />
-  //         ) : isLoading ? (
-  //           <h2>{t("LOADING")}</h2>
-  //         ) : (
-  //           <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
-  //         )}
-  //       </React.Fragment>
-  //     );
-  //   }, [applicationPreviewPdf, isLoading, t]);
-
-  // TODO: remove when api integration
-  const showDocument = (
-    <DocViewerWrapper
-      docWidth="calc(100vw * 76 / 100)"
-      docHeight="60vh"
-      fileStoreId={"620e3843-1f9c-4abb-92fe-af6bc30f0e6b"}
-      displayFilename="SampleBailBondPreview.pdf"
-      showDownloadOption={false}
-      tenantId={tenantId}
-    />
-  );
+    const showDocument = useMemo(() => {
+      return (
+        <React.Fragment>
+          {bailBondPreviewPdf ? (
+            <DocViewerWrapper
+              docWidth={"calc(100vw* 76/ 100)"}
+              docHeight={"60vh"}
+              selectedDocs={[bailBondPreviewPdf]}
+              displayFilename={bailBondPreviewFileName}
+              showDownloadOption={false}
+            />
+          ) : isLoading ? (
+            <h2>{t("LOADING")}</h2>
+          ) : (
+            <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
+          )}
+        </React.Fragment>
+      );
+    }, [bailBondPreviewPdf, isLoading, t]);
 
   return (
     <React.Fragment>
@@ -131,22 +116,22 @@ const BailBondReviewModal = ({
         actionSaveLabel={t("PROCEED_TO_SIGN")}
         isDisabled={false}
         actionSaveOnSubmit={() => {
-          // const pdfFile = new File([applicationPreviewPdf], applicationPreviewFileName, { type: "application/pdf" });
+          const pdfFile = new File([bailBondPreviewPdf], bailBondPreviewFileName, { type: "application/pdf" });
 
-          // onDocumentUpload(pdfFile, pdfFile.name)
-          //   .then((document) => {
-          //     const fileStoreId = document.file?.files?.[0]?.fileStoreId;
-          //     if (fileStoreId) {
-          //       setApplicationPdfFileStoreId(fileStoreId);
-          //     }
-          //   })
-          //   .then(() => {
-          //     setShowsignatureModal(true);
-          //     setShowBailBondReview(false);
-          //   })
-          //   .catch((e) => {
-          //     setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
-          //   });
+          onDocumentUpload(pdfFile, pdfFile.name)
+            .then((document) => {
+              const fileStoreId = document.file?.files?.[0]?.fileStoreId;
+              if (fileStoreId) {
+                setBailBondFileStoreId(fileStoreId);
+              }
+            })
+            .then(() => {
+              setShowsignatureModal(true);
+              setShowBailBondReview(false);
+            })
+            .catch((e) => {
+              setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
+            });
 
             // TODO: remove when api integration
           setShowBailBondReview(false);

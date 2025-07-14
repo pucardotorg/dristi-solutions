@@ -10,7 +10,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
   const [paymentLoader, setPaymentLoader] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [billPaymentStatus, setBillPaymentStatus] = useState();
-  const isMockEnabled = window?.globalConfigs?.getConfig("MOCKENABLED") || false;
+  const isMockEnabled = window?.globalConfigs?.getConfig("MOCKENABLED") === "true" ? true : false;
 
   const fetchBill = async (consumerCode, tenantId, service) => {
     return await DRISTIService.callFetchBill({}, { consumerCode: consumerCode, tenantId, businessService: service });
@@ -70,7 +70,7 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
   };
 
   const handleButtonClick = async (url, data, header, billConsumerCode, billBusinessService, isMockEnabled, gateway) => {
-    if (isMockEnabled === "true") {
+    if (isMockEnabled) {
       const apiUrl = `${window.location.origin}/epayments`;
       let jsonData = JSON.parse(data);
       const currentTimestamp = new Date().toISOString().replace(/\.(\d{3})Z$/, "Z");
@@ -109,8 +109,8 @@ const usePaymentProcess = ({ tenantId, consumerCode, service, path, caseDetails,
       const popup = window.open("", "popupWindow", "width=1000,height=1000,scrollbars=yes");
       if (popup) {
         popup.document.body.innerHTML = `
-        <h2>Mock Payment in Progress</h2>
-        <p>Please wait while we process your payment.</p>
+        <h2>Mock Payment in Progress.It will take 15-60 seconds</h2>
+        <p>Please wait while we process your payment.Pop up will close automatically after payment.</p>
       `;
         setPaymentLoader(true);
       }

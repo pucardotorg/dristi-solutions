@@ -61,7 +61,6 @@ public class EsUtil {
         Integer hearingTypeOrder = openHearing.getHearingTypeOrder();
         int serialNumber = openHearing.getSerialNumber();
 
-
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
                 config.getIndex(), hearingUuid, hearingUuid, tenantId, filingNumber, caseTitle, caseUuid, hearingNumber, caseNumber, stage, status, fromDate, toDate, subStage, courtId, accusedString, complainantString, searchableFieldsString, hearingType, caseFilingDate, statusOrder, hearingTypeOrder,serialNumber

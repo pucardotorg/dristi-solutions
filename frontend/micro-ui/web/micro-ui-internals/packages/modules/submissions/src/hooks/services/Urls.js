@@ -15,5 +15,14 @@ export const Urls = {
     evidenceUpdate: "/evidence/v1/_update",
   },
   FileFetchById: "/filestore/v1/files/id",
-  FileFetchByFileStore: "/openapi/v1/file/kl",
+  bailBond : {
+    bailBondCreate: "/bail-bond/v1/_create",
+    bailBondUpdate: "/bail-bond/v1/_update",
+    bailBondSearch: "/bail-bond/v1/_search",
+  },
+  openApi:{
+    FileFetchByFileStore: "/openapi/v1/file/kl",
+    bailSearch:"/openapi/v1/bail/search",
+    updateBailBond: "/openapi/v1/updateBailBond",
+  }
 };
