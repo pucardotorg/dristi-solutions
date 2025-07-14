@@ -16,6 +16,9 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import static digit.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
@@ -28,11 +31,13 @@ public class InboxUtil {
     private final ObjectMapper objectMapper;
     private final ServiceRequestRepository serviceRequestRepository;
     private final Configuration configuration;
+    private final DateUtil dateUtil;
 
-    public InboxUtil(ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository, Configuration configuration) {
+    public InboxUtil(ObjectMapper objectMapper, ServiceRequestRepository serviceRequestRepository, Configuration configuration, DateUtil dateUtil) {
         this.objectMapper = objectMapper;
         this.serviceRequestRepository = serviceRequestRepository;
         this.configuration = configuration;
+        this.dateUtil = dateUtil;
     }
 
 
@@ -159,4 +164,55 @@ public class InboxUtil {
                 .inbox(inboxSearchCriteria)
                 .build();
     }
+
+    public InboxRequest getOpenPendingTasks() {
+        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
+        ZoneId zoneId = ZoneId.of(configuration.getZoneId());
+
+        ZonedDateTime zonedDateTime = ZonedDateTime.now(zoneId);
+
+        long millis = zonedDateTime.toInstant().toEpochMilli();
+
+        moduleSearchCriteria.put("expiryDate", millis);
+        moduleSearchCriteria.put("isCompleted", false);
+
+        ProcessInstanceSearchCriteria processSearchCriteria = ProcessInstanceSearchCriteria.builder()
+                .moduleName("Pending Tasks Service")
+                .tenantId(configuration.getEgovStateTenantId())
+                .businessService(Collections.singletonList(""))
+                .build();
+        InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
+                .processSearchCriteria(processSearchCriteria)
+                .moduleSearchCriteria(moduleSearchCriteria)
+                .tenantId(configuration.getEgovStateTenantId())
+                .limit(300)
+                .offset(0)
+                .build();
+
+        return InboxRequest.builder()
+                .inbox(inboxSearchCriteria)
+                .build();
+    }
+
+    public List<Inbox> getPendingTasksForExpiry(InboxRequest request) {
+
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        StringBuilder uri = new StringBuilder(configuration.getInboxHost()).append(configuration.getIndexSearchEndPoint());
+        Object response = serviceRequestRepository.fetchResult(uri, request);
+        InboxResponse pendingTaskSearchResponse ;
+        try {
+            JsonNode jsonNode = objectMapper.valueToTree(response);
+            pendingTaskSearchResponse = objectMapper.readValue(jsonNode.toString(), InboxResponse.class);
+
+            return pendingTaskSearchResponse.getItems();
+
+        } catch (HttpClientErrorException e) {
+            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
+            throw new ServiceCallException(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error(SEARCHER_SERVICE_EXCEPTION, e);
+        }
+        return new ArrayList<>();
+    }
+
 }
