@@ -175,7 +175,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
           referenceId: `MANUAL_BAIL_BOND_${filingNumber}`,
           status: "completed",
           assignedTo: [],
-          assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "TYPIST_ROLE"],
+          assignedRole: ["JUDGE_ROLE", "BENCH_CLERK"],
           filingNumber,
           isCompleted: true,
           caseId: caseId,

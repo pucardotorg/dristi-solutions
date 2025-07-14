@@ -2935,10 +2935,6 @@ const AdmittedCaseV2 = () => {
               value: "SHOW_TIMELINE",
               label: "SHOW_TIMELINE",
             },
-            {
-              value: "CREATE_BAIL_BOND",
-              label: "CREATE_BAIL_BOND",
-            },
           ];
     } else if (isTypist) {
       return currentInProgressHearing
@@ -3150,7 +3146,7 @@ const AdmittedCaseV2 = () => {
             referenceId: `MANUAL_BAIL_BOND_${filingNumber}`,
             status: "PENDING_SIGN",
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "TYPIST_ROLE"],
+            assignedRole: ["JUDGE_ROLE", "BENCH_CLERK"],
             cnrNumber,
             filingNumber,
             caseId: caseDetails?.id,
