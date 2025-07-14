@@ -21,6 +21,7 @@ public class ShortenRequest {
 	@NotNull
 	private String url;
 	private Long validFrom;
-	private Long validTill;
+	private Long validTo;
+	private String referenceId;
 	
 }
