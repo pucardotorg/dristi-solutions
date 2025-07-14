@@ -175,10 +175,10 @@ public class InboxUtil {
 
         moduleSearchCriteria.put("expiryDate", millis);
         moduleSearchCriteria.put("isCompleted", false);
+        moduleSearchCriteria.put("entityType", "bail bond");
 
         ProcessInstanceSearchCriteria processSearchCriteria = ProcessInstanceSearchCriteria.builder()
                 .moduleName("Pending Tasks Service")
-                .tenantId(configuration.getEgovStateTenantId())
                 .businessService(Collections.singletonList(""))
                 .build();
         InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
