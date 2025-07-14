@@ -28,7 +28,7 @@ const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
 };
 
-const BailBondModal = ({ row, setIsBailBondTaskExists }) => {
+const BailBondModal = ({ row, setShowBailModal = () => {} }) => {
   const queryStrings = Digit.Hooks.useQueryParams();
 
   const { t } = useTranslation();
@@ -37,7 +37,6 @@ const BailBondModal = ({ row, setIsBailBondTaskExists }) => {
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const [loader, setLoader] = useState(false);
   const [toastMsg, setToastMsg] = useState(null);
-  const [showBailModal, setShowBailModal] = useState(queryStrings?.filingNumber ? true : false);
   const [showBailConfirmationModal, setShowBailConfirmationModal] = useState(false);
   const [isDocviewOpened, setIsDocViewOpened] = useState(false);
   const selectedBailBondFilestoreid = "97060b57-eea9-405c-966c-0577c52224fe";
@@ -184,10 +183,6 @@ const BailBondModal = ({ row, setIsBailBondTaskExists }) => {
           tenantId,
         },
       }).then((res) => {
-        // Update the parent component's state to indicate task no longer exists
-        if (typeof setIsBailBondTaskExists === "function") {
-          setIsBailBondTaskExists(false);
-        }
         if (queryStrings?.filingNumber) history.goBack();
         else {
           setTimeout(() => {
@@ -205,10 +200,6 @@ const BailBondModal = ({ row, setIsBailBondTaskExists }) => {
 
   return (
     <React.Fragment>
-      {" "}
-      <div style={{ cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowBailModal(true)}>
-        {row?.caseTitle}
-      </div>
       {loader && (
         <div
           style={{
@@ -228,118 +219,115 @@ const BailBondModal = ({ row, setIsBailBondTaskExists }) => {
           <Loader />
         </div>
       )}
-      {showBailModal && (
-        <Modal
-          headerBarEnd={
-            <CloseBtn
-              onClick={() => {
-                if (queryStrings?.filingNumber) {
-                  history.goBack();
-                } else setShowBailModal(false);
+      <Modal
+        headerBarEnd={
+          <CloseBtn
+            onClick={() => {
+              if (queryStrings?.filingNumber) {
+                history.goBack();
+              } else setShowBailModal(false);
+            }}
+          />
+        }
+        actionSaveLabel={t("Close Task")}
+        actionSaveOnSubmit={() => {
+          setShowBailModal(false);
+          setShowBailConfirmationModal(true);
+        }}
+        style={{ width: "50%" }}
+        actionCancelStyle={{ width: "50%" }}
+        actionCancelLabel={t("Issue Warrant")}
+        actionCancelOnSubmit={() => {
+          createOrder();
+        }}
+        formId="modal-action"
+        headerBarMain={<Heading label={t("View Bail Bonds")} />}
+        className="upload-signature-modal"
+        submitTextClassName="upload-signature-button"
+        popupModuleActionBarStyles={{ padding: "0 8px 8px 8px" }}
+      >
+        <div>
+          {Array.isArray(bailBonds) && bailBonds.length > 0 ? (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                padding: "24px",
+                gap: "20px",
+                maxHeight: "360px",
+                overflowY: "auto",
+                fontFamily: "Roboto",
               }}
-            />
-          }
-          actionSaveLabel={t("Close Task")}
-          actionSaveOnSubmit={() => {
-            setShowBailModal(false);
-            setShowBailConfirmationModal(true);
-          }}
-          style={{ width: "50%" }}
-          actionCancelStyle={{ width: "50%" }}
-          actionCancelLabel={t("Issue Warrant")}
-          actionCancelOnSubmit={() => {
-            // setShowBailModal(false);
-            createOrder();
-          }}
-          formId="modal-action"
-          headerBarMain={<Heading label={t("View Bail Bonds")} />}
-          className="upload-signature-modal"
-          submitTextClassName="upload-signature-button"
-          popupModuleActionBarStyles={{ padding: "0 8px 8px 8px" }}
-        >
-          <div>
-            {Array.isArray(bailBonds) && bailBonds.length > 0 ? (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  padding: "24px",
-                  gap: "20px",
-                  maxHeight: "360px",
-                  overflowY: "auto",
-                  fontFamily: "Roboto",
-                }}
-              >
-                {bailBonds.map((bond, index) => (
-                  <div
-                    key={index}
-                    style={{
-                      display: "flex",
-                      margin: "8px 0",
-                      width: "100%",
-                      height: "147px",
-                      justifyContent: "space-between",
-                      padding: "16px 24px",
-                      backgroundColor: "#ECF3FD66",
-                    }}
-                  >
-                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                      <div>
-                        <span style={{ fontWeight: "700", fontSize: "16px" }}>{bond?.name}</span>
-                      </div>
-                      <div>
-                        {" "}
-                        <span style={{ fontWeight: "600", fontSize: "14px" }}>Litigant :</span> {bond?.advocate}
-                      </div>
-                      <div>
-                        <span style={{ fontWeight: "600", fontSize: "14px" }}>Advocate: </span>
-                        {bond?.advocate}
-                      </div>
-                      <div>
-                        <span style={{ fontWeight: "600", fontSize: "14px" }}>Date:</span> {bond?.date}
-                      </div>
+            >
+              {bailBonds.map((bond, index) => (
+                <div
+                  key={index}
+                  style={{
+                    display: "flex",
+                    margin: "8px 0",
+                    width: "100%",
+                    height: "147px",
+                    justifyContent: "space-between",
+                    padding: "16px 24px",
+                    backgroundColor: "#ECF3FD66",
+                  }}
+                >
+                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                    <div>
+                      <span style={{ fontWeight: "700", fontSize: "16px" }}>{bond?.name}</span>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-                      <button
-                        style={{
-                          backgroundColor: "transparent",
-                          fontWeight: "500",
-                          color: "#0A5757",
-                          border: "none",
-                          padding: "8px 16px",
-                          borderRadius: "4px",
-                          fontSize: "16px",
-                          fontFamily: "Roboto",
-                        }}
-                        onClick={() => setIsDocViewOpened(true)}
-                      >
-                        View
-                      </button>
+                    <div>
+                      {" "}
+                      <span style={{ fontWeight: "600", fontSize: "14px" }}>Litigant :</span> {bond?.advocate}
+                    </div>
+                    <div>
+                      <span style={{ fontWeight: "600", fontSize: "14px" }}>Advocate: </span>
+                      {bond?.advocate}
+                    </div>
+                    <div>
+                      <span style={{ fontWeight: "600", fontSize: "14px" }}>Date:</span> {bond?.date}
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "start",
-                  padding: "24px",
-                  gap: "20px",
-                  maxHeight: "360px",
-                  overflowY: "auto",
-                  fontFamily: "Roboto",
-                }}
-              >
-                <span style={{ fontSize: "16px" }}>There are no bail bonds present for this case. </span>
-              </div>
-            )}
-          </div>{" "}
-        </Modal>
-      )}
-      {showBailModal && isDocviewOpened && (
+                  <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+                    <button
+                      style={{
+                        backgroundColor: "transparent",
+                        fontWeight: "500",
+                        color: "#0A5757",
+                        border: "none",
+                        padding: "8px 16px",
+                        borderRadius: "4px",
+                        fontSize: "16px",
+                        fontFamily: "Roboto",
+                      }}
+                      onClick={() => setIsDocViewOpened(true)}
+                    >
+                      View
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "start",
+                padding: "24px",
+                gap: "20px",
+                maxHeight: "360px",
+                overflowY: "auto",
+                fontFamily: "Roboto",
+              }}
+            >
+              <span style={{ fontSize: "16px" }}>There are no bail bonds present for this case. </span>
+            </div>
+          )}
+        </div>{" "}
+      </Modal>
+      {isDocviewOpened && (
         <Modal
           headerBarEnd={
             <CloseBtn

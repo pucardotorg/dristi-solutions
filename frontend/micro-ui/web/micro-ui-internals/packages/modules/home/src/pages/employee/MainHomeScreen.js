@@ -9,6 +9,8 @@ import { useHistory } from "react-router-dom";
 import { Loader, Toast, InboxSearchComposer, CloseSvg } from "@egovernments/digit-ui-react-components";
 import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import BulkBailBondSignView from "./BulkBailBondSignView";
+import { BailBondSignModal } from "./BailBondSignModal";
+import BailBondModal from "./BailBondModal";
 
 const sectionsParentStyle = {
   height: "50%",
@@ -18,45 +20,13 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-const CloseBtn = (props) => {
-  return (
-    <div
-      onClick={props?.onClick}
-      style={{
-        height: "100%",
-        display: "flex",
-        alignItems: "center",
-        paddingRight: "20px",
-        cursor: "pointer",
-        ...(props?.backgroundColor && { backgroundColor: props.backgroundColor }),
-      }}
-    >
-      <CloseSvg />
-    </div>
-  );
-};
-
-const Heading = (props) => {
-  return <h1 className="heading-m">{props.label}</h1>;
-};
-
 const MainHomeScreen = () => {
   const { t } = useTranslation();
   const history = useHistory();
   const location = useLocation();
   const homeFilteredData = location?.state?.homeFilteredData;
-
-  // Get the initial active tab value
   const initialActiveTab = sessionStorage.getItem("homeActiveTab") || location?.state?.homeActiveTab || "HEARINGS_TAB";
   const [homeActiveTab] = useState(initialActiveTab);
-
-  // Clear sessionStorage on component mount
-  useEffect(() => {
-    if (sessionStorage.getItem("homeActiveTab")) {
-      console.log("Clearing homeActiveTab from sessionStorage after use");
-      // sessionStorage.removeItem("homeActiveTab");
-    }
-  }, []); // Run only on component mount
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const [activeTab, setActiveTab] = useState(homeActiveTab);
   const [updateCounter, setUpdateCounter] = useState(0);
@@ -68,11 +38,10 @@ const MainHomeScreen = () => {
   const [loader, setLoader] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false, currentHearing: {} });
   const [toastMsg, setToastMsg] = useState(null);
-  const [showBailModal, setShowBailModal] = useState(true);
-  const [showBailConfirmationModal, setShowBailConfirmationModal] = useState(false);
-
+  const [needRefresh, setNeedRefresh] = useState(false);
+  const [showBailBondModal, setShowBailBondModal] = useState(false);
+  const [selectedBailBond, setSelectedBailBond] = useState(null);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
 
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
@@ -321,36 +290,12 @@ const MainHomeScreen = () => {
       name: "Bail Bonds Status",
     },
   };
-  const bailBonds = [
-    {
-      name: "Bail Bond 1",
-      advocate: "Diwakar on behalf of Aparna",
-      date: "23 Mar 2024",
-    },
-    {
-      name: "Bail Bond 2",
-      advocate: "Diwakar on behalf of Aparna",
-      date: "23 Feb 2024",
-    },
-    {
-      name: "Bail Bond 3",
-      advocate: "Sharma on behalf of Gupta",
-      date: "15 Jan 2024",
-    },
-    {
-      name: "Bail Bond 4",
-      advocate: "Reddy on behalf of Patel",
-      date: "10 Dec 2023",
-    },
-    {
-      name: "Bail Bond 5",
-      advocate: "Mehta on behalf of Sharma",
-      date: "05 Nov 2023",
-    },
-  ];
-
   useEffect(() => {
     let updatedConfig = structuredClone(pendingTaskConfig);
+    const openBailBondModal = (row) => {
+      setShowBailBondModal(true);
+      setSelectedBailBond(row);
+    };
 
     if (activeTab === "REGISTRATION") {
       updatedConfig.sections.search.uiConfig.fields = [
@@ -373,9 +318,28 @@ const MainHomeScreen = () => {
     }
     updatedConfig = {
       ...updatedConfig,
+      sections: {
+        ...updatedConfig.sections,
+        searchResult: {
+          ...updatedConfig.sections.searchResult,
+          uiConfig: {
+            ...updatedConfig.sections.searchResult.uiConfig,
+            columns: updatedConfig?.sections?.searchResult?.uiConfig?.columns?.map((column) => {
+              return column?.label === "PENDING_CASE_NAME"
+                ? {
+                    ...column,
+                    clickFunc: openBailBondModal,
+                  }
+                : column;
+            }),
+          },
+        },
+      },
       additionalDetails: {
         setCount: setPendingTaskCount,
         activeTab: activeTab,
+        setShowBailBondModal: setShowBailBondModal,
+        setSelectedBailBond: setSelectedBailBond,
       },
     };
     setConfig(updatedConfig);
@@ -398,7 +362,8 @@ const MainHomeScreen = () => {
     () => (
       <InboxSearchComposer key={`${activeTab}-${updateCounter}`} customStyle={sectionsParentStyle} configs={modifiedConfig}></InboxSearchComposer>
     ),
-    [activeTab, updateCounter, modifiedConfig]
+    //added  need refresh to refresh once the pending task is closed
+    [activeTab, updateCounter, modifiedConfig, needRefresh]
   );
 
   return (
@@ -458,6 +423,7 @@ const MainHomeScreen = () => {
             {inboxSearchComposer}
           </div>
         )}
+        {showBailBondModal && <BailBondModal t={t} showToast={showToast} setShowBailModal={setShowBailBondModal} row={selectedBailBond} />}
         {toastMsg && (
           <Toast
             error={toastMsg.key === "error"}

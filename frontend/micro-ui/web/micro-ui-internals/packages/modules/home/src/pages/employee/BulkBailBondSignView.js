@@ -26,24 +26,14 @@ function BulkBailBondSignView() {
   const searchComposerRef = useRef(null);
 
   const [bulkSignList, setBulkSignList] = useState(null);
-  const [showOrderDeleteModal, setShowOrderDeleteModal] = useState(false);
   const [showBulkSignConfirmModal, setShowBulkSignConfirmModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isDeleteOrderLoading, setIsDeleteOrderLoading] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [selectedBailBond, setSelectedBailBond] = useState(
     sessionStorage.getItem("bulkBailBondSignSelectedItem") ? JSON.parse(sessionStorage.getItem("bulkBailBondSignSelectedItem")) : null
   );
   const [showBulkSignModal, setShowBulkSignModal] = useState(sessionStorage.getItem("bulkBailBondSignSelectedItem") ? true : false);
   const [bailBondPaginationData, setBailBondPaginationData] = useState({});
-
-  const { deleteBailBond } = Digit.Hooks.useQueryParams();
-
-  const initialFormState = {};
-
-  const onSearchFormReset = useCallback(() => {
-    // Reset form logic if needed
-  }, []);
 
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
   const courtId = localStorage.getItem("courtId");
@@ -54,6 +44,7 @@ function BulkBailBondSignView() {
   const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  const [needConfigRefresh, setNeedConfigRefresh] = useState(false);
 
   const config = useMemo(() => {
     const setOrderFunc = async (order) => {
@@ -98,21 +89,25 @@ function BulkBailBondSignView() {
             }),
           },
         },
+        search: {
+          ...bulkBailBondSignConfig.sections.search,
+          uiConfig: {
+            ...bulkBailBondSignConfig.sections.search.uiConfig,
+            defaultValues: {
+              ...bulkBailBondSignConfig.sections.search.uiConfig.defaultValues,
+              tenantId: tenantId,
+              caseTitle: sessionStorage.getItem("bulkBailBondSignCaseTitle") || "",
+            },
+          },
+        },
       },
       additionalDetails: {
         setbulkBailBondSignList: setBulkSignList,
         setBailBondPaginationData: setBailBondPaginationData,
+        setNeedConfigRefresh: setNeedConfigRefresh,
       },
     };
-  }, []);
-
-  useEffect(() => {
-    if (deleteBailBond) {
-      setShowOrderDeleteModal(true);
-    } else {
-      setShowOrderDeleteModal(false);
-    }
-  }, [deleteBailBond]);
+  }, [needConfigRefresh]);
 
   const closeToast = useCallback(() => {
     setShowErrorToast(null);
@@ -129,41 +124,6 @@ function BulkBailBondSignView() {
       </div>
     ),
     []
-  );
-
-  const handleDeleteOrder = useCallback(
-    async (action) => {
-      try {
-        setIsDeleteOrderLoading(true);
-        const response = await axios.post(
-          `${window?.globalConfigs?.getConfig("ORDER_MANAGEMENT_URL")}/order/delete`,
-          { id: deleteBailBond },
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${sessionStorage.getItem("Digit.citizen.token") || sessionStorage.getItem("Digit.employee.token")}`,
-              courtId: courtId || "",
-              tenantId: tenantId || "",
-            },
-          }
-        );
-
-        if (response) {
-          history.replace(homePath, {
-            bulkDeleteSuccess: {
-              show: true,
-              label: t("ORDER_DELETE_SUCCESS"),
-            },
-          });
-        }
-      } catch (error) {
-        setShowErrorToast({ label: t("FAILED_TO_DELETE_ORDER"), error: true });
-        history.goBack();
-      } finally {
-        setIsDeleteOrderLoading(false);
-      }
-    },
-    [deleteBailBond, homePath, history, t, courtId, tenantId]
   );
 
   const handleBulkSign = useCallback(async () => {
@@ -224,11 +184,9 @@ function BulkBailBondSignView() {
   }, [bulkSignList, tenantId, courtId, bulkSignUrl, t]);
 
   const handleSigningComplete = useCallback(() => {
-    // Refresh the data after successful signing
     if (searchComposerRef.current) {
       searchComposerRef.current.refresh();
     }
-    // Clear any bail bond session data that might remain
     clearBailBondSessionData();
   }, []);
 
@@ -261,30 +219,6 @@ function BulkBailBondSignView() {
           )}
         </React.Fragment>
       )}
-      {showOrderDeleteModal && (
-        <Modal
-          headerBarMain={<Heading label={t("CONFIRM_BULK_DELETE")} />}
-          headerBarEnd={<CloseBtn onClick={() => !isDeleteOrderLoading && history.goBack()} />}
-          actionCancelLabel={t("CS_BULK_CANCEL")}
-          actionCancelOnSubmit={() => history.goBack()}
-          actionSaveLabel={t("CS_BULK_DELETE")}
-          actionSaveOnSubmit={() => handleDeleteOrder(OrderWorkflowAction.DELETE)}
-          style={{ height: "40px", background: "#BB2C2F" }}
-          popupStyles={{ width: "35%" }}
-          className={"review-order-modal"}
-          isDisabled={isDeleteOrderLoading}
-          isBackButtonDisabled={isDeleteOrderLoading}
-          children={
-            isDeleteOrderLoading ? (
-              <Loader />
-            ) : (
-              <div className="delete-warning-text">
-                <h3 style={{ margin: "12px 24px" }}>{t("CONFIRM_BULK_DELETE_TEXT")}</h3>
-              </div>
-            )
-          }
-        />
-      )}
       {showBulkSignConfirmModal && (
         <Modal
           headerBarMain={<Heading label={t("CONFIRM_BULK_SIGN")} />}
@@ -298,7 +232,7 @@ function BulkBailBondSignView() {
           className={"review-order-modal"}
           children={
             <div className="delete-warning-text">
-              <h3 style={{ margin: "12px 24px" }}>{t("CONFIRM_BULK_SIGN_TEXT")}</h3>
+              <h3 style={{ margin: "12px 24px" }}>{t("CONFIRM_BULK_BAIL_BOND_SIGN_TEXT")}</h3>
             </div>
           }
         />

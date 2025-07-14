@@ -264,6 +264,19 @@ const AdmittedCaseV2 = () => {
       enable: false,
     },
   };
+  const { data: bailPendingTaskExpiry } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "common-masters",
+    [{ name: "pendingTaskExpiry" }],
+    {
+      select: (data) => {
+        return data?.["common-masters"]?.pendingTaskExpiry || [];
+      },
+    }
+  );
+  const bailPendingTaskExpiryDays = useMemo(() => {
+    return bailPendingTaskExpiry?.find((data) => data?.enitiyName === "BAIL_BONDS_REVIEW")?.noofdaysforexpiry || 0;
+  }, [bailPendingTaskExpiry]);
 
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
 
@@ -357,7 +370,7 @@ const AdmittedCaseV2 = () => {
             moduleName: "Pending Tasks Service",
             moduleSearchCriteria: {
               isCompleted: false,
-              assignedRole: [...roles],
+              assignedRole: [...roles], //judge.clerk,typist
               filingNumber: filingNumber,
               courtId: courtId,
               entityType: "bail bond",
@@ -3138,6 +3151,7 @@ const AdmittedCaseV2 = () => {
             caseId: caseDetails?.id,
             caseTitle: caseDetails?.caseTitle,
             isCompleted: false,
+            expiryDate: bailPendingTaskExpiryDays * 24 * 60 * 60 * 1000 + todayDate,
             stateSla: todayDate,
             additionalDetails: {},
             tenantId,

@@ -167,6 +167,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal, rowD
       sessionStorage.setItem("bailBondStepper", stepper);
       sessionStorage.setItem("bailBondData", JSON.stringify({ selectedBailBond: effectiveRowData }));
       sessionStorage.setItem("bulkBailBondSignlimit", bailBondPaginationData?.limit);
+      sessionStorage.setItem("bulkBailBondSignCaseTitle", bailBondPaginationData?.caseTitle);
       sessionStorage.setItem("bulkBailBondSignoffset", bailBondPaginationData?.offset);
       sessionStorage.setItem("homeActiveTab", "BULK_BAIL_BOND_SIGN");
       sessionStorage.setItem("bulkBailBondSignSelectedItem", JSON.stringify(effectiveRowData));

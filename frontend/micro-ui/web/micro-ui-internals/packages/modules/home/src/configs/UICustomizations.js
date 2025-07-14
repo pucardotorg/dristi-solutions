@@ -604,14 +604,15 @@ export const UICustomizations = {
       const entityType = "Order"; // "BailBond";
 
       const effectiveSearchForm = requestCriteria?.state?.searchForm || {};
-      const caseTitle = effectiveSearchForm?.caseTitle;
+      const caseTitle = sessionStorage.getItem("bulkBailBondSignCaseTitle") || effectiveSearchForm?.caseTitle;
       const status = effectiveSearchForm?.status;
       const startOfTheDay = effectiveSearchForm?.startOfTheDay;
       const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
       const setbulkBailBondSignList = additionalDetails?.setbulkBailBondSignList;
       const setBailBondPaginationData = additionalDetails?.setBailBondPaginationData;
-      const limit = parseInt(sessionStorage.getItem("bulkBailBondSignlimit")) || requestCriteria?.state?.tableForm?.limit;
-      const offset = parseInt(sessionStorage.getItem("bulkBailBondSignoffset")) || requestCriteria?.state?.tableForm?.offset;
+      const setNeedConfigRefresh = additionalDetails?.setNeedConfigRefresh;
+      const limit = parseInt(sessionStorage.getItem("bulkBailBondSignlimit")) || parseInt(requestCriteria?.state?.tableForm?.limit) || 10;
+      const offset = parseInt(sessionStorage.getItem("bulkBailBondSignoffset")) || parseInt(requestCriteria?.state?.tableForm?.offset) || 0;
 
       const moduleSearchCriteria = {
         entityType,
@@ -624,6 +625,7 @@ export const UICustomizations = {
         }),
         ...(courtId && { courtId }),
       };
+      const bulkBailBondSignCaseTitle = requestCriteria?.state?.searchForm && requestCriteria?.state?.searchForm?.caseTitle;
 
       return {
         ...requestCriteria,
@@ -648,9 +650,13 @@ export const UICustomizations = {
             });
             sessionStorage.removeItem("bulkBailBondSignlimit");
             sessionStorage.removeItem("bulkBailBondSignoffset");
+            if (sessionStorage.getItem("bulkBailBondSignCaseTitle")) {
+              sessionStorage.removeItem("bulkBailBondSignCaseTitle");
+              setNeedConfigRefresh((prev) => !prev);
+            }
 
             if (setbulkBailBondSignList) setbulkBailBondSignList(bailBondItems);
-            if (setBailBondPaginationData) setBailBondPaginationData({ limit: limit, offset: offset });
+            if (setBailBondPaginationData) setBailBondPaginationData({ limit: limit, offset: offset, caseTitle: bulkBailBondSignCaseTitle });
 
             return {
               ...data,

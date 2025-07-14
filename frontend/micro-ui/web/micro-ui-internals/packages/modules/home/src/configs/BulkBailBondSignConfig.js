@@ -7,6 +7,9 @@ const defaultSearchValues = {
   endOfTheDay: "",
 };
 
+const limit = parseInt(sessionStorage.getItem("bulkBailBondSignlimit") || 10);
+const offset = parseInt(sessionStorage.getItem("bulkBailBondSignoffset") || 0);
+
 export const bulkBailBondSignConfig = {
   label: "CS_HOME_BULK_BAIL_BOND_SIGN",
   type: "inbox",
@@ -24,6 +27,8 @@ export const bulkBailBondSignConfig = {
     requestParam: {},
     requestBody: {
       inbox: {
+        limit: limit,
+        offset: offset,
         processSearchCriteria: {
           businessService: ["notification"],
           moduleName: "Transformer service",
@@ -93,9 +98,10 @@ export const bulkBailBondSignConfig = {
         ],
         resultsJsonPath: "items",
         customDefaultPagination: {
-          limit: sessionStorage.getItem("bulkBailBondSignlimit") || 10,
-          offset: sessionStorage.getItem("bulkBailBondSignoffset") || 0,
+          limit: limit,
+          offset: offset,
         },
+        manualPagination: true,
         enableColumnSort: true,
       },
 

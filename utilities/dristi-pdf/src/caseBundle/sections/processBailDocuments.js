@@ -52,6 +52,8 @@ async function processBailDocuments(
       }
     );
 
+    // call bail bond search
+
     const applicationList = bailApplications?.data?.applicationList;
 
     if (applicationList?.length !== 0) {
@@ -317,6 +319,9 @@ async function processBailDocuments(
       bailApplicationsIndexSection.lineItems =
         bailApplicationsLineItems.filter(Boolean);
     }
+    // if(){
+
+    // }
   }
 }
 

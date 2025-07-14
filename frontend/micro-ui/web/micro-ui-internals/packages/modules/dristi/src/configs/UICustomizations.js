@@ -2024,8 +2024,9 @@ export const UICustomizations = {
               {value ? value : "-"}
             </Link>
           ) : row?.tab === "BAIL_BOND_STATUS" ? (
-            <BailBondModal style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="SearchIndividualConfig" />
+            <OrderName rowData={row} colData={column} value={value} />
           ) : (
+            // <BailBondModal style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="SearchIndividualConfig" />
             <Link
               style={{ color: "black", textDecoration: "underline" }}
               to={{
