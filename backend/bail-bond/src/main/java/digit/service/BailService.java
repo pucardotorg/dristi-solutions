@@ -144,6 +144,11 @@ public class BailService {
     public List<Bail> searchBail(BailSearchRequest bailSearchRequest) {
         try {
             log.info("Starting bail search with parameters :: {}", bailSearchRequest);
+
+            if(bailSearchRequest.getCriteria()!=null && bailSearchRequest.getCriteria().getSuretyMobileNumber() != null) {
+                bailSearchRequest.setCriteria(encryptionDecryptionUtil.encryptObject(bailSearchRequest.getCriteria(), "BailSearch", BailSearchCriteria.class));
+            }
+
             List<Bail> bailList = bailRepository.getBails(bailSearchRequest);
             List<Bail> decryptedBailList = new ArrayList<>();
             bailList.forEach(bail -> {
@@ -157,35 +162,4 @@ public class BailService {
         }
     }
 
-    public void updateCaseNumberBail(Map<String, Object> body) {
-        try {
-            log.info("operation=updateCaseNumberBail, status=IN_PROGRESS, filingNumber={}", body.get("filingNumber").toString());
-            RequestInfo requestInfo = objectMapper.convertValue(body.get("requestInfo"), RequestInfo.class);
-            String filingNumber = body.get("filingNumber").toString();
-            BailSearchRequest request = BailSearchRequest.builder()
-                    .requestInfo(requestInfo)
-                    .criteria(BailSearchCriteria.builder().filingNumber(filingNumber).build())
-                    .build();
-            List<Bail> bailList = searchBail(request);
-            for (Bail bail : bailList) {
-                bail.setCnrNumber(body.get("cnrNumber") != null ? body.get("cnrNumber").toString() : null);
-                if (body.get("courtCaseNumber") != null) {
-                    bail.setCaseNumber(body.get("courtCaseNumber").toString());
-                } else if (body.get("cmpNumber") != null) {
-                    bail.setCaseNumber(body.get("cmpNumber").toString());
-                } else {
-                    bail.setCaseNumber(filingNumber);
-                }
-                BailRequest bailRequest = BailRequest.builder()
-                        .requestInfo(requestInfo)
-                        .bail(bail)
-                        .build();
-                updateBail(bailRequest);
-            }
-            log.info("operation=updateCaseNumberBail, status=SUCCESS, filingNumber={}", body.get("filingNumber").toString());
-        } catch (Exception e) {
-            log.info("operation=updateCaseNumberBail, status=FAILURE, filingNumber={}", body.get("filingNumber").toString());
-            throw new CustomException("Error updating case number: {}", e.getMessage());
-        }
-    }
 }

@@ -445,7 +445,6 @@ public class CaseService {
                 enrichmentUtil.enrichCourtCaseNumber(caseRequest);
                 caseRequest.getCases().setCaseType(ST);
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
-                producer.push(config.getCaseNumberForBailUpdateTopic(), createBailUpdateRequest(caseRequest));
             }
 
             boolean isAccessCodeGenerated = false;
@@ -462,8 +461,6 @@ public class CaseService {
                 enrichmentUtil.enrichRegistrationDate(caseRequest);
                 caseRequest.getCases().setCaseType(CMP);
                 producer.push(config.getCaseReferenceUpdateTopic(), createHearingUpdateRequest(caseRequest));
-                producer.push(config.getCaseNumberForBailUpdateTopic(), createBailUpdateRequest(caseRequest));
-
             }
             //todo: enhance for files delete
 //            removeInactiveDocuments(documentToDelete);
@@ -731,17 +728,6 @@ public class CaseService {
         hearingUpdateRequest.put("courtCaseNumber", caseRequest.getCases().getCourtCaseNumber());
         hearingUpdateRequest.put("tenantId", caseRequest.getCases().getTenantId());
         return hearingUpdateRequest;
-    }
-
-    private Object createBailUpdateRequest(CaseRequest caseRequest) {
-        Map<String, Object> bailUpdateRequest = new HashMap<>();
-        bailUpdateRequest.put("requestInfo", caseRequest.getRequestInfo());
-        bailUpdateRequest.put("filingNumber", caseRequest.getCases().getFilingNumber());
-        bailUpdateRequest.put("cmpNumber", caseRequest.getCases().getCmpNumber());
-        bailUpdateRequest.put("courtCaseNumber", caseRequest.getCases().getCourtCaseNumber());
-        bailUpdateRequest.put("tenantId", caseRequest.getCases().getTenantId());
-        bailUpdateRequest.put("cnrNumber", caseRequest.getCases().getCnrNumber());
-        return bailUpdateRequest;
     }
 
     private Boolean checkItsLastSign(CaseRequest caseRequest) {

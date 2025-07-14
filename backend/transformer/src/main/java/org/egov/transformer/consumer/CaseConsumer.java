@@ -87,14 +87,17 @@ public class CaseConsumer {
             if ("PENDING_REGISTRATION".equalsIgnoreCase(courtCase.getStatus())) {
                 repository.updateCourtIdForFilingNumber(courtCase.getCourtId(), courtCase.getFilingNumber());
             }
-            String caseNumber= courtCase.getFilingNumber();
-            if(courtCase.getCourtCaseNumber() != null && !courtCase.getCourtCaseNumber().isEmpty()) {
-                caseNumber = courtCase.getCourtCaseNumber();
-            } else if (courtCase.getCmpNumber()!=null && !courtCase.getCmpNumber().isEmpty()) {
-                caseNumber = courtCase.getCmpNumber();
-            }
-            if(caseNumber!=null && !caseNumber.isEmpty()) {
-                repository.updateBailCaseNumberForFilingNumber(caseNumber, courtCase.getFilingNumber());
+            if ("PENDING_RESPONSE".equalsIgnoreCase(courtCase.getStatus()) || "CASE_ADMITTED".equalsIgnoreCase(courtCase.getStatus())) {
+                repository.updateCourtIdForFilingNumber(courtCase.getCourtId(), courtCase.getFilingNumber());
+                String caseNumber = courtCase.getFilingNumber();
+                if (courtCase.getCourtCaseNumber() != null && !courtCase.getCourtCaseNumber().isEmpty()) {
+                    caseNumber = courtCase.getCourtCaseNumber();
+                } else if (courtCase.getCmpNumber() != null && !courtCase.getCmpNumber().isEmpty()) {
+                    caseNumber = courtCase.getCmpNumber();
+                }
+                if (caseNumber != null && !caseNumber.isEmpty()) {
+                    repository.updateBailCaseNumberForFilingNumber(caseNumber, courtCase.getCnrNumber(), courtCase.getFilingNumber());
+                }
             }
         } catch (Exception exception) {
             log.error("error in saving case", exception);
