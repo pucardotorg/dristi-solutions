@@ -137,6 +137,11 @@ public class BailService {
     public List<Bail> searchBail(BailSearchRequest bailSearchRequest) {
         try {
             log.info("Starting bail search with parameters :: {}", bailSearchRequest);
+
+            if(bailSearchRequest.getCriteria()!=null && bailSearchRequest.getCriteria().getSuretyMobileNumber() != null) {
+                bailSearchRequest.setCriteria(encryptionDecryptionUtil.encryptObject(bailSearchRequest.getCriteria(), "BailSearch", BailSearchCriteria.class));
+            }
+
             List<Bail> bailList = bailRepository.getBails(bailSearchRequest);
             List<Bail> decryptedBailList = new ArrayList<>();
             bailList.forEach(bail -> {

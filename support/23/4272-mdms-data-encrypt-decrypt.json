@@ -167,5 +167,55 @@
         }
       }
     ]
+  },
+
+  {
+    "moduleName": "DataSecurity",
+    "masterName": "SecurityPolicy",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "id": "9ec9d195-177c-4f64-b4a0-c0ece3ac5927",
+        "tenantId": "kl",
+        "schemaCode": "DataSecurity.SecurityPolicy",
+        "uniqueIdentifier": "BailSearch",
+        "data": {
+          "model": "BailSearch",
+          "attributes": [
+            {
+              "name": "suretyMobileNumber",
+              "jsonPath": "suretyMobileNumber",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            }
+          ],
+          "uniqueIdentifier": {
+            "name": "id",
+            "jsonPath": "/id"
+          },
+          "roleBasedDecryptionPolicy": [
+            {
+              "roles": [
+                "INTERNAL_MICROSERVICE_ROLE"
+              ],
+              "attributeAccessList": [
+                {
+                  "attribute": "suretyMobileNumber",
+                  "firstLevelVisibility": "PLAIN",
+                  "secondLevelVisibility": "PLAIN"
+                }
+              ]
+            }
+          ]
+        },
+        "isActive": true,
+        "auditDetails": {
+          "createdBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "lastModifiedBy": "80374419-b47f-4e33-bb58-e9213e547bb4",
+          "createdTime": 1752481485897,
+          "lastModifiedTime": 1752481485897
+        }
+      }
+    ]
   }
 ]

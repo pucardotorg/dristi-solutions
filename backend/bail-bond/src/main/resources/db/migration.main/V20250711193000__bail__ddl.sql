@@ -20,7 +20,7 @@ CREATE TABLE dristi_bail (
                              litigant_name varchar(256), -- Name of the litigant
                              litigant_father_name varchar(256), -- Father name of the litigant
                              litigant_signed boolean, -- Whether the litigant has signed the bail
-                             litigant_mobile_number varchar(16), -- Mobile number of the litigant
+                             litigant_mobile_number varchar(256), -- Mobile number of the litigant
                              shortened_url varchar(512), -- Shortened URL for the bail bond
                              bail_id varchar(64), -- Id gen formatted bail id
                              additional_details jsonb,
@@ -43,8 +43,8 @@ CREATE TABLE dristi_surety (
                                surety_name varchar(256),
                                surety_father_name varchar(256),
                                surety_signed boolean,
-                               surety_mobile_number varchar(16),
-                               surety_email varchar(64),
+                               surety_mobile_number varchar(256),
+                               surety_email varchar(256),
                                surety_approved boolean,
                                surety_address jsonb,
                                additional_details jsonb,
