@@ -146,4 +146,26 @@ public class Configuration {
 
     @Value("${module.names.enabled}")
     private List<String> moduleNamesEnabled;
+
+    // Bail and Surety service configs
+    @Value("${bail.service.host}")
+    private String bailServiceHost;
+
+    @Value("${bail.service.search.endpoint}")
+    private String bailServiceSearchEndpoint;
+
+    @Value("${bail.service.update.endpoint}")
+    private String bailServiceUpdateEndpoint;
+
+    // eSign Config
+    @Value("${esign.service.host}")
+    private String eSignHost;
+
+    @Value("${esign.service.endpoint}")
+    private String eSignEndpoint;
+
+    //Tenant Id
+    @Value("${egov-state-level-tenant-id}")
+    private String egovStateTenantId;
+
 }
