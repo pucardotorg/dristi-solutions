@@ -1,20 +1,23 @@
 package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
+import org.egov.common.contract.request.User;
 import org.egov.common.contract.response.ResponseInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
-import org.pucar.dristi.util.AdvocateUtil;
-import org.pucar.dristi.util.DateUtil;
-import org.pucar.dristi.util.FileStoreUtil;
-import org.pucar.dristi.util.HrmsUtil;
-import org.pucar.dristi.util.InboxUtil;
-import org.pucar.dristi.util.ResponseInfoFactory;
+import org.pucar.dristi.util.*;
 import org.pucar.dristi.web.models.*;
 
+import org.pucar.dristi.web.models.bailbond.*;
+import org.pucar.dristi.web.models.esign.ESignParameter;
+import org.pucar.dristi.web.models.esign.ESignRequest;
+import org.pucar.dristi.web.models.esign.ESignResponse;
 import org.pucar.dristi.web.models.inbox.*;
 
 import org.springframework.core.io.Resource;
@@ -53,7 +56,15 @@ public class OpenApiService {
 
     private final HrmsUtil hrmsUtil;
 
-    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateUtil advocateUtil, ResponseInfoFactory responseInfoFactory, HrmsUtil hrmsUtil) {
+    private final BailUtil bailUtil;
+
+    private final ESignUtil esignUtil;
+
+    private final FileStoreUtil fileStoreUtil;
+
+    private final UserService userService;
+
+    public OpenApiService(Configuration configuration, ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, DateUtil dateUtil, InboxUtil inboxUtil, AdvocateUtil advocateUtil, ResponseInfoFactory responseInfoFactory, HrmsUtil hrmsUtil, BailUtil bailUtil, ESignUtil esignUtil, FileStoreUtil fileStoreUtil, UserService userService) {
         this.configuration = configuration;
         this.serviceRequestRepository = serviceRequestRepository;
         this.objectMapper = objectMapper;
@@ -62,6 +73,10 @@ public class OpenApiService {
         this.advocateUtil = advocateUtil;
         this.responseInfoFactory = responseInfoFactory;
         this.hrmsUtil = hrmsUtil;
+        this.bailUtil = bailUtil;
+        this.esignUtil = esignUtil;
+        this.fileStoreUtil = fileStoreUtil;
+        this.userService = userService;
     }
 
     public CaseSummaryResponse getCaseByCnrNumber(String tenantId, String cnrNumber) {
@@ -635,4 +650,148 @@ public class OpenApiService {
         }
         return fileStoreId;
     }
+
+    public OpenApiBailResponse getBailByPartyMobile(OpenApiBailSearchRequest openApiBailSearchRequest) {
+
+        boolean isValidRequest = false;
+        String tenantId = openApiBailSearchRequest.getTenantId();
+        String bailId = openApiBailSearchRequest.getBailId();
+        String mobileNumber = openApiBailSearchRequest.getMobileNumber();
+        BailSearchCriteria criteria = BailSearchCriteria.builder()
+                .tenantId(tenantId)
+                .bailId(bailId)
+                .fuzzySearch(false)
+                .build();
+
+        BailSearchResponse response = bailUtil.fetchBails(criteria);
+        List<Bail> bails = response.getBails();
+
+        if (bails == null || bails.isEmpty()) {
+            throw new CustomException(BAIL_NOT_FOUND_EXCEPTION, "Bail not found");
+        }
+
+        Bail bail = bails.get(0);
+
+        OpenApiBailResponse openBailResponse = objectMapper.convertValue(bail, OpenApiBailResponse.class);
+
+        if (mobileNumber.equals(bail.getLitigantMobileNumber())) {
+            isValidRequest = true;
+            openBailResponse.setPhoneNumber(mobileNumber);
+        } else {
+            Optional<Surety> matchingSurety = bail.getSureties().stream()
+                    .filter(surety -> mobileNumber.equals(surety.getMobileNumber()))
+                    .findFirst();
+
+            if (matchingSurety.isPresent()) {
+                isValidRequest = true;
+                openBailResponse.getSureties().stream()
+                        .filter(openSurety -> openSurety.getId().equals(matchingSurety.get().getId()))
+                        .findFirst()
+                        .ifPresent(openSurety -> openSurety.setPhoneNumber(mobileNumber));
+            }
+        }
+
+        if (isValidRequest) {
+            return openBailResponse;
+        } else {
+            throw new CustomException(BAIL_NOT_FOUND_EXCEPTION, "Bail not found");
+        }
+
+    }
+
+    public ESignResponse eSignDocument(String tenantId, ESignParameter params, HttpServletRequest servletRequest) {
+        log.info("Initiating eSign for tenantId: {}", tenantId);
+
+        ESignRequest eSignRequest = ESignRequest.builder()
+                .eSignParameter(params)
+                .requestInfo(RequestInfo.builder().userInfo(User.builder().build()).build())
+                .build();
+
+        return esignUtil.callESignService(eSignRequest, servletRequest);
+    }
+
+    public OpenApiBailResponse updateBailBond(OpenApiUpdateBailBondRequest request) {
+
+        try {
+            // Validate file store ID
+            fileStoreUtil.getFilesByFileStore(request.getFileStoreId(), request.getTenantId(), null);
+
+            // Fetch bail
+            BailSearchCriteria criteria = BailSearchCriteria.builder()
+                    .tenantId(request.getTenantId())
+                    .bailId(request.getBailId())
+                    .fuzzySearch(false)
+                    .build();
+
+            BailSearchResponse response = bailUtil.fetchBails(criteria);
+            List<Bail> bails = response.getBails();
+
+            if (bails == null || bails.isEmpty()) {
+                log.error("Bail not found for bailId: {}", request.getBailId());
+                throw new CustomException("Bail not found for bailId: ", request.getBailId());
+            }
+
+            Bail bail = bails.get(0);
+            String mobileNumber = request.getMobileNumber();
+
+            boolean isLitigant = mobileNumber.equals(bail.getLitigantMobileNumber());
+            Optional<Surety> matchingSurety = bail.getSureties().stream()
+                    .filter(surety -> mobileNumber.equals(surety.getMobileNumber()))
+                    .findFirst();
+
+            if (!isLitigant && matchingSurety.isEmpty()) {
+                throw new CustomException("mobile number not found", request.getBailId());
+            }
+
+            // Add signed document
+            Document document = Document.builder()
+                    .id(UUID.randomUUID().toString())
+                    .fileStore(request.getFileStoreId())
+                    .documentType("SIGNED")
+                    .build();
+
+            // Set signed flag
+            if (isLitigant) {
+                bail.setLitigantSigned(true);
+            } else {
+                matchingSurety.get().setHasSigned(true);
+            }
+
+            // Replace documents with signed document
+            bail.getDocuments().clear();
+            bail.getDocuments().add(document);
+
+            // Update Workflow
+            WorkflowObject workflowObject = new WorkflowObject();
+            workflowObject.setAction(E_SIGN);
+            bail.setWorkflow(workflowObject);
+
+            BailRequest bailRequest = BailRequest.builder()
+                    .requestInfo(createInternalRequestInfo())
+                    .bail(bail)
+                    .build();
+
+            BailResponse bailResponse = bailUtil.updateBailBond(bailRequest);
+            return objectMapper.convertValue(bailResponse, OpenApiBailResponse.class);
+        } catch (CustomException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Error while updating bail bond", e);
+            throw new CustomException("Error while updating bail bond", e.getMessage());
+        }
+    }
+
+    private RequestInfo createInternalRequestInfo() {
+        org.egov.common.contract.request.User userInfo = new User();
+        userInfo.setUuid(userService.internalMicroserviceRoleUuid);
+        userInfo.setRoles(userService.internalMicroserviceRoles);
+        userInfo.getRoles().add(Role.builder().code(BAIL_BOND_CREATOR)
+                .name(BAIL_BOND_CREATOR)
+                .tenantId(configuration.getEgovStateTenantId())
+                .build());
+        userInfo.setType(CITIZEN_UPPER);
+        userInfo.setTenantId(configuration.getEgovStateTenantId());
+        return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
+    }
+
 }

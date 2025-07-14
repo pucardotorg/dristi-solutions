@@ -60,4 +60,25 @@ public class ServiceConstants {
     public static final String OPENAPI_MODULE_NAME = "Openapi Service";
 
     public static final String ERROR_WHILE_FETCHING_FROM_ADVOCATE = "ERROR_WHILE_FETCHING_FROM_ADVOCATE";
+
+    public static final String ERROR_WHILE_FETCHING_FROM_BAIL = "ERROR_WHILE_FETCHING_FROM_BAIL";
+    public static final String BAIL_NOT_FOUND_EXCEPTION = "BAIL_NOT_FOUND_EXCEPTION";
+
+    public static final String INTERNALMICROSERVICEROLE_NAME = "Internal Microservice Role";
+
+    public static final String INTERNALMICROSERVICEROLE_CODE = "INTERNAL_MICROSERVICE_ROLE";
+
+    public static final String INTERNALMICROSERVICEUSER_USERNAME = "INTERNAL_USER";
+
+    public static final String INTERNALMICROSERVICEUSER_NAME = "Internal Microservice User";
+
+    public static final String INTERNALMICROSERVICEUSER_MOBILENO = "9999999999";
+
+    public static final String INTERNALMICROSERVICEUSER_TYPE = "SYSTEM";
+
+    public static final String msgId = "1730882648558|en_IN";
+
+    public static final String BAIL_BOND_CREATOR = "BAIL_BOND_CREATOR";
+
+    public static final String E_SIGN = "E-SIGN";
 }
