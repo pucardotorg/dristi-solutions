@@ -3,11 +3,13 @@ import { TextInput } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
+import { submissionService } from "../../hooks/services";
 
 const BailBondLoginPage = () => {
   const { t } = useTranslation();
   const history = useHistory();
-  const { filingNumber } = Digit.Hooks.useQueryParams();
+  const tenantId = Digit.ULBService.getCurrentTenantId();
+  const { bailbondId } = Digit.Hooks.useQueryParams();
   const [mobileNumber, setMobileNumber] = useState("");
   const [error, setError] = useState(false);
   const config = {
@@ -32,9 +34,23 @@ const BailBondLoginPage = () => {
     // TODO: api call and set error if any
 
     // if person is alredy registered then redirect to sign page and also set some data that again will not redirect again
-    sessionStorage.setItem("isAuthorised", true);
+    try {
+      const res = submissionService.searchOpenApiBailBond({
+        tenantId,
+        bailId: bailbondId,
+        mobileNumber: mobileNumber,
+      });
 
-    history.replace(`/${window?.contextPath}/citizen/dristi/home/bail-bond-sign?filingNumber=${filingNumber}`);
+      if (!res?.data?.length || res?.data?.length === 0) {
+        setError(true);
+        return;
+      }
+      sessionStorage.setItem("isAuthorised", true);
+      history.replace(`/${window?.contextPath}/citizen/dristi/home/bail-bond-sign?bailBondId=${bailbondId}`);
+    } catch (error) {
+      setError(true);
+      return;
+    }
   };
 
   const isDisabled = useMemo(() => {

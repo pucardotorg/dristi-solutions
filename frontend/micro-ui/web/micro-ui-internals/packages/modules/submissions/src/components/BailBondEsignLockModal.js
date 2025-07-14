@@ -4,12 +4,12 @@ import { BlackTickIcon, FileDownloadIcon } from "@egovernments/digit-ui-module-d
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
 import { Banner, CardLabel } from "@egovernments/digit-ui-react-components";
 
-function BailBondEsignLockModal({ t, handleSaveOnSubmit, userType, filingNumber }) {
+function BailBondEsignLockModal({ t, handleSaveOnSubmit, userType, filingNumber, bailBondSignatureURL }) {
   const orderModalInfo = {
     header: "BAIL_BOND_BANNER_HEADER",
     url: [
       {
-        value: `${window.location.origin}/${window?.contextPath}/${userType}/dristi/home/bail-bond-sign?filingNumber=${filingNumber}`, // TODO : replace with actual link
+        value: bailBondSignatureURL,
         customText: "E-Sign Link",
         copyData: true,
         isLocalization: false,

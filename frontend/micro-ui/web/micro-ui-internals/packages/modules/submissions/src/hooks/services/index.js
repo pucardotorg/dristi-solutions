@@ -58,4 +58,44 @@ export const submissionService = {
       data,
       params,
     }),
+  createBailBond: (data, params) =>
+    Request({
+      url: Urls.bailBond.bailBondCreate,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateBailBond: (data, params) =>
+    Request({
+      url: Urls.bailBond.bailBondUpdate,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  searchBailBond: (data, params) =>
+    Request({
+      url: Urls.bailBond.bailBondSearch,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  searchOpenApiBailBond: (data, params) =>
+    Request({
+      url: Urls.openApi.bailSearch,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  updateOpenBailBond: (data, params) =>
+    Request({
+      url: Urls.openApi.updateBailBond,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
 };

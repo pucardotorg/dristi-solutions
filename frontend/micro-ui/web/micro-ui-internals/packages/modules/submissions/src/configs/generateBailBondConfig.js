@@ -161,7 +161,7 @@ export const bailBondConfig = [
               populators: {
                 inputs: [
                   {
-                    // name: "identityProof",
+                    name: "document",
                     isMandatory: true,
                     documentHeader: "IDENTITY_PROOF",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
@@ -186,7 +186,7 @@ export const bailBondConfig = [
               populators: {
                 inputs: [
                   {
-                    // name: "proofOfSolvency",
+                    name: "document",
                     isMandatory: true,
                     documentHeader: `PROOF_OF_SOLVENCY`,
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
@@ -211,7 +211,7 @@ export const bailBondConfig = [
               populators: {
                 inputs: [
                   {
-                    // name: "otherDocuments",
+                    name: "document",
                     isMandatory: true,
                     documentHeader: "OTHER_DOCUMENTS_HEADING",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
