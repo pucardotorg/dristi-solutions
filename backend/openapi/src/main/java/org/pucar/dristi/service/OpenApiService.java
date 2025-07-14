@@ -773,6 +773,8 @@ public class OpenApiService {
 
             BailResponse bailResponse = bailUtil.updateBailBond(bailRequest);
             return objectMapper.convertValue(bailResponse, OpenApiBailResponse.class);
+        } catch (CustomException e) {
+            throw e;
         } catch (Exception e) {
             log.error("Error while updating bail bond", e);
             throw new CustomException("Error while updating bail bond", e.getMessage());
