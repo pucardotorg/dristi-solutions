@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Types;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -63,6 +64,7 @@ public class ApplicationQueryBuilder {
             query.append(FROM_APP_TABLE);
 
             boolean firstCriteria = true; // To check if it's the first criteria
+            firstCriteria = addMultipleCriteria(applicationCriteria.getOnBehalfOf(), query, firstCriteria, preparedStmtList,preparedStmtArgList);
             firstCriteria = addCriteria(applicationCriteria.getId(), query, firstCriteria, "app.id = ?", preparedStmtList,preparedStmtArgList);
             firstCriteria = addCriteria(applicationCriteria.getFilingNumber(), query, firstCriteria, "app.filingNumber = ?", preparedStmtList,preparedStmtArgList);
             firstCriteria = addCriteria(applicationCriteria.getApplicationType(), query, firstCriteria, "app.applicationType = ?", preparedStmtList,preparedStmtArgList);
@@ -82,6 +84,23 @@ public class ApplicationQueryBuilder {
             throw new CustomException(APPLICATION_SEARCH_QUERY_EXCEPTION,"Error occurred while building the application search query: "+ e.getMessage());
         }
     }
+
+    boolean addMultipleCriteria(List<UUID> criteria, StringBuilder query, boolean firstCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        if (criteria != null && !criteria.isEmpty()) {
+            addClauseIfRequired(query, firstCriteria);
+            query.append(" (");
+            for (int i = 0; i < criteria.size(); i++) {
+                if (i > 0) query.append(" OR ");
+                query.append(" app.onBehalfOf @> ?::jsonb ");
+                preparedStmtList.add("[\"" + criteria.get(i).toString() + "\"]");
+                preparedStmtArgList.add(Types.VARCHAR);
+            }
+            query.append(") ");
+            firstCriteria = false;
+        }
+        return firstCriteria;
+    }
+
     boolean addPartialCriteriaForApplicationCMPNumber(String criteria, StringBuilder query, boolean firstCriteria, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         if (criteria != null && !criteria.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);

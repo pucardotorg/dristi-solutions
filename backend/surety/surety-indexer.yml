@@ -1,0 +1,85 @@
+ServiceMaps:
+  serviceName: surety Service
+  version: 1.0.0
+  mappings:
+    - topic: save-surety
+      configKey: INDEX
+      indexes:
+        - name: surety-index
+          type: general
+          id: $.id
+          isBulk: false
+          timeStampField: $.auditDetails.createdTime
+          jsonPath: $.surety
+          customJsonMapping:
+            indexMapping: {"Data":{ suretyDetails:{},"history":{},"auditDetails":{}}}
+            fieldMapping:
+              - inJsonPath: $.id
+                outJsonPath: $.Data.suretyDetails.id
+              - inJsonPath: $.tenantId
+                outJsonPath: $.Data.suretyDetails.tenantId
+              - inJsonPath: $.caseId
+                outJsonPath: $.Data.suretyDetails.caseId
+              - inJsonPath: $.bailId
+                outJsonPath: $.Data.suretyDetails.bailId
+              - inJsonPath: $.name
+                outJsonPath: $.Data.suretyDetails.name
+              - inJsonPath: $.fatherName
+                outJsonPath: $.Data.suretyDetails.fatherName
+              - inJsonPath: $.email
+                outJsonPath: $.Data.suretyDetails.email
+              - inJsonPath: $.mobileNumber
+                outJsonPath: $.Data.suretyDetails.mobileNumber
+              - inJsonPath: $.hasSigned
+                outJsonPath: $.Data.suretyDetails.hasSigned
+              - inJsonPath: $.address
+                outJsonPath: $.Data.suretyDetails.address
+              - inJsonPath: $.isActive
+                outJsonPath: $.Data.suretyDetails.isActive
+              - inJsonPath: $.additionalDetails
+                outJsonPath: $.Data.suretyDetails.additionalDetails
+              - inJsonPath: $.documents
+                outJsonPath: $.Data.suretyDetails.documents
+              - inJsonPath: $.auditDetails
+                outJsonPath: $.Data.auditDetails
+
+    - topic: update-surety
+      configKey: INDEX
+      indexes:
+        - name: surety-index
+          type: general
+          id: $.id
+          isBulk: false
+          timeStampField: $.auditDetails.createdTime
+          jsonPath: $.surety
+          customJsonMapping:
+            indexMapping: { "Data": { suretyDetails: {},"history": {},"auditDetails":{}} }
+            fieldMapping:
+              - inJsonPath: $.id
+                outJsonPath: $.Data.suretyDetails.id
+              - inJsonPath: $.tenantId
+                outJsonPath: $.Data.suretyDetails.tenantId
+              - inJsonPath: $.caseId
+                outJsonPath: $.Data.suretyDetails.caseId
+              - inJsonPath: $.bailId
+                outJsonPath: $.Data.suretyDetails.bailId
+              - inJsonPath: $.name
+                outJsonPath: $.Data.suretyDetails.name
+              - inJsonPath: $.fatherName
+                outJsonPath: $.Data.suretyDetails.fatherName
+              - inJsonPath: $.email
+                outJsonPath: $.Data.suretyDetails.email
+              - inJsonPath: $.mobileNumber
+                outJsonPath: $.Data.suretyDetails.mobileNumber
+              - inJsonPath: $.hasSigned
+                outJsonPath: $.Data.suretyDetails.hasSigned
+              - inJsonPath: $.address
+                outJsonPath: $.Data.suretyDetails.address
+              - inJsonPath: $.isActive
+                outJsonPath: $.Data.suretyDetails.isActive
+              - inJsonPath: $.additionalDetails
+                outJsonPath: $.Data.suretyDetails.additionalDetails
+              - inJsonPath: $.documents
+                outJsonPath: $.Data.suretyDetails.documents
+              - inJsonPath: $.auditDetails
+                outJsonPath: $.Data.auditDetails
