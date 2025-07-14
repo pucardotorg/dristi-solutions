@@ -28,7 +28,7 @@ const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
 };
 
-const BailBondModal = ({ row, setShowBailModal = () => {} }) => {
+const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) => {
   const queryStrings = Digit.Hooks.useQueryParams();
 
   const { t } = useTranslation();
@@ -167,14 +167,15 @@ const BailBondModal = ({ row, setShowBailModal = () => {} }) => {
 
   const closePendingTask = async () => {
     try {
+      setLoader(true);
       await DRISTIService.customApiService(Urls.pendingTask, {
         pendingTask: {
           name: t("CS_COMMON_BAIL_BOND"),
           entityType: "bail bond",
-          referenceId: `MANUAL_${filingNumber}`,
-          status: "PENDING_SIGN",
+          referenceId: `MANUAL_BAIL_BOND_${filingNumber}`,
+          status: "completed",
           assignedTo: [],
-          assignedRole: ["JUDGE_ROLE"],
+          assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "TYPIST_ROLE"],
           filingNumber,
           isCompleted: true,
           caseId: caseId,
@@ -188,6 +189,8 @@ const BailBondModal = ({ row, setShowBailModal = () => {} }) => {
           setTimeout(() => {
             setLoader(false);
             setShowBailConfirmationModal(false);
+            setShowBailModal(false);
+            if (setUpdateCounter) setUpdateCounter((prev) => prev + 1);
           }, 1000);
         }
       });
@@ -219,114 +222,118 @@ const BailBondModal = ({ row, setShowBailModal = () => {} }) => {
           <Loader />
         </div>
       )}
-      <Modal
-        headerBarEnd={
-          <CloseBtn
-            onClick={() => {
-              if (queryStrings?.filingNumber) {
-                history.goBack();
-              } else setShowBailModal(false);
-            }}
-          />
-        }
-        actionSaveLabel={t("Close Task")}
-        actionSaveOnSubmit={() => {
-          setShowBailModal(false);
-          setShowBailConfirmationModal(true);
-        }}
-        style={{ width: "50%" }}
-        actionCancelStyle={{ width: "50%" }}
-        actionCancelLabel={t("Issue Warrant")}
-        actionCancelOnSubmit={() => {
-          createOrder();
-        }}
-        formId="modal-action"
-        headerBarMain={<Heading label={t("View Bail Bonds")} />}
-        className="upload-signature-modal"
-        submitTextClassName="upload-signature-button"
-        popupModuleActionBarStyles={{ padding: "0 8px 8px 8px" }}
-      >
-        <div>
-          {Array.isArray(bailBonds) && bailBonds.length > 0 ? (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                padding: "24px",
-                gap: "20px",
-                maxHeight: "360px",
-                overflowY: "auto",
-                fontFamily: "Roboto",
+      {!showBailConfirmationModal && (
+        <Modal
+          headerBarEnd={
+            <CloseBtn
+              onClick={() => {
+                if (queryStrings?.filingNumber) {
+                  history.goBack();
+                } else setShowBailModal(false);
               }}
-            >
-              {bailBonds.map((bond, index) => (
-                <div
-                  key={index}
-                  style={{
-                    display: "flex",
-                    margin: "8px 0",
-                    width: "100%",
-                    height: "147px",
-                    justifyContent: "space-between",
-                    padding: "16px 24px",
-                    backgroundColor: "#ECF3FD66",
-                  }}
-                >
-                  <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                    <div>
-                      <span style={{ fontWeight: "700", fontSize: "16px" }}>{bond?.name}</span>
+            />
+          }
+          actionSaveLabel={t("Close Task")}
+          actionSaveOnSubmit={() => {
+            setShowBailConfirmationModal(true);
+          }}
+          style={{ width: "50%" }}
+          actionCancelStyle={{ width: "50%" }}
+          actionCancelLabel={t("Issue Warrant")}
+          actionCancelOnSubmit={() => {
+            createOrder();
+          }}
+          isDisabled={loader}
+          isCustomButtonDisabled={loader}
+          isBackButtonDisabled={loader}
+          formId="modal-action"
+          headerBarMain={<Heading label={t("View Bail Bonds")} />}
+          className="upload-signature-modal"
+          submitTextClassName="upload-signature-button"
+          popupModuleActionBarStyles={{ padding: "0 8px 8px 8px" }}
+        >
+          <div>
+            {Array.isArray(bailBonds) && bailBonds.length > 0 ? (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  padding: "24px",
+                  gap: "20px",
+                  maxHeight: "360px",
+                  overflowY: "auto",
+                  fontFamily: "Roboto",
+                }}
+              >
+                {bailBonds.map((bond, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      display: "flex",
+                      margin: "8px 0",
+                      width: "100%",
+                      height: "147px",
+                      justifyContent: "space-between",
+                      padding: "16px 24px",
+                      backgroundColor: "#ECF3FD66",
+                    }}
+                  >
+                    <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                      <div>
+                        <span style={{ fontWeight: "700", fontSize: "16px" }}>{bond?.name}</span>
+                      </div>
+                      <div>
+                        {" "}
+                        <span style={{ fontWeight: "600", fontSize: "14px" }}>Litigant :</span> {bond?.advocate}
+                      </div>
+                      <div>
+                        <span style={{ fontWeight: "600", fontSize: "14px" }}>Advocate: </span>
+                        {bond?.advocate}
+                      </div>
+                      <div>
+                        <span style={{ fontWeight: "600", fontSize: "14px" }}>Date:</span> {bond?.date}
+                      </div>
                     </div>
-                    <div>
-                      {" "}
-                      <span style={{ fontWeight: "600", fontSize: "14px" }}>Litigant :</span> {bond?.advocate}
-                    </div>
-                    <div>
-                      <span style={{ fontWeight: "600", fontSize: "14px" }}>Advocate: </span>
-                      {bond?.advocate}
-                    </div>
-                    <div>
-                      <span style={{ fontWeight: "600", fontSize: "14px" }}>Date:</span> {bond?.date}
+                    <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+                      <button
+                        style={{
+                          backgroundColor: "transparent",
+                          fontWeight: "500",
+                          color: "#0A5757",
+                          border: "none",
+                          padding: "8px 16px",
+                          borderRadius: "4px",
+                          fontSize: "16px",
+                          fontFamily: "Roboto",
+                        }}
+                        onClick={() => setIsDocViewOpened(true)}
+                      >
+                        View
+                      </button>
                     </div>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-                    <button
-                      style={{
-                        backgroundColor: "transparent",
-                        fontWeight: "500",
-                        color: "#0A5757",
-                        border: "none",
-                        padding: "8px 16px",
-                        borderRadius: "4px",
-                        fontSize: "16px",
-                        fontFamily: "Roboto",
-                      }}
-                      onClick={() => setIsDocViewOpened(true)}
-                    >
-                      View
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "start",
-                padding: "24px",
-                gap: "20px",
-                maxHeight: "360px",
-                overflowY: "auto",
-                fontFamily: "Roboto",
-              }}
-            >
-              <span style={{ fontSize: "16px" }}>There are no bail bonds present for this case. </span>
-            </div>
-          )}
-        </div>{" "}
-      </Modal>
+                ))}
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "start",
+                  padding: "24px",
+                  gap: "20px",
+                  maxHeight: "360px",
+                  overflowY: "auto",
+                  fontFamily: "Roboto",
+                }}
+              >
+                <span style={{ fontSize: "16px" }}>There are no bail bonds present for this case. </span>
+              </div>
+            )}
+          </div>{" "}
+        </Modal>
+      )}
       {isDocviewOpened && (
         <Modal
           headerBarEnd={
@@ -359,22 +366,22 @@ const BailBondModal = ({ row, setShowBailModal = () => {} }) => {
             <CloseBtn
               onClick={() => {
                 setShowBailConfirmationModal(false);
-                setShowBailModal(true);
               }}
             />
           }
           actionSaveLabel={t("CS_COMMON_CONFIRM")}
           actionSaveOnSubmit={() => {
             closePendingTask();
-
-            console.log("actionSaveOnSubmit");
           }}
+          isDisabled={loader}
+          isCustomButtonDisabled={loader}
+          isBackButtonDisabled={loader}
           // style={{ width: "50%" }}
           // actionCancelStyle={{ width: "50%" }}
           actionCancelLabel={t("CS_COMMON_CANCEL")}
           actionCancelOnSubmit={() => {
+            showToast("error", t("ISSUE_IN_FETCHING"), 5000);
             setShowBailConfirmationModal(false);
-            setShowBailModal(true);
           }}
           formId="modal-action"
           headerBarMain={<Heading label={t("Confirm Closure")} />}

@@ -360,7 +360,7 @@ const MainHomeScreen = () => {
 
   const inboxSearchComposer = useMemo(
     () => (
-      <InboxSearchComposer key={`${activeTab}-${updateCounter}`} customStyle={sectionsParentStyle} configs={modifiedConfig}></InboxSearchComposer>
+      <InboxSearchComposer key={`${activeTab}-${updateCounter}}`} customStyle={sectionsParentStyle} configs={modifiedConfig}></InboxSearchComposer>
     ),
     //added  need refresh to refresh once the pending task is closed
     [activeTab, updateCounter, modifiedConfig, needRefresh]
@@ -423,7 +423,15 @@ const MainHomeScreen = () => {
             {inboxSearchComposer}
           </div>
         )}
-        {showBailBondModal && <BailBondModal t={t} showToast={showToast} setShowBailModal={setShowBailBondModal} row={selectedBailBond} />}
+        {showBailBondModal && (
+          <BailBondModal
+            t={t}
+            showToast={showToast}
+            setShowBailModal={setShowBailBondModal}
+            row={selectedBailBond}
+            setUpdateCounter={setUpdateCounter}
+          />
+        )}
         {toastMsg && (
           <Toast
             error={toastMsg.key === "error"}

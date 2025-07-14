@@ -3147,10 +3147,10 @@ const AdmittedCaseV2 = () => {
           pendingTask: {
             name: t("CS_COMMON_BAIL_BOND"),
             entityType: "bail bond",
-            referenceId: `MANUAL_${filingNumber}`,
+            referenceId: `MANUAL_BAIL_BOND_${filingNumber}`,
             status: "PENDING_SIGN",
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE"],
+            assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "TYPIST_ROLE"],
             cnrNumber,
             filingNumber,
             caseId: caseDetails?.id,
