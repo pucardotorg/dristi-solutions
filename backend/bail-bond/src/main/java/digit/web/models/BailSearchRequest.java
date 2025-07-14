@@ -26,7 +26,11 @@ public class BailSearchRequest {
 
     @JsonProperty("criteria")
 
-    private Object criteria = null;
+    private BailSearchCriteria criteria = null;
+
+    @JsonProperty("pagination")
+    @Valid
+    private Pagination pagination = null;
 
 
 }

@@ -18,7 +18,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/landing-page")
+@RequestMapping("openapi/landing-page")
 public class LandingPageNoticeController {
 
     private final LandingPageNoticeService landingPageNoticeService;

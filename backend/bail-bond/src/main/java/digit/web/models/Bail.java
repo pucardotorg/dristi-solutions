@@ -94,12 +94,18 @@ public class Bail {
     @JsonProperty("litigantSigned")
     private Boolean litigantSigned = null;
 
+    @JsonProperty("litigantMobileNumber")
+    private String litigantMobileNumber = null;
+
     @JsonProperty("sureties")
     @Valid
     private List<Surety> sureties = null;
 
     @JsonProperty("shortenedURL")
     private String shortenedURL = null;
+
+    @JsonProperty("status")
+    private String status = null;
 
     @JsonProperty("documents")
     @Valid
@@ -127,6 +133,9 @@ public class Bail {
 
     @JsonProperty("filingNumber")
     private String filingNumber = null;
+
+    @JsonProperty("caseNumber")
+    private String caseNumber = null;
 
     /**
      * Type of the case.

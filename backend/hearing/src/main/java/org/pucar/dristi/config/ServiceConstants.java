@@ -162,4 +162,6 @@ public class ServiceConstants {
 
     public static final String MANUAL = "MANUAL_";
 
+    public static final String PAYMENT_COLLECTOR = "PAYMENT_COLLECTOR";
+
 }
