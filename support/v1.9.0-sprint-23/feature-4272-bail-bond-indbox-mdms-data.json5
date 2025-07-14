@@ -1,0 +1,39 @@
+[
+  {
+    "tenantId": "kl",
+    "masterName": "INBOX",
+    "moduleName": "InboxQueryConfiguration",
+    "mdmsPayload": [
+      {
+        "id": "66555a96-2c93-4763-a9b7-ff4a2dd923a6",
+        "tenantId": "kl",
+        "schemaCode": "INBOX.InboxQueryConfiguration",
+        "uniqueIdentifier": "bail-bond-index",
+        "data": {
+          "index": "bail-bond-index",
+          "module": "Bail Bond Service",
+          "sortBy": {
+            "path": "Data.bailDetails.caseNumber.keyword",
+            "defaultOrder": "DESC"
+          },
+          "sourceFilterPathList": [
+            "Data"
+          ],
+          "allowedSearchCriteria": [
+            {
+              "name": "caseNumber",
+              "path": "Data.bailDetails.caseNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "caseTitle",
+              "path": "Data.bailDetails.caseTitle.keyword",
+              "isMandatory": false
+            }
+          ]
+        },
+        "isActive": true
+      }
+    ]
+  }
+]
