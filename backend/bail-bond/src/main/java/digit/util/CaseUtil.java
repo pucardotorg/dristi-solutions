@@ -41,23 +41,20 @@ public class CaseUtil {
         return caseList; // List<CourtCase>
     }
 
-    public String getCourtId(JsonNode caseList) {
-        if (caseList != null && caseList.isArray() && !caseList.isEmpty()) {
-            JsonNode courtCaseNode = caseList.get(0).get("courtId");
-            if (courtCaseNode != null && !courtCaseNode.isNull()) {
-                return courtCaseNode.textValue();
-            }
+    public String getCourtId(JsonNode caseDetails) {
+        JsonNode courtIdNode = caseDetails.get(0).get("courtId");
+        if (courtIdNode != null && !courtIdNode.isNull()) {
+            return courtIdNode.asText();
+
         }
         log.error("Court Id not found");
         return null;
     }
 
-    public String getCaseTitle(JsonNode caseList) {
-        if (caseList != null && caseList.isArray() && !caseList.isEmpty()) {
-            JsonNode courtCaseNode = caseList.get(0).get("caseTitle");
-            if (courtCaseNode != null && !courtCaseNode.isNull()) {
-                return courtCaseNode.textValue();
-            }
+    public String getCaseTitle(JsonNode caseDetails) {
+        JsonNode caseTitleNode = caseDetails.get(0).get("caseTitle");
+        if (caseTitleNode != null && !caseTitleNode.isNull()) {
+            return caseTitleNode.asText();
         }
         log.error("Case Title not found");
         return null;
@@ -65,21 +62,19 @@ public class CaseUtil {
 
     public String getCnrNumber(JsonNode caseList) {
         if (caseList != null && caseList.isArray() && !caseList.isEmpty()) {
-            JsonNode courtCaseNode = caseList.get(0).get("cnrNumber");
-            if (courtCaseNode != null && !courtCaseNode.isNull()) {
-                return courtCaseNode.textValue();
+            JsonNode cnrNumberNode = caseList.get(0).get("cnrNumber");
+            if (cnrNumberNode != null && !cnrNumberNode.isNull()) {
+                return cnrNumberNode.textValue();
             }
         }
         log.error("Cnr Number not found");
         return null;
     }
 
-    public String getCaseType(JsonNode caseList) {
-        if (caseList != null && caseList.isArray() && !caseList.isEmpty()) {
-            JsonNode courtCaseNode = caseList.get(0).get("caseType");
-            if (courtCaseNode != null && !courtCaseNode.isNull()) {
-                return courtCaseNode.textValue();
-            }
+    public String getCaseType(JsonNode caseDetails) {
+        JsonNode caseTypeNode = caseDetails.get(0).get("courtId");
+        if (caseTypeNode != null && !caseTypeNode.isNull()) {
+            return caseTypeNode.asText();
         }
         log.error("Case Type not found");
         return null;

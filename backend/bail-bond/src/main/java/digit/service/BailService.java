@@ -62,7 +62,9 @@ public class BailService {
         enrichmentUtil.enrichBailOnCreation(bailRequest);
 
         // Workflow update
-        workflowService.updateWorkflowStatus(bailRequest);
+        if(!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())){
+            workflowService.updateWorkflowStatus(bailRequest);
+        }
 
         Bail originalBail = bailRequest.getBail();
 
@@ -83,7 +85,9 @@ public class BailService {
         enrichmentUtil.enrichBailUponUpdate(bailRequest);
 
         Boolean lastSigned = checkItsLastSign(bailRequest);
-        workflowService.updateWorkflowStatus(bailRequest);
+        if(!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())){
+            workflowService.updateWorkflowStatus(bailRequest);
+        }
         try {
             if (lastSigned) {
                 log.info("Updating Bail Workflow");
@@ -110,7 +114,10 @@ public class BailService {
     private Boolean checkItsLastSign(BailRequest bailRequest) {
 
         // Check only if action is E-SIGN
-        String action = bailRequest.getBail().getWorkflow().getAction();
+        String action="";
+        if(!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())){
+            action = bailRequest.getBail().getWorkflow().getAction();
+        }
 
         if (E_SIGN.equalsIgnoreCase(action)) {
             if (!bailRequest.getBail().getLitigantSigned()) {
