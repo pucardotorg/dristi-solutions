@@ -75,4 +75,34 @@ public class URLRedisRepository implements URLRepository {
         }
         return url;
     }
+
+    @Override
+    public ShortenRequest getShortenRequestByReferenceId(String referenceId) throws Exception {
+        LOGGER.info("Retrieving at {}", referenceId);
+        String shorteningReqStr = jedis.hget(urlKey, referenceId);
+        ShortenRequest shortenRequest = objectMapper.readValue(shorteningReqStr, ShortenRequest.class);
+        LOGGER.info("Retrieved {} at {}", shortenRequest.getUrl() , referenceId);
+        if (shortenRequest.getUrl() == null) {
+            throw new Exception("URL at key" + referenceId + " does not exist");
+        }
+        return null;
+    }
+
+    @Override
+    public ShortenRequest getShortenRequestById(Long id) throws Exception {
+        LOGGER.info("Retrieving at {}", id);
+        String shorteningReqStr = jedis.hget(urlKey, "url:"+id);
+        ShortenRequest shortenRequest = objectMapper.readValue(shorteningReqStr, ShortenRequest.class);
+        LOGGER.info("Retrieved {} at {}", shortenRequest.getUrl() , id);
+        if (shortenRequest.getUrl() == null) {
+            throw new Exception("URL at key" + id + " does not exist");
+        }
+        return shortenRequest;
+    }
+
+    @Override
+    public void expireTheURL(String key, ShortenRequest shortenRequest) throws JsonProcessingException {
+        LOGGER.info("Expiring the URL at {}", key);
+        jedis.hset(urlKey, key, objectMapper.writeValueAsString(shortenRequest));
+    }
 }
