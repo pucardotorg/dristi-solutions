@@ -55,7 +55,7 @@ class MinioRepositoryTest {
         when(fileLocation.getFileName()).thenThrow(new CustomException("Code", "An error occurred"));
         when(fileLocation.getFileSource()).thenThrow(new CustomException("Code", "An error occurred"));
         when(fileLocation.getFileStoreId()).thenReturn("42");
-        assertThrows(CustomException.class, () -> minioRepository.read(fileLocation));
+        assertThrows(CustomException.class, () -> minioRepository.read(fileLocation, true));
         verify(fileLocation).getFileSource();
         verify(fileLocation).getFileStoreId();
     }

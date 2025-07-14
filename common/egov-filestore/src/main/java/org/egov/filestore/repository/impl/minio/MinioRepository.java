@@ -249,7 +249,7 @@ public class MinioRepository implements CloudFilesManager {
         return signedUrl;
 	}
 
-	public Resource read(FileLocation fileLocation) {
+	public Resource read(FileLocation fileLocation, boolean isRetry) {
 
 		Resource resource = null;
 		File f = new File(fileLocation.getFileStoreId());
@@ -260,7 +260,7 @@ public class MinioRepository implements CloudFilesManager {
 
 			try {
 				minioClient.getObject(minioConfig.getBucketName(), fileName, f.getName());
-			} catch (InvalidKeyException | ErrorResponseException | IllegalArgumentException |
+			} catch (InvalidKeyException | ErrorResponseException |
                      InsufficientDataException | InternalException | InvalidBucketNameException |
                      InvalidResponseException | NoSuchAlgorithmException | XmlParserException | IOException |
                      ServerException e) {
@@ -270,8 +270,28 @@ public class MinioRepository implements CloudFilesManager {
 						"An error has occured while trying to download image from filestore system .");
 				throw new CustomException(map);
 
+			} catch (IllegalArgumentException e) {
+				if(isRetry){
+					log.warn("IllegalArgumentException caught while downloading the file. Retrying once...");
+					try {
+						if (f.exists()) {
+							boolean deleted = f.delete();
+							if (!deleted) {
+								log.warn("Failed to delete existing local file before download: {}", f.getAbsolutePath());
+							} else {
+								log.info("Deleted local file before retrying download: {}", f.getAbsolutePath());
+							}
+						}
+						minioClient.getObject(minioConfig.getBucketName(), fileName, f.getName());
+					} catch (Exception exception) {
+						log.error("Retry failed while downloading the file from Minio", exception);
+						Map<String, String> map = new HashMap<>();
+						map.put("ERROR_MINIO_RETRY_DOWNLOAD",
+								"Retry failed while downloading file from filestore system.");
+						throw new CustomException(map);
+					}
+				}
 			}
-
 			resource = new FileSystemResource(Paths.get(f.getPath()).toFile());
 
 		}
