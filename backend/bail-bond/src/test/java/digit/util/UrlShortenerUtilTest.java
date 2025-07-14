@@ -71,9 +71,13 @@ class UrlShortenerUtilTest {
     @Test
     void test_createShortenedUrl_success() {
         String expectedShortUrl = "http://short.url/abc";
-        when(configs.getLongUrl()).thenReturn(longUrl);
+        when(configs.getLongUrl()).thenReturn("%s?tenant=%s&bailbondId=%s");
+        when(configs.getDomainUrl()).thenReturn("http://localhost:3000");
+        when(configs.getBaseUrl()).thenReturn("/ui/citizen/dristi/home/bail-bond-sign");
 
-        String expectedLongUrl = String.format("%s?tenant=%s&bailbondId=%s", longUrl, tenantId, bailBondId);
+        String baseUrl = configs.getDomainUrl() + configs.getBaseUrl();
+
+        String expectedLongUrl = String.format(configs.getLongUrl(), baseUrl , tenantId, bailBondId);
 
         when(restTemplate.postForObject(
                 eq(dummyHost + dummyEndpoint),

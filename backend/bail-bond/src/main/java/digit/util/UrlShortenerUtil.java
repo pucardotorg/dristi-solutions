@@ -39,10 +39,10 @@ public class UrlShortenerUtil {
     public String createShortenedUrl(String tenantId, String bailBondId) {
 
         try {
-            String baseUrl = configs.getLongUrl();
+            String baseUrl = configs.getDomainUrl() + configs.getBaseUrl();
 
             // Build the final long URL with query parameters
-            String longUrl = String.format("%s?tenant=%s&bailbondId=%s", baseUrl, tenantId, bailBondId);
+            String longUrl = String.format(configs.getLongUrl(), baseUrl, tenantId, bailBondId);
 
             // Return shortened version
             return getShortenedUrl(longUrl);

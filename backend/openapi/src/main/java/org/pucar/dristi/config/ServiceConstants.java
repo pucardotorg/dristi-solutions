@@ -79,4 +79,6 @@ public class ServiceConstants {
     public static final String msgId = "1730882648558|en_IN";
 
     public static final String BAIL_BOND_CREATOR = "BAIL_BOND_CREATOR";
+
+    public static final String E_SIGN = "E-SIGN";
 }

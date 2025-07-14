@@ -763,7 +763,7 @@ public class OpenApiService {
 
             // Update Workflow
             WorkflowObject workflowObject = new WorkflowObject();
-            workflowObject.setAction("SIGNED");
+            workflowObject.setAction(E_SIGN);
             bail.setWorkflow(workflowObject);
 
             BailRequest bailRequest = BailRequest.builder()
