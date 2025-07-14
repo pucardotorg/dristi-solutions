@@ -256,7 +256,7 @@ public class IndexerUtilsTest {
                 "COURT-456", "HEARING", "{\"complainant\":[\"John Doe\"]}", "action",
                 "[\"COURT-456\",\"caseTitle\",\"John Doe\"]", "[null]", "[\"role\"]", "cnrNumber",
                 "filingNumber", "caseId", "caseTitle", true, 123L, 456L,
-                "{\"key\":\"value\"}", null, null, 1000000000
+                "{\"key\":\"value\"}", null, null, 1000000000, null
         );
 
         // Assert
@@ -334,7 +334,7 @@ public class IndexerUtilsTest {
 
         String expected = String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", null,null,"{}","null",null,"[\"user1\"]", "[\"role1\",\"role2\"]", "null", "null", "null","null",false, ONE_DAY_DURATION_MILLIS+1000000000L, 456L, "{\"complainant\":[\"John Doe\"]}", null,null,1000000000
+                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", null,null,"{}","null",null,"[\"user1\"]", "[\"role1\",\"role2\"]", "null", "null", "null","null",false, ONE_DAY_DURATION_MILLIS+1000000000L, 456L, "{\"complainant\":[\"John Doe\"]}", null,null,1000000000, null
         );
 
         PendingTaskType pendingTaskType = PendingTaskType.builder().isgeneric(false).pendingTask("name").state("status").triggerAction(List.of("action")).build();
