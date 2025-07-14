@@ -62,6 +62,9 @@ public class URLConverterService {
 
     @Value("${url.shorten.indexer.topic}")
     private String kafkaTopic;
+
+    @Value("${expired.url}")
+    private String expiredUrl;
     
     @Autowired
     private HashIdConverter hashIdConverter;
@@ -127,16 +130,42 @@ public class URLConverterService {
         return shortenedUrl.toString();
     }
 
+    private ShortenRequest alreadyExists(ShortenRequest shortenRequest) {
+        if (shortenRequest.getReferenceId() == null) {
+            return null;
+        }
+        try {
+            ShortenRequest existingShortenRequest = urlRepository.getShortenRequestByReferenceId(shortenRequest.getReferenceId());
+            if (existingShortenRequest != null) {
+                existingShortenRequest.setValidTo(System.currentTimeMillis());
+                return existingShortenRequest;
+            }
+        } catch (Exception e) {
+            throw new CustomException("URL_SHORTENING_INVALID_URL","error in enrichShortenRequest");
+        }
+        return null;
+    }
+
     public String getLongURLFromID(String uniqueID) throws Exception {
         Long dictionaryKey = hashIdConverter.getIdForString(uniqueID);
         // To support previously generated dictionary keys
         if(dictionaryKey == null)
             dictionaryKey = IDConvertor.getDictionaryKeyFromUniqueID(uniqueID);
-        String longUrl = urlRepository.getUrl(dictionaryKey);
-        LOGGER.info("Converting shortened URL back to {}", longUrl);
-        if(longUrl.isEmpty())
-        	throw new CustomException("INVALID_REQUEST","Invalid Key");
-        return longUrl;
+        ShortenRequest shortenRequest = urlRepository.getShortenRequestById(dictionaryKey);
+        if(shortenRequest != null) {
+            Long validTo = shortenRequest.getValidTo();
+            if (validTo != null && validTo < System.currentTimeMillis()) {
+                LOGGER.info("Converting expired URL back to {}", expiredUrl);
+                return hostName + expiredUrl;
+            }
+            else {
+                String longUrl = shortenRequest.getUrl();
+                LOGGER.info("Converting shortened URL back to {}", longUrl);
+                return shortenRequest.getUrl();
+            }
+        } else {
+            throw new CustomException("INVALID_REQUEST","Invalid Key");
+        }
     }
 
 
@@ -162,6 +191,20 @@ public class URLConverterService {
         }
 
         return  uuid;
+    }
+
+    public void expireTheURL(ShortenRequest shortenRequest) {
+        try {
+            ShortenRequest request = alreadyExists(shortenRequest);
+            if (request != null) {
+                urlRepository.expireTheURL(request.getId(), request);
+            } else {
+                log.error("URL does not exist");
+                throw new CustomException("URL_SHORTENING_INVALID_URL","URL does not exist");
+            }
+        } catch (Exception e) {
+            throw new CustomException("URL_SHORTENING_INVALID_URL","error in expireTheURL");
+        }
     }
 
 

@@ -58,7 +58,7 @@ public class LandingPageService {
 
             Integer totalDisposedCases = getTotalDisposedCases();
 
-            //TODO : commenting this code as it is not required now need to be uncommented when required and need to modify the logic and need to write a new api in case service
+//            TODO : commenting this code as it is not required now need to be uncommented when required and need to modify the logic and need to write a new api in case service
 //            Integer daysToCaseRegistration = getDaysToCaseRegistration();
 
             Integer averageNumberOfDaysBetweenHearingsForCase = getAverageDaysToHearings();

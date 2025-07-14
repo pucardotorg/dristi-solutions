@@ -1,6 +1,7 @@
 package digit.enrichment;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import digit.config.Configuration;
 import digit.util.CaseUtil;
 import digit.util.IdgenUtil;
@@ -63,18 +64,22 @@ public class BailRegistrationEnrichment {
         Bail bail = bailRequest.getBail();
         CaseCriteria criteria = CaseCriteria.builder()
                 .filingNumber(bail.getFilingNumber())
+                .defaultFields(true)
                 .build();
         CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
                 .requestInfo(bailRequest.getRequestInfo())
                 .criteria(Collections.singletonList(criteria))
                 .build();
         JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+        ObjectNode objectNode;
 
         bail.setCourtId(caseUtil.getCourtId(caseDetails));
         bail.setCaseTitle(caseUtil.getCaseTitle(caseDetails));
         bail.setCnrNumber(caseUtil.getCnrNumber(caseDetails));
         String caseType = caseUtil.getCaseType(caseDetails);
-        bail.setCaseType(Bail.CaseTypeEnum.valueOf(caseType)) ;
+        if(caseType != null){
+            bail.setCaseType(Bail.CaseTypeEnum.valueOf(caseType)) ;
+        }
     }
 
     public void enrichDocument(Document document) {
@@ -101,7 +106,8 @@ public class BailRegistrationEnrichment {
     public void enrichBailUponUpdate(BailRequest bailRequest) {
         log.info("Enriching Bail Upon Update");
         // If workflow action is edit, invalidate all the sign
-        if(bailRequest.getBail().getWorkflow().getAction().equalsIgnoreCase(EDIT)){
+        if(!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow()) &&
+                bailRequest.getBail().getWorkflow().getAction().equalsIgnoreCase(EDIT)){
             bailRequest.getBail().setLitigantSigned(false);
             if(!ObjectUtils.isEmpty(bailRequest.getBail().getSureties())){
                 bailRequest.getBail().getSureties().forEach(surety -> {
