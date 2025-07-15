@@ -80,7 +80,7 @@ public class WorkflowService {
         try {
             WorkflowObject workflow = bail.getWorkflow();
             ProcessInstanceObject processInstance = new ProcessInstanceObject();
-            processInstance.setBusinessId(bail.getFilingNumber());
+            processInstance.setBusinessId(bail.getBailId());
             processInstance.setAction(workflow.getAction());
             processInstance.setModuleName(config.getBailBusinessName());
             processInstance.setTenantId(bail.getTenantId());
