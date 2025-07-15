@@ -130,11 +130,11 @@ public class WorkflowService {
             Bail application = bailRequest.getBail();
             ProcessInstance process = ProcessInstance.builder()
                     .businessService("ADV")
-                    .businessId(application.getFilingNumber())
+                    .businessId(application.getBailId())
                     .comment("Payment for Bail registration processed")
-                    .moduleName("cases-services") //todo
+                    .moduleName("bail-bond")
                     .tenantId(application.getTenantId())
-                    .action("PAY") //todo
+                    .action("PAY")
                     .build();
             return ProcessInstanceRequest.builder()
                     .requestInfo(bailRequest.getRequestInfo())
