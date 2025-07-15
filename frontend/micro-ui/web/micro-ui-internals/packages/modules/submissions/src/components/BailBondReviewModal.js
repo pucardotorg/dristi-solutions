@@ -22,6 +22,10 @@ const onDocumentUpload = async (fileData, filename) => {
   return { file: fileUploadRes?.data, fileType: fileData.type, filename };
 };
 
+const bailBondPreviewSubmissionTypeMap = {
+  BAIL_BOND: "bail-bond",
+};
+
 const BailBondReviewModal = ({
   t,
   handleBack,
@@ -45,6 +49,7 @@ const BailBondReviewModal = ({
       tenantId,
       bailBondDetails?.applicationNumber,
       bailBondDetails?.cnrNumber,
+      bailBondPreviewSubmissionTypeMap["BAIL_BOND"],
     ],
     cacheTime: 0,
     queryFn: async () => {
@@ -53,9 +58,10 @@ const BailBondReviewModal = ({
         url: Urls.application.submissionPreviewPdf,
         params: {
           tenantId: tenantId,
-          applicationNumber: bailBondDetails?.applicationNumber,
+          applicationNumber: bailBondDetails?.applicationNumber, // need to change
           cnrNumber: bailBondDetails?.cnrNumber,
           qrCode: false,
+          applicationType: bailBondPreviewSubmissionTypeMap["BAIL_BOND"], // need to change
           courtId: courtId,
         },
         data: {
@@ -72,7 +78,7 @@ const BailBondReviewModal = ({
         fileName: res.headers["content-disposition"]?.split("filename=")[1],
       }));
     },
-    enabled: !!bailBondDetails?.bailId && !!bailBondDetails?.cnrNumber
+    enabled: !!bailBondDetails?.bailId && !!bailBondDetails?.cnrNumber && !!bailBondPreviewSubmissionTypeMap["BAIL_BOND"],
   });
 
     const showDocument = useMemo(() => {
