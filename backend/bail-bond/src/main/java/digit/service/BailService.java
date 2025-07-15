@@ -5,6 +5,7 @@ import digit.config.Configuration;
 import digit.enrichment.BailRegistrationEnrichment;
 import digit.kafka.Producer;
 import digit.repository.BailRepository;
+
 import digit.util.*;
 import digit.validator.BailValidator;
 import digit.web.models.*;
@@ -22,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+
 import java.util.*;
 
 import static digit.config.ServiceConstants.*;
@@ -87,10 +89,69 @@ public class BailService {
         return originalBail;
     }
 
+    private Set<String> getFilestoreToDelete(BailRequest bailRequest, Bail existingBail) {
+        Set<String> fileStoreToDeleteIds = new HashSet<>();
+
+        Set<String> newFileStoreIds = new HashSet<>();
+        Set<String> existingFileStoreIds = new HashSet<>();
+
+        // Collect all existing filestore IDs from DB
+        if (existingBail.getDocuments() != null) {
+            for (Document document : existingBail.getDocuments()) {
+                existingFileStoreIds.add(document.getFileStore());
+            }
+        }
+        if (existingBail.getSureties() != null) {
+            for (Surety surety : existingBail.getSureties()) {
+                if (surety.getDocuments() != null) {
+                    for (Document document : surety.getDocuments()) {
+                        existingFileStoreIds.add(document.getFileStore());
+                    }
+                }
+            }
+        }
+
+        // Collect all new filestore IDs from request
+        if (bailRequest.getBail().getDocuments() != null) {
+            for (Document document : bailRequest.getBail().getDocuments()) {
+                newFileStoreIds.add(document.getFileStore());
+
+                // mark for deletion if isActive=false
+                if (!document.getIsActive()) {
+                    fileStoreToDeleteIds.add(document.getFileStore());
+                }
+            }
+        }
+        if (bailRequest.getBail().getSureties() != null) {
+            for (Surety surety : bailRequest.getBail().getSureties()) {
+                if (surety.getDocuments() != null) {
+                    for (Document document : surety.getDocuments()) {
+                        newFileStoreIds.add(document.getFileStore());
+
+                        // mark for deletion if isActive=false
+                        if (!document.getIsActive()) {
+                            fileStoreToDeleteIds.add(document.getFileStore());
+                        }
+                    }
+                }
+            }
+        }
+
+        // Add the ones that existed before but are no longer present in the new request
+        for (String oldFilestore : existingFileStoreIds) {
+            if (!newFileStoreIds.contains(oldFilestore)) {
+                fileStoreToDeleteIds.add(oldFilestore);
+            }
+        }
+
+        return fileStoreToDeleteIds;
+    }
+
+
     public Bail updateBail(BailRequest bailRequest) {
 
         // Check if bail exists
-        validator.validateBailExists(bailRequest);
+        Bail existingBail = validator.validateBailExists(bailRequest);
 
         // Enrich new sureties if any
         enrichmentUtil.enrichBailUponUpdate(bailRequest);
@@ -110,6 +171,13 @@ public class BailService {
             }
         } catch (Exception e) {
             log.error("Error updating bail workflow", e);
+        }
+
+        Set<String> fileStoreToDeleteIds = getFilestoreToDelete(bailRequest,existingBail);
+
+        if(!fileStoreToDeleteIds.isEmpty()){
+            fileStoreUtil.deleteFilesByFileStore(fileStoreToDeleteIds, bailRequest.getBail().getTenantId());
+            log.info("Deleted files from file store: {}", fileStoreToDeleteIds);
         }
 
         Bail originalBail = bailRequest.getBail();

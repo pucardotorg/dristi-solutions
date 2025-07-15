@@ -176,4 +176,5 @@ public class Configuration {
 
     @Value("${allowed.content.types}")
     private String[] allowedContentTypes;
+
 }

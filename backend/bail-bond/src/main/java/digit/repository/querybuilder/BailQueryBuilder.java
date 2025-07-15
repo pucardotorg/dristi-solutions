@@ -62,13 +62,13 @@ public class BailQueryBuilder {
         getWhereFields(criteria, query, preparedStmtList, preparedStmtArgList);
         query = new StringBuilder(addOrderByQuery(query.toString(), pagination));
 
-        if (pagination!=null) {
+        if (pagination != null) {
             query.append(" LIMIT ? OFFSET ?");
                 preparedStmtList.add(pagination.getLimit());
                 preparedStmtList.add(pagination.getOffSet());
 
-                preparedStmtArgList.add(Types.INTEGER);
-                preparedStmtArgList.add(Types.INTEGER);
+            preparedStmtArgList.add(Types.INTEGER);
+            preparedStmtArgList.add(Types.INTEGER);
         }
 
         return query.toString();
@@ -112,30 +112,28 @@ public class BailQueryBuilder {
         return countQuery.toString();
     }
 
-    private void getWhereFields(BailSearchCriteria criteria, StringBuilder query,
-                                List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+    private void getWhereFields(BailSearchCriteria criteria, StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
 
-        boolean firstCriteria = true;
+        // Enforce is_active = true for all tables with LEFT JOIN-safe checks
+        query.append(" WHERE bail.is_active = true");
+        query.append(" AND (bail_doc.is_active = true OR bail_doc.id IS NULL)");
+        query.append(" AND (srt.is_active = true OR srt.id IS NULL)");
+        query.append(" AND (surety_doc.is_active = true OR surety_doc.id IS NULL)");
 
-        firstCriteria = addBailCriteria(criteria.getTenantId(), query, firstCriteria, "bail.tenant_id = ?", preparedStmtList, preparedStmtArgList);
-        firstCriteria = addBailCriteria(criteria.getId(), query, firstCriteria, "bail.id = ?", preparedStmtList, preparedStmtArgList);
-        firstCriteria = addBailCriteria(criteria.getLitigantIndividualId(), query, firstCriteria, "bail.litigant_id = ?", preparedStmtList, preparedStmtArgList);
-        firstCriteria = addBailCriteria(criteria.getSuretyMobileNumber(), query, firstCriteria, "srt.surety_mobile_number = ?", preparedStmtList, preparedStmtArgList);
-        firstCriteria = addBailCriteria(criteria.getCourtId(), query, firstCriteria, "bail.court_id = ?", preparedStmtList, preparedStmtArgList);
-        firstCriteria = addBailCriteria(criteria.getFilingNumber(), query, firstCriteria, "bail.filing_number = ?", preparedStmtList, preparedStmtArgList);
-        firstCriteria = addBailCriteria(criteria.getCnrNumber(), query, firstCriteria, "bail.cnr_number = ?", preparedStmtList, preparedStmtArgList);
-        firstCriteria = addBailCriteria(criteria.getStatus(), query, firstCriteria, "bail.bail_status = ?", preparedStmtList, preparedStmtArgList);
-        firstCriteria = addBailCriteria(criteria.getCaseType() != null ? criteria.getCaseType().name() : null, query, firstCriteria, "bail.case_type = ?", preparedStmtList, preparedStmtArgList);
-        firstCriteria = addBailCriteria(criteria.getCaseNumber(), query, firstCriteria, "bail.case_number = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getTenantId(), query, "bail.tenant_id = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getId(), query, "bail.id = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getLitigantIndividualId(), query, "bail.litigant_id = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getSuretyMobileNumber(), query, "srt.surety_mobile_number = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getCourtId(), query, "bail.court_id = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getFilingNumber(), query, "bail.filing_number = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getCnrNumber(), query, "bail.cnr_number = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getStatus(), query, "bail.bail_status = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getCaseType() != null ? criteria.getCaseType().name() : null, query, "bail.case_type = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getCaseNumber(), query, "bail.case_number = ?", preparedStmtList, preparedStmtArgList);
 
         // Special fuzzy search handling
         if (criteria.getBailId() != null && !criteria.getBailId().isEmpty()) {
-            if (firstCriteria) {
-                query.append(" WHERE ");
-            } else {
-                query.append(" AND ");
-            }
-
+            query.append(" AND ");
             if (Boolean.TRUE.equals(criteria.getFuzzySearch())) {
                 query.append("bail.bail_id ILIKE ?");
                 preparedStmtList.add("%" + criteria.getBailId() + "%");
@@ -148,23 +146,12 @@ public class BailQueryBuilder {
         }
     }
 
-    private boolean addBailCriteria(String criteria, StringBuilder query, boolean firstCriteria,
-                                    String condition, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+    private void addBailCriteria(String criteria, StringBuilder query, String condition, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         if (criteria != null && !criteria.isEmpty()) {
-            addClauseIfRequired(query, firstCriteria);
+            query.append(" AND ");
             query.append(condition);
             preparedStmtList.add(criteria);
             preparedStmtArgList.add(Types.VARCHAR);
-            return false;
-        }
-        return firstCriteria;
-    }
-
-    private void addClauseIfRequired(StringBuilder query, boolean isFirstCriteria) {
-        if (isFirstCriteria) {
-            query.append(" WHERE ");
-        } else {
-            query.append(" AND ");
         }
     }
 }
