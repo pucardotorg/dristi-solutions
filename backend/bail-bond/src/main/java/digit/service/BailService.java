@@ -261,6 +261,7 @@ public class BailService {
     }
 
     public List<Bail> updateBailWithSignDoc(@Valid UpdateSignedBailRequest request) {
+        log.info("Updating Bail With Signed Doc, result= IN_PROGRESS, signedBails:{}", request.getSignedBails().size());
         List<Bail> updatedBails = new ArrayList<>();
 
         RequestInfo requestInfo = request.getRequestInfo();
@@ -311,6 +312,8 @@ public class BailService {
 
                     Bail approvedBail = updateBail(updateBailWithJudgeApproval);
                     updatedBails.add(approvedBail);
+
+                    log.info("Updating bail with signed doc, result= SUCCESS,signedBails:{}", request.getSignedBails().size());
 
                     // update the bail here
                 } catch (Exception e) {
