@@ -68,17 +68,17 @@ public class BailService {
         validator.validateBailRegistration(bailRequest);
 
         // Enrichment
-//        enrichmentUtil.enrichBailOnCreation(bailRequest);
+        enrichmentUtil.enrichBailOnCreation(bailRequest);
 
         // Workflow update
-//        if(!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())){
-//            workflowService.updateWorkflowStatus(bailRequest);
-//        }
+        if(!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())){
+            workflowService.updateWorkflowStatus(bailRequest);
+        }
 
         Bail originalBail = bailRequest.getBail();
 
-//        Bail encryptedBail = encryptionDecryptionUtil.encryptObject(originalBail, config.getBailEncrypt(), Bail.class);
-//        bailRequest.setBail(encryptedBail);
+        Bail encryptedBail = encryptionDecryptionUtil.encryptObject(originalBail, config.getBailEncrypt(), Bail.class);
+        bailRequest.setBail(encryptedBail);
 
         // Sms and Email
         if (bailRequest.getBail().getWorkflow().getAction().equalsIgnoreCase(INITIATE_E_SIGN)) {
@@ -277,7 +277,7 @@ public class BailService {
     }
 
     private void expireTheShorteningUrl(BailRequest bailRequest) {
-//        urlShortenerUtil.expireTheUrl();
+        urlShortenerUtil.expireTheUrl(bailRequest);
     }
 
     private Boolean checkItsLastSign(BailRequest bailRequest) {

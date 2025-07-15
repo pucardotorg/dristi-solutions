@@ -1,5 +1,7 @@
 package digit.util;
 
+import digit.web.models.Bail;
+import digit.web.models.BailRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.tracer.model.CustomException;
@@ -53,5 +55,14 @@ public class UrlShortenerUtil {
     }
 
 
-
+    public void expireTheUrl(BailRequest bailRequest) {
+        Bail bail = bailRequest.getBail();
+        String url = bail.getShortenedURL();
+        HashMap<String,String> body = new HashMap<>();
+        body.put(URL,url);
+        body.put("referenceId", bail.getBailId());
+        StringBuilder builder = new StringBuilder(configs.getUrlShortnerHost());
+        builder.append(configs.getUrlShortnerEndpoint());
+        String res = restTemplate.postForObject(builder.toString(), body, String.class);
+    }
 }
