@@ -57,5 +57,60 @@ public class ServiceConstants {
     public static final String EDIT = "EDIT";
     public static final String SYSTEM="SYSTEM";
 
+    public static final String MANUAL = "MANUAL_";
 
+    public static final String FILE_STORE_UTILITY_EXCEPTION = "FILE_STORE_UTILITY_EXCEPTION";
+    public static final String ESIGN_SERVICE_EXCEPTION = "ESIGN_SERVICE_EXCEPTION";
+
+    public static final String FILE_STORE_SERVICE_EXCEPTION_CODE = "FILE_STORE_SERVICE_EXCEPTION_CODE";
+    public static final String FILE_STORE_SERVICE_EXCEPTION_MESSAGE = "FILE_STORE_SERVICE_EXCEPTION_MESSAGE";
+
+    public static final String SIGNED = "SIGNED";
+    public static final String COMPOSITE = "COMPOSITE";
+
+    public static final String COORDINATES_ERROR = "COORDINATES_ERROR";
+    public static final String EMPTY_ORDERS_ERROR = "EMPTY_ORDERS_ERROR";
+    public static final String ORDER_SIGN_ERROR = "ORDER_SIGN_ERROR";
+    public static final String UPDATE_ORDER_SIGN_ERROR = "UPDATE_ORDER_SIGN_ERROR";
+    public static final String UPDATE_ORDER_SIGN_ERROR_MESSAGE = "Error while updating order with signed doc";
+    public static final String XML_CREATE_ERROR = "XML_CREATE_ERROR";
+    public static final String XML_CREATE_ERROR_MESSAGE = "error while creating XML";
+    public static final String INVALID_FILE_STORE_RESPONSE = "INVALID_FILE_STORE_RESPONSE";
+    public static final String FILESTORE_SERVICE_EXCEPTION = "FILESTORE_SERVICE_EXCEPTION";
+    public static final String FILE_STORE_UTILITY_MESSAGE_CODE = "Error occurred when getting saving document in File Store";
+    public static final String FILE_STORE_SERVICE_EXCEPTION_MESSAGE_CODE = "Failed to get valid file store id from file store service response";
+    public static final String INVALID_INPUT = "INVALID_INPUT";
+
+    public static final String COMMAND = "command";
+    public static final String PKI_NETWORK_SIGN = "pkiNetworkSign";
+    public static final String TIME_STAMP = "ts";
+    public static final String TXN = "txn";
+    public static final String NAME = "name";
+    public static final String VALUE = "value";
+    public static final String TYPE = "type";
+    public static final String PDF = "pdf";
+    public static final String ATTRIBUTE = "attribute";
+    public static final String FILE = "file";
+    public static final String CERTIFICATE = "certificate";
+    public static final String PAGE = "page";
+    public static final String CO_ORDINATES = "cood";
+    public static final String SIZE = "size";
+    public static final String DATA = "data";
+    public static final String OMIT_XML_DECLARATION = "omit-xml-declaration";
+    public static final String EMPTY_BAILS_ERROR = "EMPTY_BAILS_ERROR";
+    public static final String UNSIGNED = "UNSIGNED";
+
+    private static final String FILE_STORE_ID_KEY = "fileStoreId";
+    private static final String FILES_KEY = "files";
+    private static final String DOCUMENT_TYPE_PDF = "application/pdf";
+
+
+    public static final String ERROR_WHILE_CREATING_SURETY = "ERROR_WHILE_CREATING_SURETY";
+    public static final String ERROR_WHILE_FETCHING_FROM_SURETY = "ERROR_WHILE_FETCHING_FROM_SURETY";
+
+    public static final String EMPTY_SURETY_ERROR = "EMPTY_SURETY_ERROR";
+    public static final String INVALID_FILESTORE_ID = "INVALID_FILESTORE_ID";
+    public static final String INVALID_DOCUMENT_DETAILS = "Invalid document details";
+    public static final String BAIL_SIGN_ERROR = "BAIL_SIGN_ERROR";
+    public static final String BAILS_BULK_SIGN_EXCEPTION = "BAILS_BULK_SIGN_EXCEPTION";
 }
