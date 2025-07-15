@@ -40,7 +40,7 @@ public class BailValidator {
     }
 
 
-    public void validateBailExists(BailRequest bailRequest) throws CustomException {
+    public Bail validateBailExists(BailRequest bailRequest) throws CustomException {
         log.info("Validating That Bail Exists");
         RequestInfo requestInfo = bailRequest.getRequestInfo();
         Bail bail = bailRequest.getBail();
@@ -48,5 +48,6 @@ public class BailValidator {
         if(existingBails.isEmpty()){
             throw new CustomException(VALIDATION_EXCEPTION, String.format("Bail with ID '%s' does not exist", bail.getId()));
         }
+        return existingBails.get(0);
     }
 }

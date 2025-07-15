@@ -68,7 +68,7 @@ public class Surety {
 
     @JsonProperty("isActive")
 
-    private Boolean isActive = null;
+    private Boolean isActive = true;
 
     @JsonProperty("additionalDetails")
 
