@@ -27,8 +27,8 @@ public class BailValidator {
         baseValidations(bailRequest.getRequestInfo());
 
         Bail bail = bailRequest.getBail();
-        if(bail.getBailAmount()<0){
-            throw new CustomException(VALIDATION_EXCEPTION, "Bail amount is negative");
+        if(bail.getBailAmount()!=null && bail.getBailAmount()<0){
+            throw new CustomException(VALIDATION_EXCEPTION, "Invalid Bail amount");
         }
     }
 
