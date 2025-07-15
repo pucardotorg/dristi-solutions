@@ -35,7 +35,7 @@ public class IndexerUtils {
 
 
     @Autowired
-    public IndexerUtils(RestTemplate restTemplate, Configuration config, ObjectMapper mapper, Clock clock) {
+    public IndexerUtils(RestTemplate restTemplate, Configuration config, ObjectMapper mapper) {
         this.restTemplate = restTemplate;
         this.config = config;
         this.mapper = mapper;
