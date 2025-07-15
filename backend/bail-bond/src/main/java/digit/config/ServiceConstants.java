@@ -56,6 +56,16 @@ public class ServiceConstants {
     public static final String PENDING_E_SIGN = "PENDING_E-SIGN";
     public static final String EDIT = "EDIT";
     public static final String SYSTEM="SYSTEM";
+    public static final String INITIATE_E_SIGN = "INITIATE_E-SIGN";
+
+    public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
+    public static final String NOTIFICATION_MODULE_CODE = "notification";
+    public static final String NOTIFICATION_LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
+    public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
+
+    public static final String BAIL_BOND_INITIATED_SMS = "BAIL_BOND_INITIATED_SURETY,BAIL_BOND_INITIATED_LITIGANT";
+    public static final String BAIL_BOND_INITIATED_SURETY = "BAIL_BOND_INITIATED_SURETY";
+    public static final String BAIL_BOND_INITIATED_LITIGANT = "BAIL_BOND_INITIATED_LITIGANT";
 
 
 }
