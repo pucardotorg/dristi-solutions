@@ -117,7 +117,7 @@ public class ArtifactRepository {
 		if (artifact.getFileLocation().getFileSource().equals("minio")) {
 			// if only DiskFileStoreRepository use read else ignore
 			MinioRepository repo = (MinioRepository) cloudFilesManager;
-			resource = repo.read(artifact.getFileLocation());
+			resource = repo.read(artifact.getFileLocation(), true);
 		} else if (artifact.getFileLocation().getFileSource().equals("AzureBlobStorage")) {
 			AzureBlobStorageImpl repo = (AzureBlobStorageImpl) cloudFilesManager;
 			resource = repo.read(artifact.getFileLocation());

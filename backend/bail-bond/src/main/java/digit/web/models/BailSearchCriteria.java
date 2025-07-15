@@ -22,8 +22,8 @@ public class BailSearchCriteria {
     @JsonProperty("tenantId")
     private String tenantId;
 
-    @JsonProperty("ids")
-    private List<String> ids;
+    @JsonProperty("id")
+    private String id;
 
     @JsonProperty("litigantIndividualId")
     private String litigantIndividualId;
@@ -82,5 +82,8 @@ public class BailSearchCriteria {
 
     @JsonProperty("caseNumber")
     private String caseNumber;
+
+    @JsonProperty("fuzzySearch")
+    private Boolean fuzzySearch=false;
 
 }

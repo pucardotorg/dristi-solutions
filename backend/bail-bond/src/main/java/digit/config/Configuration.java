@@ -2,6 +2,7 @@ package digit.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.*;
+import org.egov.encryption.config.EncProperties;
 import org.egov.tracer.config.TracerConfiguration;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -47,6 +48,12 @@ public class Configuration {
     @Value("${egov.idgen.path}")
     private String idGenPath;
 
+    @Value("${egov.idgen.bailConfig}")
+    private String bailConfig;
+
+    @Value("${egov.idgen.bailFormat}")
+    private String bailFormat;
+
 
     //Workflow Config
     @Value("${egov.workflow.host}")
@@ -89,4 +96,47 @@ public class Configuration {
     //SMSNotification
     @Value("${egov.sms.notification.topic}")
     private String smsNotificationTopic;
+
+    //Bail
+    @Value("${bail.kafka.create.topic}")
+    private String bailCreateTopic;
+
+    @Value("${bail.kafka.update.topic}")
+    private String bailUpdateTopic;
+
+    @Value("${egov.workflow.bail.business.name}")
+    private String bailBusinessName;
+
+    @Value("${egov.workflow.bail.business.service.name}")
+    private String bailBusinessServiceName;
+
+    //Case Config
+    @Value("${egov.case.host}")
+    private String caseHost;
+
+    @Value("${egov.case.search.endpoint}")
+    private String caseSearchPath;
+
+    @Value("${egov.enc.mdms.security.policy.bail.encrypt}")
+    private String bailEncrypt;
+
+    @Value("${egov.enc.mdms.security.policy.bail.decrypt}")
+    private String bailDecrypt;
+
+    // long url
+    @Value("${domain.url}")
+    private String domainUrl;
+
+    @Value("${egov.base.url}")
+    private String baseUrl;
+
+    @Value("${egov.long.url}")
+    private String longUrl;
+
+    //FileStore Service
+    @Value("${egov.filestore.host}")
+    private String fileStoreHost;
+
+    @Value("${egov.file.store.delete.endpoint}")
+    private String fileStoreDeleteEndPoint;
 }
