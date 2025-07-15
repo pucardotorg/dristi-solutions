@@ -121,4 +121,6 @@ public class ServiceConstants {
 
     public static final String PAYMENT_COLLECTOR = "PAYMENT_COLLECTOR";
 
+    public static final String EXPIRED = "EXPIRED";
+
 }

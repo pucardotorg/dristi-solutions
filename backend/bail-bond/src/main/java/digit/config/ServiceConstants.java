@@ -46,5 +46,16 @@ public class ServiceConstants {
     public static final String TENANTID = "?tenantId=";
     public static final String BUSINESS_SERVICES = "&businessServices=";
 
+    public static final String VALIDATION_EXCEPTION = "Exception occurred while validating bail";
+    public static final String WORKFLOW_SERVICE_EXCEPTION = "WORKFLOW_SERVICE_EXCEPTION";
+    public static final String ERROR_WHILE_FETCHING_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE";
+
+    public static final String E_SIGN = "E-SIGN";
+    public static final String E_SIGN_COMPLETE = "E-SIGN_COMPLETE";
+    public static final String E_SIGN_COMPLETE_WITH_PAYMENT = "E-SIGN_COMPLETE_WITH_PAYMENT";
+    public static final String PENDING_E_SIGN = "PENDING_E-SIGN";
+    public static final String EDIT = "EDIT";
+    public static final String SYSTEM="SYSTEM";
+
 
 }
