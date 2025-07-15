@@ -47,7 +47,7 @@ const BailBondReviewModal = ({
     queryKey: [
       "bailBondPreviewPdf",
       tenantId,
-      bailBondDetails?.applicationNumber,
+      bailBondDetails?.bailId,
       bailBondDetails?.cnrNumber,
       bailBondPreviewSubmissionTypeMap["BAIL_BOND"],
     ],
@@ -58,7 +58,7 @@ const BailBondReviewModal = ({
         url: Urls.application.submissionPreviewPdf,
         params: {
           tenantId: tenantId,
-          applicationNumber: bailBondDetails?.applicationNumber, // need to change
+          bailBondId: bailBondDetails?.bailId, // need to change
           cnrNumber: bailBondDetails?.cnrNumber,
           qrCode: false,
           applicationType: bailBondPreviewSubmissionTypeMap["BAIL_BOND"], // need to change

@@ -126,11 +126,9 @@ const BailBondSignaturePage = () => {
 
   const { data: bailBond, isLoading: isBailDataLoading } = useSearchBailBondService(
     {
-      criteria: [
-        {
-          bailId: bailbondId,
-        },
-      ],
+      criteria: {
+        bailId: bailbondId,
+      },
       tenantId,
     },
     {},

@@ -1,5 +1,5 @@
 import { FormComposerV2, Header, Loader, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { bailBondConfig } from "../../configs/generateBailBondConfig";
 import isEqual from "lodash/isEqual";
@@ -20,7 +20,7 @@ const GenerateBailBond = () => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { t } = useTranslation();
   const history = useHistory();
-  const { filingNumber, bailBondId } = Digit.Hooks.useQueryParams();
+  const { filingNumber, bailBondId, showModal } = Digit.Hooks.useQueryParams();
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const isCitizen = useMemo(() => userInfo?.type === "CITIZEN", [userInfo]);
@@ -31,6 +31,7 @@ const GenerateBailBond = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showBailBondEsign, setShowBailBondEsign] = useState(false);
   const [loader, setLoader] = useState(false);
+  const [bailUploadLoader, setBailUploadLoader] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
   const setFormErrors = useRef(null);
   const setFormState = useRef(null);
@@ -41,6 +42,7 @@ const GenerateBailBond = () => {
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [bailBondFileStoreId, setBailBondFileStoreId] = useState("");
   const [bailBondSignatureURL, setBailBondSignatureURL] = useState("");
+  const [defaultFormValueData, setDefaultFormValueData] = useState({});
 
   const { data: caseData, isLoading: isCaseLoading } = Digit.Hooks.dristi.useSearchCaseService(
     {
@@ -59,16 +61,29 @@ const GenerateBailBond = () => {
 
   const { data: bailBond, isLoading: isBailBondLoading } = useSearchBailBondService(
     {
-      criteria: [
-        {
-          bailId: bailBondId,
-        },
-      ],
+      criteria: {
+        bailId: bailBondId,
+      },
       tenantId,
     },
     {},
     `bail-bond-details-${bailBondId}`,
     Boolean(bailBondId && filingNumber)
+  );
+
+  const getUserUUID = useCallback(
+    async (uuid) => {
+      const individualData = await window?.Digit.DRISTIService.searchIndividualUser(
+        {
+          Individual: {
+            userUuid: [uuid],
+          },
+        },
+        { tenantId, limit: 1000, offset: 0 }
+      );
+      return individualData;
+    },
+    [tenantId]
   );
 
   const caseDetails = useMemo(() => {
@@ -78,7 +93,7 @@ const GenerateBailBond = () => {
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
   const bailBondDetails = useMemo(() => {
-    return bailBond?.criteria?.[0]?.responseList?.[0];
+    return bailBond?.bails?.[0];
   }, [bailBond]);
 
   const pipComplainants = useMemo(() => {
@@ -260,6 +275,13 @@ const GenerateBailBond = () => {
   };
 
   const defaultFormValue = useMemo(() => {
+    if (Object.keys(defaultFormValueData).length > 0) {
+      return defaultFormValueData;
+    }
+    if (bailBondDetails) {
+      return bailBondDetails?.additionalDetails?.formdata || {};
+    }
+
     if (!complainantsList || complainantsList.length === 0) return {};
 
     if (complainantsList.length === 1) {
@@ -274,7 +296,7 @@ const GenerateBailBond = () => {
     }
 
     return {};
-  }, [complainantsList]);
+  }, [bailBondDetails, complainantsList]);
 
   const formKey = useMemo(() => {
     return defaultFormValue ? JSON.stringify(defaultFormValue) : "initial";
@@ -360,6 +382,7 @@ const GenerateBailBond = () => {
 
   const createBailBond = async () => {
     try {
+      const individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
       const updatedFormData = await preProcessFormData(formdata);
       const sureties = extractSureties(updatedFormData);
 
@@ -375,13 +398,15 @@ const GenerateBailBond = () => {
           litigantId: updatedFormData?.selectComplainant?.uuid,
           litigantName: updatedFormData?.selectComplainant?.name,
           litigantFatherName: updatedFormData?.selectComplainant?.fatherName,
+          litigantMobileNumber: individualData?.Individual?.[0]?.mobileNumber,
           courtId: caseDetails?.courtId,
           caseTitle: caseDetails?.caseTitle,
           cnrNumber: caseDetails?.cnrNumber,
           caseType: caseDetails?.caseType,
           documents: [],
           additionalDetails: {
-            ...updatedFormData,
+            formdata: updatedFormData,
+            createdUserName: userInfo?.name,
           },
           workflow: {
             action: bailBondWorkflowAction.SAVEDRAFT,
@@ -392,17 +417,18 @@ const GenerateBailBond = () => {
       const res = await submissionService.createBailBond(payload, { tenantId });
       return res;
     } catch (error) {
-      return null;
+      throw error;
     }
   };
 
   const updateBailBond = async (fileStoreId = null, action) => {
     try {
+      const individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
       const updatedFormData = await preProcessFormData(formdata);
       const sureties = extractSureties(updatedFormData);
       const documents = Array.isArray(bailBondDetails?.documents) ? bailBondDetails.documents : [];
       const documentsFile = fileStoreId
-        ? [{ fileStore: fileStoreId, documentType: "BAIL_BOND", additionalDetails: { name: `${t("BAIL_BOND")}.pdf` } }]
+        ? [{ fileStore: fileStoreId, documentType: "SIGNED", additionalDetails: { name: `${t("BAIL_BOND")}.pdf` } }]
         : null;
       const payload = {
         bail: {
@@ -414,9 +440,11 @@ const GenerateBailBond = () => {
           litigantId: updatedFormData?.selectComplainant?.uuid,
           litigantName: updatedFormData?.selectComplainant?.name,
           litigantFatherName: updatedFormData?.selectComplainant?.fatherName,
+          litigantMobileNumber: individualData?.Individual?.[0]?.mobileNumber,
           documents: documentsFile ? [...documents, ...documentsFile] : documents,
           additionalDetails: {
-            ...updatedFormData,
+            formdata: updatedFormData,
+            createdUserName: userInfo?.name,
           },
           workflow: { ...bailBondDetails.workflow, action, documents: [{}] },
         },
@@ -424,23 +452,23 @@ const GenerateBailBond = () => {
       const res = await submissionService.updateBailBond(payload, { tenantId });
       return res;
     } catch (error) {
-      return null;
+      throw error;
     }
   };
 
   const handleSubmit = async () => {
-    // Todo : create and Update Api Call
     try {
       setLoader(true);
       let bailBondResponse = null;
       if (!bailBondId) {
         bailBondResponse = await createBailBond();
+        setDefaultFormValueData(bailBondResponse?.bails?.[0]?.additionalDetails?.formdata || {});
         history.replace(
-          `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondResponse?.bail?.id}`
+          `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondResponse?.bails?.[0]?.bailId}&showModal=true`
         );
-        setShowBailBondReview(true);
       } else {
-        bailBondResponse = await updateBailBond(bailBondWorkflowAction.SAVEDRAFT);
+        bailBondResponse = await updateBailBond(null, bailBondWorkflowAction.SAVEDRAFT);
+        setDefaultFormValueData(bailBondResponse?.bails?.[0]?.additionalDetails?.formdata || {});
         setShowBailBondReview(true);
       }
     } catch (error) {
@@ -458,13 +486,13 @@ const GenerateBailBond = () => {
       let bailBondResponse = null;
       if (!bailBondId) {
         bailBondResponse = await createBailBond();
+        setDefaultFormValueData(bailBondResponse?.bails?.[0]?.additionalDetails?.formdata || {});
         history.replace(
-          `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondResponse?.bail?.id}`
+          `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondResponse?.bails?.[0]?.bailId}`
         );
-        setShowBailBondReview(true);
       } else {
-        bailBondResponse = await updateBailBond(bailBondWorkflowAction.SAVEDRAFT);
-        setShowBailBondReview(true);
+        bailBondResponse = await updateBailBond(null, bailBondWorkflowAction.SAVEDRAFT);
+        setDefaultFormValueData(bailBondResponse?.bails?.[0]?.additionalDetails?.formdata || {});
       }
       setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
     } catch (error) {
@@ -481,14 +509,13 @@ const GenerateBailBond = () => {
   };
 
   const handleDownload = () => {
-    // TODO : need to change
     downloadPdf(tenantId, bailBondFileStoreId);
   };
 
   const handleESign = () => {
     // TODO: call Api then close this modal and show next modal
     try {
-      const res = updateBailBond(bailBondWorkflowAction.ESIGN);
+      const res = updateBailBond(null, bailBondWorkflowAction.ESIGN);
       setBailBondSignatureURL(res?.bail?.shortenedURL);
       setShowsignatureModal(false);
       setShowBailBondEsign(true);
@@ -520,7 +547,22 @@ const GenerateBailBond = () => {
     setShowErrorToast(null);
   };
 
-  if (isCaseLoading || !caseDetails || isBailBondLoading) {
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
+
+  useEffect(() => {
+    if (showModal) {
+      setShowBailBondReview(true);
+    }
+  }, []);
+
+  if (loader || isCaseLoading || !caseDetails || isBailBondLoading) {
     return <Loader />;
   }
 
@@ -587,8 +629,8 @@ const GenerateBailBond = () => {
             setShowUploadSignature={setShowUploadSignature}
             showUploadSignature={showUploadSignature}
             handleSubmit={handleSubmitSignature}
-            setLoader={setLoader}
-            loader={loader}
+            setLoader={setBailUploadLoader}
+            loader={bailUploadLoader}
           />
         )}
 
