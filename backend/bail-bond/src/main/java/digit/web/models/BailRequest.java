@@ -19,15 +19,13 @@ import lombok.Builder;
 @NoArgsConstructor
 @Builder
 public class BailRequest {
-    @JsonProperty("RequestInfo")
 
+    @JsonProperty("RequestInfo")
     @Valid
     private RequestInfo requestInfo = null;
 
     @JsonProperty("bail")
-
     @Valid
     private Bail bail = null;
-
 
 }

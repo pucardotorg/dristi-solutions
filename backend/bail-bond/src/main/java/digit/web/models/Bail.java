@@ -95,6 +95,7 @@ public class Bail {
     private Boolean litigantSigned = null;
 
     @JsonProperty("litigantMobileNumber")
+    @NotNull
     private String litigantMobileNumber = null;
 
     @JsonProperty("sureties")
@@ -173,7 +174,6 @@ public class Bail {
 
     @JsonProperty("bailId")
     private String bailId = null;
-
 
     public Bail addSuretiesItem(Surety suretiesItem) {
         if (this.sureties == null) {

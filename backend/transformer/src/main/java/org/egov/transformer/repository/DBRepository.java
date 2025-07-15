@@ -6,15 +6,44 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Repository
 @Slf4j
-public class CourtIdRepository {
+public class DBRepository {
     private final JdbcTemplate jdbcTemplate;
 
     @Autowired
-    public CourtIdRepository(JdbcTemplate jdbcTemplate) {
+    public DBRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
+
+    @Transactional
+    public void updateBailCaseNumberForFilingNumber(String caseNumber, String cnrNumber, String filingNumber) {
+        String selectBailIdsQuery = "SELECT bail_id FROM dristi_bail WHERE filing_number = ?";
+
+        List<String> bailIds = jdbcTemplate.query(
+                selectBailIdsQuery,
+                new Object[]{filingNumber},
+                (rs, rowNum) -> rs.getString("bail_id")
+        );
+
+        log.info("Total Bail records for filingNumber {}: {}", filingNumber, bailIds.size());
+
+        if (bailIds.isEmpty()) {
+            log.warn("No bail records found for filingNumber {}", filingNumber);
+            return;
+        }
+
+        bailIds.forEach(bailId -> log.info("Bail ID to update: {}", bailId));
+
+        String updateQuery = "UPDATE dristi_bail SET case_number = ?, cnr_number = ? WHERE filing_number = ?";
+        int rowsUpdated = jdbcTemplate.update(updateQuery, caseNumber, cnrNumber, filingNumber);
+
+        log.warn("Number of bail rows updated: {} for filingNumber {}", rowsUpdated, filingNumber);
+    }
+
+
 
     @Transactional
     public void updateCourtIdForFilingNumber(String courtId, String filingNumber) {
