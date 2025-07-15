@@ -46,9 +46,10 @@ public class BailService {
     private final ESignUtil eSignUtil;
     private final XmlRequestGenerator xmlRequestGenerator;
     private final Configuration configuration;
+    private final IndexerUtils indexerUtils;
 
     @Autowired
-    public BailService(BailValidator validator, BailRegistrationEnrichment enrichmentUtil, Producer producer, Configuration config, WorkflowService workflowService, BailRepository bailRepository, EncryptionDecryptionUtil encryptionDecryptionUtil, ObjectMapper objectMapper, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, ESignUtil eSignUtil, XmlRequestGenerator xmlRequestGenerator, Configuration configuration) {
+    public BailService(BailValidator validator, BailRegistrationEnrichment enrichmentUtil, Producer producer, Configuration config, WorkflowService workflowService, BailRepository bailRepository, EncryptionDecryptionUtil encryptionDecryptionUtil, ObjectMapper objectMapper, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, ESignUtil eSignUtil, XmlRequestGenerator xmlRequestGenerator, Configuration configuration, IndexerUtils indexerUtils) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.producer = producer;
@@ -57,6 +58,7 @@ public class BailService {
         this.bailRepository = bailRepository;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.objectMapper = objectMapper;
+        this.indexerUtils = indexerUtils;
         this.fileStoreUtil = fileStoreUtil;
         this.cipherUtil = cipherUtil;
         this.eSignUtil = eSignUtil;
@@ -75,7 +77,7 @@ public class BailService {
         enrichmentUtil.enrichBailOnCreation(bailRequest);
 
         // Workflow update
-        if (!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())) {
+        if(!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())){
             workflowService.updateWorkflowStatus(bailRequest);
         }
 
@@ -171,6 +173,7 @@ public class BailService {
             }
         } catch (Exception e) {
             log.error("Error updating bail workflow", e);
+            throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.getMessage());
         }
 
         Set<String> fileStoreToDeleteIds = getFilestoreToDelete(bailRequest,existingBail);
@@ -184,6 +187,8 @@ public class BailService {
 
         Bail encryptedBail = encryptionDecryptionUtil.encryptObject(originalBail, config.getBailEncrypt(), Bail.class);
         bailRequest.setBail(encryptedBail);
+
+        insertBailIndexEntry(bailRequest);
 
         producer.push(config.getBailUpdateTopic(), bailRequest);
 
@@ -218,7 +223,7 @@ public class BailService {
         try {
             log.info("Starting bail search with parameters :: {}", bailSearchRequest);
 
-            if (bailSearchRequest.getCriteria() != null && bailSearchRequest.getCriteria().getSuretyMobileNumber() != null) {
+            if(bailSearchRequest.getCriteria()!=null && bailSearchRequest.getCriteria().getSuretyMobileNumber() != null) {
                 bailSearchRequest.setCriteria(encryptionDecryptionUtil.encryptObject(bailSearchRequest.getCriteria(), "BailSearch", BailSearchCriteria.class));
             }
 
@@ -401,6 +406,26 @@ public class BailService {
         attrData.put(VALUE, value);
         attribute.put(ATTRIBUTE, attrData);
         return attribute;
+    }
+
+    public void insertBailIndexEntry(BailRequest bailRequest) {
+        try {
+            Bail bail = bailRequest.getBail();
+            if (bail != null) {
+                log.info("Inserting Bail entry in bail-bond-index (inbox): {}", bailRequest);
+                String bulkRequest = indexerUtils.buildPayload(bail);
+                if (!bulkRequest.isEmpty()) {
+                    String uri = config.getEsHostUrl() + config.getBulkPath();
+                    indexerUtils.esPostManual(uri, bulkRequest);
+                }
+            }
+        } catch (CustomException e) {
+            log.error("Custom Exception occurred while inserting bail index entry");
+            throw e;
+        } catch (Exception e) {
+            log.error("Error occurred while inserting bail index entry");
+            throw new CustomException(BAIL_BOND_INDEX_EXCEPTION, e.getMessage());
+        }
     }
 
 }
