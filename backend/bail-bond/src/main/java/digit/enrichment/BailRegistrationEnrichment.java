@@ -53,7 +53,8 @@ public class BailRegistrationEnrichment {
 
         bail.setAuditDetails(auditDetails);
         bail.setId(String.valueOf(UUID.randomUUID()));
-        bail.setBailId(bailRegistrationBailIdList.get(0));
+        String bailId = bail.getFilingNumber() + "-" + bailRegistrationBailIdList.get(0);
+        bail.setBailId(bailId);
         enrichCaseDetails(bailRequest);
         if(!ObjectUtils.isEmpty(bailRequest.getBail().getDocuments())){
             bail.getDocuments().forEach(this::enrichDocument);
