@@ -72,7 +72,7 @@ public class FileStoreUtil {
         }
         return fileExists;
     }
-    public void deleteFilesByFileStore(List<String> fileStoreIds, String tenantId) {
+    public void deleteFilesByFileStore(Set<String> fileStoreIds, String tenantId) {
 
         if (fileStoreIds == null || fileStoreIds.isEmpty()) {
             log.warn("No file store IDs provided for deletion");
