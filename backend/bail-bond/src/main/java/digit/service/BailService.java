@@ -276,7 +276,7 @@ public class BailService {
                     BailSearchCriteria criteria = BailSearchCriteria.builder()
                             .bailId(bailId)
                             .tenantId(tenantId).build();
-                    Pagination pagination = Pagination.builder().limit(1.0).offSet(0.0).build();
+                    Pagination pagination = Pagination.builder().limit(1).offSet(0).build();
                     BailSearchRequest bailSearchRequest = BailSearchRequest.builder()
                             .criteria(criteria)
                             .pagination(pagination)
@@ -289,20 +289,20 @@ public class BailService {
                     Bail bail = bailList.get(0);
 
                     // Update document with signed PDF
-                    String pdfName = "BailBond.pdf";
-                    MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedBailData, pdfName);
+                    MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedBailData, BAIL_BOND_PDF_NAME);
                     String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
-                    // this is wrong
 
-                    bail.getDocuments().stream()
-                            .filter(document -> document.getDocumentType().equals(UNSIGNED))
-                            .findFirst()
-                            .ifPresent(document -> {
-                                document.setFileStore(fileStoreId);
-                                document.setDocumentType(SIGNED);
-                                document.setAdditionalDetails(Map.of(NAME, pdfName));
-                            });
+                    if (bail.getDocuments() != null) {
+                        bail.getDocuments().stream()
+                                .filter(document -> document.getDocumentType().equals(SIGNED))
+                                .findFirst()
+                                .ifPresent(document -> {
+                                    document.setFileStore(fileStoreId);
+                                    document.setAdditionalDetails(Map.of(NAME, BAIL_BOND_PDF_NAME));
+                                });
+                    }
+
                     if (!ObjectUtils.isEmpty(bail.getSureties())) {
                         bail.getSureties().forEach(surety -> surety.setIsApproved(true));
                     }

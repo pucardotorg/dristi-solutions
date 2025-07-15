@@ -113,4 +113,5 @@ public class ServiceConstants {
     public static final String INVALID_DOCUMENT_DETAILS = "Invalid document details";
     public static final String BAIL_SIGN_ERROR = "BAIL_SIGN_ERROR";
     public static final String BAILS_BULK_SIGN_EXCEPTION = "BAILS_BULK_SIGN_EXCEPTION";
+    public static final String BAIL_BOND_PDF_NAME = "BailBond.pdf";
 }
