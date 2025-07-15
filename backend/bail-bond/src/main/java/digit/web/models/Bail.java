@@ -80,7 +80,7 @@ public class Bail {
     private Long endDate = null;
 
     @JsonProperty("isActive")
-    private Boolean isActive = null;
+    private Boolean isActive = true;
 
     @JsonProperty("litigantId")
     private String litigantId = null;

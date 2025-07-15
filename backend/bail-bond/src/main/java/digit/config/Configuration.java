@@ -148,4 +148,11 @@ public class Configuration {
 
     @Value("${egov.bulk.index.path}")
     private String bulkPath;
+
+    //FileStore Service
+    @Value("${egov.filestore.host}")
+    private String fileStoreHost;
+
+    @Value("${egov.file.store.delete.endpoint}")
+    private String fileStoreDeleteEndPoint;
 }
