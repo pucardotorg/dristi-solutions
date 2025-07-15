@@ -25,6 +25,7 @@ public class CaseSearchRequest {
 
     @JsonProperty("criteria")
     @Valid
+    @Builder.Default
     private List<CaseCriteria> criteria = new ArrayList<>();
 
     @JsonProperty("flow")

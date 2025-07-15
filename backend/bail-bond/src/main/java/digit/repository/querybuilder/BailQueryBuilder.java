@@ -75,6 +75,9 @@ public class BailQueryBuilder {
     }
 
     public String getBailDetailsByIdsQuery(List<String> bailIds, Pagination pagination, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        if (bailIds == null || bailIds.isEmpty()) {
+            throw new IllegalArgumentException("Bail Ids cannot be null or empty");
+        }
         StringBuilder query = new StringBuilder(BASE_BAIL_QUERY);
         query.append(FROM_QUERY);
 

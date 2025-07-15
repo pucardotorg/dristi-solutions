@@ -32,7 +32,17 @@ public class CaseUtil {
         try {
             response = restTemplate.postForObject(uri.toString(), caseSearchRequest, Map.class);
             JsonNode jsonNode = mapper.readTree(mapper.writeValueAsString(response));
-            caseList = jsonNode.get("criteria").get(0).get("responseList");
+            JsonNode criteriaNode = jsonNode.get("criteria");
+            if (criteriaNode != null && criteriaNode.isArray() && !criteriaNode.isEmpty()) {
+                JsonNode firstCriteria = criteriaNode.get(0);
+                if (firstCriteria != null) {
+                    caseList = firstCriteria.get("responseList");
+                }
+                }
+            if (caseList == null) {
+                log.error("Invalid response structure from case service");
+                throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE, "Invalid response structure");
+            }
 
         } catch (Exception e) {
             log.error(ERROR_WHILE_FETCHING_FROM_CASE, e);
@@ -41,42 +51,30 @@ public class CaseUtil {
         return caseList; // List<CourtCase>
     }
 
-    public String getCourtId(JsonNode caseDetails) {
-        JsonNode courtIdNode = caseDetails.get(0).get("courtId");
-        if (courtIdNode != null && !courtIdNode.isNull()) {
-            return courtIdNode.asText();
-
+    private String extractFieldFromFirstCase(JsonNode caseDetails, String fieldName) {
+        if (caseDetails != null && caseDetails.isArray() && !caseDetails.isEmpty()) {
+            JsonNode fieldNode = caseDetails.get(0).get(fieldName);
+            if (fieldNode != null && !fieldNode.isNull()) {
+                return fieldNode.textValue();
+            }
         }
-        log.error("Court Id not found");
+        log.error("{} not found", fieldName);
         return null;
+    }
+
+    public String getCourtId(JsonNode caseDetails) {
+        return extractFieldFromFirstCase(caseDetails, "courtId");
     }
 
     public String getCaseTitle(JsonNode caseDetails) {
-        JsonNode caseTitleNode = caseDetails.get(0).get("caseTitle");
-        if (caseTitleNode != null && !caseTitleNode.isNull()) {
-            return caseTitleNode.asText();
-        }
-        log.error("Case Title not found");
-        return null;
+        return extractFieldFromFirstCase(caseDetails, "caseTitle");
     }
 
-    public String getCnrNumber(JsonNode caseList) {
-        if (caseList != null && caseList.isArray() && !caseList.isEmpty()) {
-            JsonNode cnrNumberNode = caseList.get(0).get("cnrNumber");
-            if (cnrNumberNode != null && !cnrNumberNode.isNull()) {
-                return cnrNumberNode.textValue();
-            }
-        }
-        log.error("Cnr Number not found");
-        return null;
+    public String getCnrNumber(JsonNode caseDetails) {
+        return extractFieldFromFirstCase(caseDetails, "cnrNumber");
     }
 
     public String getCaseType(JsonNode caseDetails) {
-        JsonNode caseTypeNode = caseDetails.get(0).get("courtId");
-        if (caseTypeNode != null && !caseTypeNode.isNull()) {
-            return caseTypeNode.asText();
-        }
-        log.error("Case Type not found");
-        return null;
+        return extractFieldFromFirstCase(caseDetails, "caseType");
     }
 }

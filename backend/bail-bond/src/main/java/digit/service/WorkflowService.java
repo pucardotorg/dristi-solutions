@@ -44,7 +44,11 @@ public class WorkflowService {
             ProcessInstanceObject processInstance = getProcessInstance(bailRequest.getBail());
             ProcessInstanceRequest workflowRequest = new ProcessInstanceRequest(bailRequest.getRequestInfo(), Collections.singletonList(processInstance));
             log.info("ProcessInstance Request :: {}", workflowRequest);
-            String state=callWorkFlow(workflowRequest).getState();
+            State workflowState = callWorkFlow(workflowRequest);
+            if (workflowState == null || workflowState.getState() == null) {
+                throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, "Workflow state is null");
+            }
+            String state = workflowState.getState();
             log.info("Workflow State for filing number :: {} and state :: {}",bailRequest.getBail().getFilingNumber(), state);
             bailRequest.getBail().setStatus(state);
         } catch(CustomException e){
@@ -60,6 +64,9 @@ public class WorkflowService {
             Object optional = repository.fetchResult(url, workflowReq);
             log.info("Workflow Response :: {}", optional);
             ProcessInstanceResponse response = mapper.convertValue(optional, ProcessInstanceResponse.class);
+            if(response == null || CollectionUtils.isEmpty(response.getProcessInstances())) {
+                throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, "No process instances in workflow response");
+            }
             return response.getProcessInstances().get(0).getState();
         } catch(CustomException e){
             throw e;

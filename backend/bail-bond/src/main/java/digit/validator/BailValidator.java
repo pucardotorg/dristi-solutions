@@ -25,6 +25,11 @@ public class BailValidator {
         log.info("Validating Bail Registration");
         // Validate userInfo and tenantId
         baseValidations(bailRequest.getRequestInfo());
+
+        Bail bail = bailRequest.getBail();
+        if(bail.getBailAmount()<0){
+            throw new CustomException(VALIDATION_EXCEPTION, "Bail amount is negative");
+        }
     }
 
     private void baseValidations(RequestInfo requestInfo){
@@ -41,7 +46,7 @@ public class BailValidator {
         Bail bail = bailRequest.getBail();
         List<Bail> existingBails = repository.checkBailExists(requestInfo, bail);
         if(existingBails.isEmpty()){
-            throw new CustomException(VALIDATION_EXCEPTION, "Bail does not exist");
+            throw new CustomException(VALIDATION_EXCEPTION, String.format("Bail with ID '%s' does not exist", bail.getId()));
         }
     }
 }

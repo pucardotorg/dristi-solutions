@@ -25,6 +25,7 @@ import java.util.Map;
 import static digit.config.ServiceConstants.E_SIGN;
 import static digit.config.ServiceConstants.E_SIGN_COMPLETE;
 import static digit.config.ServiceConstants.PENDING_E_SIGN;
+import static digit.config.ServiceConstants.WORKFLOW_SERVICE_EXCEPTION;
 
 @Service
 @Slf4j
@@ -99,6 +100,7 @@ public class BailService {
             }
         } catch (Exception e) {
             log.error("Error updating bail workflow", e);
+            throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.getMessage());
         }
 
         Bail originalBail = bailRequest.getBail();
@@ -113,32 +115,26 @@ public class BailService {
 
     private Boolean checkItsLastSign(BailRequest bailRequest) {
 
-        // Check only if action is E-SIGN
-        String action="";
-        if(!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())){
-            action = bailRequest.getBail().getWorkflow().getAction();
-        }
-
-        if (E_SIGN.equalsIgnoreCase(action)) {
-            if (!bailRequest.getBail().getLitigantSigned()) {
-                log.info("Litigant has not signed");
-                return false;
-            }
-            boolean allSuretiesSigned = false;
-            if (!ObjectUtils.isEmpty(bailRequest.getBail().getSureties())) {
-                allSuretiesSigned = bailRequest.getBail().getSureties().stream()
-                        .allMatch(Surety::getHasSigned);
-            }
-            if (!allSuretiesSigned) {
-                log.info("Some sureties have not signed");
-                return false;
-            }
-
-            log.info("All sureties and litigant have signed");
-            return true;
-        } else {
+        Bail bail = bailRequest.getBail();
+        WorkflowObject workflow = bail.getWorkflow();
+        if (workflow == null || !E_SIGN.equalsIgnoreCase(workflow.getAction())) {
             return false;
         }
+        if (!Boolean.TRUE.equals(bail.getLitigantSigned())) {
+            log.info("Litigant has not signed");
+            return false;
+        }
+        boolean allSuretiesSigned = false;
+        if (!ObjectUtils.isEmpty(bailRequest.getBail().getSureties())) {
+            allSuretiesSigned = bailRequest.getBail().getSureties().stream()
+                    .allMatch(Surety::getHasSigned);
+        }
+        if (!allSuretiesSigned) {
+            log.info("Some sureties have not signed");
+            return false;
+        }
+        log.info("All sureties and litigant have signed");
+        return true;
     }
 
     public List<Bail> searchBail(BailSearchRequest bailSearchRequest) {

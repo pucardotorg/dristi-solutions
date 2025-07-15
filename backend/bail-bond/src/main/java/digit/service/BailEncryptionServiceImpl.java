@@ -37,6 +37,6 @@ public class BailEncryptionServiceImpl extends EncryptionServiceImpl {
     @Override
     public List<String> encryptValue(List<Object> plaintext, String tenantId, String type) throws IOException {
         Object encryptionResponse = this.encryptionServiceRestConnection.callEncrypt(tenantId, type, plaintext);
-        return (List) BailConvertClass.convertTo(this.objectMapper.valueToTree(encryptionResponse), List.class);
+        return BailConvertClass.convertTo(this.objectMapper.valueToTree(encryptionResponse), List.class);
     }
 }

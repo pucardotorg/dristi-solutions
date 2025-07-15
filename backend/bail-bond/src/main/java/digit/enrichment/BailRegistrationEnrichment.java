@@ -14,6 +14,7 @@ import digit.web.models.Document;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
@@ -41,7 +42,7 @@ public class BailRegistrationEnrichment {
         Bail bail = bailRequest.getBail();
 
         List<String> bailRegistrationBailIdList = idgenUtil.getIdList(requestInfo, tenantId, idName, idFormat, 1);
-        log.info("Bail Registration Filing Number ID list: {}", bailRegistrationBailIdList);
+        log.info("Bail Registration ID list: {}", bailRegistrationBailIdList);
 
         AuditDetails auditDetails = AuditDetails.builder()
                 .createdBy(bailRequest.getRequestInfo().getUserInfo().getUuid())
