@@ -1,136 +1,0 @@
-
-1.0solutions_bail-bondJavaFrontend"1752560186994*java2.BÐ
-7
-2src/main/java/digit/web/models/WorkflowObject.java2
-
-package4
-
-digit.web.models5
-$
-digit.web.models.WorkflowObject7
-
-
-class8
-
-access9
-
-public10
-
-simple name11
-
-WorkflowObject12
-.
-(org.egov.common.contract.models.Workflow14
-
-unknown15
-
-extends16
-
-lombok.Getter18
-
-annotated by19
-
-
-uses20
-
-lombok.Setter22
-
-lombok.NoArgsConstructor24
-
-lombok.AllArgsConstructor26
-7
-1digit.web.models.WorkflowObject.additionalDetails28
-
-field29
-
-private30
-
-additionalDetails31
-3
--com.fasterxml.jackson.annotation.JsonProperty33J
-
-1
-12Z
-
-3	
-354jõ
-9
-64
-678 *
-1 (:3B
-	
-9
-10
-
-
-11
-12
-
-32
-323315
-
-21
-212215
-
-17
-171815
-
-13
-131415
-@
-27:
-272829 *
-1 (26:3B
-	
-9
-30
-
-
-11
-31
-
-25
-252615
-
-23
-232415rº
-
-61316*
-1% (-
-
-61719*
-1 (
-
-61720*
-1 (
-
-62119*
-1 (
-
-62120*
-1 (
-
-62319*
-1	 	(
-
-62320*
-1	 	(
-
-62519*
-1
- 
-(
-
-62520*
-1
- 
-(
-
-61320*
-1% (-
-
-273219*
-1 (
-
-273220*
-1 (

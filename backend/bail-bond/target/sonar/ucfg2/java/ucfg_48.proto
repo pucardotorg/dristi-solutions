@@ -1,25 +1,0 @@
-
-?digit.web.models.Bail$BailTypeEnum#toString()Ljava/lang/String;j
-`/home/bhcp0191/pucar/dristi-solutions/backend/bail-bond/src/main/java/digit/web/models/Bail.java: :("1*þ
-1; ;(y
-w
-;" ;('
-%0java.lang.String"__id*M
-
-__unknown_file (1*/$
-"digit.web.models.Bail$BailTypeEnum"
-valueÍ
-Ê
-; ;((
-%1java.lang.String">java.lang.String#valueOf(Ljava/lang/Object;)Ljava/lang/String;*0
-
-__unknown_file ("
-java.lang.String*4
-
-__unknown_file (
-
-%0java.lang.String"$
-; ;()
-
-%1java.lang.StringB&$
-"digit.web.models.Bail$BailTypeEnumH

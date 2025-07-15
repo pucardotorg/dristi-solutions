@@ -1,11 +1,0 @@
-;this- -("'digit.web.controllers.BailApiControllerGobjectMapper- -(6"+com.fasterxml.jackson.databind.ObjectMapper>request-8 -(R"'jakarta.servlet.http.HttpServletRequestAresponseInfoFactory-T -({"digit.util.ResponseInfoFactory5bailService	-} -(”"digit.service.BailService"Ï.
-,
-. .(("#set-field# objectMapper:)
-'
-/ /("#set-field# request:5
-3
-0 0(6"!#set-field# responseInfoFactory:-
-+
-1 1(&	"#set-field# bailService:
-
-2 2(*r/home/bhcp0191/pucar/dristi-solutions/backend/bail-bond/src/main/java/digit/web/controllers/BailApiController.java

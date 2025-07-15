@@ -1,24 +1,0 @@
--this, ,("digit.service.BailService6	validator, ,(."digit.validator.BailValidatorIenrichmentUtil,0 ,(Y"+digit.enrichment.BailRegistrationEnrichment,producer,[ ,(l"digit.kafka.Producer1config	,n ,(Ç"digit.config.Configuration>workflowService
-,Ñ ,(£"digit.service.WorkflowService?bailRepository
-,• ,(¬"digit.repository.BailRepositoryMencryptionDecryptionUtil
-,ƒ ,(ı"#digit.util.EncryptionDecryptionUtilI	objectMapper
-,˜ ,(ê"+com.fasterxml.jackson.databind.ObjectMapper"î+
-)
-- -("
-"#set-field# validator:0
-.
-. .(,"#set-field# enrichmentUtil:*
-(
-/ /( "#set-field# producer:(
-&
-0 0("#set-field# config:1
-/
-1 1(."#set-field# workflowService:0
-.
-2 2(,"#set-field# bailRepository::
-8
-3 3(@"&$#set-field# encryptionDecryptionUtil:.
-,
-4 4(("#set-field# objectMapper:	
-
-5 5(*d/home/bhcp0191/pucar/dristi-solutions/backend/bail-bond/src/main/java/digit/service/BailService.java

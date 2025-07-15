@@ -1,73 +1,0 @@
-
-1.0solutions_bail-bondJavaFrontend"1752560186192*java2.Bç
-,
-'src/main/java/digit/kafka/Consumer.java2
-
-package4
-
-digit.kafka5
-
-digit.kafka.Consumer7
-
-
-class8
-
-access9
-
-public10
-
-simple name11
-
-Consumer12
-.
-(org.springframework.stereotype.Component14
-
-unknown15
-
-annotated by16
-
-
-uses17
-7
-1digit.kafka.Consumer#listen(Ljava/util/HashMap;)V19
-
-method20
-
-listen21J
-
-1
-12Z
-
-3	
-354j‘
-
-13
-131415
-@
-18:
-181920 *
-1 (26:3B
-	
-9
-10
-
-
-11
-21
-9
-64
-678 *
-1	 	(:3B
-	
-9
-10
-
-
-11
-12r4
-
-61316*
-1 (
-
-61317*
-1 (

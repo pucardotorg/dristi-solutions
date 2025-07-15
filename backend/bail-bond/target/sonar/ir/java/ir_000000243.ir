@@ -1,4 +1,0 @@
-$this ("java.util.Random";)
-'
- (""#dependent-value#Blong
- (#*Random.java
