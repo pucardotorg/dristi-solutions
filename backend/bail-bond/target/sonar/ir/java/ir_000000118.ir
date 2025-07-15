@@ -1,0 +1,18 @@
+
+65535int
+-1int*this' '("java.io.BufferedReader"ê0
+.
+) )('result"#dependent-value#Bint-
++
+* *(%"
+#binop >=#2>=:Bboolean#
+!
+* *(&"
+#assume#:Bvoid-
++
++ +(("
+#binop <=#2<=:Bboolean#
+!
++ +()"
+#assume#:Bvoid
+, ,(*BufferedReader.java

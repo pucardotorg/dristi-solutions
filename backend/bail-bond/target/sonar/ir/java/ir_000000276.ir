@@ -1,0 +1,7 @@
+ map# (6"java.util.Map"­m
+k
+ ("E
+(org.apache.commons.collections4.MapUtilsisEmpty(Ljava/util/Map;)Z*2isEmpty:Bboolean,
+*
+ ("#unaryop !#2!:Bboolean
+ (*MapUtils.java

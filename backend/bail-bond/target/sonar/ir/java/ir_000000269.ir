@@ -1,0 +1,7 @@
+(coll# (;"java.util.Collection"¼|
+z
+ ("T
+0org.apache.commons.collections4.CollectionsUtils isEmpty(Ljava/util/Collection;)Z*2isEmpty:Bboolean,
+*
+ ("#unaryop !#2!:Bboolean
+ (*CollectionsUtils.java

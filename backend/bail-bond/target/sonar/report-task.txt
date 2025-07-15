@@ -1,0 +1,7 @@
+organization=solutions
+projectKey=solutions_bail-bond
+serverUrl=https://sonarcloud.io
+serverVersion=8.0.0.65463
+dashboardUrl=https://sonarcloud.io/dashboard?id=solutions_bail-bond
+ceTaskId=AZgMukl2zIA4wazJ0z2J
+ceTaskUrl=https://sonarcloud.io/api/ce/task?id=AZgMukl2zIA4wazJ0z2J

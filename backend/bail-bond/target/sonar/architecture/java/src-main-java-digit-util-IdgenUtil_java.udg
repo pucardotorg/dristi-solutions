@@ -1,0 +1,514 @@
+
+1.0solutions_bail-bondJavaFrontend"1752560186328*java2.B±
+,
+'src/main/java/digit/util/IdgenUtil.java2
+
+package4
+
+
+digit.util5
+
+digit.util.IdgenUtil7
+
+
+class8
+
+access9
+
+public10
+
+simple name11
+
+	IdgenUtil12
+.
+(org.springframework.stereotype.Component14
+
+unknown15
+
+annotated by16
+
+
+uses17
+!
+digit.util.IdgenUtil.mapper19
+
+field20
+
+private21
+
+mapper22
+1
++com.fasterxml.jackson.databind.ObjectMapper24
+
+is type25
+<
+6org.springframework.beans.factory.annotation.Autowired27
+#
+digit.util.IdgenUtil.restRepo29
+
+restRepo30
+/
+)digit.repository.ServiceRequestRepository32
+"
+digit.util.IdgenUtil.configs34
+
+configs35
+ 
+digit.config.Configuration37
+®
+§digit.util.IdgenUtil#getIdList(Lorg/egov/common/contract/request/RequestInfo;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;)Ljava/util/List;39
+
+method40
+
+	getIdList41
+2
+,org.egov.common.contract.request.RequestInfo43
+
+	has param44
+.
+(org.egov.common.contract.idgen.IdRequest46
+
+returns47
+?
+9org.egov.common.contract.idgen.IdRequest$IdRequestBuilder49
+
+
+references50
+q
+korg.egov.common.contract.idgen.IdRequest$IdRequestBuilder#build()Lorg/egov/common/contract/idgen/IdRequest;52
+
+calls53
+˜
+‘org.egov.common.contract.idgen.IdRequest$IdRequestBuilder#tenantId(Ljava/lang/String;)Lorg/egov/common/contract/idgen/IdRequest$IdRequestBuilder;55
+–
+org.egov.common.contract.idgen.IdRequest$IdRequestBuilder#format(Ljava/lang/String;)Lorg/egov/common/contract/idgen/IdRequest$IdRequestBuilder;57
+–
+org.egov.common.contract.idgen.IdRequest$IdRequestBuilder#idName(Ljava/lang/String;)Lorg/egov/common/contract/idgen/IdRequest$IdRequestBuilder;59
+s
+morg.egov.common.contract.idgen.IdRequest#builder()Lorg/egov/common/contract/idgen/IdRequest$IdRequestBuilder;61
+8
+2org.egov.common.contract.idgen.IdGenerationRequest63
+S
+Morg.egov.common.contract.idgen.IdGenerationRequest$IdGenerationRequestBuilder65
+
+‰org.egov.common.contract.idgen.IdGenerationRequest$IdGenerationRequestBuilder#build()Lorg/egov/common/contract/idgen/IdGenerationRequest;67
+ß
+Øorg.egov.common.contract.idgen.IdGenerationRequest$IdGenerationRequestBuilder#requestInfo(Lorg/egov/common/contract/request/RequestInfo;)Lorg/egov/common/contract/idgen/IdGenerationRequest$IdGenerationRequestBuilder;69
+À
+¹org.egov.common.contract.idgen.IdGenerationRequest$IdGenerationRequestBuilder#idRequests(Ljava/util/List;)Lorg/egov/common/contract/idgen/IdGenerationRequest$IdGenerationRequestBuilder;71
+’
+‹org.egov.common.contract.idgen.IdGenerationRequest#builder()Lorg/egov/common/contract/idgen/IdGenerationRequest$IdGenerationRequestBuilder;73
+9
+3org.egov.common.contract.idgen.IdGenerationResponse75
+u
+ocom.fasterxml.jackson.databind.ObjectMapper#convertValue(Ljava/lang/Object;Ljava/lang/Class;)Ljava/lang/Object;77
+z
+tdigit.repository.ServiceRequestRepository#fetchResult(Ljava/lang/StringBuilder;Ljava/lang/Object;)Ljava/lang/Object;79
+/
+)org.egov.common.contract.idgen.IdResponse81
+Z
+Torg.egov.common.contract.idgen.IdGenerationResponse#getIdResponses()Ljava/util/List;83
+.
+(org.springframework.util.CollectionUtils85
+O
+Iorg.springframework.util.CollectionUtils#isEmpty(Ljava/util/Collection;)Z87
++
+%org.egov.tracer.model.CustomException89
+/
+)digit.config.ServiceConstants.IDGEN_ERROR91
+6
+0digit.config.ServiceConstants.NO_IDS_FOUND_ERROR93J
+
+1
+12Z
+
+3	
+354j‡
+@
+38:
+383940 *
+1" "(26:3B
+	
+9
+10
+
+
+11
+41
+
+48
+484915
+
+78
+787915
+
+90
+909115
+
+26
+262715
+
+54
+545515
+
+74
+747515
+
+45
+454615
+
+82
+828315
+
+66
+666715
+
+36
+363715
+
+58
+585915
+
+72
+727315
+
+76
+767715
+
+70
+707115
+
+92
+929315
+@
+33:
+333420 *
+1 (26:3B
+	
+9
+21
+
+
+11
+35
+
+80
+808115
+9
+64
+678 *
+1 (:3B
+	
+9
+10
+
+
+11
+12
+
+62
+626315
+
+56
+565715
+
+23
+232415
+
+51
+515215
+
+68
+686915
+@
+18:
+181920 *
+1 (26:3B
+	
+9
+21
+
+
+11
+22
+
+13
+131415
+@
+28:
+282920 *
+1 (26:3B
+	
+9
+21
+
+
+11
+30
+
+31
+313215
+
+60
+606115
+
+64
+646515
+
+84
+848515
+
+42
+424315
+
+88
+888915
+
+86
+868715r¤
+
+61316*
+1 (
+
+61317*
+1 (
+
+182325*
+1 (
+
+182616*
+1 (
+
+182617*
+1 (
+
+182317*
+1 (
+
+182317*
+1 ( 
+
+283125*
+1 (%
+
+282616*
+1 (
+
+282617*
+1 (
+
+283117*
+1 (%
+
+283117*
+1& (.
+
+333625*
+1   (
+
+332616*
+1 (
+
+332617*
+1 (
+
+333617*
+1   (
+
+333617*
+1   ("
+
+384244*
+1"# "(.
+
+384225*
+1"/ "(:
+
+384217*
+1"# "(.
+
+384517*
+1# #(
+
+384547*
+1% %("
+
+384850*
+1% %("
+
+385153*
+1%` %(e
+
+384847*
+1% %("
+
+384850*
+1% %("
+
+385453*
+1%M %(U
+
+384847*
+1% %("
+
+384850*
+1% %("
+
+385653*
+1%< %(B
+
+384847*
+1% %("
+
+384850*
+1% %("
+
+385853*
+1%- %(3
+
+384847*
+1% %("
+
+384550*
+1% %("
+
+386053*
+1%# %(*
+
+384517*
+1% %("
+
+386225*
+1( (($
+
+386217*
+1(	 ((
+
+386247*
+1(' ((:
+
+386450*
+1(' ((:
+
+386653*
+1(r ((w
+
+386447*
+1(' ((:
+
+386450*
+1(' ((:
+
+386853*
+1(Y ((d
+
+386447*
+1(' ((:
+
+386450*
+1(' ((:
+
+387053*
+1(E ((O
+
+386447*
+1(' ((:
+
+386250*
+1(' ((:
+
+387253*
+1(; ((B
+
+386217*
+1(' ((:
+
+383350*
+1)/ )(6
+
+383617*
+1)/ )(6
+
+383350*
+1)/ )(6
+
+383350*
+1)N )(U
+
+383617*
+1)N )(U
+
+383350*
+1)N )(U
+
+387425*
+1* *(&
+
+387417*
+1*	 *(
+
+387447*
+1*) *(/
+
+382350*
+1*) *(/
+
+387653*
+1*0 *(<
+
+381850*
+1*) *(/
+
+382317*
+1*) *(/
+
+381850*
+1*) *(/
+
+383150*
+1*= *(E
+
+387853*
+1*F *(Q
+
+382850*
+1*= *(E
+
+383117*
+1*= *(E
+
+382850*
+1*= *(E
+
+387417*
+1*a *(u
+
+388017*
+1, ,(
+
+387450*
+1,( ,(0
+
+388253*
+1,1 ,(?
+
+388450*
+1. .(
+
+388653*
+1. .($
+
+388417*
+1. .(
+
+388853*
+1/ /(&
+
+389050*
+1/' /(2
+
+389250*
+1/4 /(F
+
+388017*
+11) 1(3

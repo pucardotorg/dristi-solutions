@@ -1,0 +1,357 @@
+
+1.0solutions_bail-bondJavaFrontend"1752560186355*java2.BÉ
+5
+0src/main/java/digit/validator/BailValidator.java2
+
+package4
+
+digit.validator5
+"
+digit.validator.BailValidator7
+
+
+class8
+
+access9
+
+public10
+
+simple name11
+
+BailValidator12
+.
+(org.springframework.stereotype.Component14
+
+unknown15
+
+annotated by16
+
+
+uses17
+
+lombok.extern.slf4j.Slf4j19
+
+lombok.AllArgsConstructor21
+.
+(digit.validator.BailValidator.repository23
+
+field24
+
+private25
+
+
+repository26
+%
+digit.repository.BailRepository28
+
+is type29
+]
+Wdigit.validator.BailValidator#validateBailRegistration(Ldigit/web/models/BailRequest;)V31
+
+method32
+
+validateBailRegistration33
+"
+digit.web.models.BailRequest35
+
+	has param36
++
+%org.egov.tracer.model.CustomException38
+
+
+references39
+d
+^digit.validator.BailValidator#baseValidations(Lorg/egov/common/contract/request/RequestInfo;)V41
+
+calls42
+
+digit.web.models.Bail44
+8
+2digit.config.ServiceConstants.VALIDATION_EXCEPTION46
+
+baseValidations47
+2
+,org.egov.common.contract.request.RequestInfo49
++
+%org.egov.common.contract.request.User51
+
+returns52
+g
+aorg.egov.common.contract.request.RequestInfo#getUserInfo()Lorg/egov/common/contract/request/User;54
+*
+$org.springframework.util.ObjectUtils56
+G
+Aorg.springframework.util.ObjectUtils#isEmpty(Ljava/lang/Object;)Z58
+K
+Eorg.egov.common.contract.request.User#getTenantId()Ljava/lang/String;60
+W
+Qdigit.validator.BailValidator#validateBailExists(Ldigit/web/models/BailRequest;)V62
+
+validateBailExists63
+ç
+Üdigit.repository.BailRepository#checkBailExists(Lorg/egov/common/contract/request/RequestInfo;Ldigit/web/models/Bail;)Ljava/util/List;65J
+
+1
+12Z
+
+3	
+354jÔ
+
+34
+343515
+@
+22:
+222324 *
+1 (26:3B
+	
+9
+25
+
+
+11
+26
+
+59
+596015
+
+27
+272815
+
+53
+535415
+9
+64
+678 *
+1 (:3B
+	
+9
+10
+
+
+11
+12
+
+55
+555615
+
+50
+505115
+@
+61:
+616232 *
+1+ +(26:3B
+	
+9
+10
+
+
+11
+63
+
+13
+131415
+
+18
+181915
+@
+40:
+404132 *
+1# #(26:3B
+	
+9
+25
+
+
+11
+47
+
+64
+646515
+@
+30:
+303132 *
+1 (26:3B
+	
+9
+10
+
+
+11
+33
+
+20
+202115
+
+48
+484915
+
+37
+373815
+
+45
+454615
+
+57
+575815
+
+43
+434415rê
+
+61316*
+1 (
+
+61317*
+1 (
+
+61816*
+1 (
+
+61817*
+1 (
+
+62016*
+1 (
+
+62017*
+1 (
+
+222729*
+1 (!
+
+222717*
+1 (!
+
+222717*
+1" (,
+
+303436*
+1* (5
+
+303429*
+16 (A
+
+303417*
+1* (5
+
+303717*
+1J (Y
+
+30639*
+1	 (
+
+304042*
+1	 (
+
+304329*
+1 (
+
+304317*
+1	 (
+
+303742*
+1 (&
+
+304539*
+1' (;
+
+404836*
+1#" #(-
+
+404829*
+1#. #(9
+
+404817*
+1#" #(-
+
+405052*
+1$ $(
+
+404839*
+1$ $(
+
+405342*
+1$ $($
+
+403742*
+1% %(&
+
+404539*
+1%' %(;
+
+405539*
+1& &(
+
+405742*
+1& &(
+
+405517*
+1& &(
+
+405039*
+1&  &(+
+
+405942*
+1&: &(E
+
+405052*
+1&  &(+
+
+404839*
+1&  &(+
+
+405342*
+1&, &(7
+
+403742*
+1' '('
+
+404539*
+1'( '(<
+
+613436*
+1+$ +(/
+
+613429*
+1+0 +(;
+
+613417*
+1+$ +(/
+
+613717*
+1+D +(S
+
+614829*
+1- -( 
+
+614817*
+1-	 -(
+
+614329*
+1. .(
+
+614317*
+1.	 .(
+
+614317*
+1/ /(
+
+612739*
+1/$ /(.
+
+616442*
+1// /(>
+
+612239*
+1/$ /(.
+
+612717*
+1/$ /(.
+
+612239*
+1/$ /(.
+
+613742*
+11 1(&
+
+614539*
+11' 1(;

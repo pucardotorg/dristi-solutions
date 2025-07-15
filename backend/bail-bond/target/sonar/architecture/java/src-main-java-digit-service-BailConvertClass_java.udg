@@ -1,0 +1,254 @@
+
+1.0solutions_bail-bondJavaFrontend"1752560185569*java2.Bè
+6
+1src/main/java/digit/service/BailConvertClass.java2
+
+package4
+
+digit.service5
+#
+digit.service.BailConvertClass7
+
+
+class8
+
+access9
+
+public10
+
+simple name11
+
+BailConvertClass12
+.
+(digit.service.BailConvertClass#<init>()V14
+
+method15
+
+private16
+
+calls17
+|
+vdigit.service.BailConvertClass#convertTo(Lcom/fasterxml/jackson/databind/JsonNode;Ljava/lang/Class;)Ljava/lang/Object;19
+
+	convertTo20
+
+P22
+
+unknown23
+
+returns24
+-
+'com.fasterxml.jackson.databind.JsonNode26
+
+	has param27
+
+is type28
+
+
+uses29
+1
++com.fasterxml.jackson.databind.ObjectMapper31
+
+digit.util.SpringContext33
+
+
+references34
+K
+Edigit.util.SpringContext#getBean(Ljava/lang/Class;)Ljava/lang/Object;36
+8
+2com.fasterxml.jackson.databind.JsonNode#isArray()Z38
+1
++com.fasterxml.jackson.databind.ObjectReader40
+î
+çcom.fasterxml.jackson.databind.ObjectMapper#readerFor(Lcom/fasterxml/jackson/databind/JavaType;)Lcom/fasterxml/jackson/databind/ObjectReader;42
+8
+2com.fasterxml.jackson.databind.type.CollectionType44
+5
+/com.fasterxml.jackson.databind.type.TypeFactory46
+¶
+ücom.fasterxml.jackson.databind.type.TypeFactory#constructCollectionType(Ljava/lang/Class;Ljava/lang/Class;)Lcom/fasterxml/jackson/databind/type/CollectionType;48
+s
+mcom.fasterxml.jackson.databind.ObjectMapper#getTypeFactory()Lcom/fasterxml/jackson/databind/type/TypeFactory;50
+x
+rcom.fasterxml.jackson.databind.ObjectReader#readValue(Lcom/fasterxml/jackson/databind/JsonNode;)Ljava/lang/Object;52
+
+E54
+à
+Åcom.fasterxml.jackson.databind.ObjectMapper#treeToValue(Lcom/fasterxml/jackson/core/TreeNode;Ljava/lang/Class;)Ljava/lang/Object;56J
+
+1
+12Z
+
+3	
+354jÎ
+
+41
+414223
+
+53
+535423
+
+32
+323323
+
+30
+303123
+
+43
+434423
+
+35
+353623
+
+49
+495023
+
+51
+515223
+
+21
+212223
+
+39
+394023
+
+37
+373823
+9
+64
+678 *
+1 (:3B
+	
+9
+10
+
+
+11
+12
+
+45
+454623
+
+55
+555623
+@
+18:
+181915 *
+1 (26:3B
+	
+9
+10
+
+
+11
+20
+
+25
+252623
+@
+13:
+131415 *
+1 (26:3B
+	
+9
+16
+
+
+11
+12
+
+47
+474823rƒ
+
+13617*
+1 (
+
+182124*
+1 (
+
+182527*
+1& (.
+
+182528*
+1/ (7
+
+182529*
+1& (.
+
+183028*
+1 ("
+
+183029*
+1	 (
+
+183024*
+1% (2
+
+183234*
+1% (2
+
+183517*
+13 (:
+
+183229*
+1% (2
+
+183029*
+1; (G
+
+182534*
+1 (
+
+183717*
+1 (
+
+183928*
+1 ( 
+
+183929*
+1 (
+
+183924*
+1# (/
+
+183034*
+1# (/
+
+184117*
+10 (9
+
+184324*
+1: (F
+
+184534*
+1: (F
+
+184717*
+1X (o
+
+184524*
+1: (F
+
+183034*
+1: (F
+
+184917*
+1G (U
+
+182124*
+1 (
+
+183934*
+1 (
+
+185117*
+1 ($
+
+185324*
+1 ($
+
+183034*
+1 ($
+
+185517*
+1% (0

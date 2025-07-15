@@ -1,0 +1,95 @@
+
+›digit.service.WorkflowService#getWorkflowFromProcessInstance(Lorg/egov/common/contract/workflow/ProcessInstance;)Lorg/egov/common/contract/models/Workflow;t
+h/home/bhcp0191/pucar/dristi-solutions/backend/bail-bond/src/main/java/digit/service/WorkflowService.java« «(2"3*%
+2
+­ ­("
+
+­ ­(
+""*Å
+3
+¬ ¬(«
+¨
+
+¬ ¬("
+%0boolean"	__compare*
+
+¬ ¬(
+==*T
+
+¬ ¬(F
+D
+processInstance1org.egov.common.contract.workflow.ProcessInstance*
+
+¬ ¬("
+""*
+2
+1*å
+1
+¯ ¯(‡
+„
+
+¯ ¯(!>
+%18org.egov.common.contract.models.Workflow$WorkflowBuilder"lorg.egov.common.contract.models.Workflow#builder()Lorg/egov/common/contract/models/Workflow$WorkflowBuilder;*H
+
+__unknown_file (,"*
+(org.egov.common.contract.models.Workflow•’
+
+¯) ¯(C-
+%2'org.egov.common.contract.workflow.State"eorg.egov.common.contract.workflow.ProcessInstance#getState()Lorg/egov/common/contract/workflow/State;*b
+
+__unknown_file (F
+D
+processInstance1org.egov.common.contract.workflow.ProcessInstance2
+getState()ÆÃ
+
+¯) ¯(N
+%3java.lang.String"Dorg.egov.common.contract.workflow.State#getState()Ljava/lang/String;*K
+
+__unknown_file (/
+-
+%2'org.egov.common.contract.workflow.State2
+getState()Œ
+
+¯ ¯(O>
+%48org.egov.common.contract.models.Workflow$WorkflowBuilder"org.egov.common.contract.models.Workflow$WorkflowBuilder#action(Ljava/lang/String;)Lorg/egov/common/contract/models/Workflow$WorkflowBuilder;*\
+
+__unknown_file (@
+>
+%18org.egov.common.contract.models.Workflow$WorkflowBuilder*4
+
+__unknown_file (
+
+%3java.lang.String2action(Ljava/lang/String;)ëè
+
+¯Y ¯(u
+%5java.lang.String"Porg.egov.common.contract.workflow.ProcessInstance#getComment()Ljava/lang/String;*b
+
+__unknown_file (F
+D
+processInstance1org.egov.common.contract.workflow.ProcessInstance2getComment()“
+
+¯ ¯(v>
+%68org.egov.common.contract.models.Workflow$WorkflowBuilder"org.egov.common.contract.models.Workflow$WorkflowBuilder#comments(Ljava/lang/String;)Lorg/egov/common/contract/models/Workflow$WorkflowBuilder;*\
+
+__unknown_file (@
+>
+%48org.egov.common.contract.models.Workflow$WorkflowBuilder*4
+
+__unknown_file (
+
+%5java.lang.String2comments(Ljava/lang/String;)’
+
+¯ ¯(~.
+%7(org.egov.common.contract.models.Workflow"jorg.egov.common.contract.models.Workflow$WorkflowBuilder#build()Lorg/egov/common/contract/models/Workflow;*\
+
+__unknown_file (@
+>
+%68org.egov.common.contract.models.Workflow$WorkflowBuilder2build()">
+
+¯ ¯(0
+.
+%7(org.egov.common.contract.models.Workflow:R
+
+«3 «(RD
+processInstance1org.egov.common.contract.workflow.ProcessInstanceB!
+digit.service.WorkflowServiceH

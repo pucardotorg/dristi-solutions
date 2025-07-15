@@ -1,0 +1,304 @@
+
+1.0solutions_bail-bondJavaFrontend"1752560186239*java2.Bñ
+
+0
++src/main/java/digit/util/SpringContext.java2
+
+package4
+
+
+digit.util5
+
+digit.util.SpringContext7
+
+
+class8
+
+access9
+
+public10
+
+simple name11
+
+SpringContext12
+9
+3org.springframework.context.ApplicationContextAware14
+
+unknown15
+
+
+implements16
+.
+(org.springframework.stereotype.Component18
+
+annotated by19
+
+
+uses20
+&
+ digit.util.SpringContext.context22
+
+field23
+
+private24
+
+context25
+4
+.org.springframework.context.ApplicationContext27
+
+is type28
+g
+adigit.util.SpringContext#setApplicationContext(Lorg/springframework/context/ApplicationContext;)V30
+
+method31
+
+setApplicationContext32
+
+	has param33
+%
+org.springframework.util.Assert35
+
+
+references36
+T
+Norg.springframework.util.Assert#notNull(Ljava/lang/Object;Ljava/lang/String;)V38
+
+calls39
+K
+Edigit.util.SpringContext#getBean(Ljava/lang/Class;)Ljava/lang/Object;41
+
+getBean42
+
+T44
+
+returns45
+A
+;org.springframework.util.Assert#state(ZLjava/lang/String;)V47
+3
+-org.springframework.beans.factory.BeanFactory49
+`
+Zorg.springframework.beans.factory.BeanFactory#getBean(Ljava/lang/Class;)Ljava/lang/Object;51
+f
+`digit.util.SpringContext#getApplicationContext()Lorg/springframework/context/ApplicationContext;53
+
+getApplicationContext54
+9
+3digit.util.SpringContext#clearApplicationContext()V56
+
+clearApplicationContext57J
+
+1
+12Z
+
+3	
+354j¹
+
+50
+505115
+@
+55:
+555631 *
+1 (26:3B
+	
+9
+10
+
+
+11
+57
+9
+64
+678 *
+1	 	(:3B
+	
+9
+10
+
+
+11
+12
+
+46
+464715
+@
+52:
+525331 *
+1 (26:3B
+	
+9
+10
+
+
+11
+54
+@
+29:
+293031 *
+1 (26:3B
+	
+9
+10
+
+
+11
+32
+
+26
+262715
+@
+40:
+404131 *
+1 (26:3B
+	
+9
+10
+
+
+11
+42
+
+37
+373815
+@
+21:
+212223 *
+1 (26:3B
+	
+9
+24
+
+
+11
+25
+
+17
+171815
+
+43
+434415
+
+48
+484915
+
+13
+131415
+
+34
+343515r˜
+
+61316*
+1	' 	(>
+
+61719*
+1 (
+
+61720*
+1 (
+
+61320*
+1	' 	(>
+
+212628*
+1 (&
+
+212620*
+1 (&
+
+212620*
+1' (.
+
+292633*
+14 (F
+
+292628*
+1G (Y
+
+292620*
+14 (F
+
+293436*
+1	 (
+
+293739*
+1 (
+
+293420*
+1	 (
+
+29620*
+1	 (
+
+292620*
+1 (
+
+292136*
+1 (
+
+404345*
+1$ (%
+
+403436*
+1	 (
+
+404639*
+1 (
+
+403420*
+1	 (
+
+402620*
+1 (
+
+402136*
+1 (
+
+404345*
+1 (
+
+404836*
+1 (
+
+405039*
+1 (
+
+402136*
+1 (
+
+402620*
+1 (
+
+402136*
+1 (
+
+522645*
+1  (2
+
+522620*
+1  (2
+
+523436*
+1	 (
+
+524639*
+1 (
+
+523420*
+1	 (
+
+522620*
+1 (
+
+522136*
+1 (
+
+522620*
+1 (
+
+522136*
+1 (
+
+552620*
+1	 (
+
+552136*
+1	 (
