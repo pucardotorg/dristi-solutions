@@ -331,6 +331,10 @@ public class CaseConsumer {
     public void updateCaseReferenceNumber(ConsumerRecord<String, Object> payload,
                                           @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         CaseReferenceNumberUpdateRequest caseReferenceNumberUpdateRequest = deserializeConsumerRecordIntoCaseReferenceNumberUpdateRequest(payload);
+        if (caseReferenceNumberUpdateRequest == null) {
+            log.error("Failed to deserialize CaseReferenceNumberUpdateRequest from payload");
+            return;
+        }
         List<String> bailUuids = repository.getBailUuidsForFilingNumber(caseReferenceNumberUpdateRequest.getFilingNumber());
 
         String caseNumber = getCaseReferenceNumber(caseReferenceNumberUpdateRequest);
@@ -343,7 +347,7 @@ public class CaseConsumer {
         }
     }
 
-    private static String getCaseReferenceNumber(CaseReferenceNumberUpdateRequest caseReferenceNumberUpdateRequest) {
+    private String getCaseReferenceNumber(CaseReferenceNumberUpdateRequest caseReferenceNumberUpdateRequest) {
         String caseNumber;
 
         if (caseReferenceNumberUpdateRequest.getCourtCaseNumber() != null && !caseReferenceNumberUpdateRequest.getCourtCaseNumber().isEmpty()) {

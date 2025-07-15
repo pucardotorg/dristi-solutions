@@ -87,7 +87,7 @@ public class DBRepository {
 
         if (bailUuids.isEmpty()) {
             log.warn("No bail records found for filingNumber {}", filingNumber);
-            return null;
+            return List.of();
         }
         return bailUuids;
     }

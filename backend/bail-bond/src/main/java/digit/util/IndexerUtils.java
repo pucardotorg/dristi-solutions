@@ -100,7 +100,6 @@ public class IndexerUtils {
         // Serialize documents list to JSON string
         String documentsJson = "[]";
         try {
-            ObjectMapper mapper = new ObjectMapper();
             documentsJson = mapper.writeValueAsString(simpleDocuments);
         } catch (Exception e) {
             log.warn("Documents JSON serialization FAILED!!!!");
