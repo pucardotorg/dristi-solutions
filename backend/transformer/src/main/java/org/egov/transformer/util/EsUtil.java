@@ -1,0 +1,86 @@
+package org.egov.transformer.util;
+
+import com.jayway.jsonpath.JsonPath;
+import lombok.extern.slf4j.Slf4j;
+import org.egov.transformer.config.TransformerProperties;
+import org.egov.transformer.models.BailUpdateRequest;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Base64;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static org.egov.transformer.config.ServiceConstants.*;
+
+
+@Component
+@Slf4j
+public class EsUtil {
+
+    private final RestTemplate restTemplate;
+    private final TransformerProperties config;
+
+    @Autowired
+    public EsUtil(RestTemplate restTemplate, TransformerProperties config) {
+        this.restTemplate = restTemplate;
+        this.config = config;
+    }
+
+    // Builds the ES update payload for a single Bail record
+    public String buildPayload(String bailId, String caseNumber) {
+        return String.format(
+                ES_UPDATE_BAIL_HEADER_FORMAT + ES_UPDATE_BAIL_DOCUMENT_FORMAT,
+                config.getBailBondIndex(), bailId, caseNumber
+        );
+    }
+
+    // Bulk update method for multiple Bail records
+    public void updateBailCaseNumbers(List<BailUpdateRequest> bailUpdates) {
+        try {
+            if (bailUpdates != null && !bailUpdates.isEmpty()) {
+                String bulkRequestPayload = bailUpdates.stream()
+                        .map(update -> buildPayload(update.getBailUuid(), update.getCaseNumber()))
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.joining(""));
+                String uri = config.getEsHostUrl() + config.getBulkPath();
+                manualIndex(uri, bulkRequestPayload);
+            }
+        } catch (Exception e) {
+            log.error("Error occurred while updating caseNumber in bail index");
+            log.error("ERROR: {}", e.getMessage());
+        }
+    }
+
+    public void manualIndex(String uri, String request) throws Exception {
+        try {
+            log.debug("Record being indexed manually: {}", request);
+
+            final HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON_UTF8);
+            headers.add("Authorization", getESEncodedCredentials());
+            final HttpEntity<String> entity = new HttpEntity<>(request, headers);
+
+            String response = restTemplate.postForObject(uri, entity, String.class);
+            if (uri.contains("_bulk") && JsonPath.read(response, ERRORS_PATH).equals(true)) {
+                log.info("Manual Indexing FAILED!!!!");
+                log.info("Response from ES for manual push: {}", response);
+                throw new Exception("Error while updating index");
+            }
+        } catch (Exception e) {
+            log.error("Exception while trying to index the ES documents", e);
+            throw e;
+        }
+    }
+
+    public String getESEncodedCredentials() {
+        String credentials = config.getEsUsername() + ":" + config.getEsPassword();
+        byte[] credentialsBytes = credentials.getBytes();
+        byte[] base64CredentialsBytes = Base64.getEncoder().encode(credentialsBytes);
+        return "Basic " + new String(base64CredentialsBytes);
+    }
+}

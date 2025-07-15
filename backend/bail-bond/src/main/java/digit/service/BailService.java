@@ -7,6 +7,7 @@ import digit.kafka.Producer;
 import digit.repository.BailRepository;
 import digit.util.CaseUtil;
 import digit.util.EncryptionDecryptionUtil;
+import digit.util.IndexerUtils;
 import digit.validator.BailValidator;
 import digit.web.models.*;
 import lombok.AllArgsConstructor;
@@ -22,10 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static digit.config.ServiceConstants.E_SIGN;
-import static digit.config.ServiceConstants.E_SIGN_COMPLETE;
-import static digit.config.ServiceConstants.PENDING_E_SIGN;
-import static digit.config.ServiceConstants.WORKFLOW_SERVICE_EXCEPTION;
+import static digit.config.ServiceConstants.*;
 
 @Service
 @Slf4j
@@ -39,9 +37,10 @@ public class BailService {
     private final BailRepository bailRepository;
     private final EncryptionDecryptionUtil encryptionDecryptionUtil;
     private final ObjectMapper objectMapper;
+    private final IndexerUtils indexerUtils;
 
     @Autowired
-    public BailService(BailValidator validator, BailRegistrationEnrichment enrichmentUtil, Producer producer, Configuration config, WorkflowService workflowService, BailRepository bailRepository, EncryptionDecryptionUtil encryptionDecryptionUtil, ObjectMapper objectMapper) {
+    public BailService(BailValidator validator, BailRegistrationEnrichment enrichmentUtil, Producer producer, Configuration config, WorkflowService workflowService, BailRepository bailRepository, EncryptionDecryptionUtil encryptionDecryptionUtil, ObjectMapper objectMapper, IndexerUtils indexerUtils) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.producer = producer;
@@ -50,6 +49,7 @@ public class BailService {
         this.bailRepository = bailRepository;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.objectMapper = objectMapper;
+        this.indexerUtils = indexerUtils;
     }
 
 
@@ -108,6 +108,8 @@ public class BailService {
         Bail encryptedBail = encryptionDecryptionUtil.encryptObject(originalBail, config.getBailEncrypt(), Bail.class);
         bailRequest.setBail(encryptedBail);
 
+        insertBailIndexEntry(bailRequest);
+
         producer.push(config.getBailUpdateTopic(), bailRequest);
 
         return originalBail;
@@ -155,6 +157,26 @@ public class BailService {
         } catch (Exception e) {
             log.error("Error while fetching to search results {}", e.toString());
             throw new CustomException("BAIL_SEARCH_ERR", e.getMessage());
+        }
+    }
+
+    public void insertBailIndexEntry(BailRequest bailRequest) {
+        try {
+            Bail bail = bailRequest.getBail();
+            if (bail != null) {
+                log.info("Inserting Bail entry in bail-bond-index (inbox): {}", bailRequest);
+                String bulkRequest = indexerUtils.buildPayload(bail);
+                if (!bulkRequest.isEmpty()) {
+                    String uri = config.getEsHostUrl() + config.getBulkPath();
+                    indexerUtils.esPostManual(uri, bulkRequest);
+                }
+            }
+        } catch (CustomException e) {
+            log.error("Custom Exception occurred while inserting bail index entry");
+            throw e;
+        } catch (Exception e) {
+            log.error("Error occurred while inserting bail index entry");
+            throw new CustomException(BAIL_BOND_INDEX_EXCEPTION, e.getMessage());
         }
     }
 
