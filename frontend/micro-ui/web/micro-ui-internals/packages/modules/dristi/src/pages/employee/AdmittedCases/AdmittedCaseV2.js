@@ -3147,6 +3147,7 @@ const AdmittedCaseV2 = () => {
             status: "PENDING_SIGN",
             assignedTo: [],
             assignedRole: ["JUDGE_ROLE", "BENCH_CLERK"],
+            actionCategory: "Bail Bond",
             cnrNumber,
             filingNumber,
             caseId: caseDetails?.id,

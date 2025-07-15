@@ -13,7 +13,7 @@ export const clearBailBondSessionData = () => {
   sessionStorage.removeItem("bulkBailBondSignSelectedItem");
 };
 
-export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal, rowData, colData, value, onSigningComplete, bailBondPaginationData }) => {
+export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal, rowData, value, onSigningComplete, bailBondPaginationData }) => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const courtId = localStorage.getItem("courtId");
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";

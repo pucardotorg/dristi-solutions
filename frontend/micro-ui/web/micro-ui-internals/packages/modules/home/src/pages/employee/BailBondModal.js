@@ -107,6 +107,28 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
   ];
   console.log(row);
 
+  useEffect(() => {
+    const getBailBonds = async () => {
+      const bailBonds = await DRISTIService.customApiService(Urls.bailBondSearch, {
+        criteria: {
+          tenantId: tenantId,
+          // courtId: courtId,
+          filingNumber: filingNumber,
+          fuzzySearch: true,
+        },
+        pagination: {
+          limit: 100,
+          offSet: 0,
+          sortBy: "startDate",
+          order: "ASC",
+        },
+      });
+      console.log(bailBonds, "bailBonds");
+    };
+
+    getBailBonds();
+  }, [filingNumber, tenantId]);
+
   const createOrder = async () => {
     const reqbody = {
       order: {
@@ -184,8 +206,11 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
           tenantId,
         },
       }).then((res) => {
-        if (queryStrings?.filingNumber) history.goBack();
-        else {
+        if (queryStrings?.filingNumber) {
+          setTimeout(() => {
+            history.goBack();
+          }, 1000);
+        } else {
           setTimeout(() => {
             setLoader(false);
             setShowBailConfirmationModal(false);

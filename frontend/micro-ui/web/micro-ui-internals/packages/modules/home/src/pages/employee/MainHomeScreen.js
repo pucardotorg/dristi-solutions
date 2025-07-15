@@ -33,12 +33,17 @@ const MainHomeScreen = () => {
   const [hearingCount, setHearingCount] = useState(0);
   const [config, setConfig] = useState(structuredClone(pendingTaskConfig));
   const [activeTabTitle, setActiveTabTitle] = useState(homeActiveTab);
-  const [pendingTaskCount, setPendingTaskCount] = useState({ REGISTRATION: 0, REVIEW_PROCESS: 0, VIEW_APPLICATION: 0, SCHEDULE_HEARING: 0 });
+  const [pendingTaskCount, setPendingTaskCount] = useState({
+    REGISTRATION: 0,
+    REVIEW_PROCESS: 0,
+    VIEW_APPLICATION: 0,
+    SCHEDULE_HEARING: 0,
+    BAIL_BOND_STATUS: 0,
+  });
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const [loader, setLoader] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false, currentHearing: {} });
   const [toastMsg, setToastMsg] = useState(null);
-  const [needRefresh, setNeedRefresh] = useState(false);
   const [showBailBondModal, setShowBailBondModal] = useState(false);
   const [selectedBailBond, setSelectedBailBond] = useState(null);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
@@ -244,11 +249,11 @@ const MainHomeScreen = () => {
             isOnlyCountRequired: true,
             actionCategory: "Register cases",
           },
-          // searchBailBond: {
-          //   date: null,
-          //   isOnlyCountRequired: true,
-          //   actionCategory: "Bail Bond",
-          // },
+          searchBailBonds: {
+            date: toDate,
+            isOnlyCountRequired: true,
+            actionCategory: "Bail Bond",
+          },
         },
       };
       let res = await HomeService.pendingTaskSearch(payload, { tenantId: tenantId });
@@ -256,11 +261,14 @@ const MainHomeScreen = () => {
       const applicationCount = res?.viewApplicationData?.count || 0;
       const scheduleCount = res?.scheduleHearingData?.count || 0;
       const registerCount = res?.registerCasesData?.count || 0;
+      const bailBondStatusCount = res?.bailBondData?.count || 0;
+
       setPendingTaskCount({
         REGISTRATION: registerCount,
         REVIEW_PROCESS: reviwCount,
         VIEW_APPLICATION: applicationCount,
         SCHEDULE_HEARING: scheduleCount,
+        BAIL_BOND_STATUS: bailBondStatusCount,
       });
     } catch (err) {
       showToast("error", t("ISSUE_IN_FETCHING"), 5000);
@@ -362,8 +370,7 @@ const MainHomeScreen = () => {
     () => (
       <InboxSearchComposer key={`${activeTab}-${updateCounter}}`} customStyle={sectionsParentStyle} configs={modifiedConfig}></InboxSearchComposer>
     ),
-    //added  need refresh to refresh once the pending task is closed
-    [activeTab, updateCounter, modifiedConfig, needRefresh]
+    [activeTab, updateCounter, modifiedConfig]
   );
 
   return (

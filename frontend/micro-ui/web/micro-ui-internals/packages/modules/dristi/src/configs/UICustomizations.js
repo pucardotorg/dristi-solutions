@@ -1910,10 +1910,10 @@ export const UICustomizations = {
                 }),
             },
             searchViewApplication: {
-              date: activeTab === "VIEW_APPLICATION" || activeTab === "BAIL_BOND_STATUS" ? selectedDateInMs : currentDateInMs,
-              isOnlyCountRequired: activeTab === "VIEW_APPLICATION" || activeTab === "BAIL_BOND_STATUS" ? false : true,
+              date: activeTab === "VIEW_APPLICATION" ? selectedDateInMs : currentDateInMs,
+              isOnlyCountRequired: activeTab === "VIEW_APPLICATION" ? false : true,
               actionCategory: "View Application",
-              ...((activeTab === "VIEW_APPLICATION" || activeTab === "BAIL_BOND_STATUS") &&
+              ...(activeTab === "VIEW_APPLICATION" &&
                 requestCriteria?.state?.searchForm?.caseSearchText && {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
@@ -1936,6 +1936,15 @@ export const UICustomizations = {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
             },
+            searchBailBonds: {
+              date: activeTab === "BAIL_BOND_STATUS" ? selectedDateInMs : currentDateInMs,
+              isOnlyCountRequired: activeTab === "BAIL_BOND_STATUS" ? false : true,
+              actionCategory: "Bail Bond",
+              ...(activeTab === "BAIL_BOND_STATUS" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
             limit: requestCriteria?.state?.tableForm?.limit || 10,
             offset: requestCriteria?.state?.tableForm?.offset || 0,
           },
@@ -1947,6 +1956,7 @@ export const UICustomizations = {
             const applicationCount = data?.viewApplicationData?.count || 0;
             const scheduleCount = data?.scheduleHearingData?.count || 0;
             const registerCount = data?.registerCasesData?.count || 0;
+            const bailBondStatusCount = data?.bailBondData?.count || 0;
 
             // setPendingTaskCount();
             additionalDetails?.setCount({
@@ -1954,6 +1964,7 @@ export const UICustomizations = {
               REVIEW_PROCESS: reviwCount,
               VIEW_APPLICATION: applicationCount,
               SCHEDULE_HEARING: scheduleCount,
+              BAIL_BOND_STATUS: bailBondStatusCount,
             });
             const processFields = (fields) => {
               const result = fields?.reduce((acc, curr) => {
@@ -1990,7 +2001,7 @@ export const UICustomizations = {
                 TotalCount: data?.reviewProcessData?.count,
                 data: data?.reviewProcessData?.data?.map((item) => processFields(item.fields)) || [],
               };
-            } else if (activeTab === "VIEW_APPLICATION" || activeTab === "BAIL_BOND_STATUS") {
+            } else if (activeTab === "VIEW_APPLICATION") {
               return {
                 TotalCount: data?.viewApplicationData?.count,
                 data: data?.viewApplicationData?.data?.map((item) => processFields(item.fields)),
@@ -2000,7 +2011,12 @@ export const UICustomizations = {
                 TotalCount: data?.scheduleHearingData?.count,
                 data: data?.scheduleHearingData?.data?.map((item) => processFields(item.fields)),
               };
-            else
+            else if (activeTab === "BAIL_BOND_STATUS") {
+              return {
+                TotalCount: data?.bailBondData?.count,
+                data: data?.bailBondData?.data?.map((item) => processFields(item.fields)),
+              };
+            } else
               return {
                 TotalCount: data?.registerCasesData?.count,
                 data: data?.registerCasesData?.data?.map((item) => processFields(item.fields)) || [],
