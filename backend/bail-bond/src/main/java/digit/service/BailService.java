@@ -317,8 +317,7 @@ public class BailService {
 
                     // update the bail here
                 } catch (Exception e) {
-                    log.error("Error while updating bail, bailNumber:{}", bailId);
-                    log.error("Error : ", e);
+                    log.error("Error while updating bail, bailNumber: {}", bailId, e);
                     throw new CustomException(BAILS_BULK_SIGN_EXCEPTION, "Error while updating bail: " + e.getMessage());
                 }
             }
