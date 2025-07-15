@@ -1,6 +1,5 @@
 package digit.service;
 
-import ch.qos.logback.core.rolling.helper.FileStoreUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.Configuration;
 import digit.enrichment.BailRegistrationEnrichment;
@@ -8,6 +7,8 @@ import digit.kafka.Producer;
 import digit.repository.BailRepository;
 import digit.util.CaseUtil;
 import digit.util.EncryptionDecryptionUtil;
+import digit.util.FileStoreUtil;
+import digit.util.IndexerUtils;
 import digit.validator.BailValidator;
 import digit.web.models.*;
 import lombok.AllArgsConstructor;
