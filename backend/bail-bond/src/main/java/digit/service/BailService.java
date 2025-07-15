@@ -46,7 +46,7 @@ public class BailService {
     private final Configuration configuration;
 
     @Autowired
-    public BailService(BailValidator validator, BailRegistrationEnrichment enrichmentUtil, Producer producer, Configuration config, WorkflowService workflowService, BailRepository bailRepository, EncryptionDecryptionUtil encryptionDecryptionUtil, ObjectMapper objectMapper,                        FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, ESignUtil eSignUtil, XmlRequestGenerator xmlRequestGenerator, Configuration configuration) {
+    public BailService(BailValidator validator, BailRegistrationEnrichment enrichmentUtil, Producer producer, Configuration config, WorkflowService workflowService, BailRepository bailRepository, EncryptionDecryptionUtil encryptionDecryptionUtil, ObjectMapper objectMapper, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, ESignUtil eSignUtil, XmlRequestGenerator xmlRequestGenerator, Configuration configuration) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.producer = producer;
@@ -73,7 +73,7 @@ public class BailService {
         enrichmentUtil.enrichBailOnCreation(bailRequest);
 
         // Workflow update
-        if(!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())){
+        if (!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())) {
             workflowService.updateWorkflowStatus(bailRequest);
         }
 
@@ -96,7 +96,7 @@ public class BailService {
         enrichmentUtil.enrichBailUponUpdate(bailRequest);
 
         Boolean lastSigned = checkItsLastSign(bailRequest);
-        if(!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())){
+        if (!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())) {
             workflowService.updateWorkflowStatus(bailRequest);
         }
         try {
@@ -150,7 +150,7 @@ public class BailService {
         try {
             log.info("Starting bail search with parameters :: {}", bailSearchRequest);
 
-            if(bailSearchRequest.getCriteria()!=null && bailSearchRequest.getCriteria().getSuretyMobileNumber() != null) {
+            if (bailSearchRequest.getCriteria() != null && bailSearchRequest.getCriteria().getSuretyMobileNumber() != null) {
                 bailSearchRequest.setCriteria(encryptionDecryptionUtil.encryptObject(bailSearchRequest.getCriteria(), "BailSearch", BailSearchCriteria.class));
             }
 
@@ -262,6 +262,8 @@ public class BailService {
 
     public List<Bail> updateBailWithSignDoc(@Valid UpdateSignedBailRequest request) {
         List<Bail> updatedBails = new ArrayList<>();
+
+        RequestInfo requestInfo = request.getRequestInfo();
         for (SignedBail signedBail : request.getSignedBails()) {
             String bailId = signedBail.getBailId();
             String signedBailData = signedBail.getSignedBailData();
@@ -274,7 +276,7 @@ public class BailService {
                     BailSearchCriteria criteria = BailSearchCriteria.builder()
                             .bailId(bailId)
                             .tenantId(tenantId).build();
-                    Pagination pagination = Pagination.builder().limit(10.0).offSet(0.0).build();
+                    Pagination pagination = Pagination.builder().limit(1.0).offSet(0.0).build();
                     BailSearchRequest bailSearchRequest = BailSearchRequest.builder()
                             .criteria(criteria)
                             .pagination(pagination)
@@ -291,6 +293,8 @@ public class BailService {
                     MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedBailData, pdfName);
                     String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
+                    // this is wrong
+
                     bail.getDocuments().stream()
                             .filter(document -> document.getDocumentType().equals(UNSIGNED))
                             .findFirst()
@@ -299,9 +303,16 @@ public class BailService {
                                 document.setDocumentType(SIGNED);
                                 document.setAdditionalDetails(Map.of(NAME, pdfName));
                             });
-                    //ToDo: We need to check How to handle Surety and bail-bond here
+                    if (!ObjectUtils.isEmpty(bail.getSureties())) {
+                        bail.getSureties().forEach(surety -> surety.setIsApproved(true));
+                    }
 
+                    BailRequest updateBailWithJudgeApproval = BailRequest.builder().requestInfo(requestInfo).bail(bail).build();
 
+                    Bail approvedBail = updateBail(updateBailWithJudgeApproval);
+                    updatedBails.add(approvedBail);
+
+                    // update the bail here
                 } catch (Exception e) {
                     log.error("Error while updating bail, bailNumber:{}", bailId);
                     log.error("Error : ", e);
