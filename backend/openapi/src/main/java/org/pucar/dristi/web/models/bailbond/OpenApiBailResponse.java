@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.egov.common.contract.models.Document;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
@@ -37,6 +38,10 @@ public class OpenApiBailResponse {
 
     @JsonProperty("phoneNumber")
     private String phoneNumber = null;
+
+    @JsonProperty("documents")
+    @Valid
+    private List<Document> documents = null;
 
 
     @JsonProperty("sureties")
