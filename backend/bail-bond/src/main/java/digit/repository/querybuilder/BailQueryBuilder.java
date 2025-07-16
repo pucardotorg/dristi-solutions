@@ -48,7 +48,7 @@ public class BailQueryBuilder {
 
     private static final String FROM_QUERY = " FROM dristi_bail bail" +
             " LEFT JOIN dristi_bail_document bail_doc ON bail.id = bail_doc.bail_id" +
-            " LEFT JOIN dristi_surety srt ON bail.bail_id = srt.bail_id" +
+            " LEFT JOIN dristi_surety srt ON bail.id = srt.bail_id" +
             " LEFT JOIN dristi_surety_document surety_doc ON srt.id = surety_doc.surety_id ";
 
     private static final String ORDER_BY_CLAUSE = " ORDER BY {orderBy} {sortingOrder} ";
