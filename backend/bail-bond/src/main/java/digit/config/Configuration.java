@@ -92,6 +92,10 @@ public class Configuration {
     @Value("${egov.url.shortner.endpoint}")
     private String urlShortnerEndpoint;
 
+    @Value("${egov.url.shortener.expire.endpoint}")
+    private String urlShortenerExpireEndpoint;
+
+
 
     //SMSNotification
     @Value("${egov.sms.notification.topic}")
@@ -133,14 +137,72 @@ public class Configuration {
     @Value("${egov.long.url}")
     private String longUrl;
 
-    //Email
-    @Value("${email.topic}")
-    private String emailTopic;
+    @Value("${bail.bond.index}")
+    private String bailBondIndex;
 
-    @Value("${email.bailbond.signature.subject}")
-    private String bailbondSignatureSubject;
+    @Value("${egov.indexer.es.username}")
+    private String esUsername;
 
-    @Value("${email.bailbond.signature.body}")
-    private String bailbondSignatureBody;
+    @Value("${egov.indexer.es.password}")
+    private String esPassword;
+
+
+    @Value("${egov.infra.indexer.host}")
+    private String esHostUrl;
+
+    @Value("${egov.bulk.index.path}")
+    private String bulkPath;
+
+    //FileStore Service
+    @Value("${egov.filestore.host}")
+    private String fileStoreHost;
+
+    @Value("${egov.filestore.path}")
+    private String fileStorePath;
+
+    @Value("${egov.file.store.delete.endpoint}")
+    private String fileStoreDeleteEndPoint;
+
+    //Localization
+    @Value("${egov.localization.host}")
+    private String localizationHost;
+
+    @Value("${egov.localization.context.path}")
+    private String localizationContextPath;
+
+    @Value("${egov.localization.search.endpoint}")
+    private String localizationSearchEndpoint;
+
+    // sms config
+    @Value("${bail.created.sms.for.surety}")
+    private String BailCreatedSmsForSurety;
+
+    @Value("${bail.created.sms.for.litigant}")
+    private String BailCreatedSmsForLitigant;
+
+
+    @Value("${egov.filestore.save.endpoint}")
+    private String fileStoreSaveEndPoint;
+
+
+    @Value("${egov.filestore.search.endpoint}")
+    private String fileStoreSearchEndpoint;
+
+    // ESign Config
+    @Value("${egov.esign.host}")
+    private String esignHost;
+
+    @Value("${egov.esign.location.endpoint}")
+    private String esignLocationEndPoint;
+
+    // zone id
+    @Value("${app.zone.id}")
+    private String zoneId;
+
+    @Value("${file.max.size}")
+    private long maxFileSize;
+
+    @Value("${allowed.content.types}")
+    private String[] allowedContentTypes;
 
 }

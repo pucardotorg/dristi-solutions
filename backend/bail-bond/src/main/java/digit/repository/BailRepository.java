@@ -36,7 +36,7 @@ public class BailRepository {
                 .id(bail.getId())
                 .tenantId(bail.getTenantId())
                 .build();
-        Pagination pagination = Pagination.builder().limit(1.0).offSet(0.0).build();
+        Pagination pagination = Pagination.builder().limit(1).offSet(0).build();
         BailSearchRequest bailSearchRequest = BailSearchRequest.builder()
                 .requestInfo(requestInfo)
                 .criteria(criteria)

@@ -53,7 +53,8 @@ public class BailRegistrationEnrichment {
 
         bail.setAuditDetails(auditDetails);
         bail.setId(String.valueOf(UUID.randomUUID()));
-        bail.setBailId(bailRegistrationBailIdList.get(0));
+        String bailId = bail.getFilingNumber() + "-" + bailRegistrationBailIdList.get(0);
+        bail.setBailId(bailId);
         enrichCaseDetails(bailRequest);
         if(!ObjectUtils.isEmpty(bailRequest.getBail().getDocuments())){
             bail.getDocuments().forEach(this::enrichDocument);
@@ -72,7 +73,6 @@ public class BailRegistrationEnrichment {
                 .criteria(Collections.singletonList(criteria))
                 .build();
         JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
-        ObjectNode objectNode;
 
         bail.setCourtId(caseUtil.getCourtId(caseDetails));
         bail.setCaseTitle(caseUtil.getCaseTitle(caseDetails));
@@ -80,7 +80,14 @@ public class BailRegistrationEnrichment {
         String caseType = caseUtil.getCaseType(caseDetails);
         if(caseType != null){
             bail.setCaseType(Bail.CaseTypeEnum.valueOf(caseType)) ;
+            if(caseType.equalsIgnoreCase("ST")){
+                bail.setCaseNumber(caseUtil.getCourtCaseNumber(caseDetails));
+            }
+            else{
+                bail.setCaseNumber(caseUtil.getCmpNumber(caseDetails));
+            }
         }
+        bail.setCaseId(caseUtil.getCaseId(caseDetails));
     }
 
     public void enrichDocument(Document document) {
@@ -117,5 +124,8 @@ public class BailRegistrationEnrichment {
             }
         }
         enrichSureties(bailRequest);
+        if(!ObjectUtils.isEmpty(bailRequest.getBail().getDocuments())){
+            bailRequest.getBail().getDocuments().forEach(this::enrichDocument);
+        }
     }
 }
