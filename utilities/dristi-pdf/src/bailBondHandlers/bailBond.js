@@ -39,10 +39,24 @@ const processSureties = (bailData, courtName) => {
     return [];
   }
 
+  const formatAddress = (address) => {
+    const formattedAddress = [
+      address?.locality,
+      address?.city,
+      address?.discrict,
+      address?.state,
+      address?.pincode
+    ]
+      .filter((line) => line)
+      .join(", ");
+    
+    return formattedAddress;
+  };
+
   return sureties.map((surety, index) => ({
     suretyName: surety?.name || "",
     suretyParentName: surety?.fatherName || "",
-    suretyAddress: surety?.address || "",
+    suretyAddress: formatAddress(surety?.address) || "",
     litigantName: litigantName || "",
     courtName: courtName || "",
     bailAmount: bailAmount || "",
