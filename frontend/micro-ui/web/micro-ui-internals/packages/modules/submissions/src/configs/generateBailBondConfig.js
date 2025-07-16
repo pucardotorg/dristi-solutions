@@ -66,15 +66,21 @@ export const bailBondConfig = [
             {
               code: "SURETY",
               name: "surety",
+              showSurety: true,
             },
             {
               code: "PERSONAL",
               name: "personal",
+              showSurety: false,
             },
           ],
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
       },
+    ],
+  },
+  {
+    body: [
       {
         type: "component",
         key: "sureties",
@@ -85,7 +91,7 @@ export const bailBondConfig = [
         disable: false,
         isMandatory: false,
         populators: {
-          hideInForm: true,
+          hideInForm: false,
           inputs: [
             {
               label: "FULL_NAME",
@@ -328,5 +334,8 @@ export const bailBondConfig = [
         },
       },
     ],
+    dependentKey: {
+      bailType: ["showSurety"],
+    },
   },
 ];

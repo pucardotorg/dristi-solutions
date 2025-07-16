@@ -16,6 +16,40 @@ import { bailBondWorkflowAction } from "../../../../dristi/src/Utils/submissionW
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
+const convertToFormData = (t, obj) => {
+  const formdata = {
+    selectComplainant: {
+      code: obj?.litigantName,
+      name: obj?.litigantName,
+      uuid: obj?.litigantId,
+    },
+    litigantFatherName: obj?.litigantFatherName,
+    bailAmount: obj?.bailAmount,
+    bailType: {
+      code: obj?.bailType,
+      name: t(obj?.bailType),
+      showSurety : obj?.bailType === "SURETY" ? true : false,
+    },
+    sureties: obj?.sureties?.map((surety) => ({
+      name: surety?.name,
+      fatherName: surety?.fatherName,
+      mobileNumber: surety?.mobileNumber,
+      address: surety?.address,
+      identityProof: {
+        document: surety?.document?.filter((doc) => doc?.documentType === "IDENTITY_PROOF"),
+      },
+      proofOfSolvency: {
+        document: surety?.document?.filter((doc) => doc?.documentType === "PROOF_OF_SOLVENCY"),
+      },
+      otherDocuments: {
+        document: surety?.document?.filter((doc) => doc?.documentType === "OTHER_DOCUMENTS"),
+      },
+    })),
+  };
+ 
+  return formdata;
+};
+
 const GenerateBailBond = () => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { t } = useTranslation();
@@ -154,54 +188,60 @@ const GenerateBailBond = () => {
   }, [caseDetails, pipComplainants, pipAccuseds, userInfo]);
 
   const modifiedFormConfig = useMemo(() => {
-    const updatedConfig = bailBondConfig.map((config) => {
-      const bailType = formdata?.bailType?.code;
-      return {
-        ...config,
-        body: config?.body.map((body) => {
-          if (body?.key === "sureties") {
+    const updatedConfig = bailBondConfig
+      .filter((config) => {
+        const dependentKeys = config?.dependentKey;
+        if (!dependentKeys) {
+          return config;
+        }
+        let show = true;
+        for (const key in dependentKeys) {
+          const nameArray = dependentKeys[key];
+          for (const name of nameArray) {
+            if (Array.isArray(formdata?.[key]?.[name]) && formdata?.[key]?.[name]?.length === 0) {
+              show = false;
+            } else show = show && Boolean(formdata?.[key]?.[name]);
+          }
+        }
+        return show && config;
+      })
+      .map((config) => {
+        return {
+          ...config,
+          body: config?.body.map((body) => {
+            if (body?.populators?.validation) {
+              const customValidations =
+                Digit?.Customizations?.[body.populators.validation.pattern.masterName]?.[body.populators.validation.pattern.moduleName];
+
+              if (typeof customValidations === "function") {
+                const patternType = body.populators.validation.pattern.patternType;
+                const message = body.populators.validation.pattern.message;
+
+                body.populators.validation = {
+                  ...body.populators.validation,
+                  pattern: {
+                    value: customValidations(patternType),
+                    message,
+                  },
+                };
+              }
+            }
+            if (body?.key === "selectComplainant") {
+              body.populators.options = complainantsList;
+              if (complainantsList?.length === 1) {
+                const updatedBody = {
+                  ...body,
+                  disable: true,
+                };
+                return updatedBody;
+              }
+            }
             return {
               ...body,
-              isMandatory: bailType !== "SURETY",
-              populators: {
-                ...body.populators,
-                hideInForm: bailType !== "SURETY",
-              },
             };
-          }
-          if (body?.populators?.validation) {
-            const customValidations =
-              Digit?.Customizations?.[body.populators.validation.pattern.masterName]?.[body.populators.validation.pattern.moduleName];
-
-            if (typeof customValidations === "function") {
-              const patternType = body.populators.validation.pattern.patternType;
-              const message = body.populators.validation.pattern.message;
-
-              body.populators.validation = {
-                ...body.populators.validation,
-                pattern: {
-                  value: customValidations(patternType),
-                  message,
-                },
-              };
-            }
-          }
-          if (body?.key === "selectComplainant") {
-            body.populators.options = complainantsList;
-            if (complainantsList?.length === 1) {
-              const updatedBody = {
-                ...body,
-                disable: true,
-              };
-              return updatedBody;
-            }
-          }
-          return {
-            ...body,
-          };
-        }),
-      };
-    });
+          }),
+        };
+      });
     return updatedConfig;
   }, [complainantsList, formdata]);
 
@@ -276,10 +316,10 @@ const GenerateBailBond = () => {
 
   const defaultFormValue = useMemo(() => {
     if (Object.keys(defaultFormValueData).length > 0) {
-      return defaultFormValueData;
+      return convertToFormData(t, defaultFormValueData);
     }
     if (bailBondDetails) {
-      return bailBondDetails?.additionalDetails?.formdata || {};
+      return convertToFormData(t,(bailBondDetails || {}));
     }
 
     if (!complainantsList || complainantsList.length === 0) return {};
@@ -296,11 +336,7 @@ const GenerateBailBond = () => {
     }
 
     return {};
-  }, [bailBondDetails, complainantsList]);
-
-  const formKey = useMemo(() => {
-    return defaultFormValue ? JSON.stringify(defaultFormValue) : "initial";
-  }, [defaultFormValue]);
+  }, [bailBondDetails, complainantsList, defaultFormValueData, t]);
 
   const onDocumentUpload = async (fileData, filename) => {
     const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, Digit.ULBService.getCurrentTenantId());
@@ -409,7 +445,6 @@ const GenerateBailBond = () => {
           caseType: caseDetails?.caseType,
           documents: [],
           additionalDetails: {
-            formdata: updatedFormData,
             createdUserName: userInfo?.name,
           },
           workflow: {
@@ -457,7 +492,6 @@ const GenerateBailBond = () => {
             litigantFatherName: updatedFormData?.litigantFatherName,
             litigantMobileNumber: individualData ? individualData?.Individual?.[0]?.mobileNumber : bailBondDetails?.litigantMobileNumber,
             additionalDetails: {
-              formdata: updatedFormData,
               createdUserName: userInfo?.name,
             },
             workflow: { ...bailBondDetails.workflow, action, documents: [{}] },
@@ -496,13 +530,13 @@ const GenerateBailBond = () => {
       let bailBondResponse = null;
       if (!bailBondId) {
         bailBondResponse = await createBailBond(individualData);
-        setDefaultFormValueData(bailBondResponse?.bails?.[0]?.additionalDetails?.formdata || {});
+        setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
         history.replace(
           `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondResponse?.bails?.[0]?.bailId}&showModal=true`
         );
       } else {
         bailBondResponse = await updateBailBond(null, bailBondWorkflowAction.SAVEDRAFT, individualData);
-        setDefaultFormValueData(bailBondResponse?.bails?.[0]?.additionalDetails?.formdata || {});
+        setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
         setShowBailBondReview(true);
       }
     } catch (error) {
@@ -521,13 +555,13 @@ const GenerateBailBond = () => {
       let bailBondResponse = null;
       if (!bailBondId) {
         bailBondResponse = await createBailBond(individualData);
-        setDefaultFormValueData(bailBondResponse?.bails?.[0]?.additionalDetails?.formdata || {});
+        setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
         history.replace(
           `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondResponse?.bails?.[0]?.bailId}`
         );
       } else {
         bailBondResponse = await updateBailBond(null, bailBondWorkflowAction.SAVEDRAFT, individualData);
-        setDefaultFormValueData(bailBondResponse?.bails?.[0]?.additionalDetails?.formdata || {});
+        setDefaultFormValueData(bailBondResponse?.bails?.[0] || {});
       }
       setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
     } catch (error) {
@@ -597,6 +631,10 @@ const GenerateBailBond = () => {
     }
   }, []);
 
+  useEffect(() => {
+    setFormdata(convertToFormData(t, bailBondDetails || {}));
+  }, [bailBondDetails, t]);
+
   if (loader || isCaseLoading || !caseDetails || isBailBondLoading) {
     return <Loader />;
   }
@@ -627,7 +665,6 @@ const GenerateBailBond = () => {
         <Header styles={{ margin: "25px 0px 0px 25px" }}> {t("BAIL_BOND_DETAILS")}</Header>
         <div style={{ minHeight: "550px", overflowY: "auto" }}>
           <FormComposerV2
-            key={formKey}
             className={"bailbond"}
             label={t("REVIEW_BAIL_BOND")}
             secondaryLabel={t("SAVE_AS_DRAFT")}
