@@ -244,6 +244,15 @@ public class BailService {
         if (!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())) {
             workflowService.updateWorkflowStatus(bailRequest);
         }
+        if (bailRequest.getBail().getWorkflow() != null
+                && bailRequest.getBail().getWorkflow().getAction() != null
+                && E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction())
+                && !bailRequest.getBail().getLitigantSigned()
+                && bailRequest.getBail().getLitigantId() != null) {
+            List<String> assignees = new ArrayList<>();
+            assignees.add(bailRequest.getBail().getLitigantId());
+            bailRequest.getBail().getWorkflow().setAssignes(assignees);
+        }
         try {
             if (lastSigned) {
                 log.info("Updating Bail Workflow");
