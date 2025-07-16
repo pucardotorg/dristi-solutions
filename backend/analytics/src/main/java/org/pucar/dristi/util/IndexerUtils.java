@@ -567,7 +567,7 @@ public class IndexerUtils {
             else if (config.getADiaryBusinessServiceList().contains(entityType))
                 return processADiaryEntity(request, referenceId);
             else if (config.getBailBondBusinessServiceList().contains(entityType))
-                return processBailBandEntity(request, referenceId);
+                return processBailBondEntity(request, referenceId);
             else {
                 log.error("Unexpected entityType: {}", entityType);
                 return new HashMap<>();
@@ -720,10 +720,10 @@ public class IndexerUtils {
         return caseDetails;
     }
 
-    private Map<String, String> processBailBandEntity(JSONObject request, String referenceId) throws InterruptedException {
+    private Map<String, String> processBailBondEntity(JSONObject request, String referenceId) throws InterruptedException {
         Map<String, String> caseDetails = new HashMap<>();
         Thread.sleep(config.getApiCallDelayInSeconds() * 1000);
-        String filingNumber = extractFilingNumberFromReferenceId(request, referenceId);
+        String filingNumber = extractFilingNumberFromReferenceId(referenceId);
         log.info(filingNumber);
 
         Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
@@ -740,7 +740,7 @@ public class IndexerUtils {
         return caseDetails;
     }
 
-    private String extractFilingNumberFromReferenceId(JSONObject request, String referenceId) {
+    private String extractFilingNumberFromReferenceId(String referenceId) {
         String[] parts = referenceId.split("-");
         return String.join("-", parts[0], parts[1], parts[2]);
     }
