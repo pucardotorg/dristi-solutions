@@ -1,7 +1,6 @@
 package digit.enrichment;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import digit.config.Configuration;
 import digit.util.CaseUtil;
 import digit.util.IdgenUtil;
@@ -14,7 +13,6 @@ import digit.web.models.Document;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
@@ -57,7 +55,7 @@ public class BailRegistrationEnrichment {
         bail.setBailId(bailId);
         enrichCaseDetails(bailRequest);
         if(!ObjectUtils.isEmpty(bailRequest.getBail().getDocuments())){
-            bail.getDocuments().forEach(this::enrichDocument);
+            bail.getDocuments().forEach(document -> enrichDocument(document, tenantId));
         }
         enrichSureties(bailRequest);
         if(String.valueOf(bail.getBailType()).equalsIgnoreCase("Surety")){
@@ -96,10 +94,13 @@ public class BailRegistrationEnrichment {
         bail.setCaseId(caseUtil.getCaseId(caseDetails));
     }
 
-    public void enrichDocument(Document document) {
+    public void enrichDocument(Document document, String rootTenantId) {
         if (document.getId() == null) {
             document.setId(String.valueOf(UUID.randomUUID()));
             document.setDocumentUid(document.getId());
+        }
+        if(document.getTenantId()==null){
+            document.setTenantId(rootTenantId);
         }
     }
 
@@ -110,7 +111,7 @@ public class BailRegistrationEnrichment {
                     surety.setId(String.valueOf(UUID.randomUUID()));
                 }
                 if(!ObjectUtils.isEmpty(surety.getDocuments())){
-                    surety.getDocuments().forEach(this::enrichDocument);
+                    surety.getDocuments().forEach(document -> enrichDocument(document, bailRequest.getBail().getTenantId()));
                 }
             });
         }
@@ -131,7 +132,7 @@ public class BailRegistrationEnrichment {
         }
         enrichSureties(bailRequest);
         if(!ObjectUtils.isEmpty(bailRequest.getBail().getDocuments())){
-            bailRequest.getBail().getDocuments().forEach(this::enrichDocument);
+            bailRequest.getBail().getDocuments().forEach(document -> enrichDocument(document, bailRequest.getBail().getTenantId()));
         }
     }
 }
