@@ -15,11 +15,21 @@ import org.springframework.validation.annotation.Validated;
 public class BailUpdateRequest {
 
     @JsonProperty("bailUuid")
-
     private String bailUuid = null;
 
     @JsonProperty("caseNumber")
-
     private String caseNumber = null;
+
+    @JsonProperty("filingNumber")
+    private String filingNumber = null;
+
+    @JsonProperty("cmpNumber")
+    private String cmpNumber = null;
+
+    @JsonProperty("courtCaseNumber")
+    private String courtCaseNumber = null;
+
+    @JsonProperty("caseTitle")
+    private String caseTitle = null;
 }
 

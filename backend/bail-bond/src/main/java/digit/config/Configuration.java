@@ -153,6 +153,44 @@ public class Configuration {
     @Value("${egov.filestore.host}")
     private String fileStoreHost;
 
+    @Value("${egov.filestore.path}")
+    private String fileStorePath;
+
     @Value("${egov.file.store.delete.endpoint}")
     private String fileStoreDeleteEndPoint;
+
+    @Value("${egov.filestore.save.endpoint}")
+    private String fileStoreSaveEndPoint;
+
+
+    @Value("${egov.filestore.search.endpoint}")
+    private String fileStoreSearchEndpoint;
+
+    // ESign Config
+    @Value("${egov.esign.host}")
+    private String esignHost;
+
+    @Value("${egov.esign.location.endpoint}")
+    private String esignLocationEndPoint;
+
+    // zone id
+    @Value("${app.zone.id}")
+    private String zoneId;
+
+    //Surety Config
+    @Value("${egov.surety.host}")
+    private String suretyHost;
+
+    @Value("${egov.surety.create.path}")
+    private String suretyCreateEndpoint;
+
+    @Value("${egov.surety.search.path}")
+    private String suretySearchEndpoint;
+
+    @Value("${file.max.size}")
+    private long maxFileSize;
+
+    @Value("${allowed.content.types}")
+    private String[] allowedContentTypes;
+
 }
