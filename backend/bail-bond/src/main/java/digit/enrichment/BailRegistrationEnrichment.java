@@ -87,6 +87,7 @@ public class BailRegistrationEnrichment {
                 bail.setCaseNumber(caseUtil.getCmpNumber(caseDetails));
             }
         }
+        bail.setCaseId(caseUtil.getCaseId(caseDetails));
     }
 
     public void enrichDocument(Document document) {

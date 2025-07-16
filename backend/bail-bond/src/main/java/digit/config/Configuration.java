@@ -177,16 +177,6 @@ public class Configuration {
     @Value("${app.zone.id}")
     private String zoneId;
 
-    //Surety Config
-    @Value("${egov.surety.host}")
-    private String suretyHost;
-
-    @Value("${egov.surety.create.path}")
-    private String suretyCreateEndpoint;
-
-    @Value("${egov.surety.search.path}")
-    private String suretySearchEndpoint;
-
     @Value("${file.max.size}")
     private long maxFileSize;
 

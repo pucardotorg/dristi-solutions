@@ -3,6 +3,7 @@ package digit.config;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import org.apache.tika.Tika;
 import org.egov.encryption.config.EncryptionConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -30,5 +31,10 @@ public class BailEncryptionConfiguration extends EncryptionConfiguration {
         ObjectMapper objectMapper = objectMapper();
         converter.setObjectMapper(objectMapper);
         return converter;
+    }
+
+    @Bean
+    public Tika tika() {
+        return new Tika();
     }
 }
