@@ -58,13 +58,16 @@ public class BailRegistrationEnrichment {
             bail.getDocuments().forEach(document -> enrichDocument(document, tenantId));
         }
         enrichSureties(bailRequest);
-        if(String.valueOf(bail.getBailType()).equalsIgnoreCase("Surety")){
-            bail.setBailType(Bail.BailTypeEnum.SURETY);
-        }
-        if(String.valueOf(bail.getBailType()).equalsIgnoreCase("Personal")){
-            bail.setBailType(Bail.BailTypeEnum.PERSONAL);
-        }
+        bail.setBailType(parseBailType(String.valueOf(bail.getBailType())));
     }
+
+    public static Bail.BailTypeEnum parseBailType(String value) {
+        if (value == null) return null;
+        if (value.equalsIgnoreCase("Surety")) return Bail.BailTypeEnum.SURETY;
+        if (value.equalsIgnoreCase("Personal")) return Bail.BailTypeEnum.PERSONAL;
+        return null;
+    }
+
 
     public void enrichCaseDetails(BailRequest bailRequest) {
         Bail bail = bailRequest.getBail();
