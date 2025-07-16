@@ -427,31 +427,44 @@ const GenerateBailBond = () => {
 
   const updateBailBond = async (fileStoreId = null, action, individualData) => {
     try {
-      const updatedFormData = await preProcessFormData(formdata);
-      const sureties = extractSureties(updatedFormData);
-      const documents = Array.isArray(bailBondDetails?.documents) ? bailBondDetails.documents : [];
-      const documentsFile = fileStoreId
-        ? [{ fileStore: fileStoreId, documentType: "SIGNED", additionalDetails: { name: `${t("BAIL_BOND")}.pdf` }, tenantId }]
-        : null;
-      const payload = {
-        bail: {
-          ...bailBondDetails,
-          complainant: updatedFormData?.selectComplainant?.uuid,
-          bailType: updatedFormData?.bailType?.code,
-          bailAmount: updatedFormData?.bailAmount,
-          sureties: sureties,
-          litigantId: updatedFormData?.selectComplainant?.uuid,
-          litigantName: updatedFormData?.selectComplainant?.name,
-          litigantFatherName: updatedFormData?.litigantFatherName,
-          litigantMobileNumber: individualData ? individualData?.Individual?.[0]?.mobileNumber : bailBondDetails?.litigantMobileNumber,
-          documents: documentsFile ? [...documents, ...documentsFile] : documents,
-          additionalDetails: {
-            formdata: updatedFormData,
-            createdUserName: userInfo?.name,
+      let payload = {};
+      if (action !== bailBondWorkflowAction.SAVEDRAFT) {
+        const documents = Array.isArray(bailBondDetails?.documents) ? bailBondDetails.documents : [];
+        const documentsFile = fileStoreId
+          ? [{ fileStore: fileStoreId, documentType: "SIGNED", additionalDetails: { name: `${t("BAIL_BOND")}.pdf` }, tenantId }]
+          : null;
+
+        payload = {
+          bail: {
+            ...bailBondDetails,
+            documents: documentsFile ? [...documents, ...documentsFile] : documents,
+            workflow: { ...bailBondDetails.workflow, action, documents: [{}] },
           },
-          workflow: { ...bailBondDetails.workflow, action, documents: [{}] },
-        },
-      };
+        };
+      } else {
+        const updatedFormData = await preProcessFormData(formdata);
+        const sureties = extractSureties(updatedFormData);
+
+        payload = {
+          bail: {
+            ...bailBondDetails,
+            complainant: updatedFormData?.selectComplainant?.uuid,
+            bailType: updatedFormData?.bailType?.code,
+            bailAmount: updatedFormData?.bailAmount,
+            sureties: sureties,
+            litigantId: updatedFormData?.selectComplainant?.uuid,
+            litigantName: updatedFormData?.selectComplainant?.name,
+            litigantFatherName: updatedFormData?.litigantFatherName,
+            litigantMobileNumber: individualData ? individualData?.Individual?.[0]?.mobileNumber : bailBondDetails?.litigantMobileNumber,
+            additionalDetails: {
+              formdata: updatedFormData,
+              createdUserName: userInfo?.name,
+            },
+            workflow: { ...bailBondDetails.workflow, action, documents: [{}] },
+          },
+        };
+      }
+
       const res = await submissionService.updateBailBond(payload, { tenantId });
       return res;
     } catch (error) {

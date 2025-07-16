@@ -138,10 +138,6 @@ const BailBondReviewModal = ({
             .catch((e) => {
               setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
             });
-
-            // TODO: remove when api integration
-          setShowBailBondReview(false);
-          setShowsignatureModal(true);
         }}
         className={"review-submission-appl-modal bail-bond"}
       >
