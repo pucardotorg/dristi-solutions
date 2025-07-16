@@ -22,7 +22,7 @@ export const Urls = {
     bailBondPreviewPdf: "/egov-pdf/bailBond",
   },
   openApi:{
-    FileFetchByFileStore: "/openapi/v1/file/kl",
+    FileFetchByFileStore: "/openapi/v1/landing_page/file",
     bailSearch:"/openapi/v1/bail/search",
     updateBailBond: "/openapi/v1/updateBailBond",
   }

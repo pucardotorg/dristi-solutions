@@ -26,27 +26,30 @@ const convertToFormData = (t, obj) => {
     litigantFatherName: obj?.litigantFatherName,
     bailAmount: obj?.bailAmount,
     bailType: {
-      code: obj?.bailType,
-      name: t(obj?.bailType),
-      showSurety : obj?.bailType === "SURETY" ? true : false,
+      code: obj?.bailType?.toUpperCase(),
+      name: t(obj?.bailType?.toUpperCase()),
+      showSurety: obj?.bailType?.toUpperCase() === "SURETY" ? true : false,
     },
-    sureties: obj?.sureties?.map((surety) => ({
-      name: surety?.name,
-      fatherName: surety?.fatherName,
-      mobileNumber: surety?.mobileNumber,
-      address: surety?.address,
-      identityProof: {
-        document: surety?.document?.filter((doc) => doc?.documentType === "IDENTITY_PROOF"),
-      },
-      proofOfSolvency: {
-        document: surety?.document?.filter((doc) => doc?.documentType === "PROOF_OF_SOLVENCY"),
-      },
-      otherDocuments: {
-        document: surety?.document?.filter((doc) => doc?.documentType === "OTHER_DOCUMENTS"),
-      },
-    })),
+    sureties:
+      Array.isArray(obj?.sureties) && obj.sureties.length > 0
+        ? obj.sureties.map((surety) => ({
+            name: surety?.name,
+            fatherName: surety?.fatherName,
+            mobileNumber: surety?.mobileNumber,
+            address: surety?.address,
+            identityProof: {
+              document: surety?.documents?.filter((doc) => doc?.documentType === "IDENTITY_PROOF") || [],
+            },
+            proofOfSolvency: {
+              document: surety?.documents?.filter((doc) => doc?.documentType === "PROOF_OF_SOLVENCY") || [],
+            },
+            otherDocuments: {
+              document: surety?.documents?.filter((doc) => doc?.documentType === "OTHER_DOCUMENTS") || [],
+            },
+          }))
+        : [{}],
   };
- 
+
   return formdata;
 };
 
@@ -319,7 +322,7 @@ const GenerateBailBond = () => {
       return convertToFormData(t, defaultFormValueData);
     }
     if (bailBondDetails) {
-      return convertToFormData(t,(bailBondDetails || {}));
+      return convertToFormData(t, bailBondDetails || {});
     }
 
     if (!complainantsList || complainantsList.length === 0) return {};
@@ -412,7 +415,7 @@ const GenerateBailBond = () => {
         mobileNumber: surety?.mobileNumber,
         tenantId,
         address: surety?.address,
-        document: [
+        documents: [
           ...(surety?.identityProof?.document || []),
           ...(surety?.proofOfSolvency?.document || []),
           ...(surety?.otherDocuments?.document || []),
@@ -540,6 +543,7 @@ const GenerateBailBond = () => {
         setShowBailBondReview(true);
       }
     } catch (error) {
+      setDefaultFormValueData(formdata);
       console.error("Error while creating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
@@ -565,6 +569,7 @@ const GenerateBailBond = () => {
       }
       setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
     } catch (error) {
+      setDefaultFormValueData(formdata);
       console.error("Error while creating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
@@ -581,16 +586,18 @@ const GenerateBailBond = () => {
     downloadPdf(tenantId, bailBondFileStoreId);
   };
 
-  const handleESign = () => {
+  const handleESign = async () => {
     // TODO: call Api then close this modal and show next modal
     try {
-      const res = updateBailBond(null, bailBondWorkflowAction.ESIGN);
-      setBailBondSignatureURL(res?.bail?.shortenedURL);
+      const res = await updateBailBond(bailBondFileStoreId, bailBondWorkflowAction.INITIATEESIGN);
+      setBailBondSignatureURL(res?.bails?.[0]?.shortenedURL);
       setShowsignatureModal(false);
       setShowBailBondEsign(true);
     } catch (error) {
       console.error("Error while updating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setShowsignatureModal(false);
     }
   };
 
@@ -605,6 +612,10 @@ const GenerateBailBond = () => {
     } catch (error) {
       console.error("Error while updating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setLoader(false);
+      setShowsignatureModal(false);
+      setShowUploadSignature(false);
     }
   };
 
@@ -638,6 +649,8 @@ const GenerateBailBond = () => {
   if (loader || isCaseLoading || !caseDetails || isBailBondLoading) {
     return <Loader />;
   }
+
+  console.log(defaultFormValue);
 
   return (
     <React.Fragment>

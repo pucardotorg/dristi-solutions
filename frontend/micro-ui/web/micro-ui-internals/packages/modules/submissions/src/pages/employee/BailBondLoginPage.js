@@ -30,23 +30,25 @@ const BailBondLoginPage = () => {
     componentInFront: "+91",
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // TODO: api call and set error if any
 
     // if person is alredy registered then redirect to sign page and also set some data that again will not redirect again
     try {
-      const res = submissionService.searchOpenApiBailBond({
+      const res = await submissionService.searchOpenApiBailBond({
         tenantId,
         bailId: bailbondId,
         mobileNumber: mobileNumber,
       });
-
-      if (!res?.data?.length || res?.data?.length === 0) {
+      if (!res || Object.keys(res).length === 0) {
         setError(true);
         return;
       }
       sessionStorage.setItem("isAuthorised", true);
-      history.replace(`/${window?.contextPath}/citizen/dristi/home/bail-bond-sign?bailBondId=${bailbondId}`);
+      history.replace(`/${window?.contextPath}/citizen/dristi/home/bail-bond-sign?bailbondId=${bailbondId}`, {
+        mobileNumber: mobileNumber,
+        tenantId: tenantId,
+      });
     } catch (error) {
       setError(true);
       return;

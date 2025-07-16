@@ -111,17 +111,13 @@ const BailBondSignaturePage = () => {
 
   const { data: bailBondOpenData, isLoading: isBailBondLoading } = useOpenApiSearchBailBond(
     {
-      criteria: [
-        {
-          bailId: bailbondId,
-          mobileNumber: mobileNumber,
-        },
-      ],
       tenantId,
+      bailId: bailbondId,
+      mobileNumber: mobileNumber,
     },
     {},
     `bail-bond-details-${bailbondId}`,
-    Boolean(bailbondId && filingNumber && !isUserLoggedIn)
+    Boolean(bailbondId && !isUserLoggedIn)
   );
 
   const { data: bailBond, isLoading: isBailDataLoading } = useSearchBailBondService(
@@ -133,36 +129,49 @@ const BailBondSignaturePage = () => {
     },
     {},
     `bail-bond-details-${bailbondId}`,
-    Boolean(bailbondId && filingNumber && isUserLoggedIn)
+    Boolean(bailbondId && isUserLoggedIn)
   );
 
   const bailBondDetails = useMemo(() => {
-    return bailBond?.criteria?.[0]?.responseList?.[0] || bailBondOpenData?.criteria?.[0]?.responseList?.[0];
+    return bailBond?.bails?.[0] || bailBondOpenData;
   }, [bailBond, bailBondOpenData]);
 
-  const dummyLitigants = [
-    {
+  // Check if current user is the creator of the bail bond
+  const isCreator = useMemo(() => {
+    if (!isUserLoggedIn) return false;
+    const createdByUuid = bailBondDetails?.auditDetails?.createdBy;
+    const loggedInUserUuid = userInfo?.uuid;
+    return Boolean(createdByUuid && loggedInUserUuid && createdByUuid === loggedInUserUuid);
+  }, [isUserLoggedIn, bailBondDetails, userInfo]);
+
+  const fileStoreId = useMemo(() => {
+    return bailBondDetails?.documents?.find((doc) => doc.documentType === "SIGNED")?.fileStore;
+  }, [bailBondDetails]);
+
+  const dummyLitigants = useMemo(() => {
+    const data = [];
+  
+    const litigant = {
       additionalDetails: {
-        fullName: "John Doe",
-        uuid: "user-1",
+        fullName: bailBondDetails?.litigantName || "",
       },
-      hasSigned: false,
-    },
-    {
-      additionalDetails: {
-        fullName: "Jane Smith",
-        uuid: "user-2",
-      },
-      hasSigned: true,
-    },
-    {
-      additionalDetails: {
-        fullName: "Alice Johnson",
-        uuid: "user-3",
-      },
-      hasSigned: true,
-    },
-  ];
+      hasSigned: bailBondDetails?.litigantSigned || false,
+    };
+  
+    if (Array.isArray(bailBondDetails?.sureties)) {
+      bailBondDetails.sureties.forEach((surety) => {
+        data.push({
+          additionalDetails: {
+            fullName: surety?.name || "",
+          },
+          hasSigned: surety?.hasSigned || false,
+        });
+      });
+    }
+  
+    return [litigant, ...data];
+  }, [bailBondDetails]);
+  
 
   const { data: { file: orderPreviewPdf, fileName: orderPreviewFileName } = {}, isFetching: isLoading } = useQuery({
     queryKey: ["bailBondSignaturePdf", tenantId, bailbondId, userInfo?.uuid],
@@ -170,15 +179,20 @@ const BailBondSignaturePage = () => {
     cacheTime: 0,
     queryFn: async () => {
       return Axios({
-        method: "GET",
-        url: `${Urls.openApi.FileFetchByFileStore}/${bailbondId}`,
+        method: "POST",
+        url: `${Urls.openApi.FileFetchByFileStore}`,
+        data: {
+          tenantId: "kl",
+          fileStoreId: fileStoreId,
+          moduleName: "DRISTI",
+        },
         responseType: "blob",
       }).then((res) => ({ file: res.data, fileName: res.headers["content-disposition"]?.split("filename=")[1] }));
     },
     onError: (error) => {
       console.error("Failed to fetch order preview PDF:", error);
     },
-    enabled: true,
+    enabled: Boolean(fileStoreId),
   });
 
   const handleSubmit = () => {
@@ -227,7 +241,9 @@ const BailBondSignaturePage = () => {
           },
         };
         const res = submissionService.updateBailBond(payload, { tenantId });
-        history.replace(`/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailbondId}`);
+        history.replace(
+          `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${bailBondDetails?.filingNumber}&bailBondId=${bailbondId}`
+        );
       } else {
         history.replace(`/${window?.contextPath}/citizen/dristi/home/login`);
       }
@@ -280,7 +296,7 @@ const BailBondSignaturePage = () => {
               <DocViewerWrapper
                 docWidth={"100%"}
                 docHeight={"100%"}
-                selectedDocs={[orderPreviewPdf]}
+                selectedDocs={orderPreviewPdf ? [orderPreviewPdf] : []}
                 tenantId={tenantId}
                 docViewerCardClassName={"doc-card"}
                 showDownloadOption={false}
@@ -292,22 +308,24 @@ const BailBondSignaturePage = () => {
         </div>
         <ActionBar>
           <div style={styles.actionBar}>
-            <Button
-              label={t("EDIT")}
-              variation={"secondary"}
-              onButtonClick={() => {
-                setEditCaseModal(true);
-              }}
-              style={{ backgroundColor: "#fff", padding: "10px", width: "90px", marginRight: "20px" }}
-              textStyles={{
-                fontFamily: "Roboto",
-                fontSize: "16px",
-                fontWeight: 700,
-                lineHeight: "18.75px",
-                textAlign: "center",
-                color: "#007E7E",
-              }}
-            />
+            {isCreator && (
+              <Button
+                label={t("EDIT")}
+                variation={"secondary"}
+                onButtonClick={() => {
+                  setEditCaseModal(true);
+                }}
+                style={{ backgroundColor: "#fff", padding: "10px", width: "90px", marginRight: "20px" }}
+                textStyles={{
+                  fontFamily: "Roboto",
+                  fontSize: "16px",
+                  fontWeight: 700,
+                  lineHeight: "18.75px",
+                  textAlign: "center",
+                  color: "#007E7E",
+                }}
+              />
+            )}
             <SubmitBar
               label={
                 <div style={{ boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>

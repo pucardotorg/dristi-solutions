@@ -18,7 +18,7 @@ function useSearchBailBondService(reqData, params, key, enabled) {
     data,
     refetch,
     revalidate: () => {
-      data && client.invalidateQueries({ queryKey: `GET_SUBMISSION_DETAILS_${key}` });
+      data && client.invalidateQueries({ queryKey: `GET_BAIL_BOND_DETAILS_${key}` });
     },
     error,
   };
