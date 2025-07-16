@@ -92,6 +92,10 @@ public class Configuration {
     @Value("${egov.url.shortner.endpoint}")
     private String urlShortnerEndpoint;
 
+    @Value("${egov.url.shortener.expire.endpoint}")
+    private String urlShortenerExpireEndpoint;
+
+
 
     //SMSNotification
     @Value("${egov.sms.notification.topic}")
@@ -159,6 +163,24 @@ public class Configuration {
     @Value("${egov.file.store.delete.endpoint}")
     private String fileStoreDeleteEndPoint;
 
+    //Localization
+    @Value("${egov.localization.host}")
+    private String localizationHost;
+
+    @Value("${egov.localization.context.path}")
+    private String localizationContextPath;
+
+    @Value("${egov.localization.search.endpoint}")
+    private String localizationSearchEndpoint;
+
+    // sms config
+    @Value("${bail.created.sms.for.surety}")
+    private String BailCreatedSmsForSurety;
+
+    @Value("${bail.created.sms.for.litigant}")
+    private String BailCreatedSmsForLitigant;
+
+
     @Value("${egov.filestore.save.endpoint}")
     private String fileStoreSaveEndPoint;
 
@@ -176,16 +198,6 @@ public class Configuration {
     // zone id
     @Value("${app.zone.id}")
     private String zoneId;
-
-    //Surety Config
-    @Value("${egov.surety.host}")
-    private String suretyHost;
-
-    @Value("${egov.surety.create.path}")
-    private String suretyCreateEndpoint;
-
-    @Value("${egov.surety.search.path}")
-    private String suretySearchEndpoint;
 
     @Value("${file.max.size}")
     private long maxFileSize;
