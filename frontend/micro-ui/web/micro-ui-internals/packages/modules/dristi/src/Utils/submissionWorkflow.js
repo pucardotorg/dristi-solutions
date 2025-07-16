@@ -27,10 +27,12 @@ export const SubmissionDocumentsWorkflowState = {
   SUBMITTED: "SUBMITTED",
 };
 
-export const bailBondWorkflowAction = { 
-  SAVEDRAFT:"SAVE_DRAFT",
-  INITIATEESIGN:"INITIATE_E-SIGN",
-  UPLOAD:"UPLOAD",
-  EDIT:"EDIT",
-  ESIGN:"E-SIGN",
-}
+export const bailBondWorkflowAction = {
+  SAVEDRAFT: "SAVE_DRAFT",
+  INITIATEESIGN: "INITIATE_E-SIGN",
+  UPLOAD: "UPLOAD",
+  EDIT: "EDIT",
+  ESIGN: "E-SIGN",
+  SIGN: "SIGN",
+  REJECT: "REJECT",
+};

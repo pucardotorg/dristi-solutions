@@ -838,6 +838,17 @@ export const pendingTaskForBailBondActions = {
       ],
     },
   },
+  PENDING_REVIEW: {
+    actorName: ["JUDGE"],
+    actionName: "Review the bail bond",
+    redirectDetails: {
+      url: "/home/sign-bail-bond",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "bailId", value: "referenceId" },
+      ],
+    },
+  },
 };
 
 export const selectTaskType = {
@@ -856,4 +867,5 @@ export const selectTaskType = {
   "voluntary-application-submission-bail": pendingTaskVoluntarySubmissionBailActions,
   "task-generic": pendingTaskCaseGeneratePaymentActions,
   "bail bond": pendingTaskForBailBondActions,
+  "bail-bond-default": pendingTaskForBailBondActions,
 };

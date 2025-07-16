@@ -1,10 +1,7 @@
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
 
 const defaultSearchValues = {
-  status: { type: OrderWorkflowState.PENDING_BULK_E_SIGN },
   caseTitle: "",
-  startOfTheDay: "",
-  endOfTheDay: "",
 };
 
 const limit = parseInt(sessionStorage.getItem("bulkBailBondSignlimit") || 10);
@@ -13,15 +10,15 @@ const offset = parseInt(sessionStorage.getItem("bulkBailBondSignoffset") || 0);
 export const bulkBailBondSignConfig = {
   label: "CS_HOME_BULK_BAIL_BOND_SIGN",
   type: "inbox",
-  preProcess: {
-    data: (data) => {
-      // Process the data to mark items as selected based on your criteria
-      return data.map((item) => ({
-        ...item,
-        selected: item.businessObject?.pendingActions === "SIGN_BAIL_BOND",
-      }));
-    },
-  },
+  // preProcess: {
+  //   data: (data) => {
+  //     // Process the data to mark items as selected based on your criteria
+  //     return data.map((item) => ({
+  //       ...item,
+  //       selected: item.businessObject?.pendingActions === "SIGN_BAIL_BOND",
+  //     }));
+  //   },
+  // },
   apiDetails: {
     serviceName: "/inbox/v2/index/_search",
     requestParam: {},
@@ -29,9 +26,13 @@ export const bulkBailBondSignConfig = {
       inbox: {
         limit: limit,
         offset: offset,
+        moduleSearchCriteria: {
+          courtId: localStorage.getItem("courtId"),
+          status: "PENDING_REVIEW",
+        },
         processSearchCriteria: {
-          businessService: ["notification"],
-          moduleName: "Transformer service",
+          businessService: ["bail-bond-default"],
+          moduleName: "Bail Bond Service",
         },
         tenantId: Digit.ULBService.getCurrentTenantId(),
       },
@@ -78,17 +79,17 @@ export const bulkBailBondSignConfig = {
         columns: [
           {
             label: "CASE_NAME_AND_NUMBER",
-            jsonPath: "businessObject.orderNotification.caseTitle",
+            jsonPath: "businessObject.bailDetails.caseTitle",
             additionalCustomization: true,
           },
           {
             label: "NUMBER",
-            jsonPath: "businessObject.orderNotification.bailBondAmount",
+            jsonPath: "businessObject.bailDetails.caseNumber",
             additionalCustomization: true,
           },
           {
             label: "LITIGANT",
-            jsonPath: "businessObject.orderNotification.title",
+            jsonPath: "businessObject.bailDetails.litigantName",
             additionalCustomization: true,
           },
           {

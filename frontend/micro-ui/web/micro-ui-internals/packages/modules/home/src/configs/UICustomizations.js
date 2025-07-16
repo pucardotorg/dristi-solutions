@@ -615,14 +615,10 @@ export const UICustomizations = {
       const offset = parseInt(sessionStorage.getItem("bulkBailBondSignoffset")) || parseInt(requestCriteria?.state?.tableForm?.offset) || 0;
 
       const moduleSearchCriteria = {
-        entityType,
+        // entityType,
         tenantId,
-        ...(caseTitle && { caseTitle }),
-        status: status?.type || "PENDING_BULK_E-SIGN",
-        ...(startOfTheDay && {
-          startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
-          endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
-        }),
+        status: "PENDING_REVIEW",
+        ...(caseTitle && { searchableFields: caseTitle }),
         ...(courtId && { courtId }),
       };
       const bulkBailBondSignCaseTitle = requestCriteria?.state?.searchForm && requestCriteria?.state?.searchForm?.caseTitle;
@@ -651,7 +647,7 @@ export const UICustomizations = {
             sessionStorage.removeItem("bulkBailBondSignlimit");
             sessionStorage.removeItem("bulkBailBondSignoffset");
             if (sessionStorage.getItem("bulkBailBondSignCaseTitle")) {
-              sessionStorage.removeItem("bulkBailBondSignCaseTitle");
+              sessionStorage.removeItem("bulkBailBondSignCaseTitle"); //we are storing this for search inbox
               setNeedConfigRefresh((prev) => !prev);
             }
 
@@ -673,11 +669,11 @@ export const UICustomizations = {
           return <OrderName rowData={row} colData={column} value={value} />;
         // return <BailBondSignModal rowData={row} colData={column} value={value} />;
         case "LITIGANT":
-          return value;
+          return value || "";
         case "NUMBER":
-          return <span>{value || "0"}</span>;
+          return <span>{value || ""}</span>;
         case "SELECT":
-          return <BulkCheckBox rowData={row} colData={column} />;
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
         default:
           return "";
       }

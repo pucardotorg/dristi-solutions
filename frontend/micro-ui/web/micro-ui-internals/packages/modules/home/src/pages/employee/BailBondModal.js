@@ -310,14 +310,14 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
                       </div>
                       <div>
                         {" "}
-                        <span style={{ fontWeight: "600", fontSize: "14px" }}>Litigant :</span> {bond?.advocate}
+                        <span style={{ fontWeight: "600", fontSize: "14px" }}>{t("CHOOSE_COMPLAINANT")} :</span> {bond?.advocate}
                       </div>
                       <div>
-                        <span style={{ fontWeight: "600", fontSize: "14px" }}>Advocate: </span>
+                        <span style={{ fontWeight: "600", fontSize: "14px" }}>{t("ADVOCATE")} : </span>
                         {bond?.advocate}
                       </div>
                       <div>
-                        <span style={{ fontWeight: "600", fontSize: "14px" }}>Date:</span> {bond?.date}
+                        <span style={{ fontWeight: "600", fontSize: "14px" }}>{t("DATE")} :</span> {bond?.date}
                       </div>
                     </div>
                     <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
@@ -334,7 +334,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
                         }}
                         onClick={() => setIsDocViewOpened(true)}
                       >
-                        View
+                        {t("VIEW")}
                       </button>
                     </div>
                   </div>
@@ -353,7 +353,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
                   fontFamily: "Roboto",
                 }}
               >
-                <span style={{ fontSize: "16px" }}>There are no bail bonds present for this case. </span>
+                <span style={{ fontSize: "16px" }}>{t("NO_BAIL_BONDS")} </span>
               </div>
             )}
           </div>{" "}
@@ -401,8 +401,6 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
           isDisabled={loader}
           isCustomButtonDisabled={loader}
           isBackButtonDisabled={loader}
-          // style={{ width: "50%" }}
-          // actionCancelStyle={{ width: "50%" }}
           actionCancelLabel={t("CS_COMMON_CANCEL")}
           actionCancelOnSubmit={() => {
             showToast("error", t("ISSUE_IN_FETCHING"), 5000);
@@ -427,7 +425,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
               borderBottom: "1px solid #E8E8E8",
             }}
           >
-            <span style={{ fontSize: "16px" }}>This action cannot be reversed.</span>
+            <span style={{ fontSize: "16px" }}>{t("CONFIRM_BAIL_BOND_CLOSURE")}</span>
           </div>
         </Modal>
       )}

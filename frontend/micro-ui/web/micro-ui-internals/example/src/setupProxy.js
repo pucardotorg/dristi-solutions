@@ -125,6 +125,8 @@ module.exports = function (app) {
     "/epayments",
     "/openapi",
     "/bail-bond",
+    "/bail-bond/v1/_updateSignedBails",
+    "/bail-bond/v1/_getBailsToSign",
   ].forEach((location) => app.use(location, createProxy));
   ["/pb-egov-assets"].forEach((location) => app.use(location, assetsProxy));
   ["/mdms-v2/v2/_create"].forEach((location) => app.use(location, mdmsProxy));

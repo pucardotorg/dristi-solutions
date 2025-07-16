@@ -4,11 +4,17 @@ import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { bulkBailBondSignConfig } from "../../configs/BulkBailBondSignConfig";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import { OrderWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
 import axios from "axios";
-import { BailBondSignModal, clearBailBondSessionData } from "./BailBondSignModal";
-import { set } from "lodash";
+import { BailBondSignModal } from "./BailBondSignModal";
+import qs from "qs";
+import { HomeService } from "../../hooks/services";
+const parseXml = (xmlString, tagName) => {
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(xmlString, "application/xml");
 
+  const element = xmlDoc.getElementsByTagName(tagName)[0];
+  return element ? element.textContent.trim() : null;
+};
 const sectionsParentStyle = {
   height: "50%",
   display: "flex",
@@ -45,17 +51,17 @@ function BulkBailBondSignView() {
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
   if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const [needConfigRefresh, setNeedConfigRefresh] = useState(false);
-
+  const [counter, setCounter] = useState(0);
   const config = useMemo(() => {
-    const setOrderFunc = async (order) => {
+    const setBailBondFunc = async (bailbond) => {
       setShowBulkSignModal(true);
-      setSelectedBailBond(order);
+      setSelectedBailBond(bailbond);
     };
 
-    const updateOrderFunc = async (orderData, checked) => {
+    const updateBailBondFunc = async (Data, checked) => {
       setBulkSignList((prev) => {
         return prev?.map((item, i) => {
-          if (item?.businessObject?.orderNotification?.id !== orderData?.businessObject?.orderNotification?.id) return item;
+          if (item?.businessObject?.bailDetails?.bailId !== Data?.businessObject?.bailDetails?.bailId) return item;
 
           return {
             ...item,
@@ -76,12 +82,12 @@ function BulkBailBondSignView() {
               if (column.label === "SELECT") {
                 return {
                   ...column,
-                  updateOrderFunc: updateOrderFunc,
+                  updateOrderFunc: updateBailBondFunc,
                 };
               } else if (column.label === "CASE_NAME_AND_NUMBER") {
                 return {
                   ...column,
-                  clickFunc: setOrderFunc,
+                  clickFunc: setBailBondFunc,
                 };
               } else {
                 return column;
@@ -126,50 +132,86 @@ function BulkBailBondSignView() {
     []
   );
 
+  const fetchResponseFromXmlRequest = async (bailBondRequestList) => {
+    const responses = [];
+
+    const requests = bailBondRequestList?.map(async (bailBond) => {
+      try {
+        // URL encoding the XML request
+        const formData = qs.stringify({ response: bailBond?.request });
+        const response = await axios.post(bulkSignUrl, formData, {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+          },
+        });
+
+        const data = response?.data;
+
+        if (parseXml(data, "status") !== "failed") {
+          responses.push({
+            orderNumber: bailBond?.bailId,
+            signedBailData: parseXml(data, "data"),
+            signed: true,
+            errorMsg: null,
+            tenantId: tenantId,
+          });
+        } else {
+          responses.push({
+            bailId: bailBond?.bailId,
+            signedBailData: parseXml(data, "data"),
+            signed: false,
+            errorMsg: parseXml(data, "error"),
+            tenantId: tenantId,
+          });
+        }
+      } catch (error) {
+        console.error(`Error fetching bailBond ${bailBond?.bailId}:`, error?.message);
+      }
+    });
+
+    await Promise.allSettled(requests);
+    return responses;
+  };
+
   const handleBulkSign = useCallback(async () => {
     try {
-      const xmlReqIds = [];
       setIsLoading(true);
 
       if (bulkSignList && bulkSignList.length > 0) {
-        const selectedBulkSignList = bulkSignList?.filter((item) => item?.isSelected);
-
-        if (selectedBulkSignList?.length > 0) {
-          const orderRequestList = selectedBulkSignList?.map((item) => {
-            const id = item?.businessObject?.orderNotification?.id;
-            xmlReqIds.push(id);
-            return { id };
+        const selectedBulkSignList = bulkSignList
+          ?.filter((item) => item?.isSelected)
+          ?.map((bailbond) => {
+            return {
+              fileStoreId: bailbond?.businessObject?.bailDetails?.documents?.find((doc) => doc.documentType === "SIGNED")?.fileStore,
+              bailId: bailbond?.businessObject?.bailDetails?.bailId,
+              placeholder: "Signature",
+              tenantId: tenantId,
+            };
           });
 
-          const bulkSignReqData = {
-            orderRequestList,
-          };
-
-          if (bulkSignReqData.orderRequestList.length > 0) {
-            sessionStorage.setItem(
-              "bulkBailBondSelectedItems",
-              JSON.stringify(selectedBulkSignList.map((item) => item?.businessObject?.orderNotification?.id))
-            );
-
-            const bulkAPIRes = await axios.post(`${bulkSignUrl}/bulk/api/orders/getOrderList`, bulkSignReqData, {
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${sessionStorage.getItem("Digit.citizen.token") || sessionStorage.getItem("Digit.employee.token")}`,
-                courtId: courtId || "",
-                tenantId: tenantId || "",
+        if (selectedBulkSignList?.length > 0) {
+          const response = await HomeService.getBailBondsToSign(
+            {
+              criteria: selectedBulkSignList,
+            },
+            {}
+          );
+          await fetchResponseFromXmlRequest(response?.bailList).then(async (responseArray) => {
+            const updatedBailBondResponse = await HomeService.updateSignedBailBonds(
+              {
+                signedBails: responseArray,
               },
-            });
+              {}
+            );
+            console.log(updatedBailBondResponse, "updatedBailBondResponse", updatedBailBondResponse?.bails?.length);
 
-            if (bulkAPIRes?.status === 200 && bulkAPIRes?.data?.status === "successful") {
-              window.location.href = `${bulkSignUrl}?successURL=${window.location.origin}/${window.contextPath}/employee/home/BulkBailBondSignView`;
-            } else {
-              setShowErrorToast({
-                error: true,
-                label: bulkAPIRes?.data?.error?.message ? bulkAPIRes?.data?.error?.message : t("ERROR_BAIL_BULK_SIGN_MSG"),
-              });
-              setShowBulkSignConfirmModal(false);
-            }
-          }
+            // history.replace(homePath, {
+            //   bulkSignSuccess: {
+            //     show: true,
+            //     bailBondCount: updatedBailBondResponse?.bailBond?.length,
+            //   },
+            // });
+          });
         }
       }
     } catch (error) {
@@ -183,18 +225,16 @@ function BulkBailBondSignView() {
     }
   }, [bulkSignList, tenantId, courtId, bulkSignUrl, t]);
 
-  const handleSigningComplete = useCallback(() => {
-    if (searchComposerRef.current) {
-      searchComposerRef.current.refresh();
-    }
-    clearBailBondSessionData();
-  }, []);
-
   const MemoInboxSearchComposer = useMemo(() => {
     return (
-      <InboxSearchComposer pageSizeLimit={sessionStorage.getItem("bulkBailBondSignlimit") || 10} configs={config} customStyle={sectionsParentStyle} />
+      <InboxSearchComposer
+        key={`bailbond${counter}`}
+        pageSizeLimit={sessionStorage.getItem("bulkBailBondSignlimit") || 10}
+        configs={config}
+        customStyle={sectionsParentStyle}
+      />
     );
-  }, [config]);
+  }, [config, counter]);
 
   return (
     <React.Fragment>
@@ -202,7 +242,8 @@ function BulkBailBondSignView() {
         <Loader />
       ) : (
         <React.Fragment>
-          <div className={"bulk-esign-order-view"} style={{ padding: 0 }}>
+          {/* bulk-esign-order-view */}
+          <div className={""} style={{ width: "100%", maxHeight: "calc(-250px + 100vh)", overflowY: "auto" }}>
             {MemoInboxSearchComposer}
           </div>
           {isJudge && (
@@ -241,8 +282,8 @@ function BulkBailBondSignView() {
         <BailBondSignModal
           selectedBailBond={selectedBailBond}
           setShowBulkSignModal={setShowBulkSignModal}
-          onSigningComplete={handleSigningComplete}
           bailBondPaginationData={bailBondPaginationData}
+          setCounter={setCounter}
         />
       )}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
