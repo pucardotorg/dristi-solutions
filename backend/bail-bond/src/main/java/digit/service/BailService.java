@@ -24,6 +24,7 @@ import java.util.Map;
 
 import static digit.config.ServiceConstants.E_SIGN;
 import static digit.config.ServiceConstants.E_SIGN_COMPLETE;
+import static digit.config.ServiceConstants.INITIATE_E_SIGN;
 import static digit.config.ServiceConstants.PENDING_E_SIGN;
 import static digit.config.ServiceConstants.WORKFLOW_SERVICE_EXCEPTION;
 
@@ -39,9 +40,10 @@ public class BailService {
     private final BailRepository bailRepository;
     private final EncryptionDecryptionUtil encryptionDecryptionUtil;
     private final ObjectMapper objectMapper;
+    private final NotificationService notificationService;
 
     @Autowired
-    public BailService(BailValidator validator, BailRegistrationEnrichment enrichmentUtil, Producer producer, Configuration config, WorkflowService workflowService, BailRepository bailRepository, EncryptionDecryptionUtil encryptionDecryptionUtil, ObjectMapper objectMapper) {
+    public BailService(BailValidator validator, BailRegistrationEnrichment enrichmentUtil, Producer producer, Configuration config, WorkflowService workflowService, BailRepository bailRepository, EncryptionDecryptionUtil encryptionDecryptionUtil, ObjectMapper objectMapper, NotificationService notificationService) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.producer = producer;
@@ -50,6 +52,7 @@ public class BailService {
         this.bailRepository = bailRepository;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.objectMapper = objectMapper;
+        this.notificationService = notificationService;
     }
 
 
@@ -64,6 +67,9 @@ public class BailService {
 
         // Workflow update
         if(!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())){
+            if(INITIATE_E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction())){
+                // send email
+            }
             workflowService.updateWorkflowStatus(bailRequest);
         }
 

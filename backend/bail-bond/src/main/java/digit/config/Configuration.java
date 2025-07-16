@@ -132,4 +132,15 @@ public class Configuration {
 
     @Value("${egov.long.url}")
     private String longUrl;
+
+    //Email
+    @Value("${email.topic}")
+    private String emailTopic;
+
+    @Value("${email.bailbond.signature.subject}")
+    private String bailbondSignatureSubject;
+
+    @Value("${email.bailbond.signature.body}")
+    private String bailbondSignatureBody;
+
 }

@@ -56,6 +56,7 @@ public class ServiceConstants {
     public static final String PENDING_E_SIGN = "PENDING_E-SIGN";
     public static final String EDIT = "EDIT";
     public static final String SYSTEM="SYSTEM";
+    public static final String INITIATE_E_SIGN="INITIATE_E-SIGN";
 
 
 }
