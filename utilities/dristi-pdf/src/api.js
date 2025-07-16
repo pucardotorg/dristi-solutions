@@ -540,6 +540,25 @@ async function search_multiple_cases(criteria, tenantId, requestinfo) {
   }
 }
 
+async function search_bailBond(
+  tenantId,
+  bailBondId,
+  requestinfo,
+) {
+  return await axios({
+    method: "post",
+    url: URL.resolve(config.host.bailBond, config.paths.bail_bond_search),
+    data: {
+      RequestInfo: requestinfo,
+      tenantId: tenantId,
+      criteria: {
+        tenantId: tenantId,
+        bailId: bailBondId,
+      },
+    },
+  });
+}
+
 module.exports = {
   pool,
   create_pdf,
@@ -568,4 +587,5 @@ module.exports = {
   search_application_v2,
   search_order_v2,
   search_evidence_v2,
+  search_bailBond
 };
