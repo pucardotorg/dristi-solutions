@@ -54,5 +54,8 @@ public class ServiceConstants {
    public static final String ERRORS_PATH = "$.errors";
 
    public static final String ES_UPDATE_BAIL_HEADER_FORMAT = "{\"update\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
-   public static final String ES_UPDATE_BAIL_DOCUMENT_FORMAT = "{\"doc\":{\"Data\":{\"bailDetails\":{\"caseNumber\":\"%s\"}}}}\n";
+   public static final String ES_UPDATE_BAIL_DOCUMENT_FORMAT = "{\"doc\":{\"Data\":{\"bailDetails\":{" +
+                                                               "\"caseNumber\":\"%s\"," +
+                                                               "\"searchableFields\":%s" +
+                                                               "}}}}\n";
 }

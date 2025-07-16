@@ -27,6 +27,9 @@ public class CaseReferenceNumberUpdateRequest {
     @JsonProperty("courtCaseNumber")
     private String courtCaseNumber = null;
 
+    @JsonProperty("caseTitle")
+    private String caseTitle = null;
+
     @JsonProperty("tenantId")
     private String tenantId = null;
 }
