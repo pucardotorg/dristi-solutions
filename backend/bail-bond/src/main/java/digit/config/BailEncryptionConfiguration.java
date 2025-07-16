@@ -32,9 +32,4 @@ public class BailEncryptionConfiguration extends EncryptionConfiguration {
         converter.setObjectMapper(objectMapper);
         return converter;
     }
-
-    @Bean
-    public Tika tika() {
-        return new Tika();
-    }
 }
