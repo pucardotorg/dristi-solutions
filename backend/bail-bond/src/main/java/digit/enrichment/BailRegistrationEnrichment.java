@@ -1,7 +1,6 @@
 package digit.enrichment;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import digit.config.Configuration;
 import digit.util.CaseUtil;
 import digit.util.IdgenUtil;
@@ -23,6 +22,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static digit.config.ServiceConstants.EDIT;
+import static digit.config.ServiceConstants.ERROR_WHILE_FETCHING_FROM_CASE;
 
 @Component
 @Slf4j
@@ -41,7 +41,7 @@ public class BailRegistrationEnrichment {
         String tenantId = bailRequest.getBail().getTenantId();
         Bail bail = bailRequest.getBail();
 
-        List<String> bailRegistrationBailIdList = idgenUtil.getIdList(requestInfo, tenantId, idName, idFormat, 1);
+        List<String> bailRegistrationBailIdList = idgenUtil.getIdList(requestInfo, tenantId, idName, idFormat, 1,false);
         log.info("Bail Registration ID list: {}", bailRegistrationBailIdList);
 
         AuditDetails auditDetails = AuditDetails.builder()
@@ -57,10 +57,12 @@ public class BailRegistrationEnrichment {
         bail.setBailId(bailId);
         enrichCaseDetails(bailRequest);
         if(!ObjectUtils.isEmpty(bailRequest.getBail().getDocuments())){
-            bail.getDocuments().forEach(this::enrichDocument);
+            bail.getDocuments().forEach(document -> enrichDocument(document, tenantId));
         }
         enrichSureties(bailRequest);
+        bail.setBailType(Bail.BailTypeEnum.fromValue(String.valueOf(bail.getBailType())));
     }
+
 
     public void enrichCaseDetails(BailRequest bailRequest) {
         Bail bail = bailRequest.getBail();
@@ -90,10 +92,13 @@ public class BailRegistrationEnrichment {
         bail.setCaseId(caseUtil.getCaseId(caseDetails));
     }
 
-    public void enrichDocument(Document document) {
-        if (document.getId() == null) {
+    public void enrichDocument(Document document, String rootTenantId) {
+        if (ObjectUtils.isEmpty(document.getId())) {
             document.setId(String.valueOf(UUID.randomUUID()));
             document.setDocumentUid(document.getId());
+        }
+        if(ObjectUtils.isEmpty(document.getTenantId())){
+            document.setTenantId(rootTenantId);
         }
     }
 
@@ -104,7 +109,7 @@ public class BailRegistrationEnrichment {
                     surety.setId(String.valueOf(UUID.randomUUID()));
                 }
                 if(!ObjectUtils.isEmpty(surety.getDocuments())){
-                    surety.getDocuments().forEach(this::enrichDocument);
+                    surety.getDocuments().forEach(document -> enrichDocument(document, bailRequest.getBail().getTenantId()));
                 }
             });
         }
@@ -125,7 +130,7 @@ public class BailRegistrationEnrichment {
         }
         enrichSureties(bailRequest);
         if(!ObjectUtils.isEmpty(bailRequest.getBail().getDocuments())){
-            bailRequest.getBail().getDocuments().forEach(this::enrichDocument);
+            bailRequest.getBail().getDocuments().forEach(document -> enrichDocument(document, bailRequest.getBail().getTenantId()));
         }
     }
 }

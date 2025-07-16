@@ -62,7 +62,7 @@ public class Bail {
         @JsonCreator
         public static BailTypeEnum fromValue(String text) {
             for (BailTypeEnum b : BailTypeEnum.values()) {
-                if (String.valueOf(b.value).equals(text)) {
+                if (String.valueOf(b.value).equalsIgnoreCase(text)) {
                     return b;
                 }
             }
@@ -161,7 +161,7 @@ public class Bail {
         @JsonCreator
         public static CaseTypeEnum fromValue(String text) {
             for (CaseTypeEnum b : CaseTypeEnum.values()) {
-                if (String.valueOf(b.value).equals(text)) {
+                if (String.valueOf(b.value).equalsIgnoreCase(text)) {
                     return b;
                 }
             }
