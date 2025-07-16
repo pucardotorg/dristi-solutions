@@ -237,7 +237,7 @@ public class BailService {
         // Check if bail exists
         Bail existingBail = validator.validateBailExists(bailRequest);
 
-        // Enrich new sureties if any
+        // Enrich new documents or sureties if any
         enrichmentUtil.enrichBailUponUpdate(bailRequest);
 
         Boolean lastSigned = checkItsLastSign(bailRequest);

@@ -78,12 +78,9 @@ public class CaseUtil {
         return extractFieldFromFirstCase(caseDetails, "caseType");
     }
 
-    public String getCmpNumber(JsonNode caseDetails) {
-        return extractFieldFromFirstCase(caseDetails, "cmpNumber");
-    }
+    public String getCourtCaseNumber(JsonNode caseDetails) { return extractFieldFromFirstCase(caseDetails, "courtCaseNumber"); }
 
-    public String getCourtCaseNumber(JsonNode caseDetails) {
-        return extractFieldFromFirstCase(caseDetails, "courtCaseNumber");
-    }
+    public String getCmpNumber (JsonNode caseDetails) { return extractFieldFromFirstCase(caseDetails, "cmpNumber"); }
 
+    public String getCaseId (JsonNode caseDetails) { return extractFieldFromFirstCase(caseDetails, "id"); }
 }
