@@ -13,6 +13,7 @@ import digit.web.models.Document;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static digit.config.ServiceConstants.EDIT;
+import static digit.config.ServiceConstants.ERROR_WHILE_FETCHING_FROM_CASE;
 
 @Component
 @Slf4j
@@ -39,7 +41,7 @@ public class BailRegistrationEnrichment {
         String tenantId = bailRequest.getBail().getTenantId();
         Bail bail = bailRequest.getBail();
 
-        List<String> bailRegistrationBailIdList = idgenUtil.getIdList(requestInfo, tenantId, idName, idFormat, 1);
+        List<String> bailRegistrationBailIdList = idgenUtil.getIdList(requestInfo, tenantId, idName, idFormat, 1,false);
         log.info("Bail Registration ID list: {}", bailRegistrationBailIdList);
 
         AuditDetails auditDetails = AuditDetails.builder()
@@ -98,11 +100,11 @@ public class BailRegistrationEnrichment {
     }
 
     public void enrichDocument(Document document, String rootTenantId) {
-        if (document.getId() == null) {
+        if (ObjectUtils.isEmpty(document.getId())) {
             document.setId(String.valueOf(UUID.randomUUID()));
             document.setDocumentUid(document.getId());
         }
-        if(document.getTenantId()==null){
+        if(ObjectUtils.isEmpty(document.getTenantId())){
             document.setTenantId(rootTenantId);
         }
     }
