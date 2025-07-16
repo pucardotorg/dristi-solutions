@@ -1,5 +1,6 @@
 package org.egov.transformer.util;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.transformer.config.TransformerProperties;
@@ -9,8 +10,10 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -24,37 +27,65 @@ public class EsUtil {
 
     private final RestTemplate restTemplate;
     private final TransformerProperties config;
+    private final ObjectMapper mapper;
 
     @Autowired
-    public EsUtil(RestTemplate restTemplate, TransformerProperties config) {
+    public EsUtil(RestTemplate restTemplate, TransformerProperties config, ObjectMapper mapper) {
         this.restTemplate = restTemplate;
         this.config = config;
+        this.mapper=mapper;
     }
 
     // Builds the ES update payload for a single Bail record
-    public String buildPayload(String bailId, String caseNumber) {
-        return String.format(
-                ES_UPDATE_BAIL_HEADER_FORMAT + ES_UPDATE_BAIL_DOCUMENT_FORMAT,
-                config.getBailBondIndex(), bailId, caseNumber
-        );
+    public String buildPayload(BailUpdateRequest request) {
+        try {
+            List<String> searchableFields = new ArrayList<>();
+
+            if (StringUtils.hasText(request.getFilingNumber())) {
+                searchableFields.add(request.getFilingNumber());
+            }
+            if (StringUtils.hasText(request.getCmpNumber())) {
+                searchableFields.add(request.getCmpNumber());
+            }
+            if (StringUtils.hasText(request.getCourtCaseNumber())) {
+                searchableFields.add(request.getCourtCaseNumber());
+            }
+            if (StringUtils.hasText(request.getCaseTitle())) {
+                searchableFields.add(request.getCaseTitle());
+            }
+
+            String searchableFieldsJson = mapper.writeValueAsString(searchableFields);
+
+            return String.format(
+                    ES_UPDATE_BAIL_HEADER_FORMAT + ES_UPDATE_BAIL_DOCUMENT_FORMAT,
+                    config.getBailBondIndex(),
+                    request.getBailUuid(),
+                    request.getCaseNumber(),
+                    searchableFieldsJson
+            );
+        } catch (Exception e) {
+            log.error("Failed to build payload for bailUuid: {}", request.getBailUuid(), e);
+            return "";
+        }
     }
+
 
     // Bulk update method for multiple Bail records
     public void updateBailCaseNumbers(List<BailUpdateRequest> bailUpdates) {
         try {
             if (bailUpdates != null && !bailUpdates.isEmpty()) {
                 String bulkRequestPayload = bailUpdates.stream()
-                        .map(update -> buildPayload(update.getBailUuid(), update.getCaseNumber()))
+                        .map(this::buildPayload)
                         .filter(s -> !s.isEmpty())
-                        .collect(Collectors.joining(""));
+                        .collect(Collectors.joining());
                 String uri = config.getEsHostUrl() + config.getBulkPath();
                 manualIndex(uri, bulkRequestPayload);
             }
         } catch (Exception e) {
-            log.error("Error occurred while updating caseNumber in bail index");
-            log.error("ERROR: {}", e.getMessage());
+            log.error("Error occurred while updating caseNumber in bail index", e);
         }
     }
+
 
     public void manualIndex(String uri, String request) throws Exception {
         try {

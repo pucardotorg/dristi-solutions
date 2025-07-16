@@ -340,11 +340,25 @@ public class CaseConsumer {
         String caseNumber = getCaseReferenceNumber(caseReferenceNumberUpdateRequest);
 
         if (bailUuids != null && !bailUuids.isEmpty()) {
+            String filingNumber = caseReferenceNumberUpdateRequest.getFilingNumber();
+            String cmpNumber = caseReferenceNumberUpdateRequest.getCmpNumber();
+            String courtCaseNumber = caseReferenceNumberUpdateRequest.getCourtCaseNumber();
+            String caseTitle = caseReferenceNumberUpdateRequest.getCaseTitle();
+
             List<BailUpdateRequest> updates = bailUuids.stream()
-                    .map(bailUuid -> new BailUpdateRequest(bailUuid, caseNumber))
+                    .map(bailUuid -> new BailUpdateRequest(
+                            bailUuid,
+                            caseNumber,
+                            filingNumber,
+                            cmpNumber,
+                            courtCaseNumber,
+                            caseTitle
+                    ))
                     .collect(Collectors.toList());
+
             esUtil.updateBailCaseNumbers(updates);
         }
+
     }
 
     private String getCaseReferenceNumber(CaseReferenceNumberUpdateRequest caseReferenceNumberUpdateRequest) {

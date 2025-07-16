@@ -110,6 +110,7 @@ public class IndexerUtils {
         List<String> searchableFieldsList = new ArrayList<>();
         if (caseTitle != null) searchableFieldsList.add(caseTitle);
         if (caseNumber != null) searchableFieldsList.add(caseNumber);
+        if(filingNumber != null) searchableFieldsList.add(filingNumber);
         if (litigantName != null) searchableFieldsList.add(litigantName);
         String searchableFieldsJson = new JSONArray(searchableFieldsList).toString();
 
