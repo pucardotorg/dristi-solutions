@@ -81,7 +81,7 @@ public class BailService {
         bailRequest.setBail(encryptedBail);
 
         // Sms and Email
-        if (bailRequest.getBail().getWorkflow().getAction().equalsIgnoreCase(INITIATE_E_SIGN)) {
+        if (INITIATE_E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction())) {
             Bail bail = bailRequest.getBail();
             String shortenedUrl = urlShortenerUtil.createShortenedUrl(bail.getTenantId(), bail.getBailId());
             bail.setShortenedURL(shortenedUrl);
@@ -267,7 +267,7 @@ public class BailService {
         Bail encryptedBail = encryptionDecryptionUtil.encryptObject(originalBail, config.getBailEncrypt(), Bail.class);
         bailRequest.setBail(encryptedBail);
 
-        if (bailRequest.getBail().getWorkflow().getAction().equalsIgnoreCase(EDIT)) {
+        if (EDIT.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction())) {
             expireTheShorteningUrl(bailRequest);
         }
 
