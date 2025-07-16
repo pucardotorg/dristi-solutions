@@ -80,15 +80,6 @@ public class BailService {
         Bail encryptedBail = encryptionDecryptionUtil.encryptObject(originalBail, config.getBailEncrypt(), Bail.class);
         bailRequest.setBail(encryptedBail);
 
-        // Sms and Email
-        if (INITIATE_E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction())) {
-            Bail bail = bailRequest.getBail();
-            String shortenedUrl = urlShortenerUtil.createShortenedUrl(bail.getTenantId(), bail.getBailId());
-            bail.setShortenedURL(shortenedUrl);
-            log.info("Calling notification service");
-            callNotificationService(bailRequest);
-        }
-
         producer.push(config.getBailCreateTopic(), bailRequest);
 
         return originalBail;
@@ -269,6 +260,15 @@ public class BailService {
 
         if (EDIT.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction())) {
             expireTheShorteningUrl(bailRequest);
+        }
+
+        // Sms and Email
+        if (INITIATE_E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction())) {
+            Bail bail = bailRequest.getBail();
+            String shortenedUrl = urlShortenerUtil.createShortenedUrl(bail.getTenantId(), bail.getBailId());
+            bail.setShortenedURL(shortenedUrl);
+            log.info("Calling notification service");
+            callNotificationService(bailRequest);
         }
 
         producer.push(config.getBailUpdateTopic(), bailRequest);
