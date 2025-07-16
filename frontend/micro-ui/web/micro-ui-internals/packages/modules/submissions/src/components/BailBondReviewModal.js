@@ -55,13 +55,13 @@ const BailBondReviewModal = ({
     queryFn: async () => {
       return Axios({
         method: "POST",
-        url: Urls.application.submissionPreviewPdf,
+        url: Urls.bailBond.bailBondPreviewPdf,
         params: {
           tenantId: tenantId,
           bailBondId: bailBondDetails?.bailId, // need to change
           cnrNumber: bailBondDetails?.cnrNumber,
           qrCode: false,
-          applicationType: bailBondPreviewSubmissionTypeMap["BAIL_BOND"], // need to change
+          bailBondPdfType: bailBondPreviewSubmissionTypeMap["BAIL_BOND"], // need to change
           courtId: courtId,
         },
         data: {

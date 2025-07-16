@@ -326,6 +326,7 @@ const GenerateBailBond = () => {
                   fileStore: file?.file?.files?.[0]?.fileStoreId,
                   documentName: file?.filename,
                   documentType: "IDENTITY_PROOF",
+                  tenantId,
                 },
               ],
             };
@@ -340,6 +341,7 @@ const GenerateBailBond = () => {
                   fileStore: file?.file?.files?.[0]?.fileStoreId,
                   documentName: file?.filename,
                   documentType: "PROOF_OF_SOLVENCY",
+                  tenantId,
                 },
               ],
             };
@@ -354,6 +356,7 @@ const GenerateBailBond = () => {
                   fileStore: file?.file?.files?.[0]?.fileStoreId,
                   documentName: file?.filename,
                   documentType: "OTHER_DOCUMENTS",
+                  tenantId,
                 },
               ],
             };
@@ -371,6 +374,8 @@ const GenerateBailBond = () => {
         name: surety?.name,
         fatherName: surety?.fatherName,
         mobileNumber: surety?.mobileNumber,
+        tenantId,
+        address: surety?.address,
         document: [
           ...(surety?.identityProof?.document || []),
           ...(surety?.proofOfSolvency?.document || []),
@@ -380,9 +385,8 @@ const GenerateBailBond = () => {
     });
   };
 
-  const createBailBond = async () => {
+  const createBailBond = async (individualData) => {
     try {
-      const individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
       const updatedFormData = await preProcessFormData(formdata);
       const sureties = extractSureties(updatedFormData);
 
@@ -397,7 +401,7 @@ const GenerateBailBond = () => {
           sureties: sureties,
           litigantId: updatedFormData?.selectComplainant?.uuid,
           litigantName: updatedFormData?.selectComplainant?.name,
-          litigantFatherName: updatedFormData?.selectComplainant?.fatherName,
+          litigantFatherName: updatedFormData?.litigantFatherName,
           litigantMobileNumber: individualData?.Individual?.[0]?.mobileNumber,
           courtId: caseDetails?.courtId,
           caseTitle: caseDetails?.caseTitle,
@@ -421,14 +425,13 @@ const GenerateBailBond = () => {
     }
   };
 
-  const updateBailBond = async (fileStoreId = null, action) => {
+  const updateBailBond = async (fileStoreId = null, action, individualData) => {
     try {
-      const individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
       const updatedFormData = await preProcessFormData(formdata);
       const sureties = extractSureties(updatedFormData);
       const documents = Array.isArray(bailBondDetails?.documents) ? bailBondDetails.documents : [];
       const documentsFile = fileStoreId
-        ? [{ fileStore: fileStoreId, documentType: "SIGNED", additionalDetails: { name: `${t("BAIL_BOND")}.pdf` } }]
+        ? [{ fileStore: fileStoreId, documentType: "SIGNED", additionalDetails: { name: `${t("BAIL_BOND")}.pdf` }, tenantId }]
         : null;
       const payload = {
         bail: {
@@ -439,8 +442,8 @@ const GenerateBailBond = () => {
           sureties: sureties,
           litigantId: updatedFormData?.selectComplainant?.uuid,
           litigantName: updatedFormData?.selectComplainant?.name,
-          litigantFatherName: updatedFormData?.selectComplainant?.fatherName,
-          litigantMobileNumber: individualData?.Individual?.[0]?.mobileNumber,
+          litigantFatherName: updatedFormData?.litigantFatherName,
+          litigantMobileNumber: individualData ? individualData?.Individual?.[0]?.mobileNumber : bailBondDetails?.litigantMobileNumber,
           documents: documentsFile ? [...documents, ...documentsFile] : documents,
           additionalDetails: {
             formdata: updatedFormData,
@@ -456,18 +459,36 @@ const GenerateBailBond = () => {
     }
   };
 
+  const validateSuretyContactNumber = (individualData, formData) => {
+    const indivualMobileNumber = individualData?.Individual?.[0]?.mobileNumber;
+    formData?.sureties?.forEach((surety) => {
+      if (surety?.mobileNumber && surety?.mobileNumber === indivualMobileNumber) {
+        setShowErrorToast({ label: t("SURETY_CONTACT_NUMBER_CANNOT_BE_SAME_AS_COMPLAINANT"), error: true });
+        throw new Error(t("SURETY_CONTACT_NUMBER_CANNOT_BE_SAME_AS_COMPLAINANT"));
+      }
+    });
+    return true;
+  };
+
   const handleSubmit = async () => {
     try {
       setLoader(true);
+      const individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
+      const validateSuretyContactNumbers = validateSuretyContactNumber(individualData, formdata);
+
+      if (!validateSuretyContactNumbers) {
+        setLoader(false);
+        return;
+      }
       let bailBondResponse = null;
       if (!bailBondId) {
-        bailBondResponse = await createBailBond();
+        bailBondResponse = await createBailBond(individualData);
         setDefaultFormValueData(bailBondResponse?.bails?.[0]?.additionalDetails?.formdata || {});
         history.replace(
           `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondResponse?.bails?.[0]?.bailId}&showModal=true`
         );
       } else {
-        bailBondResponse = await updateBailBond(null, bailBondWorkflowAction.SAVEDRAFT);
+        bailBondResponse = await updateBailBond(null, bailBondWorkflowAction.SAVEDRAFT, individualData);
         setDefaultFormValueData(bailBondResponse?.bails?.[0]?.additionalDetails?.formdata || {});
         setShowBailBondReview(true);
       }
@@ -483,15 +504,16 @@ const GenerateBailBond = () => {
     // Todo : Create and Update Api Call
     try {
       setLoader(true);
+      const individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
       let bailBondResponse = null;
       if (!bailBondId) {
-        bailBondResponse = await createBailBond();
+        bailBondResponse = await createBailBond(individualData);
         setDefaultFormValueData(bailBondResponse?.bails?.[0]?.additionalDetails?.formdata || {});
         history.replace(
           `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondResponse?.bails?.[0]?.bailId}`
         );
       } else {
-        bailBondResponse = await updateBailBond(null, bailBondWorkflowAction.SAVEDRAFT);
+        bailBondResponse = await updateBailBond(null, bailBondWorkflowAction.SAVEDRAFT, individualData);
         setDefaultFormValueData(bailBondResponse?.bails?.[0]?.additionalDetails?.formdata || {});
       }
       setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
@@ -631,6 +653,7 @@ const GenerateBailBond = () => {
             handleSubmit={handleSubmitSignature}
             setLoader={setBailUploadLoader}
             loader={bailUploadLoader}
+            bailBondFileStoreId={bailBondFileStoreId}
           />
         )}
 

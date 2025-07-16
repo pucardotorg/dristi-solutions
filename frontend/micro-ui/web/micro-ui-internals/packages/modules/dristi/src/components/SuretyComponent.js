@@ -3,6 +3,7 @@ import { CardLabelError, TextInput, CustomDropdown, Header, InfoBannerIcon } fro
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import SelectCustomDragDrop from "./SelectCustomDragDrop";
 import CustomEmailTextInput from "../pages/citizen/registration/CustomEmailTextInput";
+import SelectComponents from "./SelectComponents";
 
 const CloseBtn = () => {
   return (
@@ -15,7 +16,7 @@ const CloseBtn = () => {
   );
 };
 
-const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors }) => {
+const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors, control, watch }) => {  
   const [formInstances, setFormInstances] = useState(formData?.[config?.key] || [{}]);
   const disable = config?.disable;
   const inputs = useMemo(() => config?.populators?.inputs || [], [config?.populators?.inputs]);
@@ -29,7 +30,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
   const updateFormData = (updatedFormInstances) => {
     onSelect(
       config.key,
-      updatedFormInstances.map((instance) => instance[config.key] || {})
+      updatedFormInstances.map((instance) => instance || {})
     );
   };
 
@@ -48,10 +49,10 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
 
   function setValue(value, name, input, index) {
     const updatedFormInstances = [...formInstances];
-    if (!updatedFormInstances[index][config.key]) {
-      updatedFormInstances[index][config.key] = {};
+    if (!updatedFormInstances[index]) {
+      updatedFormInstances[index] = {};
     }
-    updatedFormInstances[index][config.key][name] = value;
+    updatedFormInstances[index][name] = value;
 
     setFormInstances(updatedFormInstances);
     updateFormData(updatedFormInstances);
@@ -59,13 +60,12 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
 
   function uploadedDocs(name, inputDocs, inputKey, index) {
     const updatedFormInstances = [...formInstances];
-
-    if (!updatedFormInstances[index][config.key]) {
-      updatedFormInstances[index][config.key] = {};
+    if (!updatedFormInstances[index]) {
+      updatedFormInstances[index] = {};
     }
 
-    updatedFormInstances[index][config.key] = {
-      ...updatedFormInstances[index][config.key],
+    updatedFormInstances[index] = {
+      ...updatedFormInstances[index],
       [name]: inputDocs,
     };
 
@@ -86,7 +86,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
       max-width : none
       }
       .citizen-card-input--front {
-          background-color : #E0E0E0 !important
+        background-color : #E0E0E0 !important
       }
       `}
       </style>
@@ -195,10 +195,29 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                           config={input}
                           t={t}
                           onSelect={(value, inputDocs) => uploadedDocs(value, inputDocs, input.key, formIndex)}
+                          formData={formInstances[formIndex]}
+                          errors={errors}
+                          setError={setError}
+                          clearErrors={clearErrors}
+                        />
+                      </div>
+                    )}
+                    {input?.component === "SelectComponents" && (
+                      <div>
+                        <SelectComponents
+                          config={input}
+                          t={t}
+                          onSelect={(key, data) => {
+                            if (key === "address") {
+                              setValue(data, key, input, formIndex);
+                            }
+                          }}
                           formData={formInstances[formIndex]?.[config?.key]}
                           errors={errors}
                           setError={setError}
                           clearErrors={clearErrors}
+                          control={control}
+                          watch={watch}
                         />
                       </div>
                     )}

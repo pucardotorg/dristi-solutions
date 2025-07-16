@@ -24,6 +24,7 @@ const BailUploadSignatureModal = ({
   showUploadSignature,
   setLoader,
   loader,
+  bailBondFileStoreId
 }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
@@ -168,7 +169,7 @@ const BailUploadSignatureModal = ({
           infoHeader={"CS_PLEASE_COMMON_NOTE"}
           infoText={"PLEASE_ENSURE_SIGN"}
           showDownloadText={true}
-          fileStoreId={"620e3843-1f9c-4abb-92fe-af6bc30f0e6b"}
+          fileStoreId={bailBondFileStoreId}
           cancelLabel={"SUBMIT"}
         />
       )}
