@@ -19,23 +19,8 @@ public class DBRepository {
     }
 
     @Transactional
-    public void updateBailCaseNumberForFilingNumber(String caseNumber, String cnrNumber, String filingNumber) {
-        String selectBailIdsQuery = "SELECT bail_id FROM dristi_bail WHERE filing_number = ?";
-
-        List<String> bailIds = jdbcTemplate.query(
-                selectBailIdsQuery,
-                new Object[]{filingNumber},
-                (rs, rowNum) -> rs.getString("bail_id")
-        );
-
-        log.info("Total Bail records for filingNumber {}: {}", filingNumber, bailIds.size());
-
-        if (bailIds.isEmpty()) {
-            log.warn("No bail records found for filingNumber {}", filingNumber);
-            return;
-        }
-
-        bailIds.forEach(bailId -> log.info("Bail ID to update: {}", bailId));
+    public void updateBailCaseNumberForFilingNumber(String caseNumber, String cnrNumber, List<String> bailUuids, String filingNumber) {
+        bailUuids.forEach(bailId -> log.info("Bail UUID to update: {}", bailId));
 
         String updateQuery = "UPDATE dristi_bail SET case_number = ?, cnr_number = ? WHERE filing_number = ?";
         int rowsUpdated = jdbcTemplate.update(updateQuery, caseNumber, cnrNumber, filingNumber);
@@ -87,6 +72,24 @@ public class DBRepository {
         String queryForApplication = "update dristi_application set courtid=? where filingnumber=?";
         int rowsUpdated = jdbcTemplate.update(queryForApplication, courtId, filingNumber);
         log.warn("Number of application rows updated :: {} for filingNumber {}",rowsUpdated, filingNumber);
+    }
+
+    public List<String> getBailUuidsForFilingNumber(String filingNumber) {
+        String selectBailIdsQuery = "SELECT id FROM dristi_bail WHERE filing_number = ?";
+
+        List<String> bailUuids = jdbcTemplate.query(
+                selectBailIdsQuery,
+                new Object[]{filingNumber},
+                (rs, rowNum) -> rs.getString("id")
+        );
+
+        log.info("Total Bail records for filingNumber {}: {}", filingNumber, bailUuids.size());
+
+        if (bailUuids.isEmpty()) {
+            log.warn("No bail records found for filingNumber {}", filingNumber);
+            return List.of();
+        }
+        return bailUuids;
     }
 
 }

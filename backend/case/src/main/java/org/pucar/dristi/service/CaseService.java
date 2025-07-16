@@ -726,6 +726,7 @@ public class CaseService {
         hearingUpdateRequest.put("filingNumber", caseRequest.getCases().getFilingNumber());
         hearingUpdateRequest.put("cmpNumber", caseRequest.getCases().getCmpNumber());
         hearingUpdateRequest.put("courtCaseNumber", caseRequest.getCases().getCourtCaseNumber());
+        hearingUpdateRequest.put("caseTitle", caseRequest.getCases().getCaseTitle());
         hearingUpdateRequest.put("tenantId", caseRequest.getCases().getTenantId());
         return hearingUpdateRequest;
     }

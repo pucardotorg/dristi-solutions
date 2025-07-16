@@ -137,9 +137,28 @@ public class Configuration {
     @Value("${egov.long.url}")
     private String longUrl;
 
+    @Value("${bail.bond.index}")
+    private String bailBondIndex;
+
+    @Value("${egov.indexer.es.username}")
+    private String esUsername;
+
+    @Value("${egov.indexer.es.password}")
+    private String esPassword;
+
+
+    @Value("${egov.infra.indexer.host}")
+    private String esHostUrl;
+
+    @Value("${egov.bulk.index.path}")
+    private String bulkPath;
+
     //FileStore Service
     @Value("${egov.filestore.host}")
     private String fileStoreHost;
+
+    @Value("${egov.filestore.path}")
+    private String fileStorePath;
 
     @Value("${egov.file.store.delete.endpoint}")
     private String fileStoreDeleteEndPoint;
@@ -160,5 +179,30 @@ public class Configuration {
 
     @Value("${bail.created.sms.for.litigant}")
     private String BailCreatedSmsForLitigant;
+
+
+    @Value("${egov.filestore.save.endpoint}")
+    private String fileStoreSaveEndPoint;
+
+
+    @Value("${egov.filestore.search.endpoint}")
+    private String fileStoreSearchEndpoint;
+
+    // ESign Config
+    @Value("${egov.esign.host}")
+    private String esignHost;
+
+    @Value("${egov.esign.location.endpoint}")
+    private String esignLocationEndPoint;
+
+    // zone id
+    @Value("${app.zone.id}")
+    private String zoneId;
+
+    @Value("${file.max.size}")
+    private long maxFileSize;
+
+    @Value("${allowed.content.types}")
+    private String[] allowedContentTypes;
 
 }
