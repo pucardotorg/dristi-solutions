@@ -1,5 +1,6 @@
 package digit.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.Configuration;
 import digit.enrichment.BailRegistrationEnrichment;
@@ -10,14 +11,13 @@ import digit.util.*;
 import digit.validator.BailValidator;
 import digit.web.models.*;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,9 +25,9 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static digit.config.ServiceConstants.*;
-import static org.postgresql.jdbc.EscapedFunctions.SIGN;
 
 @Service
 @Slf4j
@@ -41,7 +41,10 @@ public class BailService {
     private final BailRepository bailRepository;
     private final EncryptionDecryptionUtil encryptionDecryptionUtil;
     private final ObjectMapper objectMapper;
+    private final UrlShortenerUtil urlShortenerUtil;
+    private final NotificationService notificationService;
     private final FileStoreUtil fileStoreUtil;
+    private final CaseUtil caseUtil;
     private final CipherUtil cipherUtil;
     private final ESignUtil eSignUtil;
     private final XmlRequestGenerator xmlRequestGenerator;
@@ -49,7 +52,7 @@ public class BailService {
     private final IndexerUtils indexerUtils;
 
     @Autowired
-    public BailService(BailValidator validator, BailRegistrationEnrichment enrichmentUtil, Producer producer, Configuration config, WorkflowService workflowService, BailRepository bailRepository, EncryptionDecryptionUtil encryptionDecryptionUtil, ObjectMapper objectMapper, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, ESignUtil eSignUtil, XmlRequestGenerator xmlRequestGenerator, Configuration configuration, IndexerUtils indexerUtils) {
+    public BailService(BailValidator validator, BailRegistrationEnrichment enrichmentUtil, Producer producer, Configuration config, WorkflowService workflowService, BailRepository bailRepository, EncryptionDecryptionUtil encryptionDecryptionUtil, ObjectMapper objectMapper, UrlShortenerUtil urlShortenerUtil, NotificationService notificationService, FileStoreUtil fileStoreUtil, CaseUtil caseUtil, CipherUtil cipherUtil, ESignUtil eSignUtil, XmlRequestGenerator xmlRequestGenerator, Configuration configuration, IndexerUtils indexerUtils) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.producer = producer;
@@ -58,12 +61,15 @@ public class BailService {
         this.bailRepository = bailRepository;
         this.encryptionDecryptionUtil = encryptionDecryptionUtil;
         this.objectMapper = objectMapper;
-        this.indexerUtils = indexerUtils;
+        this.urlShortenerUtil = urlShortenerUtil;
+        this.notificationService = notificationService;
         this.fileStoreUtil = fileStoreUtil;
+        this.caseUtil = caseUtil;
         this.cipherUtil = cipherUtil;
         this.eSignUtil = eSignUtil;
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.configuration = configuration;
+        this.indexerUtils = indexerUtils;
     }
 
 
@@ -89,6 +95,82 @@ public class BailService {
         producer.push(config.getBailCreateTopic(), bailRequest);
 
         return originalBail;
+    }
+
+    private void callNotificationService(BailRequest bailRequest) {
+        try {
+            Bail bail = bailRequest.getBail();
+            String action = bail.getWorkflow().getAction();
+            String messageCode = getMessageCode(action);
+
+            if (StringUtils.isBlank(messageCode)) {
+                log.warn("No messageCode found for action: {}", action);
+                return;
+            }
+
+            log.info("Sending notifications for messageCode: {}", messageCode);
+            Set<String> smsTopics = Arrays.stream(messageCode.split(","))
+                    .map(String::trim)
+                    .collect(Collectors.toSet());
+
+            SmsTemplateData smsTemplateData = buildSmsTemplateData(bailRequest);
+
+            RequestInfo requestInfo = bailRequest.getRequestInfo();
+
+            // Notify Sureties
+            if (smsTopics.contains(BAIL_BOND_INITIATED_SURETY)) {
+                bail.getSureties().stream()
+                        .map(Surety::getMobileNumber)
+                        .filter(StringUtils::isNotBlank)
+                        .forEach(mobile -> notificationService.sendNotification(requestInfo, smsTemplateData, BAIL_BOND_INITIATED_SURETY, mobile));
+            }
+
+            // Notify Litigant
+            if (smsTopics.contains(BAIL_BOND_INITIATED_LITIGANT)) {
+                String litigantMobile = bail.getLitigantMobileNumber();
+                if (StringUtils.isNotBlank(litigantMobile)) {
+                    notificationService.sendNotification(requestInfo, smsTemplateData, BAIL_BOND_INITIATED_LITIGANT, litigantMobile);
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("Error sending notification for bailRequest: {}", bailRequest, e);
+        }
+    }
+
+    private SmsTemplateData buildSmsTemplateData(BailRequest bailRequest) {
+
+        Bail bail = bailRequest.getBail();
+
+        CaseCriteria criteria = CaseCriteria.builder()
+                .filingNumber(bail.getFilingNumber())
+                .defaultFields(true)
+                .build();
+        CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                .requestInfo(bailRequest.getRequestInfo())
+                .criteria(Collections.singletonList(criteria))
+                .build();
+        JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+
+        String cmpNumber = caseUtil.getCmpNumber(caseDetails);
+        String courtCaseNumber = caseUtil.getCourtCaseNumber(caseDetails);
+
+        return SmsTemplateData.builder()
+                .filingNumber(bail.getFilingNumber())
+                .courtCaseNumber(courtCaseNumber)
+                .shortenedUrl(bail.getShortenedURL())
+                .cmpNumber(cmpNumber)
+                .tenantId(bail.getTenantId())
+                .build();
+
+    }
+
+
+    private String getMessageCode(String action) {
+        if (action.equalsIgnoreCase(INITIATE_E_SIGN)) {
+            return BAIL_BOND_INITIATED_SMS;
+        }
+        return null;
     }
 
     private Set<String> getFilestoreToDelete(BailRequest bailRequest, Bail existingBail) {
@@ -188,11 +270,28 @@ public class BailService {
         Bail encryptedBail = encryptionDecryptionUtil.encryptObject(originalBail, config.getBailEncrypt(), Bail.class);
         bailRequest.setBail(encryptedBail);
 
+        if (EDIT.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction())) {
+            expireTheShorteningUrl(bailRequest);
+        }
+
+        // Sms and Email
+        if (INITIATE_E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction())) {
+            Bail bail = bailRequest.getBail();
+            String shortenedUrl = urlShortenerUtil.createShortenedUrl(bail.getTenantId(), bail.getBailId());
+            bail.setShortenedURL(shortenedUrl);
+            log.info("Calling notification service");
+            callNotificationService(bailRequest);
+        }
+
         insertBailIndexEntry(bailRequest);
 
         producer.push(config.getBailUpdateTopic(), bailRequest);
 
         return originalBail;
+    }
+
+    private void expireTheShorteningUrl(BailRequest bailRequest) {
+        urlShortenerUtil.expireTheUrl(bailRequest);
     }
 
     private Boolean checkItsLastSign(BailRequest bailRequest) {
