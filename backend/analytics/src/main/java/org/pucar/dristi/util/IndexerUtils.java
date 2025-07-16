@@ -566,6 +566,8 @@ public class IndexerUtils {
                 return processTaskEntity(request, referenceId);
             else if (config.getADiaryBusinessServiceList().contains(entityType))
                 return processADiaryEntity(request, referenceId);
+            else if (config.getBailBondBusinessServiceList().contains(entityType))
+                return processBailBandEntity(request, referenceId);
             else {
                 log.error("Unexpected entityType: {}", entityType);
                 return new HashMap<>();
@@ -716,6 +718,31 @@ public class IndexerUtils {
         caseDetails.put("caseId", caseId);
         caseDetails.put("caseTitle", caseTitle);
         return caseDetails;
+    }
+
+    private Map<String, String> processBailBandEntity(JSONObject request, String referenceId) throws InterruptedException {
+        Map<String, String> caseDetails = new HashMap<>();
+        Thread.sleep(config.getApiCallDelayInSeconds() * 1000);
+        String filingNumber = extractFilingNumberFromReferenceId(request, referenceId);
+        log.info(filingNumber);
+
+        Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+
+        String caseId = JsonPath.read(caseObject.toString(), CASEID_PATH);
+        String caseTitle = JsonPath.read(caseObject.toString(), CASE_TITLE_PATH);
+        String cnrNumber = JsonPath.read(caseObject.toString(), CNR_NUMBER_PATH);
+
+        caseDetails.put("cnrNumber", cnrNumber);
+        caseDetails.put("filingNumber", filingNumber);
+        caseDetails.put("caseId", caseId);
+        caseDetails.put("caseTitle", caseTitle);
+
+        return caseDetails;
+    }
+
+    private String extractFilingNumberFromReferenceId(JSONObject request, String referenceId) {
+        String[] parts = referenceId.split("-");
+        return String.join("-", parts[0], parts[1], parts[2]);
     }
 
     public void esPost(String uri, String request) {
