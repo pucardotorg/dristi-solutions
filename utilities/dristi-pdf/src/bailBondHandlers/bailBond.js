@@ -32,8 +32,8 @@ const extractPermanentAddress = (individualData) => {
   return formattedAddress;
 };
 
-const processSureties = (bailData, courtName) => {
-  const { sureties, litigantName, bailAmount } = bailData;
+const processSureties = (bailData) => {
+  const { sureties } = bailData;
 
   if (!sureties || !Array.isArray(sureties)) {
     return [];
@@ -57,10 +57,7 @@ const processSureties = (bailData, courtName) => {
     suretyName: surety?.name || "",
     suretyParentName: surety?.fatherName || "",
     suretyAddress: formatAddress(surety?.address) || "",
-    litigantName: litigantName || "",
-    courtName: courtName || "",
-    bailAmount: bailAmount || "",
-    index: index + 1,
+    index: `${index + 1}`,
   }));
 };
 
@@ -181,7 +178,7 @@ const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
           courtName: mdmsCourtRoom.name,
           caseType: "Negotiable Instruments Act 138 A",
           bailAmount: bailBond?.bailAmount || "",
-          sureties: processSureties(bailBond, mdmsCourtRoom.name),
+          sureties: processSureties(bailBond),
           accusedSignature: "Accused Signature",
           date:formattedToday,
           judgeSignature: judgeDetails.judgeSignature,
