@@ -35,6 +35,16 @@
               "path": "Data.bailDetails.searchableFields.keyword",
               "operator": "WILDCARD",
               "isMandatory": false
+            },
+            {
+              "name": "tenantId",
+              "path": "Data.bailDetails.tenantId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "courtId",
+              "path": "Data.bailDetails.courtId.keyword",
+              "isMandatory": false
             }
           ]
         },
