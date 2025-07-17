@@ -17,6 +17,9 @@ import org.springframework.validation.annotation.Validated;
 @Builder
 public class Attendee {
 
+    @JsonProperty("id")
+    private String id = null;
+
     @JsonProperty("name")
     private String name = null;
 
