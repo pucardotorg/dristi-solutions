@@ -270,6 +270,7 @@ public class BailService {
         Set<String> fileStoreToDeleteIds = getFilestoreToDelete(bailRequest,existingBail);
 
         if(!fileStoreToDeleteIds.isEmpty()){
+            setIsActiveFalse(bailRequest,fileStoreToDeleteIds);
             fileStoreUtil.deleteFilesByFileStore(fileStoreToDeleteIds, bailRequest.getBail().getTenantId());
             log.info("Deleted files from file store: {}", fileStoreToDeleteIds);
         }
@@ -302,6 +303,27 @@ public class BailService {
 
     private void expireTheShorteningUrl(BailRequest bailRequest) {
         urlShortenerUtil.expireTheUrl(bailRequest);
+    }
+
+    private void setIsActiveFalse(BailRequest bailRequest, Set<String> fileStoreToDeleteIds) {
+        if (bailRequest.getBail().getDocuments() != null) {
+            for (Document document : bailRequest.getBail().getDocuments()) {
+                if (fileStoreToDeleteIds.contains(document.getFileStore())) {
+                    document.setIsActive(false);
+                }
+            }
+        }
+        if (bailRequest.getBail().getSureties() != null) {
+            for (Surety surety : bailRequest.getBail().getSureties()) {
+                if (surety.getDocuments() != null) {
+                    for (Document document : surety.getDocuments()) {
+                        if (fileStoreToDeleteIds.contains(document.getFileStore())) {
+                            document.setIsActive(false);
+                        }
+                    }
+                }
+            }
+    }
     }
 
     private Boolean checkItsLastSign(BailRequest bailRequest) {
