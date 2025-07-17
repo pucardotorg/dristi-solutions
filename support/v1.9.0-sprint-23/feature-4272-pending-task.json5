@@ -1,0 +1,91 @@
+[
+  {
+    "id": "48b5f1f6-5fc0-466d-8a21-5181fb4194ef",
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "28",
+    "data": {
+      "id": "28",
+      "actor": "Litigant",
+      "state": "PENDING_E-SIGN",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "sign the bail bond",
+      "closerAction": [
+        "EDIT",
+        "E-SIGN",
+        "E-SIGN_COMPLETE"
+      ],
+      "triggerAction": [
+        "INITIATE_E-SIGN",
+        "E-SIGN"
+      ],
+      "workflowModule": "bail-bond-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1752675058616,
+      "lastModifiedTime": 1752675058616
+    }
+  },
+  {
+    "id": "9fe7316f-a808-4488-b0ab-bd5b3f7c9bc6",
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "27",
+    "data": {
+      "id": "27",
+      "actor": "Judge",
+      "state": "PENDING_REVIEW",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "sign bail bond",
+      "closerAction": [
+        "SIGN",
+        "REJECT"
+      ],
+      "triggerAction": [
+        "UPLOAD"
+      ],
+      "workflowModule": "bail-bond-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1752671998287,
+      "lastModifiedTime": 1752671998287
+    }
+  },
+  {
+    "id": "cf3c5839-6976-4d8f-95f8-22ee766a20fd",
+    "tenantId": "kl",
+    "schemaCode": "common-masters.PendingTaskType",
+    "uniqueIdentifier": "26",
+    "data": {
+      "id": "26",
+      "actor": "Judge",
+      "state": "PENDING_REVIEW",
+      "isgeneric": false,
+      "screenType": "home",
+      "pendingTask": "sign bail bond",
+      "closerAction": [
+        "SIGN",
+        "REJECT"
+      ],
+      "triggerAction": [
+        "E-SIGN_COMPLETE"
+      ],
+      "workflowModule": "bail-bond-default"
+    },
+    "isActive": true,
+    "auditDetails": {
+      "createdBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "lastModifiedBy": "d4308cee-8733-41c0-8059-26c2c7050b92",
+      "createdTime": 1752669387763,
+      "lastModifiedTime": 1752669387763
+    }
+  }
+]
