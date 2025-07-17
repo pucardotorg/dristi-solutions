@@ -45,6 +45,11 @@
               "name": "courtId",
               "path": "Data.bailDetails.courtId.keyword",
               "isMandatory": false
+            },
+            {
+              "name": "status",
+              "path": "Data.bailDetails.status.keyword",
+              "isMandatory": false
             }
           ]
         },
