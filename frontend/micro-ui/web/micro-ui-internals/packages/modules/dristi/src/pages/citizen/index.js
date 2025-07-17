@@ -155,23 +155,12 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = JSON.parse(eSignWindowObject);
-
-  if (bailRoute.includes(retrievedObject?.path)) {
-    if (result) {
-      sessionStorage.setItem("isSignSuccess", result);
+  if(retrievedObject) {
+    if (!isUserLoggedIn && !whiteListedRoutes.includes(location.pathname) && !bailRoute.includes(retrievedObject?.path)) {
+      history.push(`${path}/home/login`);
     }
-    if (fileStoreId) {
-      sessionStorage.setItem("fileStoreId", fileStoreId);
-    }
-    history.push(`${retrievedObject?.path}${retrievedObject?.param}`,
-      {
-        mobileNumber: JSON.parse(sessionStorage.getItem("mobileNumber")),
-        isAuthorised : true,
-      }
-    );    return;
   }
-
-  if (!isUserLoggedIn && !whiteListedRoutes.includes(location.pathname) & !bailRoute.includes(location.pathname)) {
+  else if (!isUserLoggedIn && !whiteListedRoutes.includes(location.pathname)) {
     history.push(`${path}/home/login`);
   }
   if (
@@ -199,6 +188,16 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   // Only redirect for non-bail bond flows if user is logged in
   if (isUserLoggedIn && retrievedObject && !bailRoute.includes(retrievedObject?.path)) {
     history.push(`${retrievedObject?.path}${retrievedObject?.param}`);
+    sessionStorage.removeItem("eSignWindowObject");
+  }
+
+  if (!isUserLoggedIn && retrievedObject && bailRoute.includes(retrievedObject?.path)) {
+    history.push(`${retrievedObject?.path}${retrievedObject?.param}`,
+      {
+        mobileNumber: JSON.parse(sessionStorage.getItem("mobileNumber")),
+        isAuthorised : true,
+      }
+    );
     sessionStorage.removeItem("eSignWindowObject");
   }
   if (isLoading) {
