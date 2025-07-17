@@ -1,4 +1,8 @@
-const { search_application_v2, search_order_v2 } = require("../../api");
+const {
+  search_application_v2,
+  search_order_v2,
+  search_bailBond_v2,
+} = require("../../api");
 const {
   filterCaseBundleBySection,
 } = require("../utils/filterCaseBundleBySection");
@@ -17,9 +21,14 @@ async function processBailDocuments(
   indexCopy,
   messagesMap
 ) {
-  const bailDocumentSection = filterCaseBundleBySection(
+  const bailApplicationSection = filterCaseBundleBySection(
     caseBundleMaster,
     "baildocument"
+  );
+
+  const bailBondSection = filterCaseBundleBySection(
+    caseBundleMaster,
+    "bailbond"
   );
 
   const sectionPosition = indexCopy.sections.findIndex(
@@ -31,8 +40,8 @@ async function processBailDocuments(
     sectionPosition
   );
 
-  if (bailDocumentSection?.length !== 0) {
-    const section = bailDocumentSection[0];
+  if (bailApplicationSection?.length !== 0) {
+    const section = bailApplicationSection[0];
 
     const bailApplicationsLineItems = [];
     const bailApplications = await search_application_v2(
@@ -51,8 +60,6 @@ async function processBailDocuments(
         limit: 100,
       }
     );
-
-    // call bail bond search
 
     const applicationList = bailApplications?.data?.applicationList;
 
@@ -133,12 +140,14 @@ async function processBailDocuments(
                     : `COUNSEL FOR THE COMPLAINANT - ${docketNameOfComplainants}`;
               }
 
-              const documentPath = `${dynamicSectionNumber}.${
+              const documentPath = `${dynamicSectionNumber}.1.${
                 index + 1
-              }.1 Application and Other Documents in ${dynamicSectionNumber}.${
+              }.1 Application and Other Documents in ${dynamicSectionNumber}.1.${
                 index + 1
-              } ${messagesMap[application.applicationType]} ${
-                index + 1
+              } ${
+                messagesMap[application.applicationType]
+              } in ${dynamicSectionNumber}.1 ${
+                section.Items
               } in ${dynamicSectionNumber} ${section.section}`;
 
               newApplicationFileStoreId = await applyDocketToDocument(
@@ -313,15 +322,164 @@ async function processBailDocuments(
         })
       );
       bailApplicationsLineItems.push(...innerLineItems.filter(Boolean));
-      const bailApplicationsIndexSection = indexCopy.sections.find(
+      const bailDocumentIndexSection = indexCopy.sections.find(
         (section) => section.name === "baildocument"
       );
-      bailApplicationsIndexSection.lineItems =
+      bailDocumentIndexSection.lineItems =
         bailApplicationsLineItems.filter(Boolean);
     }
-    // if(){
+  }
 
-    // }
+  if (bailBondSection?.length !== 0) {
+    const section = bailBondSection[0];
+    const bailBondLineItems = [];
+
+    const bailBond = await search_bailBond_v2(
+      tenantId,
+      requestInfo,
+      {
+        courtId: courtCase.courtId,
+        filingNumber: courtCase.filingNumber,
+        tenantId,
+        status: "COMPLETED",
+      },
+      {
+        sortBy: section.sorton,
+        order: "ASC",
+        limit: 100,
+      }
+    );
+
+    const bailBondList = bailBond?.data?.bails;
+
+    if (bailBondList?.length !== 0) {
+      const innerLineItems = await Promise.all(
+        bailBondList.map(async (bailBond, index) => {
+          if (bailBond?.documents?.length !== 0) {
+            const signed = [];
+            const others = [];
+
+            bailBond.documents.forEach((document) => {
+              if (document?.fileStore) {
+                if (document.documentType === "SIGNED") {
+                  signed.push(document.fileStore);
+                } else {
+                  others.push(document.fileStore);
+                }
+              }
+            });
+
+            const fileStores = [...signed, ...others];
+            const combinedFileStore = await combineMultipleFilestores(
+              fileStores,
+              tenantId,
+              requestInfo,
+              TEMP_FILES_DIR
+            );
+            let newBailBondFileStoreId = combinedFileStore;
+
+            if (section.docketpagerequired === "yes") {
+              const sourceUuid = bailBond.auditDetails.createdBy;
+
+              const sourceLitigant = courtCase.litigants?.find(
+                (litigant) => litigant.additionalDetails.uuid === sourceUuid
+              );
+              const sourceRepresentative = courtCase.representatives?.find(
+                (rep) => rep.additionalDetails.uuid === sourceUuid
+              );
+
+              let docketNameOfFiling;
+              let docketCounselFor;
+
+              if (sourceLitigant) {
+                docketNameOfFiling =
+                  sourceLitigant.additionalDetails?.fullName || "";
+                docketCounselFor = "";
+              } else if (sourceRepresentative) {
+                const docketNameOfComplainants =
+                  sourceRepresentative.representing
+                    ?.map((lit) => lit.additionalDetails.fullName)
+                    .filter(Boolean)
+                    .join(", ");
+                const partyType =
+                  sourceRepresentative.representing[0].partyType.includes(
+                    "complainant"
+                  )
+                    ? "COMPLAINANT"
+                    : "ACCUSED";
+                docketNameOfFiling =
+                  sourceRepresentative.additionalDetails?.advocateName || "";
+                docketCounselFor = `COUNSEL FOR THE ${partyType} - ${docketNameOfComplainants}`;
+              } else {
+                const complainant = courtCase.litigants?.find((litigant) =>
+                  litigant.partyType.includes("complainant.primary")
+                );
+                const docketNameOfComplainants =
+                  complainant.additionalDetails.fullName;
+                docketNameOfFiling =
+                  courtCase.representatives?.find((adv) =>
+                    adv.representing?.find(
+                      (party) => party.individualId === complainant.individualId
+                    )
+                  )?.additionalDetails?.advocateName ||
+                  docketNameOfComplainants;
+                docketCounselFor =
+                  docketNameOfFiling === docketNameOfComplainants
+                    ? ""
+                    : `COUNSEL FOR THE COMPLAINANT - ${docketNameOfComplainants}`;
+              }
+
+              const bailPosition =
+                indexCopy?.lineItems?.length === 0 ? "1" : "2";
+
+              const documentPath = `${dynamicSectionNumber}.${bailPosition}.${
+                index + 1
+              }.1 Bond and Other Documents in ${dynamicSectionNumber}.${bailPosition}.${
+                index + 1
+              } ${bailBond.bailType} in ${dynamicSectionNumber}.2 ${
+                section.Items
+              } in ${dynamicSectionNumber} ${section.section}`;
+
+              newBailBondFileStoreId = await applyDocketToDocument(
+                newBailBondFileStoreId,
+                {
+                  docketApplicationType: section.Items,
+                  docketCounselFor: docketCounselFor,
+                  docketNameOfFiling: docketNameOfFiling,
+                  docketDateOfSubmission: new Date(
+                    bailBond.auditDetails.createdTime
+                  ).toLocaleDateString("en-IN"),
+                  documentPath: documentPath,
+                },
+                courtCase,
+                tenantId,
+                requestInfo,
+                TEMP_FILES_DIR
+              );
+            }
+
+            return {
+              sourceId: combinedFileStore,
+              fileStoreId: newBailBondFileStoreId,
+              sortParam: index + 1,
+              createPDF: false,
+              content: "bailBond",
+            };
+          } else {
+            return null;
+          }
+        })
+      );
+      bailBondLineItems.push(...innerLineItems.filter(Boolean));
+      const bailDocumentIndexSection = indexCopy.sections.find(
+        (section) => section.name === "baildocument"
+      );
+      // Append bail bond line items to existing bail application line items instead of overwriting
+      bailDocumentIndexSection.lineItems = [
+        ...(bailDocumentIndexSection.lineItems || []),
+        ...bailBondLineItems.filter(Boolean),
+      ];
+    }
   }
 }
 
