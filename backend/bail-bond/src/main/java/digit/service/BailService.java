@@ -293,7 +293,7 @@ public class BailService {
             callNotificationService(bailRequest);
         }
 
-        insertBailIndexEntry(bailRequest);
+        insertBailIndexEntry(originalBail);
 
         producer.push(config.getBailUpdateTopic(), bailRequest);
 
@@ -522,11 +522,10 @@ public class BailService {
         return attribute;
     }
 
-    public void insertBailIndexEntry(BailRequest bailRequest) {
+    public void insertBailIndexEntry(Bail bail) {
         try {
-            Bail bail = bailRequest.getBail();
             if (bail != null) {
-                log.info("Inserting Bail entry in bail-bond-index (inbox): {}", bailRequest);
+                log.info("Inserting Bail entry in bail-bond-index (inbox): {}", bail);
                 String bulkRequest = indexerUtils.buildPayload(bail);
                 if (!bulkRequest.isEmpty()) {
                     String uri = config.getEsHostUrl() + config.getBulkPath();
