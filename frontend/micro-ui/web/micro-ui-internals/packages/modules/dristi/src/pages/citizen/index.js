@@ -153,55 +153,9 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   ];
   const bailRoute = [`${path}/home/bail-bond-sign`];
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
-  // Get the eSign window object for redirection
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
-  let retrievedObject = null;
-  try {
-    retrievedObject = JSON.parse(eSignWindowObject);
-  } catch (e) {
-    // Handle parse error silently
-    retrievedObject = null;
-  }
-  // Handle direct eSign URLs (when result and fileStoreId are in URL parameters)
-  if ((result || fileStoreId) && !retrievedObject) {
-    // Create default bail bond redirect data if coming directly from eSign
-    retrievedObject = {
-      path: `${path}/home/bail-bond-sign`,
-      param: window.location.search,
-      isBailBond: true,
-    };
-    sessionStorage.setItem("esignProcess", "true");
-  }
-  // First priority: Check if this is a bail bond e-sign return
-  const isEsignReturn = sessionStorage.getItem("esignProcess") === "true" || bailRoute.includes(retrievedObject?.path) || retrievedObject?.isBailBond;
-  // If this is a bail bond esign return OR we have a bail bond route in the retrieved object,
-  // redirect to bail bond page regardless of login status
-  if (retrievedObject && isEsignReturn) {
-    if (result) {
-      sessionStorage.setItem("isSignSuccess", result);
-    }
-    if (fileStoreId) {
-      sessionStorage.setItem("fileStoreId", fileStoreId);
-    }
-    // Get mobile number with error handling
-    let mobileNumber = null;
-    try {
-      mobileNumber = JSON.parse(sessionStorage.getItem("mobileNumber"));
-    } catch (e) {
-      mobileNumber = sessionStorage.getItem("mobileNumber");
-    }
-    // Redirect to bail bond sign page
-    history.push(`${bailRoute[0]}${retrievedObject?.param || ""}`, {
-      mobileNumber: mobileNumber,
-      isAuthorised: true,
-    });
-    sessionStorage.removeItem("eSignWindowObject");
-    return; // Exit early to prevent other redirects
-  }
-  // Regular login flow for non-bail bond pages
-  else if (!isUserLoggedIn && !whiteListedRoutes.includes(location.pathname) && !bailRoute.includes(location.pathname)) {
-    history.push(`${path}/home/login`);
-  }
+  const retrievedObject = JSON.parse(eSignWindowObject);
+ 
   if (
     !isRejected &&
     individualId &&
@@ -212,14 +166,38 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     history.push(`${path}/home`);
   }
 
+  if (bailRoute.includes(retrievedObject?.path)) {
+    if (result) {
+      sessionStorage.setItem("isSignSuccess", result);
+    }
+    if (fileStoreId) {
+      sessionStorage.setItem("fileStoreId", fileStoreId);
+    }
+    history.push(`${retrievedObject?.path}${retrievedObject?.param}`,
+      {
+        mobileNumber: JSON.parse(sessionStorage.getItem("mobileNumber")),
+        isAuthorised : true,
+      }
+    );
+    sessionStorage.removeItem("eSignWindowObject");
+  }
+
+  if (!isUserLoggedIn && !whiteListedRoutes.includes(location.pathname)) {
+    history.push(`${path}/home/login`);
+  }
+
   if (isUserLoggedIn && !location.pathname.includes(`${path}/home`) && !bailRoute.includes(location.pathname)) {
     history.push(`${path}/home`);
   }
   if (isUserLoggedIn && registerScreenRoute.includes(location.pathname)) {
     history.push(`${path}/home/registration/user-name`);
   }
-  // Only redirect for non-bail bond flows if user is logged in
-  // (Bail bond redirects are handled in the early return block above)
+  if (result) {
+    sessionStorage.setItem("isSignSuccess", result);
+  }
+  if (fileStoreId) {
+    sessionStorage.setItem("fileStoreId", fileStoreId);
+  }
   if (isUserLoggedIn && retrievedObject && !bailRoute.includes(retrievedObject?.path)) {
     history.push(`${retrievedObject?.path}${retrievedObject?.param}`);
     sessionStorage.removeItem("eSignWindowObject");
