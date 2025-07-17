@@ -57,7 +57,7 @@ public class BailRegistrationEnrichment {
         bail.setBailId(bailId);
         enrichCaseDetails(bailRequest);
         if(!ObjectUtils.isEmpty(bailRequest.getBail().getDocuments())){
-            bail.getDocuments().forEach(document -> enrichDocument(document, tenantId));
+            bail.getDocuments().forEach(document -> enrichDocument(document, tenantId, requestInfo));
         }
         enrichSureties(bailRequest);
         bail.setBailType(Bail.BailTypeEnum.fromValue(String.valueOf(bail.getBailType())));
@@ -92,7 +92,7 @@ public class BailRegistrationEnrichment {
         bail.setCaseId(caseUtil.getCaseId(caseDetails));
     }
 
-    public void enrichDocument(Document document, String rootTenantId) {
+    public void enrichDocument(Document document, String rootTenantId, RequestInfo requestInfo) {
         if (ObjectUtils.isEmpty(document.getId())) {
             document.setId(String.valueOf(UUID.randomUUID()));
             document.setDocumentUid(document.getId());
@@ -100,6 +100,26 @@ public class BailRegistrationEnrichment {
         if(ObjectUtils.isEmpty(document.getTenantId())){
             document.setTenantId(rootTenantId);
         }
+        AuditDetails auditDetails = document.getAuditDetails();
+
+        Long currentTime = System.currentTimeMillis();
+        String userUuid = requestInfo.getUserInfo().getUuid();
+
+        if (ObjectUtils.isEmpty(auditDetails)) {
+            auditDetails = AuditDetails.builder()
+                    .createdBy(userUuid)
+                    .createdTime(currentTime)
+                    .lastModifiedBy(userUuid)
+                    .lastModifiedTime(currentTime)
+                    .build();
+        } else {
+            auditDetails.setLastModifiedBy(userUuid);
+            auditDetails.setLastModifiedTime(currentTime);
+        }
+
+        document.setAuditDetails(auditDetails);
+
+
     }
 
     public void enrichSureties(BailRequest bailRequest) {
@@ -109,7 +129,7 @@ public class BailRegistrationEnrichment {
                     surety.setId(String.valueOf(UUID.randomUUID()));
                 }
                 if(!ObjectUtils.isEmpty(surety.getDocuments())){
-                    surety.getDocuments().forEach(document -> enrichDocument(document, bailRequest.getBail().getTenantId()));
+                    surety.getDocuments().forEach(document -> enrichDocument(document, bailRequest.getBail().getTenantId(), bailRequest.getRequestInfo()));
                 }
             });
         }
@@ -130,7 +150,11 @@ public class BailRegistrationEnrichment {
         }
         enrichSureties(bailRequest);
         if(!ObjectUtils.isEmpty(bailRequest.getBail().getDocuments())){
-            bailRequest.getBail().getDocuments().forEach(document -> enrichDocument(document, bailRequest.getBail().getTenantId()));
+            bailRequest.getBail().getDocuments().forEach(document -> enrichDocument(document, bailRequest.getBail().getTenantId(), bailRequest.getRequestInfo()));
         }
+        AuditDetails auditDetails = bailRequest.getBail().getAuditDetails();
+        auditDetails.setLastModifiedBy(bailRequest.getRequestInfo().getUserInfo().getUuid());
+        auditDetails.setLastModifiedTime(System.currentTimeMillis());
+        bailRequest.getBail().setAuditDetails(auditDetails);
     }
 }
