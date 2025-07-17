@@ -155,16 +155,6 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = JSON.parse(eSignWindowObject);
-  if (bailRoute.includes(retrievedObject?.path)) {
-    if (result) {
-      sessionStorage.setItem("isSignSuccess", result);
-    }
-    if (fileStoreId) {
-      sessionStorage.setItem("fileStoreId", fileStoreId);
-    }
-    history.push(`${retrievedObject?.path}${retrievedObject?.param}`);
-    sessionStorage.removeItem("eSignWindowObject");
-  }
 
   if (!isUserLoggedIn && !whiteListedRoutes.includes(location.pathname)) {
     history.push(`${path}/home/login`);
@@ -177,6 +167,22 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     !bailRoute.includes(location.pathname)
   ) {
     history.push(`${path}/home`);
+  }
+
+  if (bailRoute.includes(retrievedObject?.path)) {
+    if (result) {
+      sessionStorage.setItem("isSignSuccess", result);
+    }
+    if (fileStoreId) {
+      sessionStorage.setItem("fileStoreId", fileStoreId);
+    }
+    history.push(`${retrievedObject?.path}${retrievedObject?.param}`,
+      {
+        mobileNumber: JSON.parse(sessionStorage.getItem("mobileNumber")),
+        isAuthorised : true,
+      }
+    );
+    sessionStorage.removeItem("eSignWindowObject");
   }
 
   if (isUserLoggedIn && !location.pathname.includes(`${path}/home`) && !bailRoute.includes(location.pathname)) {
