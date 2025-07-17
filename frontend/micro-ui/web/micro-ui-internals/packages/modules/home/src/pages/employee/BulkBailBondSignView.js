@@ -202,8 +202,9 @@ function BulkBailBondSignView() {
                 signedBails: responseArray,
               },
               {}
-            );
-            console.log(updatedBailBondResponse, "updatedBailBondResponse", updatedBailBondResponse?.bails?.length);
+            ).then((response) => {
+              setShowBulkSignConfirmModal(false);
+            });
 
             // history.replace(homePath, {
             //   bulkSignSuccess: {
