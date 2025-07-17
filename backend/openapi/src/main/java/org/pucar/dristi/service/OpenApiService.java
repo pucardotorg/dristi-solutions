@@ -747,6 +747,9 @@ public class OpenApiService {
                     .id(UUID.randomUUID().toString())
                     .fileStore(request.getFileStoreId())
                     .documentType("SIGNED")
+                    .isActive(true)
+                    .tenantId(request.getTenantId())
+                    .documentUid(UUID.randomUUID().toString())
                     .build();
 
             // Set signed flag
