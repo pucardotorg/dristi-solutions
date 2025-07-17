@@ -239,28 +239,44 @@ function BulkBailBondSignView() {
 
   return (
     <React.Fragment>
-      {isLoading ? (
-        <Loader />
-      ) : (
-        <React.Fragment>
-          {/* bulk-esign-order-view */}
-          <div className={""} style={{ width: "100%", maxHeight: "calc(-250px + 100vh)", overflowY: "auto" }}>
-            {MemoInboxSearchComposer}
-          </div>
-          {isJudge && (
-            <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
-              <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
-                <SubmitBar
-                  label={t("SIGN_SELECTED_BAIL_BONDS")}
-                  submit="submit"
-                  disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
-                  onSubmit={() => setShowBulkSignConfirmModal(true)}
-                />
-              </div>
-            </ActionBar>
-          )}
-        </React.Fragment>
+      {isLoading && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "10001",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
       )}
+      <React.Fragment>
+        {/* bulk-esign-order-view */}
+        <div className={""} style={{ width: "100%", maxHeight: "calc(-250px + 100vh)", overflowY: "auto" }}>
+          {MemoInboxSearchComposer}
+        </div>
+        {isJudge && (
+          <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
+            <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
+              <SubmitBar
+                label={t("SIGN_SELECTED_BAIL_BONDS")}
+                submit="submit"
+                disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
+                onSubmit={() => setShowBulkSignConfirmModal(true)}
+              />
+            </div>
+          </ActionBar>
+        )}
+      </React.Fragment>
+
       {showBulkSignConfirmModal && (
         <Modal
           headerBarMain={<Heading label={t("CONFIRM_BULK_SIGN")} />}
