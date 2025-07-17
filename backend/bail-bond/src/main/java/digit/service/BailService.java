@@ -490,6 +490,11 @@ public class BailService {
                         bail.getSureties().forEach(surety -> surety.setIsApproved(true));
                     }
 
+                    WorkflowObject workflowObject = new WorkflowObject();
+                    workflowObject.setAction(SIGN);
+
+                    bail.setWorkflow(workflowObject);
+
                     BailRequest updateBailWithJudgeApproval = BailRequest.builder().requestInfo(requestInfo).bail(bail).build();
 
                     Bail approvedBail = updateBail(updateBailWithJudgeApproval);
