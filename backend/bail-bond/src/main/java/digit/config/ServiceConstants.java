@@ -52,6 +52,7 @@ public class ServiceConstants {
     public static final String ERROR_WHILE_FETCHING_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE";
 
     public static final String E_SIGN = "E-SIGN";
+    public static final String SIGN = "SIGN";
     public static final String E_SIGN_COMPLETE = "E-SIGN_COMPLETE";
     public static final String E_SIGN_COMPLETE_WITH_PAYMENT = "E-SIGN_COMPLETE_WITH_PAYMENT";
     public static final String PENDING_E_SIGN = "PENDING_E-SIGN";
