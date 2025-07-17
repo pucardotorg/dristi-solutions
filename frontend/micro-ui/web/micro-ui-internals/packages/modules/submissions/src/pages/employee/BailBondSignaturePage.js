@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ActionBar, SubmitBar, Button, Toast } from "@egovernments/digit-ui-react-components";
+import { ActionBar, SubmitBar, Button, Toast, Loader } from "@egovernments/digit-ui-react-components";
 import { useTranslation } from "react-i18next";
 import BailEsignModal from "../../components/BailEsignModal";
 import SuccessBannerModal from "../../components/SuccessBannerModal";
@@ -97,7 +97,7 @@ const BailBondSignaturePage = () => {
   const styles = getStyles();
   const history = useHistory();
   const token = window.localStorage.getItem("token");
-  const isAuthorised = window.sessionStorage.getItem("isAuthorised");
+  const isAuthorised = location?.state?.isAuthorised;
   const isUserLoggedIn = Boolean(token);
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
@@ -107,13 +107,14 @@ const BailBondSignaturePage = () => {
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);
-  const filingNumber = useMemo(() => bailbondId?.split("-")[0], [bailbondId]); // need to change this logic as per the requirement
+  const [esignMobileNumber, setEsignMobileNumber] = useState("");
+  
 
   const { data: bailBondOpenData, isLoading: isBailBondLoading } = useOpenApiSearchBailBond(
     {
       tenantId,
       bailId: bailbondId,
-      mobileNumber: mobileNumber,
+      mobileNumber: mobileNumber || esignMobileNumber,
     },
     {},
     `bail-bond-details-${bailbondId}`,
@@ -134,7 +135,7 @@ const BailBondSignaturePage = () => {
 
   const bailBondDetails = useMemo(() => {
     return bailBond?.bails?.[0] || bailBondOpenData;
-  }, [bailBond, bailBondOpenData]);
+  }, [bailBond, bailBondOpenData]);  
 
   // Check if current user is the creator of the bail bond
   const isCreator = useMemo(() => {
@@ -145,33 +146,55 @@ const BailBondSignaturePage = () => {
   }, [isUserLoggedIn, bailBondDetails, userInfo]);
 
   const fileStoreId = useMemo(() => {
-    return bailBondDetails?.documents?.find((doc) => doc.documentType === "SIGNED")?.fileStore;
+    return bailBondDetails?.documents?.[0]?.fileStore;
   }, [bailBondDetails]);
 
   const dummyLitigants = useMemo(() => {
     const data = [];
-  
+
     const litigant = {
       additionalDetails: {
         fullName: bailBondDetails?.litigantName || "",
+        type: "Accused",
       },
       hasSigned: bailBondDetails?.litigantSigned || false,
+      mobileNumber: bailBondDetails?.litigantMobileNumber || bailBondDetails?.phoneNumber,
+      placeHolder: "Accused Signature",
     };
-  
+
     if (Array.isArray(bailBondDetails?.sureties)) {
-      bailBondDetails.sureties.forEach((surety) => {
+      bailBondDetails.sureties.forEach((surety, index) => {
         data.push({
           additionalDetails: {
             fullName: surety?.name || "",
+            type: `Surety ${index + 1}`,
           },
           hasSigned: surety?.hasSigned || false,
+          mobileNumber: surety?.mobileNumber,
+          placeHolder: `Surety${index + 1} Signature`,
         });
       });
     }
-  
+
     return [litigant, ...data];
   }, [bailBondDetails]);
-  
+
+  const signingUserDetails = useMemo(() => {
+    let matchedMobileNumber = "";
+    if (isUserLoggedIn) {
+      matchedMobileNumber = userInfo?.mobileNumber;
+    } else {
+      matchedMobileNumber = mobileNumber;
+    }
+
+    const matched = dummyLitigants?.find((person) => person?.mobileNumber === matchedMobileNumber);
+
+    return {
+      mobileNumber: matched?.mobileNumber,
+      placeHolder: matched?.placeHolder || "",
+      hasSigned: matched?.hasSigned,
+    };
+  }, [dummyLitigants, isUserLoggedIn, mobileNumber, userInfo?.mobileNumber]);
 
   const { data: { file: orderPreviewPdf, fileName: orderPreviewFileName } = {}, isFetching: isLoading } = useQuery({
     queryKey: ["bailBondSignaturePdf", tenantId, bailbondId, userInfo?.uuid],
@@ -204,22 +227,25 @@ const BailBondSignaturePage = () => {
     setShowSignatureModal(false);
   };
 
-  const handleEsignProceed = () => {
+  const handleEsignProceed = async () => {
     // TODO: Update call with Signed FileStore
     try {
       const fileStoreId = sessionStorage.getItem("fileStoreId");
       const payload = {
         tenantId,
         bailId: bailbondId,
+        mobileNumber: mobileNumber || esignMobileNumber,
         fileStoreId: fileStoreId,
       };
       sessionStorage.removeItem("fileStoreId");
-      const res = submissionService.updateOpenBailBond(payload, { tenantId });
+      const res = await submissionService.updateOpenBailBond(payload, { tenantId });
       setShowSignatureModal(false);
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Error while updating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setShowSignatureModal(false);
     }
   };
 
@@ -229,7 +255,7 @@ const BailBondSignaturePage = () => {
     history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`);
   };
 
-  const handleEditBailBondSubmit = () => {
+  const handleEditBailBondSubmit = async () => {
     // TODO : Update Api CAll
     try {
       sessionStorage.removeItem("isAuthorised");
@@ -240,7 +266,7 @@ const BailBondSignaturePage = () => {
             workflow: { ...bailBondDetails.workflow, action: bailBondWorkflowAction.EDIT, documents: [{}] },
           },
         };
-        const res = submissionService.updateBailBond(payload, { tenantId });
+        const res = await submissionService.updateBailBond(payload, { tenantId });
         history.replace(
           `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${bailBondDetails?.filingNumber}&bailBondId=${bailbondId}`
         );
@@ -252,6 +278,22 @@ const BailBondSignaturePage = () => {
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     }
   };
+
+  useEffect(() => {
+    const isSignSuccess = sessionStorage.getItem("esignProcess");
+    const mobileNumber = sessionStorage.getItem("mobileNumber");
+    if (isSignSuccess) {
+      setShowSignatureModal(true);
+      setEsignMobileNumber(JSON.parse(mobileNumber));
+
+      const timer = setTimeout(() => {
+        sessionStorage.removeItem("esignProcess");
+        sessionStorage.removeItem("mobileNumber");
+      }, 2000);
+
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   useEffect(() => {
     if (!isUserLoggedIn && !isAuthorised) {
@@ -267,6 +309,10 @@ const BailBondSignaturePage = () => {
     setShowErrorToast(null);
   };
 
+  if (isBailDataLoading || isBailBondLoading) {
+    return <Loader />;
+  }
+
   return (
     <React.Fragment>
       <div style={styles.header}>{t("BAIL_BOND")}</div>
@@ -280,6 +326,7 @@ const BailBondSignaturePage = () => {
               {dummyLitigants?.map((litigant, index) => (
                 <div key={index} style={{ ...styles.litigantDetails, marginTop: "5px", fontSize: "16px" }}>
                   {litigant?.additionalDetails?.fullName}
+                  {` (${litigant?.additionalDetails?.type})`}
                   {litigant?.hasSigned ? (
                     <span style={{ ...styles.signedLabel, alignItems: "right" }}>{t("SIGNED")}</span>
                   ) : (
@@ -326,15 +373,17 @@ const BailBondSignaturePage = () => {
                 }}
               />
             )}
-            <SubmitBar
-              label={
-                <div style={{ boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
-                  <span>{t("PROCEED_TO_E_SIGN")}</span>
-                </div>
-              }
-              onSubmit={handleSubmit}
-              style={styles.submitButton}
-            />
+            {signingUserDetails?.mobileNumber && !signingUserDetails?.hasSigned && (
+              <SubmitBar
+                label={
+                  <div style={{ boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
+                    <span>{t("PROCEED_TO_E_SIGN")}</span>
+                  </div>
+                }
+                onSubmit={handleSubmit}
+                style={styles.submitButton}
+              />
+            )}
           </div>
         </ActionBar>
       </div>
@@ -349,7 +398,16 @@ const BailBondSignaturePage = () => {
           contentText={"INVALIDATE_ALL_SIGN"}
         />
       )}
-      {showSignatureModal && <BailEsignModal t={t} handleCloseSignaturePopup={handleCloseSignatureModal} handleProceed={handleEsignProceed} />}
+      {showSignatureModal && (
+        <BailEsignModal
+          t={t}
+          handleCloseSignaturePopup={handleCloseSignatureModal}
+          handleProceed={handleEsignProceed}
+          fileStoreId={fileStoreId}
+          signPlaceHolder={signingUserDetails?.placeHolder}
+          mobileNumber={signingUserDetails?.mobileNumber}
+        />
+      )}
       {showSuccessModal && <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"SIGNED_BAIL_BOND_MESSAGE"} />}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </React.Fragment>

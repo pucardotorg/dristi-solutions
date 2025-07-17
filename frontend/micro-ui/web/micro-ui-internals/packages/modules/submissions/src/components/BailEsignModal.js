@@ -1,6 +1,7 @@
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
+import useESignOpenApi from "../hooks/submissions/useESignOpenApi";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -14,11 +15,16 @@ const CloseBtn = (props) => {
   );
 };
 
-const BailEsignModal = ({ t, handleProceed, handleCloseSignaturePopup }) => {
+const BailEsignModal = ({ t, handleProceed, handleCloseSignaturePopup, fileStoreId, signPlaceHolder, mobileNumber }) => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [isSigned, setIsSigned] = useState(false);
-  const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
+  const { handleEsign, checkSignStatus } = useESignOpenApi();
   const [pageModule, setPageModule] = useState("ci");
+  const name = "signature";
+
+  useEffect(()=>{
+    checkSignStatus(name, setIsSigned);
+  },[])  
 
   return (
     <Modal
@@ -54,7 +60,8 @@ const BailEsignModal = ({ t, handleProceed, handleCloseSignaturePopup }) => {
                 <Button
                   label={t("CS_ESIGN_AADHAR")}
                   onClick={() => {
-                    setIsSigned(true);
+                    sessionStorage.setItem("mobileNumber", mobileNumber);
+                    handleEsign(name, pageModule, fileStoreId, signPlaceHolder)
                   }}
                   className={"upload-signature"}
                   labelClassName={"submission-upload-signature-label"}

@@ -469,13 +469,20 @@ const GenerateBailBond = () => {
       if (action !== bailBondWorkflowAction.SAVEDRAFT) {
         const documents = Array.isArray(bailBondDetails?.documents) ? bailBondDetails.documents : [];
         const documentsFile = fileStoreId
-          ? [{ fileStore: fileStoreId, documentType: "SIGNED", additionalDetails: { name: `${t("BAIL_BOND")}.pdf` }, tenantId }]
+          ? [
+              {
+                fileStore: fileStoreId,
+                documentType: action === bailBondWorkflowAction.UPLOAD ? "SIGNED" : "UNSIGNED",
+                additionalDetails: { name: `${t("BAIL_BOND")}.pdf` },
+                tenantId,
+              },
+            ]
           : null;
 
         payload = {
           bail: {
             ...bailBondDetails,
-            documents: documentsFile ? [...documents, ...documentsFile] : documents,
+            documents: documentsFile ? [...documentsFile] : documents,
             workflow: { ...bailBondDetails.workflow, action, documents: [{}] },
           },
         };
@@ -649,8 +656,6 @@ const GenerateBailBond = () => {
   if (loader || isCaseLoading || !caseDetails || isBailBondLoading) {
     return <Loader />;
   }
-
-  console.log(defaultFormValue);
 
   return (
     <React.Fragment>

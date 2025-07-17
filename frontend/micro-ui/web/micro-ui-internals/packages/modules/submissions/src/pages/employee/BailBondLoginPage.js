@@ -44,10 +44,10 @@ const BailBondLoginPage = () => {
         setError(true);
         return;
       }
-      sessionStorage.setItem("isAuthorised", true);
-      history.replace(`/${window?.contextPath}/citizen/dristi/home/bail-bond-sign?bailbondId=${bailbondId}`, {
+      history.replace(`/${window?.contextPath}/citizen/dristi/home/bail-bond-sign?tenantId=${tenantId}&bailbondId=${bailbondId}`, {
         mobileNumber: mobileNumber,
         tenantId: tenantId,
+        isAuthorised : true,
       });
     } catch (error) {
       setError(true);
