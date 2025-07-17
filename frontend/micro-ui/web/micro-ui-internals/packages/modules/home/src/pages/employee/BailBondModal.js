@@ -86,6 +86,15 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
 
   const [bailBonds, setBailBonds] = useState([]);
   console.log(row);
+  const courtId = localStorage.getItem("courtId");
+  const formatAdvocateNames = (advocateNames) => {
+    if (advocateNames.length > 0) {
+      return `${advocateNames[0]}${
+        advocateNames.length === 2 ? " + 1 Other" : advocateNames.length > 2 ? ` + ${advocateNames.length - 1} others` : ""
+      }`;
+    }
+    return "";
+  };
 
   useEffect(() => {
     const getBailBonds = async () => {
@@ -105,12 +114,40 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
             order: "ASC",
           },
         });
+        const caseDetails = await DRISTIService.caseDetailSearchService(
+          {
+            criteria: {
+              filingNumber: filingNumber,
+              ...(courtId && { courtId }),
+            },
+            tenantId,
+          },
+          {}
+        );
+        const individualIdAdvocateNameMapping = {};
+        caseDetails?.cases?.representatives?.forEach((element) => {
+          if (element?.additionalDetails?.advocateName) {
+            element?.representing?.forEach((rep) => {
+              individualIdAdvocateNameMapping[rep?.additionalDetails?.uuid] = [
+                ...(individualIdAdvocateNameMapping[rep?.additionalDetails?.uuid] || []),
+                element?.additionalDetails?.advocateName,
+              ];
+            });
+          }
+        });
+
+        Object.keys(individualIdAdvocateNameMapping).forEach((key) => {
+          const advocateNames = individualIdAdvocateNameMapping[key];
+          const formattedAdvocateName = formatAdvocateNames(advocateNames);
+          individualIdAdvocateNameMapping[key] = formattedAdvocateName;
+        });
+
         const filteredBailBonds = bailBonds?.bails?.filter(
           (bond) => bond?.status === "COMPLETED" || bond?.status === "VOID" || bond?.status === "PENDING_REVIEW"
         );
         const formattedBailBonds = filteredBailBonds?.map((bond, index) => ({
           name: `${t("BAIL_BOND")} ${index + 1}`,
-          advocate: bond?.additionalDetails?.createdUserName,
+          advocate: individualIdAdvocateNameMapping[bond?.litigantId] || "",
           litigantName: bond?.litigantName,
           date: formatDate(bond?.auditDetails?.createdTime),
           bailId: bond?.bailId,
@@ -125,7 +162,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
     };
 
     getBailBonds();
-  }, [filingNumber, tenantId]);
+  }, [courtId, filingNumber, t, tenantId]);
 
   const createOrder = async () => {
     const reqbody = {

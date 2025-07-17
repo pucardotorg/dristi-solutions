@@ -22,6 +22,9 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
 
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const courtId = localStorage.getItem("courtId");
+  const userInfo = Digit.UserService.getUser()?.info;
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const canSignBailBond = useMemo(() => roles?.some((role) => role.code === "BAIL_BOND_APPROVER"), [roles]);
 
   const [stepper, setStepper] = useState(() => {
     const bulkBailBondSignSelectedItem = sessionStorage.getItem("bulkBailBondSignSelectedItem");
@@ -339,11 +342,11 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
             <Heading label={`${effectiveRowData?.businessObject?.bailDetails?.caseTitle || effectiveRowData?.caseTitle} ${t("BAIL_BOND")}`} />
           }
           popupStyles={{ width: "70vw" }}
-          actionCancelLabel={t("REJECT")}
+          actionCancelLabel={canSignBailBond && t("REJECT")}
           actionCancelOnSubmit={() => {
             setIsRejectModalOpen(true);
           }}
-          actionSaveLabel={t("PROCEED_TO_SIGN")}
+          actionSaveLabel={canSignBailBond && t("PROCEED_TO_SIGN")}
           actionSaveOnSubmit={() => {
             setStepper(1);
           }}
@@ -478,7 +481,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
           actionCancelOnSubmit={() => {
             downloadPdf(tenantId, bailBondSignedPdf || sessionStorage.getItem("fileStoreId"));
           }}
-          actionSaveLabel={"CS_CLOSE"}
+          actionSaveLabel={"BULK_SUCCESS_CLOSE"}
           actionSaveOnSubmit={() => {
             if (setCounter && typeof setCounter === "function") setCounter((prev) => parseInt(prev) + 1);
             setShowBulkSignModal(false);
@@ -495,7 +498,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
               <Banner
                 whichSvg={"tick"}
                 successful={true}
-                message={t("You have successfully signed the Bail Bonds.")}
+                message={t("YOU_HAVE_SUCCESSFULLY_ISSUED_BAIL_BOND")}
                 headerStyles={{ fontSize: "32px" }}
                 style={{ minWidth: "100%", marginTop: "10px" }}
               ></Banner>

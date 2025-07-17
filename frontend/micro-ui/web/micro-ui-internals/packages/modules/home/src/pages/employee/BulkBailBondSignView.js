@@ -8,6 +8,9 @@ import axios from "axios";
 import { BailBondSignModal } from "./BailBondSignModal";
 import qs from "qs";
 import { HomeService } from "../../hooks/services";
+import { numberToWords } from "@egovernments/digit-ui-module-orders/src/utils";
+import { Banner } from "@egovernments/digit-ui-react-components";
+import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
 const parseXml = (xmlString, tagName) => {
   const parser = new DOMParser();
   const xmlDoc = parser.parseFromString(xmlString, "application/xml");
@@ -23,14 +26,12 @@ const sectionsParentStyle = {
   gap: "1rem",
 };
 
-function BulkBailBondSignView() {
+function BulkBailBondSignView({ showToast = () => {} }) {
   const { t } = useTranslation();
   const tenantId = window?.Digit.ULBService.getStateId();
   const history = useHistory();
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
-  const searchComposerRef = useRef(null);
-
   const [bulkSignList, setBulkSignList] = useState(null);
   const [showBulkSignConfirmModal, setShowBulkSignConfirmModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,16 +41,15 @@ function BulkBailBondSignView() {
   );
   const [showBulkSignModal, setShowBulkSignModal] = useState(sessionStorage.getItem("bulkBailBondSignSelectedItem") ? true : false);
   const [bailBondPaginationData, setBailBondPaginationData] = useState({});
-
+  const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
   const courtId = localStorage.getItem("courtId");
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-
+  const [successCount, setSuccessCount] = useState(0);
   const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const [needConfigRefresh, setNeedConfigRefresh] = useState(false);
   const [counter, setCounter] = useState(0);
   const config = useMemo(() => {
@@ -118,6 +118,25 @@ function BulkBailBondSignView() {
   const closeToast = useCallback(() => {
     setShowErrorToast(null);
   }, []);
+
+  const getFormattedDate = () => {
+    const currentDate = new Date();
+    const year = String(currentDate.getFullYear());
+    const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+    const day = String(currentDate.getDate()).padStart(2, "0");
+    return `${day}/${month}/${year}`;
+  };
+
+  const bailBondModalInfo = {
+    header: `${t("YOU_HAVE_SUCCESSFULLY_ISSUED_BULK_BAIL_BOND")} ${numberToWords(successCount)} ${t("ISSUE_BAIL_BONDS")} `, //NEED TO CHANGE COUNT
+    caseInfo: [
+      {
+        key: t("BAIL_BOND_ISSUE_DATE"),
+        value: getFormattedDate(),
+        copyData: false,
+      },
+    ],
+  };
 
   const Heading = useCallback((props) => <span className="heading-m">{props.label}</span>, []);
 
@@ -204,14 +223,10 @@ function BulkBailBondSignView() {
               {}
             ).then((response) => {
               setShowBulkSignConfirmModal(false);
+              setShowBulkSignSuccessModal(true);
+              setSuccessCount(response?.bailBond?.length);
+              showToast("success", t("BAIL_BULK_SIGN_SUCCESS_MSG"));
             });
-
-            // history.replace(homePath, {
-            //   bulkSignSuccess: {
-            //     show: true,
-            //     bailBondCount: updatedBailBondResponse?.bailBond?.length,
-            //   },
-            // });
           });
         }
       }
@@ -302,6 +317,34 @@ function BulkBailBondSignView() {
           bailBondPaginationData={bailBondPaginationData}
           setCounter={setCounter}
         />
+      )}
+      {showBulkSignSuccessModal && (
+        <Modal
+          actionSaveLabel={t("BULK_SUCCESS_CLOSE")}
+          actionSaveOnSubmit={() => {
+            setShowBulkSignSuccessModal(false);
+            setCounter((prev) => parseInt(prev) + 1);
+          }}
+          className={"orders-issue-bulk-success-modal"}
+        >
+          <div>
+            <Banner
+              whichSvg={"tick"}
+              successful={true}
+              message={bailBondModalInfo?.header}
+              headerStyles={{ fontSize: "32px" }}
+              style={{ minWidth: "100%" }}
+            ></Banner>
+            {
+              <CustomCopyTextDiv
+                t={t}
+                keyStyle={{ margin: "8px 0px" }}
+                valueStyle={{ margin: "8px 0px", fontWeight: 700 }}
+                data={bailBondModalInfo?.caseInfo}
+              />
+            }
+          </div>
+        </Modal>
       )}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </React.Fragment>
