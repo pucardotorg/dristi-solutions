@@ -2129,21 +2129,12 @@ export const UICustomizations = {
 
     additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
       switch (key) {
+        case "BAIL_TYPE":
+          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} isBail={true}/>;
         case "STAGE":
           return t(value);
         case "BAIL_ID":
-          return (
-            <Link
-              style={{ color: "black", textDecoration: "underline" }}
-              to={{
-                pathname: `/${window?.contextPath}/employee/dristi/admission`,
-                search: `?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview`,
-                state: { homeActiveTab: row?.tab },
-              }}
-            >
-              {value ? value : "-"}
-            </Link>
-          );
+          return value;
         default:
           return value ? value : "-";
       }

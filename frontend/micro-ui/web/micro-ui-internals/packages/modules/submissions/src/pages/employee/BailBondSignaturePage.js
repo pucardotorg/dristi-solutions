@@ -136,21 +136,14 @@ const BailBondSignaturePage = () => {
     return bailBond?.bails?.[0] || bailBondOpenData;
   }, [bailBond, bailBondOpenData]);
 
-  // Check if current user is the creator of the bail bond
-  const roles = useMemo(() => userInfo?.roles, [userInfo]);
-
-  const canSignBailBond = useMemo(() => {
-    return roles?.some((role) => role.code === "ADVOCATE_ROLE");
-  }, [roles]);
-
   const isCreator = useMemo(() => {
     if (!isUserLoggedIn) return false;
 
     const createdByUuid = bailBondDetails?.auditDetails?.createdBy;
     const loggedInUserUuid = userInfo?.uuid;
 
-    return Boolean(createdByUuid && loggedInUserUuid && !canSignBailBond && createdByUuid === loggedInUserUuid);
-  }, [isUserLoggedIn, bailBondDetails?.auditDetails?.createdBy, userInfo?.uuid, canSignBailBond]);
+    return Boolean(createdByUuid && loggedInUserUuid && createdByUuid === loggedInUserUuid);
+  }, [isUserLoggedIn, bailBondDetails?.auditDetails?.createdBy, userInfo?.uuid]);
 
   const fileStoreId = useMemo(() => {
     return bailBondDetails?.documents?.[0]?.fileStore;

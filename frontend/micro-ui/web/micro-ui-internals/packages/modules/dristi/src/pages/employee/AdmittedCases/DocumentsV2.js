@@ -39,40 +39,63 @@ const DocumentsV2 = ({
   const [activeTab, setActiveTab] = useState("Documents");
   const configList = useMemo(() => {
     const docSetFunc = (docObj) => {
-      const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
-      const status = docObj?.[0]?.applicationList?.status;
-      const createdByUuid = docObj?.[0]?.applicationList?.statuteSection?.auditdetails?.createdBy;
-      const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditdetails?.createdBy;
-      const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
-      const documentStatus = docObj?.[0]?.artifactList?.status;
-      if (isCitizen || isBenchClerk || isTypist || isJudge) {
-        if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
-          history.push(
-            `/${window?.contextPath}/${
-              isCitizen ? "citizen" : "employee"
-            }/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`
-          );
-        }
-        if (
-          [SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
-        ) {
-          if (createdByUuid === userInfo?.uuid) {
+      if (docObj?.[0]?.isBail) {
+        const bailStatus = docObj?.[0]?.artifactList?.status;
+        const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditDetails?.createdBy;
+        const bailBondId = docObj?.[0]?.artifactList?.bailId;
+        if (isCitizen) {
+          if (bailStatus === "DRAFT_IN_PROGRESS" && documentCreatedByUuid === userInfo?.uuid) {
             history.push(
               `/${window?.contextPath}/${
                 isCitizen ? "citizen" : "employee"
-              }/submissions/submissions-create?filingNumber=${filingNumber}&applicationNumber=${applicationNumber}`
+              }/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondId}`
             );
           }
-        } else {
-          setDocumentSubmission(docObj);
-          setShow(true);
+
+          if (bailStatus === "PENDING_E-SIGN") {
+            history.push(
+              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/dristi/home/bail-bond-sign?tenantId=${tenantId}&bailbondId=${bailBondId}`
+            );
+          }
         }
       } else {
-        if (
-          ![SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
-        ) {
-          setDocumentSubmission(docObj);
-          setShow(true);
+        const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
+        const status = docObj?.[0]?.applicationList?.status;
+        const createdByUuid = docObj?.[0]?.applicationList?.statuteSection?.auditdetails?.createdBy;
+        const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditdetails?.createdBy;
+        const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
+        const documentStatus = docObj?.[0]?.artifactList?.status;
+        if (isCitizen || isBenchClerk || isTypist || isJudge) {
+          if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
+            history.push(
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
+              }/submissions/submit-document?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}`
+            );
+          }
+          if (
+            [SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(status)
+          ) {
+            if (createdByUuid === userInfo?.uuid) {
+              history.push(
+                `/${window?.contextPath}/${
+                  isCitizen ? "citizen" : "employee"
+                }/submissions/submissions-create?filingNumber=${filingNumber}&applicationNumber=${applicationNumber}`
+              );
+            }
+          } else {
+            setDocumentSubmission(docObj);
+            setShow(true);
+          }
+        } else {
+          if (
+            ![SubmissionWorkflowState.PENDINGPAYMENT, SubmissionWorkflowState.PENDINGESIGN, SubmissionWorkflowState.PENDINGSUBMISSION].includes(
+              status
+            )
+          ) {
+            setDocumentSubmission(docObj);
+            setShow(true);
+          }
         }
       }
     };
@@ -176,6 +199,32 @@ const DocumentsV2 = ({
                 },
               },
             },
+            sections: {
+              ...tabConfig.sections,
+              search: {
+                ...tabConfig.sections.search,
+                uiConfig: {
+                  ...tabConfig.sections.search.uiConfig,
+                  fields: [...tabConfig.sections.search.uiConfig.fields],
+                },
+              },
+              searchResult: {
+                ...tabConfig.sections.searchResult,
+                uiConfig: {
+                  ...tabConfig.sections.searchResult.uiConfig,
+                  columns: tabConfig.sections.searchResult.uiConfig.columns.map((column) => {
+                    switch (column.label) {
+                      case "BAIL_TYPE":
+                        return { ...column, clickFunc: docSetFunc };
+                      case "CS_ACTIONS":
+                        return { ...column, clickFunc: handleFilingAction };
+                      default:
+                        return column;
+                    }
+                  }),
+                },
+              },
+            },
           };
         default:
           return {
@@ -216,21 +265,31 @@ const DocumentsV2 = ({
 
   return (
     <React.Fragment>
-      {tabData?.map((i, num) => (
-        <button
-          className={i?.active === true ? "search-tab-head-selected" : "search-tab-head"}
-          onClick={() => {
-            debugger;
+      <div style={{ padding: "5px", margin: "5px" }}>
+        {tabData?.map((i, num) => {
+          const isActive = activeTab === i.label;
+          return (
+            <button
+              key={num}
+              onClick={() => setActiveTab(i?.label)}
+              style={{
+                fontSize: "18px",
+                fontWeight: isActive ? "bold" : "normal",
+                color: isActive ? "#005b5b" : "#8a8a8a",
+                border: "none",
+                background: "none",
+                paddingBottom: "6px",
+                borderBottom: isActive ? "3px solid #005b5b" : "3px solid transparent",
+                marginRight: "16px",
+                cursor: "pointer",
+              }}
+            >
+              {t(i?.displayLabel)}
+            </button>
+          );
+        })}
+      </div>
 
-            console.log(i?.label);
-
-            setActiveTab(i?.label);
-          }}
-          style={{ fontSize: "18px" }}
-        >
-          {t(i?.displayLabel)}
-        </button>
-      ))}
       <InboxSearchComposer key={`${config?.label}`} configs={config} showTab={false}></InboxSearchComposer>
     </React.Fragment>
   );
