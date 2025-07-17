@@ -163,7 +163,8 @@ export const bailBondConfig = [
               key: "address",
               type: "component",
               label: "ADDRESS",
-              component: "SelectComponents",
+              component: "AddressBailBond",
+              isMandatory: true,
               populators: {
                 inputs: [
                   {
@@ -190,11 +191,11 @@ export const bailBondConfig = [
                     validation: {
                       title: "",
                       errMsg: "CORE_COMMON_APPLICANT_STATE_INVALID",
-                      pattern: {
-                        masterName: "commonUiConfig",
-                        moduleName: "patternValidation",
-                        patternType: "name",
-                      },
+                      // pattern: {
+                      //   masterName: "commonUiConfig",
+                      //   moduleName: "patternValidation",
+                      //   patternType: "name",
+                      // },
                       isRequired: true,
                       patternType: "Name",
                     },
@@ -208,11 +209,11 @@ export const bailBondConfig = [
                     validation: {
                       title: "",
                       errMsg: "CORE_COMMON_APPLICANT_DISTRICT_INVALID",
-                      pattern: {
-                        masterName: "commonUiConfig",
-                        moduleName: "patternValidation",
-                        patternType: "name",
-                      },
+                      // pattern: {
+                      //   masterName: "commonUiConfig",
+                      //   moduleName: "patternValidation",
+                      //   patternType: "name",
+                      // },
                       isRequired: true,
                       patternType: "Name",
                     },
@@ -224,7 +225,13 @@ export const bailBondConfig = [
                     type: "text",
                     label: "CITY/TOWN",
                     validation: {
-                      errMsg: "CORE_COMMON_APPLICANT_CITY_INVALID",
+                      title: "",
+                      errMsg: "CORE_COMMON_APPLICANT_DISTRICT_INVALID",
+                      // pattern: {
+                      //   masterName: "commonUiConfig",
+                      //   moduleName: "patternValidation",
+                      //   patternType: "name",
+                      // },
                       isRequired: true,
                       patternType: "Name",
                     },
@@ -237,11 +244,11 @@ export const bailBondConfig = [
                     label: "ADDRESS",
                     validation: {
                       errMsg: "CORE_COMMON_APPLICANT_ADDRESS_INVALID",
-                      pattern: {
-                        masterName: "commonUiConfig",
-                        moduleName: "patternValidation",
-                        patternType: "address",
-                      },
+                      // pattern: {
+                      //   masterName: "commonUiConfig",
+                      //   moduleName: "patternValidation",
+                      //   patternType: "address",
+                      // },
                       maxlength: 256,
                       minlength: 2,
                       isRequired: true,

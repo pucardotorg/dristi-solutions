@@ -3,7 +3,7 @@ import { CardLabelError, TextInput, CustomDropdown, Header, InfoBannerIcon } fro
 import CustomErrorTooltip from "./CustomErrorTooltip";
 import SelectCustomDragDrop from "./SelectCustomDragDrop";
 import CustomEmailTextInput from "../pages/citizen/registration/CustomEmailTextInput";
-import SelectComponents from "./SelectComponents";
+import AddressBailBond from "./AddressBailBond";
 
 const CloseBtn = () => {
   return (
@@ -16,7 +16,7 @@ const CloseBtn = () => {
   );
 };
 
-const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors, control, watch }) => {  
+const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors, control, watch }) => {
   const [formInstances, setFormInstances] = useState(formData?.[config?.key] || [{}]);
   const disable = config?.disable;
   const inputs = useMemo(() => config?.populators?.inputs || [], [config?.populators?.inputs]);
@@ -202,17 +202,15 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                         />
                       </div>
                     )}
-                    {input?.component === "SelectComponents" && (
+                    {input?.component === "AddressBailBond" && (
                       <div>
-                        <SelectComponents
+                        <AddressBailBond
                           config={input}
                           t={t}
                           onSelect={(key, data) => {
-                            if (key === "address") {
-                              setValue(data, key, input, formIndex);
-                            }
+                            setValue(data, key, input, formIndex);
                           }}
-                          formData={formInstances[formIndex]?.[config?.key]}
+                          formData={formInstances[formIndex]?.[input.key]}
                           errors={errors}
                           setError={setError}
                           clearErrors={clearErrors}

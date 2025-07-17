@@ -53,6 +53,17 @@ const convertToFormData = (t, obj) => {
   return formdata;
 };
 
+export const bailBondAddressValidation = ({ formData, inputs }) => {
+  if (
+    inputs?.some((input) => {
+      const isEmpty = /^\s*$/.test(formData?.[input?.name]);
+      return isEmpty || !formData?.[input?.name]?.match(window?.Digit.Utils.getPattern(input?.validation?.patternType) || input?.validation?.pattern);
+    })
+  ) {
+    return true;
+  }
+};
+
 const GenerateBailBond = () => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { t } = useTranslation();
@@ -528,6 +539,18 @@ const GenerateBailBond = () => {
   };
 
   const handleSubmit = async () => {
+    if (formdata?.bailType?.code) {
+      const inputs = bailBondConfig?.[1]?.body?.[0]?.populators?.inputs?.find((input) => input?.key === "address")?.populators?.inputs;
+      for (let i = 0; i < formdata?.sureties?.length; i++) {
+        const surety = formdata?.sureties?.[i];
+        const isError = bailBondAddressValidation({ formData: surety?.address, inputs });
+        if (isError) {
+          setShowErrorToast({ label: "CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT", error: true });
+          return;
+        }
+      }
+    }
+
     try {
       setLoader(true);
       const individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
