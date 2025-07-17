@@ -3,6 +3,7 @@ const router = express.Router();
 const asyncMiddleware = require("../utils/asyncMiddleware");
 const { logger } = require("../logger");
 const bailBond = require("../bailBondHandlers/bailBond");
+const { getCourtAndJudgeDetails } = require("../utils/commonUtils");
 
 function renderError(res, errorMessage, errorCode, errorObject) {
   if (errorCode == undefined) errorCode = 500;
@@ -16,6 +17,9 @@ router.post(
   "",
   asyncMiddleware(async function (req, res, next) {
     const bailBondPdfType = req.query.bailBondPdfType;
+    const courtId = req.query.courtId;
+    const tenantId = req.query.tenantId;
+    const requestInfo = req.body.RequestInfo;
     let qrCode = req.query.qrCode;
 
     // Set qrCode to false if it is undefined, null, or empty
@@ -34,10 +38,18 @@ router.post(
       );
     }
 
+    const courtCaseJudgeDetails = await getCourtAndJudgeDetails(
+      res,
+      tenantId,
+      "Judge",
+      courtId,
+      requestInfo
+    );
+
     try {
       switch (bailBondPdfType.toLowerCase()) {
         case "bail-bond":
-          await bailBond(req, res, qrCode);
+          await bailBond(req, res, courtCaseJudgeDetails, qrCode);
           break;
         default:
           return renderError(

@@ -1,5 +1,7 @@
 package digit.util;
 
+import digit.web.models.Bail;
+import digit.web.models.BailRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.tracer.model.CustomException;
@@ -21,10 +23,11 @@ public class UrlShortenerUtil {
     private Configuration configs;
 
 
-    public String getShortenedUrl(String url){
+    public String getShortenedUrl(String url, String bailBondId){
 
         HashMap<String,String> body = new HashMap<>();
         body.put(URL,url);
+        body.put(REFERENCE_ID, bailBondId);
         StringBuilder builder = new StringBuilder(configs.getUrlShortnerHost());
         builder.append(configs.getUrlShortnerEndpoint());
         String res = restTemplate.postForObject(builder.toString(), body, String.class);
@@ -45,7 +48,7 @@ public class UrlShortenerUtil {
             String longUrl = String.format(configs.getLongUrl(), baseUrl, tenantId, bailBondId);
 
             // Return shortened version
-            return getShortenedUrl(longUrl);
+            return getShortenedUrl(longUrl, bailBondId);
         } catch (CustomException e) {
             log.error(URL_SHORTENING_ERROR_CODE + "{}", e.getMessage());
             throw new CustomException(URL_SHORTENING_ERROR_CODE, URL_SHORTENING_ERROR_MESSAGE + e.getMessage());
@@ -53,5 +56,14 @@ public class UrlShortenerUtil {
     }
 
 
-
+    public void expireTheUrl(BailRequest bailRequest) {
+        Bail bail = bailRequest.getBail();
+        String url = bail.getShortenedURL();
+        HashMap<String,String> body = new HashMap<>();
+        body.put(URL,url);
+        body.put(REFERENCE_ID, bail.getBailId());
+        StringBuilder builder = new StringBuilder(configs.getUrlShortnerHost());
+        builder.append(configs.getUrlShortenerExpireEndpoint());
+        String res = restTemplate.postForObject(builder.toString(), body, String.class);
+    }
 }

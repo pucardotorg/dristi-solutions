@@ -29,7 +29,7 @@ public class ESignUtil {
         this.mapper = mapper;
     }
 
-    public ESignResponse callESignService(ESignRequest eSignRequest, HttpServletRequest servletRequest) {
+    public ESignResponse callESignService(ESignRequest eSignRequest) {
         StringBuilder uri = new StringBuilder();
         uri.append(configs.getESignHost());
         uri.append(configs.getESignEndpoint());
@@ -37,41 +37,16 @@ public class ESignUtil {
         ESignResponse eSignResponse = null;
 
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            // Forward all headers from the incoming servletRequest
-            Enumeration<String> headerNames = servletRequest.getHeaderNames();
-            if (headerNames != null) {
-                while (headerNames.hasMoreElements()) {
-                    String headerName = headerNames.nextElement();
-                    Enumeration<String> headerValues = servletRequest.getHeaders(headerName);
-                    while (headerValues.hasMoreElements()) {
-                        String headerValue = headerValues.nextElement();
-                        headers.add(headerName, headerValue);
-                    }
-                }
-            }
-
-            HttpEntity<ESignRequest> entity = new HttpEntity<>(eSignRequest, headers);
-
-            ResponseEntity<Map> responseEntity = restTemplate.exchange(
-                    uri.toString(),
-                    HttpMethod.POST,
-                    entity,
-                    Map.class
-            );
-            Map response = responseEntity.getBody();
-
+            Object response = restTemplate.postForObject(uri.toString(), eSignRequest, Map.class);
             eSignResponse = mapper.convertValue(response, ESignResponse.class);
             log.info("eSign response :: {}", eSignResponse);
         } catch (Exception e) {
             log.error("Error while fetching from eSign service", e);
             throw new CustomException("ESIGN_SERVICE_ERROR", e.getMessage());
         }
-
         return eSignResponse;
     }
+
 
 }
 

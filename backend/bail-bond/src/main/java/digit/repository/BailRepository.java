@@ -36,7 +36,7 @@ public class BailRepository {
                 .id(bail.getId())
                 .tenantId(bail.getTenantId())
                 .build();
-        Pagination pagination = Pagination.builder().limit(1.0).offSet(0.0).build();
+        Pagination pagination = Pagination.builder().limit(1).offSet(0).build();
         BailSearchRequest bailSearchRequest = BailSearchRequest.builder()
                 .requestInfo(requestInfo)
                 .criteria(criteria)
@@ -66,6 +66,7 @@ public class BailRepository {
                 log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(), preparedStmtArgList.size());
                 throw new CustomException("BAIL_SEARCH_ERR", "Arg and ArgType size mismatch");
             }
+            log.info("DB bail query :: {}", fullQuery);
             List<Bail> list = jdbcTemplate.query(fullQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), rowMapper);
             log.info("DB bail list :: {}", list);
             if (list != null) {

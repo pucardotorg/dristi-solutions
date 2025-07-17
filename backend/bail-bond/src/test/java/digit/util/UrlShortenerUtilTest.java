@@ -50,7 +50,7 @@ class UrlShortenerUtilTest {
                 eq(String.class))
         ).thenReturn(expectedShortUrl);
 
-        String result = urlShortenerUtil.getShortenedUrl(fullUrl);
+        String result = urlShortenerUtil.getShortenedUrl(fullUrl, null);
         assertEquals(expectedShortUrl, result);
     }
 
@@ -64,7 +64,7 @@ class UrlShortenerUtilTest {
                 eq(String.class))
         ).thenReturn("");
 
-        String result = urlShortenerUtil.getShortenedUrl(fullUrl);
+        String result = urlShortenerUtil.getShortenedUrl(fullUrl, null);
         assertEquals(fullUrl, result);
     }
 

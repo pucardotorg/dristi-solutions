@@ -64,8 +64,8 @@ public class BailQueryBuilder {
 
         if (pagination != null) {
             query.append(" LIMIT ? OFFSET ?");
-            preparedStmtList.add(pagination.getLimit().intValue());
-            preparedStmtList.add(pagination.getOffSet().intValue());
+                preparedStmtList.add(pagination.getLimit());
+                preparedStmtList.add(pagination.getOffSet());
 
             preparedStmtArgList.add(Types.INTEGER);
             preparedStmtArgList.add(Types.INTEGER);
@@ -84,6 +84,11 @@ public class BailQueryBuilder {
         query.append(" WHERE bail.id IN (");
         String placeholders = String.join(",", bailIds.stream().map(id -> "?").toList());
         query.append(placeholders).append(")");
+
+        query.append(" AND bail.is_active = true");
+        query.append(" AND (bail_doc.is_active = true OR bail_doc.id IS NULL)");
+        query.append(" AND (srt.is_active = true OR srt.id IS NULL)");
+        query.append(" AND (surety_doc.is_active = true OR surety_doc.id IS NULL) ");
 
         for (String id : bailIds) {
             preparedStmtList.add(id);

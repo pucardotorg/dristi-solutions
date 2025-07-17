@@ -707,7 +707,7 @@ public class OpenApiService {
                 .requestInfo(RequestInfo.builder().userInfo(User.builder().build()).build())
                 .build();
 
-        return esignUtil.callESignService(eSignRequest, servletRequest);
+        return esignUtil.callESignService(eSignRequest);
     }
 
     public OpenApiBailResponse updateBailBond(OpenApiUpdateBailBondRequest request) {
