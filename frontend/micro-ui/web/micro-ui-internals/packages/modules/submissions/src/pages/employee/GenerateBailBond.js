@@ -701,7 +701,12 @@ const GenerateBailBond = () => {
         {showBailBondReview && (
           <BailBondReviewModal
             t={t}
-            handleBack={() => setShowBailBondReview(false)}
+            handleBack={() => {
+              setShowBailBondReview(false);
+              history.replace(
+                `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondDetails?.bailId}`
+              );
+            }}
             setShowBailBondReview={setShowBailBondReview}
             setShowsignatureModal={setShowsignatureModal}
             bailBondDetails={bailBondDetails}

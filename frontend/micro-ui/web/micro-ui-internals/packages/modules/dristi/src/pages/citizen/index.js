@@ -156,19 +156,6 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = JSON.parse(eSignWindowObject);
 
-  if (!isUserLoggedIn && !whiteListedRoutes.includes(location.pathname) & !bailRoute.includes(retrievedObject?.path)) {
-    history.push(`${path}/home/login`);
-  }
-  if (
-    !isRejected &&
-    individualId &&
-    !isLitigantPartialRegistered &&
-    whiteListedRoutes.includes(location.pathname) &&
-    !bailRoute.includes(location.pathname)
-  ) {
-    history.push(`${path}/home`);
-  }
-
   if (bailRoute.includes(retrievedObject?.path)) {
     if (result) {
       sessionStorage.setItem("isSignSuccess", result);
@@ -181,9 +168,20 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
         mobileNumber: JSON.parse(sessionStorage.getItem("mobileNumber")),
         isAuthorised : true,
       }
-    );
-    sessionStorage.removeItem("eSignWindowObject");
-    return;
+    );    return;
+  }
+
+  if (!isUserLoggedIn && !whiteListedRoutes.includes(location.pathname) & !bailRoute.includes(location.pathname)) {
+    history.push(`${path}/home/login`);
+  }
+  if (
+    !isRejected &&
+    individualId &&
+    !isLitigantPartialRegistered &&
+    whiteListedRoutes.includes(location.pathname) &&
+    !bailRoute.includes(location.pathname)
+  ) {
+    history.push(`${path}/home`);
   }
 
   if (isUserLoggedIn && !location.pathname.includes(`${path}/home`) && !bailRoute.includes(location.pathname)) {

@@ -71,6 +71,7 @@ const useESignOpenApi = () => {
         localStorage.removeItem("name");
         sessionStorage.removeItem("isSignSuccess");
         sessionStorage.removeItem("esignProcess");
+        sessionStorage.removeItem("eSignWindowObject");
       }, 200);
     }
   };
