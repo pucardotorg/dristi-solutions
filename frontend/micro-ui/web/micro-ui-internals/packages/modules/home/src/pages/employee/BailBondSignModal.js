@@ -43,6 +43,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
   const { t } = useTranslation();
   const history = useHistory();
+  const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
 
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
@@ -173,22 +174,24 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
           const payload = {
             bail: {
               ...bailBondDetails,
-              documents: bailBondDetails?.documents?.map((doc) => {
-                if (fileStoreId && doc?.documentType === "SIGNED") {
-                  return { documentType: "SIGNED", fileStore: fileStoreId };
-                }
-                return doc;
-              }),
+              documents: [
+                ...bailBondDetails?.documents?.map((doc) => {
+                  if (fileStoreId && doc?.documentType === "SIGNED") {
+                    return { ...doc, isActive: false };
+                  }
+                  return doc;
+                }),
+                { documentType: "SIGNED", fileStore: fileStoreId },
+              ],
               workflow: { action: Action },
             },
           };
           await HomeService.updateBailBond(payload, { tenantId }).then((res) => {
             setTimeout(() => {
-              debugger;
               if (!fileStoreId && setCounter && typeof setCounter === "function") setCounter((prev) => parseInt(prev) + 1);
               if (fileStoreId) {
                 setIsSigned(false);
-                setBailBondSignedPdf("");
+
                 setFormData({});
                 clearBailBondSessionData();
                 setStepper(2);
@@ -196,7 +199,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
                 setIsRejectModalOpen(false);
                 setShowBulkSignModal(false);
                 if (queryStrings?.bailId) {
-                  history.goback();
+                  history.goBack();
                 }
               }
               setLoader(false);
@@ -209,7 +212,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       setIsRejectModalOpen(false);
       setShowBulkSignModal(false);
       if (queryStrings?.bailId) {
-        history.goback();
+        history.goBack();
       }
       setLoader(false);
     }
@@ -219,7 +222,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
     if (parseInt(stepper) === 0) {
       setShowBulkSignModal(false);
       if (queryStrings?.bailId) {
-        history.goback();
+        history.goBack();
       }
     } else if (parseInt(stepper) === 1) {
       if (!openUploadSignatureModal && !isSigned) {
@@ -327,7 +330,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
               onClick={() => {
                 setShowBulkSignModal(false);
                 if (queryStrings?.bailId) {
-                  history.goback();
+                  history.goBack();
                 }
               }}
             />
@@ -471,14 +474,17 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       )}
       {stepper === 2 && (
         <Modal
-          actionCancelLabel={t("DOWNLOAD_ORDER")}
-          actionCancelOnSubmit={() => {}}
-          actionSaveLabel={"Close"}
+          actionCancelLabel={t("DOWNLOAD_BAIL_BOND")}
+          actionCancelOnSubmit={() => {
+            downloadPdf(tenantId, bailBondSignedPdf || sessionStorage.getItem("fileStoreId"));
+          }}
+          actionSaveLabel={"CS_CLOSE"}
           actionSaveOnSubmit={() => {
             if (setCounter && typeof setCounter === "function") setCounter((prev) => parseInt(prev) + 1);
             setShowBulkSignModal(false);
+            setBailBondSignedPdf("");
             if (queryStrings?.bailId) {
-              history.goback();
+              history.goBack();
             }
           }}
           className={"orders-success-modal"}

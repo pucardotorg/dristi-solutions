@@ -28,6 +28,12 @@ const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
 };
 
+const formatDate = (date) => {
+  if (!date) return "";
+  const convertedDate = new Date(date);
+  return convertedDate.toLocaleDateString();
+};
+
 const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) => {
   const queryStrings = Digit.Hooks.useQueryParams();
 
@@ -39,8 +45,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
   const [toastMsg, setToastMsg] = useState(null);
   const [showBailConfirmationModal, setShowBailConfirmationModal] = useState(false);
   const [isDocviewOpened, setIsDocViewOpened] = useState(false);
-  const selectedBailBondFilestoreid = "97060b57-eea9-405c-966c-0577c52224fe";
-
+  const [bailBondsLoading, setBailBondsLoading] = useState(false);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
 
@@ -70,6 +75,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
     }
   }, [isJudge, isBenchClerk, userType, history, isTypist]);
 
+  const [selectedBailBondFilestoreid, setSelectedBailBondFilestoreid] = useState("");
   const showToast = (type, message, duration = 5000) => {
     setToastMsg({ key: type, action: message });
     setTimeout(() => {
@@ -78,52 +84,44 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
   };
   console.log(row, "bond");
 
-  const bailBonds = [
-    {
-      name: "Bail Bond 1",
-      advocate: "Diwakar on behalf of Aparna",
-      date: "23 Mar 2024",
-    },
-    {
-      name: "Bail Bond 2",
-      advocate: "Diwakar on behalf of Aparna",
-      date: "23 Feb 2024",
-    },
-    {
-      name: "Bail Bond 3",
-      advocate: "Sharma on behalf of Gupta",
-      date: "15 Jan 2024",
-    },
-    {
-      name: "Bail Bond 4",
-      advocate: "Reddy on behalf of Patel",
-      date: "10 Dec 2023",
-    },
-    {
-      name: "Bail Bond 5",
-      advocate: "Mehta on behalf of Sharma",
-      date: "05 Nov 2023",
-    },
-  ];
+  const [bailBonds, setBailBonds] = useState([]);
   console.log(row);
 
   useEffect(() => {
     const getBailBonds = async () => {
-      const bailBonds = await DRISTIService.customApiService(Urls.bailBondSearch, {
-        criteria: {
-          tenantId: tenantId,
-          // courtId: courtId,
-          filingNumber: filingNumber,
-          fuzzySearch: true,
-        },
-        pagination: {
-          limit: 100,
-          offSet: 0,
-          sortBy: "startDate",
-          order: "ASC",
-        },
-      });
-      console.log(bailBonds, "bailBonds");
+      setBailBondsLoading(true);
+      try {
+        const bailBonds = await DRISTIService.customApiService(Urls.bailBondSearch, {
+          criteria: {
+            tenantId: tenantId,
+            // courtId: courtId,
+            filingNumber: filingNumber,
+            fuzzySearch: true,
+          },
+          pagination: {
+            limit: 100,
+            offSet: 0,
+            sortBy: "startDate",
+            order: "ASC",
+          },
+        });
+        const filteredBailBonds = bailBonds?.bails?.filter(
+          (bond) => bond?.status === "COMPLETED" || bond?.status === "VOID" || bond?.status === "PENDING_REVIEW"
+        );
+        const formattedBailBonds = filteredBailBonds?.map((bond, index) => ({
+          name: `${t("BAIL_BOND")} ${index + 1}`,
+          advocate: bond?.additionalDetails?.createdUserName,
+          litigantName: bond?.litigantName,
+          date: formatDate(bond?.auditDetails?.createdTime),
+          bailId: bond?.bailId,
+          fileStoreId: bond?.documents?.find((doc) => doc?.documentType === "SIGNED")?.fileStore,
+        }));
+        setBailBonds(formattedBailBonds);
+      } catch (e) {
+        console.log(e);
+      } finally {
+        setBailBondsLoading(false);
+      }
     };
 
     getBailBonds();
@@ -268,9 +266,9 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
           actionCancelOnSubmit={() => {
             createOrder();
           }}
-          isDisabled={loader}
-          isCustomButtonDisabled={loader}
-          isBackButtonDisabled={loader}
+          isDisabled={loader || bailBondsLoading}
+          isCustomButtonDisabled={loader || bailBondsLoading}
+          isBackButtonDisabled={loader || bailBondsLoading}
           formId="modal-action"
           headerBarMain={<Heading label={t("View Bail Bonds")} />}
           className="upload-signature-modal"
@@ -278,7 +276,9 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
           popupModuleActionBarStyles={{ padding: "0 8px 8px 8px" }}
         >
           <div>
-            {Array.isArray(bailBonds) && bailBonds.length > 0 ? (
+            {bailBondsLoading ? (
+              <Loader />
+            ) : Array.isArray(bailBonds) && bailBonds.length > 0 ? (
               <div
                 style={{
                   display: "flex",
@@ -310,7 +310,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
                       </div>
                       <div>
                         {" "}
-                        <span style={{ fontWeight: "600", fontSize: "14px" }}>{t("CHOOSE_COMPLAINANT")} :</span> {bond?.advocate}
+                        <span style={{ fontWeight: "600", fontSize: "14px" }}>{t("CHOOSE_COMPLAINANT")} :</span> {bond?.litigantName}
                       </div>
                       <div>
                         <span style={{ fontWeight: "600", fontSize: "14px" }}>{t("ADVOCATE")} : </span>
@@ -332,7 +332,10 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
                           fontSize: "16px",
                           fontFamily: "Roboto",
                         }}
-                        onClick={() => setIsDocViewOpened(true)}
+                        onClick={() => {
+                          setIsDocViewOpened(true);
+                          setSelectedBailBondFilestoreid(bond?.fileStoreId);
+                        }}
                       >
                         {t("VIEW")}
                       </button>

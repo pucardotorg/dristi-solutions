@@ -149,7 +149,7 @@ function BulkBailBondSignView() {
 
         if (parseXml(data, "status") !== "failed") {
           responses.push({
-            orderNumber: bailBond?.bailId,
+            bailId: bailBond?.bailId,
             signedBailData: parseXml(data, "data"),
             signed: true,
             errorMsg: null,
