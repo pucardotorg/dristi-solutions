@@ -156,7 +156,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = JSON.parse(eSignWindowObject);
 
-  if (!isUserLoggedIn && !whiteListedRoutes.includes(location.pathname)) {
+  if (!isUserLoggedIn && !whiteListedRoutes.includes(location.pathname) & !bailRoute.includes(retrievedObject?.path)) {
     history.push(`${path}/home/login`);
   }
   if (
@@ -183,6 +183,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
       }
     );
     sessionStorage.removeItem("eSignWindowObject");
+    return;
   }
 
   if (isUserLoggedIn && !location.pathname.includes(`${path}/home`) && !bailRoute.includes(location.pathname)) {
@@ -197,7 +198,8 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   if (fileStoreId) {
     sessionStorage.setItem("fileStoreId", fileStoreId);
   }
-  if (isUserLoggedIn && retrievedObject) {
+  // Only redirect for non-bail bond flows if user is logged in
+  if (isUserLoggedIn && retrievedObject && !bailRoute.includes(retrievedObject?.path)) {
     history.push(`${retrievedObject?.path}${retrievedObject?.param}`);
     sessionStorage.removeItem("eSignWindowObject");
   }
