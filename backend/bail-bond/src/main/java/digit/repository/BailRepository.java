@@ -66,6 +66,7 @@ public class BailRepository {
                 log.info("Arg size :: {}, and ArgType size :: {}", preparedStmtList.size(), preparedStmtArgList.size());
                 throw new CustomException("BAIL_SEARCH_ERR", "Arg and ArgType size mismatch");
             }
+            log.info("DB bail query :: {}", fullQuery);
             List<Bail> list = jdbcTemplate.query(fullQuery, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), rowMapper);
             log.info("DB bail list :: {}", list);
             if (list != null) {
