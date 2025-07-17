@@ -43,7 +43,7 @@ const processSureties = (bailData) => {
     const formattedAddress = [
       address?.locality,
       address?.city,
-      address?.discrict,
+      address?.district,
       address?.state,
       address?.pincode
     ]
