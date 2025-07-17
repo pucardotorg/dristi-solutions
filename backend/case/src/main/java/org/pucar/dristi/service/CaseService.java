@@ -1932,11 +1932,12 @@ public class CaseService {
                     .filingNumber(courtCase.getFilingNumber())
                     .build();
             List<Hearing> hearingList = getHearingsForCase(hearingCriteria);
+            List<Hearing> scheduledHearings = hearingList.stream().filter(hearing -> hearing.getStatus().equalsIgnoreCase("SCHEDULED")).toList();
             Attendee newAttendee = new Attendee();
             newAttendee.setIndividualId(joinCaseAdvocate.getIndividualId());
             newAttendee.setName(getName(individual));
             newAttendee.setType("Advocate");
-            hearingList.forEach(hearing -> {
+            scheduledHearings.forEach(hearing -> {
                 Optional.ofNullable(hearing.getAttendees()).orElse(new ArrayList<>()).add(newAttendee);
                 HearingRequest hearingRequest = new HearingRequest();
                 joinCaseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().code("HEARING_SCHEDULER").name("HEARING_SCHEDULER").tenantId(joinCaseData.getTenantId()).build());
@@ -2715,7 +2716,8 @@ public class CaseService {
                 .filingNumber(courtCase.getFilingNumber())
                 .build();
         List<Hearing> hearingList = getHearingsForCase(hearingCriteria);
-        log.info("hearing list :: {}", hearingList);
+        List<Hearing> scheduledHearings = hearingList.stream().filter(hearing -> hearing.getStatus().equalsIgnoreCase("SCHEDULED")).toList();
+        log.info("hearing list :: {}", scheduledHearings);
 
         List<Attendee> newAttendees = new ArrayList<>();
 
@@ -2776,7 +2778,7 @@ public class CaseService {
                 })
                 .collect(Collectors.toList());
 
-        hearingList.forEach(hearing -> {
+        scheduledHearings.forEach(hearing -> {
             Optional.ofNullable(hearing.getAttendees()).orElse(new ArrayList<>()).addAll(newAttendees);
             HearingRequest hearingRequest = new HearingRequest();
             requestInfo.getUserInfo().getRoles().add(Role.builder().code("HEARING_SCHEDULER").name("HEARING_SCHEDULER").tenantId(joinCaseData.getTenantId()).build());
