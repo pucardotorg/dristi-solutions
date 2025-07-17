@@ -102,6 +102,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   const [isAdvocateJoined, setIsAdvocateJoined] = useState(false);
   const [alreadyJoinedMobileNumber, setAlreadyJoinedMobileNumber] = useState([]);
   const [taskNumber, setTaskNumber] = useState("");
+  const [bailBondRequired, setBailBondRequired] = useState(true);
 
   const [isVerified, setIsVerified] = useState(false);
 
@@ -1240,17 +1241,65 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     ]
   );
 
-  const isBailBondRequired = useMemo(() => {
-    // call search bail bond
-    /** 
-     * 1. If the user is an advocate for an Accused or is an Accused PiP --- if replace is no
-     * 2. They have already received Advocate rights, i.e. there is no approval request pending for them to get this access
-     * 3. No bail application has been filed for at least one of the litigants for whom the user has advocate rights
-     * 
-    */
+  const searchApplications = useCallback(
+    async (uuid) => {
+      try {
+        const response = await DRISTIService.searchSubmissions({
+          criteria: {
+            filingNumber: caseDetails?.filingNumber,
+            tenantId,
+            courtId: caseDetails?.courtId,
+            applicationType: "REQUEST_FOR_BAIL",
+            onBehalfOf: [uuid],
+          },
+        });
 
-    return true; // TODO : Placeholder for actual logic to determine if bail bond is required
-  }, []);
+        return response?.applicationList?.length > 0;
+      } catch (error) {
+        console.error("Error searching applications:", error);
+        return false;
+      }
+    },
+    [caseDetails?.courtId, caseDetails?.filingNumber, tenantId]
+  );
+
+  useEffect(() => {
+    const checkBailBondRequirement = async () => {
+      try {
+        let isBondRequired = true;
+
+        if (selectPartyData?.userType?.value === "Advocate" && selectPartyData?.isReplaceAdvocate?.value === "NO") {
+          const representedPersonUuids = party?.map((item) => item?.uuid).filter(Boolean);
+
+          if (representedPersonUuids?.length > 0) {
+            const applicationChecks = await Promise.all(representedPersonUuids.map((uuid) => searchApplications(uuid)));
+
+            const hasExistingApplication = applicationChecks.some((exists) => exists);
+            isBondRequired = !hasExistingApplication;
+          }
+        } else if (selectPartyData?.userType?.value === "Litigant" && partyInPerson?.value === "YES") {
+          const litigantUuid = individual?.userUuid;
+          if (litigantUuid) {
+            const hasExistingApplication = await searchApplications(litigantUuid);
+            isBondRequired = !hasExistingApplication;
+          }
+        }
+
+        setBailBondRequired(isBondRequired);
+      } catch (error) {
+        console.error("Error in checkBailBondRequirement:", error);
+        setBailBondRequired(true);
+      }
+    };
+
+    // Only run the check if we have the necessary data
+    if (
+      (selectPartyData?.userType?.value === "Advocate" && selectPartyData?.isReplaceAdvocate?.value === "NO" && party?.length > 0) ||
+      (selectPartyData?.userType?.value === "Litigant" && partyInPerson?.value === "YES" && individual?.userUuid)
+    ) {
+      checkBailBondRequirement();
+    }
+  }, [selectPartyData, party, individual, partyInPerson, searchApplications]);
 
   const handleKeyDown = useCallback(
     (event) => {
@@ -1362,7 +1411,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           successScreenData={successScreenData}
           isCaseViewDisabled={selectPartyData?.isReplaceAdvocate?.value === "YES" && !isAdvocateJoined}
           type={type}
-          isBailBondRequired={isBailBondRequired}
+          isBailBondRequired={bailBondRequired}
         />
       ),
     },
