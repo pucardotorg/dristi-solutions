@@ -153,15 +153,10 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   ];
   const bailRoute = [`${path}/home/bail-bond-sign`];
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
-  const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
-  console.log(eSignWindowObject, "kl");
-  
+  const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");  
   const retrievedObject = Boolean(eSignWindowObject) ? JSON.parse(eSignWindowObject) : null;
 
-  console.log(eSignWindowObject, retrievedObject, "esign");
-
   if (!isUserLoggedIn && !whiteListedRoutes.includes(location.pathname)) {
-    console.log("home");
     history.push(`${path}/home/login`);
   }
   if (
@@ -171,12 +166,10 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     whiteListedRoutes.includes(location.pathname) &&
     !bailRoute.includes(location.pathname)
   ) {
-    console.log("home1");
     history.push(`${path}/home`);
   }
 
   if (retrievedObject && bailRoute.includes(retrievedObject?.path)) {
-    console.log("home2");
     if (result) {
       sessionStorage.setItem("isSignSuccess", result);
     }
@@ -191,11 +184,9 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   }
 
   if (isUserLoggedIn && !location.pathname.includes(`${path}/home`) && !bailRoute.includes(location.pathname)) {
-    console.log("home3");
     history.push(`${path}/home`);
   }
   if (isUserLoggedIn && registerScreenRoute.includes(location.pathname)) {
-    console.log("home4");
     history.push(`${path}/home/registration/user-name`);
   }
   if (result) {
@@ -205,7 +196,6 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     sessionStorage.setItem("fileStoreId", fileStoreId);
   }
   if (isUserLoggedIn && retrievedObject) {
-    console.log("home5");
     history.push(`${retrievedObject?.path}${retrievedObject?.param}`);
     sessionStorage.removeItem("eSignWindowObject");
   }
