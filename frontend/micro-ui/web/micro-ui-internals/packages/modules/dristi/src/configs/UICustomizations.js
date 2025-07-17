@@ -2130,9 +2130,11 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
       switch (key) {
         case "BAIL_TYPE":
-          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} isBail={true}/>;
+          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} isBail={true} />;
         case "STAGE":
           return t(value);
+        case "STATUS":
+          return <CustomChip text={t(value)} shade={value === "COMPLETED" ? "green" : "orange"} />;
         case "BAIL_ID":
           return value;
         default:
