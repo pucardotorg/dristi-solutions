@@ -54,7 +54,7 @@ import CaseBundleView from "./CaseBundleView";
 import WorkflowTimeline from "../../../components/WorkflowTimeline";
 import CaseOverviewV2 from "./CaseOverviewV2";
 import PaymentDemandModal from "./PaymentDemandModal";
-import { create, set } from "lodash";
+import DocumentsV2 from "./DocumentsV2";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -3186,6 +3186,29 @@ const AdmittedCaseV2 = () => {
     }
     return <InboxSearchComposer key={`${config?.label}-${updateCounter}`} configs={config} showTab={false}></InboxSearchComposer>;
   }, [config, activeTab, updateCounter]);
+  console.log(activeTab === "Documents", "activeTab");
+
+  const documentsInboxSearch = useMemo(() => {
+    console.log("caseDetails", caseDetails);
+
+    return (
+      <DocumentsV2
+        caseDetails={caseDetails}
+        caseCourtId={courtId}
+        tenantId={tenantId}
+        filingNumber={filingNumber}
+        cnrNumber={cnrNumber}
+        setDocumentSubmission={setDocumentSubmission}
+        setShow={setShow}
+        setShowConfirmationModal={setShowConfirmationModal}
+        setVoidReason={setVoidReason}
+        setShowVoidModal={setShowVoidModal}
+        setSelectedRow={setSelectedRow}
+        setSelectedItem={setSelectedItem}
+        // handleFilingAction={handleFilingAction}
+      />
+    );
+  }, [caseDetails, courtId, tenantId, filingNumber, cnrNumber, setDocumentSubmission, setShow]);
 
   const caseTimeLine = useMemo(() => {
     return (
@@ -3545,7 +3568,7 @@ const AdmittedCaseV2 = () => {
             paddingBottom: tabData?.find((tab) => tab.label === "caseFileOverview")?.active ? "0px" : showActionBar ? "60px" : undefined,
           }}
         >
-          {inboxComposer}
+          {activeTab === "Documents" ? documentsInboxSearch : inboxComposer}
         </div>
       )}
       {tabData?.filter((tab) => tab.label === "Overview")?.[0]?.active && (

@@ -224,7 +224,7 @@ function BulkBailBondSignView({ showToast = () => {} }) {
             ).then((response) => {
               setShowBulkSignConfirmModal(false);
               setShowBulkSignSuccessModal(true);
-              setSuccessCount(response?.bailBond?.length);
+              setSuccessCount(response?.bails?.length);
               showToast("success", t("BAIL_BULK_SIGN_SUCCESS_MSG"));
             });
           });

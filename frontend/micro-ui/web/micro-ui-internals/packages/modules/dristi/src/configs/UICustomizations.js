@@ -2090,6 +2090,65 @@ export const UICustomizations = {
       }
     },
   },
+
+  BailBondConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role?.code);
+      const currentDateInMs = new Date().setHours(23, 59, 59, 999);
+      const selectedDateInMs = new Date(requestCriteria?.state?.searchForm?.date).setHours(23, 59, 59, 999);
+
+      const limit = requestCriteria?.state?.tableForm?.limit || 10;
+      const offSet = requestCriteria?.state?.tableForm?.offset || 0;
+      const bailId = requestCriteria?.state?.searchForm?.bailId;
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          tenantId: tenantId,
+          criteria: {
+            ...requestCriteria?.body?.criteria,
+            ...(bailId && { bailId }),
+            fuzzySearch: true,
+          },
+          pagination: {
+            limit: limit,
+            offSet: offSet,
+            sortBy: "startDate",
+            order: "ASC",
+          },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            return { ...data, totalCount: data?.pagination?.totalCount };
+          },
+        },
+      };
+    },
+
+    additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
+      switch (key) {
+        case "STAGE":
+          return t(value);
+        case "BAIL_ID":
+          return (
+            <Link
+              style={{ color: "black", textDecoration: "underline" }}
+              to={{
+                pathname: `/${window?.contextPath}/employee/dristi/admission`,
+                search: `?caseId=${row?.caseId}&filingNumber=${row?.filingNumber}&tab=Overview`,
+                state: { homeActiveTab: row?.tab },
+              }}
+            >
+              {value ? value : "-"}
+            </Link>
+          );
+        default:
+          return value ? value : "-";
+      }
+    },
+  },
   patternValidation: (key) => {
     switch (key) {
       case "contact":
