@@ -136,7 +136,7 @@ public class BailRegistrationEnrichment {
     }
 
 
-    public void enrichBailUponUpdate(BailRequest bailRequest) {
+    public void enrichBailUponUpdate(BailRequest bailRequest, Bail existingBail) {
         log.info("Enriching Bail Upon Update");
         // If workflow action is edit, invalidate all the sign
         if(!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow()) &&
@@ -153,6 +153,8 @@ public class BailRegistrationEnrichment {
             bailRequest.getBail().getDocuments().forEach(document -> enrichDocument(document, bailRequest.getBail().getTenantId(), bailRequest.getRequestInfo()));
         }
         AuditDetails auditDetails = bailRequest.getBail().getAuditDetails();
+        auditDetails.setCreatedBy(existingBail.getAuditDetails().getCreatedBy());
+        auditDetails.setCreatedTime(existingBail.getAuditDetails().getCreatedTime());
         auditDetails.setLastModifiedBy(bailRequest.getRequestInfo().getUserInfo().getUuid());
         auditDetails.setLastModifiedTime(System.currentTimeMillis());
         bailRequest.getBail().setAuditDetails(auditDetails);

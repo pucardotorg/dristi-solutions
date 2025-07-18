@@ -238,7 +238,7 @@ public class BailService {
         Bail existingBail = validator.validateBailExists(bailRequest);
 
         // Enrich new documents or sureties if any
-        enrichmentUtil.enrichBailUponUpdate(bailRequest);
+        enrichmentUtil.enrichBailUponUpdate(bailRequest, existingBail);
 
         Boolean lastSigned = checkItsLastSign(bailRequest);
         if (!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())) {
