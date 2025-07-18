@@ -35,10 +35,12 @@ const convertToFormData = (t, obj) => {
     sureties:
       Array.isArray(obj?.sureties) && obj.sureties.length > 0
         ? obj.sureties.map((surety) => ({
+            id: surety?.id,
             name: surety?.name,
             fatherName: surety?.fatherName,
             mobileNumber: surety?.mobileNumber,
             address: surety?.address,
+            email: surety?.email,
             identityProof: {
               document: surety?.documents?.filter((doc) => doc?.documentType === "IDENTITY_PROOF") || [],
             },
@@ -417,48 +419,72 @@ const GenerateBailBond = () => {
           const updatedSurety = { ...surety };
 
           if (surety?.identityProof?.document?.length > 0) {
-            const combinedIdentityProof = await combineMultipleFiles(surety.identityProof.document);
-            const file = await onDocumentUpload(combinedIdentityProof?.[0], "identityProof.pdf");
-            updatedSurety.identityProof = {
-              document: [
-                {
-                  fileStore: file?.file?.files?.[0]?.fileStoreId,
-                  documentName: file?.filename,
-                  documentType: "IDENTITY_PROOF",
-                  tenantId,
-                },
-              ],
-            };
+            // Check if any document is a File type (needs processing)
+            const hasFileTypeDoc = surety.identityProof.document.some(doc => 
+              doc instanceof File || (doc.file && doc.file instanceof File)
+            );
+            
+            if (hasFileTypeDoc) {
+              // Only process if we have File type documents
+              const combinedIdentityProof = await combineMultipleFiles(surety.identityProof.document);
+              const file = await onDocumentUpload(combinedIdentityProof?.[0], "identityProof.pdf");
+              updatedSurety.identityProof = {
+                document: [
+                  {
+                    fileStore: file?.file?.files?.[0]?.fileStoreId,
+                    documentName: file?.filename,
+                    documentType: "IDENTITY_PROOF",
+                    tenantId,
+                  },
+                ],
+              };
+            }
           }
 
           if (surety?.proofOfSolvency?.document?.length > 0) {
-            const combinedProof = await combineMultipleFiles(surety.proofOfSolvency.document);
-            const file = await onDocumentUpload(combinedProof?.[0], "proofOfSolvency.pdf");
-            updatedSurety.proofOfSolvency = {
-              document: [
-                {
-                  fileStore: file?.file?.files?.[0]?.fileStoreId,
-                  documentName: file?.filename,
-                  documentType: "PROOF_OF_SOLVENCY",
-                  tenantId,
-                },
-              ],
-            };
+            // Check if any document is a File type (needs processing)
+            const hasFileTypeDoc = surety.proofOfSolvency.document.some(doc => 
+              doc instanceof File || (doc.file && doc.file instanceof File)
+            );
+            
+            if (hasFileTypeDoc) {
+              // Only process if we have File type documents
+              const combinedProof = await combineMultipleFiles(surety.proofOfSolvency.document);
+              const file = await onDocumentUpload(combinedProof?.[0], "proofOfSolvency.pdf");
+              updatedSurety.proofOfSolvency = {
+                document: [
+                  {
+                    fileStore: file?.file?.files?.[0]?.fileStoreId,
+                    documentName: file?.filename,
+                    documentType: "PROOF_OF_SOLVENCY",
+                    tenantId,
+                  },
+                ],
+              };
+            }
           }
 
           if (surety?.otherDocuments?.document?.length > 0) {
-            const combinedOtherDocs = await combineMultipleFiles(surety.otherDocuments.document);
-            const file = await onDocumentUpload(combinedOtherDocs?.[0], "otherDocuments.pdf");
-            updatedSurety.otherDocuments = {
-              document: [
-                {
-                  fileStore: file?.file?.files?.[0]?.fileStoreId,
-                  documentName: file?.filename,
-                  documentType: "OTHER_DOCUMENTS",
-                  tenantId,
-                },
-              ],
-            };
+            // Check if any document is a File type (needs processing)
+            const hasFileTypeDoc = surety.otherDocuments.document.some(doc => 
+              doc instanceof File || (doc.file && doc.file instanceof File)
+            );
+            
+            if (hasFileTypeDoc) {
+              // Only process if we have File type documents
+              const combinedOtherDocs = await combineMultipleFiles(surety.otherDocuments.document);
+              const file = await onDocumentUpload(combinedOtherDocs?.[0], "otherDocuments.pdf");
+              updatedSurety.otherDocuments = {
+                document: [
+                  {
+                    fileStore: file?.file?.files?.[0]?.fileStoreId,
+                    documentName: file?.filename,
+                    documentType: "OTHER_DOCUMENTS",
+                    tenantId,
+                  },
+                ],
+              };
+            }
           }
           return updatedSurety;
         })
@@ -468,20 +494,43 @@ const GenerateBailBond = () => {
   };
 
   const extractSureties = (formData) => {
-    return formData?.sureties?.map((surety) => {
-      return {
-        name: surety?.name,
-        fatherName: surety?.fatherName,
-        mobileNumber: surety?.mobileNumber,
-        tenantId,
-        address: surety?.address,
-        documents: [
-          ...(surety?.identityProof?.document || []),
-          ...(surety?.proofOfSolvency?.document || []),
-          ...(surety?.otherDocuments?.document || []),
-        ],
-      };
-    });
+    const existingSureties = bailBondDetails?.sureties || [];
+
+    if (existingSureties?.length > 0) {
+      return formData?.sureties?.map((surety) => {
+        const matchingSurety = existingSureties?.find((existing) => existing?.id === surety?.id);
+        return {
+          ...matchingSurety,
+          name: surety?.name,
+          fatherName: surety?.fatherName,
+          mobileNumber: surety?.mobileNumber,
+          tenantId,
+          address: surety?.address,
+          email:surety?.email,
+          documents: [
+            ...(surety?.identityProof?.document || []),
+            ...(surety?.proofOfSolvency?.document || []),
+            ...(surety?.otherDocuments?.document || []),
+          ],
+        };
+      });
+    } else {
+      return formData?.sureties?.map((surety) => {
+        return {
+          name: surety?.name,
+          fatherName: surety?.fatherName,
+          mobileNumber: surety?.mobileNumber,
+          tenantId,
+          address: surety?.address,
+          email:surety?.email,
+          documents: [
+            ...(surety?.identityProof?.document || []),
+            ...(surety?.proofOfSolvency?.document || []),
+            ...(surety?.otherDocuments?.document || []),
+          ],
+        };
+      });
+    }
   };
 
   const createBailBond = async (individualData) => {
@@ -622,7 +671,6 @@ const GenerateBailBond = () => {
         setShowBailBondReview(true);
       }
     } catch (error) {
-      setDefaultFormValueData(formdata);
       console.error("Error while creating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
@@ -648,7 +696,6 @@ const GenerateBailBond = () => {
       }
       setShowErrorToast({ label: t("DRAFT_SAVED_SUCCESSFULLY"), error: false });
     } catch (error) {
-      setDefaultFormValueData(formdata);
       console.error("Error while creating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
@@ -811,7 +858,7 @@ const GenerateBailBond = () => {
             bailBondSignatureURL={bailBondSignatureURL}
           />
         )}
-        {showSuccessModal && <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"SIGNED_BAIL_BOND_MESSAGE"} />}
+        {showSuccessModal && <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"BAIL_BOND_BANNER_HEADER"} />}
         {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
       </div>
     </React.Fragment>
