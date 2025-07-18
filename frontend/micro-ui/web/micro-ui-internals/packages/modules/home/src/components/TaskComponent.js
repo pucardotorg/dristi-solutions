@@ -40,6 +40,7 @@ const TasksComponent = ({
   compositeOrderObj,
   pendingSignOrderList,
   tableView = false,
+  needRefresh = false,
 }) => {
   const JoinCasePayment = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCasePayment"), []);
   const tenantId = useMemo(() => Digit.ULBService.getCurrentTenantId(), []);
@@ -125,7 +126,7 @@ const TasksComponent = ({
 
   useEffect(() => {
     refetch();
-  }, [refetch, filingNumber]);
+  }, [refetch, filingNumber, needRefresh]);
 
   const getApplicationDetail = useCallback(
     async (applicationNumber) => {

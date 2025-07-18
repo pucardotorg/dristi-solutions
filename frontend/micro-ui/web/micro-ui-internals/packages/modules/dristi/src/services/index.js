@@ -274,6 +274,15 @@ export const DRISTIService = {
       params,
     });
   },
+  eSignOpenService: (url, data, params) => {
+    return Request({
+      url: url,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    });
+  },
   getPaymentBreakup: (data, params) =>
     Request({
       url: Urls.dristi.paymentCalculator,
