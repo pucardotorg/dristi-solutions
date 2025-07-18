@@ -260,7 +260,7 @@ public class BailService {
 
         if (bailRequest.getBail().getWorkflow() != null
                 && bailRequest.getBail().getWorkflow().getAction() != null
-                && (PENDING_E_SIGN.equalsIgnoreCase(bailRequest.getBail().getStatus()))
+                && (E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction()) || INITIATE_E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction()))
                 && !bailRequest.getBail().getLitigantSigned()
                 && bailRequest.getBail().getLitigantId() != null) {
             List<String> assignees = new ArrayList<>();
