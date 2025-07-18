@@ -56,7 +56,13 @@ public class BailQueryBuilder {
 
 
     public String getPaginatedBailIdsQuery(BailSearchCriteria criteria, Pagination pagination, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
-        StringBuilder query = new StringBuilder("SELECT DISTINCT(bail.id), bail.created_time as bailCreatedTime");
+        StringBuilder query = new StringBuilder("SELECT DISTINCT(bail.id), bail.bail_id as bailId, bail.bail_type as bailType," +
+                " bail.bail_status as bailStatus, bail.court_id as courtId, " +
+                " bail.case_title as caseTitle, bail.case_number as caseNumber, bail.cnr_number as cnrNumber, " +
+                " bail.filing_number as filingNumber, bail.case_type as caseType, bail.litigant_id as litigantId, " +
+                " bail.litigant_name as litigantName, bail.litigant_father_name as litigantFatherName," +
+                " bail.created_by as bailCreatedBy, bail.last_modified_by as bailLastModifiedBy, " +
+                " bail.created_time as bailCreatedTime, bail.last_modified_time as bailLastModifiedTime ");
         query.append(FROM_QUERY);
 
         getWhereFields(criteria, query, preparedStmtList, preparedStmtArgList);

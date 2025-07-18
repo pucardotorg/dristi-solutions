@@ -59,7 +59,6 @@ public class BailRowMapper implements ResultSetExtractor<List<Bail>> {
                             .cnrNumber(rs.getString("cnrNumber"))
                             .filingNumber(rs.getString("filingNumber"))
                             .caseType(Bail.CaseTypeEnum.fromValue(rs.getString("caseType")))
-                            .bailId(rs.getString("formattedBailId")) // 👈 matches alias
                             .isActive(rs.getBoolean("bailIsActive"))
                             .auditDetails(auditDetails)
                             .documents(new ArrayList<>())
