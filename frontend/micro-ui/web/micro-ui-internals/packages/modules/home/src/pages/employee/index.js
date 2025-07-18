@@ -18,6 +18,8 @@ import ADiaryPage from "./ADiaryPage";
 import BulkESignView from "./BulkESignView";
 import MainHomeScreen from "./MainHomeScreen";
 import GeneratePaymentDemandBreakdown from "../../components/GeneratePaymentDemandBreakdown";
+import BailBondModal from "./BailBondModal";
+import { BailBondSignModal } from "./BailBondSignModal";
 const bredCrumbStyle = { maxWidth: "min-content" };
 
 const ProjectBreadCrumb = ({ location }) => {
@@ -117,6 +119,8 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute exact path={`${path}/home-screen`} component={() => <MainHomeScreen></MainHomeScreen>} />
         <PrivateRoute path={`${path}/bulk-esign-order`} component={() => <BulkESignView></BulkESignView>} />
         <PrivateRoute path={`${path}/dashboard/adiary`} component={() => <ADiaryPage></ADiaryPage>} />
+        <PrivateRoute path={`${path}/bail-bond`} component={() => <BailBondModal></BailBondModal>} />
+        <PrivateRoute path={`${path}/sign-bail-bond`} component={() => <BailBondSignModal></BailBondSignModal>} />
         <PrivateRoute exact path={`${path}/dashboard`} component={() => <DashboardPage></DashboardPage>} />
         <PrivateRoute path={`${path}/sbi-epost-payment`} component={() => <SBIEpostPayment></SBIEpostPayment>} />
         <PrivateRoute path={`${path}/post-payment-screen`} component={() => <PaymentStatus></PaymentStatus>} />

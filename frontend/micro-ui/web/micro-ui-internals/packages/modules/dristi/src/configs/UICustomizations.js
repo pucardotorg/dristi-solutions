@@ -15,6 +15,7 @@ import { constructFullName } from "@egovernments/digit-ui-module-orders/src/util
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
 import { OrderWorkflowState } from "../Utils/orderWorkflow";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
+import BailBondModal from "../../../home/src/pages/employee/BailBondModal";
 
 const businessServiceMap = {
   "muster roll": "MR",
@@ -1891,6 +1892,7 @@ export const UICustomizations = {
         ...requestCriteria,
         body: {
           // ...requestCriteria.body,
+
           SearchCriteria: {
             ...requestCriteria.body.SearchCriteria,
             moduleSearchCriteria: {
@@ -1934,6 +1936,15 @@ export const UICustomizations = {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
             },
+            searchBailBonds: {
+              date: activeTab === "BAIL_BOND_STATUS" ? selectedDateInMs : currentDateInMs,
+              isOnlyCountRequired: activeTab === "BAIL_BOND_STATUS" ? false : true,
+              actionCategory: "Bail Bond",
+              ...(activeTab === "BAIL_BOND_STATUS" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
             limit: requestCriteria?.state?.tableForm?.limit || 10,
             offset: requestCriteria?.state?.tableForm?.offset || 0,
           },
@@ -1945,6 +1956,7 @@ export const UICustomizations = {
             const applicationCount = data?.viewApplicationData?.count || 0;
             const scheduleCount = data?.scheduleHearingData?.count || 0;
             const registerCount = data?.registerCasesData?.count || 0;
+            const bailBondStatusCount = data?.bailBondData?.count || 0;
 
             // setPendingTaskCount();
             additionalDetails?.setCount({
@@ -1952,6 +1964,7 @@ export const UICustomizations = {
               REVIEW_PROCESS: reviwCount,
               VIEW_APPLICATION: applicationCount,
               SCHEDULE_HEARING: scheduleCount,
+              BAIL_BOND_STATUS: bailBondStatusCount,
             });
             const processFields = (fields) => {
               const result = fields?.reduce((acc, curr) => {
@@ -1998,7 +2011,12 @@ export const UICustomizations = {
                 TotalCount: data?.scheduleHearingData?.count,
                 data: data?.scheduleHearingData?.data?.map((item) => processFields(item.fields)),
               };
-            else
+            else if (activeTab === "BAIL_BOND_STATUS") {
+              return {
+                TotalCount: data?.bailBondData?.count,
+                data: data?.bailBondData?.data?.map((item) => processFields(item.fields)),
+              };
+            } else
               return {
                 TotalCount: data?.registerCasesData?.count,
                 data: data?.registerCasesData?.data?.map((item) => processFields(item.fields)) || [],
@@ -2021,7 +2039,10 @@ export const UICustomizations = {
             >
               {value ? value : "-"}
             </Link>
+          ) : row?.tab === "BAIL_BOND_STATUS" ? (
+            <OrderName rowData={row} colData={column} value={value} />
           ) : (
+            // <BailBondModal style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="SearchIndividualConfig" />
             <Link
               style={{ color: "black", textDecoration: "underline" }}
               to={{
@@ -2064,6 +2085,58 @@ export const UICustomizations = {
           );
         case "STAGE":
           return t(value);
+        default:
+          return value ? value : "-";
+      }
+    },
+  },
+
+  BailBondConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role?.code);
+      const currentDateInMs = new Date().setHours(23, 59, 59, 999);
+      const selectedDateInMs = new Date(requestCriteria?.state?.searchForm?.date).setHours(23, 59, 59, 999);
+
+      const limit = requestCriteria?.state?.tableForm?.limit || 10;
+      const offSet = requestCriteria?.state?.tableForm?.offset || 0;
+      const bailId = requestCriteria?.state?.searchForm?.bailId;
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          tenantId: tenantId,
+          criteria: {
+            ...requestCriteria?.body?.criteria,
+            ...(bailId && { bailId }),
+            fuzzySearch: true,
+          },
+          pagination: {
+            limit: limit,
+            offSet: offSet,
+            sortBy: "startDate",
+            order: "ASC",
+          },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            return { ...data, totalCount: data?.pagination?.totalCount };
+          },
+        },
+      };
+    },
+
+    additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
+      switch (key) {
+        case "BAIL_TYPE":
+          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} isBail={true} />;
+        case "STAGE":
+          return t(value);
+        case "STATUS":
+          return <CustomChip text={t(value)} shade={value === "COMPLETED" ? "green" : "orange"} />;
+        case "BAIL_ID":
+          return value;
         default:
           return value ? value : "-";
       }
