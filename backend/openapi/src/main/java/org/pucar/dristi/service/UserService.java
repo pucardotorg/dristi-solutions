@@ -43,7 +43,7 @@ public class UserService {
     void initializeSystemUser() {
         RequestInfo requestInfo = new RequestInfo();
         StringBuilder uri = new StringBuilder();
-        uri.append(configuration.getUserHost()).append(configuration.getUserSearchEndpoint()); // URL for user search call
+        uri.append(configuration.getUserHost()).append(configuration.getUserContextPath()).append(configuration.getUserSearchEndpoint()); // URL for user search call
         Map<String, Object> userSearchRequest = new HashMap<>();
         userSearchRequest.put("RequestInfo", requestInfo);
         userSearchRequest.put("tenantId", configuration.getEgovStateTenantId());
@@ -81,7 +81,7 @@ public class UserService {
         userCreateRequest.put("user", user);
 
         StringBuilder uri = new StringBuilder();
-        uri.append(configuration.getUserHost()).append(configuration.getUserCreateEndpoint()); // URL for user create call
+        uri.append(configuration.getUserHost()).append(configuration.getUserContextPath()).append(configuration.getUserCreateEndpoint()); // URL for user create call
 
         try {
             LinkedHashMap<String, Object> responseMap = (LinkedHashMap<String, Object>) requestRepository.fetchResult(uri, userCreateRequest);
