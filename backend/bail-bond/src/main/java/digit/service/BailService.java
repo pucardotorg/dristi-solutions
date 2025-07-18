@@ -100,7 +100,7 @@ public class BailService {
         return originalBail;
     }
 
-    private void callNotificationService(BailRequest bailRequest) {
+    private void callNotificationServiceForSMS(BailRequest bailRequest) {
         try {
             Bail bail = bailRequest.getBail();
             String action = bail.getWorkflow().getAction();
@@ -135,6 +135,16 @@ public class BailService {
                     notificationService.sendNotification(requestInfo, smsTemplateData, BAIL_BOND_INITIATED_LITIGANT, litigantMobile);
                 }
             }
+
+        } catch (Exception e) {
+            log.error("Error sending notification for bailRequest: {}", bailRequest, e);
+        }
+    }
+
+    private void callNotificationServiceForEmail(BailRequest bailRequest) {
+        try{
+            Bail bail = bailRequest.getBail();
+            String action = bail.getWorkflow().getAction();
 
             String emailCode = getEmailCode(action);
             if(StringUtils.isBlank(emailCode)){
@@ -187,7 +197,7 @@ public class BailService {
 
             // Send email to advocate
             if(!bail.getAuditDetails().getCreatedBy().equalsIgnoreCase(bail.getLitigantId())
-                && emailTopics.contains(BAIL_BOND_INITIATED_ADVOCATE)){
+                    && emailTopics.contains(BAIL_BOND_INITIATED_ADVOCATE)){
                 log.info("Sending email to advocate");
                 List<User> users = userUtil.getUserListFromUserUuid(List.of(bail.getAuditDetails().getCreatedBy()));
                 if(users!=null && !users.isEmpty()){
@@ -208,7 +218,7 @@ public class BailService {
             }
 
         } catch (Exception e) {
-            log.error("Error sending notification for bailRequest: {}", bailRequest, e);
+            log.error("Error sending email for bailRequest: {}", bailRequest, e);
         }
     }
 
@@ -373,7 +383,8 @@ public class BailService {
             bail.setShortenedURL(shortenedUrl);
             originalBail.setShortenedURL(shortenedUrl);
             log.info("Calling notification service");
-            callNotificationService(bailRequest);
+            callNotificationServiceForSMS(bailRequest);
+            callNotificationServiceForEmail(bailRequest);
         }
 
         insertBailIndexEntry(originalBail);

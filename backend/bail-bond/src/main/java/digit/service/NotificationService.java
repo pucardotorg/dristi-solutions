@@ -5,7 +5,6 @@ import com.jayway.jsonpath.JsonPath;
 import digit.config.Configuration;
 import digit.kafka.Producer;
 import digit.repository.ServiceRequestRepository;
-import digit.web.models.Bail;
 import digit.web.models.BailRequest;
 import digit.web.models.Email;
 import digit.web.models.EmailRecipientData;
@@ -117,7 +116,7 @@ public class NotificationService {
         }
     }
 
-    public String getAsValue(String person){
+    public String getAsValueForPerson(String person){
         return switch (person){
             case LITIGANT -> "as Accused";
             case SURETY -> "as Surety";
@@ -129,20 +128,18 @@ public class NotificationService {
 
     public String buildSubject(String subject, EmailTemplateData emailTemplateData, EmailRecipientData recipientData){
         String person = recipientData.getType();
-        String asValue = getAsValue(person);
+        String asValue = getAsValueForPerson(person);
         String caseName = emailTemplateData.getCaseName();
-        subject = subject.replace("{{as}}", asValue)
+        return subject.replace("{{as}}", asValue)
                     .replace("{{caseName}}", caseName);
-
-        return subject;
     }
 
     public String buildBody(String body, EmailTemplateData emailTemplateData, EmailRecipientData recipientData){
         return body.replace("{{name}}", recipientData.getName())
                 .replace("{{caseNumber}}", emailTemplateData.getCaseNumber())
                 .replace("{{caseName}}", emailTemplateData.getCaseName())
-                .replace("{{as}}", getAsValue(recipientData.getType()))
-                .replace("{{shortenedUrl}}", emailTemplateData.getShortenedUrl());
+                .replace("{{as}}", getAsValueForPerson(recipientData.getType()))
+                .replace("{{shortenedURL}}", emailTemplateData.getShortenedUrl());
     }
 
     public String getMessage(RequestInfo requestInfo, String rootTenantId, String msgCode) {
