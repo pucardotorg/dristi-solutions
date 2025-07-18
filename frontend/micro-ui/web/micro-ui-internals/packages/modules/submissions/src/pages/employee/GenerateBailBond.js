@@ -1,5 +1,5 @@
 import { FormComposerV2, Header, Loader, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { bailBondConfig } from "../../configs/generateBailBondConfig";
 import isEqual from "lodash/isEqual";
@@ -13,6 +13,8 @@ import { combineMultipleFiles, formatAddress } from "@egovernments/digit-ui-modu
 import { submissionService } from "../../hooks/services";
 import useSearchBailBondService from "../../hooks/submissions/useSearchBailBondService";
 import { bailBondWorkflowAction } from "../../../../dristi/src/Utils/submissionWorkflow";
+import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -91,21 +93,68 @@ const GenerateBailBond = () => {
   const [bailBondFileStoreId, setBailBondFileStoreId] = useState("");
   const [bailBondSignatureURL, setBailBondSignatureURL] = useState("");
   const [defaultFormValueData, setDefaultFormValueData] = useState({});
+  const [caseData, setCaseData] = useState(undefined);
+  const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
+  const [caseApiError, setCaseApiError] = useState(undefined);
+  // Flag to prevent multiple breadcrumb updates
+  const isBreadCrumbsParamsDataSet = useRef(false);
 
-  const { data: caseData, isLoading: isCaseLoading } = Digit.Hooks.dristi.useSearchCaseService(
-    {
-      criteria: [
+  // Access breadcrumb context to get and set case navigation data
+  const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
+  const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
+  const courtId = localStorage.getItem("courtId");
+
+  // const { data: caseData, isLoading: isCaseLoading } = Digit.Hooks.dristi.useSearchCaseService(
+  //   {
+  //     criteria: [
+  //       {
+  //         filingNumber: filingNumber,
+  //       },
+  //     ],
+  //     tenantId,
+  //   },
+  //   {},
+  //   `case-details-${filingNumber}`,
+  //   filingNumber,
+  //   Boolean(filingNumber)
+  // );
+
+  const fetchCaseDetails = async () => {
+    try {
+      setIsCaseDetailsLoading(true);
+      const caseData = await DRISTIService.searchCaseService(
         {
-          filingNumber: filingNumber,
+          criteria: [
+            {
+              filingNumber: filingNumber,
+              ...(courtId && { courtId }),
+            },
+          ],
+          tenantId,
         },
-      ],
-      tenantId,
-    },
-    {},
-    `case-details-${filingNumber}`,
-    filingNumber,
-    Boolean(filingNumber)
-  );
+        {}
+      );
+      const caseId = caseData?.criteria?.[0]?.responseList?.[0]?.id;
+      setCaseData(caseData);
+      // Only update breadcrumb data if it's different from current and hasn't been set yet
+      if (!(caseIdFromBreadCrumbs === caseId && filingNumberFromBreadCrumbs === filingNumber) && !isBreadCrumbsParamsDataSet.current) {
+        setBreadCrumbsParamsData({
+          caseId,
+          filingNumber,
+        });
+        isBreadCrumbsParamsDataSet.current = true;
+      }
+    } catch (err) {
+      setCaseApiError(err);
+    } finally {
+      setIsCaseDetailsLoading(false);
+    }
+  };
+
+  // Fetch case details on component mount
+  useEffect(() => {
+    fetchCaseDetails();
+  }, [courtId]);
 
   const { data: bailBond, isLoading: isBailBondLoading } = useSearchBailBondService(
     {
@@ -676,7 +725,7 @@ const GenerateBailBond = () => {
     setFormdata(convertToFormData(t, bailBondDetails || {}));
   }, [bailBondDetails, t]);
 
-  if (loader || isCaseLoading || !caseDetails || isBailBondLoading) {
+  if (loader || isCaseDetailsLoading || !caseDetails || isBailBondLoading) {
     return <Loader />;
   }
 
