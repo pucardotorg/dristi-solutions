@@ -18,13 +18,13 @@ export const clearBailBondSessionData = () => {
 
 export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () => {}, bailBondPaginationData, setCounter = () => {} }) => {
   const queryStrings = Digit.Hooks.useQueryParams();
-  console.log(queryStrings, "queryStrings");
 
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const courtId = localStorage.getItem("courtId");
   const userInfo = Digit.UserService.getUser()?.info;
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const canSignBailBond = useMemo(() => roles?.some((role) => role.code === "BAIL_BOND_APPROVER"), [roles]);
+  const isCitizen = useMemo(() => roles?.some((role) => role.code === "CITIZEN"), [roles]);
 
   const [stepper, setStepper] = useState(() => {
     const bulkBailBondSignSelectedItem = sessionStorage.getItem("bulkBailBondSignSelectedItem");
@@ -289,6 +289,18 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       sessionStorage.removeItem("fileStoreId");
     }
   };
+
+  const isSign = useMemo(() => {
+    if (isCitizen) {
+      return false;
+    } else {
+      if(["VOID","COMPLETED"]?.includes(effectiveRowData?.status)){
+        return false;
+      }
+      return true
+    }
+  }, [effectiveRowData?.status, isCitizen]);
+
   const MemoDocViewerWrapper = useMemo(
     () => (
       <DocViewerWrapper
@@ -340,11 +352,11 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
             <Heading label={`${effectiveRowData?.businessObject?.bailDetails?.caseTitle || effectiveRowData?.caseTitle} ${t("BAIL_BOND")}`} />
           }
           popupStyles={{ width: "70vw" }}
-          actionCancelLabel={canSignBailBond && t("REJECT")}
+          actionCancelLabel={isSign && t("REJECT")}
           actionCancelOnSubmit={() => {
             setIsRejectModalOpen(true);
           }}
-          actionSaveLabel={canSignBailBond && t("PROCEED_TO_SIGN")}
+          actionSaveLabel={isSign && t("PROCEED_TO_SIGN")}
           actionSaveOnSubmit={() => {
             setStepper(1);
           }}

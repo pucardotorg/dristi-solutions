@@ -151,7 +151,6 @@ const BailBondSignaturePage = () => {
 
   const dummyLitigants = useMemo(() => {
     const data = [];
-
     const litigant = {
       additionalDetails: {
         fullName: bailBondDetails?.litigantName || "",
@@ -170,7 +169,7 @@ const BailBondSignaturePage = () => {
             type: `Surety ${index + 1}`,
           },
           hasSigned: surety?.hasSigned || false,
-          mobileNumber: surety?.mobileNumber,
+          mobileNumber: surety?.phoneNumber,
           placeHolder: `Surety${index + 1} Signature`,
         });
       });

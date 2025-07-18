@@ -2097,6 +2097,7 @@ export const UICustomizations = {
       const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role?.code);
       const currentDateInMs = new Date().setHours(23, 59, 59, 999);
       const selectedDateInMs = new Date(requestCriteria?.state?.searchForm?.date).setHours(23, 59, 59, 999);
+      const isCitizen = userRoles?.includes("CITIZEN");
 
       const limit = requestCriteria?.state?.tableForm?.limit || 10;
       const offSet = requestCriteria?.state?.tableForm?.offset || 0;
@@ -2109,6 +2110,7 @@ export const UICustomizations = {
           criteria: {
             ...requestCriteria?.body?.criteria,
             ...(bailId && { bailId }),
+            ...(isCitizen ? {} : { status: ["PENDING_REVIEW", "COMPLETED", "VOID"] }),
             fuzzySearch: true,
           },
           pagination: {
