@@ -63,8 +63,6 @@ public class BailQueryBuilder {
         query = new StringBuilder(addOrderByQuery(query.toString(), pagination));
 
         if (pagination != null) {
-            addOrderByQuery(query.toString(), pagination);
-
             query.append(" LIMIT ? OFFSET ?");
                 preparedStmtList.add(pagination.getLimit());
                 preparedStmtList.add(pagination.getOffSet());
