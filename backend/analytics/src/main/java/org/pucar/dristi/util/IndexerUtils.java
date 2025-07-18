@@ -414,13 +414,18 @@ public class IndexerUtils {
                 JsonNode excludedAssignedUuids = additonalDetailsJsonNode.path(EXCLUDED_ASSIGNED_UUIDS);
                 if (excludedAssignedUuids.isArray()) {
                     List<String> excludedAssignedUuidsList = new ArrayList<>();
-                    if (excludedAssignedUuids.isArray()) {
-                        for (JsonNode node : excludedAssignedUuids) {
-                            excludedAssignedUuidsList.add(node.asText());  // Extract string values
-                        }
+                    for (JsonNode node : excludedAssignedUuids) {
+                        excludedAssignedUuidsList.add(node.asText());
                     }
                     log.info("removing roles from assignedUuidList : {} ", excludedAssignedUuidsList);
-                    excludedAssignedUuidsList.forEach(assignedToList::remove);
+                    assignedToList = new ArrayList<>(assignedToList);
+                    assignedToList.removeIf(userObj -> {
+                        if (userObj instanceof Map) {
+                            Object uuidObj = ((Map<?, ?>) userObj).get("uuid");
+                            return excludedAssignedUuidsList.contains(String.valueOf(uuidObj));
+                        }
+                        return false; // If not a map, do not remove
+                    });
                     assignedTo = new JSONArray(assignedToList).toString();
                 }
             }
