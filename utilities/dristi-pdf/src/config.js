@@ -9,6 +9,9 @@ if (!HOST) {
 }
 
 module.exports = {
+  allowedOrigins: process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(",")
+    : ["http://localhost:3000"],
   auth_token: process.env.AUTH_TOKEN,
 
   KAFKA_BROKER_HOST: process.env.KAFKA_BROKER_HOST || "localhost:9092",

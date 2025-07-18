@@ -44,7 +44,7 @@ public class BailSearchCriteria {
     private String suretyMobileNumber;
 
     @JsonProperty("status")
-    private String status;
+    private List<String> status;
 
     /**
      * Type of the case.
