@@ -153,8 +153,8 @@ export const DocumentSearchConfig = {
           pagination: {
             limit: 10,
             offSet: 0,
-            sortBy: "startDate",
-            order: "ASC",
+            sortBy: "bailCreatedTime",
+            order: "asc",
           },
         },
 
