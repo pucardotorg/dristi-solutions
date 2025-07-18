@@ -20,7 +20,7 @@ public class BailQueryBuilder {
                     "bail.filing_number as filingNumber, bail.case_type as caseType, bail.litigant_id as litigantId, " +
                     "bail.litigant_name as litigantName, bail.litigant_father_name as litigantFatherName, " +
                     "bail.litigant_signed as litigantSigned, bail.litigant_mobile_number as litigantMobileNumber, " +
-                    "bail.shortened_url as shortenedUrl, bail.bail_id as formattedBailId, " +
+                    "bail.shortened_url as shortenedUrl, " +
                     "bail.additional_details as bailAdditionalDetails, bail.is_active as bailIsActive, " +
                     "bail.created_by as bailCreatedBy, bail.last_modified_by as bailLastModifiedBy, " +
                     "bail.created_time as bailCreatedTime, bail.last_modified_time as bailLastModifiedTime, " +
