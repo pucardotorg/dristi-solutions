@@ -341,7 +341,7 @@ async function processBailDocuments(
         courtId: courtCase.courtId,
         filingNumber: courtCase.filingNumber,
         tenantId,
-        status: "COMPLETED",
+        status: ["COMPLETED"],
       },
       {
         sortBy: section.sorton,
