@@ -78,12 +78,12 @@ export const bulkBailBondSignConfig = {
       uiConfig: {
         columns: [
           {
-            label: "CASE_NAME_AND_NUMBER",
+            label: "CASE_TITLE",
             jsonPath: "businessObject.bailDetails.caseTitle",
             additionalCustomization: true,
           },
           {
-            label: "NUMBER",
+            label: "CS_CASE_NUMBER_HOME",
             jsonPath: "businessObject.bailDetails.caseNumber",
             additionalCustomization: true,
           },
