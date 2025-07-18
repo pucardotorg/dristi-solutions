@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Types;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -132,7 +133,7 @@ public class BailQueryBuilder {
         addBailCriteria(criteria.getCourtId(), query, "bail.court_id = ?", preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getFilingNumber(), query, "bail.filing_number = ?", preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getCnrNumber(), query, "bail.cnr_number = ?", preparedStmtList, preparedStmtArgList);
-        addBailCriteria(criteria.getStatus(), query, "bail.bail_status = ?", preparedStmtList, preparedStmtArgList);
+        addListBailCriteria(criteria.getStatus(), query, preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getCaseType() != null ? criteria.getCaseType().name() : null, query, "bail.case_type = ?", preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getCaseNumber(), query, "bail.case_number = ?", preparedStmtList, preparedStmtArgList);
 
@@ -157,6 +158,18 @@ public class BailQueryBuilder {
             query.append(condition);
             preparedStmtList.add(criteria);
             preparedStmtArgList.add(Types.VARCHAR);
+        }
+    }
+
+    private void addListBailCriteria(List<String> criteria, StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        if (criteria != null && !criteria.isEmpty()) {
+            query.append(" AND ");
+            query.append(" bail.bail_status IN ")
+                    .append(" (")
+                    .append(criteria.stream().map(id -> "?").collect(Collectors.joining(",")))
+                    .append(") ");
+            preparedStmtList.addAll(criteria);
+            criteria.forEach(i -> preparedStmtArgList.add(Types.VARCHAR));
         }
     }
 }
