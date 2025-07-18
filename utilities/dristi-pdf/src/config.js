@@ -9,7 +9,7 @@ if (!HOST) {
 }
 
 module.exports = {
-  allowedOrigins: ["http://localhost:3000", "https://snakes-n-ladders.netlify.app/"],
+  allowedOrigins: ["http://localhost:3000", "https://snakes-n-ladders.netlify.app"],
   auth_token: process.env.AUTH_TOKEN,
 
   KAFKA_BROKER_HOST: process.env.KAFKA_BROKER_HOST || "localhost:9092",
