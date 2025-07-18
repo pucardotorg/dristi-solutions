@@ -3,9 +3,9 @@ package digit.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.repository.ServiceRequestRepository;
 import digit.config.Configuration;
-import org.egov.common.contract.idgen.IdGenerationRequest;
+import digit.web.models.IdGenerationRequest;
+import digit.web.models.IdRequest;
 import org.egov.common.contract.idgen.IdGenerationResponse;
-import org.egov.common.contract.idgen.IdRequest;
 import org.egov.common.contract.idgen.IdResponse;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
@@ -31,10 +31,10 @@ public class IdgenUtil {
     @Autowired
     private Configuration configs;
 
-    public List<String> getIdList(RequestInfo requestInfo, String tenantId, String idName, String idformat, Integer count) {
+    public List<String> getIdList(RequestInfo requestInfo, String tenantId, String idName, String idformat, Integer count, Boolean isSequencePadded) {
         List<IdRequest> reqList = new ArrayList<>();
         for (int i = 0; i < count; i++) {
-            reqList.add(IdRequest.builder().idName(idName).format(idformat).tenantId(tenantId).build());
+            reqList.add(IdRequest.builder().idName(idName).format(idformat).tenantId(tenantId).isSequencePadded(isSequencePadded).build());
         }
 
         IdGenerationRequest request = IdGenerationRequest.builder().idRequests(reqList).requestInfo(requestInfo).build();

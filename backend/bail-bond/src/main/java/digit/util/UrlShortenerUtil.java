@@ -63,7 +63,7 @@ public class UrlShortenerUtil {
         body.put(URL,url);
         body.put(REFERENCE_ID, bail.getBailId());
         StringBuilder builder = new StringBuilder(configs.getUrlShortnerHost());
-        builder.append(configs.getUrlShortnerEndpoint());
+        builder.append(configs.getUrlShortenerExpireEndpoint());
         String res = restTemplate.postForObject(builder.toString(), body, String.class);
     }
 }

@@ -26,3 +26,13 @@ export const SubmissionDocumentsWorkflowState = {
   PENDING_ESIGN: "PENDING_E-SIGN",
   SUBMITTED: "SUBMITTED",
 };
+
+export const bailBondWorkflowAction = {
+  SAVEDRAFT: "SAVE_DRAFT",
+  INITIATEESIGN: "INITIATE_E-SIGN",
+  UPLOAD: "UPLOAD",
+  EDIT: "EDIT",
+  ESIGN: "E-SIGN",
+  SIGN: "SIGN",
+  REJECT: "REJECT",
+};

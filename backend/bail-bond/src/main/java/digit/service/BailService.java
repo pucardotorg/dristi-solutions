@@ -258,9 +258,20 @@ public class BailService {
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.getMessage());
         }
 
+        if (bailRequest.getBail().getWorkflow() != null
+                && bailRequest.getBail().getWorkflow().getAction() != null
+                && (E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction()) || INITIATE_E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction()))
+                && !bailRequest.getBail().getLitigantSigned()
+                && bailRequest.getBail().getLitigantId() != null) {
+            List<String> assignees = new ArrayList<>();
+            assignees.add(bailRequest.getBail().getLitigantId());
+            bailRequest.getBail().getWorkflow().setAssignes(assignees);
+        }
+
         Set<String> fileStoreToDeleteIds = getFilestoreToDelete(bailRequest,existingBail);
 
         if(!fileStoreToDeleteIds.isEmpty()){
+            setIsActiveFalse(bailRequest,fileStoreToDeleteIds);
             fileStoreUtil.deleteFilesByFileStore(fileStoreToDeleteIds, bailRequest.getBail().getTenantId());
             log.info("Deleted files from file store: {}", fileStoreToDeleteIds);
         }
@@ -279,11 +290,12 @@ public class BailService {
             Bail bail = bailRequest.getBail();
             String shortenedUrl = urlShortenerUtil.createShortenedUrl(bail.getTenantId(), bail.getBailId());
             bail.setShortenedURL(shortenedUrl);
+            originalBail.setShortenedURL(shortenedUrl);
             log.info("Calling notification service");
             callNotificationService(bailRequest);
         }
 
-        insertBailIndexEntry(bailRequest);
+        insertBailIndexEntry(originalBail);
 
         producer.push(config.getBailUpdateTopic(), bailRequest);
 
@@ -292,6 +304,27 @@ public class BailService {
 
     private void expireTheShorteningUrl(BailRequest bailRequest) {
         urlShortenerUtil.expireTheUrl(bailRequest);
+    }
+
+    private void setIsActiveFalse(BailRequest bailRequest, Set<String> fileStoreToDeleteIds) {
+        if (bailRequest.getBail().getDocuments() != null) {
+            for (Document document : bailRequest.getBail().getDocuments()) {
+                if (fileStoreToDeleteIds.contains(document.getFileStore())) {
+                    document.setIsActive(false);
+                }
+            }
+        }
+        if (bailRequest.getBail().getSureties() != null) {
+            for (Surety surety : bailRequest.getBail().getSureties()) {
+                if (surety.getDocuments() != null) {
+                    for (Document document : surety.getDocuments()) {
+                        if (fileStoreToDeleteIds.contains(document.getFileStore())) {
+                            document.setIsActive(false);
+                        }
+                    }
+                }
+            }
+    }
     }
 
     private Boolean checkItsLastSign(BailRequest bailRequest) {
@@ -480,6 +513,11 @@ public class BailService {
                         bail.getSureties().forEach(surety -> surety.setIsApproved(true));
                     }
 
+                    WorkflowObject workflowObject = new WorkflowObject();
+                    workflowObject.setAction(SIGN);
+
+                    bail.setWorkflow(workflowObject);
+
                     BailRequest updateBailWithJudgeApproval = BailRequest.builder().requestInfo(requestInfo).bail(bail).build();
 
                     Bail approvedBail = updateBail(updateBailWithJudgeApproval);
@@ -507,11 +545,10 @@ public class BailService {
         return attribute;
     }
 
-    public void insertBailIndexEntry(BailRequest bailRequest) {
+    public void insertBailIndexEntry(Bail bail) {
         try {
-            Bail bail = bailRequest.getBail();
             if (bail != null) {
-                log.info("Inserting Bail entry in bail-bond-index (inbox): {}", bailRequest);
+                log.info("Inserting Bail entry in bail-bond-index (inbox): {}", bail);
                 String bulkRequest = indexerUtils.buildPayload(bail);
                 if (!bulkRequest.isEmpty()) {
                     String uri = config.getEsHostUrl() + config.getBulkPath();

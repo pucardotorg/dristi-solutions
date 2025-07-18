@@ -85,6 +85,11 @@ public class BailQueryBuilder {
         String placeholders = String.join(",", bailIds.stream().map(id -> "?").toList());
         query.append(placeholders).append(")");
 
+        query.append(" AND bail.is_active = true");
+        query.append(" AND (bail_doc.is_active = true OR bail_doc.id IS NULL)");
+        query.append(" AND (srt.is_active = true OR srt.id IS NULL)");
+        query.append(" AND (surety_doc.is_active = true OR surety_doc.id IS NULL) ");
+
         for (String id : bailIds) {
             preparedStmtList.add(id);
             preparedStmtArgList.add(Types.VARCHAR);

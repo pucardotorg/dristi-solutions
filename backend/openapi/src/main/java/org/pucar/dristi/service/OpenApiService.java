@@ -3,7 +3,6 @@ package org.pucar.dristi.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
@@ -707,7 +706,7 @@ public class OpenApiService {
                 .requestInfo(RequestInfo.builder().userInfo(User.builder().build()).build())
                 .build();
 
-        return esignUtil.callESignService(eSignRequest, servletRequest);
+        return esignUtil.callESignService(eSignRequest);
     }
 
     public OpenApiBailResponse updateBailBond(OpenApiUpdateBailBondRequest request) {
@@ -748,6 +747,9 @@ public class OpenApiService {
                     .id(UUID.randomUUID().toString())
                     .fileStore(request.getFileStoreId())
                     .documentType("SIGNED")
+                    .isActive(true)
+                    .tenantId(request.getTenantId())
+                    .documentUid(UUID.randomUUID().toString())
                     .build();
 
             // Set signed flag

@@ -8,6 +8,7 @@ import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/Cust
 import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
 import { BulkCheckBox } from "@egovernments/digit-ui-module-dristi/src/components/BulkCheckbox";
+import { BailBondSignModal } from "../pages/employee/BailBondSignModal";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
@@ -594,6 +595,88 @@ export const UICustomizations = {
           },
         },
       ];
+    },
+  },
+
+  bulkBailBondSignConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const entityType = "Order"; // "BailBond";
+
+      const effectiveSearchForm = requestCriteria?.state?.searchForm || {};
+      const caseTitle = sessionStorage.getItem("bulkBailBondSignCaseTitle") || effectiveSearchForm?.caseTitle;
+      const status = effectiveSearchForm?.status;
+      const startOfTheDay = effectiveSearchForm?.startOfTheDay;
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+      const setbulkBailBondSignList = additionalDetails?.setbulkBailBondSignList;
+      const setBailBondPaginationData = additionalDetails?.setBailBondPaginationData;
+      const setNeedConfigRefresh = additionalDetails?.setNeedConfigRefresh;
+      const limit = parseInt(sessionStorage.getItem("bulkBailBondSignlimit")) || parseInt(requestCriteria?.state?.tableForm?.limit) || 10;
+      const offset = parseInt(sessionStorage.getItem("bulkBailBondSignoffset")) || parseInt(requestCriteria?.state?.tableForm?.offset) || 0;
+
+      const moduleSearchCriteria = {
+        // entityType,
+        tenantId,
+        status: "PENDING_REVIEW",
+        ...(caseTitle && { searchableFields: caseTitle }),
+        ...(courtId && { courtId }),
+      };
+      const bulkBailBondSignCaseTitle = requestCriteria?.state?.searchForm && requestCriteria?.state?.searchForm?.caseTitle;
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            limit: limit,
+            offset: offset,
+            tenantId: tenantId,
+            moduleSearchCriteria: moduleSearchCriteria,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            const bailBondItems = data?.items?.map((item) => {
+              return {
+                ...item,
+                isSelected: true,
+              };
+            });
+            sessionStorage.removeItem("bulkBailBondSignlimit");
+            sessionStorage.removeItem("bulkBailBondSignoffset");
+            if (sessionStorage.getItem("bulkBailBondSignCaseTitle")) {
+              sessionStorage.removeItem("bulkBailBondSignCaseTitle"); //we are storing this for search inbox
+              setNeedConfigRefresh((prev) => !prev);
+            }
+
+            if (setbulkBailBondSignList) setbulkBailBondSignList(bailBondItems);
+            if (setBailBondPaginationData) setBailBondPaginationData({ limit: limit, offset: offset, caseTitle: bulkBailBondSignCaseTitle });
+
+            return {
+              ...data,
+              items: bailBondItems,
+            };
+          },
+        },
+      };
+    },
+
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "CASE_NAME_AND_NUMBER":
+          return <OrderName rowData={row} colData={column} value={value} />;
+        // return <BailBondSignModal rowData={row} colData={column} value={value} />;
+        case "LITIGANT":
+          return value || "";
+        case "NUMBER":
+          return <span>{value || ""}</span>;
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
+        default:
+          return "";
+      }
     },
   },
 };
