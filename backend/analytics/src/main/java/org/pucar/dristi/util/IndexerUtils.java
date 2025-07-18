@@ -408,7 +408,23 @@ public class IndexerUtils {
                     excludeRolesList.forEach(assignedRoleSet::remove);
                     assignedRole = new JSONArray(assignedRoleSet).toString();
                 }
-            } if(additonalDetailsJsonNode != null && additonalDetailsJsonNode.has("dueDate")) {
+            }
+            if (additonalDetailsJsonNode != null && additonalDetailsJsonNode.has(EXCLUDED_ASSIGNED_UUIDS)) {
+                log.info("additional details contains uuid's to exclude");
+                JsonNode excludedAssignedUuids = additonalDetailsJsonNode.path(EXCLUDED_ASSIGNED_UUIDS);
+                if (excludedAssignedUuids.isArray()) {
+                    List<String> excludedAssignedUuidsList = new ArrayList<>();
+                    if (excludedAssignedUuids.isArray()) {
+                        for (JsonNode node : excludedAssignedUuids) {
+                            excludedAssignedUuidsList.add(node.asText());  // Extract string values
+                        }
+                    }
+                    log.info("removing roles from assignedUuidList : {} ", excludedAssignedUuidsList);
+                    excludedAssignedUuidsList.forEach(assignedToList::remove);
+                    assignedTo = new JSONArray(assignedToList).toString();
+                }
+            }
+            if(additonalDetailsJsonNode != null && additonalDetailsJsonNode.has("dueDate")) {
                 stateSla = additonalDetailsJsonNode.get("dueDate").asLong();
             }
         } catch (Exception e) {
