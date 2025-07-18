@@ -8,7 +8,8 @@ import digit.repository.ServiceRequestRepository;
 import digit.web.models.Bail;
 import digit.web.models.BailRequest;
 import digit.web.models.Email;
-import digit.web.models.EmailBodyTemplateData;
+import digit.web.models.EmailRecipientData;
+import digit.web.models.EmailTemplateData;
 import digit.web.models.EmailContent;
 import digit.web.models.EmailRequest;
 import digit.web.models.SMSRequest;
@@ -61,21 +62,16 @@ public class NotificationService {
 
     }
 
-    public Optional<EmailContent> getEmailContent(RequestInfo requestInfo, String tenantId, String person, Bail bail) {
+    public Optional<EmailContent> getEmailContent(RequestInfo requestInfo, EmailTemplateData emailTemplateData, EmailRecipientData recipientData) {
+        String tenantId = emailTemplateData.getTenantId();
         String subjectTemplate = getMessage(requestInfo, tenantId, BAIL_BOND_SIGNATURE_SUBJECT);
         String bodyTemplate = getMessage(requestInfo, tenantId, BAIL_BOND_SIGNATURE_BODY);
 
         if (StringUtils.isEmpty(subjectTemplate) || StringUtils.isEmpty(bodyTemplate)) {
             return Optional.empty();
         }
-
-        String subject = buildSubject(subjectTemplate, person);
-        EmailBodyTemplateData templateData = EmailBodyTemplateData.builder()
-                .caseNumber(bail.getCaseNumber())
-                .caseName(bail.getCaseTitle())
-                .shortenedUrl(bail.getShortenedURL())
-                .build();
-        String body = buildBody(bodyTemplate, templateData);
+        String subject = buildSubject(subjectTemplate, emailTemplateData, recipientData);
+        String body = buildBody(bodyTemplate, emailTemplateData, recipientData);
 
         return Optional.of(new EmailContent(subject, body));
     }
@@ -100,40 +96,53 @@ public class NotificationService {
     }
 
 
-    public void sendEmail(BailRequest bailRequest, String person, Set<String> recipients) {
+    public void sendEmail(BailRequest bailRequest, EmailTemplateData emailTemplateData, EmailRecipientData recipientData) {
         try {
             RequestInfo requestInfo = bailRequest.getRequestInfo();
-            Bail bail = bailRequest.getBail();
-            String tenantId = bail.getTenantId();
+            String tenantId = emailTemplateData.getTenantId();
+            String emailId = recipientData.getEmail();
 
-            Optional<EmailContent> contentOpt = getEmailContent(requestInfo, tenantId, person, bail);
+            Optional<EmailContent> contentOpt = getEmailContent(requestInfo, emailTemplateData, recipientData);
             if (contentOpt.isEmpty()) {
-                log.info("Email content has not been configured");
+                log.error("Email content has not been configured");
                 return;
             }
 
-            EmailRequest emailRequest = buildEmailRequest(contentOpt.get(), requestInfo, tenantId, recipients);
+            EmailRequest emailRequest = buildEmailRequest(contentOpt.get(), requestInfo, tenantId, Set.of(emailId));
             producer.push(config.getMailNotificationTopic(), emailRequest);
+            log.info("Email sent successfully to {}", recipientData.getName());
 
         } catch (Exception e) {
             log.error("Error in Sending Email: ", e);
         }
     }
 
-
-    public String buildSubject(String subject, String person){
+    public String getAsValue(String person){
         return switch (person){
-            case LITIGANT -> "as Accused ";
-            case SURETY -> "as Surety ";
+            case LITIGANT -> "as Accused";
+            case SURETY -> "as Surety";
             case ADVOCATE -> "";
             default -> throw new IllegalStateException("Unexpected value: " + person);
         };
     }
 
-    public String buildBody(String body, EmailBodyTemplateData templateData){
-        return body.replace("{{caseNumber}}", templateData.getCaseNumber())
-                .replace("{{caseName}}", templateData.getCaseName())
-                .replace("{{shortenedUrl}}", templateData.getShortenedUrl());
+
+    public String buildSubject(String subject, EmailTemplateData emailTemplateData, EmailRecipientData recipientData){
+        String person = recipientData.getType();
+        String asValue = getAsValue(person);
+        String caseName = emailTemplateData.getCaseName();
+        subject = subject.replace("{{as}}", asValue)
+                    .replace("{{caseName}}", caseName);
+
+        return subject;
+    }
+
+    public String buildBody(String body, EmailTemplateData emailTemplateData, EmailRecipientData recipientData){
+        return body.replace("{{name}}", recipientData.getName())
+                .replace("{{caseNumber}}", emailTemplateData.getCaseNumber())
+                .replace("{{caseName}}", emailTemplateData.getCaseName())
+                .replace("{{as}}", getAsValue(recipientData.getType()))
+                .replace("{{shortenedUrl}}", emailTemplateData.getShortenedUrl());
     }
 
     public String getMessage(RequestInfo requestInfo, String rootTenantId, String msgCode) {

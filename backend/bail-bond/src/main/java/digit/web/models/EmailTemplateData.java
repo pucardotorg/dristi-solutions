@@ -11,8 +11,9 @@ import org.springframework.validation.annotation.Validated;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class EmailBodyTemplateData {
+public class EmailTemplateData {
     private String caseNumber;
     private String caseName;
     private String shortenedUrl;
+    private String tenantId;
 }

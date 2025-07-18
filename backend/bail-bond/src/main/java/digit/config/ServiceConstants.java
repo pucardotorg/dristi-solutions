@@ -66,9 +66,10 @@ public class ServiceConstants {
     public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
 
     public static final String BAIL_BOND_INITIATED_SMS = "BAIL_BOND_INITIATED_SURETY,BAIL_BOND_INITIATED_LITIGANT";
-    public static final String BAIL_BOND_INITIATED_EMAIL="BAIL_BOND_INITIATED_SURETY,BAIL_BOND_INITIATED_LITIGANT";
+    public static final String BAIL_BOND_INITIATED_EMAIL="BAIL_BOND_INITIATED_SURETY,BAIL_BOND_INITIATED_LITIGANT,BAIL_BOND_INITIATED_ADVOCATE";
     public static final String BAIL_BOND_INITIATED_SURETY = "BAIL_BOND_INITIATED_SURETY";
     public static final String BAIL_BOND_INITIATED_LITIGANT = "BAIL_BOND_INITIATED_LITIGANT";
+    public static final String BAIL_BOND_INITIATED_ADVOCATE = "BAIL_BOND_INITIATED_ADVOCATE";
 
     public static final String MANUAL = "MANUAL_";
 
@@ -152,4 +153,7 @@ public class ServiceConstants {
     public static  final String LITIGANT="LITIGANT";
     public static final String SURETY="SURETY";
     public static final String ADVOCATE="ADVOCATE";
+
+    public static final String ADVOCATE_ROLE = "ADVOCATE_ROLE";
+
 }

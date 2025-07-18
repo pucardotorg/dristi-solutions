@@ -14,6 +14,7 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -50,9 +51,10 @@ public class BailService {
     private final XmlRequestGenerator xmlRequestGenerator;
     private final Configuration configuration;
     private final IndexerUtils indexerUtils;
+    private final UserUtil userUtil;
 
     @Autowired
-    public BailService(BailValidator validator, BailRegistrationEnrichment enrichmentUtil, Producer producer, Configuration config, WorkflowService workflowService, BailRepository bailRepository, EncryptionDecryptionUtil encryptionDecryptionUtil, ObjectMapper objectMapper, UrlShortenerUtil urlShortenerUtil, NotificationService notificationService, FileStoreUtil fileStoreUtil, CaseUtil caseUtil, CipherUtil cipherUtil, ESignUtil eSignUtil, XmlRequestGenerator xmlRequestGenerator, Configuration configuration, IndexerUtils indexerUtils) {
+    public BailService(BailValidator validator, BailRegistrationEnrichment enrichmentUtil, Producer producer, Configuration config, WorkflowService workflowService, BailRepository bailRepository, EncryptionDecryptionUtil encryptionDecryptionUtil, ObjectMapper objectMapper, UrlShortenerUtil urlShortenerUtil, NotificationService notificationService, FileStoreUtil fileStoreUtil, CaseUtil caseUtil, CipherUtil cipherUtil, ESignUtil eSignUtil, XmlRequestGenerator xmlRequestGenerator, Configuration configuration, IndexerUtils indexerUtils, UserUtil userUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.producer = producer;
@@ -70,6 +72,7 @@ public class BailService {
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.configuration = configuration;
         this.indexerUtils = indexerUtils;
+        this.userUtil = userUtil;
     }
 
 
@@ -133,6 +136,77 @@ public class BailService {
                 }
             }
 
+            String emailCode = getEmailCode(action);
+            if(StringUtils.isBlank(emailCode)){
+                log.warn("No emailCode found for action: {}", action);
+                return;
+            }
+
+            log.info("Sending emails for emailCode: {}", emailCode);
+            Set<String> emailTopics = Arrays.stream(emailCode.split(","))
+                    .map(String::trim)
+                    .collect(Collectors.toSet());
+            EmailTemplateData emailTemplateData = EmailTemplateData.builder()
+                    .caseNumber(bail.getCaseNumber())
+                    .caseName(bail.getCaseTitle())
+                    .shortenedUrl(bail.getShortenedURL())
+                    .tenantId(bail.getTenantId())
+                    .build();
+
+            // Send Email to Sureties
+            if(emailTopics.contains(BAIL_BOND_INITIATED_SURETY)){
+                log.info("Sending email to sureties");
+                if(!ObjectUtils.isEmpty(bail.getSureties())){
+                    bail.getSureties().forEach(surety -> {
+                        EmailRecipientData recipientData = EmailRecipientData.builder()
+                                .type(SURETY)
+                                .name(surety.getName())
+                                .email(surety.getEmail())
+                                .build();
+                        notificationService.sendEmail(bailRequest, emailTemplateData, recipientData);
+                    });
+                }
+            }
+
+            // Send email to litigant
+            if(emailTopics.contains(BAIL_BOND_INITIATED_LITIGANT)){
+                log.info("Sending email to litigant");
+                List<User> users = userUtil.getUserListFromUserUuid(List.of(bail.getLitigantId()));
+                if(users!=null && !users.isEmpty()){
+                    User user = users.get(0);
+                    String litigantName = user.getName();
+                    String litigantEmailId = user.getEmailId();
+                    EmailRecipientData recipientData = EmailRecipientData.builder()
+                            .type(LITIGANT)
+                            .name(litigantName)
+                            .email(litigantEmailId)
+                            .build();
+                    notificationService.sendEmail(bailRequest, emailTemplateData, recipientData);
+                }
+            }
+
+            // Send email to advocate
+            if(!bail.getAuditDetails().getCreatedBy().equalsIgnoreCase(bail.getLitigantId())
+                && emailTopics.contains(BAIL_BOND_INITIATED_ADVOCATE)){
+                log.info("Sending email to advocate");
+                List<User> users = userUtil.getUserListFromUserUuid(List.of(bail.getAuditDetails().getCreatedBy()));
+                if(users!=null && !users.isEmpty()){
+                    User user = users.get(0);
+                    boolean isAdvocate = user.getRoles().stream().anyMatch(role -> role.getCode().contains(ADVOCATE_ROLE));
+                    if(!isAdvocate){
+                        throw new CustomException(INVALID_INPUT, "createdBy does not match the litigantId or any advocate uuid");
+                    }
+                    String advocateName = user.getName();
+                    String advocateEmailId = user.getEmailId();
+                    EmailRecipientData recipientData = EmailRecipientData.builder()
+                            .type(ADVOCATE)
+                            .name(advocateName)
+                            .email(advocateEmailId)
+                            .build();
+                    notificationService.sendEmail(bailRequest, emailTemplateData, recipientData);
+                }
+            }
+
         } catch (Exception e) {
             log.error("Error sending notification for bailRequest: {}", bailRequest, e);
         }
@@ -169,6 +243,13 @@ public class BailService {
     private String getMessageCode(String action) {
         if (action.equalsIgnoreCase(INITIATE_E_SIGN)) {
             return BAIL_BOND_INITIATED_SMS;
+        }
+        return null;
+    }
+
+    private String getEmailCode(String action){
+        if(action.equalsIgnoreCase(INITIATE_E_SIGN)){
+            return BAIL_BOND_INITIATED_EMAIL;
         }
         return null;
     }

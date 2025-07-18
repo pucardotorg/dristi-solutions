@@ -6,11 +6,13 @@ import static digit.config.ServiceConstants.*;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.common.contract.user.UserDetailResponse;
+import org.egov.common.contract.user.UserSearchRequest;
 import org.egov.common.contract.user.enums.UserType;
 import digit.repository.ServiceRequestRepository;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -36,12 +38,31 @@ public class UserUtil {
     }
 
     /**
+     * Searches for users based on uuid by calling userCall
+     * @param uuids List of uuids for which users need to be fetched
+     * @return
+     */
+    public List<User> getUserListFromUserUuid(List<String> uuids) {
+        List<User> users = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(uuids)) {
+            UserSearchRequest userSearchRequest = new UserSearchRequest();
+            userSearchRequest.setUuid(uuids);
+            StringBuilder uri = new StringBuilder(configs.getUserHost()).append(configs.getUserSearchEndpoint());
+            UserDetailResponse userDetailResponse = userCall(userSearchRequest, uri);
+            if (userDetailResponse != null && !CollectionUtils.isEmpty(userDetailResponse.getUser())) {
+                users = userDetailResponse.getUser().stream().map(user -> User.builder().uuid(user.getUuid()).roles(user.getRoles()).build()).toList();
+            }
+        }
+        return users;
+    }
+
+
+    /**
      * Returns UserDetailResponse by calling user service with given uri and object
      * @param userRequest Request object for user service
      * @param uri The address of the endpoint
      * @return Response from user service as parsed as userDetailResponse
      */
-
     public UserDetailResponse userCall(Object userRequest, StringBuilder uri) {
         String dobFormat = null;
         if(uri.toString().contains(configs.getUserSearchEndpoint())  || uri.toString().contains(configs.getUserUpdateEndpoint()))
