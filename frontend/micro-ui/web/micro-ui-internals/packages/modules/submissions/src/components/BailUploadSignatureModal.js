@@ -24,7 +24,7 @@ const BailUploadSignatureModal = ({
   showUploadSignature,
   setLoader,
   loader,
-  bailBondFileStoreId
+  bailBondFileStoreId,
 }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
@@ -150,7 +150,7 @@ const BailUploadSignatureModal = ({
         className={"bail-signature-modal"}
       >
         <div style={{ padding: "10px" }}>
-          <p style={{ marginBottom: "24px", color: "#505A5F" }}>{t("BAIL_SIGN_INFO")}</p>
+          <p style={{ marginBottom: "24px", color: "#0A0A0A" }}>{t("BAIL_SIGN_INFO")}</p>
         </div>
       </Modal>
 
