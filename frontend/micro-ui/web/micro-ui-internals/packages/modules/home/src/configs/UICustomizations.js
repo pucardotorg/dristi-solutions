@@ -665,17 +665,17 @@ export const UICustomizations = {
 
     additionalCustomizations: (row, key, column, value, t, searchResult) => {
       switch (key) {
-        case "CASE_NAME_AND_NUMBER":
+        case "CASE_TITLE":
           return <OrderName rowData={row} colData={column} value={value} />;
         // return <BailBondSignModal rowData={row} colData={column} value={value} />;
         case "LITIGANT":
           return value || "";
-        case "NUMBER":
+        case "CS_CASE_NUMBER_HOME":
           return <span>{value || ""}</span>;
         case "SELECT":
           return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
         default:
-          return "";
+          return value || "";
       }
     },
   },

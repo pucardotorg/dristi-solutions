@@ -2114,10 +2114,10 @@ export const UICustomizations = {
             fuzzySearch: true,
           },
           pagination: {
+            sortBy: "bailCreatedTime",
+            order: "desc",
             limit: limit,
             offSet: offSet,
-            sortBy: "bailCreatedTime",
-            order: "asc",
           },
         },
         config: {
