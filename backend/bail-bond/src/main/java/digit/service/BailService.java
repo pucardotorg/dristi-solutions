@@ -240,10 +240,21 @@ public class BailService {
         // Enrich new documents or sureties if any
         enrichmentUtil.enrichBailUponUpdate(bailRequest);
 
+        if (bailRequest.getBail().getWorkflow() != null
+                && bailRequest.getBail().getWorkflow().getAction() != null
+                && (E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction()) || INITIATE_E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction()))
+                && !bailRequest.getBail().getLitigantSigned()
+                && bailRequest.getBail().getLitigantId() != null) {
+            List<String> assignees = new ArrayList<>();
+            assignees.add(bailRequest.getBail().getLitigantId());
+            bailRequest.getBail().getWorkflow().setAssignes(assignees);
+        }
+
         Boolean lastSigned = checkItsLastSign(bailRequest);
         if (!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())) {
             workflowService.updateWorkflowStatus(bailRequest);
         }
+
         try {
             if (lastSigned) {
                 log.info("Updating Bail Workflow");
@@ -256,16 +267,6 @@ public class BailService {
         } catch (Exception e) {
             log.error("Error updating bail workflow", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.getMessage());
-        }
-
-        if (bailRequest.getBail().getWorkflow() != null
-                && bailRequest.getBail().getWorkflow().getAction() != null
-                && (E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction()) || INITIATE_E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction()))
-                && !bailRequest.getBail().getLitigantSigned()
-                && bailRequest.getBail().getLitigantId() != null) {
-            List<String> assignees = new ArrayList<>();
-            assignees.add(bailRequest.getBail().getLitigantId());
-            bailRequest.getBail().getWorkflow().setAssignes(assignees);
         }
 
         Set<String> fileStoreToDeleteIds = getFilestoreToDelete(bailRequest,existingBail);
