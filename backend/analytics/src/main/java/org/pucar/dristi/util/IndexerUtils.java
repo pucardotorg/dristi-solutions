@@ -290,6 +290,10 @@ public class IndexerUtils {
         isGeneric = details.containsKey("isGeneric");
         String actors = details.get("actors");
         String actionCategory = details.get("actionCategory");
+        Long stateSlaFromMdms = details.get("stateSla") != null ? Long.parseLong(details.get("stateSla")) : null;
+        if (stateSlaFromMdms != null) {
+            stateSla = stateSlaFromMdms;
+        }
         RequestInfo requestInfo1 = mapper.readValue(requestInfo.toString(), RequestInfo.class);
         Long createdTime = clock.millis();
 
@@ -528,6 +532,7 @@ public class IndexerUtils {
         boolean isGeneric = false;
         String actors = null;
         String actionCategory = null;
+        Long stateSla = null;
         List<ReferenceEntityTypeNameMapping> referenceEntityTypeMappings = null; // Store the reference mappings
 
         List<PendingTaskType> pendingTaskTypeList = mdmsDataConfig.getPendingTaskTypeMap().get(entityType);
@@ -543,6 +548,7 @@ public class IndexerUtils {
                 isGeneric = pendingTaskType.getIsgeneric();
                 actors = pendingTaskType.getActor();
                 referenceEntityTypeMappings = pendingTaskType.getReferenceEntityTypeNameMapping();
+                stateSla = extractSlaFromMdms(pendingTaskType.getStateSla());
                 break;
             }
         }
@@ -566,9 +572,20 @@ public class IndexerUtils {
         caseDetails.put("screenType", screenType);
         caseDetails.put("actionCategory", actionCategory);
         caseDetails.put("actors", actors);
+        if (stateSla != null) {
+            caseDetails.put("stateSla", String.valueOf(stateSla));
+        }
         if (isGeneric) caseDetails.put("isGeneric", "Generic");
 
         return caseDetails;
+    }
+
+    private Long extractSlaFromMdms(String stateSla) {
+        try {
+            return Long.parseLong(stateSla);
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
     public Map<String, String> processEntityByType(String entityType, JSONObject request, String referenceId, Object object) {
