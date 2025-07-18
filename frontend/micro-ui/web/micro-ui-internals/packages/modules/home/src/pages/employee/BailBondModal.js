@@ -62,8 +62,6 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
   const caseTitle = row?.caseTitle || queryStrings?.caseTitle;
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
 
-  console.log(queryStrings, "queryStrings");
-
   const userType = useMemo(() => {
     if (!userInfo) return "employee";
     return userInfo?.type === "CITIZEN" ? "citizen" : "employee";
@@ -82,10 +80,8 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
       setToastMsg(null);
     }, duration);
   };
-  console.log(row, "bond");
 
   const [bailBonds, setBailBonds] = useState([]);
-  console.log(row);
   const courtId = localStorage.getItem("courtId");
   const formatAdvocateNames = (advocateNames) => {
     if (advocateNames.length > 0) {
@@ -345,11 +341,27 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
                       <div>
                         <span style={{ fontWeight: "700", fontSize: "16px" }}>{bond?.name}</span>
                       </div>
-                      <div>
+                      <div
+                        style={{
+                          width: "100%",
+                          maxWidth: "100%",
+                          wordWrap: "break-word",
+                          overflowWrap: "break-word",
+                          whiteSpace: "normal",
+                        }}
+                      >
                         {" "}
                         <span style={{ fontWeight: "600", fontSize: "14px" }}>{t("CHOOSE_COMPLAINANT")} :</span> {bond?.litigantName}
                       </div>
-                      <div>
+                      <div
+                        style={{
+                          width: "100%",
+                          maxWidth: "100%",
+                          wordWrap: "break-word",
+                          overflowWrap: "break-word",
+                          whiteSpace: "normal",
+                        }}
+                      >
                         <span style={{ fontWeight: "600", fontSize: "14px" }}>{t("ADVOCATE")} : </span>
                         {bond?.advocate}
                       </div>
@@ -357,26 +369,28 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
                         <span style={{ fontWeight: "600", fontSize: "14px" }}>{t("DATE")} :</span> {bond?.date}
                       </div>
                     </div>
-                    <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-                      <button
-                        style={{
-                          backgroundColor: "transparent",
-                          fontWeight: "500",
-                          color: "#0A5757",
-                          border: "none",
-                          padding: "8px 16px",
-                          borderRadius: "4px",
-                          fontSize: "16px",
-                          fontFamily: "Roboto",
-                        }}
-                        onClick={() => {
-                          setIsDocViewOpened(true);
-                          setSelectedBailBondFilestoreid(bond?.fileStoreId);
-                        }}
-                      >
-                        {t("VIEW")}
-                      </button>
-                    </div>
+                    {bond?.fileStoreId && (
+                      <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+                        <button
+                          style={{
+                            backgroundColor: "transparent",
+                            fontWeight: "500",
+                            color: "#0A5757",
+                            border: "none",
+                            padding: "8px 16px",
+                            borderRadius: "4px",
+                            fontSize: "16px",
+                            fontFamily: "Roboto",
+                          }}
+                          onClick={() => {
+                            setIsDocViewOpened(true);
+                            setSelectedBailBondFilestoreid(bond?.fileStoreId);
+                          }}
+                        >
+                          {t("VIEW")}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -418,7 +432,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
           <DocViewerWrapper
             key={"fdsfdsf"}
             fileStoreId={selectedBailBondFilestoreid}
-            tenantId={"kl"}
+            tenantId={tenantId}
             docWidth="100%"
             docHeight="70vh"
             showDownloadOption={false}

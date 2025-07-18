@@ -368,7 +368,7 @@ const MainHomeScreen = () => {
 
   const inboxSearchComposer = useMemo(
     () => (
-      <InboxSearchComposer key={`${activeTab}-${updateCounter}}`} customStyle={sectionsParentStyle} configs={modifiedConfig}></InboxSearchComposer>
+      <InboxSearchComposer key={`${activeTab}-${updateCounter}`} customStyle={sectionsParentStyle} configs={modifiedConfig}></InboxSearchComposer>
     ),
     [activeTab, updateCounter, modifiedConfig]
   );

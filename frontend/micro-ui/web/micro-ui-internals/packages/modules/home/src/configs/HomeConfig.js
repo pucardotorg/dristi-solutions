@@ -828,7 +828,7 @@ export const pendingTaskCaseGeneratePaymentActions = {
 export const pendingTaskForBailBondActions = {
   PENDING_SIGN: {
     actorName: ["JUDGE"],
-    actionName: "Make Payment",
+    actionName: "E-Sign Pending",
     redirectDetails: {
       url: "/home/bail-bond",
       params: [

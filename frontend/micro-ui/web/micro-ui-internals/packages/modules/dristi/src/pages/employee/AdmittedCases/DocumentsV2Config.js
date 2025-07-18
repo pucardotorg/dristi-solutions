@@ -16,7 +16,7 @@ const defaultBailValues = { bailId: "" };
 
 //config for tab search sceeen
 export const DocumentSearchConfig = {
-  tenantId: "mz",
+  tenantId: Digit.ULBService.getCurrentTenantId(),
   moduleName: "commonCampaignUiConfig",
   showTab: true,
   DocumentSearchConfig: [

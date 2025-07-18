@@ -13,7 +13,6 @@ import { removeInvalidNameParts } from "../../../Utils";
 import { OrderWorkflowAction, OrderWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/orderWorkflow";
 import { ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom";
-import { set } from "lodash";
 
 const OrderDrawer = ({
   isOpen,

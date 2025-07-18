@@ -154,8 +154,6 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   }, [formData, uploadDocuments, tenantId]);
 
   const updateBailBond = async ({ bailBondId, Action, fileStoreId }) => {
-    console.log("updateBailBond", bailBondId, Action, fileStoreId);
-
     try {
       setLoader(true);
       await HomeService.searchBailBond({
@@ -184,7 +182,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
                   }
                   return doc;
                 }),
-                { documentType: "SIGNED", fileStore: fileStoreId },
+                ...(fileStoreId ? [{ documentType: "SIGNED", fileStore: fileStoreId }] : []),
               ],
               workflow: { action: Action },
             },
@@ -517,7 +515,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
           actionSaveOnSubmit={async () => {
             await updateBailBond({
               bailBondId: effectiveRowData?.businessObject?.bailDetails?.bailId || effectiveRowData?.bailId,
-              Action: bailBondWorkflowAction.SIGN,
+              Action: bailBondWorkflowAction.REJECT,
             });
           }}
           className="reject-modal"

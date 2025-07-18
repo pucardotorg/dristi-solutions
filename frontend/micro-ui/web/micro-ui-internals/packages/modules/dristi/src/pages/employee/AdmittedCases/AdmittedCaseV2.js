@@ -363,29 +363,34 @@ const AdmittedCaseV2 = () => {
   useEffect(() => {
     fetchInbox();
     const isBailBondPendingTaskPresent = async () => {
-      const bailBondPendingTask = await HomeService.getPendingTaskService(
-        {
-          SearchCriteria: {
-            tenantId,
-            moduleName: "Pending Tasks Service",
-            moduleSearchCriteria: {
-              isCompleted: false,
-              assignedRole: [...roles], //judge.clerk,typist
-              filingNumber: filingNumber,
-              courtId: courtId,
-              entityType: "bail bond",
+      try {
+        const bailBondPendingTask = await HomeService.getPendingTaskService(
+          {
+            SearchCriteria: {
+              tenantId,
+              moduleName: "Pending Tasks Service",
+              moduleSearchCriteria: {
+                isCompleted: false,
+                assignedRole: [...roles], //judge.clerk,typist
+                filingNumber: filingNumber,
+                courtId: courtId,
+                entityType: "bail bond",
+              },
+              limit: 10000,
+              offset: 0,
             },
-            limit: 10000,
-            offset: 0,
           },
-        },
-        { tenantId }
-      );
-      if (bailBondPendingTask?.data?.length > 0) {
-        setIsBailBondTaskExists(true);
+          { tenantId }
+        );
+        if (bailBondPendingTask?.data?.length > 0) {
+          setIsBailBondTaskExists(true);
+        }
+      } catch (err) {
+        console.log(err);
       }
     };
     isBailBondPendingTaskPresent();
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "HEARINGS_TAB", [location?.state?.homeActiveTab]);
@@ -3171,7 +3176,7 @@ const AdmittedCaseV2 = () => {
 
       showToast({
         isError: true,
-        message: "Failed to create bail bond task",
+        message: t("UNABLE_TO_CREATE_BAIL_BOND_TASK"),
       });
     }
   };
@@ -3186,11 +3191,8 @@ const AdmittedCaseV2 = () => {
     }
     return <InboxSearchComposer key={`${config?.label}-${updateCounter}`} configs={config} showTab={false}></InboxSearchComposer>;
   }, [config, activeTab, updateCounter]);
-  console.log(activeTab === "Documents", "activeTab");
 
   const documentsInboxSearch = useMemo(() => {
-    console.log("caseDetails", caseDetails);
-
     return (
       <DocumentsV2
         caseDetails={caseDetails}
