@@ -106,8 +106,8 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
           pagination: {
             limit: 100,
             offSet: 0,
-            sortBy: "startDate",
-            order: "ASC",
+            sortBy: "bailCreatedTime",
+            order: "asc",
           },
         });
         const caseDetails = await DRISTIService.caseDetailSearchService(
