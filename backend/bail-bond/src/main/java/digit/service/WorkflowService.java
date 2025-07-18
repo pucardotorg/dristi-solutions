@@ -46,7 +46,7 @@ public class WorkflowService {
             log.info("ProcessInstance Request :: {}", workflowRequest);
             State workflowState = callWorkFlow(workflowRequest);
             if (workflowState == null || workflowState.getState() == null) {
-//                throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, "Workflow state is null");
+                throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, "Workflow state is null");
             }
             String state = workflowState.getState();
             log.info("Workflow State for filing number :: {} and state :: {}",bailRequest.getBail().getFilingNumber(), state);
@@ -55,7 +55,7 @@ public class WorkflowService {
             throw e;
         } catch (Exception e) {
             log.error("Error updating workflow status :: {}", e.toString());
-//            throw new CustomException(WORKFLOW_SERVICE_EXCEPTION,"Error updating workflow status: "+e.getMessage());
+            throw new CustomException(WORKFLOW_SERVICE_EXCEPTION,"Error updating workflow status: "+e.getMessage());
         }
     }
     public State callWorkFlow(ProcessInstanceRequest workflowReq) {
