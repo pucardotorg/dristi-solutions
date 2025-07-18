@@ -523,7 +523,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
           headerBarEnd={<CloseBtn onClick={() => setIsRejectModalOpen(false)} />}
           actionCancelLabel={t("CS_COMMON_CANCEL")}
           actionCancelOnSubmit={() => setIsRejectModalOpen(false)}
-          actionSaveLabel={t("REJECT")}
+          actionSaveLabel={t("CONFIRM")}
           actionSaveOnSubmit={async () => {
             await updateBailBond({
               bailBondId: effectiveRowData?.businessObject?.bailDetails?.bailId || effectiveRowData?.bailId,
