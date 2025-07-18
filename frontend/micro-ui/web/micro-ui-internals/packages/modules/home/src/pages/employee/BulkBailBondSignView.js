@@ -84,7 +84,7 @@ function BulkBailBondSignView({ showToast = () => {} }) {
                   ...column,
                   updateOrderFunc: updateBailBondFunc,
                 };
-              } else if (column.label === "CASE_NAME_AND_NUMBER") {
+              } else if (column.label === "CASE_TITLE") {
                 return {
                   ...column,
                   clickFunc: setBailBondFunc,
