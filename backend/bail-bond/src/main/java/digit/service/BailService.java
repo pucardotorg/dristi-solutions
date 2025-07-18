@@ -2,6 +2,8 @@ package digit.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import digit.config.Configuration;
 import digit.enrichment.BailRegistrationEnrichment;
 import digit.kafka.Producer;
@@ -246,8 +248,14 @@ public class BailService {
                 && !bailRequest.getBail().getLitigantSigned()
                 && bailRequest.getBail().getLitigantId() != null) {
             List<String> assignees = new ArrayList<>();
+            WorkflowObject workflow = bailRequest.getBail().getWorkflow();
             assignees.add(bailRequest.getBail().getLitigantId());
-            bailRequest.getBail().getWorkflow().setAssignes(assignees);
+            workflow.setAssignes(assignees);
+            if(!bailRequest.getBail().getLitigantId().equalsIgnoreCase(bailRequest.getRequestInfo().getUserInfo().getUuid()))
+            {
+                ObjectNode additionalDetails = updateAdditionalDetails(workflow.getAdditionalDetails(), bailRequest.getRequestInfo().getUserInfo().getUuid());
+                workflow.setAdditionalDetails(additionalDetails);
+            }
         }
 
         Boolean lastSigned = checkItsLastSign(bailRequest);
@@ -563,6 +571,20 @@ public class BailService {
             log.error("Error occurred while inserting bail index entry");
             throw new CustomException(BAIL_BOND_INDEX_EXCEPTION, e.getMessage());
         }
+    }
+
+
+    private ObjectNode updateAdditionalDetails(Object existingDetails, String excludeUuid) {
+        ObjectNode detailsNode;
+        if (existingDetails == null) {
+            detailsNode = objectMapper.createObjectNode();
+        } else {
+            detailsNode = objectMapper.convertValue(existingDetails, ObjectNode.class);
+        }
+        ArrayNode excludedAssignedUuidsArray = detailsNode.putArray("excludedAssignedUuids");
+        excludedAssignedUuidsArray.add(excludeUuid);
+
+        return detailsNode;
     }
 
 }
