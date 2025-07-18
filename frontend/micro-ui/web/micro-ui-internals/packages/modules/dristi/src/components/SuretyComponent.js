@@ -17,7 +17,7 @@ const CloseBtn = () => {
 };
 
 const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors, control, watch }) => {
-  const [formInstances, setFormInstances] = useState(formData?.[config?.key] || [{}]);
+  const [formInstances, setFormInstances] = useState(formData?.[config?.key] || [{},{}]);
   const disable = config?.disable;
   const inputs = useMemo(() => config?.populators?.inputs || [], [config?.populators?.inputs]);
 
