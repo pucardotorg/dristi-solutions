@@ -791,7 +791,7 @@ public class OpenApiService {
                 .name(BAIL_BOND_CREATOR)
                 .tenantId(configuration.getEgovStateTenantId())
                 .build());
-        userInfo.setType(CITIZEN_UPPER);
+        userInfo.setType("EMPLOYEE");
         userInfo.setTenantId(configuration.getEgovStateTenantId());
         return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
     }

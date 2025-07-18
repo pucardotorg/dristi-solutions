@@ -251,10 +251,12 @@ public class BailService {
             WorkflowObject workflow = bailRequest.getBail().getWorkflow();
             assignees.add(bailRequest.getBail().getLitigantId());
             workflow.setAssignes(assignees);
-            if(!bailRequest.getBail().getLitigantId().equalsIgnoreCase(bailRequest.getRequestInfo().getUserInfo().getUuid()))
+            if(!bailRequest.getBail().getLitigantId().equalsIgnoreCase(bailRequest.getBail().getAuditDetails().getCreatedBy()))
             {
                 ObjectNode additionalDetails = updateAdditionalDetails(workflow.getAdditionalDetails(), bailRequest.getRequestInfo().getUserInfo().getUuid());
                 workflow.setAdditionalDetails(additionalDetails);
+                assignees.add(bailRequest.getRequestInfo().getUserInfo().getUuid());
+                workflow.setAssignes(assignees);
             }
         }
 
