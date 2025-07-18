@@ -77,8 +77,8 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
           pagination: {
             limit: 10,
             offSet: 0,
-            sortBy: "startDate",
-            order: "ASC",
+            sortBy: "bailCreatedTime",
+            order: "asc",
           },
         });
         const bailBondData = searchBailBondResponse?.bails[0];
@@ -166,8 +166,8 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
         pagination: {
           limit: 10,
           offSet: 0,
-          sortBy: "startDate",
-          order: "ASC",
+          sortBy: "bailCreatedTime",
+          order: "asc",
         },
       }).then(async (res) => {
         if (res?.bails?.length > 0) {
@@ -294,10 +294,10 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
     if (isCitizen) {
       return false;
     } else {
-      if(["VOID","COMPLETED"]?.includes(effectiveRowData?.status)){
+      if (["VOID", "COMPLETED"]?.includes(effectiveRowData?.status)) {
         return false;
       }
-      return true
+      return true;
     }
   }, [effectiveRowData?.status, isCitizen]);
 
@@ -385,7 +385,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
               <InfoCard
                 variant={"default"}
                 label={t("PLEASE_NOTE")}
-                additionalElements={[<p key="note">{t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}</p>]}
+                additionalElements={[<p key="note">{t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE_BAIL_BOND")}</p>]}
                 inline
                 textStyle={{}}
                 className={`custom-info-card`}
@@ -404,7 +404,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
                 />
               </div>
               <div className="donwload-submission">
-                <h2>{t("DOWNLOAD_ADIARY_TEXT")}</h2>
+                <h2>{t("DOWNLOAD_BAILBOND_TEXT")}</h2>
                 <AuthenticatedLink
                   uri={uri}
                   style={{ color: "#007E7E", cursor: "pointer", textDecoration: "underline" }}
@@ -491,7 +491,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
           actionCancelOnSubmit={() => {
             downloadPdf(tenantId, bailBondSignedPdf || sessionStorage.getItem("fileStoreId"));
           }}
-          actionSaveLabel={"BULK_SUCCESS_CLOSE"}
+          actionSaveLabel={t("BULK_SUCCESS_CLOSE")}
           actionSaveOnSubmit={() => {
             if (setCounter && typeof setCounter === "function") setCounter((prev) => parseInt(prev) + 1);
             setShowBulkSignModal(false);
