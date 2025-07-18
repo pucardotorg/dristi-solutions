@@ -449,7 +449,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         tenantId,
         courtId: courtId,
         filingNumber: filingNumber,
-        status: "COMPLETED",
+        status: ["COMPLETED"],
       },
       pagination: {
         sortBy: "startDate",
