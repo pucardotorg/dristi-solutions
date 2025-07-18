@@ -344,5 +344,5 @@ export const bailBondConfig = [
     dependentKey: {
       bailType: ["showSurety"],
     },
-  },
+  }
 ];

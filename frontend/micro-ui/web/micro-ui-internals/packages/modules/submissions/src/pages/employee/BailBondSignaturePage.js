@@ -276,6 +276,9 @@ const BailBondSignaturePage = () => {
       console.error("Error while updating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     }
+    finally{
+      setEditCaseModal(false);
+    }
   };
 
   useEffect(() => {

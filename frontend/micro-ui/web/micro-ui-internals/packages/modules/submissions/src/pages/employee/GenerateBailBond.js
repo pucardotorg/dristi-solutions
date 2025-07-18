@@ -753,6 +753,24 @@ const GenerateBailBond = () => {
     setShowErrorToast(null);
   };
 
+  const documents = useMemo(() => {
+    let docList = [];
+    if(bailBondDetails?.sureties?.length > 0) {
+      bailBondDetails.sureties.forEach((surety, index) => {
+        if (surety?.documents?.length > 0) {
+          surety?.documents?.forEach(doc => {
+            docList.push({
+              ...doc,
+              name : `Surety${index+1} ${doc?.documentName}`
+            });
+          });
+        }
+      });
+    }
+    return docList;
+  }, [bailBondDetails])
+  
+
   useEffect(() => {
     if (showErrorToast) {
       const timer = setTimeout(() => {
@@ -831,6 +849,7 @@ const GenerateBailBond = () => {
             bailBondDetails={bailBondDetails}
             courtId={caseCourtId}
             setBailBondFileStoreId={setBailBondFileStoreId}
+            documents={documents}
           />
         )}
 
