@@ -308,6 +308,15 @@ const BailBondSignaturePage = () => {
     setShowErrorToast(null);
   };
 
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
+
   if (isBailDataLoading || isBailBondLoading) {
     return <Loader />;
   }
