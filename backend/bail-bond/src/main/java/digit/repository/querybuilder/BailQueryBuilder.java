@@ -56,13 +56,15 @@ public class BailQueryBuilder {
 
 
     public String getPaginatedBailIdsQuery(BailSearchCriteria criteria, Pagination pagination, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
-        StringBuilder query = new StringBuilder("SELECT DISTINCT(bail.id), bail.created_time");
+        StringBuilder query = new StringBuilder("SELECT DISTINCT(bail.id), bail.created_time as bailCreatedTime");
         query.append(FROM_QUERY);
 
         getWhereFields(criteria, query, preparedStmtList, preparedStmtArgList);
         query = new StringBuilder(addOrderByQuery(query.toString(), pagination));
 
         if (pagination != null) {
+            addOrderByQuery(query.toString(), pagination);
+
             query.append(" LIMIT ? OFFSET ?");
                 preparedStmtList.add(pagination.getLimit());
                 preparedStmtList.add(pagination.getOffSet());
