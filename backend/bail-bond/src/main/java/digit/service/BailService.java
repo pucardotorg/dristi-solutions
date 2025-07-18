@@ -240,11 +240,6 @@ public class BailService {
         // Enrich new documents or sureties if any
         enrichmentUtil.enrichBailUponUpdate(bailRequest);
 
-        Boolean lastSigned = checkItsLastSign(bailRequest);
-        if (!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())) {
-            workflowService.updateWorkflowStatus(bailRequest);
-        }
-
         if (bailRequest.getBail().getWorkflow() != null
                 && bailRequest.getBail().getWorkflow().getAction() != null
                 && (E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction()) || INITIATE_E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction()))
@@ -253,6 +248,11 @@ public class BailService {
             List<String> assignees = new ArrayList<>();
             assignees.add(bailRequest.getBail().getLitigantId());
             bailRequest.getBail().getWorkflow().setAssignes(assignees);
+        }
+
+        Boolean lastSigned = checkItsLastSign(bailRequest);
+        if (!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())) {
+            workflowService.updateWorkflowStatus(bailRequest);
         }
 
         try {
