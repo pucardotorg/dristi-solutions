@@ -292,7 +292,7 @@ public class IndexerUtils {
         String actionCategory = details.get("actionCategory");
         Long stateSlaFromMdms = details.get("stateSla") != null ? Long.parseLong(details.get("stateSla")) : null;
         if (stateSlaFromMdms != null) {
-            stateSla = stateSlaFromMdms;
+            stateSla = stateSlaFromMdms + clock.millis();
         }
         RequestInfo requestInfo1 = mapper.readValue(requestInfo.toString(), RequestInfo.class);
         Long createdTime = clock.millis();
