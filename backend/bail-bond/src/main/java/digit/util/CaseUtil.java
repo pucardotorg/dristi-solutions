@@ -10,7 +10,9 @@ import org.egov.tracer.model.CustomException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static digit.config.ServiceConstants.ERROR_WHILE_FETCHING_FROM_CASE;
@@ -59,6 +61,24 @@ public class CaseUtil {
             }
         }
         log.error("{} not found", fieldName);
+        return null;
+    }
+
+    private List<String> extractAdvocateIdsForLitigant(JsonNode caseDetails) {
+        List<String> advocateIds = new ArrayList<>();
+        if (caseDetails != null && caseDetails.isArray() && !caseDetails.isEmpty()) {
+            JsonNode representativesNode = caseDetails.get(0).get("representatives");
+            if (representativesNode == null || representativesNode.isNull()) {
+                log.error("No representatives found");
+                return null;
+            }
+            JsonNode representingNode = representativesNode.get("representing");
+            if(representingNode == null || representingNode.isNull()) {
+                log.error("No representing found");
+                return null;
+            }
+
+        }
         return null;
     }
 

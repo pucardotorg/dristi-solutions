@@ -39,6 +39,36 @@ public class Bail {
     @JsonProperty("bailAmount")
 
     private Double bailAmount = null;
+    /**
+     * Type of bail (Personal or Surety).
+     */
+    public enum BailTypeEnum {
+        PERSONAL("Personal"),
+
+        SURETY("Surety");
+
+        private String value;
+
+        BailTypeEnum(String value) {
+            this.value = value;
+        }
+
+        @Override
+        @JsonValue
+        public String toString() {
+            return String.valueOf(value);
+        }
+
+        @JsonCreator
+        public static BailTypeEnum fromValue(String text) {
+            for (BailTypeEnum b : BailTypeEnum.values()) {
+                if (String.valueOf(b.value).equals(text)) {
+                    return b;
+                }
+            }
+            return null;
+        }
+    }
 
     @JsonProperty("bailType")
     private BailTypeEnum bailType = null;
@@ -108,61 +138,6 @@ public class Bail {
     @JsonProperty("caseNumber")
     private String caseNumber = null;
 
-
-    @JsonProperty("caseType")
-    private CaseTypeEnum caseType = null;
-
-    @JsonProperty("bailId")
-    private String bailId = null;
-
-    public Bail addSuretiesItem(Surety suretiesItem) {
-        if (this.sureties == null) {
-            this.sureties = new ArrayList<>();
-        }
-        this.sureties.add(suretiesItem);
-        return this;
-    }
-
-    public Bail addDocumentsItem(Document documentsItem) {
-        if (this.documents == null) {
-            this.documents = new ArrayList<>();
-        }
-        this.documents.add(documentsItem);
-        return this;
-    }
-
-
-    /**
-     * Type of bail (Personal or Surety).
-     */
-    public enum BailTypeEnum {
-        PERSONAL("Personal"),
-
-        SURETY("Surety");
-
-        private String value;
-
-        BailTypeEnum(String value) {
-            this.value = value;
-        }
-
-        @Override
-        @JsonValue
-        public String toString() {
-            return String.valueOf(value);
-        }
-
-        @JsonCreator
-        public static BailTypeEnum fromValue(String text) {
-            for (BailTypeEnum b : BailTypeEnum.values()) {
-                if (String.valueOf(b.value).equalsIgnoreCase(text)) {
-                    return b;
-                }
-            }
-            return null;
-        }
-    }
-
     /**
      * Type of the case.
      */
@@ -186,12 +161,34 @@ public class Bail {
         @JsonCreator
         public static CaseTypeEnum fromValue(String text) {
             for (CaseTypeEnum b : CaseTypeEnum.values()) {
-                if (String.valueOf(b.value).equalsIgnoreCase(text)) {
+                if (String.valueOf(b.value).equals(text)) {
                     return b;
                 }
             }
             return null;
         }
+    }
+
+    @JsonProperty("caseType")
+    private CaseTypeEnum caseType = null;
+
+    @JsonProperty("bailId")
+    private String bailId = null;
+
+    public Bail addSuretiesItem(Surety suretiesItem) {
+        if (this.sureties == null) {
+            this.sureties = new ArrayList<>();
+        }
+        this.sureties.add(suretiesItem);
+        return this;
+    }
+
+    public Bail addDocumentsItem(Document documentsItem) {
+        if (this.documents == null) {
+            this.documents = new ArrayList<>();
+        }
+        this.documents.add(documentsItem);
+        return this;
     }
 
 }
