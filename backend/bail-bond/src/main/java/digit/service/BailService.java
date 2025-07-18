@@ -240,7 +240,7 @@ public class BailService {
         Bail existingBail = validator.validateBailExists(bailRequest);
 
         // Enrich new documents or sureties if any
-        enrichmentUtil.enrichBailUponUpdate(bailRequest);
+        enrichmentUtil.enrichBailUponUpdate(bailRequest, existingBail);
 
         if (bailRequest.getBail().getWorkflow() != null
                 && bailRequest.getBail().getWorkflow().getAction() != null
