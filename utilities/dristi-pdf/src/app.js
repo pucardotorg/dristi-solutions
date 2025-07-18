@@ -16,23 +16,9 @@ const bailBond = require("./routes/bailBond");
 var app = express();
 app.disable("x-powered-by");
 
-app.use(
-  cors({
-    origin: config.allowedOrigins,
-    methods: ["GET", "POST"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+app.use(cors());
+app.options("*", cors()); // Preflight requests
 
-// Handle preflight requests
-app.options(
-  "*",
-  cors({
-    origin: config.allowedOrigins,
-    methods: ["GET", "POST"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
