@@ -16,6 +16,8 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
+import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -211,7 +213,7 @@ public class BailService {
                                 .peek(doc -> doc.setIsActive(false))
                                 .toList();
 
-                if(updatedSurety.getDocuments() == null)
+                if (updatedSurety.getDocuments() == null)
                     updatedSurety.setDocuments(new ArrayList<>());
                 updatedSurety.getDocuments().addAll(missingSuretyDocs);
             }
@@ -367,6 +369,8 @@ public class BailService {
         try {
             log.info("Starting bail search with parameters :: {}", bailSearchRequest);
 
+            enrichBailSearchRequest(bailSearchRequest);
+
             if (bailSearchRequest.getCriteria() != null && bailSearchRequest.getCriteria().getSuretyMobileNumber() != null) {
                 bailSearchRequest.setCriteria(encryptionDecryptionUtil.encryptObject(bailSearchRequest.getCriteria(), "BailSearch", BailSearchCriteria.class));
             }
@@ -384,6 +388,18 @@ public class BailService {
         }
     }
 
+    public void enrichBailSearchRequest(BailSearchRequest bailSearchRequest) {
+        RequestInfo requestInfo = bailSearchRequest.getRequestInfo();
+        User userInfo = requestInfo.getUserInfo();
+        String type = userInfo.getType();
+
+        switch (type.toLowerCase()) {
+            case "employee", "system" -> {
+            }
+            case "citizen" -> bailSearchRequest.getCriteria().setUserUuid(userInfo.getUuid());
+            default -> throw new IllegalArgumentException("Unknown user type: " + type);
+        }
+    }
 
     public List<BailToSign> createBailToSignRequest(BailsToSignRequest request) {
         log.info("creating bail to sign request, result= IN_PROGRESS, bailCriteria:{}", request.getCriteria().size());

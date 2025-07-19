@@ -157,6 +157,12 @@ public class BailQueryBuilder {
 
             preparedStmtArgList.add(Types.VARCHAR);
         }
+
+        if (criteria.getUserUuid() != null && !criteria.getUserUuid().isEmpty()) {
+            query.append(" AND (bail.bail_status != 'DRAFT_IN_PROGRESS' OR (bail.bail_status = 'DRAFT_IN_PROGRESS' AND bail.created_by = ?)) ");
+            preparedStmtList.add(criteria.getUserUuid());
+            preparedStmtArgList.add(Types.VARCHAR);
+        }
     }
 
     private void addBailCriteria(String criteria, StringBuilder query, String condition, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
