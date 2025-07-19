@@ -615,6 +615,30 @@ const GenerateBailBond = () => {
     return true;
   };
 
+  const validateAdvocateSuretyContactNumber = (sureties) => {
+    const advocateMobileNumber = userInfo?.mobileNumber;
+    const mobileNumbers = new Set();
+    
+    for (let i = 0; i < sureties?.length; i++) {
+      const currentMobile = sureties[i]?.mobileNumber;
+      if (!currentMobile) continue;
+      
+      if (advocateMobileNumber && currentMobile === advocateMobileNumber) {
+        setShowErrorToast({ label: "SURETY_ADVOCATE_MOBILE_NUMBER_SAME", error: true });
+        return true;
+      }
+    
+      if (mobileNumbers.has(currentMobile)) {
+        setShowErrorToast({ label: "SAME_MOBILE_NUMBER_SURETY", error: true });
+        return true;
+      }
+      
+      mobileNumbers.add(currentMobile);
+    }
+    
+    return false;
+  };
+
   const validateSurities = (sureties) => {
     let error = false;
     if (!sureties && !Object.keys(setFormState?.current?.errors).includes("sureties")) {
@@ -671,6 +695,10 @@ const GenerateBailBond = () => {
           setShowErrorToast({ label: "CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT", error: true });
           return;
         }
+      }
+
+      if(validateAdvocateSuretyContactNumber(formdata?.sureties)){
+        return;
       }
     }
 
