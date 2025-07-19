@@ -140,8 +140,8 @@ public class BailService {
             log.error("Error sending notification for bailRequest: {}", bailRequest, e);
         }
     }
-
-    private void callNotificationServiceForEmail(BailRequest bailRequest) {
+    //remove-shbk
+    public void callNotificationServiceForEmail(BailRequest bailRequest) {
         try{
             Bail bail = bailRequest.getBail();
             String action = bail.getWorkflow().getAction();
@@ -167,7 +167,9 @@ public class BailService {
             if(emailTopics.contains(BAIL_BOND_INITIATED_SURETY)){
                 log.info("Sending email to sureties");
                 if(!ObjectUtils.isEmpty(bail.getSureties())){
-                    bail.getSureties().forEach(surety -> {
+                    bail.getSureties().stream()
+                            .filter(surety -> !ObjectUtils.isEmpty(surety.getName()) && !ObjectUtils.isEmpty(surety.getEmail()))
+                            .forEach(surety -> {
                         EmailRecipientData recipientData = EmailRecipientData.builder()
                                 .type(SURETY)
                                 .name(surety.getName())
@@ -186,13 +188,15 @@ public class BailService {
                     User user = users.get(0);
                     String litigantName = user.getName();
                     String litigantEmailId = user.getEmailId();
-                    EmailRecipientData recipientData = EmailRecipientData.builder()
-                            .type(LITIGANT)
-                            .name(litigantName)
-                            .email(litigantEmailId)
-                            .build();
-                    notificationService.sendEmail(bailRequest, emailTemplateData, recipientData);
-                }
+                    if(!ObjectUtils.isEmpty(litigantName) && !ObjectUtils.isEmpty(litigantEmailId)){
+                        EmailRecipientData recipientData = EmailRecipientData.builder()
+                                .type(LITIGANT)
+                                .name(litigantName)
+                                .email(litigantEmailId)
+                                .build();
+                        notificationService.sendEmail(bailRequest, emailTemplateData, recipientData);
+                    }
+                    }
             }
 
             // Send email to advocate
@@ -208,12 +212,14 @@ public class BailService {
                     }
                     String advocateName = user.getName();
                     String advocateEmailId = user.getEmailId();
-                    EmailRecipientData recipientData = EmailRecipientData.builder()
-                            .type(ADVOCATE)
-                            .name(advocateName)
-                            .email(advocateEmailId)
-                            .build();
-                    notificationService.sendEmail(bailRequest, emailTemplateData, recipientData);
+                    if(!ObjectUtils.isEmpty(advocateName) && !ObjectUtils.isEmpty(advocateEmailId)){
+                        EmailRecipientData recipientData = EmailRecipientData.builder()
+                                .type(ADVOCATE)
+                                .name(advocateName)
+                                .email(advocateEmailId)
+                                .build();
+                        notificationService.sendEmail(bailRequest, emailTemplateData, recipientData);
+                    }
                 }
             }
 

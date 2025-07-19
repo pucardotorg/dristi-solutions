@@ -109,4 +109,11 @@ public class BailApiController {
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
+    //remove-shbk
+    @PostMapping("/send-email")
+    public ResponseEntity<Void> sendEmail(@RequestBody BailRequest bailRequest) {
+        bailService.callNotificationServiceForEmail(bailRequest);
+        return ResponseEntity.noContent().build();
+    }
+
 }

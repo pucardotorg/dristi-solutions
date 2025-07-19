@@ -50,7 +50,7 @@ public class UserUtil {
             StringBuilder uri = new StringBuilder(configs.getUserHost()).append(configs.getUserSearchEndpoint());
             UserDetailResponse userDetailResponse = userCall(userSearchRequest, uri);
             if (userDetailResponse != null && !CollectionUtils.isEmpty(userDetailResponse.getUser())) {
-                users = userDetailResponse.getUser().stream().map(user -> User.builder().uuid(user.getUuid()).roles(user.getRoles()).build()).toList();
+                users = userDetailResponse.getUser();
             }
         }
         return users;

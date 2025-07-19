@@ -86,6 +86,7 @@ public class NotificationService {
                 .body(emailBody)
                 .tenantId(tenantId)
                 .templateCode(BAIL_BOND_TEMPLATE_CODE)
+                .isHTML(true)
                 .build();
 
         return EmailRequest.builder()
