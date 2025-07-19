@@ -34,7 +34,7 @@ public class FileStoreUtil {
         }
         String url = configs.getFileStoreHost() + configs.getFileStoreGetEndPoint() + "?tenantId=" + tenantId + "&fileStoreId="+fileStoreId;
         if (moduleName != null && !moduleName.isEmpty()) {
-            url += "&module=" + moduleName;
+            url += "&module=" + moduleName + ",signed";
         }
         try {
             return restTemplate.getForEntity(url, Resource.class);
