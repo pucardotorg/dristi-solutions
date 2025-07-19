@@ -606,36 +606,36 @@ const GenerateBailBond = () => {
 
   const validateSuretyContactNumber = (individualData, formData) => {
     const indivualMobileNumber = individualData?.Individual?.[0]?.mobileNumber;
-    formData?.sureties?.forEach((surety) => {
-      if (surety?.mobileNumber && surety?.mobileNumber === indivualMobileNumber) {
-        setShowErrorToast({ label: t("SURETY_CONTACT_NUMBER_CANNOT_BE_SAME_AS_COMPLAINANT"), error: true });
-        throw new Error(t("SURETY_CONTACT_NUMBER_CANNOT_BE_SAME_AS_COMPLAINANT"));
-      }
-    });
+    const hasDuplicate = formData?.sureties?.some((surety) => surety?.mobileNumber && surety?.mobileNumber === indivualMobileNumber);
+
+    if (hasDuplicate) {
+      setShowErrorToast({ label: t("SURETY_CONTACT_NUMBER_CANNOT_BE_SAME_AS_COMPLAINANT"), error: true });
+      return false;
+    }
     return true;
   };
 
   const validateAdvocateSuretyContactNumber = (sureties) => {
     const advocateMobileNumber = userInfo?.mobileNumber;
     const mobileNumbers = new Set();
-    
+
     for (let i = 0; i < sureties?.length; i++) {
       const currentMobile = sureties[i]?.mobileNumber;
       if (!currentMobile) continue;
-      
+
       if (advocateMobileNumber && currentMobile === advocateMobileNumber) {
-        setShowErrorToast({ label: "SURETY_ADVOCATE_MOBILE_NUMBER_SAME", error: true });
+        setShowErrorToast({ label: t("SURETY_ADVOCATE_MOBILE_NUMBER_SAME"), error: true });
         return true;
       }
-    
+
       if (mobileNumbers.has(currentMobile)) {
-        setShowErrorToast({ label: "SAME_MOBILE_NUMBER_SURETY", error: true });
+        setShowErrorToast({ label: t("SAME_MOBILE_NUMBER_SURETY"), error: true });
         return true;
       }
-      
+
       mobileNumbers.add(currentMobile);
     }
-    
+
     return false;
   };
 
@@ -692,12 +692,12 @@ const GenerateBailBond = () => {
         const surety = formdata?.sureties?.[i];
         const isError = bailBondAddressValidation({ formData: surety?.address, inputs });
         if (isError) {
-          setShowErrorToast({ label: "CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT", error: true });
+          setShowErrorToast({ label: t("CS_PLEASE_CHECK_ADDRESS_DETAILS_BEFORE_SUBMIT"), error: true });
           return;
         }
       }
 
-      if(validateAdvocateSuretyContactNumber(formdata?.sureties)){
+      if (validateAdvocateSuretyContactNumber(formdata?.sureties)) {
         return;
       }
     }
@@ -892,9 +892,7 @@ const GenerateBailBond = () => {
             t={t}
             handleBack={() => {
               setShowBailBondReview(false);
-              history.replace(
-                `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondDetails?.bailId}`
-              );
+              history.replace(`/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${filingNumber}&bailBondId=${bailBondId}`);
             }}
             setShowBailBondReview={setShowBailBondReview}
             setShowsignatureModal={setShowsignatureModal}

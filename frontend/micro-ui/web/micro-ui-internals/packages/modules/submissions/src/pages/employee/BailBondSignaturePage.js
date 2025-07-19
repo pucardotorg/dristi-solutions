@@ -251,7 +251,7 @@ const BailBondSignaturePage = () => {
   const handleCloseSuccessModal = () => {
     sessionStorage.removeItem("isAuthorised");
     sessionStorage.removeItem("fileStoreId");
-    history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`);
+    history.replace(`/${window?.contextPath}/citizen/dristi/home/login`);
   };
 
   const handleEditBailBondSubmit = async () => {
@@ -275,8 +275,7 @@ const BailBondSignaturePage = () => {
     } catch (error) {
       console.error("Error while updating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
-    }
-    finally{
+    } finally {
       setEditCaseModal(false);
     }
   };
