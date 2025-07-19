@@ -102,7 +102,7 @@ function BulkBailBondSignView({ showToast = () => {} }) {
             defaultValues: {
               ...bulkBailBondSignConfig.sections.search.uiConfig.defaultValues,
               tenantId: tenantId,
-              caseTitle: sessionStorage.getItem("bulkBailBondSignCaseTitle") || "",
+              caseTitle: sessionStorage.getItem("bulkBailBondSignCaseTitle") ? sessionStorage.getItem("bulkBailBondSignCaseTitle") : "",
             },
           },
         },
