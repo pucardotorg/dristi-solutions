@@ -317,44 +317,29 @@ const GenerateBailBond = () => {
       clearErrors("bailAmount");
     }
     if (formData?.bailType?.code === "SURETY") {
-      if (!formData?.sureties && !Object.keys(formState?.errors).includes("sureties")) {
-        setValue("sureties", [{}]);
-        setError("sureties", { message: t("CORE_REQUIRED_FIELD_ERROR") });
-      } else if (formData?.sureties?.length > 0 && !Object.keys(formState?.errors).includes("sureties")) {
+      if (formData?.sureties?.length > 0 && !Object.keys(formState?.errors).includes("sureties")) {
         formData?.sureties?.forEach((docs, index) => {
-          if (!docs?.name && !Object.keys(formState?.errors).includes(`name_${index}`)) {
-            setError(`name_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
-          } else if (docs?.name && Object.keys(formState?.errors).includes(`name_${index}`)) {
+          if (docs?.name && Object.keys(formState?.errors).includes(`name_${index}`)) {
             clearErrors(`name_${index}`);
           }
 
-          if (!docs?.fatherName && !Object.keys(formState?.errors).includes(`fatherName_${index}`)) {
-            setError(`fatherName_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
-          } else if (docs?.fatherName && Object.keys(formState?.errors).includes(`fatherName_${index}`)) {
+          if (docs?.fatherName && Object.keys(formState?.errors).includes(`fatherName_${index}`)) {
             clearErrors(`fatherName_${index}`);
           }
 
-          if (!docs?.mobileNumber && !Object.keys(formState?.errors).includes(`mobileNumber_${index}`)) {
-            setError(`mobileNumber_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
-          } else if (docs?.mobileNumber && Object.keys(formState?.errors).includes(`mobileNumber_${index}`)) {
+          if (docs?.mobileNumber && Object.keys(formState?.errors).includes(`mobileNumber_${index}`)) {
             clearErrors(`mobileNumber_${index}`);
           }
 
-          if (!docs?.identityProof && !Object.keys(formState?.errors).includes(`identityProof_${index}`)) {
-            setError(`identityProof_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
-          } else if (docs?.identityProof && Object.keys(formState?.errors).includes(`identityProof_${index}`)) {
+          if (docs?.identityProof && Object.keys(formState?.errors).includes(`identityProof_${index}`)) {
             clearErrors(`identityProof_${index}`);
           }
 
-          if (!docs?.proofOfSolvency && !Object.keys(formState?.errors).includes(`proofOfSolvency_${index}`)) {
-            setError(`proofOfSolvency_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
-          } else if (docs?.proofOfSolvency && Object.keys(formState?.errors).includes(`proofOfSolvency_${index}`)) {
+          if (docs?.proofOfSolvency && Object.keys(formState?.errors).includes(`proofOfSolvency_${index}`)) {
             clearErrors(`proofOfSolvency_${index}`);
           }
 
-          if (!docs?.otherDocuments && !Object.keys(formState?.errors).includes(`otherDocuments_${index}`)) {
-            setError(`otherDocuments_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
-          } else if (docs?.otherDocuments && Object.keys(formState?.errors).includes(`otherDocuments_${index}`)) {
+          if (docs?.otherDocuments && Object.keys(formState?.errors).includes(`otherDocuments_${index}`)) {
             clearErrors(`otherDocuments_${index}`);
           }
         });
@@ -420,10 +405,8 @@ const GenerateBailBond = () => {
 
           if (surety?.identityProof?.document?.length > 0) {
             // Check if any document is a File type (needs processing)
-            const hasFileTypeDoc = surety.identityProof.document.some(doc => 
-              doc instanceof File || (doc.file && doc.file instanceof File)
-            );
-            
+            const hasFileTypeDoc = surety.identityProof.document.some((doc) => doc instanceof File || (doc.file && doc.file instanceof File));
+
             if (hasFileTypeDoc) {
               // Only process if we have File type documents
               const combinedIdentityProof = await combineMultipleFiles(surety.identityProof.document);
@@ -443,10 +426,8 @@ const GenerateBailBond = () => {
 
           if (surety?.proofOfSolvency?.document?.length > 0) {
             // Check if any document is a File type (needs processing)
-            const hasFileTypeDoc = surety.proofOfSolvency.document.some(doc => 
-              doc instanceof File || (doc.file && doc.file instanceof File)
-            );
-            
+            const hasFileTypeDoc = surety.proofOfSolvency.document.some((doc) => doc instanceof File || (doc.file && doc.file instanceof File));
+
             if (hasFileTypeDoc) {
               // Only process if we have File type documents
               const combinedProof = await combineMultipleFiles(surety.proofOfSolvency.document);
@@ -466,10 +447,8 @@ const GenerateBailBond = () => {
 
           if (surety?.otherDocuments?.document?.length > 0) {
             // Check if any document is a File type (needs processing)
-            const hasFileTypeDoc = surety.otherDocuments.document.some(doc => 
-              doc instanceof File || (doc.file && doc.file instanceof File)
-            );
-            
+            const hasFileTypeDoc = surety.otherDocuments.document.some((doc) => doc instanceof File || (doc.file && doc.file instanceof File));
+
             if (hasFileTypeDoc) {
               // Only process if we have File type documents
               const combinedOtherDocs = await combineMultipleFiles(surety.otherDocuments.document);
@@ -506,7 +485,7 @@ const GenerateBailBond = () => {
           mobileNumber: surety?.mobileNumber,
           tenantId,
           address: surety?.address,
-          email:surety?.email,
+          email: surety?.email,
           documents: [
             ...(surety?.identityProof?.document || []),
             ...(surety?.proofOfSolvency?.document || []),
@@ -522,7 +501,7 @@ const GenerateBailBond = () => {
           mobileNumber: surety?.mobileNumber,
           tenantId,
           address: surety?.address,
-          email:surety?.email,
+          email: surety?.email,
           documents: [
             ...(surety?.identityProof?.document || []),
             ...(surety?.proofOfSolvency?.document || []),
@@ -636,8 +615,54 @@ const GenerateBailBond = () => {
     return true;
   };
 
+  const validateSurities = (sureties) => {
+    let error = false;
+    if (!sureties && !Object.keys(setFormState?.current?.errors).includes("sureties")) {
+      error = true;
+      setFormDataValue.current("sureties", [{}, {}]);
+      setFormErrors.current("sureties", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+    } else if (sureties?.length > 0 && !Object.keys(setFormState?.current?.errors).includes("sureties")) {
+      sureties?.forEach((docs, index) => {
+        if (!docs?.name && !Object.keys(setFormState?.current?.errors).includes(`name_${index}`)) {
+          error = true;
+          setFormErrors.current(`name_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
+        }
+
+        if (!docs?.fatherName && !Object.keys(setFormState?.current?.errors).includes(`fatherName_${index}`)) {
+          error = true;
+          setFormErrors.current(`fatherName_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
+        }
+
+        if (!docs?.mobileNumber && !Object.keys(setFormState?.current?.errors).includes(`mobileNumber_${index}`)) {
+          error = true;
+          setFormErrors.current(`mobileNumber_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
+        }
+
+        if (!docs?.identityProof && !Object.keys(setFormState?.current?.errors).includes(`identityProof_${index}`)) {
+          error = true;
+          setFormErrors.current(`identityProof_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
+        }
+
+        if (!docs?.proofOfSolvency && !Object.keys(setFormState?.current?.errors).includes(`proofOfSolvency_${index}`)) {
+          error = true;
+          setFormErrors.current(`proofOfSolvency_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
+        }
+
+        if (!docs?.otherDocuments && !Object.keys(setFormState?.current?.errors).includes(`otherDocuments_${index}`)) {
+          error = true;
+          setFormErrors.current(`otherDocuments_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
+        }
+      });
+    }
+    return error;
+  };
+
   const handleSubmit = async () => {
-    if (formdata?.bailType?.code) {
+    if (formdata?.bailType?.code === "SURETY") {
+      if (validateSurities(formdata?.sureties)) {
+        return;
+      }
+
       const inputs = bailBondConfig?.[1]?.body?.[0]?.populators?.inputs?.find((input) => input?.key === "address")?.populators?.inputs;
       for (let i = 0; i < formdata?.sureties?.length; i++) {
         const surety = formdata?.sureties?.[i];
@@ -755,21 +780,20 @@ const GenerateBailBond = () => {
 
   const documents = useMemo(() => {
     let docList = [];
-    if(bailBondDetails?.sureties?.length > 0) {
+    if (bailBondDetails?.sureties?.length > 0) {
       bailBondDetails.sureties.forEach((surety, index) => {
         if (surety?.documents?.length > 0) {
-          surety?.documents?.forEach(doc => {
+          surety?.documents?.forEach((doc) => {
             docList.push({
               ...doc,
-              name : `Surety${index+1} ${doc?.documentName}`
+              name: `Surety${index + 1} ${doc?.documentName}`,
             });
           });
         }
       });
     }
     return docList;
-  }, [bailBondDetails])
-  
+  }, [bailBondDetails]);
 
   useEffect(() => {
     if (showErrorToast) {
