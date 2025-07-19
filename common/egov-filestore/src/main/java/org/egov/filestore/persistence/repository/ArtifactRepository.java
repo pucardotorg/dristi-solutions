@@ -109,7 +109,11 @@ public class ArtifactRepository {
 		if (artifact == null)
 			throw new CustomException("NOT_FOUND", "Invalid filestoreid or tenantid");
 
-		if (module != null && !module.isEmpty() && !Arrays.asList(module.split(",")).contains(artifact.getModule())) {
+		if (module != null && !module.isEmpty() &&
+				Arrays.stream(module.split(","))
+						.map(String::trim)
+						.filter(m -> !m.isEmpty())
+				        .noneMatch(m -> m.equalsIgnoreCase(artifact.getModule()))) {
 			throw new CustomException("module_mismatch", "Invalid module");
 		}
 
