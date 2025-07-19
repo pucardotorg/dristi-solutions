@@ -27,6 +27,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static digit.config.ServiceConstants.*;
@@ -85,7 +86,7 @@ public class BailService {
         enrichmentUtil.enrichBailOnCreation(bailRequest);
 
         // Workflow update
-        if(!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())){
+        if (!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())) {
             workflowService.updateWorkflowStatus(bailRequest);
         }
 
@@ -175,64 +176,85 @@ public class BailService {
         return null;
     }
 
-    private Set<String> getFilestoreToDelete(BailRequest bailRequest, Bail existingBail) {
-        Set<String> fileStoreToDeleteIds = new HashSet<>();
+    public void mergeDeletedDocumentsIntoPayload(BailRequest bailRequest, Bail existingBail) {
+        Bail updatedBail = bailRequest.getBail();
 
-        Set<String> newFileStoreIds = new HashSet<>();
-        Set<String> existingFileStoreIds = new HashSet<>();
+        // Bail documents
+        if (updatedBail.getDocuments() != null) {
+            Set<String> updatedBailDocIds = fileStoreIds(updatedBail.getDocuments());
+            List<Document> missingBailDocs =
+                    Optional.ofNullable(existingBail.getDocuments())
+                            .orElse(Collections.emptyList())
+                            .stream()
+                            .filter(doc -> !updatedBailDocIds.contains(doc.getFileStore()))
+                            .peek(doc -> doc.setIsActive(false))
+                            .toList();
 
-        // Collect all existing filestore IDs from DB
-        if (existingBail.getDocuments() != null) {
-            for (Document document : existingBail.getDocuments()) {
-                existingFileStoreIds.add(document.getFileStore());
+            updatedBail.getDocuments().addAll(missingBailDocs);
+        }
+        // Surety documents
+        if (updatedBail.getSureties() != null && existingBail.getSureties() != null) {
+            Map<String, Surety> updatedSuretyMap = updatedBail.getSureties().stream()
+                    .collect(Collectors.toMap(Surety::getId, s -> s));
+
+            for (Surety existingSurety : existingBail.getSureties()) {
+                Surety updatedSurety = updatedSuretyMap.get(existingSurety.getId());
+                if (updatedSurety == null) continue;
+
+                Set<String> updatedSuretyDocIds = fileStoreIds(updatedSurety.getDocuments());
+
+                List<Document> missingSuretyDocs =
+                        Optional.ofNullable(existingSurety.getDocuments())
+                                .orElse(Collections.emptyList())
+                                .stream()
+                                .filter(doc -> !updatedSuretyDocIds.contains(doc.getFileStore()))
+                                .peek(doc -> doc.setIsActive(false))
+                                .toList();
+
+                if(updatedSurety.getDocuments() == null)
+                    updatedSurety.setDocuments(new ArrayList<>());
+                updatedSurety.getDocuments().addAll(missingSuretyDocs);
             }
         }
-        if (existingBail.getSureties() != null) {
-            for (Surety surety : existingBail.getSureties()) {
-                if (surety.getDocuments() != null) {
-                    for (Document document : surety.getDocuments()) {
-                        existingFileStoreIds.add(document.getFileStore());
-                    }
-                }
-            }
-        }
-
-        // Collect all new filestore IDs from request
-        if (bailRequest.getBail().getDocuments() != null) {
-            for (Document document : bailRequest.getBail().getDocuments()) {
-                newFileStoreIds.add(document.getFileStore());
-
-                // mark for deletion if isActive=false
-                if (!document.getIsActive()) {
-                    fileStoreToDeleteIds.add(document.getFileStore());
-                }
-            }
-        }
-        if (bailRequest.getBail().getSureties() != null) {
-            for (Surety surety : bailRequest.getBail().getSureties()) {
-                if (surety.getDocuments() != null) {
-                    for (Document document : surety.getDocuments()) {
-                        newFileStoreIds.add(document.getFileStore());
-
-                        // mark for deletion if isActive=false
-                        if (!document.getIsActive()) {
-                            fileStoreToDeleteIds.add(document.getFileStore());
-                        }
-                    }
-                }
-            }
-        }
-
-        // Add the ones that existed before but are no longer present in the new request
-        for (String oldFilestore : existingFileStoreIds) {
-            if (!newFileStoreIds.contains(oldFilestore)) {
-                fileStoreToDeleteIds.add(oldFilestore);
-            }
-        }
-
-        return fileStoreToDeleteIds;
     }
 
+    private Set<String> fileStoreIds(List<Document> documents) {
+        if (documents == null) return Collections.emptySet();
+        return documents.stream()
+                .map(Document::getFileStore)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+    }
+
+    public Set<String> extractInactiveFileStoreIds(BailRequest bailRequest) {
+        Set<String> inactiveFileStoreIds = new HashSet<>();
+
+        Bail bail = bailRequest.getBail();
+
+        // Bail-level
+        if (bail.getDocuments() != null) {
+            bail.getDocuments().stream()
+                    .filter(doc -> Boolean.FALSE.equals(doc.getIsActive()))
+                    .map(Document::getFileStore)
+                    .filter(Objects::nonNull)
+                    .forEach(inactiveFileStoreIds::add);
+        }
+
+        // Surety-level
+        if (bail.getSureties() != null) {
+            for (Surety surety : bail.getSureties()) {
+                if (surety.getDocuments() != null) {
+                    surety.getDocuments().stream()
+                            .filter(doc -> Boolean.FALSE.equals(doc.getIsActive()))
+                            .map(Document::getFileStore)
+                            .filter(Objects::nonNull)
+                            .forEach(inactiveFileStoreIds::add);
+                }
+            }
+        }
+
+        return inactiveFileStoreIds;
+    }
 
     public Bail updateBail(BailRequest bailRequest) {
 
@@ -251,8 +273,7 @@ public class BailService {
             WorkflowObject workflow = bailRequest.getBail().getWorkflow();
             assignees.add(bailRequest.getBail().getLitigantId());
             workflow.setAssignes(assignees);
-            if(!bailRequest.getBail().getLitigantId().equalsIgnoreCase(bailRequest.getBail().getAuditDetails().getCreatedBy()))
-            {
+            if (!bailRequest.getBail().getLitigantId().equalsIgnoreCase(bailRequest.getBail().getAuditDetails().getCreatedBy())) {
                 ObjectNode additionalDetails = updateAdditionalDetails(workflow.getAdditionalDetails(), bailRequest.getRequestInfo().getUserInfo().getUuid());
                 workflow.setAdditionalDetails(additionalDetails);
                 assignees.add(bailRequest.getRequestInfo().getUserInfo().getUuid());
@@ -279,12 +300,13 @@ public class BailService {
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.getMessage());
         }
 
-        Set<String> fileStoreToDeleteIds = getFilestoreToDelete(bailRequest,existingBail);
+        mergeDeletedDocumentsIntoPayload(bailRequest, existingBail);
 
-        if(!fileStoreToDeleteIds.isEmpty()){
-            setIsActiveFalse(bailRequest,fileStoreToDeleteIds);
-            fileStoreUtil.deleteFilesByFileStore(fileStoreToDeleteIds, bailRequest.getBail().getTenantId());
-            log.info("Deleted files from file store: {}", fileStoreToDeleteIds);
+        Set<String> fileStoreIdsToDelete = extractInactiveFileStoreIds(bailRequest);
+
+        if (!fileStoreIdsToDelete.isEmpty()) {
+            fileStoreUtil.deleteFilesByFileStore(fileStoreIdsToDelete, bailRequest.getBail().getTenantId());
+            log.info("Deleted files for ids: {}", fileStoreIdsToDelete);
         }
 
         Bail originalBail = bailRequest.getBail();
@@ -317,27 +339,6 @@ public class BailService {
         urlShortenerUtil.expireTheUrl(bailRequest);
     }
 
-    private void setIsActiveFalse(BailRequest bailRequest, Set<String> fileStoreToDeleteIds) {
-        if (bailRequest.getBail().getDocuments() != null) {
-            for (Document document : bailRequest.getBail().getDocuments()) {
-                if (fileStoreToDeleteIds.contains(document.getFileStore())) {
-                    document.setIsActive(false);
-                }
-            }
-        }
-        if (bailRequest.getBail().getSureties() != null) {
-            for (Surety surety : bailRequest.getBail().getSureties()) {
-                if (surety.getDocuments() != null) {
-                    for (Document document : surety.getDocuments()) {
-                        if (fileStoreToDeleteIds.contains(document.getFileStore())) {
-                            document.setIsActive(false);
-                        }
-                    }
-                }
-            }
-    }
-    }
-
     private Boolean checkItsLastSign(BailRequest bailRequest) {
 
         Bail bail = bailRequest.getBail();
@@ -366,7 +367,7 @@ public class BailService {
         try {
             log.info("Starting bail search with parameters :: {}", bailSearchRequest);
 
-            if(bailSearchRequest.getCriteria()!=null && bailSearchRequest.getCriteria().getSuretyMobileNumber() != null) {
+            if (bailSearchRequest.getCriteria() != null && bailSearchRequest.getCriteria().getSuretyMobileNumber() != null) {
                 bailSearchRequest.setCriteria(encryptionDecryptionUtil.encryptObject(bailSearchRequest.getCriteria(), "BailSearch", BailSearchCriteria.class));
             }
 
