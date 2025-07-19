@@ -141,6 +141,7 @@ public class BailQueryBuilder {
         addBailCriteria(criteria.getCnrNumber(), query, "bail.cnr_number = ?", preparedStmtList, preparedStmtArgList);
         addListBailCriteria(criteria.getStatus(), query, preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getCaseType() != null ? criteria.getCaseType().name() : null, query, "bail.case_type = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getBailType() != null ? criteria.getBailType().name() : null, query, "bail.bail_type = ?", preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getCaseNumber(), query, "bail.case_number = ?", preparedStmtList, preparedStmtArgList);
 
         // Special fuzzy search handling
