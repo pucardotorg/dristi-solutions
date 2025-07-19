@@ -21,7 +21,7 @@ function BailBondEsignLockModal({ t, handleSaveOnSubmit, userType, filingNumber,
     <Modal
       actionSaveLabel={t("CS_CLOSE")}
       actionSaveOnSubmit={handleSaveOnSubmit}
-      className={"orders-add-bulk-list-modal"}
+      className={"submission-success-modal bailbondEsign"}
       cancelButtonBody={<FileDownloadIcon></FileDownloadIcon>}
       popupStyles={{ width: "700px", borderRadius: "4px" }}
       style={{ width: "100%" }}
@@ -29,11 +29,11 @@ function BailBondEsignLockModal({ t, handleSaveOnSubmit, userType, filingNumber,
       <div style={{ padding: "8px 0" }}>
         <div>
           <Banner
+            whichSvg={"tick"}
             successful={true}
             message={t(orderModalInfo?.header)}
             headerStyles={{ fontSize: "32px" }}
             style={{ minWidth: "100%" }}
-            svg={<BlackTickIcon color={"white"} />}
           ></Banner>
 
           {orderModalInfo?.subHeader && (

@@ -848,26 +848,6 @@ const GenerateBailBond = () => {
 
   return (
     <React.Fragment>
-      <style>
-        {`
-          .bail-action-bar {
-            display: flex;
-            flex-direction: row-reverse;
-            gap: 16px;
-          }
-
-          .submit-bar {
-            width: fit-content;
-            padding-inline: 20px;
-            box-shadow: none;
-          }
-          
-          .card .label-field-pair .card-label{
-          font-weight : unset !important;
-          margin-bottom : 8px !important
-          }
-        `}
-      </style>
       <div className="citizen create-submission" style={{ width: "90%", ...(!isCitizen && { padding: "0 8px 24px 16px" }) }}>
         <Header styles={{ margin: "25px 0px 0px 25px" }}> {t("BAIL_BOND_DETAILS")}</Header>
         <div style={{ minHeight: "550px", overflowY: "auto" }}>
