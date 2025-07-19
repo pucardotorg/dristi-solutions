@@ -42,13 +42,13 @@ const convertToFormData = (t, obj) => {
             address: surety?.address,
             email: surety?.email,
             identityProof: {
-              document: surety?.documents?.filter((doc) => doc?.documentType === "IDENTITY_PROOF") || [],
+              document: surety?.documents?.filter((doc) => doc?.documentType === "IDENTITY_PROOF" && doc?.isActive === true) || [],
             },
             proofOfSolvency: {
-              document: surety?.documents?.filter((doc) => doc?.documentType === "PROOF_OF_SOLVENCY") || [],
+              document: surety?.documents?.filter((doc) => doc?.documentType === "PROOF_OF_SOLVENCY" && doc?.isActive === true) || [],
             },
             otherDocuments: {
-              document: surety?.documents?.filter((doc) => doc?.documentType === "OTHER_DOCUMENTS") || [],
+              document: surety?.documents?.filter((doc) => doc?.documentType === "OTHER_DOCUMENTS" && doc?.isActive === true) || [],
             },
           }))
         : [{}],
