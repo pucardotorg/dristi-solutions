@@ -51,6 +51,8 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
+  const isCourtRoomManager = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
+
   const today = new Date();
   const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
@@ -67,10 +69,10 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
   }, [userInfo]);
 
   useEffect(() => {
-    if (!isJudge && !isBenchClerk && !isTypist) {
+    if (!isJudge && !isBenchClerk && !isTypist && !isCourtRoomManager) {
       history.push(`/${window?.contextPath}/${userType}/home/home-pending-task`);
     }
-  }, [isJudge, isBenchClerk, userType, history, isTypist]);
+  }, [isJudge, isBenchClerk, userType, history, isTypist, isCourtRoomManager]);
 
   const [selectedBailBondFilestoreid, setSelectedBailBondFilestoreid] = useState("");
 
