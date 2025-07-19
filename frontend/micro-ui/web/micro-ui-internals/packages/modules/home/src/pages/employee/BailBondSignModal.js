@@ -64,7 +64,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   const [loader, setLoader] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [bailDocuments, setBailDocuments] = useState([]);
-  const [bailBondLoader, setBailBondLoader] = useState(true);
+  const [bailBondLoader, setBailBondLoader] = useState(false);
   const name = "Signature";
   const pageModule = "en";
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();

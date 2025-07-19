@@ -159,8 +159,6 @@ const formatDate = (date) => {
 };
 
 const AdmittedCaseV2 = () => {
-  console.log("AdmittedCaseV2");
-
   const { t } = useTranslation();
   const location = useLocation();
   const { pathname, search, hash } = location;
