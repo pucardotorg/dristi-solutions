@@ -34,7 +34,7 @@ const formatDate = (date) => {
   return convertedDate.toLocaleDateString();
 };
 
-const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) => {
+const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, showToast = () => {} }) => {
   const queryStrings = Digit.Hooks.useQueryParams();
 
   const { t } = useTranslation();
@@ -42,7 +42,6 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const [loader, setLoader] = useState(false);
-  const [toastMsg, setToastMsg] = useState(null);
   const [showBailConfirmationModal, setShowBailConfirmationModal] = useState(false);
   const [isDocviewOpened, setIsDocViewOpened] = useState(false);
   const [bailBondsLoading, setBailBondsLoading] = useState(false);
@@ -74,12 +73,6 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
   }, [isJudge, isBenchClerk, userType, history, isTypist]);
 
   const [selectedBailBondFilestoreid, setSelectedBailBondFilestoreid] = useState("");
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
 
   const [bailBonds, setBailBonds] = useState([]);
   const courtId = localStorage.getItem("courtId");
@@ -228,7 +221,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
           referenceId: `MANUAL_BAIL_BOND_${filingNumber}`,
           status: "completed",
           assignedTo: [],
-          assignedRole: ["JUDGE_ROLE", "BENCH_CLERK"],
+          assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "COURT_ROOM_MANAGER"],
           filingNumber,
           isCompleted: true,
           caseId: caseId,
@@ -247,6 +240,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
             setShowBailConfirmationModal(false);
             setShowBailModal(false);
             if (setUpdateCounter) setUpdateCounter((prev) => prev + 1);
+            showToast("sucess", t("BULK_CLOSE_PENDING_TASK"), 5000);
           }, 1000);
         }
       });
@@ -289,13 +283,13 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
               }}
             />
           }
-          actionSaveLabel={t("Close Task")}
+          actionSaveLabel={t("CLOSE_PENDING_TASK")}
           actionSaveOnSubmit={() => {
             setShowBailConfirmationModal(true);
           }}
           style={{ width: "50%" }}
           actionCancelStyle={{ width: "50%" }}
-          actionCancelLabel={t("Issue Warrant")}
+          actionCancelLabel={t("ISSUE_WARRANT_BAIL")}
           actionCancelOnSubmit={() => {
             createOrder();
           }}
@@ -303,7 +297,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
           isCustomButtonDisabled={loader || bailBondsLoading}
           isBackButtonDisabled={loader || bailBondsLoading}
           formId="modal-action"
-          headerBarMain={<Heading label={t("View Bail Bonds")} />}
+          headerBarMain={<Heading label={t("VIEW_BAIL_BONDS")} />}
           className="upload-signature-modal"
           submitTextClassName="upload-signature-button"
           popupModuleActionBarStyles={{ padding: "0 8px 8px 8px" }}
@@ -457,11 +451,10 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
           isBackButtonDisabled={loader}
           actionCancelLabel={t("CS_COMMON_CANCEL")}
           actionCancelOnSubmit={() => {
-            showToast("error", t("ISSUE_IN_FETCHING"), 5000);
             setShowBailConfirmationModal(false);
           }}
           formId="modal-action"
-          headerBarMain={<Heading label={t("Confirm Closure")} />}
+          headerBarMain={<Heading label={t("CONFRIM_CLOSE")} />}
           className="upload-signature-modal"
           submitTextClassName="upload-signature-button"
           popupModuleActionBarStyles={{ padding: "0 8px 8px 8px" }}

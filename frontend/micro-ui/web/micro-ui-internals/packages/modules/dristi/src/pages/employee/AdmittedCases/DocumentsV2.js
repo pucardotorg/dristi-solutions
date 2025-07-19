@@ -12,6 +12,7 @@ const DocumentsV2 = ({
   caseDetails,
   caseCourtId,
   tenantId,
+  caseId,
   filingNumber,
   cnrNumber,
   setDocumentSubmission,
@@ -36,7 +37,7 @@ const DocumentsV2 = ({
   const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
   const isBenchClerk = roles?.some((role) => role.code === "BENCH_CLERK");
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
-  const [activeTab, setActiveTab] = useState("Documents");
+  const [activeTab, setActiveTab] = useState(sessionStorage.getItem("documents-activeTab") || "Documents");
   const configList = useMemo(() => {
     const docSetFunc = (docObj) => {
       if (docObj?.[0]?.isBail) {
@@ -61,13 +62,15 @@ const DocumentsV2 = ({
 
           if (["PENDING_REVIEW", "COMPLETED", "VOID"]?.includes(bailStatus)) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/home/sign-bail-bond?filingNumber=${filingNumber}&bailId=${bailBondId}`
+              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/home/sign-bail-bond?filingNumber=${filingNumber}&bailId=${bailBondId}`,
+              { state: { params: { caseId, filingNumber } } }
             );
           }
         } else {
           if (["PENDING_REVIEW", "COMPLETED", "VOID"]?.includes(bailStatus)) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/home/sign-bail-bond?filingNumber=${filingNumber}&bailId=${bailBondId}`
+              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/home/sign-bail-bond?filingNumber=${filingNumber}&bailId=${bailBondId}`,
+              { state: { params: { caseId, filingNumber } } }
             );
           }
         }
@@ -284,7 +287,10 @@ const DocumentsV2 = ({
           return (
             <button
               key={num}
-              onClick={() => setActiveTab(i?.label)}
+              onClick={() => {
+                setActiveTab(i?.label);
+                sessionStorage.setItem("documents-activeTab", i?.label);
+              }}
               style={{
                 fontSize: "18px",
                 fontWeight: isActive ? "bold" : "normal",
