@@ -476,7 +476,7 @@ const GenerateBailBond = () => {
     const existingSureties = bailBondDetails?.sureties || [];
 
     if (existingSureties?.length > 0) {
-      return formData?.sureties?.map((surety) => {
+      const activeSureties = formData?.sureties?.map((surety) => {
         const matchingSurety = existingSureties?.find((existing) => existing?.id === surety?.id);
         return {
           ...matchingSurety,
@@ -493,6 +493,16 @@ const GenerateBailBond = () => {
           ],
         };
       });
+
+      const formDataSuretyIds = formData?.sureties?.map((surety) => surety?.id)?.filter(Boolean);
+      const inactiveSureties = existingSureties
+        ?.filter((existingSurety) => existingSurety?.id && !formDataSuretyIds?.includes(existingSurety.id))
+        ?.map((surety) => ({
+          ...surety,
+          isActive: false,
+        }));
+
+      return [...activeSureties, ...inactiveSureties];
     } else {
       return formData?.sureties?.map((surety) => {
         return {
