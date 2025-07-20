@@ -14,6 +14,7 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -159,7 +160,7 @@ public class BailService {
             EmailTemplateData emailTemplateData = EmailTemplateData.builder()
                     .caseNumber(bail.getCaseNumber())
                     .caseName(bail.getCaseTitle())
-                    .shortenedUrl(bail.getShortenedURL())
+                    .shortenedURL(bail.getShortenedURL())
                     .tenantId(bail.getTenantId())
                     .build();
 

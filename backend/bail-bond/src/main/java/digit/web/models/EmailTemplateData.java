@@ -14,6 +14,6 @@ import org.springframework.validation.annotation.Validated;
 public class EmailTemplateData {
     private String caseNumber;
     private String caseName;
-    private String shortenedUrl;
+    private String shortenedURL;
     private String tenantId;
 }

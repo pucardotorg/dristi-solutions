@@ -63,8 +63,8 @@ public class NotificationService {
 
     public Optional<EmailContent> getEmailContent(RequestInfo requestInfo, EmailTemplateData emailTemplateData, EmailRecipientData recipientData) {
         String tenantId = emailTemplateData.getTenantId();
-        String subjectTemplate = getMessage(requestInfo, tenantId, BAIL_BOND_SIGNATURE_SUBJECT);
-        String bodyTemplate = getMessage(requestInfo, tenantId, BAIL_BOND_SIGNATURE_BODY);
+        String subjectTemplate = BAIL_BOND_SIGNATURE_SUBJECT;
+        String bodyTemplate = BAIL_BOND_SIGNATURE_BODY;
 
         if (StringUtils.isEmpty(subjectTemplate) || StringUtils.isEmpty(bodyTemplate)) {
             return Optional.empty();
@@ -76,14 +76,10 @@ public class NotificationService {
     }
 
     public EmailRequest buildEmailRequest(EmailContent content, RequestInfo requestInfo, String tenantId, Set<String> recipients) {
-        Map<String, Object> bodyMap = new HashMap<>();
-        bodyMap.put("emailBody", content.getBody());
-        String emailBody = new Gson().toJson(bodyMap);
-
         Email email = Email.builder()
                 .emailTo(recipients)
                 .subject(content.getSubject())
-                .body(emailBody)
+                .body(content.getBody())
                 .tenantId(tenantId)
                 .templateCode(BAIL_BOND_TEMPLATE_CODE)
                 .isHTML(true)
@@ -140,7 +136,7 @@ public class NotificationService {
                 .replace("{{caseNumber}}", emailTemplateData.getCaseNumber())
                 .replace("{{caseName}}", emailTemplateData.getCaseName())
                 .replace("{{as}}", getAsValueForPerson(recipientData.getType()))
-                .replace("{{shortenedURL}}", emailTemplateData.getShortenedUrl());
+                .replace("{{shortenedURL}}", emailTemplateData.getShortenedURL());
     }
 
     public String getMessage(RequestInfo requestInfo, String rootTenantId, String msgCode) {
@@ -245,3 +241,10 @@ public class NotificationService {
 
 
 }
+/*
+To {{name}},\n\nPlease find the Bail Bond for signature in {{caseNumber}} {{caseName}} {{as}} by HH:MM PM on DD.MM.YYYY here: {{shortenedURL}}.\n\n24X7 ON Court,\nKollam, Kerala
+ */
+
+/*
+Signature of Bail Bond {{as}} | {{caseName}}
+ */

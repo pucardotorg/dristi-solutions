@@ -79,10 +79,10 @@ public class ApplicationConfiguration {
     private JavaMailSenderImpl getMailSender(EmailProperties emailProperties) {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
         mailSender.setPort(emailProperties.getMailPort());
-        mailSender.setHost(emailProperties.getMailHost());
+        mailSender.setHost("smtp.gmail.com"); //remove-shbk
         mailSender.setProtocol(emailProperties.getMailProtocol());
-        mailSender.setUsername(emailProperties.getMailSenderUsername());
-        mailSender.setPassword(emailProperties.getMailSenderPassword());
+        mailSender.setUsername("shashankbk10@gmail.com");
+        mailSender.setPassword("vmgn jclq ezzt kkfm");
         return mailSender;
     }
 

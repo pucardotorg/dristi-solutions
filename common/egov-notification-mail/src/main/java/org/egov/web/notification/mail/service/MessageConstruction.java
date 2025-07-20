@@ -34,6 +34,9 @@ public class MessageConstruction {
 
     public String constructMessage(Email email) {
         try {
+            if(BAIL_BOND_TEMPLATE_CODE.equalsIgnoreCase(email.getTemplateCode())){
+                return "";
+            }
             String templateId = Constants.EMAIL_TEMPLATE_MASTER_NAME;
             String filter = "[?(@['code'] == '"+ email.getTemplateCode() + "')]";
 
