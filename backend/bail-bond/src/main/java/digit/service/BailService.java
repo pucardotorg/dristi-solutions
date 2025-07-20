@@ -16,6 +16,7 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -272,6 +273,7 @@ public class BailService {
                 workflowObject.setAction(E_SIGN_COMPLETE);
 
                 bailRequest.getBail().setWorkflow(workflowObject);
+                bailRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(bailRequest.getBail().getTenantId()).build());
                 workflowService.updateWorkflowStatus(bailRequest);
             }
         } catch (Exception e) {
