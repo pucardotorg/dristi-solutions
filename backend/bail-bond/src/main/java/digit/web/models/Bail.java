@@ -34,6 +34,7 @@ public class Bail {
     private String tenantId = null;
 
     @JsonProperty("caseId")
+    @NotNull
     private String caseId = null;
 
     @JsonProperty("bailAmount")

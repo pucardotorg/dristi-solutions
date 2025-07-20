@@ -33,9 +33,6 @@ public class BailValidator {
             throw new CustomException(VALIDATION_EXCEPTION, "Invalid Bail amount");
         }
         if(!(SAVE_DRAFT.equalsIgnoreCase(bail.getWorkflow().getAction()) || DELETE_DRAFT.equalsIgnoreCase(bail.getWorkflow().getAction()))){
-            if(ObjectUtils.isEmpty(bail.getCaseId())){
-                throw new CustomException(VALIDATION_EXCEPTION, "Case ID is required for creating bail");
-            }
             if(ObjectUtils.isEmpty(bail.getLitigantMobileNumber())){
                 throw new CustomException(VALIDATION_EXCEPTION, "Litigant mobile number is required for creating bail");
             }
