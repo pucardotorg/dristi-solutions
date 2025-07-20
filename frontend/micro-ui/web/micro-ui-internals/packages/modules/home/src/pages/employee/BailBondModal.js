@@ -62,6 +62,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
   const caseId = row?.caseId || queryStrings?.caseId;
   const caseTitle = row?.caseTitle || queryStrings?.caseTitle;
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
+  const [cnrNumber, setCnrNumber] = useState("");
 
   const userType = useMemo(() => {
     if (!userInfo) return "employee";
@@ -136,6 +137,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
         const filteredBailBonds = bailBonds?.bails?.filter(
           (bond) => bond?.status === "COMPLETED" || bond?.status === "VOID" || bond?.status === "PENDING_REVIEW"
         );
+        setCnrNumber(caseDetails?.cases?.cnrNumber);
         const formattedBailBonds = filteredBailBonds?.map((bond, index) => ({
           name: `${t("BAIL_BOND")} ${index + 1}`,
           advocate: individualIdAdvocateNameMapping[bond?.litigantId] || "",
@@ -168,6 +170,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
         orderTitle: orderType,
         orderCategory: "INTERMEDIATE",
         orderType,
+        cnrNumber,
         status: "",
         isActive: true,
         workflow: {
