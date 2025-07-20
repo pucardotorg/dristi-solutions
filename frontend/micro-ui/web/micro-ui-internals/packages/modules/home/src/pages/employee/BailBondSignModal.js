@@ -46,6 +46,10 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
   const { t } = useTranslation();
   const history = useHistory();
+  const userType = useMemo(() => (isCitizen ? "citizen" : "employee"), [isCitizen]);
+  const caseId = history?.location?.state?.state?.params?.caseId;
+  const filingNumber = history?.location?.state?.state?.params?.filingNumber;
+
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
 
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
@@ -59,34 +63,47 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   const [bailBondSignedPdf, setBailBondSignedPdf] = useState("");
   const [loader, setLoader] = useState(false);
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
-
+  const [bailDocuments, setBailDocuments] = useState([]);
+  const [bailBondLoader, setBailBondLoader] = useState(false);
   const name = "Signature";
   const pageModule = "en";
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
 
   useEffect(() => {
     const fetchBailBondData = async () => {
-      if (queryStrings?.bailId) {
-        const searchBailBondResponse = await HomeService.searchBailBond({
-          criteria: {
-            tenantId: tenantId,
-            courtId: courtId,
-            bailId: queryStrings.bailId,
-            fuzzySearch: false,
-          },
-          pagination: {
-            limit: 10,
-            offSet: 0,
-            sortBy: "bailCreatedTime",
-            order: "asc",
-          },
-        });
-        const bailBondData = searchBailBondResponse?.bails[0];
-        setEffectiveRowData(bailBondData);
+      try {
+        setBailBondLoader(true);
+        if (queryStrings?.bailId || selectedBailBond?.businessObject?.bailDetails?.bailId || selectedBailBond?.bailId) {
+          const searchBailBondResponse = await HomeService.searchBailBond({
+            criteria: {
+              tenantId: tenantId,
+              courtId: courtId,
+              bailId: queryStrings.bailId || selectedBailBond?.businessObject?.bailDetails?.bailId || selectedBailBond?.bailId,
+              fuzzySearch: false,
+            },
+            pagination: {
+              limit: 10,
+              offSet: 0,
+              sortBy: "bailCreatedTime",
+              order: "asc",
+            },
+          });
+          const bailBondData = searchBailBondResponse?.bails?.[0];
+          setEffectiveRowData(bailBondData);
+          const combinedDocuments = [
+            ...bailBondData?.documents.filter((doc) => doc.documentType === "SIGNED"),
+            ...bailBondData?.sureties.flatMap((surety) => surety.documents),
+          ];
+
+          setBailDocuments(combinedDocuments);
+        }
+        setBailBondLoader(false);
+      } catch (error) {
+        setBailBondLoader(false);
       }
     };
     fetchBailBondData();
-  }, [queryStrings?.bailId, tenantId, courtId]);
+  }, [queryStrings.bailId, tenantId, courtId, selectedBailBond?.bailId, selectedBailBond?.businessObject?.bailDetails?.bailId]);
 
   const CloseBtn = useCallback((props) => {
     return (
@@ -200,7 +217,12 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
                 setIsRejectModalOpen(false);
                 setShowBulkSignModal(false);
                 if (queryStrings?.bailId) {
-                  history.goBack();
+                  if (userType && caseId && filingNumber) {
+                    sessionStorage.setItem("documents-activeTab", "Bail Bonds");
+                    history.push(
+                      `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`
+                    );
+                  } else history.push(`/${window?.contextPath}/${userType}/home/home-screen`);
                 }
               }
               setLoader(false);
@@ -213,7 +235,10 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       setIsRejectModalOpen(false);
       setShowBulkSignModal(false);
       if (queryStrings?.bailId) {
-        history.goBack();
+        if (userType && caseId && filingNumber) {
+          sessionStorage.setItem("documents-activeTab", "Bail Bonds");
+          history.push(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`);
+        } else history.push(`/${window?.contextPath}/${userType}/home/home-screen`);
       }
       setLoader(false);
     }
@@ -223,7 +248,12 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
     if (parseInt(stepper) === 0) {
       setShowBulkSignModal(false);
       if (queryStrings?.bailId) {
-        history.goBack();
+        if (queryStrings?.bailId) {
+          if (userType && caseId && filingNumber) {
+            sessionStorage.setItem("documents-activeTab", "Bail Bonds");
+            history.push(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`);
+          } else history.push(`/${window?.contextPath}/${userType}/home/home-screen`);
+        }
       }
     } else if (parseInt(stepper) === 1) {
       if (!openUploadSignatureModal && !isSigned) {
@@ -255,7 +285,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
 
       sessionStorage.setItem("bailBondStepper", stepper);
       sessionStorage.setItem("bulkBailBondSignlimit", bailBondPaginationData?.limit);
-      sessionStorage.setItem("bulkBailBondSignCaseTitle", bailBondPaginationData?.caseTitle);
+      if (bailBondPaginationData?.caseTitle) sessionStorage.setItem("bulkBailBondSignCaseTitle", bailBondPaginationData?.caseTitle);
       sessionStorage.setItem("bulkBailBondSignoffset", bailBondPaginationData?.offset);
       sessionStorage.setItem("homeActiveTab", "BULK_BAIL_BOND_SIGN");
       sessionStorage.setItem("bulkBailBondSignSelectedItem", JSON.stringify(effectiveRowData));
@@ -263,6 +293,8 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       handleEsign(name, pageModule, selectedBailBondFilestoreid, "Signature");
     } catch (error) {
       console.log("E-sign navigation error:", error);
+      setLoader(false);
+    } finally {
       setLoader(false);
     }
   }, [stepper, effectiveRowData, bailBondPaginationData, handleEsign, selectedBailBondFilestoreid]);
@@ -301,22 +333,32 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
     }
   }, [effectiveRowData?.status, isCitizen]);
 
-  const MemoDocViewerWrapper = useMemo(
-    () => (
-      <DocViewerWrapper
-        key={`bailbond-viewer-${selectedBailBondFilestoreid}`}
-        fileStoreId={selectedBailBondFilestoreid}
-        tenantId={tenantId}
-        docWidth="100%"
-        docHeight="70vh"
-        showDownloadOption={false}
-      />
-    ),
-    [tenantId, selectedBailBondFilestoreid]
-  );
+  const customStyles = `
+  .popup-module.review-submission-appl-modal .popup-module-main .popup-module-action-bar .selector-button-primary  {
+    background-color: #007e7e !important;
+  };
+  `;
+  const MemoizedDocViewers = useMemo(() => {
+    return (
+      <React.Fragment>
+        {bailDocuments?.map((docs) => (
+          <DocViewerWrapper
+            key={docs.fileStore}
+            fileStoreId={docs.fileStore}
+            tenantId={tenantId}
+            docWidth="100%"
+            docHeight="unset"
+            showDownloadOption={false}
+            documentName={docs?.name}
+          />
+        ))}
+      </React.Fragment>
+    );
+  }, [bailDocuments, tenantId]);
 
   return (
     <div>
+      <style>{customStyles}</style>
       {loader && (
         <div
           style={{
@@ -343,15 +385,28 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
               onClick={() => {
                 setShowBulkSignModal(false);
                 if (queryStrings?.bailId) {
-                  history.goBack();
+                  if (queryStrings?.bailId) {
+                    if (userType && caseId && filingNumber) {
+                      sessionStorage.setItem("documents-activeTab", "Bail Bonds");
+                      history.push(
+                        `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`
+                      );
+                    } else history.push(`/${window?.contextPath}/${userType}/home/home-screen`);
+                  }
                 }
               }}
             />
           }
           headerBarMain={
-            <Heading label={`${effectiveRowData?.businessObject?.bailDetails?.caseTitle || effectiveRowData?.caseTitle} ${t("BAIL_BOND")}`} />
+            <Heading
+              label={
+                bailBondLoader
+                  ? t(" ")
+                  : `${effectiveRowData?.businessObject?.bailDetails?.caseTitle || effectiveRowData?.caseTitle || ""} - ${t("BAIL_BOND")}`
+              }
+            />
           }
-          popupStyles={{ width: "70vw" }}
+          popupStyles={{ width: "70vw", minHeight: "75vh", maxheight: "90vh" }}
           actionCancelLabel={isSign && t("REJECT")}
           actionCancelOnSubmit={() => {
             setIsRejectModalOpen(true);
@@ -361,9 +416,18 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
             setStepper(1);
           }}
           formId="modal-action"
-          headerBarMainStyle={{ height: "50px" }}
+          headerBarMainStyle={{ minHeight: "50px" }}
+          className={"review-submission-appl-modal bail-bond"}
+          isDisabled={bailBondLoader}
+          isBackButtonDisabled={bailBondLoader}
+          style={{ backgroundColor: "#007e7e !important" }}
+          textStyle={{ color: "#fff", fontSize: "1.2rem", fontWeight: "600", margin: "0px" }}
         >
-          {MemoDocViewerWrapper}
+          <div className="review-submission-appl-body-main">
+            <div className="application-details">
+              <div className="application-view">{bailBondLoader ? <Loader /> : <React.Fragment>{MemoizedDocViewers}</React.Fragment>}</div>
+            </div>
+          </div>
         </Modal>
       )}
       {/* to select e-sign or upload */}
@@ -373,7 +437,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
           headerBarEnd={<CloseBtn onClick={handleCancel} />}
           actionCancelLabel={t("CS_COMMON_BACK")}
           actionCancelOnSubmit={handleCancel}
-          actionSaveLabel={t("submit")}
+          actionSaveLabel={t("CS_COMMON_SUBMIT")}
           isDisabled={!isSigned}
           actionSaveOnSubmit={() => {
             console.log("submiteed");
@@ -497,7 +561,10 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
             setShowBulkSignModal(false);
             setBailBondSignedPdf("");
             if (queryStrings?.bailId) {
-              history.goBack();
+              if (userType && caseId && filingNumber) {
+                sessionStorage.setItem("documents-activeTab", "Bail Bonds");
+                history.push(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`);
+              } else history.push(`/${window?.contextPath}/${userType}/home/home-screen`);
             }
           }}
           className={"orders-success-modal"}
