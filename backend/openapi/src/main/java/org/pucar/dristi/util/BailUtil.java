@@ -30,13 +30,13 @@ public class BailUtil {
         this.configs = configs;
     }
 
-    public BailSearchResponse fetchBails(BailSearchCriteria bailCriteria) {
+    public BailSearchResponse fetchBails(BailSearchCriteria bailCriteria, RequestInfo requestInfo) {
         StringBuilder uri = new StringBuilder();
         uri.append(configs.getBailServiceHost()).append(configs.getBailServiceSearchEndpoint());
 
         BailSearchRequest bailSearchRequest = new BailSearchRequest();
         bailSearchRequest.setCriteria(bailCriteria);
-        bailSearchRequest.setRequestInfo(RequestInfo.builder().userInfo(User.builder().build()).build());
+        bailSearchRequest.setRequestInfo(requestInfo);
 
         Object response;
         BailSearchResponse bailResponse;

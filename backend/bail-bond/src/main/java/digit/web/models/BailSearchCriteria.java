@@ -19,6 +19,9 @@ import java.util.List;
 @Builder
 public class BailSearchCriteria {
 
+    @JsonProperty("userUuid")
+    private String userUuid;
+
     @JsonProperty("tenantId")
     private String tenantId;
 
