@@ -45,6 +45,7 @@ const DocumentsV2 = ({
         const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditDetails?.createdBy;
         const bailBondId = docObj?.[0]?.artifactList?.bailId;
         const filingNumber = docObj?.[0]?.artifactList?.filingNumber;
+        const caseId = docObj?.[0]?.artifactList?.caseId;
         if (isCitizen) {
           if (bailStatus === "DRAFT_IN_PROGRESS" && documentCreatedByUuid === userInfo?.uuid) {
             history.push(
@@ -62,14 +63,18 @@ const DocumentsV2 = ({
 
           if (["PENDING_REVIEW", "COMPLETED", "VOID"]?.includes(bailStatus)) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/home/sign-bail-bond?filingNumber=${filingNumber}&bailId=${bailBondId}`,
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
+              }/home/sign-bail-bond?filingNumber=${filingNumber}&bailId=${bailBondId}&caseId=${caseId}`,
               { state: { params: { caseId, filingNumber } } }
             );
           }
         } else {
           if (["PENDING_REVIEW", "COMPLETED", "VOID"]?.includes(bailStatus)) {
             history.push(
-              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/home/sign-bail-bond?filingNumber=${filingNumber}&bailId=${bailBondId}`,
+              `/${window?.contextPath}/${
+                isCitizen ? "citizen" : "employee"
+              }/home/sign-bail-bond?filingNumber=${filingNumber}&bailId=${bailBondId}&caseId=${caseId}`,
               { state: { params: { caseId, filingNumber } } }
             );
           }
