@@ -734,6 +734,11 @@ const GenerateBailBond = () => {
   const handleSaveDraft = async () => {
     // Todo : Create and Update Api Call
     try {
+      if (!formdata?.bailType) {
+        setShowErrorToast({ label: t("BAIL_TYPE_ISSUE"), error: true });
+        return;
+      }
+
       setLoader(true);
       const individualData = await getUserUUID(formdata?.selectComplainant?.uuid);
       let bailBondResponse = null;
