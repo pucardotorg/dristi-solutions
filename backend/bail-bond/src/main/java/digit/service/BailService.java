@@ -295,6 +295,7 @@ public class BailService {
                 workflowObject.setAction(E_SIGN_COMPLETE);
 
                 bailRequest.getBail().setWorkflow(workflowObject);
+                bailRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(bailRequest.getBail().getTenantId()).build());
                 workflowService.updateWorkflowStatus(bailRequest);
             }
         } catch (Exception e) {
