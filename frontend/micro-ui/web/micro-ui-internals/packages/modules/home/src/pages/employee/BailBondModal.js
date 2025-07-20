@@ -51,6 +51,8 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
+  const isCourtRoomManager = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
+
   const today = new Date();
   const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
@@ -60,6 +62,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
   const caseId = row?.caseId || queryStrings?.caseId;
   const caseTitle = row?.caseTitle || queryStrings?.caseTitle;
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
+  const [cnrNumber, setCnrNumber] = useState("");
 
   const userType = useMemo(() => {
     if (!userInfo) return "employee";
@@ -67,10 +70,10 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
   }, [userInfo]);
 
   useEffect(() => {
-    if (!isJudge && !isBenchClerk && !isTypist) {
+    if (!isJudge && !isBenchClerk && !isTypist && !isCourtRoomManager) {
       history.push(`/${window?.contextPath}/${userType}/home/home-pending-task`);
     }
-  }, [isJudge, isBenchClerk, userType, history, isTypist]);
+  }, [isJudge, isBenchClerk, userType, history, isTypist, isCourtRoomManager]);
 
   const [selectedBailBondFilestoreid, setSelectedBailBondFilestoreid] = useState("");
 
@@ -134,6 +137,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
         const filteredBailBonds = bailBonds?.bails?.filter(
           (bond) => bond?.status === "COMPLETED" || bond?.status === "VOID" || bond?.status === "PENDING_REVIEW"
         );
+        setCnrNumber(caseDetails?.cases?.cnrNumber);
         const formattedBailBonds = filteredBailBonds?.map((bond, index) => ({
           name: `${t("BAIL_BOND")} ${index + 1}`,
           advocate: individualIdAdvocateNameMapping[bond?.litigantId] || "",
@@ -166,6 +170,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, sho
         orderTitle: orderType,
         orderCategory: "INTERMEDIATE",
         orderType,
+        cnrNumber,
         status: "",
         isActive: true,
         workflow: {
