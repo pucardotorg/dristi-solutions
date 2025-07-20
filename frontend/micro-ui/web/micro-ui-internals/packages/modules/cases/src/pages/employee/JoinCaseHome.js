@@ -102,7 +102,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   const [isAdvocateJoined, setIsAdvocateJoined] = useState(false);
   const [alreadyJoinedMobileNumber, setAlreadyJoinedMobileNumber] = useState([]);
   const [taskNumber, setTaskNumber] = useState("");
-  const [bailBondRequired, setBailBondRequired] = useState(true);
+  const [bailBondRequired, setBailBondRequired] = useState(false);
 
   const [isVerified, setIsVerified] = useState(false);
 
