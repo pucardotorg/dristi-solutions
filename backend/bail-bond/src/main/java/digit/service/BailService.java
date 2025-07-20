@@ -143,7 +143,7 @@ public class BailService {
             log.error("Error sending notification for bailRequest: {}", bailRequest, e);
         }
     }
-    //remove-shbk
+
     public void callNotificationServiceForEmail(BailRequest bailRequest) {
         try{
             Bail bail = bailRequest.getBail();
