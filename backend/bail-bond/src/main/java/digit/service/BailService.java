@@ -256,7 +256,7 @@ public class BailService {
             {
                 ObjectNode additionalDetails = updateAdditionalDetails(workflow.getAdditionalDetails(), bailRequest.getRequestInfo().getUserInfo().getUuid());
                 workflow.setAdditionalDetails(additionalDetails);
-                assignees.add(bailRequest.getRequestInfo().getUserInfo().getUuid());
+                assignees.add(bailRequest.getBail().getAuditDetails().getCreatedBy());
                 workflow.setAssignes(assignees);
             }
         }
