@@ -28,14 +28,14 @@ public class Bail {
 
     @JsonProperty("id")
     private String id = null;
+
     @JsonProperty("tenantId")
     @NotNull
-
     private String tenantId = null;
-    @JsonProperty("caseId")
-    @NotNull
 
+    @JsonProperty("caseId")
     private String caseId = null;
+
     @JsonProperty("bailAmount")
 
     private Double bailAmount = null;
@@ -65,7 +65,6 @@ public class Bail {
     private Boolean litigantSigned = null;
 
     @JsonProperty("litigantMobileNumber")
-    @NotNull
     private String litigantMobileNumber = null;
 
     @JsonProperty("sureties")

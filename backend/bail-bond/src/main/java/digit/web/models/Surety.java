@@ -33,8 +33,6 @@ public class Surety {
     private String tenantId = null;
 
     @JsonProperty("name")
-    @NotNull
-
     private String name = null;
 
     @JsonProperty("fatherName")
@@ -42,8 +40,6 @@ public class Surety {
     private String fatherName = null;
 
     @JsonProperty("mobileNumber")
-    @NotNull
-
     private String mobileNumber = null;
 
     @JsonProperty("address")
