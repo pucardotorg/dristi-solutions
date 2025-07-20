@@ -17,7 +17,7 @@ const CloseBtn = () => {
 };
 
 const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError, clearErrors, control, watch }) => {
-  const [formInstances, setFormInstances] = useState(formData?.[config?.key] || [{}]);
+  const [formInstances, setFormInstances] = useState(formData?.[config?.key] || [{},{}]);
   const disable = config?.disable;
   const inputs = useMemo(() => config?.populators?.inputs || [], [config?.populators?.inputs]);
 
@@ -105,9 +105,9 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                 justifyContent: "space-between",
               }}
             >
-              <div style={{ fontSize: "20px", fontWeight: 700, color: "#0B0C0C", padding: "12px 22px" }}>{`${t(config?.name)} (${
+              <div style={{ fontSize: "20px", fontWeight: 700, color: "#0B0C0C", padding: "12px 22px" }}>{`${t(config?.name)} ${
                 formIndex + 1
-              })`}</div>
+              }`}</div>
               {formInstances.length > 1 && !disable && (
                 <button
                   type="button"
@@ -148,7 +148,7 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                             onChange={(e) => {
                               const newValue = e.target.value;
                               const regex = input?.validation?.pattern;
-                              if (input?.key === "emailId") {
+                              if (input?.key === "email") {
                                 if (newValue) {
                                   if (!input?.validation?.pattern?.test(newValue)) {
                                     setError(`${input?.key}_${formIndex}`, {

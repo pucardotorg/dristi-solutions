@@ -361,7 +361,7 @@ const MainHomeScreen = () => {
         fetchPendingTaskCounts();
       }
     }
-
+    sessionStorage.setItem("homeActiveTab", label || title);
     setActiveTab(label || title);
     setActiveTabTitle(title);
   };

@@ -341,7 +341,7 @@ async function processBailDocuments(
         courtId: courtCase.courtId,
         filingNumber: courtCase.filingNumber,
         tenantId,
-        status: "COMPLETED",
+        status: ["COMPLETED"],
       },
       {
         sortBy: section.sorton,
@@ -363,10 +363,17 @@ async function processBailDocuments(
               if (document?.fileStore) {
                 if (document.documentType === "SIGNED") {
                   signed.push(document.fileStore);
-                } else {
-                  others.push(document.fileStore);
                 }
+                //  else {
+                //   others.push(document.fileStore);
+                // }
               }
+            });
+
+            bailBond?.sureties?.forEach((surety, i) => {
+              surety?.documents?.forEach((doc) => {
+                others?.push(doc?.fileStore);
+              });
             });
 
             const fileStores = [...signed, ...others];

@@ -2,6 +2,8 @@ package digit.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import digit.config.Configuration;
 import digit.enrichment.BailRegistrationEnrichment;
 import digit.kafka.Producer;
@@ -338,10 +340,29 @@ public class BailService {
         // Enrich new documents or sureties if any
         enrichmentUtil.enrichBailUponUpdate(bailRequest, existingBail);
 
+        if (bailRequest.getBail().getWorkflow() != null
+                && bailRequest.getBail().getWorkflow().getAction() != null
+                && (E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction()) || INITIATE_E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction()))
+                && !bailRequest.getBail().getLitigantSigned()
+                && bailRequest.getBail().getLitigantId() != null) {
+            List<String> assignees = new ArrayList<>();
+            WorkflowObject workflow = bailRequest.getBail().getWorkflow();
+            assignees.add(bailRequest.getBail().getLitigantId());
+            workflow.setAssignes(assignees);
+            if(!bailRequest.getBail().getLitigantId().equalsIgnoreCase(bailRequest.getBail().getAuditDetails().getCreatedBy()))
+            {
+                ObjectNode additionalDetails = updateAdditionalDetails(workflow.getAdditionalDetails(), bailRequest.getRequestInfo().getUserInfo().getUuid());
+                workflow.setAdditionalDetails(additionalDetails);
+                assignees.add(bailRequest.getBail().getAuditDetails().getCreatedBy());
+                workflow.setAssignes(assignees);
+            }
+        }
+
         Boolean lastSigned = checkItsLastSign(bailRequest);
         if (!ObjectUtils.isEmpty(bailRequest.getBail().getWorkflow())) {
             workflowService.updateWorkflowStatus(bailRequest);
         }
+
         try {
             if (lastSigned) {
                 log.info("Updating Bail Workflow");
@@ -349,21 +370,12 @@ public class BailService {
                 workflowObject.setAction(E_SIGN_COMPLETE);
 
                 bailRequest.getBail().setWorkflow(workflowObject);
+                bailRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(bailRequest.getBail().getTenantId()).build());
                 workflowService.updateWorkflowStatus(bailRequest);
             }
         } catch (Exception e) {
             log.error("Error updating bail workflow", e);
             throw new CustomException(WORKFLOW_SERVICE_EXCEPTION, e.getMessage());
-        }
-
-        if (bailRequest.getBail().getWorkflow() != null
-                && bailRequest.getBail().getWorkflow().getAction() != null
-                && (E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction()) || INITIATE_E_SIGN.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction()))
-                && !bailRequest.getBail().getLitigantSigned()
-                && bailRequest.getBail().getLitigantId() != null) {
-            List<String> assignees = new ArrayList<>();
-            assignees.add(bailRequest.getBail().getLitigantId());
-            bailRequest.getBail().getWorkflow().setAssignes(assignees);
         }
 
         Set<String> fileStoreToDeleteIds = getFilestoreToDelete(bailRequest,existingBail);
@@ -398,6 +410,13 @@ public class BailService {
 
         producer.push(config.getBailUpdateTopic(), bailRequest);
 
+        // Remove inactive sureties from originalBail before returning it
+        if (originalBail.getSureties() != null) {
+            List<Surety> activeSureties = originalBail.getSureties().stream()
+                    .filter(surety -> surety.getIsActive() == null || surety.getIsActive())
+                    .toList();
+            originalBail.setSureties(activeSureties);
+        }
         return originalBail;
     }
 
@@ -661,6 +680,20 @@ public class BailService {
             log.error("Error occurred while inserting bail index entry");
             throw new CustomException(BAIL_BOND_INDEX_EXCEPTION, e.getMessage());
         }
+    }
+
+
+    private ObjectNode updateAdditionalDetails(Object existingDetails, String excludeUuid) {
+        ObjectNode detailsNode;
+        if (existingDetails == null) {
+            detailsNode = objectMapper.createObjectNode();
+        } else {
+            detailsNode = objectMapper.convertValue(existingDetails, ObjectNode.class);
+        }
+        ArrayNode excludedAssignedUuidsArray = detailsNode.putArray("excludedAssignedUuids");
+        excludedAssignedUuidsArray.add(excludeUuid);
+
+        return detailsNode;
     }
 
 }

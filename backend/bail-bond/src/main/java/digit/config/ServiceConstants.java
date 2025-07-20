@@ -51,6 +51,9 @@ public class ServiceConstants {
     public static final String WORKFLOW_SERVICE_EXCEPTION = "WORKFLOW_SERVICE_EXCEPTION";
     public static final String ERROR_WHILE_FETCHING_FROM_CASE = "ERROR_WHILE_FETCHING_FROM_CASE";
 
+    public static final String SAVE_DRAFT = "SAVE_DRAFT";
+    public static final String DELETE_DRAFT = "DELETE_DRAFT";
+
     public static final String E_SIGN = "E-SIGN";
     public static final String SIGN = "SIGN";
     public static final String E_SIGN_COMPLETE = "E-SIGN_COMPLETE";

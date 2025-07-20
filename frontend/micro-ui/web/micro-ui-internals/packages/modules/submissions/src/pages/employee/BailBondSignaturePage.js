@@ -151,7 +151,6 @@ const BailBondSignaturePage = () => {
 
   const dummyLitigants = useMemo(() => {
     const data = [];
-
     const litigant = {
       additionalDetails: {
         fullName: bailBondDetails?.litigantName || "",
@@ -170,7 +169,7 @@ const BailBondSignaturePage = () => {
             type: `Surety ${index + 1}`,
           },
           hasSigned: surety?.hasSigned || false,
-          mobileNumber: surety?.mobileNumber,
+          mobileNumber: surety?.phoneNumber,
           placeHolder: `Surety${index + 1} Signature`,
         });
       });
@@ -252,7 +251,7 @@ const BailBondSignaturePage = () => {
   const handleCloseSuccessModal = () => {
     sessionStorage.removeItem("isAuthorised");
     sessionStorage.removeItem("fileStoreId");
-    history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`);
+    history.replace(`/${window?.contextPath}/citizen/dristi/home/login`);
   };
 
   const handleEditBailBondSubmit = async () => {
@@ -276,6 +275,8 @@ const BailBondSignaturePage = () => {
     } catch (error) {
       console.error("Error while updating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setEditCaseModal(false);
     }
   };
 
@@ -308,6 +309,15 @@ const BailBondSignaturePage = () => {
   const closeToast = () => {
     setShowErrorToast(null);
   };
+
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
 
   if (isBailDataLoading || isBailBondLoading) {
     return <Loader />;

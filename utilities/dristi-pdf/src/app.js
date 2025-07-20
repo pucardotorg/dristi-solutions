@@ -18,6 +18,7 @@ app.disable("x-powered-by");
 
 app.use(cors());
 app.options("*", cors()); // Preflight requests
+
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

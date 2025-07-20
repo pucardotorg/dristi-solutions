@@ -449,11 +449,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         tenantId,
         courtId: courtId,
         filingNumber: filingNumber,
-        status: "COMPLETED",
+        status: ["COMPLETED"],
       },
       pagination: {
-        sortBy: "startDate",
-        order: "ASC",
+        sortBy: "bailCreatedTime",
+        order: "asc",
         limit: 100,
       },
     },
@@ -1150,7 +1150,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
             bond?.documents?.forEach((doc) => {
               if (doc?.fileStore) {
                 if (doc?.documentType === "SIGNED") signed?.push(doc?.fileStore);
-                else otherDocument?.push(doc);
+                // else otherDocument?.push(doc);
               }
             });
 
@@ -1160,6 +1160,12 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
               hasChildren: false,
               fileStoreId: signed[0] || null,
             };
+
+            bond?.sureties?.forEach((surety, i) => {
+              surety?.documents?.forEach((doc) => {
+                otherDocument?.push(doc);
+              });
+            });
 
             const otherDocsChildren = otherDocument?.map((doc, i) => ({
               id: `${bond?.bailId}-other-${i}`,

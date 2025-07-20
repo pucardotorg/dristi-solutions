@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Types;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -20,7 +21,7 @@ public class BailQueryBuilder {
                     "bail.filing_number as filingNumber, bail.case_type as caseType, bail.litigant_id as litigantId, " +
                     "bail.litigant_name as litigantName, bail.litigant_father_name as litigantFatherName, " +
                     "bail.litigant_signed as litigantSigned, bail.litigant_mobile_number as litigantMobileNumber, " +
-                    "bail.shortened_url as shortenedUrl, bail.bail_id as formattedBailId, " +
+                    "bail.shortened_url as shortenedUrl, " +
                     "bail.additional_details as bailAdditionalDetails, bail.is_active as bailIsActive, " +
                     "bail.created_by as bailCreatedBy, bail.last_modified_by as bailLastModifiedBy, " +
                     "bail.created_time as bailCreatedTime, bail.last_modified_time as bailLastModifiedTime, " +
@@ -56,7 +57,13 @@ public class BailQueryBuilder {
 
 
     public String getPaginatedBailIdsQuery(BailSearchCriteria criteria, Pagination pagination, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
-        StringBuilder query = new StringBuilder("SELECT DISTINCT(bail.id), bail.created_time");
+        StringBuilder query = new StringBuilder("SELECT DISTINCT(bail.id), bail.bail_id as bailId, bail.bail_type as bailType," +
+                " bail.bail_status as bailStatus, bail.court_id as courtId, " +
+                " bail.case_title as caseTitle, bail.case_number as caseNumber, bail.cnr_number as cnrNumber, " +
+                " bail.filing_number as filingNumber, bail.case_type as caseType, bail.litigant_id as litigantId, " +
+                " bail.litigant_name as litigantName, bail.litigant_father_name as litigantFatherName," +
+                " bail.created_by as bailCreatedBy, bail.last_modified_by as bailLastModifiedBy, " +
+                " bail.created_time as bailCreatedTime, bail.last_modified_time as bailLastModifiedTime ");
         query.append(FROM_QUERY);
 
         getWhereFields(criteria, query, preparedStmtList, preparedStmtArgList);
@@ -132,7 +139,7 @@ public class BailQueryBuilder {
         addBailCriteria(criteria.getCourtId(), query, "bail.court_id = ?", preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getFilingNumber(), query, "bail.filing_number = ?", preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getCnrNumber(), query, "bail.cnr_number = ?", preparedStmtList, preparedStmtArgList);
-        addBailCriteria(criteria.getStatus(), query, "bail.bail_status = ?", preparedStmtList, preparedStmtArgList);
+        addListBailCriteria(criteria.getStatus(), query, preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getCaseType() != null ? criteria.getCaseType().name() : null, query, "bail.case_type = ?", preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getCaseNumber(), query, "bail.case_number = ?", preparedStmtList, preparedStmtArgList);
 
@@ -157,6 +164,18 @@ public class BailQueryBuilder {
             query.append(condition);
             preparedStmtList.add(criteria);
             preparedStmtArgList.add(Types.VARCHAR);
+        }
+    }
+
+    private void addListBailCriteria(List<String> criteria, StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        if (criteria != null && !criteria.isEmpty()) {
+            query.append(" AND ");
+            query.append(" bail.bail_status IN ")
+                    .append(" (")
+                    .append(criteria.stream().map(id -> "?").collect(Collectors.joining(",")))
+                    .append(") ");
+            preparedStmtList.addAll(criteria);
+            criteria.forEach(i -> preparedStmtArgList.add(Types.VARCHAR));
         }
     }
 }

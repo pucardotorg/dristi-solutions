@@ -87,7 +87,7 @@ export const bailBondConfig = [
         component: "SuretyComponent",
         // schemaKeyPath: "applicationDetails.applicationDocuments",
         // transformer: "applicationDocuments",
-        name: "sureties",
+        name: "BAIL_SURETY",
         disable: false,
         isMandatory: false,
         populators: {
@@ -344,5 +344,5 @@ export const bailBondConfig = [
     dependentKey: {
       bailType: ["showSurety"],
     },
-  },
+  }
 ];

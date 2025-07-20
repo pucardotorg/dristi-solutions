@@ -34,7 +34,7 @@ const formatDate = (date) => {
   return convertedDate.toLocaleDateString();
 };
 
-const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) => {
+const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter, showToast = () => {} }) => {
   const queryStrings = Digit.Hooks.useQueryParams();
 
   const { t } = useTranslation();
@@ -42,7 +42,6 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const [loader, setLoader] = useState(false);
-  const [toastMsg, setToastMsg] = useState(null);
   const [showBailConfirmationModal, setShowBailConfirmationModal] = useState(false);
   const [isDocviewOpened, setIsDocViewOpened] = useState(false);
   const [bailBondsLoading, setBailBondsLoading] = useState(false);
@@ -52,6 +51,8 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
+  const isCourtRoomManager = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
+
   const today = new Date();
   const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
   const ordersService = Digit.ComponentRegistryService.getComponent("OrdersService") || {};
@@ -61,6 +62,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
   const caseId = row?.caseId || queryStrings?.caseId;
   const caseTitle = row?.caseTitle || queryStrings?.caseTitle;
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
+  const [cnrNumber, setCnrNumber] = useState("");
 
   const userType = useMemo(() => {
     if (!userInfo) return "employee";
@@ -68,18 +70,12 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
   }, [userInfo]);
 
   useEffect(() => {
-    if (!isJudge && !isBenchClerk && !isTypist) {
+    if (!isJudge && !isBenchClerk && !isTypist && !isCourtRoomManager) {
       history.push(`/${window?.contextPath}/${userType}/home/home-pending-task`);
     }
-  }, [isJudge, isBenchClerk, userType, history, isTypist]);
+  }, [isJudge, isBenchClerk, userType, history, isTypist, isCourtRoomManager]);
 
   const [selectedBailBondFilestoreid, setSelectedBailBondFilestoreid] = useState("");
-  const showToast = (type, message, duration = 5000) => {
-    setToastMsg({ key: type, action: message });
-    setTimeout(() => {
-      setToastMsg(null);
-    }, duration);
-  };
 
   const [bailBonds, setBailBonds] = useState([]);
   const courtId = localStorage.getItem("courtId");
@@ -106,8 +102,8 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
           pagination: {
             limit: 100,
             offSet: 0,
-            sortBy: "startDate",
-            order: "ASC",
+            sortBy: "bailCreatedTime",
+            order: "asc",
           },
         });
         const caseDetails = await DRISTIService.caseDetailSearchService(
@@ -141,6 +137,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
         const filteredBailBonds = bailBonds?.bails?.filter(
           (bond) => bond?.status === "COMPLETED" || bond?.status === "VOID" || bond?.status === "PENDING_REVIEW"
         );
+        setCnrNumber(caseDetails?.cases?.cnrNumber);
         const formattedBailBonds = filteredBailBonds?.map((bond, index) => ({
           name: `${t("BAIL_BOND")} ${index + 1}`,
           advocate: individualIdAdvocateNameMapping[bond?.litigantId] || "",
@@ -173,6 +170,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
         orderTitle: orderType,
         orderCategory: "INTERMEDIATE",
         orderType,
+        cnrNumber,
         status: "",
         isActive: true,
         workflow: {
@@ -228,7 +226,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
           referenceId: `MANUAL_BAIL_BOND_${filingNumber}`,
           status: "completed",
           assignedTo: [],
-          assignedRole: ["JUDGE_ROLE", "BENCH_CLERK"],
+          assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "COURT_ROOM_MANAGER"],
           filingNumber,
           isCompleted: true,
           caseId: caseId,
@@ -247,6 +245,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
             setShowBailConfirmationModal(false);
             setShowBailModal(false);
             if (setUpdateCounter) setUpdateCounter((prev) => prev + 1);
+            showToast("sucess", t("BULK_CLOSE_PENDING_TASK"), 5000);
           }, 1000);
         }
       });
@@ -289,13 +288,13 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
               }}
             />
           }
-          actionSaveLabel={t("Close Task")}
+          actionSaveLabel={t("CLOSE_PENDING_TASK")}
           actionSaveOnSubmit={() => {
             setShowBailConfirmationModal(true);
           }}
           style={{ width: "50%" }}
           actionCancelStyle={{ width: "50%" }}
-          actionCancelLabel={t("Issue Warrant")}
+          actionCancelLabel={t("ISSUE_WARRANT_BAIL")}
           actionCancelOnSubmit={() => {
             createOrder();
           }}
@@ -303,7 +302,7 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
           isCustomButtonDisabled={loader || bailBondsLoading}
           isBackButtonDisabled={loader || bailBondsLoading}
           formId="modal-action"
-          headerBarMain={<Heading label={t("View Bail Bonds")} />}
+          headerBarMain={<Heading label={t("VIEW_BAIL_BONDS")} />}
           className="upload-signature-modal"
           submitTextClassName="upload-signature-button"
           popupModuleActionBarStyles={{ padding: "0 8px 8px 8px" }}
@@ -457,11 +456,10 @@ const BailBondModal = ({ row, setShowBailModal = () => {}, setUpdateCounter }) =
           isBackButtonDisabled={loader}
           actionCancelLabel={t("CS_COMMON_CANCEL")}
           actionCancelOnSubmit={() => {
-            showToast("error", t("ISSUE_IN_FETCHING"), 5000);
             setShowBailConfirmationModal(false);
           }}
           formId="modal-action"
-          headerBarMain={<Heading label={t("Confirm Closure")} />}
+          headerBarMain={<Heading label={t("CONFRIM_CLOSE")} />}
           className="upload-signature-modal"
           submitTextClassName="upload-signature-button"
           popupModuleActionBarStyles={{ padding: "0 8px 8px 8px" }}

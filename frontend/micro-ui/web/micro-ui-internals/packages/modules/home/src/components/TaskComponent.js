@@ -364,6 +364,7 @@ const TasksComponent = ({
       return {
         actionName: actionName || pendingTaskActions?.[status]?.actionName,
         status,
+        entityType,
         individualId,
         caseId,
         caseTitle,
@@ -396,7 +397,8 @@ const TasksComponent = ({
     const filteredTasks = tasks.filter((task) => {
       if (isCourtRoomManager) {
         // TODO: For court room manager,show only summons pending task, have to confirm which are those and include here.
-        return false;
+
+        return task?.entityType === "bail bond" ? true : false;
       } else return true;
     });
     if (taskType?.code)
