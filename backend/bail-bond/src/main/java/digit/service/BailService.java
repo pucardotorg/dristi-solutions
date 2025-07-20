@@ -335,6 +335,13 @@ public class BailService {
 
         producer.push(config.getBailUpdateTopic(), bailRequest);
 
+        // Remove inactive sureties from originalBail before returning it
+        if (originalBail.getSureties() != null) {
+            List<Surety> activeSureties = originalBail.getSureties().stream()
+                    .filter(surety -> surety.getIsActive() == null || surety.getIsActive())
+                    .toList();
+            originalBail.setSureties(activeSureties);
+        }
         return originalBail;
     }
 
