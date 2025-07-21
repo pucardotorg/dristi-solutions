@@ -101,6 +101,10 @@ public class Configuration {
     @Value("${egov.sms.notification.topic}")
     private String smsNotificationTopic;
 
+    //Email
+    @Value("${egov.mail.notification.topic}")
+    private String mailNotificationTopic;
+
     //Bail
     @Value("${bail.kafka.create.topic}")
     private String bailCreateTopic;
