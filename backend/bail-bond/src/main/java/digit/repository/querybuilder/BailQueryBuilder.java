@@ -91,7 +91,7 @@ public class BailQueryBuilder {
         query.append(" WHERE bail.id IN (");
         String placeholders = String.join(",", bailIds.stream().map(id -> "?").toList());
         query.append(placeholders).append(")");
-
+        query.append(" AND bail.is_active = true ");
         for (String id : bailIds) {
             preparedStmtList.add(id);
             preparedStmtArgList.add(Types.VARCHAR);
