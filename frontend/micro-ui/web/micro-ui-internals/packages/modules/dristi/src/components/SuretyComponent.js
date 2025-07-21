@@ -80,16 +80,6 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
 
   return (
     <React.Fragment>
-      <style>
-        {`
-      .text-Input .text-input-width {
-      max-width : none
-      }
-      .citizen-card-input--front {
-        background-color : #E0E0E0 !important
-      }
-      `}
-      </style>
       <div>
         {" "}
         {config.header && <Header>{t(config.header)}</Header>}
@@ -131,13 +121,13 @@ const SuretyComponent = ({ t, config, onSelect, formData = {}, errors, setError,
                 return (
                   <React.Fragment key={inputIndex}>
                     {input?.type === "text" && (
-                      <div className="text-Input">
+                      <div className="text-Input text-surety">
                         <div style={{ marginBottom: "8px" }}>
                           {t(input.label)} {input?.isOptional && <span style={{ color: "#77787B" }}>&nbsp;{t("CS_IS_OPTIONAL")}</span>}
                         </div>
                         <div style={{ display: "flex", justifyContent: "center" }}>
                           {input?.componentInFront ? (
-                            <span className="citizen-card-input citizen-card-input--front">{input?.componentInFront}</span>
+                            <span className="citizen-card-input citizen-card-input--front citizen-bail-bond">{input?.componentInFront}</span>
                           ) : null}
                           <TextInput
                             t={t}
