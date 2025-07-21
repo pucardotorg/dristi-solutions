@@ -38,7 +38,7 @@ public class BailRegistrationEnrichment {
         String idFormat = config.getBailFormat();
 
         RequestInfo requestInfo = bailRequest.getRequestInfo();
-        String tenantId = bailRequest.getBail().getTenantId();
+        String tenantId = bailRequest.getBail().getFilingNumber().replace("-","");;
         Bail bail = bailRequest.getBail();
 
         List<String> bailRegistrationBailIdList = idgenUtil.getIdList(requestInfo, tenantId, idName, idFormat, 1,false);
