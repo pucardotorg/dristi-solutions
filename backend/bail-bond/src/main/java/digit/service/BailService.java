@@ -268,27 +268,6 @@ public class BailService {
         return null;
     }
 
-    private Set<String> getFilestoreToDelete(BailRequest bailRequest, Bail existingBail) {
-        Set<String> fileStoreToDeleteIds = new HashSet<>();
-
-        Set<String> newFileStoreIds = new HashSet<>();
-        Set<String> existingFileStoreIds = new HashSet<>();
-
-        // Collect all existing filestore IDs from DB
-        if (existingBail.getDocuments() != null) {
-            for (Document document : existingBail.getDocuments()) {
-                existingFileStoreIds.add(document.getFileStore());
-            }
-        }
-        if (existingBail.getSureties() != null) {
-            for (Surety surety : existingBail.getSureties()) {
-                if (surety.getDocuments() != null) {
-                    for (Document document : surety.getDocuments()) {
-                        existingFileStoreIds.add(document.getFileStore());
-                    }
-                }
-            }
-
     public void mergeDeletedDocumentsIntoPayload(BailRequest bailRequest, Bail existingBail) {
         Bail updatedBail = bailRequest.getBail();
 
