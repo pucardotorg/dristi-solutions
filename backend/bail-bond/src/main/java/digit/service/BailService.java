@@ -525,15 +525,13 @@ public class BailService {
                     String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
 
-                    if (bail.getDocuments() != null) {
-                        bail.getDocuments().stream()
-                                .filter(document -> document.getDocumentType().equals(SIGNED))
-                                .findFirst()
-                                .ifPresent(document -> {
-                                    document.setFileStore(fileStoreId);
-                                    document.setAdditionalDetails(Map.of(NAME, BAIL_BOND_PDF_NAME));
-                                });
-                    }
+                    Document document = Document.builder()
+                            .documentType(SIGNED)
+                            .fileStore(fileStoreId)
+                            .documentName(BAIL_BOND_PDF_NAME)
+                            .additionalDetails(Map.of(NAME, BAIL_BOND_PDF_NAME))
+                            .build();
+                    bail.setDocuments(List.of(document));
 
                     if (!ObjectUtils.isEmpty(bail.getSureties())) {
                         bail.getSureties().forEach(surety -> surety.setIsApproved(true));
