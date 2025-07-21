@@ -240,10 +240,3 @@ public class NotificationService {
 
 
 }
-/*
-To {{name}},\n\nPlease find the Bail Bond for signature in {{caseNumber}} {{caseName}} {{as}} by HH:MM PM on DD.MM.YYYY here: {{shortenedURL}}.\n\n24X7 ON Court,\nKollam, Kerala
- */
-
-/*
-Signature of Bail Bond {{as}} | {{caseName}}
- */

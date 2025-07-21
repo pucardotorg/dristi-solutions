@@ -144,7 +144,7 @@ public class BailService {
         }
     }
 
-    public void callNotificationServiceForEmail(BailRequest bailRequest) {
+    private void callNotificationServiceForEmail(BailRequest bailRequest) {
         try{
             Bail bail = bailRequest.getBail();
             String action = bail.getWorkflow().getAction();
