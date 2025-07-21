@@ -215,6 +215,7 @@ class BailServiceTest {
         BailSearchRequest bailSearchRequest = BailSearchRequest.builder()
                 .criteria(searchCrit).pagination(pagination).build();
         when(bailRepository.getBails(any())).thenReturn(List.of(bail));
+        when(encryptionDecryptionUtil.decryptObject(any(), any(), eq(Bail.class), any())).thenReturn(bail);
         MultipartFile file = mock(MultipartFile.class);
         when(cipherUtil.decodeBase64ToPdf(eq("PDFBASE64"), anyString())).thenReturn(file);
         when(fileStoreUtil.storeFileInFileStore(file, "tenantId")).thenReturn("filestore123");
