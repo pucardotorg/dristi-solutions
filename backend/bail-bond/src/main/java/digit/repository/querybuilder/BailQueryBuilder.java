@@ -48,9 +48,9 @@ public class BailQueryBuilder {
                     "surety_doc.created_time as suretyDocCreatedTime, surety_doc.last_modified_time as suretyDocLastModifiedTime ";
 
     private static final String FROM_QUERY = " FROM dristi_bail bail" +
-            " LEFT JOIN dristi_bail_document bail_doc ON bail.id = bail_doc.bail_id" +
-            " LEFT JOIN dristi_surety srt ON bail.id = srt.bail_id" +
-            " LEFT JOIN dristi_surety_document surety_doc ON srt.id = surety_doc.surety_id ";
+            " LEFT JOIN dristi_bail_document bail_doc ON bail.id = bail_doc.bail_id AND bail_doc.is_active = true " +
+            " LEFT JOIN dristi_surety srt ON bail.id = srt.bail_id AND srt.is_active = true " +
+            " LEFT JOIN dristi_surety_document surety_doc ON srt.id = surety_doc.surety_id AND surety_doc.is_active = true ";
 
     private static final String ORDER_BY_CLAUSE = " ORDER BY {orderBy} {sortingOrder} ";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY bail.created_time DESC ";
@@ -93,9 +93,6 @@ public class BailQueryBuilder {
         query.append(placeholders).append(")");
 
         query.append(" AND bail.is_active = true");
-        query.append(" AND (bail_doc.is_active = true OR bail_doc.id IS NULL)");
-        query.append(" AND (srt.is_active = true OR srt.id IS NULL)");
-        query.append(" AND (surety_doc.is_active = true OR surety_doc.id IS NULL) ");
 
         for (String id : bailIds) {
             preparedStmtList.add(id);
@@ -128,9 +125,6 @@ public class BailQueryBuilder {
 
         // Enforce is_active = true for all tables with LEFT JOIN-safe checks
         query.append(" WHERE bail.is_active = true");
-        query.append(" AND (bail_doc.is_active = true OR bail_doc.id IS NULL)");
-        query.append(" AND (srt.is_active = true OR srt.id IS NULL)");
-        query.append(" AND (surety_doc.is_active = true OR surety_doc.id IS NULL)");
 
         addBailCriteria(criteria.getTenantId(), query, "bail.tenant_id = ?", preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getId(), query, "bail.id = ?", preparedStmtList, preparedStmtArgList);
