@@ -64,7 +64,11 @@ public class ExternalEmailService implements EmailService {
 		mailMessage.setTo(getEmailAddress(email));
 		mailMessage.setSubject(email.getSubject());
 		mailMessage.setText(email.getBody());
-		mailSender.send(mailMessage);
+		try{
+			mailSender.send(mailMessage);
+		} catch (Exception e) {
+			log.error(EXCEPTION_MESSAGE, e);
+		}
 	}
 
 	private void sendHTMLEmail(Email email) {

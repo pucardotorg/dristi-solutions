@@ -55,9 +55,10 @@ public class BailService {
     private final XmlRequestGenerator xmlRequestGenerator;
     private final Configuration configuration;
     private final IndexerUtils indexerUtils;
+    private final UserUtil userUtil;
 
     @Autowired
-    public BailService(BailValidator validator, BailRegistrationEnrichment enrichmentUtil, Producer producer, Configuration config, WorkflowService workflowService, BailRepository bailRepository, EncryptionDecryptionUtil encryptionDecryptionUtil, ObjectMapper objectMapper, UrlShortenerUtil urlShortenerUtil, NotificationService notificationService, FileStoreUtil fileStoreUtil, CaseUtil caseUtil, CipherUtil cipherUtil, ESignUtil eSignUtil, XmlRequestGenerator xmlRequestGenerator, Configuration configuration, IndexerUtils indexerUtils) {
+    public BailService(BailValidator validator, BailRegistrationEnrichment enrichmentUtil, Producer producer, Configuration config, WorkflowService workflowService, BailRepository bailRepository, EncryptionDecryptionUtil encryptionDecryptionUtil, ObjectMapper objectMapper, UrlShortenerUtil urlShortenerUtil, NotificationService notificationService, FileStoreUtil fileStoreUtil, CaseUtil caseUtil, CipherUtil cipherUtil, ESignUtil eSignUtil, XmlRequestGenerator xmlRequestGenerator, Configuration configuration, IndexerUtils indexerUtils, UserUtil userUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.producer = producer;
@@ -75,6 +76,7 @@ public class BailService {
         this.xmlRequestGenerator = xmlRequestGenerator;
         this.configuration = configuration;
         this.indexerUtils = indexerUtils;
+        this.userUtil = userUtil;
     }
 
 
@@ -102,7 +104,7 @@ public class BailService {
         return originalBail;
     }
 
-    private void callNotificationService(BailRequest bailRequest) {
+    private void callNotificationServiceForSMS(BailRequest bailRequest) {
         try {
             Bail bail = bailRequest.getBail();
             String action = bail.getWorkflow().getAction();
@@ -143,6 +145,85 @@ public class BailService {
         }
     }
 
+    private void callNotificationServiceForEmail(BailRequest bailRequest) {
+        try{
+            Bail bail = bailRequest.getBail();
+            String action = bail.getWorkflow().getAction();
+
+            String emailCode = getEmailCode(action);
+            if(StringUtils.isBlank(emailCode)){
+                log.warn("No emailCode found for action: {}", action);
+                return;
+            }
+
+            log.info("Sending emails for emailCode: {}", emailCode);
+            Set<String> emailTopics = Arrays.stream(emailCode.split(","))
+                    .map(String::trim)
+                    .collect(Collectors.toSet());
+            EmailTemplateData emailTemplateData = EmailTemplateData.builder()
+                    .caseNumber(bail.getCaseNumber())
+                    .caseName(bail.getCaseTitle())
+                    .shortenedURL(bail.getShortenedURL())
+                    .tenantId(bail.getTenantId())
+                    .build();
+
+            // Send Email to Sureties
+            if(emailTopics.contains(BAIL_BOND_INITIATED_SURETY)){
+                log.info("Sending email to sureties");
+                if(!ObjectUtils.isEmpty(bail.getSureties())){
+                    bail.getSureties()
+                            .forEach(surety -> { sendEmailToRecipient(bailRequest, emailTemplateData, SURETY, surety.getName(), surety.getEmail());
+                        });
+                }
+            }
+
+            // Send email to litigant
+            if(emailTopics.contains(BAIL_BOND_INITIATED_LITIGANT)){
+                log.info("Sending email to litigant");
+                List<User> users = userUtil.getUserListFromUserUuid(List.of(bail.getLitigantId()));
+                if(users!=null && !users.isEmpty()){
+                    User user = users.get(0);
+                    String litigantName = user.getName();
+                    String litigantEmailId = user.getEmailId();
+                    sendEmailToRecipient(bailRequest, emailTemplateData, LITIGANT, litigantName, litigantEmailId);
+                }
+            }
+
+            // Send email to advocate
+            if(!bail.getAuditDetails().getCreatedBy().equalsIgnoreCase(bail.getLitigantId())
+                    && emailTopics.contains(BAIL_BOND_INITIATED_ADVOCATE)){
+                log.info("Sending email to advocate");
+                List<User> users = userUtil.getUserListFromUserUuid(List.of(bail.getAuditDetails().getCreatedBy()));
+                if(users!=null && !users.isEmpty()){
+                    User user = users.get(0);
+                    boolean isAdvocate = user.getRoles() != null && user.getRoles().stream().anyMatch(role -> role.getCode() != null && role.getCode().contains(ADVOCATE_ROLE));
+                    if(!isAdvocate){
+                        throw new CustomException(INVALID_INPUT, "createdBy does not match the litigantId or any advocate uuid");
+                    }
+                    String advocateName = user.getName();
+                    String advocateEmailId = user.getEmailId();
+                    sendEmailToRecipient(bailRequest, emailTemplateData, ADVOCATE, advocateName, advocateEmailId);
+                }
+            }
+
+        } catch (Exception e) {
+            log.error("Error sending email for bailRequest: {}", bailRequest, e);
+        }
+    }
+
+    private void sendEmailToRecipient(BailRequest bailRequest, EmailTemplateData emailTemplateData, String recipientType, String name, String email) {
+        if (ObjectUtils.isEmpty(name) || ObjectUtils.isEmpty(email)) {
+            log.error("Invalid recipient details");
+            return;
+        }
+        EmailRecipientData recipientData = EmailRecipientData.builder()
+                .type(recipientType)
+                .name(name)
+                .email(email)
+                .build();
+        notificationService.sendEmail(bailRequest, emailTemplateData, recipientData);
+    }
+
     private SmsTemplateData buildSmsTemplateData(BailRequest bailRequest) {
 
         Bail bail = bailRequest.getBail();
@@ -178,6 +259,36 @@ public class BailService {
         return null;
     }
 
+
+  
+    private String getEmailCode(String action){
+        if(action.equalsIgnoreCase(INITIATE_E_SIGN)){
+            return BAIL_BOND_INITIATED_EMAIL;
+        }
+        return null;
+    }
+
+    private Set<String> getFilestoreToDelete(BailRequest bailRequest, Bail existingBail) {
+        Set<String> fileStoreToDeleteIds = new HashSet<>();
+
+        Set<String> newFileStoreIds = new HashSet<>();
+        Set<String> existingFileStoreIds = new HashSet<>();
+
+        // Collect all existing filestore IDs from DB
+        if (existingBail.getDocuments() != null) {
+            for (Document document : existingBail.getDocuments()) {
+                existingFileStoreIds.add(document.getFileStore());
+            }
+        }
+        if (existingBail.getSureties() != null) {
+            for (Surety surety : existingBail.getSureties()) {
+                if (surety.getDocuments() != null) {
+                    for (Document document : surety.getDocuments()) {
+                        existingFileStoreIds.add(document.getFileStore());
+                    }
+                }
+            }
+
     public void mergeDeletedDocumentsIntoPayload(BailRequest bailRequest, Bail existingBail) {
         Bail updatedBail = bailRequest.getBail();
 
@@ -193,6 +304,7 @@ public class BailService {
                             .toList();
 
             updatedBail.getDocuments().addAll(missingBailDocs);
+
         }
         // Surety documents
         if (updatedBail.getSureties() != null && existingBail.getSureties() != null) {
@@ -322,7 +434,8 @@ public class BailService {
             String shortenedUrl = urlShortenerUtil.createShortenedUrl(bail.getTenantId(), bail.getBailId());
             bail.setShortenedURL(shortenedUrl);
             log.info("Calling notification service");
-            callNotificationService(bailRequest);
+            callNotificationServiceForSMS(bailRequest);
+            callNotificationServiceForEmail(bailRequest);
         }
 
         insertBailIndexEntry(bailRequest.getBail());
