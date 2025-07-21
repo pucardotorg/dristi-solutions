@@ -170,16 +170,9 @@ public class BailService {
             if(emailTopics.contains(BAIL_BOND_INITIATED_SURETY)){
                 log.info("Sending email to sureties");
                 if(!ObjectUtils.isEmpty(bail.getSureties())){
-                    bail.getSureties().stream()
-                            .filter(surety -> !ObjectUtils.isEmpty(surety.getName()) && !ObjectUtils.isEmpty(surety.getEmail()))
-                            .forEach(surety -> {
-                        EmailRecipientData recipientData = EmailRecipientData.builder()
-                                .type(SURETY)
-                                .name(surety.getName())
-                                .email(surety.getEmail())
-                                .build();
-                        notificationService.sendEmail(bailRequest, emailTemplateData, recipientData);
-                    });
+                    bail.getSureties()
+                            .forEach(surety -> { sendEmailToRecipient(bailRequest, emailTemplateData, SURETY, surety.getName(), surety.getEmail());
+                        });
                 }
             }
 
@@ -191,15 +184,8 @@ public class BailService {
                     User user = users.get(0);
                     String litigantName = user.getName();
                     String litigantEmailId = user.getEmailId();
-                    if(!ObjectUtils.isEmpty(litigantName) && !ObjectUtils.isEmpty(litigantEmailId)){
-                        EmailRecipientData recipientData = EmailRecipientData.builder()
-                                .type(LITIGANT)
-                                .name(litigantName)
-                                .email(litigantEmailId)
-                                .build();
-                        notificationService.sendEmail(bailRequest, emailTemplateData, recipientData);
-                    }
-                    }
+                    sendEmailToRecipient(bailRequest, emailTemplateData, LITIGANT, litigantName, litigantEmailId);
+                }
             }
 
             // Send email to advocate
@@ -209,26 +195,32 @@ public class BailService {
                 List<User> users = userUtil.getUserListFromUserUuid(List.of(bail.getAuditDetails().getCreatedBy()));
                 if(users!=null && !users.isEmpty()){
                     User user = users.get(0);
-                    boolean isAdvocate = user.getRoles().stream().anyMatch(role -> role.getCode().contains(ADVOCATE_ROLE));
+                    boolean isAdvocate = user.getRoles() != null && user.getRoles().stream().anyMatch(role -> role.getCode() != null && role.getCode().contains(ADVOCATE_ROLE));
                     if(!isAdvocate){
                         throw new CustomException(INVALID_INPUT, "createdBy does not match the litigantId or any advocate uuid");
                     }
                     String advocateName = user.getName();
                     String advocateEmailId = user.getEmailId();
-                    if(!ObjectUtils.isEmpty(advocateName) && !ObjectUtils.isEmpty(advocateEmailId)){
-                        EmailRecipientData recipientData = EmailRecipientData.builder()
-                                .type(ADVOCATE)
-                                .name(advocateName)
-                                .email(advocateEmailId)
-                                .build();
-                        notificationService.sendEmail(bailRequest, emailTemplateData, recipientData);
-                    }
+                    sendEmailToRecipient(bailRequest, emailTemplateData, ADVOCATE, advocateName, advocateEmailId);
                 }
             }
 
         } catch (Exception e) {
             log.error("Error sending email for bailRequest: {}", bailRequest, e);
         }
+    }
+
+    private void sendEmailToRecipient(BailRequest bailRequest, EmailTemplateData emailTemplateData, String recipientType, String name, String email) {
+        if (ObjectUtils.isEmpty(name) || ObjectUtils.isEmpty(email)) {
+            log.error("Invalid recipient details");
+            return;
+        }
+        EmailRecipientData recipientData = EmailRecipientData.builder()
+                .type(recipientType)
+                .name(name)
+                .email(email)
+                .build();
+        notificationService.sendEmail(bailRequest, emailTemplateData, recipientData);
     }
 
     private SmsTemplateData buildSmsTemplateData(BailRequest bailRequest) {
