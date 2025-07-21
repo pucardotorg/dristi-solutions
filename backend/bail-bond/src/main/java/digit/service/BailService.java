@@ -312,11 +312,6 @@ public class BailService {
             log.info("Deleted files for ids: {}", fileStoreIdsToDelete);
         }
 
-        Bail originalBail = bailRequest.getBail();
-
-        Bail encryptedBail = encryptionDecryptionUtil.encryptObject(originalBail, config.getBailEncrypt(), Bail.class);
-        bailRequest.setBail(encryptedBail);
-
         if (EDIT.equalsIgnoreCase(bailRequest.getBail().getWorkflow().getAction())) {
             expireTheShorteningUrl(bailRequest);
         }
@@ -326,22 +321,44 @@ public class BailService {
             Bail bail = bailRequest.getBail();
             String shortenedUrl = urlShortenerUtil.createShortenedUrl(bail.getTenantId(), bail.getBailId());
             bail.setShortenedURL(shortenedUrl);
-            originalBail.setShortenedURL(shortenedUrl);
+            bail.setShortenedURL(shortenedUrl);
             log.info("Calling notification service");
             callNotificationService(bailRequest);
         }
 
-        insertBailIndexEntry(originalBail);
+        insertBailIndexEntry(bailRequest.getBail());
 
-        producer.push(config.getBailUpdateTopic(), bailRequest);
+        Bail originalBail = bailRequest.getBail();
 
-        // Remove inactive sureties from originalBail before returning it
+       // Filter out inactive bail documents
+        if (originalBail.getDocuments() != null) {
+            List<Document> activeBailDocs = originalBail.getDocuments().stream()
+                    .filter(doc -> doc.getIsActive() == null || doc.getIsActive())
+                    .toList();
+            originalBail.setDocuments(activeBailDocs);
+        }
+
+        // Filter out inactive sureties and their inactive documents
         if (originalBail.getSureties() != null) {
             List<Surety> activeSureties = originalBail.getSureties().stream()
                     .filter(surety -> surety.getIsActive() == null || surety.getIsActive())
+                    .peek(surety -> {
+                        // Filter inactive documents in each surety
+                        if (surety.getDocuments() != null) {
+                            List<Document> activeSuretyDocs = surety.getDocuments().stream()
+                                    .filter(doc -> doc.getIsActive() == null || doc.getIsActive())
+                                    .toList();
+                            surety.setDocuments(activeSuretyDocs);
+                        }
+                    })
                     .toList();
             originalBail.setSureties(activeSureties);
         }
+
+        Bail encryptedBail = encryptionDecryptionUtil.encryptObject(originalBail, config.getBailEncrypt(), Bail.class);
+        bailRequest.setBail(encryptedBail);
+        producer.push(config.getBailUpdateTopic(), bailRequest);
+
         return originalBail;
     }
 
@@ -529,6 +546,7 @@ public class BailService {
                         throw new CustomException(EMPTY_BAILS_ERROR, "empty bails found for the given criteria");
                     }
                     Bail bail = bailList.get(0);
+                    bail = encryptionDecryptionUtil.decryptObject(bail, config.getBailDecrypt(), Bail.class, RequestInfo.builder().userInfo(User.builder().build()).build());
 
                     // Update document with signed PDF
                     MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedBailData, BAIL_BOND_PDF_NAME);
