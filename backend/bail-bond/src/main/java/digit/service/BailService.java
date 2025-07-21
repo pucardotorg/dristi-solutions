@@ -321,7 +321,6 @@ public class BailService {
             Bail bail = bailRequest.getBail();
             String shortenedUrl = urlShortenerUtil.createShortenedUrl(bail.getTenantId(), bail.getBailId());
             bail.setShortenedURL(shortenedUrl);
-            bail.setShortenedURL(shortenedUrl);
             log.info("Calling notification service");
             callNotificationService(bailRequest);
         }
