@@ -110,12 +110,7 @@ function UploadSignatureModal({
       {showDownloadText && (
         <div className="donwload-submission" style={{ display: "flex", alignItems: "center" }}>
           <h2>{t("WANT_TO_UNSIGNED_DOWNLOAD")}</h2>
-          <AuthenticatedLink
-            uri={uri}
-            t={t}
-            displayFilename={"CLICK_HERE"}
-            pdf={true}
-          />
+          <AuthenticatedLink uri={uri} t={t} displayFilename={"CLICK_HERE"} pdf={true} />
         </div>
       )}
     </Modal>
