@@ -259,6 +259,12 @@ public class MinioRepository implements CloudFilesManager {
 					fileLocation.getFileName().length());
 
 			try {
+				if (f.exists()) {
+					boolean deleted = f.delete();
+					if (!deleted) {
+						log.warn("Failed to delete existing destination file: {}", f.getAbsolutePath());
+					}
+				}
 				minioClient.getObject(minioConfig.getBucketName(), fileName, f.getName());
 			} catch (InvalidKeyException | ErrorResponseException |
                      InsufficientDataException | InternalException | InvalidBucketNameException |
