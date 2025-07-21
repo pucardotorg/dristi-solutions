@@ -345,7 +345,7 @@ async function processBailDocuments(
       },
       {
         sortBy: section.sorton,
-        order: "ASC",
+        order: "asc",
         limit: 100,
       }
     );
@@ -436,9 +436,11 @@ async function processBailDocuments(
                     : `COUNSEL FOR THE COMPLAINANT - ${docketNameOfComplainants}`;
               }
 
-              const bailPosition =
-                indexCopy?.lineItems?.length === 0 ? "1" : "2";
-
+              const bailPosition = !indexCopy.sections.find(
+                (section) => section.name === "baildocument"
+              )?.lineItems?.length
+                ? "1"
+                : "2";
               const documentPath = `${dynamicSectionNumber}.${bailPosition}.${
                 index + 1
               }.1 Bond and Other Documents in ${dynamicSectionNumber}.${bailPosition}.${
