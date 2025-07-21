@@ -155,18 +155,58 @@ export const Request = async ({
   return returnData;
 };
 
+// Generate a unique request ID for tracking
+const generateRequestId = () => {
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+};
+
+// Get rate limit token if available
+const getRateLimitToken = () => {
+  return window?.Digit?.Utils?.getRateLimitToken?.();
+};
+
+// Configure secure headers for all requests
+const getSecureHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Accept': window?.globalConfigs?.getConfig("ENABLE_SINGLEINSTANCE") ? "application/pdf,application/json" : "application/pdf",
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Content-Security-Policy': "default-src 'self'",
+  'X-XSS-Protection': '1; mode=block',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  'Cache-Control': 'no-store, no-cache, must-revalidate',
+  'Pragma': 'no-cache',
+  'X-Permitted-Cross-Domain-Policies': 'none',
+  'Referrer-Policy': 'same-origin',
+  'Feature-Policy': "camera 'none'; microphone 'none'; geolocation 'none'",
+  'X-DNS-Prefetch-Control': 'off',
+  'X-Request-ID': generateRequestId()
+});
+
 export const ServiceRequest = async ({
   serviceName,
   method = "POST",
   url,
   data = {},
-  headers = {},
+  headers: customHeaders = {},
   useCache = false,
   params = {},
   auth,
   reqTimestamp,
   userService,
 }) => {
+  // Merge secure headers with custom headers
+  const headers = {
+    ...getSecureHeaders(),
+    ...customHeaders
+  };
+
+  // Add rate limiting token if available
+  const rateLimitToken = getRateLimitToken();
+  if (rateLimitToken) {
+    headers['X-Rate-Limit-Token'] = rateLimitToken;
+  }
+
   const preHookName = `${serviceName}Pre`;
   const postHookName = `${serviceName}Post`;
 
@@ -177,7 +217,20 @@ export const ServiceRequest = async ({
     reqParams = preHookRes.params;
     reqData = preHookRes.data;
   }
-  const resData = await Request({ method, url, data: reqData, headers, useCache, params: reqParams, auth, userService, reqTimestamp });
+  const resData = await Request({
+    url,
+    method,
+    data: reqData,
+    headers,
+    useCache,
+    params: reqParams,
+    auth,
+    reqTimestamp,
+    userService,
+    withCredentials: true,
+    timeout: 30000,
+    validateStatus: status => status >= 200 && status < 300
+  });
 
   if (window[postHookName] && typeof window[postHookName] === "function") {
     return await window[postHookName](resData);
