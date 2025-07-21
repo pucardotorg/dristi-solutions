@@ -436,14 +436,15 @@ async function processBailDocuments(
                     : `COUNSEL FOR THE COMPLAINANT - ${docketNameOfComplainants}`;
               }
 
-              const bailPosition =
-                indexCopy?.lineItems?.length === 0 ? "1" : "2";
+              const bailPosition = !indexCopy?.lineItems?.length ? "1" : "2";
 
               const documentPath = `${dynamicSectionNumber}.${bailPosition}.${
                 index + 1
               }.1 Bond and Other Documents in ${dynamicSectionNumber}.${bailPosition}.${
                 index + 1
-              } ${bailBond.bailType} in ${dynamicSectionNumber}.2 ${
+              } ${
+                bailBond.bailType
+              } in ${dynamicSectionNumber}.${bailPosition} ${
                 section.Items
               } in ${dynamicSectionNumber} ${section.section}`;
 
