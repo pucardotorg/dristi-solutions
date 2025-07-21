@@ -10,7 +10,7 @@ import ShowAllTranscriptModal from "../../../components/ShowAllTranscriptModal";
 import { HearingWorkflowState } from "@egovernments/digit-ui-module-orders/src/utils/hearingWorkflow";
 import NextHearingCard from "./NextHearingCard";
 
-const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails, showNoticeProcessModal = true }) => {
+const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails, showNoticeProcessModal = true, isBailBondTaskExists = false }) => {
   const { t } = useTranslation();
   //   const filingNumber = caseData.filingNumber;
   const history = useHistory();
@@ -152,6 +152,7 @@ const CaseOverviewV2 = ({ caseData, filingNumber, currentHearingId, caseDetails,
           filingNumber={filingNumber}
           inCase={true}
           tableView={true}
+          needRefresh={isBailBondTaskExists}
         />
       </div>
       {showNoticeProcessModal && (

@@ -2,7 +2,7 @@ import React from "react";
 import { FactCheckIcon, FactCrossIcon } from "../icons/svgIndex";
 import ReactTooltip from "react-tooltip";
 
-export const Evidence = ({ rowData, colData, value = "", showAsHeading = false, t, userRoles }) => {
+export const Evidence = ({ rowData, colData, value = "", showAsHeading = false, t, userRoles, isBail = false }) => {
   const getDate = (value) => {
     const date = new Date(value);
     const day = date.getDate().toString().padStart(2, "0");
@@ -16,23 +16,24 @@ export const Evidence = ({ rowData, colData, value = "", showAsHeading = false, 
     {
       status: rowData.workflow?.action,
       details: {
-        applicationType: rowData.artifactType,
-        applicationSentOn: getDate(parseInt(rowData.auditdetails.createdTime)),
-        sender: rowData.owner,
-        additionalDetails: rowData.additionalDetails,
-        applicationId: rowData.id,
-        auditDetails: rowData.auditDetails,
+        applicationType: rowData?.artifactType,
+        applicationSentOn: getDate(parseInt(rowData?.auditdetails?.createdTime)),
+        sender: rowData?.owner,
+        additionalDetails: rowData?.additionalDetails,
+        applicationId: rowData?.id,
+        auditDetails: rowData?.auditDetails,
       },
       applicationContent: {
-        tenantId: rowData.tenantId,
-        fileStoreId: rowData.file?.fileStore,
-        id: rowData.file?.id,
-        documentType: rowData.file?.documentType,
-        documentUid: rowData.file?.documentUid,
-        additionalDetails: rowData.file?.additionalDetails,
+        tenantId: rowData?.tenantId,
+        fileStoreId: rowData?.file?.fileStore,
+        id: rowData?.file?.id,
+        documentType: rowData?.file?.documentType,
+        documentUid: rowData?.file?.documentUid,
+        additionalDetails: rowData?.file?.additionalDetails,
       },
-      comments: rowData.comments,
+      comments: rowData?.comments,
       artifactList: rowData,
+      isBail: isBail,
     },
   ];
 

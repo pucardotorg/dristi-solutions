@@ -381,6 +381,7 @@ public class InboxServiceV2 {
         populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchScheduleHearing(), inboxQueryConfiguration, response::setScheduleHearingData);
         populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchViewApplication(),inboxQueryConfiguration, response::setViewApplicationData);
         populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchRegisterCases(), inboxQueryConfiguration, response::setRegisterCasesData);
+        populateActionCategoryData(searchRequest, indexSearchCriteria.getSearchBailBonds(), inboxQueryConfiguration, response::setBailBondData);
 
         return response;
     }

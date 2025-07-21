@@ -540,6 +540,39 @@ async function search_multiple_cases(criteria, tenantId, requestinfo) {
   }
 }
 
+async function search_bailBond(tenantId, bailBondId, requestinfo) {
+  return await axios({
+    method: "post",
+    url: URL.resolve(config.host.bailBond, config.paths.bail_bond_search),
+    data: {
+      RequestInfo: requestinfo,
+      tenantId: tenantId,
+      criteria: {
+        tenantId: tenantId,
+        bailId: bailBondId,
+      },
+    },
+  });
+}
+
+async function search_bailBond_v2(tenantId, requestinfo, criteria, pagination) {
+  try {
+    return await axios({
+      method: "post",
+      url: URL.resolve(config.host.bailBond, config.paths.bail_bond_search),
+      data: {
+        RequestInfo: requestinfo,
+        criteria,
+        pagination,
+        tenantId,
+      },
+    });
+  } catch (error) {
+    logger.error(`Error in ${config.paths.task_search}: ${error.message}`);
+    throw error;
+  }
+}
+
 module.exports = {
   pool,
   create_pdf,
@@ -568,4 +601,6 @@ module.exports = {
   search_application_v2,
   search_order_v2,
   search_evidence_v2,
+  search_bailBond,
+  search_bailBond_v2,
 };

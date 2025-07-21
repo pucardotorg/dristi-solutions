@@ -238,7 +238,6 @@ public class PaymentService {
                 log.error("No AuthSek found for authToken: {}", treasuryParams.getAuthToken());
                 throw new CustomException(AUTH_SEK_NOT_FOUND, "No AuthSek found for the provided authToken");
             }
-
             AuthSek authSek = optionalAuthSek.get();
             String decryptedData;
             if(config.isMockEnabled() && treasuryParams.isMockEnabled()) {

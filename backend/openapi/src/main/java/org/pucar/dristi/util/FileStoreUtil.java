@@ -27,12 +27,19 @@ public class FileStoreUtil {
         this.restTemplate = restTemplate;
         this.configs = configs;
     }
-    public ResponseEntity<Resource> getFilesByFileStore(String fileStoreId, String tenantId) {
+    public ResponseEntity<Resource> getFilesByFileStore(String fileStoreId, String tenantId, String moduleName) {
         if (fileStoreId == null || fileStoreId.isEmpty()) {
             log.warn("No file store IDs provided");
             throw new CustomException("INVALID_FILE_STORE_ID", "File store ID cannot be null or empty");
         }
         String url = configs.getFileStoreHost() + configs.getFileStoreGetEndPoint() + "?tenantId=" + tenantId + "&fileStoreId="+fileStoreId;
+        if (moduleName != null && !moduleName.isEmpty()) {
+            final String SIGNED_SUFFIX = ",signed"; // consider moving to a constant or config
+            if (moduleName.contains(SIGNED_SUFFIX.replace(",", ""))) {
+                log.warn("Module name already contains ‘signed’: {}", moduleName);
+            }
+            url += "&module=" + moduleName + SIGNED_SUFFIX;
+        }
         try {
             return restTemplate.getForEntity(url, Resource.class);
         } catch (CustomException e) {

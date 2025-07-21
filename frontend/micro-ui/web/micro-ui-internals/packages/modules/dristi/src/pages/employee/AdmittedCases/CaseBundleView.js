@@ -16,6 +16,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     cheque: false,
     affidavit: false,
     "pending-application": false,
+    bail: false,
   });
   const reqEvidenceUpdate = {
     url: Urls.dristi.evidenceUpdate,
@@ -31,7 +32,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const [selectedDocument, setSelectedDocument] = useState("complaint");
   const [selectedFileStoreId, setSelectedFileStoreId] = useState(null);
   const [disposedApplicationChildren, setDisposedApplicationChildren] = useState([]);
-  const [bailApplicationChildren, setBailApplicationChildren] = useState([]);
+  const [bailChildren, setBailChildren] = useState([]);
   const [processChildren, setProcessChildren] = useState([]);
   const [genericTaskList, setGenericTaskList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -442,6 +443,27 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
 
   const bailApplicationsList = useMemo(() => bailApplicationsData?.applicationList, [bailApplicationsData]);
 
+  const { data: bailBondData, isLoading: isBailBondLoading } = Digit.Hooks.submissions.useSearchBailBondService(
+    {
+      criteria: {
+        tenantId,
+        courtId: courtId,
+        filingNumber: filingNumber,
+        status: ["COMPLETED"],
+      },
+      pagination: {
+        sortBy: "bailCreatedTime",
+        order: "asc",
+        limit: 100,
+      },
+    },
+    {},
+    filingNumber + "bailBondData",
+    Boolean(filingNumber)
+  );
+
+  const bailBondList = useMemo(() => bailBondData?.bails, [bailBondData]);
+
   useEffect(() => {
     const fetchProcessData = async () => {
       try {
@@ -542,7 +564,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     };
 
     fetchProcessData();
-  }, [caseDetails, t, tenantId]);
+  }, [caseDetails, t, tenantId, courtId, filingNumber]);
 
   const productionQueries = useQueries(
     orderList?.map((order) => ({
@@ -987,141 +1009,217 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   }, [disposedApplicationList, courtId, filingNumber, tenantId, t]);
 
   useEffect(() => {
-    const buildBailApplicationStructure = async () => {
-      if (!bailApplicationsList || bailApplicationsList.length === 0) return;
-
+    const buildBailStructure = async () => {
       setLoading(true);
-      const children = await Promise.all(
-        bailApplicationsList?.map(async (application, index) => {
-          const signed = [];
-          const otherDocument = [];
+      let applicationChildren = [];
+      if (bailApplicationsList && bailApplicationsList?.length !== 0) {
+        applicationChildren = await Promise.all(
+          bailApplicationsList?.map(async (application, index) => {
+            const signed = [];
+            const otherDocument = [];
 
-          application?.documents?.forEach((doc) => {
-            if (doc?.fileStore) {
-              if (doc?.documentType === "SIGNED") signed?.push(doc?.fileStore);
-              else otherDocument?.push(doc);
-            }
-          });
-
-          const signedNode = {
-            id: `${application?.applicationNumber}-signed`,
-            title: "APPLICATION_PDF_HEADING",
-            hasChildren: false,
-            fileStoreId: signed[0] || null,
-          };
-
-          const otherDocsChildren = otherDocument?.map((doc, i) => ({
-            id: `${application?.applicationNumber}-other-${i}`,
-            title: doc?.additionalDetails?.documentTitle || doc?.additionalDetails?.documentType || doc?.additionalDetails?.name?.split(".")[0],
-            fileStoreId: doc?.fileStore,
-            hasChildren: false,
-          }));
-
-          const otherDocsNode = {
-            id: `${application?.applicationNumber}-others`,
-            title: "OTHER_DOCUMENTS_HEADING",
-            hasChildren: otherDocsChildren?.length > 0,
-            children: otherDocsChildren,
-          };
-
-          let submitBailNode = null;
-          try {
-            const resOrder = await DRISTIService.searchOrders({
-              criteria: {
-                courtId,
-                filingNumber,
-                applicationNumber: application?.applicationNumber,
-                status: "PUBLISHED",
-                orderType: "SET_BAIL_TERMS",
-                tenantId,
-              },
+            application?.documents?.forEach((doc) => {
+              if (doc?.fileStore) {
+                if (doc?.documentType === "SIGNED") signed?.push(doc?.fileStore);
+                else otherDocument?.push(doc);
+              }
             });
 
-            const orderList = resOrder?.list || [];
+            const signedNode = {
+              id: `${application?.applicationNumber}-signed`,
+              title: "APPLICATION_PDF_HEADING",
+              hasChildren: false,
+              fileStoreId: signed[0] || null,
+            };
 
-            if (orderList?.length > 0) {
-              const resSubmissions = await DRISTIService.searchSubmissions({
+            const otherDocsChildren = otherDocument?.map((doc, i) => ({
+              id: `${application?.applicationNumber}-other-${i}`,
+              title: doc?.additionalDetails?.documentTitle || doc?.additionalDetails?.documentType || doc?.additionalDetails?.name?.split(".")[0],
+              fileStoreId: doc?.fileStore,
+              hasChildren: false,
+            }));
+
+            const otherDocsNode = {
+              id: `${application?.applicationNumber}-others`,
+              title: "OTHER_DOCUMENTS_HEADING",
+              hasChildren: otherDocsChildren?.length > 0,
+              children: otherDocsChildren,
+            };
+
+            let submitBailNode = null;
+            try {
+              const resOrder = await DRISTIService.searchOrders({
                 criteria: {
                   courtId,
                   filingNumber,
-                  referenceId: orderList[0]?.id,
-                  applicationType: "SUBMIT_BAIL_DOCUMENTS",
-                  status: "COMPLETED",
+                  applicationNumber: application?.applicationNumber,
+                  status: "PUBLISHED",
+                  orderType: "SET_BAIL_TERMS",
                   tenantId,
                 },
               });
 
-              const submitApps = resSubmissions?.applicationList || [];
+              const orderList = resOrder?.list || [];
 
-              if (submitApps.length > 0) {
-                const docs = submitApps[0]?.documents || [];
-                const submitSigned = [];
-                const submitOtherDocument = [];
-
-                docs.forEach((doc) => {
-                  if (doc?.fileStore) {
-                    if (doc?.documentType === "SIGNED") submitSigned?.push(doc?.fileStore);
-                    else submitOtherDocument?.push(doc);
-                  }
+              if (orderList?.length > 0) {
+                const resSubmissions = await DRISTIService.searchSubmissions({
+                  criteria: {
+                    courtId,
+                    filingNumber,
+                    referenceId: orderList[0]?.id,
+                    applicationType: "SUBMIT_BAIL_DOCUMENTS",
+                    status: "COMPLETED",
+                    tenantId,
+                  },
                 });
 
-                const submitChildren = [];
+                const submitApps = resSubmissions?.applicationList || [];
 
-                submitSigned?.forEach((fsId, i) =>
-                  submitChildren?.push({
-                    id: `${application?.applicationNumber}-submit-signed-${i}`,
-                    title: "APPLICATION_PDF_HEADING",
-                    fileStoreId: fsId,
-                    hasChildren: false,
-                  })
-                );
+                if (submitApps.length > 0) {
+                  const docs = submitApps[0]?.documents || [];
+                  const submitSigned = [];
+                  const submitOtherDocument = [];
 
-                if (submitOtherDocument.length > 0) {
-                  const othersChildren = submitOtherDocument?.map((doc, j) => ({
-                    id: `${application?.applicationNumber}-submit-other-${j}`,
-                    title:
-                      doc?.additionalDetails?.documentTitle || doc?.additionalDetails?.documentType || doc?.additionalDetails?.name?.split(".")[0],
-                    fileStoreId: doc?.fileStore,
-                    hasChildren: false,
-                  }));
-
-                  submitChildren.push({
-                    id: `${application?.applicationNumber}-submit-other-group`,
-                    title: "OTHER_DOCUMENTS_HEADING",
-                    hasChildren: true,
-                    children: othersChildren,
+                  docs.forEach((doc) => {
+                    if (doc?.fileStore) {
+                      if (doc?.documentType === "SIGNED") submitSigned?.push(doc?.fileStore);
+                      else submitOtherDocument?.push(doc);
+                    }
                   });
+
+                  const submitChildren = [];
+
+                  submitSigned?.forEach((fsId, i) =>
+                    submitChildren?.push({
+                      id: `${application?.applicationNumber}-submit-signed-${i}`,
+                      title: "APPLICATION_PDF_HEADING",
+                      fileStoreId: fsId,
+                      hasChildren: false,
+                    })
+                  );
+
+                  if (submitOtherDocument.length > 0) {
+                    const othersChildren = submitOtherDocument?.map((doc, j) => ({
+                      id: `${application?.applicationNumber}-submit-other-${j}`,
+                      title:
+                        doc?.additionalDetails?.documentTitle || doc?.additionalDetails?.documentType || doc?.additionalDetails?.name?.split(".")[0],
+                      fileStoreId: doc?.fileStore,
+                      hasChildren: false,
+                    }));
+
+                    submitChildren.push({
+                      id: `${application?.applicationNumber}-submit-other-group`,
+                      title: "OTHER_DOCUMENTS_HEADING",
+                      hasChildren: true,
+                      children: othersChildren,
+                    });
+                  }
+
+                  submitBailNode = {
+                    id: `${application?.applicationNumber}-submit-bail`,
+                    title: submitApps[0]?.applicationType,
+                    hasChildren: true,
+                    children: submitChildren,
+                  };
                 }
-
-                submitBailNode = {
-                  id: `${application?.applicationNumber}-submit-bail`,
-                  title: submitApps[0]?.applicationType,
-                  hasChildren: true,
-                  children: submitChildren,
-                };
               }
+            } catch (e) {
+              console.error("Error fetching Submit Bail Documents for", application?.applicationNumber, e);
             }
-          } catch (e) {
-            console.error("Error fetching Submit Bail Documents for", application?.applicationNumber, e);
-          }
 
-          const appChildren = [signedNode, otherDocsNode];
-          if (submitBailNode) appChildren?.push(submitBailNode);
+            const appChildren = [signedNode, otherDocsNode];
+            if (submitBailNode) appChildren?.push(submitBailNode);
 
-          return {
-            id: application?.applicationNumber,
-            title: t(application?.applicationType) + " " + (index + 1),
-            hasChildren: appChildren?.length > 0,
-            children: appChildren,
-          };
-        })
-      );
+            return {
+              id: application?.applicationNumber,
+              title: t(application?.applicationType) + " " + (index + 1),
+              hasChildren: appChildren?.length > 0,
+              children: appChildren,
+            };
+          })
+        );
+      }
+
+      let bailBondChildren = [];
+      if (bailBondList && bailBondList?.length !== 0) {
+        bailBondChildren = await Promise.all(
+          bailBondList?.map(async (bond, index) => {
+            const signed = [];
+            const otherDocument = [];
+
+            bond?.documents?.forEach((doc) => {
+              if (doc?.fileStore) {
+                if (doc?.documentType === "SIGNED") signed?.push(doc?.fileStore);
+                // else otherDocument?.push(doc);
+              }
+            });
+
+            const signedNode = {
+              id: `${bond?.bailId}-signed`,
+              title: "BOND_PDF_HEADING",
+              hasChildren: false,
+              fileStoreId: signed[0] || null,
+            };
+
+            bond?.sureties?.forEach((surety, i) => {
+              surety?.documents?.forEach((doc) => {
+                otherDocument?.push(doc);
+              });
+            });
+
+            const otherDocsChildren = otherDocument?.map((doc, i) => ({
+              id: `${bond?.bailId}-other-${i}`,
+              title: doc?.additionalDetails?.documentTitle || doc?.additionalDetails?.documentType || doc?.additionalDetails?.name?.split(".")[0],
+              fileStoreId: doc?.fileStore,
+              hasChildren: false,
+            }));
+
+            const otherDocsNode = {
+              id: `${bond?.bailId}-others`,
+              title: "OTHER_DOCUMENTS_HEADING",
+              hasChildren: otherDocsChildren?.length > 0,
+              children: otherDocsChildren,
+            };
+
+            const appChildren = [signedNode];
+
+            if (otherDocsNode?.hasChildren) appChildren?.push(otherDocsNode);
+
+            return {
+              id: bond?.bailId,
+              title: bond?.bailType,
+              hasChildren: appChildren?.length > 0,
+              children: appChildren,
+            };
+          })
+        );
+      }
+
+      const result = [];
+      if (applicationChildren?.length > 0) {
+        result.push({
+          id: "bail-applications",
+          title: "BAIL_APPLICATIONS_PDF",
+          hasChildren: true,
+          children: applicationChildren,
+        });
+      }
+
+      if (bailBondChildren?.length > 0) {
+        result.push({
+          id: "bail-bonds",
+          title: "BAIL_BONDS_PDF",
+          hasChildren: true,
+          children: bailBondChildren,
+        });
+      }
+
       setLoading(false);
-      setBailApplicationChildren(children);
+      setBailChildren(result);
     };
 
-    buildBailApplicationStructure();
-  }, [bailApplicationsList, tenantId, courtId, filingNumber, t]);
+    buildBailStructure();
+  }, [bailApplicationsList, bailBondList, tenantId, courtId, filingNumber, t]);
 
   useEffect(() => {
     const getOrder = async () => {
@@ -1351,10 +1449,10 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         children: disposedApplicationChildren,
       },
       {
-        id: "bail-applications",
-        title: "BAIL_APPLICATIONS_PDF",
-        hasChildren: bailApplicationsList?.length > 0,
-        children: bailApplicationChildren,
+        id: "bail",
+        title: "BAIL_PDF",
+        hasChildren: bailApplicationsList?.length > 0 || bailBondList?.length > 0,
+        children: bailChildren,
       },
       {
         id: "processes",
@@ -1436,7 +1534,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     isHearingLoading ||
     isPendingReviewApplicationLoading ||
     isPendingApprovalApplicationLoading ||
-    isMandatoryOrdersLoading
+    isMandatoryOrdersLoading ||
+    isBailBondLoading
   ) {
     return (
       <div style={{ width: "100%", paddingTop: "50px" }}>

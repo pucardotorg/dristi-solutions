@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Import;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 
 @Component
 @Data
@@ -119,6 +121,12 @@ public class Configuration {
     @Value("${egov.mdms.search.endpoint}")
     private String mdmsEndPoint;
 
+    @Value("${egov.mdms.v2.search.endpoint}")
+    private String mdmsV2EndPoint;
+
+    @Value("${egov.mdms.update.endpoint}")
+    private String mdmsUpdateEndPoint;
+
     //SMSNotification
     @Value("${egov.sms.notification.topic}")
     private String smsNotificationTopic;
@@ -146,6 +154,18 @@ public class Configuration {
     @Value("${drishti.case.endpoint}")
     private String caseEndpoint;
 
+    @Value("${drishti.case.count.endpoint}")
+    private String caseCountEndpoint;
+
+    @Value("${case.statuses.after.payment}")
+    private List<String> caseStatusesAfterPayment;
+
+    @Value("${case.statuses.after.registration}")
+    private List<String> caseStatusesAfterRegistration;
+
+    @Value("${case.disposed.statuses}")
+    private List<String> caseStatusesDisposed;
+
     @Value("${drishti.opt-out.selection.limit}")
     private Long optOutLimit;
 
@@ -167,6 +187,9 @@ public class Configuration {
 
     @Value("${drishti.hearing.update.endpoint}")
     private String hearingsUpdateEndPoint;
+
+    @Value("${drishti.no.of.days.to.hearing.endpoint}")
+    private String daysToHearingEndPoint;
 
     @Value("${app.zone.id}")
     private String zoneId;
@@ -264,6 +287,9 @@ public class Configuration {
     @Value("${hearing.retry.delay.ms:60000}")
     private Long hearingRetryDelayMs;
 
+    // landing page mdms schema code
+    @Value("${egov.landing.page.metrics.schema.code}")
+    private String landingPageMetricsSchemaCode;
 
     @Value("${egov.indexer.es.username}")
     private String esUsername;

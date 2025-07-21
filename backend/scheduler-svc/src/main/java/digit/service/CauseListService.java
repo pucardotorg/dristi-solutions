@@ -3,6 +3,7 @@ package digit.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 import digit.config.Configuration;
 import digit.config.ServiceConstants;
 import digit.kafka.producer.Producer;
@@ -23,8 +24,12 @@ import org.egov.common.models.individual.Individual;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.client.ResourceAccessException;
 
 import java.time.*;
 import java.time.format.DateTimeFormatter;
@@ -227,6 +232,7 @@ public class CauseListService {
         log.info("operation = getHearingTypePriority, result = IN_PROGRESS");
         try {
             List<MdmsHearing> mdmsHearings = getHearingDataFromMdms();
+
             for(CauseList cause: causeLists){
                 Optional<MdmsHearing> optionalHearing = mdmsHearings.stream().filter(a -> a.getHearingType()
                         .equalsIgnoreCase(cause.getHearingType())).findFirst();

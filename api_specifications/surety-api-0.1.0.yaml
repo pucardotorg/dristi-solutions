@@ -1,0 +1,140 @@
+openapi: 3.0.0
+info:
+  version: 0.1.0
+  title: Surety API
+  description: API for managing sureties in the DRISTI system.
+paths:
+  /v1/_create:
+    post:
+      summary: Create a new surety.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuretyRequest'
+      responses:
+        '200':
+          description: Surety created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuretyResponse'
+  /v1/_update:
+    post:
+      summary: Update an existing surety.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuretyRequest'
+      responses:
+        '200':
+          description: Surety updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuretyResponse'
+  /v1/_search:
+    post:
+      summary: Search for sureties.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuretySearchRequest'
+      responses:
+        '200':
+          description: Search results.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuretySearchResponse'
+components:
+  schemas:
+    Surety:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the surety.
+        tenantId:
+          type: string
+          description: Tenant ID of the surety.
+        name:
+          type: string
+          description: Name of the surety.
+        fatherName:
+          type: string
+          description: Father name of the surety.
+        caseId:
+          type: string
+          description: Identifier for the case.
+        bailId:
+          type: string
+          description: Identifier for the bail.
+        mobileNumber:
+          type: string
+          description: Mobile number of the surety.
+        address:
+          type: object
+          description: Address of the surety.
+        email:
+          type: string
+          description: Email of the surety.
+        hasSigned:
+          type: boolean
+          description: Whether the surety has signed or not.
+        documents:
+          type: array
+          items:
+            $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Document'
+        isActive:
+          type: boolean
+          description: Whether the surety is active or not.
+        additionalDetails:
+          type: object
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+      required:
+        - tenantId
+        - name
+        - mobileNumber
+    SuretyRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/egov-services/master/docs/common-contract/v1/contract.json#/components/schemas/RequestInfo'
+        surety:
+          $ref: '#/components/schemas/Surety'
+    SuretyResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/egov-services/master/docs/common-contract/v1/contract.json#/components/schemas/ResponseInfo'
+        sureties:
+          type: array
+          items:
+            $ref: '#/components/schemas/Surety'
+    SuretySearchRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/egov-services/master/docs/common-contract/v1/contract.json#/components/schemas/RequestInfo'
+        criteria:
+          type: object
+          properties:
+            tenantId:
+              type: string
+            ids:
+              type: array
+              items:
+                type: string
+    SuretySearchResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/egov-services/master/docs/common-contract/v1/contract.json#/components/schemas/ResponseInfo'
+        sureties:
+          type: array
+          items:
+            $ref: '#/components/schemas/Surety'

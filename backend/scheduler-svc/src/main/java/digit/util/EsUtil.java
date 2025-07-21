@@ -65,6 +65,7 @@ public class EsUtil {
 
     }
 
+
     public void manualIndex(String uri, String request) throws Exception {
         try {
             log.debug("Record being indexed manually: {}", request);

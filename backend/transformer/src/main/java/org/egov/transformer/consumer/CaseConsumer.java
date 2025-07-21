@@ -11,9 +11,10 @@ import org.egov.common.contract.request.User;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.models.*;
 import org.egov.transformer.producer.TransformerProducer;
-import org.egov.transformer.repository.CourtIdRepository;
+import org.egov.transformer.repository.DBRepository;
 import org.egov.transformer.service.CaseService;
 import org.egov.transformer.service.UserService;
+import org.egov.transformer.util.EsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.egov.transformer.config.ServiceConstants.FLOW_JAC;
 import static org.egov.transformer.config.ServiceConstants.msgId;
@@ -39,19 +41,21 @@ public class CaseConsumer {
     private final TransformerProducer producer;
     private final TransformerProperties transformerProperties;
     private final CaseService caseService;
-    private final CourtIdRepository courtIdRepository;
+    private final DBRepository repository;
     private final UserService userService;
+    private final EsUtil esUtil;
 
     @Autowired
     public CaseConsumer(ObjectMapper objectMapper,
                         TransformerProducer producer,
-                        TransformerProperties transformerProperties, CaseService caseService, CourtIdRepository courtIdRepository, UserService userService) {
+                        TransformerProperties transformerProperties, CaseService caseService, DBRepository repository, UserService userService, EsUtil esUtil) {
         this.objectMapper = objectMapper;
         this.producer = producer;
         this.transformerProperties = transformerProperties;
         this.caseService = caseService;
-        this.courtIdRepository = courtIdRepository;
+        this.repository = repository;
         this.userService = userService;
+        this.esUtil = esUtil;
     }
 
     public CaseRequest deserializeConsumerRecordIntoCaseRequest(ConsumerRecord<String, Object> payload){
@@ -85,7 +89,24 @@ public class CaseConsumer {
             logger.info("Current case status ::{}",courtCase.getStatus());
 
             if ("PENDING_REGISTRATION".equalsIgnoreCase(courtCase.getStatus())) {
-                courtIdRepository.updateCourtIdForFilingNumber(courtCase.getCourtId(), courtCase.getFilingNumber());
+                repository.updateCourtIdForFilingNumber(courtCase.getCourtId(), courtCase.getFilingNumber());
+            }
+            if ("PENDING_RESPONSE".equalsIgnoreCase(courtCase.getStatus()) || "CASE_ADMITTED".equalsIgnoreCase(courtCase.getStatus())) {
+                repository.updateCourtIdForFilingNumber(courtCase.getCourtId(), courtCase.getFilingNumber());
+                String caseNumber;
+                if (courtCase.getCourtCaseNumber() != null && !courtCase.getCourtCaseNumber().isEmpty()) {
+                    caseNumber = courtCase.getCourtCaseNumber();
+                } else if (courtCase.getCmpNumber() != null && !courtCase.getCmpNumber().isEmpty()) {
+                    caseNumber = courtCase.getCmpNumber();
+                } else {
+                    caseNumber = courtCase.getFilingNumber();
+                }
+                if (caseNumber != null && !caseNumber.isEmpty()) {
+                    List<String> bailUuids = repository.getBailUuidsForFilingNumber(courtCase.getFilingNumber());
+                    if (bailUuids != null && !bailUuids.isEmpty()) {
+                        repository.updateBailCaseNumberForFilingNumber(caseNumber, courtCase.getCnrNumber(), bailUuids, courtCase.getFilingNumber());
+                    }
+                }
             }
         } catch (Exception exception) {
             log.error("error in saving case", exception);
@@ -306,6 +327,54 @@ public class CaseConsumer {
         }
     }
 
+    @KafkaListener(topics = {"${transformer.consumer.case.reference.number.update}"})
+    public void updateCaseReferenceNumber(ConsumerRecord<String, Object> payload,
+                                          @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        CaseReferenceNumberUpdateRequest caseReferenceNumberUpdateRequest = deserializeConsumerRecordIntoCaseReferenceNumberUpdateRequest(payload);
+        if (caseReferenceNumberUpdateRequest == null) {
+            log.error("Failed to deserialize CaseReferenceNumberUpdateRequest from payload");
+            return;
+        }
+        List<String> bailUuids = repository.getBailUuidsForFilingNumber(caseReferenceNumberUpdateRequest.getFilingNumber());
+
+        String caseNumber = getCaseReferenceNumber(caseReferenceNumberUpdateRequest);
+
+        if (bailUuids != null && !bailUuids.isEmpty()) {
+            String filingNumber = caseReferenceNumberUpdateRequest.getFilingNumber();
+            String cmpNumber = caseReferenceNumberUpdateRequest.getCmpNumber();
+            String courtCaseNumber = caseReferenceNumberUpdateRequest.getCourtCaseNumber();
+            String caseTitle = caseReferenceNumberUpdateRequest.getCaseTitle();
+
+            List<BailUpdateRequest> updates = bailUuids.stream()
+                    .map(bailUuid -> new BailUpdateRequest(
+                            bailUuid,
+                            caseNumber,
+                            filingNumber,
+                            cmpNumber,
+                            courtCaseNumber,
+                            caseTitle
+                    ))
+                    .collect(Collectors.toList());
+
+            esUtil.updateBailCaseNumbers(updates);
+        }
+
+    }
+
+    private String getCaseReferenceNumber(CaseReferenceNumberUpdateRequest caseReferenceNumberUpdateRequest) {
+        String caseNumber;
+
+        if (caseReferenceNumberUpdateRequest.getCourtCaseNumber() != null && !caseReferenceNumberUpdateRequest.getCourtCaseNumber().isEmpty()) {
+            caseNumber = caseReferenceNumberUpdateRequest.getCourtCaseNumber();
+        } else if (caseReferenceNumberUpdateRequest.getCmpNumber() != null && !caseReferenceNumberUpdateRequest.getCmpNumber().isEmpty()) {
+            caseNumber = caseReferenceNumberUpdateRequest.getCmpNumber();
+        } else {
+            caseNumber = caseReferenceNumberUpdateRequest.getFilingNumber();
+        }
+        return caseNumber;
+    }
+
+
 
     public void publishCaseSearchFromCaseRequest(CaseRequest caseRequest){
         CourtCase courtCase = caseRequest.getCases();
@@ -333,5 +402,17 @@ public class CaseConsumer {
                 .criteria(Collections.singletonList(criteria))
                 .flow(FLOW_JAC)
                 .build();
+    }
+
+    public CaseReferenceNumberUpdateRequest deserializeConsumerRecordIntoCaseReferenceNumberUpdateRequest(ConsumerRecord<String, Object> payload){
+        try {
+            CaseReferenceNumberUpdateRequest caseReferenceNumberUpdateRequest = (objectMapper.readValue((String) payload.value(), new TypeReference<>() {
+            }));
+            return caseReferenceNumberUpdateRequest;
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to parse CaseReferenceNumberUpdateRequest from payload: {}", payload.value(), e);
+        }
+
+        return null;
     }
 }

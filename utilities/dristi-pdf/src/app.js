@@ -10,13 +10,29 @@ const order = require("./routes/order");
 const application = require("./routes/application");
 const pdfRoutes = require("./routes/pdfRoutes");
 const hearing = require("./routes/hearing");
+const bailBond = require("./routes/bailBond");
 // var {listenConsumer} = require("./consumer")
 
 var app = express();
 app.disable("x-powered-by");
 
-app.use(cors());
-app.options("*", cors()); // Preflight requests
+app.use(
+  cors({
+    origin: config.allowedOrigins,
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
+// Handle preflight requests
+app.options(
+  "*",
+  cors({
+    origin: config.allowedOrigins,
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -27,6 +43,7 @@ app.use(config.app.contextPath + "/order", order);
 app.use(config.app.contextPath + "/application", application);
 app.use(config.app.contextPath + "/dristi-pdf", pdfRoutes);
 app.use(config.app.contextPath + "/hearing", hearing);
+app.use(config.app.contextPath + "/bailBond", bailBond);
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));

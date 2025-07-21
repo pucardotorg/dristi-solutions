@@ -9,8 +9,8 @@ import org.egov.transformer.models.*;
 import org.egov.transformer.models.inbox.InboxRequest;
 import org.egov.transformer.producer.TransformerProducer;
 import org.egov.transformer.repository.ServiceRequestRepository;
-import org.egov.transformer.util.InboxUtil;
 import org.egov.transformer.util.AdvocateUtil;
+import org.egov.transformer.util.InboxUtil;
 import org.egov.transformer.util.JsonUtil;
 import org.egov.transformer.util.MdmsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,11 +34,11 @@ public class HearingService {
     private final MdmsUtil mdmsUtil;
     private final ServiceRequestRepository serviceRequestRepository;
     private final ObjectMapper objectMapper;
-    private final InboxUtil inboxUtil;
     private final AdvocateUtil advocateUtil;
+    private final InboxUtil inboxUtil;
 
     @Autowired
-    public HearingService(TransformerProducer producer, CaseService caseService, TransformerProperties properties, JsonUtil jsonUtil, MdmsUtil mdmsUtil, org.egov.transformer.repository.ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, InboxUtil inboxUtil, AdvocateUtil advocateUtil) {
+    public HearingService(TransformerProducer producer, CaseService caseService, TransformerProperties properties, JsonUtil jsonUtil, MdmsUtil mdmsUtil, org.egov.transformer.repository.ServiceRequestRepository serviceRequestRepository, ObjectMapper objectMapper, AdvocateUtil advocateUtil, InboxUtil inboxUtil) {
         this.producer = producer;
         this.caseService = caseService;
         this.properties = properties;
@@ -46,8 +46,8 @@ public class HearingService {
         this.mdmsUtil = mdmsUtil;
         this.serviceRequestRepository = serviceRequestRepository;
         this.objectMapper = objectMapper;
-        this.inboxUtil = inboxUtil;
         this.advocateUtil = advocateUtil;
+        this.inboxUtil = inboxUtil;
     }
 
     public void addCaseDetailsToHearing(Hearing hearing, String topic) throws IOException {

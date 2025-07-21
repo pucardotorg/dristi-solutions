@@ -726,6 +726,7 @@ public class CaseService {
         hearingUpdateRequest.put("filingNumber", caseRequest.getCases().getFilingNumber());
         hearingUpdateRequest.put("cmpNumber", caseRequest.getCases().getCmpNumber());
         hearingUpdateRequest.put("courtCaseNumber", caseRequest.getCases().getCourtCaseNumber());
+        hearingUpdateRequest.put("caseTitle", caseRequest.getCases().getCaseTitle());
         hearingUpdateRequest.put("tenantId", caseRequest.getCases().getTenantId());
         return hearingUpdateRequest;
     }
@@ -5101,5 +5102,9 @@ public class CaseService {
         return amountNode != null && amountNode.isTextual()
                 ? Double.parseDouble(amountNode.asText())
                 : 0.0;
+    }
+
+    public Integer getCaseCount(CaseSearchRequest caseSearchRequest) {
+        return caseRepository.getCaseCount(caseSearchRequest);
     }
 }

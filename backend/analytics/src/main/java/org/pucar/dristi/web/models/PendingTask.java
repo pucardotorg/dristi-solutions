@@ -95,4 +95,7 @@ public class PendingTask {
     @JsonProperty("courtId")
     private String courtId = null;
 
+    @JsonProperty("expiryDate")
+    private Long expiryDate = null;
+
 }
