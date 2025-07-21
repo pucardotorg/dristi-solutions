@@ -213,7 +213,7 @@ const componentsToRegister = {
   SelectCustomFormatterTextArea,
   SelectCustomGroupedDropdown,
   SuretyComponent,
-  EditSendBackModal
+  EditSendBackModal,
 };
 
 const overrideHooks = () => {
