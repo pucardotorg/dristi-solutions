@@ -153,7 +153,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   ];
   const bailRoute = [`${path}/home/bail-bond-sign`];
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
-  const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");  
+  const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = Boolean(eSignWindowObject) ? JSON.parse(eSignWindowObject) : null;
 
   if (!isUserLoggedIn && !whiteListedRoutes.includes(location.pathname)) {
@@ -199,7 +199,6 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     history.push(`${retrievedObject?.path}${retrievedObject?.param}`);
     sessionStorage.removeItem("eSignWindowObject");
   }
-
   if (isLoading) {
     return <Loader />;
   }

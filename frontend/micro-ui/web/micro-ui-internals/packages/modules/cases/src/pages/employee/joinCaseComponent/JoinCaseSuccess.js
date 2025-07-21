@@ -8,7 +8,17 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { RightArrow } from "@egovernments/digit-ui-module-dristi/src/icons/svgIndex";
 import { useTranslation } from "react-i18next";
 
-const JoinCaseSuccess = ({ success, messageHeader, type, caseDetails, closeModal, refreshInbox, successScreenData, isCaseViewDisabled, isBailBondRequired }) => {
+const JoinCaseSuccess = ({
+  success,
+  messageHeader,
+  type,
+  caseDetails,
+  closeModal,
+  refreshInbox,
+  successScreenData,
+  isCaseViewDisabled,
+  isBailBondRequired,
+}) => {
   const { t } = useTranslation();
 
   const history = useHistory();
@@ -121,13 +131,12 @@ const JoinCaseSuccess = ({ success, messageHeader, type, caseDetails, closeModal
               className={"selector-button-primary"}
               label={isBailBondRequired ? t("FILE_BAIL_APPLICATION") : t("VIEW_CASE_FILE")}
               onButtonClick={() => {
-                if(isBailBondRequired) {
+                if (isBailBondRequired) {
                   // TODO : can add for lititgants and respondents like litigant=${}&&litigantIndId=${}`;
                   history.push(
                     `/${window?.contextPath}/${userInfoType}/submissions/submissions-create?filingNumber=${caseDetails?.filingNumber}&applicationType=REQUEST_FOR_BAIL`
                   );
-                }
-                else {
+                } else {
                   if (type === "external") {
                     closeModal();
                     if (refreshInbox) refreshInbox();
