@@ -5,7 +5,7 @@ import { default as EmployeeApp } from "./pages/employee";
 import SubmissionsCard from "./components/SubmissionsCard";
 import BailBondSignaturePage from "./pages/employee/BailBondSignaturePage";
 import BailBondLoginPage from "./pages/employee/BailBondLoginPage";
-import BailBondLinkExpiredPage from "./pages/employee/BailBondExpirePage";
+import BailBondLinkExpiredPage from "./pages/employee/BailBondLinkExpiredPage";
 import { overrideHooks, updateCustomConfigs } from "./utils";
 
 export const SubmissionsModule = ({ stateCode, userType, tenants }) => {
