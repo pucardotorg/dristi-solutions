@@ -328,6 +328,9 @@ public class BailService {
         insertBailIndexEntry(bailRequest.getBail());
 
         Bail originalBail = bailRequest.getBail();
+        Bail encryptedBail = encryptionDecryptionUtil.encryptObject(originalBail, config.getBailEncrypt(), Bail.class);
+        bailRequest.setBail(encryptedBail);
+        producer.push(config.getBailUpdateTopic(), bailRequest);
 
         // Filter out inactive bail documents
         if (originalBail.getDocuments() != null) {
@@ -353,10 +356,6 @@ public class BailService {
                     .toList();
             originalBail.setSureties(activeSureties);
         }
-
-        Bail encryptedBail = encryptionDecryptionUtil.encryptObject(originalBail, config.getBailEncrypt(), Bail.class);
-        bailRequest.setBail(encryptedBail);
-        producer.push(config.getBailUpdateTopic(), bailRequest);
 
         return originalBail;
     }
