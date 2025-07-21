@@ -389,10 +389,10 @@ const AdmittedCaseV2 = () => {
         console.log(err);
       }
     };
-    isBailBondPendingTaskPresent();
+    if (userType === "employee") isBailBondPendingTaskPresent();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [userType]);
   const homeActiveTab = useMemo(() => location?.state?.homeActiveTab || "HEARINGS_TAB", [location?.state?.homeActiveTab]);
   const homeFilteredData = useMemo(() => location?.state?.homeFilteredData || {}, [location?.state?.homeFilteredData]);
 
@@ -3151,7 +3151,7 @@ const AdmittedCaseV2 = () => {
             referenceId: `MANUAL_BAIL_BOND_${filingNumber}`,
             status: "PENDING_SIGN",
             assignedTo: [],
-            assignedRole: ["JUDGE_ROLE", "BENCH_CLERK"],
+            assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "COURT_ROOM_MANAGER"],
             actionCategory: "Bail Bond",
             cnrNumber,
             filingNumber,
@@ -3199,6 +3199,7 @@ const AdmittedCaseV2 = () => {
         caseCourtId={courtId}
         tenantId={tenantId}
         filingNumber={filingNumber}
+        caseId={caseId}
         cnrNumber={cnrNumber}
         setDocumentSubmission={setDocumentSubmission}
         setShow={setShow}
@@ -3987,30 +3988,30 @@ const AdmittedCaseV2 = () => {
         (!isBailBondTaskExists ? (
           <Modal
             headerBarEnd={<CloseBtn onClick={() => !bailBondLoading && setShowBailBondModal(false)} />}
-            actionSaveLabel={t("Confirm")}
+            actionSaveLabel={t("CS_COMMON_CONFIRM")}
             actionSaveOnSubmit={createBailBondTask}
-            actionCancelLabel={t("Cancel")}
+            actionCancelLabel={t("CS_COMMON_CANCEL")}
             isBackButtonDisabled={bailBondLoading}
             isDisabled={bailBondLoading}
             actionCancelOnSubmit={() => setShowBailBondModal(false)}
             formId="modal-action"
-            headerBarMain={<Heading label={t("Confirm Bail Bond")} />}
+            headerBarMain={<Heading label={t("CREATE_BAIL_BOND_TASK")} />}
             className="upload-signature-modal"
             submitTextClassName="upload-signature-button"
           >
-            <div style={{ margin: "16px 16px" }}>{t("This will create a task to confirm that the bail bond has been submitted")}</div>
+            <div style={{ margin: "16px 16px" }}>{t("CREATE_BAIL_BOND_TASK_TEXT")}</div>
           </Modal>
         ) : (
           <Modal
             headerBarEnd={<CloseBtn onClick={() => setShowBailBondModal(false)} />}
-            actionSaveLabel={t("close")}
+            actionSaveLabel={t("CS_COMMON_CLOSE")}
             actionSaveOnSubmit={() => setShowBailBondModal(false)}
             formId="modal-action"
-            headerBarMain={<Heading label={t("Task Already Exists")} />}
+            headerBarMain={<Heading label={t("TASK_ALREADY_EXISTS")} />}
             className="upload-signature-modal"
             submitTextClassName="upload-signature-button"
           >
-            <div style={{ margin: "16px 16px" }}>{t("A pending task to Confirm Bond Submission is already present for this case")}</div>
+            <div style={{ margin: "16px 16px" }}>{t("TASK_ALREADY_EXISTS_TEXT")}</div>
           </Modal>
         ))}
     </div>

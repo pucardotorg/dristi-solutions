@@ -84,7 +84,7 @@ function BulkBailBondSignView({ showToast = () => {} }) {
                   ...column,
                   updateOrderFunc: updateBailBondFunc,
                 };
-              } else if (column.label === "CASE_NAME_AND_NUMBER") {
+              } else if (column.label === "CASE_TITLE") {
                 return {
                   ...column,
                   clickFunc: setBailBondFunc,
@@ -102,7 +102,7 @@ function BulkBailBondSignView({ showToast = () => {} }) {
             defaultValues: {
               ...bulkBailBondSignConfig.sections.search.uiConfig.defaultValues,
               tenantId: tenantId,
-              caseTitle: sessionStorage.getItem("bulkBailBondSignCaseTitle") || "",
+              caseTitle: sessionStorage.getItem("bulkBailBondSignCaseTitle") ? sessionStorage.getItem("bulkBailBondSignCaseTitle") : "",
             },
           },
         },

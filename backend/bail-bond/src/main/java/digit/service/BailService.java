@@ -16,6 +16,7 @@ import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -251,10 +252,12 @@ public class BailService {
             WorkflowObject workflow = bailRequest.getBail().getWorkflow();
             assignees.add(bailRequest.getBail().getLitigantId());
             workflow.setAssignes(assignees);
-            if(!bailRequest.getBail().getLitigantId().equalsIgnoreCase(bailRequest.getRequestInfo().getUserInfo().getUuid()))
+            if(!bailRequest.getBail().getLitigantId().equalsIgnoreCase(bailRequest.getBail().getAuditDetails().getCreatedBy()))
             {
                 ObjectNode additionalDetails = updateAdditionalDetails(workflow.getAdditionalDetails(), bailRequest.getRequestInfo().getUserInfo().getUuid());
                 workflow.setAdditionalDetails(additionalDetails);
+                assignees.add(bailRequest.getBail().getAuditDetails().getCreatedBy());
+                workflow.setAssignes(assignees);
             }
         }
 
@@ -270,6 +273,7 @@ public class BailService {
                 workflowObject.setAction(E_SIGN_COMPLETE);
 
                 bailRequest.getBail().setWorkflow(workflowObject);
+                bailRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(bailRequest.getBail().getTenantId()).build());
                 workflowService.updateWorkflowStatus(bailRequest);
             }
         } catch (Exception e) {
@@ -308,6 +312,13 @@ public class BailService {
 
         producer.push(config.getBailUpdateTopic(), bailRequest);
 
+        // Remove inactive sureties from originalBail before returning it
+        if (originalBail.getSureties() != null) {
+            List<Surety> activeSureties = originalBail.getSureties().stream()
+                    .filter(surety -> surety.getIsActive() == null || surety.getIsActive())
+                    .toList();
+            originalBail.setSureties(activeSureties);
+        }
         return originalBail;
     }
 

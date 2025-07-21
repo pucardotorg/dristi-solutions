@@ -154,7 +154,7 @@ export const DocumentSearchConfig = {
             limit: 10,
             offSet: 0,
             sortBy: "bailCreatedTime",
-            order: "asc",
+            order: "desc",
           },
         },
 

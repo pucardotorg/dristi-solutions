@@ -846,7 +846,16 @@ export const pendingTaskForBailBondActions = {
       params: [
         { key: "filingNumber", value: "filingNumber" },
         { key: "bailId", value: "referenceId" },
+        { key: "caseId", value: "id" },
       ],
+    },
+  },
+  "PENDING_E-SIGN": {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "E-Sign Pending",
+    redirectDetails: {
+      url: "/dristi/home/bail-bond-sign",
+      params: [{ key: "bailbondId", value: "referenceId" }],
     },
   },
 };

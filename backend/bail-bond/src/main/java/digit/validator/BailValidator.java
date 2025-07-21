@@ -12,6 +12,8 @@ import org.springframework.util.ObjectUtils;
 
 import java.util.List;
 
+import static digit.config.ServiceConstants.DELETE_DRAFT;
+import static digit.config.ServiceConstants.SAVE_DRAFT;
 import static digit.config.ServiceConstants.VALIDATION_EXCEPTION;
 
 @Component
@@ -29,6 +31,21 @@ public class BailValidator {
         Bail bail = bailRequest.getBail();
         if(bail.getBailAmount()!=null && bail.getBailAmount()<0){
             throw new CustomException(VALIDATION_EXCEPTION, "Invalid Bail amount");
+        }
+        if(!(SAVE_DRAFT.equalsIgnoreCase(bail.getWorkflow().getAction()) || DELETE_DRAFT.equalsIgnoreCase(bail.getWorkflow().getAction()))){
+            if(ObjectUtils.isEmpty(bail.getLitigantMobileNumber())){
+                throw new CustomException(VALIDATION_EXCEPTION, "Litigant mobile number is required for creating bail");
+            }
+            if(!ObjectUtils.isEmpty(bail.getSureties())){
+                bail.getSureties().forEach(surety -> {
+                    if(ObjectUtils.isEmpty(surety.getName())){
+                        throw new CustomException(VALIDATION_EXCEPTION, "Surety name is required for creating bail");
+                    }
+                    if(ObjectUtils.isEmpty(surety.getMobileNumber())){
+                        throw new CustomException(VALIDATION_EXCEPTION, "Surety mobile number is required for creating bail");
+                    }
+                });
+            }
         }
     }
 

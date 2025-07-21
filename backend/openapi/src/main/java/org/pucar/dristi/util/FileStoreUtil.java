@@ -34,7 +34,11 @@ public class FileStoreUtil {
         }
         String url = configs.getFileStoreHost() + configs.getFileStoreGetEndPoint() + "?tenantId=" + tenantId + "&fileStoreId="+fileStoreId;
         if (moduleName != null && !moduleName.isEmpty()) {
-            url += "&module=" + moduleName;
+            final String SIGNED_SUFFIX = ",signed"; // consider moving to a constant or config
+            if (moduleName.contains(SIGNED_SUFFIX.replace(",", ""))) {
+                log.warn("Module name already contains ‘signed’: {}", moduleName);
+            }
+            url += "&module=" + moduleName + SIGNED_SUFFIX;
         }
         try {
             return restTemplate.getForEntity(url, Resource.class);
@@ -43,5 +47,4 @@ public class FileStoreUtil {
             throw new CustomException("FILE_STORE_UTILITY_EXCEPTION", "Error occurred when fetching files from File Store");
         }
     }
-
 }

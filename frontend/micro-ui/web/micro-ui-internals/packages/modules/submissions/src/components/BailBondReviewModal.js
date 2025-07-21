@@ -87,10 +87,10 @@ const BailBondReviewModal = ({
           {bailBondPreviewPdf ? (
             <DocViewerWrapper
               docWidth={"calc(100vw* 76/ 100)"}
-              docHeight={"60vh"}
               selectedDocs={[bailBondPreviewPdf]}
               displayFilename={bailBondPreviewFileName}
               showDownloadOption={false}
+              docHeight={"unset"}
             />
           ) : isLoading ? (
             <h2>{t("LOADING")}</h2>
@@ -151,9 +151,9 @@ const BailBondReviewModal = ({
                   fileStoreId={docs.fileStore}
                   tenantId={tenantId}
                   docWidth="100%"
-                  docHeight="unset"
+                  docHeight={"unset"}
                   showDownloadOption={false}
-                  documentName={docs.fileName}
+                  documentName={docs?.name}
                 />
               ))}
             </div>
