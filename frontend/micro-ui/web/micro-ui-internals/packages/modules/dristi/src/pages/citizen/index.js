@@ -151,7 +151,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     `${path}/home/bail-bond-login`,
     `${path}/home/access-expired`,
   ];
-  const bailRoute = [`${path}/home/bail-bond-sign`];
+  const bailRoute = [`${path}/home/bail-bond-sign`, `${path}/home/access-expired`];
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = Boolean(eSignWindowObject) ? JSON.parse(eSignWindowObject) : null;

@@ -1,13 +1,15 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 const BailBondLinkExpiredPage = () => {
   const history = useHistory();
   const { t } = useTranslation();
+  const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
 
   const handleBackToHome = () => {
-    history.push(`/${window?.contextPath}/citizen/dristi/home/login`);
+    history.push(`/${window?.contextPath}/${userInfoType}/home/home-pending-task`);
   };
 
   return (
