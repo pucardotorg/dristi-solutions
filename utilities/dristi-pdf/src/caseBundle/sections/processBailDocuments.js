@@ -40,10 +40,10 @@ async function processBailDocuments(
     sectionPosition
   );
 
+  const bailApplicationsLineItems = [];
   if (bailApplicationSection?.length !== 0) {
     const section = bailApplicationSection[0];
 
-    const bailApplicationsLineItems = [];
     const bailApplications = await search_application_v2(
       tenantId,
       requestInfo,
@@ -345,7 +345,7 @@ async function processBailDocuments(
       },
       {
         sortBy: section.sorton,
-        order: "ASC",
+        order: "asc",
         limit: 100,
       }
     );
@@ -436,14 +436,18 @@ async function processBailDocuments(
                     : `COUNSEL FOR THE COMPLAINANT - ${docketNameOfComplainants}`;
               }
 
-              const bailPosition =
-                indexCopy?.lineItems?.length === 0 ? "1" : "2";
-
+              const bailPosition = !indexCopy.sections.find(
+                (section) => section.name === "baildocument"
+              )?.lineItems?.length
+                ? "1"
+                : "2";
               const documentPath = `${dynamicSectionNumber}.${bailPosition}.${
                 index + 1
               }.1 Bond and Other Documents in ${dynamicSectionNumber}.${bailPosition}.${
                 index + 1
-              } ${bailBond.bailType} in ${dynamicSectionNumber}.2 ${
+              } ${
+                bailBond.bailType
+              } in ${dynamicSectionNumber}.${bailPosition} ${
                 section.Items
               } in ${dynamicSectionNumber} ${section.section}`;
 
@@ -483,7 +487,7 @@ async function processBailDocuments(
       );
       // Append bail bond line items to existing bail application line items instead of overwriting
       bailDocumentIndexSection.lineItems = [
-        ...(bailDocumentIndexSection.lineItems || []),
+        ...(bailApplicationsLineItems.filter(Boolean) || []),
         ...bailBondLineItems.filter(Boolean),
       ];
     }
