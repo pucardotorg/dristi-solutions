@@ -557,7 +557,7 @@ public class BailService {
                                 .documentName(BAIL_BOND_PDF_NAME)
                                 .additionalDetails(Map.of(NAME, BAIL_BOND_PDF_NAME))
                                 .build();
-                    bail.setDocuments(List.of(document));
+                    bail.setDocuments(new ArrayList<>(List.of(document)));
 
                     if (!ObjectUtils.isEmpty(bail.getSureties())) {
                         bail.getSureties().forEach(surety -> surety.setIsApproved(true));
