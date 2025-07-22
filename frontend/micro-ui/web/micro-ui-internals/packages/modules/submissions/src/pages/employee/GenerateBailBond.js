@@ -192,8 +192,12 @@ const GenerateBailBond = () => {
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
   const bailBondDetails = useMemo(() => {
+    if (Object.keys(defaultFormValueData).length > 0) {
+      return defaultFormValueData;
+    }
     return bailBond?.bails?.[0];
-  }, [bailBond]);
+  }, [defaultFormValueData, bailBond]);
+  
 
   const pipComplainants = useMemo(() => {
     return caseDetails?.litigants
@@ -474,8 +478,7 @@ const GenerateBailBond = () => {
 
   const extractSureties = (formData) => {
     const existingSureties = bailBondDetails?.sureties || [];
-
-    if (existingSureties?.length > 0 && formData?.bailType === "SURETY") {
+    if (existingSureties?.length > 0 && formData?.bailType?.code === "SURETY") {
       const activeSureties = formData?.sureties?.map((surety) => {
         const matchingSurety = existingSureties?.find((existing) => existing?.id === surety?.id);
         return {
@@ -503,7 +506,7 @@ const GenerateBailBond = () => {
         }));
 
       return [...activeSureties, ...inactiveSureties];
-    } else if (existingSureties?.length > 0 && formData?.bailType !== "SURETY") {
+    } else if (existingSureties?.length > 0 && formData?.bailType?.code !== "SURETY") {
       return existingSureties?.map((surety) => ({
         ...surety,
         isActive: false,
@@ -540,7 +543,7 @@ const GenerateBailBond = () => {
           complainant: updatedFormData?.selectComplainant?.uuid,
           bailType: updatedFormData?.bailType?.code,
           bailAmount: updatedFormData?.bailAmount,
-          sureties: sureties,
+          sureties: sureties || [],
           litigantId: updatedFormData?.selectComplainant?.uuid,
           litigantName: updatedFormData?.selectComplainant?.name,
           litigantFatherName: updatedFormData?.litigantFatherName,
@@ -599,7 +602,7 @@ const GenerateBailBond = () => {
             complainant: updatedFormData?.selectComplainant?.uuid,
             bailType: updatedFormData?.bailType?.code,
             bailAmount: updatedFormData?.bailAmount,
-            sureties: sureties,
+            sureties: sureties || [],
             litigantId: updatedFormData?.selectComplainant?.uuid,
             litigantName: updatedFormData?.selectComplainant?.name,
             litigantFatherName: updatedFormData?.litigantFatherName,
