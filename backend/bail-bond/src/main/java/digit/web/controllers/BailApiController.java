@@ -108,5 +108,4 @@ public class BailApiController {
                 .build();
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
-
 }
