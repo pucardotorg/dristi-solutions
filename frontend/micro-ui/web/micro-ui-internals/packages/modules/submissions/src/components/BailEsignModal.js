@@ -1,29 +1,5 @@
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import React, { useEffect, useState } from "react";
-
-// Simple AES encryption using Web Crypto API
-async function encryptData(text, key) {
-  const enc = new TextEncoder();
-  const iv = crypto.getRandomValues(new Uint8Array(12));
-  const encodedText = enc.encode(text);
-  const cryptoKey = await crypto.subtle.importKey(
-    "raw",
-    enc.encode(key),
-    { name: "AES-GCM" },
-    false,
-    ["encrypt"]
-  );
-  const ciphertext = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv: iv },
-    cryptoKey,
-    encodedText
-  );
-  // Store iv + ciphertext together, base64 encode
-  const buffer = new Uint8Array(iv.length + ciphertext.byteLength);
-  buffer.set(iv, 0);
-  buffer.set(new Uint8Array(ciphertext), iv.length);
-  return btoa(String.fromCharCode(...buffer));
-}
 import { Button, CloseSvg, InfoCard } from "@egovernments/digit-ui-components";
 import useESignOpenApi from "../hooks/submissions/useESignOpenApi";
 
@@ -83,10 +59,8 @@ const BailEsignModal = ({ t, handleProceed, handleCloseSignaturePopup, fileStore
               <div className="buttons-div">
                 <Button
                   label={t("CS_ESIGN_AADHAR")}
-                  onClick={async () => {
-                    const encryptionKey = "YourStrongSecretKey123"; // Should be managed securely
-                    const encryptedNumber = await encryptData(mobileNumber, encryptionKey);
-                    sessionStorage.setItem("mobileNumber", encryptedNumber);
+                  onClick={() => {
+                    sessionStorage.setItem("mobileNumber", mobileNumber);
                     handleEsign(name, pageModule, fileStoreId, signPlaceHolder)
                   }}
                   className={"upload-signature"}
