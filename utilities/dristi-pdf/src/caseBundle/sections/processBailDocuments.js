@@ -40,10 +40,10 @@ async function processBailDocuments(
     sectionPosition
   );
 
+  const bailApplicationsLineItems = [];
   if (bailApplicationSection?.length !== 0) {
     const section = bailApplicationSection[0];
 
-    const bailApplicationsLineItems = [];
     const bailApplications = await search_application_v2(
       tenantId,
       requestInfo,
@@ -487,7 +487,7 @@ async function processBailDocuments(
       );
       // Append bail bond line items to existing bail application line items instead of overwriting
       bailDocumentIndexSection.lineItems = [
-        ...(bailDocumentIndexSection.lineItems || []),
+        ...(bailApplicationsLineItems.filter(Boolean) || []),
         ...bailBondLineItems.filter(Boolean),
       ];
     }
