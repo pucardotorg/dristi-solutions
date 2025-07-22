@@ -151,7 +151,7 @@ public class ServiceConstants {
     public static final String BAILS_BULK_SIGN_EXCEPTION = "BAILS_BULK_SIGN_EXCEPTION";
     public static final String BAIL_BOND_PDF_NAME = "BailBond.pdf";
     public static final String BAIL_BOND_SIGNATURE_SUBJECT = "Signature of Bail Bond {{as}} | {{caseName}}";
-    public static final String BAIL_BOND_SIGNATURE_BODY = "To {{name}},\\n\\nPlease find the Bail Bond for signature in {{caseNumber}} {{caseName}} {{as}} by HH:MM PM on DD.MM.YYYY here: {{shortenedURL}}.\\n\\n24X7 ON Court,\\nKollam, Kerala";
+    public static final String BAIL_BOND_SIGNATURE_BODY = "To {{name}},\\n\\nPlease find the Bail Bond for signature in {{caseNumber}} {{caseName}} {{as}} by {{time}} on {{date}} here: {{shortenedURL}}.\\n\\n24X7 ON Court,\\nKollam, Kerala";
     public static final String BAIL_BOND_TEMPLATE_CODE="BAIL_BOND_TEMPLATE_CODE";
     public static  final String LITIGANT="LITIGANT";
     public static final String SURETY="SURETY";
