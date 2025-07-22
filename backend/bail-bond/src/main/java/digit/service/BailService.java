@@ -332,7 +332,7 @@ public class BailService {
         bailRequest.setBail(encryptedBail);
         producer.push(config.getBailUpdateTopic(), bailRequest);
 
-        // Filter out inactive bail documents
+       // Filter out inactive bail documents
         if (originalBail.getDocuments() != null) {
             List<Document> activeBailDocs = originalBail.getDocuments().stream()
                     .filter(doc -> doc.getIsActive() == null || doc.getIsActive())
@@ -551,12 +551,13 @@ public class BailService {
                     String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
 
-                    Document document = Document.builder()
-                            .documentType(SIGNED)
-                            .fileStore(fileStoreId)
-                            .documentName(BAIL_BOND_PDF_NAME)
-                            .additionalDetails(Map.of(NAME, BAIL_BOND_PDF_NAME))
-                            .build();
+                        Document document = Document.builder()
+                                .documentType(SIGNED)
+                                .fileStore(fileStoreId)
+                                .isActive(true)
+                                .documentName(BAIL_BOND_PDF_NAME)
+                                .additionalDetails(Map.of(NAME, BAIL_BOND_PDF_NAME))
+                                .build();
                     bail.setDocuments(new ArrayList<>(List.of(document)));
 
                     if (!ObjectUtils.isEmpty(bail.getSureties())) {
