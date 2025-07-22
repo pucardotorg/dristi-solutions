@@ -20,6 +20,8 @@ import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -122,19 +124,27 @@ public class NotificationService {
     }
 
 
-    public String buildSubject(String subject, EmailTemplateData emailTemplateData, EmailRecipientData recipientData){
+    public String buildSubject(String subjectTemplate, EmailTemplateData emailTemplateData, EmailRecipientData recipientData){
         String person = recipientData.getType();
         String asValue = getAsValueForPerson(person);
         String caseName = emailTemplateData.getCaseName();
-        return subject.replace("{{as}}", asValue)
+        return subjectTemplate.replace("{{as}}", asValue)
                     .replace("{{caseName}}", caseName);
     }
 
-    public String buildBody(String body, EmailTemplateData emailTemplateData, EmailRecipientData recipientData){
-        return body.replace("{{name}}", recipientData.getName())
+    public String buildBody(String bodyTemplate, EmailTemplateData emailTemplateData, EmailRecipientData recipientData){
+        // Get current time + 1 day
+        LocalDateTime future = LocalDateTime.now().plusDays(1);
+
+        // Formatters
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm a");
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        return bodyTemplate.replace("{{name}}", recipientData.getName())
                 .replace("{{caseNumber}}", emailTemplateData.getCaseNumber())
                 .replace("{{caseName}}", emailTemplateData.getCaseName())
                 .replace("{{as}}", getAsValueForPerson(recipientData.getType()))
+                .replace("{{time}}", future.format(timeFormatter))
+                .replace("{{date}}", future.format(dateFormatter))
                 .replace("{{shortenedURL}}", emailTemplateData.getShortenedURL());
     }
 
