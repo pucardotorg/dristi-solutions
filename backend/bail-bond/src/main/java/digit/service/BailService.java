@@ -620,6 +620,7 @@ public class BailService {
                     Document document = Document.builder()
                             .documentType(SIGNED)
                             .fileStore(fileStoreId)
+                            .isActive(true)
                             .documentName(BAIL_BOND_PDF_NAME)
                             .additionalDetails(Map.of(NAME, BAIL_BOND_PDF_NAME))
                             .build();
