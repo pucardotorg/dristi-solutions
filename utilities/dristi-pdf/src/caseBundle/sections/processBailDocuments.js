@@ -436,9 +436,8 @@ async function processBailDocuments(
                     : `COUNSEL FOR THE COMPLAINANT - ${docketNameOfComplainants}`;
               }
 
-              const bailPosition = !indexCopy.sections.find(
-                (section) => section.name === "baildocument"
-              )?.lineItems?.length
+              const bailPosition = !bailApplicationsLineItems?.filter(Boolean)
+                ?.length
                 ? "1"
                 : "2";
               const documentPath = `${dynamicSectionNumber}.${bailPosition}.${
