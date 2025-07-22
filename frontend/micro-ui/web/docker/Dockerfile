@@ -9,6 +9,9 @@ ENV NODE_OPTIONS "--max-old-space-size=8168"
 COPY ${WORK_DIR} .
 RUN ls -lah
 
+ARG REACT_APP_JWT_TOKEN
+ENV REACT_APP_JWT_TOKEN=${REACT_APP_JWT_TOKEN}
+
 RUN cd web/ \
     &&  ./install-deps.sh \
     && yarn install \
