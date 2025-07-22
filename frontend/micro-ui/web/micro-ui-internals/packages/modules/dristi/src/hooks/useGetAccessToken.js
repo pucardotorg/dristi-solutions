@@ -23,7 +23,7 @@ const authenticate = async (details) => {
     url: Urls.Authenticate,
     data,
     headers: {
-      authorization: `Basic ${window?.globalConfigs?.getConfig("JWT_TOKEN") || "ZWdvdi11c2VyLWNsaWVudDo="}`,
+      authorization: `Basic ${window?.globalConfigs?.getConfig("JWT_TOKEN") || process.env.REACT_APP_JWT_TOKEN}`,
       "Content-Type": "application/x-www-form-urlencoded",
     },
   });
