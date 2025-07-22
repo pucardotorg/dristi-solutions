@@ -436,7 +436,7 @@ async function processBailDocuments(
                     : `COUNSEL FOR THE COMPLAINANT - ${docketNameOfComplainants}`;
               }
 
-              const bailPosition = !bailApplicationsLineItems.filter(Boolean)
+              const bailPosition = !bailApplicationsLineItems?.filter(Boolean)
                 ?.length
                 ? "1"
                 : "2";
