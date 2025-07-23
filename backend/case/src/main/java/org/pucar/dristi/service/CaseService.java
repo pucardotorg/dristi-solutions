@@ -4986,9 +4986,8 @@ public class CaseService {
                 .collect(Collectors.toMap(BreakDown::getCode, Function.identity()));
         List<BreakDown> differenceBreakDowns = new ArrayList<>();
 
-        Double diffTotalAmount = 0.0;
-        for (int i = 0; i < newBreakDowns.size(); i++) {
-            BreakDown newBreakDown = newBreakDowns.get(i);
+        double diffTotalAmount = 0.0;
+        for (BreakDown newBreakDown : newBreakDowns) {
             BreakDown oldBreakDown = oldBreakDownMap.get(newBreakDown.getCode());
 
             if (newBreakDown.getAmount() > oldBreakDown.getAmount()) {
