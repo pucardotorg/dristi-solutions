@@ -5,4 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class WitnessAddress {
     @JsonProperty("addressDetails")
     private AddressDetails addressDetails;
+
+    @JsonProperty("id")
+    private String id;
 }

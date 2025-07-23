@@ -7,5 +7,6 @@ import java.util.List;
 
 @Data
 public class PhoneNumbers {
-    List<String> mobileNumber = new ArrayList<>();
+    private List<String> mobileNumber = new ArrayList<>();
+    private String textfieldValue;
 }

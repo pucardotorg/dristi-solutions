@@ -29,4 +29,7 @@ public class AddressDetails {
 
     @JsonProperty("coordinates")
     private Coordinates coordinates;
+
+    @JsonProperty("typeOfAddress")
+    private AddressType typeOfAddress;
 }
