@@ -4982,32 +4982,32 @@ public class CaseService {
         List<BreakDown> newBreakDowns = newCalc.getBreakDown();
         List<BreakDown> oldBreakDowns = oldCalculation.getBreakDown();
 
-        if(newCalc.getTotalAmount()> oldCalculation.getTotalAmount()) {
+        Map<String, BreakDown> oldBreakDownMap = oldBreakDowns.stream()
+                .collect(Collectors.toMap(BreakDown::getCode, Function.identity()));
+        List<BreakDown> differenceBreakDowns = new ArrayList<>();
 
-            Map<String, BreakDown> oldBreakDownMap = oldBreakDowns.stream()
-                    .collect(Collectors.toMap(BreakDown::getCode, Function.identity()));
-            List<BreakDown> differenceBreakDowns = new ArrayList<>();
+        Double diffTotalAmount = 0.0;
+        for (int i = 0; i < newBreakDowns.size(); i++) {
+            BreakDown newBreakDown = newBreakDowns.get(i);
+            BreakDown oldBreakDown = oldBreakDownMap.get(newBreakDown.getCode());
 
-            for (int i = 0; i < newBreakDowns.size(); i++) {
-                BreakDown newBreakDown = newBreakDowns.get(i);
-                BreakDown oldBreakDown = oldBreakDownMap.get(newBreakDown.getCode());
+            if (newBreakDown.getAmount() > oldBreakDown.getAmount()) {
+                diffTotalAmount += (newBreakDown.getAmount() - oldBreakDown.getAmount());
 
-                if (newBreakDown.getAmount() > oldBreakDown.getAmount()) {
-                    BreakDown differenceItem = new BreakDown();
-                    differenceItem.setCode(newBreakDown.getCode());
-                    differenceItem.setType(newBreakDown.getType());
-                    differenceItem.setAmount(newBreakDown.getAmount() - oldBreakDown.getAmount());
-                    differenceBreakDowns.add(differenceItem);
-                }
+                BreakDown differenceItem = new BreakDown();
+                differenceItem.setCode(newBreakDown.getCode());
+                differenceItem.setType(newBreakDown.getType());
+                differenceItem.setAmount(newBreakDown.getAmount() - oldBreakDown.getAmount());
+                differenceBreakDowns.add(differenceItem);
             }
+        }
 
-            if (!differenceBreakDowns.isEmpty()) {
-                Calculation difference = new Calculation();
-                difference.setTenantId(newCalc.getTenantId());
-                difference.setTotalAmount(newCalc.getTotalAmount() - oldCalculation.getTotalAmount());
-                difference.setBreakDown(differenceBreakDowns);
-                return difference;
-            }
+        if (!differenceBreakDowns.isEmpty()) {
+            Calculation difference = new Calculation();
+            difference.setTenantId(newCalc.getTenantId());
+            difference.setTotalAmount(diffTotalAmount);
+            difference.setBreakDown(differenceBreakDowns);
+            return difference;
         }
         return null;
     }
