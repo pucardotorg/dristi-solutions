@@ -61,7 +61,7 @@ jobs:
 
       - name: Build and Push Docker image for digit-ui
         run: |
-          docker build --build-arg DIGIT_UI_REACT_APP_JWT_TOKEN=${{ vars.DIGIT_UI_REACT_APP_JWT_TOKEN }} -t pucarsolutionsdev.azurecr.io/digit-ui:${{ env.VERSION }}-${{ env.commit_hash }} -f  web/docker/Dockerfile .
+          docker build --build-arg REACT_APP_JWT_TOKEN=${{ vars.DIGIT_UI_REACT_APP_JWT_TOKEN }} -t pucarsolutionsdev.azurecr.io/digit-ui:${{ env.VERSION }}-${{ env.commit_hash }} -f  web/docker/Dockerfile .
           docker push pucarsolutionsdev.azurecr.io/digit-ui:${{ env.VERSION }}-${{ env.commit_hash }}
         working-directory: frontend/micro-ui
 
