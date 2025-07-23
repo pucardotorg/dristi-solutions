@@ -279,7 +279,7 @@ public class CaseApiController {
     }
 
     @PostMapping(value = "/v2/add/witness")
-    public ResponseEntity<?> addWitnessToCase(@Parameter(in = ParameterIn.DEFAULT, description = "Court case details + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody WitnessDetailsRequest body) {
+    public ResponseEntity<WitnessDetailsResponse> addWitnessToCase(@Parameter(in = ParameterIn.DEFAULT, description = "Court case details + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody WitnessDetailsRequest body) {
         log.info("api=/v2/add/witness, result=IN_PROGRESS");
         WitnessDetailsResponse response = caseService.addWitnessToCase(body);
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);

@@ -378,14 +378,14 @@ public class CaseRegistrationValidator {
         return masterList;
     }
 
-    public void validateWitnessRequest(@Valid WitnessDetailsRequest body, CourtCase courtCase) {
+    public void validateWitnessRequest(WitnessDetailsRequest body, CourtCase courtCase) {
         try {
             log.info("operation=validateWitnessRequest, status=IN_PROGRESS, filingNumber: {}", body.getCaseFilingNumber());
             JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
             validateMobileNumbers(additionalDetails, body.getWitnessDetails());
             validateEmail(additionalDetails, body.getWitnessDetails());
             log.info("operation=validateWitnessRequest, status=SUCCESS, filingNumber: {}", body.getCaseFilingNumber());
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             log.error("operation=validateWitnessRequest, status=FAILURE, filingNumber: {}, error: {}", body.getCaseFilingNumber(), e.getMessage());
             throw new CustomException("ERROR_VALIDATING_WITNESS", "Error while validating witness request: " + body.getCaseFilingNumber() + ", error: " + e.getMessage());
         }
@@ -396,6 +396,9 @@ public class CaseRegistrationValidator {
         emailIds.addAll(extractEmailIdsFromDetails(additionalDetails.get("respondentDetails")));
         emailIds.addAll(extractEmailIdsFromDetails(additionalDetails.get("witnessDetails")));
 
+        if (witnessDetails.getEmails() == null || witnessDetails.getEmails().getEmailId().isEmpty()) {
+            return;
+        }
         List<String> witnessEmailIds = witnessDetails.getEmails().getEmailId();
         Set<String> emailIdSet = new HashSet<>(emailIds);
         for(String emailId : witnessEmailIds) {
@@ -498,7 +501,8 @@ public class CaseRegistrationValidator {
                     break;
 
                 default:
-                    throw new IllegalArgumentException("Unsupported type: " + type);
+                    log.warn("Unsupported party type for mobile number extraction: {}", type);
+                    return mobileNumbers;
             }
         }
 

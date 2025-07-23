@@ -7,6 +7,6 @@ import java.util.List;
 
 @Data
 public class Emails {
-    List<String> emailId = new ArrayList<>();
+    private List<String> emailId = new ArrayList<>();
     private String textfieldValue;
 }

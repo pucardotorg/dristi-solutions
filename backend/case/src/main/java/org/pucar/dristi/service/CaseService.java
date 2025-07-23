@@ -5130,6 +5130,9 @@ public class CaseService {
                     .defaultFields(false)
                     .build();
             List<CaseCriteria> courtCaseList = caseRepository.getCases(Collections.singletonList(caseCriteria), body.getRequestInfo());
+            if (courtCaseList.isEmpty() || courtCaseList.get(0).getResponseList().isEmpty()) {
+                throw new CustomException(INVALID_CASE,"No case found for filing number "+body.getCaseFilingNumber());
+            }
             CourtCase courtCase = encryptionDecryptionUtil.decryptObject(courtCaseList.get(0).getResponseList().get(0), config.getCaseDecryptSelf(), CourtCase.class, body.getRequestInfo());
             validator.validateWitnessRequest(body, courtCase);
             updateCaseAdditionalDetails(body.getWitnessDetails(), courtCase);
