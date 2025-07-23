@@ -3,7 +3,6 @@ package org.pucar.dristi.validators;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
@@ -16,6 +15,7 @@ import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.LockUtil;
 import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.v2.PartyType;
 import org.pucar.dristi.web.models.v2.WitnessDetails;
 import org.pucar.dristi.web.models.v2.WitnessDetailsRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +26,9 @@ import java.util.*;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
-
+/**
+ * @author Sathvik
+ */
 @Component
 @Slf4j
 public class CaseRegistrationValidator {
@@ -34,7 +36,6 @@ public class CaseRegistrationValidator {
     private IndividualService individualService;
 
     private CaseRepository repository;
-
 
     private MdmsUtil mdmsUtil;
 
@@ -387,7 +388,7 @@ public class CaseRegistrationValidator {
             log.info("operation=validateWitnessRequest, status=SUCCESS, filingNumber: {}", body.getCaseFilingNumber());
         } catch (Exception e) {
             log.error("operation=validateWitnessRequest, status=FAILURE, filingNumber: {}, error: {}", body.getCaseFilingNumber(), e.getMessage());
-            throw new CustomException("ERROR_VALIDATING_WITNESS", "Error while validating witness request: " + body.getCaseFilingNumber() + ", error: " + e.getMessage());
+            throw new CustomException(ERROR_VALIDATING_WITNESS, "Error while validating witness request: " + body.getCaseFilingNumber() + ", error: " + e.getMessage());
         }
     }
 
@@ -403,7 +404,7 @@ public class CaseRegistrationValidator {
         Set<String> emailIdSet = new HashSet<>(emailIds);
         for(String emailId : witnessEmailIds) {
             if(emailIdSet.contains(emailId)) {
-                throw new CustomException("ERROR_VALIDATING_WITNESS",
+                throw new CustomException(ERROR_VALIDATING_WITNESS,
                         "Witness email id should not be same as existing parties email id");
             }
         }
@@ -434,26 +435,27 @@ public class CaseRegistrationValidator {
 
         return emailIds;
     }
+
     private void validateMobileNumbers(JsonNode additionalDetails, WitnessDetails witnessDetails) {
 
         List<String> mobileNumberList = new ArrayList<>();
 
-        mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("advocateDetails"), "advocate"));
-        mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("complainantDetails"), "complainant"));
-        mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("witnessDetails"), "witness"));
-        mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("respondentDetails"), "respondent"));
+        mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("advocateDetails"), PartyType.ADVOCATE));
+        mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("complainantDetails"), PartyType.COMPLAINANT));
+        mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("witnessDetails"), PartyType.WITNESS));
+        mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("respondentDetails"), PartyType.RESPONDENT));
 
         List<String> witnessMobileNumber = witnessDetails.getPhoneNumbers().getMobileNumber();
         Set<String> mobileNumberSet = new HashSet<>(mobileNumberList);
         for (String witnessNumber : witnessMobileNumber) {
             if (mobileNumberSet.contains(witnessNumber)) {
-                throw new CustomException("ERROR_VALIDATING_WITNESS", 
-                    "Witness mobile number should not be same as existing parties mobile number");
+                throw new CustomException(ERROR_VALIDATING_WITNESS,
+                        "Witness mobile number should not be same as existing parties mobile number");
             }
         }
     }
 
-    public static List<String> extractMobileNumbersFromDetails(JsonNode detailsNode, String type) {
+    public static List<String> extractMobileNumbersFromDetails(JsonNode detailsNode, PartyType type) {
         List<String> mobileNumbers = new ArrayList<>();
         if (detailsNode == null || !detailsNode.has("formdata")) {
             return mobileNumbers;
@@ -466,16 +468,16 @@ public class CaseRegistrationValidator {
             JsonNode dataNode = formDataItem.get("data");
 
             if (dataNode == null) continue;
-            switch (type.toLowerCase()) {
-                case "complainant":
+            switch (type) {
+                case COMPLAINANT:
                     JsonNode complainantMobile = dataNode.at("/complainantVerification/mobileNumber");
                     if (!complainantMobile.isMissingNode() && complainantMobile.isTextual()) {
                         mobileNumbers.add(complainantMobile.asText());
                     }
                     break;
 
-                case "witness":
-                case "respondent":
+                case WITNESS:
+                case RESPONDENT:
                     JsonNode mobileNode = dataNode.at("/phonenumbers/mobileNumber");
                     if (!mobileNode.isMissingNode() && mobileNode.isArray()) {
                         for (JsonNode numberNode : mobileNode) {
@@ -485,7 +487,7 @@ public class CaseRegistrationValidator {
                         }
                     }
                     break;
-                case "advocate":
+                case ADVOCATE:
                     JsonNode multipleAdvocates = dataNode.at("/multipleAdvocatesAndPip/multipleAdvocateNameDetails");
                     if (multipleAdvocates.isArray()) {
                         for (JsonNode advocateEntry : multipleAdvocates) {

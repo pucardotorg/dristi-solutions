@@ -1449,7 +1449,7 @@ public class CaseServiceTest {
         // Execute & Verify
         CustomException exception = assertThrows(CustomException.class, () -> caseService.addWitnessToCase(request));
         
-        assertEquals("ERROR_ADDING_WITNESS", exception.getCode());
+        assertEquals(ERROR_ADDING_WITNESS, exception.getCode());
         assertTrue(exception.getMessage().contains("Error while adding witness to case"));
         
         verify(caseRepository, times(1)).getCases(any(), any());

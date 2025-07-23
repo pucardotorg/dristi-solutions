@@ -5143,7 +5143,7 @@ public class CaseService {
             return WitnessDetailsResponse.builder().witnessDetails(body.getWitnessDetails()).build();
         } catch (Exception e) {
             log.error("operation=addWitnessToCase, status=FAILURE, filingNumber: {}, error: {}", body.getCaseFilingNumber(), e.getMessage());
-            throw new CustomException("ERROR_ADDING_WITNESS", "Error while adding witness to case: " + body.getCaseFilingNumber() + ", error: " + e.getMessage());
+            throw new CustomException(ERROR_ADDING_WITNESS, "Error while adding witness to case: " + body.getCaseFilingNumber() + ", error: " + e.getMessage());
         }
     }
 
