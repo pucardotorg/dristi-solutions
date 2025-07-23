@@ -46,7 +46,7 @@ public class PaymentCalculaterUtil {
 
             ResponseEntity<CalculationRes> responseEntity = restTemplate.postForEntity(uri.toString(),
                     requestEntity, CalculationRes.class);
-            log.info("Response of payment calculator :: {}",requestEntity.getBody());
+            log.info("Response of payment calculator :: {}", responseEntity.getBody());
 
             return responseEntity.getBody();
         } catch (Exception e) {
