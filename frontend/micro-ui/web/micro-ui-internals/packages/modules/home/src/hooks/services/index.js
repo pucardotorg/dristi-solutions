@@ -14,6 +14,10 @@ export const Urls = {
   searchADiary: "/ab-diary/case/diary/v1/search",
   inboxSearch: "/inbox/v2/index/_search",
   pendingTaskSearch: "/inbox/v2/_getFields/actionCategory",
+  updateSignedBailBonds: "/bail-bond/v1/_updateSignedBails",
+  getBailBondsToSign: "/bail-bond/v1/_getBailsToSign",
+  bailBondUpdate: "/bail-bond/v1/_update",
+  bailBondSearch: "/bail-bond/v1/_search",
 };
 export const HomeService = {
   InboxSearch: (data, params) =>
@@ -92,4 +96,36 @@ export const HomeService = {
       params,
     });
   },
+  getBailBondsToSign: (data, params) =>
+    Request({
+      url: Urls.getBailBondsToSign,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateSignedBailBonds: (data, params) =>
+    Request({
+      url: Urls.updateSignedBailBonds,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateBailBond: (data, params) =>
+    Request({
+      url: Urls.bailBondUpdate,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  searchBailBond: (data, params) =>
+    Request({
+      url: Urls.bailBondSearch,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
 };

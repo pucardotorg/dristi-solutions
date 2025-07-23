@@ -10,18 +10,8 @@ const axios = Axios.create();
 axios.interceptors.response.use(
   (res) => res,
   (error) => {
-    const errorDetails = {
-      message: error.message,
-      stack: error.stack,
-      status: error.response?.status, // HTTP status code if available
-      data: error.response?.data, // Response body if available
-      url: error.config?.url, // Requested URL
-      method: error.config?.method, // HTTP method
-    };
-
-    // Log error using Winston
-    logger.error("Error during API call", errorDetails);
-    return Promise.reject(error);
+    const { handleApiError } = require("./utils/errorHandler");
+    return handleApiError(error, "API Request Interceptor");
   }
 );
 
@@ -540,6 +530,39 @@ async function search_multiple_cases(criteria, tenantId, requestinfo) {
   }
 }
 
+async function search_bailBond(tenantId, bailBondId, requestinfo) {
+  return await axios({
+    method: "post",
+    url: URL.resolve(config.host.bailBond, config.paths.bail_bond_search),
+    data: {
+      RequestInfo: requestinfo,
+      tenantId: tenantId,
+      criteria: {
+        tenantId: tenantId,
+        bailId: bailBondId,
+      },
+    },
+  });
+}
+
+async function search_bailBond_v2(tenantId, requestinfo, criteria, pagination) {
+  try {
+    return await axios({
+      method: "post",
+      url: URL.resolve(config.host.bailBond, config.paths.bail_bond_search),
+      data: {
+        RequestInfo: requestinfo,
+        criteria,
+        pagination,
+        tenantId,
+      },
+    });
+  } catch (error) {
+    logger.error(`Error in ${config.paths.task_search}: ${error.message}`);
+    throw error;
+  }
+}
+
 module.exports = {
   pool,
   create_pdf,
@@ -568,4 +591,6 @@ module.exports = {
   search_application_v2,
   search_order_v2,
   search_evidence_v2,
+  search_bailBond,
+  search_bailBond_v2,
 };

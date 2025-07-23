@@ -1539,7 +1539,7 @@ const SubmissionsCreate = ({ path }) => {
     (orderNumber ? !orderDetails?.orderTitle : false) ||
     (hearingId ? (hearingsData?.HearingList?.[0]?.startTime ? false : true) : false) ||
     isAllOrdersLoading ||
-    isApplicationTypeAmountLoading
+    isApplicationTypeAmountLoading || isCaseDetailsLoading
   ) {
     return <Loader />;
   }

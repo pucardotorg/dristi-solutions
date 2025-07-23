@@ -35,6 +35,9 @@ export const userTypeOptions = [
       "TASK_VIEWER",
       "ADVOCATE_VIEWER",
       "PENDING_TASK_CREATOR",
+      "BAIL_BOND_CREATOR",
+      "BAIL_BOND_VIEWER",
+      "BAIL_BOND_EDITOR",
     ],
     subText: "LITIGANT_SUB_TEXT",
   },
@@ -64,6 +67,9 @@ export const userTypeOptions = [
       "ADVOCATE_VIEWER",
       "ADVOCATE_APPLICATION_VIEWER",
       "PENDING_TASK_CREATOR",
+      "BAIL_BOND_CREATOR",
+      "BAIL_BOND_VIEWER",
+      "BAIL_BOND_EDITOR",
     ],
     apiDetails: {
       serviceName: "/advocate/v1/_create",
@@ -98,6 +104,9 @@ export const userTypeOptions = [
       "ADVOCATE_VIEWER",
       "ADVOCATE_APPLICATION_VIEWER",
       "PENDING_TASK_CREATOR",
+      "BAIL_BOND_CREATOR",
+      "BAIL_BOND_VIEWER",
+      "BAIL_BOND_EDITOR",
     ],
     apiDetails: {
       serviceName: "/advocate/clerk/v1/_create",
@@ -816,6 +825,41 @@ export const pendingTaskCaseGeneratePaymentActions = {
   },
 };
 
+export const pendingTaskForBailBondActions = {
+  PENDING_SIGN: {
+    actorName: ["JUDGE"],
+    actionName: "E-Sign Pending",
+    redirectDetails: {
+      url: "/home/bail-bond",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "caseTitle", value: "caseTitle" },
+        { key: "caseId", value: "id" },
+      ],
+    },
+  },
+  PENDING_REVIEW: {
+    actorName: ["JUDGE"],
+    actionName: "Review the bail bond",
+    redirectDetails: {
+      url: "/home/sign-bail-bond",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "bailId", value: "referenceId" },
+        { key: "caseId", value: "id" },
+      ],
+    },
+  },
+  "PENDING_E-SIGN": {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "E-Sign Pending",
+    redirectDetails: {
+      url: "/dristi/home/bail-bond-sign",
+      params: [{ key: "bailbondId", value: "referenceId" }],
+    },
+  },
+};
+
 export const selectTaskType = {
   "case-default": pendingTaskCaseActions,
   "hearing-default": pendingTaskHearingActions,
@@ -831,4 +875,6 @@ export const selectTaskType = {
   "voluntary-application-submission-bail-documents": pendingTaskVoluntarySubmissionBailDocumentsActions,
   "voluntary-application-submission-bail": pendingTaskVoluntarySubmissionBailActions,
   "task-generic": pendingTaskCaseGeneratePaymentActions,
+  "bail bond": pendingTaskForBailBondActions,
+  "bail-bond-default": pendingTaskForBailBondActions,
 };

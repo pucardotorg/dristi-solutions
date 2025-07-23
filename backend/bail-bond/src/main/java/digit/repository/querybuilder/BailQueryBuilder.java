@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.sql.Types;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -20,7 +21,7 @@ public class BailQueryBuilder {
                     "bail.filing_number as filingNumber, bail.case_type as caseType, bail.litigant_id as litigantId, " +
                     "bail.litigant_name as litigantName, bail.litigant_father_name as litigantFatherName, " +
                     "bail.litigant_signed as litigantSigned, bail.litigant_mobile_number as litigantMobileNumber, " +
-                    "bail.shortened_url as shortenedUrl, bail.bail_id as formattedBailId, " +
+                    "bail.shortened_url as shortenedUrl, " +
                     "bail.additional_details as bailAdditionalDetails, bail.is_active as bailIsActive, " +
                     "bail.created_by as bailCreatedBy, bail.last_modified_by as bailLastModifiedBy, " +
                     "bail.created_time as bailCreatedTime, bail.last_modified_time as bailLastModifiedTime, " +
@@ -47,28 +48,34 @@ public class BailQueryBuilder {
                     "surety_doc.created_time as suretyDocCreatedTime, surety_doc.last_modified_time as suretyDocLastModifiedTime ";
 
     private static final String FROM_QUERY = " FROM dristi_bail bail" +
-            " LEFT JOIN dristi_bail_document bail_doc ON bail.id = bail_doc.bail_id" +
-            " LEFT JOIN dristi_surety srt ON bail.id = srt.bail_id" +
-            " LEFT JOIN dristi_surety_document surety_doc ON srt.id = surety_doc.surety_id ";
+            " LEFT JOIN dristi_bail_document bail_doc ON bail.id = bail_doc.bail_id AND bail_doc.is_active = true " +
+            " LEFT JOIN dristi_surety srt ON bail.id = srt.bail_id AND srt.is_active = true " +
+            " LEFT JOIN dristi_surety_document surety_doc ON srt.id = surety_doc.surety_id AND surety_doc.is_active = true ";
 
     private static final String ORDER_BY_CLAUSE = " ORDER BY {orderBy} {sortingOrder} ";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY bail.created_time DESC ";
 
 
     public String getPaginatedBailIdsQuery(BailSearchCriteria criteria, Pagination pagination, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
-        StringBuilder query = new StringBuilder("SELECT DISTINCT(bail.id), bail.created_time");
+        StringBuilder query = new StringBuilder("SELECT DISTINCT(bail.id), bail.bail_id as bailId, bail.bail_type as bailType," +
+                " bail.bail_status as bailStatus, bail.court_id as courtId, " +
+                " bail.case_title as caseTitle, bail.case_number as caseNumber, bail.cnr_number as cnrNumber, " +
+                " bail.filing_number as filingNumber, bail.case_type as caseType, bail.litigant_id as litigantId, " +
+                " bail.litigant_name as litigantName, bail.litigant_father_name as litigantFatherName," +
+                " bail.created_by as bailCreatedBy, bail.last_modified_by as bailLastModifiedBy, " +
+                " bail.created_time as bailCreatedTime, bail.last_modified_time as bailLastModifiedTime ");
         query.append(FROM_QUERY);
 
         getWhereFields(criteria, query, preparedStmtList, preparedStmtArgList);
         query = new StringBuilder(addOrderByQuery(query.toString(), pagination));
 
-        if (pagination!=null) {
+        if (pagination != null) {
             query.append(" LIMIT ? OFFSET ?");
-                preparedStmtList.add(pagination.getLimit().intValue());
-                preparedStmtList.add(pagination.getOffSet().intValue());
+                preparedStmtList.add(pagination.getLimit());
+                preparedStmtList.add(pagination.getOffSet());
 
-                preparedStmtArgList.add(Types.INTEGER);
-                preparedStmtArgList.add(Types.INTEGER);
+            preparedStmtArgList.add(Types.INTEGER);
+            preparedStmtArgList.add(Types.INTEGER);
         }
 
         return query.toString();
@@ -84,6 +91,8 @@ public class BailQueryBuilder {
         query.append(" WHERE bail.id IN (");
         String placeholders = String.join(",", bailIds.stream().map(id -> "?").toList());
         query.append(placeholders).append(")");
+
+        query.append(" AND bail.is_active = true");
 
         for (String id : bailIds) {
             preparedStmtList.add(id);
@@ -112,30 +121,25 @@ public class BailQueryBuilder {
         return countQuery.toString();
     }
 
-    private void getWhereFields(BailSearchCriteria criteria, StringBuilder query,
-                                List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+    private void getWhereFields(BailSearchCriteria criteria, StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
 
-        boolean firstCriteria = true;
+        // Enforce is_active = true for all tables with LEFT JOIN-safe checks
+        query.append(" WHERE bail.is_active = true");
 
-        firstCriteria = addBailCriteria(criteria.getTenantId(), query, firstCriteria, "bail.tenant_id = ?", preparedStmtList, preparedStmtArgList);
-        firstCriteria = addBailCriteria(criteria.getId(), query, firstCriteria, "bail.id = ?", preparedStmtList, preparedStmtArgList);
-        firstCriteria = addBailCriteria(criteria.getLitigantIndividualId(), query, firstCriteria, "bail.litigant_id = ?", preparedStmtList, preparedStmtArgList);
-        firstCriteria = addBailCriteria(criteria.getSuretyMobileNumber(), query, firstCriteria, "srt.surety_mobile_number = ?", preparedStmtList, preparedStmtArgList);
-        firstCriteria = addBailCriteria(criteria.getCourtId(), query, firstCriteria, "bail.court_id = ?", preparedStmtList, preparedStmtArgList);
-        firstCriteria = addBailCriteria(criteria.getFilingNumber(), query, firstCriteria, "bail.filing_number = ?", preparedStmtList, preparedStmtArgList);
-        firstCriteria = addBailCriteria(criteria.getCnrNumber(), query, firstCriteria, "bail.cnr_number = ?", preparedStmtList, preparedStmtArgList);
-        firstCriteria = addBailCriteria(criteria.getStatus(), query, firstCriteria, "bail.bail_status = ?", preparedStmtList, preparedStmtArgList);
-        firstCriteria = addBailCriteria(criteria.getCaseType() != null ? criteria.getCaseType().name() : null, query, firstCriteria, "bail.case_type = ?", preparedStmtList, preparedStmtArgList);
-        firstCriteria = addBailCriteria(criteria.getCaseNumber(), query, firstCriteria, "bail.case_number = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getTenantId(), query, "bail.tenant_id = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getId(), query, "bail.id = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getLitigantIndividualId(), query, "bail.litigant_id = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getSuretyMobileNumber(), query, "srt.surety_mobile_number = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getCourtId(), query, "bail.court_id = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getFilingNumber(), query, "bail.filing_number = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getCnrNumber(), query, "bail.cnr_number = ?", preparedStmtList, preparedStmtArgList);
+        addListBailCriteria(criteria.getStatus(), query, preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getCaseType() != null ? criteria.getCaseType().name() : null, query, "bail.case_type = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getCaseNumber(), query, "bail.case_number = ?", preparedStmtList, preparedStmtArgList);
 
         // Special fuzzy search handling
         if (criteria.getBailId() != null && !criteria.getBailId().isEmpty()) {
-            if (firstCriteria) {
-                query.append(" WHERE ");
-            } else {
-                query.append(" AND ");
-            }
-
+            query.append(" AND ");
             if (Boolean.TRUE.equals(criteria.getFuzzySearch())) {
                 query.append("bail.bail_id ILIKE ?");
                 preparedStmtList.add("%" + criteria.getBailId() + "%");
@@ -146,25 +150,32 @@ public class BailQueryBuilder {
 
             preparedStmtArgList.add(Types.VARCHAR);
         }
+
+        if (criteria.getUserUuid() != null && !criteria.getUserUuid().isEmpty()) {
+            query.append(" AND (bail.bail_status != 'DRAFT_IN_PROGRESS' OR (bail.bail_status = 'DRAFT_IN_PROGRESS' AND bail.created_by = ?)) ");
+            preparedStmtList.add(criteria.getUserUuid());
+            preparedStmtArgList.add(Types.VARCHAR);
+        }
     }
 
-    private boolean addBailCriteria(String criteria, StringBuilder query, boolean firstCriteria,
-                                    String condition, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+    private void addBailCriteria(String criteria, StringBuilder query, String condition, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
         if (criteria != null && !criteria.isEmpty()) {
-            addClauseIfRequired(query, firstCriteria);
+            query.append(" AND ");
             query.append(condition);
             preparedStmtList.add(criteria);
             preparedStmtArgList.add(Types.VARCHAR);
-            return false;
         }
-        return firstCriteria;
     }
 
-    private void addClauseIfRequired(StringBuilder query, boolean isFirstCriteria) {
-        if (isFirstCriteria) {
-            query.append(" WHERE ");
-        } else {
+    private void addListBailCriteria(List<String> criteria, StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
+        if (criteria != null && !criteria.isEmpty()) {
             query.append(" AND ");
+            query.append(" bail.bail_status IN ")
+                    .append(" (")
+                    .append(criteria.stream().map(id -> "?").collect(Collectors.joining(",")))
+                    .append(") ");
+            preparedStmtList.addAll(criteria);
+            criteria.forEach(i -> preparedStmtArgList.add(Types.VARCHAR));
         }
     }
 }

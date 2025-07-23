@@ -726,6 +726,7 @@ public class CaseService {
         hearingUpdateRequest.put("filingNumber", caseRequest.getCases().getFilingNumber());
         hearingUpdateRequest.put("cmpNumber", caseRequest.getCases().getCmpNumber());
         hearingUpdateRequest.put("courtCaseNumber", caseRequest.getCases().getCourtCaseNumber());
+        hearingUpdateRequest.put("caseTitle", caseRequest.getCases().getCaseTitle());
         hearingUpdateRequest.put("tenantId", caseRequest.getCases().getTenantId());
         return hearingUpdateRequest;
     }
@@ -1932,11 +1933,12 @@ public class CaseService {
                     .filingNumber(courtCase.getFilingNumber())
                     .build();
             List<Hearing> hearingList = getHearingsForCase(hearingCriteria);
+            List<Hearing> scheduledHearings = hearingList.stream().filter(hearing -> hearing.getStatus().equalsIgnoreCase("SCHEDULED")).toList();
             Attendee newAttendee = new Attendee();
             newAttendee.setIndividualId(joinCaseAdvocate.getIndividualId());
             newAttendee.setName(getName(individual));
             newAttendee.setType("Advocate");
-            hearingList.forEach(hearing -> {
+            scheduledHearings.forEach(hearing -> {
                 Optional.ofNullable(hearing.getAttendees()).orElse(new ArrayList<>()).add(newAttendee);
                 HearingRequest hearingRequest = new HearingRequest();
                 joinCaseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().code("HEARING_SCHEDULER").name("HEARING_SCHEDULER").tenantId(joinCaseData.getTenantId()).build());
@@ -2715,7 +2717,8 @@ public class CaseService {
                 .filingNumber(courtCase.getFilingNumber())
                 .build();
         List<Hearing> hearingList = getHearingsForCase(hearingCriteria);
-        log.info("hearing list :: {}", hearingList);
+        List<Hearing> scheduledHearings = hearingList.stream().filter(hearing -> hearing.getStatus().equalsIgnoreCase("SCHEDULED")).toList();
+        log.info("hearing list :: {}", scheduledHearings);
 
         List<Attendee> newAttendees = new ArrayList<>();
 
@@ -2776,7 +2779,7 @@ public class CaseService {
                 })
                 .collect(Collectors.toList());
 
-        hearingList.forEach(hearing -> {
+        scheduledHearings.forEach(hearing -> {
             Optional.ofNullable(hearing.getAttendees()).orElse(new ArrayList<>()).addAll(newAttendees);
             HearingRequest hearingRequest = new HearingRequest();
             requestInfo.getUserInfo().getRoles().add(Role.builder().code("HEARING_SCHEDULER").name("HEARING_SCHEDULER").tenantId(joinCaseData.getTenantId()).build());
@@ -4979,32 +4982,31 @@ public class CaseService {
         List<BreakDown> newBreakDowns = newCalc.getBreakDown();
         List<BreakDown> oldBreakDowns = oldCalculation.getBreakDown();
 
-        if(newCalc.getTotalAmount()> oldCalculation.getTotalAmount()) {
+        Map<String, BreakDown> oldBreakDownMap = oldBreakDowns.stream()
+                .collect(Collectors.toMap(BreakDown::getCode, Function.identity()));
+        List<BreakDown> differenceBreakDowns = new ArrayList<>();
 
-            Map<String, BreakDown> oldBreakDownMap = oldBreakDowns.stream()
-                    .collect(Collectors.toMap(BreakDown::getCode, Function.identity()));
-            List<BreakDown> differenceBreakDowns = new ArrayList<>();
+        double diffTotalAmount = 0.0;
+        for (BreakDown newBreakDown : newBreakDowns) {
+            BreakDown oldBreakDown = oldBreakDownMap.get(newBreakDown.getCode());
 
-            for (int i = 0; i < newBreakDowns.size(); i++) {
-                BreakDown newBreakDown = newBreakDowns.get(i);
-                BreakDown oldBreakDown = oldBreakDownMap.get(newBreakDown.getCode());
+            if (newBreakDown.getAmount() > oldBreakDown.getAmount()) {
+                diffTotalAmount += (newBreakDown.getAmount() - oldBreakDown.getAmount());
 
-                if (newBreakDown.getAmount() > oldBreakDown.getAmount()) {
-                    BreakDown differenceItem = new BreakDown();
-                    differenceItem.setCode(newBreakDown.getCode());
-                    differenceItem.setType(newBreakDown.getType());
-                    differenceItem.setAmount(newBreakDown.getAmount() - oldBreakDown.getAmount());
-                    differenceBreakDowns.add(differenceItem);
-                }
+                BreakDown differenceItem = new BreakDown();
+                differenceItem.setCode(newBreakDown.getCode());
+                differenceItem.setType(newBreakDown.getType());
+                differenceItem.setAmount(newBreakDown.getAmount() - oldBreakDown.getAmount());
+                differenceBreakDowns.add(differenceItem);
             }
+        }
 
-            if (!differenceBreakDowns.isEmpty()) {
-                Calculation difference = new Calculation();
-                difference.setTenantId(newCalc.getTenantId());
-                difference.setTotalAmount(newCalc.getTotalAmount() - oldCalculation.getTotalAmount());
-                difference.setBreakDown(differenceBreakDowns);
-                return difference;
-            }
+        if (!differenceBreakDowns.isEmpty()) {
+            Calculation difference = new Calculation();
+            difference.setTenantId(newCalc.getTenantId());
+            difference.setTotalAmount(diffTotalAmount);
+            difference.setBreakDown(differenceBreakDowns);
+            return difference;
         }
         return null;
     }
@@ -5087,18 +5089,30 @@ public class CaseService {
 
     private Double getChequeAmount(CourtCase courtCase) {
         JsonNode caseDetails = objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
-        if(caseDetails == null || caseDetails.get("chequeDetails") == null){
+        JsonNode chequeDetails = (caseDetails != null) ? caseDetails.get("chequeDetails") : null;
+
+        if (chequeDetails == null || chequeDetails.get("formdata") == null || !chequeDetails.get("formdata").isArray()) {
             return 0.0;
         }
-        JsonNode amountNode = caseDetails.get("chequeDetails")
-                .get("formdata")
-                .get(0)
-                .get("data")
-                .get("chequeAmount");
+        return sumChequeAmounts(chequeDetails.get("formdata"), courtCase.getId().toString());
+    }
 
-        return amountNode != null && amountNode.isTextual()
-                ? Double.parseDouble(amountNode.asText())
-                : 0.0;
+    private double sumChequeAmounts(JsonNode formdata, String caseId) {
+        double totalAmount = 0.0;
+
+        for (JsonNode formNode : formdata) {
+            JsonNode amountNode = formNode.path("data").path("chequeAmount");
+
+            if (amountNode.isTextual()) {
+                try {
+                    totalAmount += Double.parseDouble(amountNode.asText());
+                } catch (NumberFormatException e) {
+                    log.error("Error parsing chequeAmount for caseId: {}, error: {}", caseId, e.getMessage());
+                }
+            }
+        }
+
+        return totalAmount;
     }
 
     public Integer getCaseCount(CaseSearchRequest caseSearchRequest) {

@@ -2,6 +2,7 @@ package org.egov.filestore.persistence.repository;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -108,7 +109,11 @@ public class ArtifactRepository {
 		if (artifact == null)
 			throw new CustomException("NOT_FOUND", "Invalid filestoreid or tenantid");
 
-		if (module != null && !module.isEmpty() && !module.equals(artifact.getModule())) {
+		if (module != null && !module.isEmpty() &&
+				Arrays.stream(module.split(","))
+						.map(String::trim)
+						.filter(m -> !m.isEmpty())
+				        .noneMatch(m -> m.equalsIgnoreCase(artifact.getModule()))) {
 			throw new CustomException("module_mismatch", "Invalid module");
 		}
 

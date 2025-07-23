@@ -85,8 +85,14 @@ public class UrlDBRepository implements URLRepository{
         if (results.isEmpty()) {
             return null;
         } else {
-            ShortenRequest shortenRequest = results.get(0);
-            log.info("Retrieved {} at {}", shortenRequest.getUrl(), referenceId);
+            ShortenRequest shortenRequest = results.stream()
+                    .filter(r -> r.getValidTo() == null).findFirst()
+                    .orElse(null);
+
+            if (shortenRequest != null) {
+                log.info("Retrieved {} at {}", shortenRequest.getUrl(), referenceId);
+            } else
+                log.info("URL at key" + referenceId + " does not exist");
             return shortenRequest;
         }
     }

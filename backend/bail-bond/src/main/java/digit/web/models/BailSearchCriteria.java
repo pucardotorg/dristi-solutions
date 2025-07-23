@@ -19,6 +19,9 @@ import java.util.List;
 @Builder
 public class BailSearchCriteria {
 
+    @JsonProperty("userUuid")
+    private String userUuid;
+
     @JsonProperty("tenantId")
     private String tenantId;
 
@@ -44,7 +47,7 @@ public class BailSearchCriteria {
     private String suretyMobileNumber;
 
     @JsonProperty("status")
-    private String status;
+    private List<String> status;
 
     /**
      * Type of the case.

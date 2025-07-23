@@ -61,13 +61,7 @@ public class HearingRegistrationEnrichment {
             List<String> hearingIdList = idgenUtil.getIdList(hearingRequest.getRequestInfo(), tenantId, idName, idFormat, 1, false);
             hearing.setHearingId(hearing.getFilingNumber().get(0) + "-" + hearingIdList.get(0));
 
-            List<Attendee> attendees = hearing.getAttendees();
-
-            if (attendees != null && !attendees.isEmpty()) {
-                attendees.forEach(attendee -> {
-                    attendee.setId(String.valueOf(UUID.randomUUID()));
-                });
-            }
+            enrichHearingAttendees(hearingRequest);
 
             if (null != hearing.getCourtCaseNumber())
                 hearing.setCaseReferenceNumber(hearing.getCourtCaseNumber());
@@ -101,9 +95,27 @@ public class HearingRegistrationEnrichment {
                         document.setId(String.valueOf(UUID.randomUUID()));
                 });
             }
+            enrichHearingAttendees(hearingRequest);
             enrichHearingDuration(hearingRequest);
         } catch (Exception e) {
             log.error("Error enriching hearing application upon update: {}", e.getMessage());
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Error in hearing enrichment service during hearing update process: " + e.getMessage());
+        }
+    }
+
+    private void enrichHearingAttendees(HearingRequest hearingRequest) {
+        try {
+            Hearing hearing = hearingRequest.getHearing();
+            List<Attendee> attendees = hearing.getAttendees();
+
+            if (attendees != null && !attendees.isEmpty()) {
+                attendees.forEach(attendee -> {
+                    if(attendee.getId() == null)
+                        attendee.setId(String.valueOf(UUID.randomUUID()));
+                });
+            }
+        } catch (Exception e) {
+            log.error("Error enriching hearing attendees upon update: {}", e.getMessage());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in hearing enrichment service during hearing update process: " + e.getMessage());
         }
     }

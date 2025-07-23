@@ -28,14 +28,15 @@ public class Bail {
 
     @JsonProperty("id")
     private String id = null;
+
     @JsonProperty("tenantId")
     @NotNull
-
     private String tenantId = null;
+
     @JsonProperty("caseId")
     @NotNull
-
     private String caseId = null;
+
     @JsonProperty("bailAmount")
 
     private Double bailAmount = null;
@@ -62,7 +63,7 @@ public class Bail {
         @JsonCreator
         public static BailTypeEnum fromValue(String text) {
             for (BailTypeEnum b : BailTypeEnum.values()) {
-                if (String.valueOf(b.value).equals(text)) {
+                if (String.valueOf(b.value).equalsIgnoreCase(text)) {
                     return b;
                 }
             }
@@ -80,7 +81,7 @@ public class Bail {
     private Long endDate = null;
 
     @JsonProperty("isActive")
-    private Boolean isActive = null;
+    private Boolean isActive = true;
 
     @JsonProperty("litigantId")
     private String litigantId = null;
@@ -95,7 +96,6 @@ public class Bail {
     private Boolean litigantSigned = null;
 
     @JsonProperty("litigantMobileNumber")
-    @NotNull
     private String litigantMobileNumber = null;
 
     @JsonProperty("sureties")
@@ -161,7 +161,7 @@ public class Bail {
         @JsonCreator
         public static CaseTypeEnum fromValue(String text) {
             for (CaseTypeEnum b : CaseTypeEnum.values()) {
-                if (String.valueOf(b.value).equals(text)) {
+                if (String.valueOf(b.value).equalsIgnoreCase(text)) {
                     return b;
                 }
             }

@@ -3,7 +3,6 @@ package org.pucar.dristi.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
@@ -663,7 +662,7 @@ public class OpenApiService {
                 .fuzzySearch(false)
                 .build();
 
-        BailSearchResponse response = bailUtil.fetchBails(criteria);
+        BailSearchResponse response = bailUtil.fetchBails(criteria,createInternalRequestInfoWithSystemUserType());
         List<Bail> bails = response.getBails();
 
         if (bails == null || bails.isEmpty()) {
@@ -707,7 +706,7 @@ public class OpenApiService {
                 .requestInfo(RequestInfo.builder().userInfo(User.builder().build()).build())
                 .build();
 
-        return esignUtil.callESignService(eSignRequest, servletRequest);
+        return esignUtil.callESignService(eSignRequest);
     }
 
     public OpenApiBailResponse updateBailBond(OpenApiUpdateBailBondRequest request) {
@@ -723,7 +722,7 @@ public class OpenApiService {
                     .fuzzySearch(false)
                     .build();
 
-            BailSearchResponse response = bailUtil.fetchBails(criteria);
+            BailSearchResponse response = bailUtil.fetchBails(criteria,createInternalRequestInfoWithSystemUserType());
             List<Bail> bails = response.getBails();
 
             if (bails == null || bails.isEmpty()) {
@@ -745,9 +744,9 @@ public class OpenApiService {
 
             // Add signed document
             Document document = Document.builder()
-                    .id(UUID.randomUUID().toString())
                     .fileStore(request.getFileStoreId())
                     .documentType("SIGNED")
+                    .isActive(true)
                     .build();
 
             // Set signed flag
@@ -789,7 +788,16 @@ public class OpenApiService {
                 .name(BAIL_BOND_CREATOR)
                 .tenantId(configuration.getEgovStateTenantId())
                 .build());
-        userInfo.setType(CITIZEN_UPPER);
+        userInfo.setType("EMPLOYEE");
+        userInfo.setTenantId(configuration.getEgovStateTenantId());
+        return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
+    }
+
+    private RequestInfo createInternalRequestInfoWithSystemUserType() {
+        org.egov.common.contract.request.User userInfo = new User();
+        userInfo.setUuid(userService.internalMicroserviceRoleUuid);
+        userInfo.setRoles(userService.internalMicroserviceRoles);
+        userInfo.setType("SYSTEM");
         userInfo.setTenantId(configuration.getEgovStateTenantId());
         return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
     }
