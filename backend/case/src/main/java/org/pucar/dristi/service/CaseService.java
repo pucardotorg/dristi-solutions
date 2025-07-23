@@ -5092,14 +5092,27 @@ public class CaseService {
         if(caseDetails == null || caseDetails.get("chequeDetails") == null){
             return 0.0;
         }
-        JsonNode amountNode = caseDetails.get("chequeDetails")
-                .get("formdata")
-                .get(0)
-                .get("data")
-                .get("chequeAmount");
+        JsonNode formdata = caseDetails.get("chequeDetails").get("formdata");
+        if (formdata == null || !formdata.isArray()) {
+            return 0.0;
+        }
 
-        return amountNode != null && amountNode.isTextual()
-                ? Double.parseDouble(amountNode.asText())
-                : 0.0;
+        double totalAmount = 0.0;
+
+        for (JsonNode formNode : formdata) {
+            JsonNode amountNode = formNode
+                    .get("data")
+                    .get("chequeAmount");
+
+            if (amountNode != null && amountNode.isTextual()) {
+                try {
+                    totalAmount += Double.parseDouble(amountNode.asText());
+                } catch (NumberFormatException e) {
+                    log.error("Error while parsing chequeAmount for caseId: {}, error: {}", courtCase.getId(), e.getMessage());
+                }
+            }
+        }
+
+        return totalAmount;
     }
 }
