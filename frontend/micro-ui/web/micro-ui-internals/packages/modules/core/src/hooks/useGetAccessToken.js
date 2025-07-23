@@ -22,7 +22,7 @@ const authenticate = async (details) => {
     url: "/user/oauth/token",
     data,
     headers: {
-      authorization: `Basic ${window?.globalConfigs?.getConfig("JWT_TOKEN") || process.env.REACT_APP_JWT_TOKEN}`,
+      authorization: `Basic ${ "first"}`,
       "Content-Type": "application/x-www-form-urlencoded",
     },
   });
