@@ -5090,26 +5090,25 @@ public class CaseService {
 
     private Double getChequeAmount(CourtCase courtCase) {
         JsonNode caseDetails = objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
-        if(caseDetails == null || caseDetails.get("chequeDetails") == null){
-            return 0.0;
-        }
-        JsonNode formdata = caseDetails.get("chequeDetails").get("formdata");
-        if (formdata == null || !formdata.isArray()) {
-            return 0.0;
-        }
+        JsonNode chequeDetails = (caseDetails != null) ? caseDetails.get("chequeDetails") : null;
 
+        if (chequeDetails == null || chequeDetails.get("formdata") == null || !chequeDetails.get("formdata").isArray()) {
+            return 0.0;
+        }
+        return sumChequeAmounts(chequeDetails.get("formdata"), courtCase.getId().toString());
+    }
+
+    private double sumChequeAmounts(JsonNode formdata, String caseId) {
         double totalAmount = 0.0;
 
         for (JsonNode formNode : formdata) {
-            JsonNode amountNode = formNode
-                    .get("data")
-                    .get("chequeAmount");
+            JsonNode amountNode = formNode.path("data").path("chequeAmount");
 
-            if (amountNode != null && amountNode.isTextual()) {
+            if (amountNode.isTextual()) {
                 try {
                     totalAmount += Double.parseDouble(amountNode.asText());
                 } catch (NumberFormatException e) {
-                    log.error("Error while parsing chequeAmount for caseId: {}, error: {}", courtCase.getId(), e.getMessage());
+                    log.error("Error parsing chequeAmount for caseId: {}, error: {}", caseId, e.getMessage());
                 }
             }
         }
