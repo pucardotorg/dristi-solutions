@@ -295,7 +295,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       if (bailBondPaginationData?.limit) sessionStorage.setItem("bulkBailBondSignlimit", bailBondPaginationData?.limit);
       if (bailBondPaginationData?.caseTitle) sessionStorage.setItem("bulkBailBondSignCaseTitle", bailBondPaginationData?.caseTitle);
       if (bailBondPaginationData?.offset) sessionStorage.setItem("bulkBailBondSignoffset", bailBondPaginationData?.offset);
-      handleEsign(name, pageModule, selectedBailBondFilestoreid, "Signature");
+      handleEsign(name, pageModule, selectedBailBondFilestoreid, "Magistrate Signature");
     } catch (error) {
       console.log("E-sign navigation error:", error);
       setLoader(false);
