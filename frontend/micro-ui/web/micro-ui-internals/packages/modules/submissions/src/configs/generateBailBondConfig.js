@@ -321,7 +321,7 @@ export const bailBondConfig = [
                 inputs: [
                   {
                     name: "document",
-                    isMandatory: true,
+                    isMandatory: false,
                     documentHeader: "OTHER_DOCUMENTS_HEADING",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
                     uploadGuidelines: "UPLOAD_DOC_50",
