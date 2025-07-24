@@ -81,11 +81,11 @@ jobs:
       - name: Build and Push Docker image for CaseManagement
         run: |
           docker build --build-arg WORK_DIR="backend/casemanagement" -t docker.io/venkatramireddyb/pucar_casemanagement:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/pucar_casemanagement:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker push docker.io/venkatramireddyb/pucar_casemanagement:${{ env.VERSION }}-${{ env.commit_hash }}
       - name: Build and Push Docker image for CaseManagement_DB
         run: |
-          docker build  -t pucarsolutionsdev.azurecr.io/pucar_casemanagement_db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/pucar_casemanagement_db:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker build  -t docker.io/venkatramireddyb/pucar_casemanagement_db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
+          docker push docker.io/venkatramireddyb/pucar_casemanagement_db:${{ env.VERSION }}-${{ env.commit_hash }}
         working-directory: backend/casemanagement/src/main/resources/db
 
 
