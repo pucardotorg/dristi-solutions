@@ -79,13 +79,13 @@ jobs:
 
       - name: Build and Push Docker image for egov-localization
         run: |
-          docker build --build-arg WORK_DIR="common/egov-localization" -t pucarsolutionsdev.azurecr.io/egov-localization:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/egov-localization:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker build --build-arg WORK_DIR="common/egov-localization" -t docker.io/venkatramireddyb/egov-localization:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
+          docker push docker.io/venkatramireddyb/egov-localization:${{ env.VERSION }}-${{ env.commit_hash }}
 
       - name: Build and Push Docker image for egov-localization DB
         run: |
-          docker build  -t pucarsolutionsdev.azurecr.io/egov-localization-db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/egov-localization-db:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker build  -t docker.io/venkatramireddyb/egov-localization-db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
+          docker push docker.io/venkatramireddyb/egov-localization-db:${{ env.VERSION }}-${{ env.commit_hash }}
         working-directory: common/egov-localization/src/main/resources/db
 
   Workflow_Trigger:

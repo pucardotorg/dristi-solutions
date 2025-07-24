@@ -87,7 +87,7 @@ jobs:
         if: (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/develop') || startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v'))) || github.event_name == 'workflow_dispatch'
         run: |
           docker build  -t docker.io/venkatramireddyb/summons-svc_db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/summons-svc_db:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker push docker.io/venkatramireddyb/summons-svc_db:${{ env.VERSION }}-${{ env.commit_hash }}
         working-directory: backend/summons-svc/src/main/resources/db
 
   Workflow_Trigger:
