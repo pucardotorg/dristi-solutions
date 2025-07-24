@@ -85,8 +85,8 @@ jobs:
 
       - name: Build and Push Docker image for sunbirdrc-credential-service_DB
         run: |
-          docker build  -t pucarsolutionsdev.azurecr.io/sunbirdrc-credential-service-db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/sunbirdrc-credential-service-db:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker build  -t docker.io/venkatramireddyb/sunbirdrc-credential-service-db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
+          docker push docker.io/venkatramireddyb/sunbirdrc-credential-service-db:${{ env.VERSION }}-${{ env.commit_hash }}
         working-directory: common/sunbirdrc-credential-service/src/main/resources/db
 
   Workflow_Trigger:

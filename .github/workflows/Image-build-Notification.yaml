@@ -83,12 +83,12 @@ jobs:
       - name: Build and Push Docker image for Notification
         run: |
           docker build --build-arg WORK_DIR="backend/Notification" -t docker.io/venkatramireddyb/notification:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/notification:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker push docker.io/venkatramireddyb/notification:${{ env.VERSION }}-${{ env.commit_hash }}
 
       - name: Build and Push Docker image for Notification DB
         run: |
-          docker build  -t pucarsolutionsdev.azurecr.io/notification-db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/notification-db:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker build  -t docker.io/venkatramireddyb/notification-db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
+          docker push docker.io/venkatramireddyb/notification-db:${{ env.VERSION }}-${{ env.commit_hash }}
         working-directory: backend/Notification/src/main/resources/db
 
   Workflow_Trigger:
