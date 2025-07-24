@@ -865,7 +865,7 @@ const GenerateBailBond = () => {
     setFormdata(convertToFormData(t, bailBondDetails || {}));
   }, [bailBondDetails, t]);
 
-  if (loader || isCaseDetailsLoading || !caseDetails || isBailBondLoading) {
+  if (isCaseDetailsLoading || !caseDetails || isBailBondLoading) {
     return <Loader />;
   }
 
@@ -891,6 +891,25 @@ const GenerateBailBond = () => {
           }
         `}
       </style>
+      {loader && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "9999",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
       <div className="citizen create-submission" style={{ width: "90%", ...(!isCitizen && { padding: "0 8px 24px 16px" }) }}>
         <Header styles={{ margin: "25px 0px 0px 25px" }}> {t("BAIL_BOND_DETAILS")}</Header>
         <div style={{ minHeight: "550px", overflowY: "auto" }}>
