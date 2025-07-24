@@ -343,9 +343,6 @@ const GenerateBailBond = () => {
             clearErrors(`proofOfSolvency_${index}`);
           }
 
-          if (docs?.otherDocuments && Object.keys(formState?.errors).includes(`otherDocuments_${index}`)) {
-            clearErrors(`otherDocuments_${index}`);
-          }
         });
       } else if (formData?.sureties?.length > 0 && Object.keys(formState?.errors).includes("sureties")) {
         clearErrors("sureties");
@@ -690,10 +687,6 @@ const GenerateBailBond = () => {
           setFormErrors.current(`proofOfSolvency_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
         }
 
-        if (!docs?.otherDocuments && !Object.keys(setFormState?.current?.errors).includes(`otherDocuments_${index}`)) {
-          error = true;
-          setFormErrors.current(`otherDocuments_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
-        }
       });
     }
     return error;

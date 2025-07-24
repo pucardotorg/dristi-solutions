@@ -437,19 +437,26 @@ public class BailService {
             return false;
         }
         if (!Boolean.TRUE.equals(bail.getLitigantSigned())) {
-            log.info("Litigant has not signed");
+            log.info("Litigant has not signed for bail :  {} ", bail.getBailId());
             return false;
         }
+
+
+        if (bail.getBailType().equals(Bail.BailTypeEnum.PERSONAL)) {
+            log.info("Bail type is personal and litigant has signed successfully for bail :  {} ", bail.getBailId());
+            return true;
+        }
+
         boolean allSuretiesSigned = false;
         if (!ObjectUtils.isEmpty(bailRequest.getBail().getSureties())) {
             allSuretiesSigned = bailRequest.getBail().getSureties().stream()
                     .allMatch(Surety::getHasSigned);
         }
         if (!allSuretiesSigned) {
-            log.info("Some sureties have not signed");
+            log.info("Some sureties have not signed for bail :  {} ", bail.getBailId());
             return false;
         }
-        log.info("All sureties and litigant have signed");
+        log.info("All sureties and litigant have signed successfully for bail :  {} ", bail.getBailId());
         return true;
     }
 
