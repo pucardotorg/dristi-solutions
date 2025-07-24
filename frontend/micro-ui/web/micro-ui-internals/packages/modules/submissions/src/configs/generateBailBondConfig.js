@@ -322,6 +322,7 @@ export const bailBondConfig = [
                   {
                     name: "document",
                     isMandatory: false,
+                    isOptional: "CS_IS_OPTIONAL",
                     documentHeader: "OTHER_DOCUMENTS_HEADING",
                     fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
                     uploadGuidelines: "UPLOAD_DOC_50",
@@ -331,6 +332,9 @@ export const bailBondConfig = [
                     textAreaStyle: {
                       fontSize: "16px",
                       fontWeight: 400,
+                      marginBottom: "8px",
+                    },
+                    documentOptionalStyle: {
                       marginBottom: "8px",
                     },
                   },
@@ -344,5 +348,5 @@ export const bailBondConfig = [
     dependentKey: {
       bailType: ["showSurety"],
     },
-  }
+  },
 ];
