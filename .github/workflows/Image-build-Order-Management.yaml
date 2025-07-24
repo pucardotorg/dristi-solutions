@@ -57,9 +57,9 @@ jobs:
           sarif_file: reports/dependency-check-report.sarif
         if: always()
 
-      # Login to Azure Container Registry
-      - name: Login to Azure Container Registry
-        run: docker login -u pucarsolutionsdev -p ${{ secrets.ACR_PASSWORD }} pucarsolutionsdev.azurecr.io
+      # Login to Docker Registry
+      - name: Login to Docker Registry
+        run: docker login -u venkatramireddyb -p ${{ secrets.ACR_PASSWORD }}
       - name: Set Version from Tag or Branch
         id: set_version
         run: |

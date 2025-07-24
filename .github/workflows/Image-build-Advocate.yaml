@@ -57,9 +57,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: mvn -B -f backend/advocate/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.projectKey=solutions_advocate -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
-      # Login to Azure Container Registry
-      - name: Login to Azure Container Registry
-        run: docker login -u pucarsolutionsdev -p ${{ secrets.ACR_PASSWORD }} pucarsolutionsdev.azurecr.io
+      # Login to Docker Registry
+      - name: Login to Docker Registry
+        run: docker login -u venkatramireddyb -p ${{ secrets.ACR_PASSWORD }}
 
       - name: Set Version from Tag or Branch
         id: set_version
@@ -81,13 +81,13 @@ jobs:
 
       - name: Build and Push Docker image for Advocate
         run: |
-          docker build --build-arg WORK_DIR="backend/advocate" -t pucarsolutionsdev.azurecr.io/pucar_advocate:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/pucar_advocate:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker build --build-arg WORK_DIR="backend/advocate" -t docker.io/venkatramireddyb/pucar_advocate:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
+          docker push docker.io/venkatramireddyb/pucar_advocate:${{ env.VERSION }}-${{ env.commit_hash }}
 
       - name: Build and Push Docker image for Advocate_DB
         run: |
-          docker build  -t pucarsolutionsdev.azurecr.io/pucar_advocate_db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/pucar_advocate_db:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker build  -t docker.io/venkatramireddyb/pucar_advocate_db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
+          docker push docker.io/venkatramireddyb/pucar_advocate_db:${{ env.VERSION }}-${{ env.commit_hash }}
         working-directory: backend/advocate/src/main/resources/db
 
   Workflow_Trigger:

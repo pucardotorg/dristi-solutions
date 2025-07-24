@@ -75,9 +75,9 @@ jobs:
           commit_hash=$(git log -1 --pretty=format:%H -- common/collection-services)
           echo "commit_hash=$commit_hash" >> $GITHUB_ENV
 
-      # Login to Azure Container Registry
-      - name: Login to Azure Container Registry
-        run: docker login -u pucarsolutionsdev -p ${{ secrets.ACR_PASSWORD }} pucarsolutionsdev.azurecr.io
+      # Login to Docker Registry
+      - name: Login to Docker Registry
+        run: docker login -u venkatramireddyb -p ${{ secrets.ACR_PASSWORD }}
 
       - name: Build and Push Docker image for Collection-Service
         run: |

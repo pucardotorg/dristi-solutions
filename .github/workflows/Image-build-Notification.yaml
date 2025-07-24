@@ -58,9 +58,9 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: mvn -B -f backend/Notification/pom.xml package org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.1.2184:sonar -Dsonar.projectKey=solutions_Notification -Dsonar.organization=solutions -Dsonar.host.url=https://sonarcloud.io/
 
-      # Login to Azure Container Registry
-      - name: Login to Azure Container Registry
-        run: docker login -u pucarsolutionsdev -p ${{ secrets.ACR_PASSWORD }} pucarsolutionsdev.azurecr.io
+      # Login to Docker Registry
+      - name: Login to Docker Registry
+        run: docker login -u venkatramireddyb -p ${{ secrets.ACR_PASSWORD }}
 
       - name: Set Version from Tag or Branch
         id: set_version
@@ -82,7 +82,7 @@ jobs:
 
       - name: Build and Push Docker image for Notification
         run: |
-          docker build --build-arg WORK_DIR="backend/Notification" -t pucarsolutionsdev.azurecr.io/notification:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
+          docker build --build-arg WORK_DIR="backend/Notification" -t docker.io/venkatramireddyb/notification:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
           docker push pucarsolutionsdev.azurecr.io/notification:${{ env.VERSION }}-${{ env.commit_hash }}
 
       - name: Build and Push Docker image for Notification DB
