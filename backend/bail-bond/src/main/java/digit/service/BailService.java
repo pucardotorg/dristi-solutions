@@ -437,19 +437,26 @@ public class BailService {
             return false;
         }
         if (!Boolean.TRUE.equals(bail.getLitigantSigned())) {
-            log.info("Litigant has not signed");
+            log.info("Litigant has not signed for bail :  {} ", bail.getBailId());
             return false;
         }
+
+
+        if (bail.getBailType().equals(Bail.BailTypeEnum.PERSONAL)) {
+            log.info("Bail type is personal and litigant has signed successfully for bail :  {} ", bail.getBailId());
+            return true;
+        }
+
         boolean allSuretiesSigned = false;
         if (!ObjectUtils.isEmpty(bailRequest.getBail().getSureties())) {
             allSuretiesSigned = bailRequest.getBail().getSureties().stream()
                     .allMatch(Surety::getHasSigned);
         }
         if (!allSuretiesSigned) {
-            log.info("Some sureties have not signed");
+            log.info("Some sureties have not signed for bail :  {} ", bail.getBailId());
             return false;
         }
-        log.info("All sureties and litigant have signed");
+        log.info("All sureties and litigant have signed successfully for bail :  {} ", bail.getBailId());
         return true;
     }
 
@@ -620,10 +627,11 @@ public class BailService {
                     Document document = Document.builder()
                             .documentType(SIGNED)
                             .fileStore(fileStoreId)
+                            .isActive(true)
                             .documentName(BAIL_BOND_PDF_NAME)
                             .additionalDetails(Map.of(NAME, BAIL_BOND_PDF_NAME))
                             .build();
-                    bail.setDocuments(List.of(document));
+                    bail.setDocuments(new ArrayList<>(List.of(document)));
 
                     if (!ObjectUtils.isEmpty(bail.getSureties())) {
                         bail.getSureties().forEach(surety -> surety.setIsApproved(true));
