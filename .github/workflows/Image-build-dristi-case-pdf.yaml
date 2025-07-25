@@ -38,7 +38,7 @@ jobs:
         working-directory: backend/dristi-case-pdf
       # Login to Azure Container Registry
       - name: Login to Azure Container Registry
-        run: docker login -u pucarsolutionsdev -p ${{ secrets.ACR_PASSWORD }} pucarsolutionsdev.azurecr.io
+        run: docker login -u venkatramireddyb -p ${{ secrets.ACR_PASSWORD }}
       - name: Set Version from Tag or Branch
         id: set_version
         run: |
@@ -59,8 +59,8 @@ jobs:
 
       - name: Build and Push Docker image for dristi-case-pdf
         run: |
-          docker build --build-arg WORK_DIR="backend/dristi-case-pdf" -t pucarsolutionsdev.azurecr.io/pucar_dristi_case_pdf:${{ env.VERSION }}-${{ env.commit_hash }} -f backend/dristi-case-pdf/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/pucar_dristi_case_pdf:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker build --build-arg WORK_DIR="backend/dristi-case-pdf" -t docker.io/venkatramireddyb/pucar_dristi_case_pdf:${{ env.VERSION }}-${{ env.commit_hash }} -f backend/dristi-case-pdf/Dockerfile .
+          docker push docker.io/venkatramireddyb/pucar_dristi_case_pdf:${{ env.VERSION }}-${{ env.commit_hash }}
 
 
   Workflow_Trigger:

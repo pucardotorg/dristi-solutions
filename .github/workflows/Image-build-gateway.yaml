@@ -63,7 +63,7 @@ jobs:
       # Login to Azure Container Registry
       - name: Login to Azure Container Registry
         if: (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release' || github.ref == 'refs/heads/dpg-qa-deployment')) || github.event_name == 'workflow_dispatch'
-        run: docker login -u pucarsolutionsdev -p ${{ secrets.ACR_PASSWORD }} pucarsolutionsdev.azurecr.io
+        run: docker login -u venkatramireddyb -p ${{ secrets.ACR_PASSWORD }}
 
       - name: Git commit_hash for service
         run: |
@@ -73,8 +73,8 @@ jobs:
       - name: Build and Push Docker image for e-sign-svc
         if: (github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/release' || github.ref == 'refs/heads/dpg-qa-deployment')) || github.event_name == 'workflow_dispatch'
         run: |
-          docker build --build-arg WORK_DIR="common/gateway" -t pucarsolutionsdev.azurecr.io/pucar_gateway:v1.0.0-${{ env.commit_hash }} -f build/maven/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/pucar_gateway:v1.0.0-${{ env.commit_hash }}
+          docker build --build-arg WORK_DIR="common/gateway" -t docker.io/venkatramireddyb/pucar_gateway:v1.0.0-${{ env.commit_hash }} -f build/maven/Dockerfile .
+          docker push docker.io/venkatramireddyb/pucar_gateway:v1.0.0-${{ env.commit_hash }}
 
 
   Workflow_Trigger:

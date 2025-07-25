@@ -38,7 +38,7 @@ jobs:
       # Login to Azure Container Registry
       - name: Login to Azure Container Registry
         if: (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/develop') || startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v'))) || github.event_name == 'workflow_dispatch'
-        run: docker login -u pucarsolutionsdev -p ${{ secrets.ACR_PASSWORD }} pucarsolutionsdev.azurecr.io
+        run: docker login -u venkatramireddyb -p ${{ secrets.ACR_PASSWORD }}
       - name: Set Version from Tag or Branch
         id: set_version
         run: |
@@ -60,8 +60,8 @@ jobs:
       - name: Build and Push Docker image for sbi-ui
         if: (github.event_name == 'push' && (startsWith(github.ref, 'refs/heads/develop') || startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/heads/main') || startsWith(github.ref, 'refs/tags/v'))) || github.event_name == 'workflow_dispatch'
         run: |
-          docker build  -t pucarsolutionsdev.azurecr.io/sbi-ui:${{ env.VERSION }}-${{ env.commit_hash }} -f Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/sbi-ui:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker build  -t docker.io/venkatramireddyb/sbi-ui:${{ env.VERSION }}-${{ env.commit_hash }} -f Dockerfile .
+          docker push docker.io/venkatramireddyb/sbi-ui:${{ env.VERSION }}-${{ env.commit_hash }}
         working-directory: backend/sbi-webpage/
 
   Workflow_Trigger:

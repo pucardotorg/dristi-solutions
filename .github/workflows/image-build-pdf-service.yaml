@@ -39,7 +39,7 @@ jobs:
         working-directory: common/pdf-service
       # Login to Azure Container Registry
       - name: Login to Azure Container Registry
-        run: docker login -u pucarsolutionsdev -p ${{ secrets.ACR_PASSWORD }} pucarsolutionsdev.azurecr.io
+        run: docker login -u venkatramireddyb -p ${{ secrets.ACR_PASSWORD }}
       - name: Set Version from Tag or Branch
         id: set_version
         run: |
@@ -60,11 +60,11 @@ jobs:
 
       - name: Build and Push Docker image for pdf-service
         run: |
-          docker build  -t pucarsolutionsdev.azurecr.io/pdf-service:${{ env.VERSION }}-${{ env.commit_hash }} -f Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/pdf-service:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker build  -t docker.io/venkatramireddyb/pdf-service:${{ env.VERSION }}-${{ env.commit_hash }} -f Dockerfile .
+          docker push docker.io/venkatramireddyb/pdf-service:${{ env.VERSION }}-${{ env.commit_hash }}
         working-directory: common/pdf-service
       - name: Build and Push Docker image for pdf-service DB
         run: |
-          docker build  -t pucarsolutionsdev.azurecr.io/pdf-service-db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/pdf-service-db:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker build  -t docker.io/venkatramireddyb/pdf-service-db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
+          docker push docker.io/venkatramireddyb/pdf-service-db:${{ env.VERSION }}-${{ env.commit_hash }}
         working-directory: common/pdf-service/migration
