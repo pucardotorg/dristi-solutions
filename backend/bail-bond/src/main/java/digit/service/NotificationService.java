@@ -1,10 +1,10 @@
 package digit.service;
 
-import com.google.gson.Gson;
 import com.jayway.jsonpath.JsonPath;
 import digit.config.Configuration;
 import digit.kafka.Producer;
 import digit.repository.ServiceRequestRepository;
+import digit.util.DateUtil;
 import digit.web.models.BailRequest;
 import digit.web.models.Email;
 import digit.web.models.EmailRecipientData;
@@ -20,8 +20,6 @@ import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,11 +38,14 @@ public class NotificationService {
 
     private final ServiceRequestRepository repository;
 
+    private final DateUtil dateUtil;
+
     @Autowired
-    public NotificationService(Configuration config, Producer producer, ServiceRequestRepository repository) {
+    public NotificationService(Configuration config, Producer producer, ServiceRequestRepository repository, DateUtil dateUtil) {
         this.config = config;
         this.producer = producer;
         this.repository = repository;
+        this.dateUtil = dateUtil;
     }
 
     public void sendNotification(RequestInfo requestInfo, SmsTemplateData smsTemplateData, String notificationStatus, String mobileNumber) {
@@ -133,18 +134,13 @@ public class NotificationService {
     }
 
     public String buildBody(String bodyTemplate, EmailTemplateData emailTemplateData, EmailRecipientData recipientData){
-        // Get current time + 1 day
-        LocalDateTime future = LocalDateTime.now().plusDays(1);
+        String formattedCurrentDate = dateUtil.getFormattedCurrentDate();
 
-        // Formatters
-        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("hh:mm a");
-        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
         return bodyTemplate.replace("{{name}}", recipientData.getName())
                 .replace("{{caseNumber}}", emailTemplateData.getCaseNumber())
                 .replace("{{caseName}}", emailTemplateData.getCaseName())
                 .replace("{{as}}", getAsValueForPerson(recipientData.getType()))
-                .replace("{{time}}", future.format(timeFormatter))
-                .replace("{{date}}", future.format(dateFormatter))
+                .replace("{{date}}", formattedCurrentDate)
                 .replace("{{shortenedURL}}", emailTemplateData.getShortenedURL());
     }
 
