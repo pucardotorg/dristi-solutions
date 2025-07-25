@@ -197,7 +197,6 @@ const GenerateBailBond = () => {
     }
     return bailBond?.bails?.[0];
   }, [defaultFormValueData, bailBond]);
-  
 
   const pipComplainants = useMemo(() => {
     return caseDetails?.litigants
@@ -342,7 +341,6 @@ const GenerateBailBond = () => {
           if (docs?.proofOfSolvency && Object.keys(formState?.errors).includes(`proofOfSolvency_${index}`)) {
             clearErrors(`proofOfSolvency_${index}`);
           }
-
         });
       } else if (formData?.sureties?.length > 0 && Object.keys(formState?.errors).includes("sureties")) {
         clearErrors("sureties");
@@ -686,7 +684,6 @@ const GenerateBailBond = () => {
           error = true;
           setFormErrors.current(`proofOfSolvency_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
         }
-
       });
     }
     return error;
@@ -857,6 +854,13 @@ const GenerateBailBond = () => {
   useEffect(() => {
     setFormdata(convertToFormData(t, bailBondDetails || {}));
   }, [bailBondDetails, t]);
+
+  useEffect(()=> {
+    if(!isCaseDetailsLoading && !isBailBondLoading && bailBondId && bailBondDetails?.status !== "DRAFT_IN_PROGRESS"){
+      history.replace(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Documents`);
+    }
+  },[isCaseDetailsLoading, isBailBondLoading, bailBondId, bailBondDetails,  caseDetails, filingNumber])
+
 
   if (isCaseDetailsLoading || !caseDetails || isBailBondLoading) {
     return <Loader />;
