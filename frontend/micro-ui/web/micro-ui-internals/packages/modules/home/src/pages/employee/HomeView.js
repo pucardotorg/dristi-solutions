@@ -443,6 +443,7 @@ const HomeView = () => {
         "PENDING_RESPONSE",
         "UNDER_SCRUTINY",
         "CASE_DISMISSED",
+        "RE_PENDING_PAYMENT",
       ];
       if (statusArray.includes(row?.original?.status)) {
         history.push(getRedirectUrl(row?.original?.status, row?.original?.id, row?.original?.filingNumber));

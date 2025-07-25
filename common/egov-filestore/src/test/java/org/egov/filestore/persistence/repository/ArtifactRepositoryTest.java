@@ -33,7 +33,7 @@ class ArtifactRepositoryTest {
         artifact.setTenantId("42");
         FileStoreJpaRepository fileStoreJpaRepository = mock(FileStoreJpaRepository.class);
         when(fileStoreJpaRepository.findByFileStoreIdAndTenantId((String) any(), (String) any())).thenReturn(artifact);
-        assertNull((new ArtifactRepository(fileStoreJpaRepository)).find("File Store Id", "42"));
+        assertNull((new ArtifactRepository(fileStoreJpaRepository)).find("File Store Id", "42", "Module"));
         verify(fileStoreJpaRepository).findByFileStoreIdAndTenantId((String) any(), (String) any());
     }
 
@@ -245,6 +245,29 @@ class ArtifactRepositoryTest {
         assertThrows(CustomException.class,
                 () -> artifactRepository.getByTenantIdAndFileStoreIdList("foo", new ArrayList<>()));
         verify(fileStoreJpaRepository).findByTenantIdAndFileStoreIdList((String) any(), (List<String>) any());
+    }
+
+    @Test
+    void testFindModuleMisMatchException() {
+        Artifact artifact = new Artifact();
+        artifact.setContentType("text/plain");
+        artifact.setCreatedBy("Jan 1, 2020 8:00am GMT+0100");
+        artifact.setCreatedTime(1L);
+        artifact.setFileName("foo.txt");
+        artifact.setFileSource("File Source");
+        artifact.setFileStoreId("42");
+        artifact.setId(123L);
+        artifact.setLastModifiedBy("Jan 1, 2020 9:00am GMT+0100");
+        artifact.setLastModifiedTime(1L);
+        artifact.setModule("Module");
+        artifact.setTag("Tag");
+        artifact.setTenantId("42");
+        FileStoreJpaRepository fileStoreJpaRepository = mock(FileStoreJpaRepository.class);
+        when(fileStoreJpaRepository.findByFileStoreIdAndTenantId((String) any(), (String) any())).thenReturn(artifact);
+        ArtifactRepository artifactRepository = new ArtifactRepository(fileStoreJpaRepository);
+        assertThrows(CustomException.class,
+                () -> artifactRepository.find("File Store Id", "42", "landing-page"));
+        verify(fileStoreJpaRepository).findByFileStoreIdAndTenantId((String) any(), (String) any());
     }
 }
 

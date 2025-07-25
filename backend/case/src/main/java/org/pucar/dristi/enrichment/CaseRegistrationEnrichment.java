@@ -11,11 +11,7 @@ import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.ServiceConstants;
 import org.pucar.dristi.service.IndividualService;
-import org.pucar.dristi.util.AdvocateUtil;
-import org.pucar.dristi.util.CaseUtil;
-import org.pucar.dristi.util.HrmsUtil;
-import org.pucar.dristi.util.EtreasuryUtil;
-import org.pucar.dristi.util.IdgenUtil;
+import org.pucar.dristi.util.*;
 import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -567,7 +563,7 @@ public class CaseRegistrationEnrichment {
 
     }
 
-    public Document enrichCasePaymentReceipt(CaseRequest caseRequest, String id){
+    public Document enrichCasePaymentReceipt(CaseRequest caseRequest, String id, String consumerCode){
         try {
             log.info("Enriching payment receipt for case with id: {}", id);
             JsonNode paymentReceipt = etreasuryUtil.getPaymentReceipt(caseRequest.getRequestInfo(), id);
@@ -575,6 +571,7 @@ public class CaseRegistrationEnrichment {
                     .fileStore(paymentReceipt.get("Document").get("fileStore").textValue())
                     .documentType(PAYMENT_RECEIPT)
                     .isActive(true)
+                    .additionalDetails(getAdditionalDetails(consumerCode))
                     .build();
             enrichDocumentsOnCreate(paymentReceiptDocument);
             caseRequest.getCases().getDocuments().add(paymentReceiptDocument);
@@ -583,5 +580,11 @@ public class CaseRegistrationEnrichment {
             log.error("Error enriching payment receipt: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching payment receipt: " + e.getMessage());
         }
+    }
+
+    private Object getAdditionalDetails(String consumerCode) {
+        Map<String, Object> additionalDetails = new HashMap<>();
+        additionalDetails.put("consumerCode", consumerCode);
+        return additionalDetails;
     }
 }

@@ -15,6 +15,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import static org.egov.web.notification.mail.utils.Constants.*;
 
 @Slf4j
 @Service
@@ -41,6 +42,8 @@ public class EmailNotificationListener {
         try {
             EmailRequest emailRequest = objectMapper.convertValue(record, EmailRequest.class);
             log.info("Sending email to {}", emailRequest.getEmail().getEmailTo());
+            String originalBody = emailRequest.getEmail().getBody();
+            originalBody = originalBody.replace("\\n", "\n");
             String message = messageConstruction.constructMessage(emailRequest.getEmail());
 
             if (Constants.CAUSELIST_EMAIL_TEMPLATE_CODE.equalsIgnoreCase(emailRequest.getEmail().getTemplateCode())) {
@@ -48,6 +51,9 @@ public class EmailNotificationListener {
             }
 
             emailRequest.getEmail().setBody(message);
+            if(BAIL_BOND_TEMPLATE_CODE.equalsIgnoreCase(emailRequest.getEmail().getTemplateCode())) {
+                emailRequest.getEmail().setBody(originalBody);
+            }
             emailService.sendEmail(emailRequest.getEmail());
             log.info("Email sent to {}", properties.getMailSenderTest() ? properties.getTestEmail() : emailRequest.getEmail().getEmailTo());
         } catch (IllegalArgumentException e) {

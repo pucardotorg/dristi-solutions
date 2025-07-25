@@ -408,6 +408,12 @@ public class CaseService {
             // conditional enrichment using strategy
             enrichmentService.enrichCourtCase(caseRequest);
             String previousStatus = caseRequest.getCases().getStatus();
+            if(PENDING_RE_SIGN.equals(previousStatus)) {
+                Calculation calculation = compareCalculationAndCreateDemand(caseRequest);
+                if(calculation != null) {
+                    caseRequest.getCases().getWorkflow().setAction(UPLOAD_WITH_PAYMENT);
+                }
+            }
             workflowService.updateWorkflowStatus(caseRequest);
 
 
@@ -422,8 +428,13 @@ public class CaseService {
 
             if (lastSigned) {
                 log.info("Last e-sign for case {}", caseRequest.getCases().getId());
+                Calculation calculation = compareCalculationAndCreateDemand(caseRequest);
                 caseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(caseRequest.getCases().getTenantId()).build());
-                caseRequest.getCases().getWorkflow().setAction(E_SIGN_COMPLETE);
+                if(calculation != null){
+                    caseRequest.getCases().getWorkflow().setAction(E_SIGN_COMPLETE_WITH_PAYMENT);
+                } else {
+                    caseRequest.getCases().getWorkflow().setAction(E_SIGN_COMPLETE);
+                }
                 log.info("Updating workflow status for case {} in last e-sign", caseRequest.getCases().getId());
                 workflowService.updateWorkflowStatus(caseRequest);
             }
@@ -437,11 +448,14 @@ public class CaseService {
             }
 
             boolean isAccessCodeGenerated = false;
-            if (PENDING_ADMISSION_HEARING_STATUS.equals(caseRequest.getCases().getStatus())) {
+            if(PENDING_REGISTRATION.equals(caseRequest.getCases().getStatus()) || PENDING_RESPONSE.equals(caseRequest.getCases().getStatus())) {
                 if (caseRequest.getCases().getAccessCode() == null) {
                     isAccessCodeGenerated = true;
                 }
                 enrichmentUtil.enrichAccessCode(caseRequest);
+            }
+
+            if (PENDING_RESPONSE.equals(caseRequest.getCases().getStatus())) {
                 enrichmentUtil.enrichCNRNumber(caseRequest);
                 enrichmentUtil.enrichCMPNumber(caseRequest);
                 enrichmentUtil.enrichRegistrationDate(caseRequest);
@@ -712,6 +726,7 @@ public class CaseService {
         hearingUpdateRequest.put("filingNumber", caseRequest.getCases().getFilingNumber());
         hearingUpdateRequest.put("cmpNumber", caseRequest.getCases().getCmpNumber());
         hearingUpdateRequest.put("courtCaseNumber", caseRequest.getCases().getCourtCaseNumber());
+        hearingUpdateRequest.put("caseTitle", caseRequest.getCases().getCaseTitle());
         hearingUpdateRequest.put("tenantId", caseRequest.getCases().getTenantId());
         return hearingUpdateRequest;
     }
@@ -1168,12 +1183,10 @@ public class CaseService {
             return CASE_FORWARDED_TO_JUDGE;
         } else if (previousStatus.equalsIgnoreCase(UNDER_SCRUTINY) && updatedStatus.equalsIgnoreCase(CASE_REASSIGNED)) {
             return FSO_SEND_BACK;
-        } else if (previousStatus.equalsIgnoreCase(PENDING_REGISTRATION) && updatedStatus.equalsIgnoreCase(PENDING_ADMISSION_HEARING)) {
+        } else if (previousStatus.equalsIgnoreCase(PENDING_REGISTRATION) && updatedStatus.equalsIgnoreCase(PENDING_RESPONSE)) {
             return CASE_REGISTERED;
         } else if (previousStatus.equalsIgnoreCase(PENDING_REGISTRATION) && updatedStatus.equalsIgnoreCase(CASE_REASSIGNED)) {
             return JUDGE_SEND_BACK_E_SIGN_CODE;
-        } else if (previousStatus.equalsIgnoreCase(PENDING_ADMISSION_HEARING) && updatedStatus.equalsIgnoreCase(ADMISSION_HEARING_SCHEDULED)) {
-            return ADMISSION_HEARING_SCHEDULED;
         } else if (previousStatus.equalsIgnoreCase(PENDING_RESPONSE) && updatedStatus.equalsIgnoreCase(CASE_ADMITTED)) {
             return CASE_ADMITTED;
         }
@@ -1920,11 +1933,12 @@ public class CaseService {
                     .filingNumber(courtCase.getFilingNumber())
                     .build();
             List<Hearing> hearingList = getHearingsForCase(hearingCriteria);
+            List<Hearing> scheduledHearings = hearingList.stream().filter(hearing -> hearing.getStatus().equalsIgnoreCase("SCHEDULED")).toList();
             Attendee newAttendee = new Attendee();
             newAttendee.setIndividualId(joinCaseAdvocate.getIndividualId());
             newAttendee.setName(getName(individual));
             newAttendee.setType("Advocate");
-            hearingList.forEach(hearing -> {
+            scheduledHearings.forEach(hearing -> {
                 Optional.ofNullable(hearing.getAttendees()).orElse(new ArrayList<>()).add(newAttendee);
                 HearingRequest hearingRequest = new HearingRequest();
                 joinCaseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().code("HEARING_SCHEDULER").name("HEARING_SCHEDULER").tenantId(joinCaseData.getTenantId()).build());
@@ -2654,13 +2668,57 @@ public class CaseService {
         return objectMapper.convertValue(additionalDetailsNode, additionalDetails.getClass());
     }
 
+    private void updateMobilenumber(ObjectNode dataNode, Individual individual) {
+        if (dataNode.has("phonenumbers")) {
+            ObjectNode phonenumbersNode = (ObjectNode) dataNode.get("phonenumbers");
+
+            if (phonenumbersNode.has("mobileNumber") && phonenumbersNode.get("mobileNumber").isArray()) {
+                ArrayNode mobileNumberArray = (ArrayNode) phonenumbersNode.get("mobileNumber");
+
+                boolean numberExists = false;
+                for (JsonNode numberNode : mobileNumberArray) {
+                    if (numberNode.asText().equals(individual.getMobileNumber())) {
+                        numberExists = true;
+                        break;
+                    }
+                }
+
+                if (!numberExists) {
+                    mobileNumberArray.add(individual.getMobileNumber());
+                    log.info("Mobile number added to mobileNumber array.");
+                } else {
+                    log.info("Mobile number already exists.");
+                }
+
+            } else {
+                // Create mobileNumber array and add the number
+                ArrayNode mobileNumberArray = objectMapper.createArrayNode();
+                mobileNumberArray.add(individual.getMobileNumber());
+                phonenumbersNode.set("mobileNumber", mobileNumberArray);
+                log.info("mobileNumber array created and mobile number added.");
+            }
+
+        } else {
+            // Create phonenumbers object and add mobileNumber array
+            ObjectNode phonenumbersNode = objectMapper.createObjectNode();
+            ArrayNode mobileNumberArray = objectMapper.createArrayNode();
+            mobileNumberArray.add(individual.getMobileNumber());
+
+            phonenumbersNode.set("mobileNumber", mobileNumberArray);
+            dataNode.set("phonenumbers", phonenumbersNode);
+            log.info("phonenumbers object created with mobile number.");
+        }
+
+    }
+
     public void mapAndSetLitigants(JoinCaseDataV2 joinCaseData, CourtCase caseObj, CourtCase courtCase, RequestInfo requestInfo) {
 
         HearingCriteria hearingCriteria = HearingCriteria.builder()
                 .filingNumber(courtCase.getFilingNumber())
                 .build();
         List<Hearing> hearingList = getHearingsForCase(hearingCriteria);
-        log.info("hearing list :: {}", hearingList);
+        List<Hearing> scheduledHearings = hearingList.stream().filter(hearing -> hearing.getStatus().equalsIgnoreCase("SCHEDULED")).toList();
+        log.info("hearing list :: {}", scheduledHearings);
 
         List<Attendee> newAttendees = new ArrayList<>();
 
@@ -2721,7 +2779,7 @@ public class CaseService {
                 })
                 .collect(Collectors.toList());
 
-        hearingList.forEach(hearing -> {
+        scheduledHearings.forEach(hearing -> {
             Optional.ofNullable(hearing.getAttendees()).orElse(new ArrayList<>()).addAll(newAttendees);
             HearingRequest hearingRequest = new HearingRequest();
             requestInfo.getUserInfo().getRoles().add(Role.builder().code("HEARING_SCHEDULER").name("HEARING_SCHEDULER").tenantId(joinCaseData.getTenantId()).build());
@@ -4872,5 +4930,192 @@ public class CaseService {
         }
 
         return responseMap;
+    }
+
+    public Calculation compareCalculationAndCreateDemand(@Valid CaseRequest body) {
+        try {
+            log.info("operation=compareCalculationAndCreateDemand, status=IN_PROGRESS, caseId: {}", body.getCases().getId());
+            CalculationRes newCalculation = getCalculation(body.getCases(), body.getRequestInfo());
+
+            String lastSubmissionConsumerCode = getLastSubmissionConsumerCode(body) != null ? getLastSubmissionConsumerCode(body) : body.getCases().getFilingNumber()+"_CASE_FILING";
+            Calculation oldCalculation = etreasuryUtil.getHeadBreakupCalculation(lastSubmissionConsumerCode, body.getRequestInfo());
+
+            if(oldCalculation == null) {
+                log.info("No previous calculation found for caseId: {}, for creating new demand", body.getCases().getId());
+                return null;
+            }
+            Calculation calculation = getCalculationDifference(newCalculation, oldCalculation);
+
+            if(calculation != null) {
+                createDemandForCase(body, calculation, newCalculation.getCalculation().get(0), lastSubmissionConsumerCode);
+            }
+            log.info("operation=compareCalculationAndCreateDemand, status=SUCCESS, caseId: {}", body.getCases().getId());
+            return calculation;
+        } catch (Exception e) {
+            log.error("operation=compareCalculationAndCreateDemand, status=ERROR, caseId: {}, error: {}", body.getCases().getId(), e.getMessage());
+            throw new CustomException("ERROR_CALCULATION_CASE", "Error while resubmitting case with id: " + body.getCases().getId() + ", error: " + e.getMessage());
+        }
+    }
+
+    private CalculationRes getCalculation(CourtCase courtCase, RequestInfo requestInfo) {
+        EFillingCalculationCriteria calculationCriteria = EFillingCalculationCriteria.builder()
+                .tenantId(courtCase.getTenantId())
+                .caseId(courtCase.getId().toString())
+                .filingNumber(courtCase.getFilingNumber())
+                .build();
+
+        calculationCriteria.setCheckAmount(getChequeAmount(courtCase));
+        calculationCriteria.setIsDelayCondonation(isDelayCondonation(courtCase));
+
+        EFillingCalculationRequest calculationRequest = EFillingCalculationRequest.builder()
+                .requestInfo(requestInfo)
+                .calculationCriteria(Collections.singletonList(calculationCriteria))
+                .build();
+
+        return paymentCalculaterUtil.callPaymentCalculator(calculationRequest);
+    }
+
+
+    private Calculation getCalculationDifference(CalculationRes newCalculation, Calculation oldCalculation) {
+        Calculation newCalc = newCalculation.getCalculation().get(0);
+
+        List<BreakDown> newBreakDowns = newCalc.getBreakDown();
+        List<BreakDown> oldBreakDowns = oldCalculation.getBreakDown();
+
+        Map<String, BreakDown> oldBreakDownMap = oldBreakDowns.stream()
+                .collect(Collectors.toMap(BreakDown::getCode, Function.identity()));
+        List<BreakDown> differenceBreakDowns = new ArrayList<>();
+
+        double diffTotalAmount = 0.0;
+        for (BreakDown newBreakDown : newBreakDowns) {
+            BreakDown oldBreakDown = oldBreakDownMap.get(newBreakDown.getCode());
+
+            if (newBreakDown.getAmount() > oldBreakDown.getAmount()) {
+                diffTotalAmount += (newBreakDown.getAmount() - oldBreakDown.getAmount());
+
+                BreakDown differenceItem = new BreakDown();
+                differenceItem.setCode(newBreakDown.getCode());
+                differenceItem.setType(newBreakDown.getType());
+                differenceItem.setAmount(newBreakDown.getAmount() - oldBreakDown.getAmount());
+                differenceBreakDowns.add(differenceItem);
+            }
+        }
+
+        if (!differenceBreakDowns.isEmpty()) {
+            Calculation difference = new Calculation();
+            difference.setTenantId(newCalc.getTenantId());
+            difference.setTotalAmount(diffTotalAmount);
+            difference.setBreakDown(differenceBreakDowns);
+            return difference;
+        }
+        return null;
+    }
+
+    private void createDemandForCase(@Valid CaseRequest body, Calculation calculation, Calculation finalCalculation, String lastSubmissionConsumerCode) {
+        try {
+            DemandCreateRequest demandCreateRequest  = DemandCreateRequest.builder()
+                    .requestInfo(body.getRequestInfo())
+                    .filingNumber(body.getCases().getFilingNumber())
+                    .consumerCode(updateAndGetConsumerCode(body))
+                    .tenantId(body.getCases().getTenantId())
+                    .entityType(config.getCaseBusinessServiceName())
+                    .calculation(Collections.singletonList(calculation))
+                    .finalCalcPostResubmission(finalCalculation)
+                    .lastSubmissionConsumerCode(lastSubmissionConsumerCode)
+                    .build();
+
+            etreasuryUtil.createDemand(demandCreateRequest);
+        } catch (Exception e) {
+            log.error("Error while creating demand for caseId: {}, error: {}", body.getCases().getId(), e.getMessage());
+            throw new CustomException("ERROR_CREATING_DEMAND", "Error while creating demand for caseId: " + body.getCases().getId() + ", error: " + e.getMessage());
+        }
+    }
+
+    private String getLastSubmissionConsumerCode(CaseRequest body) {
+        JsonNode additionalDetails = objectMapper.convertValue(body.getCases().getAdditionalDetails(), JsonNode.class);
+
+        if (additionalDetails != null && additionalDetails.has("lastSubmissionConsumerCode")) {
+            return additionalDetails.get("lastSubmissionConsumerCode").textValue();
+        }
+        return null;
+    }
+
+    private String updateAndGetConsumerCode(CaseRequest body) {
+        JsonNode additionalDetails = objectMapper.convertValue(body.getCases().getAdditionalDetails(), JsonNode.class);
+        String baseConsumerCode = body.getCases().getFilingNumber() + "_CASE_FILING";
+
+        String newConsumerCode;
+        int nextSuffix = 1;
+
+        if (additionalDetails != null && additionalDetails.has("lastSubmissionConsumerCode")) {
+            String lastConsumerCode = getLastSubmissionConsumerCode(body);
+            if (lastConsumerCode != null && lastConsumerCode.startsWith(baseConsumerCode)) {
+                nextSuffix = getNextSuffix(lastConsumerCode, baseConsumerCode);
+            }
+        }
+        newConsumerCode = baseConsumerCode + "-" + nextSuffix;
+        ((ObjectNode) additionalDetails).put("lastSubmissionConsumerCode", newConsumerCode);
+
+        body.getCases().setAdditionalDetails(objectMapper.convertValue(additionalDetails, Map.class));
+        return newConsumerCode;
+    }
+
+
+    private static int getNextSuffix(String lastConsumerCode, String baseConsumerCode) {
+        String suffixPart = lastConsumerCode.substring(baseConsumerCode.length());
+
+        int nextSuffix = 1; // Default if no suffix found
+
+        if (suffixPart.startsWith("-")) {
+            try {
+                int currentSuffix = Integer.parseInt(suffixPart.substring(1));
+                nextSuffix = currentSuffix + 1;
+            } catch (NumberFormatException e) {
+                // If suffix is not a valid number, reset to 1
+                nextSuffix = 1;
+            }
+        }
+        return nextSuffix;
+    }
+
+
+    private Boolean isDelayCondonation(CourtCase existingCase) {
+        JsonNode caseDetails = objectMapper.convertValue(existingCase.getCaseDetails(), JsonNode.class);
+        if(caseDetails == null || caseDetails.get("delayApplications") == null) {
+            return false;
+        }
+        return !caseDetails.get("delayApplications").get("formdata").get(0).get("data").get("delayCondonationType").get("code").textValue().equals("YES");
+    }
+
+    private Double getChequeAmount(CourtCase courtCase) {
+        JsonNode caseDetails = objectMapper.convertValue(courtCase.getCaseDetails(), JsonNode.class);
+        JsonNode chequeDetails = (caseDetails != null) ? caseDetails.get("chequeDetails") : null;
+
+        if (chequeDetails == null || chequeDetails.get("formdata") == null || !chequeDetails.get("formdata").isArray()) {
+            return 0.0;
+        }
+        return sumChequeAmounts(chequeDetails.get("formdata"), courtCase.getId().toString());
+    }
+
+    private double sumChequeAmounts(JsonNode formdata, String caseId) {
+        double totalAmount = 0.0;
+
+        for (JsonNode formNode : formdata) {
+            JsonNode amountNode = formNode.path("data").path("chequeAmount");
+
+            if (amountNode.isTextual()) {
+                try {
+                    totalAmount += Double.parseDouble(amountNode.asText());
+                } catch (NumberFormatException e) {
+                    log.error("Error parsing chequeAmount for caseId: {}, error: {}", caseId, e.getMessage());
+                }
+            }
+        }
+
+        return totalAmount;
+    }
+
+    public Integer getCaseCount(CaseSearchRequest caseSearchRequest) {
+        return caseRepository.getCaseCount(caseSearchRequest);
     }
 }
