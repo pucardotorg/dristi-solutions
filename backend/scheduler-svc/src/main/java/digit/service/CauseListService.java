@@ -148,6 +148,7 @@ public class CauseListService {
         log.info("operation = generateCauseListForJudge, result = IN_PROGRESS, judgeId = {}", courtId);
         try {
             InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtId, getFromDate(hearingDate),getToDate(hearingDate) );
+            log.info("inboxRequest = {}", inboxRequest.toString());
             List<OpenHearing> openHearings = inboxUtil.getOpenHearings(inboxRequest);
 
             List<CauseList> causeList  = getCauseListFromHearings(openHearings);
@@ -206,8 +207,8 @@ public class CauseListService {
 
     private Long getToDate(String hearingDate) {
         return hearingDate == null
-                ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now().toLocalDate().plusDays(2).atStartOfDay())
-                : dateUtil.getEpochFromLocalDateTime(LocalDate.parse(hearingDate).plusDays(1).atStartOfDay());
+                ? dateUtil.getEpochFromLocalDateTime(LocalDateTime.now().toLocalDate().plusDays(1).atTime(LocalTime.MAX))
+                : dateUtil.getEpochFromLocalDateTime(LocalDate.parse(hearingDate).atTime(LocalTime.MAX));
     }
 
     private Long getFromDate(String hearingDate) {
