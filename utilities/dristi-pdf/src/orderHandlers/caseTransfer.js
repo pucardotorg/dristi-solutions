@@ -44,7 +44,7 @@ async function caseTransfer(
     // Search for case details
     const resCase = await handleApiCall(
       res,
-      () => search_case(cnrNumber, tenantId, requestInfo),
+      () => search_case(cnrNumber, tenantId, requestInfo, order?.courtId),
       "Failed to query case service"
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
@@ -124,11 +124,11 @@ async function caseTransfer(
       order?.additionalDetails?.formdata?.caseTransferredTo || "";
     const groundsForTransfer = order?.orderDetails?.grounds || "";
     const grantStatus =
-      order?.additionalDetails?.applicationStatus === "Rejected"
+      order?.additionalDetails?.applicationStatus === "REJECTED"
         ? "REJECTED"
         : "GRANTED";
     const reasonForRejection =
-      order?.additionalDetails?.applicationStatus === "Rejected"
+      order?.additionalDetails?.applicationStatus === "REJECTED"
         ? additionalComments
         : "";
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";

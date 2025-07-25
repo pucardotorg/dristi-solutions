@@ -34,6 +34,11 @@ public class MessageConstruction {
 
     public String constructMessage(Email email) {
         try {
+            // For bail bond notifications, skip template lookup/compilation.
+            // The EmailNotificationListener will restore the original Email.body.
+            if(BAIL_BOND_TEMPLATE_CODE.equalsIgnoreCase(email.getTemplateCode())){
+                return "";
+            }
             String templateId = Constants.EMAIL_TEMPLATE_MASTER_NAME;
             String filter = "[?(@['code'] == '"+ email.getTemplateCode() + "')]";
 

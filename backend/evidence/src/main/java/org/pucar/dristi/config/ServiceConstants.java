@@ -44,6 +44,8 @@ public class ServiceConstants {
 	public static final String RESPONDENT = "RESPONDENT";
 	public static final String ACCUSED = "ACCUSED";
 	public static final String COURT = "COURT";
+	public static final String JUDGE_ROLE = "JUDGE_ROLE";
+	public static final String TYPIST_ROLE = "TYPIST_ROLE";
 
 	public static final String PARSING_ERROR = "PARSING ERROR";
 	public static final String FAILED_TO_PARSE_BUSINESS_SERVICE_SEARCH = "Failed to parse response of workflow business service search";
@@ -90,6 +92,7 @@ public class ServiceConstants {
     public static final String APPLICATION_NUMBER_PATH = "$.application.applicationNumber";
 
     public static final String APPLICATION_STATUS_PATH = "$.application.status";
+	public static final String FILING_NUMBER_PATH = "$.application.filingNumber";
 
 	public static final String SUBMITTED = "SUBMITTED";
 	public static final String EVIDENCE_SUBMISSION_CODE = "EVIDENCE_SUBMISSION,EVIDENCE_SUBMISSION_MESSAGE_FILING,EVIDENCE_SUBMISSION_MESSAGE_OPPOSITE_PARTY";

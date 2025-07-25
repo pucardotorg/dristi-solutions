@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.response.ResponseInfo;
 import org.pucar.dristi.service.CasePdfService;
@@ -30,9 +31,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-04-15T11:31:40.281899+05:30[Asia/Kolkata]")
 @RestController
 @RequestMapping("")
+@Slf4j
 public class CaseApiController {
 
     private final CaseService caseService;
+
+    private final CaseServiceV2 caseServiceV2;
 
     private final WitnessService witnessService;
 
@@ -40,16 +44,14 @@ public class CaseApiController {
 
     private final CasePdfService casePdfService;
 
-    private final CaseServiceV2 caseServiceV2;
-
 
     @Autowired
-    public CaseApiController(CaseService caseService, WitnessService witnessService, ResponseInfoFactory responseInfoFactory, CasePdfService casePdfService, CaseServiceV2 caseServiceV2) {
+    public CaseApiController(CaseService caseService, CaseServiceV2 caseServiceV2, WitnessService witnessService, ResponseInfoFactory responseInfoFactory, CasePdfService casePdfService) {
         this.caseService = caseService;
+        this.caseServiceV2 = caseServiceV2;
         this.witnessService = witnessService;
         this.responseInfoFactory = responseInfoFactory;
         this.casePdfService = casePdfService;
-        this.caseServiceV2 = caseServiceV2;
     }
 
     @PostMapping(value = "/v1/_create")
@@ -266,5 +268,13 @@ public class CaseApiController {
     public ResponseEntity<Map<String, AtomicBoolean>> enrichAccessCode(@Parameter(in = ParameterIn.DEFAULT, description = "enrich access code", required = true, schema = @Schema()) @Valid @RequestBody AccessCodeGenerateRequest body) {
         Map<String,AtomicBoolean> response = caseService.enrichAccessCode(body);
         return new ResponseEntity<>(response,HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/v1/_count")
+    public ResponseEntity<Integer> getCaseCount(@Parameter(in = ParameterIn.DEFAULT, description = "Search criteria + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseSearchRequest body) {
+        log.info("api=/v1/_count, result=IN_PROGRESS");
+        Integer count = caseService.getCaseCount(body);
+        log.info("api=/v1/_count, result=SUCCESS");
+        return new ResponseEntity<>(count,HttpStatus.OK);
     }
 }

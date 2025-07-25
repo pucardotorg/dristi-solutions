@@ -10,7 +10,7 @@ const OverlayDropdown = ({ styles, textStyle, column, row, master, module }) => 
   const history = useHistory();
   const dropdownRef = useRef(null);
   const roles = Digit.UserService.getUser()?.info?.roles;
-  const isCourtRoomManager = roles.some((role) => role.code === "COURT_ROOM_MANAGER");
+  const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
   const dropdownItems =
     Digit.Customizations[master]?.[module]?.dropDownItems?.(row).filter((item) => {
       if (isCourtRoomManager) {
