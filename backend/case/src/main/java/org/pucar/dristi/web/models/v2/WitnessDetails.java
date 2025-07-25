@@ -13,6 +13,9 @@ import java.util.List;
 @NoArgsConstructor
 public class WitnessDetails {
 
+    @JsonProperty("id")
+    private String id;
+
     @JsonProperty("firstName")
     private String firstName;
 
@@ -42,4 +45,7 @@ public class WitnessDetails {
 
     @JsonProperty("dateOfService")
     private String dateOfService;
+
+    @JsonProperty("witnessTag")
+    private String witnessTag;
 }
