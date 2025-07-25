@@ -69,7 +69,7 @@ public class ApplicationService {
                 workflowService.updateWorkflowStatus(body);
 
             if (body.getApplication().getWorkflow() != null && (PENDINGAPPROVAL.equalsIgnoreCase(body.getApplication().getStatus())
-                    || PENDINGREVIEW.equalsIgnoreCase(body.getApplication().getStatus()))) {
+                    || PENDINGREVIEW.equalsIgnoreCase(body.getApplication().getStatus()) || (COMPLETED.equalsIgnoreCase(body.getApplication().getStatus()) && REQUEST_FOR_BAIL.equalsIgnoreCase(body.getApplication().getApplicationType())))) {
                 enrichmentUtil.enrichApplicationNumberByCMPNumber(body);
             }
 
