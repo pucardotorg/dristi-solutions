@@ -2,6 +2,7 @@ import { Request } from "@egovernments/digit-ui-libraries";
 import isEmpty from "lodash/isEmpty";
 import axios from "axios";
 import { DocumentUploadError } from "./errorUtil";
+import DOMPurify from "dompurify";
 
 export const ServiceRequest = async ({
   serviceName,
@@ -360,4 +361,18 @@ export const isEmptyValue = (value) => {
   } else {
     return false;
   }
+};
+
+export const sanitizeFormData = (data) => {
+  if (typeof data === "string") {
+    return DOMPurify.sanitize(data);
+  } else if (Array.isArray(data)) {
+    return data.map((item) => sanitizeFormData(item));
+  } else if (typeof data === "object" && data !== null) {
+    return Object.keys(data).reduce((acc, key) => {
+      acc[key] = sanitizeFormData(data[key]);
+      return acc;
+    }, {});
+  }
+  return data;
 };
