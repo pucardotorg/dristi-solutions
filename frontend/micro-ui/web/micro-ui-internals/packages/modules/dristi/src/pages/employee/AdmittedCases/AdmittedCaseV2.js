@@ -2898,6 +2898,10 @@ const AdmittedCaseV2 = () => {
           value: "SHOW_TIMELINE",
           label: "SHOW_TIMELINE",
         },
+        {
+          value: "ADD_WITNESS",
+          label: "ADD_WITNESS",
+        },
       ];
     else if (isBenchClerk) {
       return currentInProgressHearing
@@ -2930,6 +2934,10 @@ const AdmittedCaseV2 = () => {
               value: "SHOW_TIMELINE",
               label: "SHOW_TIMELINE",
             },
+            {
+              value: "ADD_WITNESS",
+              label: "ADD_WITNESS",
+            },
           ]
         : [
             {
@@ -2939,6 +2947,10 @@ const AdmittedCaseV2 = () => {
             {
               value: "SHOW_TIMELINE",
               label: "SHOW_TIMELINE",
+            },
+            {
+              value: "ADD_WITNESS",
+              label: "ADD_WITNESS",
             },
           ];
     } else if (isTypist) {
@@ -2972,6 +2984,10 @@ const AdmittedCaseV2 = () => {
               value: "SHOW_TIMELINE",
               label: "SHOW_TIMELINE",
             },
+            {
+              value: "ADD_WITNESS",
+              label: "ADD_WITNESS",
+            },
           ]
         : [
             {
@@ -2985,6 +3001,10 @@ const AdmittedCaseV2 = () => {
             {
               value: "CREATE_BAIL_BOND",
               label: "CREATE_BAIL_BOND",
+            },
+            {
+              value: "ADD_WITNESS",
+              label: "ADD_WITNESS",
             },
           ];
     }
@@ -3512,6 +3532,14 @@ const AdmittedCaseV2 = () => {
                 {t("DOWNLOAD_ALL_LINK")}
               </div>
             )} */}
+          {(showMakeSubmission || isJudge || isBenchClerk || isTypist || isCourtStaff) && config?.label === "Parties" && (
+            <Button
+              label={"ADD_NEW_WITNESS"}
+              variation={"secondary"}
+              // onClick={() => handleNavigate("/employee/hearings/adjourn-hearing")}
+              style={{ marginRight: "30px" }}
+            />
+          )}
           {userRoles?.includes("ORDER_CREATOR") && config?.label === "Orders" && (
             <div style={{ display: "flex", gap: "10px" }}>
               <div

@@ -7,6 +7,7 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import { useTranslation } from "react-i18next";
 import { formatAddress, getFormattedName } from "../utils";
 import GetPoliceStationModal from "./GetPoliceStationModal";
+import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
 
 // Helper function to compare addresses without police station data
 const compareAddressValues = (value1, value2) => {
@@ -584,7 +585,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
         </div>
       ))}
       {isPartyModalOpen && (
-        <AddParty
+        <AddWitnessModal
           onCancel={handleAddParty}
           onDismiss={handleAddParty}
           tenantId={tenantId}
@@ -593,7 +594,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             handleAddParty();
             refetch();
           }}
-        ></AddParty>
+        ></AddWitnessModal>
       )}
     </div>
   );
