@@ -102,7 +102,12 @@ public class HearingService {
         openHearing.setHearingDurationInMillis(hearing.getHearingDurationInMillis());
 
         InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtCase.getCourtId(), hearing.getId().toString() );
-        List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(inboxRequest);
+        List<OpenHearing> openHearingList = null;
+        try {
+            openHearingList = inboxUtil.getOpenHearings(inboxRequest);
+        } catch (Exception ex) {
+            log.error("Error while getting open hearings: {}, for hearingId: {}", ex.getMessage(),openHearing.getHearingUuid(), ex);
+        }
         if(openHearingList != null && !openHearingList.isEmpty()) {
             if(openHearingList.get(0).getSerialNumber() > 0) {
                 openHearing.setSerialNumber(openHearingList.get(0).getSerialNumber());

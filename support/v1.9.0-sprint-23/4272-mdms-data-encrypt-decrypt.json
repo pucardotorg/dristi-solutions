@@ -52,6 +52,36 @@
               "jsonPath": "sureties/*/email",
               "patternId": "003",
               "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "city",
+              "jsonPath": "sureties/*/address/city",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "state",
+              "jsonPath": "sureties/*/address/state",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "sureties/*/address/pincode",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "district",
+              "jsonPath": "sureties/*/address/district",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "sureties/*/address/locality",
+              "patternId": "003",
+              "defaultVisibility": "PLAIN"
             }
           ],
           "uniqueIdentifier": {
@@ -135,6 +165,36 @@
             {
               "name": "suretyEmail",
               "jsonPath": "sureties/*/email",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "city",
+              "jsonPath": "sureties/*/address/city",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "state",
+              "jsonPath": "sureties/*/address/state",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "pincode",
+              "jsonPath": "sureties/*/address/pincode",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "district",
+              "jsonPath": "sureties/*/address/district",
+              "patternId": "002",
+              "defaultVisibility": "MASKED"
+            },
+            {
+              "name": "locality",
+              "jsonPath": "sureties/*/address/locality",
               "patternId": "002",
               "defaultVisibility": "MASKED"
             }
