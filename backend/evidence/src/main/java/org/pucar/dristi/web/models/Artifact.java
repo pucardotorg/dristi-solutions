@@ -164,6 +164,15 @@ public class Artifact {
 	@Valid
 	private WorkflowObject workflow = null;
 
+	@JsonProperty("shortenedUrl")
+	private String shortenedUrl = null;
+
+	@JsonProperty("witnessMobileNumbers")
+	private List<String> witnessMobileNumbers = null;
+
+	@JsonProperty("witnessEmails")
+	private List<String> witnessEmails = null;
+
 	public Artifact addApplicableToItem(String applicableToItem) {
 		if (this.applicableTo == null) {
 			this.applicableTo = new ArrayList<>();

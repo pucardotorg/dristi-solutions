@@ -77,6 +77,16 @@ public class Configuration {
 	@Value("${egov.url.shortner.endpoint}")
 	private String urlShortnerEndpoint;
 
+	// long url
+	@Value("${domain.url}")
+	private String domainUrl;
+
+	@Value("${egov.base.url}")
+	private String baseUrl;
+
+	@Value("${egov.long.url}")
+	private String longUrl;
+
 	// SMSNotification
 	@Value("${egov.sms.notification.topic}")
 	private String smsNotificationTopic;
@@ -226,5 +236,38 @@ public class Configuration {
 
 	@Value("${egov.sms.notification.document.evidence.submission.opposite.party.template.id}")
 	private String smsNotificationDocumentSubmissionToOppositeParty;
+
+	// zone id
+	@Value("${app.zone.id}")
+	private String zoneId;
+
+	// ESign Config
+	@Value("${egov.esign.host}")
+	private String esignHost;
+
+	@Value("${egov.esign.location.endpoint}")
+	private String esignLocationEndPoint;
+
+	//FileStore Service
+	@Value("${egov.filestore.host}")
+	private String fileStoreHost;
+
+	@Value("${egov.filestore.path}")
+	private String fileStorePath;
+
+	@Value("${egov.file.store.delete.endpoint}")
+	private String fileStoreDeleteEndPoint;
+
+	@Value("${egov.filestore.search.endpoint}")
+	private String fileStoreSearchEndpoint;
+
+	@Value("${egov.filestore.save.endpoint}")
+	private String fileStoreSaveEndPoint;
+
+	@Value("${file.max.size}")
+	private long maxFileSize;
+
+	@Value("${allowed.content.types}")
+	private String[] allowedContentTypes;
 
 }

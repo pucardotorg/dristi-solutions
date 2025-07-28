@@ -35,6 +35,7 @@ public class EvidenceSearchCriteria {
     private String fileStoreId;
     private String courtId;
     private String sourceType;
+    private Boolean fuzzySearch = true;
 
     @JsonIgnore
     private String userUuid;
@@ -142,5 +143,11 @@ public class EvidenceSearchCriteria {
     }
     public boolean getIsCourtEmployee() {
         return isCourtEmployee;
+    }
+    public Boolean getFuzzySearch() {
+        if (fuzzySearch == null) {
+            fuzzySearch = true;
+        }
+        return fuzzySearch;
     }
 }

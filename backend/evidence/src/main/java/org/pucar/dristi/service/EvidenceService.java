@@ -2,10 +2,14 @@ package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
+import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.models.Document;
+import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
@@ -14,13 +18,13 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.EvidenceEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.EvidenceRepository;
-import org.pucar.dristi.util.CaseUtil;
-import org.pucar.dristi.util.MdmsUtil;
+import org.pucar.dristi.util.*;
 import org.pucar.dristi.validators.EvidenceValidator;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
@@ -40,9 +44,14 @@ public class EvidenceService {
     private final CaseUtil caseUtil;
     private final SmsNotificationService notificationService;
     private final IndividualService individualService;
+    private final UrlShortenerUtil urlShortenerUtil;
+    private final ESignUtil eSignUtil;
+    private final FileStoreUtil fileStoreUtil;
+    private final CipherUtil cipherUtil;
+    private final XmlRequestGenerator xmlRequestGenerator;
 
     @Autowired
-    public EvidenceService(EvidenceValidator validator, EvidenceEnrichment evidenceEnrichment, WorkflowService workflowService, EvidenceRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService) {
+    public EvidenceService(EvidenceValidator validator, EvidenceEnrichment evidenceEnrichment, WorkflowService workflowService, EvidenceRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, UrlShortenerUtil urlShortenerUtil, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, XmlRequestGenerator xmlRequestGenerator) {
         this.validator = validator;
         this.evidenceEnrichment = evidenceEnrichment;
         this.workflowService = workflowService;
@@ -54,6 +63,11 @@ public class EvidenceService {
         this.caseUtil = caseUtil;
         this.notificationService = notificationService;
         this.individualService = individualService;
+        this.urlShortenerUtil = urlShortenerUtil;
+        this.eSignUtil = eSignUtil;
+        this.fileStoreUtil = fileStoreUtil;
+        this.cipherUtil = cipherUtil;
+        this.xmlRequestGenerator = xmlRequestGenerator;
     }
 
     public Artifact createEvidence(EvidenceRequest body) {
@@ -182,6 +196,7 @@ public class EvidenceService {
                     evidenceRequest.getArtifact().getArtifactType().equals(DEPOSITION)) ||
                     (filingType!= null && evidenceRequest.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION))) {
                 workflowService.updateWorkflowStatus(evidenceRequest, filingType);
+                enrichShortenedURL(evidenceRequest);
                 enrichBasedOnStatus(evidenceRequest);
                 producer.push(config.getUpdateEvidenceKafkaTopic(), evidenceRequest);
             } else {
@@ -197,6 +212,18 @@ public class EvidenceService {
             log.error("Error occurred while updating evidence", e);
             throw new CustomException(EVIDENCE_UPDATE_EXCEPTION, "Error occurred while updating evidence: " + e.toString());
         }
+    }
+
+    private void enrichShortenedURL(EvidenceRequest evidenceRequest) {
+
+        Workflow workflow = evidenceRequest.getArtifact().getWorkflow();
+
+        if (INITIATE_E_SIGN.equals(workflow.getAction())) {
+            String shortenedUrl = urlShortenerUtil.createShortenedUrl(evidenceRequest.getArtifact().getTenantId() , evidenceRequest.getArtifact().getArtifactNumber());
+            evidenceRequest.getArtifact().setShortenedUrl(shortenedUrl);
+            callNotificationServiceForSMS(evidenceRequest);
+        }
+
     }
 
     Artifact validateExistingEvidence(EvidenceRequest evidenceRequest) {
@@ -463,5 +490,222 @@ public class EvidenceService {
             }
         }
         return individualIds;
+    }
+
+    private void callNotificationServiceForSMS(EvidenceRequest evidenceRequest) {
+        try {
+            Artifact artifact = evidenceRequest.getArtifact();
+            String action = artifact.getWorkflow().getAction();
+            String messageCode = getMessageCode(action);
+
+            if (StringUtils.isBlank(messageCode)) {
+                log.warn("No messageCode found for action: {}", action);
+                return;
+            }
+
+            log.info("Sending notifications for messageCode: {}", messageCode);
+            SmsTemplateData smsTemplateData = buildSmsTemplateData(evidenceRequest);
+
+            RequestInfo requestInfo = evidenceRequest.getRequestInfo();
+
+            for (String mobileNumber : artifact.getWitnessMobileNumbers()) {
+                notificationService.sendNotification(requestInfo, smsTemplateData, messageCode, mobileNumber);
+            }
+
+        } catch (Exception e) {
+            log.error("Error sending notification for evidenceRequest: {}", evidenceRequest, e);
+        }
+    }
+
+    private String getMessageCode(String action) {
+        if (action.equalsIgnoreCase(INITIATE_E_SIGN)) {
+            return WITNESS_DEPOSITION_CODE;
+        }
+        return null;
+    }
+
+    private SmsTemplateData buildSmsTemplateData(EvidenceRequest evidenceRequest) {
+
+        Artifact artifact = evidenceRequest.getArtifact();
+
+        CaseCriteria criteria = CaseCriteria.builder()
+                .filingNumber(artifact.getFilingNumber())
+                .defaultFields(true)
+                .build();
+        CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                .requestInfo(evidenceRequest.getRequestInfo())
+                .criteria(Collections.singletonList(criteria))
+                .build();
+        JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+
+        String cmpNumber = caseDetails.has("cmpNumber") ? (caseDetails.get("cmpNumber").textValue() != null ? caseDetails.get("cmpNumber").textValue() : null) : null;
+        String courtCaseNumber = caseDetails.has("courtCaseNumber") ? (caseDetails.get("courtCaseNumber").textValue() != null ? caseDetails.get("courtCaseNumber").textValue() : null) : null;
+
+        return SmsTemplateData.builder()
+                .filingNumber(artifact.getFilingNumber())
+                .courtCaseNumber(courtCaseNumber)
+                .shortenedUrl(artifact.getShortenedUrl())
+                .cmpNumber(cmpNumber)
+                .tenantId(artifact.getTenantId())
+                .build();
+
+    }
+
+    public List<ArtifactToSign> createArtifactsToSignRequest(ArtifactsToSignRequest request) {
+        log.info("creating artifacts to sign request, result= IN_PROGRESS, artifactCriteria:{}", request.getCriteria().size());
+
+        List<CoordinateCriteria> coordinateCriteria = new ArrayList<>();
+        Map<String, ArtifactsCriteria> artifactCriteriaMap = new HashMap<>();
+
+        request.getCriteria().forEach(criterion -> {
+            CoordinateCriteria criteria = new CoordinateCriteria();
+            criteria.setFileStoreId(criterion.getFileStoreId());
+            criteria.setPlaceholder(criterion.getPlaceholder());
+            criteria.setTenantId(criterion.getTenantId());
+            coordinateCriteria.add(criteria);
+            artifactCriteriaMap.put(criterion.getFileStoreId(), criterion);
+        });
+
+        CoordinateRequest coordinateRequest = CoordinateRequest.builder()
+                .requestInfo(request.getRequestInfo())
+                .criteria(coordinateCriteria).build();
+        List<Coordinate> coordinateForSign = eSignUtil.getCoordinateForSign(coordinateRequest);
+
+        if (coordinateForSign.isEmpty() || coordinateForSign.size() != request.getCriteria().size()) {
+            throw new CustomException(COORDINATES_ERROR, "error in co-ordinates");
+        }
+
+        List<ArtifactToSign> artifactToSignList = new ArrayList<>();
+        for (Coordinate coordinate : coordinateForSign) {
+            ArtifactToSign artifactToSign = new ArtifactToSign();
+            org.springframework.core.io.Resource resource = null;
+            try {
+                resource = fileStoreUtil.fetchFileStoreObjectById(coordinate.getFileStoreId(), coordinate.getTenantId());
+            } catch (Exception e) {
+                throw new CustomException("FILE_STORE_UTILITY_EXCEPTION", "something went wrong while signing");
+            }
+            try {
+                String base64Document = cipherUtil.encodePdfToBase64(resource);
+                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
+                String txnId = java.util.UUID.randomUUID().toString();
+                String pageNo = String.valueOf(coordinate.getPageNumber());
+                java.time.ZonedDateTime timestamp = java.time.ZonedDateTime.now(java.time.ZoneId.of(config.getZoneId()));
+
+                String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo);
+                String artifactId = artifactCriteriaMap.get(coordinate.getFileStoreId()).getArtifactId();
+                artifactToSign.setArtifactId(artifactId);
+                artifactToSign.setRequest(xmlRequest);
+
+                artifactToSignList.add(artifactToSign);
+            } catch (Exception e) {
+                throw new CustomException("ARTIFACT_SIGN_ERROR", "something went wrong while signing");
+            }
+        }
+        log.info("creating artifacts to sign request, result= SUCCESS, artifactCriteria:{}", request.getCriteria().size());
+        return artifactToSignList;
+    }
+
+    public List<Artifact> updateArtifactWithSignDoc(@Valid UpdateSignedArtifactRequest request) {
+        log.info("Updating Artifact With Signed Doc, result= IN_PROGRESS, signedArtifacts:{}", request.getSignedArtifacts() != null ? request.getSignedArtifacts().size() : 0);
+        List<Artifact> updatedArtifacts = new ArrayList<>();
+        RequestInfo requestInfo = request.getRequestInfo();
+        if (request.getSignedArtifacts() != null) {
+            for (SignedArtifact signedArtifact : request.getSignedArtifacts()) {
+                String artifactId = signedArtifact.getArtifactId();
+                String signedArtifactData = signedArtifact.getSignedArtifactData();
+                Boolean isSigned = signedArtifact.getSigned();
+                String tenantId = signedArtifact.getTenantId();
+
+                if (Boolean.TRUE.equals(isSigned)) {
+                    try {
+                        // Fetch and validate existing artifact
+                        EvidenceSearchCriteria evidenceSearchCriteria = EvidenceSearchCriteria.builder().artifactNumber(artifactId).tenantId(tenantId).fuzzySearch(false).build();
+                        Artifact existingArtifact = repository.getArtifacts(evidenceSearchCriteria, null).stream().findFirst().orElse(null);
+                        if (existingArtifact == null) {
+                            log.error("Artifact not found for id: {}", artifactId);
+                            throw new CustomException("ARTIFACT_NOT_FOUND", "Artifact not found for id: " + artifactId);
+                        }
+
+                        // Update signed data (assuming a document or field for signed data exists)
+
+                        // Update document with signed PDF
+                        MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedArtifactData, ARTIFACT_FILE_NAME);
+                        String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
+
+                        Document document = Document.builder()
+                                .id(UUID.randomUUID().toString())
+                                .documentType(SIGNED)
+                                .fileStore(fileStoreId)
+                                .additionalDetails(Map.of(NAME, ARTIFACT_FILE_NAME))
+                                .build();
+
+                        existingArtifact.setFile(document);
+
+
+                        WorkflowObject workflow = existingArtifact.getWorkflow();
+                        workflow.setAction(SIGNED);
+                        existingArtifact.setWorkflow(workflow);
+
+                        EvidenceRequest evidenceRequest = EvidenceRequest.builder().artifact(existingArtifact).requestInfo(requestInfo).build();
+
+                        Artifact artifact = updateEvidence(evidenceRequest);
+                        updatedArtifacts.add(artifact);
+                        log.info("Updated artifact with signed doc, artifactId: {}", artifactId);
+                    } catch (Exception e) {
+                        log.error("Error while updating artifact, artifactId: {}", artifactId, e);
+                        throw new CustomException("ARTIFACT_BULK_SIGN_EXCEPTION", "Error while updating artifact: " + e.getMessage());
+                    }
+                }
+            }
+        }
+        return updatedArtifacts;
+    }
+
+
+    private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber) {
+        log.info("generating request, result= IN_PROGRESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
+        Map<String, Object> requestData = new LinkedHashMap<>();
+
+        requestData.put(COMMAND, PKI_NETWORK_SIGN);
+        requestData.put(TIME_STAMP, timeStamp);
+        requestData.put(TXN, txnId);
+
+        List<Map<String, Object>> certificateAttributes = new ArrayList<>();
+        certificateAttributes.add(createAttribute("CN", ""));
+        certificateAttributes.add(createAttribute("O", ""));
+        certificateAttributes.add(createAttribute("OU", ""));
+        certificateAttributes.add(createAttribute("T", ""));
+        certificateAttributes.add(createAttribute("E", ""));
+        certificateAttributes.add(createAttribute("SN", ""));
+        certificateAttributes.add(createAttribute("CA", ""));
+        certificateAttributes.add(createAttribute("TC", "SG"));
+        certificateAttributes.add(createAttribute("AP", "1"));
+        requestData.put(CERTIFICATE, certificateAttributes);
+
+        Map<String, Object> file = new LinkedHashMap<>();
+        file.put(ATTRIBUTE, Map.of(NAME, TYPE, VALUE, PDF));
+        requestData.put(FILE, file);
+
+        Map<String, Object> pdf = new LinkedHashMap<>();
+        pdf.put(PAGE, pageNumber);
+        pdf.put(CO_ORDINATES, coordination);
+        pdf.put(SIZE, "150,100");
+        requestData.put(PDF, pdf);
+
+        requestData.put(DATA, base64Doc);
+
+        String xmlRequest = xmlRequestGenerator.createXML("request", requestData);
+        log.info("generating request, result= SUCCESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
+
+        return xmlRequest;
+    }
+
+    private Map<String, Object> createAttribute(String name, String value) {
+        Map<String, Object> attribute = new LinkedHashMap<>();
+        Map<String, String> attrData = new LinkedHashMap<>();
+        attrData.put(NAME, name);
+        attrData.put(VALUE, value);
+        attribute.put(ATTRIBUTE, attrData);
+        return attribute;
     }
 }

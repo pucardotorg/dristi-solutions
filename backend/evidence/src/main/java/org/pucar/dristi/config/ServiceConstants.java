@@ -20,6 +20,7 @@ public class ServiceConstants {
 	public static final String FAILED = "failed";
 
 	public static final String URL = "url";
+	public static final String REFERENCE_ID = "referenceId";
 	public static final String URL_SHORTENING_ERROR_CODE = "URL_SHORTENING_ERROR";
 	public static final String URL_SHORTENING_ERROR_MESSAGE = "Unable to shorten url: ";
 
@@ -104,5 +105,45 @@ public class ServiceConstants {
 	public static final String BENCH_CLERK = "BENCH_CLERK";
 	public static final String ICOPS ="ICOPS";
 
+	public static final String INITIATE_E_SIGN = "INITIATE_E-SIGN";
+
+	public static final String WITNESS_DEPOSITION_CODE = "WITNESS_DEPOSITION_MESSAGE";
+
+	public static final String MANUAL = "MANUAL_";
+
+	public static final String FILE_STORE_UTILITY_EXCEPTION = "FILE_STORE_UTILITY_EXCEPTION";
+	public static final String ESIGN_SERVICE_EXCEPTION = "ESIGN_SERVICE_EXCEPTION";
+
+	public static final String FILE_STORE_SERVICE_EXCEPTION_CODE = "FILE_STORE_SERVICE_EXCEPTION_CODE";
+	public static final String FILE_STORE_SERVICE_EXCEPTION_MESSAGE = "FILE_STORE_SERVICE_EXCEPTION_MESSAGE";
+
+	public static final String SIGNED = "SIGNED";
+	public static final String COMPOSITE = "COMPOSITE";
+
+	public static final String COORDINATES_ERROR = "COORDINATES_ERROR";
+	public static final String XML_CREATE_ERROR = "XML_CREATE_ERROR";
+	public static final String XML_CREATE_ERROR_MESSAGE = "error while creating XML";
+	public static final String INVALID_FILE_STORE_RESPONSE = "INVALID_FILE_STORE_RESPONSE";
+	public static final String FILE_STORE_SERVICE_EXCEPTION_MESSAGE_CODE = "Failed to get valid file store id from file store service response";
+	public static final String INVALID_INPUT = "INVALID_INPUT";
+
+	public static final String COMMAND = "command";
+	public static final String PKI_NETWORK_SIGN = "pkiNetworkSign";
+	public static final String TIME_STAMP = "ts";
+	public static final String TXN = "txn";
+	public static final String NAME = "name";
+	public static final String VALUE = "value";
+	public static final String TYPE = "type";
+	public static final String PDF = "pdf";
+	public static final String ATTRIBUTE = "attribute";
+	public static final String FILE = "file";
+	public static final String CERTIFICATE = "certificate";
+	public static final String PAGE = "page";
+	public static final String CO_ORDINATES = "cood";
+	public static final String SIZE = "size";
+	public static final String DATA = "data";
+	public static final String OMIT_XML_DECLARATION = "omit-xml-declaration";
+
+	public static final String ARTIFACT_FILE_NAME = "artifact.pdf";
 
 }
