@@ -92,6 +92,7 @@ public class ServiceConstants {
     public static final String APPLICATION_NUMBER_PATH = "$.application.applicationNumber";
 
     public static final String APPLICATION_STATUS_PATH = "$.application.status";
+	public static final String FILING_NUMBER_PATH = "$.application.filingNumber";
 
 	public static final String SUBMITTED = "SUBMITTED";
 	public static final String EVIDENCE_SUBMISSION_CODE = "EVIDENCE_SUBMISSION,EVIDENCE_SUBMISSION_MESSAGE_FILING,EVIDENCE_SUBMISSION_MESSAGE_OPPOSITE_PARTY";

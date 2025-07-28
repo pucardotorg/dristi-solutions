@@ -1,0 +1,270 @@
+openapi: 3.0.0
+info:
+  version: 0.1.0
+  title: Bail API
+  description: API for managing bails in the DRISTI system.
+paths:
+  /v1/_create:
+    post:
+      summary: Create a new bail.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BailRequest'
+      responses:
+        '200':
+          description: Bail created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BailResponse'
+  /v1/_update:
+    post:
+      summary: Update an existing bail.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BailRequest'
+      responses:
+        '200':
+          description: Bail updated successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BailResponse'
+  /v1/_search:
+    post:
+      summary: Search for bails.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BailSearchRequest'
+      responses:
+        '200':
+          description: Search results.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BailSearchResponse'
+components:
+  schemas:
+    Bail:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the bail.
+        tenantId:
+          type: string
+          description: Tenant ID of the bail.
+        caseId:
+          type: string
+          description: Identifier for the case.
+        bailAmount:
+          type: number
+          format: double
+          description: Amount for the bail.
+        bailType:
+          type: string
+          description: Type of bail (Personal or Surety).
+          enum:
+            - Personal
+            - Surety
+        startDate:
+          type: integer
+          format: int64
+          description: Start date of the bail in epoch time (milliseconds).
+        endDate:
+          type: integer
+          format: int64
+          description: End date of the bail in epoch time (milliseconds).
+        isActive:
+          type: boolean
+          description: Whether the bail is active or not.
+        litigantId:
+          type: string
+          description: Identifier for the litigant.
+        litigantName:
+          type: string
+          description: Name of the litigant.
+        litigantFatherName:
+          type: string
+          description: Father name of the litigant.
+        litigantSigned:
+          type: boolean
+          description: Whether the litigant has signed the bail.
+        litigantMobileNumber:
+          type: string
+          description: Mobile number of the litigant.
+        sureties:
+          type: array
+          items:
+            $ref: '#/components/schemas/Surety'
+          description: List of surety objects.
+        shortenedURL:
+          type: string
+          description: Shortened URL for the bail bond.
+        status:
+          type: string
+          description: Workflow Status of the bail.
+        documents:
+          type: array
+          items:
+            $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Document'
+        additionalDetails:
+          type: object
+        workflow:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Workflow'
+        auditDetails:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/AuditDetails'
+        courtId:
+          type: string
+          description: Establishment ID for the court.
+        caseTitle:
+          type: string
+          description: Title of the case.
+        cnrNumber:
+          type: string
+          description: CNR number of the case.
+        filingNumber:
+          type: string
+          description: Filing number of the case.
+        caseNumber:
+          type: string
+          description: Case number of the case.
+        caseType:
+          type: string
+          description: Type of the case.
+          enum:
+            - ST
+            - CMP
+        bailId:
+          type: string
+          description: Id gen formatted bail id.
+      required:
+        - tenantId
+        - caseId
+    Surety:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the surety.
+        tenantId:
+          type: string
+          description: Tenant ID of the surety.
+        name:
+          type: string
+          description: Name of the surety.
+        fatherName:
+          type: string
+          description: Father name of the surety.
+        mobileNumber:
+          type: string
+          description: Mobile number of the surety.
+        address:
+          type: object
+          description: Address of the surety.
+        email:
+          type: string
+          description: Email of the surety.
+        hasSigned:
+          type: boolean
+          description: Whether the surety has signed or not.
+        isApproved:
+          type: boolean
+          description: Whether the surety is approved or not by Magistrate.
+        documents:
+          type: array
+          items:
+            $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-OSS/master/core-services/docs/common-contract_v1-1.yml#/components/schemas/Document'
+        isActive:
+          type: boolean
+          description: Whether the surety is active or not.
+        additionalDetails:
+          type: object
+      required:
+        - tenantId
+        - name
+        - mobileNumber
+    BailRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/egov-services/master/docs/common-contract/v1/contract.json#/components/schemas/RequestInfo'
+        bail:
+          $ref: '#/components/schemas/Bail'
+    BailResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/egov-services/master/docs/common-contract/v1/contract.json#/components/schemas/ResponseInfo'
+        bails:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bail'
+    BailSearchRequest:
+      type: object
+      properties:
+        RequestInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/egov-services/master/docs/common-contract/v1/contract.json#/components/schemas/RequestInfo'
+        criteria:
+          type: object
+          properties:
+            tenantId:
+              type: string
+            ids:
+              type: array
+              items:
+                type: string
+            litigantIndividualId:
+              type: string
+              description: Individual ID of the litigant.
+            bailId:
+              type: string
+              description: Formatted Bail ID.
+            courtId:
+              type: string
+              description: Establishment ID for the court.
+            filingNumber:
+              type: string
+              description: Filing number of the case.
+            cnrNumber:
+              type: string
+              description: CNR number of the case.
+            suretyMobileNumber:
+              type: string
+              description: Mobile number of the surety.
+            status:
+              type: string
+              description: Status of the bail.
+            caseType:
+              type: string
+              description: Type of the case.
+              enum:
+                - ST
+                - CMP
+            caseNumber:
+              type: string
+              description: Case number of the case.
+            fuzzySearch:
+              type: boolean
+              description: Whether to perform fuzzy search or not on bail id.
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+
+    BailSearchResponse:
+      type: object
+      properties:
+        ResponseInfo:
+          $ref: 'https://raw.githubusercontent.com/egovernments/egov-services/master/docs/common-contract/v1/contract.json#/components/schemas/ResponseInfo'
+        bails:
+          type: array
+          items:
+            $ref: '#/components/schemas/Bail'
+        pagination:
+          $ref: 'https://raw.githubusercontent.com/egovernments/DIGIT-Specs/common-contract-update/Common%20Services/common-contract.yaml#/components/schemas/Pagination'
+

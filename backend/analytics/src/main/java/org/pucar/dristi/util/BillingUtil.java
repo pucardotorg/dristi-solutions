@@ -57,7 +57,7 @@ public class BillingUtil {
         String status = JsonPath.read(jsonItem, STATUS_PATH);
         String tenantId = JsonPath.read(jsonItem, TENANT_ID_PATH);
         String consumerCode = JsonPath.read(jsonItem, CONSUMER_CODE_PATH);
-        String[] consumerCodeSplitArray = consumerCode.split("_", 2);
+        String[] consumerCodeSplitArray = splitConsumerCode(consumerCode);
         String paymentType = getPaymentType(consumerCodeSplitArray[1], businessService);
 
         // Extract demandDetails array
@@ -102,6 +102,12 @@ public class BillingUtil {
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_BILLING_FORMAT,
                 config.getBillingIndex(), id, id, tenantId, paymentCreatedDate,paymentCompletedDate,caseTitle, caseNumber,caseStage, caseId, caseType, paymentType, totalAmount, status, consumerCode, filingNumber,businessService, courtId, auditJsonString
         );
+    }
+
+    private String[] splitConsumerCode(String consumerCode) {
+        String[] temp = consumerCode.split("_", 2);
+        String suffix = temp[1].replaceFirst("-\\d+$", "");
+        return new String[] { temp[0], suffix };
     }
 
     private String getCourtId(String filingNumber, RequestInfo request) {

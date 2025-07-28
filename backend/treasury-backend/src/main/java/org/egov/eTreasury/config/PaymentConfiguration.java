@@ -108,6 +108,9 @@ public class PaymentConfiguration {
     @Value("${egov.idgen.name}")
     private String idName;
 
+    @Value("${egov.mock.grn.name}")
+    private String mockGrnName;
+
     @Value("${egov.pdf.service.host}")
     private String pdfServiceHost;
 
@@ -174,6 +177,12 @@ public class PaymentConfiguration {
 
     @Value("${treasury.mapping.save.topic}")
     private String treasuryMappingSaveTopic;
+
+    @Value("${treasury.mapping.update.topic}")
+    private String treasuryMappingUpdateTopic;
+
+    @Value("${isMock.enabled}")
+    private boolean isMockEnabled;
 
     @PostConstruct
     public void init() {

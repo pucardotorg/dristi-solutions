@@ -187,4 +187,9 @@ public class Configuration {
     @Value("${egov.hrms.search.endpoint}")
     private String hrmsEndPoint;
 
+    @Value("${file.max.size}")
+    private long maxFileSize;
+
+    @Value("${allowed.content.types}")
+    private String[] allowedContentTypes;
 }
