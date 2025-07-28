@@ -1,71 +1,123 @@
-package digit.web.controllers;
+    package digit.web.controllers;
 
-import org.junit.Test;
-import org.junit.Ignore;
-import org.junit.runner.RunWith;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import digit.TestConfiguration;
+    import digit.service.BailService;
+    import digit.util.ResponseInfoFactory;
+    import digit.web.models.Bail;
+    import digit.web.models.BailRequest;
+    import digit.web.models.BailResponse;
+    import digit.web.models.BailSearchCriteria;
+    import digit.web.models.BailSearchRequest;
+    import digit.web.models.BailSearchResponse;
+    import org.egov.common.contract.request.RequestInfo;
+    import org.egov.common.contract.response.ResponseInfo;
+    import org.junit.jupiter.api.Test;
+    import org.junit.jupiter.api.extension.ExtendWith;
+    import org.mockito.InjectMocks;
+    import org.mockito.Mock;
+    import org.mockito.junit.jupiter.MockitoExtension;
+    import org.springframework.http.HttpStatus;
+    import org.springframework.http.ResponseEntity;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+    import java.util.List;
+    import java.util.Objects;
 
-/**
-* API tests for BailApiController
-*/
-@Ignore
-@RunWith(SpringRunner.class)
-@WebMvcTest(BailApiController.class)
-@Import(TestConfiguration.class)
-public class BailApiControllerTest {
+    import static org.junit.jupiter.api.Assertions.assertEquals;
+    import static org.mockito.ArgumentMatchers.any;
+    import static org.mockito.Mockito.when;
 
-    @Autowired
-    private MockMvc mockMvc;
+    /**
+    * API tests for BailApiController
+    */
 
-    @Test
-    public void bailv1CreatePostSuccess() throws Exception {
-        mockMvc.perform(post("/v1/_create").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
-        .andExpect(status().isOk());
+    @ExtendWith(MockitoExtension.class)
+    public class BailApiControllerTest {
+
+        @InjectMocks
+        private BailApiController bailApiController;
+        @Mock
+        private BailService bailService;
+        @Mock
+        private ResponseInfoFactory responseInfoFactory;
+
+
+        @Test
+        public void bailv1CreatePostSuccess() {
+
+            BailRequest bailRequest = new BailRequest();
+            Bail bail = new Bail();
+            RequestInfo requestInfo = new RequestInfo();
+            bailRequest.setBail(bail);
+            bailRequest.setRequestInfo(requestInfo);
+
+            //Mocking bailService.createBail method to return a Bail object
+            when(bailService.createBail(bailRequest)).thenReturn(bail);
+
+            // Mocking responseInfoFactory.createResponseInfoFromRequestInfo method to return a ResponseInfo object
+            ResponseInfo responseInfo = new ResponseInfo();
+            when(responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true)).thenReturn(responseInfo);
+
+            // Call the method under test
+            ResponseEntity<BailResponse> bailResponseEntity = bailApiController.bailV1CreatePost(bailRequest);
+
+            // Verify that response is correct
+            assertEquals(responseInfo, Objects.requireNonNull(bailResponseEntity.getBody()).getResponseInfo());
+            assertEquals(HttpStatus.OK, bailResponseEntity.getStatusCode());
+            assertEquals(bail, Objects.requireNonNull(bailResponseEntity.getBody()).getBails().get(0));
+        }
+
+
+        @Test
+        public void bailv1SearchPostSuccess() {
+            BailSearchRequest bailSearchRequest = new BailSearchRequest();
+            BailSearchCriteria criteria = BailSearchCriteria.builder()
+                    .id("id")
+                    .build();
+            RequestInfo requestInfo = new RequestInfo();
+            Bail bail = new Bail();
+            bailSearchRequest.setCriteria(criteria);
+            bailSearchRequest.setRequestInfo(requestInfo);
+
+            //Mocking bailService.searchBail method to return a Bail object
+            when(bailService.searchBail(bailSearchRequest)).thenReturn(List.of(bail));
+
+            // Mocking responseInfoFactory.createResponseInfoFromRequestInfo method to return a ResponseInfo object
+            ResponseInfo responseInfo = new ResponseInfo();
+            when(responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true)).thenReturn(responseInfo);
+
+            // Call the method under test
+            ResponseEntity<BailSearchResponse> bailResponseEntity = bailApiController.bailV1SearchPost(bailSearchRequest);
+
+            // Verify that response is correct
+            assertEquals(responseInfo, Objects.requireNonNull(bailResponseEntity.getBody()).getResponseInfo());
+            assertEquals(HttpStatus.OK, bailResponseEntity.getStatusCode());
+            assertEquals(bail, Objects.requireNonNull(bailResponseEntity.getBody()).getBails().get(0));
+
+        }
+
+
+        @Test
+        public void v1UpdatePostSuccess() {
+            BailRequest bailRequest = new BailRequest();
+            Bail bail = new Bail();
+            RequestInfo requestInfo = new RequestInfo();
+            bailRequest.setBail(bail);
+            bailRequest.setRequestInfo(requestInfo);
+
+            //Mocking bailService.updateBail method to return a Bail object
+            when(bailService.updateBail(bailRequest)).thenReturn(bail);
+
+            // Mocking responseInfoFactory.createResponseInfoFromRequestInfo method to return a ResponseInfo object
+            ResponseInfo responseInfo = new ResponseInfo();
+            when(responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true)).thenReturn(responseInfo);
+
+            // Call the method under test
+            ResponseEntity<BailResponse> bailResponseEntity = bailApiController.bailV1UpdatePost(bailRequest);
+
+            // Verify that response is correct
+            assertEquals(responseInfo, Objects.requireNonNull(bailResponseEntity.getBody()).getResponseInfo());
+            assertEquals(HttpStatus.OK, bailResponseEntity.getStatusCode());
+            assertEquals(bail, Objects.requireNonNull(bailResponseEntity.getBody()).getBails().get(0));
+        }
+
+
     }
-
-    @Test
-    public void bailV1CreatePostFailure() throws Exception {
-        mockMvc.perform(post("/v1/_create").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
-        .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    public void bailv1SearchPostSuccess() throws Exception {
-        mockMvc.perform(post("/v1/_search").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
-        .andExpect(status().isOk());
-    }
-
-    @Test
-    public void bailv1SearchPostFailure() throws Exception {
-        mockMvc.perform(post("/v1/_search").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
-        .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    public void v1UpdatePostSuccess() throws Exception {
-        mockMvc.perform(post("/v1/_update").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
-        .andExpect(status().isOk());
-    }
-
-    @Test
-    public void v1UpdatePostFailure() throws Exception {
-        mockMvc.perform(post("/v1/_update").contentType(MediaType
-        .APPLICATION_JSON_UTF8))
-        .andExpect(status().isBadRequest());
-    }
-
-}
