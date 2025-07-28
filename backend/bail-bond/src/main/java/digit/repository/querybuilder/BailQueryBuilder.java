@@ -91,9 +91,7 @@ public class BailQueryBuilder {
         query.append(" WHERE bail.id IN (");
         String placeholders = String.join(",", bailIds.stream().map(id -> "?").toList());
         query.append(placeholders).append(")");
-
-        query.append(" AND bail.is_active = true");
-
+        query.append(" AND bail.is_active = true ");
         for (String id : bailIds) {
             preparedStmtList.add(id);
             preparedStmtArgList.add(Types.VARCHAR);
@@ -123,9 +121,7 @@ public class BailQueryBuilder {
 
     private void getWhereFields(BailSearchCriteria criteria, StringBuilder query, List<Object> preparedStmtList, List<Integer> preparedStmtArgList) {
 
-        // Enforce is_active = true for all tables with LEFT JOIN-safe checks
         query.append(" WHERE bail.is_active = true");
-
         addBailCriteria(criteria.getTenantId(), query, "bail.tenant_id = ?", preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getId(), query, "bail.id = ?", preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getLitigantIndividualId(), query, "bail.litigant_id = ?", preparedStmtList, preparedStmtArgList);
@@ -135,6 +131,7 @@ public class BailQueryBuilder {
         addBailCriteria(criteria.getCnrNumber(), query, "bail.cnr_number = ?", preparedStmtList, preparedStmtArgList);
         addListBailCriteria(criteria.getStatus(), query, preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getCaseType() != null ? criteria.getCaseType().name() : null, query, "bail.case_type = ?", preparedStmtList, preparedStmtArgList);
+        addBailCriteria(criteria.getBailType() != null ? criteria.getBailType().name() : null, query, "bail.bail_type = ?", preparedStmtList, preparedStmtArgList);
         addBailCriteria(criteria.getCaseNumber(), query, "bail.case_number = ?", preparedStmtList, preparedStmtArgList);
 
         // Special fuzzy search handling

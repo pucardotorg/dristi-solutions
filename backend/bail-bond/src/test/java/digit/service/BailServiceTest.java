@@ -92,8 +92,8 @@ class BailServiceTest {
         BailSearchRequest searchReq = new BailSearchRequest();
         BailSearchCriteria crit = new BailSearchCriteria();
         searchReq.setCriteria(crit);
-        List<Bail> retList = List.of(mock(Bail.class));
         searchReq.setRequestInfo(RequestInfo.builder().userInfo(User.builder().type("system").build()).build());
+        List<Bail> retList = List.of(mock(Bail.class));
         when(bailRepository.getBails(any())).thenReturn(retList);
         when(encryptionDecryptionUtil.decryptObject(any(), any(), eq(Bail.class), any())).thenReturn(retList.get(0));
 
@@ -107,9 +107,9 @@ class BailServiceTest {
     @Test
     void whenSearchBail_noCriteria_thenNoEncryptionOnCriteria() {
         BailSearchRequest searchReq = new BailSearchRequest();
+        searchReq.setRequestInfo(RequestInfo.builder().userInfo(User.builder().type("system").build()).build());
         List<Bail> retList = List.of(mock(Bail.class));
         when(bailRepository.getBails(any())).thenReturn(retList);
-        searchReq.setRequestInfo(RequestInfo.builder().userInfo(User.builder().type("system").build()).build());
         when(encryptionDecryptionUtil.decryptObject(any(), any(), eq(Bail.class), any())).thenReturn(retList.get(0));
 
         List<Bail> result = bailService.searchBail(searchReq);
@@ -119,8 +119,8 @@ class BailServiceTest {
     @Test
     void whenSearchBail_bailRepositoryThrows_thenThrowsCustomException() {
         BailSearchRequest searchReq = new BailSearchRequest();
-        when(bailRepository.getBails(any())).thenThrow(new RuntimeException("DB down"));
         searchReq.setRequestInfo(RequestInfo.builder().userInfo(User.builder().type("system").build()).build());
+        when(bailRepository.getBails(any())).thenThrow(new RuntimeException("DB down"));
         CustomException ex = assertThrows(CustomException.class,
                 () -> bailService.searchBail(searchReq));
         assertEquals("BAIL_SEARCH_ERR", ex.getCode());
