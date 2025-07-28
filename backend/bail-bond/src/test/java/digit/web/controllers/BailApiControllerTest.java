@@ -8,6 +8,11 @@
     import digit.web.models.BailSearchCriteria;
     import digit.web.models.BailSearchRequest;
     import digit.web.models.BailSearchResponse;
+    import digit.web.models.BailToSign;
+    import digit.web.models.BailsToSignRequest;
+    import digit.web.models.BailsToSignResponse;
+    import digit.web.models.UpdateSignedBailRequest;
+    import digit.web.models.UpdateSignedBailResponse;
     import org.egov.common.contract.request.RequestInfo;
     import org.egov.common.contract.response.ResponseInfo;
     import org.junit.jupiter.api.Test;
@@ -117,6 +122,48 @@
             assertEquals(responseInfo, Objects.requireNonNull(bailResponseEntity.getBody()).getResponseInfo());
             assertEquals(HttpStatus.OK, bailResponseEntity.getStatusCode());
             assertEquals(bail, Objects.requireNonNull(bailResponseEntity.getBody()).getBails().get(0));
+        }
+
+        @Test
+        public void getBailsToSignSuccess() {
+            BailsToSignRequest request = new BailsToSignRequest();
+            RequestInfo requestInfo = new RequestInfo();
+            request.setRequestInfo(requestInfo);
+
+            BailToSign bailToSign = new BailToSign();
+            List<BailToSign> bailToSignList = List.of(bailToSign);
+
+            ResponseInfo responseInfo = new ResponseInfo();
+
+            when(bailService.createBailToSignRequest(any(BailsToSignRequest.class))).thenReturn(bailToSignList);
+            when(responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true)).thenReturn(responseInfo);
+
+            ResponseEntity<BailsToSignResponse> responseEntity = bailApiController.getBailsToSign(request);
+
+            assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+            assertEquals(responseInfo, Objects.requireNonNull(responseEntity.getBody()).getResponseInfo());
+            assertEquals(bailToSignList, responseEntity.getBody().getBailList());
+        }
+
+        @Test
+        public void updateSignedBailsSuccess() {
+            UpdateSignedBailRequest request = new UpdateSignedBailRequest();
+            RequestInfo requestInfo = new RequestInfo();
+            request.setRequestInfo(requestInfo);
+
+            Bail bail = new Bail();
+            List<Bail> bails = List.of(bail);
+
+            ResponseInfo responseInfo = new ResponseInfo();
+
+            when(bailService.updateBailWithSignDoc(any(UpdateSignedBailRequest.class))).thenReturn(bails);
+            when(responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true)).thenReturn(responseInfo);
+
+            ResponseEntity<UpdateSignedBailResponse> responseEntity = bailApiController.updateSignedBails(request);
+
+            assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+            assertEquals(responseInfo, Objects.requireNonNull(responseEntity.getBody()).getResponseInfo());
+            assertEquals(bails, responseEntity.getBody().getBails());
         }
 
 
