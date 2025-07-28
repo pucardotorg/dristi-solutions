@@ -72,6 +72,7 @@ public class ShortenController {
             if (code.trim().isEmpty()) {
                 throw new CustomException("INVALID_CODE", "Code parameter cannot be empty");
             }
+            id = code;
             log.info("Using code parameter '{}' instead of path variable '{}'", code, id);
         }
         String redirectUrlString = urlConverterService.getLongURLFromID(id);
