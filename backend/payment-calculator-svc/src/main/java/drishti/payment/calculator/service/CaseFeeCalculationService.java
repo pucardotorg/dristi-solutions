@@ -49,6 +49,7 @@ public class CaseFeeCalculationService {
         List<Calculation> result = new ArrayList<>();
 
         for (EFillingCalculationCriteria criteria : calculationCriteria) {
+            log.info("operation=calculateCaseFees, result=CALCULATING_FEE, caseId={}", criteria.getCaseId());
             Double complaintFee = getComplaintFee(criteria.getCheckAmount(), complaintFeeRange);
             Double delayFee = criteria.getIsDelayCondonation() ? delayCondonationFee : 0.0;
 
@@ -68,13 +69,14 @@ public class CaseFeeCalculationService {
 
             }
 
-            log.info("complaintFee={}, courtFee={}, legalBasicFund={}, advocateClerkWelfareFund={}, totalApplicationFee={}, complaintFee={}", complaintFee, calculatedCourtFee, calculatedLegalBasicFund, calculatedAdvocateClerkWelfareFund, complaintFee);
             calculatedCourtFee = Math.ceil(calculatedCourtFee);
             calculatedLegalBasicFund = Math.ceil(calculatedLegalBasicFund);
             calculatedAdvocateClerkWelfareFund = Math.ceil(calculatedAdvocateClerkWelfareFund);
             complaintFee = Math.ceil(complaintFee);
             delayFee = Math.ceil(delayFee);
             advocateFee = Math.ceil(advocateFee);
+
+            log.info("complaintFee={}, courtFee={}, legalBasicFund={}, advocateClerkWelfareFund={}, delayFee={}, advocateFee={}", complaintFee, calculatedCourtFee, calculatedLegalBasicFund, calculatedAdvocateClerkWelfareFund, delayFee, advocateFee);
 
             List<BreakDown> feeBreakdown = getFeeBreakdown(calculatedCourtFee, calculatedLegalBasicFund, calculatedAdvocateClerkWelfareFund, complaintFee, delayFee, advocateFee);
             Double totalCourtFee = calculatedCourtFee + calculatedLegalBasicFund + calculatedAdvocateClerkWelfareFund + complaintFee + delayFee + advocateFee;

@@ -92,6 +92,14 @@ public class CaseServiceV2 {
 
     private void validateIfUserPartOfCase(CaseSearchCriteriaV2 criteria, CourtCase courtCase) {
         boolean isPoaPresent = false;
+
+        if (criteria.getCourtId() != null && !criteria.getCourtId().isEmpty()) {
+            if(courtCase.getCourtId() == null || !(criteria.getCourtId().equalsIgnoreCase(courtCase.getCourtId()))){
+                log.debug("User not eligible for to view the case, caseId {}", criteria.getCaseId());
+                throw new CustomException(SEARCH_CASE_ERR, "User not eligible for to view this case");
+            }
+        }
+
         if (criteria.getPoaHolderIndividualId() != null && !criteria.getPoaHolderIndividualId().isEmpty()) {
              isPoaPresent = courtCase.getPoaHolders() != null &&
                     courtCase.getPoaHolders().stream()

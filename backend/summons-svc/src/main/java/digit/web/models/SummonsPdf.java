@@ -105,4 +105,7 @@ public class SummonsPdf  {
 
     @JsonProperty("helplineNumber")
     private String helplineNumber;
+
+    @JsonProperty("warrantText")
+    private String warrantText;
 }
