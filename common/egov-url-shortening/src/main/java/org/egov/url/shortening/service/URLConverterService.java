@@ -65,7 +65,11 @@ public class URLConverterService {
 
     @Value("${expired.url}")
     private String expiredUrl;
-    
+
+    @Value("${shorten.url.path.param}")
+    private String shortenUrlPathParam;
+
+
     @Autowired
     private HashIdConverter hashIdConverter;
     
@@ -125,6 +129,7 @@ public class URLConverterService {
         if(!serverContextPath.endsWith("/")) {
         	shortenedUrl.append("/");
         }
+        shortenedUrl.append(shortenUrlPathParam);
     	shortenedUrl.append(uniqueID);
     	
         return shortenedUrl.toString();

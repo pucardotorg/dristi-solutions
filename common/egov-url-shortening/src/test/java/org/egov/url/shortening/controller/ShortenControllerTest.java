@@ -35,7 +35,7 @@ class ShortenControllerTest {
     @DisplayName("Should throws an exception when the id is invalid")
     public void testRedirectUrlWhenIdIsInvalidThenThrowsException() {
         assertThrows(Exception.class, () -> {
-            shortenController.redirectUrl("invalidId", null);
+            shortenController.redirectUrl("invalidId", null, null);
         });
     }
 
