@@ -107,7 +107,15 @@ public class ServiceConstants {
 
 	public static final String INITIATE_E_SIGN = "INITIATE_E-SIGN";
 
-	public static final String WITNESS_DEPOSITION_CODE = "WITNESS_DEPOSITION_MESSAGE";
+	public static final String WITNESS_DEPOSITION_MESSAGE = "WITNESS_DEPOSITION_MESSAGE";
+
+	public static final String WITNESS_DEPOSITION_EMAIL = "WITNESS_DEPOSITION_EMAIL";
+
+	public static final String WITNESS_DEPOSITION_EMAIL_SUBJECT = "Signature of Witness Deposition | {{caseName}}";
+
+	public static final String WITNESS_DEPOSITION_EMAIL_BODY = "To {{name}},\\n\\nPlease find the witness deposition for signature in {{caseNumber}} {{caseName}} by 5pm on {{date}} here: {{shortenedURL}}.\\n\\n24X7 ON Court,\\nKollam, Kerala";
+
+	public static final String DATE_PATTERN = "dd.MM.yyyy";
 
 	public static final String MANUAL = "MANUAL_";
 

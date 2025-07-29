@@ -11,7 +11,6 @@ import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -222,6 +221,7 @@ public class EvidenceService {
             String shortenedUrl = urlShortenerUtil.createShortenedUrl(evidenceRequest.getArtifact().getTenantId() , evidenceRequest.getArtifact().getArtifactNumber());
             evidenceRequest.getArtifact().setShortenedUrl(shortenedUrl);
             callNotificationServiceForSMS(evidenceRequest);
+            callNotificationServiceForEmail(evidenceRequest);
         }
 
     }
@@ -519,7 +519,7 @@ public class EvidenceService {
 
     private String getMessageCode(String action) {
         if (action.equalsIgnoreCase(INITIATE_E_SIGN)) {
-            return WITNESS_DEPOSITION_CODE;
+            return WITNESS_DEPOSITION_MESSAGE;
         }
         return null;
     }
@@ -549,6 +549,66 @@ public class EvidenceService {
                 .tenantId(artifact.getTenantId())
                 .build();
 
+    }
+
+    private void callNotificationServiceForEmail(EvidenceRequest evidenceRequest) {
+        try {
+            Artifact artifact = evidenceRequest.getArtifact();
+            String action = artifact.getWorkflow().getAction();
+
+            String emailCode = getEmailCode(action);
+            if (StringUtils.isBlank(emailCode)) {
+                log.warn("No emailCode found for action: {}", action);
+                return;
+            }
+
+            log.info("Sending emails for emailCode: {}", emailCode);
+            Set<String> emailTopics = Arrays.stream(emailCode.split(","))
+                    .map(String::trim)
+                    .collect(java.util.stream.Collectors.toSet());
+
+            CaseCriteria criteria = CaseCriteria.builder()
+                    .filingNumber(artifact.getFilingNumber())
+                    .defaultFields(true)
+                    .build();
+            CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                    .requestInfo(evidenceRequest.getRequestInfo())
+                    .criteria(Collections.singletonList(criteria))
+                    .build();
+
+            JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+
+            String cmpNumber = caseDetails.has("cmpNumber") ? (caseDetails.get("cmpNumber").textValue() != null ? caseDetails.get("cmpNumber").textValue() : null) : null;
+            String courtCaseNumber = caseDetails.has("courtCaseNumber") ? (caseDetails.get("courtCaseNumber").textValue() != null ? caseDetails.get("courtCaseNumber").textValue() : null) : null;
+            String caseTitle = caseDetails.has("caseTitle") ? (caseDetails.get("caseTitle").textValue() != null ? caseDetails.get("caseTitle").textValue() : null) : null;
+
+            EmailTemplateData emailTemplateData = EmailTemplateData.builder()
+                    .caseNumber(courtCaseNumber != null ? courtCaseNumber : cmpNumber)
+                    .caseName(caseTitle != null ? caseTitle : "")
+                    .shortenedURL(artifact.getShortenedUrl())
+                    .tenantId(artifact.getTenantId())
+                    .artifactNumber(artifact.getArtifactNumber())
+                    .filingNumber(artifact.getFilingNumber())
+                    .build();
+
+            if (emailTopics.contains(WITNESS_DEPOSITION_EMAIL)) {
+                log.info("Sending email to witnesses");
+                if (artifact.getWitnessEmails() != null && !artifact.getWitnessEmails().isEmpty()) {
+                    for (String witnessEmail : artifact.getWitnessEmails()) {
+                        notificationService.sendEmail(evidenceRequest.getRequestInfo(), emailTemplateData, artifact.getSourceName(), witnessEmail);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error sending notification for evidenceRequest: {}", evidenceRequest, e);
+        }
+    }
+
+    private String getEmailCode(String action) {
+        if (action.equalsIgnoreCase(INITIATE_E_SIGN)) {
+            return WITNESS_DEPOSITION_EMAIL;
+        }
+        return null;
     }
 
     public List<ArtifactToSign> createArtifactsToSignRequest(ArtifactsToSignRequest request) {
@@ -614,6 +674,7 @@ public class EvidenceService {
                 String artifactId = signedArtifact.getArtifactId();
                 String signedArtifactData = signedArtifact.getSignedArtifactData();
                 Boolean isSigned = signedArtifact.getSigned();
+                Boolean isWitnessDeposition = signedArtifact.getIsWitnessDeposition();
                 String tenantId = signedArtifact.getTenantId();
 
                 if (Boolean.TRUE.equals(isSigned)) {
@@ -632,19 +693,18 @@ public class EvidenceService {
                         MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedArtifactData, ARTIFACT_FILE_NAME);
                         String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
-                        Document document = Document.builder()
-                                .id(UUID.randomUUID().toString())
-                                .documentType(SIGNED)
-                                .fileStore(fileStoreId)
-                                .additionalDetails(Map.of(NAME, ARTIFACT_FILE_NAME))
-                                .build();
-
-                        existingArtifact.setFile(document);
-
-
-                        WorkflowObject workflow = existingArtifact.getWorkflow();
-                        workflow.setAction(SIGNED);
-                        existingArtifact.setWorkflow(workflow);
+                        if (isWitnessDeposition != null && isWitnessDeposition) {
+                            Document document = Document.builder()
+                                    .id(UUID.randomUUID().toString())
+                                    .documentType(SIGNED)
+                                    .fileStore(fileStoreId)
+                                    .additionalDetails(Map.of(NAME, ARTIFACT_FILE_NAME))
+                                    .build();
+                            existingArtifact.setFile(document);
+                            WorkflowObject workflow = existingArtifact.getWorkflow();
+                            workflow.setAction(SIGNED);
+                            existingArtifact.setWorkflow(workflow);
+                        }
 
                         EvidenceRequest evidenceRequest = EvidenceRequest.builder().artifact(existingArtifact).requestInfo(requestInfo).build();
 

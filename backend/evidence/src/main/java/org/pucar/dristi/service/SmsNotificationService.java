@@ -1,6 +1,7 @@
 package org.pucar.dristi.service;
 
 import com.jayway.jsonpath.JsonPath;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.models.RequestInfoWrapper;
@@ -8,15 +9,13 @@ import org.egov.common.contract.request.RequestInfo;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ServiceRequestRepository;
-import org.pucar.dristi.web.models.SMSRequest;
-import org.pucar.dristi.web.models.SmsTemplateData;
+import org.pucar.dristi.util.DateUtil;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -30,11 +29,14 @@ public class SmsNotificationService {
 
     private final ServiceRequestRepository repository;
 
+    private final DateUtil dateUtil;
+
     @Autowired
-    public SmsNotificationService(Configuration config, Producer producer, ServiceRequestRepository repository) {
+    public SmsNotificationService(Configuration config, Producer producer, ServiceRequestRepository repository, DateUtil dateUtil) {
         this.config = config;
         this.producer = producer;
         this.repository = repository;
+        this.dateUtil = dateUtil;
     }
 
     public void sendNotification(RequestInfo requestInfo, SmsTemplateData smsTemplateData, String notificationStatus, String mobileNumber) {
@@ -196,5 +198,69 @@ public class SmsNotificationService {
         }
 
         return localizedMessageMap;
+    }
+
+    public void sendEmail(@Valid RequestInfo requestInfo, EmailTemplateData emailTemplateData, String sourceName, String witnessEmail) {
+        try {
+            if (sourceName == null) {
+                log.error("sourceName cannot be null");
+            }
+            Optional<EmailContent> contentOpt = getEmailContent(emailTemplateData, sourceName);
+            if (contentOpt.isEmpty()) {
+                log.error("Email content has not been configured");
+                return;
+            }
+
+            EmailRequest emailRequest = buildEmailRequest(contentOpt.get(), requestInfo, emailTemplateData.getTenantId(), Set.of(witnessEmail));
+            producer.push(config.getMailNotificationTopic(), emailRequest);
+            log.info("Email sent successfully to {}", sourceName);
+        } catch (Exception e) {
+            log.error("Error in Sending Message To Notification Service: " , e);
+        }
+    }
+
+    public EmailRequest buildEmailRequest(EmailContent content, RequestInfo requestInfo, String tenantId, Set<String> recipients) {
+        Email email = Email.builder()
+                .emailTo(recipients)
+                .subject(content.getSubject())
+                .body(content.getBody())
+                .tenantId(tenantId)
+                .templateCode(WITNESS_DEPOSITION_EMAIL)
+                .build();
+
+        return EmailRequest.builder()
+                .requestInfo(requestInfo)
+                .email(email)
+                .build();
+    }
+
+    private Optional<EmailContent> getEmailContent(EmailTemplateData emailTemplateData, String sourceName) {
+
+        String subjectTemplate = WITNESS_DEPOSITION_EMAIL_SUBJECT;
+        String bodyTemplate = WITNESS_DEPOSITION_EMAIL_BODY;
+
+        if (StringUtils.isEmpty(subjectTemplate) || StringUtils.isEmpty(bodyTemplate)) {
+            return Optional.empty();
+        }
+        String subject = buildSubject(subjectTemplate, emailTemplateData);
+        String body = buildBody(bodyTemplate, emailTemplateData, sourceName);
+
+        return Optional.of(new EmailContent(subject, body));
+
+    }
+
+    public String buildSubject(String subjectTemplate, EmailTemplateData emailTemplateData){
+        String caseName = emailTemplateData.getCaseName();
+        return subjectTemplate.replace("{{caseName}}", caseName);
+    }
+
+    public String buildBody(String bodyTemplate, EmailTemplateData emailTemplateData, String sourceName) {
+        String formattedCurrentDate = dateUtil.getFormattedCurrentDate();
+
+        return bodyTemplate.replace("{{name}}", sourceName)
+                .replace("{{caseNumber}}", emailTemplateData.getCaseNumber())
+                .replace("{{caseName}}", emailTemplateData.getCaseName())
+                .replace("{{date}}", formattedCurrentDate)
+                .replace("{{shortenedURL}}", emailTemplateData.getShortenedURL());
     }
 }

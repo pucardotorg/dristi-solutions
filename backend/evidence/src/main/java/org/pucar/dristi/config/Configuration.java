@@ -275,4 +275,8 @@ public class Configuration {
 	@Value("${allowed.content.types}")
 	private String[] allowedContentTypes;
 
+	//Email
+	@Value("${egov.mail.notification.topic}")
+	private String mailNotificationTopic;
+
 }

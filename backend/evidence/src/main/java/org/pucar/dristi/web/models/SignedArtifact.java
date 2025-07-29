@@ -20,6 +20,9 @@ public class SignedArtifact {
     @NotNull
     private String signedArtifactData;
 
+    @JsonProperty("isWitnessDeposition")
+    private Boolean isWitnessDeposition;
+
     @JsonProperty("signed")
     @NotNull
     private Boolean signed;
