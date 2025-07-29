@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
 import org.egov.common.contract.request.RequestInfo;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -20,5 +22,5 @@ public class WitnessDetailsRequest {
     private String tenantId;
 
     @JsonProperty("witnessDetails")
-    private WitnessDetails witnessDetails;
+    private List<WitnessDetails> witnessDetails;
 }

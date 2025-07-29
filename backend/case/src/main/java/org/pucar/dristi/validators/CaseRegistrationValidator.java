@@ -383,8 +383,10 @@ public class CaseRegistrationValidator {
         try {
             log.info("operation=validateWitnessRequest, status=IN_PROGRESS, filingNumber: {}", body.getCaseFilingNumber());
             JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
-            validateMobileNumbers(additionalDetails, body.getWitnessDetails());
-            validateEmail(additionalDetails, body.getWitnessDetails());
+            for(WitnessDetails witnessDetails : body.getWitnessDetails()) {
+                validateMobileNumbers(additionalDetails, witnessDetails);
+                validateEmail(additionalDetails, witnessDetails);
+            }
             log.info("operation=validateWitnessRequest, status=SUCCESS, filingNumber: {}", body.getCaseFilingNumber());
         } catch (Exception e) {
             log.error("operation=validateWitnessRequest, status=FAILURE, filingNumber: {}, error: {}", body.getCaseFilingNumber(), e.getMessage());

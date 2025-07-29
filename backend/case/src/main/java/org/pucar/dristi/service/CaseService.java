@@ -5147,7 +5147,7 @@ public class CaseService {
         }
     }
 
-    private void updateCaseAdditionalDetails(WitnessDetails updatedWitnessDetails, CourtCase courtCase) {
+    private void updateCaseAdditionalDetails(List<WitnessDetails> updatedWitnessDetails, CourtCase courtCase) {
         if (updatedWitnessDetails == null || courtCase == null) {
             log.warn("WitnessDetails or CourtCase is null, skipping enrichment.");
             return;
@@ -5162,11 +5162,13 @@ public class CaseService {
             witnessDetailsNode.set("formdata", formdataArray);
         }
 
-        JsonNode dataNode = objectMapper.convertValue(updatedWitnessDetails, JsonNode.class);
-        ObjectNode dataWrapperNode = objectMapper.createObjectNode();
-        dataWrapperNode.set("data", dataNode);
+        for(WitnessDetails witnessDetails : updatedWitnessDetails) {
+            JsonNode dataNode = objectMapper.convertValue(witnessDetails, JsonNode.class);
+            ObjectNode dataWrapperNode = objectMapper.createObjectNode();
+            dataWrapperNode.set("data", dataNode);
 
-        formdataArray.add(dataWrapperNode);
+            formdataArray.add(dataWrapperNode);
+        }
         courtCase.setAdditionalDetails(additionalDetailsNode);
     }
 }
