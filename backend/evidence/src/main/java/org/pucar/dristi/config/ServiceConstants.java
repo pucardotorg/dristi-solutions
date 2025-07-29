@@ -145,5 +145,6 @@ public class ServiceConstants {
 	public static final String OMIT_XML_DECLARATION = "omit-xml-declaration";
 
 	public static final String ARTIFACT_FILE_NAME = "artifact.pdf";
+	public static final String WITNESS_DEPOSITION = "WITNESS_DEPOSITION";
 
 }

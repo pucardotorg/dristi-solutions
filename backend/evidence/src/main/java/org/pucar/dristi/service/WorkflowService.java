@@ -68,9 +68,9 @@ public class WorkflowService {
             ProcessInstanceObject processInstance = new ProcessInstanceObject();
             processInstance.setBusinessId(artifact.getArtifactNumber());
             processInstance.setAction(workflow.getAction());
-            processInstance.setModuleName(getBusinessModule(filingType));
+            processInstance.setModuleName(getBusinessModule(filingType, artifact.getArtifactType()));
             processInstance.setTenantId(artifact.getTenantId());
-            processInstance.setBusinessService(getBusinessServiceName(filingType));
+            processInstance.setBusinessService(getBusinessServiceName(filingType, artifact.getArtifactType()));
             processInstance.setDocuments(workflow.getDocuments());
             processInstance.setComment(workflow.getComments());
             processInstance.setAdditionalDetails(workflow.getAdditionalDetails());
@@ -92,16 +92,22 @@ public class WorkflowService {
         }
     }
 
-    private String getBusinessModule(String filingType) {
-        if (filingType.equalsIgnoreCase(SUBMISSION)){
+    private String getBusinessModule(String filingType, String artifactType) {
+        if(WITNESS_DEPOSITION.equalsIgnoreCase(artifactType)){
+            return config.getWitnessDepositionBusinessServiceModule();
+        }
+        else if (SUBMISSION.equalsIgnoreCase(filingType)){
             return config.getSubmissionBusinessServiceModule();
         } else {
             return config.getBusinessServiceModule();
         }
     }
 
-    private String getBusinessServiceName(String filingType) {
-        if (filingType.equalsIgnoreCase(SUBMISSION)){
+    private String getBusinessServiceName(String filingType, String artifactType) {
+        if(WITNESS_DEPOSITION.equalsIgnoreCase(artifactType)){
+            return config.getWitnessDepositionBusinessServiceName();
+        }
+        else if (SUBMISSION.equalsIgnoreCase(filingType)){
             return config.getSubmissionBusinessServiceName();
         } else {
             return config.getBusinessServiceName();
