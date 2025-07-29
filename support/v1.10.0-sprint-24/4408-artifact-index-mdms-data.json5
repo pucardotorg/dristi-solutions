@@ -1,0 +1,59 @@
+[
+  {
+    "tenantId": "kl",
+    "masterName": "INBOX",
+    "moduleName": "InboxQueryConfiguration",
+    "mdmsPayload": [
+      {
+        "id": "7ef4c999-8344-46c4-9361-3eaa018482f4",
+        "tenantId": "kl",
+        "schemaCode": "INBOX.InboxQueryConfiguration",
+        "uniqueIdentifier": "artifact-index",
+        "data": {
+          "index": "artifact-index",
+          "module": "Evidence Service",
+          "sortBy": {
+            "path": "Data.artifactDetails.caseNumber.keyword",
+            "defaultOrder": "DESC"
+          },
+          "sourceFilterPathList": [
+            "Data"
+          ],
+          "allowedSearchCriteria": [
+            {
+              "name": "searchableFields",
+              "path": "Data.artifactDetails.searchableFields.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "courtId",
+              "path": "Data.artifactDetails.courtId.Keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "tenantId",
+              "path": "Data.artifactDetails.tenantId.Keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "artifactNumber",
+              "path": "Data.artifactDetails.artifactNumber.Keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "artifactType",
+              "path": "Data.artifactDetails.artifactType.Keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "status",
+              "path": "Data.artifactDetails.status.Keyword",
+              "isMandatory": false
+            }
+          ]
+        },
+        "isActive": true,
+      }
+    ]
+  }
+]

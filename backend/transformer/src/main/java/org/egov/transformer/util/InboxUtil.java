@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.ServiceCallException;
 import org.egov.transformer.config.TransformerProperties;
+import org.egov.transformer.models.Artifact;
 import org.egov.transformer.models.OpenHearing;
 import org.egov.transformer.models.inbox.*;
 import org.egov.transformer.repository.ServiceRequestRepository;
@@ -66,6 +67,37 @@ public class InboxUtil {
 
     }
 
+    public List<Artifact> getArtifacts(InboxRequest request) {
+
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        StringBuilder uri = new StringBuilder(configuration.getInboxHost()).append(configuration.getIndexSearchEndPoint());
+        Object response = serviceRequestRepository.fetchResult(uri, request);
+        InboxResponse artifactSearchResponse ;
+        List<Artifact> artifactList = new ArrayList<>();
+        try {
+            JsonNode jsonNode = objectMapper.valueToTree(response);
+            artifactSearchResponse = objectMapper.readValue(jsonNode.toString(), InboxResponse.class);
+            List<Inbox> items = artifactSearchResponse.getItems();
+
+            for (Inbox inbox : items) {
+                Artifact artifact = new Artifact();
+                Map<String, Object> businessObject = inbox.getBusinessObject();
+                Map artifactDetails = (Map) businessObject.get("artifactDetails");
+                mapValuesToArtifacts(artifact,artifactDetails );
+                artifactList.add(artifact);
+            }
+
+        } catch (HttpClientErrorException e) {
+            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
+            throw new ServiceCallException(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error(SEARCHER_SERVICE_EXCEPTION, e);
+        }
+
+        return artifactList;
+
+    }
+
     private void mapValuesToOpenHearing(OpenHearing openHearing, Map<String, Object> keyValueMap) {
 
 
@@ -111,6 +143,51 @@ public class InboxUtil {
         }
     }
 
+    private void mapValuesToArtifacts(Artifact artifact, Map<String, Object> keyValueMap) {
+
+
+        Class<?> clazz = artifact.getClass();
+
+        for (Map.Entry<String, Object> entry : keyValueMap.entrySet()) {
+            try {
+                Field field = clazz.getDeclaredField(entry.getKey());
+                field.setAccessible(true);
+                Object value = entry.getValue();
+
+                if (value == null) continue;
+
+                // Handle lists
+                if (List.class.isAssignableFrom(field.getType())) {
+                    ParameterizedType listType = (ParameterizedType) field.getGenericType();
+                    Class<?> listGenericType = (Class<?>) listType.getActualTypeArguments()[0];
+
+                    if (value instanceof List<?>) {
+                        List<?> listValue = (List<?>) value;
+                        List<Object> convertedList = new ArrayList<>();
+                        for (Object v : listValue) {
+                            convertedList.add(convertValue(v, listGenericType));
+                        }
+                        field.set(artifact, convertedList);
+                    }
+                }
+                // Handle nested objects
+                else if (!field.getType().isPrimitive() && !field.getType().equals(String.class) &&
+                        !Number.class.isAssignableFrom(field.getType()) && !Boolean.class.isAssignableFrom(field.getType())) {
+                    Object convertedObject = objectMapper.convertValue(value, field.getType());
+                    field.set(artifact, convertedObject);
+                }
+                // Handle primitives and other types
+                else {
+                    field.set(artifact, convertValue(value, field.getType()));
+                }
+            } catch (NoSuchFieldException e) {
+                log.error("Field not found:{} ", entry.getKey());
+            } catch (IllegalAccessException e) {
+                log.error("Error accessing field: {}", entry.getKey());
+            }
+        }
+    }
+
     private Object convertValue(Object value, Class<?> targetType) {
         if (value == null) return null;
 
@@ -144,6 +221,31 @@ public class InboxUtil {
                 .moduleName("Hearing Service")
                 .tenantId(configuration.getEgovStateTenantId())
                 .businessService(Collections.singletonList("hearing-default"))
+                .build();
+        InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
+                .processSearchCriteria(processSearchCriteria)
+                .moduleSearchCriteria(moduleSearchCriteria)
+                .tenantId(configuration.getEgovStateTenantId())
+                .limit(1)
+                .offset(0)
+                .build();
+
+        return InboxRequest.builder()
+                .inbox(inboxSearchCriteria)
+                .build();
+    }
+
+    public InboxRequest getInboxRequestForArtifacts(String courtId, String filingNumber) {
+
+        HashMap<String, Object> moduleSearchCriteria = new HashMap<>();
+
+        moduleSearchCriteria.put("courtId", courtId);
+        moduleSearchCriteria.put("filingNumber", filingNumber);
+        ProcessInstanceSearchCriteria processSearchCriteria = ProcessInstanceSearchCriteria.builder()
+                .moduleName("Evidence Service")
+                .tenantId(configuration.getEgovStateTenantId())
+                //Todo: Need to check Workflow name
+                .businessService(Collections.singletonList("evidence-default"))
                 .build();
         InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
                 .processSearchCriteria(processSearchCriteria)

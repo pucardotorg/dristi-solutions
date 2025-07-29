@@ -79,7 +79,7 @@ public class HearingService {
 
         List<AdvocateMapping> representatives = courtCase.getRepresentatives();
 
-        Advocate advocate = getAdvocates(representatives, hearing, courtCase.getLitigants(), requestInfo);
+        Advocate advocate = getAdvocates(representatives, courtCase.getLitigants(), requestInfo);
 
         OpenHearing openHearing = new OpenHearing();
         openHearing.setHearingUuid(hearing.getId().toString());
@@ -174,7 +174,8 @@ public class HearingService {
 
     }
 
-    private Advocate getAdvocates(List<AdvocateMapping> representatives, Hearing hearing, List<Party> litigants, RequestInfo requestInfo) {
+
+    public Advocate getAdvocates(List<AdvocateMapping> representatives, List<Party> litigants, RequestInfo requestInfo) {
 
         List<String> complainantNames = new ArrayList<>();
         List<String> accusedNames = new ArrayList<>();

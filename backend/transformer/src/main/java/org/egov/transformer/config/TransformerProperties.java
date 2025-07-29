@@ -126,4 +126,16 @@ public class TransformerProperties {
     @Value("${egov.bulk.index.path}")
     private String bulkPath;
 
+    @Value("${transformer.consumer.save.artifact.topic}")
+    private String saveArtifactTopic;
+
+    @Value("${transformer.consumer.update.artifact.topic}")
+    private String updateArtifactTopic;
+
+    @Value("${transformer.producer.save.artifact.index.topic}")
+    private String saveArtifactIndexTopic;
+
+    @Value("${artifact.index}")
+    private String artifactIndex;
+
 }
