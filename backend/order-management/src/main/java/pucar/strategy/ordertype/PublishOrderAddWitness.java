@@ -19,6 +19,7 @@ import pucar.web.models.application.ApplicationCriteria;
 import pucar.web.models.application.ApplicationSearchRequest;
 import pucar.web.models.courtCase.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -31,11 +32,13 @@ public class PublishOrderAddWitness implements OrderUpdateStrategy {
     private final ApplicationUtil applicationUtil;
     private final CaseUtil caseUtil;
     private final JsonUtil jsonUtil;
+    private final ObjectMapper mapper;
 
-    public PublishOrderAddWitness(ApplicationUtil applicationUtil, CaseUtil caseUtil, JsonUtil jsonUtil) {
+    public PublishOrderAddWitness(ApplicationUtil applicationUtil, CaseUtil caseUtil, JsonUtil jsonUtil, ObjectMapper mapper) {
         this.applicationUtil = applicationUtil;
         this.caseUtil = caseUtil;
         this.jsonUtil = jsonUtil;
+        this.mapper = mapper;
     }
 
     @Override
@@ -95,13 +98,24 @@ public class PublishOrderAddWitness implements OrderUpdateStrategy {
                     .requestInfo(requestInfo)
                     .caseFilingNumber(application.getFilingNumber())
                     .tenantId(application.getTenantId())
-                    .witnessDetails(witnessDetails)
+                    .witnessDetails(createWitnessDetails(witnessDetails))
                     .build();
             caseUtil.addWitnessToCase(witnessDetailsRequest);
         } catch (Exception e) {
             log.error("Error adding witness to case for application: {}", application.getApplicationNumber(), e);
             throw new CustomException(ERROR_ADDING_WITNESS, e.getMessage());
         }
+    }
+
+    public List<WitnessDetails> createWitnessDetails(Object witnessDetails) {
+        List<WitnessDetails> witnessDetailsList = new ArrayList<>();
+        JsonNode witnessDetailsNode = mapper.convertValue(witnessDetails, JsonNode.class);
+        for(JsonNode witnessDetail : witnessDetailsNode) {
+            WitnessDetails witness = mapper.convertValue(witnessDetail.get("data"), WitnessDetails.class);
+            witness.setUniqueId(witnessDetail.get("uniqueId").textValue());
+            witnessDetailsList.add(witness);
+        }
+        return witnessDetailsList;
     }
 
     @Override
