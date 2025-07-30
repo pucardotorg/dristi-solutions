@@ -13,8 +13,8 @@ import java.util.List;
 @NoArgsConstructor
 public class WitnessDetails {
 
-    @JsonProperty("id")
-    private String id;
+    @JsonProperty("uniqueId")
+    private String uniqueId;
 
     @JsonProperty("firstName")
     private String firstName;

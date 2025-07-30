@@ -5166,7 +5166,9 @@ public class CaseService {
             JsonNode dataNode = objectMapper.convertValue(witnessDetails, JsonNode.class);
             ObjectNode dataWrapperNode = objectMapper.createObjectNode();
             dataWrapperNode.set("data", dataNode);
-
+            dataWrapperNode.put("uniqueId", witnessDetails.getUniqueId());
+            dataWrapperNode.put("isenabled", true);
+            dataWrapperNode.put("displayindex", 0);
             formdataArray.add(dataWrapperNode);
         }
         courtCase.setAdditionalDetails(additionalDetailsNode);
