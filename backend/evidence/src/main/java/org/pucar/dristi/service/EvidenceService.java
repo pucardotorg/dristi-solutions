@@ -651,7 +651,7 @@ public class EvidenceService {
             try {
                 resource = fileStoreUtil.fetchFileStoreObjectById(coordinate.getFileStoreId(), coordinate.getTenantId());
             } catch (Exception e) {
-                throw new CustomException("FILE_STORE_UTILITY_EXCEPTION", "something went wrong while signing");
+                throw new CustomException(FILE_STORE_UTILITY_EXCEPTION, "something went wrong while signing");
             }
             try {
                 String base64Document = cipherUtil.encodePdfToBase64(resource);
@@ -661,13 +661,13 @@ public class EvidenceService {
                 java.time.ZonedDateTime timestamp = java.time.ZonedDateTime.now(java.time.ZoneId.of(config.getZoneId()));
 
                 String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo);
-                String artifactId = artifactCriteriaMap.get(coordinate.getFileStoreId()).getArtifactId();
-                artifactToSign.setArtifactId(artifactId);
+                String artifactId = artifactCriteriaMap.get(coordinate.getFileStoreId()).getArtifactNumber();
+                artifactToSign.setArtifactNumber(artifactId);
                 artifactToSign.setRequest(xmlRequest);
 
                 artifactToSignList.add(artifactToSign);
             } catch (Exception e) {
-                throw new CustomException("ARTIFACT_SIGN_ERROR", "something went wrong while signing");
+                throw new CustomException(ARTIFACT_SIGN_ERROR, "something went wrong while signing");
             }
         }
         log.info("creating artifacts to sign request, result= SUCCESS, artifactCriteria:{}", request.getCriteria().size());
@@ -680,7 +680,7 @@ public class EvidenceService {
         RequestInfo requestInfo = request.getRequestInfo();
         if (request.getSignedArtifacts() != null) {
             for (SignedArtifact signedArtifact : request.getSignedArtifacts()) {
-                String artifactId = signedArtifact.getArtifactId();
+                String artifactNumber = signedArtifact.getArtifactNumber();
                 String signedArtifactData = signedArtifact.getSignedArtifactData();
                 Boolean isSigned = signedArtifact.getSigned();
                 Boolean isWitnessDeposition = signedArtifact.getIsWitnessDeposition();
@@ -689,17 +689,19 @@ public class EvidenceService {
                 if (Boolean.TRUE.equals(isSigned)) {
                     try {
                         // Fetch and validate existing artifact
-                        EvidenceSearchCriteria evidenceSearchCriteria = EvidenceSearchCriteria.builder().artifactNumber(artifactId).tenantId(tenantId).fuzzySearch(false).build();
+                        EvidenceSearchCriteria evidenceSearchCriteria = EvidenceSearchCriteria.builder().artifactNumber(artifactNumber).tenantId(tenantId).fuzzySearch(false).build();
                         Artifact existingArtifact = repository.getArtifacts(evidenceSearchCriteria, null).stream().findFirst().orElse(null);
                         if (existingArtifact == null) {
-                            log.error("Artifact not found for id: {}", artifactId);
-                            throw new CustomException("ARTIFACT_NOT_FOUND", "Artifact not found for id: " + artifactId);
+                            log.error("Artifact not found for id: {}", artifactNumber);
+                            throw new CustomException(ARTIFACT_NOT_FOUND, "Artifact not found for id: " + artifactNumber);
                         }
+
+                        String fileName = signedArtifact.getIsWitnessDeposition() != null && signedArtifact.getIsWitnessDeposition() ? SIGNED_WITNESS_DEPOSITION_DOCUMENT : SIGNED_EVIDENCE_SEAL;
 
                         // Update signed data (assuming a document or field for signed data exists)
 
                         // Update document with signed PDF
-                        MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedArtifactData, ARTIFACT_FILE_NAME);
+                        MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedArtifactData, fileName);
                         String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
                         if (isWitnessDeposition != null && isWitnessDeposition) {
@@ -707,22 +709,31 @@ public class EvidenceService {
                                     .id(UUID.randomUUID().toString())
                                     .documentType(SIGNED)
                                     .fileStore(fileStoreId)
-                                    .additionalDetails(Map.of(NAME, ARTIFACT_FILE_NAME))
+                                    .additionalDetails(Map.of(NAME, fileName))
                                     .build();
                             existingArtifact.setFile(document);
-                            WorkflowObject workflow = existingArtifact.getWorkflow();
-                            workflow.setAction(SIGNED);
-                            existingArtifact.setWorkflow(workflow);
                         }
+                        else{
+                            Document seal = Document.builder()
+                                    .id(UUID.randomUUID().toString())
+                                    .documentType(SIGNED)
+                                    .fileStore(fileStoreId)
+                                    .additionalDetails(Map.of(NAME, fileName))
+                                    .build();
+                            existingArtifact.setSeal(seal);
+                        }
+                        WorkflowObject workflow = existingArtifact.getWorkflow();
+                        workflow.setAction(SIGN);
+                        existingArtifact.setWorkflow(workflow);
 
                         EvidenceRequest evidenceRequest = EvidenceRequest.builder().artifact(existingArtifact).requestInfo(requestInfo).build();
 
                         Artifact artifact = updateEvidence(evidenceRequest);
                         updatedArtifacts.add(artifact);
-                        log.info("Updated artifact with signed doc, artifactId: {}", artifactId);
+                        log.info("Updated artifact with signed doc, artifactNumber: {}", artifactNumber);
                     } catch (Exception e) {
-                        log.error("Error while updating artifact, artifactId: {}", artifactId, e);
-                        throw new CustomException("ARTIFACT_BULK_SIGN_EXCEPTION", "Error while updating artifact: " + e.getMessage());
+                        log.error("Error while updating artifact, artifactNumber: {}", artifactNumber, e);
+                        throw new CustomException(ARTIFACT_BULK_SIGN_EXCEPTION, "Error while updating artifact: " + e.getMessage());
                     }
                 }
             }

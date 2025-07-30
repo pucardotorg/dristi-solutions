@@ -6,12 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.egov.common.contract.models.AuditDetails;
-import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
-import org.egov.common.contract.workflow.ProcessInstance;
-import org.egov.common.contract.workflow.State;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -396,7 +393,7 @@ class EvidenceServiceTest {
         criteria.setFileStoreId("fs1");
         criteria.setPlaceholder("ph1");
         criteria.setTenantId("tenant1");
-        criteria.setArtifactId("art1");
+        criteria.setArtifactNumber("art1");
         request.setCriteria(Collections.singletonList(criteria));
         request.setRequestInfo(new RequestInfo());
 
@@ -418,7 +415,7 @@ class EvidenceServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals("art1", result.get(0).getArtifactId());
+        assertEquals("art1", result.get(0).getArtifactNumber());
         assertEquals("<xml>req</xml>", result.get(0).getRequest());
     }
 
@@ -429,7 +426,7 @@ class EvidenceServiceTest {
         criteria.setFileStoreId("fs1");
         criteria.setPlaceholder("ph1");
         criteria.setTenantId("tenant1");
-        criteria.setArtifactId("art1");
+        criteria.setArtifactNumber("art1");
         request.setCriteria(Collections.singletonList(criteria));
         request.setRequestInfo(new RequestInfo());
         when(eSignUtil.getCoordinateForSign(any())).thenReturn(Collections.emptyList());
@@ -442,10 +439,11 @@ class EvidenceServiceTest {
         UpdateSignedArtifactRequest req = new UpdateSignedArtifactRequest();
         req.setRequestInfo(new RequestInfo());
         SignedArtifact signed = new SignedArtifact();
-        signed.setArtifactId("art1");
+        signed.setArtifactNumber("art1");
         signed.setSignedArtifactData("data");
         signed.setSigned(true);
         signed.setTenantId("tenant1");
+        signed.setIsWitnessDeposition(true);
         req.setSignedArtifacts(Collections.singletonList(signed));
         Artifact artifact = new Artifact();
         artifact.setArtifactNumber("art1");
@@ -463,7 +461,7 @@ class EvidenceServiceTest {
         assertEquals(1, result.size());
         assertEquals("art1", result.get(0).getArtifactNumber());
         assertEquals("CASE_FILING", result.get(0).getFilingType());
-        assertEquals("SIGNED", result.get(0).getWorkflow().getAction());
+        assertEquals("SIGN", result.get(0).getWorkflow().getAction());
         assertNotNull(result.get(0).getFile());
         assertNotNull(result.get(0).getFile().getId());
         assertEquals("fsid", result.get(0).getFile().getFileStore());
@@ -474,7 +472,7 @@ class EvidenceServiceTest {
         UpdateSignedArtifactRequest req = new UpdateSignedArtifactRequest();
         req.setRequestInfo(new RequestInfo());
         SignedArtifact signed = new SignedArtifact();
-        signed.setArtifactId("art1");
+        signed.setArtifactNumber("art1");
         signed.setSignedArtifactData("data");
         signed.setSigned(true);
         signed.setTenantId("tenant1");

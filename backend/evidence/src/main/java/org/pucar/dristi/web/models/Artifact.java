@@ -138,6 +138,11 @@ public class Artifact {
 	@Valid
 	private Document file = null;
 
+    @JsonProperty("seal")
+
+    @Valid
+    private Document seal = null;
+
 	@JsonProperty("description")
 
 	private String description = null;

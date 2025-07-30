@@ -12,9 +12,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class SignedArtifact {
-    @JsonProperty("artifactId")
+    @JsonProperty("artifactNumber")
     @NotNull
-    private String artifactId;
+    private String artifactNumber;
 
     @JsonProperty("signedArtifactData")
     @NotNull
