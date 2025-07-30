@@ -26,7 +26,6 @@ class OpenApiEvidenceSearchRequestTest {
         OpenApiEvidenceSearchRequest request = new OpenApiEvidenceSearchRequest();
         assertNull(request.getTenantId());
         assertNull(request.getArtifactNumber());
-        assertNull(request.getSourceType());
         assertNull(request.getMobileNumber());
     }
 
@@ -34,14 +33,12 @@ class OpenApiEvidenceSearchRequestTest {
     void testAllArgsConstructor() {
         OpenApiEvidenceSearchRequest request = new OpenApiEvidenceSearchRequest(
                 "tenant123",
-                "artifact456",
                 "SOURCE_XYZ",
                 "9876543210"
         );
 
         assertEquals("tenant123", request.getTenantId());
-        assertEquals("artifact456", request.getArtifactNumber());
-        assertEquals("SOURCE_XYZ", request.getSourceType());
+        assertEquals("SOURCE_XYZ", request.getArtifactNumber());
         assertEquals("9876543210", request.getMobileNumber());
     }
 
@@ -50,13 +47,11 @@ class OpenApiEvidenceSearchRequestTest {
         OpenApiEvidenceSearchRequest request = OpenApiEvidenceSearchRequest.builder()
                 .tenantId("tenantABC")
                 .artifactNumber("art001")
-                .sourceType("AUTO")
                 .mobileNumber("9999999999")
                 .build();
 
         assertEquals("tenantABC", request.getTenantId());
         assertEquals("art001", request.getArtifactNumber());
-        assertEquals("AUTO", request.getSourceType());
         assertEquals("9999999999", request.getMobileNumber());
     }
 
@@ -66,12 +61,10 @@ class OpenApiEvidenceSearchRequestTest {
 
         request.setTenantId("tenantXYZ");
         request.setArtifactNumber("artifactXYZ");
-        request.setSourceType("SOURCE_MANUAL");
         request.setMobileNumber("1234567890");
 
         assertEquals("tenantXYZ", request.getTenantId());
         assertEquals("artifactXYZ", request.getArtifactNumber());
-        assertEquals("SOURCE_MANUAL", request.getSourceType());
         assertEquals("1234567890", request.getMobileNumber());
     }
 
@@ -80,7 +73,7 @@ class OpenApiEvidenceSearchRequestTest {
         OpenApiEvidenceSearchRequest request = new OpenApiEvidenceSearchRequest();
 
         Set<ConstraintViolation<OpenApiEvidenceSearchRequest>> violations = validator.validate(request);
-        assertEquals(4, violations.size());
+        assertEquals(3, violations.size());
 
         for (ConstraintViolation<OpenApiEvidenceSearchRequest> violation : violations) {
             assertTrue(
@@ -97,7 +90,6 @@ class OpenApiEvidenceSearchRequestTest {
         OpenApiEvidenceSearchRequest request = OpenApiEvidenceSearchRequest.builder()
                 .tenantId("tenantABC")
                 .artifactNumber("artifact123")
-                .sourceType("TYPE_A")
                 .mobileNumber("8888888888")
                 .build();
 

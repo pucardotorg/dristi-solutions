@@ -21,10 +21,6 @@ public class OpenApiEvidenceSearchRequest {
     @NotNull(message = "artifactNumber is required")
     private String artifactNumber;
 
-    @JsonProperty("sourceType")
-    @NotNull(message = "sourceType is required")
-    private String sourceType;
-
     @JsonProperty("mobileNumber")
     @NotNull(message = "mobileNumber is required")
     private String mobileNumber;

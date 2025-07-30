@@ -15,6 +15,7 @@ import org.pucar.dristi.web.models.witnessdeposition.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -53,7 +54,6 @@ public class WitnessDepositionService {
                     .tenantId(request.getTenantId())
                     .artifactNumber(request.getArtifactNumber())
                     .fuzzySearch(false)
-                    .sourceType(request.getSourceType())
                     .build();
 
             EvidenceSearchResponse response = evidenceUtil.searchEvidence(criteria, createInternalRequestInfoWithSystemUserType());
@@ -142,6 +142,9 @@ public class WitnessDepositionService {
         userInfo.setRoles(userService.internalMicroserviceRoles);
         userInfo.setType(SYSTEM);
         userInfo.setTenantId(configuration.getEgovStateTenantId());
+        if (userInfo.getRoles() == null || userInfo.getRoles().isEmpty()) {
+            userInfo.setRoles(new ArrayList<>());
+        }
         userInfo.getRoles().add(Role.builder().code(SYSTEM)
                 .name(SYSTEM)
                 .tenantId(configuration.getEgovStateTenantId())

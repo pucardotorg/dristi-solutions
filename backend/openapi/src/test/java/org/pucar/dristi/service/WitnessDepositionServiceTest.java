@@ -40,7 +40,6 @@ public class WitnessDepositionServiceTest {
         OpenApiEvidenceSearchRequest request = new OpenApiEvidenceSearchRequest();
         request.setTenantId("tenant");
         request.setArtifactNumber("artifact");
-        request.setSourceType("type");
         request.setMobileNumber("12345");
 
         Artifact artifact = new Artifact();
