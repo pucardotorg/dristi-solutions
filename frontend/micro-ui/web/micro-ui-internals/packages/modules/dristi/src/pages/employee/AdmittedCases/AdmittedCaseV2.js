@@ -2868,7 +2868,7 @@ const AdmittedCaseV2 = () => {
                 label: "END_HEARING",
               },
               {
-                value: "TAKE_WITNESS_DEPOSITION",
+                value: "TAKE_WITNESS_DEPOSITION",  // added witness dep, option
                 label: "TAKE_WITNESS_DEPOSITION",
               },
               {
