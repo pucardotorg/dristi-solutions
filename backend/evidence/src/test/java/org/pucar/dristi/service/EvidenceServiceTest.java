@@ -393,7 +393,7 @@ class EvidenceServiceTest {
         criteria.setFileStoreId("fs1");
         criteria.setPlaceholder("ph1");
         criteria.setTenantId("tenant1");
-        criteria.setArtifactId("art1");
+        criteria.setArtifactNumber("art1");
         request.setCriteria(Collections.singletonList(criteria));
         request.setRequestInfo(new RequestInfo());
 
@@ -415,7 +415,7 @@ class EvidenceServiceTest {
         // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals("art1", result.get(0).getArtifactId());
+        assertEquals("art1", result.get(0).getArtifactNumber());
         assertEquals("<xml>req</xml>", result.get(0).getRequest());
     }
 
@@ -426,7 +426,7 @@ class EvidenceServiceTest {
         criteria.setFileStoreId("fs1");
         criteria.setPlaceholder("ph1");
         criteria.setTenantId("tenant1");
-        criteria.setArtifactId("art1");
+        criteria.setArtifactNumber("art1");
         request.setCriteria(Collections.singletonList(criteria));
         request.setRequestInfo(new RequestInfo());
         when(eSignUtil.getCoordinateForSign(any())).thenReturn(Collections.emptyList());

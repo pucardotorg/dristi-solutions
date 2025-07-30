@@ -22,6 +22,6 @@ public class ArtifactsCriteria {
     @JsonProperty("tenantId")
     private String tenantId;
 
-    @JsonProperty("artifactId")
-    private String artifactId;
+    @JsonProperty("artifactNumber")
+    private String artifactNumber;
 }

@@ -652,8 +652,8 @@ public class EvidenceService {
                 java.time.ZonedDateTime timestamp = java.time.ZonedDateTime.now(java.time.ZoneId.of(config.getZoneId()));
 
                 String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo);
-                String artifactId = artifactCriteriaMap.get(coordinate.getFileStoreId()).getArtifactId();
-                artifactToSign.setArtifactId(artifactId);
+                String artifactId = artifactCriteriaMap.get(coordinate.getFileStoreId()).getArtifactNumber();
+                artifactToSign.setArtifactNumber(artifactId);
                 artifactToSign.setRequest(xmlRequest);
 
                 artifactToSignList.add(artifactToSign);

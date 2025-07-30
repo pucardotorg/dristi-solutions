@@ -13,8 +13,8 @@ import org.springframework.validation.annotation.Validated;
 @Builder
 @Validated
 public class ArtifactToSign {
-    @JsonProperty("artifactId")
-    private String artifactId;
+    @JsonProperty("artifactNumber")
+    private String artifactNumber;
 
     @JsonProperty("request")
     private String request;
