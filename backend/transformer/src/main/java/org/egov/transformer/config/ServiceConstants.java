@@ -65,4 +65,7 @@ public class ServiceConstants {
            "\"searchableFields\":%s" +
            "}}}}\n";
 
+   public static final String ARTIFACT_INDEX_BUSINESS_OBJECT_KEY = "artifactDetails";
+   public static final String OPEN_HEARING_INDEX_BUSINESS_OBJECT_KEY = "hearingDetails";
+
 }

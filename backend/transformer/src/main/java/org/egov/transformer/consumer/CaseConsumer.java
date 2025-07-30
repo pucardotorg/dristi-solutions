@@ -31,8 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.egov.transformer.config.ServiceConstants.FLOW_JAC;
-import static org.egov.transformer.config.ServiceConstants.msgId;
+import static org.egov.transformer.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -347,7 +346,7 @@ public class CaseConsumer {
         InboxRequest inboxRequest = inboxUtil.getInboxRequestForArtifacts(caseReferenceNumberUpdateRequest.getCourtId(), caseReferenceNumberUpdateRequest.getFilingNumber());
         List<Artifact> artifactList = null;
         try {
-            artifactList = inboxUtil.getArtifacts(inboxRequest);
+            artifactList = inboxUtil.getInboxEntities(inboxRequest, ARTIFACT_INDEX_BUSINESS_OBJECT_KEY, Artifact.class);
         } catch (Exception ex) {
             log.error("Error while getting artifacts: {}, for filingNumber: {}", ex.getMessage(), caseReferenceNumberUpdateRequest.getFilingNumber(), ex);
         }

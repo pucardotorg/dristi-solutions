@@ -104,7 +104,7 @@ public class HearingService {
         InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtCase.getCourtId(), hearing.getId().toString() );
         List<OpenHearing> openHearingList = null;
         try {
-            openHearingList = inboxUtil.getOpenHearings(inboxRequest);
+            openHearingList = inboxUtil.getInboxEntities(inboxRequest, OPEN_HEARING_INDEX_BUSINESS_OBJECT_KEY, OpenHearing.class);
         } catch (Exception ex) {
             log.error("Error while getting open hearings: {}, for hearingId: {}", ex.getMessage(),openHearing.getHearingUuid(), ex);
         }

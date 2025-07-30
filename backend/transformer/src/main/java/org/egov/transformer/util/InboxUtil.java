@@ -7,8 +7,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.ServiceCallException;
 import org.egov.transformer.config.TransformerProperties;
-import org.egov.transformer.models.Artifact;
-import org.egov.transformer.models.OpenHearing;
 import org.egov.transformer.models.inbox.*;
 import org.egov.transformer.repository.ServiceRequestRepository;
 import org.springframework.stereotype.Component;
@@ -35,73 +33,35 @@ public class InboxUtil {
         this.configuration = configuration;
     }
 
-
-    public List<OpenHearing> getOpenHearings(InboxRequest request) {
-
+    public <T> List<T> getInboxEntities(InboxRequest request, String businessObjectKey, Class<T> entityClass) {
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
         StringBuilder uri = new StringBuilder(configuration.getInboxHost()).append(configuration.getIndexSearchEndPoint());
         Object response = serviceRequestRepository.fetchResult(uri, request);
-        InboxResponse openHearingSearchResponse ;
-        List<OpenHearing> openHearingList = new ArrayList<>();
+        InboxResponse searchResponse;
+        List<T> entityList = new ArrayList<>();
         try {
             JsonNode jsonNode = objectMapper.valueToTree(response);
-            openHearingSearchResponse = objectMapper.readValue(jsonNode.toString(), InboxResponse.class);
-            List<Inbox> items = openHearingSearchResponse.getItems();
+            searchResponse = objectMapper.readValue(jsonNode.toString(), InboxResponse.class);
+            List<Inbox> items = searchResponse.getItems();
 
             for (Inbox inbox : items) {
-                OpenHearing openHearing = new OpenHearing();
+                T entity = entityClass.getDeclaredConstructor().newInstance();
                 Map<String, Object> businessObject = inbox.getBusinessObject();
-                Map hearingDetails = (Map) businessObject.get("hearingDetails");
-                mapValuesToOpenHearing(openHearing,hearingDetails );
-                openHearingList.add(openHearing);
+                Map details = (Map) businessObject.get(businessObjectKey);
+                mapValuesToEntity(entity, details);
+                entityList.add(entity);
             }
-
         } catch (HttpClientErrorException e) {
             log.error(EXTERNAL_SERVICE_EXCEPTION, e);
             throw new ServiceCallException(e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error(SEARCHER_SERVICE_EXCEPTION, e);
         }
-
-        return openHearingList;
-
+        return entityList;
     }
 
-    public List<Artifact> getArtifacts(InboxRequest request) {
-
-        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        StringBuilder uri = new StringBuilder(configuration.getInboxHost()).append(configuration.getIndexSearchEndPoint());
-        Object response = serviceRequestRepository.fetchResult(uri, request);
-        InboxResponse artifactSearchResponse ;
-        List<Artifact> artifactList = new ArrayList<>();
-        try {
-            JsonNode jsonNode = objectMapper.valueToTree(response);
-            artifactSearchResponse = objectMapper.readValue(jsonNode.toString(), InboxResponse.class);
-            List<Inbox> items = artifactSearchResponse.getItems();
-
-            for (Inbox inbox : items) {
-                Artifact artifact = new Artifact();
-                Map<String, Object> businessObject = inbox.getBusinessObject();
-                Map artifactDetails = (Map) businessObject.get("artifactDetails");
-                mapValuesToArtifacts(artifact,artifactDetails );
-                artifactList.add(artifact);
-            }
-
-        } catch (HttpClientErrorException e) {
-            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
-            throw new ServiceCallException(e.getResponseBodyAsString());
-        } catch (Exception e) {
-            log.error(SEARCHER_SERVICE_EXCEPTION, e);
-        }
-
-        return artifactList;
-
-    }
-
-    private void mapValuesToOpenHearing(OpenHearing openHearing, Map<String, Object> keyValueMap) {
-
-
-        Class<?> clazz = openHearing.getClass();
+    private <T> void mapValuesToEntity(T entity, Map<String, Object> keyValueMap) {
+        Class<?> clazz = entity.getClass();
 
         for (Map.Entry<String, Object> entry : keyValueMap.entrySet()) {
             try {
@@ -122,63 +82,18 @@ public class InboxUtil {
                         for (Object v : listValue) {
                             convertedList.add(convertValue(v, listGenericType));
                         }
-                        field.set(openHearing, convertedList);
+                        field.set(entity, convertedList);
                     }
                 }
                 // Handle nested objects
                 else if (!field.getType().isPrimitive() && !field.getType().equals(String.class) &&
                         !Number.class.isAssignableFrom(field.getType()) && !Boolean.class.isAssignableFrom(field.getType())) {
                     Object convertedObject = objectMapper.convertValue(value, field.getType());
-                    field.set(openHearing, convertedObject);
+                    field.set(entity, convertedObject);
                 }
                 // Handle primitives and other types
                 else {
-                    field.set(openHearing, convertValue(value, field.getType()));
-                }
-            } catch (NoSuchFieldException e) {
-                log.error("Field not found:{} ", entry.getKey());
-            } catch (IllegalAccessException e) {
-                log.error("Error accessing field: {}", entry.getKey());
-            }
-        }
-    }
-
-    private void mapValuesToArtifacts(Artifact artifact, Map<String, Object> keyValueMap) {
-
-
-        Class<?> clazz = artifact.getClass();
-
-        for (Map.Entry<String, Object> entry : keyValueMap.entrySet()) {
-            try {
-                Field field = clazz.getDeclaredField(entry.getKey());
-                field.setAccessible(true);
-                Object value = entry.getValue();
-
-                if (value == null) continue;
-
-                // Handle lists
-                if (List.class.isAssignableFrom(field.getType())) {
-                    ParameterizedType listType = (ParameterizedType) field.getGenericType();
-                    Class<?> listGenericType = (Class<?>) listType.getActualTypeArguments()[0];
-
-                    if (value instanceof List<?>) {
-                        List<?> listValue = (List<?>) value;
-                        List<Object> convertedList = new ArrayList<>();
-                        for (Object v : listValue) {
-                            convertedList.add(convertValue(v, listGenericType));
-                        }
-                        field.set(artifact, convertedList);
-                    }
-                }
-                // Handle nested objects
-                else if (!field.getType().isPrimitive() && !field.getType().equals(String.class) &&
-                        !Number.class.isAssignableFrom(field.getType()) && !Boolean.class.isAssignableFrom(field.getType())) {
-                    Object convertedObject = objectMapper.convertValue(value, field.getType());
-                    field.set(artifact, convertedObject);
-                }
-                // Handle primitives and other types
-                else {
-                    field.set(artifact, convertValue(value, field.getType()));
+                    field.set(entity, convertValue(value, field.getType()));
                 }
             } catch (NoSuchFieldException e) {
                 log.error("Field not found:{} ", entry.getKey());

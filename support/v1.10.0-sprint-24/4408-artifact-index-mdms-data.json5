@@ -27,27 +27,27 @@
             },
             {
               "name": "courtId",
-              "path": "Data.artifactDetails.courtId.Keyword",
+              "path": "Data.artifactDetails.courtId.keyword",
               "isMandatory": false
             },
             {
               "name": "tenantId",
-              "path": "Data.artifactDetails.tenantId.Keyword",
+              "path": "Data.artifactDetails.tenantId.keyword",
               "isMandatory": false
             },
             {
               "name": "artifactNumber",
-              "path": "Data.artifactDetails.artifactNumber.Keyword",
+              "path": "Data.artifactDetails.artifactNumber.keyword",
               "isMandatory": false
             },
             {
               "name": "artifactType",
-              "path": "Data.artifactDetails.artifactType.Keyword",
+              "path": "Data.artifactDetails.artifactType.keyword",
               "isMandatory": false
             },
             {
               "name": "status",
-              "path": "Data.artifactDetails.status.Keyword",
+              "path": "Data.artifactDetails.status.keyword",
               "isMandatory": false
             }
           ]
