@@ -5163,14 +5163,39 @@ public class CaseService {
         }
 
         for(WitnessDetails witnessDetails : updatedWitnessDetails) {
-            JsonNode dataNode = objectMapper.convertValue(witnessDetails, JsonNode.class);
-            ObjectNode dataWrapperNode = objectMapper.createObjectNode();
-            dataWrapperNode.set("data", dataNode);
-            dataWrapperNode.put("uniqueId", witnessDetails.getUniqueId());
-            dataWrapperNode.put("isenabled", true);
-            dataWrapperNode.put("displayindex", 0);
-            formdataArray.add(dataWrapperNode);
+            String uniqueId = witnessDetails.getUniqueId();
+            boolean found = false;
+
+            // Check if uniqueId already exists in the formdata array
+            for (int i = 0; i < formdataArray.size(); i++) {
+                JsonNode existingNode = formdataArray.get(i);
+                if (existingNode.has("uniqueId") &&
+                        uniqueId != null &&
+                        uniqueId.equals(existingNode.get("uniqueId").asText())) {
+
+                    // Update existing record - replace the data field
+                    ObjectNode existingObjectNode = (ObjectNode) existingNode;
+                    JsonNode updatedDataNode = objectMapper.convertValue(witnessDetails, JsonNode.class);
+                    existingObjectNode.set("data", updatedDataNode);
+                    found = true;
+                    log.debug("Updated existing witness record with uniqueId: {}", uniqueId);
+                    break;
+                }
+            }
+
+            // If uniqueId not found, add new record
+            if (!found) {
+                JsonNode dataNode = objectMapper.convertValue(witnessDetails, JsonNode.class);
+                ObjectNode dataWrapperNode = objectMapper.createObjectNode();
+                dataWrapperNode.set("data", dataNode);
+                dataWrapperNode.put("uniqueId", uniqueId);
+                dataWrapperNode.put("isenabled", true);
+                dataWrapperNode.put("displayindex", 0);
+                formdataArray.add(dataWrapperNode);
+                log.debug("Added new witness record with uniqueId: {}", uniqueId);
+            }
         }
         courtCase.setAdditionalDetails(additionalDetailsNode);
     }
+
 }

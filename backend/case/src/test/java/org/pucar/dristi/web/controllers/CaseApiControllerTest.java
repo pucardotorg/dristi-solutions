@@ -115,7 +115,7 @@ public class CaseApiControllerTest {
         // Create mock response
         WitnessDetailsResponse witnessDetailsResponse = new WitnessDetailsResponse();
         WitnessDetails witnessDetails = new WitnessDetails();
-        witnessDetailsResponse.setWitnessDetails(witnessDetails);
+        witnessDetailsResponse.setWitnessDetails(Collections.singletonList(witnessDetails));
         
         // Mock the service call
         when(caseService.addWitnessToCase(request)).thenReturn(witnessDetailsResponse);

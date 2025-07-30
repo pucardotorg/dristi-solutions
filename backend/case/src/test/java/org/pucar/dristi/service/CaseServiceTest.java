@@ -1423,8 +1423,8 @@ public class CaseServiceTest {
         // Verify
         assertNotNull(response);
         assertNotNull(response.getWitnessDetails());
-        assertEquals(request.getWitnessDetails().getFirstName(), response.getWitnessDetails().getFirstName());
-        assertEquals(request.getWitnessDetails().getLastName(), response.getWitnessDetails().getLastName());
+        assertEquals(request.getWitnessDetails().get(0).getFirstName(), response.getWitnessDetails().get(0).getFirstName());
+        assertEquals(request.getWitnessDetails().get(0).getLastName(), response.getWitnessDetails().get(0).getLastName());
         
         verify(caseRepository, times(1)).getCases(any(), any());
         verify(encryptionDecryptionUtil, times(1)).decryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class), any());
@@ -1502,7 +1502,7 @@ public class CaseServiceTest {
                 .requestInfo(requestInfo)
                 .caseFilingNumber("CASE-2024-001")
                 .tenantId("pb.amritsar")
-                .witnessDetails(witnessDetails)
+                .witnessDetails(Collections.singletonList(witnessDetails))
                 .build();
     }
 
