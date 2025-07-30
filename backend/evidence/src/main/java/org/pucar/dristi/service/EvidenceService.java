@@ -195,7 +195,12 @@ public class EvidenceService {
                     evidenceRequest.getArtifact().getArtifactType().equals(DEPOSITION)) ||
                     (filingType!= null && evidenceRequest.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION))) {
                 workflowService.updateWorkflowStatus(evidenceRequest, filingType);
-                enrichShortenedURL(evidenceRequest);
+                if (INITIATE_E_SIGN.equalsIgnoreCase(evidenceRequest.getArtifact().getWorkflow().getAction())) {
+                    enrichShortenedURL(evidenceRequest);
+                }
+                if (EDIT.equalsIgnoreCase(evidenceRequest.getArtifact().getWorkflow().getAction())) {
+                    expireTheShorteningUrl(evidenceRequest);
+                }
                 enrichBasedOnStatus(evidenceRequest);
                 producer.push(config.getUpdateEvidenceKafkaTopic(), evidenceRequest);
             } else {
@@ -224,6 +229,10 @@ public class EvidenceService {
             callNotificationServiceForEmail(evidenceRequest);
         }
 
+    }
+
+    private void expireTheShorteningUrl(EvidenceRequest bailRequest) {
+        urlShortenerUtil.expireTheUrl(bailRequest);
     }
 
     Artifact validateExistingEvidence(EvidenceRequest evidenceRequest) {

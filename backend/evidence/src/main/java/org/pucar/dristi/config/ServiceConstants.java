@@ -107,6 +107,8 @@ public class ServiceConstants {
 
 	public static final String INITIATE_E_SIGN = "INITIATE_E-SIGN";
 
+	public static final String EDIT = "EDIT";
+
 	public static final String WITNESS_DEPOSITION_MESSAGE = "WITNESS_DEPOSITION_MESSAGE";
 
 	public static final String WITNESS_DEPOSITION_EMAIL = "WITNESS_DEPOSITION_EMAIL";

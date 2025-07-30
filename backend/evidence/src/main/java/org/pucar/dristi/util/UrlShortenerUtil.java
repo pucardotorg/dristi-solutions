@@ -3,6 +3,8 @@ package org.pucar.dristi.util;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.tracer.model.CustomException;
+import org.pucar.dristi.web.models.Artifact;
+import org.pucar.dristi.web.models.EvidenceRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -53,6 +55,17 @@ public class UrlShortenerUtil {
 			log.error(URL_SHORTENING_ERROR_CODE + "{}", e.getMessage());
 			throw new CustomException(URL_SHORTENING_ERROR_CODE, URL_SHORTENING_ERROR_MESSAGE + e.getMessage());
 		}
+	}
+
+	public void expireTheUrl(EvidenceRequest evidenceRequest) {
+		Artifact artifact = evidenceRequest.getArtifact();
+		String url = artifact.getShortenedUrl();
+		HashMap<String,String> body = new HashMap<>();
+		body.put(URL,url);
+		body.put(REFERENCE_ID, artifact.getArtifactNumber());
+		StringBuilder builder = new StringBuilder(configs.getUrlShortnerHost());
+		builder.append(configs.getUrlShortenerExpireEndpoint());
+		String res = restTemplate.postForObject(builder.toString(), body, String.class);
 	}
 
 

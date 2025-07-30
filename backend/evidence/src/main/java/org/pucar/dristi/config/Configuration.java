@@ -77,6 +77,9 @@ public class Configuration {
 	@Value("${egov.url.shortner.endpoint}")
 	private String urlShortnerEndpoint;
 
+	@Value("${egov.url.shortener.expire.endpoint}")
+	private String urlShortenerExpireEndpoint;
+
 	// long url
 	@Value("${domain.url}")
 	private String domainUrl;

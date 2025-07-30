@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.EvidenceUtil;
 import org.pucar.dristi.util.FileStoreUtil;
+import org.pucar.dristi.web.models.WorkflowObject;
 import org.pucar.dristi.web.models.witnessdeposition.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -115,6 +117,10 @@ public class WitnessDepositionService {
 
                 artifact.setFile(document);
 
+                WorkflowObject workflow = new WorkflowObject();
+                workflow.setAction(E_SIGN);
+                artifact.setWorkflow(workflow);
+
                 EvidenceResponse evidenceResponse = evidenceUtil.updateEvidence(artifact, createInternalRequestInfoWithSystemUserType());
                 OpenApiEvidenceResponse openApiEvidenceResponse = objectMapper.convertValue(evidenceResponse, OpenApiEvidenceResponse.class);
                 openApiEvidenceResponse.setMobileNumber(request.getMobileNumber());
@@ -136,6 +142,11 @@ public class WitnessDepositionService {
         userInfo.setRoles(userService.internalMicroserviceRoles);
         userInfo.setType(SYSTEM);
         userInfo.setTenantId(configuration.getEgovStateTenantId());
+        userInfo.getRoles().add(Role.builder().code(SYSTEM)
+                .name(SYSTEM)
+                .tenantId(configuration.getEgovStateTenantId())
+                .build());
+
         return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
     }
 
