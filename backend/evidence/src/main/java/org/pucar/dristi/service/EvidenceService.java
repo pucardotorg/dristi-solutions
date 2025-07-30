@@ -671,7 +671,7 @@ public class EvidenceService {
         RequestInfo requestInfo = request.getRequestInfo();
         if (request.getSignedArtifacts() != null) {
             for (SignedArtifact signedArtifact : request.getSignedArtifacts()) {
-                String artifactId = signedArtifact.getArtifactId();
+                String artifactNumber = signedArtifact.getArtifactNumber();
                 String signedArtifactData = signedArtifact.getSignedArtifactData();
                 Boolean isSigned = signedArtifact.getSigned();
                 Boolean isWitnessDeposition = signedArtifact.getIsWitnessDeposition();
@@ -680,11 +680,11 @@ public class EvidenceService {
                 if (Boolean.TRUE.equals(isSigned)) {
                     try {
                         // Fetch and validate existing artifact
-                        EvidenceSearchCriteria evidenceSearchCriteria = EvidenceSearchCriteria.builder().artifactNumber(artifactId).tenantId(tenantId).fuzzySearch(false).build();
+                        EvidenceSearchCriteria evidenceSearchCriteria = EvidenceSearchCriteria.builder().artifactNumber(artifactNumber).tenantId(tenantId).fuzzySearch(false).build();
                         Artifact existingArtifact = repository.getArtifacts(evidenceSearchCriteria, null).stream().findFirst().orElse(null);
                         if (existingArtifact == null) {
-                            log.error("Artifact not found for id: {}", artifactId);
-                            throw new CustomException("ARTIFACT_NOT_FOUND", "Artifact not found for id: " + artifactId);
+                            log.error("Artifact not found for id: {}", artifactNumber);
+                            throw new CustomException("ARTIFACT_NOT_FOUND", "Artifact not found for id: " + artifactNumber);
                         }
 
                         String fileName = signedArtifact.getIsWitnessDeposition() != null && signedArtifact.getIsWitnessDeposition() ? SIGNED_WITNESS_DEPOSITION_DOCUMENT : SIGNED_EVIDENCE_SEAL;
@@ -721,9 +721,9 @@ public class EvidenceService {
 
                         Artifact artifact = updateEvidence(evidenceRequest);
                         updatedArtifacts.add(artifact);
-                        log.info("Updated artifact with signed doc, artifactId: {}", artifactId);
+                        log.info("Updated artifact with signed doc, artifactNumber: {}", artifactNumber);
                     } catch (Exception e) {
-                        log.error("Error while updating artifact, artifactId: {}", artifactId, e);
+                        log.error("Error while updating artifact, artifactNumber: {}", artifactNumber, e);
                         throw new CustomException("ARTIFACT_BULK_SIGN_EXCEPTION", "Error while updating artifact: " + e.getMessage());
                     }
                 }
