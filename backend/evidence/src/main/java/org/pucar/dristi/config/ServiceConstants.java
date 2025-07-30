@@ -126,6 +126,7 @@ public class ServiceConstants {
 	public static final String FILE_STORE_SERVICE_EXCEPTION_MESSAGE = "FILE_STORE_SERVICE_EXCEPTION_MESSAGE";
 
 	public static final String SIGNED = "SIGNED";
+	public static final String SIGN = "SIGN";
 	public static final String COMPOSITE = "COMPOSITE";
 
 	public static final String COORDINATES_ERROR = "COORDINATES_ERROR";
@@ -154,5 +155,7 @@ public class ServiceConstants {
 
 	public static final String ARTIFACT_FILE_NAME = "artifact.pdf";
 	public static final String WITNESS_DEPOSITION = "WITNESS_DEPOSITION";
+	public static final String SIGNED_WITNESS_DEPOSITION_DOCUMENT = "SIGNED_WITNESS_DEPOSITION_DOCUMENT";
+	public static final String SIGNED_EVIDENCE_SEAL = "SIGNED_EVIDENCE_SEAL";
 
 }

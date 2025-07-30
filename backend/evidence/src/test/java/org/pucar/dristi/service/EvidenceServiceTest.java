@@ -446,6 +446,7 @@ class EvidenceServiceTest {
         signed.setSignedArtifactData("data");
         signed.setSigned(true);
         signed.setTenantId("tenant1");
+        signed.setIsWitnessDeposition(true);
         req.setSignedArtifacts(Collections.singletonList(signed));
         Artifact artifact = new Artifact();
         artifact.setArtifactNumber("art1");
@@ -463,7 +464,7 @@ class EvidenceServiceTest {
         assertEquals(1, result.size());
         assertEquals("art1", result.get(0).getArtifactNumber());
         assertEquals("CASE_FILING", result.get(0).getFilingType());
-        assertEquals("SIGNED", result.get(0).getWorkflow().getAction());
+        assertEquals("SIGN", result.get(0).getWorkflow().getAction());
         assertNotNull(result.get(0).getFile());
         assertNotNull(result.get(0).getFile().getId());
         assertEquals("fsid", result.get(0).getFile().getFileStore());

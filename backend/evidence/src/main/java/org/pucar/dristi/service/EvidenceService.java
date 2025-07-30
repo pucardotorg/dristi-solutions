@@ -687,10 +687,12 @@ public class EvidenceService {
                             throw new CustomException("ARTIFACT_NOT_FOUND", "Artifact not found for id: " + artifactId);
                         }
 
+                        String fileName = signedArtifact.getIsWitnessDeposition() != null && signedArtifact.getIsWitnessDeposition() ? SIGNED_WITNESS_DEPOSITION_DOCUMENT : SIGNED_EVIDENCE_SEAL;
+
                         // Update signed data (assuming a document or field for signed data exists)
 
                         // Update document with signed PDF
-                        MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedArtifactData, ARTIFACT_FILE_NAME);
+                        MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedArtifactData, fileName);
                         String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
                         if (isWitnessDeposition != null && isWitnessDeposition) {
@@ -698,13 +700,22 @@ public class EvidenceService {
                                     .id(UUID.randomUUID().toString())
                                     .documentType(SIGNED)
                                     .fileStore(fileStoreId)
-                                    .additionalDetails(Map.of(NAME, ARTIFACT_FILE_NAME))
+                                    .additionalDetails(Map.of(NAME, fileName))
                                     .build();
                             existingArtifact.setFile(document);
-                            WorkflowObject workflow = existingArtifact.getWorkflow();
-                            workflow.setAction(SIGNED);
-                            existingArtifact.setWorkflow(workflow);
                         }
+                        else{
+                            Document seal = Document.builder()
+                                    .id(UUID.randomUUID().toString())
+                                    .documentType(SIGNED)
+                                    .fileStore(fileStoreId)
+                                    .additionalDetails(Map.of(NAME, fileName))
+                                    .build();
+                            existingArtifact.setSeal(seal);
+                        }
+                        WorkflowObject workflow = existingArtifact.getWorkflow();
+                        workflow.setAction(SIGN);
+                        existingArtifact.setWorkflow(workflow);
 
                         EvidenceRequest evidenceRequest = EvidenceRequest.builder().artifact(existingArtifact).requestInfo(requestInfo).build();
 
