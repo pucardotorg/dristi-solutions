@@ -642,7 +642,7 @@ public class EvidenceService {
             try {
                 resource = fileStoreUtil.fetchFileStoreObjectById(coordinate.getFileStoreId(), coordinate.getTenantId());
             } catch (Exception e) {
-                throw new CustomException("FILE_STORE_UTILITY_EXCEPTION", "something went wrong while signing");
+                throw new CustomException(FILE_STORE_UTILITY_EXCEPTION, "something went wrong while signing");
             }
             try {
                 String base64Document = cipherUtil.encodePdfToBase64(resource);
@@ -658,7 +658,7 @@ public class EvidenceService {
 
                 artifactToSignList.add(artifactToSign);
             } catch (Exception e) {
-                throw new CustomException("ARTIFACT_SIGN_ERROR", "something went wrong while signing");
+                throw new CustomException(ARTIFACT_SIGN_ERROR, "something went wrong while signing");
             }
         }
         log.info("creating artifacts to sign request, result= SUCCESS, artifactCriteria:{}", request.getCriteria().size());
@@ -684,7 +684,7 @@ public class EvidenceService {
                         Artifact existingArtifact = repository.getArtifacts(evidenceSearchCriteria, null).stream().findFirst().orElse(null);
                         if (existingArtifact == null) {
                             log.error("Artifact not found for id: {}", artifactNumber);
-                            throw new CustomException("ARTIFACT_NOT_FOUND", "Artifact not found for id: " + artifactNumber);
+                            throw new CustomException(ARTIFACT_NOT_FOUND, "Artifact not found for id: " + artifactNumber);
                         }
 
                         String fileName = signedArtifact.getIsWitnessDeposition() != null && signedArtifact.getIsWitnessDeposition() ? SIGNED_WITNESS_DEPOSITION_DOCUMENT : SIGNED_EVIDENCE_SEAL;
@@ -724,7 +724,7 @@ public class EvidenceService {
                         log.info("Updated artifact with signed doc, artifactNumber: {}", artifactNumber);
                     } catch (Exception e) {
                         log.error("Error while updating artifact, artifactNumber: {}", artifactNumber, e);
-                        throw new CustomException("ARTIFACT_BULK_SIGN_EXCEPTION", "Error while updating artifact: " + e.getMessage());
+                        throw new CustomException(ARTIFACT_BULK_SIGN_EXCEPTION, "Error while updating artifact: " + e.getMessage());
                     }
                 }
             }

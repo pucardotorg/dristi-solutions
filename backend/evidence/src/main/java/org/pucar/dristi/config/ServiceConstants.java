@@ -158,4 +158,7 @@ public class ServiceConstants {
 	public static final String SIGNED_WITNESS_DEPOSITION_DOCUMENT = "SIGNED_WITNESS_DEPOSITION_DOCUMENT";
 	public static final String SIGNED_EVIDENCE_SEAL = "SIGNED_EVIDENCE_SEAL";
 
+	public static final String ARTIFACT_SIGN_ERROR = "ARTIFACT_SIGN_ERROR";
+	public static final String ARTIFACT_NOT_FOUND = "ARTIFACT_NOT_FOUND";
+	public static final String ARTIFACT_BULK_SIGN_EXCEPTION = "ARTIFACT_BULK_SIGN_EXCEPTION";
 }
