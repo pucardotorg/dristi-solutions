@@ -2,38 +2,21 @@ import { Button, CloseSvg, FormComposerV2, Loader, Toast } from "@egovernments/d
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import addWitnessConfig from "../../configs/AddWitnessConfig.js";
 import { useTranslation } from "react-i18next";
-import { Urls } from "../../hooks/services/Urls.js";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal.js";
 import isEqual from "lodash/isEqual";
+import { submissionService } from "../../../../submissions/src/hooks/services/index.js";
+import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow.js";
 
-const AddWitnessModal = ({ onCancel, onAddSuccess, caseDetails, tenantId, hearing, refetchHearing }) => {
+const AddWitnessModal = ({ tenantId, onCancel, caseDetails, isJudge, onAddSuccess }) => {
   const { t } = useTranslation();
   const DRISTIService = Digit?.ComponentRegistryService?.getComponent("DRISTIService");
   const [formConfigs, setFormConfigs] = useState([addWitnessConfig(1)]);
-  const [aFormData, setFormData] = useState([{}]);
+  const [witnessFormList, setWitnessFormList] = useState([{}]);
+  const userInfo = Digit.UserService.getUser()?.info;
   const setFormErrors = useRef([]);
   const [isWitnessAdding, setIsWitnessAdding] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [previewData, setPreviewData] = useState([]);
   const [showErrorToast, setShowErrorToast] = useState(null);
-
-  const fieldLabelMap = {
-    partyType: "Party Type",
-    partyName: "Party Name",
-    phoneNumber: "Phone Number",
-    emailId: "Email ID",
-    address: "Address",
-    additionalDetails: "Additional Details",
-  };
-
-  const { mutateAsync: updateAttendees } = Digit.Hooks.useCustomAPIMutationHook({
-    url: Urls.hearing.hearingUpdateTranscript,
-    params: { applicationNumber: "", cnrNumber: "" },
-    body: { tenantId, hearingType: "", status: "" },
-    config: {
-      mutationKey: "addAttendee",
-    },
-  });
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -60,6 +43,27 @@ const AddWitnessModal = ({ onCancel, onAddSuccess, caseDetails, tenantId, hearin
     );
   };
 
+  const generateUUID = () => {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+      const r = (Math.random() * 16) | 0;
+      const v = c === "x" ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  };
+
+  const { data: individualData } = window?.Digit.Hooks.dristi.useGetIndividualUser(
+    {
+      Individual: {
+        userUuid: [userInfo?.uuid],
+      },
+    },
+    { tenantId, limit: 1000, offset: 0 },
+    "Home",
+    "",
+    userInfo?.uuid
+  );
+  const individualId = useMemo(() => individualData?.Individual?.[0]?.individualId, [individualData]);
+
   // check if labelchildren is optional then change it to span with color #77787B
   useMemo(() => {
     formConfigs.forEach((config) => {
@@ -73,43 +77,84 @@ const AddWitnessModal = ({ onCancel, onAddSuccess, caseDetails, tenantId, hearin
     });
   }, [formConfigs, t]);
 
+  const pipComplainants = useMemo(() => {
+    return caseDetails?.litigants
+      ?.filter((litigant) => litigant.partyType.includes("complainant"))
+      ?.filter(
+        (litigant) =>
+          !caseDetails?.representatives?.some((representative) =>
+            representative?.representing?.some((rep) => rep?.individualId === litigant?.individualId)
+          )
+      );
+  }, [caseDetails]);
+
+  const pipAccuseds = useMemo(() => {
+    return caseDetails?.litigants
+      ?.filter((litigant) => litigant.partyType.includes("respondent"))
+      ?.filter(
+        (litigant) =>
+          !caseDetails?.representatives?.some((representative) =>
+            representative?.representing?.some((rep) => rep?.individualId === litigant?.individualId)
+          )
+      );
+  }, [caseDetails]);
+
+  const complainantsList = useMemo(() => {
+    const loggedinUserUuid = userInfo?.uuid;
+    // If logged in person is an advocate
+    const isAdvocateLoggedIn = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === loggedinUserUuid);
+    const isPipLoggedIn = pipComplainants?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
+    const accusedLoggedIn = pipAccuseds?.find((p) => p?.additionalDetails?.uuid === loggedinUserUuid);
+
+    if (isAdvocateLoggedIn) {
+      return isAdvocateLoggedIn?.representing?.map((r) => {
+        return {
+          code: r?.additionalDetails?.fullName,
+          name: r?.additionalDetails?.fullName,
+          uuid: r?.additionalDetails?.uuid,
+        };
+      });
+    } else if (isPipLoggedIn) {
+      return [
+        {
+          code: isPipLoggedIn?.additionalDetails?.fullName,
+          name: isPipLoggedIn?.additionalDetails?.fullName,
+          uuid: isPipLoggedIn?.additionalDetails?.uuid,
+        },
+      ];
+    } else if (accusedLoggedIn) {
+      return [
+        {
+          code: accusedLoggedIn?.additionalDetails?.fullName,
+          name: accusedLoggedIn?.additionalDetails?.fullName,
+          uuid: accusedLoggedIn?.additionalDetails?.uuid,
+        },
+      ];
+    }
+    return [];
+  }, [caseDetails, pipComplainants, pipAccuseds, userInfo]);
+
   const handleAddParty = () => {
     const newConfig = addWitnessConfig(formConfigs.length + 1);
     setFormConfigs([...formConfigs, newConfig]);
-    setFormData((prev) => [...prev, {}]);
+    setWitnessFormList((prev) => [...prev, {}]);
   };
 
   const handleRemoveParty = () => {
     if (formConfigs.length > 1) {
       setFormConfigs(formConfigs.slice(0, -1));
     }
-    if (aFormData.length > 1) {
-      setFormData(aFormData.slice(0, -1));
+    if (witnessFormList.length > 1) {
+      setWitnessFormList(witnessFormList.slice(0, -1));
     }
   };
 
-  //   const validateFormData = (data, index) => {
-  //     const errors = {};
-  //     if (!data["partyName" + index] || !/^[a-zA-Z\s]+$/.test(data["partyName" + index])) errors["partyName" + index] = "Party name is required";
-  //     if (!data["partyType" + index]) errors["partyType" + index] = "Party type is required";
-  //     const phone = data["phoneNumber" + index];
-  //     if (phone && !/^\d{10}$/.test(phone)) {
-  //       errors["phoneNumber" + index] = "Phone number is invalid";
-  //     }
-  //     const email = data["emailId" + index];
-  //     if (email && !/\S+@\S+\.\S+/.test(email)) {
-  //       errors["emailId" + index] = "Email is invalid";
-  //     }
-  //     if (!data["address" + index]) errors["address" + index] = "Address is required";
-  //     return errors;
-  //   };
-
-  const handleSubmit = (e) => {
+  const handleReviewDetails = (e) => {
     e?.stopPropagation();
     e?.preventDefault();
 
     // Filter out entries with data
-    const validFormData = aFormData.filter((item) => item.data);
+    const validFormData = witnessFormList?.filter((item) => item?.data);
 
     // Validate required fields
     for (const { data } of validFormData) {
@@ -118,121 +163,87 @@ const AddWitnessModal = ({ onCancel, onAddSuccess, caseDetails, tenantId, hearin
         return;
       }
     }
-
-    const collectedData = validFormData.map(({ data }) => {
-      const entry = {};
-      Object.entries(data).forEach(([key, value]) => {
-        entry[key] = typeof value === "object" && value?.name ? value.name : value;
-      });
-      return entry;
-    });
-
-    setPreviewData(collectedData);
     setShowConfirmModal(true);
   };
 
-  const confirmAndSubmit = (e) => {
+  const confirmAndSubmit = async (e) => {
     setIsWitnessAdding(true);
     e?.stopPropagation();
     e?.preventDefault();
 
-    const cleanedData = aFormData.map(({ data }) => {
-      const newData = {};
-      Object.keys(data).forEach((key) => {
-        const newKey = key.replace(/\d+$/, "");
-        if (newKey === "partyType") {
-          newData[newKey] = data[key].name;
-        } else {
-          newData[newKey] = data[key];
-        }
-      });
-      newData.uuid = generateUUID();
-      return newData;
-    });
-    setIsWitnessAdding(false);
-    onAdd(cleanedData)
-      .catch(console.error)
-      .then(() => {
-        onAddSuccess();
-        onCancel();
-        setShowConfirmModal(false);
-      });
-  };
-
-  const generateUUID = () => {
-    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
-      const r = (Math.random() * 16) | 0;
-      const v = c === "x" ? r : (r & 0x3) | 0x8;
-      return v.toString(16);
-    });
-  };
-  const onAdd = async (cleanedData) => {
-    const newWitnesses = cleanedData.map((data) => {
-      return {
-        isenabled: true,
-        displayindex: 0,
-        data: {
-          emails: { emailId: [data.emailId], textFieldValue: "" },
-          firstName: data.partyName,
-          lastName: "",
-          phonenumbers: {
-            mobileNumber: [data.phoneNumber],
-            textFieldValue: "",
-          },
-          addressDetails: [{ addressDetails: data?.address }],
-          witnessAdditionalDetails: {
-            text: data.additionalDetails,
-          },
-          uuid: data.uuid,
-        },
-      };
-    });
-
-    const witnessDetails = caseDetails.additionalDetails?.witnessDetails
-      ? [...caseDetails.additionalDetails?.witnessDetails?.formdata, ...newWitnesses]
-      : [...newWitnesses];
-
-    await DRISTIService.addWitness(
-      {
-        tenantId,
-        caseFilingNumber: caseDetails.filingNumber,
-        additionalDetails: {
-          ...caseDetails.additionalDetails,
-          witnessDetails: {
-            formdata: witnessDetails,
-          },
-        },
-      },
-      tenantId
-    );
-
-    if (hearing) {
-      const updatedHearing = structuredClone(hearing);
-      updatedHearing.attendees = updatedHearing.attendees || [];
-      updatedHearing.attendees.push(
-        ...newWitnesses.map((witness) => {
+    try {
+      if (isJudge) {
+        const newWitnesses = witnessFormList?.map((data) => {
           return {
-            name: [witness.data.firstName, witness.data.lastName].join(" "),
-            type: "Witness",
-            wasPresent: false,
-            isOnline: false,
+            ...data?.data,
+            uniqueId: generateUUID(),
           };
-        })
-      );
-
-      await updateAttendees({ body: { hearing: updatedHearing } });
-      refetchHearing?.();
+        });
+        await DRISTIService.addNewWitness(
+          {
+            tenantId,
+            caseFilingNumber: caseDetails?.filingNumber,
+            witnessDetails: newWitnesses,
+          },
+          tenantId
+        );
+      } else {
+        const newWitnesses = witnessFormList?.map((data) => {
+          return {
+            ...data,
+            isenabled: true,
+            displayindex: 0,
+            uniqueId: generateUUID(),
+          };
+        });
+        await submissionService.createApplication(
+          {
+            tenantId,
+            application: {
+              tenantId,
+              filingNumber: caseDetails?.filingNumber,
+              cnrNumber: caseDetails?.cnrNumber,
+              cmpNumber: caseDetails?.cmpNumber,
+              caseId: caseDetails?.id,
+              createdDate: new Date().getTime(),
+              applicationType: "WITNESS_DEPOSITION",
+              isActive: true,
+              createdBy: userInfo?.uuid,
+              statuteSection: { tenantId },
+              additionalDetails: {
+                witnessDetails: newWitnesses,
+                onBehalfOfName: complainantsList,
+                advocateIndividualId: individualId,
+              },
+              onBehalfOf: complainantsList?.map((item) => item?.uuid),
+              comment: [],
+              workflow: {
+                action: SubmissionWorkflowAction.CREATE,
+              },
+            },
+          },
+          { tenantId }
+        );
+      }
+    } catch (error) {
+      console.error(error);
+      setShowErrorToast({ label: t("ERROR_ADDING_WITNESS"), error: true });
+    } finally {
+      onAddSuccess();
+      onCancel();
+      setShowConfirmModal(false);
+      setIsWitnessAdding(false);
     }
   };
 
   const onFormValueChange = useCallback(
     (formData, index) => {
       // Ensure we have valid form data
-      if (!isEqual(formData, aFormData?.[index]?.data)) {
-        setFormData((prevData) => prevData?.map((item, i) => (i === index ? { ...item, data: formData } : item)));
+      if (!isEqual(formData, witnessFormList?.[index]?.data)) {
+        setWitnessFormList((prevData) => prevData?.map((item, i) => (i === index ? { ...item, data: formData } : item)));
       }
     },
-    [aFormData]
+    [witnessFormList]
   );
 
   return (
@@ -257,7 +268,7 @@ const AddWitnessModal = ({ onCancel, onAddSuccess, caseDetails, tenantId, hearin
         }}
         headerBarMain={<h1 className="heading-m">{t("ADD_WITNESS_DETAILS")}</h1>}
         headerBarEnd={<CloseBtn onClick={onCancel} />}
-        actionSaveOnSubmit={handleSubmit}
+        actionSaveOnSubmit={handleReviewDetails}
         actionSaveLabel={t("REVIEW_WITNESS_DETAILS")}
         actionCancelLabel={t("WITNESS_CANCEL")}
         actionCancelOnSubmit={onCancel}
@@ -334,6 +345,8 @@ const AddWitnessModal = ({ onCancel, onAddSuccess, caseDetails, tenantId, hearin
           style={{ height: "40px", background: "#007E7E" }}
           popupStyles={{ width: "35%" }}
           className={"review-order-modal"}
+          isDisabled={isWitnessAdding}
+          isBackButtonDisabled={isWitnessAdding}
           children={
             isWitnessAdding ? (
               <Loader />

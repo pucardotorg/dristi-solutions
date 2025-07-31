@@ -545,7 +545,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
                 style={{ maxWidth: "100%", marginBottom: 8 }}
                 className="party-dropdown"
               />
-              {
+              {input?.addWitness && (
                 <Button
                   onButtonClick={handleAddParty}
                   className="add-party-btn"
@@ -569,7 +569,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
                   }}
                   label={t("+ Add new witness")}
                 />
-              }
+              )}
             </div>
           )}
           {input.type !== "dropdown" && selectedParty && (
@@ -586,10 +586,10 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       ))}
       {isPartyModalOpen && (
         <AddWitnessModal
-          onCancel={handleAddParty}
-          onDismiss={handleAddParty}
           tenantId={tenantId}
+          onCancel={handleAddParty}
           caseDetails={caseDetails}
+          isJudge={true}
           onAddSuccess={() => {
             handleAddParty();
             refetch();

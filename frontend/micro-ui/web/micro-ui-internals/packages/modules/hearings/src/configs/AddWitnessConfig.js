@@ -95,11 +95,7 @@ const createWitnessConfig = (index) => [
               label: "CORE_COMMON_PHONE_NUMBER",
               className: "mobile-number",
               validation: {
-                pattern: {
-                  masterName: "commonUiConfig",
-                  moduleName: "patternValidation",
-                  patternType: "contact",
-                },
+                pattern: /^[6-9]\d{9}$/,
                 isNumber: true,
                 required: true,
                 maxLength: 10,
@@ -132,11 +128,7 @@ const createWitnessConfig = (index) => [
               label: "CORE_COMMON_EMAILS",
               className: "email-address",
               validation: {
-                pattern: {
-                  masterName: "commonUiConfig",
-                  moduleName: "patternValidation",
-                  patternType: "email",
-                },
+                pattern: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
                 required: true,
               },
             },

@@ -55,6 +55,7 @@ import WorkflowTimeline from "../../../components/WorkflowTimeline";
 import CaseOverviewV2 from "./CaseOverviewV2";
 import PaymentDemandModal from "./PaymentDemandModal";
 import DocumentsV2 from "./DocumentsV2";
+import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -229,6 +230,7 @@ const AdmittedCaseV2 = () => {
   const [showBailBondModal, setShowBailBondModal] = useState(false);
   const [isBailBondTaskExists, setIsBailBondTaskExists] = useState(false);
   const [bailBondLoading, setBailBondLoading] = useState(false);
+  const [showAddWitnessModal, setShowAddWitnessModal] = useState(false);
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
@@ -2570,6 +2572,8 @@ const AdmittedCaseV2 = () => {
         setShowAllStagesModal(true);
       } else if (option.value === "CREATE_BAIL_BOND") {
         setShowBailBondModal(true);
+      } else if (option.value === "ADD_WITNESS") {
+        setShowAddWitnessModal(true);
       }
     },
     [
@@ -3536,7 +3540,7 @@ const AdmittedCaseV2 = () => {
             <Button
               label={"ADD_NEW_WITNESS"}
               variation={"secondary"}
-              // onClick={() => handleNavigate("/employee/hearings/adjourn-hearing")}
+              onButtonClick={() => setShowAddWitnessModal(true)}
               style={{ marginRight: "30px" }}
             />
           )}
@@ -4042,6 +4046,18 @@ const AdmittedCaseV2 = () => {
             <div style={{ margin: "16px 16px" }}>{t("TASK_ALREADY_EXISTS_TEXT")}</div>
           </Modal>
         ))}
+      {showAddWitnessModal && (
+        <AddWitnessModal
+          onCancel={() => setShowAddWitnessModal(false)}
+          onDismiss={() => setShowAddWitnessModal(false)}
+          tenantId={tenantId}
+          caseDetails={caseDetails}
+          isJudge={isJudge}
+          onAddSuccess={() => {
+            setShowAddWitnessModal(false);
+          }}
+        ></AddWitnessModal>
+      )}
     </div>
   );
 };

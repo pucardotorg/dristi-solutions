@@ -98,6 +98,7 @@ export const Urls = {
   },
   case: {
     addWitness: "/case/v1/add/witness",
+    addNewWitness: "/case/v2/add/witness",
     taskCreate: "/task/v1/create",
     searchTasks: "/task/v1/search",
   },
