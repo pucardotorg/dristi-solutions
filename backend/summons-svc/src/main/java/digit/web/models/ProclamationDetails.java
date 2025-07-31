@@ -10,7 +10,7 @@ import org.springframework.validation.annotation.Validated;
 @Builder
 public class ProclamationDetails {
 
-    @JsonProperty("warrantId")
+    @JsonProperty("proclamationId")
     private String proclamationId = null;
 
     @JsonProperty("issueDate")
@@ -22,6 +22,6 @@ public class ProclamationDetails {
     @JsonProperty("templateType")
     private String templateType;
 
-    @JsonProperty("warrantText")
+    @JsonProperty("proclamationText")
     private String proclamationText;
 }

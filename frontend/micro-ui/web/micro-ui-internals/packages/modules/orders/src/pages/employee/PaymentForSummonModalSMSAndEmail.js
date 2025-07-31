@@ -615,7 +615,7 @@ const PaymentForSummonModalSMSAndEmail = ({ path }) => {
     const name =
       [partyData?.firstName, partyData?.lastName]?.filter(Boolean)?.join(" ") ||
       (orderType === "WARRANT" && formdata?.warrantFor?.name) ||
-      (orderType === "PROCLAMATION" && formdata?.proclamationFor?.name)
+      (orderType === "PROCLAMATION" && formdata?.proclamationFor?.name) ||
       formdata?.warrantFor ||  formdata?.proclamationFor
       "";
 

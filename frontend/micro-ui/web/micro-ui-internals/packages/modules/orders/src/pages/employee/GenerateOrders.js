@@ -3042,7 +3042,7 @@ const GenerateOrders = () => {
             caseFilingDate: caseDetails?.filingDate,
             docSubType: "Proclamation requiring the apperance of a person accused",
             templateType: "GENERIC",
-            proclamationText: orderFormValue?.proclamationText?.procalmationText || "",
+            proclamationText: orderFormValue?.proclamationText?.proclamationText || "",
           },
           respondentDetails: {
             name: respondentName,

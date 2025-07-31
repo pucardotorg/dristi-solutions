@@ -57,9 +57,6 @@ public class SummonsDeliveryEnrichment {
                 docSubType = summonDetails.getDocSubType();
                 partyType = summonDetails.getPartyType();
                 break;
-            case PROCLAMATION:
-                partyType = warrantDetails.getPartyType();
-                break;
         }
 
         return SummonsDelivery.builder()
