@@ -135,6 +135,9 @@ public class Configuration {
 	@Value("${egov.case.search.path}")
 	private String caseSearchPath;
 
+	@Value("${egov.case.witness.add.path}")
+	private String addWitnessEndpoint;
+
 	// Application Config
 	@Value("${egov.application.host}")
 	private String applicationHost;

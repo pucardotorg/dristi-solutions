@@ -196,4 +196,28 @@ public class EvidenceEnrichment {
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error enriching comment upon create: " + e.getMessage());
         }
     }
+
+    public void enrichTag(EvidenceRequest body) {
+        try {
+            String tag = idgenUtil.getIdList(body.getRequestInfo(),
+                    body.getArtifact().getTenantId(),
+                    getIdName(body.getArtifact().getTag()), null, 1, false).get(0);
+            body.getArtifact().setTag(tag);
+        } catch (CustomException e) {
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Failed to generate tag for " + body.getArtifact().getId() + ": " + e.getMessage());
+        }
+    }
+
+    private String getIdName(String tag) {
+        switch (tag) {
+            case "PW":
+                return configuration.getProsecutionWitnessConfig();
+            case "DW":
+                return configuration.getDefenceWitnessConfig();
+            case "CW":
+                return configuration.getCourtWitnessConfig();
+            default:
+                return configuration.getCourtConfig();
+        }
+    }
 }

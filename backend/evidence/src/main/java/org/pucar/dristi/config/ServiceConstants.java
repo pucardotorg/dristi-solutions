@@ -163,4 +163,5 @@ public class ServiceConstants {
 	public static final String ARTIFACT_SIGN_ERROR = "ARTIFACT_SIGN_ERROR";
 	public static final String ARTIFACT_NOT_FOUND = "ARTIFACT_NOT_FOUND";
 	public static final String ARTIFACT_BULK_SIGN_EXCEPTION = "ARTIFACT_BULK_SIGN_EXCEPTION";
+	public static final String UPDATE_CASE_WITNESS_ERR = "UPDATE_CASE_WITNESS_ERR";
 }

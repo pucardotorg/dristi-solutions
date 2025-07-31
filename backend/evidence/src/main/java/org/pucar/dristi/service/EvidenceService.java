@@ -2,6 +2,8 @@ package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
@@ -83,7 +85,10 @@ public class EvidenceService {
                 evidenceEnrichment.enrichEvidenceNumber(body);
             }
 
-
+            if(WITNESS_DEPOSITION.equalsIgnoreCase(body.getArtifact().getArtifactType())){
+                evidenceEnrichment.enrichTag(body);
+                updateCaseWitnessDeposition(body);
+            }
             // Initiate workflow for the new application- //todo witness deposition is part of case filing or not
             if ((body.getArtifact().getArtifactType() != null &&
                     body.getArtifact().getArtifactType().equals(DEPOSITION)) ||
@@ -101,6 +106,186 @@ public class EvidenceService {
         } catch (Exception e) {
             log.error("Error occurred while creating evidence");
             throw new CustomException(EVIDENCE_CREATE_EXCEPTION, e.toString());
+        }
+    }
+
+    public void updateCaseWitnessDeposition(EvidenceRequest body) {
+        log.info("Starting updateCaseWitness for filing number: {}",
+                body.getArtifact() != null ? body.getArtifact().getFilingNumber() : null);
+
+        try {
+            String filingNumber = body.getArtifact().getFilingNumber();
+            String uniqueId = body.getArtifact().getSourceID();
+
+            JsonNode courtCase = searchCaseDetails(body, filingNumber);
+            JsonNode formdata = extractWitnessFormData(courtCase, filingNumber);
+
+            boolean witnessFound = processWitnessRecords(body, filingNumber, uniqueId, formdata);
+            if(!witnessFound) {
+                updateWitnessDeposition(body, courtCase);
+            }
+            log.info("Successfully completed updateCaseWitness for filing number: {}",
+                    filingNumber);
+
+        } catch (CustomException e) {
+            log.error("Unexpected error in updateCaseWitness for filing number: {}",
+                    body.getArtifact() != null ? body.getArtifact().getFilingNumber() : "null", e);
+            throw new CustomException(UPDATE_CASE_WITNESS_ERR,
+                    "Unexpected error updating case witness: " + e.getMessage());
+        }
+    }
+
+    private void updateWitnessDeposition(EvidenceRequest body, JsonNode courtCase) {
+        JsonNode litigants = courtCase.get("litigants");
+        JsonNode representatives = courtCase.get("representatives");
+        JsonNode poaHolders = courtCase.get("poaHolders");
+
+        String uniqueId = body.getArtifact().getSourceID();
+        String tag = body.getArtifact().getTag();
+
+        // Process litigants
+        if (litigants != null && litigants.isArray()) {
+            updatePartyTag(litigants, uniqueId, tag, "litigant");
+        }
+
+        // Process representatives
+        if (representatives != null && representatives.isArray()) {
+            updatePartyTag(representatives, uniqueId, tag, "representative");
+        }
+
+        // Process poaHolders
+        if (poaHolders != null && poaHolders.isArray()) {
+            updatePartyTag(poaHolders, uniqueId, tag, "poaHolder");
+        }
+
+    }
+
+    private void updatePartyTag(JsonNode parties, String uniqueId, String tag, String partyType) {
+        for (int i = 0; i < parties.size(); i++) {
+            JsonNode party = parties.get(i);
+            JsonNode additionalDetails = party.get("additionalDetails");
+
+            if (additionalDetails != null) {
+                JsonNode uuid = additionalDetails.get("uuid");
+                if (uuid != null && uniqueId.equals(uuid.textValue())) {
+                    log.info("Found matching {} with uuid: {} for uniqueId: {}", partyType, uuid.textValue(), uniqueId);
+
+                    if (additionalDetails instanceof ObjectNode) {
+                        ((ObjectNode) additionalDetails).put("tag", tag);
+                        log.info("Added tag: {} to {} additionalDetails for uuid: {}", tag, partyType, uuid.textValue());
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
+    public JsonNode searchCaseDetails(EvidenceRequest body, String filingNumber) {
+        try {
+            return caseUtil.searchCaseDetails(
+                    CaseSearchRequest.builder()
+                            .requestInfo(body.getRequestInfo())
+                            .criteria(List.of(CaseCriteria.builder()
+                                    .filingNumber(filingNumber)
+                                    .defaultFields(false)
+                                    .build()))
+                            .build()
+            );
+        } catch (Exception e) {
+            log.error("Error while searching case details for filing number: {}", filingNumber, e);
+            throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE,
+                    "Failed to retrieve case details for filing number: " + filingNumber);
+        }
+    }
+
+    public JsonNode extractWitnessFormData(JsonNode courtCase, String filingNumber) {
+        JsonNode additionalDetails = courtCase.get("additionalDetails");
+        JsonNode witnessDetails = additionalDetails.get("witnessDetails");
+        JsonNode formdata = witnessDetails.get("formdata");
+
+        if (formdata == null || !formdata.isArray()) {
+            log.warn("No witness formdata found or invalid format for filing number: {}", filingNumber);
+            throw new CustomException(UPDATE_CASE_WITNESS_ERR,
+                    "No witness formdata found for filing number: " + filingNumber);
+        }
+
+        return formdata;
+    }
+
+    private boolean processWitnessRecords(EvidenceRequest body, String filingNumber, String uniqueId, JsonNode formdata) {
+        boolean witnessFound = false;
+        for (int i = 0; i < formdata.size(); i++) {
+            JsonNode data = formdata.get(i);
+            try {
+                if (data == null || data.get("uniqueId") == null) {
+                    log.warn("Skipping witness record at index {} - missing uniqueId for filing number: {}",
+                            i, filingNumber);
+                    continue;
+                }
+                String witnessUniqueId = data.get("uniqueId").textValue();
+                if (witnessUniqueId != null && witnessUniqueId.equals(uniqueId)) {
+                    witnessFound = true;
+                    updateWitnessRecord(body, uniqueId, data);
+                    break;
+                }
+            } catch (CustomException e) {
+                log.error("Unexpected error processing witness record at index {} for filing number: {}",
+                        i, filingNumber, e);
+                throw new CustomException(UPDATE_CASE_WITNESS_ERR,
+                        "Unexpected error processing witness record at index " + i +
+                        " for filing number: " + filingNumber);
+            }
+        }
+
+        if (!witnessFound) {
+            log.warn("No witness found with uniqueId: {} in filing number: {}", uniqueId, filingNumber);
+        }
+        return witnessFound;
+    }
+
+    private void updateWitnessRecord(EvidenceRequest body, String uniqueId, JsonNode data) {
+        WitnessDetails witness = objectMapper.convertValue(data.get("data"), WitnessDetails.class);
+        witness.setUniqueId(uniqueId);
+        witness.setWitnessTag(body.getArtifact().getTag());
+
+        updateWitnessEmails(body, uniqueId, witness);
+        updateWitnessMobileNumbers(body, uniqueId, witness);
+
+        WitnessDetailsRequest witnessDetailsRequest = WitnessDetailsRequest.builder()
+                .requestInfo(body.getRequestInfo())
+                .witnessDetails(List.of(witness))
+                .caseFilingNumber(body.getArtifact().getFilingNumber())
+                .tenantId(body.getArtifact().getTenantId())
+                .build();
+
+        try {
+            caseUtil.updateWitnessDetails(witnessDetailsRequest);
+        } catch (Exception e) {
+            log.error("Error updating witness details for uniqueId: {} in filing number: {}",
+                    uniqueId, body.getArtifact().getFilingNumber(), e);
+            throw new CustomException(UPDATE_CASE_WITNESS_ERR,
+                    "Failed to update witness details for uniqueId: " + uniqueId +
+                    " in filing number: " + body.getArtifact().getFilingNumber());
+        }
+    }
+
+    private void updateWitnessMobileNumbers(EvidenceRequest body, String uniqueId, WitnessDetails witness) {
+        if (body.getArtifact().getWitnessMobileNumbers() != null &&
+            !body.getArtifact().getWitnessMobileNumbers().isEmpty()) {
+            ObjectNode phonenumbers = objectMapper.createObjectNode();
+            ArrayNode mobileNumbersArray = objectMapper.valueToTree(body.getArtifact().getWitnessMobileNumbers());
+            phonenumbers.set("mobileNumber", mobileNumbersArray);
+            witness.setPhoneNumbers(phonenumbers);
+        }
+    }
+
+    private void updateWitnessEmails(EvidenceRequest body, String uniqueId, WitnessDetails witness) {
+        if (body.getArtifact().getWitnessEmails() != null &&
+            !body.getArtifact().getWitnessEmails().isEmpty()) {
+            ObjectNode emails = objectMapper.createObjectNode();
+            ArrayNode emailArray = objectMapper.valueToTree(body.getArtifact().getWitnessEmails());
+            emails.set("emailId", emailArray);
+            witness.setEmails(emails);
         }
     }
 
@@ -185,11 +370,12 @@ public class EvidenceService {
 
             // Enrich application upon update
             evidenceEnrichment.enrichEvidenceRegistrationUponUpdate(evidenceRequest);
-
             if (evidenceRequest.getArtifact().getIsEvidence().equals(true) && evidenceRequest.getArtifact().getEvidenceNumber() == null) {
                 evidenceEnrichment.enrichEvidenceNumber(evidenceRequest);
             }
-
+            if(WITNESS_DEPOSITION.equalsIgnoreCase(evidenceRequest.getArtifact().getArtifactType())){
+                updateCaseWitnessDeposition(evidenceRequest);
+            }
 
             if ((evidenceRequest.getArtifact().getArtifactType() != null &&
                     evidenceRequest.getArtifact().getArtifactType().equals(DEPOSITION)) ||
