@@ -197,7 +197,6 @@ const GenerateBailBond = () => {
     }
     return bailBond?.bails?.[0];
   }, [defaultFormValueData, bailBond]);
-  
 
   const pipComplainants = useMemo(() => {
     return caseDetails?.litigants
@@ -341,10 +340,6 @@ const GenerateBailBond = () => {
 
           if (docs?.proofOfSolvency && Object.keys(formState?.errors).includes(`proofOfSolvency_${index}`)) {
             clearErrors(`proofOfSolvency_${index}`);
-          }
-
-          if (docs?.otherDocuments && Object.keys(formState?.errors).includes(`otherDocuments_${index}`)) {
-            clearErrors(`otherDocuments_${index}`);
           }
         });
       } else if (formData?.sureties?.length > 0 && Object.keys(formState?.errors).includes("sureties")) {
@@ -689,11 +684,6 @@ const GenerateBailBond = () => {
           error = true;
           setFormErrors.current(`proofOfSolvency_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
         }
-
-        if (!docs?.otherDocuments && !Object.keys(setFormState?.current?.errors).includes(`otherDocuments_${index}`)) {
-          error = true;
-          setFormErrors.current(`otherDocuments_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
-        }
       });
     }
     return error;
@@ -865,7 +855,14 @@ const GenerateBailBond = () => {
     setFormdata(convertToFormData(t, bailBondDetails || {}));
   }, [bailBondDetails, t]);
 
-  if (loader || isCaseDetailsLoading || !caseDetails || isBailBondLoading) {
+  useEffect(()=> {
+    if(!isCaseDetailsLoading && !isBailBondLoading && bailBondId && bailBondDetails?.status !== "DRAFT_IN_PROGRESS"){
+      history.replace(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Documents`);
+    }
+  },[isCaseDetailsLoading, isBailBondLoading, bailBondId, bailBondDetails,  caseDetails, filingNumber])
+
+
+  if (isCaseDetailsLoading || !caseDetails || isBailBondLoading) {
     return <Loader />;
   }
 
@@ -891,6 +888,25 @@ const GenerateBailBond = () => {
           }
         `}
       </style>
+      {loader && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "9999",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
       <div className="citizen create-submission" style={{ width: "90%", ...(!isCitizen && { padding: "0 8px 24px 16px" }) }}>
         <Header styles={{ margin: "25px 0px 0px 25px" }}> {t("BAIL_BOND_DETAILS")}</Header>
         <div style={{ minHeight: "550px", overflowY: "auto" }}>

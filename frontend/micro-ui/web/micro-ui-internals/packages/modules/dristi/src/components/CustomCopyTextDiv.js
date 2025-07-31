@@ -2,7 +2,18 @@ import React, { useState } from "react";
 import { CardText } from "@egovernments/digit-ui-react-components";
 import { CopyIcon } from "../icons/svgIndex";
 
-const CustomCopyTextDiv = ({ data, t, keyStyle, valueStyle, textWrapperStyle, cardStyle, subCardStyle, isCenter = false, isShowValue = true, customTextStyle }) => {
+const CustomCopyTextDiv = ({
+  data,
+  t,
+  keyStyle,
+  valueStyle,
+  textWrapperStyle,
+  cardStyle,
+  subCardStyle,
+  isCenter = false,
+  isShowValue = true,
+  customTextStyle,
+}) => {
   const [copiedIndex, setCopiedIndex] = useState(null); // Track the index of the copied item
 
   const handleCopy = (text) => {

@@ -22,9 +22,9 @@ const BailEsignModal = ({ t, handleProceed, handleCloseSignaturePopup, fileStore
   const [pageModule, setPageModule] = useState("ci");
   const name = "signature";
 
-  useEffect(()=>{
+  useEffect(() => {
     checkSignStatus(name, setIsSigned);
-  },[])  
+  }, []);
 
   return (
     <Modal
@@ -61,7 +61,7 @@ const BailEsignModal = ({ t, handleProceed, handleCloseSignaturePopup, fileStore
                   label={t("CS_ESIGN_AADHAR")}
                   onClick={() => {
                     sessionStorage.setItem("mobileNumber", mobileNumber);
-                    handleEsign(name, pageModule, fileStoreId, signPlaceHolder)
+                    handleEsign(name, pageModule, fileStoreId, signPlaceHolder);
                   }}
                   className={"upload-signature"}
                   labelClassName={"submission-upload-signature-label"}

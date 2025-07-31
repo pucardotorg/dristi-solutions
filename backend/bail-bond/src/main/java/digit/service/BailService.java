@@ -29,6 +29,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static digit.config.ServiceConstants.*;
@@ -284,6 +285,30 @@ public class BailService {
             updatedBail.getDocuments().addAll(missingBailDocs);
 
         }
+        // Surety documents
+        if (updatedBail.getSureties() != null && existingBail.getSureties() != null) {
+            Map<String, Surety> updatedSuretyMap = updatedBail.getSureties().stream()
+                    .collect(Collectors.toMap(Surety::getId, s -> s));
+
+            for (Surety existingSurety : existingBail.getSureties()) {
+                Surety updatedSurety = updatedSuretyMap.get(existingSurety.getId());
+                if (updatedSurety == null) continue;
+
+                Set<String> updatedSuretyDocIds = fileStoreIds(updatedSurety.getDocuments());
+
+                List<Document> missingSuretyDocs =
+                        Optional.ofNullable(existingSurety.getDocuments())
+                                .orElse(Collections.emptyList())
+                                .stream()
+                                .filter(doc -> !updatedSuretyDocIds.contains(doc.getFileStore()))
+                                .peek(doc -> doc.setIsActive(false))
+                                .toList();
+
+                if (updatedSurety.getDocuments() == null)
+                    updatedSurety.setDocuments(new ArrayList<>());
+                updatedSurety.getDocuments().addAll(missingSuretyDocs);
+            }
+        }
     }
 
     private Set<String> fileStoreIds(List<Document> documents) {
@@ -296,6 +321,7 @@ public class BailService {
 
     public Set<String> extractInactiveFileStoreIds(BailRequest bailRequest) {
         Set<String> inactiveFileStoreIds = new HashSet<>();
+
         Bail bail = bailRequest.getBail();
 
         // Bail-level
@@ -319,7 +345,8 @@ public class BailService {
                 }
             }
         }
-      return inactiveFileStoreIds;
+
+        return inactiveFileStoreIds;
     }
 
     public Bail updateBail(BailRequest bailRequest) {
@@ -397,7 +424,7 @@ public class BailService {
         bailRequest.setBail(encryptedBail);
         producer.push(config.getBailUpdateTopic(), bailRequest);
 
-        // Filter out inactive bail documents
+       // Filter out inactive bail documents
         if (originalBail.getDocuments() != null) {
             List<Document> activeBailDocs = originalBail.getDocuments().stream()
                     .filter(doc -> doc.getIsActive() == null || doc.getIsActive())
@@ -437,19 +464,26 @@ public class BailService {
             return false;
         }
         if (!Boolean.TRUE.equals(bail.getLitigantSigned())) {
-            log.info("Litigant has not signed");
+            log.info("Litigant has not signed for bail :  {} ", bail.getBailId());
             return false;
         }
+
+
+        if (bail.getBailType().equals(Bail.BailTypeEnum.PERSONAL)) {
+            log.info("Bail type is personal and litigant has signed successfully for bail :  {} ", bail.getBailId());
+            return true;
+        }
+
         boolean allSuretiesSigned = false;
         if (!ObjectUtils.isEmpty(bailRequest.getBail().getSureties())) {
             allSuretiesSigned = bailRequest.getBail().getSureties().stream()
                     .allMatch(Surety::getHasSigned);
         }
         if (!allSuretiesSigned) {
-            log.info("Some sureties have not signed");
+            log.info("Some sureties have not signed for bail :  {} ", bail.getBailId());
             return false;
         }
-        log.info("All sureties and litigant have signed");
+        log.info("All sureties and litigant have signed successfully for bail :  {} ", bail.getBailId());
         return true;
     }
 
@@ -488,7 +522,6 @@ public class BailService {
             default -> throw new IllegalArgumentException("Unknown user type: " + type);
         }
     }
-
 
     public List<BailToSign> createBailToSignRequest(BailsToSignRequest request) {
         log.info("creating bail to sign request, result= IN_PROGRESS, bailCriteria:{}", request.getCriteria().size());
@@ -617,13 +650,13 @@ public class BailService {
                     String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
 
-                    Document document = Document.builder()
-                            .documentType(SIGNED)
-                            .fileStore(fileStoreId)
-                            .isActive(true)
-                            .documentName(BAIL_BOND_PDF_NAME)
-                            .additionalDetails(Map.of(NAME, BAIL_BOND_PDF_NAME))
-                            .build();
+                        Document document = Document.builder()
+                                .documentType(SIGNED)
+                                .fileStore(fileStoreId)
+                                .isActive(true)
+                                .documentName(BAIL_BOND_PDF_NAME)
+                                .additionalDetails(Map.of(NAME, BAIL_BOND_PDF_NAME))
+                                .build();
                     bail.setDocuments(new ArrayList<>(List.of(document)));
 
                     if (!ObjectUtils.isEmpty(bail.getSureties())) {

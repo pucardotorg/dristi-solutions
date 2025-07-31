@@ -67,7 +67,14 @@ public class ShortenController {
     }
 
     @RequestMapping(value = "/{id}", method=RequestMethod.GET)
-    public RedirectView redirectUrl(@PathVariable String id, HttpServletRequest request) throws IOException, URISyntaxException, Exception {
+    public RedirectView redirectUrl(@PathVariable String id, HttpServletRequest request, @RequestParam(value = "code", required = false) String code) throws IOException, URISyntaxException, Exception {
+        if (code != null) {
+            if (code.trim().isEmpty()) {
+                throw new CustomException("INVALID_CODE", "Code parameter cannot be empty");
+            }
+            id = code;
+            log.info("Using code parameter '{}' instead of path variable '{}'", code, id);
+        }
         String redirectUrlString = urlConverterService.getLongURLFromID(id);
         RedirectView redirectView = new RedirectView();
         redirectView.setUrl(redirectUrlString);

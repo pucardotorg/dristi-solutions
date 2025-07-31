@@ -57,9 +57,9 @@ jobs:
           sarif_file: reports/dependency-check-report.sarif
         if: always()
 
-      # Login to Azure Container Registry
-      - name: Login to Azure Container Registry
-        run: docker login -u pucarsolutionsdev -p ${{ secrets.ACR_PASSWORD }} pucarsolutionsdev.azurecr.io
+      # Login to Docker Registry
+      - name: Login to Docker Registry
+        run: docker login -u venkatramireddyb -p ${{ secrets.ACR_PASSWORD }}
       - name: Set Version from Tag or Branch
         id: set_version
         run: |
@@ -80,8 +80,8 @@ jobs:
 
       - name: Build and Push Docker image for order-management
         run: |
-          docker build --build-arg WORK_DIR="backend/order-management" -t pucarsolutionsdev.azurecr.io/order-management:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/order-management:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker build --build-arg WORK_DIR="backend/order-management" -t docker.io/venkatramireddyb/order-management:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
+          docker push docker.io/venkatramireddyb/order-management:${{ env.VERSION }}-${{ env.commit_hash }}
 
 
   Workflow_Trigger:

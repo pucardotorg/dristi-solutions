@@ -46,9 +46,9 @@ jobs:
           sarif_file: reports/dependency-check-report.sarif
         if: always()
 
-      # Login to Azure Container Registry
+      # Login to Docker Registry
       - name: Login to Azure Container Registry
-        run: docker login -u pucarsolutionsdev -p ${{ secrets.ACR_PASSWORD }} pucarsolutionsdev.azurecr.io
+        run: docker login -u venkatramireddyb -p ${{ secrets.ACR_PASSWORD }}
       - name: Set Version from Tag or Branch
         id: set_version
         run: |
@@ -69,13 +69,13 @@ jobs:
 
       - name: Build and Push Docker image for egov-url-shortening
         run: |
-          docker build --build-arg WORK_DIR="common/egov-url-shortening" -t pucarsolutionsdev.azurecr.io/egov-url-shortening:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/egov-url-shortening:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker build --build-arg WORK_DIR="common/egov-url-shortening" -t docker.io/venkatramireddyb/egov-url-shortening:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
+          docker push docker.io/venkatramireddyb/egov-url-shortening:${{ env.VERSION }}-${{ env.commit_hash }}
 
       - name: Build and Push Docker image for egov-url-shortening-DB
         run: |
-          docker build  -t pucarsolutionsdev.azurecr.io/egov-url-shortening-db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/egov-url-shortening-db:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker build  -t docker.io/venkatramireddyb/egov-url-shortening-db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
+          docker push docker.io/venkatramireddyb/egov-url-shortening-db:${{ env.VERSION }}-${{ env.commit_hash }}
         working-directory: common/egov-url-shortening/src/main/resources/db
 
   Workflow_Trigger:
