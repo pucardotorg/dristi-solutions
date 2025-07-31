@@ -52,6 +52,7 @@ public class EvidenceQueryBuilder {
             String filingType = criteria.getFilingType();
             Boolean isVoid = criteria.getIsVoid();
             String sourceType = criteria.getSourceType();
+            List<String> status = criteria.getStatus();
 
             // Build the query using the extracted fields
             firstCriteria = addArtifactCriteria(id, query, preparedStmtList, firstCriteria, "art.id = ?",preparedStmtArgList);
@@ -70,6 +71,7 @@ public class EvidenceQueryBuilder {
             firstCriteria = addArtifactCriteria(owner != null ? owner.toString() : null, query, preparedStmtList, firstCriteria, "art.createdBy = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(sourceName, query, preparedStmtList, firstCriteria, "art.sourceName = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(fileStoreId, query, preparedStmtList, firstCriteria, "art.file ->> 'fileStore' = ?",preparedStmtArgList);
+            firstCriteria = addArtifactCriteriaList(status, query, preparedStmtList, firstCriteria, "art.status", preparedStmtArgList);
             addArtifactPartialCriteria(artifactNumber, query, preparedStmtList, firstCriteria,preparedStmtArgList, criteria.getFuzzySearch());
 
             return query.toString();
@@ -176,6 +178,24 @@ public class EvidenceQueryBuilder {
             query.append(criteriaClause);
             preparedStmtList.add(criteria);
             preparedStmtArgList.add(Types.VARCHAR);
+            firstCriteria = false;
+        }
+        return firstCriteria;
+    }
+
+    boolean addArtifactCriteriaList(List<String> criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, String fieldName, List<Integer> preparedStmtArgList) {
+        if (criteria != null && !criteria.isEmpty()) {
+            addClauseIfRequired(query, firstCriteria);
+            query.append(fieldName).append(" IN (");
+            for (int i = 0; i < criteria.size(); i++) {
+                query.append("?");
+                if (i < criteria.size() - 1) {
+                    query.append(", ");
+                }
+                preparedStmtList.add(criteria.get(i));
+                preparedStmtArgList.add(java.sql.Types.VARCHAR);
+            }
+            query.append(")");
             firstCriteria = false;
         }
         return firstCriteria;

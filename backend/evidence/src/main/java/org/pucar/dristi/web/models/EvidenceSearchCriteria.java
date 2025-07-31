@@ -7,6 +7,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.validation.annotation.Validated;
+
+import java.util.List;
 import java.util.UUID;
 
 @Validated
@@ -26,7 +28,7 @@ public class EvidenceSearchCriteria {
     private String order;
     private String sourceId;
     private String sourceName;
-    private String status;
+    private List<String> status;
     private String artifactNumber;
     private String filingNumber;
     private UUID owner;
@@ -111,11 +113,11 @@ public class EvidenceSearchCriteria {
         this.sourceName = sourceName;
     }
 
-    public String getStatus() {
+    public List<String> getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(List<String> status) {
         this.status = status;
     }
     public UUID getOwner() {
