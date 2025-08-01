@@ -61,7 +61,7 @@ public class BillingService {
     }
 
 
-    private void processPayment(String payment) {
+    public void processPayment(String payment) {
         try {
             JSONArray paymentDetailsArray = util.constructArray(payment, PAYMENT_PAYMENT_DETAILS_PATH);
             Long paymentCompletedDate =  ((Number) JsonPath.read(payment, PAYMENT_TRANSACTION_DATE_PATH)).longValue();
@@ -124,7 +124,7 @@ public class BillingService {
     }
 
 
-    private void processDemand(String demands, Long paymentCompletedDate) {
+    public void processDemand(String demands, Long paymentCompletedDate) {
         try {
             JSONArray kafkaJsonArray = util.constructArray(demands, DEMAND_PATH);
 

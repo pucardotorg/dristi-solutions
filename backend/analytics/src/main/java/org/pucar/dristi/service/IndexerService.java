@@ -32,8 +32,8 @@ public class IndexerService {
         this.util = util;
     }
 
-    public void esIndexer(String topic, String kafkaJson) {
-		log.info("Inside indexer service:: Topic: {}, kafkaJson: {}", topic, kafkaJson);
+    public void esIndexer(String kafkaJson) {
+		log.info("Inside indexer service, kafkaJson: {}", kafkaJson);
 		try {
 			JSONArray kafkaJsonArray = util.constructArray(kafkaJson, PROCESS_INSTANCE_PATH);
 			LinkedHashMap<String, Object> requestInfoMap = JsonPath.read(kafkaJson, REQUEST_INFO_PATH);

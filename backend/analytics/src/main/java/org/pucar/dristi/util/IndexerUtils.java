@@ -14,7 +14,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.MdmsDataConfig;
-import org.pucar.dristi.kafka.consumer.EventConsumerConfig;
 import org.pucar.dristi.service.IndividualService;
 import org.pucar.dristi.service.SmsNotificationService;
 import org.pucar.dristi.service.UserService;
@@ -24,6 +23,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
@@ -72,9 +72,11 @@ public class IndexerUtils {
 
     private final JsonUtil jsonUtil;
 
+    private final KafkaListenerEndpointRegistry registry;
+
 
     @Autowired
-    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, Clock clock, UserService userService, JsonUtil jsonUtil) {
+    public IndexerUtils(RestTemplate restTemplate, Configuration config, CaseUtil caseUtil, EvidenceUtil evidenceUtil, TaskUtil taskUtil, ApplicationUtil applicationUtil, ObjectMapper mapper, MdmsDataConfig mdmsDataConfig, CaseOverallStatusUtil caseOverallStatusUtil, SmsNotificationService notificationService, IndividualService individualService, AdvocateUtil advocateUtil, Clock clock, UserService userService, JsonUtil jsonUtil, KafkaListenerEndpointRegistry registry) {
         this.restTemplate = restTemplate;
         this.config = config;
         this.caseUtil = caseUtil;
@@ -90,6 +92,7 @@ public class IndexerUtils {
         this.clock = clock;
         this.userService = userService;
         this.jsonUtil = jsonUtil;
+        this.registry = registry;
     }
 
     public static boolean isNullOrEmpty(String str) {
@@ -102,7 +105,7 @@ public class IndexerUtils {
      * stacked up records in the queue are processed.
      */
     public void orchestrateListenerOnESHealth() {
-        EventConsumerConfig.pauseContainer();
+        pauseAllListeners();
         log.info("Polling ES....");
         final Runnable esPoller = new Runnable() {
             boolean threadRun = true;
@@ -121,13 +124,29 @@ public class IndexerUtils {
                     }
                     if (response != null) {
                         log.info("ES is UP!");
-                        EventConsumerConfig.resumeContainer();
+                        resumeAllListeners();
                         threadRun = false;
                     }
                 }
             }
         };
         scheduler.scheduleAtFixedRate(esPoller, 0, Long.parseLong(config.getPollInterval()), TimeUnit.SECONDS);
+    }
+
+    public void pauseAllListeners() {
+        registry.getListenerContainers().forEach(container -> {
+            if (container.isRunning()) {
+                container.pause();
+            }
+        });
+    }
+
+    public void resumeAllListeners() {
+        registry.getListenerContainers().forEach(container -> {
+            if (container.isContainerPaused()) {
+                container.resume();
+            }
+        });
     }
 
     public String buildString(Object object) {
