@@ -7,7 +7,6 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -21,6 +20,7 @@ import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import java.util.*;
 
@@ -173,14 +173,18 @@ public class EvidenceService {
             // Enrich application upon update
             evidenceEnrichment.enrichEvidenceRegistrationUponUpdate(evidenceRequest);
 
-            if (evidenceRequest.getArtifact().getIsEvidence().equals(true) && evidenceRequest.getArtifact().getEvidenceNumber() == null) {
-                evidenceEnrichment.enrichEvidenceNumber(evidenceRequest);
+            if (evidenceRequest.getArtifact().getIsEvidenceMarkedFlow()) {
+                if (ObjectUtils.isEmpty(evidenceRequest.getArtifact().getEvidenceNumber())) {
+                    throw new CustomException(ILLEGAL_ARGUMENT_EXCEPTION_CODE, "Evidence number is required for Evidence Marked Flow");
+                } else {
+                    checkUniqueEvidenceNumberForCase(evidenceRequest);
+                }
             }
 
 
             if ((evidenceRequest.getArtifact().getArtifactType() != null &&
                     evidenceRequest.getArtifact().getArtifactType().equals(DEPOSITION)) ||
-                    (filingType!= null && evidenceRequest.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION))) {
+                    (filingType!= null && evidenceRequest.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION)) || evidenceRequest.getArtifact().getIsEvidenceMarkedFlow()) {
                 workflowService.updateWorkflowStatus(evidenceRequest, filingType);
                 enrichBasedOnStatus(evidenceRequest);
                 producer.push(config.getUpdateEvidenceKafkaTopic(), evidenceRequest);
@@ -196,6 +200,25 @@ public class EvidenceService {
         } catch (Exception e) {
             log.error("Error occurred while updating evidence", e);
             throw new CustomException(EVIDENCE_UPDATE_EXCEPTION, "Error occurred while updating evidence: " + e.toString());
+        }
+    }
+
+    public void checkUniqueEvidenceNumberForCase(EvidenceRequest body){
+        // Throw exception if evidence number exists
+        EvidenceSearchCriteria criteria = EvidenceSearchCriteria.builder()
+                .filingNumber(body.getArtifact().getFilingNumber())
+                .evidenceStatus(true)
+                .build();
+        Pagination pagination = Pagination.builder()
+                .build();
+        List<Artifact> caseArtifacts = searchEvidence(body.getRequestInfo(), criteria, pagination);
+        if(!ObjectUtils.isEmpty(caseArtifacts)){
+            List <String> caseEvidenceNumbers = caseArtifacts.stream()
+                    .map(Artifact::getEvidenceNumber)
+                    .toList();
+            if(caseEvidenceNumbers.contains(body.getArtifact().getEvidenceNumber())){
+                throw new CustomException(EVIDENCE_NUMBER_EXISTS_EXCEPTION, String.format("Evidence Number %s already exists for case: %s", body.getArtifact().getEvidenceNumber(), body.getArtifact().getFilingNumber()));
+            }
         }
     }
 
