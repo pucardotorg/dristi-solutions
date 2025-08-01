@@ -17,11 +17,11 @@ const Evidence = async (req, res, qrCode) => {
   const markedThrough = Evidence?.markedThrough;
 
   const missingFields = [];
-  if (!courtId) missingFields.push("cnrNumber");
+  if (!courtId) missingFields.push("courtId");
   if (!tenantId) missingFields.push("tenantId");
-  if (!markedAs) missingFields.push("tenantId");
-  if (!caseNumber) missingFields.push("tenantId");
-  if (!markedThrough) missingFields.push("tenantId");
+  if (!markedAs) missingFields.push("markedAs");
+  if (!caseNumber) missingFields.push("caseNumber");
+  if (!markedThrough) missingFields.push("markedThrough");
   if (requestInfo === undefined) missingFields.push("requestInfo");
   if (qrCode === "true" && (!entityId || !code))
     missingFields.push("entityId and code");
