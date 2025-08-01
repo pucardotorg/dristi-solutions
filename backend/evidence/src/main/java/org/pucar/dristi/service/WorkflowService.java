@@ -71,6 +71,7 @@ public class WorkflowService {
             ProcessInstanceObject processInstance = new ProcessInstanceObject();
             String businessId = artifact.getArtifactNumber();
             if(artifact.getIsEvidenceMarkedFlow()){
+                // add suffix to avoid duplicate businessId (ME = Mark Evidence)
                 businessId = businessId + "-ME";
             }
             processInstance.setBusinessId(businessId);

@@ -56,6 +56,12 @@ public class EvidenceService {
         this.individualService = individualService;
     }
 
+    private boolean shouldUpdateWorkflowStatusForUpdate(EvidenceRequest evidenceRequest, String filingType){
+        return (evidenceRequest.getArtifact().getArtifactType() != null &&
+                evidenceRequest.getArtifact().getArtifactType().equals(DEPOSITION)) ||
+                (filingType!= null && evidenceRequest.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION)) || evidenceRequest.getArtifact().getIsEvidenceMarkedFlow();
+    }
+
     public Artifact createEvidence(EvidenceRequest body) {
         try {
 
@@ -66,9 +72,6 @@ public class EvidenceService {
 
             // Enrich applications
             evidenceEnrichment.enrichEvidenceRegistration(body);
-            if (body.getArtifact().getIsEvidence().equals(true)) {
-                evidenceEnrichment.enrichEvidenceNumber(body);
-            }
 
 
             // Initiate workflow for the new application- //todo witness deposition is part of case filing or not
@@ -131,7 +134,7 @@ public class EvidenceService {
     }
 
     private void enrichEvidenceSearch(RequestInfo requestInfo, EvidenceSearchCriteria searchCriteria) {
-        if(requestInfo.getUserInfo() != null) {
+        if(requestInfo != null && requestInfo.getUserInfo() != null) {
             User userInfo = requestInfo.getUserInfo();
             String userType = userInfo.getType();
             switch (userType.toUpperCase()) {
@@ -182,9 +185,7 @@ public class EvidenceService {
             }
 
 
-            if ((evidenceRequest.getArtifact().getArtifactType() != null &&
-                    evidenceRequest.getArtifact().getArtifactType().equals(DEPOSITION)) ||
-                    (filingType!= null && evidenceRequest.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION)) || evidenceRequest.getArtifact().getIsEvidenceMarkedFlow()) {
+            if (shouldUpdateWorkflowStatusForUpdate(evidenceRequest, filingType)) {
                 workflowService.updateWorkflowStatus(evidenceRequest, filingType);
                 enrichBasedOnStatus(evidenceRequest);
                 producer.push(config.getUpdateEvidenceKafkaTopic(), evidenceRequest);
@@ -207,18 +208,14 @@ public class EvidenceService {
         // Throw exception if evidence number exists
         EvidenceSearchCriteria criteria = EvidenceSearchCriteria.builder()
                 .filingNumber(body.getArtifact().getFilingNumber())
+                .evidenceNumber(body.getArtifact().getEvidenceNumber())
                 .evidenceStatus(true)
                 .build();
         Pagination pagination = Pagination.builder()
                 .build();
-        List<Artifact> caseArtifacts = searchEvidence(body.getRequestInfo(), criteria, pagination);
-        if(!ObjectUtils.isEmpty(caseArtifacts)){
-            List <String> caseEvidenceNumbers = caseArtifacts.stream()
-                    .map(Artifact::getEvidenceNumber)
-                    .toList();
-            if(caseEvidenceNumbers.contains(body.getArtifact().getEvidenceNumber())){
-                throw new CustomException(EVIDENCE_NUMBER_EXISTS_EXCEPTION, String.format("Evidence Number %s already exists for case: %s", body.getArtifact().getEvidenceNumber(), body.getArtifact().getFilingNumber()));
-            }
+        List<Artifact> artifactsList = searchEvidence(body.getRequestInfo(), criteria, pagination);
+        if(!artifactsList.isEmpty()){
+            throw new CustomException(EVIDENCE_NUMBER_EXISTS_EXCEPTION, String.format("Evidence Number %s already exists for case: %s", body.getArtifact().getEvidenceNumber(), body.getArtifact().getFilingNumber()));
         }
     }
 
@@ -233,11 +230,7 @@ public class EvidenceService {
 
     void enrichBasedOnStatus(EvidenceRequest evidenceRequest) {
         String status = evidenceRequest.getArtifact().getStatus();
-        if (PUBLISHED_STATE.equalsIgnoreCase(status)) {
-            evidenceEnrichment.enrichEvidenceNumber(evidenceRequest);
-        } else if (ABATED_STATE.equalsIgnoreCase(status)) {
-            evidenceEnrichment.enrichIsActive(evidenceRequest);
-        } else if(DELETED_STATE.equalsIgnoreCase(status)){
+        if (ABATED_STATE.equalsIgnoreCase(status) || DELETED_STATE.equalsIgnoreCase(status)) {
             evidenceEnrichment.enrichIsActive(evidenceRequest);
         }
     }

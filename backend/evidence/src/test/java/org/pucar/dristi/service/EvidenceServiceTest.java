@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.EvidenceEnrichment;
@@ -31,6 +32,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.pucar.dristi.config.ServiceConstants.COMMENT_ADD_ERR;
+import static org.pucar.dristi.config.ServiceConstants.EMPLOYEE_UPPER;
 
 @ExtendWith(MockitoExtension.class)
 class EvidenceServiceTest {
@@ -59,6 +61,7 @@ class EvidenceServiceTest {
     @Mock
     private ObjectMapper objectMapper;
 
+    @Spy
     @InjectMocks
     private EvidenceService evidenceService;
 
@@ -168,15 +171,6 @@ class EvidenceServiceTest {
         Artifact result = evidenceService.validateExistingEvidence(evidenceRequest);
 
         assertEquals(artifact, result);
-    }
-
-    @Test
-    void testEnrichBasedOnStatus_Published() {
-        artifact.setStatus("PUBLISHED");
-
-        evidenceService.enrichBasedOnStatus(evidenceRequest);
-
-        verify(evidenceEnrichment).enrichEvidenceNumber(evidenceRequest);
     }
 
     @Test
@@ -326,5 +320,52 @@ class EvidenceServiceTest {
         assertEquals(1, result.size());
         assertTrue(result.contains("IND-123"));
     }
+
+    @Test
+    void shouldThrowExceptionIfEvidenceNumberExists() {
+        EvidenceRequest request = buildEvidenceRequest("FN123", "EV123");
+        Artifact artifact = new Artifact(); // mock artifact
+
+        // Simulate duplicate found
+        when(evidenceService.searchEvidence(any(), any(), any()))
+                .thenReturn(List.of(artifact));
+
+
+        CustomException ex = assertThrows(CustomException.class, () -> {
+            evidenceService.checkUniqueEvidenceNumberForCase(request);
+        });
+
+        assertTrue(ex.getMessage().contains("Evidence Number EV123 already exists for case: FN123"));
+    }
+
+
+    @Test
+    void shouldNotThrowExceptionIfEvidenceNumberIsUnique() {
+        EvidenceRequest request = buildEvidenceRequest("FN123", "EV123");
+        when(evidenceService.searchEvidence(any(), any(), any()))
+                .thenReturn(Collections.emptyList()); // simulate no duplicates
+
+        assertDoesNotThrow(() -> evidenceService.checkUniqueEvidenceNumberForCase(request));
+    }
+
+    // Utility method to build test data
+    private EvidenceRequest buildEvidenceRequest(String filingNumber, String evidenceNumber) {
+        Artifact artifact = new Artifact();
+        artifact.setFilingNumber(filingNumber);
+        artifact.setEvidenceNumber(evidenceNumber);
+
+        RequestInfo requestInfo = new RequestInfo();
+        User user = User.builder()
+                .type(EMPLOYEE_UPPER)
+                .build();
+        requestInfo.setUserInfo(user);
+
+        EvidenceRequest request = new EvidenceRequest();
+        request.setArtifact(artifact);
+        request.setRequestInfo(requestInfo);
+
+        return request;
+    }
+
 
 }
