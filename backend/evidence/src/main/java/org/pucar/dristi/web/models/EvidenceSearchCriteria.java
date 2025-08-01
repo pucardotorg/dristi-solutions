@@ -40,6 +40,7 @@ public class EvidenceSearchCriteria {
     private String sourceType;
     private Boolean fuzzySearch = true;
     private List<String> workflowStatus = new ArrayList<>();
+    private String evidenceNumber;
 
     @JsonIgnore
     private String userUuid;

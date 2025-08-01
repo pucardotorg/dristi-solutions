@@ -123,8 +123,9 @@ public class Configuration {
 	@Value("${egov.workflow.witness.deposition.businessservice.name}")
 	private String witnessDepositionBusinessServiceName;
 
-	@Value("${egov.workflow.witness.deposition.businessservice.module}")
-	private String witnessDepositionBusinessServiceModule;
+	@Value("${egov.workflow.evidence.businessservice.name}")
+	private String evidenceBusinessServiceName;
+
 	// Case Config
 	@Value("${egov.case.host}")
 	private String caseHost;
