@@ -728,6 +728,7 @@ public class CaseService {
         hearingUpdateRequest.put("courtCaseNumber", caseRequest.getCases().getCourtCaseNumber());
         hearingUpdateRequest.put("caseTitle", caseRequest.getCases().getCaseTitle());
         hearingUpdateRequest.put("tenantId", caseRequest.getCases().getTenantId());
+        hearingUpdateRequest.put("courtId", caseRequest.getCases().getCourtId());
         return hearingUpdateRequest;
     }
 
