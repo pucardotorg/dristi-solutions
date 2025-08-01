@@ -36,6 +36,9 @@ import org.pucar.dristi.web.models.analytics.Outcome;
 import org.pucar.dristi.web.models.task.Task;
 import org.pucar.dristi.web.models.task.TaskRequest;
 import org.pucar.dristi.web.models.task.TaskResponse;
+import org.pucar.dristi.web.models.v2.WitnessDetails;
+import org.pucar.dristi.web.models.v2.WitnessDetailsRequest;
+import org.pucar.dristi.web.models.v2.WitnessDetailsResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -5149,4 +5152,81 @@ public class CaseService {
     public Integer getCaseCount(CaseSearchRequest caseSearchRequest) {
         return caseRepository.getCaseCount(caseSearchRequest);
     }
+
+    public WitnessDetailsResponse addWitnessToCase(@Valid WitnessDetailsRequest body) {
+        try {
+            log.info("operation=addWitnessToCase, status=IN_PROGRESS, filingNumber: {}", body.getCaseFilingNumber());
+            CaseCriteria caseCriteria = CaseCriteria.builder()
+                    .filingNumber(body.getCaseFilingNumber())
+                    .defaultFields(false)
+                    .build();
+            List<CaseCriteria> courtCaseList = caseRepository.getCases(Collections.singletonList(caseCriteria), body.getRequestInfo());
+            if (courtCaseList.isEmpty() || courtCaseList.get(0).getResponseList().isEmpty()) {
+                throw new CustomException(INVALID_CASE,"No case found for filing number "+body.getCaseFilingNumber());
+            }
+            CourtCase courtCase = encryptionDecryptionUtil.decryptObject(courtCaseList.get(0).getResponseList().get(0), config.getCaseDecryptSelf(), CourtCase.class, body.getRequestInfo());
+            validator.validateWitnessRequest(body, courtCase);
+            updateCaseAdditionalDetails(body.getWitnessDetails(), courtCase);
+            CourtCase caseObj = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
+            updateCourtCaseInRedis(body.getTenantId(), caseObj);
+            producer.push(config.getCaseUpdateTopic(), CaseRequest.builder().requestInfo(body.getRequestInfo()).cases(caseObj).build());
+            log.info("operation=addWitnessToCase, status=SUCCESS, filingNumber: {}", body.getCaseFilingNumber());
+            return WitnessDetailsResponse.builder().witnessDetails(body.getWitnessDetails()).build();
+        } catch (Exception e) {
+            log.error("operation=addWitnessToCase, status=FAILURE, filingNumber: {}, error: {}", body.getCaseFilingNumber(), e.getMessage());
+            throw new CustomException(ERROR_ADDING_WITNESS, "Error while adding witness to case: " + body.getCaseFilingNumber() + ", error: " + e.getMessage());
+        }
+    }
+
+    private void updateCaseAdditionalDetails(List<WitnessDetails> updatedWitnessDetails, CourtCase courtCase) {
+        if (updatedWitnessDetails == null || courtCase == null) {
+            log.warn("WitnessDetails or CourtCase is null, skipping enrichment.");
+            return;
+        }
+        ObjectNode additionalDetailsNode = objectMapper.convertValue(courtCase.getAdditionalDetails(), ObjectNode.class);
+
+        ObjectNode witnessDetailsNode = additionalDetailsNode.withObject("/witnessDetails");
+
+        ArrayNode formdataArray = (ArrayNode) witnessDetailsNode.get("formdata");
+        if (formdataArray == null || !formdataArray.isArray()) {
+            formdataArray = objectMapper.createArrayNode();
+            witnessDetailsNode.set("formdata", formdataArray);
+        }
+
+        for(WitnessDetails witnessDetails : updatedWitnessDetails) {
+            String uniqueId = witnessDetails.getUniqueId();
+            boolean found = false;
+
+            // Check if uniqueId already exists in the formdata array
+            for (int i = 0; i < formdataArray.size(); i++) {
+                JsonNode existingNode = formdataArray.get(i);
+                if (existingNode.has("uniqueId") &&
+                        uniqueId != null &&
+                        uniqueId.equals(existingNode.get("uniqueId").asText())) {
+
+                    // Update existing record - replace the data field
+                    ObjectNode existingObjectNode = (ObjectNode) existingNode;
+                    JsonNode updatedDataNode = objectMapper.convertValue(witnessDetails, JsonNode.class);
+                    existingObjectNode.set("data", updatedDataNode);
+                    found = true;
+                    log.debug("Updated existing witness record with uniqueId: {}", uniqueId);
+                    break;
+                }
+            }
+
+            // If uniqueId not found, add new record
+            if (!found) {
+                JsonNode dataNode = objectMapper.convertValue(witnessDetails, JsonNode.class);
+                ObjectNode dataWrapperNode = objectMapper.createObjectNode();
+                dataWrapperNode.set("data", dataNode);
+                dataWrapperNode.put("uniqueId", uniqueId);
+                dataWrapperNode.put("isenabled", true);
+                dataWrapperNode.put("displayindex", 0);
+                formdataArray.add(dataWrapperNode);
+                log.debug("Added new witness record with uniqueId: {}", uniqueId);
+            }
+        }
+        courtCase.setAdditionalDetails(additionalDetailsNode);
+    }
+
 }

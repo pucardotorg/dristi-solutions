@@ -40,6 +40,9 @@ import org.pucar.dristi.web.models.*;
 import org.pucar.dristi.web.models.task.Task;
 import org.pucar.dristi.web.models.task.TaskRequest;
 import org.pucar.dristi.web.models.task.TaskResponse;
+import org.pucar.dristi.web.models.v2.WitnessDetails;
+import org.pucar.dristi.web.models.v2.WitnessDetailsRequest;
+import org.pucar.dristi.web.models.v2.WitnessDetailsResponse;
 import org.springframework.web.client.RestTemplate;
 
 @ExtendWith(MockitoExtension.class)
@@ -1389,6 +1392,127 @@ public class CaseServiceTest {
         assertFalse(result.isEmpty());
         assertEquals(1, result.size());
         assertTrue(result.contains("IND-123"));
+    }
+
+    @Test
+    void testAddWitnessToCase_Success() {
+        // Setup
+        WitnessDetailsRequest request = createWitnessDetailsRequest();
+        CourtCase courtCase = createCourtCase();
+        CaseCriteria caseCriteria = CaseCriteria.builder()
+                .responseList(Collections.singletonList(courtCase))
+                .defaultFields(false)
+                .build();
+        
+        // Mock dependencies
+        when(caseRepository.getCases(any(), any())).thenReturn(List.of(caseCriteria));
+        when(encryptionDecryptionUtil.decryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class), any()))
+                .thenReturn(courtCase);
+        when(encryptionDecryptionUtil.encryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class)))
+                .thenReturn(courtCase);
+        when(config.getCaseDecryptSelf()).thenReturn("decrypt-key");
+        when(config.getCourtCaseEncrypt()).thenReturn("encryption-key");
+        when(config.getCaseUpdateTopic()).thenReturn("case-update-topic");
+        doNothing().when(validator).validateWitnessRequest(any(), any());
+        doNothing().when(cacheService).save(anyString(), any());
+        doNothing().when(producer).push(anyString(), any());
+        
+        // Execute
+        WitnessDetailsResponse response = caseService.addWitnessToCase(request);
+        
+        // Verify
+        assertNotNull(response);
+        assertNotNull(response.getWitnessDetails());
+        assertEquals(request.getWitnessDetails().get(0).getFirstName(), response.getWitnessDetails().get(0).getFirstName());
+        assertEquals(request.getWitnessDetails().get(0).getLastName(), response.getWitnessDetails().get(0).getLastName());
+        
+        verify(caseRepository, times(1)).getCases(any(), any());
+        verify(encryptionDecryptionUtil, times(1)).decryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class), any());
+        verify(validator, times(1)).validateWitnessRequest(eq(request), any(CourtCase.class));
+        verify(encryptionDecryptionUtil, times(1)).encryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class));
+        verify(cacheService, times(1)).save(anyString(), any(CourtCase.class));
+        verify(producer, times(1)).push(eq("case-update-topic"), any(CaseRequest.class));
+    }
+
+    @Test
+    void testAddWitnessToCase_CaseNotFound() {
+        // Setup
+        WitnessDetailsRequest request = createWitnessDetailsRequest();
+        CaseCriteria caseCriteria = CaseCriteria.builder()
+                .responseList(Collections.emptyList())
+                .defaultFields(false)
+                .build();
+        
+        // Mock empty case list
+        when(caseRepository.getCases(any(), any())).thenReturn(List.of(caseCriteria));
+
+        // Execute & Verify
+        CustomException exception = assertThrows(CustomException.class, () -> caseService.addWitnessToCase(request));
+        
+        assertEquals(ERROR_ADDING_WITNESS, exception.getCode());
+        assertTrue(exception.getMessage().contains("Error while adding witness to case"));
+        
+        verify(caseRepository, times(1)).getCases(any(), any());
+        verify(validator, never()).validateWitnessRequest(any(), any());
+        verify(producer, never()).push(anyString(), any());
+    }
+
+    @Test
+    void testAddWitnessToCase_NullWitnessDetails() {
+        // Setup
+        WitnessDetailsRequest request = createWitnessDetailsRequest();
+        request.setWitnessDetails(null);
+        CourtCase courtCase = createCourtCase();
+        CaseCriteria caseCriteria = CaseCriteria.builder()
+                .responseList(Collections.singletonList(courtCase))
+                .defaultFields(false)
+                .build();
+        
+        when(caseRepository.getCases(any(), any())).thenReturn(List.of(caseCriteria));
+        when(encryptionDecryptionUtil.decryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class), any()))
+                .thenReturn(courtCase);
+        when(encryptionDecryptionUtil.encryptObject(any(CourtCase.class), anyString(), eq(CourtCase.class)))
+                .thenReturn(courtCase);
+        when(config.getCaseDecryptSelf()).thenReturn("decrypt-key");
+        when(config.getCourtCaseEncrypt()).thenReturn("encryption-key");
+        when(config.getCaseUpdateTopic()).thenReturn("case-update-topic");
+        doNothing().when(validator).validateWitnessRequest(any(), any());
+        doNothing().when(cacheService).save(anyString(), any());
+        doNothing().when(producer).push(anyString(), any());
+        
+        // Execute
+        WitnessDetailsResponse response = caseService.addWitnessToCase(request);
+        
+        // Verify
+        assertNotNull(response);
+        assertNull(response.getWitnessDetails());
+        
+        verify(validator, times(1)).validateWitnessRequest(eq(request), any(CourtCase.class));
+        verify(producer, times(1)).push(anyString(), any());
+    }
+
+    // Helper methods for test data creation
+    private WitnessDetailsRequest createWitnessDetailsRequest() {
+        WitnessDetails witnessDetails = new WitnessDetails();
+        witnessDetails.setFirstName("John");
+        witnessDetails.setLastName("Doe");
+        witnessDetails.setMiddleName("Smith");
+        
+        return WitnessDetailsRequest.builder()
+                .requestInfo(requestInfo)
+                .caseFilingNumber("CASE-2024-001")
+                .tenantId("pb.amritsar")
+                .witnessDetails(Collections.singletonList(witnessDetails))
+                .build();
+    }
+
+    private CourtCase createCourtCase() {
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setFilingNumber("CASE-2024-001");
+        courtCase.setTenantId("pb.amritsar");
+        courtCase.setAdditionalDetails(new HashMap<>());
+        return courtCase;
     }
 
 }
