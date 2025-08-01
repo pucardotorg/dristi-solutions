@@ -147,7 +147,7 @@ public class PendingTaskUtil {
 
         return switch (taskType) {
             case SUMMON -> "task-summons";
-            case WARRANT -> "task-warrant";
+            case WARRANT, PROCLAMATION -> "task-warrant";
             case NOTICE -> "task-notice";
             default -> null;
         };

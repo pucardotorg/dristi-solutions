@@ -94,7 +94,17 @@ public class PdfServiceUtil {
                 }
             }
 
-            if (taskRequest.getTask().getTaskType().equalsIgnoreCase(SUMMON) || taskRequest.getTask().getTaskType().equalsIgnoreCase(NOTICE) || taskRequest.getTask().getTaskType().equalsIgnoreCase(WARRANT)) {
+            if (PROCLAMATION.equalsIgnoreCase(taskRequest.getTask().getTaskType())) {
+                String executorName = getExecutorName(taskRequest);
+                var proclamationDetails = taskRequest.getTask().getTaskDetails().getProclamationDetails();
+                summonsPdf.setExecutorName(executorName);
+
+                if(GENERIC.equals(proclamationDetails.getTemplateType())){
+                    summonsPdf.setProclamationText(proclamationDetails.getProclamationText());
+                }
+            }
+
+            if (taskRequest.getTask().getTaskType().equalsIgnoreCase(SUMMON) || taskRequest.getTask().getTaskType().equalsIgnoreCase(NOTICE) || taskRequest.getTask().getTaskType().equalsIgnoreCase(WARRANT) || taskRequest.getTask().getTaskType().equalsIgnoreCase(PROCLAMATION)) {
                 CaseSearchRequest caseSearchRequest = createCaseSearchRequest(taskRequest.getRequestInfo(), taskRequest.getTask());
                 JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
                 String accessCode = caseDetails.has("accessCode") ? caseDetails.get("accessCode").asText() : "";
@@ -178,6 +188,10 @@ public class PdfServiceUtil {
             issueDate = task.getTaskDetails().getWarrantDetails().getIssueDate();
             docSubType = task.getTaskDetails().getWarrantDetails().getDocSubType();
         }
+        else if(PROCLAMATION.equals(task.getTaskType())){
+            issueDate = task.getTaskDetails().getProclamationDetails().getIssueDate();
+        }
+
         String issueDateString = Optional.ofNullable(issueDate)
                 .map(this::formatDateFromMillis)
                 .orElse("");

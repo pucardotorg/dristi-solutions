@@ -107,6 +107,9 @@ public class Configuration {
 	@Value("${egov.workflow.submission.businessservice.module}")
 	private String submissionBusinessServiceModule;
 
+	@Value("${egov.workflow.evidence.businessservice.name}")
+	private String evidenceBusinessServiceName;
+
 	// Case Config
 	@Value("${egov.case.host}")
 	private String caseHost;
