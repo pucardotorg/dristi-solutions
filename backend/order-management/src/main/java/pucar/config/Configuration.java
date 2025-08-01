@@ -114,6 +114,8 @@ public class Configuration {
     @Value("${dristi.case.process.profile.endpoint}")
     private String processProfileEndPoint;
 
+    @Value("${dristi.case.add.witness.endpoint}")
+    private String addWitnessEndPoint;
 
     //Hearing config
     @Value("${dristi.hearing.host}")
