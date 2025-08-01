@@ -2850,10 +2850,10 @@ const AdmittedCaseV2 = () => {
         value: "SUBMIT_DOCUMENTS",
         label: "Submit Documents",
       },
-      {
-        value: "GENERATE_BAIL_BOND",
-        label: "Generate Bail Bond",
-      },
+      // {
+      //   value: "GENERATE_BAIL_BOND",
+      //   label: "Generate Bail Bond",
+      // },
     ],
     []
   );
