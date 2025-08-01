@@ -166,7 +166,7 @@ public class InboxUtil {
                 .processSearchCriteria(processSearchCriteria)
                 .moduleSearchCriteria(moduleSearchCriteria)
                 .tenantId(configuration.getEgovStateTenantId())
-                .limit(Integer.MAX_VALUE)
+                .limit(300)
                 .offset(0)
                 .build();
 
