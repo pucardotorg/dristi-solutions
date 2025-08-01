@@ -75,6 +75,7 @@ import CustomCalendarV2 from "./components/CustomCalendarV2";
 import SelectCustomGroupedDropdown from "./components/SelectCustomGroupedDropdown";
 import SuretyComponent from "./components/SuretyComponent";
 import EditSendBackModal from "./components/EditSendBackModal";
+import DownloadButton from "./components/DownloadButton";
 
 export const DRISTIModule = ({ stateCode, userType, tenants }) => {
   const Digit = useMemo(() => window?.Digit || {}, []);
@@ -213,7 +214,8 @@ const componentsToRegister = {
   SelectCustomFormatterTextArea,
   SelectCustomGroupedDropdown,
   SuretyComponent,
-  EditSendBackModal
+  EditSendBackModal,
+  DownloadButton,
 };
 
 const overrideHooks = () => {

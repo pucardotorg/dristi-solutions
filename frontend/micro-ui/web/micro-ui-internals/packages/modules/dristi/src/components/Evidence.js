@@ -2,7 +2,7 @@ import React from "react";
 import { FactCheckIcon, FactCrossIcon } from "../icons/svgIndex";
 import ReactTooltip from "react-tooltip";
 
-export const Evidence = ({ rowData, colData, value = "", showAsHeading = false, t, userRoles, isBail=false }) => {
+export const Evidence = ({ rowData, colData, value = "", showAsHeading = false, t, userRoles, isBail = false }) => {
   const getDate = (value) => {
     const date = new Date(value);
     const day = date.getDate().toString().padStart(2, "0");
@@ -33,7 +33,7 @@ export const Evidence = ({ rowData, colData, value = "", showAsHeading = false, 
       },
       comments: rowData?.comments,
       artifactList: rowData,
-      isBail:isBail,
+      isBail: isBail,
     },
   ];
 
@@ -41,7 +41,13 @@ export const Evidence = ({ rowData, colData, value = "", showAsHeading = false, 
 
   return (
     <React.Fragment>
-      <div className="fack-check-icon" onClick={() => colData?.clickFunc(docObj)}>
+      <div
+        className="fack-check-icon"
+        onClick={() => {
+          debugger;
+          colData?.clickFunc(docObj);
+        }}
+      >
         {userRoles?.includes("JUDGE_ROLE") && (
           <ReactTooltip id={`mark-unmark-tooltip-${rowData.artifactNumber}`} place="left">
             {t(rowData.isEvidence ? "UNMARK_EVIDENCE_TOOLTIP" : "MARK_EVIDENCE_TOOLTIP")}

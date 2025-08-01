@@ -41,7 +41,9 @@ const EvidenceModal = ({
   setIsDelayApplicationPending,
   currentDiaryEntry,
   artifact,
+  setShowMakeAsEvidenceModal,
 }) => {
+  debugger;
   const [comments, setComments] = useState(documentSubmission[0]?.comments ? documentSubmission[0].comments : artifact?.comments || []);
   const [showConfirmationModal, setShowConfirmationModal] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(null);
@@ -1088,7 +1090,16 @@ const EvidenceModal = ({
         await handleApplicationAction(true, "accept");
       } else if (modalType === "Submissions" && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION") {
         await handleApplicationAction(true, "accept");
-      } else modalType === "Documents" ? setShowConfirmationModal({ type: "documents-confirmation" }) : setShowConfirmationModal({ type: "accept" });
+      } else {
+        debugger;
+        if (modalType === "Documents") {
+          setShow(false);
+          setShowMakeAsEvidenceModal(true);
+        } else {
+          setShowConfirmationModal({ type: "accept" });
+        }
+        // modalType === "Documents" ? setShowConfirmationModal({ type: "documents-confirmation" }) :;
+      }
     } else {
       if (actionSaveLabel === t("ADD_COMMENT")) {
         try {

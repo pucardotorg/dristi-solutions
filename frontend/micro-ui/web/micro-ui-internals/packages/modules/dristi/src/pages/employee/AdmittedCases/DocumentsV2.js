@@ -80,6 +80,7 @@ const DocumentsV2 = ({
           }
         }
       } else {
+        debugger;
         const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
         const status = docObj?.[0]?.applicationList?.status;
         const createdByUuid = docObj?.[0]?.applicationList?.statuteSection?.auditdetails?.createdBy;
@@ -148,6 +149,7 @@ const DocumentsV2 = ({
       ];
       if ("mark_as_evidence" === item.id || "unmark_as_evidence" === item.id) {
         setSelectedRow(row);
+        setDocumentSubmission(docObj);
         setSelectedItem(item); // Store row before showing the modal
         setShowConfirmationModal(true);
       } else if ("mark_as_void" === item.id || "view_reason_for_voiding" === item.id) {

@@ -425,6 +425,10 @@ const MainHomeScreen = () => {
           <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
             <BulkBailBondSignView showToast={showToast} />
           </div>
+        ) : activeTab === "BULK_EVIDENCE_SIGN" ? (
+          <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
+            <BulkBailBondSignView showToast={showToast} />
+          </div>
         ) : (
           <div className="inbox-search-wrapper" style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
             {inboxSearchComposer}

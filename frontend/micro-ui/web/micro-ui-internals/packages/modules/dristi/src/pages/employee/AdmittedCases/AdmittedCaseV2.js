@@ -55,6 +55,7 @@ import WorkflowTimeline from "../../../components/WorkflowTimeline";
 import CaseOverviewV2 from "./CaseOverviewV2";
 import PaymentDemandModal from "./PaymentDemandModal";
 import DocumentsV2 from "./DocumentsV2";
+import MarkAsEvidence from "./MarkAsEvidence";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -227,6 +228,7 @@ const AdmittedCaseV2 = () => {
   const [showPaymentConfirmationModal, setShowPaymentConfirmationModal] = useState(false);
   const [showAllStagesModal, setShowAllStagesModal] = useState(false);
   const [showBailBondModal, setShowBailBondModal] = useState(false);
+  const [showMakeAsEvidenceModal, setShowMakeAsEvidenceModal] = useState(false);
   const [isBailBondTaskExists, setIsBailBondTaskExists] = useState(false);
   const [bailBondLoading, setBailBondLoading] = useState(false);
 
@@ -1470,73 +1472,73 @@ const AdmittedCaseV2 = () => {
     }
   };
 
-  useEffect(() => {
-    const getOwnerName = async (artifact) => {
-      if (artifact?.sourceType === "COURT") {
-        if (artifact.sourceID === undefined) {
-          return "NA";
-        }
-        const owner = await Digit.UserService.userSearch(tenantId, { uuid: [artifact?.sourceID] }, {});
-        if (owner?.user?.length > 1) return "";
-        return `${owner?.user?.[0]?.name}`.trim();
-      } else {
-        if (artifact?.sourceID === undefined) {
-          return "NA";
-        }
-        const owner = await DRISTIService.searchIndividualUser(
-          {
-            Individual: {
-              individualId: artifact?.sourceID,
-            },
-          },
-          { tenantId, limit: 1000, offset: 0 }
-        );
-        return `${owner?.Individual[0]?.name?.givenName} ${owner[0]?.Individual[0]?.name?.familyName || ""}`.trim();
-      }
-    };
-    const fetchEvidence = async () => {
-      try {
-        const response = await DRISTIService.searchEvidence(
-          {
-            criteria: {
-              filingNumber: filingNumber,
-              artifactNumber: artifactNumber,
-              tenantId: tenantId,
-              ...(caseCourtId && { courtId: caseCourtId }),
-            },
-            tenantId,
-          },
-          {}
-        );
+  // useEffect(() => {
+  //   const getOwnerName = async (artifact) => {
+  //     if (artifact?.sourceType === "COURT") {
+  //       if (artifact.sourceID === undefined) {
+  //         return "NA";
+  //       }
+  //       const owner = await Digit.UserService.userSearch(tenantId, { uuid: [artifact?.sourceID] }, {});
+  //       if (owner?.user?.length > 1) return "";
+  //       return `${owner?.user?.[0]?.name}`.trim();
+  //     } else {
+  //       if (artifact?.sourceID === undefined) {
+  //         return "NA";
+  //       }
+  //       const owner = await DRISTIService.searchIndividualUser(
+  //         {
+  //           Individual: {
+  //             individualId: artifact?.sourceID,
+  //           },
+  //         },
+  //         { tenantId, limit: 1000, offset: 0 }
+  //       );
+  //       return `${owner?.Individual[0]?.name?.givenName} ${owner[0]?.Individual[0]?.name?.familyName || ""}`.trim();
+  //     }
+  //   };
+  //   // const fetchEvidence = async () => {
+  //   //   try {
+  //   //     const response = await DRISTIService.searchEvidence(
+  //   //       {
+  //   //         criteria: {
+  //   //           filingNumber: filingNumber,
+  //   //           artifactNumber: artifactNumber,
+  //   //           tenantId: tenantId,
+  //   //           ...(caseCourtId && { courtId: caseCourtId }),
+  //   //         },
+  //   //         tenantId,
+  //   //       },
+  //   //       {}
+  //   //     );
 
-        const uniqueArtifactsMap = new Map();
-        response?.artifacts?.forEach((artifact) => {
-          if (!uniqueArtifactsMap.has(artifact.sourceID)) {
-            uniqueArtifactsMap.set(artifact.sourceID, artifact);
-          }
-        });
-        const uniqueArtifacts = Array.from(uniqueArtifactsMap.values());
+  //   //     const uniqueArtifactsMap = new Map();
+  //   //     response?.artifacts?.forEach((artifact) => {
+  //   //       if (!uniqueArtifactsMap.has(artifact.sourceID)) {
+  //   //         uniqueArtifactsMap.set(artifact.sourceID, artifact);
+  //   //       }
+  //   //     });
+  //   //     const uniqueArtifacts = Array.from(uniqueArtifactsMap.values());
 
-        const ownerNames = await Promise.all(
-          uniqueArtifacts?.map(async (artifact) => {
-            const ownerName = await getOwnerName(artifact);
-            return { owner: ownerName, sourceID: artifact.sourceID };
-          })
-        );
-        const evidence = response?.artifacts?.map((artifact) => {
-          const ownerName = ownerNames?.find((item) => item.sourceID === artifact.sourceID)?.owner;
-          return { artifact, owner: ownerName };
-        });
-        setArtifacts(evidence);
-      } catch (error) {
-        console.error("Error fetching evidence:", error);
-      }
-    };
-    if (activeTab === "Documents") {
-      // There is no need to set Artifacts now, so commenting the fetchEvidence function call but keeping the code.
-      // fetchEvidence();
-    }
-  }, [filingNumber, artifactNumber, tenantId, activeTab]);
+  //   //     const ownerNames = await Promise.all(
+  //   //       uniqueArtifacts?.map(async (artifact) => {
+  //   //         const ownerName = await getOwnerName(artifact);
+  //   //         return { owner: ownerName, sourceID: artifact.sourceID };
+  //   //       })
+  //   //     );
+  //   //     const evidence = response?.artifacts?.map((artifact) => {
+  //   //       const ownerName = ownerNames?.find((item) => item.sourceID === artifact.sourceID)?.owner;
+  //   //       return { artifact, owner: ownerName };
+  //   //     });
+  //   //     setArtifacts(evidence);
+  //   //   } catch (error) {
+  //   //     console.error("Error fetching evidence:", error);
+  //   //   }
+  //   // };
+  //   if (activeTab === "Documents") {
+  //     // There is no need to set Artifacts now, so commenting the fetchEvidence function call but keeping the code.
+  //     // fetchEvidence();
+  //   }
+  // }, [filingNumber, artifactNumber, tenantId, activeTab]);
 
   useEffect(() => {
     if (
@@ -3211,7 +3213,7 @@ const AdmittedCaseV2 = () => {
         // handleFilingAction={handleFilingAction}
       />
     );
-  }, [caseDetails, courtId, tenantId, filingNumber, cnrNumber, setDocumentSubmission, setShow]);
+  }, [caseDetails, courtId, tenantId, filingNumber, caseId, cnrNumber]);
 
   const caseTimeLine = useMemo(() => {
     return (
@@ -3608,6 +3610,7 @@ const AdmittedCaseV2 = () => {
           setIsDelayApplicationPending={setIsDelayApplicationPending}
           currentDiaryEntry={currentDiaryEntry}
           artifact={artifact}
+          setShowMakeAsEvidenceModal={setShowMakeAsEvidenceModal}
         />
       )}
       {showOrderReviewModal && (
@@ -3778,7 +3781,17 @@ const AdmittedCaseV2 = () => {
         />
       )}
       {showConfirmationModal && (
-        <ConfirmEvidenceAction
+        <MarkAsEvidence
+          t={t}
+          selectedItem={selectedItem}
+          selectedRow={selectedRow}
+          documentSubmission={documentSubmission}
+          isEvidenceLoading={false}
+          handleAction={handleEvidenceAction}
+          setShowMakeAsEvidenceModal={setShowConfirmationModal}
+        />
+      )}
+      {/* <ConfirmEvidenceAction
           t={t}
           setShowConfirmationModal={setShowConfirmationModal}
           type={showConfirmationModal.type}
@@ -3788,7 +3801,7 @@ const AdmittedCaseV2 = () => {
           isEvidence={documentSubmission?.[0]?.artifactList?.isEvidence}
           isFromActions={true}
         />
-      )}
+      )} */}
       {showCalendarModal && (
         <Modal
           headerBarMain={<Heading label={t("CS_CASE_VIEW_CALENDAR")} />}
@@ -4014,6 +4027,17 @@ const AdmittedCaseV2 = () => {
             <div style={{ margin: "16px 16px" }}>{t("TASK_ALREADY_EXISTS_TEXT")}</div>
           </Modal>
         ))}
+      {showMakeAsEvidenceModal && (
+        <MarkAsEvidence
+          t={t}
+          selectedItem={selectedItem}
+          selectedRow={selectedRow}
+          documentSubmission={documentSubmission}
+          isEvidenceLoading={false}
+          handleAction={handleEvidenceAction}
+          setShowMakeAsEvidenceModal={setShowConfirmationModal}
+        />
+      )}
     </div>
   );
 };

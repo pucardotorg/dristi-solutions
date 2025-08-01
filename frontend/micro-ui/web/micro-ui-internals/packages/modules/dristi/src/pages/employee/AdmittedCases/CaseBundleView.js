@@ -9,6 +9,8 @@ import { Urls } from "../../../hooks";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import { Loader } from "@egovernments/digit-ui-react-components";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
+import MarkAsEvidence from "./MarkAsEvidence";
+import DownloadButton from "../../../components/DownloadButton";
 
 function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const [expandedItems, setExpandedItems] = useState({
@@ -234,15 +236,48 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     filingNumber + "applicationEvidence",
     filingNumber
   );
+  const {
+    data: completeEvidenceData,
+    isLoading: isCompleteEvidenceLoading, // renamed to match convention and fix lint warning
+    refetch: completeEvidenceRefetch,
+  } = Digit.Hooks.submissions.useSearchEvidenceService(
+    {
+      criteria: {
+        courtId: courtId,
+        filingNumber: filingNumber,
+        tenantId,
+      },
+      pagination: {
+        sortBy: "createdTime",
+        order: "asc",
+        limit: 100,
+      },
+    },
+    {},
+    filingNumber + "completeEvidence",
+    filingNumber
+  );
+  console.log("completeEvidenceData", completeEvidenceData);
 
   const combinedEvidenceList = useMemo(() => {
     const directEvidenceList = directEvidenceData?.artifacts || [];
     const applicationEvidenceList = applicationEvidenceData?.artifacts || [];
 
-    const newEvidenceList = [...directEvidenceList, ...applicationEvidenceList];
-
-    return newEvidenceList.sort((a, b) => a?.auditdetails?.createdTime - b?.auditdetails?.createdTime);
+    return [...directEvidenceList, ...applicationEvidenceList];
   }, [directEvidenceData, applicationEvidenceData]);
+
+  // Create a map of fileStoreId to evidence data for quick lookups
+  const evidenceFileStoreMap = useMemo(() => {
+    const map = new Map();
+    if (completeEvidenceData?.artifacts && Array.isArray(completeEvidenceData?.artifacts)) {
+      completeEvidenceData.artifacts.forEach((evidence) => {
+        if (evidence?.file?.fileStore) {
+          map.set(evidence.file.fileStore, evidence);
+        }
+      });
+    }
+    return map;
+  }, [completeEvidenceData]);
 
   const { data: ordersData, isLoading: isMandatoryOrdersLoading } = Digit.Hooks.dristi.useGetOrders(
     {
@@ -1290,6 +1325,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           accusedEvidenceRefetch();
           courtEvidenceRefetch();
           courtDepositionRefetch();
+          completeEvidenceRefetch(); // Refresh the complete evidence data
         });
     } catch (error) {
       console.error("error: ", error);
@@ -1612,6 +1648,25 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       </div>
     );
   };
+  console.log(menuData, "menuData");
+  console.log(selectedDocument, "selectedDocument");
+  console.log(selectedFileStoreId, "selectedFileStoreId");
+
+  console.log(evidenceFileStoreMap, "evidenceFileStoreMap");
+  console.log(
+    dynamicCaseFileStructure
+      ?.flatMap((item) =>
+        item.hasChildren ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))] : [item]
+      )
+      ?.find((item) => item.id === selectedDocument)?.title &&
+      `- ${t(
+        dynamicCaseFileStructure
+          ?.flatMap((item) =>
+            item.hasChildren ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))] : [item]
+          )
+          ?.find((item) => item.id === selectedDocument)?.title
+      )}`
+  );
 
   return (
     <React.Fragment>
@@ -1623,7 +1678,76 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       </div>
 
       {/* Right Content Area - Independent scrolling */}
-      <div className="doc-viewer-container">{MemoDocViewerWrapper}</div>
+      <div className="doc-viewer-container">
+        <div
+          className="doc-viewer-header-container"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "8px 0px",
+          }}
+        >
+          <div>
+            {selectedDocument && selectedFileStoreId && (
+              <span style={{ fontFamily: "Roboto", fontWeight: "700", fontStyle: "bold", fontSize: "20px" }}>
+                {dynamicCaseFileStructure
+                  ?.flatMap((item) =>
+                    item.hasChildren
+                      ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))]
+                      : [item]
+                  )
+                  ?.find((item) => item.id === selectedDocument)?.title &&
+                  `${t(
+                    dynamicCaseFileStructure
+                      ?.flatMap((item) =>
+                        item.hasChildren
+                          ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))]
+                          : [item]
+                      )
+                      ?.find((item) => item.id === selectedDocument)?.title
+                  )}`}
+              </span>
+            )}
+          </div>
+          {selectedDocument && selectedFileStoreId && (
+            <div className="doc-action-buttons" style={{ display: "flex", gap: "10px" }}>
+              <DownloadButton onClick={() => downloadPdf(tenantId, selectedFileStoreId)} label="DOWNLOAD_PDF" t={t} />
+              {isJudge && selectedFileStoreId && evidenceFileStoreMap.has(selectedFileStoreId) && (
+                <button
+                  className="mark-asevidence-button"
+                  onClick={() => {
+                    setMenuData({
+                      fileStoreId: selectedFileStoreId,
+                      isEvidence: false,
+                      isEvidenceMenu: true,
+                      artifactNumber: dynamicCaseFileStructure
+                        ?.flatMap((item) =>
+                          item.hasChildren
+                            ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))]
+                            : [item]
+                        )
+                        ?.find((item) => item.id === selectedDocument)?.artifactNumber,
+                      artifactList: dynamicCaseFileStructure
+                        ?.flatMap((item) =>
+                          item.hasChildren
+                            ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))]
+                            : [item]
+                        )
+                        ?.find((item) => item.id === selectedDocument)?.artifactList,
+                    });
+                    setShowEvidenceConfirmationModal(true);
+                  }}
+                  style={{}}
+                >
+                  {t("MARK_AS_EVIDENCE")}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+        {MemoDocViewerWrapper}
+      </div>
       {contextMenu && (
         <div
           className="context-menu"
@@ -1642,7 +1766,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           >
             {t("DOWNLOAD_PDF")}
           </div>
-          {isJudge && menuData?.isEvidenceMenu && menuData?.isEvidence === false && (
+          {isJudge && menuData?.fileStoreId && !evidenceFileStoreMap.has(menuData?.fileStoreId) && (
             <div
               style={{ padding: "10px", cursor: "pointer" }}
               onClick={() => {
@@ -1654,7 +1778,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           )}
         </div>
       )}
-      {showEvidenceConfirmationModal && (
+      {showEvidenceConfirmationModal && <MarkAsEvidence setShowConfirmationModal={setShowEvidenceConfirmationModal} />}
+      {/* {showEvidenceConfirmationModal && (
         <ConfirmEvidenceAction
           t={t}
           setShowConfirmationModal={setShowEvidenceConfirmationModal}
@@ -1664,7 +1789,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           isFromActions={true}
           setMenuData={setMenuData}
         />
-      )}
+      )} */}
     </React.Fragment>
   );
 }
