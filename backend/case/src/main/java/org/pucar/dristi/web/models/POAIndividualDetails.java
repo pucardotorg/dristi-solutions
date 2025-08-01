@@ -7,17 +7,13 @@ import lombok.Data;
 
 @Data
 public class POAIndividualDetails {
-    @NotNull
-    @JsonProperty("name")
-    private String name;
+
+    @JsonProperty("uniqueId")
+    private String uniqueId;
 
     @NotNull
     @JsonProperty("individualId")
     private String individualId;
-
-    @NotNull
-    @JsonProperty("partyType")
-    private String partyType;
 
     @NotNull
     @JsonProperty("userUuid")
@@ -29,8 +25,4 @@ public class POAIndividualDetails {
     @JsonProperty("poaAuthDocument")
     @Valid
     private Document poaAuthDocument = null;
-
-    @JsonProperty("revokeDocument")
-    @Valid
-    private Document revokeDocument = null;
 }
