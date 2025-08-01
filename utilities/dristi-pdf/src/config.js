@@ -285,6 +285,7 @@ module.exports = {
     application_witness_deposition_qr:
       process.env.APPLICATION_WITNESS_DEPOSITION_QR ||
       "application-witness-deposition-qr",
+    evidence: process.env.EVIDENCE || "evidence",
   },
 
   app: {
