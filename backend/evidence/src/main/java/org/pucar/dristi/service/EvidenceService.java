@@ -139,7 +139,7 @@ public class EvidenceService {
         JsonNode litigants = courtCase.get("litigants");
         JsonNode representatives = courtCase.get("representatives");
         JsonNode poaHolders = courtCase.get("poaHolders");
-
+        JsonNode respondentDetails = courtCase.get("additionalDetails").get("respondentDetails");
         String uniqueId = body.getArtifact().getSourceID();
         String tag = body.getArtifact().getTag();
 
@@ -158,6 +158,20 @@ public class EvidenceService {
             updatePartyTag(poaHolders, uniqueId, tag, "poaHolder");
         }
 
+        if(respondentDetails != null && respondentDetails.get("formdata").isArray()) {
+            updateAccusedDetails(respondentDetails, uniqueId, tag);
+        }
+
+    }
+
+    private void updateAccusedDetails(JsonNode respondentDetails, String uniqueId, String tag) {
+        JsonNode formdata = respondentDetails.get("formdata");
+        for(JsonNode data : formdata) {
+            if(uniqueId.equals(data.get("uniqueId").textValue())) {
+                ((ObjectNode) data.get("data")).put("tag", tag);
+                log.info("Added tag: {} to respondent details for uniqueId: {}", tag, uniqueId);
+            }
+        }
     }
 
     private void updatePartyTag(JsonNode parties, String uniqueId, String tag, String partyType) {
