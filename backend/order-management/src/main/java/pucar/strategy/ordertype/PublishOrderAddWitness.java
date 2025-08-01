@@ -68,9 +68,7 @@ public class PublishOrderAddWitness implements OrderUpdateStrategy {
                     .criteria(ApplicationCriteria.builder().applicationNumber(applicationNumber).build())
                     .build());
             for(Application application : applications) {
-                if(COMPLETED.equals(application.getStatus())) {
-                    addWitnessToCase(application, orderRequest.getRequestInfo());
-                }
+                addWitnessToCase(application, orderRequest.getRequestInfo());
             }
         }
         log.info("operation=postProcess, result= COMPLETED, orderType:{}, orderNumber:{}", orderRequest.getOrder().getOrderType(), orderRequest.getOrder().getOrderNumber());
@@ -84,7 +82,6 @@ public class PublishOrderAddWitness implements OrderUpdateStrategy {
             log.warn("No additional details found in application: {}", application.getApplicationNumber());
             return;
         }
-        // Extract witnessDetails from additionalDetails
         Object witnessDetails = jsonUtil.getNestedValue(additionalDetails, List.of("witnessDetails"), Object.class);
         if (witnessDetails == null) {
             log.warn("No witnessDetails found in application additionalDetails for application: {}", application.getApplicationNumber());
