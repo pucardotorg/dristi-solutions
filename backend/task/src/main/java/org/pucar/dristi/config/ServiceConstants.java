@@ -66,6 +66,7 @@ public class ServiceConstants {
 
     public static final String NOTICE = "NOTICE";
     public static final String WARRANT = "WARRANT";
+    public static final String PROCLAMATION = "PROCLAMATION";
     public static final String ISSUESUMMON = "ISSUE_SUMMON";
 
     public static final String SUMMON_SENT = "SUMMON_SENT";
