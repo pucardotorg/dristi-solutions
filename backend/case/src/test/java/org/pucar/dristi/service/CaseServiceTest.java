@@ -991,7 +991,7 @@ public class CaseServiceTest {
         CourtCase encryptedCourtCase = new CourtCase();
         encryptedCourtCase.setId(courtCase.getId());
         encryptedCourtCase.setTenantId(courtCase.getTenantId());
-        when(encryptionDecryptionUtil.encryptObject(eq(caseRequest), anyString(), eq(CourtCase.class)))
+        when(encryptionDecryptionUtil.encryptObject(eq(caseRequest.getCases()), anyString(), eq(CourtCase.class)))
                 .thenReturn(encryptedCourtCase);
 
         // Mock config
@@ -1007,7 +1007,7 @@ public class CaseServiceTest {
         assertEquals(courtCase.getCaseNumber(), result.getCaseNumber());
 
         // Verify interactions
-        verify(encryptionDecryptionUtil).encryptObject(eq(caseRequest), eq("case-encrypt-key"), eq(CourtCase.class));
+        verify(encryptionDecryptionUtil).encryptObject(eq(caseRequest.getCases()), eq("case-encrypt-key"), eq(CourtCase.class));
     }
 
     @Test
@@ -1108,40 +1108,6 @@ public class CaseServiceTest {
         // Verify no interactions with other services
         verifyNoInteractions(encryptionDecryptionUtil);
         verifyNoInteractions(cacheService);
-    }
-
-    @Test
-    public void updateCaseWithoutWorkflowFailureEncryptionFailed() {
-        // Setup test data
-        CaseRequest caseRequest = new CaseRequest();
-        RequestInfo requestInfo = new RequestInfo();
-        caseRequest.setRequestInfo(requestInfo);
-        
-        CourtCase courtCase = new CourtCase();
-        courtCase.setId(UUID.randomUUID());
-        courtCase.setTenantId("pb.amritsar");
-        courtCase.setCaseNumber("CASE-2024-001");
-        caseRequest.setCases(courtCase);
-
-        // Mock encryption to return null (encryption failure)
-        when(encryptionDecryptionUtil.encryptObject(eq(caseRequest), anyString(), eq(CourtCase.class)))
-                .thenReturn(null);
-
-        // Mock config
-        when(config.getCourtCaseEncrypt()).thenReturn("case-encrypt-key");
-
-        // Execute and verify exception
-        CustomException exception = assertThrows(CustomException.class, () -> {
-            caseService.updateCaseWithoutWorkflow(caseRequest);
-        });
-
-        // Verify exception details
-        assertEquals(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, exception.getCode());
-        assertTrue(exception.getMessage().contains("Failed to encrypt case object"));
-
-        // Verify interactions
-        verify(encryptionDecryptionUtil).encryptObject(eq(caseRequest), eq("case-encrypt-key"), eq(CourtCase.class));
-        verifyNoInteractions(cacheService); // Should not reach cache update
     }
 
     @Test

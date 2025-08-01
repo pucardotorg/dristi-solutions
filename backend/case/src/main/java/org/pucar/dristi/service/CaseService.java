@@ -5176,12 +5176,8 @@ public class CaseService {
                 log.error("Method=updateCaseWithoutWorkflow,Result=FAILURE, Error=CaseId is null or empty");
                 throw new CustomException(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, "Case ID cannot be null or empty");
             }
-
-            log.debug("Method=updateCaseWithoutWorkflow,Result=VALIDATION_SUCCESS, CaseId={}, TenantId={}",
-                    courtCase.getId(), courtCase.getTenantId());
-
             // Encrypt the case object
-            CourtCase encryptedCourtCase = encryptionDecryptionUtil.encryptObject(body, config.getCourtCaseEncrypt(), CourtCase.class);
+            CourtCase encryptedCourtCase = encryptionDecryptionUtil.encryptObject(body.getCases(), config.getCourtCaseEncrypt(), CourtCase.class);
             if (encryptedCourtCase == null) {
                 log.error("Method=updateCaseWithoutWorkflow,Result=FAILURE, Error=Encryption failed, CaseId={}", courtCase.getId());
                 throw new CustomException(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, "Failed to encrypt case object");
