@@ -360,7 +360,12 @@ public class CaseConsumer {
                         artifact.getArtifactNumber()
                 ));
             });
-            esUtil.updateArtifactCaseNumbers(artifactList);
+            try {
+                esUtil.updateArtifactCaseNumbers(artifactList);
+            }
+            catch (Exception ex) {
+                log.error("Error while updating artifacts: {}, for filingNumber: {}", ex.getMessage(), caseReferenceNumberUpdateRequest.getFilingNumber(), ex);
+            }
 
         }
 
@@ -380,8 +385,12 @@ public class CaseConsumer {
                             caseTitle
                     ))
                     .collect(Collectors.toList());
-
-            esUtil.updateBailCaseNumbers(updates);
+            try {
+                esUtil.updateBailCaseNumbers(updates);
+            }
+            catch (Exception ex) {
+                log.error("Error while updating bail: {}, for filingNumber: {}", ex.getMessage(), caseReferenceNumberUpdateRequest.getFilingNumber(), ex);
+            }
         }
 
     }
