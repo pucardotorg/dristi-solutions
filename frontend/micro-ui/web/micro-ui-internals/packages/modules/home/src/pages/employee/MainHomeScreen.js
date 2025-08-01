@@ -294,9 +294,9 @@ const MainHomeScreen = () => {
     SCHEDULE_HEARING: {
       name: "Schedule Hearing",
     },
-    BAIL_BOND_STATUS: {
-      name: "Bail Bonds Status",
-    },
+    // BAIL_BOND_STATUS: {
+    //   name: "Bail Bonds Status",
+    // },
   };
   useEffect(() => {
     let updatedConfig = structuredClone(pendingTaskConfig);

@@ -2885,10 +2885,10 @@ const AdmittedCaseV2 = () => {
               },
             ]
           : [
-              {
-                value: "CREATE_BAIL_BOND",
-                label: "CREATE_BAIL_BOND",
-              },
+              // {
+              //   value: "CREATE_BAIL_BOND",
+              //   label: "CREATE_BAIL_BOND",
+              // },
             ]),
         {
           value: "DOWNLOAD_CASE_FILE",
@@ -2982,10 +2982,10 @@ const AdmittedCaseV2 = () => {
               value: "SHOW_TIMELINE",
               label: "SHOW_TIMELINE",
             },
-            {
-              value: "CREATE_BAIL_BOND",
-              label: "CREATE_BAIL_BOND",
-            },
+            // {
+            //   value: "CREATE_BAIL_BOND",
+            //   label: "CREATE_BAIL_BOND",
+            // },
           ];
     }
   }, [isJudge, currentInProgressHearing, isBenchClerk, isTypist]);
