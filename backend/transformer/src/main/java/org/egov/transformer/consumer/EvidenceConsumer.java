@@ -50,14 +50,14 @@ public class EvidenceConsumer {
             "${transformer.consumer.save.withoutworkflow.artifact.topic}"})
     public void saveArtifact(ConsumerRecord<String, Object> payload,
                              @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        publishArtifact(payload, transformerProperties.getSaveArtifactTopic());
+        publishArtifact(payload, topic);
     }
 
     @KafkaListener(topics = {"${transformer.consumer.update.artifact.topic}",
             "${transformer.consumer.update.withoutworkflow.artifact.topic}"})
     public void updateArtifact(ConsumerRecord<String, Object> payload,
                                @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        publishArtifact(payload, transformerProperties.getUpdateArtifactTopic());
+        publishArtifact(payload, topic);
     }
 
     private void publishArtifact(ConsumerRecord<String, Object> payload, String targetTopic) {
