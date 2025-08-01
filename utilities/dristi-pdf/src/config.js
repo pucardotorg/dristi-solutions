@@ -275,6 +275,7 @@ module.exports = {
       process.env.APPLICATION_PROFILE_EDIT_QR || "application-profile-edit-qr",
     bail_bond: process.env.BAIL_BOND || "bail-bond",
     bail_bond_qr: process.env.BAIL_BOND_QR || "bail-bond-qr",
+    evidence: process.env.EVIDENCE || "evidence",
   },
 
   app: {
