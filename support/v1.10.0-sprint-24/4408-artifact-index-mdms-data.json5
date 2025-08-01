@@ -5,12 +5,12 @@
     "moduleName": "InboxQueryConfiguration",
     "mdmsPayload": [
       {
-        "id": "7ef4c999-8344-46c4-9361-3eaa018482f4",
+        "id": "094ed19b-d2c8-4ef4-be2c-f231551ee474",
         "tenantId": "kl",
         "schemaCode": "INBOX.InboxQueryConfiguration",
-        "uniqueIdentifier": "artifact-index",
+        "uniqueIdentifier": "open-artifact-index",
         "data": {
-          "index": "artifact-index",
+          "index": "open-artifact-index",
           "module": "Evidence Service",
           "sortBy": {
             "path": "Data.artifactDetails.caseNumber.keyword",
@@ -23,11 +23,7 @@
             {
               "name": "searchableFields",
               "path": "Data.artifactDetails.searchableFields.keyword",
-              "isMandatory": false
-            },
-            {
-              "name": "courtId",
-              "path": "Data.artifactDetails.courtId.keyword",
+              "operator": "WILDCARD",
               "isMandatory": false
             },
             {
@@ -48,6 +44,16 @@
             {
               "name": "status",
               "path": "Data.artifactDetails.status.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "courtId",
+              "path": "Data.artifactDetails.courtId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "filingNumber",
+              "path": "Data.artifactDetails.filingNumber.keyword",
               "isMandatory": false
             }
           ]
