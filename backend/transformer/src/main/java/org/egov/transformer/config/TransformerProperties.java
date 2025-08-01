@@ -135,7 +135,10 @@ public class TransformerProperties {
     @Value("${transformer.producer.open.artifact.index.topic}")
     private String openArtifactIndexTopic;
 
-    @Value("${artifact.index}")
-    private String artifactIndex;
+    @Value("${open.artifact.index}")
+    private String openArtifactIndex;
+
+    @Value("${inox.search.limit}")
+    private String inboxSearchLimit;
 
 }

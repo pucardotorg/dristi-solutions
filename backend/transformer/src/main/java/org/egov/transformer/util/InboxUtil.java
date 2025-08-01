@@ -166,7 +166,7 @@ public class InboxUtil {
                 .moduleSearchCriteria(moduleSearchCriteria)
                 .tenantId(configuration.getEgovStateTenantId())
                 //Todo: Remove hard coded limit once inbox search limit is updated
-                .limit(300)
+                .limit(Integer.valueOf(configuration.getInboxSearchLimit()))
                 .offset(0)
                 .build();
 

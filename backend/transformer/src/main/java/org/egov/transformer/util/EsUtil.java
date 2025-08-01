@@ -87,7 +87,7 @@ public class EsUtil {
 
             return String.format(
                     ES_UPDATE_ARTIFACT_HEADER_FORMAT + ES_UPDATE_ARTIFACT_DOCUMENT_FORMAT,
-                    config.getArtifactIndex(),
+                    config.getOpenArtifactIndex(),
                     artifact.getArtifactNumber(),
                     artifact.getCaseNumber(),
                     searchableFieldsJson
