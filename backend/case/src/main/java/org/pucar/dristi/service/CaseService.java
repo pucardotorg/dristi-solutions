@@ -4991,13 +4991,24 @@ public class CaseService {
         for (BreakDown newBreakDown : newBreakDowns) {
             BreakDown oldBreakDown = oldBreakDownMap.get(newBreakDown.getCode());
 
-            if (newBreakDown.getAmount() > oldBreakDown.getAmount()) {
-                diffTotalAmount += (newBreakDown.getAmount() - oldBreakDown.getAmount());
+            if (oldBreakDown == null) {
+                // Entire new amount is considered difference
+                diffTotalAmount += newBreakDown.getAmount();
 
                 BreakDown differenceItem = new BreakDown();
                 differenceItem.setCode(newBreakDown.getCode());
                 differenceItem.setType(newBreakDown.getType());
-                differenceItem.setAmount(newBreakDown.getAmount() - oldBreakDown.getAmount());
+                differenceItem.setAmount(newBreakDown.getAmount());
+                differenceBreakDowns.add(differenceItem);
+            } else if (newBreakDown.getAmount() > oldBreakDown.getAmount()) {
+                // Only the increased amount is considered difference
+                double diff = newBreakDown.getAmount() - oldBreakDown.getAmount();
+                diffTotalAmount += diff;
+
+                BreakDown differenceItem = new BreakDown();
+                differenceItem.setCode(newBreakDown.getCode());
+                differenceItem.setType(newBreakDown.getType());
+                differenceItem.setAmount(diff);
                 differenceBreakDowns.add(differenceItem);
             }
         }
@@ -5082,10 +5093,29 @@ public class CaseService {
 
     private Boolean isDelayCondonation(CourtCase existingCase) {
         JsonNode caseDetails = objectMapper.convertValue(existingCase.getCaseDetails(), JsonNode.class);
-        if(caseDetails == null || caseDetails.get("delayApplications") == null) {
+        if (caseDetails == null || caseDetails.get("delayApplications") == null) {
             return false;
         }
-        return !caseDetails.get("delayApplications").get("formdata").get(0).get("data").get("delayCondonationType").get("code").textValue().equals("YES");
+
+        JsonNode delayFormData = caseDetails.get("delayApplications").get("formdata").get(0);
+        if (delayFormData == null || delayFormData.get("data") == null) {
+            return false;
+        }
+
+        JsonNode data = delayFormData.get("data");
+        JsonNode delayType = data.get("delayCondonationType");
+        JsonNode condonationFiles = data.get("condonationFileUpload");
+
+        boolean isCodeNo = delayType != null
+                && "NO".equals(delayType.get("code").asText());
+
+        boolean hasFile = condonationFiles != null
+                && condonationFiles.has("document")
+                && condonationFiles.get("document").isArray()
+                && !condonationFiles.get("document").isEmpty()
+                && condonationFiles.get("document").get(0).hasNonNull("fileStore");
+
+        return isCodeNo && hasFile;
     }
 
     private Double getChequeAmount(CourtCase courtCase) {
