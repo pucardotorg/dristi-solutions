@@ -72,7 +72,7 @@ import ConfirmCaseDetailsModal from "./ConfirmCaseDetailsModal";
 import { DocumentUploadError } from "../../../Utils/errorUtil";
 import ConfirmDcaSkipModal from "./ConfirmDcaSkipModal";
 import ErrorDataModal from "./ErrorDataModal";
-import { documentLabels } from "../../../Utils";
+import { documentLabels, sanitizeFormData } from "../../../Utils";
 
 export const OutlinedInfoIcon = () => (
   <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
@@ -2075,6 +2075,7 @@ function EFilingCases({ path }) {
     //   }
     // }
     else {
+      const sanitizedFormData = sanitizeFormData(formdata);
       let caseComplaintDocument = {};
       try {
         if (isCaseLocked) {
@@ -2126,7 +2127,7 @@ function EFilingCases({ path }) {
           isCompleted: true,
           caseDetails: isCaseReAssigned && errorCaseDetails ? errorCaseDetails : newCaseDetails,
           prevCaseDetails: prevCaseDetails,
-          formdata,
+          formdata : sanitizedFormData,
           pageConfig,
           selected,
           setIsDisabled,
@@ -2200,11 +2201,12 @@ function EFilingCases({ path }) {
         modifiedCaseTitle: newCaseName || caseDetails?.additionalDetails?.modifiedCaseTitle,
       },
     };
+    const sanitizedFormData = sanitizeFormData(newFormData);
     updateCaseDetails({
       t,
       caseDetails: newCaseDetails,
       prevCaseDetails: prevCaseDetails,
-      formdata: newFormData,
+      formdata: sanitizedFormData,
       setFormDataValue: setFormDataValue.current,
       pageConfig,
       selected,
