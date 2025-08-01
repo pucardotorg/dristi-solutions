@@ -168,4 +168,14 @@ public class Configuration {
     @Value("${egov-state-level-tenant-id}")
     private String egovStateTenantId;
 
+    // evidence service configs
+    @Value("${evidence.service.host}")
+    private String evidenceServiceHost;
+
+    @Value("${evidence.service.search.endpoint}")
+    private String evidenceServiceSearchEndpoint;
+
+    @Value("${evidence.service.update.endpoint}")
+    private String evidenceServiceUpdateEndpoint;
+
 }
