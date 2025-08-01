@@ -161,7 +161,16 @@ public class EvidenceService {
         if(respondentDetails != null && respondentDetails.get("formdata").isArray()) {
             updateAccusedDetails(respondentDetails, uniqueId, tag);
         }
-
+        try {
+            CaseRequest caseRequest = CaseRequest.builder()
+                    .requestInfo(body.getRequestInfo())
+                    .cases(courtCase)
+                    .build();
+            caseUtil.updateCaseDetails(caseRequest);
+        } catch (CustomException e) {
+            log.error("Error updating case details for filing number: {}", body.getArtifact().getFilingNumber(), e);
+            throw new CustomException(UPDATE_CASE_ERR, e.getMessage());
+        }
     }
 
     private void updateAccusedDetails(JsonNode respondentDetails, String uniqueId, String tag) {

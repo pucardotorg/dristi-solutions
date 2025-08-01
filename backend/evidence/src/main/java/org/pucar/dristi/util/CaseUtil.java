@@ -96,4 +96,15 @@ public class CaseUtil {
             throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE, e.getMessage());
         }
     }
+
+    public void updateCaseDetails(CaseRequest caseRequest) {
+        StringBuilder uri = new StringBuilder(configs.getCaseHost()).append(configs.getUpdateCaseEndpoint());
+        Object response = repository.fetchResult(uri, caseRequest);
+        try {
+            mapper.valueToTree(response);
+        } catch (CustomException e) {
+            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
+            throw new ServiceCallException(e.getMessage());
+        }
+    }
 }
