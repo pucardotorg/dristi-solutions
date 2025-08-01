@@ -175,8 +175,8 @@ const witnessDeposition = async (req, res, qrCode) => {
     };
     const pdfKey =
       qrCode === "true"
-        ? config.pdf.application_bail_bond_qr
-        : config.pdf.application_bail_bond;
+        ? config.pdf.new_witness_deposition_qr
+        : config.pdf.new_witness_deposition;
     const pdfResponse = await handleApiCall(
       () => create_pdf(tenantId, pdfKey, data, req.body),
       "Failed to generate PDF of Application Bail Bond"
