@@ -5158,8 +5158,6 @@ public class CaseService {
      * @throws CustomException if validation fails or update operation encounters errors
      */
     public CourtCase updateCaseWithoutWorkflow(@Valid CaseRequest body) {
-        log.info("Method=updateCaseWithoutWorkflow,Result=IN_PROGRESS, caseId={}, tenantId={}", body.getCases().getId(), body.getCases().getTenantId());
-
         try {
             // Validate case object
             CourtCase courtCase = body.getCases();
@@ -5167,7 +5165,7 @@ public class CaseService {
                 log.error("Method=updateCaseWithoutWorkflow,Result=FAILURE, Error=CourtCase is null");
                 throw new CustomException(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, "CourtCase cannot be null");
             }
-
+            log.info("Method=updateCaseWithoutWorkflow,Result=IN_PROGRESS, caseId={}, tenantId={}", body.getCases().getId(), body.getCases().getTenantId());
             // Validate required fields
             if (StringUtils.isBlank(courtCase.getTenantId())) {
                 log.error("Method=updateCaseWithoutWorkflow,Result=FAILURE, Error=TenantId is null or empty, CaseId={}", courtCase.getId());
@@ -5191,7 +5189,11 @@ public class CaseService {
 
             // Update case in Redis cache
             updateCourtCaseInRedis(courtCase.getTenantId(), encryptedCourtCase);
-
+            CaseRequest caseRequest = CaseRequest.builder()
+                            .requestInfo(body.getRequestInfo())
+                            .cases(encryptedCourtCase)
+                            .build();
+            producer.push(config.getCaseUpdateTopic(), caseRequest);
             log.info("Method=updateCaseWithoutWorkflow,Result=SUCCESS, CaseId={}, TenantId={}",
                     courtCase.getId(), courtCase.getTenantId());
 
