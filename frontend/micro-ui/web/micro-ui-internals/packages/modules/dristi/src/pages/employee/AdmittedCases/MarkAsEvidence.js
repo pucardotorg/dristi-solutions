@@ -44,6 +44,22 @@ const MarkAsEvidence = ({ t, isEvidenceLoading = false, setShowMakeAsEvidenceMod
     };
   }, [selectedRow]);
 
+  const { data: EvidenceNumberFormat, isLoading } = Digit.Hooks.useCommonMDMS(Digit.ULBService.getStateId(), "Evidence", ["Tag"], {
+    select: (data) => {
+      return {
+        config: data?.Evidence,
+      };
+    },
+    retry: false,
+  });
+
+  const getMarkAsEvidencePdf = async () => {
+    try {
+      const response = await DRISTIService.getMarkAsEvidencePdf(selectedItem, memoEvidenceValues);
+      return response;
+    } catch (error) {}
+  };
+
   const evidenceType = [
     { code: "1", name: t("ACTIONS_MARK_EVIDENCE_TYPE_1") },
     { code: "2", name: t("ACTIONS_MARK_EVIDENCE_TYPE_2") },
@@ -198,7 +214,7 @@ const MarkAsEvidence = ({ t, isEvidenceLoading = false, setShowMakeAsEvidenceMod
           noteText="YOUR_CUSTOM_NOTE"
           containerStyle={{ padding: "20px", backgroundColor: "#f8f8f8" }}
           headingStyle={{ color: "#0b0c28", fontSize: "28px" }}
-          signedBadgeStyle={{ backgroundColor: "#ccffcc", color: "#006600" }}
+          // signedBadgeStyle={{ backgroundColor: "#ccffcc", color: "#006600" }}
           infoCardStyle={{ fontStyle: "italic" }}
         />
       )}

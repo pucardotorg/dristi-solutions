@@ -76,9 +76,9 @@ const SignatureSuccessModal = ({
               fontWeight: 400,
               lineHeight: "16.41px",
               textAlign: "center",
-              color: "#00703c",
+              color: "#00703c;",
               padding: "6px",
-              backgroundColor: "#e4f2e4",
+              backgroundColor: "#e4f2e4;",
               borderRadius: "999px",
               ...signedBadgeStyle,
             }}

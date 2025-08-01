@@ -476,4 +476,12 @@ export const DRISTIService = {
       data,
       params,
     }),
+  getMarkAsEvidencePdf: (data, params) =>
+    Request({
+      url: Urls.dristi.getMarkAsEvidencePdf,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
 };

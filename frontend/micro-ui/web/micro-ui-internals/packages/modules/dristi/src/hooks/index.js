@@ -38,6 +38,7 @@ import useFetchBill from "./dristi/useFetchBill.js";
 export const Urls = {
   Authenticate: "/user/oauth/token",
   dristi: {
+    getMarkAsEvidencePdf: "/egov-pdf/evidence",
     individual: "/individual/v1/_create",
     updateIndividual: "/individual/v1/_update",
     searchIndividual: "/individual/v1/_search",

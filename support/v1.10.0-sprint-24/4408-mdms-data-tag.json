@@ -1,0 +1,39 @@
+[
+  {
+    "tenantId": "kl",
+    "moduleName": "Evidence",
+    "masterName": "Tag",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "Evidence.Tag",
+        "uniqueIdentifier": "ACCUSED",
+        "data": {
+          "sourceType": "ACCUSED",
+          "evidenceTag": "D"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "Evidence.Tag",
+        "uniqueIdentifier": "COURT",
+        "data": {
+          "sourceType": "COURT",
+          "evidenceTag": "C"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "Evidence.Tag",
+        "uniqueIdentifier": "COMPLAINANT",
+        "data": {
+          "sourceType": "COMPLAINANT",
+          "evidenceTag": "P"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]
