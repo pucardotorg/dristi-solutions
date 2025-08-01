@@ -19,8 +19,4 @@ public class POARepresentingJoinCase {
     @JsonProperty("poaAuthDocument")
     @Valid
     private Document poaAuthDocument = null;
-
-    @JsonProperty("revokeDocument")
-    @Valid
-    private Document revokeDocument = null;
 }
