@@ -70,7 +70,7 @@ public class EvidenceConsumer {
 
             enrichArtifactIndex(artifact, evidenceRequest.getRequestInfo());
 
-            producer.push(transformerProperties.getSaveArtifactIndexTopic(), artifact);
+            producer.push(transformerProperties.getOpenArtifactIndexTopic(), artifact);
         } catch (Exception e) {
             logger.error("Unexpected error while processing artifact from topic: {}, payload: {}", targetTopic, payload.value(), e);
         }

@@ -132,8 +132,8 @@ public class TransformerProperties {
     @Value("${transformer.consumer.update.artifact.topic}")
     private String updateArtifactTopic;
 
-    @Value("${transformer.producer.save.artifact.index.topic}")
-    private String saveArtifactIndexTopic;
+    @Value("${transformer.producer.open.artifact.index.topic}")
+    private String openArtifactIndexTopic;
 
     @Value("${artifact.index}")
     private String artifactIndex;

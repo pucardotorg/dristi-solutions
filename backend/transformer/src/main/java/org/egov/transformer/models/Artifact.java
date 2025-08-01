@@ -111,6 +111,9 @@ public class Artifact {
 
     private List<String> applicableTo = null;
 
+    @JsonProperty("seal")
+    private Document seal = null;
+
     @JsonProperty("createdDate")
 
     private Long createdDate = null;
@@ -145,11 +148,6 @@ public class Artifact {
     private Document file = null;
 
 
-    @JsonProperty("seal")
-
-    @Valid
-    private Document seal = null;
-
     @JsonProperty("description")
 
     private String description = null;
@@ -178,6 +176,12 @@ public class Artifact {
 
     @Valid
     private WorkflowObject workflow = null;
+
+    @JsonProperty("evidenceMarkedStatus")
+    private String evidenceMarkedStatus = null;
+
+    @JsonProperty("isEvidenceMarkedFlow")
+    private Boolean isEvidenceMarkedFlow = false;
 
     public Artifact addApplicableToItem(String applicableToItem) {
         if (this.applicableTo == null) {

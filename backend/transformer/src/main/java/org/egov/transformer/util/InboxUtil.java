@@ -159,13 +159,13 @@ public class InboxUtil {
         ProcessInstanceSearchCriteria processSearchCriteria = ProcessInstanceSearchCriteria.builder()
                 .moduleName("Evidence Service")
                 .tenantId(configuration.getEgovStateTenantId())
-                //Todo: Need to check Workflow name
                 .businessService(Collections.singletonList("evidence-default"))
                 .build();
         InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
                 .processSearchCriteria(processSearchCriteria)
                 .moduleSearchCriteria(moduleSearchCriteria)
                 .tenantId(configuration.getEgovStateTenantId())
+                //Todo: Remove hard coded limit once inbox search limit is updated
                 .limit(300)
                 .offset(0)
                 .build();
