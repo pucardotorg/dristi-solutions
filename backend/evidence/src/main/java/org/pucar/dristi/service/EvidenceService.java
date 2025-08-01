@@ -57,9 +57,9 @@ public class EvidenceService {
     }
 
     private boolean shouldUpdateWorkflowStatusForUpdate(EvidenceRequest evidenceRequest, String filingType){
-        return (evidenceRequest.getArtifact().getArtifactType() != null &&
+        return evidenceRequest.getArtifact().getWorkflow() != null && (evidenceRequest.getArtifact().getArtifactType() != null &&
                 evidenceRequest.getArtifact().getArtifactType().equals(DEPOSITION)) ||
-                (filingType!= null && evidenceRequest.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION)) || evidenceRequest.getArtifact().getIsEvidenceMarkedFlow();
+                (filingType!= null && filingType.equalsIgnoreCase(SUBMISSION)) || evidenceRequest.getArtifact().getIsEvidenceMarkedFlow();
     }
 
     public Artifact createEvidence(EvidenceRequest body) {
