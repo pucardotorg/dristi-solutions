@@ -46,13 +46,15 @@ public class EvidenceConsumer {
         this.hearingService = hearingService;
     }
 
-    @KafkaListener(topics = {"${transformer.consumer.save.artifact.topic}"})
+    @KafkaListener(topics = {"${transformer.consumer.save.artifact.topic}",
+            "${transformer.consumer.save.withoutworkflow.artifact.topic}"})
     public void saveArtifact(ConsumerRecord<String, Object> payload,
                              @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         publishArtifact(payload, transformerProperties.getSaveArtifactTopic());
     }
 
-    @KafkaListener(topics = {"${transformer.consumer.update.artifact.topic}"})
+    @KafkaListener(topics = {"${transformer.consumer.update.artifact.topic}",
+            "${transformer.consumer.update.withoutworkflow.artifact.topic}"})
     public void updateArtifact(ConsumerRecord<String, Object> payload,
                                @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         publishArtifact(payload, transformerProperties.getUpdateArtifactTopic());
