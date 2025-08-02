@@ -54,6 +54,8 @@ public class ICopsChannel implements ExternalChannel {
             }
         } else if(task.getTaskType().equals(WARRANT)) {
                 task.getTaskDetails().getWarrantDetails().setDocSubType(WARRANT_TO_ACCUSED);
+        } else if(task.getTaskType().equals(PROCLAMATION)) {
+                task.getTaskDetails().getProclamationDetails().setDocSubType(PROCLAMATION_DOC_SUB_TYPE);
         }
     }
 }

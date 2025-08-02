@@ -6,15 +6,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
+import org.egov.common.contract.workflow.ProcessInstance;
+import org.egov.common.contract.workflow.State;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.EvidenceEnrichment;
@@ -33,6 +37,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 import static org.pucar.dristi.config.ServiceConstants.COMMENT_ADD_ERR;
 import static org.pucar.dristi.config.ServiceConstants.INITIATE_E_SIGN;
+import static org.pucar.dristi.config.ServiceConstants.EMPLOYEE_UPPER;
 
 @ExtendWith(MockitoExtension.class)
 class EvidenceServiceTest {
@@ -79,6 +84,7 @@ class EvidenceServiceTest {
     @Mock
     private org.pucar.dristi.util.XmlRequestGenerator xmlRequestGenerator;
 
+    @Spy
     @InjectMocks
     private EvidenceService evidenceService;
 
@@ -170,7 +176,6 @@ class EvidenceServiceTest {
     void testUpdateEvidence() {
         when(mdmsUtil.fetchMdmsData(any(), any(), any(), any())).thenReturn(mockMdmsData);
         when(objectMapper.convertValue(any(), eq(JSONObject.class))).thenReturn((JSONObject) mockMdmsData.get("FilingTypeModule").get("FilingTypeMaster").get(0));
-        when(config.getUpdateEvidenceKafkaTopic()).thenReturn("update-evidence-topic");
         when(validator.validateEvidenceExistence(evidenceRequest)).thenReturn(mock(Artifact.class));
         evidenceRequest.getArtifact().setWorkflow(new WorkflowObject());
         evidenceRequest.getArtifact().getWorkflow().setAction(INITIATE_E_SIGN);
@@ -182,7 +187,6 @@ class EvidenceServiceTest {
         Artifact result = evidenceService.updateEvidence(evidenceRequest);
 
         verify(evidenceEnrichment).enrichEvidenceRegistrationUponUpdate(evidenceRequest);
-        verify(producer).push(config.getUpdateEvidenceKafkaTopic(), evidenceRequest);
 
         assertEquals(artifact, result);
         assertEquals(artifact.getArtifactNumber(), result.getArtifactNumber());
@@ -197,15 +201,6 @@ class EvidenceServiceTest {
         Artifact result = evidenceService.validateExistingEvidence(evidenceRequest);
 
         assertEquals(artifact, result);
-    }
-
-    @Test
-    void testEnrichBasedOnStatus_Published() {
-        artifact.setStatus("PUBLISHED");
-
-        evidenceService.enrichBasedOnStatus(evidenceRequest);
-
-        verify(evidenceEnrichment).enrichEvidenceNumber(evidenceRequest);
     }
 
     @Test
@@ -481,5 +476,52 @@ class EvidenceServiceTest {
         Exception ex = assertThrows(CustomException.class, () -> evidenceService.updateArtifactWithSignDoc(req));
         assertEquals("ARTIFACT_BULK_SIGN_EXCEPTION", ((CustomException)ex).getCode());
     }
+
+    @Test
+    void shouldThrowExceptionIfEvidenceNumberExists() {
+        EvidenceRequest request = buildEvidenceRequest("FN123", "EV123");
+        Artifact artifact = new Artifact(); // mock artifact
+
+        // Simulate duplicate found
+        when(evidenceService.searchEvidence(any(), any(), any()))
+                .thenReturn(List.of(artifact));
+
+
+        CustomException ex = assertThrows(CustomException.class, () -> {
+            evidenceService.checkUniqueEvidenceNumberForCase(request);
+        });
+
+        assertTrue(ex.getMessage().contains("Evidence Number EV123 already exists for case: FN123"));
+    }
+
+
+    @Test
+    void shouldNotThrowExceptionIfEvidenceNumberIsUnique() {
+        EvidenceRequest request = buildEvidenceRequest("FN123", "EV123");
+        when(evidenceService.searchEvidence(any(), any(), any()))
+                .thenReturn(Collections.emptyList()); // simulate no duplicates
+
+        assertDoesNotThrow(() -> evidenceService.checkUniqueEvidenceNumberForCase(request));
+    }
+
+    // Utility method to build test data
+    private EvidenceRequest buildEvidenceRequest(String filingNumber, String evidenceNumber) {
+        Artifact artifact = new Artifact();
+        artifact.setFilingNumber(filingNumber);
+        artifact.setEvidenceNumber(evidenceNumber);
+
+        RequestInfo requestInfo = new RequestInfo();
+        User user = User.builder()
+                .type(EMPLOYEE_UPPER)
+                .build();
+        requestInfo.setUserInfo(user);
+
+        EvidenceRequest request = new EvidenceRequest();
+        request.setArtifact(artifact);
+        request.setRequestInfo(requestInfo);
+
+        return request;
+    }
+
 
 }

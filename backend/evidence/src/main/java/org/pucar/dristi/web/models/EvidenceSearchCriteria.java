@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,6 +39,8 @@ public class EvidenceSearchCriteria {
     private String courtId;
     private String sourceType;
     private Boolean fuzzySearch = true;
+    private List<String> workflowStatus = new ArrayList<>();
+    private String evidenceNumber;
 
     @JsonIgnore
     private String userUuid;

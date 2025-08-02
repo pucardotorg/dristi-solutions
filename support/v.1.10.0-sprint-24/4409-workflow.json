@@ -3,42 +3,25 @@
     "BusinessServices": [
       {
         "tenantId": "kl",
+        "business": "evidence",
         "businessService": "witness-deposition-default",
-        "business": "witness-deposition",
         "businessServiceSla": null,
         "states": [
           {
             "sla": null,
             "state": null,
             "applicationStatus": null,
-            "docUploadRequired": true,
+            "docUploadRequired": false,
             "isStartState": true,
             "isTerminateState": false,
             "isStateUpdatable": true,
             "actions": [
               {
                 "action": "SAVE_DRAFT",
-                "nextState": "DRAFT",
+                "nextState": "DRAFT_IN_PROGRESS",
                 "roles": [
                   "EVIDENCE_CREATOR"
-                ],
-                "active": true
-              },
-              {
-                "action": "SUBMIT_SIGNED_COPY",
-                "nextState": "PENDING_REVIEW",
-                "roles": [
-                  "EVIDENCE_CREATOR"
-                ],
-                "active": true
-              },
-              {
-                "action": "SUBMIT",
-                "nextState": "PENDING_SIGNATURE",
-                "roles": [
-                  "EVIDENCE_CREATOR"
-                ],
-                "active": true
+                ]
               }
             ]
           },
@@ -52,26 +35,38 @@
             "isStateUpdatable": true,
             "actions": [
               {
-                "action": "SUBMIT_SIGNED_COPY",
-                "nextState": "PENDING_REVIEW",
+                "action": "SAVE_DRAFT",
+                "nextState": "DRAFT_IN_PROGRESS",
                 "roles": [
-                  "EVIDENCE_EDITOR"
-                ],
-                "active": true
+                  "EVIDENCE_CREATOR"
+                ]
               },
               {
-                "action": "SUBMIT",
-                "nextState": "PENDING_SIGNATURE",
+                "action": "INITIATE_E-SIGN",
+                "nextState": "PENDING_E-SIGN",
                 "roles": [
-                  "EVIDENCE_EDITOR"
-                ],
-                "active": true
+                  "EVIDENCE_CREATOR"
+                ]
+              },
+              {
+                "action": "UPLOAD",
+                "nextState": "PENDING_REVIEW",
+                "roles": [
+                  "EVIDENCE_CREATOR"
+                ]
+              },
+              {
+                "action": "DELETE_DRAFT",
+                "nextState": "DELETED_DRAFT",
+                "roles": [
+                  "EVIDENCE_CREATOR"
+                ]
               }
             ]
           },
           {
             "sla": null,
-            "state": "PENDING_SIGNATURE",
+            "state": "PENDING_E-SIGN",
             "applicationStatus": "INWORKFLOW",
             "docUploadRequired": false,
             "isStartState": false,
@@ -79,20 +74,18 @@
             "isStateUpdatable": true,
             "actions": [
               {
-                "action": "EDIT",
-                "nextState": "DRAFT_IN_PROGRESS",
-                "roles": [
-                  "EVIDENCE_EDITOR"
-                ],
-                "active": true
-              },
-              {
                 "action": "E-SIGN",
                 "nextState": "PENDING_REVIEW",
                 "roles": [
-                  "EVIDENCE_EDITOR"
-                ],
-                "active": true
+                  "EVIDENCE_CREATOR"
+                ]
+              },
+              {
+                "action": "EDIT",
+                "nextState": "DRAFT_IN_PROGRESS",
+                "roles": [
+                  "EVIDENCE_CREATOR"
+                ]
               }
             ]
           },
@@ -109,20 +102,30 @@
                 "action": "SIGN",
                 "nextState": "COMPLETED",
                 "roles": [
-                  "EVIDENCE_EDITOR"
-                ],
-                "active": true
+                  "EVIDENCE_APPROVER",
+                  "SYSTEM",
+                  "SYSTEM_ADMIN"
+                ]
               }
             ]
           },
           {
             "sla": null,
-            "state": "COMPLETED",
-            "applicationStatus": "ACTIVE",
-            "isStateUpdatable": false,
+            "state": "DELETED_DRAFT",
+            "applicationStatus": "INACTIVE",
             "docUploadRequired": false,
             "isStartState": false,
-            "isTerminateState": true
+            "isTerminateState": true,
+            "isStateUpdatable": false
+          },
+          {
+            "sla": null,
+            "state": "COMPLETED",
+            "applicationStatus": "ACTIVE",
+            "docUploadRequired": false,
+            "isStartState": false,
+            "isTerminateState": true,
+            "isStateUpdatable": false
           }
         ]
       }
