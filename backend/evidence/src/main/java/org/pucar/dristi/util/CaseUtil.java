@@ -2,20 +2,24 @@ package org.pucar.dristi.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
+import org.egov.tracer.model.ServiceCallException;
 import org.pucar.dristi.config.Configuration;
-import org.pucar.dristi.web.models.CaseExistsRequest;
-import org.pucar.dristi.web.models.CaseExistsResponse;
-import org.pucar.dristi.web.models.CaseSearchRequest;
+import org.pucar.dristi.repository.ServiceRequestRepository;
+import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import static org.pucar.dristi.config.ServiceConstants.ERROR_WHILE_FETCHING_FROM_CASE;
+import static org.pucar.dristi.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
 
 @Slf4j
 @Component
@@ -23,12 +27,14 @@ public class CaseUtil {
     private final RestTemplate restTemplate;
     private final ObjectMapper mapper;
     private final Configuration configs;
+    private final ServiceRequestRepository repository;
 
     @Autowired
-    public CaseUtil(RestTemplate restTemplate, ObjectMapper mapper, Configuration configs) {
+    public CaseUtil(RestTemplate restTemplate, ObjectMapper mapper, Configuration configs, ServiceRequestRepository repository) {
         this.restTemplate = restTemplate;
         this.mapper = mapper;
         this.configs = configs;
+        this.repository = repository;
     }
 
     public Boolean fetchCaseDetails(CaseExistsRequest caseExistsRequest) {
@@ -74,6 +80,31 @@ public class CaseUtil {
         } catch (Exception e) {
             log.error(ERROR_WHILE_FETCHING_FROM_CASE, e);
             throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE, e.getMessage());
+        }
+    }
+
+    public void updateWitnessDetails(WitnessDetailsRequest witnessDetailsRequest) {
+        StringBuilder uri = new StringBuilder(configs.getCaseHost()).append(configs.getAddWitnessEndpoint());
+        Object response = repository.fetchResult(uri, witnessDetailsRequest);
+        try {
+            mapper.valueToTree(response);
+        } catch (HttpClientErrorException e) {
+            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
+            throw new ServiceCallException(e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error(ERROR_WHILE_FETCHING_FROM_CASE, e);
+            throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE, e.getMessage());
+        }
+    }
+
+    public void updateCaseDetails(CaseRequest caseRequest) {
+        StringBuilder uri = new StringBuilder(configs.getCaseHost()).append(configs.getUpdateCaseEndpoint());
+        Object response = repository.fetchResult(uri, caseRequest);
+        try {
+            mapper.valueToTree(response);
+        } catch (CustomException e) {
+            log.error(EXTERNAL_SERVICE_EXCEPTION, e);
+            throw new ServiceCallException(e.getMessage());
         }
     }
 }

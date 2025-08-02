@@ -177,6 +177,9 @@ public class Artifact {
 	@JsonProperty("witnessEmails")
 	private List<String> witnessEmails = null;
 
+	@JsonProperty("tag")
+	private String tag = null;
+
 	@JsonProperty("workflowStatus")
 	private String workflowStatus = null;
 
