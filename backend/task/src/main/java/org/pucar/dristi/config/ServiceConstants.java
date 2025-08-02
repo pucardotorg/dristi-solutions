@@ -138,5 +138,10 @@ public class ServiceConstants {
     public static final String PENDING_ENVELOPE_SUBMISSION = "PENDING_ENVELOPE_SUBMISSION";
     public static final String MANUAL = "MANUAL_";
     public static final String ERROR_WHILE_FETCHING_FROM_ADVOCATE = "ERROR_WHILE_FETCHING_FROM_ADVOCATE";
+    public static final String APPLICATION_DETAILS_PATH = "$.application.applicationDetails";
+    public static final String APPLICATION_TYPE_PATH = "$.application.applicationType";
+
+    public static final String APPLICATION_STATUS_PATH = "$.application.status";
+    public static final String FILING_NUMBER_PATH = "$.application.filingNumber";
 
 }

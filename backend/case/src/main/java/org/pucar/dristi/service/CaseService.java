@@ -408,9 +408,9 @@ public class CaseService {
             // conditional enrichment using strategy
             enrichmentService.enrichCourtCase(caseRequest);
             String previousStatus = caseRequest.getCases().getStatus();
-            if(PENDING_RE_SIGN.equals(previousStatus)) {
+            if (PENDING_RE_SIGN.equals(previousStatus)) {
                 Calculation calculation = compareCalculationAndCreateDemand(caseRequest);
-                if(calculation != null) {
+                if (calculation != null) {
                     caseRequest.getCases().getWorkflow().setAction(UPLOAD_WITH_PAYMENT);
                 }
             }
@@ -430,7 +430,7 @@ public class CaseService {
                 log.info("Last e-sign for case {}", caseRequest.getCases().getId());
                 Calculation calculation = compareCalculationAndCreateDemand(caseRequest);
                 caseRequest.getRequestInfo().getUserInfo().getRoles().add(Role.builder().id(123L).code(SYSTEM).name(SYSTEM).tenantId(caseRequest.getCases().getTenantId()).build());
-                if(calculation != null){
+                if (calculation != null) {
                     caseRequest.getCases().getWorkflow().setAction(E_SIGN_COMPLETE_WITH_PAYMENT);
                 } else {
                     caseRequest.getCases().getWorkflow().setAction(E_SIGN_COMPLETE);
@@ -448,7 +448,7 @@ public class CaseService {
             }
 
             boolean isAccessCodeGenerated = false;
-            if(PENDING_REGISTRATION.equals(caseRequest.getCases().getStatus()) || PENDING_RESPONSE.equals(caseRequest.getCases().getStatus())) {
+            if (PENDING_REGISTRATION.equals(caseRequest.getCases().getStatus()) || PENDING_RESPONSE.equals(caseRequest.getCases().getStatus())) {
                 if (caseRequest.getCases().getAccessCode() == null) {
                     isAccessCodeGenerated = true;
                 }
@@ -1554,6 +1554,14 @@ public class CaseService {
                 }
             }
 
+            //for poa join case
+            if (joinCaseData.getPoa() != null) {
+                validator.validatePOARequest(courtCase, joinCaseRequest.getJoinCaseData());
+                Individual poaIndividual = validator.validatePOAIndividual(joinCaseRequest);
+                TaskResponse taskResponse = createTaskForJudgePOA(joinCaseRequest,poaIndividual);
+                joinCaseV2Response.setPaymentTaskNumber(taskResponse.getTask().getTaskNumber());
+            }
+
             joinCaseNotificationsForDirectJoinOfAdvocate(joinCaseRequest, courtCase);
 
         } catch (CustomException e) {
@@ -1608,6 +1616,16 @@ public class CaseService {
                 return;
             }
             addAdvocateToCase(joinCaseRequest, caseObj, courtCase, auditDetails, existingRepresentative);
+        }
+    }
+
+    public void joinCasePoa(JoinCaseV2Request joinCaseRequest, CourtCase courtCase, Individual poaIndividual) {
+        try {
+            validator.validatePOARequest(courtCase, joinCaseRequest.getJoinCaseData());
+
+        } catch (Exception e) {
+            log.error("Error occurred while creating task for join case request :: {}", e.toString());
+            throw new CustomException(JOIN_CASE_ERR, TASK_SERVICE_ERROR);
         }
     }
 
@@ -2606,6 +2624,115 @@ public class CaseService {
         log.info("Pushing join case litigant details :: {}", caseObj);
         producer.push(config.getLitigantJoinCaseTopic(), caseObj);
     }
+
+    private TaskResponse createTaskForJudgePOA(JoinCaseV2Request joinCaseRequest, Individual poaIndividual) throws JsonProcessingException {
+        //TO-DO- Avoid creating approval pending task
+        TaskRequest taskRequest = new TaskRequest();
+        Task task = new Task();
+        task.setTaskType(JOIN_CASE);
+        task.setStatus("");
+        task.setTaskDescription("poaJoinCase");
+        task.setTenantId(joinCaseRequest.getRequestInfo().getUserInfo().getTenantId());
+        task.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
+        WorkflowObject workflow = new WorkflowObject();
+        workflow.setAction("CREATE");
+        task.setWorkflow(workflow);
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        JoinCaseDataV2 joinCaseData = joinCaseRequest.getJoinCaseData();
+
+        POAJoinCaseTaskRequest taskJoinCase = new POAJoinCaseTaskRequest();
+
+        List<POAIndividualDetails> poaIndividualDetailsList = new ArrayList<>();
+
+        POADetails poaDetails = new POADetails();
+        poaDetails.setFirstName(poaIndividual.getName().getGivenName());
+        poaDetails.setMiddleName(poaIndividual.getName().getOtherNames());
+        poaDetails.setLastName(poaIndividual.getName().getFamilyName());
+        poaDetails.setIdDocument(getPoaIdProofDocument(poaIndividual, objectMapper));
+        poaDetails.setIndividualId(poaIndividual.getIndividualId());
+        poaDetails.setMobileNumber(poaIndividual.getMobileNumber());
+        poaDetails.setUserUuid(poaIndividual.getUserUuid());
+        poaDetails.setAddress(getPoaAdressDetails(poaIndividual));
+
+        joinCaseData.getPoa().getPoaRepresenting().forEach(representingJoinCase -> {
+
+            POAIndividualDetails poaIndividualDetails = new POAIndividualDetails();
+            poaIndividualDetails.setIndividualId(representingJoinCase.getIndividualId());
+            poaIndividualDetails.setIsRevoking(representingJoinCase.getIsRevoking());
+            poaIndividualDetails.setUniqueId(representingJoinCase.getUniqueId());
+            poaIndividualDetails.setPoaAuthDocument(representingJoinCase.getPoaAuthDocument());
+
+            poaIndividualDetailsList.add(poaIndividualDetails);
+        });
+
+        taskJoinCase.setPoaDetails(poaDetails);
+        taskJoinCase.setIndividualDetails(poaIndividualDetailsList);
+
+        Object taskDetails = objectMapper.convertValue(taskJoinCase, Object.class);
+        task.setTaskDetails(taskDetails);
+
+        taskRequest.setTask(task);
+        RequestInfo requestInfo = joinCaseRequest.getRequestInfo();
+        Role role = Role.builder().code("TASK_CREATOR").name("TASK_CREATOR").tenantId(joinCaseData.getTenantId()).build();
+        requestInfo.getUserInfo().getRoles().add(role);
+        taskRequest.setRequestInfo(requestInfo);
+        return taskUtil.callCreateTask(taskRequest);
+    }
+
+    private static Document getPoaIdProofDocument(Individual poaIndividual, ObjectMapper objectMapper) throws JsonProcessingException {
+        Identifier identifier = poaIndividual.getIdentifiers().get(0);
+        AdditionalFields additionalFields = poaIndividual.getAdditionalFields();
+
+        List<Field> fields = additionalFields.getFields();
+        String fileStoreId = null;
+        String filename = null;
+
+        for (Field field : fields) {
+            if ("identifierIdDetails".equals(field.getKey())) {
+                JsonNode jsonNode = objectMapper.readTree(field.getValue());
+                fileStoreId = jsonNode.has("fileStoreId") ? jsonNode.get("fileStoreId").asText() : null;
+                filename = jsonNode.has("filename") ? jsonNode.get("filename").asText() : null;
+                break;
+            }
+        }
+
+        Map<String, Object> additionalDetails = new HashMap<>();
+        additionalDetails.put("fileName", identifier.getIdentifierType() + " Card");
+        additionalDetails.put("documentName", filename);
+
+        return Document.builder()
+                .fileStore(fileStoreId)
+                .documentType("POA_COMPLAINANT_ID_PROOF")
+                .additionalDetails(additionalDetails)
+                .build();
+    }
+
+    private Map<String, Object> getPoaAdressDetails(Individual poaIndividual) {
+        Address address = poaIndividual.getAddress().get(0);
+
+        Map<String, Object> poaAddressDetails = new HashMap<>();
+        poaAddressDetails.put("city", address.getCity());
+        poaAddressDetails.put("state", address.getAddressLine1()); // Assuming addressLine1 = state
+        poaAddressDetails.put("district", address.getAddressLine2()); // Assuming addressLine2 = district
+        poaAddressDetails.put("pincode", address.getPincode());
+        poaAddressDetails.put("locality", address.getStreet()); // or address.getLocality() if available
+
+        Map<String, Object> coordinates = new HashMap<>();
+        coordinates.put("latitude", address.getLatitude());
+        coordinates.put("longitude", address.getLongitude());
+        poaAddressDetails.put("coordinates", coordinates);
+
+        Map<String, Object> typeOfAddress = new HashMap<>();
+        typeOfAddress.put("id", 1);
+        typeOfAddress.put("code", "RESIDENTIAL");
+        typeOfAddress.put("name", "Residential");
+        typeOfAddress.put("isActive", true);
+
+        poaAddressDetails.put("typeOfAddress", typeOfAddress);
+        return poaAddressDetails;
+    }
+
 
     private Object updateRespondentDetails(Object additionalDetails, RequestInfo requestInfo, JoinCaseLitigant joinCaseLitigant) {
 
@@ -4937,16 +5064,16 @@ public class CaseService {
             log.info("operation=compareCalculationAndCreateDemand, status=IN_PROGRESS, caseId: {}", body.getCases().getId());
             CalculationRes newCalculation = getCalculation(body.getCases(), body.getRequestInfo());
 
-            String lastSubmissionConsumerCode = getLastSubmissionConsumerCode(body) != null ? getLastSubmissionConsumerCode(body) : body.getCases().getFilingNumber()+"_CASE_FILING";
+            String lastSubmissionConsumerCode = getLastSubmissionConsumerCode(body) != null ? getLastSubmissionConsumerCode(body) : body.getCases().getFilingNumber() + "_CASE_FILING";
             Calculation oldCalculation = etreasuryUtil.getHeadBreakupCalculation(lastSubmissionConsumerCode, body.getRequestInfo());
 
-            if(oldCalculation == null) {
+            if (oldCalculation == null) {
                 log.info("No previous calculation found for caseId: {}, for creating new demand", body.getCases().getId());
                 return null;
             }
             Calculation calculation = getCalculationDifference(newCalculation, oldCalculation);
 
-            if(calculation != null) {
+            if (calculation != null) {
                 createDemandForCase(body, calculation, newCalculation.getCalculation().get(0), lastSubmissionConsumerCode);
             }
             log.info("operation=compareCalculationAndCreateDemand, status=SUCCESS, caseId: {}", body.getCases().getId());
@@ -5013,7 +5140,7 @@ public class CaseService {
 
     private void createDemandForCase(@Valid CaseRequest body, Calculation calculation, Calculation finalCalculation, String lastSubmissionConsumerCode) {
         try {
-            DemandCreateRequest demandCreateRequest  = DemandCreateRequest.builder()
+            DemandCreateRequest demandCreateRequest = DemandCreateRequest.builder()
                     .requestInfo(body.getRequestInfo())
                     .filingNumber(body.getCases().getFilingNumber())
                     .consumerCode(updateAndGetConsumerCode(body))
@@ -5081,7 +5208,7 @@ public class CaseService {
 
     private Boolean isDelayCondonation(CourtCase existingCase) {
         JsonNode caseDetails = objectMapper.convertValue(existingCase.getCaseDetails(), JsonNode.class);
-        if(caseDetails == null || caseDetails.get("delayApplications") == null) {
+        if (caseDetails == null || caseDetails.get("delayApplications") == null) {
             return false;
         }
         return !caseDetails.get("delayApplications").get("formdata").get(0).get("data").get("delayCondonationType").get("code").textValue().equals("YES");

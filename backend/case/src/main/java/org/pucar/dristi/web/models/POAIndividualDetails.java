@@ -15,10 +15,6 @@ public class POAIndividualDetails {
     @JsonProperty("individualId")
     private String individualId;
 
-    @NotNull
-    @JsonProperty("userUuid")
-    private String userUuid;
-
     @JsonProperty("isRevoking")
     private Boolean isRevoking = false;
 

@@ -402,6 +402,9 @@ public class Configuration {
 	@Value("${kafka.case.update.last.modified.time}")
 	private String caseUpdateLastModifiedTimeTopic;
 
+	@Value("${egov.poa.join.case.kafka.topic}")
+	private String poaJoinCaseKafkaTopic;
+
 	// evidence
 	@Value("${egov.evidence.host}")
 	private String evidenceServiceHost;

@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -297,6 +298,53 @@ public class CaseRegistrationValidator {
             }
         }
         return true;
+    }
+
+    public Individual validatePOAIndividual(JoinCaseV2Request joinCaseRequest) {
+        JoinCasePOA joinCasePOA = joinCaseRequest.getJoinCaseData().getPoa();
+
+        if (joinCasePOA.getIndividualId() != null) {
+            List<Individual> individual = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), joinCasePOA.getIndividualId());
+            if (individual.isEmpty())
+                throw new CustomException(INDIVIDUAL_NOT_FOUND, "POA individual not found");
+
+            return individual.get(0);
+        } else {
+            throw new CustomException(INDIVIDUAL_NOT_FOUND, "POA individual not found");
+        }
+    }
+
+    public void validatePOARequest(CourtCase courtCase, JoinCaseDataV2 joinCaseData) {
+        List<POARepresentingJoinCase> poaRepresenting = joinCaseData.getPoa().getPoaRepresenting();
+        List<POAHolder> poaHolders = courtCase.getPoaHolders();
+
+        Map<String, String> poaHolderRepresentingMap = new HashMap<>();
+        for (POAHolder poaHolder : poaHolders) {
+            for (PoaParty party : poaHolder.getRepresentingLitigants()) {
+                poaHolderRepresentingMap.put(party.getIndividualId(), poaHolder.getIndividualId());
+            }
+        }
+
+        String individualIdPOA = joinCaseData.getPoa().getIndividualId();
+        for (POARepresentingJoinCase poaRepresentingJoinCase : poaRepresenting) {
+            String individualIdRepresenting = poaRepresentingJoinCase.getIndividualId();
+
+            if (poaRepresentingJoinCase.getIsRevoking()) {
+                if (!poaHolderRepresentingMap.containsKey(individualIdRepresenting))
+                 throw new CustomException(VALIDATION_ERR, "Litigant with individualId " + individualIdRepresenting + " don't have poa holder");
+                else if (poaHolderRepresentingMap.containsKey(individualIdRepresenting) && poaHolderRepresentingMap.get(individualIdRepresenting).equals(individualIdPOA)) {
+                    throw new CustomException(VALIDATION_ERR, "POA individualId " + individualIdPOA + " already a POA holder for the litigant " + individualIdRepresenting);
+                }
+            }else {
+                if (poaHolderRepresentingMap.containsKey(individualIdRepresenting))
+                    throw new CustomException(VALIDATION_ERR, "Litigant with individualId " + individualIdRepresenting + " have poa holder");
+            }
+
+            if(individualIdRepresenting.equalsIgnoreCase(individualIdPOA) && !poaHolderRepresentingMap.containsKey(individualIdRepresenting)) {
+                    throw new CustomException(VALIDATION_ERR, "POA individualId " + individualIdPOA + "don't have poa for revoking poa rights");
+            }
+
+        }
     }
 
     public void validateEditCase(CaseRequest caseRequest) throws CustomException {

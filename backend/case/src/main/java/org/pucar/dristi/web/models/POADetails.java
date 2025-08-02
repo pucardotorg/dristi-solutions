@@ -21,11 +21,19 @@ public class POADetails {
 
     @NotNull
     @JsonProperty("address")
-    private String address;
+    private Object address;
 
     @NotNull
     @JsonProperty("mobileNumber")
     private String mobileNumber;
+
+    @NotNull
+    @JsonProperty("individualId")
+    private String individualId;
+
+    @NotNull
+    @JsonProperty("userUuid")
+    private String userUuid;
 
     @NotNull
     @JsonProperty("idDocument")
