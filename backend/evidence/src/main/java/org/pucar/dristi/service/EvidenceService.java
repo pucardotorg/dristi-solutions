@@ -397,8 +397,6 @@ public class EvidenceService {
 
             // Enrich application upon update
             evidenceEnrichment.enrichEvidenceRegistrationUponUpdate(evidenceRequest);
-            if (evidenceRequest.getArtifact().getIsEvidence().equals(true) && evidenceRequest.getArtifact().getEvidenceNumber() == null) {
-                evidenceEnrichment.enrichEvidenceNumber(evidenceRequest);
 
             if (evidenceRequest.getArtifact().getIsEvidenceMarkedFlow()) {
                 if (ObjectUtils.isEmpty(evidenceRequest.getArtifact().getEvidenceNumber())) {
