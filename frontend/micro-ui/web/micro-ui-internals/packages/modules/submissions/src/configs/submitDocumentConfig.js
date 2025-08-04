@@ -56,7 +56,7 @@ const submissionDocumentConfig = [
       {
         inline: true,
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectCustomFormatterTextArea",
         key: "reasonForFiling",
         isMandatory: true,
         populators: {

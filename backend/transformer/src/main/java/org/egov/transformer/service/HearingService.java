@@ -79,7 +79,7 @@ public class HearingService {
 
         List<AdvocateMapping> representatives = courtCase.getRepresentatives();
 
-        Advocate advocate = getAdvocates(representatives, hearing, courtCase.getLitigants(), requestInfo);
+        Advocate advocate = getAdvocates(representatives, courtCase.getLitigants(), requestInfo);
 
         OpenHearing openHearing = new OpenHearing();
         openHearing.setHearingUuid(hearing.getId().toString());
@@ -102,7 +102,12 @@ public class HearingService {
         openHearing.setHearingDurationInMillis(hearing.getHearingDurationInMillis());
 
         InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtCase.getCourtId(), hearing.getId().toString() );
-        List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(inboxRequest);
+        List<OpenHearing> openHearingList = null;
+        try {
+            openHearingList = inboxUtil.getInboxEntities(inboxRequest, OPEN_HEARING_INDEX_BUSINESS_OBJECT_KEY, OpenHearing.class);
+        } catch (Exception ex) {
+            log.error("Error while getting open hearings: {}, for hearingId: {}", ex.getMessage(),openHearing.getHearingUuid(), ex);
+        }
         if(openHearingList != null && !openHearingList.isEmpty()) {
             if(openHearingList.get(0).getSerialNumber() > 0) {
                 openHearing.setSerialNumber(openHearingList.get(0).getSerialNumber());
@@ -169,7 +174,8 @@ public class HearingService {
 
     }
 
-    private Advocate getAdvocates(List<AdvocateMapping> representatives, Hearing hearing, List<Party> litigants, RequestInfo requestInfo) {
+
+    public Advocate getAdvocates(List<AdvocateMapping> representatives, List<Party> litigants, RequestInfo requestInfo) {
 
         List<String> complainantNames = new ArrayList<>();
         List<String> accusedNames = new ArrayList<>();
