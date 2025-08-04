@@ -4554,40 +4554,9 @@ public class CaseService {
         poaVerification.put("mobileNumber", poaDetails.getMobileNumber());
         poaVerification.put("isUserVerified", true);
 
-        Object address = poaDetails.getAddress();
-        JsonNode addressNode = objectMapper.convertValue(address, JsonNode.class);
-        String city = addressNode.path("city").asText("");
-        String state = addressNode.path("addressLine1").asText("");
-        String district = addressNode.path("addressLine2").asText("");
-        String locality = addressNode.path("street").asText("");
-        String pincode = addressNode.path("pincode").asText("");
-        double latitude = addressNode.path("latitude").asDouble();
-        double longitude = addressNode.path("longitude").asDouble();
-
-        ObjectNode poaAddressDetails = data.putObject("poaAddressDetails");
-        poaAddressDetails.put("city", city);
-        poaAddressDetails.put("state", state);
-        poaAddressDetails.put("district", district);
-        poaAddressDetails.put("locality", locality);
-        poaAddressDetails.put("pincode", pincode);
-
-        ObjectNode coordinates = poaAddressDetails.putObject("coordinates");
-        coordinates.put("latitude", latitude);
-        coordinates.put("longitude", longitude);
-
-        ObjectNode typeOfAddress = poaAddressDetails.putObject("typeOfAddress");
-        typeOfAddress.put("id", 1);
-        typeOfAddress.put("code", "RESIDENTIAL");
-        typeOfAddress.put("name", "Residential");
-        typeOfAddress.put("isActive", true);
-
-
-        ObjectNode addressSelect = data.putObject("poaAddressDetails-select");
-        addressSelect.put("city", city);
-        addressSelect.put("state", state);
-        addressSelect.put("district", district);
-        addressSelect.put("locality", locality);
-        addressSelect.put("pincode", pincode);
+        JsonNode addressNode = objectMapper.convertValue(poaDetails.getAddress(), JsonNode.class);
+        data.set("poaAddressDetails", addressNode);
+        data.set("poaAddressDetails-select", addressNode);
 
         // Add POA Documents
         ArrayNode documentArray = data.putObject("poaVerification").putObject("individualDetails").putArray("document");
