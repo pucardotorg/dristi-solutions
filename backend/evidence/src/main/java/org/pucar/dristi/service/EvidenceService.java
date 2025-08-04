@@ -457,6 +457,7 @@ public class EvidenceService {
                 .filingNumber(body.getArtifact().getFilingNumber())
                 .evidenceNumber(body.getArtifact().getEvidenceNumber())
                 .evidenceStatus(true)
+                .tenantId(body.getArtifact().getTenantId())
                 .build();
         Pagination pagination = Pagination.builder()
                 .build();
