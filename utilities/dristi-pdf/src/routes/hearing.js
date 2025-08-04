@@ -3,6 +3,7 @@ const router = express.Router();
 const asyncMiddleware = require("../utils/asyncMiddleware");
 const { logger } = require("../logger");
 const hearingBulkReschedule = require("../hearingHandlers/hearingBulkReschedule");
+const witnessDeposition = require("../hearingHandlers/witnessDeposition");
 
 function renderError(res, errorMessage, errorCode, errorObject) {
   if (errorCode == undefined) errorCode = 500;
@@ -38,6 +39,9 @@ router.post(
       switch (hearingPdfType.toLowerCase()) {
         case "order-bulk-reschedule":
           await hearingBulkReschedule(req, res, qrCode);
+          break;
+        case "witness-deposition":
+          await witnessDeposition(req, res, qrCode);
           break;
         default:
           return renderError(
