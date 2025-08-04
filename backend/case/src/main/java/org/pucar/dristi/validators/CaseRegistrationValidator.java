@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -383,6 +384,7 @@ public class CaseRegistrationValidator {
         try {
             log.info("operation=validateWitnessRequest, status=IN_PROGRESS, filingNumber: {}", body.getCaseFilingNumber());
             JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+            validateMobileNumbersInRequest(body.getWitnessDetails());
             for(WitnessDetails witnessDetails : body.getWitnessDetails()) {
                 validateMobileNumbers(additionalDetails, witnessDetails);
                 validateEmail(additionalDetails, witnessDetails);
@@ -392,6 +394,45 @@ public class CaseRegistrationValidator {
             log.error("operation=validateWitnessRequest, status=FAILURE, filingNumber: {}, error: {}", body.getCaseFilingNumber(), e.getMessage());
             throw new CustomException(ERROR_VALIDATING_WITNESS, "Error while validating witness request: " + body.getCaseFilingNumber() + ", error: " + e.getMessage());
         }
+    }
+
+    private void validateMobileNumbersInRequest(List<WitnessDetails> witnessDetails) {
+        if(witnessDetails == null || witnessDetails.isEmpty()) {
+            throw new CustomException(ERROR_VALIDATING_WITNESS, "Witness details cannot be empty");
+        }
+        
+        Set<String> mobileNumberSet = new HashSet<>();
+        for(WitnessDetails witnessDetail : witnessDetails) {
+            List<String> mobileNumbers = extractMobileNumbers(witnessDetail);
+            for(String mobileNumber : mobileNumbers) {
+                if(!mobileNumberSet.add(mobileNumber)) {
+                    throw new CustomException(ERROR_VALIDATING_WITNESS, 
+                        "Duplicate mobile number found: " + mobileNumber + ". All witnesses must have different mobile numbers.");
+                }
+            }
+        }
+    }
+    
+    private List<String> extractMobileNumbers(WitnessDetails witnessDetail) {
+        if(witnessDetail.getPhoneNumbers() == null || witnessDetail.getPhoneNumbers().getMobileNumber() == null) {
+            return Collections.emptyList();
+        }
+        return witnessDetail.getPhoneNumbers().getMobileNumber().stream()
+                .filter(mobile -> mobile != null && !mobile.trim().isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    private boolean doesWitnessExists(JsonNode additionalDetails, WitnessDetails witnessDetails) {
+        JsonNode witnessDetailsNode = additionalDetails.get("witnessDetails");
+        if (witnessDetailsNode == null || !witnessDetailsNode.isArray()) {
+            return false;
+        }
+        for(JsonNode witness : witnessDetailsNode.get("formdata")) {
+            if(witnessDetails.getUniqueId().equalsIgnoreCase(witness.get("uniqueId").textValue())){
+                return true;
+            }
+        }
+        return false;
     }
 
     private void validateEmail(JsonNode additionalDetails, WitnessDetails witnessDetails) {
@@ -405,7 +446,8 @@ public class CaseRegistrationValidator {
         List<String> witnessEmailIds = witnessDetails.getEmails().getEmailId();
         Set<String> emailIdSet = new HashSet<>(emailIds);
         for(String emailId : witnessEmailIds) {
-            if(emailIdSet.contains(emailId)) {
+            boolean witnessExist = !doesWitnessExists(additionalDetails, witnessDetails);
+            if(emailIdSet.contains(emailId) && !witnessExist) {
                 throw new CustomException(ERROR_VALIDATING_WITNESS,
                         "Witness email id should not be same as existing parties email id");
             }
@@ -453,7 +495,8 @@ public class CaseRegistrationValidator {
         List<String> witnessMobileNumber = witnessDetails.getPhoneNumbers().getMobileNumber();
         Set<String> mobileNumberSet = new HashSet<>(mobileNumberList);
         for (String witnessNumber : witnessMobileNumber) {
-            if (mobileNumberSet.contains(witnessNumber)) {
+            boolean isWitnessExists = doesWitnessExists(additionalDetails, witnessDetails);
+            if (mobileNumberSet.contains(witnessNumber) && !isWitnessExists) {
                 throw new CustomException(ERROR_VALIDATING_WITNESS,
                         "Witness mobile number should not be same as existing parties mobile number");
             }
