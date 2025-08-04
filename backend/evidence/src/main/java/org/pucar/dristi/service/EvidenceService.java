@@ -120,7 +120,7 @@ public class EvidenceService {
         }
         EvidenceSearchCriteria evidenceSearchCriteria = createEvidenceSearchCriteria(body);
         List<Artifact> artifacts = repository.getArtifacts(evidenceSearchCriteria, null);
-        boolean witnessFound = artifacts.stream().anyMatch(artifact -> artifact.getTag().equalsIgnoreCase(body.getArtifact().getTag()));
+        boolean witnessFound = artifacts.stream().anyMatch(artifact -> artifact.getTag() != null && artifact.getTag().equalsIgnoreCase(body.getArtifact().getTag()));
         if (witnessFound) {
             log.info("Tag already exists for the witness with source:{} ", body.getArtifact().getSourceType());
         }
