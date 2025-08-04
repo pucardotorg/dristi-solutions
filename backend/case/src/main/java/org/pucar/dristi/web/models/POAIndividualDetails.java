@@ -18,6 +18,9 @@ public class POAIndividualDetails {
     @JsonProperty("isRevoking")
     private Boolean isRevoking = false;
 
+    @JsonProperty("existingPoaIndividualId")
+    private String existingPoaIndividualId = null;
+
     @JsonProperty("poaAuthDocument")
     @Valid
     private Document poaAuthDocument = null;

@@ -138,10 +138,23 @@ public class ServiceConstants {
     public static final String PENDING_ENVELOPE_SUBMISSION = "PENDING_ENVELOPE_SUBMISSION";
     public static final String MANUAL = "MANUAL_";
     public static final String ERROR_WHILE_FETCHING_FROM_ADVOCATE = "ERROR_WHILE_FETCHING_FROM_ADVOCATE";
-    public static final String APPLICATION_DETAILS_PATH = "$.application.applicationDetails";
+    public static final String APPLICATION_DETAILS_PATH = "$.application.applicationDetails.taskNumber";
     public static final String APPLICATION_TYPE_PATH = "$.application.applicationType";
 
     public static final String APPLICATION_STATUS_PATH = "$.application.status";
     public static final String FILING_NUMBER_PATH = "$.application.filingNumber";
+    public static final String TENANTID_PATH = "$.application.tenantId";
+
+    public static final String INTERNALMICROSERVICEROLE_NAME = "SYSTEM";
+
+    public static final String INTERNALMICROSERVICEROLE_CODE = "SYSTEM";
+
+    public static final String INTERNALMICROSERVICEUSER_NAME = "Internal Microservice User";
+
+    public static final String INTERNALMICROSERVICEUSER_USERNAME = "INTERNAL_SYSTEM_USER";
+
+    public static final String INTERNALMICROSERVICEUSER_MOBILENO = "1234567890";
+
+    public static final String INTERNALMICROSERVICEUSER_TYPE = "SYSTEM";
 
 }
