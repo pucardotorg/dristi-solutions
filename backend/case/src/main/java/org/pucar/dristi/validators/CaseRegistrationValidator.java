@@ -341,6 +341,9 @@ public class CaseRegistrationValidator {
     }
 
     private Map<String, String> getPoaHolderRepresentingMap(CourtCase courtCase) {
+        if(courtCase.getPoaHolders() == null){
+            courtCase.setPoaHolders(new ArrayList<>());
+        }
         List<POAHolder> poaHolders = courtCase.getPoaHolders();
 
         Map<String, String> poaHolderRepresentingMap = new HashMap<>();

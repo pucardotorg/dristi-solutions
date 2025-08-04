@@ -146,7 +146,7 @@ public class PaymentUpdateService {
     }
 
     private void getSmsAfterPayment(ApplicationRequest applicationRequest,String applicationType) throws JsonProcessingException {
-        CaseSearchRequest caseSearchRequest = createCaseSearchRequest(applicationRequest.getRequestInfo(), applicationRequest.getApplication().getFilingNumber());
+        CaseSearchRequest caseSearchRequest = createCaseSearchRequest(applicationRequest.getRequestInfo(), applicationRequest.getApplication());
         JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
 
         Object additionalDetailsObject = applicationRequest.getApplication().getAdditionalDetails();
@@ -178,11 +178,14 @@ public class PaymentUpdateService {
         }
     }
 
-    private CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String fillingNUmber) {
+    private CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, Application application) {
         CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
         caseSearchRequest.setRequestInfo(requestInfo);
-        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(fillingNUmber).defaultFields(false).build();
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(application.getFilingNumber()).defaultFields(false).build();
         caseSearchRequest.addCriteriaItem(caseCriteria);
+        if(APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS.equalsIgnoreCase(application.getApplicationType())) {
+            caseSearchRequest.setFlow(FLOW_JAC);
+        }
         return caseSearchRequest;
     }
 
