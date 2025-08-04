@@ -424,7 +424,10 @@ public class EvidenceService {
                 if (ObjectUtils.isEmpty(evidenceRequest.getArtifact().getEvidenceNumber())) {
                     throw new CustomException(ILLEGAL_ARGUMENT_EXCEPTION_CODE, "Evidence number is required for Evidence Marked Flow");
                 } else {
-                    checkUniqueEvidenceNumberForCase(evidenceRequest);
+                    // check if the evidence number exists for the case only when mark as evidence workflow begins
+                    if(CREATE.equalsIgnoreCase(evidenceRequest.getArtifact().getWorkflow().getAction())){
+                        checkUniqueEvidenceNumberForCase(evidenceRequest);
+                    }
                 }
             }
             if(WITNESS_DEPOSITION.equalsIgnoreCase(evidenceRequest.getArtifact().getArtifactType())){
