@@ -82,6 +82,7 @@ public class EvidenceRowMapper implements ResultSetExtractor<List<Artifact>> {
                             .witnessEmails(getObjectFromJson(rs.getString("witnessEmails"), new TypeReference<>() {
                             }))
                             .workflowStatus(rs.getString("evidenceMarkedStatus"))
+                            .tag(rs.getString("tag"))
                             .build();
                 }
 
