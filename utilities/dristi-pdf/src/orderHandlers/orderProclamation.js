@@ -126,12 +126,11 @@ async function orderProclamation(
         },
       ],
     };
-
     // Generate the PDF
     const pdfKey =
       qrCode === "true"
         ? config.pdf.order_issue_proclamation_qr
-        : config.pdf.order_proclamation_proclamation;
+        : config.pdf.order_issue_proclamation;
 
     if (compositeOrder) {
       const pdfResponse = await handleApiCall(
@@ -162,6 +161,7 @@ async function orderProclamation(
         return renderError(res, "Failed to send PDF response", 500, err);
       });
   } catch (ex) {
+    console.error("Error generating proclamation order PDF:", ex);
     return renderError(res, "Failed to create PDF for proclamation order", 500, ex);
   }
 }
