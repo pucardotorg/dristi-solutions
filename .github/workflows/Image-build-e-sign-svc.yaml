@@ -89,7 +89,7 @@ jobs:
             echo "${{ secrets.ESIGN_PRIVATE_KEY }}" > backend/e-sign-svc/src/main/resources/privateKey.pem
           else
             echo "Using default private key"
-            echo "${{ secrets.PRIVATE_KEY }}" > backend/e-sign-svc/src/main/resources/privateKey.pem
+            echo "${{ secrets.PROD_PRIVATE_KEY }}" > backend/e-sign-svc/src/main/resources/privateKey.pem
           fi
 
       - name: Build and Push Docker image for e-sign-svc
