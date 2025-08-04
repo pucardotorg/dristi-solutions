@@ -13,6 +13,7 @@ import { getFilingType } from "../../../Utils";
 import { hearingService } from "../../../../../hearings/src/hooks/services";
 import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/caseUtils";
 import { constructFullName, removeInvalidNameParts } from "@egovernments/digit-ui-module-orders/src/utils";
+import SelectCustomFormatterTextArea from "../../../components/SelectCustomFormatterTextArea";
 
 const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDetails, hearing, hearingId, setAddPartyModal }) => {
   const { t } = useTranslation();
@@ -361,6 +362,47 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
   if (isFilingTypeLoading) {
     return <Loader />;
   }
+  const CONFIG_KEY = "witnessDeposition"; // any key name you prefer
+  const FIELD_NAME = "comment";
+
+  const formData = {
+    [CONFIG_KEY]: {
+      [FIELD_NAME]: IsSelectedWitness ? witnessDepositionText : "",
+    },
+  };
+
+  const onSelect = (key, value) => {
+    if (key === CONFIG_KEY && value?.[FIELD_NAME] !== undefined) {
+      setWitnessDepositionText(value[FIELD_NAME]);
+    }
+  };
+  const isDisabled = isDepositionSaved || !IsSelectedWitness || isProceeding;
+
+  const config = {
+    key: CONFIG_KEY,
+    disable: isDepositionSaved || !IsSelectedWitness || isProceeding,
+    populators: {
+      inputs: [
+        {
+          name: FIELD_NAME,
+          // textAreaHeader: "Witness Deposition",
+          // textAreaSubHeader: "Write the deposition for the selected witness",
+          isOptional: false,
+          rows: 10,
+          style: {
+            width: "100%",
+            minHeight: "40vh",
+            fontSize: "large",
+            opacity: isDisabled ? 0.5 : 1,
+            pointerEvents: isDisabled ? "none" : "auto",
+            backgroundColor: isDisabled ? "#f5f5f5" : "white",
+            color: isDisabled ? "#666" : "black",
+          },
+        },
+      ],
+    },
+    disableScrutinyHeader: true,
+  };
 
   return (
     <div className="bottom-drawer-wrapper">
@@ -421,20 +463,7 @@ const WitnessDrawer = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDet
             </div>
 
             <div style={{ gap: "16px", border: "1px solid", marginTop: "2px" }}>
-              <TextArea
-                ref={textAreaRef}
-                style={{
-                  width: "100%",
-                  minHeight: "40vh",
-                  fontSize: "large",
-                  ...((isDepositionSaved || !IsSelectedWitness) && {
-                    pointerEvents: "unset !important",
-                  }),
-                }}
-                value={IsSelectedWitness ? witnessDepositionText || "" : ""}
-                onChange={(e) => setWitnessDepositionText(e.target.value)}
-                disabled={isDepositionSaved || !IsSelectedWitness || isProceeding}
-              />
+              <SelectCustomFormatterTextArea t={t} config={config} formData={formData} onSelect={onSelect} errors={{}} />
               {!isDepositionSaved && IsSelectedWitness && (
                 <TranscriptComponent
                   setWitnessDepositionText={setWitnessDepositionText}

@@ -7,7 +7,6 @@ import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -21,6 +20,7 @@ import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 import java.util.*;
 
@@ -56,6 +56,12 @@ public class EvidenceService {
         this.individualService = individualService;
     }
 
+    private boolean shouldUpdateWorkflowStatusForUpdate(EvidenceRequest evidenceRequest, String filingType){
+        return evidenceRequest.getArtifact().getWorkflow() != null && (evidenceRequest.getArtifact().getArtifactType() != null &&
+                evidenceRequest.getArtifact().getArtifactType().equals(DEPOSITION)) ||
+                (filingType!= null && filingType.equalsIgnoreCase(SUBMISSION)) || evidenceRequest.getArtifact().getIsEvidenceMarkedFlow();
+    }
+
     public Artifact createEvidence(EvidenceRequest body) {
         try {
 
@@ -66,9 +72,6 @@ public class EvidenceService {
 
             // Enrich applications
             evidenceEnrichment.enrichEvidenceRegistration(body);
-            if (body.getArtifact().getIsEvidence().equals(true)) {
-                evidenceEnrichment.enrichEvidenceNumber(body);
-            }
 
 
             // Initiate workflow for the new application- //todo witness deposition is part of case filing or not
@@ -131,7 +134,7 @@ public class EvidenceService {
     }
 
     private void enrichEvidenceSearch(RequestInfo requestInfo, EvidenceSearchCriteria searchCriteria) {
-        if(requestInfo.getUserInfo() != null) {
+        if(requestInfo != null && requestInfo.getUserInfo() != null) {
             User userInfo = requestInfo.getUserInfo();
             String userType = userInfo.getType();
             switch (userType.toUpperCase()) {
@@ -173,14 +176,16 @@ public class EvidenceService {
             // Enrich application upon update
             evidenceEnrichment.enrichEvidenceRegistrationUponUpdate(evidenceRequest);
 
-            if (evidenceRequest.getArtifact().getIsEvidence().equals(true) && evidenceRequest.getArtifact().getEvidenceNumber() == null) {
-                evidenceEnrichment.enrichEvidenceNumber(evidenceRequest);
+            if (evidenceRequest.getArtifact().getIsEvidenceMarkedFlow()) {
+                if (ObjectUtils.isEmpty(evidenceRequest.getArtifact().getEvidenceNumber())) {
+                    throw new CustomException(ILLEGAL_ARGUMENT_EXCEPTION_CODE, "Evidence number is required for Evidence Marked Flow");
+                } else {
+                    checkUniqueEvidenceNumberForCase(evidenceRequest);
+                }
             }
 
 
-            if ((evidenceRequest.getArtifact().getArtifactType() != null &&
-                    evidenceRequest.getArtifact().getArtifactType().equals(DEPOSITION)) ||
-                    (filingType!= null && evidenceRequest.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION))) {
+            if (shouldUpdateWorkflowStatusForUpdate(evidenceRequest, filingType)) {
                 workflowService.updateWorkflowStatus(evidenceRequest, filingType);
                 enrichBasedOnStatus(evidenceRequest);
                 producer.push(config.getUpdateEvidenceKafkaTopic(), evidenceRequest);
@@ -199,6 +204,21 @@ public class EvidenceService {
         }
     }
 
+    public void checkUniqueEvidenceNumberForCase(EvidenceRequest body){
+        // Throw exception if evidence number exists
+        EvidenceSearchCriteria criteria = EvidenceSearchCriteria.builder()
+                .filingNumber(body.getArtifact().getFilingNumber())
+                .evidenceNumber(body.getArtifact().getEvidenceNumber())
+                .evidenceStatus(true)
+                .build();
+        Pagination pagination = Pagination.builder()
+                .build();
+        List<Artifact> artifactsList = searchEvidence(body.getRequestInfo(), criteria, pagination);
+        if(!artifactsList.isEmpty()){
+            throw new CustomException(EVIDENCE_NUMBER_EXISTS_EXCEPTION, String.format("Evidence Number %s already exists for case: %s", body.getArtifact().getEvidenceNumber(), body.getArtifact().getFilingNumber()));
+        }
+    }
+
     Artifact validateExistingEvidence(EvidenceRequest evidenceRequest) {
         try {
             return validator.validateEvidenceExistence(evidenceRequest);
@@ -210,11 +230,7 @@ public class EvidenceService {
 
     void enrichBasedOnStatus(EvidenceRequest evidenceRequest) {
         String status = evidenceRequest.getArtifact().getStatus();
-        if (PUBLISHED_STATE.equalsIgnoreCase(status)) {
-            evidenceEnrichment.enrichEvidenceNumber(evidenceRequest);
-        } else if (ABATED_STATE.equalsIgnoreCase(status)) {
-            evidenceEnrichment.enrichIsActive(evidenceRequest);
-        } else if(DELETED_STATE.equalsIgnoreCase(status)){
+        if (ABATED_STATE.equalsIgnoreCase(status) || DELETED_STATE.equalsIgnoreCase(status)) {
             evidenceEnrichment.enrichIsActive(evidenceRequest);
         }
     }
