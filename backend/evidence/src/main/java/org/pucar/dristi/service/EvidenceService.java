@@ -443,7 +443,7 @@ public class EvidenceService {
                 if (INITIATE_E_SIGN.equalsIgnoreCase(evidenceRequest.getArtifact().getWorkflow().getAction())) {
                     enrichShortenedURL(evidenceRequest);
                 }
-                if (EDIT.equalsIgnoreCase(evidenceRequest.getArtifact().getWorkflow().getAction())) {
+                if (EDIT.equalsIgnoreCase(evidenceRequest.getArtifact().getWorkflow().getAction()) && WITNESS_DEPOSITION.equalsIgnoreCase(evidenceRequest.getArtifact().getArtifactType())) {
                     expireTheShorteningUrl(evidenceRequest);
                 }
                 enrichBasedOnStatus(evidenceRequest);
