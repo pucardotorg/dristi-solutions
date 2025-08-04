@@ -90,6 +90,7 @@ public class EvidenceService {
             evidenceEnrichment.enrichEvidenceRegistration(body);
 
             if(WITNESS_DEPOSITION.equalsIgnoreCase(body.getArtifact().getArtifactType())){
+                validateWitnessDeposition(body);
                 evidenceEnrichment.enrichTag(body);
                 updateCaseWitnessDeposition(body);
             }
@@ -111,6 +112,26 @@ public class EvidenceService {
             log.error("Error occurred while creating evidence");
             throw new CustomException(EVIDENCE_CREATE_EXCEPTION, e.toString());
         }
+    }
+
+    private void validateWitnessDeposition(EvidenceRequest body) {
+        if(body.getArtifact().getTag() == null || body.getArtifact().getSourceID() == null){
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Tag or SourceID is required for witness deposition");
+        }
+        EvidenceSearchCriteria evidenceSearchCriteria = createEvidenceSearchCriteria(body);
+        List<Artifact> artifacts = repository.getArtifacts(evidenceSearchCriteria, null);
+        boolean witnessFound = artifacts.stream().anyMatch(artifact -> artifact.getTag().equalsIgnoreCase(body.getArtifact().getTag()));
+        if (witnessFound) {
+            log.info("Tag already exists for the witness with source:{} ", body.getArtifact().getSourceType());
+        }
+    }
+
+    private EvidenceSearchCriteria createEvidenceSearchCriteria(EvidenceRequest body) {
+        return EvidenceSearchCriteria.builder()
+                .filingNumber(body.getArtifact().getFilingNumber())
+                .artifactType(WITNESS_DEPOSITION)
+                .tenantId(body.getArtifact().getTenantId())
+                .build();
     }
 
     public void updateCaseWitnessDeposition(EvidenceRequest body) {
@@ -162,6 +183,7 @@ public class EvidenceService {
             updatePartyTag(poaHolders, uniqueId, tag, "poaHolder");
         }
 
+        // Process respondents
         if(respondentDetails != null && respondentDetails.get("formdata").isArray()) {
             updateAccusedDetails(respondentDetails, uniqueId, tag);
         }
