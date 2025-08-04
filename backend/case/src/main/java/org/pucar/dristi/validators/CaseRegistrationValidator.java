@@ -440,6 +440,9 @@ public class CaseRegistrationValidator {
 
     private void validateMobileNumbers(JsonNode additionalDetails, WitnessDetails witnessDetails) {
 
+        if(witnessDetails.getPhoneNumbers() == null || witnessDetails.getPhoneNumbers().getMobileNumber().isEmpty()) {
+            return;
+        }
         List<String> mobileNumberList = new ArrayList<>();
 
         mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("advocateDetails"), PartyType.ADVOCATE));
