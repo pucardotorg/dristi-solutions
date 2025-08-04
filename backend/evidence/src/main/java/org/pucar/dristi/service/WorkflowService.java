@@ -112,7 +112,7 @@ public class WorkflowService {
         if(isEvidenceMarkedFlow){
             return config.getEvidenceBusinessServiceName();
         }
-        else if(SUBMISSION.equalsIgnoreCase(artifactType)){
+        else if(SUBMISSION.equalsIgnoreCase(filingType)){
             return config.getSubmissionBusinessServiceName();
         }
         else if (WITNESS_DEPOSITION.equalsIgnoreCase(artifactType)){
