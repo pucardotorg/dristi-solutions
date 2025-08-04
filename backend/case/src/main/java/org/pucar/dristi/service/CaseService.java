@@ -2617,7 +2617,6 @@ public class CaseService {
     }
 
     private TaskResponse createTaskForJudgePOA(JoinCaseV2Request joinCaseRequest, Individual poaIndividual) throws JsonProcessingException {
-        //TO-DO- Avoid creating approval pending task
         TaskRequest taskRequest = new TaskRequest();
         Task task = new Task();
         task.setTaskType(JOIN_CASE);
@@ -2627,7 +2626,15 @@ public class CaseService {
         task.setFilingNumber(joinCaseRequest.getJoinCaseData().getFilingNumber());
         WorkflowObject workflow = new WorkflowObject();
         workflow.setAction("CREATE");
+
+        ObjectNode detailsNode = objectMapper.createObjectNode();
+        ArrayNode excludeRolesArray = detailsNode.putArray("excludeRoles");
+        excludeRolesArray.add("TASK_EDITOR");
+        excludeRolesArray.add("SYSTEM");
+        workflow.setAdditionalDetails(detailsNode);
+
         task.setWorkflow(workflow);
+
         ObjectMapper objectMapper = new ObjectMapper();
 
         JoinCaseDataV2 joinCaseData = joinCaseRequest.getJoinCaseData();
