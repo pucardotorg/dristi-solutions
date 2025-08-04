@@ -180,9 +180,6 @@ public class Artifact {
 	@JsonProperty("tag")
 	private String tag = null;
 
-	@JsonProperty("workflowStatus")
-	private String workflowStatus = null;
-
 	@JsonProperty("evidenceMarkedStatus")
 	private String evidenceMarkedStatus = null;
 
