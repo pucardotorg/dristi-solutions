@@ -80,7 +80,7 @@ const applicationWitnessDeposition = async (
     let barRegistrationNumber = "";
     let advocateName = "";
     const advocateIndividualId =
-      application?.applicationDetails?.advocateIndividualId;
+      application?.additionalDetails?.advocateIndividualId;
     if (advocateIndividualId) {
       const resAdvocate = await handleApiCall(
         () => search_advocate(tenantId, advocateIndividualId, requestInfo),
@@ -96,7 +96,7 @@ const applicationWitnessDeposition = async (
     }
 
     const partyName =
-      application?.additionalDetails?.onBehalOfName
+      application?.additionalDetails?.onBehalfOfName
         ?.map((party) => party?.name)
         ?.join(", ") || "";
 
@@ -104,15 +104,15 @@ const applicationWitnessDeposition = async (
       (witness) => {
         return {
           witnessName: [
-            witness.data.firstName,
-            witness.data.middleName,
-            witness.data.lastName,
+            witness?.data?.firstName,
+            witness?.data?.middleName,
+            witness?.data?.lastName,
           ]
-            .filter(Boolean)
-            .join(" "),
-          witnessDesignation: witness?.data.witnessDesignation,
+            ?.filter(Boolean)
+            ?.join(" "),
+          witnessDesignation: witness?.data?.witnessDesignation || "",
           witnessAdditionalComments:
-            witness?.data.witnessAdditionalDetails.text,
+            witness?.data?.witnessAdditionalDetails?.text || "",
         };
       }
     );

@@ -6,13 +6,17 @@ import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal.js"
 import isEqual from "lodash/isEqual";
 import { submissionService } from "../../../../submissions/src/hooks/services/index.js";
 import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow.js";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min.js";
 
 const AddWitnessModal = ({ tenantId, onCancel, caseDetails, isJudge, onAddSuccess }) => {
   const { t } = useTranslation();
+  const history = useHistory();
   const DRISTIService = Digit?.ComponentRegistryService?.getComponent("DRISTIService");
   const [formConfigs, setFormConfigs] = useState([addWitnessConfig(1)]);
   const [witnessFormList, setWitnessFormList] = useState([{}]);
   const userInfo = Digit.UserService.getUser()?.info;
+  const userRoles = userInfo?.roles?.map((role) => role?.code);
+  const isCitizen = userRoles?.includes("CITIZEN");
   const setFormErrors = useRef([]);
   const [isWitnessAdding, setIsWitnessAdding] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -49,6 +53,13 @@ const AddWitnessModal = ({ tenantId, onCancel, caseDetails, isJudge, onAddSucces
       const v = c === "x" ? r : (r & 0x3) | 0x8;
       return v.toString(16);
     });
+  };
+
+  const cleanString = (input) => {
+    return input
+      .replace(/\b(null|undefined)\b/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
   };
 
   const { data: individualData } = window?.Digit.Hooks.dristi.useGetIndividualUser(
@@ -185,7 +196,7 @@ const AddWitnessModal = ({ tenantId, onCancel, caseDetails, isJudge, onAddSucces
             caseFilingNumber: caseDetails?.filingNumber,
             witnessDetails: newWitnesses,
           },
-          tenantId
+          { tenantId: tenantId }
         );
       } else {
         const newWitnesses = witnessFormList?.map((data) => {
@@ -196,42 +207,63 @@ const AddWitnessModal = ({ tenantId, onCancel, caseDetails, isJudge, onAddSucces
             uniqueId: generateUUID(),
           };
         });
-        await submissionService.createApplication(
-          {
-            tenantId,
-            application: {
+        await submissionService
+          .createApplication(
+            {
               tenantId,
-              filingNumber: caseDetails?.filingNumber,
-              cnrNumber: caseDetails?.cnrNumber,
-              cmpNumber: caseDetails?.cmpNumber,
-              caseId: caseDetails?.id,
-              createdDate: new Date().getTime(),
-              applicationType: "WITNESS_DEPOSITION",
-              isActive: true,
-              createdBy: userInfo?.uuid,
-              statuteSection: { tenantId },
-              additionalDetails: {
-                witnessDetails: newWitnesses,
-                onBehalfOfName: complainantsList,
-                advocateIndividualId: individualId,
-              },
-              onBehalfOf: complainantsList?.map((item) => item?.uuid),
-              comment: [],
-              workflow: {
-                action: SubmissionWorkflowAction.CREATE,
+              application: {
+                tenantId,
+                filingNumber: caseDetails?.filingNumber,
+                cnrNumber: caseDetails?.cnrNumber,
+                cmpNumber: caseDetails?.cmpNumber,
+                caseId: caseDetails?.id,
+                createdDate: new Date().getTime(),
+                applicationType: "WITNESS_DEPOSITION",
+                isActive: true,
+                createdBy: userInfo?.uuid,
+                statuteSection: { tenantId },
+                additionalDetails: {
+                  witnessDetails: newWitnesses,
+                  onBehalfOfName: complainantsList,
+                  advocateIndividualId: individualId,
+                  owner: cleanString(userInfo?.name),
+                  formdata: {
+                    submissionType: {
+                      code: "APPLICATION",
+                      name: "APPLICATION",
+                    },
+                    applicationType: {
+                      name: "APPLICATION_TYPE_WITNESS_DEPOSITION",
+                      type: "WITNESS_DEPOSITION",
+                      isActive: true,
+                    },
+                  },
+                },
+                onBehalfOf: complainantsList?.map((item) => item?.uuid),
+                comment: [],
+                status: caseDetails?.status,
+
+                workflow: {
+                  action: SubmissionWorkflowAction.CREATE,
+                },
               },
             },
-          },
-          { tenantId }
-        );
+            { tenantId }
+          )
+          .then((response) => {
+            history.push(
+              `/${window?.contextPath}/${isCitizen ? "citizen" : "employee"}/submissions/submissions-create?filingNumber=${
+                caseDetails?.filingNumber
+              }&applicationNumber=${response?.application?.applicationNumber}`
+            );
+          });
       }
+      setShowConfirmModal(false);
+      onAddSuccess();
     } catch (error) {
       console.error(error);
       setShowErrorToast({ label: t("ERROR_ADDING_WITNESS"), error: true });
     } finally {
-      onAddSuccess();
-      onCancel();
-      setShowConfirmModal(false);
       setIsWitnessAdding(false);
     }
   };

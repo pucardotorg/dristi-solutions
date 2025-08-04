@@ -2,10 +2,10 @@ import { ActionBar, Toast, CloseSvg, InboxSearchComposer, SubmitBar, Loader } fr
 import React, { useMemo, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
-import { bulkBailBondSignConfig } from "../../configs/BulkBailBondSignConfig";
+import { bulkWitnessDepositionSignConfig } from "../../configs/BulkWitnessDepositionSignConfig";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import axios from "axios";
-import { BailBondSignModal } from "./BailBondSignModal";
+import { WitnessDepositionSignModal } from "./WitnessDepositionSignModal";
 import qs from "qs";
 import { HomeService } from "../../hooks/services";
 import { numberToWords } from "@egovernments/digit-ui-module-orders/src/utils";
@@ -36,11 +36,13 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
   const [showBulkSignConfirmModal, setShowBulkSignConfirmModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);
-  const [selectedBailBond, setSelectedBailBond] = useState(
-    sessionStorage.getItem("bulkBailBondSignSelectedItem") ? JSON.parse(sessionStorage.getItem("bulkBailBondSignSelectedItem")) : null
+  const [selectedWitnessDeposition, setSelectedWitnessDeposition] = useState(
+    sessionStorage.getItem("bulkWitnessDepositionSignSelectedItem")
+      ? JSON.parse(sessionStorage.getItem("bulkWitnessDepositionSignSelectedItem"))
+      : null
   );
-  const [showBulkSignModal, setShowBulkSignModal] = useState(sessionStorage.getItem("bulkBailBondSignSelectedItem") ? true : false);
-  const [bailBondPaginationData, setBailBondPaginationData] = useState({});
+  const [showBulkSignModal, setShowBulkSignModal] = useState(sessionStorage.getItem("bulkWitnessDepositionSignSelectedItem") ? true : false);
+  const [witnessDepositionPaginationData, setWitnessDepositionPaginationData] = useState({});
   const [showBulkSignSuccessModal, setShowBulkSignSuccessModal] = useState(false);
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
   const courtId = localStorage.getItem("courtId");
@@ -53,15 +55,15 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
   const [needConfigRefresh, setNeedConfigRefresh] = useState(false);
   const [counter, setCounter] = useState(0);
   const config = useMemo(() => {
-    const setBailBondFunc = async (bailbond) => {
+    const setWitnessDepositionFunc = async (deposition) => {
       setShowBulkSignModal(true);
-      setSelectedBailBond(bailbond);
+      setSelectedWitnessDeposition(deposition);
     };
 
-    const updateBailBondFunc = async (Data, checked) => {
+    const updateWitnessDepositionFunc = async (Data, checked) => {
       setBulkSignList((prev) => {
         return prev?.map((item, i) => {
-          if (item?.businessObject?.bailDetails?.bailId !== Data?.businessObject?.bailDetails?.bailId) return item;
+          if (item?.businessObject?.artifactDetails?.artifactNumber !== Data?.businessObject?.artifactDetails?.artifactNumber) return item;
 
           return {
             ...item,
@@ -71,23 +73,23 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
       });
     };
     return {
-      ...bulkBailBondSignConfig,
+      ...bulkWitnessDepositionSignConfig,
       sections: {
-        ...bulkBailBondSignConfig.sections,
+        ...bulkWitnessDepositionSignConfig.sections,
         searchResult: {
-          ...bulkBailBondSignConfig.sections.searchResult,
+          ...bulkWitnessDepositionSignConfig.sections.searchResult,
           uiConfig: {
-            ...bulkBailBondSignConfig.sections.searchResult.uiConfig,
-            columns: bulkBailBondSignConfig.sections.searchResult.uiConfig.columns.map((column) => {
+            ...bulkWitnessDepositionSignConfig.sections.searchResult.uiConfig,
+            columns: bulkWitnessDepositionSignConfig.sections.searchResult.uiConfig.columns.map((column) => {
               if (column.label === "SELECT") {
                 return {
                   ...column,
-                  updateOrderFunc: updateBailBondFunc,
+                  updateOrderFunc: updateWitnessDepositionFunc,
                 };
               } else if (column.label === "CASE_TITLE") {
                 return {
                   ...column,
-                  clickFunc: setBailBondFunc,
+                  clickFunc: setWitnessDepositionFunc,
                 };
               } else {
                 return column;
@@ -96,20 +98,22 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
           },
         },
         search: {
-          ...bulkBailBondSignConfig.sections.search,
+          ...bulkWitnessDepositionSignConfig.sections.search,
           uiConfig: {
-            ...bulkBailBondSignConfig.sections.search.uiConfig,
+            ...bulkWitnessDepositionSignConfig.sections.search.uiConfig,
             defaultValues: {
-              ...bulkBailBondSignConfig.sections.search.uiConfig.defaultValues,
+              ...bulkWitnessDepositionSignConfig.sections.search.uiConfig.defaultValues,
               tenantId: tenantId,
-              caseTitle: sessionStorage.getItem("bulkBailBondSignCaseTitle") ? sessionStorage.getItem("bulkBailBondSignCaseTitle") : "",
+              caseTitle: sessionStorage.getItem("bulkWitnessDepositionSignCaseTitle")
+                ? sessionStorage.getItem("bulkWitnessDepositionSignCaseTitle")
+                : "",
             },
           },
         },
       },
       additionalDetails: {
-        setbulkBailBondSignList: setBulkSignList,
-        setBailBondPaginationData: setBailBondPaginationData,
+        setbulkWitnessDepositionSignList: setBulkSignList,
+        setWitnessDepositionPaginationData: setWitnessDepositionPaginationData,
         setNeedConfigRefresh: setNeedConfigRefresh,
       },
     };
@@ -127,11 +131,11 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
     return `${day}/${month}/${year}`;
   };
 
-  const bailBondModalInfo = {
-    header: `${t("YOU_HAVE_SUCCESSFULLY_ISSUED_BULK_BAIL_BOND")} ${numberToWords(successCount)} ${t("ISSUE_BAIL_BONDS")} `, //NEED TO CHANGE COUNT
+  const witnessDepositionModalInfo = {
+    header: `${t("YOU_HAVE_SUCCESSFULLY_ISSUED_BULK_WITNESS_DEPOSITION")} ${numberToWords(successCount)} ${t("ISSUE_WITNESS_DEPOSITION")} `, //NEED TO CHANGE COUNT
     caseInfo: [
       {
-        key: t("BAIL_BOND_ISSUE_DATE"),
+        key: t("WITNESS_DEPOSITION_ISSUE_DATE"),
         value: getFormattedDate(),
         copyData: false,
       },
@@ -151,13 +155,13 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
     []
   );
 
-  const fetchResponseFromXmlRequest = async (bailBondRequestList) => {
+  const fetchResponseFromXmlRequest = async (witnessDepositionRequestList) => {
     const responses = [];
 
-    const requests = bailBondRequestList?.map(async (bailBond) => {
+    const requests = witnessDepositionRequestList?.map(async (deposition) => {
       try {
         // URL encoding the XML request
-        const formData = qs.stringify({ response: bailBond?.request });
+        const formData = qs.stringify({ response: deposition?.request });
         const response = await axios.post(bulkSignUrl, formData, {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
@@ -168,23 +172,25 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
 
         if (parseXml(data, "status") !== "failed") {
           responses.push({
-            bailId: bailBond?.bailId,
-            signedBailData: parseXml(data, "data"),
+            artifactNumber: deposition?.artifactNumber,
+            signedArtifactData: parseXml(data, "data"),
+            isWitnessDeposition: true,
             signed: true,
             errorMsg: null,
             tenantId: tenantId,
           });
         } else {
           responses.push({
-            bailId: bailBond?.bailId,
-            signedBailData: parseXml(data, "data"),
+            artifactNumber: deposition?.artifactNumber,
+            signedArtifactData: parseXml(data, "data"),
+            isWitnessDeposition: true,
             signed: false,
             errorMsg: parseXml(data, "error"),
             tenantId: tenantId,
           });
         }
       } catch (error) {
-        console.error(`Error fetching bailBond ${bailBond?.bailId}:`, error?.message);
+        console.error(`Error fetching witness deposition ${deposition?.artifactNumber}:`, error?.message);
       }
     });
 
@@ -199,33 +205,33 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
       if (bulkSignList && bulkSignList.length > 0) {
         const selectedBulkSignList = bulkSignList
           ?.filter((item) => item?.isSelected)
-          ?.map((bailbond) => {
+          ?.map((deposition) => {
             return {
-              fileStoreId: bailbond?.businessObject?.bailDetails?.documents?.find((doc) => doc.documentType === "SIGNED")?.fileStore,
-              bailId: bailbond?.businessObject?.bailDetails?.bailId,
-              placeholder: "Signature",
+              fileStoreId: deposition?.businessObject?.artifactDetails?.file?.fileStore,
+              artifactNumber: deposition?.businessObject?.artifactDetails?.artifactNumber,
+              placeholder: "Judicial Magistrate of First Class",
               tenantId: tenantId,
             };
           });
 
         if (selectedBulkSignList?.length > 0) {
-          const response = await HomeService.getBailBondsToSign(
+          const response = await HomeService.getWitnessDepositionsToSign(
             {
               criteria: selectedBulkSignList,
             },
             {}
           );
-          await fetchResponseFromXmlRequest(response?.bailList).then(async (responseArray) => {
-            const updatedBailBondResponse = await HomeService.updateSignedBailBonds(
+          await fetchResponseFromXmlRequest(response?.artifactList).then(async (responseArray) => {
+            await HomeService.updateSignedWitnessDepositions(
               {
-                signedBails: responseArray,
+                signedArtifacts: responseArray,
               },
               {}
             ).then((response) => {
               setShowBulkSignConfirmModal(false);
               setShowBulkSignSuccessModal(true);
-              setSuccessCount(response?.bails?.length);
-              showToast("success", t("BAIL_BULK_SIGN_SUCCESS_MSG"));
+              setSuccessCount(response?.artifacts?.length);
+              showToast("success", t("WITNESS_DEPOSITION_BULK_SIGN_SUCCESS_MSG"));
             });
           });
         }
@@ -233,7 +239,7 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
     } catch (error) {
       setShowErrorToast({
         error: true,
-        label: error?.message ? error?.message : t("ERROR_BAIL_BULK_SIGN_MSG"),
+        label: error?.message ? error?.message : t("ERROR_WITNESS_DEPOSITION_BULK_SIGN_MSG"),
       });
       setShowBulkSignConfirmModal(false);
     } finally {
@@ -244,8 +250,8 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
   const MemoInboxSearchComposer = useMemo(() => {
     return (
       <InboxSearchComposer
-        key={`bailbond${counter}`}
-        pageSizeLimit={sessionStorage.getItem("bulkBailBondSignlimit") || 10}
+        key={`witness-deposition-${counter}`}
+        pageSizeLimit={sessionStorage.getItem("bulkWitnessDepositionSignlimit") || 10}
         configs={config}
         customStyle={sectionsParentStyle}
       />
@@ -282,7 +288,7 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
           <ActionBar className={"e-filing-action-bar"} style={{ justifyContent: "space-between" }}>
             <div style={{ width: "fit-content", display: "flex", gap: 20 }}>
               <SubmitBar
-                label={t("SIGN_SELECTED_BAIL_BONDS")}
+                label={t("SIGN_SELECTED_WITNESS_DEPOSITIONS")}
                 submit="submit"
                 disabled={!bulkSignList || bulkSignList?.length === 0 || bulkSignList?.every((item) => !item?.isSelected)}
                 onSubmit={() => setShowBulkSignConfirmModal(true)}
@@ -305,16 +311,16 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
           className={"review-order-modal"}
           children={
             <div className="delete-warning-text">
-              <h3 style={{ margin: "12px 24px" }}>{t("CONFIRM_BULK_BAIL_BOND_SIGN_TEXT")}</h3>
+              <h3 style={{ margin: "12px 24px" }}>{t("CONFIRM_BULK_WITNESS_DEPOSITION_SIGN_TEXT")}</h3>
             </div>
           }
         />
       )}
       {showBulkSignModal && (
-        <BailBondSignModal
-          selectedBailBond={selectedBailBond}
+        <WitnessDepositionSignModal
+          selectedWitnessDeposition={selectedWitnessDeposition}
           setShowBulkSignModal={setShowBulkSignModal}
-          bailBondPaginationData={bailBondPaginationData}
+          witnessDepositionPaginationData={witnessDepositionPaginationData}
           setCounter={setCounter}
         />
       )}
@@ -331,7 +337,7 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
             <Banner
               whichSvg={"tick"}
               successful={true}
-              message={bailBondModalInfo?.header}
+              message={witnessDepositionModalInfo?.header}
               headerStyles={{ fontSize: "32px" }}
               style={{ minWidth: "100%" }}
             ></Banner>
@@ -340,7 +346,7 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
                 t={t}
                 keyStyle={{ margin: "8px 0px" }}
                 valueStyle={{ margin: "8px 0px", fontWeight: 700 }}
-                data={bailBondModalInfo?.caseInfo}
+                data={witnessDepositionModalInfo?.caseInfo}
               />
             }
           </div>

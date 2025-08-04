@@ -838,7 +838,7 @@ export const UICustomizations = {
           //Need to change the shade as per the value
           return <CustomChip text={t(value)} shade={value === "PUBLISHED" ? "green" : "orange"} />;
         case "OWNER":
-          return removeInvalidNameParts(value);
+          return value ? removeInvalidNameParts(value) : "-";
         case "SUBMISSION_ID":
           return value ? value : "-";
         case "CS_ACTIONS":
