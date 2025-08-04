@@ -75,7 +75,8 @@ public class EvidenceService {
     private boolean shouldUpdateWorkflowStatusForUpdate(EvidenceRequest evidenceRequest, String filingType){
         return evidenceRequest.getArtifact().getWorkflow() != null && (evidenceRequest.getArtifact().getArtifactType() != null &&
                 evidenceRequest.getArtifact().getArtifactType().equals(DEPOSITION)) ||
-                (filingType!= null && filingType.equalsIgnoreCase(SUBMISSION)) || evidenceRequest.getArtifact().getIsEvidenceMarkedFlow();
+                (filingType!= null && filingType.equalsIgnoreCase(SUBMISSION)) || evidenceRequest.getArtifact().getIsEvidenceMarkedFlow()
+                || (evidenceRequest.getArtifact().getArtifactType() != null && WITNESS_DEPOSITION.equalsIgnoreCase(evidenceRequest.getArtifact().getArtifactType()));
     }
 
     public Artifact createEvidence(EvidenceRequest body) {
@@ -97,7 +98,8 @@ public class EvidenceService {
             // Initiate workflow for the new application- //todo witness deposition is part of case filing or not
             if ((body.getArtifact().getArtifactType() != null &&
                     body.getArtifact().getArtifactType().equals(DEPOSITION)) ||
-                    (filingType != null && body.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION))) {
+                    (filingType != null && body.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION)) ||
+                    (body.getArtifact().getArtifactType() != null && WITNESS_DEPOSITION.equalsIgnoreCase(body.getArtifact().getArtifactType()))) {
                 workflowService.updateWorkflowStatus(body, filingType);
                 producer.push(config.getEvidenceCreateTopic(), body);
             } else {
