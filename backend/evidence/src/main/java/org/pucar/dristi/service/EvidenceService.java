@@ -325,6 +325,8 @@ public class EvidenceService {
             ArrayNode mobileNumbersArray = objectMapper.valueToTree(body.getArtifact().getWitnessMobileNumbers());
             phonenumbers.set("mobileNumber", mobileNumbersArray);
             witness.setPhoneNumbers(phonenumbers);
+        } else {
+            witness.setPhoneNumbers(null);
         }
     }
 
@@ -335,6 +337,8 @@ public class EvidenceService {
             ArrayNode emailArray = objectMapper.valueToTree(body.getArtifact().getWitnessEmails());
             emails.set("emailId", emailArray);
             witness.setEmails(emails);
+        } else {
+            witness.setEmails(null);
         }
     }
 
