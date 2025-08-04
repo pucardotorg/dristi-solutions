@@ -363,10 +363,6 @@ public class CaseRegistrationValidator {
             if (poaHolderRepresentingMap.containsKey(individualIdRepresenting))
                 throw new CustomException(VALIDATION_ERR, "Litigant with individualId " + individualIdRepresenting + " have poa holder");
         }
-
-        if(individualIdRepresenting.equalsIgnoreCase(individualIdPOA) && !poaHolderRepresentingMap.containsKey(individualIdRepresenting)) {
-            throw new CustomException(VALIDATION_ERR, "POA individualId " + individualIdPOA + "don't have poa for revoking poa rights");
-        }
     }
 
     public void validateEditCase(CaseRequest caseRequest) throws CustomException {

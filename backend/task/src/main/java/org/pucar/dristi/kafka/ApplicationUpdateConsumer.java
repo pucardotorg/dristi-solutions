@@ -44,14 +44,13 @@ public class ApplicationUpdateConsumer {
         log.info("Received record for topic {} , method: taskUpdate , result: InProgress", topic);
         try {
             String application = objectMapper.writeValueAsString(record);
-            String taskNumber = JsonPath.read(application, APPLICATION_DETAILS_PATH);
             String applicationType = JsonPath.read(application, APPLICATION_TYPE_PATH);
             String status = JsonPath.read(application, APPLICATION_STATUS_PATH);
             String filingNumber = JsonPath.read(application, FILING_NUMBER_PATH);
-            String tenantId = JsonPath.read(application, TENANTID_PATH);
 
-            //TO-Do update application type and status
             if(applicationType.equalsIgnoreCase("APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS") && "COMPLETED".equalsIgnoreCase(status)) {
+                String taskNumber = JsonPath.read(application, APPLICATION_DETAILS_PATH);
+
                 TaskSearchRequest taskSearchRequest = new TaskSearchRequest();
                 taskSearchRequest.setCriteria(TaskCriteria.builder().taskNumber(taskNumber).filingNumber(filingNumber).build());
                 taskSearchRequest.setRequestInfo(new RequestInfo());

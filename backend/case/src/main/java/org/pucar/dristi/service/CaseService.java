@@ -2716,10 +2716,10 @@ public class CaseService {
 
         Map<String, Object> poaAddressDetails = new HashMap<>();
         poaAddressDetails.put("city", address.getCity());
-        poaAddressDetails.put("state", address.getAddressLine1()); // Assuming addressLine1 = state
-        poaAddressDetails.put("district", address.getAddressLine2()); // Assuming addressLine2 = district
+        poaAddressDetails.put("state", address.getAddressLine1());
+        poaAddressDetails.put("district", address.getAddressLine2());
         poaAddressDetails.put("pincode", address.getPincode());
-        poaAddressDetails.put("locality", address.getStreet()); // or address.getLocality() if available
+        poaAddressDetails.put("locality", address.getStreet());
 
         Map<String, Object> coordinates = new HashMap<>();
         coordinates.put("latitude", address.getLatitude());
