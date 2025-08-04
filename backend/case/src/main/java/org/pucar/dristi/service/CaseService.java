@@ -2700,8 +2700,12 @@ public class CaseService {
         additionalDetails.put("fileName", identifier.getIdentifierType() + " Card");
         additionalDetails.put("documentName", filename);
 
+        String uuid = UUID.randomUUID().toString();
+
         return Document.builder()
+                .id(uuid)
                 .fileStore(fileStoreId)
+                .documentUid(uuid)
                 .documentType("POA_COMPLAINANT_ID_PROOF")
                 .additionalDetails(additionalDetails)
                 .build();
@@ -4385,12 +4389,17 @@ public class CaseService {
                 if (poaIndividualId.equalsIgnoreCase(poaIndividualDetails.getExistingPoaIndividualId())) {
                     removePOAFromAdditionalDetails(courtCase, poaIndividualDetails);
                 } else {
+                    Document documentPoaAuth = poaIndividualDetails.getPoaAuthDocument();
+                    String uuid = UUID.randomUUID().toString();
+                    documentPoaAuth.setId(uuid);
+                    documentPoaAuth.setDocumentUid(uuid);
+
                     PoaParty newPoaParty = PoaParty.builder()
                             .individualId(poaIndividualDetails.getIndividualId())
                             .isActive(true)
                             .caseId(courtCase.getId().toString())
                             .id(UUID.randomUUID().toString())
-                            .documents(Collections.singletonList(poaIndividualDetails.getPoaAuthDocument()))
+                            .documents(Collections.singletonList(documentPoaAuth))
                             .build();
                     assert existingPoaHolder != null;
                     existingPoaHolder.getRepresentingLitigants().add(newPoaParty);
@@ -4413,6 +4422,9 @@ public class CaseService {
 
                 }
             }
+
+            courtCase.getAuditdetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
+            courtCase.getAuditdetails().setLastModifiedTime(System.currentTimeMillis());
 
             CourtCase encrptedCourtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
             updateCourtCaseInRedis(courtCase.getTenantId(), encrptedCourtCase);
