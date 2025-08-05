@@ -79,7 +79,8 @@ const witnessDeposition = async (req, res, qrCode) => {
           {
             courtId,
             cnrNumber,
-            filingType: "DIRECT",
+            tenantId,
+            filingType: "CASE_FILING",
             artifactNumber,
           },
           {}
