@@ -572,7 +572,7 @@ export const reviewCaseFileFormConfig = [
                   value: "swornStatement.text",
                 },
                 {
-                  type: "text",
+                  type: "formattedText",
                   label: "CS_PRAYER",
                   value: "prayer.text",
                 },
