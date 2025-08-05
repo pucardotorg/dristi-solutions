@@ -980,7 +980,7 @@ public class EvidenceService {
                                     .build();
                             existingArtifact.setSeal(seal);
                         }
-                        WorkflowObject workflow = existingArtifact.getWorkflow();
+                        WorkflowObject workflow = new WorkflowObject();
                         workflow.setAction(SIGN);
                         existingArtifact.setWorkflow(workflow);
 
