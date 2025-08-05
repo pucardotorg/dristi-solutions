@@ -47,7 +47,7 @@ public class PublishOrderApprovalRejectionLitigantDetailsChange implements Order
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
         String action = order.getWorkflow().getAction();
-        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE.equalsIgnoreCase(order.getOrderType());
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && APPROVE_VOLUNTARY_SUBMISSIONS.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
