@@ -1,11 +1,9 @@
 package org.pucar.dristi.service;
 
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.models.individual.Individual;
@@ -76,9 +74,41 @@ public class PendingTaskService {
                 updatePendingTaskForLitigant(joinCaseJson, pendingTaskNode);
             } else if (Objects.equals(topic, REPRESENTATIVE_JOIN_CASE_TOPIC) || Objects.equals(topic, REPRESENTATIVE_REPLACE_JOIN_CASE)) {
                 updatePendingTaskForAdvocate(joinCaseJson, pendingTaskNode);
+            } else if (Objects.equals(topic, "poa-join-case") && joinCaseJson.get("poaHolders") != null) {
+                updatePendingTaskForPOA(joinCaseJson, pendingTaskNode);
             }
             log.info("operation=updatePendingTask, result=SUCCESS, topic={}, filingNumber={}", topic, filingNumber);
         } catch (Exception e) {
+            log.error(ERROR_UPDATING_PENDING_TASK, e);
+            throw new CustomException(ERROR_UPDATING_PENDING_TASK, e.getMessage());
+        }
+    }
+
+    public void updatePendingTaskForPOA(Map<String, Object> joinCaseJson, JsonNode pendingTaskNode) {
+        try {
+            log.info("operation=updatePendingTaskForPOA, status=IN_PROGRESS");
+            JsonNode hitsNode = pendingTaskNode.path("hits").path("hits");
+            JsonNode poaHolders = objectMapper.convertValue(joinCaseJson.get("poaHolders"), JsonNode.class);
+            for(JsonNode poaHolder: poaHolders) {
+                String poaUuid = poaHolder.get("additionalDetails").get("uuid").textValue();
+                JsonNode representingLitigants = poaHolder.get("representingLitigants");
+                List<String> individualIds = new ArrayList<>();
+                
+                // Extract individualIds from the list of PoaParty objects
+                if (representingLitigants != null && representingLitigants.isArray()) {
+                    for (JsonNode litigant : representingLitigants) {
+                        JsonNode individualIdNode = litigant.get("individualId");
+                        if (individualIdNode != null && !individualIdNode.isNull()) {
+                            individualIds.add(individualIdNode.textValue());
+                        }
+                    }
+                }
+                List<JsonNode> filteredTask = filterPendingTask(hitsNode, individualIds);
+                addAssigneeToPendingTask(filteredTask, poaUuid);
+                pendingTaskUtil.updatePendingTask(filteredTask);
+            }
+            log.info("operation=updatePendingTaskForPOA, status=SUCCESS");
+        }  catch (Exception e) {
             log.error(ERROR_UPDATING_PENDING_TASK, e);
             throw new CustomException(ERROR_UPDATING_PENDING_TASK, e.getMessage());
         }
@@ -129,7 +159,7 @@ public class PendingTaskService {
         log.info("Joining pending task for advocate with id :: {}", advocateUuid);
         List<JsonNode> filteredTasks = new ArrayList<>();
         for(JsonNode litigant: parties) {
-            List<JsonNode> tasks = filterPendingTaskAdvocate(hitsNode, Collections.singletonList(litigant.get("individualId").asText()));
+            List<JsonNode> tasks = filterPendingTask(hitsNode, Collections.singletonList(litigant.get("individualId").asText()));
             if(litigant.get("isActive").asBoolean()){
                 addAssigneeToPendingTask(tasks, advocateUuid);
             } else {
@@ -208,7 +238,7 @@ public class PendingTaskService {
         return userUuids;
     }
 
-    private List<JsonNode> filterPendingTaskAdvocate(JsonNode hitsNode, List<String> individualIds) {
+    private List<JsonNode> filterPendingTask(JsonNode hitsNode, List<String> individualIds) {
         List<JsonNode> filteredTasks = new ArrayList<>();
         for (JsonNode hit : hitsNode) {
             JsonNode dataNode = hit.path("_source").path("Data");
