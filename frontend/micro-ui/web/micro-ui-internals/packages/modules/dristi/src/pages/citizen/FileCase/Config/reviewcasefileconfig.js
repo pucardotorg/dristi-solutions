@@ -63,7 +63,7 @@ export const reviewCaseFileFormConfig = [
                   value: "currentAddressDetails",
                   dependentOn: "complainantType.code",
                   dependentValue: "INDIVIDUAL",
-                  enableScrutinyField: true
+                  enableScrutinyField: true,
                 },
                 {
                   type: "text",
@@ -316,7 +316,7 @@ export const reviewCaseFileFormConfig = [
                   value: "delayReason.reasonForReturnCheque",
                 },
                 {
-                  type: "text",
+                  type: "formattedText",
                   label: "CS_CHEQUE_ADDITIONAL_DETAILS",
                   value: "chequeAdditionalDetails.text",
                 },
@@ -355,7 +355,7 @@ export const reviewCaseFileFormConfig = [
                   value: "totalAmount",
                 },
                 {
-                  type: "text",
+                  type: "formattedText",
                   label: "CS_DEBT_ADDITIONAL_DETAILS",
                   value: "additionalDebtLiabilityDetails.text",
                 },
@@ -470,7 +470,7 @@ export const reviewCaseFileFormConfig = [
                   isLocalizationRequired: true,
                 },
                 {
-                  type: "text",
+                  type: "formattedText",
                   label: "DELAY_ADDITIONAL_INFO",
                   value: "additionalDelayCondonationDetails.text",
                 },
@@ -528,7 +528,7 @@ export const reviewCaseFileFormConfig = [
                   value: "addressDetails",
                 },
                 {
-                  type: "text",
+                  type: "formattedText",
                   label: "CS_TEXTAREA_WITNESS_ADDITIONAL_DETAIL",
                   value: "witnessAdditionalDetails.text",
                 },
@@ -577,7 +577,7 @@ export const reviewCaseFileFormConfig = [
                   value: "prayer.text",
                 },
                 {
-                  type: "text",
+                  type: "formattedText",
                   label: "CS_ADDITIONAL_DETAILS",
                   value: "additionalDetails.text",
                 },

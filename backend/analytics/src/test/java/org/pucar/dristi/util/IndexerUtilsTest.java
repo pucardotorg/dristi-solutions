@@ -383,4 +383,49 @@ public class IndexerUtilsTest {
         // Assert
         verify(restTemplate, times(1)).postForObject(eq(uri), any(HttpEntity.class), eq(String.class));
     }
+
+    @Test
+    public void testBuildPayloadWithJsonString1() throws Exception {
+        String jsonItem = "{" +
+                "\"id\": \"id\"," +
+                "\"businessService\": \"entityType\"," +
+                "\"businessId\": \"referenceId\"," +
+                "\"state\": {\"state\":\"status\", \"actions\":[{\"roles\" : [\"role1\", \"role2\"]}]}," +
+                "\"stateSla\": 86400," +
+                "\"businesssServiceSla\": 456," +
+                "\"assignes\": [{" +
+                "\"uuid\": \"user1\"" +
+                "}, {" +
+                "\"uuid\": \"user2\"" +
+                "}]," +
+        "\"assignedTo\": [\"user1\"]," +
+                "\"assignedRole\": [\"role1\", \"role2\"]," +
+                "\"tenantId\": \"tenantId\"," +
+                "\"action\": \"action\"," +
+        "\"actionCategory\": \"action\"," +
+                "\"additionalDetails\" : {\"key\":\"value\", \"excludeRoles\":[\"role2\"], \"excludedAssignedUuids\":[\"user2\"]}" +
+                "}";
+        JSONObject requestInfo = new JSONObject();
+
+        when(config.getIndex()).thenReturn("index");
+        when(caseOverallStatusUtil.checkCaseOverAllStatus(anyString(), anyString(), anyString(), anyString(), anyString(), any()))
+                .thenReturn(new Object());
+        when(mapper.writeValueAsString(any())).thenReturn("{\"key\":\"value\", \"excludeRoles\":[\"role2\"]}");
+        when(mapper.convertValue(anyString(), eq(String.class))).thenReturn("{\"key\":\"value\"}");
+        when(mapper.readTree(anyString())).thenReturn(new ObjectMapper().readTree("{\"key\":\"value\", \"excludeRoles\":[\"role2\"], \"excludedAssignedUuids\":[\"user2\"]}"));
+
+        String expected = String.format(
+                ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
+                "index", "referenceId", "id", "name", "entityType", "referenceId", "status", null, null, "{}", null, null,
+                "[{\"uuid\":\"user1\"}]", "[\"role1\"]", null, null, null, null, false, 1086400000, 456L, "{\"key\":\"value\", \"excludeRoles\":[\"role2\"]}", null, null, 1000000000L, null
+        );
+
+        PendingTaskType pendingTaskType = PendingTaskType.builder().isgeneric(false).pendingTask("name").state("status").triggerAction(List.of("action")).actor("judge").build();
+        Map<String,List<PendingTaskType>> map = new HashMap<>();
+        map.put("entityType",List.of(pendingTaskType));
+        when(mdmsDataConfig.getPendingTaskTypeMap()).thenReturn(map);
+
+        String result = indexerUtils.buildPayload(jsonItem, requestInfo);
+        assertEquals(expected, result);
+    }
 }

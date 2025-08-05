@@ -246,6 +246,8 @@ public class ServiceConstants {
     public static final String UPLOAD_WITH_PAYMENT = "UPLOAD_WITH_PAYMENT";
     public static final String PENDING_RE_SIGN = "PENDING_RE_SIGN";
     public static final String E_SIGN_COMPLETE_WITH_PAYMENT = "E-SIGN_COMPLETE_WITH_PAYMENT";
+    public static final String ERROR_ADDING_WITNESS = "ERROR_ADDING_WITNESS";
+    public static final String ERROR_VALIDATING_WITNESS = "ERROR_VALIDATING_WITNESS";
     private ServiceConstants() {
     }
 }
