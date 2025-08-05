@@ -90,10 +90,11 @@ public class EvidenceService {
             // Enrich applications
             evidenceEnrichment.enrichEvidenceRegistration(body);
 
-            if(WITNESS_DEPOSITION.equalsIgnoreCase(body.getArtifact().getArtifactType())){
+            String tag = body.getArtifact().getTag();
+            if(WITNESS_DEPOSITION.equalsIgnoreCase(body.getArtifact().getArtifactType()) &&
+             SAVE_DRAFT.equalsIgnoreCase(body.getArtifact().getWorkflow().getAction())) {
                 validateWitnessDeposition(body);
-                evidenceEnrichment.enrichTag(body);
-                updateCaseWitnessDeposition(body);
+                tag = evidenceEnrichment.enrichPseudoTag(body);
             }
             // Initiate workflow for the new application- //todo witness deposition is part of case filing or not
             if ((body.getArtifact().getArtifactType() != null &&
@@ -105,6 +106,7 @@ public class EvidenceService {
             } else {
                 producer.push(config.getEvidenceCreateWithoutWorkflowTopic(), body);
             }
+            body.getArtifact().setTag(tag);
             callNotificationService(body,false,true);
             return body.getArtifact();
         } catch (CustomException e) {
@@ -436,7 +438,9 @@ public class EvidenceService {
                     }
                 }
             }
-            if(WITNESS_DEPOSITION.equalsIgnoreCase(evidenceRequest.getArtifact().getArtifactType())){
+            if(WITNESS_DEPOSITION.equalsIgnoreCase(evidenceRequest.getArtifact().getArtifactType())
+             && SUBMIT.equalsIgnoreCase(evidenceRequest.getArtifact().getWorkflow().getAction())) {
+                evidenceEnrichment.enrichTag(evidenceRequest);
                 updateCaseWitnessDeposition(evidenceRequest);
             }
 
