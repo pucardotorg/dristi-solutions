@@ -182,15 +182,15 @@ public class EvidenceEnrichment {
             // Enrich lastModifiedTime and lastModifiedBy in case of update
             evidenceRequest.getArtifact().getAuditdetails().setLastModifiedTime(System.currentTimeMillis());
             evidenceRequest.getArtifact().getAuditdetails().setLastModifiedBy(evidenceRequest.getRequestInfo().getUserInfo().getUuid());
+            Document seal = evidenceRequest.getArtifact().getSeal();
+            if(seal != null && seal.getId() == null){
+                seal.setId(String.valueOf(UUID.randomUUID()));
+                seal.setDocumentUid(seal.getId());
+                evidenceRequest.getArtifact().setSeal(seal);
+            }
         } catch (Exception e) {
             log.error("Error enriching evidence application upon update: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in enrichment service during  update process: " + e.toString());
-        }
-        Document seal = evidenceRequest.getArtifact().getSeal();
-        if(seal != null && seal.getId() == null){
-            seal.setId(String.valueOf(UUID.randomUUID()));
-            seal.setDocumentUid(seal.getId());
-            evidenceRequest.getArtifact().setSeal(seal);
         }
     }
 
