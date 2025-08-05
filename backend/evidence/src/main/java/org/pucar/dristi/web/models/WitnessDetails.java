@@ -47,4 +47,10 @@ public class WitnessDetails {
 
     @JsonProperty("witnessTag")
     private String witnessTag;
+
+    @JsonProperty("ownerType")
+    private String ownerType;
+
+    @JsonProperty("createdTime")
+    private Long createdTime;
 }
