@@ -76,7 +76,7 @@ public class WorkflowService {
             }
             processInstance.setBusinessId(businessId);
             processInstance.setAction(workflow.getAction());
-            processInstance.setModuleName(getBusinessModule(filingType));
+            processInstance.setModuleName(getBusinessModule(filingType, artifact.getArtifactType()));
             processInstance.setTenantId(artifact.getTenantId());
             processInstance.setBusinessService(getBusinessServiceName(filingType, artifact.getArtifactType(), artifact.getIsEvidenceMarkedFlow()));
             processInstance.setDocuments(workflow.getDocuments());
@@ -100,8 +100,8 @@ public class WorkflowService {
         }
     }
 
-    private String getBusinessModule(String filingType) {
-        if (filingType.equalsIgnoreCase(SUBMISSION)){
+    private String getBusinessModule(String filingType, String artifactType) {
+        if (SUBMISSION.equalsIgnoreCase(filingType)){
             return config.getSubmissionBusinessServiceModule();
         } else {
             return config.getBusinessServiceModule();
@@ -112,13 +112,14 @@ public class WorkflowService {
         if(isEvidenceMarkedFlow){
             return config.getEvidenceBusinessServiceName();
         }
-        else if(SUBMISSION.equalsIgnoreCase(artifactType)){
+        else if(SUBMISSION.equalsIgnoreCase(filingType)){
             return config.getSubmissionBusinessServiceName();
         }
-        else{
-            return null; // todo witness deposition flow
+        else if (WITNESS_DEPOSITION.equalsIgnoreCase(artifactType)){
+            return config.getWitnessDepositionBusinessServiceName();
+        } else {
+            return config.getBusinessServiceName();
         }
-
     }
 
     public Workflow getWorkflowFromProcessInstance(ProcessInstance processInstance) {
