@@ -973,6 +973,7 @@ public class EvidenceService {
                                     .build();
                             existingArtifact.setFile(document);
                             workflow.setAction(SIGN);
+                            existingArtifact.setIsEvidenceMarkedFlow(Boolean.FALSE);
                         }
                         else{
                             Document seal = Document.builder()
@@ -983,6 +984,8 @@ public class EvidenceService {
                                     .build();
                             existingArtifact.setSeal(seal);
                             workflow.setAction(E_SIGN);
+                            existingArtifact.setIsEvidenceMarkedFlow(Boolean.TRUE);
+                            existingArtifact.setIsEvidence(Boolean.TRUE);
                         }
                         existingArtifact.setWorkflow(workflow);
 
