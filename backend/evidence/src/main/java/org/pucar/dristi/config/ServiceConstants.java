@@ -158,8 +158,8 @@ public class ServiceConstants {
 
 	public static final String ARTIFACT_FILE_NAME = "artifact.pdf";
 	public static final String WITNESS_DEPOSITION = "WITNESS_DEPOSITION";
-	public static final String SIGNED_WITNESS_DEPOSITION_DOCUMENT = "SIGNED_WITNESS_DEPOSITION_DOCUMENT";
-	public static final String SIGNED_EVIDENCE_SEAL = "SIGNED_EVIDENCE_SEAL";
+	public static final String SIGNED_WITNESS_DEPOSITION_DOCUMENT = "SignedWitnessDepositionDocument.pdf";
+	public static final String SIGNED_EVIDENCE_SEAL = "signedEvidenceSeal.pdf";
 
 	public static final String ARTIFACT_SIGN_ERROR = "ARTIFACT_SIGN_ERROR";
 	public static final String ARTIFACT_NOT_FOUND = "ARTIFACT_NOT_FOUND";
