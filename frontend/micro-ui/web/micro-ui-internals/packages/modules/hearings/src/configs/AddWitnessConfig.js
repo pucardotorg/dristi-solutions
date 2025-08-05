@@ -92,6 +92,7 @@ const createWitnessConfig = (index) => [
               name: "mobileNumber",
               type: "text",
               error: "ERR_HRMS_INVALID_MOB_NO",
+              errorStyle: { width: "100%", color: "red" },
               label: "CORE_COMMON_PHONE_NUMBER",
               className: "mobile-number",
               validation: {
@@ -125,6 +126,7 @@ const createWitnessConfig = (index) => [
               name: "emailId",
               type: "text",
               error: "ERR_HRMS_INVALID_MOB_NO",
+              errorStyle: { width: "100%", color: "red" },
               label: "CORE_COMMON_EMAILS",
               className: "email-address",
               validation: {
