@@ -4518,6 +4518,7 @@ public class CaseService {
                 break;
             }
         }
+        courtCase.setAdditionalDetails(objectMapper.convertValue(additionalDetailsJsonNode, Object.class));
     }
 
     public void enrichAdditionalDetailsPOARespondent(CourtCase courtCase, POADetails poaDetails, POAIndividualDetails poaIndividualDetails) {
@@ -4536,21 +4537,25 @@ public class CaseService {
                 break;
             }
         }
+        courtCase.setAdditionalDetails(objectMapper.convertValue(additionalDetailsJsonNode, Object.class));
     }
 
-    private void enrichAdditionalDetails(POADetails poaDetails, POAIndividualDetails
-            poaIndividualDetails, ObjectNode data) {
-
+    private void enrichAdditionalDetails(POADetails poaDetails, POAIndividualDetails poaIndividualDetails, ObjectNode data) {
         // Add POA Name fields
         data.put("poaFirstName", poaDetails.getFirstName());
         data.put("poaMiddleName", poaDetails.getMiddleName());
         data.put("poaLastName", poaDetails.getLastName());
 
+        // Add transferred POA flag
         ObjectNode transferredPOA = data.putObject("transferredPOA");
-        ;
         transferredPOA.put("code", "YES");
         transferredPOA.put("name", "YES");
         transferredPOA.put("showPoaDetails", true);
+
+        // Add POA Address
+        JsonNode addressNode = objectMapper.convertValue(poaDetails.getAddress(), JsonNode.class);
+        data.set("poaAddressDetails", addressNode);
+        data.set("poaAddressDetails-select", addressNode);
 
         // Add POA Verification block
         ObjectNode poaVerification = data.putObject("poaVerification");
@@ -4558,36 +4563,65 @@ public class CaseService {
         poaVerification.put("mobileNumber", poaDetails.getMobileNumber());
         poaVerification.put("isUserVerified", true);
 
-        JsonNode addressNode = objectMapper.convertValue(poaDetails.getAddress(), JsonNode.class);
-        data.set("poaAddressDetails", addressNode);
-        data.set("poaAddressDetails-select", addressNode);
+        // Add individualDetails inside poaVerification
+        ObjectNode individualDetails = objectMapper.createObjectNode();
+        individualDetails.put("userUuid", poaDetails.getUserUuid());
+        individualDetails.put("individualId", poaDetails.getIndividualId());
+        individualDetails.set("poaAddressDetails", addressNode);
+        individualDetails.set("poaAddressDetails-select", addressNode);
 
-        // Add POA Documents
-        ArrayNode documentArray = data.putObject("poaVerification").putObject("individualDetails").putArray("document");
+        // Add POA ID Proof Document
+        ArrayNode documentArray = individualDetails.putArray("document");
         ObjectNode document = documentArray.addObject();
         document.put("fileStore", poaDetails.getIdDocument().getFileStore());
 
-        Object additionalDetailsIdProof = poaDetails.getIdDocument().getAdditionalDetails();
-        JsonNode docAdditionalDetailsIdProof = objectMapper.convertValue(additionalDetailsIdProof, JsonNode.class);
-        String documentNameIdProof = docAdditionalDetailsIdProof.get("documentName").asText();
-        document.put("documentName", documentNameIdProof);
+        JsonNode docAdditionalDetailsIdProof = objectMapper.convertValue(
+                poaDetails.getIdDocument().getAdditionalDetails(), JsonNode.class
+        );
+        document.put("documentName", docAdditionalDetailsIdProof.get("documentName").asText());
         document.put("documentType", poaDetails.getIdDocument().getDocumentType());
+
+        poaVerification.set("individualDetails", individualDetails);
+
+        // Create poaComplainantId nested structure
+        ObjectNode fileNode = objectMapper.createObjectNode();
+        fileNode.put("fileStore", poaDetails.getIdDocument().getFileStore());
+        fileNode.put("documentName", docAdditionalDetailsIdProof.get("documentName").asText());
+        fileNode.put("documentType", poaDetails.getIdDocument().getDocumentType());
+
+        ObjectNode innerMap = objectMapper.createObjectNode();
+        innerMap.set("file", fileNode);
+        innerMap.put("fileStoreId", poaDetails.getIdDocument().getFileStore());
+
+        ArrayNode idProofList = objectMapper.createArrayNode();
+        idProofList.add(poaDetails.getIdDocument().getDocumentType());
+        idProofList.add(innerMap);
+
+        ObjectNode poaComplainantIdLevel3 = objectMapper.createObjectNode();
+        poaComplainantIdLevel3.set("ID_Proof", objectMapper.createArrayNode().add(idProofList));
+
+        ObjectNode poaComplainantIdLevel2 = objectMapper.createObjectNode();
+        poaComplainantIdLevel2.set("poaComplainantId", poaComplainantIdLevel3);
+
+        ObjectNode poaComplainantIdLevel1 = objectMapper.createObjectNode();
+        poaComplainantIdLevel1.set("poaComplainantId", poaComplainantIdLevel2);
+
+        data.set("poaComplainantId", poaComplainantIdLevel1);
 
         // Add POA Authorization Document
         ObjectNode poaAuthDoc = data.putObject("poaAuthorizationDocument");
         ArrayNode authDocArray = poaAuthDoc.putArray("poaDocument");
+
         ObjectNode authDoc = authDocArray.addObject();
         authDoc.put("documentType", poaIndividualDetails.getPoaAuthDocument().getDocumentType());
         authDoc.put("fileStore", poaIndividualDetails.getPoaAuthDocument().getFileStore());
 
-        Object additionalDetailsObj = poaIndividualDetails.getPoaAuthDocument().getAdditionalDetails();
-        JsonNode docAdditionalDetails = objectMapper.convertValue(additionalDetailsObj, JsonNode.class);
-        String fileName = docAdditionalDetails.get("fileName").asText();
-        String documentName = docAdditionalDetails.get("documentName").asText();
-        authDoc.put("fileName", fileName);
-        authDoc.put("documentName", documentName);
+        JsonNode docAdditionalDetails = objectMapper.convertValue(
+                poaIndividualDetails.getPoaAuthDocument().getAdditionalDetails(), JsonNode.class
+        );
+        authDoc.put("fileName", docAdditionalDetails.get("fileName").asText());
+        authDoc.put("documentName", docAdditionalDetails.get("documentName").asText());
     }
-
 
     private void updateCourtCaseObject(CourtCase courtCase, JoinCaseTaskRequest joinCaseRequest, String
             advocateUuid,
