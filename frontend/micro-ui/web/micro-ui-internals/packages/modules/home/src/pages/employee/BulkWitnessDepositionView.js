@@ -1,5 +1,5 @@
 import { ActionBar, Toast, CloseSvg, InboxSearchComposer, SubmitBar, Loader } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { bulkWitnessDepositionSignConfig } from "../../configs/BulkWitnessDepositionSignConfig";
@@ -122,6 +122,15 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
   const closeToast = useCallback(() => {
     setShowErrorToast(null);
   }, []);
+
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
 
   const getFormattedDate = () => {
     const currentDate = new Date();
