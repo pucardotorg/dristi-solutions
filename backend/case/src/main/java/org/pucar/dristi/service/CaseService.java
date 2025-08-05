@@ -4422,6 +4422,9 @@ public class CaseService {
             CourtCase encrptedCourtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
             updateCourtCaseInRedis(courtCase.getTenantId(), encrptedCourtCase);
 
+            encrptedCourtCase.getPoaHolders().clear(); // Remove all existing POA holders
+            encrptedCourtCase.getPoaHolders().add(existingPoaHolder);
+
             producer.push(config.getPoaJoinCaseKafkaTopic(), encrptedCourtCase);
 
         } catch (CustomException e) {
