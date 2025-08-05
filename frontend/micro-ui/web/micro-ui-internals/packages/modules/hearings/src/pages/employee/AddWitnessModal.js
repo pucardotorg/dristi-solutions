@@ -8,7 +8,7 @@ import { submissionService } from "../../../../submissions/src/hooks/services/in
 import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow.js";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min.js";
 
-const AddWitnessModal = ({ tenantId, onCancel, caseDetails, isJudge, onAddSuccess }) => {
+const AddWitnessModal = ({ tenantId, onCancel, caseDetails, isJudge, showToast, onAddSuccess }) => {
   const { t } = useTranslation();
   const history = useHistory();
   const DRISTIService = Digit?.ComponentRegistryService?.getComponent("DRISTIService");
@@ -197,7 +197,9 @@ const AddWitnessModal = ({ tenantId, onCancel, caseDetails, isJudge, onAddSucces
             witnessDetails: newWitnesses,
           },
           { tenantId: tenantId }
-        );
+        ).then(() => {
+          showToast({ message: t("NEW_WITNESS_SUCCESSFULLY_ADDED"), error: false });
+        });
       } else {
         const newWitnesses = witnessFormList?.map((data) => {
           return {

@@ -70,7 +70,6 @@ export const WitnessDepositionSignModal = ({
   const [formData, setFormData] = useState({});
   const [witnessDepositionSignedPdf, setWitnessDepositionSignedPdf] = useState("");
   const [loader, setLoader] = useState(false);
-  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [witnessDepositionLoader, setWitnessDepositionLoader] = useState(false);
   const name = "Signature";
   const pageModule = "en";
@@ -223,7 +222,6 @@ export const WitnessDepositionSignModal = ({
                 clearWitnessDepositionSessionData();
                 setStepper(2);
               } else {
-                setIsRejectModalOpen(false);
                 setShowBulkSignModal(false);
                 if (queryStrings?.artifactNumber) {
                   clearWitnessDepositionSessionData();
@@ -242,7 +240,6 @@ export const WitnessDepositionSignModal = ({
       });
     } catch (error) {
       console.error("Error while updating witness deposition:", error);
-      setIsRejectModalOpen(false);
       setShowBulkSignModal(false);
       if (queryStrings?.artifactNumber) {
         clearWitnessDepositionSessionData();
@@ -398,15 +395,13 @@ export const WitnessDepositionSignModal = ({
               label={
                 witnessDepositionLoader
                   ? t(" ")
-                  : `${t("WITNESS_DEPOSITION")} (${effectiveRowData?.businessObject?.artifactDetails?.tag || effectiveRowData?.tag || ""})`
+                  : `${t("CS_WITNESS_DEPOSITION")} (${effectiveRowData?.businessObject?.artifactDetails?.tag || effectiveRowData?.tag || ""})`
               }
             />
           }
           popupStyles={{ width: "70vw", minHeight: "75vh", maxheight: "90vh" }}
-          actionCancelLabel={isSign && t("REJECT")}
-          actionCancelOnSubmit={() => {
-            setIsRejectModalOpen(true);
-          }}
+          actionCancelLabel={isSign && t("WITNESS_BACK")}
+          actionCancelOnSubmit={handleCancel}
           actionSaveLabel={isSign && t("PROCEED_TO_SIGN")}
           actionSaveOnSubmit={() => {
             setStepper(1);
@@ -445,7 +440,12 @@ export const WitnessDepositionSignModal = ({
               <InfoCard
                 variant={"default"}
                 label={t("PLEASE_NOTE")}
-                additionalElements={[<p key="note">{t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE_WITNESS_DEPOSITION")}</p>]}
+                additionalElements={[
+                  <p key="note">
+                    {`${t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}`}
+                    <strong>{t("CS_WITNESS_DEPOSITION")}</strong>
+                  </p>,
+                ]}
                 inline
                 textStyle={{}}
                 className={`custom-info-card`}
@@ -506,7 +506,12 @@ export const WitnessDepositionSignModal = ({
             <InfoCard
               variant={"default"}
               label={t("PLEASE_NOTE")}
-              additionalElements={[<p key="note">{t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE_WITNESS_DEPOSITION")}</p>]}
+              additionalElements={[
+                <p key="note">
+                  {`${t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}`}
+                  <strong>{t("CS_WITNESS_DEPOSITION")}</strong>
+                </p>,
+              ]}
               inline
               textStyle={{}}
               className={`custom-info-card`}
@@ -579,27 +584,6 @@ export const WitnessDepositionSignModal = ({
                 style={{ minWidth: "100%", marginTop: "10px" }}
               ></Banner>
             </div>
-          </div>
-        </Modal>
-      )}
-
-      {isRejectModalOpen && (
-        <Modal
-          headerBarMain={<Heading label={t("REJECT_WITNESS_DEPOSITION")} />}
-          headerBarEnd={<CloseBtn onClick={() => setIsRejectModalOpen(false)} />}
-          actionCancelLabel={t("CS_COMMON_CANCEL")}
-          actionCancelOnSubmit={() => setIsRejectModalOpen(false)}
-          actionSaveLabel={t("CONFIRM")}
-          actionSaveOnSubmit={async () => {
-            await updateWitnessDeposition({
-              artifactNumber: effectiveRowData?.businessObject?.artifactDetails?.artifactNumber || effectiveRowData?.artifactNumber,
-              action: witnessDepositionWorkflowAction.REJECT,
-            });
-          }}
-          className="reject-modal"
-        >
-          <div className="reject-modal-content">
-            <p>{t("REJECT_WITNESS_DEPOSITION_CONFIRMATION")}</p>
           </div>
         </Modal>
       )}
