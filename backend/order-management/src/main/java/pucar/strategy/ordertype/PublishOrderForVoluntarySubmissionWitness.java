@@ -64,7 +64,7 @@ public class PublishOrderForVoluntarySubmissionWitness implements OrderUpdateStr
         for(String applicationNumber : applicationNumberList) {
             List<Application> applications = applicationUtil.searchApplications(ApplicationSearchRequest.builder()
                     .requestInfo(orderRequest.getRequestInfo())
-                    .criteria(ApplicationCriteria.builder().applicationNumber(applicationNumber).build())
+                    .criteria(ApplicationCriteria.builder().applicationNumber(applicationNumber).tenantId(order.getTenantId()).build())
                     .build());
             for(Application application : applications) {
                 if(ADDING_WITNESSES.equalsIgnoreCase(application.getApplicationType())) {
