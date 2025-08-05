@@ -36,3 +36,11 @@ export const bailBondWorkflowAction = {
   SIGN: "SIGN",
   REJECT: "REJECT",
 };
+
+export const MarkAsEvidenceAction = {
+  CREATE: "CREATE",
+  SAVEDRAFT: "SAVE_DRAFT",
+  ESIGN: "E-SIGN",
+  BULKSIGN: "SUBMIT_BULK_E-SIGN",
+  EDIT: "EDIT",
+};

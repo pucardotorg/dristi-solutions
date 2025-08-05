@@ -25,6 +25,7 @@ import { useGetPendingTask } from "./dristi/useGetPendingTask.js";
 import useEvidenceDetails from "./dristi/useEvidenceDetails.js";
 import useGetStatuteSection from "./dristi/useGetStatuteSection.js";
 import useDownloadCasePdf from "./dristi/useDownloadCasePdf.js";
+import useDownloadFiles from "./dristi/useDownloadFiles.js";
 import useWorkflowDetails from "./dristi/useWorkflowDetails.js";
 import useSummonsPaymentBreakUp from "./dristi/useSummonsPaymentBreakUp.js";
 import { extractFeeMedium, getTaskType, combineMultipleFiles, getFilingType } from "../Utils/index.js";
@@ -136,6 +137,7 @@ const dristi = {
   useJudgeAvailabilityDates,
   useGetOCRData,
   useDownloadCasePdf,
+  useDownloadFiles,
   useSummonsPaymentBreakUp,
   useRepondentPincodeDetails,
   downloadPdfFromFile,

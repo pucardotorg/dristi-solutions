@@ -11,7 +11,7 @@ import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import BulkBailBondSignView from "./BulkBailBondSignView";
 import { BailBondSignModal } from "./BailBondSignModal";
 import BailBondModal from "./BailBondModal";
-
+import BulkMarkAsEvidenceView from "./BulkMarkAsEvidenceView";
 const sectionsParentStyle = {
   height: "50%",
   display: "flex",
@@ -427,7 +427,7 @@ const MainHomeScreen = () => {
           </div>
         ) : activeTab === "BULK_EVIDENCE_SIGN" ? (
           <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
-            <BulkBailBondSignView showToast={showToast} />
+            <BulkMarkAsEvidenceView showToast={showToast} />
           </div>
         ) : (
           <div className="inbox-search-wrapper" style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>

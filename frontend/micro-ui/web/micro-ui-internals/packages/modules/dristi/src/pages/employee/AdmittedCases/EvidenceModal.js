@@ -22,6 +22,8 @@ import { useToast } from "../../../components/Toast/useToast";
 import Button from "../../../components/Button";
 import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders/src/pages/employee/GenerateOrders";
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
+import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
+import CustomChip from "../../../components/CustomChip";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -43,7 +45,6 @@ const EvidenceModal = ({
   artifact,
   setShowMakeAsEvidenceModal,
 }) => {
-  debugger;
   const [comments, setComments] = useState(documentSubmission[0]?.comments ? documentSubmission[0].comments : artifact?.comments || []);
   const [showConfirmationModal, setShowConfirmationModal] = useState(null);
   const [showSuccessModal, setShowSuccessModal] = useState(null);
@@ -93,6 +94,10 @@ const EvidenceModal = ({
     return (
       <div className="evidence-title">
         <h1 className="heading-m">{props.label}</h1>
+        {props?.evidenceMarkedStatus && (
+          <CustomChip text={t(props?.evidenceMarkedStatus) || ""} shade={props?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"} />
+        )}
+
         {props.showStatus && <h3 className={props.isStatusRed ? "status-false" : "status"}>{props?.status}</h3>}
       </div>
     );
@@ -1091,7 +1096,6 @@ const EvidenceModal = ({
       } else if (modalType === "Submissions" && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION") {
         await handleApplicationAction(true, "accept");
       } else {
-        debugger;
         if (modalType === "Documents") {
           setShow(false);
           setShowMakeAsEvidenceModal(true);
@@ -1284,6 +1288,7 @@ const EvidenceModal = ({
                     : "Action Pending"
                   : t(applicationStatus)
               }
+              evidenceMarkedStatus={modalType === "Documents" ? documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus : null}
               showStatus={modalType === "Documents" ? false : true}
               isStatusRed={modalType === "Documents" ? !documentSubmission?.[0]?.artifactList?.isEvidence : applicationStatus}
             />
@@ -1303,7 +1308,34 @@ const EvidenceModal = ({
           //     : {}
           // }
         >
-          <div className="evidence-modal-main">
+          {isJudge && (
+            <div style={{ margin: "16px 24px" }}>
+              <div className="custom-note-main-div" style={{ padding: "8px 16px", flexDirection: "row", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <CustomErrorTooltip message={t("CS_EVIDENCE_MARKED_INFO_TEXT")} showTooltip={true} />
+                  <div className="custom-note-heading-div">
+                    <h2>{t("CS_PLEASE_COMMON_NOTE")}</h2>
+                  </div>
+                  <div className="custom-note-info-div" style={{ display: "flex", alignItems: "center" }}>
+                    {<p>{t("CS_EVIDENCE_MARKED_INFO_TEXT")}</p>}
+                  </div>
+                </div>
+                <div>
+                  <button
+                    className="custom-note-close-button"
+                    style={{ fontWeight: "700", fontSize: "18px", fontStyle: "large", backgroundColor: "transparent", color: "#0F3B8C" }}
+                    onClick={() => {
+                      setShow(false);
+                      setShowMakeAsEvidenceModal(true);
+                    }}
+                  >
+                    {t("VIEW_DETAILS")}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="evidence-modal-main " style={{ height: "Calc(100% - 140px)" }}>
             <div className={"application-details"}>
               <div style={{ display: "flex", flexDirection: "column", overflowY: "auto", height: "fit-content" }}>
                 {isJudge && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION" && !Boolean(applicationNumber) && (

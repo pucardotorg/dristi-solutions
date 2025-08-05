@@ -44,7 +44,6 @@ export const Evidence = ({ rowData, colData, value = "", showAsHeading = false, 
       <div
         className="fack-check-icon"
         onClick={() => {
-          debugger;
           colData?.clickFunc(docObj);
         }}
       >

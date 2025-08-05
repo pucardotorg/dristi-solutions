@@ -1422,6 +1422,7 @@ const AdmittedCaseV2 = () => {
     }));
   }, [activeTab]);
   const [updateCounter, setUpdateCounter] = useState(0);
+  const [documentCounter, setDocumentCounter] = useState(0);
   const [toastDetails, setToastDetails] = useState({});
   const [showOtherMenu, setShowOtherMenu] = useState(false);
   const [showScheduleHearingModal, setShowScheduleHearingModal] = useState(false);
@@ -3205,15 +3206,17 @@ const AdmittedCaseV2 = () => {
         cnrNumber={cnrNumber}
         setDocumentSubmission={setDocumentSubmission}
         setShow={setShow}
+        setShowMakeAsEvidenceModal={setShowMakeAsEvidenceModal}
         setShowConfirmationModal={setShowConfirmationModal}
         setVoidReason={setVoidReason}
         setShowVoidModal={setShowVoidModal}
         setSelectedRow={setSelectedRow}
         setSelectedItem={setSelectedItem}
+        counter={documentCounter}
         // handleFilingAction={handleFilingAction}
       />
     );
-  }, [caseDetails, courtId, tenantId, filingNumber, caseId, cnrNumber]);
+  }, [caseDetails, courtId, tenantId, filingNumber, caseId, cnrNumber, documentCounter]);
 
   const caseTimeLine = useMemo(() => {
     return (
@@ -3780,18 +3783,19 @@ const AdmittedCaseV2 = () => {
           handleOrdersTab={handleOrdersTab}
         />
       )}
-      {showConfirmationModal && (
+      {showMakeAsEvidenceModal && (
         <MarkAsEvidence
+          showToast={showToast}
           t={t}
-          selectedItem={selectedItem}
-          selectedRow={selectedRow}
-          documentSubmission={documentSubmission}
+          evidenceDetailsObj={documentSubmission?.[0]?.artifactList || artifact || selectedRow}
+          setDocumentCounter={setDocumentCounter}
           isEvidenceLoading={false}
           handleAction={handleEvidenceAction}
-          setShowMakeAsEvidenceModal={setShowConfirmationModal}
+          setShowMakeAsEvidenceModal={setShowMakeAsEvidenceModal}
         />
       )}
-      {/* <ConfirmEvidenceAction
+      {showConfirmationModal && (
+        <ConfirmEvidenceAction
           t={t}
           setShowConfirmationModal={setShowConfirmationModal}
           type={showConfirmationModal.type}
@@ -3801,7 +3805,7 @@ const AdmittedCaseV2 = () => {
           isEvidence={documentSubmission?.[0]?.artifactList?.isEvidence}
           isFromActions={true}
         />
-      )} */}
+      )}
       {showCalendarModal && (
         <Modal
           headerBarMain={<Heading label={t("CS_CASE_VIEW_CALENDAR")} />}
@@ -4027,17 +4031,6 @@ const AdmittedCaseV2 = () => {
             <div style={{ margin: "16px 16px" }}>{t("TASK_ALREADY_EXISTS_TEXT")}</div>
           </Modal>
         ))}
-      {showMakeAsEvidenceModal && (
-        <MarkAsEvidence
-          t={t}
-          selectedItem={selectedItem}
-          selectedRow={selectedRow}
-          documentSubmission={documentSubmission}
-          isEvidenceLoading={false}
-          handleAction={handleEvidenceAction}
-          setShowMakeAsEvidenceModal={setShowConfirmationModal}
-        />
-      )}
     </div>
   );
 };

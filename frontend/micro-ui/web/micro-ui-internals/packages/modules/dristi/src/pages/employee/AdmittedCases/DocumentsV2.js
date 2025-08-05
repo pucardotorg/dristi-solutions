@@ -17,11 +17,13 @@ const DocumentsV2 = ({
   cnrNumber,
   setDocumentSubmission,
   setShow,
+  setShowMakeAsEvidenceModal,
   setShowConfirmationModal,
   setVoidReason,
   setShowVoidModal,
   setSelectedRow,
   setSelectedItem,
+  counter,
 }) => {
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const roles = Digit.UserService.getUser()?.info?.roles;
@@ -80,7 +82,6 @@ const DocumentsV2 = ({
           }
         }
       } else {
-        debugger;
         const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
         const status = docObj?.[0]?.applicationList?.status;
         const createdByUuid = docObj?.[0]?.applicationList?.statuteSection?.auditdetails?.createdBy;
@@ -147,11 +148,12 @@ const DocumentsV2 = ({
           artifactList: row,
         },
       ];
-      if ("mark_as_evidence" === item.id || "unmark_as_evidence" === item.id) {
+      if ("mark_as_evidence" === item.id || "unmark_as_evidence" === item.id || "view_mark_as_evidence" === item.id) {
         setSelectedRow(row);
         setDocumentSubmission(docObj);
         setSelectedItem(item); // Store row before showing the modal
-        setShowConfirmationModal(true);
+        setShowMakeAsEvidenceModal(true);
+        // setShowConfirmationModal(true);
       } else if ("mark_as_void" === item.id || "view_reason_for_voiding" === item.id) {
         setDocumentSubmission(docObj);
         setVoidReason(row?.reason);
@@ -316,7 +318,7 @@ const DocumentsV2 = ({
         })}
       </div>
 
-      <InboxSearchComposer key={`${config?.label}`} configs={config} showTab={false}></InboxSearchComposer>
+      <InboxSearchComposer key={`${config?.label}-${counter}`} configs={config} showTab={false}></InboxSearchComposer>
     </React.Fragment>
   );
 };

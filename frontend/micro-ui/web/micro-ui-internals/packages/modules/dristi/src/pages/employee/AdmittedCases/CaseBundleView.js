@@ -1713,36 +1713,41 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           {selectedDocument && selectedFileStoreId && (
             <div className="doc-action-buttons" style={{ display: "flex", gap: "10px" }}>
               <DownloadButton onClick={() => downloadPdf(tenantId, selectedFileStoreId)} label="DOWNLOAD_PDF" t={t} />
-              {isJudge && selectedFileStoreId && evidenceFileStoreMap.has(selectedFileStoreId) && (
-                <button
-                  className="mark-asevidence-button"
-                  onClick={() => {
-                    setMenuData({
-                      fileStoreId: selectedFileStoreId,
-                      isEvidence: false,
-                      isEvidenceMenu: true,
-                      artifactNumber: dynamicCaseFileStructure
-                        ?.flatMap((item) =>
-                          item.hasChildren
-                            ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))]
-                            : [item]
-                        )
-                        ?.find((item) => item.id === selectedDocument)?.artifactNumber,
-                      artifactList: dynamicCaseFileStructure
-                        ?.flatMap((item) =>
-                          item.hasChildren
-                            ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))]
-                            : [item]
-                        )
-                        ?.find((item) => item.id === selectedDocument)?.artifactList,
-                    });
-                    setShowEvidenceConfirmationModal(true);
-                  }}
-                  style={{}}
-                >
-                  {t("MARK_AS_EVIDENCE")}
-                </button>
-              )}
+              {isJudge &&
+                selectedFileStoreId &&
+                evidenceFileStoreMap.has(selectedFileStoreId) &&
+                evidenceFileStoreMap?.get(selectedFileStoreId)?.evidenceMarkedStatus !== "COMPLETED" && (
+                  <button
+                    className="mark-asevidence-button"
+                    onClick={() => {
+                      setMenuData({
+                        fileStoreId: selectedFileStoreId,
+                        isEvidence: false,
+                        isEvidenceMenu: true,
+                        artifactNumber: dynamicCaseFileStructure
+                          ?.flatMap((item) =>
+                            item.hasChildren
+                              ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))]
+                              : [item]
+                          )
+                          ?.find((item) => item.id === selectedDocument)?.artifactNumber,
+                        artifactList: dynamicCaseFileStructure
+                          ?.flatMap((item) =>
+                            item.hasChildren
+                              ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))]
+                              : [item]
+                          )
+                          ?.find((item) => item.id === selectedDocument)?.artifactList,
+                      });
+                      setShowEvidenceConfirmationModal(true);
+                    }}
+                    // data-tip="This feature is not available"
+                    // disabled={evidenceFileStoreMap?.get(selectedFileStoreId)?.evidenceMarkedStatus !== "PENDING_BULK_E-SIGN" ? true : false}
+                    style={{}}
+                  >
+                    {t("MARK_AS_EVIDENCE")}
+                  </button>
+                )}
             </div>
           )}
         </div>
@@ -1778,7 +1783,13 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           )}
         </div>
       )}
-      {showEvidenceConfirmationModal && <MarkAsEvidence setShowConfirmationModal={setShowEvidenceConfirmationModal} />}
+      {showEvidenceConfirmationModal && (
+        <MarkAsEvidence
+          t={t}
+          setShowConfirmationModal={setShowEvidenceConfirmationModal}
+          evidenceDetailsObj={evidenceFileStoreMap.get(selectedFileStoreId)}
+        />
+      )}
       {/* {showEvidenceConfirmationModal && (
         <ConfirmEvidenceAction
           t={t}
