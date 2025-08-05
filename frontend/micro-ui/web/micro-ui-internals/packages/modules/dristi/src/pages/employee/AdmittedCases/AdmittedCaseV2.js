@@ -3538,7 +3538,7 @@ const AdmittedCaseV2 = () => {
             )} */}
           {(showMakeSubmission || isJudge || isBenchClerk || isTypist || isCourtStaff) && config?.label === "Parties" && (
             <Button
-              label={"ADD_NEW_WITNESS"}
+              label={t("ADD_NEW_WITNESS")}
               variation={"secondary"}
               onButtonClick={() => setShowAddWitnessModal(true)}
               style={{ marginRight: "30px" }}
