@@ -4422,7 +4422,7 @@ public class CaseService {
             CourtCase encrptedCourtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
             updateCourtCaseInRedis(courtCase.getTenantId(), encrptedCourtCase);
 
-            producer.push(config.getPoaJoinCaseKafkaTopic(), courtCase);
+            producer.push(config.getPoaJoinCaseKafkaTopic(), encrptedCourtCase);
 
         } catch (CustomException e) {
             log.error("CustomException occurred: {}", e.getMessage(), e);
