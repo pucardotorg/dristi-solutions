@@ -130,6 +130,7 @@ public class ServiceConstants {
 
 	public static final String SIGNED = "SIGNED";
 	public static final String SIGN = "SIGN";
+	public static final String E_SIGN = "E-SIGN";
 	public static final String COMPOSITE = "COMPOSITE";
 
 	public static final String COORDINATES_ERROR = "COORDINATES_ERROR";
