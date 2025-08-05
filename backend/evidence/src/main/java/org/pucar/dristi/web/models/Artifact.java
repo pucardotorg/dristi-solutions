@@ -104,9 +104,6 @@ public class Artifact {
 
 	private List<String> applicableTo = null;
 
-	@JsonProperty("seal")
-	private Document seal = null;
-
 	@JsonProperty("createdDate")
 
 	private Long createdDate = null;
@@ -140,6 +137,11 @@ public class Artifact {
 	@Valid
 	private Document file = null;
 
+    @JsonProperty("seal")
+
+    @Valid
+    private Document seal = null;
+
 	@JsonProperty("description")
 
 	private String description = null;
@@ -165,6 +167,18 @@ public class Artifact {
 
 	@Valid
 	private WorkflowObject workflow = null;
+
+	@JsonProperty("shortenedUrl")
+	private String shortenedUrl = null;
+
+	@JsonProperty("witnessMobileNumbers")
+	private List<String> witnessMobileNumbers = null;
+
+	@JsonProperty("witnessEmails")
+	private List<String> witnessEmails = null;
+
+	@JsonProperty("tag")
+	private String tag = null;
 
 	@JsonProperty("evidenceMarkedStatus")
 	private String evidenceMarkedStatus = null;

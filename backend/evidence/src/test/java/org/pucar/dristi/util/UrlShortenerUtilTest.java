@@ -39,7 +39,7 @@ class UrlShortenerUtilTest {
         // Mocking successful response from the URL shortening service
         when(restTemplate.postForObject(anyString(), any(), eq(String.class))).thenReturn(testShortenedUrl);
 
-        String shortenedUrl = urlShortenerUtil.getShortenedUrl(testUrl);
+        String shortenedUrl = urlShortenerUtil.getShortenedUrl(testUrl, "123");
 
         assertEquals(testShortenedUrl, shortenedUrl);
         verify(restTemplate, times(1)).postForObject(anyString(), any(), eq(String.class));
@@ -50,7 +50,7 @@ class UrlShortenerUtilTest {
         // Mocking empty response from the URL shortening service
         when(restTemplate.postForObject(anyString(), any(), eq(String.class))).thenReturn(null);
 
-        String shortenedUrl = urlShortenerUtil.getShortenedUrl(testUrl);
+        String shortenedUrl = urlShortenerUtil.getShortenedUrl(testUrl, "123");
 
         assertEquals(testUrl, shortenedUrl);
         verify(restTemplate, times(1)).postForObject(anyString(), any(), eq(String.class));
@@ -61,7 +61,7 @@ class UrlShortenerUtilTest {
         // Mocking empty response from the URL shortening service
         when(restTemplate.postForObject(anyString(), any(), eq(String.class))).thenReturn("");
 
-        String shortenedUrl = urlShortenerUtil.getShortenedUrl(testUrl);
+        String shortenedUrl = urlShortenerUtil.getShortenedUrl(testUrl, "123");
 
         assertEquals(testUrl, shortenedUrl);
         verify(restTemplate, times(1)).postForObject(anyString(), any(), eq(String.class));

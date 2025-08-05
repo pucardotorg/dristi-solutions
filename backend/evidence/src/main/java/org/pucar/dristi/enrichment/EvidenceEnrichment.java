@@ -3,6 +3,7 @@ package org.pucar.dristi.enrichment;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -181,6 +182,12 @@ public class EvidenceEnrichment {
             // Enrich lastModifiedTime and lastModifiedBy in case of update
             evidenceRequest.getArtifact().getAuditdetails().setLastModifiedTime(System.currentTimeMillis());
             evidenceRequest.getArtifact().getAuditdetails().setLastModifiedBy(evidenceRequest.getRequestInfo().getUserInfo().getUuid());
+            Document seal = evidenceRequest.getArtifact().getSeal();
+            if(seal != null && seal.getId() == null){
+                seal.setId(String.valueOf(UUID.randomUUID()));
+                seal.setDocumentUid(seal.getId());
+                evidenceRequest.getArtifact().setSeal(seal);
+            }
         } catch (Exception e) {
             log.error("Error enriching evidence application upon update: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in enrichment service during  update process: " + e.toString());
@@ -195,5 +202,26 @@ public class EvidenceEnrichment {
             log.error("Error enriching comment upon create: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error enriching comment upon create: " + e.getMessage());
         }
+    }
+
+    public void enrichTag(EvidenceRequest body) {
+        try {
+            log.info("Tag for {} is {}", body.getArtifact().getId(), body.getArtifact().getTag());
+            List<String> tags = idgenUtil.getIdList(body.getRequestInfo(), body.getArtifact().getTenantId(), getIdName(body.getArtifact().getTag()), null, 1, false);
+            body.getArtifact().setTag(tags.get(0));
+            log.info("Tag generated id: {} is {}", body.getArtifact().getId(), body.getArtifact().getTag());
+        } catch (CustomException e) {
+            log.error("Error generating tag for {}: {}", body.getArtifact().getId(), e.getMessage());
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Failed to generate tag for " + body.getArtifact().getId() + ": " + e.getMessage());
+        }
+    }
+
+    private String getIdName(String tag) {
+        return switch (tag) {
+            case "PW" -> configuration.getProsecutionWitnessConfig();
+            case "DW" -> configuration.getDefenceWitnessConfig();
+            case "CW" -> configuration.getCourtWitnessConfig();
+            default -> configuration.getCourtConfig();
+        };
     }
 }

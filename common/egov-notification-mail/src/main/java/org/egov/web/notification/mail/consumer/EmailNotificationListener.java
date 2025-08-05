@@ -1,10 +1,12 @@
 package org.egov.web.notification.mail.consumer;
 
 import java.util.HashMap;
+import java.util.List;
 
 import com.github.jknack.handlebars.internal.text.StringEscapeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.tracer.model.CustomException;
+import org.egov.web.notification.mail.config.ApplicationConfiguration;
 import org.egov.web.notification.mail.config.EmailProperties;
 import org.egov.web.notification.mail.consumer.contract.EmailRequest;
 import org.egov.web.notification.mail.service.EmailService;
@@ -29,12 +31,16 @@ public class EmailNotificationListener {
     private MessageConstruction messageConstruction;
 
     private final EmailProperties properties;
+
+    private final ApplicationConfiguration applicationConfiguration;
+
     @Autowired
-    public EmailNotificationListener(EmailService emailService, ObjectMapper objectMapper, MessageConstruction messageConstruction, EmailProperties properties) {
+    public EmailNotificationListener(EmailService emailService, ObjectMapper objectMapper, MessageConstruction messageConstruction, EmailProperties properties, ApplicationConfiguration applicationConfiguration) {
         this.emailService = emailService;
         this.objectMapper = objectMapper;
         this.messageConstruction = messageConstruction;
         this.properties = properties;
+        this.applicationConfiguration = applicationConfiguration;
     }
 
     @KafkaListener(topics = "${kafka.topics.notification.mail.name}")
@@ -51,7 +57,9 @@ public class EmailNotificationListener {
             }
 
             emailRequest.getEmail().setBody(message);
-            if(BAIL_BOND_TEMPLATE_CODE.equalsIgnoreCase(emailRequest.getEmail().getTemplateCode())) {
+            List<String> bailBondTemplateCodes = applicationConfiguration.getCustomEmailSubject();
+            if (bailBondTemplateCodes != null && bailBondTemplateCodes.stream()
+                    .anyMatch(code -> code.equalsIgnoreCase(emailRequest.getEmail().getTemplateCode()))) {
                 emailRequest.getEmail().setBody(originalBody);
             }
             emailService.sendEmail(emailRequest.getEmail());

@@ -22,7 +22,8 @@ public class EvidenceQueryBuilder {
             "art.comments as comments, art.file as file, art.createdDate as createdDate, art.isActive as isActive, art.isEvidence as isEvidence, art.status as status, art.description as description, " +
             "art.artifactDetails as artifactDetails, art.additionalDetails as additionalDetails, art.createdBy as createdBy, " +
             "art.lastModifiedBy as lastModifiedBy, art.createdTime as createdTime, art.lastModifiedTime as lastModifiedTime, " +
-            "art.isVoid as isVoid, art.reason as reason, art.filingType as filingType, art.publishedDate as publishedDate";
+            "art.isVoid as isVoid, art.reason as reason, art.filingType as filingType, art.publishedDate as publishedDate, art.shortenedUrl as shortenedUrl , art.witnessMobileNumbers as witnessMobileNumbers, art.witnessEmails as witnessEmails, art.evidenceMarkedStatus as evidenceMarkedStatus, art.seal as seal, art.isEvidenceMarkedFlow as isEvidenceMarkedFlow" +
+            ", art.tag as tag ";
 
     private  static  final String TOTAL_COUNT_QUERY = "SELECT COUNT(*) FROM ({baseQuery}) total_result";
     private static final String DEFAULT_ORDERBY_CLAUSE = " ORDER BY art.createdtime DESC ";
@@ -52,6 +53,8 @@ public class EvidenceQueryBuilder {
             String filingType = criteria.getFilingType();
             Boolean isVoid = criteria.getIsVoid();
             String sourceType = criteria.getSourceType();
+            List<String> status = criteria.getStatus();
+            List<String> workflowStatus = criteria.getWorkflowStatus();
             String evidenceNumber = criteria.getEvidenceNumber();
 
             // Build the query using the extracted fields
@@ -72,7 +75,9 @@ public class EvidenceQueryBuilder {
             firstCriteria = addArtifactCriteria(sourceName, query, preparedStmtList, firstCriteria, "art.sourceName = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(evidenceNumber, query, preparedStmtList, firstCriteria, "art.evidenceNumber = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteria(fileStoreId, query, preparedStmtList, firstCriteria, "art.file ->> 'fileStore' = ?",preparedStmtArgList);
-            addArtifactPartialCriteria(artifactNumber, query, preparedStmtList, firstCriteria,preparedStmtArgList);
+            firstCriteria = addArtifactCriteriaList(status, query, preparedStmtList, firstCriteria, "art.status", preparedStmtArgList);
+            firstCriteria = addArtifactCriteriaList(workflowStatus, query, preparedStmtList, firstCriteria, "art.evidenceMarkedStatus", preparedStmtArgList);
+            addArtifactPartialCriteria(artifactNumber, query, preparedStmtList, firstCriteria,preparedStmtArgList, criteria.getFuzzySearch());
 
             return query.toString();
         } catch (Exception e) {
@@ -158,12 +163,18 @@ public class EvidenceQueryBuilder {
 
         return queryBuilder.toString();
     }
-    void addArtifactPartialCriteria(String criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, List<Integer> preparedStmtArgList) {
+    void addArtifactPartialCriteria(String criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, List<Integer> preparedStmtArgList, Boolean fuzzySearch) {
         if (criteria != null && !criteria.isEmpty()) {
             addClauseIfRequired(query, firstCriteria);
-            query.append("art.artifactNumber").append(" LIKE ?");
-            preparedStmtList.add("%" + criteria + "%");
-            preparedStmtArgList.add(Types.VARCHAR);// Add wildcard characters for partial match
+            if (Boolean.TRUE.equals(fuzzySearch)) {
+                query.append("art.artifactNumber").append(" LIKE ?");
+                preparedStmtList.add("%" + criteria + "%");
+                preparedStmtArgList.add(Types.VARCHAR);// Add wildcard characters for partial match
+            } else {
+                query.append("art.artifactNumber").append(" = ?");
+                preparedStmtList.add(criteria);
+                preparedStmtArgList.add(Types.VARCHAR);
+            }
         }
     }
     boolean addArtifactCriteria(String criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, String criteriaClause,List<Integer> preparedStmtArgList) {
@@ -172,6 +183,24 @@ public class EvidenceQueryBuilder {
             query.append(criteriaClause);
             preparedStmtList.add(criteria);
             preparedStmtArgList.add(Types.VARCHAR);
+            firstCriteria = false;
+        }
+        return firstCriteria;
+    }
+
+    boolean addArtifactCriteriaList(List<String> criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, String fieldName, List<Integer> preparedStmtArgList) {
+        if (criteria != null && !criteria.isEmpty()) {
+            addClauseIfRequired(query, firstCriteria);
+            query.append(fieldName).append(" IN (");
+            for (int i = 0; i < criteria.size(); i++) {
+                query.append("?");
+                if (i < criteria.size() - 1) {
+                    query.append(", ");
+                }
+                preparedStmtList.add(criteria.get(i));
+                preparedStmtArgList.add(java.sql.Types.VARCHAR);
+            }
+            query.append(")");
             firstCriteria = false;
         }
         return firstCriteria;
