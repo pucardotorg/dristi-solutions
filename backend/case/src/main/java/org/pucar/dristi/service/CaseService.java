@@ -5229,4 +5229,58 @@ public class CaseService {
         courtCase.setAdditionalDetails(additionalDetailsNode);
     }
 
+
+    /**
+     * Updates a case without triggering workflow processes.
+     * Performs validation on the case object and handles errors appropriately.
+     *
+     * @param body The CaseRequest containing case details to update
+     * @return CourtCase The updated court case
+     * @throws CustomException if validation fails or update operation encounters errors
+     */
+    public CourtCase updateCaseWithoutWorkflow(@Valid CaseRequest body) {
+        try {
+            // Validate case object
+            CourtCase courtCase = body.getCases();
+            if (courtCase == null) {
+                log.error("Method=updateCaseWithoutWorkflow,Result=FAILURE, Error=CourtCase is null");
+                throw new CustomException(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, "CourtCase cannot be null");
+            }
+            log.info("Method=updateCaseWithoutWorkflow,Result=IN_PROGRESS, caseId={}, tenantId={}", body.getCases().getId(), body.getCases().getTenantId());
+            // Validate required fields
+            if (StringUtils.isBlank(courtCase.getTenantId())) {
+                log.error("Method=updateCaseWithoutWorkflow,Result=FAILURE, Error=TenantId is null or empty, CaseId={}", courtCase.getId());
+                throw new CustomException(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, "TenantId cannot be null or empty");
+            }
+
+            if (courtCase.getId() == null) {
+                log.error("Method=updateCaseWithoutWorkflow,Result=FAILURE, Error=CaseId is null or empty");
+                throw new CustomException(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, "Case ID cannot be null or empty");
+            }
+            // Encrypt the case object
+            CourtCase encryptedCourtCase = encryptionDecryptionUtil.encryptObject(body.getCases(), config.getCourtCaseEncrypt(), CourtCase.class);
+            if (encryptedCourtCase == null) {
+                log.error("Method=updateCaseWithoutWorkflow,Result=FAILURE, Error=Encryption failed, CaseId={}", courtCase.getId());
+                throw new CustomException(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, "Failed to encrypt case object");
+            }
+
+            // Update case in Redis cache
+            updateCourtCaseInRedis(courtCase.getTenantId(), encryptedCourtCase);
+            CaseRequest caseRequest = CaseRequest.builder()
+                            .requestInfo(body.getRequestInfo())
+                            .cases(encryptedCourtCase)
+                            .build();
+            producer.push(config.getCaseUpdateTopic(), caseRequest);
+            log.info("Method=updateCaseWithoutWorkflow,Result=SUCCESS, CaseId={}, TenantId={}",
+                    courtCase.getId(), courtCase.getTenantId());
+
+            return courtCase;
+
+        } catch (CustomException e) {
+            log.error("Method=updateCaseWithoutWorkflow,Result=FAILURE, Error=Unexpected exception occurred, Message={}",
+                    e.getMessage(), e);
+            throw new CustomException(UPDATE_CASE_WITHOUT_WORKFLOW_ERR,
+                    "An unexpected error occurred while updating case without workflow: " + e.getMessage());
+        }
+    }
 }
