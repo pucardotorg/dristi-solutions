@@ -16,6 +16,9 @@ import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.LockUtil;
 import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.v2.PartyType;
+import org.pucar.dristi.web.models.v2.WitnessDetails;
+import org.pucar.dristi.web.models.v2.WitnessDetailsRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ObjectUtils;
@@ -25,7 +28,9 @@ import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
-
+/**
+ * @author Sathvik
+ */
 @Component
 @Slf4j
 public class CaseRegistrationValidator {
@@ -33,7 +38,6 @@ public class CaseRegistrationValidator {
     private IndividualService individualService;
 
     private CaseRepository repository;
-
 
     private MdmsUtil mdmsUtil;
 
@@ -444,4 +448,182 @@ public class CaseRegistrationValidator {
         return masterList;
     }
 
+    public void validateWitnessRequest(WitnessDetailsRequest body, CourtCase courtCase) {
+        try {
+            log.info("operation=validateWitnessRequest, status=IN_PROGRESS, filingNumber: {}", body.getCaseFilingNumber());
+            JsonNode additionalDetails = objectMapper.convertValue(courtCase.getAdditionalDetails(), JsonNode.class);
+            validateMobileNumbersInRequest(body.getWitnessDetails());
+            for(WitnessDetails witnessDetails : body.getWitnessDetails()) {
+                validateMobileNumbers(additionalDetails, witnessDetails);
+                validateEmail(additionalDetails, witnessDetails);
+            }
+            log.info("operation=validateWitnessRequest, status=SUCCESS, filingNumber: {}", body.getCaseFilingNumber());
+        } catch (Exception e) {
+            log.error("operation=validateWitnessRequest, status=FAILURE, filingNumber: {}, error: {}", body.getCaseFilingNumber(), e.getMessage());
+            throw new CustomException(ERROR_VALIDATING_WITNESS, "Error while validating witness request: " + body.getCaseFilingNumber() + ", error: " + e.getMessage());
+        }
+    }
+
+    private void validateMobileNumbersInRequest(List<WitnessDetails> witnessDetails) {
+        if(witnessDetails == null || witnessDetails.isEmpty()) {
+            throw new CustomException(ERROR_VALIDATING_WITNESS, "Witness details cannot be empty");
+        }
+        
+        Set<String> mobileNumberSet = new HashSet<>();
+        for(WitnessDetails witnessDetail : witnessDetails) {
+            List<String> mobileNumbers = extractMobileNumbers(witnessDetail);
+            for(String mobileNumber : mobileNumbers) {
+                if(!mobileNumberSet.add(mobileNumber)) {
+                    throw new CustomException(ERROR_VALIDATING_WITNESS, 
+                        "Duplicate mobile number found: " + mobileNumber + ". All witnesses must have different mobile numbers.");
+                }
+            }
+        }
+    }
+    
+    private List<String> extractMobileNumbers(WitnessDetails witnessDetail) {
+        if(witnessDetail.getPhoneNumbers() == null || witnessDetail.getPhoneNumbers().getMobileNumber() == null) {
+            return Collections.emptyList();
+        }
+        return witnessDetail.getPhoneNumbers().getMobileNumber().stream()
+                .filter(mobile -> mobile != null && !mobile.trim().isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    private boolean doesWitnessExists(JsonNode additionalDetails, WitnessDetails witnessDetails) {
+        JsonNode witnessDetailsNode = additionalDetails.get("witnessDetails");
+        if (witnessDetailsNode == null || !witnessDetailsNode.isArray()) {
+            return false;
+        }
+        for(JsonNode witness : witnessDetailsNode.get("formdata")) {
+            if(witnessDetails.getUniqueId().equalsIgnoreCase(witness.get("uniqueId").textValue())){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void validateEmail(JsonNode additionalDetails, WitnessDetails witnessDetails) {
+        List<String> emailIds = new ArrayList<>();
+        emailIds.addAll(extractEmailIdsFromDetails(additionalDetails.get("respondentDetails")));
+        emailIds.addAll(extractEmailIdsFromDetails(additionalDetails.get("witnessDetails")));
+
+        if (witnessDetails.getEmails() == null || witnessDetails.getEmails().getEmailId().isEmpty()) {
+            return;
+        }
+        List<String> witnessEmailIds = witnessDetails.getEmails().getEmailId();
+        Set<String> emailIdSet = new HashSet<>(emailIds);
+        for(String emailId : witnessEmailIds) {
+            boolean witnessExist = !doesWitnessExists(additionalDetails, witnessDetails);
+            if(emailIdSet.contains(emailId) && !witnessExist) {
+                throw new CustomException(ERROR_VALIDATING_WITNESS,
+                        "Witness email id should not be same as existing parties email id");
+            }
+        }
+    }
+
+    public static List<String> extractEmailIdsFromDetails(JsonNode detailsNode) {
+        List<String> emailIds = new ArrayList<>();
+
+        if (detailsNode == null || !detailsNode.has("formdata")) {
+            return emailIds;
+        }
+
+        JsonNode formDataArray = detailsNode.get("formdata");
+        if (!formDataArray.isArray() || formDataArray.isEmpty()) {
+            return emailIds;
+        }
+
+        for (JsonNode formDataItem : formDataArray) {
+            JsonNode emailNode = formDataItem.at("/data/emails/emailId");
+            if (!emailNode.isMissingNode() && emailNode.isArray()) {
+                for (JsonNode node : emailNode) {
+                    if (node.isTextual() && !node.asText().trim().isEmpty()) {
+                        emailIds.add(node.asText());
+                    }
+                }
+            }
+        }
+
+        return emailIds;
+    }
+
+    private void validateMobileNumbers(JsonNode additionalDetails, WitnessDetails witnessDetails) {
+
+        if(witnessDetails.getPhoneNumbers() == null || witnessDetails.getPhoneNumbers().getMobileNumber().isEmpty()) {
+            return;
+        }
+        List<String> mobileNumberList = new ArrayList<>();
+
+        mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("advocateDetails"), PartyType.ADVOCATE));
+        mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("complainantDetails"), PartyType.COMPLAINANT));
+        mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("witnessDetails"), PartyType.WITNESS));
+        mobileNumberList.addAll(extractMobileNumbersFromDetails(additionalDetails.get("respondentDetails"), PartyType.RESPONDENT));
+
+        List<String> witnessMobileNumber = witnessDetails.getPhoneNumbers().getMobileNumber();
+        Set<String> mobileNumberSet = new HashSet<>(mobileNumberList);
+        for (String witnessNumber : witnessMobileNumber) {
+            boolean isWitnessExists = doesWitnessExists(additionalDetails, witnessDetails);
+            if (mobileNumberSet.contains(witnessNumber) && !isWitnessExists) {
+                throw new CustomException(ERROR_VALIDATING_WITNESS,
+                        "Witness mobile number should not be same as existing parties mobile number");
+            }
+        }
+    }
+
+    public static List<String> extractMobileNumbersFromDetails(JsonNode detailsNode, PartyType type) {
+        List<String> mobileNumbers = new ArrayList<>();
+        if (detailsNode == null || !detailsNode.has("formdata")) {
+            return mobileNumbers;
+        }
+        JsonNode formDataArray = detailsNode.get("formdata");
+        if (!formDataArray.isArray()) {
+            return mobileNumbers;
+        }
+        for (JsonNode formDataItem : formDataArray) {
+            JsonNode dataNode = formDataItem.get("data");
+
+            if (dataNode == null) continue;
+            switch (type) {
+                case COMPLAINANT:
+                    JsonNode complainantMobile = dataNode.at("/complainantVerification/mobileNumber");
+                    if (!complainantMobile.isMissingNode() && complainantMobile.isTextual()) {
+                        mobileNumbers.add(complainantMobile.asText());
+                    }
+                    break;
+
+                case WITNESS:
+                case RESPONDENT:
+                    JsonNode mobileNode = dataNode.at("/phonenumbers/mobileNumber");
+                    if (!mobileNode.isMissingNode() && mobileNode.isArray()) {
+                        for (JsonNode numberNode : mobileNode) {
+                            if (numberNode.isTextual() && !numberNode.asText().trim().isEmpty()) {
+                                mobileNumbers.add(numberNode.asText());
+                            }
+                        }
+                    }
+                    break;
+                case ADVOCATE:
+                    JsonNode multipleAdvocates = dataNode.at("/multipleAdvocatesAndPip/multipleAdvocateNameDetails");
+                    if (multipleAdvocates.isArray()) {
+                        for (JsonNode advocateEntry : multipleAdvocates) {
+                            JsonNode advocateNameDetails = advocateEntry.get("advocateNameDetails");
+                            if (advocateNameDetails != null) {
+                                JsonNode advocateMobile = advocateNameDetails.get("advocateMobileNumber");
+                                if (advocateMobile != null && advocateMobile.isTextual()) {
+                                    mobileNumbers.add(advocateMobile.asText());
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                default:
+                    log.warn("Unsupported party type for mobile number extraction: {}", type);
+                    return mobileNumbers;
+            }
+        }
+
+        return mobileNumbers;
+    }
 }

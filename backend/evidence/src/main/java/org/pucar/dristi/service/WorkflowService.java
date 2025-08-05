@@ -17,7 +17,6 @@ import org.springframework.util.CollectionUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -41,7 +40,11 @@ public class WorkflowService {
                 ProcessInstanceObject processInstance = getProcessInstanceForArtifact(evidenceRequest.getArtifact(), filingType);
                 ProcessInstanceRequest workflowRequest = new ProcessInstanceRequest(evidenceRequest.getRequestInfo(), Collections.singletonList(processInstance));
                 String state=callWorkFlow(workflowRequest).getState();
-                evidenceRequest.getArtifact().setStatus(state);
+                if (evidenceRequest.getArtifact().getIsEvidenceMarkedFlow()) {
+                    evidenceRequest.getArtifact().setEvidenceMarkedStatus(state);
+                } else {
+                    evidenceRequest.getArtifact().setStatus(state);
+                }
             } catch (CustomException e){
                 throw e;
             } catch (Exception e) {
@@ -66,11 +69,16 @@ public class WorkflowService {
         try {
             WorkflowObject workflow = artifact.getWorkflow();
             ProcessInstanceObject processInstance = new ProcessInstanceObject();
-            processInstance.setBusinessId(artifact.getArtifactNumber());
+            String businessId = artifact.getArtifactNumber();
+            if(artifact.getIsEvidenceMarkedFlow()){
+                // add suffix to avoid duplicate businessId (ME = Mark Evidence)
+                businessId = businessId + "-ME";
+            }
+            processInstance.setBusinessId(businessId);
             processInstance.setAction(workflow.getAction());
             processInstance.setModuleName(getBusinessModule(filingType));
             processInstance.setTenantId(artifact.getTenantId());
-            processInstance.setBusinessService(getBusinessServiceName(filingType));
+            processInstance.setBusinessService(getBusinessServiceName(filingType, artifact.getArtifactType(), artifact.getIsEvidenceMarkedFlow()));
             processInstance.setDocuments(workflow.getDocuments());
             processInstance.setComment(workflow.getComments());
             processInstance.setAdditionalDetails(workflow.getAdditionalDetails());
@@ -100,12 +108,17 @@ public class WorkflowService {
         }
     }
 
-    private String getBusinessServiceName(String filingType) {
-        if (filingType.equalsIgnoreCase(SUBMISSION)){
-            return config.getSubmissionBusinessServiceName();
-        } else {
-            return config.getBusinessServiceName();
+    private String getBusinessServiceName(String filingType, String artifactType, Boolean isEvidenceMarkedFlow) {
+        if(isEvidenceMarkedFlow){
+            return config.getEvidenceBusinessServiceName();
         }
+        else if(SUBMISSION.equalsIgnoreCase(artifactType)){
+            return config.getSubmissionBusinessServiceName();
+        }
+        else{
+            return null; // todo witness deposition flow
+        }
+
     }
 
     public Workflow getWorkflowFromProcessInstance(ProcessInstance processInstance) {

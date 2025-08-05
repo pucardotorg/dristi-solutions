@@ -6,7 +6,6 @@ import java.util.UUID;
 
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.models.Document;
-import org.egov.common.contract.models.Workflow;
 import org.springframework.validation.annotation.Validated;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -105,6 +104,9 @@ public class Artifact {
 
 	private List<String> applicableTo = null;
 
+	@JsonProperty("seal")
+	private Document seal = null;
+
 	@JsonProperty("createdDate")
 
 	private Long createdDate = null;
@@ -163,6 +165,12 @@ public class Artifact {
 
 	@Valid
 	private WorkflowObject workflow = null;
+
+	@JsonProperty("evidenceMarkedStatus")
+	private String evidenceMarkedStatus = null;
+
+	@JsonProperty("isEvidenceMarkedFlow")
+	private Boolean isEvidenceMarkedFlow = false;
 
 	public Artifact addApplicableToItem(String applicableToItem) {
 		if (this.applicableTo == null) {
