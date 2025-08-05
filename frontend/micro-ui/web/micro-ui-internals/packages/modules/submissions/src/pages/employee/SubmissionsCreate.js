@@ -437,7 +437,7 @@ const SubmissionsCreate = ({ path }) => {
                   ...input.populators,
                   mdmsConfig: {
                     ...input.populators.mdmsConfig,
-                    select: `(data) => {return data['Application'].ApplicationType?.filter((item)=>!["WITNESS_DEPOSITION","EXTENSION_SUBMISSION_DEADLINE","DOCUMENT","RE_SCHEDULE","CHECKOUT_REQUEST", "SUBMIT_BAIL_DOCUMENTS", "CORRECTION_IN_COMPLAINANT_DETAILS",${
+                    select: `(data) => {return data['Application'].ApplicationType?.filter((item)=>!["ADDING_WITNESSES","EXTENSION_SUBMISSION_DEADLINE","DOCUMENT","RE_SCHEDULE","CHECKOUT_REQUEST", "SUBMIT_BAIL_DOCUMENTS", "CORRECTION_IN_COMPLAINANT_DETAILS",${
                       isDelayApplicationPending ? `"DELAY_CONDONATION",` : ""
                     }${
                       !BAIL_APPLICATION_EXCLUDED_STATUSES.includes(caseDetails?.status) ? `"REQUEST_FOR_BAIL",` : ""
@@ -872,7 +872,7 @@ const SubmissionsCreate = ({ path }) => {
         "SUBMIT_BAIL_DOCUMENTS",
         "DELAY_CONDONATION",
         "CORRECTION_IN_COMPLAINANT_DETAILS",
-        "WITNESS_DEPOSITION",
+        "ADDING_WITNESSES",
       ].includes(applicationType) &&
       !formData?.applicationDate
     ) {

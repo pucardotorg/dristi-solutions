@@ -11,7 +11,7 @@
         "uniqueIdentifier": "16",
         "data": {
           "id": 16,
-          "type": "WITNESS_DEPOSITION",
+          "type": "ADDING_WITNESSES",
           "isactive": true,
           "totalAmount": "20"
         },
