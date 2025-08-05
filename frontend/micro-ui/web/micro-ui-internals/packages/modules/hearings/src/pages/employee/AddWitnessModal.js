@@ -187,6 +187,8 @@ const AddWitnessModal = ({ tenantId, onCancel, caseDetails, isJudge, showToast, 
         const newWitnesses = witnessFormList?.map((data) => {
           return {
             ...data?.data,
+            ownerType: "-",
+            createdTime: new Date().getTime(),
             uniqueId: generateUUID(),
           };
         });
@@ -201,9 +203,15 @@ const AddWitnessModal = ({ tenantId, onCancel, caseDetails, isJudge, showToast, 
           showToast({ message: t("NEW_WITNESS_SUCCESSFULLY_ADDED"), error: false });
         });
       } else {
+        const litigant = caseDetails?.representatives?.find((rep) => rep?.additionalDetails?.uuid === userInfo?.uuid)?.representing?.[0];
+        const ownerType = litigant?.partyType?.includes("complainant") ? "COMPLAINANT" : "ACCUSED";
         const newWitnesses = witnessFormList?.map((data) => {
           return {
-            ...data,
+            data: {
+              ...data?.data,
+              ownerType,
+              createdTime: new Date().getTime(),
+            },
             isenabled: true,
             displayindex: 0,
             uniqueId: generateUUID(),
