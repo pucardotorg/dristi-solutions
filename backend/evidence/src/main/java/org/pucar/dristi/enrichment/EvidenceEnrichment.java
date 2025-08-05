@@ -3,6 +3,7 @@ package org.pucar.dristi.enrichment;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.models.Document;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
@@ -181,6 +182,12 @@ public class EvidenceEnrichment {
             // Enrich lastModifiedTime and lastModifiedBy in case of update
             evidenceRequest.getArtifact().getAuditdetails().setLastModifiedTime(System.currentTimeMillis());
             evidenceRequest.getArtifact().getAuditdetails().setLastModifiedBy(evidenceRequest.getRequestInfo().getUserInfo().getUuid());
+            Document seal = evidenceRequest.getArtifact().getSeal();
+            if(seal != null && seal.getId() == null){
+                seal.setId(String.valueOf(UUID.randomUUID()));
+                seal.setDocumentUid(seal.getId());
+                evidenceRequest.getArtifact().setSeal(seal);
+            }
         } catch (Exception e) {
             log.error("Error enriching evidence application upon update: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in enrichment service during  update process: " + e.toString());
