@@ -136,8 +136,12 @@ public class PaymentUpdateService {
 
                 String applicationType = application.getApplicationType();
 
-                getSmsAfterPayment(applicationRequest,applicationType);
-                smsNotificationUtil.callNotificationService(applicationRequest, state.getState(), applicationType);
+                try{
+                    getSmsAfterPayment(applicationRequest, applicationType);
+                    smsNotificationUtil.callNotificationService(applicationRequest, state.getState(), applicationType);
+                } catch (Exception e) {
+                    log.error("Error while sending sms.");
+                }
                 producer.push(configuration.getApplicationUpdateStatusTopic(), applicationRequest);
             }
         } catch (Exception e) {
