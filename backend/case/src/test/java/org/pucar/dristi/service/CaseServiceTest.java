@@ -978,6 +978,142 @@ public class CaseServiceTest {
     }
 
     @Test
+    public void updateCaseWithoutWorkflowSuccess() {
+        // Setup test data
+        CaseRequest caseRequest = new CaseRequest();
+        RequestInfo requestInfo = new RequestInfo();
+        caseRequest.setRequestInfo(requestInfo);
+        
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setTenantId("pb.amritsar");
+        courtCase.setCaseNumber("CASE-2024-001");
+        caseRequest.setCases(courtCase);
+
+        // Mock encryption
+        CourtCase encryptedCourtCase = new CourtCase();
+        encryptedCourtCase.setId(courtCase.getId());
+        encryptedCourtCase.setTenantId(courtCase.getTenantId());
+        when(encryptionDecryptionUtil.encryptObject(eq(caseRequest.getCases()), anyString(), eq(CourtCase.class)))
+                .thenReturn(encryptedCourtCase);
+
+        // Mock config
+        when(config.getCourtCaseEncrypt()).thenReturn("case-encrypt-key");
+
+        // Execute the method
+        CourtCase result = caseService.updateCaseWithoutWorkflow(caseRequest);
+
+        // Verify the result
+        assertNotNull(result);
+        assertEquals(courtCase.getId(), result.getId());
+        assertEquals(courtCase.getTenantId(), result.getTenantId());
+        assertEquals(courtCase.getCaseNumber(), result.getCaseNumber());
+
+        // Verify interactions
+        verify(encryptionDecryptionUtil).encryptObject(eq(caseRequest.getCases()), eq("case-encrypt-key"), eq(CourtCase.class));
+    }
+
+    @Test
+    public void updateCaseWithoutWorkflowFailureNullCourtCase() {
+        // Setup test data with null court case
+        CaseRequest caseRequest = new CaseRequest();
+        RequestInfo requestInfo = new RequestInfo();
+        caseRequest.setRequestInfo(requestInfo);
+        caseRequest.setCases(null); // Null court case
+
+        // Execute and verify exception
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            caseService.updateCaseWithoutWorkflow(caseRequest);
+        });
+
+        // Verify exception details
+        assertEquals(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, exception.getCode());
+        assertTrue(exception.getMessage().contains("CourtCase cannot be null"));
+
+        // Verify no interactions with other services
+        verifyNoInteractions(encryptionDecryptionUtil);
+        verifyNoInteractions(cacheService);
+    }
+
+    @Test
+    public void updateCaseWithoutWorkflowFailureNullTenantId() {
+        // Setup test data with null tenant ID
+        CaseRequest caseRequest = new CaseRequest();
+        RequestInfo requestInfo = new RequestInfo();
+        caseRequest.setRequestInfo(requestInfo);
+        
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setTenantId(null); // Null tenant ID
+        caseRequest.setCases(courtCase);
+
+        // Execute and verify exception
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            caseService.updateCaseWithoutWorkflow(caseRequest);
+        });
+
+        // Verify exception details
+        assertEquals(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, exception.getCode());
+        assertTrue(exception.getMessage().contains("TenantId cannot be null or empty"));
+
+        // Verify no interactions with other services
+        verifyNoInteractions(encryptionDecryptionUtil);
+        verifyNoInteractions(cacheService);
+    }
+
+    @Test
+    public void updateCaseWithoutWorkflowFailureEmptyTenantId() {
+        // Setup test data with empty tenant ID
+        CaseRequest caseRequest = new CaseRequest();
+        RequestInfo requestInfo = new RequestInfo();
+        caseRequest.setRequestInfo(requestInfo);
+        
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setTenantId(""); // Empty tenant ID
+        caseRequest.setCases(courtCase);
+
+        // Execute and verify exception
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            caseService.updateCaseWithoutWorkflow(caseRequest);
+        });
+
+        // Verify exception details
+        assertEquals(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, exception.getCode());
+        assertTrue(exception.getMessage().contains("TenantId cannot be null or empty"));
+
+        // Verify no interactions with other services
+        verifyNoInteractions(encryptionDecryptionUtil);
+        verifyNoInteractions(cacheService);
+    }
+
+    @Test
+    public void updateCaseWithoutWorkflowFailureNullCaseId() {
+        // Setup test data with null case ID
+        CaseRequest caseRequest = new CaseRequest();
+        RequestInfo requestInfo = new RequestInfo();
+        caseRequest.setRequestInfo(requestInfo);
+        
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(null); // Null case ID
+        courtCase.setTenantId("pb.amritsar");
+        caseRequest.setCases(courtCase);
+
+        // Execute and verify exception
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            caseService.updateCaseWithoutWorkflow(caseRequest);
+        });
+
+        // Verify exception details
+        assertEquals(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, exception.getCode());
+        assertTrue(exception.getMessage().contains("Case ID cannot be null or empty"));
+
+        // Verify no interactions with other services
+        verifyNoInteractions(encryptionDecryptionUtil);
+        verifyNoInteractions(cacheService);
+    }
+
+    @Test
     void testExistCases_Success() {
         // Setup
         CaseExists caseExists = new CaseExists();

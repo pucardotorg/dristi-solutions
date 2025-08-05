@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -311,4 +312,37 @@ public class CaseApiControllerTest {
     }
 
 
+    @Test
+    public void updateCaseWithoutWorkflowSuccess() {
+        // Mocking request body
+        CaseRequest caseRequest = new CaseRequest();
+        RequestInfo requestInfo = new RequestInfo();
+        caseRequest.setRequestInfo(requestInfo);
+
+        // Mocking caseService.updateCaseWithoutWorkflow method to return a CourtCase object
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setCaseNumber("CASE-2024-001");
+        when(caseService.updateCaseWithoutWorkflow(caseRequest)).thenReturn(courtCase);
+
+        // Mocking responseInfoFactory.createResponseInfoFromRequestInfo method to return a ResponseInfo object
+        ResponseInfo responseInfo = new ResponseInfo();
+        responseInfo.setApiId("case-services");
+        responseInfo.setVer("1.0");
+        responseInfo.setTs(System.currentTimeMillis());
+        when(responseInfoFactory.createResponseInfoFromRequestInfo(requestInfo, true)).thenReturn(responseInfo);
+
+        // Call the method under test
+        ResponseEntity<CaseResponse> responseEntity = caseApiController.updateCaseWithoutWorkflow(caseRequest);
+
+        // Verify the response entity
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        assertEquals(courtCase, responseEntity.getBody().getCases().get(0));
+        assertEquals(responseInfo, responseEntity.getBody().getResponseInfo());
+        assertEquals(1, responseEntity.getBody().getCases().size());
+
+        // Verify service method was called
+        verify(caseService).updateCaseWithoutWorkflow(caseRequest);
+        verify(responseInfoFactory).createResponseInfoFromRequestInfo(requestInfo, true);
+    }
 }

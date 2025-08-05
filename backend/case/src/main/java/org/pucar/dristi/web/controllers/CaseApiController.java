@@ -287,4 +287,12 @@ public class CaseApiController {
         log.info("api=/v2/add/witness, result=SUCCESS");
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
+    @PostMapping(value = "/v2/_update")
+    public ResponseEntity<CaseResponse> updateCaseWithoutWorkflow(@Parameter(in = ParameterIn.DEFAULT, description = "Details for the new court case + RequestInfo meta data.", required = true, schema = @Schema()) @Valid @RequestBody CaseRequest body) {
+        CourtCase cases = caseService.updateCaseWithoutWorkflow(body);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(body.getRequestInfo(), true);
+        CaseResponse caseResponse = CaseResponse.builder().cases(Collections.singletonList(cases)).responseInfo(responseInfo).build();
+        return new ResponseEntity<>(caseResponse, HttpStatus.OK);
+    }
 }
