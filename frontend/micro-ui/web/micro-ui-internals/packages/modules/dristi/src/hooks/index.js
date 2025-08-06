@@ -95,6 +95,7 @@ export const Urls = {
     createProfileRequest: "/case/v2/profilerequest/create",
     processProfileRequest: "/case/v2/profilerequest/process",
     etreasuryCreateDemand: "/etreasury/payment/v1/_createDemand",
+    taskSearch: "/task/v1/search"
   },
   case: {
     addWitness: "/case/v1/add/witness",

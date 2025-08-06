@@ -476,4 +476,12 @@ export const DRISTIService = {
       data,
       params,
     }),
+  searchTask: (data, params) =>
+    Request({
+      url: Urls.dristi.taskSearch,
+      useCache: true,
+      userService: true,
+      data,
+      params,
+    }),
 };

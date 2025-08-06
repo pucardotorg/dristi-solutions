@@ -42,6 +42,7 @@ const SubmissionPreviewSubmissionTypeMap = {
   SUBMIT_BAIL_DOCUMENTS: "application-submit-bail-documents",
   DELAY_CONDONATION: "application-delay-condonation",
   CORRECTION_IN_COMPLAINANT_DETAILS: "application-profile-edit",
+  APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS: "application-generic",
 };
 
 const onDocumentUpload = async (fileData, filename) => {
@@ -150,27 +151,29 @@ function ReviewSubmissionModal({
     <Modal
       headerBarMain={<Heading label={t("REVIEW_SUBMISSION_APPLICATION_HEADING")} />}
       headerBarEnd={<CloseBtn onClick={handleBack} />}
-      actionCancelLabel={t("CS_COMMON_BACK")}
+      actionCancelLabel={applicationType !== "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS" && t("CS_COMMON_BACK")}
       actionCancelOnSubmit={handleBack}
       actionSaveLabel={t("ADD_SIGNATURE")}
       isDisabled={isLoading}
       actionSaveOnSubmit={() => {
-        const pdfFile = new File([applicationPreviewPdf], applicationPreviewFileName, { type: "application/pdf" });
+        setShowsignatureModal(true);
+        setShowReviewModal(false);
+        // const pdfFile = new File([applicationPreviewPdf], applicationPreviewFileName, { type: "application/pdf" });
 
-        onDocumentUpload(pdfFile, pdfFile.name)
-          .then((document) => {
-            const fileStoreId = document.file?.files?.[0]?.fileStoreId;
-            if (fileStoreId) {
-              setApplicationPdfFileStoreId(fileStoreId);
-            }
-          })
-          .then(() => {
-            setShowsignatureModal(true);
-            setShowReviewModal(false);
-          })
-          .catch((e) => {
-            setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
-          });
+        // onDocumentUpload(pdfFile, pdfFile.name)
+        //   .then((document) => {
+        //     const fileStoreId = document.file?.files?.[0]?.fileStoreId;
+        //     if (fileStoreId) {
+        //       setApplicationPdfFileStoreId(fileStoreId);
+        //     }
+        //   })
+        //   .then(() => {
+        //     setShowsignatureModal(true);
+        //     setShowReviewModal(false);
+        //   })
+        //   .catch((e) => {
+        //     setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
+        //   });
       }}
       className={"review-submission-appl-modal"}
     >
