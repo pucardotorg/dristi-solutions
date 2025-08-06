@@ -506,7 +506,7 @@ const MarkAsEvidence = ({
             setStepper(1);
           }
         });
-      } else if (stepper === 1) {
+      } else if (stepper === 1 && !isSigned) {
         const fileStoreId = await getMarkAsEvidencePdf();
         if (fileStoreId && action !== null) {
           const seal = {
@@ -546,7 +546,7 @@ const MarkAsEvidence = ({
             documentName: "markAsEvidenceSigned.pdf",
           },
         };
-        await handleMarkEvidence(action, seal).then(async (res) => {
+        await handleMarkEvidence(action, seal, true).then(async (res) => {
           if (res) {
             const response = await Digit.HearingService.searchHearings(
               {
