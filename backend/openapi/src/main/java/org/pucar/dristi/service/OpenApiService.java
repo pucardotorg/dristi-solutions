@@ -662,7 +662,7 @@ public class OpenApiService {
                 .fuzzySearch(false)
                 .build();
 
-        BailSearchResponse response = bailUtil.fetchBails(criteria);
+        BailSearchResponse response = bailUtil.fetchBails(criteria,createInternalRequestInfoWithSystemUserType());
         List<Bail> bails = response.getBails();
 
         if (bails == null || bails.isEmpty()) {
@@ -722,7 +722,7 @@ public class OpenApiService {
                     .fuzzySearch(false)
                     .build();
 
-            BailSearchResponse response = bailUtil.fetchBails(criteria);
+            BailSearchResponse response = bailUtil.fetchBails(criteria,createInternalRequestInfoWithSystemUserType());
             List<Bail> bails = response.getBails();
 
             if (bails == null || bails.isEmpty()) {
@@ -744,12 +744,9 @@ public class OpenApiService {
 
             // Add signed document
             Document document = Document.builder()
-                    .id(UUID.randomUUID().toString())
                     .fileStore(request.getFileStoreId())
                     .documentType("SIGNED")
                     .isActive(true)
-                    .tenantId(request.getTenantId())
-                    .documentUid(UUID.randomUUID().toString())
                     .build();
 
             // Set signed flag
@@ -792,6 +789,15 @@ public class OpenApiService {
                 .tenantId(configuration.getEgovStateTenantId())
                 .build());
         userInfo.setType("EMPLOYEE");
+        userInfo.setTenantId(configuration.getEgovStateTenantId());
+        return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
+    }
+
+    private RequestInfo createInternalRequestInfoWithSystemUserType() {
+        org.egov.common.contract.request.User userInfo = new User();
+        userInfo.setUuid(userService.internalMicroserviceRoleUuid);
+        userInfo.setRoles(userService.internalMicroserviceRoles);
+        userInfo.setType("SYSTEM");
         userInfo.setTenantId(configuration.getEgovStateTenantId());
         return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
     }

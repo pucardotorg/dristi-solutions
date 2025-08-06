@@ -192,8 +192,11 @@ const GenerateBailBond = () => {
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
   const bailBondDetails = useMemo(() => {
+    if (Object.keys(defaultFormValueData).length > 0) {
+      return defaultFormValueData;
+    }
     return bailBond?.bails?.[0];
-  }, [bailBond]);
+  }, [defaultFormValueData, bailBond]);
 
   const pipComplainants = useMemo(() => {
     return caseDetails?.litigants
@@ -338,10 +341,6 @@ const GenerateBailBond = () => {
           if (docs?.proofOfSolvency && Object.keys(formState?.errors).includes(`proofOfSolvency_${index}`)) {
             clearErrors(`proofOfSolvency_${index}`);
           }
-
-          if (docs?.otherDocuments && Object.keys(formState?.errors).includes(`otherDocuments_${index}`)) {
-            clearErrors(`otherDocuments_${index}`);
-          }
         });
       } else if (formData?.sureties?.length > 0 && Object.keys(formState?.errors).includes("sureties")) {
         clearErrors("sureties");
@@ -474,9 +473,8 @@ const GenerateBailBond = () => {
 
   const extractSureties = (formData) => {
     const existingSureties = bailBondDetails?.sureties || [];
-
-    if (existingSureties?.length > 0) {
-      return formData?.sureties?.map((surety) => {
+    if (existingSureties?.length > 0 && formData?.bailType?.code === "SURETY") {
+      const activeSureties = formData?.sureties?.map((surety) => {
         const matchingSurety = existingSureties?.find((existing) => existing?.id === surety?.id);
         return {
           ...matchingSurety,
@@ -493,6 +491,21 @@ const GenerateBailBond = () => {
           ],
         };
       });
+
+      const formDataSuretyIds = formData?.sureties?.map((surety) => surety?.id)?.filter(Boolean);
+      const inactiveSureties = existingSureties
+        ?.filter((existingSurety) => existingSurety?.id && !formDataSuretyIds?.includes(existingSurety.id))
+        ?.map((surety) => ({
+          ...surety,
+          isActive: false,
+        }));
+
+      return [...activeSureties, ...inactiveSureties];
+    } else if (existingSureties?.length > 0 && formData?.bailType?.code !== "SURETY") {
+      return existingSureties?.map((surety) => ({
+        ...surety,
+        isActive: false,
+      }));
     } else {
       return formData?.sureties?.map((surety) => {
         return {
@@ -525,7 +538,7 @@ const GenerateBailBond = () => {
           complainant: updatedFormData?.selectComplainant?.uuid,
           bailType: updatedFormData?.bailType?.code,
           bailAmount: updatedFormData?.bailAmount,
-          sureties: sureties,
+          sureties: sureties || [],
           litigantId: updatedFormData?.selectComplainant?.uuid,
           litigantName: updatedFormData?.selectComplainant?.name,
           litigantFatherName: updatedFormData?.litigantFatherName,
@@ -584,7 +597,7 @@ const GenerateBailBond = () => {
             complainant: updatedFormData?.selectComplainant?.uuid,
             bailType: updatedFormData?.bailType?.code,
             bailAmount: updatedFormData?.bailAmount,
-            sureties: sureties,
+            sureties: sureties || [],
             litigantId: updatedFormData?.selectComplainant?.uuid,
             litigantName: updatedFormData?.selectComplainant?.name,
             litigantFatherName: updatedFormData?.litigantFatherName,
@@ -670,11 +683,6 @@ const GenerateBailBond = () => {
         if (!docs?.proofOfSolvency && !Object.keys(setFormState?.current?.errors).includes(`proofOfSolvency_${index}`)) {
           error = true;
           setFormErrors.current(`proofOfSolvency_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
-        }
-
-        if (!docs?.otherDocuments && !Object.keys(setFormState?.current?.errors).includes(`otherDocuments_${index}`)) {
-          error = true;
-          setFormErrors.current(`otherDocuments_${index}`, { message: t("CORE_REQUIRED_FIELD_ERROR") });
         }
       });
     }
@@ -847,12 +855,38 @@ const GenerateBailBond = () => {
     setFormdata(convertToFormData(t, bailBondDetails || {}));
   }, [bailBondDetails, t]);
 
-  if (loader || isCaseDetailsLoading || !caseDetails || isBailBondLoading) {
+  useEffect(()=> {
+    if(!isCaseDetailsLoading && !isBailBondLoading && bailBondId && bailBondDetails?.status !== "DRAFT_IN_PROGRESS"){
+      history.replace(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Documents`);
+    }
+  },[isCaseDetailsLoading, isBailBondLoading, bailBondId, bailBondDetails,  caseDetails, filingNumber])
+
+
+  if (isCaseDetailsLoading || !caseDetails || isBailBondLoading) {
     return <Loader />;
   }
 
   return (
     <React.Fragment>
+      {loader && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "9999",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
       <div className="citizen create-submission" style={{ width: "90%", ...(!isCitizen && { padding: "0 8px 24px 16px" }) }}>
         <Header styles={{ margin: "25px 0px 0px 25px" }}> {t("BAIL_BOND_DETAILS")}</Header>
         <div style={{ minHeight: "550px", overflowY: "auto" }}>

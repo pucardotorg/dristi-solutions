@@ -1,5 +1,5 @@
 import { Button, CloseSvg, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { DRISTIService } from "../../../../dristi/src/services";
 import { useTranslation } from "react-i18next";
 import { getFullName, registerIndividualWithNameAndMobileNumber, searchIndividualUserWithUuid, submitJoinCase } from "../../utils/joinCaseUtils";
@@ -102,7 +102,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   const [isAdvocateJoined, setIsAdvocateJoined] = useState(false);
   const [alreadyJoinedMobileNumber, setAlreadyJoinedMobileNumber] = useState([]);
   const [taskNumber, setTaskNumber] = useState("");
-  const [bailBondRequired, setBailBondRequired] = useState(true);
+  const [bailBondRequired, setBailBondRequired] = useState(false);
 
   const [isVerified, setIsVerified] = useState(false);
 

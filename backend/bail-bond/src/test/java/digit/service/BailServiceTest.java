@@ -9,6 +9,7 @@ import digit.util.*;
 import digit.validator.BailValidator;
 import digit.web.models.*;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.*;
 import org.mockito.*;
@@ -91,6 +92,7 @@ class BailServiceTest {
         BailSearchRequest searchReq = new BailSearchRequest();
         BailSearchCriteria crit = new BailSearchCriteria();
         searchReq.setCriteria(crit);
+        searchReq.setRequestInfo(RequestInfo.builder().userInfo(User.builder().type("system").build()).build());
         List<Bail> retList = List.of(mock(Bail.class));
         when(bailRepository.getBails(any())).thenReturn(retList);
         when(encryptionDecryptionUtil.decryptObject(any(), any(), eq(Bail.class), any())).thenReturn(retList.get(0));
@@ -105,6 +107,7 @@ class BailServiceTest {
     @Test
     void whenSearchBail_noCriteria_thenNoEncryptionOnCriteria() {
         BailSearchRequest searchReq = new BailSearchRequest();
+        searchReq.setRequestInfo(RequestInfo.builder().userInfo(User.builder().type("system").build()).build());
         List<Bail> retList = List.of(mock(Bail.class));
         when(bailRepository.getBails(any())).thenReturn(retList);
         when(encryptionDecryptionUtil.decryptObject(any(), any(), eq(Bail.class), any())).thenReturn(retList.get(0));
@@ -116,6 +119,7 @@ class BailServiceTest {
     @Test
     void whenSearchBail_bailRepositoryThrows_thenThrowsCustomException() {
         BailSearchRequest searchReq = new BailSearchRequest();
+        searchReq.setRequestInfo(RequestInfo.builder().userInfo(User.builder().type("system").build()).build());
         when(bailRepository.getBails(any())).thenThrow(new RuntimeException("DB down"));
         CustomException ex = assertThrows(CustomException.class,
                 () -> bailService.searchBail(searchReq));
@@ -211,6 +215,7 @@ class BailServiceTest {
         BailSearchRequest bailSearchRequest = BailSearchRequest.builder()
                 .criteria(searchCrit).pagination(pagination).build();
         when(bailRepository.getBails(any())).thenReturn(List.of(bail));
+        when(encryptionDecryptionUtil.decryptObject(any(), any(), eq(Bail.class), any())).thenReturn(bail);
         MultipartFile file = mock(MultipartFile.class);
         when(cipherUtil.decodeBase64ToPdf(eq("PDFBASE64"), anyString())).thenReturn(file);
         when(fileStoreUtil.storeFileInFileStore(file, "tenantId")).thenReturn("filestore123");

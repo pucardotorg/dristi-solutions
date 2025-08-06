@@ -9,6 +9,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
+const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -112,10 +113,12 @@ const applicationDelayCondonation = async (
         (litigant) => litigant.partyType === "complainant.primary"
       )?.additionalDetails?.fullName || "";
 
-    const additionalComments =
-      application?.applicationDetails?.additionalInformation || "";
-    const reasonForDelay =
-      application?.applicationDetails?.reasonForDelay || "";
+    const additionalComments = htmlToFormattedText(
+      application?.applicationDetails?.additionalInformation || ""
+    );
+    const reasonForDelay = htmlToFormattedText(
+      application?.applicationDetails?.reasonForDelay || ""
+    );
     // Handle QR code if enabled
     let base64Url = "";
     if (qrCode === "true") {

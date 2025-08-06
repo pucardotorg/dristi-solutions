@@ -45,11 +45,11 @@ const processSureties = (bailData) => {
       address?.city,
       address?.district,
       address?.state,
-      address?.pincode
+      address?.pincode,
     ]
       .filter((line) => line)
       .join(", ");
-    
+
     return formattedAddress;
   };
 
@@ -125,7 +125,6 @@ const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
     }
 
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
-    const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
     let base64Url = "";
     if (qrCode === "true") {
@@ -166,6 +165,7 @@ const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const judgeDetails = courtCaseJudgeDetails.judgeDetails;
     const data = {
       Data: [
         {
@@ -180,10 +180,12 @@ const bailBond = async (req, res, courtCaseJudgeDetails, qrCode) => {
           bailAmount: bailBond?.bailAmount || "",
           sureties: processSureties(bailBond),
           accusedSignature: "Accused Signature",
-          date:formattedToday,
-          judgeSignature: judgeDetails.judgeSignature,
+          date: formattedToday,
+          judgeSignature: "Magistrate Signature",
           orderHeading: mdmsCourtRoom.orderHeading,
           qrCodeUrl: base64Url,
+          judgeName: judgeDetails.name,
+          judgeDesignation: judgeDetails.judgeDesignation,
         },
       ],
     };

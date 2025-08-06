@@ -19,6 +19,9 @@ import java.util.List;
 @Builder
 public class BailSearchCriteria {
 
+    @JsonProperty("userUuid")
+    private String userUuid;
+
     @JsonProperty("tenantId")
     private String tenantId;
 
@@ -46,6 +49,37 @@ public class BailSearchCriteria {
     @JsonProperty("status")
     private List<String> status;
 
+    public enum BailTypeEnum {
+        PERSONAL("Personal"),
+
+        SURETY("Surety");
+
+        private String value;
+
+        BailTypeEnum(String value) {
+            this.value = value;
+        }
+
+        @Override
+        @JsonValue
+        public String toString() {
+            return String.valueOf(value);
+        }
+
+        @JsonCreator
+        public static BailTypeEnum fromValue(String text) {
+            for (BailTypeEnum b : BailTypeEnum.values()) {
+                if (String.valueOf(b.value).equalsIgnoreCase(text)) {
+                    return b;
+                }
+            }
+            return null;
+        }
+    }
+
+    @JsonProperty("bailType")
+    private BailTypeEnum bailType = null;
+
     /**
      * Type of the case.
      */
@@ -69,7 +103,7 @@ public class BailSearchCriteria {
         @JsonCreator
         public static CaseTypeEnum fromValue(String text) {
             for (CaseTypeEnum b : CaseTypeEnum.values()) {
-                if (String.valueOf(b.value).equals(text)) {
+                if (String.valueOf(b.value).equalsIgnoreCase(text)) {
                     return b;
                 }
             }

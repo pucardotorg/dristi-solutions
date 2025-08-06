@@ -680,7 +680,6 @@ const EvidenceModal = ({
       return acceptedApplicationTypes.includes(applicationType);
     }
   }, [documentSubmission, showConfirmationModal?.type]);
-
   const showDocument = useMemo(() => {
     return (
       <React.Fragment>
@@ -1247,7 +1246,21 @@ const EvidenceModal = ({
         }
         .popup-module.evidence-modal .popup-module-main .selector-button-border h2 {
           color: #BB2C2F !important;
-        }`}
+        }
+        .popup-module.evidence-modal .info-value p {
+          margin-top: 0;
+        }
+        .popup-module.evidence-modal .info-value ul {
+          list-style-type: disc;
+          margin-top: 0;
+        }
+       .popup-module.evidence-modal .info-value ol {
+          list-style-type: decimal;
+          margin-top: 0;
+        }
+      .popup-module.evidence-modal .info-value li {
+        margin: 0;
+      }`}
       </style>
       {!showConfirmationModal && !showSuccessModal && (
         <Modal
@@ -1377,9 +1390,12 @@ const EvidenceModal = ({
                       <div className="info-key">
                         <h3>{t("REASON_FOR_FILING")}</h3>
                       </div>
-                      <div className="info-value">
-                        <h3>{documentSubmission?.[0]?.artifactList?.additionalDetails?.formdata?.reasonForFiling?.text}</h3>
-                      </div>
+                      <div
+                        className="info-value"
+                        dangerouslySetInnerHTML={{
+                          __html: documentSubmission?.[0]?.artifactList?.additionalDetails?.formdata?.reasonForFiling?.text || "",
+                        }}
+                      ></div>
                     </div>
                   )}
                 </div>

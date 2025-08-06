@@ -145,5 +145,7 @@ public class ServiceConstants {
     public static final String SMS = "SMS";
 
     public static final String EMAIL = "EMAIL";
-
+    public static final String APPROVAL_REJECTION_ADD_WITNESS = "APPROVAL_REJECTION_ADD_WITNESS";
+    public static final String ERROR_ADDING_WITNESS="ERROR_ADDING_WITNESS";
+    public static final String ADDING_WITNESSES = "ADDING_WITNESSES";
 }

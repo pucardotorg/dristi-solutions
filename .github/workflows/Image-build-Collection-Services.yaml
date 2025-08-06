@@ -75,19 +75,19 @@ jobs:
           commit_hash=$(git log -1 --pretty=format:%H -- common/collection-services)
           echo "commit_hash=$commit_hash" >> $GITHUB_ENV
 
-      # Login to Azure Container Registry
-      - name: Login to Azure Container Registry
-        run: docker login -u pucarsolutionsdev -p ${{ secrets.ACR_PASSWORD }} pucarsolutionsdev.azurecr.io
+      # Login to Docker Registry
+      - name: Login to Docker Registry
+        run: docker login -u venkatramireddyb -p ${{ secrets.ACR_PASSWORD }}
 
       - name: Build and Push Docker image for Collection-Service
         run: |
-          docker build --build-arg WORK_DIR="common/collection-services" -t pucarsolutionsdev.azurecr.io/pucar_collection:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/pucar_collection:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker build --build-arg WORK_DIR="common/collection-services" -t docker.io/venkatramireddyb/pucar_collection:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
+          docker push docker.io/venkatramireddyb/pucar_collection:${{ env.VERSION }}-${{ env.commit_hash }}
 
       - name: Build and Push Docker image for Collection-Service_DB
         run: |
-          docker build  -t pucarsolutionsdev.azurecr.io/pucar_collection_db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/pucar_collection_db:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker build  -t docker.io/venkatramireddyb/pucar_collection_db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
+          docker push docker.io/venkatramireddyb/pucar_collection_db:${{ env.VERSION }}-${{ env.commit_hash }}
         working-directory: common/collection-services/src/main/resources/db
 
   Workflow_Trigger:
