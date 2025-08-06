@@ -93,12 +93,12 @@ public class EvidenceQueryBuilder {
         if (searchCriteria.getOwner() == null) {
             queryBuilder.append(" AND ( ");
             queryBuilder.append(addUserCriteria(loggedInUserUuid, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
-            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
-            queryBuilder.append(" )) ");
+            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
+            queryBuilder.append(" ) OR status IS NULL) ");
         }
 
         else if(!searchCriteria.getOwner().toString().equals(loggedInUserUuid)) {
-            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
         }
 
         return queryBuilder.toString();
@@ -112,16 +112,16 @@ public class EvidenceQueryBuilder {
             if (searchCriteria.getOwner() == null) {
                 queryBuilder.append(" AND ( ");
                 queryBuilder.append(addUserCriteria(loggedInUserUuid, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
-                queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+                queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
                 queryBuilder.append(" )) ");
             }
 
             else if(!searchCriteria.getOwner().toString().equals(loggedInUserUuid)) {
-                queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+                queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
             }
         }
         else{
-            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
         }
 
         return queryBuilder.toString();
@@ -144,11 +144,12 @@ public class EvidenceQueryBuilder {
         return queryBuilder.toString();
     }
 
-    public String getStatusQuery(List<String> statusList, List<Object> preparedStmtList, List<Integer> preparedStmtArgsList) {
-        StringBuilder queryBuilder = new StringBuilder(" AND ");
+    public String getStatusQuery(List<String> statusList, List<Object> preparedStmtList, List<Integer> preparedStmtArgsList, EvidenceSearchCriteria searchCriteria) {
+        String loggedInUserUuid = searchCriteria.getUserUuid();
+        StringBuilder queryBuilder = new StringBuilder(" AND (");
 
         if (statusList != null && !statusList.isEmpty()) {
-            queryBuilder.append(" (status NOT IN (");
+            queryBuilder.append("((status NOT IN (");
             for (int i = 0; i < statusList.size(); i++) {
                 queryBuilder.append("?");
                 if (i < statusList.size() - 1) {
@@ -157,9 +158,20 @@ public class EvidenceQueryBuilder {
                 preparedStmtList.add(statusList.get(i));
                 preparedStmtArgsList.add(java.sql.Types.VARCHAR);
             }
-            queryBuilder.append(" ) OR ");
+            queryBuilder.append(") AND artifactType != 'WITNESS_DEPOSITION') ");
+            queryBuilder.append(" OR (status IN (?") ;
+            queryBuilder.append(" ) AND artifactType = 'WITNESS_DEPOSITION' AND sourceId = ?)");
+            preparedStmtList.add("PENDING_E-SIGN");
+            preparedStmtArgsList.add(java.sql.Types.VARCHAR);
+            preparedStmtList.add(loggedInUserUuid);
+            preparedStmtArgsList.add(java.sql.Types.VARCHAR);
+            queryBuilder.append(")");
+        } else {
+            queryBuilder.append("status IS NULL");
         }
-        queryBuilder.append(" status IS NULL )");
+        queryBuilder.append(") AND (status != ? )");
+        preparedStmtList.add("DRAFT_IN_PROGRESS");
+        preparedStmtArgsList.add(java.sql.Types.VARCHAR);
 
         return queryBuilder.toString();
     }
