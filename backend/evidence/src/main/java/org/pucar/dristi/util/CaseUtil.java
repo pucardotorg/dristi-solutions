@@ -29,15 +29,13 @@ public class CaseUtil {
     private final ObjectMapper mapper;
     private final Configuration configs;
     private final ServiceRequestRepository repository;
-    private final CacheUtil cacheUtil;
 
     @Autowired
-    public CaseUtil(RestTemplate restTemplate, ObjectMapper mapper, Configuration configs, ServiceRequestRepository repository, CacheUtil cacheUtil) {
+    public CaseUtil(RestTemplate restTemplate, ObjectMapper mapper, Configuration configs, ServiceRequestRepository repository) {
         this.restTemplate = restTemplate;
         this.mapper = mapper;
         this.configs = configs;
         this.repository = repository;
-        this.cacheUtil = cacheUtil;
     }
 
     public Boolean fetchCaseDetails(CaseExistsRequest caseExistsRequest) {
@@ -109,19 +107,5 @@ public class CaseUtil {
             log.error(EXTERNAL_SERVICE_EXCEPTION, e);
             throw new ServiceCallException(e.getMessage());
         }
-    }
-
-    public List<CourtCase> getCaseDetailsForSingleTonCriteria(CaseSearchRequest caseSearchRequest) {
-
-        // add redis cache here based on filing number
-        Object courtCase = cacheUtil.findById(caseSearchRequest.getCriteria().get(0).getTenantId() + ":" + caseSearchRequest.getCriteria().get(0).getFilingNumber());
-        if (courtCase != null) {
-            return List.of(mapper.convertValue(courtCase, CourtCase.class));
-        }
-        JsonNode jsonNodeCaseListResponse = searchCaseDetails(caseSearchRequest);
-        CaseListResponse caseListResponse = mapper.convertValue(jsonNodeCaseListResponse, CaseListResponse.class);
-        cacheUtil.save(caseListResponse.getCriteria().get(0).getTenantId() + ":" + caseListResponse.getCriteria().get(0).getFilingNumber(),
-                caseListResponse.getCriteria().get(0).getResponseList().get(0));
-        return caseListResponse.getCriteria().get(0).getResponseList();
     }
 }

@@ -122,9 +122,6 @@ public class CourtCase {
     @Valid
     private WorkflowObject workflow = null;
 
-    @JsonProperty("additionalDetails")
-    private Object additionalDetails = null;
-
     @JsonProperty("auditDetails")
     @Valid
     private AuditDetails auditdetails = null;

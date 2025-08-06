@@ -1090,9 +1090,20 @@ public class EvidenceService {
 
         log.info("finding case for filingNumber: {}", artifact.getFilingNumber());
 
-        List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
-                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(artifact.getFilingNumber()).tenantId(artifact.getTenantId()).defaultFields(false).build()))
-                .requestInfo(requestInfo).build());
+        List<CourtCase> cases = new ArrayList<>();
+        CaseListResponse caseListResponse = null;
+        try {
+
+            JsonNode jsonNodeCaseListResponse = caseUtil.searchCaseDetails(CaseSearchRequest.builder()
+                    .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(artifact.getFilingNumber()).tenantId(artifact.getTenantId()).defaultFields(false).build()))
+                    .requestInfo(requestInfo).build());
+            caseListResponse = objectMapper.convertValue(jsonNodeCaseListResponse, CaseListResponse.class);
+
+        } catch (Exception e) {
+            log.error("Unexpected error occurred while fetching case details", e);
+        }
+
+        cases = caseListResponse.getCriteria().get(0).getResponseList();
 
         if (cases == null || cases.isEmpty()) {
             log.error("No court case found for filing number: {}", artifact.getFilingNumber());

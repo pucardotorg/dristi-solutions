@@ -539,7 +539,7 @@ class EvidenceServiceTest {
     }
 
     @Test
-    void testCreateADiaryEntriesSuccess() {
+    void testCreateADiaryEntriesSuccess() throws JsonProcessingException {
         // Arrange
         Artifact artifact = new Artifact();
         artifact.setFilingNumber("CASE-001");
@@ -558,6 +558,16 @@ class EvidenceServiceTest {
         courtCase.setCourtId("court-123");
         List<CourtCase> cases = Arrays.asList(courtCase);
 
+        // Create JsonNode for searchCaseDetails response
+        JsonNode caseJsonNode = new ObjectMapper().createObjectNode();
+        
+        // Create CaseListResponse with proper structure
+        CaseCriteria caseCriteria = new CaseCriteria();
+        caseCriteria.setResponseList(cases);
+        
+        CaseListResponse caseListResponse = new CaseListResponse();
+        caseListResponse.setCriteria(Arrays.asList(caseCriteria));
+
         Hearing hearing = new Hearing();
         hearing.setStatus("SCHEDULED");
         hearing.setStartTime(1234567890L);
@@ -567,8 +577,10 @@ class EvidenceServiceTest {
         Long startOfDay = currentTime - (currentTime % 86400000L); // Start of day
 
         // Mock dependencies
-        when(caseUtil.getCaseDetailsForSingleTonCriteria(any(CaseSearchRequest.class)))
-                .thenReturn(cases);
+        when(caseUtil.searchCaseDetails(any(CaseSearchRequest.class)))
+                .thenReturn(caseJsonNode);
+        when(objectMapper.convertValue(caseJsonNode, CaseListResponse.class))
+                .thenReturn(caseListResponse);
         when(hearingUtil.fetchHearing(any(HearingSearchRequest.class)))
                 .thenReturn(hearings);
         when(dateUtil.getCurrentTimeInMilis()).thenReturn(currentTime);
@@ -598,7 +610,7 @@ class EvidenceServiceTest {
     }
 
     @Test
-    void testCreateADiaryEntriesNoCaseFound() {
+    void testCreateADiaryEntriesNoCaseFound() throws JsonProcessingException {
         // Arrange
         Artifact artifact = new Artifact();
         artifact.setFilingNumber("CASE-001");
@@ -606,9 +618,21 @@ class EvidenceServiceTest {
 
         RequestInfo requestInfo = new RequestInfo();
 
-        // Mock empty case list
-        when(caseUtil.getCaseDetailsForSingleTonCriteria(any(CaseSearchRequest.class)))
-                .thenReturn(Collections.emptyList());
+        // Create JsonNode for searchCaseDetails response
+        JsonNode caseJsonNode = new ObjectMapper().createObjectNode();
+        
+        // Create CaseListResponse with empty responseList
+        CaseCriteria caseCriteria = new CaseCriteria();
+        caseCriteria.setResponseList(Collections.emptyList());
+        
+        CaseListResponse caseListResponse = new CaseListResponse();
+        caseListResponse.setCriteria(Arrays.asList(caseCriteria));
+
+        // Mock dependencies
+        when(caseUtil.searchCaseDetails(any(CaseSearchRequest.class)))
+                .thenReturn(caseJsonNode);
+        when(objectMapper.convertValue(caseJsonNode, CaseListResponse.class))
+                .thenReturn(caseListResponse);
 
         // Act & Assert
         CustomException exception = assertThrows(CustomException.class, () -> {
@@ -620,7 +644,7 @@ class EvidenceServiceTest {
     }
 
     @Test
-    void testCreateADiaryEntriesNullCaseList() {
+    void testCreateADiaryEntriesNullCaseList() throws JsonProcessingException {
         // Arrange
         Artifact artifact = new Artifact();
         artifact.setFilingNumber("CASE-001");
@@ -628,9 +652,21 @@ class EvidenceServiceTest {
 
         RequestInfo requestInfo = new RequestInfo();
 
-        // Mock null case list
-        when(caseUtil.getCaseDetailsForSingleTonCriteria(any(CaseSearchRequest.class)))
-                .thenReturn(null);
+        // Create JsonNode for searchCaseDetails response
+        JsonNode caseJsonNode = new ObjectMapper().createObjectNode();
+        
+        // Create CaseListResponse with null responseList
+        CaseCriteria caseCriteria = new CaseCriteria();
+        caseCriteria.setResponseList(null);
+        
+        CaseListResponse caseListResponse = new CaseListResponse();
+        caseListResponse.setCriteria(Arrays.asList(caseCriteria));
+
+        // Mock dependencies
+        when(caseUtil.searchCaseDetails(any(CaseSearchRequest.class)))
+                .thenReturn(caseJsonNode);
+        when(objectMapper.convertValue(caseJsonNode, CaseListResponse.class))
+                .thenReturn(caseListResponse);
 
         // Act & Assert
         CustomException exception = assertThrows(CustomException.class, () -> {
@@ -642,7 +678,7 @@ class EvidenceServiceTest {
     }
 
     @Test
-    void testCreateADiaryEntriesNoScheduledHearing() {
+    void testCreateADiaryEntriesNoScheduledHearing() throws JsonProcessingException {
         // Arrange
         Artifact artifact = new Artifact();
         artifact.setFilingNumber("CASE-001");
@@ -657,6 +693,16 @@ class EvidenceServiceTest {
         courtCase.setCourtId("court-123");
         List<CourtCase> cases = Arrays.asList(courtCase);
 
+        // Create JsonNode for searchCaseDetails response
+        JsonNode caseJsonNode = new ObjectMapper().createObjectNode();
+        
+        // Create CaseListResponse with proper structure
+        CaseCriteria caseCriteria = new CaseCriteria();
+        caseCriteria.setResponseList(cases);
+        
+        CaseListResponse caseListResponse = new CaseListResponse();
+        caseListResponse.setCriteria(Arrays.asList(caseCriteria));
+
         // No scheduled hearings
         Hearing hearing = new Hearing();
         hearing.setStatus("COMPLETED");
@@ -667,8 +713,10 @@ class EvidenceServiceTest {
         Long startOfDay = currentTime - (currentTime % 86400000L);
 
         // Mock dependencies
-        when(caseUtil.getCaseDetailsForSingleTonCriteria(any(CaseSearchRequest.class)))
-                .thenReturn(cases);
+        when(caseUtil.searchCaseDetails(any(CaseSearchRequest.class)))
+                .thenReturn(caseJsonNode);
+        when(objectMapper.convertValue(caseJsonNode, CaseListResponse.class))
+                .thenReturn(caseListResponse);
         when(hearingUtil.fetchHearing(any(HearingSearchRequest.class)))
                 .thenReturn(hearings);
         when(dateUtil.getCurrentTimeInMilis()).thenReturn(currentTime);
@@ -685,7 +733,7 @@ class EvidenceServiceTest {
     }
 
     @Test
-    void testCreateADiaryEntriesWithNonMapAdditionalDetails() {
+    void testCreateADiaryEntriesWithNonMapAdditionalDetails() throws JsonProcessingException {
         // Arrange
         Artifact artifact = new Artifact();
         artifact.setFilingNumber("CASE-001");
@@ -701,14 +749,26 @@ class EvidenceServiceTest {
         courtCase.setCourtId("court-123");
         List<CourtCase> cases = Arrays.asList(courtCase);
 
+        // Create JsonNode for searchCaseDetails response
+        JsonNode caseJsonNode = new ObjectMapper().createObjectNode();
+        
+        // Create CaseListResponse with proper structure
+        CaseCriteria caseCriteria = new CaseCriteria();
+        caseCriteria.setResponseList(cases);
+        
+        CaseListResponse caseListResponse = new CaseListResponse();
+        caseListResponse.setCriteria(Arrays.asList(caseCriteria));
+
         List<Hearing> hearings = Collections.emptyList();
 
         Long currentTime = System.currentTimeMillis();
         Long startOfDay = currentTime - (currentTime % 86400000L);
 
         // Mock dependencies
-        when(caseUtil.getCaseDetailsForSingleTonCriteria(any(CaseSearchRequest.class)))
-                .thenReturn(cases);
+        when(caseUtil.searchCaseDetails(any(CaseSearchRequest.class)))
+                .thenReturn(caseJsonNode);
+        when(objectMapper.convertValue(caseJsonNode, CaseListResponse.class))
+                .thenReturn(caseListResponse);
         when(hearingUtil.fetchHearing(any(HearingSearchRequest.class)))
                 .thenReturn(hearings);
         when(dateUtil.getCurrentTimeInMilis()).thenReturn(currentTime);

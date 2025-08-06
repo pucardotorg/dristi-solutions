@@ -300,8 +300,5 @@ public class Configuration {
 	@Value("${egov.adiary.create.bulk}")
 	private String aDiaryCreateBulkEndPoint;
 
-	@Value("${spring.redis.timeout}")
-	private Long redisTimeout;
-
 
 }
