@@ -94,7 +94,7 @@ public class EvidenceQueryBuilder {
             queryBuilder.append(" AND ( ");
             queryBuilder.append(addUserCriteria(loggedInUserUuid, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
             queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
-            queryBuilder.append(" )) ");
+            queryBuilder.append(" ) OR status IS NULL) ");
         }
 
         else if(!searchCriteria.getOwner().toString().equals(loggedInUserUuid)) {
@@ -169,7 +169,7 @@ public class EvidenceQueryBuilder {
         } else {
             queryBuilder.append("status IS NULL");
         }
-        queryBuilder.append(") AND (status != ? OR status IS NULL)");
+        queryBuilder.append(") AND (status != ? )");
         preparedStmtList.add("DRAFT_IN_PROGRESS");
         preparedStmtArgsList.add(java.sql.Types.VARCHAR);
 
