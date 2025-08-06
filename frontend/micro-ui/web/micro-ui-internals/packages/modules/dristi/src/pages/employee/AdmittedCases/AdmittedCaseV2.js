@@ -3991,6 +3991,7 @@ const AdmittedCaseV2 = () => {
           hearingId={currentInProgressHearingId}
           setAddPartyModal={setAddPartyModal}
           tenantId={tenantId}
+          refetchCaseData={refetchCaseData}
         />
       )}
       {addPartyModal && (

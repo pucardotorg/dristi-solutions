@@ -46,6 +46,7 @@ const WitnessDrawerV2 = ({
   hearingId,
   setAddPartyModal,
   artifactNumber = null,
+  refetchCaseData,
 }) => {
   const { t } = useTranslation();
   const textAreaRef = useRef(null);
@@ -85,6 +86,7 @@ const WitnessDrawerV2 = ({
   const [loader, setLoader] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [disableWitnessType, setDisableWitnessType] = useState(false);
+  const [obtainedTag, setObtainedTag] = useState("");
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -123,7 +125,7 @@ const WitnessDrawerV2 = ({
   const filingType = useMemo(() => getFilingType(filingTypeData?.FilingType, "CaseFiling"), [filingTypeData?.FilingType]);
 
   const onClickAddWitness = () => {
-    setAddPartyModal(true);
+    setWitnessModalOpen(true);
   };
   useEffect(() => {
     if (isOpen) {
@@ -311,6 +313,7 @@ const WitnessDrawerV2 = ({
         const mobileNumber = witness?.data?.phonenumbers?.mobileNumber;
         const address = formatAddress(witness?.data?.addressDetails?.[0]?.addressDetails);
         const tag = witness?.data?.witnessTag;
+        const uniqueId = witness?.uniqueId || witness?.data?.uuid;
 
         return {
           name: getFormattedName(
@@ -324,7 +327,7 @@ const WitnessDrawerV2 = ({
           gender: witness?.data?.gender,
           designation: witness?.data?.witnessDesignation || "",
           address,
-          uniqueId: witness?.uniqueId,
+          uniqueId,
           partyType: "witness",
           witnessMobileNumbers: mobileNumber?.length > 0 ? mobileNumber : [],
           sourceName: getFormattedName(
@@ -461,6 +464,8 @@ const WitnessDrawerV2 = ({
       setDisableWitnessType(true);
     } else if (isTag && isTag === selectedWitnessType?.value && !disableWitnessType) {
       setDisableWitnessType(true);
+    } else if (!isTag && disableWitnessType) {
+      setDisableWitnessType(false);
     }
   }, [selectedWitness, selectedWitnessType, allParties, disableWitnessType]);
 
@@ -543,6 +548,7 @@ const WitnessDrawerV2 = ({
     const selectedUUID = selectedPartyOption?.value;
     const matchingWitness = options.find((opt) => opt?.value === selectedUUID);
     setSelectedWitness({ label: matchingWitness?.label, value: matchingWitness?.value });
+    setSelectedWitnessType({});
     setWitnessDepositionText("");
   };
 
@@ -673,6 +679,7 @@ const WitnessDrawerV2 = ({
             setCurrentArtifactNumber(updatedEvidence?.artifact?.artifactNumber);
           }
           setActiveTabs(updatedTabs);
+          setObtainedTag(updatedEvidence?.artifact?.tag);
         }
 
         setShowErrorToast({ label: "Draft updated successfully", error: false });
@@ -706,22 +713,21 @@ const WitnessDrawerV2 = ({
 
         const newEvidence = await submissionService.createEvidence(createEvidenceReqBody);
 
-        // Update the tab in activeTabs directly with the new evidence
         if (newEvidence?.artifact) {
           const updatedTabs = [...activeTabs];
           if (activeTabs?.length > 0 && activeTabs?.[activeTabIndex]?.isNew) {
-            // Replace the unsaved tab with the new evidence
             updatedTabs[activeTabIndex] = newEvidence?.artifact;
           } else {
-            // Add as a new tab
             updatedTabs.push(newEvidence?.artifact);
             setActiveTabIndex(updatedTabs.length - 1);
           }
           setActiveTabs(updatedTabs);
+          setObtainedTag(newEvidence?.artifact?.tag);
           if (newCurrentArtifactNumber) {
             setCurrentArtifactNumber(newCurrentArtifactNumber);
           } else {
             setCurrentArtifactNumber(newEvidence.artifact?.artifactNumber);
+            setCurrentEvidence(newEvidence.artifact);
           }
         }
 
@@ -736,8 +742,11 @@ const WitnessDrawerV2 = ({
     } finally {
       setLoader(false);
       if (submit) {
-        // setShowConfirmWitnessModal(true);
-        setShowWitnessDepositionReview(true);
+        if (!disableWitnessType) {
+          setShowConfirmWitnessModal(true);
+        } else {
+          setShowWitnessDepositionReview(true);
+        }
       }
     }
   };
@@ -809,15 +818,18 @@ const WitnessDrawerV2 = ({
       const party = allParties?.find((p) => p?.uuid === selectedWitness?.uuid || p?.uniqueId === selectedWitness?.uuid);
 
       // Check if we need to create or update evidence
-      if (evidence && evidence?.artifactNumber) {
+      const evidence = activeTabs?.find((tab) => tab?.artifactNumber === currentArtifactNumber);
+      if (evidence?.artifactNumber) {
         // Update existing evidence
         const updateEvidenceReqBody = {
           artifact: {
-            ...currentEvidence?.artifact,
+            ...evidence,
             filingType: "CASE_FILING",
+            tag: obtainedTag,
             workflow: {
-              action: "UPDATE",
+              action: "SUBMIT",
             },
+            isEvidenceMarkedFlow: false,
           },
         };
 
@@ -984,7 +996,7 @@ const WitnessDrawerV2 = ({
           <div className="drawer-section">
             {/* Tabs UI for draft depositions */}
 
-            <div className="witness-tabs" style={{ display: "flex", marginTop: "16px", borderBottom: "1px solid #d6d5d4" }}>
+            <div className="witness-tabs" style={{ display: "flex", marginTop: "16px", borderBottom: "1px solid #d6d5d4", overflowX: "scroll" }}>
               {/* Display tabs for both evidence list items and unsaved drafts */}
               {activeTabs
                 ?.filter((tab) => !tab?.isNew)
@@ -1022,7 +1034,7 @@ const WitnessDrawerV2 = ({
                 <CustomAddIcon width="17" height="17" fill="#0A5757" />
               </div>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", margin: "16px 0px 8px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", margin: "16px 0px 0px" }}>
               <LabelFieldPair>
                 <CardLabel className="case-input-label">{t("ALL_PARTIES")}</CardLabel>
                 <Dropdown
@@ -1037,14 +1049,14 @@ const WitnessDrawerV2 = ({
                 />
               </LabelFieldPair>
               <LabelFieldPair>
-                <CardLabel className="case-input-label">{`Select Witness Type`}</CardLabel>
+                <CardLabel className="case-input-label">{t("WITNESS_MARKED_AS")}</CardLabel>
                 <Dropdown
                   t={t}
                   option={witnessTypeOptions}
                   optionKey={"label"}
                   select={handleWitnessTypeChange}
                   freeze={true}
-                  disable={isProceeding}
+                  disable={isProceeding || disableWitnessType}
                   selected={selectedWitnessType}
                   style={{ width: "100%", height: "40px", fontSize: "16px", marginBottom: "0px" }}
                 />
@@ -1069,7 +1081,9 @@ const WitnessDrawerV2 = ({
               </button>
             </div>
 
-            <div style={{ gap: "16px", border: "1px solid", marginTop: "2px" }}>
+            <div style={{ marginTop: "16px" }}>{t("CS_DESCRIPTION")}</div>
+
+            <div style={{ gap: "16px", border: "1px solid" }}>
               <TextArea
                 ref={textAreaRef}
                 style={{
@@ -1120,18 +1134,20 @@ const WitnessDrawerV2 = ({
         </div>
       </div>
 
-      {/* {witnessModalOpen && (
+      {witnessModalOpen && (
         <AddWitnessModal
-        onCancel={() => setShowAddWitnessModal(false)}
-        onDismiss={() => setShowAddWitnessModal(false)}
-        tenantId={tenantId}
-        caseDetails={caseDetails}
-        isJudge={true}
-        onAddSuccess={() => {
-          setShowAddWitnessModal(false);
-        }}
-      ></AddWitnessModal>
-      )} */}
+          onCancel={() => setWitnessModalOpen(false)}
+          onDismiss={() => setWitnessModalOpen(false)}
+          tenantId={tenantId}
+          caseDetails={caseDetails}
+          isJudge={true}
+          onAddSuccess={() => {
+            setWitnessModalOpen(false);
+            refetchCaseData();
+          }}
+          showToast={setShowErrorToast}
+        ></AddWitnessModal>
+      )}
 
       {showWitnessDepositionReview && (
         <WitnessDepositionReviewModal
@@ -1193,9 +1209,10 @@ const WitnessDrawerV2 = ({
         <ConfirmWitnessModal
           t={t}
           selectedWitness={selectedWitness}
-          witnessTag={currentEvidence?.tag}
+          witnessTag={obtainedTag}
           onCancel={() => setShowConfirmWitnessModal(false)}
           onSubmit={handleConfirmWitnessAndSign}
+          allParties={allParties}
         />
       )}
       {showSuccessModal && (
