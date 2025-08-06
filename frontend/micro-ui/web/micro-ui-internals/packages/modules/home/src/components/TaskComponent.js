@@ -332,9 +332,17 @@ const TasksComponent = ({
       const dateOfApplication = data?.fields?.find((field) => field.key === "additionalDetails.dateOfApplication")?.value;
       const uniqueId = data?.fields?.find((field) => field.key === "additionalDetails.uniqueId")?.value;
       const createdTime = data?.fields?.find((field) => field.key === "createdTime")?.value;
+      const applicationType = data?.fields?.find((field) => field.key === "additionalDetails.applicationType")?.value;
 
       const updateReferenceId = referenceId.split("_").pop();
-      const defaultObj = { referenceId: updateReferenceId, id: caseId, cnrNumber, filingNumber, caseTitle };
+      const defaultObj = {
+        referenceId: updateReferenceId,
+        id: caseId,
+        cnrNumber,
+        filingNumber,
+        caseTitle,
+        ...(applicationType && { applicationType }),
+      };
       const pendingTaskActions = selectTaskType?.[entityType || taskTypeCode];
       const isCustomFunction = Boolean(pendingTaskActions?.[status]?.customFunction);
       const dayCount = stateSla
@@ -357,6 +365,10 @@ const TasksComponent = ({
       pendingTaskActions?.[status]?.redirectDetails?.params?.forEach((item) => {
         searchParams.set(item?.key, item?.value ? defaultObj?.[item?.value] : item?.defaultValue);
       });
+
+      if(applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS"){
+        searchParams.set("applicationType", applicationType);
+      }
       const redirectUrl = isCustomFunction
         ? getCustomFunction[pendingTaskActions?.[status]?.customFunction]
         : `/${window?.contextPath}/${userType}${pendingTaskActions?.[status]?.redirectDetails?.url}?${searchParams.toString()}`;
@@ -387,6 +399,7 @@ const TasksComponent = ({
           litigantIndId,
           dateOfApplication,
           uniqueId,
+          applicationType,
         },
         isCustomFunction,
         referenceId,

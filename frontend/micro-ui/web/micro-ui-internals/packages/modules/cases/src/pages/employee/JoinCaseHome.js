@@ -1,8 +1,15 @@
 import { Button, CloseSvg, Toast } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { DRISTIService } from "../../../../dristi/src/services";
 import { useTranslation } from "react-i18next";
-import { getFullName, registerIndividualWithNameAndMobileNumber, searchIndividualUserWithUuid, submitJoinCase } from "../../utils/joinCaseUtils";
+import {
+  createPendingTask,
+  getFullName,
+  getTaskDetails,
+  registerIndividualWithNameAndMobileNumber,
+  searchIndividualUserWithUuid,
+  submitJoinCase,
+} from "../../utils/joinCaseUtils";
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 import SearchCaseAndShowDetails from "./joinCaseComponent/SearchCaseAndShowDetails";
 import AccessCodeValidation from "./joinCaseComponent/AccessCodeValidation";
@@ -12,6 +19,10 @@ import JoinCasePayment from "./joinCaseComponent/JoinCasePayment";
 import JoinCaseSuccess from "./joinCaseComponent/JoinCaseSuccess";
 import LitigantVerification from "./joinCaseComponent/LitigantVerification";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
+import POAInfo from "./joinCaseComponent/POAInfo";
+import { cleanString, combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-orders/src/utils/submissionWorkflow";
+import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
 const CloseBtn = (props) => {
   return (
@@ -37,6 +48,7 @@ const JoinHomeLocalisation = {
   JOIN_CASE_BACK_TEXT: "JOIN_CASE_BACK_TEXT",
   INVALID_ACCESS_CODE_MESSAGE: "INVALID_ACCESS_CODE_MESSAGE",
   JOIN_CASE_SUCCESS: "JOIN_CASE_SUCCESS",
+  APPLICATION_CREATION_FAILED: "APPLICATION_CREATION_FAILED",
 };
 
 const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data }) => {
@@ -66,6 +78,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     userType: { label: "", value: "" },
     partyInvolve: { label: "", value: "" },
     isReplaceAdvocate: { label: "", value: "" },
+    isPoaRightsClaiming: { label: "", value: "" },
     advocateToReplaceList: [],
     approver: { label: "", value: "" },
     reasonForReplacement: "",
@@ -103,10 +116,15 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   const [alreadyJoinedMobileNumber, setAlreadyJoinedMobileNumber] = useState([]);
   const [taskNumber, setTaskNumber] = useState("");
   const [bailBondRequired, setBailBondRequired] = useState(false);
+  const [poa, setIsPoa] = useState(false);
+  const [poaJoinedParties, setPoaJoinedParties] = useState([]);
+  const [formdata, setFormData] = useState({});
+  const history = useHistory();
 
   const [isVerified, setIsVerified] = useState(false);
 
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
 
   const closeToast = () => {
     setShowErrorToast(false);
@@ -235,10 +253,19 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
         selectPartyData?.userType &&
         selectPartyData?.userType?.value === "Litigant" &&
         selectPartyData?.partyInvolve?.value &&
+        selectPartyData?.isPoaRightsClaiming?.value === "NO" &&
         party &&
         partyInPerson?.value &&
         ((partyInPerson?.value === "YES" && selectPartyData?.affidavit?.affidavitData) ||
           (partyInPerson?.value === "NO" && !Boolean(party?.individualId)))
+      ) {
+        setIsDisabled(false);
+      } else if (
+        selectPartyData?.userType &&
+        selectPartyData?.userType?.value === "Litigant" &&
+        selectPartyData?.partyInvolve?.value &&
+        selectPartyData?.isPoaRightsClaiming?.value === "YES" &&
+        party?.length > 0
       ) {
         setIsDisabled(false);
       } else if (
@@ -333,6 +360,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       partyInvolve: { label: "", value: "" },
       isReplaceAdvocate: { label: "", value: "" },
       affidavit: {},
+      isPoaRightsClaiming: { label: "", value: "" },
     });
     setPartyInPerson(false);
     setParty({});
@@ -356,6 +384,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     setCaseList([]);
     setIsLitigantJoined(false);
     setSuccess(false);
+    setIsPoa(false);
+    setFormData({});
   }, [setShowJoinCase]);
 
   const onSelect = (option) => {
@@ -422,6 +452,9 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       const { firstName, middleName, lastName } = data?.data;
 
       const fullName = getFullName(" ", firstName, middleName, lastName);
+      const poaAuthorizationDocument = data?.data?.poaAuthorizationDocument;
+      const isAlreadyPoa = data?.data?.transferredPOA || { code: "NO", name: "NO", showPoaDetails: false };
+      const poaVerification = data?.data?.poaVerification;
 
       return {
         ...data?.data,
@@ -442,6 +475,9 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             userUuid: data?.data?.complainantVerification?.individualDetails?.userUuid,
           },
         },
+        isPoaAvailable: isAlreadyPoa,
+        poaAuthorizationDocument,
+        poaVerification,
         isAdvocateRepresenting: !!isAdvocateRepresenting,
         advocateRepresentingLength: representatives?.length,
       };
@@ -484,6 +520,9 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           const { respondentFirstName, respondentMiddleName, respondentLastName } = data?.data;
 
           fullName = getFullName(" ", respondentFirstName, respondentMiddleName, respondentLastName);
+          const poaAuthorizationDocument = data?.data?.poaAuthorizationDocument;
+          const isAlreadyPoa = data?.data?.transferredPOA || { code: "NO", name: "NO", showPoaDetails: false };
+          const poaVerification = data?.data?.poaVerification;
 
           return {
             ...data?.data,
@@ -507,6 +546,9 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                 },
               },
             }),
+            isPoaAvailable: isAlreadyPoa,
+            poaAuthorizationDocument,
+            poaVerification,
             isAdvocateRepresenting: !!isAdvocateRepresenting,
             advocateRepresentingLength: representatives?.length,
             uniqueId: data?.uniqueId,
@@ -841,9 +883,11 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           selectPartyData?.userType &&
           selectPartyData?.userType?.value === "Litigant" &&
           selectPartyData?.partyInvolve?.value &&
+          selectPartyData?.isPoaRightsClaiming?.value === "NO" &&
           party &&
           partyInPerson?.value
         ) {
+          setIsPoa(false);
           const { isFound } = searchLitigantInRepresentives(caseDetails?.representatives, individualId);
           if (isLitigantJoined && partyInPerson?.value === "NO") {
             setMessageHeader(t("ALREADY_PART_OF_CASE"));
@@ -969,6 +1013,15 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           }
         } else if (
           selectPartyData?.userType &&
+          selectPartyData?.userType?.value === "Litigant" &&
+          selectPartyData?.partyInvolve?.value &&
+          selectPartyData?.isPoaRightsClaiming?.value === "YES" &&
+          party
+        ) {
+          setIsPoa(true);
+          setStep(step + 1);
+        } else if (
+          selectPartyData?.userType &&
           selectPartyData?.userType?.value === "Advocate" &&
           selectPartyData?.partyInvolve?.value &&
           party?.length > 0 &&
@@ -989,7 +1042,45 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
         setIsApiCalled(true);
         const party = litigants;
         const updatedParty = await registerLitigants(party);
-        if (selectPartyData?.isReplaceAdvocate?.value === "NO" || selectPartyData?.isReplaceAdvocate?.value === "YES") {
+        if (selectPartyData?.userType?.value === "Litigant") {
+          try {
+            const poaUpdatedData = await Promise.all(
+              updatedParty?.map(async (user) => {
+                const document = user?.poaAuthorizationDocument?.poaDocument;
+                const hasFileTypeDoc = document?.some((doc) => doc instanceof File || (doc.file && doc.file instanceof File));
+                let uploadedData = {};
+
+                if (hasFileTypeDoc && document?.length > 1) {
+                  const combineDocs = await combineMultipleFiles(document);
+                  uploadedData = await onDocumentUpload(combineDocs[0], "poaAuthorization.pdf", tenantId);
+                } else if (hasFileTypeDoc && document?.length > 0) {
+                  uploadedData = await onDocumentUpload(document[0], "poaAuthorization.pdf", tenantId);
+                }
+
+                return {
+                  ...user,
+                  poaAuthorizationDocument: {
+                    poaDocument: [
+                      {
+                        documentType: "POA_AUTHORIZATION_DOCUMENT",
+                        fileStore: uploadedData?.file?.files?.[0]?.fileStoreId || document?.[0]?.fileStore || "",
+                        additionalDetails: {
+                          documentName: "poaAuthorization.pdf",
+                          fileName: "Company documents"
+                        }
+                      },
+                    ],
+                  },
+                };
+              })
+            );
+            setPoaJoinedParties(poaUpdatedData);
+            setStep(step + 3);
+          } catch (error) {
+            console.error("error :>> ", error);
+          }
+          setIsApiCalled(false);
+        } else if (selectPartyData?.isReplaceAdvocate?.value === "NO" || selectPartyData?.isReplaceAdvocate?.value === "YES") {
           try {
             const litigantData = [
               ...updatedParty
@@ -1200,6 +1291,132 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           console.error("error", error);
         }
         setIsApiCalled(false);
+      } else if (step === 6) {
+        setIsApiCalled(true);
+        try {
+          const poaRepresenting = litigants?.map((party) => {
+            return {
+              uniqueId: party?.uniqueId,
+              individualId: party?.individualId,
+              isRevoking: party?.transferredPOA?.code === "YES" ? true : false,
+              poaAuthDocument: party?.poaAuthorizationDocument?.poaDocument?.[0],
+              existingPoaIndividualId: party?.poaVerification?.individualDetails?.individualId,
+            };
+          });
+
+          const payload = {
+            joinCaseData: {
+              accessCode: validationCode,
+              tenantId: tenantId,
+              filingNumber: caseDetails?.filingNumber,
+              litigant: [],
+              poa: {
+                individualId: individualId,
+                poaRepresenting: poaRepresenting,
+              },
+            },
+          };
+
+          const [res] = await submitJoinCase(payload);
+
+          if (res) {
+            setTaskNumber(res?.paymentTaskNumber);
+            const taskNumber = res?.paymentTaskNumber;
+            const taskSearchResponse = await getTaskDetails(taskNumber, tenantId);
+            const taskDetails = taskSearchResponse?.list?.[0]?.taskDetails;
+
+            const applicationReqBody = {
+              tenantId,
+              application: {
+                tenantId,
+                filingNumber: caseDetails?.filingNumber,
+                cnrNumber: caseDetails?.cnrNumber,
+                cmpNumber: caseDetails?.cmpNumber,
+                caseId: caseDetails?.id,
+                referenceId: null,
+                createdDate: new Date().getTime(),
+                applicationType: "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",
+                status: "",
+                isActive: true,
+                createdBy: userInfo?.uuid,
+                statuteSection: { tenantId },
+                additionalDetails: {
+                  formdata: {
+                    ...formdata,
+                    submissionType: {
+                      code: "APPLICATION",
+                      name: "APPLICATION",
+                    },
+                    applicationType: {
+                      type: "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",
+                      name: "APPLICATION_TYPE_APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",
+                      isActive: true,
+                    },
+                  },
+                  caseTitle: caseDetails?.caseTitle,
+                  partyType: selectPartyData?.partyInvolve?.value === "COMPLAINANTS" ? "COMPLAINANTS" : "ACCUSED",
+                  owner: cleanString(userInfo?.name),
+                  onBehalOfName: cleanString(userInfo?.name),
+                },
+                documents: [],
+                onBehalfOf: [userInfo?.uuid],
+                comment: [],
+                applicationDetails: {
+                  taskNumber: taskNumber,
+                  taskDetails: taskDetails,
+                },
+                workflow: {
+                  id: "workflow123",
+                  action: SubmissionWorkflowAction.CREATE,
+                  status: "in_progress",
+                  comments: "Workflow comments",
+                  documents: [{}],
+                },
+              },
+            };
+
+            const resApplication = await DRISTIService.createApplication(applicationReqBody, { tenantId });
+            if (resApplication) {
+              await createPendingTask({
+                name: t("ESIGN_THE_SUBMISSION_FOR_POA_CLAIM"),
+                status: "ESIGN_THE_SUBMISSION",
+                assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
+                refId: resApplication?.application?.applicationNumber,
+                entityType: "application-voluntary-submission",
+                userInfo: userInfo,
+                cnrNumber: caseDetails?.cnrNumber,
+                filingNumber: caseDetails?.filingNumber,
+                caseId: caseDetails?.id,
+                caseTitle: caseDetails?.caseTitle,
+                applicationType: "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS",
+                stateSla: todayDate + 2 * 24 * 3600 * 1000,
+                isCompleted: false,
+                tenantId,
+              });
+              history.push(
+                `/${window?.contextPath}/${userInfoType}/submissions/submissions-create?filingNumber=${caseDetails?.filingNumber}&applicationNumber=${resApplication?.application?.applicationNumber}&applicationType=APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS`
+              );
+            } else {
+              setErrors({
+                ...errors,
+                validationCode: {
+                  message: JoinHomeLocalisation.APPLICATION_CREATION_FAILED,
+                },
+              });
+            }
+          } else {
+            setErrors({
+              ...errors,
+              validationCode: {
+                message: JoinHomeLocalisation.INVALID_ACCESS_CODE_MESSAGE,
+              },
+            });
+          }
+          // TODO : create application
+        } catch (error) {
+          console.error("error :>> ", error);
+        }
+        setIsApiCalled(false);
       }
     },
     [
@@ -1392,6 +1609,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           setIsDisabled={setIsDisabled}
           selectPartyData={selectPartyData}
           isApiCalled={isApiCalled}
+          poa={poa}
         />
       ),
     },
@@ -1415,6 +1633,27 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
         />
       ),
     },
+    // 6
+    {
+      modalMain: (
+        <POAInfo
+          t={t}
+          poaJoinedParties={poaJoinedParties}
+          onProceed={onProceed}
+          closeModal={closeModal}
+          label={"Poa Joining"}
+          isApiCalled={isApiCalled}
+          isDisabled={isDisabled}
+          setIsDisabled={setIsDisabled}
+          goBack={() => {
+            setFormData({});
+            setStep(step - 3);
+          }}
+          setFormData={setFormData}
+          formdata={formdata}
+        />
+      ),
+    },
   ];
 
   return (
@@ -1435,7 +1674,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           actionCancelLabel={
             step === 1
               ? t("DOWNLOAD_CASE_FILE")
-              : (step === 2 && type === "external") || step === 3 || step === 4
+              : (step === 2 && type === "external") || step === 3 || step === 4 || step === 6
               ? undefined
               : ((step === 0 && caseDetails?.cnrNumber) || step !== 0) && t(JoinHomeLocalisation.JOIN_CASE_BACK_TEXT)
           }
@@ -1454,6 +1693,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                   setSelectPartyData((selectPartyData) => ({
                     ...selectPartyData,
                     partyInvolve: {},
+                    isPoaRightsClaiming: {},
                     affidavit: {},
                   }));
                   setPartyInPerson({});
@@ -1524,7 +1764,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           popupStyles={{ width: "fit-content", userSelect: "none" }}
           customActionStyle={{ background: "#fff", boxShadow: "none", border: "1px solid #007e7e" }}
           customActionTextStyle={{ color: "#007e7e" }}
-          hideModalActionbar={step === 3 ? true : false}
+          hideModalActionbar={step === 3 || step === 6 ? true : false}
           popupModuleMianClassName={success ? "success-main" : ""}
         >
           {step >= 0 && modalItem[step]?.modalMain}

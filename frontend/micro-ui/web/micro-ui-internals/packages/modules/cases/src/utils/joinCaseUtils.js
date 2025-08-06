@@ -1,6 +1,6 @@
 import { userTypeOptions } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/registration/config";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
-import { CASEService } from "../hooks/services";
+import { CASEService, Urls } from "../hooks/services";
 import { getUserDetails } from "@egovernments/digit-ui-module-dristi/src/hooks/useGetAccessToken";
 
 const TYPE_REGISTER = { type: "register" };
@@ -304,4 +304,54 @@ export const getUserUUID = async (individualId, tenantId) => {
     { tenantId, limit: 1000, offset: 0 }
   );
   return individualData;
+};
+
+export const getTaskDetails = async (taskNumber, tenentId) => {
+  const taskDetails = await window?.Digit.DRISTIService?.searchTask({
+    criteria: {
+      tenantId: tenentId,
+      taskNumber: taskNumber,
+    },
+  });
+  return taskDetails;
+};
+
+export const createPendingTask = async ({
+  name,
+  status,
+  isCompleted = false,
+  refId,
+  stateSla = null,
+  isAssignedRole = false,
+  assignedRole = [],
+  userInfo,
+  entityType,
+  tenantId,
+  cnrNumber,
+  filingNumber,
+  caseId,
+  caseTitle,
+  applicationType,
+}) => {
+  const assignes = !isAssignedRole ? [userInfo?.uuid] || [] : [];
+  await DRISTIService.customApiService(Urls.task.pendingTask, {
+    pendingTask: {
+      name,
+      entityType,
+      referenceId: `MANUAL_${refId}`,
+      status,
+      assignedTo: assignes?.map((uuid) => ({ uuid })),
+      assignedRole: assignedRole,
+      cnrNumber: cnrNumber,
+      filingNumber: filingNumber,
+      caseId: caseId,
+      caseTitle: caseTitle,
+      isCompleted,
+      stateSla,
+      additionalDetails: {
+        applicationType,
+      },
+      tenantId,
+    },
+  });
 };

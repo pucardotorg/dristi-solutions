@@ -102,7 +102,9 @@ const SelectParty = ({
       }
     });
     return partyWithAdvocate?.filter((party) =>
-      selectPartyData?.partyInvolve?.value === "RESPONDENTS" ? (pipAccusedIds.has(party?.individualId) && !party?.advocateId)  || party?.advocateId : true
+      selectPartyData?.partyInvolve?.value === "RESPONDENTS"
+        ? (pipAccusedIds.has(party?.individualId) && !party?.advocateId) || party?.advocateId
+        : true
     );
   }, [selectPartyData?.userType, party, caseDetails, searchLitigantInRepresentives, t, selectPartyData?.partyInvolve?.value]);
 
@@ -135,7 +137,7 @@ const SelectParty = ({
   }, [caseDetails]);
 
   const customLabel = useMemo(() => {
-    if (selectPartyData?.userType?.value !== "Advocate") return "";
+    if (selectPartyData?.userType?.value !== "Advocate" && selectPartyData?.isPoaRightsClaiming?.value === "NO") return "";
 
     const partyCount = party?.length || 0;
 
@@ -180,14 +182,14 @@ const SelectParty = ({
       />
 
       <LabelFieldPair className="case-label-field-pair">
-        <CardLabel className="case-input-label">{`${t("JOINING_THIS_CASE_AS")}`}</CardLabel>
+        <CardLabel className="case-input-label">{`${t("JOINING_THIS_CASE_AS")}`}</CardLabel> {/* TODO: localisation change*/}
         <RadioButtons
           selectedOption={selectPartyData?.userType}
           disabled={true}
           optionsKey={"label"}
           options={[
             { label: t("ADVOCATE_OPT"), value: "Advocate" },
-            { label: t("LITIGANT_OPT"), value: "Litigant" },
+            { label: t("LITIGANT_OPT"), value: "Litigant" }, // TODO: localisation change
           ]}
           additionalWrapperClass={"radio-disabled"}
         />
@@ -207,6 +209,7 @@ const SelectParty = ({
               advocateToReplaceList: [],
               approver: { label: "", value: "" },
               reasonForReplacement: "",
+              isPoaRightsClaiming: { label: "", value: "" },
             }));
             setPartyInPerson({});
             setParty(selectPartyData?.userType?.value === "Litigant" ? {} : []);
@@ -220,6 +223,41 @@ const SelectParty = ({
           additionalWrapperClass={(isAdvocateJoined || isLitigantJoined) && "radio-disabled"}
         />
       </LabelFieldPair>
+
+      {/** TODO: Change here */}
+      {selectPartyData?.userType?.value === "Litigant" && selectPartyData?.partyInvolve?.value && (
+        <LabelFieldPair className="case-label-field-pair">
+          <CardLabel className="case-input-label">{`${t("Are you claiming/revoking PoA-holder rights?")}`}</CardLabel>
+          <RadioButtons
+            selectedOption={selectPartyData?.isPoaRightsClaiming}
+            onSelect={(value) => {
+              setSelectPartyData((selectPartyData) => ({
+                ...selectPartyData,
+                isPoaRightsClaiming: value,
+                isReplaceAdvocate: {},
+                affidavit: {},
+                advocateToReplaceList: [],
+                approver: { label: "", value: "" },
+                reasonForReplacement: "",
+              }));
+              setPartyInPerson({});
+              if (isLitigantJoined || isAdvocateJoined) {
+                setParty(selectPartyData?.userType?.value === "Litigant" && value?.value === "NO" ? party || {} : []);
+              } else {
+                setParty(selectPartyData?.userType?.value === "Litigant" && value?.value === "NO" ? {} : []);
+              }
+            }}
+            optionsKey={"label"}
+            options={[
+              { label: t("YES"), value: "YES" },
+              { label: t("NO"), value: "NO" },
+            ]}
+            disabled={false}
+            additionalWrapperClass={(isAdvocateJoined || isLitigantJoined) && "radio-disabled"}
+          />
+        </LabelFieldPair>
+      )}
+
       {selectPartyData?.userType?.value === "Advocate" && selectPartyData?.partyInvolve?.value && (
         <LabelFieldPair className="case-label-field-pair">
           <CardLabel className="case-input-label">{`${t("ARE_YOU_REPLACING_ADVOCATE")}`}</CardLabel>
@@ -244,39 +282,72 @@ const SelectParty = ({
           />
         </LabelFieldPair>
       )}
-      {((selectPartyData?.userType?.value === "Litigant" && selectPartyData?.partyInvolve?.value) || selectPartyData?.isReplaceAdvocate?.value) && (
+      {((selectPartyData?.userType?.value === "Litigant" && selectPartyData?.partyInvolve?.value && selectPartyData?.isPoaRightsClaiming?.value) ||
+        selectPartyData?.isReplaceAdvocate?.value) && (
         <LabelFieldPair className="case-label-field-pair">
           <CardLabel className="case-input-label">{`${t(
             selectPartyData?.userType?.value === "Litigant" ? "WHICH_LITIGANT" : "WHICH_LITIGANTS_REPRESENTING"
           )}`}</CardLabel>
           {selectPartyData?.userType?.value === "Litigant" ? (
-            <Dropdown
-              t={t}
-              option={parties?.filter((filterParty) =>
-                selectPartyData?.partyInvolve?.value === "COMPLAINANTS"
-                  ? filterParty?.partyType?.includes("complainant")
-                  : filterParty?.partyType?.includes("respondent")
-              )}
-              selected={party}
-              optionKey={"fullName"}
-              select={(e) => {
-                setParty(e);
-                setPartyInPerson({});
-                setSelectPartyData((selectPartyData) => ({
-                  ...selectPartyData,
-                  advocateToReplaceList: [],
-                  approver: { label: "", value: "" },
-                  reasonForReplacement: "",
-                  affidavit: {},
-                }));
-              }}
-              freeze={true}
-              topbarOptionsClassName={"top-bar-option"}
-              disable={isLitigantJoined}
-              style={{
-                marginBottom: "1px",
-              }}
-            />
+            selectPartyData?.isPoaRightsClaiming?.value === "NO" ? (
+              <Dropdown
+                t={t}
+                option={parties?.filter((filterParty) =>
+                  selectPartyData?.partyInvolve?.value === "COMPLAINANTS"
+                    ? filterParty?.partyType?.includes("complainant")
+                    : filterParty?.partyType?.includes("respondent")
+                )}
+                selected={party}
+                optionKey={"fullName"}
+                select={(e) => {
+                  setParty(e);
+                  setPartyInPerson({});
+                  setSelectPartyData((selectPartyData) => ({
+                    ...selectPartyData,
+                    advocateToReplaceList: [],
+                    approver: { label: "", value: "" },
+                    reasonForReplacement: "",
+                    affidavit: {},
+                  }));
+                }}
+                freeze={true}
+                topbarOptionsClassName={"top-bar-option"}
+                disable={isLitigantJoined}
+                style={{
+                  marginBottom: "1px",
+                }}
+              />
+            ) : selectPartyData?.isPoaRightsClaiming?.value === "YES" ? (
+              <MultiSelectDropdown
+                options={parties
+                  ?.filter((filterParty) =>
+                    selectPartyData?.partyInvolve?.value === "COMPLAINANTS"
+                      ? filterParty?.partyType?.includes("complainant")
+                      : filterParty?.partyType?.includes("respondent")
+                  )
+                  ?.map((party) => ({
+                    ...party,
+                    isDisabled: party?.isPoaAvailable?.code === "NO" && party?.uuid === userInfo?.uuid,
+                  }))}
+                selected={party}
+                optionsKey={"fullName"}
+                onSelect={(value) => {
+                  setParty(value?.map((val) => val[1]));
+                  setSelectPartyData((selectPartyData) => ({
+                    ...selectPartyData,
+                    advocateToReplaceList: [],
+                    approver: { label: "", value: "" },
+                    reasonForReplacement: "",
+                    affidavit: {},
+                  }));
+                }}
+                customLabel={customLabel}
+                config={{
+                  isSelectAll: true,
+                }}
+                parentRef={targetRef}
+              />
+            ) : null
           ) : (
             selectPartyData?.isReplaceAdvocate?.value && (
               <MultiSelectDropdown
@@ -316,7 +387,7 @@ const SelectParty = ({
           )}
         </LabelFieldPair>
       )}
-      {selectPartyData?.userType?.value === "Litigant" && party?.label && (
+      {selectPartyData?.userType?.value === "Litigant" && party?.label && selectPartyData?.isPoaRightsClaiming?.value === "NO" && (
         <LabelFieldPair className="case-label-field-pair">
           <CardLabel className="case-input-label">{`${t("ARE_YOU_JOINING_AS_PARTY_IN_PERSON")}`}</CardLabel>
           <RadioButtons
