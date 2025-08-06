@@ -1536,7 +1536,6 @@ const GenerateOrders = () => {
         }
 
         if (orderType === "ACCEPT_BAIL") {
-          debugger;
           orderTypeForm = orderTypeForm?.map((section) => {
             return {
               ...section,
