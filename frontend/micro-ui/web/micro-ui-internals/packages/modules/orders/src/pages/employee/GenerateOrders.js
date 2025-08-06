@@ -82,7 +82,7 @@ export const compositeOrderAllowedTypes = [
   },
   {
     key: "no_restriction",
-    orderTypes: ["NOTICE", "OTHERS", "WARRANT", "SUMMONS", "MANDATORY_SUBMISSIONS_RESPONSES", "SECTION_202_CRPC", "PROCLAMATION"],
+    orderTypes: ["NOTICE", "OTHERS", "WARRANT", "SUMMONS", "MANDATORY_SUBMISSIONS_RESPONSES", "SECTION_202_CRPC", "ACCEPT_BAIL"],
     unAllowedOrderTypes: [],
   },
   {
@@ -449,10 +449,10 @@ const GenerateOrders = () => {
 
       if (isDelayApplicationPending) {
         updatedConfig[0].body[0].populators.mdmsConfig.select =
-          "(data) => {return data['Order'].OrderType?.filter((item)=>[`DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `PROCLAMATION`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+          "(data) => {return data['Order'].OrderType?.filter((item)=>[`DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
       } else {
         updatedConfig[0].body[0].populators.mdmsConfig.select =
-          "(data) => {return data['Order'].OrderType?.filter((item)=>[`TAKE_COGNIZANCE`, `DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `PROCLAMATION`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+          "(data) => {return data['Order'].OrderType?.filter((item)=>[`TAKE_COGNIZANCE`, `DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
       }
     }
     return updatedConfig;
@@ -1240,6 +1240,26 @@ const GenerateOrders = () => {
               };
             });
           }
+
+          if (orderType === "ACCEPT_BAIL") {
+            orderTypeForm = orderTypeForm?.map((section) => {
+              return {
+                ...section,
+                body: section.body.map((field) => {
+                  if (field.key === "bailParty") {
+                    return {
+                      ...field,
+                      populators: {
+                        ...field.populators,
+                        options: [...complainants, ...respondents],
+                      },
+                    };
+                  }
+                  return field;
+                }),
+              };
+            });
+          }
           newConfig = [...newConfig, ...orderTypeForm];
         }
         const updatedConfig = newConfig.map((config) => {
@@ -1515,6 +1535,27 @@ const GenerateOrders = () => {
           });
         }
 
+        if (orderType === "ACCEPT_BAIL") {
+          debugger;
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "bailParty") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...complainants, ...respondents],
+                    },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
+        }
+
         newConfig = [...newConfig, ...orderTypeForm];
       }
       const updatedConfig = newConfig.map((config) => {
@@ -1698,7 +1739,7 @@ const GenerateOrders = () => {
         updatedFormdata.partyId = newApplicationDetails?.createdBy;
         setValueRef?.current?.[index]?.("partyId", updatedFormdata.partyId);
       }
-      if (orderType === "ACCEPT_BAIL" || orderType === "REJECT_BAIL") {
+      if (orderType === "REJECT_BAIL") {
         updatedFormdata.bailParty = newApplicationDetails?.additionalDetails?.onBehalOfName;
         updatedFormdata.submissionDocuments = {
           uploadedDocs:

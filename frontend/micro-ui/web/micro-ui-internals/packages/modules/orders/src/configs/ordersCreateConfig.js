@@ -19,7 +19,7 @@ export const applicationTypeConfig = [
             masterName: "OrderType",
             localePrefix: "ORDER_TYPE",
             select:
-              "(data) => {return data['Order'].OrderType?.filter((item)=>[`SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`,`PROCLAMATION`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}",
+              "(data) => {return data['Order'].OrderType?.filter((item)=>[`SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}",
           },
         },
       },
@@ -4511,25 +4511,20 @@ export const configsIssueBailAcceptance = [
   {
     body: [
       {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        schemaKeyPath: "orderDetails.refApplicationId",
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
-      {
         isMandatory: true,
         key: "bailParty",
         type: "dropdown",
         label: "BAIL_PARTY",
-        disable: true,
+        disable: false,
         schemaKeyPath: "orderDetails.bailParty",
         populators: {
+          required: true,
+          isMandatory: true,
           name: "bailParty",
+          optionsKey:"name",
           styles: { maxWidth: "100%" },
           error: "required ",
+          options: [],
         },
       },
       {
@@ -4605,29 +4600,7 @@ export const configsIssueBailAcceptance = [
             },
           ],
         },
-      },
-      {
-        type: "component",
-        key: "submissionDocuments",
-        component: "SelectMultiUpload",
-        disable: true,
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "uploadedDocs",
-              isMandatory: true,
-              textAreaHeader: "CS_DOCUMENT_ATTACHED",
-              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: "8px",
-              },
-            },
-          ],
-        },
-      },
+      }
     ],
   },
 ];
