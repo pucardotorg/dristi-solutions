@@ -145,11 +145,10 @@ public class EvidenceQueryBuilder {
     }
 
     public String getStatusQuery(List<String> statusList, List<Object> preparedStmtList, List<Integer> preparedStmtArgsList, EvidenceSearchCriteria searchCriteria) {
-        String loggedInUserUuid = searchCriteria.getUserUuid();
-        StringBuilder queryBuilder = new StringBuilder(" AND (");
+        StringBuilder queryBuilder = new StringBuilder(" AND ");
 
         if (statusList != null && !statusList.isEmpty()) {
-            queryBuilder.append("((status NOT IN (");
+            queryBuilder.append(" (((status NOT IN (");
             for (int i = 0; i < statusList.size(); i++) {
                 queryBuilder.append("?");
                 if (i < statusList.size() - 1) {
@@ -158,21 +157,13 @@ public class EvidenceQueryBuilder {
                 preparedStmtList.add(statusList.get(i));
                 preparedStmtArgsList.add(java.sql.Types.VARCHAR);
             }
-            queryBuilder.append(") AND artifactType != 'WITNESS_DEPOSITION') ");
-            queryBuilder.append(" OR (status IN (?") ;
-            queryBuilder.append(" ) AND artifactType = 'WITNESS_DEPOSITION' AND sourceId = ?)");
-            preparedStmtList.add("PENDING_E-SIGN");
-            preparedStmtArgsList.add(java.sql.Types.VARCHAR);
-            preparedStmtList.add(loggedInUserUuid);
-            preparedStmtArgsList.add(java.sql.Types.VARCHAR);
-            queryBuilder.append(")");
-        } else {
-            queryBuilder.append("status IS NULL");
+            queryBuilder.append(") AND artifactType != 'WITNESS_DEPOSITION'");
+            queryBuilder.append(" OR ");
         }
-        queryBuilder.append(") AND (status != ? OR status IS NULL)");
-        preparedStmtList.add("DRAFT_IN_PROGRESS");
+        queryBuilder.append("(status IN (PENDING_E-SIGN) AND artifactType = 'WITNESS_DEPOSITION' AND sourceId = ?)) AND status != 'DRAFT_IN_PROGRESS)'");
+        preparedStmtList.add(searchCriteria.getSourceId());
         preparedStmtArgsList.add(java.sql.Types.VARCHAR);
-
+        queryBuilder.append("OR status IS NULL )");
         return queryBuilder.toString();
     }
     void addArtifactPartialCriteria(String criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, List<Integer> preparedStmtArgList, Boolean fuzzySearch) {
