@@ -160,10 +160,10 @@ public class EvidenceQueryBuilder {
             queryBuilder.append(") AND artifactType != 'WITNESS_DEPOSITION'");
             queryBuilder.append(" OR ");
         }
-        queryBuilder.append("(status IN (PENDING_E-SIGN) AND artifactType = 'WITNESS_DEPOSITION' AND sourceId = ?)) AND status != 'DRAFT_IN_PROGRESS)'");
-        preparedStmtList.add(searchCriteria.getSourceId());
+        queryBuilder.append("(status IN (PENDING_E-SIGN) AND artifactType = 'WITNESS_DEPOSITION' AND sourceId = ?)) AND status != 'DRAFT_IN_PROGRESS')");
+        preparedStmtList.add(searchCriteria.getUserUuid());
         preparedStmtArgsList.add(java.sql.Types.VARCHAR);
-        queryBuilder.append("OR status IS NULL )");
+        queryBuilder.append(" OR status IS NULL )");
         return queryBuilder.toString();
     }
     void addArtifactPartialCriteria(String criteria, StringBuilder query, List<Object> preparedStmtList, boolean firstCriteria, List<Integer> preparedStmtArgList, Boolean fuzzySearch) {
