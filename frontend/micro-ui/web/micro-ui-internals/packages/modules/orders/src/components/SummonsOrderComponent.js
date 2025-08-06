@@ -7,6 +7,7 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import { useTranslation } from "react-i18next";
 import { formatAddress, getFormattedName } from "../utils";
 import GetPoliceStationModal from "./GetPoliceStationModal";
+import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
 
 // Helper function to compare addresses without police station data
 const compareAddressValues = (value1, value2) => {
@@ -544,7 +545,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
                 style={{ maxWidth: "100%", marginBottom: 8 }}
                 className="party-dropdown"
               />
-              {
+              {input?.addWitness && (
                 <Button
                   onButtonClick={handleAddParty}
                   className="add-party-btn"
@@ -568,7 +569,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
                   }}
                   label={t("+ Add new witness")}
                 />
-              }
+              )}
             </div>
           )}
           {input.type !== "dropdown" && selectedParty && (
@@ -584,16 +585,16 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
         </div>
       ))}
       {isPartyModalOpen && (
-        <AddParty
-          onCancel={handleAddParty}
-          onDismiss={handleAddParty}
+        <AddWitnessModal
           tenantId={tenantId}
+          onCancel={handleAddParty}
           caseDetails={caseDetails}
+          isJudge={true}
           onAddSuccess={() => {
             handleAddParty();
             refetch();
           }}
-        ></AddParty>
+        ></AddWitnessModal>
       )}
     </div>
   );

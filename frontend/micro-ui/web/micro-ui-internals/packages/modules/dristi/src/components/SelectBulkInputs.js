@@ -102,7 +102,7 @@ function SelectBulkInputs({ t, config, onSelect, formData = {}, errors }) {
           />
         </div>
         {errors?.[config?.key]?.[input.name] && (
-          <CardLabelError className={errors?.[config?.key]?.[input.name] && "error-text"} style={{ margin: 0 }}>
+          <CardLabelError className={errors?.[config?.key]?.[input.name] && "error-text"} style={{ margin: 0, ...input?.errorStyle }}>
             {t(errors?.[config?.key]?.[input.name] && errors?.[config?.key]?.[input.name])}
           </CardLabelError>
         )}

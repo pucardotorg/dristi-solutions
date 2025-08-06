@@ -2,10 +2,10 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import useSearchCaseService from "../../../dristi/src/hooks/dristi/useSearchCaseService";
 import { Button, Dropdown } from "@egovernments/digit-ui-react-components";
 import _ from "lodash";
-import AddParty from "../../../hearings/src/pages/employee/AddParty";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { getFormattedName } from "../utils";
 import WarrantRenderDeliveryChannels from "./WarrantRenderDeliveryChannels";
+import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
 
 // Helper function to compare addresses without police station data
 const compareAddressValues = (value1, value2) => {
@@ -374,6 +374,29 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
                 style={{ maxWidth: "100%", marginBottom: 8 }}
                 className="party-dropdown"
               />
+              <Button
+                onButtonClick={handleAddParty}
+                className="add-party-btn"
+                style={{
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  WebkitBoxShadow: "none",
+                  boxShadow: "none",
+                  height: "auto",
+                }}
+                textStyles={{
+                  marginTop: 0,
+                  fontFamily: "Roboto",
+                  fontSize: "16px",
+                  fontWeight: 700,
+                  lineHeight: "18.75px",
+                  textAlign: "center",
+                  color: "#007E7E",
+                }}
+                label={t("+ Add new witness")}
+              />
             </div>
           )}
           {input.type !== "dropdown" && selectedParty && (
@@ -393,16 +416,16 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
         </div>
       ))}
       {isPartyModalOpen && (
-        <AddParty
-          onCancel={handleAddParty}
-          onDismiss={handleAddParty}
+        <AddWitnessModal
           tenantId={tenantId}
+          onCancel={handleAddParty}
           caseDetails={caseDetails}
+          isJudge={true}
           onAddSuccess={() => {
             handleAddParty();
             refetch();
           }}
-        ></AddParty>
+        ></AddWitnessModal>
       )}
     </div>
   );
