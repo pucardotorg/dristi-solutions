@@ -130,6 +130,7 @@ public class ServiceConstants {
 
 	public static final String SIGNED = "SIGNED";
 	public static final String SIGN = "SIGN";
+	public static final String E_SIGN = "E-SIGN";
 	public static final String COMPOSITE = "COMPOSITE";
 
 	public static final String COORDINATES_ERROR = "COORDINATES_ERROR";
@@ -158,8 +159,8 @@ public class ServiceConstants {
 
 	public static final String ARTIFACT_FILE_NAME = "artifact.pdf";
 	public static final String WITNESS_DEPOSITION = "WITNESS_DEPOSITION";
-	public static final String SIGNED_WITNESS_DEPOSITION_DOCUMENT = "SIGNED_WITNESS_DEPOSITION_DOCUMENT";
-	public static final String SIGNED_EVIDENCE_SEAL = "SIGNED_EVIDENCE_SEAL";
+	public static final String SIGNED_WITNESS_DEPOSITION_DOCUMENT = "Signed_Witness_Deposition_Document.pdf";
+	public static final String SIGNED_EVIDENCE_SEAL = "Signed_Evidence_Seal.pdf";
 
 	public static final String ARTIFACT_SIGN_ERROR = "ARTIFACT_SIGN_ERROR";
 	public static final String ARTIFACT_NOT_FOUND = "ARTIFACT_NOT_FOUND";
@@ -167,4 +168,9 @@ public class ServiceConstants {
 	public static final String UPDATE_CASE_WITNESS_ERR = "UPDATE_CASE_WITNESS_ERR";
 	public static final String UPDATE_CASE_ERR="UPDATE_CASE_ERR";
 	public static final String CREATE = "CREATE";
+	public static final String SAVE_DRAFT = "SAVE_DRAFT";
+	public static final String SUBMIT = "SUBMIT";
+	public static final String PROSECUTION_WITNESS="PW";
+	public static final String DEFENCE_WITNESS="DW";
+	public static final String COURT_WITNESS="CW";
 }

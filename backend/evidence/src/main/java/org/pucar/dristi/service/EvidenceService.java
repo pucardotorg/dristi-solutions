@@ -90,10 +90,11 @@ public class EvidenceService {
             // Enrich applications
             evidenceEnrichment.enrichEvidenceRegistration(body);
 
-            if(WITNESS_DEPOSITION.equalsIgnoreCase(body.getArtifact().getArtifactType())){
+            String tag = body.getArtifact().getTag();
+            if(WITNESS_DEPOSITION.equalsIgnoreCase(body.getArtifact().getArtifactType()) &&
+             SAVE_DRAFT.equalsIgnoreCase(body.getArtifact().getWorkflow().getAction())) {
                 validateWitnessDeposition(body);
-                evidenceEnrichment.enrichTag(body);
-                updateCaseWitnessDeposition(body);
+                tag = evidenceEnrichment.enrichPseudoTag(body);
             }
             // Initiate workflow for the new application- //todo witness deposition is part of case filing or not
             if ((body.getArtifact().getArtifactType() != null &&
@@ -105,6 +106,7 @@ public class EvidenceService {
             } else {
                 producer.push(config.getEvidenceCreateWithoutWorkflowTopic(), body);
             }
+            body.getArtifact().setTag(tag);
             callNotificationService(body,false,true);
             return body.getArtifact();
         } catch (CustomException e) {
@@ -436,7 +438,9 @@ public class EvidenceService {
                     }
                 }
             }
-            if(WITNESS_DEPOSITION.equalsIgnoreCase(evidenceRequest.getArtifact().getArtifactType())){
+            if(WITNESS_DEPOSITION.equalsIgnoreCase(evidenceRequest.getArtifact().getArtifactType())
+             && SUBMIT.equalsIgnoreCase(evidenceRequest.getArtifact().getWorkflow().getAction())) {
+                evidenceEnrichment.enrichTag(evidenceRequest);
                 updateCaseWitnessDeposition(evidenceRequest);
             }
 
@@ -962,6 +966,8 @@ public class EvidenceService {
                         MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedArtifactData, fileName);
                         String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
+                        WorkflowObject workflow = new WorkflowObject();
+
                         if (isWitnessDeposition != null && isWitnessDeposition) {
                             Document document = Document.builder()
                                     .id(UUID.randomUUID().toString())
@@ -970,6 +976,8 @@ public class EvidenceService {
                                     .additionalDetails(Map.of(NAME, fileName))
                                     .build();
                             existingArtifact.setFile(document);
+                            workflow.setAction(SIGN);
+                            existingArtifact.setIsEvidenceMarkedFlow(Boolean.FALSE);
                         }
                         else{
                             Document seal = Document.builder()
@@ -979,9 +987,10 @@ public class EvidenceService {
                                     .additionalDetails(Map.of(NAME, fileName))
                                     .build();
                             existingArtifact.setSeal(seal);
+                            workflow.setAction(E_SIGN);
+                            existingArtifact.setIsEvidenceMarkedFlow(Boolean.TRUE);
+                            existingArtifact.setIsEvidence(Boolean.TRUE);
                         }
-                        WorkflowObject workflow = existingArtifact.getWorkflow();
-                        workflow.setAction(SIGN);
                         existingArtifact.setWorkflow(workflow);
 
                         EvidenceRequest evidenceRequest = EvidenceRequest.builder().artifact(existingArtifact).requestInfo(requestInfo).build();
