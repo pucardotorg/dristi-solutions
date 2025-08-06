@@ -966,6 +966,8 @@ public class EvidenceService {
                         MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedArtifactData, fileName);
                         String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
 
+                        WorkflowObject workflow = new WorkflowObject();
+
                         if (isWitnessDeposition != null && isWitnessDeposition) {
                             Document document = Document.builder()
                                     .id(UUID.randomUUID().toString())
@@ -974,6 +976,8 @@ public class EvidenceService {
                                     .additionalDetails(Map.of(NAME, fileName))
                                     .build();
                             existingArtifact.setFile(document);
+                            workflow.setAction(SIGN);
+                            existingArtifact.setIsEvidenceMarkedFlow(Boolean.FALSE);
                         }
                         else{
                             Document seal = Document.builder()
@@ -983,9 +987,10 @@ public class EvidenceService {
                                     .additionalDetails(Map.of(NAME, fileName))
                                     .build();
                             existingArtifact.setSeal(seal);
+                            workflow.setAction(E_SIGN);
+                            existingArtifact.setIsEvidenceMarkedFlow(Boolean.TRUE);
+                            existingArtifact.setIsEvidence(Boolean.TRUE);
                         }
-                        WorkflowObject workflow = existingArtifact.getWorkflow();
-                        workflow.setAction(SIGN);
                         existingArtifact.setWorkflow(workflow);
 
                         EvidenceRequest evidenceRequest = EvidenceRequest.builder().artifact(existingArtifact).requestInfo(requestInfo).build();
