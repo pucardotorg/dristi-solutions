@@ -131,7 +131,7 @@ async function orderProclamation(
     const pdfKey =
       qrCode === "true"
         ? config.pdf.order_issue_proclamation_qr
-        : config.pdf.order_issue_proclamation;
+        : config.pdf.order_proclamation_proclamation;
 
     if (compositeOrder) {
       const pdfResponse = await handleApiCall(
