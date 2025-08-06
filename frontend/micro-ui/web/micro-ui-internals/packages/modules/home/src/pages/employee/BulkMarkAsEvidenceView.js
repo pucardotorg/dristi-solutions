@@ -174,13 +174,13 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
             artifactNumber: MarkAsEvidence?.artifactNumber,
             signedArtifactData: parseXml(data, "data"),
             isWitnessDeposition: false,
-            signed: true,
+            signed: false,
             errorMsg: parseXml(data, "error"),
             tenantId: tenantId,
           });
         }
       } catch (error) {
-        console.error(`Error fetching MarkAsEvidence ${MarkAsEvidence?.bailId}:`, error?.message);
+        console.error(`Error fetching MarkAsEvidence ${MarkAsEvidence?.artifactNumber}:`, error?.message);
       }
     });
 

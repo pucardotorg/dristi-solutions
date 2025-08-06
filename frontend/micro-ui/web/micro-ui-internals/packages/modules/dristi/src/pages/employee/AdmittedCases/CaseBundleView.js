@@ -265,7 +265,6 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     filingNumber + "completeEvidence",
     filingNumber
   );
-  console.log("completeEvidenceData", completeEvidenceData);
 
   const combinedEvidenceList = useMemo(() => {
     const directEvidenceList = directEvidenceData?.artifacts || [];
@@ -1582,7 +1581,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         {evidenceFileStoreMap?.get(selectedFileStoreId)?.seal?.fileStore &&
           evidenceFileStoreMap?.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED" && (
             <DocViewerWrapper
-              key={"selectedFileStoreId"}
+              key={"seal-document"}
               tenantId={tenantId}
               fileStoreId={evidenceFileStoreMap?.get(selectedFileStoreId)?.seal?.fileStore}
               showDownloadOption={false}
@@ -1596,7 +1595,15 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   }, [evidenceFileStoreMap, selectedFileStoreId, tenantId]);
 
   const dynamicCaseFileStructure = generateCaseFileStructure(caseDetails?.documents || []);
+  const selectedDocumentData = useMemo(() => {
+    if (!selectedDocument || !dynamicCaseFileStructure) return null;
 
+    return dynamicCaseFileStructure
+      ?.flatMap((item) =>
+        item.hasChildren ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))] : [item]
+      )
+      ?.find((item) => item.id === selectedDocument);
+  }, [selectedDocument, dynamicCaseFileStructure]);
   if (
     loading ||
     isDirectEvidenceLoading ||
@@ -1692,25 +1699,6 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       </div>
     );
   };
-  console.log(menuData, "menuData");
-  console.log(selectedDocument, "selectedDocument");
-  console.log(selectedFileStoreId, "selectedFileStoreId");
-
-  console.log(evidenceFileStoreMap, "evidenceFileStoreMap");
-  console.log(
-    dynamicCaseFileStructure
-      ?.flatMap((item) =>
-        item.hasChildren ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))] : [item]
-      )
-      ?.find((item) => item.id === selectedDocument)?.title &&
-      `- ${t(
-        dynamicCaseFileStructure
-          ?.flatMap((item) =>
-            item.hasChildren ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))] : [item]
-          )
-          ?.find((item) => item.id === selectedDocument)?.title
-      )}`
-  );
 
   return (
     <React.Fragment>
@@ -1735,22 +1723,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           <div>
             {selectedDocument && selectedFileStoreId && (
               <span style={{ display: "flex", gap: "10px", fontFamily: "Roboto", fontWeight: "700", fontStyle: "bold", fontSize: "20px" }}>
-                {dynamicCaseFileStructure
-                  ?.flatMap((item) =>
-                    item.hasChildren
-                      ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))]
-                      : [item]
-                  )
-                  ?.find((item) => item.id === selectedDocument)?.title &&
-                  `${t(
-                    dynamicCaseFileStructure
-                      ?.flatMap((item) =>
-                        item.hasChildren
-                          ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))]
-                          : [item]
-                      )
-                      ?.find((item) => item.id === selectedDocument)?.title
-                  )}`}
+                {selectedDocumentData?.title && t(selectedDocumentData.title)}
                 {evidenceFileStoreMap &&
                   evidenceFileStoreMap.has(selectedFileStoreId) &&
                   evidenceFileStoreMap?.get(selectedFileStoreId)?.evidenceMarkedStatus !== null && (

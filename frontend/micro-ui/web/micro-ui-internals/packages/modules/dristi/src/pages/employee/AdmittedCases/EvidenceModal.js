@@ -14,17 +14,14 @@ import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Util
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import DocViewerWrapper from "../docViewerWrapper";
 import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
-import ESignSignatureModal from "../../../components/ESignSignatureModal";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import { cleanString, getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { useToast } from "../../../components/Toast/useToast";
-import Button from "../../../components/Button";
 import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders/src/pages/employee/GenerateOrders";
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
 import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
 import CustomChip from "../../../components/CustomChip";
-import { HomeService } from "../../../../../home/src/hooks/services";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -105,24 +102,8 @@ const EvidenceModal = ({
   };
 
   const computeDefaultBOTD = useMemo(() => {
-    const getAdiaryEntry = async () => {
-      const response = await DRISTIService.aDiaryEntrySearch({
-        criteria: {
-          tenantId: tenantId,
-          courtId: localStorage.getItem("courtId"),
-          caseId: caseId,
-          referenceId: documentSubmission?.[0]?.artifactList?.artifactNumber,
-        },
-        pagination: {
-          limit: 10,
-          offSet: 0,
-        },
-      });
-      console.log(response);
-    };
-    getAdiaryEntry();
     return `Document marked as evidence exhibit number ${documentSubmission?.[0]?.artifactList?.artifactNumber}`;
-  }, [documentSubmission, tenantId]);
+  }, [documentSubmission]);
 
   useEffect(() => {
     setBusinessOfTheDay(computeDefaultBOTD);
@@ -716,13 +697,36 @@ const EvidenceModal = ({
         {modalType !== "Submissions" ? (
           currentDiaryEntry && artifact ? (
             <div className="application-view">
-              <DocViewerWrapper
+              <React.Fragment>
+                <DocViewerWrapper
+                  key={"selectedFileStoreId"}
+                  tenantId={tenantId}
+                  fileStoreId={artifact?.file?.fileStore}
+                  showDownloadOption={false}
+                  docHeight="100%"
+                  docWidth="100%"
+                  docViewerStyle={{ maxWidth: "100%" }}
+                />
+
+                {artifact?.seal?.fileStore && artifact?.evidenceMarkedStatus === "COMPLETED" && (
+                  <DocViewerWrapper
+                    key={"selectedFileStoreId"}
+                    tenantId={tenantId}
+                    fileStoreId={artifact?.seal?.fileStore}
+                    showDownloadOption={false}
+                    docHeight="100%"
+                    docWidth="100%"
+                    docViewerStyle={{ maxWidth: "100%" }}
+                  />
+                )}
+              </React.Fragment>
+              {/* <DocViewerWrapper
                 fileStoreId={artifact?.file?.fileStore}
                 tenantId={tenantId}
                 docWidth={"calc(80vw * 62 / 100)"}
                 docHeight={"unset"}
                 showDownloadOption={false}
-              />
+              /> */}
             </div>
           ) : (
             documentSubmission?.map((docSubmission, index) => (

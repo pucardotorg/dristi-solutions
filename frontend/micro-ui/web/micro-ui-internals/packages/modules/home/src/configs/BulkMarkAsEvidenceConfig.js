@@ -2,8 +2,8 @@ const defaultSearchValues = {
   caseTitle: "",
 };
 
-const limit = parseInt(sessionStorage.getItem("bulkMarkAsEvidenceLimit") || 10);
-const offset = parseInt(sessionStorage.getItem("bulkMarkAsEvidenceOffset") || 0);
+const limit = parseInt(sessionStorage.getItem("bulkMarkAsEvidenceLimit")) || 10;
+const offset = parseInt(sessionStorage.getItem("bulkMarkAsEvidenceOffset")) || 0;
 
 export const bulkMarkAsEvidenceConfig = {
   label: "CS_HOME_BULK_MARK_AS_EVIDENCE",

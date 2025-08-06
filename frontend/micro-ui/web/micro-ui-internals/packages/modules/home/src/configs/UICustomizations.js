@@ -695,7 +695,7 @@ export const UICustomizations = {
         ...(caseTitle && { searchableFields: caseTitle }),
         ...(courtId && { courtId }),
       };
-      const bulkBailBondSignCaseTitle = requestCriteria?.state?.searchForm && requestCriteria?.state?.searchForm?.caseTitle;
+      const bulkEvidenceCaseTitle = requestCriteria?.state?.searchForm && requestCriteria?.state?.searchForm?.caseTitle;
 
       return {
         ...requestCriteria,
@@ -726,8 +726,7 @@ export const UICustomizations = {
             }
 
             if (setMarkAsEvidenceSignList) setMarkAsEvidenceSignList(markAsEvidenceItems);
-            if (setMarkAsEvidencePaginationData)
-              setMarkAsEvidencePaginationData({ limit: limit, offset: offset, caseTitle: bulkBailBondSignCaseTitle });
+            if (setMarkAsEvidencePaginationData) setMarkAsEvidencePaginationData({ limit: limit, offset: offset, caseTitle: bulkEvidenceCaseTitle });
 
             return {
               ...data,

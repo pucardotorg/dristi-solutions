@@ -1247,6 +1247,7 @@ export const UICustomizations = {
           : []),
         ...(userInfo.roles.map((role) => role.code).includes("EMPLOYEE") &&
         !row.isEvidence &&
+        row?.artifactType !== "WITNESS_DEPOSITION" &&
         !row?.isVoid &&
         !(row?.status !== "SUBMITTED" && row?.filingType === "DIRECT")
           ? row?.evidenceMarkedStatus !== null

@@ -1465,7 +1465,8 @@ const AdmittedCaseV2 = () => {
       const fullName = getFullName(" ", individualData?.name?.givenName, individualData?.name?.otherNames, individualData?.name?.familyName);
       if (evidence) {
         setArtifact({ ...evidence, sender: fullName });
-        setShow(true);
+        setShowMakeAsEvidenceModal(true);
+        // setShow(true);
       }
     } catch (error) {
       console.error("Error fetching evidence:", error);
@@ -1632,9 +1633,9 @@ const AdmittedCaseV2 = () => {
       if (doc) {
         setDocumentSubmission(doc);
       }
-      if (sessionStorage.getItem("markAsEvidenceSelectedItem")) {
-        console.log(sessionStorage.getItem("markAsEvidenceSelectedItem"));
-      } else setShow(true);
+      if (!sessionStorage.getItem("markAsEvidenceSelectedItem")) {
+        setShow(true);
+      }
     }
   }, []);
 

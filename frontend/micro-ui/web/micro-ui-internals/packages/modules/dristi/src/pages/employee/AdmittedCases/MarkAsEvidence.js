@@ -1,22 +1,24 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Modal from "../../../components/Modal";
 import { Dropdown, Loader, CloseSvg, TextInput, LabelFieldPair, CardLabel } from "@egovernments/digit-ui-react-components";
 import { DRISTIService } from "../../../services";
 import SuccessBannerModal from "../../../../../submissions/src/components/SuccessBannerModal";
-import SignatureSuccessModal from "../../../../../submissions/src/components/SignatureSuccessModal";
 import { MarkAsEvidenceAction } from "../../../Utils/submissionWorkflow";
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
 import { Urls } from "../../../hooks";
 import Axios from "axios";
-import { set } from "lodash";
+import { useHistory } from "react-router-dom";
+import { InfoCard } from "@egovernments/digit-ui-components";
 
 // Helper functions for button labels and actions
-const getButtonLabels = (isJudge, evidenceDetails, t) => {
+const getButtonLabels = (isJudge, evidenceDetails, t, currentDiaryEntry = false) => {
   return {
     // Primary action button label
     saveLabel: isJudge
       ? evidenceDetails?.evidenceMarkedStatus === "COMPLETED"
-        ? t("CORE_COMMON_SAVE")
+        ? currentDiaryEntry
+          ? t("CORE_COMMON_SAVE")
+          : false
         : t("CS_ESIGN")
       : evidenceDetails?.evidenceMarkedStatus === "COMPLETED"
       ? t("CORE_COMMON_SAVE")
@@ -30,16 +32,64 @@ const getButtonLabels = (isJudge, evidenceDetails, t) => {
       evidenceDetails?.evidenceMarkedStatus === "DRAFT_IN_PROGRESS" || evidenceDetails?.evidenceMarkedStatus === null
         ? t("CS_BULK_BACK")
         : evidenceDetails?.evidenceMarkedStatus === "COMPLETED"
-        ? t("CS_BULK_CANCEL")
+        ? currentDiaryEntry && t("CS_BULK_CANCEL")
         : t("EDIT_DETAILS"),
   };
 };
 
+const handleUpdateBusinessOfDayEntry = async (evidenceDetails, currentDiaryEntry, businessOfTheDay, history) => {
+  try {
+    let oldAdiaryEntry = currentDiaryEntry;
+    if (!currentDiaryEntry) {
+      oldAdiaryEntry = await DRISTIService.aDiaryEntrySearch(
+        {
+          criteria: {
+            referenceId: evidenceDetails?.artifactNumber,
+            tenantId: evidenceDetails?.tenantId,
+            courtId: evidenceDetails?.courtId,
+            caseId: evidenceDetails?.caseId,
+          },
+        },
+        {}
+      ).then((res) => console.log(res, "fdsf"));
+    }
+    await DRISTIService.aDiaryEntryUpdate(
+      {
+        diaryEntry: {
+          ...oldAdiaryEntry,
+          businessOfDay: businessOfTheDay,
+        },
+      },
+      {}
+    ).then(async () => {
+      history.goBack();
+    });
+  } catch (error) {
+    console.error("error: ", error);
+  }
+};
 // Helper function to get button actions
-const getButtonActions = (isJudge, handleSubmit, onESignClick, handleCancel, markAsEvidenceAction) => {
+const getButtonActions = (
+  isJudge,
+  handleSubmit,
+  onESignClick,
+  handleCancel,
+  markAsEvidenceAction,
+  handleUpdateBusinessOfDayEntry,
+  evidenceDetails,
+  currentDiaryEntry,
+  businessOfDay,
+  history
+) => {
   return {
     // Primary action handler
     saveAction: () => {
+      if (evidenceDetails?.evidenceMarkedStatus === "COMPLETED" && currentDiaryEntry) {
+        return handleUpdateBusinessOfDayEntry(evidenceDetails, currentDiaryEntry, businessOfDay, history);
+      }
+      if (evidenceDetails?.evidenceMarkedStatus === "PENDING_BULK_E-SIGN" && !isJudge) {
+        return handleSubmit();
+      }
       return isJudge ? onESignClick() : handleSubmit(isJudge ? "" : markAsEvidenceAction?.BULKSIGN);
     },
 
@@ -93,9 +143,7 @@ const MarkAsEvidence = ({
   showToast,
   paginatedData,
   evidenceDetailsObj,
-  setDocumentCounter = (e) => {
-    console.log(e, "in ff");
-  },
+  setDocumentCounter = (e) => {},
 }) => {
   const [loader, setLoader] = useState(false); // Loader state for API calls
   const [stepper, setStepper] = useState(0);
@@ -116,7 +164,8 @@ const MarkAsEvidence = ({
   const name = "Signature";
   const pageModule = "en";
   const accessToken = window.localStorage.getItem("token");
-  const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
+  const history = useHistory();
+  const currentDiaryEntry = history.location?.state?.diaryEntry;
   const [witnessTag, setWitnessTag] = useState(null);
   const filingNumber = useMemo(() => {
     if (evidenceDetailsObj?.filingNumber) {
@@ -147,7 +196,6 @@ const MarkAsEvidence = ({
       }));
     }
   };
-  console.log(caseDetails, "caseDetails");
 
   const { data: EvidenceNumberFormat, isLoading } = Digit.Hooks.useCommonMDMS(Digit.ULBService.getStateId(), "Evidence", ["Tag"], {
     select: (data) => {
@@ -334,10 +382,10 @@ const MarkAsEvidence = ({
               witnessTag: data.witnessTag || "",
               firstName: data.firstName || "",
               lastName: data.lastName || "",
-              middleName: data.lastName || "",
-              fullName: getFullName(" ", data.firstName, data.lastName, data.lastName),
+              middleName: data.middleName || "",
+              fullName: getFullName(" ", data.firstName, data.middleName, data.lastName),
               code: data.witnessTag,
-              displayName: data?.witnessTag + " (" + getFullName(" ", data.firstName, data.lastName, data.lastName) + ")",
+              displayName: data?.witnessTag + " (" + getFullName(" ", data.firstName, data.middleName, data.lastName) + ")",
             }
           : null;
       });
@@ -449,14 +497,13 @@ const MarkAsEvidence = ({
     if (filingNumber) {
       getCaseDetails();
     }
-  }, [filingNumber, courtId, userType, tenantId, artifactNumber, showToast, evidenceDetailsObj, t]);
+  }, [filingNumber, courtId, userType, tenantId, artifactNumber, evidenceDetailsObj, t]);
   useEffect(() => {
     checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
   }, [checkSignStatus, name, formData, uploadModalConfig, setIsSigned]);
 
   const handleMarkEvidence = async (action, seal = null, isEvidence = false) => {
     try {
-      if (action === null) return;
       const payload = {
         ...evidenceDetails,
         evidenceNumber: `${evidenceTag}${evidenceNumber}`,
@@ -602,6 +649,9 @@ const MarkAsEvidence = ({
   const handleCancel = async () => {
     try {
       clearEvidenceSessionData();
+      if (currentDiaryEntry) {
+        history.goBack();
+      }
       if (stepper === 0) {
         setShowMakeAsEvidenceModal(false);
         setDocumentCounter((prevCount) => prevCount + 1);
@@ -669,6 +719,7 @@ const MarkAsEvidence = ({
   };
 
   if (isLoading) return <Loader />;
+  console.log(evidenceDetails);
 
   return (
     <React.Fragment>
@@ -781,6 +832,9 @@ const MarkAsEvidence = ({
           headerBarEnd={
             <CloseBtn
               onClick={() => {
+                if (currentDiaryEntry) {
+                  history.goBack();
+                }
                 if (!isEvidenceLoading) {
                   setShowMakeAsEvidenceModal(false);
                   setDocumentCounter((prevCount) => prevCount + 1);
@@ -789,13 +843,30 @@ const MarkAsEvidence = ({
             />
           }
           actionSaveLabel={getButtonLabels(isJudge, evidenceDetails, t).saveLabel}
-          actionCustomLabelSubmit={getButtonActions(isJudge, handleSubmit, onESignClick, handleCancel, MarkAsEvidenceAction).customAction}
+          actionCustomLabelSubmit={
+            getButtonActions(isJudge, handleSubmit, onESignClick, handleCancel, MarkAsEvidenceAction, evidenceDetails).customAction
+          }
           actionCustomLabel={getButtonLabels(isJudge, evidenceDetails, t).customLabel}
-          actionSaveOnSubmit={getButtonActions(isJudge, handleSubmit, onESignClick, handleCancel, MarkAsEvidenceAction).saveAction}
+          actionSaveOnSubmit={
+            getButtonActions(
+              isJudge,
+              handleSubmit,
+              onESignClick,
+              handleCancel,
+              MarkAsEvidenceAction,
+              handleUpdateBusinessOfDayEntry,
+              evidenceDetails,
+              currentDiaryEntry,
+              businessOfDay,
+              history
+            ).saveAction
+          }
           actionCancelLabel={getButtonLabels(isJudge, evidenceDetails, t).cancelLabel}
           isBackButtonDisabled={isEvidenceLoading}
           isDisabled={isEvidenceLoading}
-          actionCancelOnSubmit={getButtonActions(isJudge, handleSubmit, onESignClick, handleCancel, MarkAsEvidenceAction).cancelAction}
+          actionCancelOnSubmit={
+            getButtonActions(isJudge, handleSubmit, onESignClick, handleCancel, MarkAsEvidenceAction, evidenceDetails).cancelAction
+          }
           formId="modal-action"
           customActionTextStyle={{ color: "#007e7e" }}
           customActionStyle={{ background: "transparent", border: "1px solid #007e7e" }}
@@ -864,16 +935,62 @@ const MarkAsEvidence = ({
       )}
 
       {stepper === 1 && isSigned && (
-        <SignatureSuccessModal
-          t={t}
-          handleCancel={handleCancel}
-          handleSubmit={() => handleSubmit(MarkAsEvidenceAction?.ESIGN)}
-          title="ADD_SIGNATURE"
-          noteText="YOUR_CUSTOM_NOTE"
-          containerStyle={{ padding: "20px", backgroundColor: "#f8f8f8" }}
-          headingStyle={{ color: "#0b0c28", fontSize: "28px" }}
-          infoCardStyle={{ fontStyle: "italic" }}
-        />
+        <Modal
+          headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
+          headerBarEnd={<CloseBtn onClick={handleCancel} />}
+          actionCancelLabel={t("CS_COMMON_BACK")}
+          actionCancelOnSubmit={handleCancel}
+          actionSaveLabel={t("SUBMIT_BUTTON")}
+          actionSaveOnSubmit={() => handleSubmit(MarkAsEvidenceAction?.ESIGN)}
+          className="add-signature-modal"
+        >
+          <div className="add-signature-main-div">
+            <InfoCard
+              variant={"default"}
+              label={t("PLEASE_NOTE")}
+              additionalElements={[
+                <span key="note">{t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}</span>,
+                <span style={{ fontWeight: "bold" }} key="note">
+                  {t("EVIDENCE_HEADING")}
+                </span>,
+              ]}
+              inline
+              textStyle={{}}
+              className={`custom-info-card`}
+            />
+            <div style={{ display: "flex", flexDirection: "row", gap: "16px" }}>
+              <h1
+                style={{
+                  margin: 0,
+                  fontFamily: "Roboto",
+                  fontSize: "24px",
+                  fontWeight: 700,
+                  lineHeight: "28.13px",
+                  textAlign: "left",
+                  color: "#3d3c3c",
+                }}
+              >
+                {t("YOUR_SIGNATURE")}
+              </h1>
+              <h2
+                style={{
+                  margin: 0,
+                  fontFamily: "Roboto",
+                  fontSize: "14px",
+                  fontWeight: 400,
+                  lineHeight: "16.41px",
+                  textAlign: "center",
+                  color: "#00703c",
+                  padding: "6px",
+                  backgroundColor: "#e4f2e4",
+                  borderRadius: "999px",
+                }}
+              >
+                {t("SIGNED")}
+              </h2>
+            </div>
+          </div>
+        </Modal>
       )}
 
       {stepper === 2 && (

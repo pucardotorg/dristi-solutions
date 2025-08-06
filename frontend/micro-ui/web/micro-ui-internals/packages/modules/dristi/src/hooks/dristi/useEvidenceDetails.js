@@ -32,7 +32,6 @@ const useEvidenceDetails = ({ url, params, body, config = {}, plainAccessRequest
         true
       );
       if (owner?.Employees?.length > 1) return "";
-      console.log(owner, "owner");
 
       return {
         name: `${owner?.Individual?.[0]?.name?.givenName} ${owner?.Individual?.[0]?.name?.familyName || ""}`.trim(),

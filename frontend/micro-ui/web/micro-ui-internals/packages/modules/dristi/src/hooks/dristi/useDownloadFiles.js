@@ -4,40 +4,6 @@ import axios from "axios";
 import JSZip from "jszip";
 
 const useDownloadFiles = () => {
-  // const downloadFile = useCallback(async (tenantId, fileStoreId, fileName = "downloadedFile") => {
-  //   if (!fileStoreId) {
-  //     return;
-  //   }
-  //   const token = localStorage.getItem("token");
-  //   const url = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
-
-  //   try {
-  //     const response = await axios.get(url, {
-  //       responseType: "blob",
-  //       headers: {
-  //         "auth-token": `${token}`,
-  //       },
-  //     });
-  //     const mimeType = response.data.type;
-  //     const extension = mimeType.split("/")[1];
-
-  //     const blob = new Blob([response.data], { type: mimeType });
-  //     const blobUrl = URL.createObjectURL(blob);
-
-  //     const link = document.createElement("a");
-  //     link.href = blobUrl;
-  //     link.download = `${fileName}.${extension}`;
-  //     document.body.appendChild(link);
-  //     link.click();
-  //     document.body.removeChild(link);
-  //     URL.revokeObjectURL(blobUrl);
-
-  //     return { blob, mimeType, extension };
-  //   } catch (error) {
-  //     console.error("Error downloading the file:", error);
-  //   }
-  // }, []);
-
   const downloadFilesAsZip = useCallback(async (tenantId, files, zipFileName = "downloaded_files") => {
     if (!files || !files.length) {
       console.warn("No files provided for download");
@@ -109,14 +75,18 @@ const useDownloadFiles = () => {
       return { success: true, failedFiles };
     } catch (error) {
       console.error("Error creating ZIP file:", error);
+
+      const loadingElement = document.querySelector('[style*="Preparing ZIP file"]');
+      if (loadingElement) {
+        document.body.removeChild(loadingElement);
+      }
+
       return { success: false, error };
     }
   }, []);
 
   return {
-    // downloadFile,
     downloadFilesAsZip,
-    // downloadPdf: downloadFile,
   };
 };
 
