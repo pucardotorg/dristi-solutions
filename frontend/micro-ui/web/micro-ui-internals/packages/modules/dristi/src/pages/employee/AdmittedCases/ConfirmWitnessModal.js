@@ -1,0 +1,45 @@
+import React from "react";
+import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
+import { CloseSvg } from "@egovernments/digit-ui-react-components";
+
+function ConfirmWitnessModal({ t, selectedWitness, witnessTag, onCancel, onSubmit }) {
+
+
+  const CloseBtn = (props) => {
+    return (
+      <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
+        <CloseSvg />
+      </div>
+    );
+  };
+  const Heading = (props) => {
+    return <h1 className="heading-m">{props.label}</h1>;
+  };
+ 
+
+  return (
+    <React.Fragment>
+      <Modal
+
+        actionCancelLabel={t("CS_BACK")}
+        actionCancelOnSubmit={onCancel}
+        actionSaveOnSubmit={onSubmit}
+        actionSaveLabel={t("SUBMIT_AND_E-SIGN")}
+        formId="modal-action"
+        headerBarMain={<Heading label={t("CS_CONFIRM_CORRECTION")} />}
+        headerBarEnd={<CloseBtn onClick={onCancel} />}
+
+      >
+        <div style={{ padding: "8px 0" }}>
+          <span>{t("ARE_YOU_SURE_YOU_WANT_TO_MARK")}</span>
+          <span>{selectedWitness?.label}</span>
+          <span>{t("AS")}</span>
+          <span>{witnessTag}</span>
+          <span>{t("THIS_ACTION_CAN_NOT_BE_REVERSED_LATER")}</span>
+        </div>
+      </Modal>
+    </React.Fragment>
+  );
+}
+
+export default ConfirmWitnessModal;

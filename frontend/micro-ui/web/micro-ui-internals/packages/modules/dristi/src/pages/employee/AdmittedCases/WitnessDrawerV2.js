@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Dropdown, LabelFieldPair, CardLabel, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import { LeftArrow, CustomAddIcon } from "../../../icons/svgIndex";
@@ -15,8 +15,38 @@ import { getAdvocates } from "@egovernments/digit-ui-module-orders/src/utils/cas
 import { constructFullName, removeInvalidNameParts } from "@egovernments/digit-ui-module-orders/src/utils";
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
 import { DRISTIService } from "../../../services";
+import { submissionService } from "../../../../../submissions/src/hooks/services";
+import WitnessDepositionReviewModal from "./WitnessDepositionReviewModal";
+import ConfirmWitnessModal from "./ConfirmWitnessModal";
+import isEqual from "lodash/isEqual";
+import WitnessDepositionSignatureModal from "./WitnessDepositionSignatureModal";
+import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
+import WitnessDepositionESignLockModal from "./WitnessDepositionESignLockModal";
+import AddWitnessMobileNumberModal from "./AddWitnessMobileNumberModal";
+import SuccessBannerModal from "../../../../../submissions/src/components/SuccessBannerModal";
+import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
 
-const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseDetails, hearing, hearingId, setAddPartyModal }) => {
+const formatAddress = (addr) => {
+  if (!addr) return "";
+  // const { addressLine1 = "", addressLine2 = "", buildingName = "", street = "", city = "", pincode = "" } = addr;
+
+  const { locality = "", city = "", district = "", state = "", pincode = "" } = addr;
+
+  return `${locality}, ${city}, ${district}, ${state}, ${pincode}`.trim();
+};
+
+const WitnessDrawerV2 = ({
+  isOpen,
+  onClose,
+  tenantId,
+  onSubmit,
+  attendees,
+  caseDetails,
+  hearing,
+  hearingId,
+  setAddPartyModal,
+  artifactNumber = null,
+}) => {
   const { t } = useTranslation();
   const textAreaRef = useRef(null);
   const [options, setOptions] = useState([]);
@@ -25,7 +55,7 @@ const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseD
     { label: "DW", value: "DW" },
     { label: "CW", value: "CW" },
   ]);
-  const [selectedWitnessType, setSelectedWitnessType] = useState({ label: "PW", value: "PW" });
+  const [selectedWitnessType, setSelectedWitnessType] = useState({});
   const [selectedWitness, setSelectedWitness] = useState({});
   const [witnessDepositionText, setWitnessDepositionText] = useState("");
   const [isRecording, setIsRecording] = useState(false);
@@ -35,11 +65,26 @@ const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseD
   const [signedDocumentUploadID, setSignedDocumentUploadID] = useState("");
   const [additionalDetails, setAdditionalDetails] = useState({});
   const [activeTabs, setActiveTabs] = useState([]);
-  const [activeTabIndex, setActiveTabIndex] = useState(0);
+  const [activeTabIndex, setActiveTabIndex] = useState(0); // set activetabindex based on new or already existing tab.
   const [currentEvidence, setCurrentEvidence] = useState(null);
   const [showErrorToast, setShowErrorToast] = useState(null);
   const userInfo = Digit?.UserService?.getUser?.()?.info;
-  const isInitialLoad = useRef(true);
+  const urlParams = new URLSearchParams(window.location.search);
+  const [showWitnessDepositionReview, setShowWitnessDepositionReview] = useState(false);
+  const [witnessDepositionFileStoreId, setWitnessDepositionFileStoreId] = useState("");
+  const [showSignatureModal, setShowsignatureModal] = useState(false);
+  const [showConfirmWitnessModal, setShowConfirmWitnessModal] = useState(false);
+  const [currentArtifactNumber, setCurrentArtifactNumber] = useState(null);
+  const [witnessDepositionUploadLoader, setWitnessDepositionUploadLoader] = useState(false);
+  const [showWitnessDepositionESign, setShowWitnessDepositionESign] = useState(false);
+  const { downloadPdf } = useDownloadCasePdf();
+  const [showAddWitnessMobileNumberModal, setShowAddWitnessMobileNumberModal] = useState(false);
+  const [witnesMobileNumber, setWitnessMobileNumber] = useState("");
+  const [witnessDepositionSignatureURL, setWitnessDepositionSignatureURL] = useState("");
+  const [showUploadSignature, setShowUploadSignature] = useState(false);
+  const [loader, setLoader] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [disableWitnessType, setDisableWitnessType] = useState(false);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -70,13 +115,12 @@ const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseD
     Boolean(caseDetails?.filingNumber && caseDetails?.courtId)
   );
 
-  const evidenceList = useMemo(() => evidenceData?.artifacts?.[0], [evidenceData]);
+  const evidenceList = useMemo(() => evidenceData?.artifacts?.filter((artifact) => artifact?.status === "DRAFT_IN_PROGRESS"), [evidenceData]);
 
   const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "FilingType" },
   ]);
-
-  const filingType = useMemo(() => getFilingType(filingTypeData?.FilingType, "Direct"), [filingTypeData?.FilingType]);
+  const filingType = useMemo(() => getFilingType(filingTypeData?.FilingType, "CaseFiling"), [filingTypeData?.FilingType]);
 
   const onClickAddWitness = () => {
     setAddPartyModal(true);
@@ -102,25 +146,56 @@ const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseD
           const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
           const poaHolder = caseDetails?.poaHolders?.find((poa) => poa?.individualId === item?.individualId);
           if (poaHolder) {
+            const userData = caseDetails?.additionalDetails?.complainantDetails?.formdata?.find(
+              (data) => data?.data?.poaVerification?.individualDetails?.individualId === item?.individualId
+            )?.data;
+
+            const mobileNumber = userData?.poaVerification?.mobileNumber;
+            const age = userData?.poaAge || "";
+            const address = formatAddress(userData?.poaAddressDetails);
+            const tag = item?.additionalDetails?.tag;
+
             return {
               code: fullName,
               name: `${fullName} (Complainant, PoA Holder)`,
-              uuid: allAdvocates[item?.additionalDetails?.uuid],
-              partyUuid: item?.additionalDetails?.uuid,
+              representedByUuid: allAdvocates[item?.additionalDetails?.uuid],
+              uuid: item?.additionalDetails?.uuid,
               individualId: item?.individualId,
               isJoined: true,
               partyType: "complainant",
               representingLitigants: poaHolder?.representingLitigants?.map((lit) => lit?.individualId),
+              witnessMobileNumbers: mobileNumber ? [mobileNumber] : [],
+              sourceName: fullName,
+              age,
+              address,
+              designation: "",
+              tag,
             };
           }
+
+          const userData = caseDetails?.additionalDetails?.complainantDetails?.formdata?.find(
+            (data) => data?.data?.complainantVerification?.individualDetails?.individualId === item?.individualId
+          )?.data;
+
+          const mobileNumber = userData?.complainantVerification?.mobileNumber;
+          const age = userData?.complainantAge || "";
+          const address = formatAddress(userData?.addressDetails);
+          const designation = userData?.complainantDesignation || "";
+          const tag = item?.additionalDetails?.tag;
           return {
             code: fullName,
             name: `${fullName} (Complainant)`,
-            uuid: allAdvocates[item?.additionalDetails?.uuid],
-            partyUuid: item?.additionalDetails?.uuid,
+            representedByUuid: allAdvocates[item?.additionalDetails?.uuid],
+            uuid: item?.additionalDetails?.uuid,
             individualId: item?.individualId,
             isJoined: true,
             partyType: "complainant",
+            age,
+            address,
+            designation: designation,
+            witnessMobileNumbers: mobileNumber ? [mobileNumber] : [],
+            sourceName: fullName,
+            tag,
           };
         }) || []
     );
@@ -133,17 +208,34 @@ const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseD
         ?.filter((item) => !complainantIds.has(item?.individualId))
         ?.map((item) => {
           const fullName = removeInvalidNameParts(item?.name);
+
+          const userData = caseDetails?.additionalDetails?.complainantDetails?.formdata?.find(
+            (data) => data?.data?.poaVerification?.individualDetails?.individualId === item?.individualId
+          )?.data;
+
+          const mobileNumber = userData?.poaVerification?.mobileNumber;
+          const age = userData?.poaAge || "";
+          const address = formatAddress(userData?.poaAddressDetails);
+          const tag = item?.additionalDetails?.tag;
           return {
             code: fullName,
             name: `${fullName} (PoA Holder)`,
+            uuid: item?.additionalDetails?.uuid,
+            representedByUuid: allAdvocates[item?.additionalDetails?.uuid],
             representingLitigants: item?.representingLitigants?.map((lit) => lit?.individualId),
             individualId: item?.individualId,
             isJoined: true,
             partyType: "poaHolder",
+            witnessMobileNumbers: mobileNumber ? [mobileNumber] : [],
+            sourceName: fullName,
+            age,
+            address,
+            designation: "",
+            tag,
           };
         }) || []
     );
-  }, [caseDetails, complainants]);
+  }, [caseDetails, complainants, allAdvocates]);
 
   const respondents = useMemo(() => {
     return (
@@ -151,245 +243,307 @@ const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseD
         ?.filter((item) => item?.partyType?.includes("respondent"))
         .map((item) => {
           const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
-          const uniqueId = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
+          const userData = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
             (obj) => obj?.data?.respondentVerification?.individualDetails?.individualId === item?.individualId
-          )?.uniqueId;
+          );
+          const uniqueId = userData?.uniqueId;
+          const mobileNumber = userData?.data?.phonenumbers?.mobileNumber;
+          const age = userData?.data?.respondentAge || "";
+          const address = formatAddress(userData?.data?.addressDetails?.[0]?.addressDetails);
+          const designation = "";
+          const tag = item?.additionalDetails?.tag;
+
           return {
             code: fullName,
             name: `${fullName} (Accused)`,
-            uuid: allAdvocates[item?.additionalDetails?.uuid],
-            partyUuid: item?.additionalDetails?.uuid,
+            representedByUuid: allAdvocates[item?.additionalDetails?.uuid],
+            uuid: item?.additionalDetails?.uuid,
             individualId: item?.individualId,
             isJoined: true,
             partyType: "respondent",
             uniqueId,
+            witnessMobileNumbers: mobileNumber?.length > 0 ? mobileNumber : [],
+            sourceName: fullName,
+            age,
+            address,
+            designation,
+            tag,
           };
         }) || []
     );
   }, [caseDetails, allAdvocates]);
 
-  const unJoinedLitigant = useMemo(() => {
-    return (
-      caseDetails?.additionalDetails?.respondentDetails?.formdata
-        ?.filter((data) => !data?.data?.respondentVerification?.individualDetails?.individualId)
-        ?.map((data) => {
-          const fullName = constructFullName(data?.data?.respondentFirstName, data?.data?.respondentMiddleName, data?.data?.respondentLastName);
-          return {
-            code: fullName,
-            name: `${fullName} (Accused)`,
-            uuid: data?.data?.uuid,
-            isJoined: false,
-            partyType: "respondent",
-            uniqueId: data?.uniqueId,
-          };
-        }) || []
-    );
-  }, [caseDetails]);
+  const advocates = useMemo(
+    () =>
+      caseDetails?.representatives?.map((rep) => {
+        const advocates = caseDetails?.additionalDetails?.advocateDetails?.formdata;
 
-  const allParties = useMemo(() => [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant], [
+        let mobileNumber = null;
+        for (let i = 0; i < advocates?.length; i++) {
+          for (let j = 0; j < advocates[i]?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.length; j++) {
+            const advocateData = advocates[i]?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.[j];
+            if (advocateData?.advocateBarRegNumberWithName?.advocateUuid === rep?.additionalDetails?.uuid) {
+              mobileNumber = advocateData?.advocateNameDetails?.advocateMobileNumber;
+              break;
+            }
+          }
+        }
+        const tag = rep?.additionalDetails?.tag;
+        return {
+          name: `${rep?.additionalDetails?.advocateName} (Advocate)`,
+          partyType: `ADVOCATE`,
+          uuid: rep?.additionalDetails?.uuid,
+          representingList: rep?.representing?.map((client) => removeInvalidNameParts(client?.additionalDetails?.fullName))?.join(", "),
+          witnessMobileNumbers: mobileNumber ? [mobileNumber] : [],
+          sourceName: rep?.additionalDetails?.advocateName,
+          address: "",
+          age: "",
+          designation: "",
+          tag,
+        };
+      }) || [],
+    [caseDetails]
+  );
+
+  const witnesses = useMemo(
+    () =>
+      caseDetails?.additionalDetails?.witnessDetails?.formdata?.map((witness) => {
+        const mobileNumber = witness?.data?.phonenumbers?.mobileNumber;
+        const address = formatAddress(witness?.data?.addressDetails?.[0]?.addressDetails);
+        const tag = witness?.data?.witnessTag;
+
+        return {
+          name: getFormattedName(
+            witness?.data?.firstName,
+            witness?.data?.middleName,
+            witness?.data?.lastName,
+            witness?.data?.witnessDesignation,
+            "(Witness)"
+          ),
+          age: witness?.data?.witnessAge || "",
+          gender: witness?.data?.gender,
+          designation: witness?.data?.witnessDesignation || "",
+          address,
+          uniqueId: witness?.uniqueId,
+          partyType: "witness",
+          witnessMobileNumbers: mobileNumber?.length > 0 ? mobileNumber : [],
+          sourceName: getFormattedName(
+            witness?.data?.firstName,
+            witness?.data?.middleName,
+            witness?.data?.lastName,
+            witness?.data?.witnessDesignation
+          ),
+          tag,
+        };
+      }) || [],
+    [caseDetails]
+  );
+
+  const allParties = useMemo(() => [...complainants, ...poaHolders, ...respondents, ...advocates, ...witnesses], [
     complainants,
     poaHolders,
     respondents,
-    unJoinedLitigant,
+    advocates,
+    witnesses,
   ]);
+
+  // Create a new draft
+  const createNewDraft = useCallback(
+    async (evidenceList = []) => {
+      try {
+        const newTab = {
+          artifactNumber: null, // Will be set after saving
+          sourceName: "Deposition", // Default name until saved
+          sourceType: selectedWitnessType?.value === "PW" ? "COMPLAINANT" : selectedWitnessType?.value === "DW" ? "ACCUSED" : "COURT",
+          sourceID: selectedWitness?.value,
+          content: "",
+          artifactType: "WITNESS_DEPOSITION",
+          caseId: caseDetails?.id,
+          filingNumber: caseDetails?.filingNumber,
+          tenantId,
+          isNew: true, // Flag to identify unsaved tabs
+        };
+
+        // Add the new tab to the list and set it as active
+        const updatedTabs = [...evidenceList, newTab];
+        setActiveTabs(updatedTabs);
+        setActiveTabIndex(updatedTabs.length - 1);
+        setWitnessDepositionText(""); // Clear the text area for new draft
+
+        // No need to call API yet - we'll create the evidence when user saves the draft
+      } catch (error) {
+        console.error("Error creating draft:", error);
+      }
+    },
+    [selectedWitnessType, selectedWitness, caseDetails, tenantId, activeTabs, setActiveTabs, setActiveTabIndex, setWitnessDepositionText]
+  );
+
+  useEffect(() => {
+    const partiesOption =
+      allParties?.map((party) => ({
+        label: party?.name,
+        value: party?.uuid || party?.uniqueId, // For witnesses, uuid is not available so we use uniqueId.
+      })) || [];
+
+    setOptions(partiesOption);
+  }, [caseDetails, hearingData, allParties, activeTabs.length]);
+
+  useEffect(() => {
+    createNewDraft([]);
+  }, []);
 
   // Process evidence list when data is loaded
   useEffect(() => {
-    if (evidenceList?.length > 0) {
-      // Use the whole evidence list directly
+    if (!isEvidenceLoading && evidenceList?.length > 0) {
       const evidenceWithUnsaved = [...evidenceList];
 
-      // Preserve any unsaved tabs that might exist
-      const unsavedTabs = activeTabs?.filter((tab) => tab?.isNew);
-      if (unsavedTabs?.length > 0) {
-        evidenceWithUnsaved?.push(...unsavedTabs);
-      }
-
-      setActiveTabs(evidenceWithUnsaved);
-
-      // Set the first tab as active if there are tabs and no tab is currently selected
-      if (evidenceWithUnsaved.length > 0 && activeTabIndex === -1) {
-        setActiveTabIndex(0);
-        const firstTab = evidenceWithUnsaved[0];
-        setCurrentEvidence(firstTab);
-
-        // Update witness deposition text from tab content
-        setWitnessDepositionText(firstTab?.description || "");
-
-        // Try to find matching witness in options
-        if (firstTab?.sourceName) {
-          const matchingWitness = options?.find((opt) => opt?.value === firstTab?.sourceID);
-          if (matchingWitness) {
-            setSelectedWitness({ uuid: matchingWitness?.value });
-          }
+      if (artifactNumber) {
+        const artifact = evidenceWithUnsaved?.find((tab) => tab?.artifactNumber === artifactNumber);
+        if (artifact) {
+          setActiveTabs([artifact]); // basically we show only that particular tab when editing an evidence(it will have corresponding artifact number)
+          setActiveTabIndex(0);
+          setCurrentEvidence(artifact);
+          setSelectedWitnessType({ label: artifact?.tag, value: artifact?.tag });
+          setWitnessDepositionText(artifact?.description || "");
+          return;
         }
+      } else if (currentArtifactNumber) {
+        const artifact = evidenceWithUnsaved?.find((tab) => tab?.artifactNumber === currentArtifactNumber);
+        if (artifact) {
+          const activeindex = evidenceWithUnsaved?.findIndex((tab) => tab?.artifactNumber === currentArtifactNumber);
+          const selectedUUID = artifact?.sourceID;
+          const matchingWitness = options.find((opt) => opt?.value === selectedUUID);
+          setActiveTabs(evidenceWithUnsaved); // basically we show only that particular tab when editing an evidence(it will have corresponding artifact number)
+          setActiveTabIndex(activeindex);
+          setCurrentEvidence(evidenceWithUnsaved[activeindex]);
+          setSelectedWitness({ label: matchingWitness?.label, value: matchingWitness?.value });
+          let witnessType = evidenceWithUnsaved[activeindex]?.tag;
+          const isTag = allParties?.find((party) => (party?.uuid || party?.uniqueId) === selectedUUID)?.tag;
+          if (isTag) {
+            witnessType = isTag;
+          }
+          setSelectedWitnessType({ label: witnessType, value: witnessType });
+          setWitnessDepositionText(artifact?.description || "");
+          return;
+        }
+      } else {
+        const newTab = {
+          artifactNumber: null, // Will be set after saving
+          sourceName: "Deposition", // Default name until saved
+          sourceType: selectedWitnessType?.value === "PW" ? "COMPLAINANT" : selectedWitnessType?.value === "DW" ? "ACCUSED" : "COURT",
+          sourceID: selectedWitness?.value,
+          content: "",
+          artifactType: "WITNESS_DEPOSITION",
+          caseId: caseDetails?.id,
+          filingNumber: caseDetails?.filingNumber,
+          tenantId,
+          isNew: true, // Flag to identify unsaved tabs
+        };
 
-        // Set witness type based on tab source type
-        const witnessType = firstTab.sourceType === "COMPLAINANT" ? "PW" : firstTab.sourceType === "ACCUSED" ? "DW" : "CW";
-        setSelectedWitnessType({ label: witnessType, value: witnessType });
+        // Add the new tab to the list and set it as active
+        const updatedTabs = [...evidenceList, newTab];
+
+        if (!isEqual(updatedTabs, activeTabs)) {
+          setActiveTabs(updatedTabs);
+          setActiveTabIndex(updatedTabs.length - 1);
+          setWitnessDepositionText(""); // Clear the text area for new draft
+          setSelectedWitness({});
+          setSelectedWitnessType({});
+        }
       }
-    } else if (isInitialLoad.current) {
-      // If no evidence and it's initial load, reset tabs
-      setActiveTabs([]);
-      setActiveTabIndex(-1);
     }
-
-    // Mark that initial load is complete
-    isInitialLoad.current = false;
-  }, [evidenceList, options, activeTabIndex, activeTabs]);
+  }, [evidenceList, options, artifactNumber, currentArtifactNumber, isEvidenceLoading]);
 
   useEffect(() => {
-    if (caseDetails) {
-      setAdditionalDetails(caseDetails?.additionalDetails);
-      const witnessOptions =
-        caseDetails?.additionalDetails?.witnessDetails?.formdata?.map((witness) => ({
-          label: getFormattedName(witness?.data?.firstName, witness?.data?.middleName, witness?.data?.lastName, witness?.data?.witnessDesignation),
-          value: witness.data.uuid,
-        })) || [];
-
-      const advocateOptions =
-        caseDetails?.representatives?.map((rep) => ({
-          label: rep?.additionalDetails?.advocateName,
-          value: rep?.advocateId,
-        })) || [];
-
-      const partiesOption =
-        allParties
-          ?.filter((party) => party?.isJoined === true)
-          .map((party) => ({
-            label: party?.name,
-            value: party?.partyType === "poaHolder" ? party?.individualId : party?.partyUuid,
-          })) || [];
-
-      const combinedOptions = [...witnessOptions, ...advocateOptions, ...partiesOption];
-      setOptions(combinedOptions);
-
-      // Only set default witness if no tabs are active and it's the initial load
-      if (isInitialLoad.current && activeTabs.length === 0) {
-        const selectedWitnessDefault = caseDetails?.additionalDetails?.witnessDetails?.formdata?.[0]?.data || {};
-        setSelectedWitness(selectedWitnessDefault);
-        setWitnessDepositionText(
-          hearingData?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitnessDefault?.uuid)?.deposition || ""
-        );
-        isInitialLoad.current = false;
-      }
+    const isTag = allParties?.find((party) => (party?.uuid || party?.uniqueId) === selectedWitness?.value)?.tag;
+    if (isTag && isTag !== selectedWitnessType?.value) {
+      setSelectedWitnessType({ label: isTag, value: isTag });
+      setDisableWitnessType(true);
+    } else if (isTag && isTag === selectedWitnessType?.value && !disableWitnessType) {
+      setDisableWitnessType(true);
     }
-  }, [caseDetails, hearingData, allParties, activeTabs.length]);
+  }, [selectedWitness, selectedWitnessType, allParties, disableWitnessType]);
 
   // Handle witness type dropdown change
   const handleWitnessTypeChange = (option) => {
-    setSelectedWitnessType(option);
+    setSelectedWitnessType({ label: option?.value, value: option?.value });
+  };
+
+  const handleAddNewDraft = async () => {
+    const newTab = {
+      artifactNumber: null, // Will be set after saving
+      sourceName: "Deposition", // Default name until saved
+      sourceType: selectedWitnessType?.value === "PW" ? "COMPLAINANT" : selectedWitnessType?.value === "DW" ? "ACCUSED" : "COURT",
+      sourceID: selectedWitness?.value,
+      content: "",
+      artifactType: "WITNESS_DEPOSITION",
+      caseId: caseDetails?.id,
+      filingNumber: caseDetails?.filingNumber,
+      tenantId,
+      isNew: true, // Flag to identify unsaved tabs
+    };
+
+    // Add the new tab to the list and set it as active
+    const updatedTabs = [...evidenceList, newTab];
+    setActiveTabs(updatedTabs);
+    setActiveTabIndex(updatedTabs.length - 1);
+    setWitnessDepositionText(""); // Clear the text area for new draft
+    setCurrentArtifactNumber(null);
+    setSelectedWitness({});
+    setSelectedWitnessType({});
   };
 
   // Handle tab change
-  const handleTabChange = async (index) => {
-    // If current tab has content, save it before switching
-    activeTabs?.forEach((tab) => {
-      handleSaveDraft(tab);
-    });
-    if (index === activeTabs.length) {
-      // This is the + tab, create a new draft
-      createNewDraft();
+  const handleTabChange = async (tab) => {
+    const currentArtifact = activeTabs?.find((t) => t?.artifactNumber === tab?.artifactNumber);
+    // if (currentArtifact) {
+    //   setCurrentArtifactNumber(currentArtifact?.artifactNumber);
+
+    //   // setActiveTabIndex(tab?.index);
+    //   // setCurrentEvidence(tab);
+    //   // setWitnessDepositionText(tab?.description || "");
+    //   // setSelectedWitnessType({ label: tab?.tag, value: tab?.tag });
+    // }
+    if (activeTabs?.find((tab) => tab?.isNew && selectedWitness?.value)) {
+      handleSaveDraft(false, currentArtifact?.artifactNumber);
     } else {
-      // Switch to existing tab
-      setActiveTabIndex(index);
-
-      // Get the tab data
-      const tab = activeTabs[index];
-      if (tab) {
-        // Update witness deposition text from tab content
-        setWitnessDepositionText(tab.content || "");
-
-        // Try to find matching witness in options
-        const matchingWitness = options.find((opt) => opt.label.includes(tab.sourceName) || (tab.sourceID && opt.value === tab.sourceID));
-
-        if (matchingWitness) {
-          setSelectedWitness({ uuid: matchingWitness.value });
-        }
-
-        // Set witness type based on tab source type
-        const witnessType = tab.sourceType === "COMPLAINANT" ? "PW" : tab.sourceType === "ACCUSED" ? "DW" : "CW";
-        setSelectedWitnessType({ label: witnessType, value: witnessType });
-      }
+      setCurrentArtifactNumber(currentArtifact?.artifactNumber);
     }
   };
-
-  // Create a new draft
-  const createNewDraft = async () => {
-    try {
-      // Create a new draft with the current witness
-      if (!selectedWitness?.uuid) {
-        setShowErrorToast({ label: "Please select a witness first", error: true });
-        return;
-      }
-
-      // Create a new temporary tab with the same structure as evidence items
-      const newTab = {
-        artifactNumber: null, // Will be set after saving
-        sourceName: "Deposition", // Default name until saved
-        sourceType: selectedWitnessType.value === "PW" ? "COMPLAINANT" : selectedWitnessType.value === "DW" ? "ACCUSED" : "COURT",
-        sourceID: selectedWitness.uuid,
-        content: "",
-        artifactType: "WITNESS_DEPOSITION",
-        caseId: caseDetails?.id,
-        filingNumber: caseDetails?.filingNumber,
-        tenantId,
-        isNew: true, // Flag to identify unsaved tabs
-      };
-
-      // Add the new tab to the list and set it as active
-      const updatedTabs = [...activeTabs, newTab];
-      setActiveTabs(updatedTabs);
-      setActiveTabIndex(updatedTabs.length - 1);
-      setWitnessDepositionText(""); // Clear the text area for new draft
-
-      // No need to call API yet - we'll create the evidence when user saves the draft
-      setShowErrorToast({ label: "New draft created. Enter content and click Save Draft to save.", error: false });
-    } catch (error) {
-      console.error("Error creating draft:", error);
-      setShowErrorToast({ label: "Failed to create new draft", error: true });
-    }
-  };
-
-  const isDepositionSaved = useMemo(() => {
-    return (
-      hearingData?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitness?.uuid)?.isDepositionSaved === true ||
-      hearingData?.additionalDetails?.witnessDepositions?.find((witness) => witness.uuid === selectedWitness?.uuid)?.isDepositionSaved === true
-    );
-  }, [selectedWitness, hearingData]);
 
   const handleDropdownChange = (selectedPartyOption) => {
-    const selectedUUID = selectedPartyOption.value;
-    let selectedData = additionalDetails?.witnessDetails?.formdata?.find((w) => w.data.uuid === selectedUUID)?.data;
-    if (!selectedData) {
-      const attendee = hearingData?.attendees?.find((a) => a.individualId === selectedUUID);
-      if (attendee) {
-        selectedData = {
-          ...attendee,
-          uuid: attendee.individualId,
-        };
-      }
-    }
-    if (!selectedData) {
-      const party = allParties?.find((p) => p.partyUuid === selectedUUID);
-      if (party) {
-        selectedData = {
-          ...party,
-          uuid: party.partyUuid,
-        };
-      }
-    }
-    if (!selectedData) {
-      const advocate = caseDetails?.representatives?.find((adv) => adv?.advocateId === selectedUUID);
-      if (advocate) {
-        selectedData = {
-          ...advocate,
-          uuid: advocate?.advocateId,
-        };
-      }
-    }
-    setSelectedWitness(selectedData || {});
-    setWitnessDepositionText(hearingData?.additionalDetails?.witnessDepositions?.find((w) => w.uuid === selectedUUID)?.deposition || "");
+    // let selectedData = additionalDetails?.witnessDetails?.formdata?.find((w) => w.data.uuid === selectedUUID)?.data;
+    // if (!selectedData) {
+    //   const attendee = hearingData?.attendees?.find((a) => a.individualId === selectedUUID);
+    //   if (attendee) {
+    //     selectedData = {
+    //       ...attendee,
+    //       uuid: attendee.individualId,
+    //     };
+    //   }
+    // }
+    // if (!selectedData) {
+    //   const party = allParties?.find((p) => p.partyUuid === selectedUUID);
+    //   if (party) {
+    //     selectedData = {
+    //       ...party,
+    //       uuid: party.partyUuid,
+    //     };
+    //   }
+    // }
+    // if (!selectedData) {
+    //   const advocate = caseDetails?.representatives?.find((adv) => adv?.advocateId === selectedUUID);
+    //   if (advocate) {
+    //     selectedData = {
+    //       ...advocate,
+    //       uuid: advocate?.advocateId,
+    //     };
+    //   }
+    // }
+    const selectedUUID = selectedPartyOption?.value;
+    const matchingWitness = options.find((opt) => opt?.value === selectedUUID);
+    setSelectedWitness({ label: matchingWitness?.label, value: matchingWitness?.value });
+    setWitnessDepositionText("");
   };
 
   const IsSelectedWitness = useMemo(() => {
@@ -398,8 +552,6 @@ const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseD
 
   // Save witness deposition - either as draft or final
   const saveWitnessDeposition = async (saveAsDraft = false) => {
-    if (!hearingData) return;
-
     if (!selectedWitness?.uuid) {
       setShowErrorToast({ message: "Please select a witness first", variant: "error" });
       return;
@@ -438,38 +590,30 @@ const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseD
     }
 
     // Continue with regular save process for final deposition
-    setWitnessModalOpen(true);
-
-    const updatedHearing = structuredClone(hearingData || {});
-    updatedHearing.additionalDetails = updatedHearing.additionalDetails || {};
-    updatedHearing.additionalDetails.witnessDepositions = updatedHearing.additionalDetails.witnessDepositions || [];
-    // Find the index of the selected witness in witnessDepositions
-    const witnessIndex = updatedHearing.additionalDetails.witnessDepositions.findIndex((witness) => witness.uuid === selectedWitness?.uuid);
-
-    if (!isDepositionSaved) {
-      if (witnessIndex !== -1) {
-        // existing ones
-        updatedHearing.additionalDetails.witnessDepositions[witnessIndex] = {
-          ...updatedHearing.additionalDetails.witnessDepositions[witnessIndex],
-          deposition: witnessDepositionText,
-          isDepositionSaved: false,
-        };
-      } else {
-        updatedHearing.additionalDetails.witnessDepositions.push({
-          ...selectedWitness,
-          deposition: witnessDepositionText,
-          isDepositionSaved: false,
-          uuid: selectedWitness?.uuid,
-        });
-      }
-    }
+    // setWitnessModalOpen(true);
   };
+
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
+
+  const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
+
+  const filingNumber = useMemo(() => caseDetails?.filingNumber, [caseDetails]);
 
   const handleClose = () => {
     setWitnessModalOpen(false);
   };
 
-  const handleSaveDraft = async (evidence) => {
+  const handleSaveDraft = async (submit = false, newCurrentArtifactNumber = null) => {
+    if (!selectedWitness?.value) {
+      setShowErrorToast({ message: "Please select a witness first", variant: "error" });
+      return;
+    }
+
+    if (!witnessDepositionText.trim()) {
+      setShowErrorToast({ message: "Please enter deposition content", variant: "error" });
+      return;
+    }
+
     try {
       // if (!selectedWitness?.uuid) {
       //   setShowErrorToast({ label: "Please select a witness first", error: true });
@@ -480,33 +624,39 @@ const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseD
       //   setShowErrorToast({ label: "Please enter deposition content", error: true });
       //   return;
       // }
+      setLoader(true);
 
-      // Prepare witness name
-      const witnessName = getFormattedName(
-        selectedWitness?.firstName || selectedWitness?.name || selectedWitness?.additionalDetails?.advocateName,
-        selectedWitness?.middleName,
-        selectedWitness?.lastName,
-        selectedWitness?.witnessDesignation
-      );
+      const party = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value);
 
       // Check if we need to create or update evidence
-      if (evidence && evidence?.artifactNumber) {
+      const artifactNum = artifactNumber || currentArtifactNumber;
+      if (artifactNum) {
+        const evidence = activeTabs?.find((tab) => tab?.artifactNumber === artifactNum);
         // Update existing evidence
         const updateEvidenceReqBody = {
           artifact: {
-            artifactType: "WITNESS_DEPOSITION",
-            artifactNumber: evidence.artifactNumber,
-            caseId: caseDetails?.id,
-            filingNumber: caseDetails?.filingNumber,
-            tenantId,
+            ...evidence,
+            // artifactType: "WITNESS_DEPOSITION",
+            // artifactNumber: evidence.artifactNumber,
+            // caseId: caseDetails?.id,
+            // filingNumber: caseDetails?.filingNumber,
+            // tenantId,
             sourceType: selectedWitnessType.value === "PW" ? "COMPLAINANT" : selectedWitnessType.value === "DW" ? "ACCUSED" : "COURT",
-            sourceID: selectedWitness.uuid,
-            sourceName: witnessName,
-            filingType: filingType,
-            content: witnessDepositionText,
+            sourceID: selectedWitness.value,
+            sourceName: party?.sourceName,
+            // filingType: filingType,
+            description: witnessDepositionText,
+            // additionalDetails: { ...party },
             additionalDetails: {
-              uuid: userInfo?.uuid,
-              witnessType: selectedWitnessType.value,
+              witnessDetails: {
+                address: evidence?.additionalDetails?.witnessDetails?.address || "",
+                designation: evidence?.additionalDetails?.witnessDetails?.designation || "",
+                age: evidence?.additionalDetails?.witnessDetails?.age || "",
+              },
+            },
+            isEvidenceMarkedFlow: false,
+            workflow: {
+              action: "SAVE_DRAFT",
             },
           },
         };
@@ -517,6 +667,11 @@ const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseD
         if (updatedEvidence?.artifact) {
           const updatedTabs = [...activeTabs];
           //   updatedTabs[tabIndex] = updatedEvidence.artifact;
+          if (newCurrentArtifactNumber) {
+            setCurrentArtifactNumber(newCurrentArtifactNumber);
+          } else {
+            setCurrentArtifactNumber(updatedEvidence?.artifact?.artifactNumber);
+          }
           setActiveTabs(updatedTabs);
         }
 
@@ -529,32 +684,45 @@ const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseD
             caseId: caseDetails?.id,
             filingNumber: caseDetails?.filingNumber,
             tenantId,
-            sourceType: selectedWitnessType.value === "PW" ? "COMPLAINANT" : selectedWitnessType.value === "DW" ? "ACCUSED" : "COURT",
-            sourceID: selectedWitness.uuid,
-            sourceName: witnessName,
+            sourceType: selectedWitnessType?.value === "PW" ? "COMPLAINANT" : selectedWitnessType?.value === "DW" ? "ACCUSED" : "COURT",
+            tag: selectedWitnessType?.value,
+            sourceID: selectedWitness?.value,
+            sourceName: party?.sourceName, // confirm?
             filingType: filingType,
-            content: witnessDepositionText,
+            description: witnessDepositionText,
             additionalDetails: {
-              uuid: userInfo?.uuid,
-              witnessType: selectedWitnessType.value,
+              witnessDetails: {
+                address: party?.address || "",
+                designation: party?.designation || "",
+                age: party?.age || "",
+              },
+            },
+            comments: [],
+            workflow: {
+              action: "SAVE_DRAFT",
             },
           },
         };
 
-        const newEvidence = await DRISTIService.createEvidence(createEvidenceReqBody);
+        const newEvidence = await submissionService.createEvidence(createEvidenceReqBody);
 
         // Update the tab in activeTabs directly with the new evidence
         if (newEvidence?.artifact) {
           const updatedTabs = [...activeTabs];
-          if (activeTabs.length > 0 && activeTabs[activeTabIndex].isNew) {
+          if (activeTabs?.length > 0 && activeTabs?.[activeTabIndex]?.isNew) {
             // Replace the unsaved tab with the new evidence
-            updatedTabs[activeTabIndex] = newEvidence.artifact;
+            updatedTabs[activeTabIndex] = newEvidence?.artifact;
           } else {
             // Add as a new tab
-            updatedTabs.push(newEvidence.artifact);
+            updatedTabs.push(newEvidence?.artifact);
             setActiveTabIndex(updatedTabs.length - 1);
           }
           setActiveTabs(updatedTabs);
+          if (newCurrentArtifactNumber) {
+            setCurrentArtifactNumber(newCurrentArtifactNumber);
+          } else {
+            setCurrentArtifactNumber(newEvidence.artifact?.artifactNumber);
+          }
         }
 
         setShowErrorToast({ label: "New draft created successfully", error: false });
@@ -565,6 +733,12 @@ const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseD
     } catch (error) {
       console.error("Error saving draft:", error);
       setShowErrorToast({ label: "Failed to save draft", error: true });
+    } finally {
+      setLoader(false);
+      if (submit) {
+        // setShowConfirmWitnessModal(true);
+        setShowWitnessDepositionReview(true);
+      }
     }
   };
 
@@ -576,17 +750,6 @@ const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseD
       updatedHearing.additionalDetails.witnessDepositions = updatedHearing.additionalDetails.witnessDepositions || [];
       const witnessIndex = updatedHearing.additionalDetails.witnessDepositions.findIndex((witness) => witness.uuid === selectedWitness?.uuid);
 
-      if (!isDepositionSaved) {
-        if (witnessIndex !== -1) {
-          // check for existing one
-          updatedHearing.additionalDetails.witnessDepositions[witnessIndex].isDepositionSaved = true;
-        } else {
-          updatedHearing.additionalDetails.witnessDepositions.push({
-            ...selectedWitness,
-            isDepositionSaved: true,
-          });
-        }
-      }
       const documents = Array.isArray(hearingData?.documents) ? hearingData.documents : [];
       const documentsFile =
         signedDocumentUploadID !== ""
@@ -641,12 +804,172 @@ const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseD
     }
   };
 
-  if (isFilingTypeLoading) {
+  const handleConfirmWitnessAndSign = async (evidence) => {
+    try {
+      const party = allParties?.find((p) => p?.uuid === selectedWitness?.uuid || p?.uniqueId === selectedWitness?.uuid);
+
+      // Check if we need to create or update evidence
+      if (evidence && evidence?.artifactNumber) {
+        // Update existing evidence
+        const updateEvidenceReqBody = {
+          artifact: {
+            ...currentEvidence?.artifact,
+            filingType: "CASE_FILING",
+            workflow: {
+              action: "UPDATE",
+            },
+          },
+        };
+
+        const updatedEvidence = await DRISTIService.updateEvidence(updateEvidenceReqBody);
+
+        // Update the tab in activeTabs directly
+        if (updatedEvidence?.artifact) {
+          const updatedTabs = [...activeTabs];
+          //   updatedTabs[tabIndex] = updatedEvidence.artifact;
+          setActiveTabs(updatedTabs);
+        }
+
+        setShowErrorToast({ label: "Draft updated successfully", error: false });
+      }
+
+      // Also refresh evidence list to ensure server and client are in sync
+      evidenceRefetch();
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      setShowErrorToast({ label: "Failed to save draft", error: true });
+    } finally {
+      setShowConfirmWitnessModal(false);
+      setShowWitnessDepositionReview(true);
+    }
+  };
+
+  const handleCloseSignatureModal = () => {
+    setShowsignatureModal(false);
+    setShowWitnessDepositionReview(true);
+  };
+
+  const handleDownload = () => {
+    downloadPdf(tenantId, witnessDepositionFileStoreId);
+  };
+
+  const updateWitnessDepositionDocument = async (fileStoreId = null, action, witnessMobileNumbers) => {
+    try {
+      const documents = Array.isArray(currentEvidence?.file) ? currentEvidence.file : {};
+      const documentsFile = fileStoreId
+        ? [
+            {
+              fileStore: fileStoreId,
+              documentType: action === "UPLOAD" ? "SIGNED" : "UNSIGNED",
+              additionalDetails: { name: `${t("WITNESS_DEPOSITION")}.pdf` },
+              tenantId,
+            },
+          ]
+        : null;
+
+      let workflow = { ...currentEvidence?.artifact?.workflow, action };
+      if (action === "INITIATE_E-SIGN") {
+        workflow.assignes = [currentEvidence?.sourceID];
+      }
+
+      const updateEvidenceReqBody = {
+        artifact: {
+          ...currentEvidence,
+          file: documentsFile ? documentsFile?.[0] : documents,
+          workflow,
+          isEvidenceMarkedFlow: false,
+          witnessMobileNumbers: witnessMobileNumbers ? witnessMobileNumbers : currentEvidence?.witnessMobileNumbers || [],
+        },
+      };
+
+      const updatedEvidence = await DRISTIService.updateEvidence(updateEvidenceReqBody);
+
+      return updatedEvidence;
+    } catch (error) {
+      console.error("error:", error);
+      throw error;
+    }
+  };
+
+  const handleESign = async (number = "") => {
+    // TODO: call Api then close this modal and show next modal
+    try {
+      const currentParty = allParties?.find((p) => (p?.uuid || p?.uniqueId) === selectedWitness?.value);
+      const currnetEvidenceUpdated = structuredClone(currentEvidence);
+      let witnessMobileNum = [];
+      if (currentParty?.witnessMobileNumbers?.length > 0) {
+        witnessMobileNum = currentParty?.witnessMobileNumbers;
+      } else if (witnesMobileNumber) {
+        witnessMobileNum = [witnesMobileNumber];
+      } else if (number) {
+        witnessMobileNum = [number];
+      }
+      // if no mobile numbers present then show add mobile number modal otherwise e sign action.
+      if (witnessMobileNum?.length === 0) {
+        setShowsignatureModal(false);
+        setShowAddWitnessMobileNumberModal(true);
+        return;
+      }
+      currnetEvidenceUpdated.workflow = {
+        action: "INITIATE_E-SIGN",
+        witnessMobileNumbers: witnessMobileNum,
+      };
+      const updatedEvidence = await updateWitnessDepositionDocument(witnessDepositionFileStoreId, "INITIATE_E-SIGN", witnessMobileNum);
+      setWitnessDepositionSignatureURL(updatedEvidence?.artifact?.shortenedUrl);
+      setShowAddWitnessMobileNumberModal(false);
+      setShowsignatureModal(false);
+      setShowWitnessDepositionESign(true);
+    } catch (error) {
+      console.error("Error while updating bail bond:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setShowsignatureModal(false);
+    }
+  };
+
+  const handleSubmitSignature = async (fileStoreId) => {
+    // TODO: api call with fileStoreID then
+    try {
+      setLoader(false);
+      const res = await updateWitnessDepositionDocument(fileStoreId, "UPLOAD");
+      setShowsignatureModal(false);
+      setShowUploadSignature(false);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("Error while updating bail bond:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setLoader(false);
+      setShowsignatureModal(false);
+      setShowUploadSignature(false);
+    }
+  };
+
+  if (isFilingTypeLoading || isEvidenceLoading) {
     return <Loader />;
   }
 
   return (
     <div className="bottom-drawer-wrapper">
+      {loader && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "9999",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
       <div className="bottom-drawer-overlay" onClick={onClose} />
       <div className={`bottom-drawer ${isOpen ? "open" : ""}`}>
         <div className="drawer-header">
@@ -663,29 +986,31 @@ const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseD
 
             <div className="witness-tabs" style={{ display: "flex", marginTop: "16px", borderBottom: "1px solid #d6d5d4" }}>
               {/* Display tabs for both evidence list items and unsaved drafts */}
-              {activeTabs.map((tab, index) => (
-                <div
-                  key={tab.artifactNumber || `new-tab-${index}`}
-                  className={`witness-tab ${activeTabIndex === index ? "active" : ""}`}
-                  onClick={() => handleTabChange(index)}
-                  style={{
-                    padding: "8px 16px",
-                    marginRight: "8px",
-                    cursor: "pointer",
-                    fontSize: "16px",
-                    backgroundColor: "transparent",
-                    color: activeTabIndex === index ? "#0A5757" : "#6F767E",
-                    borderBottom: activeTabIndex === index ? "2px solid #0A5757" : "none",
-                    fontWeight: activeTabIndex === index ? "bold" : "normal",
-                  }}
-                >
-                  {tab.isNew ? t("CS_DEPOSITION") : `${t("CS_DEPOSITION")} (${tab.sourceName || "Deposition"})`}
-                </div>
-              ))}
+              {activeTabs
+                ?.filter((tab) => !tab?.isNew)
+                .map((tab, index) => (
+                  <div
+                    key={tab.artifactNumber || `new-tab-${index}`}
+                    className={`witness-tab ${activeTabIndex === index ? "active" : ""}`}
+                    onClick={() => handleTabChange(tab)}
+                    style={{
+                      padding: "8px 16px",
+                      marginRight: "8px",
+                      cursor: "pointer",
+                      fontSize: "16px",
+                      backgroundColor: "transparent",
+                      color: activeTabIndex === index ? "#0A5757" : "#6F767E",
+                      borderBottom: activeTabIndex === index ? "2px solid #0A5757" : "none",
+                      fontWeight: activeTabIndex === index ? "bold" : "normal",
+                    }}
+                  >
+                    {`${t("CS_DEPOSITION")} (${tab?.sourceName})`}
+                  </div>
+                ))}
               {/* Add new tab button */}
               <div
                 className="witness-tab add-tab"
-                onClick={() => handleTabChange(activeTabs.length)}
+                onClick={() => handleAddNewDraft()}
                 style={{
                   padding: "8px 18px",
                   cursor: "pointer",
@@ -707,19 +1032,7 @@ const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseD
                   select={handleDropdownChange}
                   freeze={true}
                   disable={isProceeding}
-                  selected={
-                    IsSelectedWitness
-                      ? {
-                          label: getFormattedName(
-                            selectedWitness?.firstName || selectedWitness?.name || selectedWitness?.additionalDetails?.advocateName,
-                            selectedWitness?.middleName,
-                            selectedWitness?.lastName,
-                            selectedWitness?.witnessDesignation
-                          ),
-                          value: selectedWitness?.uuid,
-                        }
-                      : {}
-                  }
+                  selected={selectedWitness}
                   style={{ width: "100%", height: "40px", fontSize: "16px", marginBottom: "0px" }}
                 />
               </LabelFieldPair>
@@ -763,15 +1076,15 @@ const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseD
                   width: "100%",
                   minHeight: "40vh",
                   fontSize: "large",
-                  ...((isDepositionSaved || !IsSelectedWitness) && {
+                  ...(!IsSelectedWitness && {
                     pointerEvents: "unset !important",
                   }),
                 }}
                 value={IsSelectedWitness ? witnessDepositionText || "" : ""}
                 onChange={(e) => setWitnessDepositionText(e.target.value)}
-                disabled={isDepositionSaved || !IsSelectedWitness || isProceeding}
+                disabled={isProceeding}
               />
-              {!isDepositionSaved && IsSelectedWitness && (
+              {IsSelectedWitness && (
                 <TranscriptComponent
                   setWitnessDepositionText={setWitnessDepositionText}
                   isRecording={isRecording}
@@ -784,19 +1097,20 @@ const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseD
               <Button
                 label={t("SAVE_DRAFT")}
                 isDisabled={!IsSelectedWitness || isProceeding}
-                onButtonClick={() => handleSaveDraft(currentEvidence)}
+                onButtonClick={() => handleSaveDraft()}
                 style={{
                   width: "130px",
                   backgroundColor: "#fff",
                   color: "#0B6265",
                   border: "1px solid #0B6265",
+                  boxShadow: "none",
                 }}
               />
               <Button
-                label={t("SAVE")}
-                isDisabled={isDepositionSaved || !IsSelectedWitness || isProceeding}
+                label={t("SUBMIT_BUTTON")}
+                isDisabled={!IsSelectedWitness || isProceeding || witnessDepositionText?.length === 0}
                 className={"order-drawer-save-btn"}
-                onButtonClick={saveWitnessDeposition}
+                onButtonClick={() => handleSaveDraft(true)}
                 style={{
                   width: "110px",
                 }}
@@ -806,14 +1120,86 @@ const WitnessDrawerV2 = ({ isOpen, onClose, tenantId, onSubmit, attendees, caseD
         </div>
       </div>
 
-      {witnessModalOpen && (
-        <WitnessModal
-          isProceeding={isProceeding}
-          handleClose={handleClose}
-          hearingId={hearingId}
-          setSignedDocumentUploadID={setSignedDocumentUploadID}
-          handleProceed={handleProceed}
+      {/* {witnessModalOpen && (
+        <AddWitnessModal
+        onCancel={() => setShowAddWitnessModal(false)}
+        onDismiss={() => setShowAddWitnessModal(false)}
+        tenantId={tenantId}
+        caseDetails={caseDetails}
+        isJudge={true}
+        onAddSuccess={() => {
+          setShowAddWitnessModal(false);
+        }}
+      ></AddWitnessModal>
+      )} */}
+
+      {showWitnessDepositionReview && (
+        <WitnessDepositionReviewModal
+          t={t}
+          handleBack={() => {
+            setShowWitnessDepositionReview(false);
+          }}
+          setShowWitnessDepositionReview={setShowWitnessDepositionReview}
+          setShowsignatureModal={setShowsignatureModal}
+          currentEvidence={currentEvidence}
+          courtId={caseCourtId}
+          cnrNumber={cnrNumber}
+          setWitnessDepositionFileStoreId={setWitnessDepositionFileStoreId}
         />
+      )}
+
+      {showSignatureModal && (
+        <WitnessDepositionSignatureModal
+          t={t}
+          handleCloseSignatureModal={handleCloseSignatureModal}
+          handleDownload={handleDownload}
+          handleESign={() => handleESign("")}
+          setShowUploadSignature={setShowUploadSignature}
+          showUploadSignature={showUploadSignature}
+          handleSubmit={handleSubmitSignature}
+          setLoader={setWitnessDepositionUploadLoader}
+          loader={witnessDepositionUploadLoader}
+          witnessDepositionFileStoreId={witnessDepositionFileStoreId}
+        />
+      )}
+
+      {showAddWitnessMobileNumberModal && (
+        <AddWitnessMobileNumberModal
+          t={t}
+          handleClose={() => {
+            setShowAddWitnessMobileNumberModal(false);
+            setShowAddWitnessMobileNumberModal(false);
+            setShowsignatureModal(true);
+            setWitnessMobileNumber("");
+          }}
+          submit={(mobileNumber) => handleESign(mobileNumber)}
+          witnesMobileNumber={witnesMobileNumber}
+          setWitnessMobileNumber={setWitnessMobileNumber}
+        />
+      )}
+
+      {showWitnessDepositionESign && (
+        <WitnessDepositionESignLockModal
+          t={t}
+          handleSaveOnSubmit={() => {
+            setShowWitnessDepositionESign(false);
+            evidenceRefetch();
+          }}
+          witnessDepositionSignatureURL={witnessDepositionSignatureURL}
+        />
+      )}
+
+      {showConfirmWitnessModal && (
+        <ConfirmWitnessModal
+          t={t}
+          selectedWitness={selectedWitness}
+          witnessTag={currentEvidence?.tag}
+          onCancel={() => setShowConfirmWitnessModal(false)}
+          onSubmit={handleConfirmWitnessAndSign}
+        />
+      )}
+      {showSuccessModal && (
+        <SuccessBannerModal t={t} handleCloseSuccessModal={() => setShowSuccessModal(false)} message={"WITNESS_DEPOSITION_SUCCESS_BANNER_HEADER"} />
       )}
 
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}

@@ -56,6 +56,7 @@ import CaseOverviewV2 from "./CaseOverviewV2";
 import PaymentDemandModal from "./PaymentDemandModal";
 import DocumentsV2 from "./DocumentsV2";
 import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
+import WitnessDrawerV2 from "./WitnessDrawerV2";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -3961,13 +3962,12 @@ const AdmittedCaseV2 = () => {
         />
       )}
       {showWitnessModal && (
-        <WitnessDrawer
+        <WitnessDrawerV2
           isOpen={showWitnessModal}
           onClose={() => {
             setShowWitnessModal(false);
             refetchHearing();
           }}
-          refetchHearing={refetchHearing}
           onSubmit={(action) => {
             if (action === "end-hearing") {
               // Handle end hearing action
