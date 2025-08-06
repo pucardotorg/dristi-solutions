@@ -42,4 +42,16 @@ public class WitnessDetails {
 
     @JsonProperty("witnessAdditionalDetails")
     private Object additionalDetails;
+
+    @JsonProperty("dateOfService")
+    private String dateOfService;
+
+    @JsonProperty("witnessTag")
+    private String witnessTag;
+
+    @JsonProperty("ownerType")
+    private String ownerType;
+
+    @JsonProperty("createdTime")
+    private Long createdTime;
 }
