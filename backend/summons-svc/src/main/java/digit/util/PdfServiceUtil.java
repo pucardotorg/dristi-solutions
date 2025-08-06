@@ -190,7 +190,6 @@ public class PdfServiceUtil {
         }
         else if(PROCLAMATION.equals(task.getTaskType())){
             issueDate = task.getTaskDetails().getProclamationDetails().getIssueDate();
-            docSubType = task.getTaskDetails().getProclamationDetails().getDocSubType();
         }
 
         String issueDateString = Optional.ofNullable(issueDate)
