@@ -1249,7 +1249,7 @@ export const UICustomizations = {
         !row.isEvidence &&
         !row?.isVoid &&
         !(row?.status !== "SUBMITTED" && row?.filingType === "DIRECT")
-          ? row?.evidenceMarkedStatus != null
+          ? row?.evidenceMarkedStatus !== null
             ? [
                 {
                   label: "VIEW_MARK_AS_EVIDENCE",

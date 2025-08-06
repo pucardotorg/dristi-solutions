@@ -193,7 +193,11 @@ const EvidenceModal = ({
         }
       }
     } else {
-      if (documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus === "COMPLETED" || documentSubmission?.[0]?.artifactList?.isEvidence) {
+      if (
+        documentSubmission?.[0]?.artifactList?.isEvidence ||
+        documentSubmission?.[0]?.artifactList?.isVoid ||
+        documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus !== null
+      ) {
         label = false;
       } else {
         label = t("MARK_AS_EVIDENCE");
@@ -1341,7 +1345,7 @@ const EvidenceModal = ({
           //     : {}
           // }
         >
-          {isJudge && (
+          {documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus !== null && (
             <div style={{ margin: "16px 24px" }}>
               <div className="custom-note-main-div" style={{ padding: "8px 16px", flexDirection: "row", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -1368,7 +1372,10 @@ const EvidenceModal = ({
               </div>
             </div>
           )}
-          <div className="evidence-modal-main " style={{ height: "Calc(100% - 140px)" }}>
+          <div
+            className="evidence-modal-main "
+            style={documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus !== null ? { height: "calc(100% - 140px)" } : {}}
+          >
             <div className={"application-details"}>
               <div style={{ display: "flex", flexDirection: "column", overflowY: "auto", height: "fit-content" }}>
                 {isJudge && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION" && !Boolean(applicationNumber) && (
@@ -1464,7 +1471,7 @@ const EvidenceModal = ({
                 </div>
                 <div style={{ display: "flex", flexDirection: "column" }}>{showDocument}</div>
               </div>
-              {modalType === "Documents" && isJudge && (
+              {/* {modalType === "Documents" && isJudge && (
                 <div>
                   <h3 style={{ marginTop: 0, marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
                   <div style={{ display: "flex", gap: "10px" }}>
@@ -1490,7 +1497,7 @@ const EvidenceModal = ({
                     )}
                   </div>
                 </div>
-              )}
+              )} */}
             </div>
             {(userRoles.includes("SUBMISSION_RESPONDER") || userRoles.includes("JUDGE_ROLE")) && (
               <div className={`application-comment ${isCourtRoomManager && "disabled"}`}>

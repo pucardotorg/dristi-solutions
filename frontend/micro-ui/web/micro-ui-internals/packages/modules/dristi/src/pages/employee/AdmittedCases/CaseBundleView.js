@@ -58,6 +58,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       setSelectedFileStoreId(complaintDoc?.fileStore);
     }
   }, [caseDetails, selectedFileStoreId]);
+  useEffect(() => {
+    if (sessionStorage.getItem("markAsEvidenceSelectedItem")) {
+      setShowEvidenceConfirmationModal(true);
+    }
+  }, [setShowEvidenceConfirmationModal]);
 
   const collectDescendantIds = (item) => {
     let ids = [];

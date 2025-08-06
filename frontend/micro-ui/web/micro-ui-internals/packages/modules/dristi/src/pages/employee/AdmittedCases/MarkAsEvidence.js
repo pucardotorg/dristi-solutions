@@ -55,7 +55,6 @@ const getButtonActions = (isJudge, handleSubmit, onESignClick, handleCancel, mar
 export const clearEvidenceSessionData = () => {
   sessionStorage.removeItem("esignProcess");
   sessionStorage.removeItem("markAsEvidenceStepper");
-  sessionStorage.removeItem("fileStoreId");
   sessionStorage.removeItem("markAsEvidenceSelectedItem");
   sessionStorage.removeItem("signStatus");
   sessionStorage.removeItem("bulkMarkAsEvidenceLimit");
@@ -446,7 +445,6 @@ const MarkAsEvidence = ({
         setBusinessOfDay(evidenceDetailsObj?.additionalDetails?.botd || `Document marked as evidence exhibit number ${artifactNumber}`);
       }
     }
-
     // Get case details if filing number is available
     if (filingNumber) {
       getCaseDetails();
@@ -496,6 +494,7 @@ const MarkAsEvidence = ({
   const handleSubmit = async (action) => {
     try {
       if (stepper === 0) {
+        clearEvidenceSessionData();
         if (businessOfDay === null || businessOfDay === "") {
           setBusinessOfDay(`Document marked as evidence exhibit number ${artifactNumber}`);
         }
@@ -566,23 +565,23 @@ const MarkAsEvidence = ({
                   businessOfDay: businessOfDay,
                   tenantId: tenantId,
                   entryDate: new Date().setHours(0, 0, 0, 0),
-                  caseNumber: caseDetails?.caseNumber,
+                  caseNumber: caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber,
                   referenceId: artifactNumber,
                   referenceType: "Documents",
                   hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
                   additionalDetails: {
                     filingNumber: filingNumber,
-                    caseId: caseDetails?.caseId,
+                    caseId: caseDetails?.id,
                   },
                 },
               },
               {}
             ).catch((error) => {
               console.error("error: ", error);
-              // toast.error(t("SOMETHING_WENT_WRONG"));
-              // setIsSubmitDisabled(false);
             });
             setStepper(2);
+
+            clearEvidenceSessionData();
             sessionStorage.removeItem("fileStoreId");
           } else {
             setStepper(1);
@@ -602,13 +601,13 @@ const MarkAsEvidence = ({
 
   const handleCancel = async () => {
     try {
+      clearEvidenceSessionData();
       if (stepper === 0) {
         setShowMakeAsEvidenceModal(false);
         setDocumentCounter((prevCount) => prevCount + 1);
       } else if (stepper === 1) {
         if (isSigned) {
           setIsSigned(false);
-          clearEvidenceSessionData();
           setFormData({});
         }
         if (evidenceDetails?.evidenceMarkedStatus === "DRAFT_IN_PROGRESS" || evidenceDetails?.evidenceMarkedStatus === null) {
@@ -634,10 +633,7 @@ const MarkAsEvidence = ({
       setLoader(true);
       let file = sealFileStoreId;
       if (!sealFileStoreId) {
-        // Make sure to await the PDF generation
         file = await getMarkAsEvidencePdf();
-
-        // Verify we got a valid file store ID
         if (!file) {
           throw new Error("Failed to generate PDF file store ID");
         }
@@ -658,8 +654,8 @@ const MarkAsEvidence = ({
       if (paginatedData?.caseTitle) sessionStorage.setItem("bulkMarkAsEvidenceSignCaseTitle", paginatedData?.caseTitle);
       if (paginatedData?.offset) sessionStorage.setItem("bulkMarkAsEvidenceOffset", paginatedData?.offset);
 
-      // Handle e-sign with callback for success
-      handleEsign(name, pageModule, file, "Magistrate Signature");
+      sessionStorage.removeItem("fileStoreId");
+      handleEsign(name, pageModule, file, "Judge/Magistrate");
     } catch (error) {
       console.log("E-sign navigation error:", error);
       showToast({
@@ -672,19 +668,10 @@ const MarkAsEvidence = ({
     }
   };
 
-  // useEffect(() => {
-  //   if (isSigned && stepper !== 2) {
-  //     setStepper(2);
-  //     // Clear session storage after successful esign
-  //     // clearEvidenceSessionData();
-  //   }
-  // }, [isSigned, stepper]);
-
   if (isLoading) return <Loader />;
 
   return (
     <React.Fragment>
-      {/* Loader overlay - appears during API calls */}
       {loader && (
         <div
           style={{
