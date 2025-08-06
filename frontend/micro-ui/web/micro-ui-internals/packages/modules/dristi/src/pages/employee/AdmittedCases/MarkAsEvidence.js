@@ -10,6 +10,47 @@ import { Urls } from "../../../hooks";
 import Axios from "axios";
 import { set } from "lodash";
 
+// Helper functions for button labels and actions
+const getButtonLabels = (isJudge, evidenceDetails, t) => {
+  return {
+    // Primary action button label
+    saveLabel: isJudge
+      ? evidenceDetails?.evidenceMarkedStatus === "COMPLETED"
+        ? t("CORE_COMMON_SAVE")
+        : t("CS_ESIGN")
+      : evidenceDetails?.evidenceMarkedStatus === "COMPLETED"
+      ? t("CORE_COMMON_SAVE")
+      : t("SEND_FOR_SIGN"),
+
+    // Custom action button label (only shown conditionally)
+    customLabel: isJudge && evidenceDetails?.evidenceMarkedStatus === "DRAFT_IN_PROGRESS" ? t("SEND_FOR_SIGN") : false,
+
+    // Cancel/back button label
+    cancelLabel:
+      evidenceDetails?.evidenceMarkedStatus === "DRAFT_IN_PROGRESS" || evidenceDetails?.evidenceMarkedStatus === null
+        ? t("CS_BULK_BACK")
+        : evidenceDetails?.evidenceMarkedStatus === "COMPLETED"
+        ? t("CS_BULK_CANCEL")
+        : t("EDIT_DETAILS"),
+  };
+};
+
+// Helper function to get button actions
+const getButtonActions = (isJudge, handleSubmit, onESignClick, handleCancel, markAsEvidenceAction) => {
+  return {
+    // Primary action handler
+    saveAction: () => {
+      return isJudge ? onESignClick() : handleSubmit(isJudge ? "" : markAsEvidenceAction?.BULKSIGN);
+    },
+
+    // Custom action handler
+    customAction: () => handleSubmit(markAsEvidenceAction?.BULKSIGN),
+
+    // Cancel action handler
+    cancelAction: handleCancel,
+  };
+};
+
 // Function to clear evidence session data after process completion
 export const clearEvidenceSessionData = () => {
   sessionStorage.removeItem("esignProcess");
@@ -79,10 +120,18 @@ const MarkAsEvidence = ({
   const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
   const [witnessTag, setWitnessTag] = useState(null);
   const filingNumber = useMemo(() => {
-    return evidenceDetailsObj?.filingNumber;
+    if (evidenceDetailsObj?.filingNumber) {
+      return evidenceDetailsObj?.filingNumber;
+    }
+    const sessionData = JSON.parse(sessionStorage.getItem("markAsEvidenceSelectedItem"));
+    return sessionData?.filingNumber;
   }, [evidenceDetailsObj?.filingNumber]);
   const artifactNumber = useMemo(() => {
-    return evidenceDetailsObj?.artifactNumber;
+    if (evidenceDetailsObj?.artifactNumber) {
+      return evidenceDetailsObj?.artifactNumber;
+    }
+    const sessionData = JSON.parse(sessionStorage.getItem("markAsEvidenceSelectedItem"));
+    return sessionData?.artifactNumber || evidenceDetailsObj?.artifactNumber;
   }, [evidenceDetailsObj?.artifactNumber]);
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
   const [isSigned, setIsSigned] = useState(false);
@@ -343,7 +392,7 @@ const MarkAsEvidence = ({
   };
 
   useEffect(() => {
-    if (!evidenceDetailsObj && sessionStorage.getItem("markAsEvidenceSelectedItem")) {
+    if (!evidenceDetailsObj && !sessionStorage.getItem("markAsEvidenceSelectedItem")) {
       getEvidenceDetails();
     } else if (sessionStorage.getItem("markAsEvidenceSelectedItem")) {
       const sessionData = JSON.parse(sessionStorage.getItem("markAsEvidenceSelectedItem"));
@@ -474,6 +523,7 @@ const MarkAsEvidence = ({
             }
             if (res && action === "SUBMIT_BULK_E-SIGN") {
               setShowMakeAsEvidenceModal(false);
+              setDocumentCounter((prevCount) => prevCount + 1);
               showToast({
                 isError: false,
                 message: t("SUCCESSFULLY_SENT_FOR_E-SIGNING_MARKED_MESSAGE"),
@@ -481,7 +531,14 @@ const MarkAsEvidence = ({
             }
           });
         }
-      } else if (stepper === 2) {
+      } else if (stepper === 1 && isSigned) {
+        if (sessionStorage.getItem("fileStoreId") === null) {
+          showToast({
+            isError: true,
+            message: t("EVIDENCE_UPDATE_ERROR_MESSAGE"),
+          });
+          return;
+        }
         const seal = {
           documentType: "SIGNED",
           fileStore: sessionStorage.getItem("fileStoreId"),
@@ -525,7 +582,7 @@ const MarkAsEvidence = ({
               // toast.error(t("SOMETHING_WENT_WRONG"));
               // setIsSubmitDisabled(false);
             });
-            setStepper(3);
+            setStepper(2);
             sessionStorage.removeItem("fileStoreId");
           } else {
             setStepper(1);
@@ -549,6 +606,11 @@ const MarkAsEvidence = ({
         setShowMakeAsEvidenceModal(false);
         setDocumentCounter((prevCount) => prevCount + 1);
       } else if (stepper === 1) {
+        if (isSigned) {
+          setIsSigned(false);
+          clearEvidenceSessionData();
+          setFormData({});
+        }
         if (evidenceDetails?.evidenceMarkedStatus === "DRAFT_IN_PROGRESS" || evidenceDetails?.evidenceMarkedStatus === null) {
           setStepper(0);
         } else if (evidenceDetails?.evidenceMarkedStatus !== "COMPLETED" && evidenceDetails?.evidenceMarkedStatus !== "DRAFT_IN_PROGRESS") {
@@ -559,7 +621,6 @@ const MarkAsEvidence = ({
           });
         } else {
           setShowMakeAsEvidenceModal(false);
-
           setDocumentCounter((prevCount) => prevCount + 1);
         }
       }
@@ -573,11 +634,25 @@ const MarkAsEvidence = ({
       setLoader(true);
       let file = sealFileStoreId;
       if (!sealFileStoreId) {
-        file = getMarkAsEvidencePdf();
+        // Make sure to await the PDF generation
+        file = await getMarkAsEvidencePdf();
+
+        // Verify we got a valid file store ID
+        if (!file) {
+          throw new Error("Failed to generate PDF file store ID");
+        }
       }
 
+      const updatedEvidenceDetails = {
+        ...evidenceDetails,
+        additionalDetails: {
+          ...(evidenceDetails?.additionalDetails || {}),
+          businessOfDay: businessOfDay,
+        },
+      };
+
       sessionStorage.setItem("markAsEvidenceStepper", stepper);
-      sessionStorage.setItem("markAsEvidenceSelectedItem", JSON.stringify(evidenceDetails));
+      sessionStorage.setItem("markAsEvidenceSelectedItem", JSON.stringify(updatedEvidenceDetails));
       sessionStorage.setItem("homeActiveTab", "BULK_EVIDENCE_SIGN");
       if (paginatedData?.limit) sessionStorage.setItem("bulkMarkAsEvidenceLimit", paginatedData?.limit);
       if (paginatedData?.caseTitle) sessionStorage.setItem("bulkMarkAsEvidenceSignCaseTitle", paginatedData?.caseTitle);
@@ -597,13 +672,13 @@ const MarkAsEvidence = ({
     }
   };
 
-  useEffect(() => {
-    if (isSigned && stepper !== 2) {
-      setStepper(2);
-      // Clear session storage after successful esign
-      clearEvidenceSessionData();
-    }
-  }, [isSigned, stepper]);
+  // useEffect(() => {
+  //   if (isSigned && stepper !== 2) {
+  //     setStepper(2);
+  //     // Clear session storage after successful esign
+  //     // clearEvidenceSessionData();
+  //   }
+  // }, [isSigned, stepper]);
 
   if (isLoading) return <Loader />;
 
@@ -714,23 +789,26 @@ const MarkAsEvidence = ({
         </Modal>
       )}
 
-      {stepper === 1 && (
+      {stepper === 1 && !isSigned && (
         <Modal
-          headerBarEnd={<CloseBtn onClick={() => (isEvidenceLoading ? null : setShowMakeAsEvidenceModal(false))} />}
-          actionSaveLabel={isJudge ? t("CS_ESIGN") : t("SEND_FOR_SIGN")}
-          actionCustomLabelSubmit={() => handleSubmit(MarkAsEvidenceAction?.BULKSIGN)}
-          actionCustomLabel={isJudge && evidenceDetails?.evidenceMarkedStatus === "DRAFT_IN_PROGRESS" ? t("SEND_FOR_SIGN") : false}
-          actionSaveOnSubmit={() => {
-            isJudge ? onESignClick() : handleSubmit(isJudge ? "" : MarkAsEvidenceAction?.BULKSIGN);
-          }}
-          actionCancelLabel={
-            evidenceDetails?.evidenceMarkedStatus === "DRAFT_IN_PROGRESS" || evidenceDetails?.evidenceMarkedStatus === null
-              ? t("CS_BULK_BACK")
-              : t("EDIT_DETAILS")
+          headerBarEnd={
+            <CloseBtn
+              onClick={() => {
+                if (!isEvidenceLoading) {
+                  setShowMakeAsEvidenceModal(false);
+                  setDocumentCounter((prevCount) => prevCount + 1);
+                }
+              }}
+            />
           }
+          actionSaveLabel={getButtonLabels(isJudge, evidenceDetails, t).saveLabel}
+          actionCustomLabelSubmit={getButtonActions(isJudge, handleSubmit, onESignClick, handleCancel, MarkAsEvidenceAction).customAction}
+          actionCustomLabel={getButtonLabels(isJudge, evidenceDetails, t).customLabel}
+          actionSaveOnSubmit={getButtonActions(isJudge, handleSubmit, onESignClick, handleCancel, MarkAsEvidenceAction).saveAction}
+          actionCancelLabel={getButtonLabels(isJudge, evidenceDetails, t).cancelLabel}
           isBackButtonDisabled={isEvidenceLoading}
           isDisabled={isEvidenceLoading}
-          actionCancelOnSubmit={handleCancel}
+          actionCancelOnSubmit={getButtonActions(isJudge, handleSubmit, onESignClick, handleCancel, MarkAsEvidenceAction).cancelAction}
           formId="modal-action"
           customActionTextStyle={{ color: "#007e7e" }}
           customActionStyle={{ background: "transparent", border: "1px solid #007e7e" }}
@@ -797,11 +875,12 @@ const MarkAsEvidence = ({
           </div>
         </Modal>
       )}
-      {stepper === 2 && (
+
+      {stepper === 1 && isSigned && (
         <SignatureSuccessModal
           t={t}
-          handleCancel={() => setStepper(0)}
-          handleSubmit={() => setStepper(3)}
+          handleCancel={handleCancel}
+          handleSubmit={() => handleSubmit(MarkAsEvidenceAction?.ESIGN)}
           title="ADD_SIGNATURE"
           noteText="YOUR_CUSTOM_NOTE"
           containerStyle={{ padding: "20px", backgroundColor: "#f8f8f8" }}
@@ -810,7 +889,16 @@ const MarkAsEvidence = ({
         />
       )}
 
-      {stepper === 3 && <SuccessBannerModal t={t} handleCloseSuccessModal={() => setStepper(3)} message={"MARK_AS_EVIDENCE_SUCCESS"} />}
+      {stepper === 2 && (
+        <SuccessBannerModal
+          t={t}
+          handleCloseSuccessModal={() => {
+            setShowMakeAsEvidenceModal(false);
+            setDocumentCounter((prevCount) => prevCount + 1);
+          }}
+          message={"MARK_AS_EVIDENCE_SUCCESS"}
+        />
+      )}
     </React.Fragment>
   );
 };

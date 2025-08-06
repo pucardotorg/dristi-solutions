@@ -1627,11 +1627,14 @@ const AdmittedCaseV2 = () => {
   useEffect(() => {
     const isSignSuccess = sessionStorage.getItem("esignProcess");
     const doc = JSON.parse(sessionStorage.getItem("docSubmission"));
+
     if (isSignSuccess) {
       if (doc) {
         setDocumentSubmission(doc);
       }
-      setShow(true);
+      if (sessionStorage.getItem("markAsEvidenceSelectedItem")) {
+        console.log(sessionStorage.getItem("markAsEvidenceSelectedItem"));
+      } else setShow(true);
     }
   }, []);
 

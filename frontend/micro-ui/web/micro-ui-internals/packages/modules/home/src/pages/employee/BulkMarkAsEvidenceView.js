@@ -39,9 +39,9 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
   const [isLoading, setIsLoading] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [selectedEvidence, setSelectedEvidence] = useState(
-    sessionStorage.getItem("bulkMarkAsEvidenceSelectedItem") ? JSON.parse(sessionStorage.getItem("bulkMarkAsEvidenceSelectedItem")) : null
+    sessionStorage.getItem("markAsEvidenceSelectedItem") ? JSON.parse(sessionStorage.getItem("markAsEvidenceSelectedItem")) : null
   );
-  const [showMakeAsEvidenceModal, setShowMakeAsEvidenceModal] = useState(sessionStorage.getItem("bulkMarkAsEvidenceSelectedItem") ? true : false);
+  const [showMakeAsEvidenceModal, setShowMakeAsEvidenceModal] = useState(sessionStorage.getItem("markAsEvidenceSelectedItem") ? true : false);
   const [showBulkEvidenceSuccessModal, setShowBulkEvidenceSuccessModal] = useState(false);
   const bulkSignUrl = window?.globalConfigs?.getConfig("BULK_SIGN_URL") || "http://localhost:1620";
   const courtId = localStorage.getItem("courtId");
@@ -118,14 +118,6 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
   const closeToast = useCallback(() => {
     setShowErrorToast(null);
   }, []);
-
-  const getFormattedDate = () => {
-    const currentDate = new Date();
-    const year = String(currentDate.getFullYear());
-    const month = String(currentDate.getMonth() + 1).padStart(2, "0");
-    const day = String(currentDate.getDate()).padStart(2, "0");
-    return `${day}/${month}/${year}`;
-  };
 
   const evidenceModalInfo = {
     // header: `${t("YOU_HAVE_SUCCESSFULLY_ISSUED_BULK_EVIDENCE")} ${numberToWords(successCount)} ${t("ISSUE_EVIDENCES")} `,
@@ -228,7 +220,7 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
               setShowBulkSignConfirmModal(false);
               setShowBulkEvidenceSuccessModal(true);
               setSuccessCount(response?.artifactList?.length);
-              showToast("success", t("EVIDENCE_BULK_SIGN_SUCCESS_MSG"));
+              // showToast("success", t("EVIDENCE_BULK_SIGN_SUCCESS_MSG"));
             });
           });
         }
@@ -319,7 +311,6 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
           isEvidenceLoading={isLoading}
           setShowMakeAsEvidenceModal={setShowMakeAsEvidenceModal}
           evidenceDetailsObj={selectedEvidence?.businessObject?.artifactDetails}
-          selectedRow={selectedEvidence?.businessObject?.artifactDetails}
           paginatedData={paginatedData}
           showToast={showToast}
         />

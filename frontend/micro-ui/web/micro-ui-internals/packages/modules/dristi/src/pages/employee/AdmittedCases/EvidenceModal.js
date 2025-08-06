@@ -24,6 +24,7 @@ import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
 import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
 import CustomChip from "../../../components/CustomChip";
+import { HomeService } from "../../../../../home/src/hooks/services";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -104,10 +105,24 @@ const EvidenceModal = ({
   };
 
   const computeDefaultBOTD = useMemo(() => {
-    return `${documentSubmission?.[0]?.artifactList?.artifactNumber} ${
-      documentSubmission?.[0]?.artifactList?.isEvidence ? "unmarked" : "marked"
-    } as evidence`;
-  }, [documentSubmission]);
+    const getAdiaryEntry = async () => {
+      const response = await DRISTIService.aDiaryEntrySearch({
+        criteria: {
+          tenantId: tenantId,
+          courtId: localStorage.getItem("courtId"),
+          caseId: caseId,
+          referenceId: documentSubmission?.[0]?.artifactList?.artifactNumber,
+        },
+        pagination: {
+          limit: 10,
+          offSet: 0,
+        },
+      });
+      console.log(response);
+    };
+    getAdiaryEntry();
+    return `Document marked as evidence exhibit number ${documentSubmission?.[0]?.artifactList?.artifactNumber}`;
+  }, [documentSubmission, tenantId]);
 
   useEffect(() => {
     setBusinessOfTheDay(computeDefaultBOTD);
@@ -178,7 +193,11 @@ const EvidenceModal = ({
         }
       }
     } else {
-      label = !documentSubmission?.[0]?.artifactList?.isEvidence ? t("MARK_AS_EVIDENCE") : t("UNMARK_AS_EVIDENCE");
+      if (documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus === "COMPLETED" || documentSubmission?.[0]?.artifactList?.isEvidence) {
+        label = false;
+      } else {
+        label = t("MARK_AS_EVIDENCE");
+      }
     }
     return label;
   }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
@@ -1097,6 +1116,7 @@ const EvidenceModal = ({
         await handleApplicationAction(true, "accept");
       } else {
         if (modalType === "Documents") {
+          //need to add logic for bitd save
           setShow(false);
           setShowMakeAsEvidenceModal(true);
         } else {
