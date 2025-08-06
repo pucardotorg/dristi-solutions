@@ -38,7 +38,7 @@ public class SmsNotificationUtil {
     public void callNotificationService(ApplicationRequest applicationRequest, String updatedState, String applicationType) {
 
         try {
-            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(applicationRequest.getRequestInfo(), applicationRequest.getApplication().getFilingNumber());
+            CaseSearchRequest caseSearchRequest = createCaseSearchRequest(applicationRequest.getRequestInfo(), applicationRequest.getApplication());
             JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
 
             Object additionalDetailsObject = applicationRequest.getApplication().getAdditionalDetails();
@@ -100,11 +100,14 @@ public class SmsNotificationUtil {
         return null;
     }
 
-    private CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, String fillingNUmber) {
+    private CaseSearchRequest createCaseSearchRequest(RequestInfo requestInfo, Application application) {
         CaseSearchRequest caseSearchRequest = new CaseSearchRequest();
         caseSearchRequest.setRequestInfo(requestInfo);
-        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(fillingNUmber).defaultFields(false).build();
+        CaseCriteria caseCriteria = CaseCriteria.builder().filingNumber(application.getFilingNumber()).defaultFields(false).build();
         caseSearchRequest.addCriteriaItem(caseCriteria);
+        if(APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS.equalsIgnoreCase(application.getApplicationType())) {
+            caseSearchRequest.setFlow(FLOW_JAC);
+        }
         return caseSearchRequest;
     }
 

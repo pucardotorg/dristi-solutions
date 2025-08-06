@@ -301,4 +301,7 @@ public class Configuration {
     // Sla values
     @Value("${sla.envelope.sla.value}")
     private Long envelopeSlaValue;
+
+    @Value("${state.level.tenant.id}")
+    private String tenantId;
 }
