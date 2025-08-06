@@ -36,6 +36,9 @@ import org.pucar.dristi.web.models.analytics.Outcome;
 import org.pucar.dristi.web.models.task.Task;
 import org.pucar.dristi.web.models.task.TaskRequest;
 import org.pucar.dristi.web.models.task.TaskResponse;
+import org.pucar.dristi.web.models.v2.WitnessDetails;
+import org.pucar.dristi.web.models.v2.WitnessDetailsRequest;
+import org.pucar.dristi.web.models.v2.WitnessDetailsResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -728,6 +731,7 @@ public class CaseService {
         hearingUpdateRequest.put("courtCaseNumber", caseRequest.getCases().getCourtCaseNumber());
         hearingUpdateRequest.put("caseTitle", caseRequest.getCases().getCaseTitle());
         hearingUpdateRequest.put("tenantId", caseRequest.getCases().getTenantId());
+        hearingUpdateRequest.put("courtId", caseRequest.getCases().getCourtId());
         return hearingUpdateRequest;
     }
 
@@ -4990,13 +4994,24 @@ public class CaseService {
         for (BreakDown newBreakDown : newBreakDowns) {
             BreakDown oldBreakDown = oldBreakDownMap.get(newBreakDown.getCode());
 
-            if (newBreakDown.getAmount() > oldBreakDown.getAmount()) {
-                diffTotalAmount += (newBreakDown.getAmount() - oldBreakDown.getAmount());
+            if (oldBreakDown == null) {
+                // Entire new amount is considered difference
+                diffTotalAmount += newBreakDown.getAmount();
 
                 BreakDown differenceItem = new BreakDown();
                 differenceItem.setCode(newBreakDown.getCode());
                 differenceItem.setType(newBreakDown.getType());
-                differenceItem.setAmount(newBreakDown.getAmount() - oldBreakDown.getAmount());
+                differenceItem.setAmount(newBreakDown.getAmount());
+                differenceBreakDowns.add(differenceItem);
+            } else if (newBreakDown.getAmount() > oldBreakDown.getAmount()) {
+                // Only the increased amount is considered difference
+                double diff = newBreakDown.getAmount() - oldBreakDown.getAmount();
+                diffTotalAmount += diff;
+
+                BreakDown differenceItem = new BreakDown();
+                differenceItem.setCode(newBreakDown.getCode());
+                differenceItem.setType(newBreakDown.getType());
+                differenceItem.setAmount(diff);
                 differenceBreakDowns.add(differenceItem);
             }
         }
@@ -5081,10 +5096,29 @@ public class CaseService {
 
     private Boolean isDelayCondonation(CourtCase existingCase) {
         JsonNode caseDetails = objectMapper.convertValue(existingCase.getCaseDetails(), JsonNode.class);
-        if(caseDetails == null || caseDetails.get("delayApplications") == null) {
+        if (caseDetails == null || caseDetails.get("delayApplications") == null) {
             return false;
         }
-        return !caseDetails.get("delayApplications").get("formdata").get(0).get("data").get("delayCondonationType").get("code").textValue().equals("YES");
+
+        JsonNode delayFormData = caseDetails.get("delayApplications").get("formdata").get(0);
+        if (delayFormData == null || delayFormData.get("data") == null) {
+            return false;
+        }
+
+        JsonNode data = delayFormData.get("data");
+        JsonNode delayType = data.get("delayCondonationType");
+        JsonNode condonationFiles = data.get("condonationFileUpload");
+
+        boolean isCodeNo = delayType != null
+                && "NO".equals(delayType.get("code").asText());
+
+        boolean hasFile = condonationFiles != null
+                && condonationFiles.has("document")
+                && condonationFiles.get("document").isArray()
+                && !condonationFiles.get("document").isEmpty()
+                && condonationFiles.get("document").get(0).hasNonNull("fileStore");
+
+        return isCodeNo && hasFile;
     }
 
     private Double getChequeAmount(CourtCase courtCase) {
@@ -5117,5 +5151,136 @@ public class CaseService {
 
     public Integer getCaseCount(CaseSearchRequest caseSearchRequest) {
         return caseRepository.getCaseCount(caseSearchRequest);
+    }
+
+    public WitnessDetailsResponse addWitnessToCase(@Valid WitnessDetailsRequest body) {
+        try {
+            log.info("operation=addWitnessToCase, status=IN_PROGRESS, filingNumber: {}", body.getCaseFilingNumber());
+            CaseCriteria caseCriteria = CaseCriteria.builder()
+                    .filingNumber(body.getCaseFilingNumber())
+                    .defaultFields(false)
+                    .build();
+            List<CaseCriteria> courtCaseList = caseRepository.getCases(Collections.singletonList(caseCriteria), body.getRequestInfo());
+            if (courtCaseList.isEmpty() || courtCaseList.get(0).getResponseList().isEmpty()) {
+                throw new CustomException(INVALID_CASE,"No case found for filing number "+body.getCaseFilingNumber());
+            }
+            CourtCase courtCase = encryptionDecryptionUtil.decryptObject(courtCaseList.get(0).getResponseList().get(0), config.getCaseDecryptSelf(), CourtCase.class, body.getRequestInfo());
+            validator.validateWitnessRequest(body, courtCase);
+            updateCaseAdditionalDetails(body.getWitnessDetails(), courtCase);
+            CourtCase caseObj = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
+            updateCourtCaseInRedis(body.getTenantId(), caseObj);
+            producer.push(config.getCaseUpdateTopic(), CaseRequest.builder().requestInfo(body.getRequestInfo()).cases(caseObj).build());
+            log.info("operation=addWitnessToCase, status=SUCCESS, filingNumber: {}", body.getCaseFilingNumber());
+            return WitnessDetailsResponse.builder().witnessDetails(body.getWitnessDetails()).build();
+        } catch (Exception e) {
+            log.error("operation=addWitnessToCase, status=FAILURE, filingNumber: {}, error: {}", body.getCaseFilingNumber(), e.getMessage());
+            throw new CustomException(ERROR_ADDING_WITNESS, "Error while adding witness to case: " + body.getCaseFilingNumber() + ", error: " + e.getMessage());
+        }
+    }
+
+    private void updateCaseAdditionalDetails(List<WitnessDetails> updatedWitnessDetails, CourtCase courtCase) {
+        if (updatedWitnessDetails == null || courtCase == null) {
+            log.warn("WitnessDetails or CourtCase is null, skipping enrichment.");
+            return;
+        }
+        ObjectNode additionalDetailsNode = objectMapper.convertValue(courtCase.getAdditionalDetails(), ObjectNode.class);
+
+        ObjectNode witnessDetailsNode = additionalDetailsNode.withObject("/witnessDetails");
+
+        ArrayNode formdataArray = (ArrayNode) witnessDetailsNode.get("formdata");
+        if (formdataArray == null || !formdataArray.isArray()) {
+            formdataArray = objectMapper.createArrayNode();
+            witnessDetailsNode.set("formdata", formdataArray);
+        }
+
+        for(WitnessDetails witnessDetails : updatedWitnessDetails) {
+            String uniqueId = witnessDetails.getUniqueId();
+            boolean found = false;
+
+            // Check if uniqueId already exists in the formdata array
+            for (int i = 0; i < formdataArray.size(); i++) {
+                JsonNode existingNode = formdataArray.get(i);
+                if (existingNode.has("uniqueId") &&
+                        uniqueId != null &&
+                        uniqueId.equals(existingNode.get("uniqueId").asText())) {
+
+                    // Update existing record - replace the data field
+                    ObjectNode existingObjectNode = (ObjectNode) existingNode;
+                    JsonNode updatedDataNode = objectMapper.convertValue(witnessDetails, JsonNode.class);
+                    existingObjectNode.set("data", updatedDataNode);
+                    found = true;
+                    log.debug("Updated existing witness record with uniqueId: {}", uniqueId);
+                    break;
+                }
+            }
+
+            // If uniqueId not found, add new record
+            if (!found) {
+                JsonNode dataNode = objectMapper.convertValue(witnessDetails, JsonNode.class);
+                ObjectNode dataWrapperNode = objectMapper.createObjectNode();
+                dataWrapperNode.set("data", dataNode);
+                dataWrapperNode.put("uniqueId", uniqueId);
+                dataWrapperNode.put("isenabled", true);
+                dataWrapperNode.put("displayindex", 0);
+                formdataArray.add(dataWrapperNode);
+                log.debug("Added new witness record with uniqueId: {}", uniqueId);
+            }
+        }
+        courtCase.setAdditionalDetails(additionalDetailsNode);
+    }
+
+
+    /**
+     * Updates a case without triggering workflow processes.
+     * Performs validation on the case object and handles errors appropriately.
+     *
+     * @param body The CaseRequest containing case details to update
+     * @return CourtCase The updated court case
+     * @throws CustomException if validation fails or update operation encounters errors
+     */
+    public CourtCase updateCaseWithoutWorkflow(@Valid CaseRequest body) {
+        try {
+            // Validate case object
+            CourtCase courtCase = body.getCases();
+            if (courtCase == null) {
+                log.error("Method=updateCaseWithoutWorkflow,Result=FAILURE, Error=CourtCase is null");
+                throw new CustomException(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, "CourtCase cannot be null");
+            }
+            log.info("Method=updateCaseWithoutWorkflow,Result=IN_PROGRESS, caseId={}, tenantId={}", body.getCases().getId(), body.getCases().getTenantId());
+            // Validate required fields
+            if (StringUtils.isBlank(courtCase.getTenantId())) {
+                log.error("Method=updateCaseWithoutWorkflow,Result=FAILURE, Error=TenantId is null or empty, CaseId={}", courtCase.getId());
+                throw new CustomException(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, "TenantId cannot be null or empty");
+            }
+
+            if (courtCase.getId() == null) {
+                log.error("Method=updateCaseWithoutWorkflow,Result=FAILURE, Error=CaseId is null or empty");
+                throw new CustomException(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, "Case ID cannot be null or empty");
+            }
+            // Encrypt the case object
+            CourtCase encryptedCourtCase = encryptionDecryptionUtil.encryptObject(body.getCases(), config.getCourtCaseEncrypt(), CourtCase.class);
+            if (encryptedCourtCase == null) {
+                log.error("Method=updateCaseWithoutWorkflow,Result=FAILURE, Error=Encryption failed, CaseId={}", courtCase.getId());
+                throw new CustomException(UPDATE_CASE_WITHOUT_WORKFLOW_ERR, "Failed to encrypt case object");
+            }
+
+            // Update case in Redis cache
+            updateCourtCaseInRedis(courtCase.getTenantId(), encryptedCourtCase);
+            CaseRequest caseRequest = CaseRequest.builder()
+                            .requestInfo(body.getRequestInfo())
+                            .cases(encryptedCourtCase)
+                            .build();
+            producer.push(config.getCaseUpdateTopic(), caseRequest);
+            log.info("Method=updateCaseWithoutWorkflow,Result=SUCCESS, CaseId={}, TenantId={}",
+                    courtCase.getId(), courtCase.getTenantId());
+
+            return courtCase;
+
+        } catch (CustomException e) {
+            log.error("Method=updateCaseWithoutWorkflow,Result=FAILURE, Error=Unexpected exception occurred, Message={}",
+                    e.getMessage(), e);
+            throw new CustomException(UPDATE_CASE_WITHOUT_WORKFLOW_ERR,
+                    "An unexpected error occurred while updating case without workflow: " + e.getMessage());
+        }
     }
 }

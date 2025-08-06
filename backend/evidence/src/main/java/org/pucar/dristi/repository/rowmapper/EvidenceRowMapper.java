@@ -76,6 +76,14 @@ public class EvidenceRowMapper implements ResultSetExtractor<List<Artifact>> {
                             .description(rs.getString("description"))
                             .auditdetails(auditDetails)
                             .publishedDate(rs.getLong("publishedDate"))
+                            .shortenedUrl(rs.getString("shortenedUrl"))
+                            .seal(getObjectFromJson(rs.getString("seal"), new TypeReference<Document>(){}))
+                            .witnessMobileNumbers(getObjectFromJson(rs.getString("witnessMobileNumbers"), new TypeReference<>() {
+                            }))
+                            .witnessEmails(getObjectFromJson(rs.getString("witnessEmails"), new TypeReference<>() {
+                            }))
+                            .evidenceMarkedStatus(rs.getString("evidenceMarkedStatus"))
+                            .tag(rs.getString("tag"))
                             .build();
                 }
 
