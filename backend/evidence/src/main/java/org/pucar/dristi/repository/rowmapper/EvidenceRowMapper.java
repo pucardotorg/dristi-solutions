@@ -84,6 +84,7 @@ public class EvidenceRowMapper implements ResultSetExtractor<List<Artifact>> {
                             }))
                             .evidenceMarkedStatus(rs.getString("evidenceMarkedStatus"))
                             .tag(rs.getString("tag"))
+                            .isEvidenceMarkedFlow(rs.getBoolean("isEvidenceMarkedFlow"))
                             .build();
                 }
 
