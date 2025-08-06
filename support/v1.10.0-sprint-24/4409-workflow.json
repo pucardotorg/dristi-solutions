@@ -61,6 +61,13 @@
                 "roles": [
                   "EVIDENCE_CREATOR"
                 ]
+              },
+              {
+                "action": "SUBMIT",
+                "nextState": "DRAFT_IN_PROGRESS",
+                "roles": [
+                  "EVIDENCE_CREATOR"
+                ]
               }
             ]
           },

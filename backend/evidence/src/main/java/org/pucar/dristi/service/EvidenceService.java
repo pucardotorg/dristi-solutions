@@ -25,8 +25,8 @@ import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.util.ObjectUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
@@ -100,7 +100,9 @@ public class EvidenceService {
             if(WITNESS_DEPOSITION.equalsIgnoreCase(body.getArtifact().getArtifactType()) &&
              SAVE_DRAFT.equalsIgnoreCase(body.getArtifact().getWorkflow().getAction())) {
                 validateWitnessDeposition(body);
-                tag = evidenceEnrichment.enrichPseudoTag(body);
+                if(tag != null && !hasNumberSuffix(tag)){
+                    tag = evidenceEnrichment.enrichPseudoTag(body);
+                }
             }
             // Initiate workflow for the new application- //todo witness deposition is part of case filing or not
             if ((body.getArtifact().getArtifactType() != null &&
@@ -112,7 +114,9 @@ public class EvidenceService {
             } else {
                 producer.push(config.getEvidenceCreateWithoutWorkflowTopic(), body);
             }
-            body.getArtifact().setTag(tag);
+            if(tag != null && !tag.isEmpty()) {
+                body.getArtifact().setTag(tag);
+            }
             callNotificationService(body,false,true);
             return body.getArtifact();
         } catch (CustomException e) {
@@ -444,9 +448,11 @@ public class EvidenceService {
                     }
                 }
             }
-            if(WITNESS_DEPOSITION.equalsIgnoreCase(evidenceRequest.getArtifact().getArtifactType())
-             && SUBMIT.equalsIgnoreCase(evidenceRequest.getArtifact().getWorkflow().getAction())) {
-                evidenceEnrichment.enrichTag(evidenceRequest);
+            if(WITNESS_DEPOSITION.equalsIgnoreCase(evidenceRequest.getArtifact().getArtifactType())) {
+                if(SUBMIT.equalsIgnoreCase(evidenceRequest.getArtifact().getWorkflow().getAction()) &&
+                        !hasNumberSuffix(evidenceRequest.getArtifact().getTag())) {
+                        evidenceEnrichment.enrichTag(evidenceRequest);
+                }
                 updateCaseWitnessDeposition(evidenceRequest);
             }
 
@@ -1077,6 +1083,7 @@ public class EvidenceService {
         return attribute;
     }
 
+
     private List<CaseDiaryEntry> createADiaryEntries(Artifact artifact, RequestInfo requestInfo) {
 
         log.info("finding case for filingNumber: {}", artifact.getFilingNumber());
@@ -1144,5 +1151,11 @@ public class EvidenceService {
         } else {
             return courtCase.getFilingNumber();
         }
+
+    private boolean hasNumberSuffix(String tag) {
+        if (tag == null || tag.trim().isEmpty()) {
+            return false;
+        }
+        return tag.matches(".*\\d+$");
     }
 }
