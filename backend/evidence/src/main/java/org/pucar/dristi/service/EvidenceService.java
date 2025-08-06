@@ -1115,21 +1115,11 @@ public class EvidenceService {
 
     }
 
-    private String getCaseReferenceNumber(CourtCase courtCase) {
-        if (courtCase.getCourtCaseNumber() != null && !courtCase.getCourtCaseNumber().isEmpty()) {
-            return courtCase.getCourtCaseNumber();
-        } else if (courtCase.getCmpNumber() != null && !courtCase.getCmpNumber().isEmpty()) {
-            return courtCase.getCmpNumber();
-        } else {
-            return courtCase.getFilingNumber();
-        }
-    }
-
     private CaseDiaryEntry createCaseDiaryEntry(Artifact artifact, CourtCase courtCase, String botd, Long hearingDate) {
         return CaseDiaryEntry.builder()
                 .tenantId(artifact.getTenantId())
                 .entryDate(dateUtil.getStartOfTheDayForEpoch(dateUtil.getCurrentTimeInMilis()))
-                .caseNumber(getCaseReferenceNumber(courtCase))
+                .caseNumber(courtCase.getCaseNumber())
                 .caseId(courtCase.getId().toString())
                 .courtId(courtCase.getCourtId())
                 .businessOfDay(botd)
@@ -1139,5 +1129,15 @@ public class EvidenceService {
                 .additionalDetails(Map.of("filingNumber", artifact.getFilingNumber(),
                         "caseId", courtCase.getId()))
                 .build();
+    }
+
+    private String getCaseReferenceNumber(CourtCase courtCase) {
+        if (courtCase.getCourtCaseNumber() != null && !courtCase.getCourtCaseNumber().isEmpty()) {
+            return courtCase.getCourtCaseNumber();
+        } else if (courtCase.getCmpNumber() != null && !courtCase.getCmpNumber().isEmpty()) {
+            return courtCase.getCmpNumber();
+        } else {
+            return courtCase.getFilingNumber();
+        }
     }
 }
