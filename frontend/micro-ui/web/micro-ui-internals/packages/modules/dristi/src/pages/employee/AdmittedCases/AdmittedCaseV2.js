@@ -57,6 +57,7 @@ import PaymentDemandModal from "./PaymentDemandModal";
 import DocumentsV2 from "./DocumentsV2";
 import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
 import WitnessDrawerV2 from "./WitnessDrawerV2";
+import WitnessDepositionDocModal from "./WitnessDepositionDocModal";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -232,6 +233,7 @@ const AdmittedCaseV2 = () => {
   const [isBailBondTaskExists, setIsBailBondTaskExists] = useState(false);
   const [bailBondLoading, setBailBondLoading] = useState(false);
   const [showAddWitnessModal, setShowAddWitnessModal] = useState(false);
+  const [showWitnessDepositionDoc, setShowWitnessDepositionDoc] = useState({docObj: null, show:false});  
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
@@ -3241,6 +3243,7 @@ const AdmittedCaseV2 = () => {
         setSelectedRow={setSelectedRow}
         setSelectedItem={setSelectedItem}
         // handleFilingAction={handleFilingAction}
+        setShowWitnessDepositionDoc={setShowWitnessDepositionDoc}
       />
     );
   }, [caseDetails, courtId, tenantId, filingNumber, cnrNumber, setDocumentSubmission, setShow]);
@@ -3634,6 +3637,13 @@ const AdmittedCaseV2 = () => {
           <CaseBundleView caseDetails={caseDetails} tenantId={tenantId} filingNumber={filingNumber} />
         </div>
       )}
+       {showWitnessDepositionDoc?.show && (
+        <WitnessDepositionDocModal
+          t={t}
+          docObj={showWitnessDepositionDoc?.docObj}
+          setShowWitnessDepositionDoc={setShowWitnessDepositionDoc}
+        />
+      )}
       {show && (
         <EvidenceModal
           documentSubmission={documentSubmission}
@@ -3650,6 +3660,8 @@ const AdmittedCaseV2 = () => {
           artifact={artifact}
         />
       )}
+
+     
       {showOrderReviewModal && (
         <PublishedOrderModal
           t={t}

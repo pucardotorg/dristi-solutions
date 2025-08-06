@@ -122,4 +122,12 @@ export const submissionService = {
       data,
       params,
     }),
+    updateOpenWitnessDeposition: (data, params) =>
+      Request({
+        url: Urls.openApi.updateWitnessDeposition,
+        useCache: false,
+        userService: false,
+        data,
+        params,
+      }),
 };
