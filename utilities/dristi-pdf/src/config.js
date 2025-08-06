@@ -196,6 +196,10 @@ module.exports = {
       process.env.ORDER_ISSUE_WARRANT_QR || "order-issue-warrant-qr",
     order_issue_warrant:
       process.env.ORDER_ISSUE_WARRANT || "order-issue-warrant",
+    order_issue_proclamation_qr:
+      process.env.ORDER_ISSUE_PROCLAMATION_QR || "order-issue-proclamation-qr",
+    order_issue_proclamation:
+      process.env.ORDER_ISSUE_PROCLAMATION || "order-issue-proclamation",
     order_case_withdrawal_acceptance_qr:
       process.env.ORDER_CASE_WITHDRAWAL_ACCEPTANCE_QR ||
       "order-case-withdrawal-acceptance-qr",
@@ -275,6 +279,7 @@ module.exports = {
       process.env.APPLICATION_PROFILE_EDIT_QR || "application-profile-edit-qr",
     bail_bond: process.env.BAIL_BOND || "bail-bond",
     bail_bond_qr: process.env.BAIL_BOND_QR || "bail-bond-qr",
+    evidence: process.env.EVIDENCE || "evidence",
   },
 
   app: {

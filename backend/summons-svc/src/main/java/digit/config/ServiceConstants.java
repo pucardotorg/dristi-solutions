@@ -55,6 +55,7 @@ public class ServiceConstants {
     public static final String SUMMON = "SUMMONS";
     public static final String WARRANT = "WARRANT";
     public static final String NOTICE = "NOTICE";
+    public static final String PROCLAMATION = "PROCLAMATION";
     public static final String ACCUSED = "ACCUSED";
     public static final String WITNESS = "WITNESS";
     public static final String BAILABLE = "BAILABLE";
@@ -82,6 +83,7 @@ public class ServiceConstants {
     public static final String SUMMON_TO_ACCUSED="Summons to an accused 138";
     public static final String SUMMON_TO_WITNESS="Summons to witness";
     public static final String WARRANT_TO_ACCUSED="Warrant of arrest of accused 138";
+    public static final String PROCLAMATION_DOC_SUB_TYPE="Proclamation requiring the apperance of a person accused";
     public static final String POLICE_REPORT = "POLICE_REPORT";
     public static final String DIRECT = "DIRECT";
     public static final String ICOPS ="ICOPS";
