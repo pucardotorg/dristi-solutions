@@ -102,7 +102,6 @@ public class HearingService {
         openHearing.setHearingDurationInMillis(hearing.getHearingDurationInMillis());
 
         InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(courtCase.getCourtId(), hearing.getId().toString() );
-
         List<OpenHearing> openHearingList = null;
         try {
             openHearingList = inboxUtil.getInboxEntities(inboxRequest, OPEN_HEARING_INDEX_BUSINESS_OBJECT_KEY, OpenHearing.class);
