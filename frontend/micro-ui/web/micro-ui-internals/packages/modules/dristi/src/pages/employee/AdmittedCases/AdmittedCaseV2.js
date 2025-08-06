@@ -253,6 +253,7 @@ const AdmittedCaseV2 = () => {
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const historyCaseData = location?.state?.caseData;
   const historyOrderData = location?.state?.orderData;
+  const newWitnesToast = history.location?.state?.newWitnesToast;
 
   const openOrder = location?.state?.openOrder;
   const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
@@ -1591,6 +1592,12 @@ const AdmittedCaseV2 = () => {
       getEvidence();
     }
   }, [artifactNumber, currentDiaryEntry]);
+
+  useEffect(() => {
+    if (newWitnesToast) {
+      showToast({ message: t("NEW_WITNESS_SUCCESSFULLY_ADDED"), error: false });
+    }
+  }, [newWitnesToast, showToast, t]);
 
   useEffect(() => {
     if (applicationData && applicationNumber) {
@@ -4048,6 +4055,7 @@ const AdmittedCaseV2 = () => {
         ))}
       {showAddWitnessModal && (
         <AddWitnessModal
+          activeTab={activeTab}
           onCancel={() => setShowAddWitnessModal(false)}
           onDismiss={() => setShowAddWitnessModal(false)}
           tenantId={tenantId}

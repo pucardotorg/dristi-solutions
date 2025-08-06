@@ -237,6 +237,8 @@ const AdmittedCases = () => {
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const historyCaseData = location?.state?.caseData;
   const historyOrderData = location?.state?.orderData;
+  const newWitnesToast = history.location?.state?.newWitnesToast;
+
   const courtId = localStorage.getItem("courtId");
   const reqEvidenceUpdate = {
     url: Urls.dristi.evidenceUpdate,
@@ -1414,6 +1416,12 @@ const AdmittedCases = () => {
       getEvidence();
     }
   }, [artifactNumber, currentDiaryEntry]);
+
+  useEffect(() => {
+    if (newWitnesToast) {
+      showToast({ message: t("NEW_WITNESS_SUCCESSFULLY_ADDED"), error: false });
+    }
+  }, [newWitnesToast, showToast, t]);
 
   useEffect(() => {
     if (applicationData && applicationNumber) {
@@ -3289,6 +3297,7 @@ const AdmittedCases = () => {
       )}
       {showAddWitnessModal && (
         <AddWitnessModal
+          activeTab={activeTab}
           onCancel={() => setShowAddWitnessModal(false)}
           onDismiss={() => setShowAddWitnessModal(false)}
           tenantId={tenantId}

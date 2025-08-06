@@ -331,6 +331,7 @@ function BulkWitnessDepositionView({ showToast = () => {} }) {
           setShowBulkSignModal={setShowBulkSignModal}
           witnessDepositionPaginationData={witnessDepositionPaginationData}
           setCounter={setCounter}
+          setShowErrorToast={setShowErrorToast}
         />
       )}
       {showBulkSignSuccessModal && (

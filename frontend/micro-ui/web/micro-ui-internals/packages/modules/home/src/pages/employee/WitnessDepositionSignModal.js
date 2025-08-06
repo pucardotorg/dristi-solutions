@@ -25,6 +25,7 @@ export const WitnessDepositionSignModal = ({
   setShowBulkSignModal = () => {},
   witnessDepositionPaginationData,
   setCounter = () => {},
+  setShowErrorToast = () => {},
 }) => {
   const queryStrings = Digit.Hooks.useQueryParams();
 
@@ -240,6 +241,10 @@ export const WitnessDepositionSignModal = ({
       });
     } catch (error) {
       console.error("Error while updating witness deposition:", error);
+      setShowErrorToast({
+        error: true,
+        label: t("ERROR_WITNESS_DEPOSITION_BULK_SIGN_MSG"),
+      });
       setShowBulkSignModal(false);
       if (queryStrings?.artifactNumber) {
         clearWitnessDepositionSessionData();
@@ -298,7 +303,7 @@ export const WitnessDepositionSignModal = ({
       if (witnessDepositionPaginationData?.caseTitle)
         sessionStorage.setItem("bulkWitnessDepositionSignCaseTitle", witnessDepositionPaginationData?.caseTitle);
       if (witnessDepositionPaginationData?.offset) sessionStorage.setItem("bulkWitnessDepositionSignoffset", witnessDepositionPaginationData?.offset);
-      handleEsign(name, pageModule, selectedWitnessDepositionFilestoreid, "Magistrate Signature");
+      handleEsign(name, pageModule, selectedWitnessDepositionFilestoreid, "Judicial Magistrate of First Class");
     } catch (error) {
       console.log("E-sign navigation error:", error);
       setLoader(false);

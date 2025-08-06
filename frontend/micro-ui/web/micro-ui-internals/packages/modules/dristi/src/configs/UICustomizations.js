@@ -1426,7 +1426,9 @@ export const UICustomizations = {
                   partyType: "witness",
                   caseId: data?.criteria[0]?.responseList[0]?.id,
                   isEditable: false,
-                  auditDetails: itemData?.createdTime ? { createdTime: itemData?.createdTime } : data?.criteria[0]?.responseList[0]?.auditDetails,
+                  auditDetails: itemData?.data?.createdTime
+                    ? { createdTime: itemData?.data?.createdTime }
+                    : data?.criteria[0]?.responseList[0]?.auditDetails,
                 };
               }) || [];
 
