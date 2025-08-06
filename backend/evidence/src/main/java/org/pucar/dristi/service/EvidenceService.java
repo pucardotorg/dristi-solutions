@@ -1090,27 +1090,18 @@ public class EvidenceService {
 
         log.info("finding case for filingNumber: {}", artifact.getFilingNumber());
 
-        List<CourtCase> cases = new ArrayList<>();
-        CaseListResponse caseListResponse = null;
+        JsonNode caseDetails = null;
         try {
 
-            JsonNode jsonNodeCaseListResponse = caseUtil.searchCaseDetails(CaseSearchRequest.builder()
+            caseDetails = caseUtil.searchCaseDetails(CaseSearchRequest.builder()
                     .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(artifact.getFilingNumber()).tenantId(artifact.getTenantId()).defaultFields(false).build()))
                     .requestInfo(requestInfo).build());
-            caseListResponse = objectMapper.convertValue(jsonNodeCaseListResponse, CaseListResponse.class);
 
         } catch (Exception e) {
             log.error("Unexpected error occurred while fetching case details", e);
+            throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE,
+                    "Failed to retrieve case details for filing number: " + artifact.getFilingNumber());
         }
-
-        cases = caseListResponse.getCriteria().get(0).getResponseList();
-
-        if (cases == null || cases.isEmpty()) {
-            log.error("No court case found for filing number: {}", artifact.getFilingNumber());
-            throw new CustomException("CASE_NOT_FOUND", "Court case not found for filing number: " + artifact.getFilingNumber());
-        }
-
-        CourtCase courtCase = cases.get(0);
 
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder()
                 .criteria(HearingCriteria.builder().tenantId(artifact.getTenantId())
@@ -1134,35 +1125,39 @@ public class EvidenceService {
 
         log.info("creating case diary entry for filingNumber: {}", artifact.getFilingNumber());
 
-        CaseDiaryEntry caseDiaryEntry = createCaseDiaryEntry(artifact, courtCase, botd, hearingDate);
+        CaseDiaryEntry caseDiaryEntry = createCaseDiaryEntry(artifact, caseDetails, botd, hearingDate);
 
         return new ArrayList<>(Collections.singletonList(caseDiaryEntry));
 
     }
 
-    public CaseDiaryEntry createCaseDiaryEntry(Artifact artifact, CourtCase courtCase, String botd, Long hearingDate) {
+    public CaseDiaryEntry createCaseDiaryEntry(Artifact artifact, JsonNode caseDetails, String botd, Long hearingDate) {
+        String cmpNumber = caseDetails.has("cmpNumber") ? (caseDetails.get("cmpNumber").textValue() != null ? caseDetails.get("cmpNumber").textValue() : null) : null;
+        String courtCaseNumber = caseDetails.has("courtCaseNumber") ? (caseDetails.get("courtCaseNumber").textValue() != null ? caseDetails.get("courtCaseNumber").textValue() : null) : null;
+        String caseId = caseDetails.has("id") ? (caseDetails.get("id").textValue() != null ? caseDetails.get("id").textValue() : null) : null;
+
         return CaseDiaryEntry.builder()
                 .tenantId(artifact.getTenantId())
                 .entryDate(dateUtil.getStartOfTheDayForEpoch(dateUtil.getCurrentTimeInMilis()))
-                .caseNumber(getCaseReferenceNumber(courtCase))
-                .caseId(courtCase.getId().toString())
-                .courtId(courtCase.getCourtId())
+                .caseNumber(getCaseReferenceNumber(courtCaseNumber, cmpNumber, artifact.getFilingNumber()))
+                .caseId(caseId)
+                .courtId(artifact.getCourtId())
                 .businessOfDay(botd)
                 .referenceId(artifact.getArtifactNumber())
                 .referenceType("Documents")
                 .hearingDate(hearingDate)
                 .additionalDetails(Map.of("filingNumber", artifact.getFilingNumber(),
-                        "caseId", courtCase.getId()))
+                        "caseId", caseId))
                 .build();
     }
 
-    public String getCaseReferenceNumber(CourtCase courtCase) {
-        if (courtCase.getCourtCaseNumber() != null && !courtCase.getCourtCaseNumber().isEmpty()) {
-            return courtCase.getCourtCaseNumber();
-        } else if (courtCase.getCmpNumber() != null && !courtCase.getCmpNumber().isEmpty()) {
-            return courtCase.getCmpNumber();
+    public String getCaseReferenceNumber(String courtCaseNumber, String cmpNumber, String filingNumber) {
+        if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
+            return courtCaseNumber;
+        } else if (cmpNumber != null && !cmpNumber.isEmpty()) {
+            return cmpNumber;
         } else {
-            return courtCase.getFilingNumber();
+            return filingNumber;
         }
     }
 
