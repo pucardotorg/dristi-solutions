@@ -149,7 +149,7 @@ public class EvidenceQueryBuilder {
         StringBuilder queryBuilder = new StringBuilder(" AND ");
 
         if (statusList != null && !statusList.isEmpty()) {
-            queryBuilder.append(" (status NOT IN (");
+            queryBuilder.append(" ((status NOT IN (");
             for (int i = 0; i < statusList.size(); i++) {
                 queryBuilder.append("?");
                 if (i < statusList.size() - 1) {
@@ -158,7 +158,9 @@ public class EvidenceQueryBuilder {
                 preparedStmtList.add(statusList.get(i));
                 preparedStmtArgsList.add(java.sql.Types.VARCHAR);
             }
-            queryBuilder.append(" ) and artifactType != 'WITNESS_DEPOSITION'  OR (artifactType = 'WITNESS_DEPOSITION' AND sourceId = ? ))");
+            queryBuilder.append(" AND artifactType != 'WITNESS_DEPOSITION') ");
+            queryBuilder.append(" OR (artifactType = 'WITNESS_DEPOSITION' AND sourceId = ?)) ");
+            queryBuilder.append(" AND status IS NULL )");
             preparedStmtList.add(loggedInUserUuid);
             preparedStmtArgsList.add(java.sql.Types.VARCHAR);
         }
