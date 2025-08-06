@@ -23,9 +23,6 @@ public class TaskDetails {
     @JsonProperty("warrantDetails")
     private WarrantDetails warrantDetails = null;
 
-    @JsonProperty("proclamationDetails")
-    private ProclamationDetails proclamationDetails = null;
-
     @JsonProperty("complainantDetails")
     private ComplainantDetails complainantDetails = null;
 
