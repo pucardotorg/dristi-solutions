@@ -7,10 +7,12 @@ import { useQueries } from "react-query";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
+import useDownloadFiles from "../../../hooks/dristi/useDownloadFiles";
 import { Loader } from "@egovernments/digit-ui-react-components";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import MarkAsEvidence from "./MarkAsEvidence";
 import DownloadButton from "../../../components/DownloadButton";
+import CustomChip from "../../../components/CustomChip";
 
 function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const [expandedItems, setExpandedItems] = useState({
@@ -41,6 +43,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const [publishedOrderData, setPublishedOrderData] = useState([]);
   const [contextMenu, setContextMenu] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
+  const { downloadFilesAsZip } = useDownloadFiles();
   const evidenceUpdateMutation = Digit.Hooks.useCustomAPIMutationHook(reqEvidenceUpdate);
   const [showEvidenceConfirmationModal, setShowEvidenceConfirmationModal] = useState(false);
   const [isEvidenceSubmitDisabled, setIsEvidenceSubmitDisabled] = useState(false);
@@ -1531,25 +1534,61 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     return mainStructure;
   };
 
+  // Handle download for either single PDF or ZIP containing evidence file and seal
+  const handleDownload = (fileStoreId) => {
+    if (evidenceFileStoreMap?.has(fileStoreId)) {
+      const evidenceData = evidenceFileStoreMap.get(fileStoreId);
+      // Check if evidence is marked as COMPLETED and has a seal object
+      if (evidenceData?.evidenceMarkedStatus === "COMPLETED" && evidenceData?.seal?.fileStore) {
+        // Download both evidence and seal files as a ZIP
+        const filesToDownload = [
+          { fileStoreId: fileStoreId, fileName: `Evidence_${evidenceData.evidenceNumber || "File"}` },
+          { fileStoreId: evidenceData.seal.fileStore, fileName: `Seal_${evidenceData.evidenceNumber || "File"}` },
+        ];
+        downloadFilesAsZip(tenantId, filesToDownload, `Evidence_${evidenceData.evidenceNumber || "Files"}`);
+      } else {
+        // Normal PDF download if not completed or no seal
+        downloadPdf(tenantId, fileStoreId);
+      }
+    } else {
+      // Normal PDF download for non-evidence files
+      downloadPdf(tenantId, fileStoreId);
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = () => setContextMenu(false);
     window?.addEventListener("click", handleClickOutside);
     return () => window?.removeEventListener("click", handleClickOutside);
   }, []);
-  const MemoDocViewerWrapper = useMemo(
-    () => (
-      <DocViewerWrapper
-        key={"selectedFileStoreId"}
-        tenantId={tenantId}
-        fileStoreId={selectedFileStoreId}
-        showDownloadOption={false}
-        docHeight="100%"
-        docWidth="100%"
-        docViewerStyle={{ maxWidth: "100%" }}
-      />
-    ),
-    [selectedFileStoreId, tenantId]
-  );
+  const MemoDocViewerWrapper = useMemo(() => {
+    return (
+      <React.Fragment>
+        <DocViewerWrapper
+          key={"selectedFileStoreId"}
+          tenantId={tenantId}
+          fileStoreId={selectedFileStoreId}
+          showDownloadOption={false}
+          docHeight="100%"
+          docWidth="100%"
+          docViewerStyle={{ maxWidth: "100%" }}
+        />
+
+        {evidenceFileStoreMap?.get(selectedFileStoreId)?.seal?.fileStore &&
+          evidenceFileStoreMap?.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED" && (
+            <DocViewerWrapper
+              key={"selectedFileStoreId"}
+              tenantId={tenantId}
+              fileStoreId={evidenceFileStoreMap?.get(selectedFileStoreId)?.seal?.fileStore}
+              showDownloadOption={false}
+              docHeight="100%"
+              docWidth="100%"
+              docViewerStyle={{ maxWidth: "100%" }}
+            />
+          )}
+      </React.Fragment>
+    );
+  }, [evidenceFileStoreMap, selectedFileStoreId, tenantId]);
 
   const dynamicCaseFileStructure = generateCaseFileStructure(caseDetails?.documents || []);
 
@@ -1690,7 +1729,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         >
           <div>
             {selectedDocument && selectedFileStoreId && (
-              <span style={{ fontFamily: "Roboto", fontWeight: "700", fontStyle: "bold", fontSize: "20px" }}>
+              <span style={{ display: "flex", gap: "10px", fontFamily: "Roboto", fontWeight: "700", fontStyle: "bold", fontSize: "20px" }}>
                 {dynamicCaseFileStructure
                   ?.flatMap((item) =>
                     item.hasChildren
@@ -1707,12 +1746,20 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
                       )
                       ?.find((item) => item.id === selectedDocument)?.title
                   )}`}
+                {evidenceFileStoreMap &&
+                  evidenceFileStoreMap.has(selectedFileStoreId) &&
+                  evidenceFileStoreMap?.get(selectedFileStoreId)?.evidenceMarkedStatus !== null && (
+                    <CustomChip
+                      text={t(evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus) || ""}
+                      shade={evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"}
+                    />
+                  )}
               </span>
             )}
           </div>
           {selectedDocument && selectedFileStoreId && (
             <div className="doc-action-buttons" style={{ display: "flex", gap: "10px" }}>
-              <DownloadButton onClick={() => downloadPdf(tenantId, selectedFileStoreId)} label="DOWNLOAD_PDF" t={t} />
+              <DownloadButton onClick={() => handleDownload(selectedFileStoreId)} label="DOWNLOAD_PDF" t={t} />
               {isJudge &&
                 selectedFileStoreId &&
                 evidenceFileStoreMap.has(selectedFileStoreId) &&
@@ -1753,7 +1800,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         </div>
         {MemoDocViewerWrapper}
       </div>
-      {contextMenu && (
+      {/* {contextMenu && (
         <div
           className="context-menu"
           style={{
@@ -1782,11 +1829,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
             </div>
           )}
         </div>
-      )}
+      )} */}
       {showEvidenceConfirmationModal && (
         <MarkAsEvidence
           t={t}
-          setShowConfirmationModal={setShowEvidenceConfirmationModal}
+          setShowMakeAsEvidenceModal={setShowEvidenceConfirmationModal}
           evidenceDetailsObj={evidenceFileStoreMap.get(selectedFileStoreId)}
         />
       )}

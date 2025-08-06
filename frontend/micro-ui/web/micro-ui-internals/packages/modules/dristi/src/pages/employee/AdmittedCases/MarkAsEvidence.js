@@ -6,6 +6,22 @@ import SuccessBannerModal from "../../../../../submissions/src/components/Succes
 import SignatureSuccessModal from "../../../../../submissions/src/components/SignatureSuccessModal";
 import { MarkAsEvidenceAction } from "../../../Utils/submissionWorkflow";
 import { getFullName } from "../../../../../cases/src/utils/joinCaseUtils";
+import { Urls } from "../../../hooks";
+import Axios from "axios";
+import { set } from "lodash";
+
+// Function to clear evidence session data after process completion
+export const clearEvidenceSessionData = () => {
+  sessionStorage.removeItem("esignProcess");
+  sessionStorage.removeItem("markAsEvidenceStepper");
+  sessionStorage.removeItem("fileStoreId");
+  sessionStorage.removeItem("markAsEvidenceSelectedItem");
+  sessionStorage.removeItem("signStatus");
+  sessionStorage.removeItem("bulkMarkAsEvidenceLimit");
+  sessionStorage.removeItem("bulkMarkAsEvidenceOffset");
+  sessionStorage.removeItem("homeActiveTab");
+  sessionStorage.removeItem("bulkMarkAsEvidenceSignCaseTitle");
+};
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -41,6 +57,7 @@ const MarkAsEvidence = ({
     console.log(e, "in ff");
   },
 }) => {
+  const [loader, setLoader] = useState(false); // Loader state for API calls
   const [stepper, setStepper] = useState(0);
   const courtId = localStorage.getItem("courtId");
   const userInfo = Digit.UserService.getUser()?.info;
@@ -49,20 +66,40 @@ const MarkAsEvidence = ({
   const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [evidenceDetails, setEvidenceDetails] = useState(evidenceDetailsObj || {});
-  const [, setCaseDetails] = useState({});
+  const [caseDetails, setCaseDetails] = useState({});
   const [businessOfDay, setBusinessOfDay] = useState("");
   const [evidenceNumber, setEvidenceNumber] = useState("");
   const [evidenceNumberError, setEvidenceNumberError] = useState("");
   const [sealFileStoreId, setSealFileStoreId] = useState("");
   const [ownerName, setOwnerName] = useState("");
+  const [witnessTagValues, setWitnessTagValues] = useState([]);
   const name = "Signature";
   const pageModule = "en";
+  const accessToken = window.localStorage.getItem("token");
+  const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
+  const [witnessTag, setWitnessTag] = useState(null);
   const filingNumber = useMemo(() => {
     return evidenceDetailsObj?.filingNumber;
   }, [evidenceDetailsObj?.filingNumber]);
   const artifactNumber = useMemo(() => {
     return evidenceDetailsObj?.artifactNumber;
   }, [evidenceDetailsObj?.artifactNumber]);
+  const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
+  const [isSigned, setIsSigned] = useState(false);
+
+  const [formData, setFormData] = useState({});
+  const onSelect = (key, value) => {
+    if (value?.Signature === null) {
+      setFormData({});
+      setIsSigned(false);
+    } else {
+      setFormData((prevData) => ({
+        ...prevData,
+        [key]: value,
+      }));
+    }
+  };
+  console.log(caseDetails, "caseDetails");
 
   const { data: EvidenceNumberFormat, isLoading } = Digit.Hooks.useCommonMDMS(Digit.ULBService.getStateId(), "Evidence", ["Tag"], {
     select: (data) => {
@@ -83,6 +120,16 @@ const MarkAsEvidence = ({
     return EvidenceNumberFormat?.data?.find((item) => item?.sourceType === evidenceDetails?.sourceType)?.evidenceTag || "";
   }, [evidenceDetails, EvidenceNumberFormat]);
 
+  const onDocumentUpload = async (fileData, filename) => {
+    try {
+      const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", fileData, Digit.ULBService.getCurrentTenantId());
+      return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+    } catch (error) {
+      console.error("Failed to upload document:", error);
+      throw error; // or handle error appropriately
+    }
+  };
+
   // Commented out unused hook
   // const { downloadFilesAsZip } = Digit.Hooks.dristi.useDownloadFiles();
   // const downloadFiles = async () => {
@@ -102,8 +149,15 @@ const MarkAsEvidence = ({
   // downloadFiles();
   const getMarkAsEvidencePdf = async () => {
     try {
-      const response = await DRISTIService.getMarkAsEvidencePdf(
+      const response = await Axios.post(
+        Urls.dristi.getMarkAsEvidencePdf,
         {
+          RequestInfo: {
+            authToken: accessToken,
+            userInfo: userInfo,
+            msgId: `${Date.now()}|${Digit.StoreData.getCurrentLanguage()}`,
+            apiId: "Rainmaker",
+          },
           Evidence: {
             courtId: courtId,
             markedAs: `${evidenceTag}${evidenceNumber}`,
@@ -112,16 +166,27 @@ const MarkAsEvidence = ({
           },
         },
         {
-          tenantId,
-          qrCode: false,
-          evidencePdfType: "evidence-seal",
+          params: {
+            tenantId,
+            qrCode: false,
+            evidencePdfType: "evidence-seal",
+          },
+          responseType: "blob",
         }
       );
-      const pdfFile = new File([response], "evidence_seal.pdf", { type: "application/pdf" });
-      const fileUploadRes = await Digit.UploadServices.Filestorage("DRISTI", pdfFile, Digit.ULBService.getCurrentTenantId());
-      const fileStoreId = fileUploadRes?.data?.files?.[0]?.fileStoreId;
-      setSealFileStoreId(fileStoreId);
-      return fileStoreId;
+
+      const contentDisposition = response.headers["content-disposition"];
+      const filename = contentDisposition ? contentDisposition.split("filename=")[1]?.replace(/['"]/g, "") : "marked_as_evidence_seal.pdf";
+
+      const pdfFile = new File([response?.data], filename, { type: "application/pdf" });
+      try {
+        const document = await onDocumentUpload(pdfFile, pdfFile?.name);
+        const fileStoreId = document?.file?.files?.[0]?.fileStoreId;
+        setSealFileStoreId(fileStoreId);
+        return fileStoreId;
+      } catch (error) {
+        throw error;
+      }
     } catch (error) {
       console.error("Error creating PDF seal:", error);
       showToast({
@@ -131,59 +196,119 @@ const MarkAsEvidence = ({
       return null;
     }
   };
-
-  useEffect(() => {
-    const getEvidenceDetails = async () => {
-      try {
-        const response = await DRISTIService.searchEvidence(
+  const uploadModalConfig = useMemo(() => {
+    return {
+      key: "uploadSignature",
+      populators: {
+        inputs: [
           {
-            criteria: {
-              courtId: courtId,
+            name,
+            type: "DragDropComponent",
+            uploadGuidelines: "Ensure the image is not blurry and under 5MB.",
+            maxFileSize: 5,
+            maxFileErrorMessage: "CS_FILE_LIMIT_5_MB",
+            fileTypes: ["JPG", "PNG", "JPEG", "PDF"],
+            isMultipleUpload: false,
+          },
+        ],
+        validation: {},
+      },
+    };
+  }, [name]);
+
+  const getEvidenceDetails = async () => {
+    try {
+      setLoader(true);
+      const response = await DRISTIService.searchEvidence(
+        {
+          criteria: {
+            courtId: courtId,
+            filingNumber: filingNumber,
+            artifactNumber: artifactNumber,
+            tenantId,
+          },
+
+          tenantId,
+        },
+        {}
+      );
+      const customEvidenceNumber =
+        response?.artifacts?.[0]?.evidenceNumber?.length > 1
+          ? response?.artifacts?.[0]?.evidenceNumber?.slice(1)
+          : response?.artifacts?.[0]?.evidenceNumber;
+      setStepper(response?.artifacts?.[0]?.evidenceMarkedStatus === null ? 0 : 1);
+      setEvidenceNumber(customEvidenceNumber);
+      setEvidenceDetails(response?.artifacts?.[0]);
+
+      // Set businessOfDay from additionalDetails if available
+      if (response?.artifacts?.[0]?.additionalDetails?.botd) {
+        setBusinessOfDay(response?.artifacts?.[0]?.additionalDetails?.botd);
+      }
+
+      // Set ownerName from additionalDetails if available
+      if (response?.artifacts?.[0]?.additionalDetails?.ownerName) {
+        setOwnerName(response?.artifacts?.[0]?.additionalDetails?.ownerName);
+      } else if (response?.artifacts?.[0]?.owner) {
+        setOwnerName(response?.artifacts?.[0]?.owner);
+      } else if (response?.artifacts?.[0]?.sourceID) {
+        // If owner name is missing, get it from individual details
+        getIndividualDetails(response?.artifacts?.[0]?.sourceID);
+      }
+    } catch (error) {
+      showToast({
+        isError: true,
+        message: t("ERROR_FETCHING_EVIDENCE_DETAILS"),
+      });
+      console.log("error fetching evidence details", error);
+    } finally {
+      setLoader(false);
+    }
+  };
+  const getCaseDetails = async () => {
+    try {
+      setLoader(true);
+      const response = await DRISTIService.searchCaseService(
+        {
+          criteria: [
+            {
               filingNumber: filingNumber,
-              artifactNumber: artifactNumber,
-              tenantId,
+              ...(courtId && userType === "employee" && { courtId }),
             },
+          ],
+          tenantId,
+        },
+        {}
+      );
+      const witnessList = response?.criteria[0]?.responseList[0]?.additionalDetails?.witnessDetails?.formdata?.map((witness) => {
+        const data = witness?.data || {};
+        return data?.witnessTag
+          ? {
+              witnessTag: data.witnessTag || "",
+              firstName: data.firstName || "",
+              lastName: data.lastName || "",
+              middleName: data.lastName || "",
+              fullName: getFullName(" ", data.firstName, data.lastName, data.lastName),
+              code: data.witnessTag,
+              displayName: data?.witnessTag + " (" + getFullName(" ", data.firstName, data.lastName, data.lastName) + ")",
+            }
+          : null;
+      });
 
-            tenantId,
-          },
-          {}
-        );
-        const customEvidenceNumber =
-          response?.artifacts?.[0]?.evidenceNumber?.length > 1
-            ? response?.artifacts?.[0]?.evidenceNumber?.slice(1)
-            : response?.artifacts?.[0]?.evidenceNumber;
-        setStepper(response?.artifacts?.[0]?.evidenceMarkedStatus === null ? 0 : 1);
-        setEvidenceNumber(customEvidenceNumber);
-        setEvidenceDetails(response?.artifacts?.[0]);
-        if (response?.artifacts?.[0]?.additionalDetails?.botd) setBusinessOfDay(response?.artifacts?.[0]?.additionalDetails?.botd);
-      } catch (error) {
-        showToast({
-          isError: false,
-          message: "SUCCESSFULLY_MARKED_AS_VOID_MESSAGE",
-        });
-        console.log("error fetching evidence details", error);
-      }
-    };
-    const getCaseDetails = async () => {
-      try {
-        const response = await DRISTIService.searchCaseService(
-          {
-            criteria: [
-              {
-                filingNumber: filingNumber,
-                ...(courtId && userType === "employee" && { courtId }),
-              },
-            ],
-            tenantId,
-          },
-          {}
-        );
-        setCaseDetails(response?.criteria[0]?.responseList[0]);
-      } catch (error) {
-        // console.log("error fetching case details", error);
-      }
-    };
-    const getIndividualDetails = async (sourceId) => {
+      setWitnessTagValues(witnessList?.filter(Boolean));
+      setCaseDetails(response?.criteria[0]?.responseList[0]);
+    } catch (error) {
+      console.log("error fetching case details", error);
+      showToast({
+        isError: true,
+        message: t("ERROR_FETCHING_CASE_DETAILS"),
+      });
+    } finally {
+      setLoader(false);
+    }
+  };
+  const getIndividualDetails = async (sourceId) => {
+    try {
+      setLoader(true);
       const individualResponse = await DRISTIService.searchIndividualUser(
         {
           Individual: {
@@ -195,30 +320,102 @@ const MarkAsEvidence = ({
       const individualData = individualResponse?.Individual?.[0];
       const fullName = getFullName(" ", individualData?.name?.givenName, individualData?.name?.otherNames, individualData?.name?.familyName);
       setOwnerName(fullName);
-    };
 
-    if (!evidenceDetailsObj) getEvidenceDetails();
-    else {
-      if (evidenceDetailsObj?.owner === null) {
-        getIndividualDetails(evidenceDetailsObj?.sourceID);
-      } else setOwnerName(evidenceDetailsObj?.owner);
-      if (evidenceDetailsObj?.evidenceNumber === null) setStepper(0);
-      else setStepper(1);
-      const customEvidenceNumber =
-        evidenceDetailsObj?.evidenceNumber?.length > 1 ? evidenceDetailsObj?.evidenceNumber?.slice(1) : evidenceDetailsObj?.evidenceNumber;
-      setEvidenceNumber(customEvidenceNumber);
-      setBusinessOfDay(evidenceDetailsObj?.additionalDetails?.botd || `Document marked as evidence exhibit number ${artifactNumber}`);
+      // Store owner name in additionalDetails to avoid repeated API calls
+      if (fullName && evidenceDetails?.id) {
+        const updatedEvidenceDetails = {
+          ...evidenceDetails,
+          additionalDetails: {
+            ...(evidenceDetails?.additionalDetails || {}),
+            ownerName: fullName,
+          },
+        };
+        setEvidenceDetails(updatedEvidenceDetails);
+
+        // Update the evidence with owner name in additionalDetails
+        await DRISTIService.updateEvidence({ artifact: updatedEvidenceDetails }, {});
+      }
+    } catch (error) {
+      console.error("Error fetching individual details:", error);
+    } finally {
+      setLoader(false);
     }
-    if (filingNumber) getCaseDetails();
-  }, [filingNumber, courtId, userType, tenantId, artifactNumber, showToast, evidenceDetailsObj]);
+  };
 
-  const handleMarkEvidence = async (action, seal = null) => {
+  useEffect(() => {
+    if (!evidenceDetailsObj && sessionStorage.getItem("markAsEvidenceSelectedItem")) {
+      getEvidenceDetails();
+    } else if (sessionStorage.getItem("markAsEvidenceSelectedItem")) {
+      const sessionData = JSON.parse(sessionStorage.getItem("markAsEvidenceSelectedItem"));
+      setEvidenceDetails(sessionData);
+
+      // Set evidence details from session storage
+      if (sessionData?.evidenceNumber) {
+        const customEvidenceNumber = sessionData.evidenceNumber.length > 1 ? sessionData.evidenceNumber.slice(1) : sessionData.evidenceNumber;
+        setEvidenceNumber(customEvidenceNumber);
+      }
+
+      // Set business of day from session storage
+      if (sessionData?.additionalDetails?.botd) {
+        setBusinessOfDay(sessionData.additionalDetails.botd);
+      }
+
+      // Set owner name from session storage
+      if (sessionData?.additionalDetails?.ownerName) {
+        setOwnerName(sessionData.additionalDetails.ownerName);
+      } else if (sessionData?.owner) {
+        setOwnerName(sessionData.owner);
+      }
+
+      // Set stepper from session storage if available
+      if (sessionStorage.getItem("markAsEvidenceStepper")) {
+        setStepper(parseInt(sessionStorage.getItem("markAsEvidenceStepper")));
+      } else {
+        setStepper(sessionData?.evidenceMarkedStatus === null ? 0 : 1);
+      }
+    } else {
+      // Handle from props
+      if (evidenceDetailsObj) {
+        // Check for owner name in additionalDetails first, then check regular owner, finally fetch if needed
+        if (evidenceDetailsObj?.additionalDetails?.ownerName) {
+          setOwnerName(evidenceDetailsObj.additionalDetails.ownerName);
+        } else if (evidenceDetailsObj?.owner) {
+          setOwnerName(evidenceDetailsObj.owner);
+        } else if (evidenceDetailsObj?.sourceID) {
+          getIndividualDetails(evidenceDetailsObj.sourceID);
+        }
+
+        // Set stepper based on evidence status
+        setStepper(evidenceDetailsObj?.evidenceNumber === null ? 0 : 1);
+
+        // Set evidence number
+        const customEvidenceNumber =
+          evidenceDetailsObj?.evidenceNumber?.length > 1 ? evidenceDetailsObj.evidenceNumber.slice(1) : evidenceDetailsObj.evidenceNumber;
+        setEvidenceNumber(customEvidenceNumber);
+
+        // Set business of day from props
+        setBusinessOfDay(evidenceDetailsObj?.additionalDetails?.botd || `Document marked as evidence exhibit number ${artifactNumber}`);
+      }
+    }
+
+    // Get case details if filing number is available
+    if (filingNumber) {
+      getCaseDetails();
+    }
+  }, [filingNumber, courtId, userType, tenantId, artifactNumber, showToast, evidenceDetailsObj, t]);
+  useEffect(() => {
+    checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
+  }, [checkSignStatus, name, formData, uploadModalConfig, setIsSigned]);
+
+  const handleMarkEvidence = async (action, seal = null, isEvidence = false) => {
     try {
       if (action === null) return;
       const payload = {
         ...evidenceDetails,
         evidenceNumber: `${evidenceTag}${evidenceNumber}`,
         isEvidenceMarkedFlow: true,
+        tag: witnessTag?.code,
+        isEvidence: isEvidence,
         additionalDetails: {
           ...evidenceDetails?.additionalDetails,
           botd: businessOfDay,
@@ -232,30 +429,7 @@ const MarkAsEvidence = ({
       await DRISTIService.updateEvidence({ artifact: payload }, {}).then((res) => {
         setEvidenceDetails(res?.artifact);
       });
-      //  await DRISTIService.addADiaryEntry(
-      //         {
-      //           diaryEntry: {
-      //             courtId: courtId,
-      //             businessOfDay: businessOfTheDay,
-      //             tenantId: tenantId,
-      //             entryDate: new Date().setHours(0, 0, 0, 0),
-      //             caseNumber: caseData?.case?.cmpNumber,
-      //             referenceId: documentSubmission?.[0]?.artifactList?.artifactNumber,
-      //             referenceType: "Documents",
-      //             hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
-      //             additionalDetails: {
-      //               filingNumber: filingNumber,
-      //               caseId: caseId,
-      //             },
-      //           },
-      //         },
-      //         {}
-      //       ).catch((error) => {
-      //         console.error("error: ", error);
-      //         toast.error(t("SOMETHING_WENT_WRONG"));
-      //         setIsSubmitDisabled(false);
-      //       });
-      // onSuccess();
+
       return true;
     } catch (error) {
       if (error?.response?.data?.Errors?.[0]?.code === "EVIDENCE_NUMBER_EXISTS_EXCEPTION") {
@@ -307,6 +481,58 @@ const MarkAsEvidence = ({
             }
           });
         }
+      } else if (stepper === 2) {
+        const seal = {
+          documentType: "SIGNED",
+          fileStore: sessionStorage.getItem("fileStoreId"),
+          additionalDetails: {
+            documentName: "markAsEvidenceSigned.pdf",
+          },
+        };
+        await handleMarkEvidence(action, seal).then(async (res) => {
+          if (res) {
+            const response = await Digit.HearingService.searchHearings(
+              {
+                criteria: {
+                  tenantId: Digit.ULBService.getCurrentTenantId(),
+                  filingNumber: filingNumber,
+                  ...(courtId && { courtId: courtId }),
+                },
+              },
+              {}
+            );
+            const nextHearing = response?.HearingList?.filter((hearing) => hearing.status === "SCHEDULED");
+            await DRISTIService.addADiaryEntry(
+              {
+                diaryEntry: {
+                  courtId: courtId,
+                  businessOfDay: businessOfDay,
+                  tenantId: tenantId,
+                  entryDate: new Date().setHours(0, 0, 0, 0),
+                  caseNumber: caseDetails?.caseNumber,
+                  referenceId: artifactNumber,
+                  referenceType: "Documents",
+                  hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,
+                  additionalDetails: {
+                    filingNumber: filingNumber,
+                    caseId: caseDetails?.caseId,
+                  },
+                },
+              },
+              {}
+            ).catch((error) => {
+              console.error("error: ", error);
+              // toast.error(t("SOMETHING_WENT_WRONG"));
+              // setIsSubmitDisabled(false);
+            });
+            setStepper(3);
+            sessionStorage.removeItem("fileStoreId");
+          } else {
+            setStepper(1);
+            setIsSigned(false);
+            setFormData({});
+          }
+        });
       }
     } catch (error) {
       console.error("Error in handleSubmit:", error);
@@ -341,9 +567,14 @@ const MarkAsEvidence = ({
       console.error("Error in handleCancel:", error);
     }
   };
-  const onESignClick = useCallback(() => {
+
+  const onESignClick = async () => {
     try {
-      // setLoader(true);
+      setLoader(true);
+      let file = sealFileStoreId;
+      if (!sealFileStoreId) {
+        file = getMarkAsEvidencePdf();
+      }
 
       sessionStorage.setItem("markAsEvidenceStepper", stepper);
       sessionStorage.setItem("markAsEvidenceSelectedItem", JSON.stringify(evidenceDetails));
@@ -351,19 +582,53 @@ const MarkAsEvidence = ({
       if (paginatedData?.limit) sessionStorage.setItem("bulkMarkAsEvidenceLimit", paginatedData?.limit);
       if (paginatedData?.caseTitle) sessionStorage.setItem("bulkMarkAsEvidenceSignCaseTitle", paginatedData?.caseTitle);
       if (paginatedData?.offset) sessionStorage.setItem("bulkMarkAsEvidenceOffset", paginatedData?.offset);
-      // handleEsign(name, pageModule, selectedMarkAsEvidenceFilestoreid, "Magistrate Signature");
+
+      // Handle e-sign with callback for success
+      handleEsign(name, pageModule, file, "Magistrate Signature");
     } catch (error) {
       console.log("E-sign navigation error:", error);
-      // setLoader(false);
+      showToast({
+        isError: true,
+        message: t("ERROR_ESIGN_EVIDENCE"),
+      });
+      setLoader(false);
     } finally {
-      // setLoader(false);
+      setLoader(false);
     }
-  }, [stepper, evidenceDetails, paginatedData?.limit, paginatedData?.caseTitle, paginatedData?.offset]);
+  };
+
+  useEffect(() => {
+    if (isSigned && stepper !== 2) {
+      setStepper(2);
+      // Clear session storage after successful esign
+      clearEvidenceSessionData();
+    }
+  }, [isSigned, stepper]);
 
   if (isLoading) return <Loader />;
 
   return (
     <React.Fragment>
+      {/* Loader overlay - appears during API calls */}
+      {loader && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "10001",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
       {stepper === 0 && (
         <Modal
           headerBarEnd={<CloseBtn onClick={() => (isEvidenceLoading ? null : handleCancel())} />}
@@ -391,7 +656,7 @@ const MarkAsEvidence = ({
                 type="text"
                 value={t(memoEvidenceValues?.title)}
                 disabled
-                style={{ minWidth: 120, textAlign: "start", marginBottom: "0px" }}
+                style={{ minWidth: 120, textAlign: "start", marginBottom: "0px", color: "black" }}
               />
             </LabelFieldPair>
             <LabelFieldPair>
@@ -409,12 +674,12 @@ const MarkAsEvidence = ({
               <CardLabel className="case-input-label">{t("EVIDENCE_MARKED_THROUGH")}</CardLabel>
               <Dropdown
                 t={t}
-                placeholder={`${t("PURPOSE")}`}
-                option={[]}
-                // selected={filters?.purpose}
-                optionKey={"code"}
+                placeholder={`${t("WITNESS")}`}
+                option={witnessTagValues ? witnessTagValues : []}
+                selected={witnessTag}
+                optionKey={"displayName"}
                 select={(e) => {
-                  //   setFilters((prev) => ({ ...prev, purpose: e }));
+                  setWitnessTag(e);
                 }}
                 topbarOptionsClassName={"top-bar-option"}
                 style={{
@@ -455,7 +720,9 @@ const MarkAsEvidence = ({
           actionSaveLabel={isJudge ? t("CS_ESIGN") : t("SEND_FOR_SIGN")}
           actionCustomLabelSubmit={() => handleSubmit(MarkAsEvidenceAction?.BULKSIGN)}
           actionCustomLabel={isJudge && evidenceDetails?.evidenceMarkedStatus === "DRAFT_IN_PROGRESS" ? t("SEND_FOR_SIGN") : false}
-          actionSaveOnSubmit={() => (isJudge ? onESignClick() : handleSubmit(isJudge ? "" : MarkAsEvidenceAction?.BULKSIGN))}
+          actionSaveOnSubmit={() => {
+            isJudge ? onESignClick() : handleSubmit(isJudge ? "" : MarkAsEvidenceAction?.BULKSIGN);
+          }}
           actionCancelLabel={
             evidenceDetails?.evidenceMarkedStatus === "DRAFT_IN_PROGRESS" || evidenceDetails?.evidenceMarkedStatus === null
               ? t("CS_BULK_BACK")
@@ -467,7 +734,15 @@ const MarkAsEvidence = ({
           formId="modal-action"
           customActionTextStyle={{ color: "#007e7e" }}
           customActionStyle={{ background: "transparent", border: "1px solid #007e7e" }}
-          headerBarMain={<Heading label={t("CONFIRM_EVIDENCE_HEADER")} />}
+          headerBarMain={
+            <Heading
+              label={
+                evidenceDetails?.evidenceMarkedStatus === "DRAFT_IN_PROGRESS" || evidenceDetails?.evidenceMarkedStatus === null
+                  ? t("CONFIRM_EVIDENCE_HEADER")
+                  : t("EVIDENCE_DETAILS")
+              }
+            />
+          }
           className="mark-evidence-modal"
           submitTextClassName="upload-signature-button"
           popupModuleMianClassName="mark-evidence-modal-main"
@@ -488,7 +763,7 @@ const MarkAsEvidence = ({
                   <h3>{t("UPLOADED_BY")}</h3>
                 </div>
                 <div className="info-value" style={{ flex: 1 }}>
-                  <h3>{t(memoEvidenceValues?.owner)}</h3>
+                  <h3>{memoEvidenceValues?.owner || ownerName}</h3>
                 </div>
               </div>
 
@@ -497,7 +772,7 @@ const MarkAsEvidence = ({
                   <h3>{t("EVIDENCE_MARKED_THROUGH")}</h3>
                 </div>
                 <div className="info-value" style={{ flex: 1 }}>
-                  <h3>{}</h3>
+                  <h3>{witnessTag?.displayName}</h3>
                 </div>
               </div>
               <div className="info-row" style={{ display: "flex" }}>
@@ -531,7 +806,6 @@ const MarkAsEvidence = ({
           noteText="YOUR_CUSTOM_NOTE"
           containerStyle={{ padding: "20px", backgroundColor: "#f8f8f8" }}
           headingStyle={{ color: "#0b0c28", fontSize: "28px" }}
-          // signedBadgeStyle={{ backgroundColor: "#ccffcc", color: "#006600" }}
           infoCardStyle={{ fontStyle: "italic" }}
         />
       )}

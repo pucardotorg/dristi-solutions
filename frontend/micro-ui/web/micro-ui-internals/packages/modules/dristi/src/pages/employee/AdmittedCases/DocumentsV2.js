@@ -1,6 +1,6 @@
 import { DocumentSearchConfig } from "./DocumentsV2Config";
 import { InboxSearchComposer } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import "./tabs.css";
@@ -284,6 +284,12 @@ const DocumentsV2 = ({
       displayLabel: configItem?.displayLabel,
     }));
   }, [activeTab]);
+
+  useEffect(() => {
+    if (sessionStorage.getItem("markAsEvidenceSelectedItem")) {
+      setShowMakeAsEvidenceModal(true);
+    }
+  }, [setShowMakeAsEvidenceModal]);
   const config = useMemo(() => {
     return newTabSearchConfig?.TabSearchconfig;
   }, [newTabSearchConfig?.TabSearchconfig]);

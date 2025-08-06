@@ -128,13 +128,15 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
   };
 
   const evidenceModalInfo = {
-    header: `${t("YOU_HAVE_SUCCESSFULLY_ISSUED_BULK_EVIDENCE")} ${numberToWords(successCount)} ${t("ISSUE_EVIDENCES")} `,
+    // header: `${t("YOU_HAVE_SUCCESSFULLY_ISSUED_BULK_EVIDENCE")} ${numberToWords(successCount)} ${t("ISSUE_EVIDENCES")} `,
+
+    header: `${t("YOU_HAVE_SUCCESSFULLY_ISSUED_BULK_EVIDENCE")}`,
     caseInfo: [
-      {
-        key: t("EVIDENCE_ISSUE_DATE"),
-        value: getFormattedDate(),
-        copyData: false,
-      },
+      // {
+      //   key: t("EVIDENCE_ISSUE_DATE"),
+      //   value: getFormattedDate(),
+      //   copyData: false,
+      // },
     ],
   };
 
@@ -216,7 +218,7 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
             },
             {}
           );
-          await fetchResponseFromXmlRequest(response?.artifacts).then(async (responseArray) => {
+          await fetchResponseFromXmlRequest(response?.artifactList).then(async (responseArray) => {
             await HomeService.updateSignedEvidences(
               {
                 signedArtifacts: responseArray,
@@ -225,7 +227,7 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
             ).then((response) => {
               setShowBulkSignConfirmModal(false);
               setShowBulkEvidenceSuccessModal(true);
-              setSuccessCount(response?.evidences?.length);
+              setSuccessCount(response?.artifactList?.length);
               showToast("success", t("EVIDENCE_BULK_SIGN_SUCCESS_MSG"));
             });
           });
@@ -339,14 +341,14 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
               headerStyles={{ fontSize: "32px" }}
               style={{ minWidth: "100%" }}
             ></Banner>
-            {
+            {/* {
               <CustomCopyTextDiv
                 t={t}
                 keyStyle={{ margin: "8px 0px" }}
                 valueStyle={{ margin: "8px 0px", fontWeight: 700 }}
                 data={evidenceModalInfo?.caseInfo}
               />
-            }
+            } */}
           </div>
         </Modal>
       )}
