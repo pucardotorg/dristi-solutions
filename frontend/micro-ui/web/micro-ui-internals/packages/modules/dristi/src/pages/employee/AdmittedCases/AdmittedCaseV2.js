@@ -55,6 +55,8 @@ import WorkflowTimeline from "../../../components/WorkflowTimeline";
 import CaseOverviewV2 from "./CaseOverviewV2";
 import PaymentDemandModal from "./PaymentDemandModal";
 import DocumentsV2 from "./DocumentsV2";
+import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
+import WitnessDrawerV2 from "./WitnessDrawerV2";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -229,6 +231,7 @@ const AdmittedCaseV2 = () => {
   const [showBailBondModal, setShowBailBondModal] = useState(false);
   const [isBailBondTaskExists, setIsBailBondTaskExists] = useState(false);
   const [bailBondLoading, setBailBondLoading] = useState(false);
+  const [showAddWitnessModal, setShowAddWitnessModal] = useState(false);
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
@@ -250,6 +253,7 @@ const AdmittedCaseV2 = () => {
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const historyCaseData = location?.state?.caseData;
   const historyOrderData = location?.state?.orderData;
+  const newWitnesToast = history.location?.state?.newWitnesToast;
 
   const openOrder = location?.state?.openOrder;
   const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
@@ -1590,6 +1594,12 @@ const AdmittedCaseV2 = () => {
   }, [artifactNumber, currentDiaryEntry]);
 
   useEffect(() => {
+    if (newWitnesToast) {
+      showToast({ message: t("NEW_WITNESS_SUCCESSFULLY_ADDED"), error: false });
+    }
+  }, [newWitnesToast, showToast, t]);
+
+  useEffect(() => {
     if (applicationData && applicationNumber) {
       const applicationDetails = applicationData?.applicationList?.filter((application) => application?.applicationNumber === applicationNumber)?.[0];
       setDocumentSubmission(
@@ -2570,6 +2580,8 @@ const AdmittedCaseV2 = () => {
         setShowAllStagesModal(true);
       } else if (option.value === "CREATE_BAIL_BOND") {
         setShowBailBondModal(true);
+      } else if (option.value === "ADD_WITNESS") {
+        setShowAddWitnessModal(true);
       }
     },
     [
@@ -2868,7 +2880,7 @@ const AdmittedCaseV2 = () => {
                 label: "END_HEARING",
               },
               {
-                value: "TAKE_WITNESS_DEPOSITION",
+                value: "TAKE_WITNESS_DEPOSITION", // added witness dep, option
                 label: "TAKE_WITNESS_DEPOSITION",
               },
               {
@@ -2897,6 +2909,10 @@ const AdmittedCaseV2 = () => {
         {
           value: "SHOW_TIMELINE",
           label: "SHOW_TIMELINE",
+        },
+        {
+          value: "ADD_WITNESS",
+          label: "ADD_WITNESS",
         },
       ];
     else if (isBenchClerk) {
@@ -2930,6 +2946,10 @@ const AdmittedCaseV2 = () => {
               value: "SHOW_TIMELINE",
               label: "SHOW_TIMELINE",
             },
+            {
+              value: "ADD_WITNESS",
+              label: "ADD_WITNESS",
+            },
           ]
         : [
             {
@@ -2939,6 +2959,10 @@ const AdmittedCaseV2 = () => {
             {
               value: "SHOW_TIMELINE",
               label: "SHOW_TIMELINE",
+            },
+            {
+              value: "ADD_WITNESS",
+              label: "ADD_WITNESS",
             },
           ];
     } else if (isTypist) {
@@ -2972,6 +2996,10 @@ const AdmittedCaseV2 = () => {
               value: "SHOW_TIMELINE",
               label: "SHOW_TIMELINE",
             },
+            {
+              value: "ADD_WITNESS",
+              label: "ADD_WITNESS",
+            },
           ]
         : [
             {
@@ -2985,6 +3013,10 @@ const AdmittedCaseV2 = () => {
             {
               value: "CREATE_BAIL_BOND",
               label: "CREATE_BAIL_BOND",
+            },
+            {
+              value: "ADD_WITNESS",
+              label: "ADD_WITNESS",
             },
           ];
     }
@@ -3512,6 +3544,14 @@ const AdmittedCaseV2 = () => {
                 {t("DOWNLOAD_ALL_LINK")}
               </div>
             )} */}
+          {(showMakeSubmission || isJudge || isBenchClerk || isTypist || isCourtStaff) && config?.label === "Parties" && (
+            <Button
+              label={t("ADD_NEW_WITNESS")}
+              variation={"secondary"}
+              onButtonClick={() => setShowAddWitnessModal(true)}
+              style={{ marginRight: "30px" }}
+            />
+          )}
           {userRoles?.includes("ORDER_CREATOR") && config?.label === "Orders" && (
             <div style={{ display: "flex", gap: "10px" }}>
               <div
@@ -3929,13 +3969,12 @@ const AdmittedCaseV2 = () => {
         />
       )}
       {showWitnessModal && (
-        <WitnessDrawer
+        <WitnessDrawerV2
           isOpen={showWitnessModal}
           onClose={() => {
             setShowWitnessModal(false);
             refetchHearing();
           }}
-          refetchHearing={refetchHearing}
           onSubmit={(action) => {
             if (action === "end-hearing") {
               // Handle end hearing action
@@ -3952,6 +3991,7 @@ const AdmittedCaseV2 = () => {
           hearingId={currentInProgressHearingId}
           setAddPartyModal={setAddPartyModal}
           tenantId={tenantId}
+          refetchCaseData={refetchCaseData}
         />
       )}
       {addPartyModal && (
@@ -4014,6 +4054,20 @@ const AdmittedCaseV2 = () => {
             <div style={{ margin: "16px 16px" }}>{t("TASK_ALREADY_EXISTS_TEXT")}</div>
           </Modal>
         ))}
+      {showAddWitnessModal && (
+        <AddWitnessModal
+          activeTab={activeTab}
+          onCancel={() => setShowAddWitnessModal(false)}
+          onDismiss={() => setShowAddWitnessModal(false)}
+          tenantId={tenantId}
+          caseDetails={caseDetails}
+          isJudge={isJudge}
+          showToast={showToast}
+          onAddSuccess={() => {
+            setShowAddWitnessModal(false);
+          }}
+        ></AddWitnessModal>
+      )}
     </div>
   );
 };
