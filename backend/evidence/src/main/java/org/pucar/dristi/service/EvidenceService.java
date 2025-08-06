@@ -1085,6 +1085,11 @@ public class EvidenceService {
                 .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(artifact.getFilingNumber()).tenantId(artifact.getTenantId()).defaultFields(false).build()))
                 .requestInfo(requestInfo).build());
 
+        if (cases == null || cases.isEmpty()) {
+            log.error("No court case found for filing number: {}", artifact.getFilingNumber());
+            throw new CustomException("CASE_NOT_FOUND", "Court case not found for filing number: " + artifact.getFilingNumber());
+        }
+
         CourtCase courtCase = cases.get(0);
 
         List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder()
@@ -1119,7 +1124,7 @@ public class EvidenceService {
         return CaseDiaryEntry.builder()
                 .tenantId(artifact.getTenantId())
                 .entryDate(dateUtil.getStartOfTheDayForEpoch(dateUtil.getCurrentTimeInMilis()))
-                .caseNumber(courtCase.getCaseNumber())
+                .caseNumber(getCaseReferenceNumber(courtCase))
                 .caseId(courtCase.getId().toString())
                 .courtId(courtCase.getCourtId())
                 .businessOfDay(botd)

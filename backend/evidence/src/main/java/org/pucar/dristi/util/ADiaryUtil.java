@@ -46,7 +46,7 @@ public class ADiaryUtil {
             throw new ServiceCallException(e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error(SEARCHER_SERVICE_EXCEPTION, e);
-            throw new CustomException(); // add log and code
+            throw new CustomException(SEARCHER_SERVICE_EXCEPTION, "Failed to create bulk diary entry: " + e.getMessage());
         }
 
     }
