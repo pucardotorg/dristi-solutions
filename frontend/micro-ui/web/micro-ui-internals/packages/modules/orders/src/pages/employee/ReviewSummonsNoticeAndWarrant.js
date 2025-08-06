@@ -73,10 +73,10 @@ function getAction(selectedDelievery, orderType) {
   }
 
   if (key === "DELIVERED") {
-    return orderType === "WARRANT" ? "DELIVERED" : "SERVED";
+    return (orderType === "WARRANT" || orderType === "PROCLAMATION") ? "DELIVERED" : "SERVED";
   }
 
-  return orderType === "WARRANT" ? "NOT_DELIVERED" : "NOT_SERVED";
+  return (orderType === "WARRANT" || orderType === "PROCLAMATION") ? "NOT_DELIVERED" : "NOT_SERVED";
 }
 
 const ReviewSummonsNoticeAndWarrant = () => {
@@ -286,7 +286,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
           },
         };
         await taskService.updateTask(reqBody, { tenantId }).then(async (res) => {
-          if (res?.task && selectedDelievery?.key === "NOT_DELIVERED" && orderType !== "WARRANT") {
+          if (res?.task && selectedDelievery?.key === "NOT_DELIVERED" && !(orderType === "WARRANT" || orderType === "PROCLAMATION")) {
             await taskService.updateTask(
               {
                 task: {
@@ -482,7 +482,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (documents && !isViaPolice) {
       if (orderType === "NOTICE") {
         msg = t("SUCCESSFULLY_SIGNED_NOTICE");
-      } else if (orderType === "WARRANT") {
+      } else if (orderType === "WARRANT" || orderType === "PROCLAMATION") {
         msg = t("SUCCESSFULLY_SIGNED_WARRANT");
       } else {
         msg = t("SUCCESSFULLY_SIGNED_SUMMON");
@@ -490,7 +490,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
     } else {
       if (orderType === "NOTICE") {
         msg = t("SENT_NOTICE_VIA");
-      } else if (orderType === "WARRANT") {
+      } else if (orderType === "WARRANT" || orderType === "PROCLAMATION") {
         msg = t("SENT_WARRANT_VIA");
       } else {
         msg = t("SENT_SUMMONS_VIA");

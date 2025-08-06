@@ -81,4 +81,13 @@ public class ServiceConstants {
     public static final String BAIL_BOND_CREATOR = "BAIL_BOND_CREATOR";
 
     public static final String E_SIGN = "E-SIGN";
+
+    public static final String SYSTEM = "SYSTEM";
+
+    public static final String EVIDENCE_NOT_FOUND_EXCEPTION = "EVIDENCE_NOT_FOUND_EXCEPTION";
+
+    public static final String EVIDENCE_SERVICE_EXCEPTION = "EVIDENCE_SERVICE_EXCEPTION";
+
+    public static final String EVIDENCE_UPDATE_EXCEPTION = "EVIDENCE_UPDATE_EXCEPTION";
+
 }
