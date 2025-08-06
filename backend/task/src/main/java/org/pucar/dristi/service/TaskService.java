@@ -90,8 +90,7 @@ public class TaskService {
             workflowUpdate(body);
 
             if(body.getTask().getTaskType().equalsIgnoreCase("SUMMONS")
-                    || body.getTask().getTaskType().equalsIgnoreCase("WARRANT")
-                    || body.getTask().getTaskType().equalsIgnoreCase("PROCLAMATION")) {
+             || body.getTask().getTaskType().equalsIgnoreCase("WARRANT")) {
                 updateCase(body);
             }
             producer.push(config.getTaskCreateTopic(), body);
@@ -218,7 +217,7 @@ public class TaskService {
             String status = body.getTask().getStatus();
             String taskType = body.getTask().getTaskType();
             log.info("status , taskType : {} , {} ", status, taskType);
-            if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status) || PROCLAMATION.equalsIgnoreCase(status)){
+            if (SUMMON_SENT.equalsIgnoreCase(status) || NOTICE_SENT.equalsIgnoreCase(status) || WARRANT_SENT.equalsIgnoreCase(status)){
                 String acknowledgementId = summonUtil.sendSummons(body);
                 updateAcknowledgementId(body, acknowledgementId);
                 closeEnvelopePendingTaskOfRpad(body);
@@ -321,7 +320,7 @@ public class TaskService {
                     config.getTaskBailBusinessServiceName(), workflow, config.getTaskBailBusinessName());
             case SUMMON -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskSummonBusinessServiceName(), workflow, config.getTaskSummonBusinessName());
-            case WARRANT, PROCLAMATION -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
+            case WARRANT -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskWarrantBusinessServiceName(), workflow, config.getTaskWarrantBusinessName());
             case NOTICE -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskNoticeBusinessServiceName(), workflow, config.getTaskNoticeBusinessName());
@@ -383,7 +382,7 @@ public class TaskService {
 
     public void closeEnvelopePendingTaskOfRpad(TaskRequest taskRequest) {
         Task task = taskRequest.getTask();
-        if ((task.getTaskType().equalsIgnoreCase(SUMMON) || task.getTaskType().equalsIgnoreCase(WARRANT) || task.getTaskType().equalsIgnoreCase(PROCLAMATION)
+        if ((task.getTaskType().equalsIgnoreCase(SUMMON) || task.getTaskType().equalsIgnoreCase(WARRANT)
                 || task.getTaskType().equalsIgnoreCase(NOTICE)) && (isRPADdeliveryChannel(task))) {
             closeEnvelopePendingTask(taskRequest);
         }
@@ -550,16 +549,16 @@ public class TaskService {
         if (SUMMON.equalsIgnoreCase(taskType) && RE_ISSUE.equalsIgnoreCase(status)) {
             return SUMMONS_NOT_DELIVERED;
         }
-        if ((WARRANT.equalsIgnoreCase(taskType) || PROCLAMATION.equalsIgnoreCase(taskType)) && PENDING_PAYMENT.equalsIgnoreCase(status)) {
+        if (WARRANT.equalsIgnoreCase(taskType) && PENDING_PAYMENT.equalsIgnoreCase(status)) {
             return WARRANT_ISSUED;
         }
-        if ((WARRANT.equalsIgnoreCase(taskType) || PROCLAMATION.equalsIgnoreCase(taskType)) && WARRANT_SENT.equalsIgnoreCase(status)) {
+        if (WARRANT.equalsIgnoreCase(taskType) && WARRANT_SENT.equalsIgnoreCase(status)) {
             return WARRANT_ISSUE_SUCCESS;
         }
-        if ((WARRANT.equalsIgnoreCase(taskType) || PROCLAMATION.equalsIgnoreCase(taskType)) && EXECUTED.equalsIgnoreCase(status)) {
+        if (WARRANT.equalsIgnoreCase(taskType) && EXECUTED.equalsIgnoreCase(status)) {
             return WARRANT_DELIVERED;
         }
-        if ((WARRANT.equalsIgnoreCase(taskType) || PROCLAMATION.equalsIgnoreCase(taskType)) && NOT_EXECUTED.equalsIgnoreCase(status)) {
+        if (WARRANT.equalsIgnoreCase(taskType) && NOT_EXECUTED.equalsIgnoreCase(status)) {
             return WARRANT_NOT_DELIVERED;
         }
         return null;

@@ -1,0 +1,94 @@
+[
+  {
+    "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+    "masterName": "actions-test",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 2750,
+          "url": "/case/v2/add/witness",
+          "code": "2750",
+          "name": "Case add witness",
+          "displayName": "Case add witness",
+          "serviceCode": "case",
+          "enabled": true
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+    "masterName": "roleactions",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 493,
+          "actionid": 2750,
+          "actioncode": "2750",
+          "tenantid": "kl",
+          "rolecode": "EMPLOYEE"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": null,
+        "data": {
+          "id": 494,
+          "actionid": 2750,
+          "rolecode": "SYSTEM_ADMIN",
+          "tenantid": "kl",
+          "actioncode": "2750"
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "moduleName": "common-masters",
+    "masterName": "IdFormat",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "common-masters.IdFormat",
+        "uniqueIdentifier": "case.evidence.prosecution.witness.[TENANT_ID]",
+        "data": {
+          "format": "PW[SEQ_WITNESS_[TENANT_ID]]",
+          "idname": "case.evidence.prosecution.witness.[TENANT_ID]"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "common-masters.IdFormat",
+        "uniqueIdentifier": "case.evidence.defence.witness.[TENANT_ID]",
+        "data": {
+          "format": "DW[SEQ_PRSQNWTNS_[TENANT_ID]]",
+          "idname": "case.evidence.defence.witness.[TENANT_ID]"
+        },
+        "isActive": true
+      },
+      {
+        "tenantId": "kl",
+        "schemaCode": "common-masters.IdFormat",
+        "uniqueIdentifier": "case.evidence.court.witness.[TENANT_ID]",
+        "data": {
+          "format": "CW[SEQ_PRSQNWTNS_[TENANT_ID]]",
+          "idname": "case.evidence.court.witness.[TENANT_ID]"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

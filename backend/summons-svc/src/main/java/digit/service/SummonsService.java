@@ -85,8 +85,6 @@ public class SummonsService {
     private String getTemplateType(String taskType, TaskDetails taskDetails) {
         if(WARRANT.equals(taskType)){
             return taskDetails.getWarrantDetails() != null ? taskDetails.getWarrantDetails().getTemplateType() : null;
-        } else if(PROCLAMATION.equals(taskType)){
-            return taskDetails.getProclamationDetails() != null ? taskDetails.getProclamationDetails().getTemplateType() : null;
         }
         return null; // For other task types, templateType is not applicable
     }
@@ -118,7 +116,7 @@ public class SummonsService {
                 .task(task)
                 .requestInfo(request.getRequestInfo()).build();
 
-        if (!(taskType.equalsIgnoreCase(WARRANT) || taskType.equalsIgnoreCase(PROCLAMATION))) {
+        if (!taskType.equalsIgnoreCase(WARRANT)) {
             String docSubType = getDocSubType(taskType, task.getTaskDetails());
             String noticeType = getNoticeType(task.getTaskDetails());
             String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, true, noticeType, null);
@@ -186,7 +184,7 @@ public class SummonsService {
             }else {
                 workflow = Workflow.builder().action("NOT_SERVED").build();
             }
-        } else if (task.getTaskType().equalsIgnoreCase(WARRANT) || task.getTaskType().equalsIgnoreCase(PROCLAMATION)) {
+        } else if (task.getTaskType().equalsIgnoreCase(WARRANT)) {
             if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.DELIVERED)) {
             workflow = Workflow.builder().action("DELIVERED").build();
             } else if (request.getSummonsDelivery().getDeliveryStatus().equals(DeliveryStatus.IN_TRANSIT)) {
@@ -337,9 +335,6 @@ public class SummonsService {
                     throw new CustomException("INVALID_TEMPLATE_TYPE", "Template Type must be valid. Provided: " + templateType);
                 }
             }
-            case PROCLAMATION -> {
-                return config.getTaskProclamationGenericPdfTemplateKey();
-            }
             case NOTICE -> {
                 if(Objects.equals(noticeType, BNSS_NOTICE)){
                     return config.getTaskBnssNoticePdfTemplateKey();
@@ -362,7 +357,6 @@ public class SummonsService {
             case SUMMON -> taskDetails.getSummonDetails() != null ? taskDetails.getSummonDetails().getDocSubType() : null;
             case WARRANT -> taskDetails.getWarrantDetails() != null ? taskDetails.getWarrantDetails().getDocSubType() : null;
             case NOTICE -> taskDetails.getNoticeDetails() != null ? taskDetails.getNoticeDetails().getDocSubType() : null;
-            case PROCLAMATION -> null;
             default -> throw new CustomException("INVALID_TASK_TYPE", "Task Type must be valid. Provided: " + taskType);
         };
     }

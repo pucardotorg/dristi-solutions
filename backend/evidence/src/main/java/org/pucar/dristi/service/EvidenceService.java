@@ -2,10 +2,16 @@ package org.pucar.dristi.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
+import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.models.AuditDetails;
+import org.egov.common.contract.models.Document;
+import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
@@ -13,14 +19,14 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.EvidenceEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.EvidenceRepository;
-import org.pucar.dristi.util.CaseUtil;
-import org.pucar.dristi.util.MdmsUtil;
+import org.pucar.dristi.util.*;
 import org.pucar.dristi.validators.EvidenceValidator;
 import org.pucar.dristi.web.models.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.ObjectUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 
@@ -40,9 +46,14 @@ public class EvidenceService {
     private final CaseUtil caseUtil;
     private final SmsNotificationService notificationService;
     private final IndividualService individualService;
+    private final UrlShortenerUtil urlShortenerUtil;
+    private final ESignUtil eSignUtil;
+    private final FileStoreUtil fileStoreUtil;
+    private final CipherUtil cipherUtil;
+    private final XmlRequestGenerator xmlRequestGenerator;
 
     @Autowired
-    public EvidenceService(EvidenceValidator validator, EvidenceEnrichment evidenceEnrichment, WorkflowService workflowService, EvidenceRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService) {
+    public EvidenceService(EvidenceValidator validator, EvidenceEnrichment evidenceEnrichment, WorkflowService workflowService, EvidenceRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, UrlShortenerUtil urlShortenerUtil, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, XmlRequestGenerator xmlRequestGenerator) {
         this.validator = validator;
         this.evidenceEnrichment = evidenceEnrichment;
         this.workflowService = workflowService;
@@ -54,12 +65,18 @@ public class EvidenceService {
         this.caseUtil = caseUtil;
         this.notificationService = notificationService;
         this.individualService = individualService;
+        this.urlShortenerUtil = urlShortenerUtil;
+        this.eSignUtil = eSignUtil;
+        this.fileStoreUtil = fileStoreUtil;
+        this.cipherUtil = cipherUtil;
+        this.xmlRequestGenerator = xmlRequestGenerator;
     }
 
     private boolean shouldUpdateWorkflowStatusForUpdate(EvidenceRequest evidenceRequest, String filingType){
         return evidenceRequest.getArtifact().getWorkflow() != null && (evidenceRequest.getArtifact().getArtifactType() != null &&
                 evidenceRequest.getArtifact().getArtifactType().equals(DEPOSITION)) ||
-                (filingType!= null && filingType.equalsIgnoreCase(SUBMISSION)) || evidenceRequest.getArtifact().getIsEvidenceMarkedFlow();
+                (filingType!= null && filingType.equalsIgnoreCase(SUBMISSION)) || evidenceRequest.getArtifact().getIsEvidenceMarkedFlow()
+                || (evidenceRequest.getArtifact().getArtifactType() != null && WITNESS_DEPOSITION.equalsIgnoreCase(evidenceRequest.getArtifact().getArtifactType()));
     }
 
     public Artifact createEvidence(EvidenceRequest body) {
@@ -73,15 +90,26 @@ public class EvidenceService {
             // Enrich applications
             evidenceEnrichment.enrichEvidenceRegistration(body);
 
-
+            String tag = body.getArtifact().getTag();
+            if(WITNESS_DEPOSITION.equalsIgnoreCase(body.getArtifact().getArtifactType()) &&
+             SAVE_DRAFT.equalsIgnoreCase(body.getArtifact().getWorkflow().getAction())) {
+                validateWitnessDeposition(body);
+                if(tag != null && !hasNumberSuffix(tag)){
+                    tag = evidenceEnrichment.enrichPseudoTag(body);
+                }
+            }
             // Initiate workflow for the new application- //todo witness deposition is part of case filing or not
             if ((body.getArtifact().getArtifactType() != null &&
                     body.getArtifact().getArtifactType().equals(DEPOSITION)) ||
-                    (filingType != null && body.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION))) {
+                    (filingType != null && body.getArtifact().getWorkflow() != null && filingType.equalsIgnoreCase(SUBMISSION)) ||
+                    (body.getArtifact().getArtifactType() != null && WITNESS_DEPOSITION.equalsIgnoreCase(body.getArtifact().getArtifactType()))) {
                 workflowService.updateWorkflowStatus(body, filingType);
                 producer.push(config.getEvidenceCreateTopic(), body);
             } else {
                 producer.push(config.getEvidenceCreateWithoutWorkflowTopic(), body);
+            }
+            if(tag != null && !tag.isEmpty()) {
+                body.getArtifact().setTag(tag);
             }
             callNotificationService(body,false,true);
             return body.getArtifact();
@@ -91,6 +119,234 @@ public class EvidenceService {
         } catch (Exception e) {
             log.error("Error occurred while creating evidence");
             throw new CustomException(EVIDENCE_CREATE_EXCEPTION, e.toString());
+        }
+    }
+
+    private void validateWitnessDeposition(EvidenceRequest body) {
+        if(body.getArtifact().getTag() == null || body.getArtifact().getSourceID() == null){
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Tag or SourceID is required for witness deposition");
+        }
+        EvidenceSearchCriteria evidenceSearchCriteria = createEvidenceSearchCriteria(body);
+        List<Artifact> artifacts = repository.getArtifacts(evidenceSearchCriteria, null);
+        boolean witnessFound = artifacts.stream().anyMatch(artifact -> artifact.getTag() != null && artifact.getTag().equalsIgnoreCase(body.getArtifact().getTag()));
+        if (witnessFound) {
+            log.info("Tag already exists for the witness with source:{} ", body.getArtifact().getSourceType());
+        }
+    }
+
+    private EvidenceSearchCriteria createEvidenceSearchCriteria(EvidenceRequest body) {
+        return EvidenceSearchCriteria.builder()
+                .filingNumber(body.getArtifact().getFilingNumber())
+                .artifactType(WITNESS_DEPOSITION)
+                .tenantId(body.getArtifact().getTenantId())
+                .build();
+    }
+
+    public void updateCaseWitnessDeposition(EvidenceRequest body) {
+        log.info("Starting updateCaseWitness for filing number: {}",
+                body.getArtifact() != null ? body.getArtifact().getFilingNumber() : null);
+
+        try {
+            String filingNumber = body.getArtifact().getFilingNumber();
+            String uniqueId = body.getArtifact().getSourceID();
+
+            JsonNode courtCase = searchCaseDetails(body, filingNumber);
+            JsonNode formdata = extractWitnessFormData(courtCase, filingNumber);
+
+            boolean witnessFound = processWitnessRecords(body, filingNumber, uniqueId, formdata);
+            if(!witnessFound) {
+                updateWitnessDeposition(body, courtCase);
+            }
+            log.info("Successfully completed updateCaseWitness for filing number: {}",
+                    filingNumber);
+
+        } catch (CustomException e) {
+            log.error("Unexpected error in updateCaseWitness for filing number: {}",
+                    body.getArtifact() != null ? body.getArtifact().getFilingNumber() : "null", e);
+            throw new CustomException(UPDATE_CASE_WITNESS_ERR,
+                    "Unexpected error updating case witness: " + e.getMessage());
+        }
+    }
+
+    private void updateWitnessDeposition(EvidenceRequest body, JsonNode courtCase) {
+        JsonNode litigants = courtCase.get("litigants");
+        JsonNode representatives = courtCase.get("representatives");
+        JsonNode poaHolders = courtCase.get("poaHolders");
+        JsonNode respondentDetails = courtCase.get("additionalDetails").get("respondentDetails");
+        String uniqueId = body.getArtifact().getSourceID();
+        String tag = body.getArtifact().getTag();
+
+        // Process litigants
+        if (litigants != null && litigants.isArray()) {
+            updatePartyTag(litigants, uniqueId, tag, "litigant");
+        }
+
+        // Process representatives
+        if (representatives != null && representatives.isArray()) {
+            updatePartyTag(representatives, uniqueId, tag, "representative");
+        }
+
+        // Process poaHolders
+        if (poaHolders != null && poaHolders.isArray()) {
+            updatePartyTag(poaHolders, uniqueId, tag, "poaHolder");
+        }
+
+        // Process respondents
+        if(respondentDetails != null && respondentDetails.get("formdata").isArray()) {
+            updateAccusedDetails(respondentDetails, uniqueId, tag);
+        }
+        try {
+            CaseRequest caseRequest = CaseRequest.builder()
+                    .requestInfo(body.getRequestInfo())
+                    .cases(courtCase)
+                    .build();
+            caseUtil.updateCaseDetails(caseRequest);
+        } catch (CustomException e) {
+            log.error("Error updating case details for filing number: {}", body.getArtifact().getFilingNumber(), e);
+            throw new CustomException(UPDATE_CASE_ERR, e.getMessage());
+        }
+    }
+
+    private void updateAccusedDetails(JsonNode respondentDetails, String uniqueId, String tag) {
+        JsonNode formdata = respondentDetails.get("formdata");
+        for(JsonNode data : formdata) {
+            if(uniqueId.equals(data.get("uniqueId").textValue())) {
+                ((ObjectNode) data.get("data")).put("tag", tag);
+                log.info("Added tag: {} to respondent details for uniqueId: {}", tag, uniqueId);
+            }
+        }
+    }
+
+    private void updatePartyTag(JsonNode parties, String uniqueId, String tag, String partyType) {
+        for (int i = 0; i < parties.size(); i++) {
+            JsonNode party = parties.get(i);
+            JsonNode additionalDetails = party.get("additionalDetails");
+
+            if (additionalDetails != null) {
+                JsonNode uuid = additionalDetails.get("uuid");
+                if (uuid != null && uniqueId.equals(uuid.textValue())) {
+                    log.info("Found matching {} with uuid: {} for uniqueId: {}", partyType, uuid.textValue(), uniqueId);
+
+                    if (additionalDetails instanceof ObjectNode) {
+                        ((ObjectNode) additionalDetails).put("tag", tag);
+                        log.info("Added tag: {} to {} additionalDetails for uuid: {}", tag, partyType, uuid.textValue());
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
+    public JsonNode searchCaseDetails(EvidenceRequest body, String filingNumber) {
+        try {
+            return caseUtil.searchCaseDetails(
+                    CaseSearchRequest.builder()
+                            .requestInfo(body.getRequestInfo())
+                            .criteria(List.of(CaseCriteria.builder()
+                                    .filingNumber(filingNumber)
+                                    .defaultFields(false)
+                                    .build()))
+                            .build()
+            );
+        } catch (Exception e) {
+            log.error("Error while searching case details for filing number: {}", filingNumber, e);
+            throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE,
+                    "Failed to retrieve case details for filing number: " + filingNumber);
+        }
+    }
+
+    public JsonNode extractWitnessFormData(JsonNode courtCase, String filingNumber) {
+        JsonNode additionalDetails = courtCase.get("additionalDetails");
+        JsonNode witnessDetails = additionalDetails.get("witnessDetails");
+        JsonNode formdata = witnessDetails.get("formdata");
+
+        if (formdata == null || !formdata.isArray()) {
+            log.warn("No witness formdata found or invalid format for filing number: {}", filingNumber);
+            throw new CustomException(UPDATE_CASE_WITNESS_ERR,
+                    "No witness formdata found for filing number: " + filingNumber);
+        }
+
+        return formdata;
+    }
+
+    private boolean processWitnessRecords(EvidenceRequest body, String filingNumber, String uniqueId, JsonNode formdata) {
+        boolean witnessFound = false;
+        for (int i = 0; i < formdata.size(); i++) {
+            JsonNode data = formdata.get(i);
+            try {
+                if (data == null || data.get("uniqueId") == null) {
+                    log.warn("Skipping witness record at index {} - missing uniqueId for filing number: {}",
+                            i, filingNumber);
+                    continue;
+                }
+                String witnessUniqueId = data.get("uniqueId").textValue();
+                if (witnessUniqueId != null && witnessUniqueId.equals(uniqueId)) {
+                    witnessFound = true;
+                    updateWitnessRecord(body, uniqueId, data);
+                    break;
+                }
+            } catch (CustomException e) {
+                log.error("Unexpected error processing witness record at index {} for filing number: {}",
+                        i, filingNumber, e);
+                throw new CustomException(UPDATE_CASE_WITNESS_ERR,
+                        "Unexpected error processing witness record at index " + i +
+                        " for filing number: " + filingNumber);
+            }
+        }
+
+        if (!witnessFound) {
+            log.warn("No witness found with uniqueId: {} in filing number: {}", uniqueId, filingNumber);
+        }
+        return witnessFound;
+    }
+
+    private void updateWitnessRecord(EvidenceRequest body, String uniqueId, JsonNode data) {
+        WitnessDetails witness = objectMapper.convertValue(data.get("data"), WitnessDetails.class);
+        witness.setUniqueId(uniqueId);
+        witness.setWitnessTag(body.getArtifact().getTag());
+
+        updateWitnessEmails(body, uniqueId, witness);
+        updateWitnessMobileNumbers(body, uniqueId, witness);
+
+        WitnessDetailsRequest witnessDetailsRequest = WitnessDetailsRequest.builder()
+                .requestInfo(body.getRequestInfo())
+                .witnessDetails(List.of(witness))
+                .caseFilingNumber(body.getArtifact().getFilingNumber())
+                .tenantId(body.getArtifact().getTenantId())
+                .build();
+
+        try {
+            caseUtil.updateWitnessDetails(witnessDetailsRequest);
+        } catch (Exception e) {
+            log.error("Error updating witness details for uniqueId: {} in filing number: {}",
+                    uniqueId, body.getArtifact().getFilingNumber(), e);
+            throw new CustomException(UPDATE_CASE_WITNESS_ERR,
+                    "Failed to update witness details for uniqueId: " + uniqueId +
+                    " in filing number: " + body.getArtifact().getFilingNumber());
+        }
+    }
+
+    private void updateWitnessMobileNumbers(EvidenceRequest body, String uniqueId, WitnessDetails witness) {
+        if (body.getArtifact().getWitnessMobileNumbers() != null &&
+            !body.getArtifact().getWitnessMobileNumbers().isEmpty()) {
+            ObjectNode phonenumbers = objectMapper.createObjectNode();
+            ArrayNode mobileNumbersArray = objectMapper.valueToTree(body.getArtifact().getWitnessMobileNumbers());
+            phonenumbers.set("mobileNumber", mobileNumbersArray);
+            witness.setPhoneNumbers(phonenumbers);
+        } else {
+            witness.setPhoneNumbers(null);
+        }
+    }
+
+    private void updateWitnessEmails(EvidenceRequest body, String uniqueId, WitnessDetails witness) {
+        if (body.getArtifact().getWitnessEmails() != null &&
+            !body.getArtifact().getWitnessEmails().isEmpty()) {
+            ObjectNode emails = objectMapper.createObjectNode();
+            ArrayNode emailArray = objectMapper.valueToTree(body.getArtifact().getWitnessEmails());
+            emails.set("emailId", emailArray);
+            witness.setEmails(emails);
+        } else {
+            witness.setEmails(null);
         }
     }
 
@@ -180,13 +436,28 @@ public class EvidenceService {
                 if (ObjectUtils.isEmpty(evidenceRequest.getArtifact().getEvidenceNumber())) {
                     throw new CustomException(ILLEGAL_ARGUMENT_EXCEPTION_CODE, "Evidence number is required for Evidence Marked Flow");
                 } else {
-                    checkUniqueEvidenceNumberForCase(evidenceRequest);
+                    // check if the evidence number exists for the case only when mark as evidence workflow begins
+                    if(CREATE.equalsIgnoreCase(evidenceRequest.getArtifact().getWorkflow().getAction())){
+                        checkUniqueEvidenceNumberForCase(evidenceRequest);
+                    }
                 }
             }
-
+            if(WITNESS_DEPOSITION.equalsIgnoreCase(evidenceRequest.getArtifact().getArtifactType())) {
+                if(SUBMIT.equalsIgnoreCase(evidenceRequest.getArtifact().getWorkflow().getAction()) &&
+                        !hasNumberSuffix(evidenceRequest.getArtifact().getTag())) {
+                        evidenceEnrichment.enrichTag(evidenceRequest);
+                }
+                updateCaseWitnessDeposition(evidenceRequest);
+            }
 
             if (shouldUpdateWorkflowStatusForUpdate(evidenceRequest, filingType)) {
                 workflowService.updateWorkflowStatus(evidenceRequest, filingType);
+                if (INITIATE_E_SIGN.equalsIgnoreCase(evidenceRequest.getArtifact().getWorkflow().getAction())) {
+                    enrichShortenedURL(evidenceRequest);
+                }
+                if (EDIT.equalsIgnoreCase(evidenceRequest.getArtifact().getWorkflow().getAction()) && WITNESS_DEPOSITION.equalsIgnoreCase(evidenceRequest.getArtifact().getArtifactType())) {
+                    expireTheShorteningUrl(evidenceRequest);
+                }
                 enrichBasedOnStatus(evidenceRequest);
                 producer.push(config.getUpdateEvidenceKafkaTopic(), evidenceRequest);
             } else {
@@ -204,12 +475,29 @@ public class EvidenceService {
         }
     }
 
+    private void enrichShortenedURL(EvidenceRequest evidenceRequest) {
+
+        Workflow workflow = evidenceRequest.getArtifact().getWorkflow();
+
+        if (INITIATE_E_SIGN.equals(workflow.getAction())) {
+            String shortenedUrl = urlShortenerUtil.createShortenedUrl(evidenceRequest.getArtifact().getTenantId() , evidenceRequest.getArtifact().getArtifactNumber());
+            evidenceRequest.getArtifact().setShortenedUrl(shortenedUrl);
+            callNotificationServiceForSMS(evidenceRequest);
+            callNotificationServiceForEmail(evidenceRequest);
+        }
+
+    }
+
+    private void expireTheShorteningUrl(EvidenceRequest bailRequest) {
+        urlShortenerUtil.expireTheUrl(bailRequest);
+    }
+
     public void checkUniqueEvidenceNumberForCase(EvidenceRequest body){
         // Throw exception if evidence number exists
         EvidenceSearchCriteria criteria = EvidenceSearchCriteria.builder()
                 .filingNumber(body.getArtifact().getFilingNumber())
                 .evidenceNumber(body.getArtifact().getEvidenceNumber())
-                .evidenceStatus(true)
+                .tenantId(body.getArtifact().getTenantId())
                 .build();
         Pagination pagination = Pagination.builder()
                 .build();
@@ -479,5 +767,305 @@ public class EvidenceService {
             }
         }
         return individualIds;
+    }
+
+    private void callNotificationServiceForSMS(EvidenceRequest evidenceRequest) {
+        try {
+            Artifact artifact = evidenceRequest.getArtifact();
+            String action = artifact.getWorkflow().getAction();
+            String messageCode = getMessageCode(action);
+
+            if (StringUtils.isBlank(messageCode)) {
+                log.warn("No messageCode found for action: {}", action);
+                return;
+            }
+
+            log.info("Sending notifications for messageCode: {}", messageCode);
+            SmsTemplateData smsTemplateData = buildSmsTemplateData(evidenceRequest);
+
+            RequestInfo requestInfo = evidenceRequest.getRequestInfo();
+
+            for (String mobileNumber : artifact.getWitnessMobileNumbers()) {
+                notificationService.sendNotification(requestInfo, smsTemplateData, messageCode, mobileNumber);
+            }
+
+        } catch (Exception e) {
+            log.error("Error sending notification for evidenceRequest: {}", evidenceRequest, e);
+        }
+    }
+
+    private String getMessageCode(String action) {
+        if (action.equalsIgnoreCase(INITIATE_E_SIGN)) {
+            return WITNESS_DEPOSITION_MESSAGE;
+        }
+        return null;
+    }
+
+    private SmsTemplateData buildSmsTemplateData(EvidenceRequest evidenceRequest) {
+
+        Artifact artifact = evidenceRequest.getArtifact();
+
+        CaseCriteria criteria = CaseCriteria.builder()
+                .filingNumber(artifact.getFilingNumber())
+                .defaultFields(true)
+                .build();
+        CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                .requestInfo(evidenceRequest.getRequestInfo())
+                .criteria(Collections.singletonList(criteria))
+                .build();
+        JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+
+        String cmpNumber = caseDetails.has("cmpNumber") ? (caseDetails.get("cmpNumber").textValue() != null ? caseDetails.get("cmpNumber").textValue() : null) : null;
+        String courtCaseNumber = caseDetails.has("courtCaseNumber") ? (caseDetails.get("courtCaseNumber").textValue() != null ? caseDetails.get("courtCaseNumber").textValue() : null) : null;
+
+        return SmsTemplateData.builder()
+                .filingNumber(artifact.getFilingNumber())
+                .courtCaseNumber(courtCaseNumber)
+                .shortenedUrl(artifact.getShortenedUrl())
+                .cmpNumber(cmpNumber)
+                .tenantId(artifact.getTenantId())
+                .build();
+
+    }
+
+    private void callNotificationServiceForEmail(EvidenceRequest evidenceRequest) {
+        try {
+            Artifact artifact = evidenceRequest.getArtifact();
+            String action = artifact.getWorkflow().getAction();
+
+            String emailCode = getEmailCode(action);
+            if (StringUtils.isBlank(emailCode)) {
+                log.warn("No emailCode found for action: {}", action);
+                return;
+            }
+
+            log.info("Sending emails for emailCode: {}", emailCode);
+            Set<String> emailTopics = Arrays.stream(emailCode.split(","))
+                    .map(String::trim)
+                    .collect(java.util.stream.Collectors.toSet());
+
+            CaseCriteria criteria = CaseCriteria.builder()
+                    .filingNumber(artifact.getFilingNumber())
+                    .defaultFields(true)
+                    .build();
+            CaseSearchRequest caseSearchRequest = CaseSearchRequest.builder()
+                    .requestInfo(evidenceRequest.getRequestInfo())
+                    .criteria(Collections.singletonList(criteria))
+                    .build();
+
+            JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+
+            String cmpNumber = caseDetails.has("cmpNumber") ? (caseDetails.get("cmpNumber").textValue() != null ? caseDetails.get("cmpNumber").textValue() : null) : null;
+            String courtCaseNumber = caseDetails.has("courtCaseNumber") ? (caseDetails.get("courtCaseNumber").textValue() != null ? caseDetails.get("courtCaseNumber").textValue() : null) : null;
+            String caseTitle = caseDetails.has("caseTitle") ? (caseDetails.get("caseTitle").textValue() != null ? caseDetails.get("caseTitle").textValue() : null) : null;
+
+            EmailTemplateData emailTemplateData = EmailTemplateData.builder()
+                    .caseNumber(courtCaseNumber != null ? courtCaseNumber : cmpNumber)
+                    .caseName(caseTitle != null ? caseTitle : "")
+                    .shortenedURL(artifact.getShortenedUrl())
+                    .tenantId(artifact.getTenantId())
+                    .artifactNumber(artifact.getArtifactNumber())
+                    .filingNumber(artifact.getFilingNumber())
+                    .build();
+
+            if (emailTopics.contains(WITNESS_DEPOSITION_EMAIL)) {
+                log.info("Sending email to witnesses");
+                if (artifact.getWitnessEmails() != null && !artifact.getWitnessEmails().isEmpty()) {
+                    for (String witnessEmail : artifact.getWitnessEmails()) {
+                        notificationService.sendEmail(evidenceRequest.getRequestInfo(), emailTemplateData, artifact.getSourceName(), witnessEmail);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error sending notification for evidenceRequest: {}", evidenceRequest, e);
+        }
+    }
+
+    private String getEmailCode(String action) {
+        if (action.equalsIgnoreCase(INITIATE_E_SIGN)) {
+            return WITNESS_DEPOSITION_EMAIL;
+        }
+        return null;
+    }
+
+    public List<ArtifactToSign> createArtifactsToSignRequest(ArtifactsToSignRequest request) {
+        log.info("creating artifacts to sign request, result= IN_PROGRESS, artifactCriteria:{}", request.getCriteria().size());
+
+        List<CoordinateCriteria> coordinateCriteria = new ArrayList<>();
+        Map<String, ArtifactsCriteria> artifactCriteriaMap = new HashMap<>();
+
+        request.getCriteria().forEach(criterion -> {
+            CoordinateCriteria criteria = new CoordinateCriteria();
+            criteria.setFileStoreId(criterion.getFileStoreId());
+            criteria.setPlaceholder(criterion.getPlaceholder());
+            criteria.setTenantId(criterion.getTenantId());
+            coordinateCriteria.add(criteria);
+            artifactCriteriaMap.put(criterion.getFileStoreId(), criterion);
+        });
+
+        CoordinateRequest coordinateRequest = CoordinateRequest.builder()
+                .requestInfo(request.getRequestInfo())
+                .criteria(coordinateCriteria).build();
+        List<Coordinate> coordinateForSign = eSignUtil.getCoordinateForSign(coordinateRequest);
+
+        if (coordinateForSign.isEmpty() || coordinateForSign.size() != request.getCriteria().size()) {
+            throw new CustomException(COORDINATES_ERROR, "error in co-ordinates");
+        }
+
+        List<ArtifactToSign> artifactToSignList = new ArrayList<>();
+        for (Coordinate coordinate : coordinateForSign) {
+            ArtifactToSign artifactToSign = new ArtifactToSign();
+            org.springframework.core.io.Resource resource = null;
+            try {
+                resource = fileStoreUtil.fetchFileStoreObjectById(coordinate.getFileStoreId(), coordinate.getTenantId());
+            } catch (Exception e) {
+                throw new CustomException(FILE_STORE_UTILITY_EXCEPTION, "something went wrong while signing");
+            }
+            try {
+                String base64Document = cipherUtil.encodePdfToBase64(resource);
+                String coord = (int) Math.floor(coordinate.getX()) + "," + (int) Math.floor(coordinate.getY());
+                String txnId = java.util.UUID.randomUUID().toString();
+                String pageNo = String.valueOf(coordinate.getPageNumber());
+                java.time.ZonedDateTime timestamp = java.time.ZonedDateTime.now(java.time.ZoneId.of(config.getZoneId()));
+
+                String xmlRequest = generateRequest(base64Document, timestamp.toString(), txnId, coord, pageNo);
+                String artifactId = artifactCriteriaMap.get(coordinate.getFileStoreId()).getArtifactNumber();
+                artifactToSign.setArtifactNumber(artifactId);
+                artifactToSign.setRequest(xmlRequest);
+
+                artifactToSignList.add(artifactToSign);
+            } catch (Exception e) {
+                throw new CustomException(ARTIFACT_SIGN_ERROR, "something went wrong while signing");
+            }
+        }
+        log.info("creating artifacts to sign request, result= SUCCESS, artifactCriteria:{}", request.getCriteria().size());
+        return artifactToSignList;
+    }
+
+    public List<Artifact> updateArtifactWithSignDoc(@Valid UpdateSignedArtifactRequest request) {
+        log.info("Updating Artifact With Signed Doc, result= IN_PROGRESS, signedArtifacts:{}", request.getSignedArtifacts() != null ? request.getSignedArtifacts().size() : 0);
+        List<Artifact> updatedArtifacts = new ArrayList<>();
+        RequestInfo requestInfo = request.getRequestInfo();
+        if (request.getSignedArtifacts() != null) {
+            for (SignedArtifact signedArtifact : request.getSignedArtifacts()) {
+                String artifactNumber = signedArtifact.getArtifactNumber();
+                String signedArtifactData = signedArtifact.getSignedArtifactData();
+                Boolean isSigned = signedArtifact.getSigned();
+                Boolean isWitnessDeposition = signedArtifact.getIsWitnessDeposition();
+                String tenantId = signedArtifact.getTenantId();
+
+                if (Boolean.TRUE.equals(isSigned)) {
+                    try {
+                        // Fetch and validate existing artifact
+                        EvidenceSearchCriteria evidenceSearchCriteria = EvidenceSearchCriteria.builder().artifactNumber(artifactNumber).tenantId(tenantId).fuzzySearch(false).build();
+                        Artifact existingArtifact = repository.getArtifacts(evidenceSearchCriteria, null).stream().findFirst().orElse(null);
+                        if (existingArtifact == null) {
+                            log.error("Artifact not found for id: {}", artifactNumber);
+                            throw new CustomException(ARTIFACT_NOT_FOUND, "Artifact not found for id: " + artifactNumber);
+                        }
+
+                        String fileName = signedArtifact.getIsWitnessDeposition() != null && signedArtifact.getIsWitnessDeposition() ? SIGNED_WITNESS_DEPOSITION_DOCUMENT : SIGNED_EVIDENCE_SEAL;
+
+                        // Update signed data (assuming a document or field for signed data exists)
+
+                        // Update document with signed PDF
+                        MultipartFile multipartFile = cipherUtil.decodeBase64ToPdf(signedArtifactData, fileName);
+                        String fileStoreId = fileStoreUtil.storeFileInFileStore(multipartFile, tenantId);
+
+                        WorkflowObject workflow = new WorkflowObject();
+
+                        if (isWitnessDeposition != null && isWitnessDeposition) {
+                            Document document = Document.builder()
+                                    .id(UUID.randomUUID().toString())
+                                    .documentType(SIGNED)
+                                    .fileStore(fileStoreId)
+                                    .additionalDetails(Map.of(NAME, fileName))
+                                    .build();
+                            existingArtifact.setFile(document);
+                            workflow.setAction(SIGN);
+                            existingArtifact.setIsEvidenceMarkedFlow(Boolean.FALSE);
+                        }
+                        else{
+                            Document seal = Document.builder()
+                                    .id(UUID.randomUUID().toString())
+                                    .documentType(SIGNED)
+                                    .fileStore(fileStoreId)
+                                    .additionalDetails(Map.of(NAME, fileName))
+                                    .build();
+                            existingArtifact.setSeal(seal);
+                            workflow.setAction(E_SIGN);
+                            existingArtifact.setIsEvidenceMarkedFlow(Boolean.TRUE);
+                            existingArtifact.setIsEvidence(Boolean.TRUE);
+                        }
+                        existingArtifact.setWorkflow(workflow);
+
+                        EvidenceRequest evidenceRequest = EvidenceRequest.builder().artifact(existingArtifact).requestInfo(requestInfo).build();
+
+                        Artifact artifact = updateEvidence(evidenceRequest);
+                        updatedArtifacts.add(artifact);
+                        log.info("Updated artifact with signed doc, artifactNumber: {}", artifactNumber);
+                    } catch (Exception e) {
+                        log.error("Error while updating artifact, artifactNumber: {}", artifactNumber, e);
+                        throw new CustomException(ARTIFACT_BULK_SIGN_EXCEPTION, "Error while updating artifact: " + e.getMessage());
+                    }
+                }
+            }
+        }
+        return updatedArtifacts;
+    }
+
+
+    private String generateRequest(String base64Doc, String timeStamp, String txnId, String coordination, String pageNumber) {
+        log.info("generating request, result= IN_PROGRESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
+        Map<String, Object> requestData = new LinkedHashMap<>();
+
+        requestData.put(COMMAND, PKI_NETWORK_SIGN);
+        requestData.put(TIME_STAMP, timeStamp);
+        requestData.put(TXN, txnId);
+
+        List<Map<String, Object>> certificateAttributes = new ArrayList<>();
+        certificateAttributes.add(createAttribute("CN", ""));
+        certificateAttributes.add(createAttribute("O", ""));
+        certificateAttributes.add(createAttribute("OU", ""));
+        certificateAttributes.add(createAttribute("T", ""));
+        certificateAttributes.add(createAttribute("E", ""));
+        certificateAttributes.add(createAttribute("SN", ""));
+        certificateAttributes.add(createAttribute("CA", ""));
+        certificateAttributes.add(createAttribute("TC", "SG"));
+        certificateAttributes.add(createAttribute("AP", "1"));
+        requestData.put(CERTIFICATE, certificateAttributes);
+
+        Map<String, Object> file = new LinkedHashMap<>();
+        file.put(ATTRIBUTE, Map.of(NAME, TYPE, VALUE, PDF));
+        requestData.put(FILE, file);
+
+        Map<String, Object> pdf = new LinkedHashMap<>();
+        pdf.put(PAGE, pageNumber);
+        pdf.put(CO_ORDINATES, coordination);
+        pdf.put(SIZE, "150,100");
+        requestData.put(PDF, pdf);
+
+        requestData.put(DATA, base64Doc);
+
+        String xmlRequest = xmlRequestGenerator.createXML("request", requestData);
+        log.info("generating request, result= SUCCESS, timeStamp:{}, txnId:{}, coordination:{}, pageNumber:{}", timeStamp, txnId, coordination, pageNumber);
+
+        return xmlRequest;
+    }
+
+    private Map<String, Object> createAttribute(String name, String value) {
+        Map<String, Object> attribute = new LinkedHashMap<>();
+        Map<String, String> attrData = new LinkedHashMap<>();
+        attrData.put(NAME, name);
+        attrData.put(VALUE, value);
+        attribute.put(ATTRIBUTE, attrData);
+        return attribute;
+    }
+
+    private boolean hasNumberSuffix(String tag) {
+        if (tag == null || tag.trim().isEmpty()) {
+            return false;
+        }
+        return tag.matches(".*\\d+$");
     }
 }
