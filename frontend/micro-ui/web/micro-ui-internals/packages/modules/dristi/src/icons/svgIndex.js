@@ -174,9 +174,9 @@ const CustomDeleteIcon = () => (
     />
   </svg>
 );
-const CustomAddIcon = () => (
-  <svg width="10" height="11" viewBox="0 0 10 11" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M4.33203 6.16732H0.332031V4.83398H4.33203V0.833984H5.66536V4.83398H9.66536V6.16732H5.66536V10.1673H4.33203V6.16732Z" fill="#007E7E" />
+const CustomAddIcon = ({ width = "10", height = "11", fill = "#007E7E" }) => (
+  <svg width={width} height={height} viewBox="0 0 10 11" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M4.33203 6.16732H0.332031V4.83398H4.33203V0.833984H5.66536V4.83398H9.66536V6.16732H5.66536V10.1673H4.33203V6.16732Z" fill={fill} />
   </svg>
 );
 

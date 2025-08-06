@@ -2,13 +2,14 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { formatDate } from "../../../cases/src/utils";
 import { formatDateDifference } from "../../../orders/src/utils";
-import { formatNoticeDeliveryDate } from "../utils";
+import { formatNoticeDeliveryDate, getFormattedDate } from "../utils";
 import { OrderName } from "@egovernments/digit-ui-module-dristi/src/components/OrderName";
 import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/CustomChip";
 import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
 import { BulkCheckBox } from "@egovernments/digit-ui-module-dristi/src/components/BulkCheckbox";
 import { BailBondSignModal } from "../pages/employee/BailBondSignModal";
+import { AdvocateName } from "@egovernments/digit-ui-module-dristi/src/components/AdvocateName";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
@@ -669,6 +670,89 @@ export const UICustomizations = {
           return value || "";
         case "CS_CASE_NUMBER_HOME":
           return <span>{value || ""}</span>;
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
+        default:
+          return value || "";
+      }
+    },
+  },
+
+  bulkWitnessDepositionSignConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+
+      const effectiveSearchForm = requestCriteria?.state?.searchForm || {};
+      const caseTitle = sessionStorage.getItem("bulkWitnessDepositionSignCaseTitle") || effectiveSearchForm?.caseTitle;
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+      const setbulkWitnessDepositionSignList = additionalDetails?.setbulkWitnessDepositionSignList;
+      const setWitnessDepositionPaginationData = additionalDetails?.setWitnessDepositionPaginationData;
+      const setNeedConfigRefresh = additionalDetails?.setNeedConfigRefresh;
+      const limit = parseInt(sessionStorage.getItem("bulkWitnessDepositionSignlimit")) || parseInt(requestCriteria?.state?.tableForm?.limit) || 10;
+      const offset = parseInt(sessionStorage.getItem("bulkWitnessDepositionSignoffset")) || parseInt(requestCriteria?.state?.tableForm?.offset) || 0;
+
+      const moduleSearchCriteria = {
+        // entityType,
+        tenantId,
+        status: "PENDING_REVIEW",
+        ...(caseTitle && { searchableFields: caseTitle }),
+        ...(courtId && { courtId }),
+      };
+      const bulkWitnessDepositionSignCaseTitle = requestCriteria?.state?.searchForm && requestCriteria?.state?.searchForm?.caseTitle;
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            limit: limit,
+            offset: offset,
+            tenantId: tenantId,
+            moduleSearchCriteria: moduleSearchCriteria,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            const witnessDepositionItems = data?.items?.map((item) => {
+              return {
+                ...item,
+                isSelected: true,
+              };
+            });
+            sessionStorage.removeItem("bulkWitnessDepositionSignlimit");
+            sessionStorage.removeItem("bulkWitnessDepositionSignoffset");
+            if (sessionStorage.getItem("bulkWitnessDepositionSignCaseTitle")) {
+              sessionStorage.removeItem("bulkWitnessDepositionSignCaseTitle"); //we are storing this for search inbox
+              setNeedConfigRefresh((prev) => !prev);
+            }
+
+            if (setbulkWitnessDepositionSignList) setbulkWitnessDepositionSignList(witnessDepositionItems);
+            if (setWitnessDepositionPaginationData)
+              setWitnessDepositionPaginationData({ limit: limit, offset: offset, caseTitle: bulkWitnessDepositionSignCaseTitle });
+
+            return {
+              ...data,
+              items: witnessDepositionItems,
+            };
+          },
+        },
+      };
+    },
+
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "CASE_TITLE":
+          return <OrderName rowData={row} colData={column} value={value} />;
+        case "CS_CASE_NUMBER_HOME":
+          return <span>{value || ""}</span>;
+        case "WITNESS_NAME":
+          return <span>{value || ""}</span>;
+        case "DATE_OF_DEPOSITION":
+          return formatNoticeDeliveryDate(value);
+        case "ADVOCATES":
+          return <AdvocateName value={value} />;
         case "SELECT":
           return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
         default:

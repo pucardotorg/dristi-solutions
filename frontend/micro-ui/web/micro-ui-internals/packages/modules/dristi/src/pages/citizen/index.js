@@ -24,7 +24,11 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const Registration = Digit?.ComponentRegistryService?.getComponent("DRISTIRegistration");
   const Response = Digit?.ComponentRegistryService?.getComponent("DRISTICitizenResponse");
   const BailBondSignaturePage = Digit?.ComponentRegistryService?.getComponent("BailBondSignaturePage");
+  const WitnessDepositionSignaturePage = Digit?.ComponentRegistryService?.getComponent("WitnessDepositionSignaturePage");
   const BailBondLoginPage = Digit?.ComponentRegistryService?.getComponent("BailBondLoginPage");
+  const WitnessDepositionLoginPage = Digit?.ComponentRegistryService?.getComponent("WitnessDepositionLoginPage");
+
+  
   const BailBondLinkExpiredPage = Digit?.ComponentRegistryService?.getComponent("BailBondLinkExpiredPage");
   const Login = Digit?.ComponentRegistryService?.getComponent("DRISTILogin");
   const FileCase = Digit?.ComponentRegistryService?.getComponent("FileCase");
@@ -128,7 +132,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     },
   ];
 
-  const hideBackRoutes = ["/home/access-expired", "/home/bail-bond-login", "/home/bail-bond-sign", "/login", "/registration/email"];
+  const hideBackRoutes = ["/home/access-expired", "/home/bail-bond-login", "/home/bail-bond-sign", "/login", "/registration/email", "evidence-sign", "evidence-esign-page"];
 
   const whiteListedRoutes = [
     `${path}/home/register`,
@@ -150,8 +154,10 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     `${path}/home/bail-bond-sign`,
     `${path}/home/bail-bond-login`,
     `${path}/home/access-expired`,
+    `${path}/home/evidence-sign`,
+    `${path}/home/evidence-esign-page`,
   ];
-  const bailRoute = [`${path}/home/bail-bond-sign`];
+  const bailRoute = [`${path}/home/bail-bond-sign`]; // add evidence-esign-page ???
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = Boolean(eSignWindowObject) ? JSON.parse(eSignWindowObject) : null;
@@ -287,6 +293,14 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
 
           <Route path={`${path}/home/bail-bond-sign`}>
             <BailBondSignaturePage />
+          </Route>
+
+          <Route path={`${path}/home/evidence-sign`}>
+            <WitnessDepositionLoginPage />
+          </Route>
+
+          <Route path={`${path}/home/evidence-esign-page`}>
+            <WitnessDepositionSignaturePage />
           </Route>
         </React.Fragment>
       </Switch>

@@ -42,6 +42,7 @@ const SubmissionPreviewSubmissionTypeMap = {
   SUBMIT_BAIL_DOCUMENTS: "application-submit-bail-documents",
   DELAY_CONDONATION: "application-delay-condonation",
   CORRECTION_IN_COMPLAINANT_DETAILS: "application-profile-edit",
+  ADDING_WITNESSES: "application-witness-deposition",
 };
 
 const onDocumentUpload = async (fileData, filename) => {

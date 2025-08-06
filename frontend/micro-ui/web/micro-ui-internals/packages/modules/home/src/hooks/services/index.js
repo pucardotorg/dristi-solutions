@@ -20,6 +20,10 @@ export const Urls = {
   getBailBondsToSign: "/bail-bond/v1/_getBailsToSign",
   bailBondUpdate: "/bail-bond/v1/_update",
   bailBondSearch: "/bail-bond/v1/_search",
+  updateSignedWitnessDepositions: "/evidence/v1/_updateSignedArtifacts",
+  getWitnessDepositionsToSign: "/evidence/v1/_getArtifactsToSign",
+  witnessDepositionUpdate: "/evidence/v1/_update",
+  witnessDepositionSearch: "/evidence/v1/_search",
 };
 export const HomeService = {
   InboxSearch: (data, params) =>
@@ -125,6 +129,38 @@ export const HomeService = {
   searchBailBond: (data, params) =>
     Request({
       url: Urls.bailBondSearch,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  getWitnessDepositionsToSign: (data, params) =>
+    Request({
+      url: Urls.getWitnessDepositionsToSign,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateSignedWitnessDepositions: (data, params) =>
+    Request({
+      url: Urls.updateSignedWitnessDepositions,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateWitnessDeposition: (data, params) =>
+    Request({
+      url: Urls.witnessDepositionUpdate,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  searchWitnessDeposition: (data, params) =>
+    Request({
+      url: Urls.witnessDepositionSearch,
       useCache: false,
       userService: false,
       data,

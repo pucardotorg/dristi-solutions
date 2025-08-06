@@ -100,12 +100,14 @@ export const Urls = {
   },
   case: {
     addWitness: "/case/v1/add/witness",
+    addNewWitness: "/case/v2/add/witness",
     taskCreate: "/task/v1/create",
     searchTasks: "/task/v1/search",
   },
   hearing: {
     hearingUpdateTranscript: "/hearing/v1/update_transcript_additional_attendees",
     uploadWitnesspdf: "/hearing/witnessDeposition/v1/uploadPdf",
+    witnessDepositionPreviewPdf: "/egov-pdf/hearing",
   },
   FileFetchById: "/filestore/v1/files/id",
   CombineDocuments: "/egov-pdf/dristi-pdf/combine-documents",

@@ -73,7 +73,7 @@ public class DemandService {
                 .channelId(ChannelName.fromString(task.getTaskDetails().getDeliveryChannel().getChannelName()).toString())
                 .receiverPincode(task.getTaskDetails().getRespondentDetails().getAddress().getPinCode())
                 .tenantId(task.getTenantId())
-                .taskType(WARRANT.equalsIgnoreCase(task.getTaskType()) || PROCLAMATION.equalsIgnoreCase(task.getTaskType()) ? WARRANT : task.getTaskType())
+                .taskType(task.getTaskType())
                 .id(task.getTaskNumber()).build();
 
         StringBuilder url = new StringBuilder().append(config.getPaymentCalculatorHost())
@@ -422,7 +422,7 @@ public class DemandService {
     private String getBusinessService(String taskType) {
         return switch (taskType.toUpperCase()) {
             case SUMMON -> config.getTaskSummonBusinessService();
-            case WARRANT,PROCLAMATION -> config.getTaskWarrantBusinessService();
+            case WARRANT -> config.getTaskWarrantBusinessService();
             case NOTICE -> config.getTaskNoticeBusinessService();
             default -> throw new IllegalArgumentException("Unsupported task type: " + taskType);
         };

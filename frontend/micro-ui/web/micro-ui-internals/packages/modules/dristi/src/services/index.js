@@ -257,6 +257,14 @@ export const DRISTIService = {
       data,
       params,
     }),
+  addNewWitness: (data, params) =>
+    Request({
+      url: Urls.case.addNewWitness,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
   getPendingTaskService: (data, params) =>
     Request({
       url: Urls.dristi.getPendingTaskFields,
