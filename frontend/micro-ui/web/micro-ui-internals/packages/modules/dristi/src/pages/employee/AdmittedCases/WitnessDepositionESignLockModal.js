@@ -4,12 +4,12 @@ import { BlackTickIcon, FileDownloadIcon } from "@egovernments/digit-ui-module-d
 import CustomCopyTextDiv from "@egovernments/digit-ui-module-dristi/src/components/CustomCopyTextDiv";
 import { Banner, CardLabel } from "@egovernments/digit-ui-react-components";
 
-function BailBondEsignLockModal({ t, handleSaveOnSubmit, userType, filingNumber, bailBondSignatureURL }) {
+function WitnessDepositionESignLockModal({ t, handleSaveOnSubmit, witnessDepositionSignatureURL }) {
   const orderModalInfo = {
-    header: "BAIL_BOND_BANNER_HEADER",
+    header: "WITNESS_DEPOSITION_BANNER_HEADER",
     url: [
       {
-        value: bailBondSignatureURL,
+        value: witnessDepositionSignatureURL,
         customText: "E-Sign Link",
         copyData: true,
         isLocalization: false,
@@ -18,23 +18,31 @@ function BailBondEsignLockModal({ t, handleSaveOnSubmit, userType, filingNumber,
   };
 
   return (
-    <Modal
-      actionSaveLabel={t("CS_CLOSE")}
-      actionSaveOnSubmit={handleSaveOnSubmit}
-      className={"submission-success-modal bailbondEsign"}
-      cancelButtonBody={<FileDownloadIcon></FileDownloadIcon>}
-      popupStyles={{ width: "700px", borderRadius: "4px" }}
-      style={{ width: "100%" }}
-    >
-      <div style={{ padding: "8px 0" }}>
-        <div>
-          <Banner
-            whichSvg={"tick"}
-            successful={true}
-            message={t(orderModalInfo?.header)}
-            headerStyles={{ fontSize: "32px" }}
-            style={{ minWidth: "100%" }}
-          ></Banner>
+    <React.Fragment>
+      <style>
+        {`
+          .bailbondEsign .popup-module-main{
+          padding: 40px !important;
+          }
+          `}
+      </style>
+      <Modal
+        actionSaveLabel={t("CS_CLOSE")}
+        actionSaveOnSubmit={handleSaveOnSubmit}
+        className={"submission-success-modal bailbondEsign"}
+        cancelButtonBody={<FileDownloadIcon></FileDownloadIcon>}
+        popupStyles={{ width: "700px", borderRadius: "4px" }}
+        style={{ width: "100%" }}
+      >
+        <div style={{ padding: "8px 0" }}>
+          <div>
+            <Banner
+              whichSvg={"tick"}
+              successful={true}
+              message={t(orderModalInfo?.header)}
+              headerStyles={{ fontSize: "32px" }}
+              style={{ minWidth: "100%" }}
+            ></Banner>
 
             {orderModalInfo?.subHeader && (
               <CardLabel style={{ fontSize: "16px", fontWeight: 400, marginBottom: "10px", textAlign: "center" }}>
@@ -56,7 +64,8 @@ function BailBondEsignLockModal({ t, handleSaveOnSubmit, userType, filingNumber,
           </div>
         </div>
       </Modal>
+    </React.Fragment>
   );
 }
 
-export default BailBondEsignLockModal;
+export default WitnessDepositionESignLockModal;

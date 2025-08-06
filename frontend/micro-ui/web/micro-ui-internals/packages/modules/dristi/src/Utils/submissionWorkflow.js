@@ -36,3 +36,13 @@ export const bailBondWorkflowAction = {
   SIGN: "SIGN",
   REJECT: "REJECT",
 };
+
+export const witnessDepositionWorkflowAction = {
+  SAVEDRAFT: "SAVE_DRAFT",
+  INITIATEESIGN: "INITIATE_E-SIGN",
+  UPLOAD: "UPLOAD",
+  EDIT: "EDIT",
+  ESIGN: "E-SIGN",
+  SIGN: "SIGN",
+  REJECT: "REJECT",
+};

@@ -5,11 +5,11 @@ import Button from "@egovernments/digit-ui-module-dristi/src/components/Button";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { submissionService } from "../../hooks/services";
 
-const BailBondLoginPage = () => {
+const WitnessDepositionLoginPage = () => {
   const { t } = useTranslation();
   const history = useHistory();
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const { bailbondId } = Digit.Hooks.useQueryParams();
+  const { artifactNumber } = Digit.Hooks.useQueryParams();
   const [mobileNumber, setMobileNumber] = useState("");
   const [error, setError] = useState(false);
   const config = {
@@ -35,19 +35,19 @@ const BailBondLoginPage = () => {
 
     // if person is alredy registered then redirect to sign page and also set some data that again will not redirect again
     try {
-      const res = await submissionService.searchOpenApiBailBond({
+      const res = await submissionService.searchOpenApiWitnessDeposition({
         tenantId,
-        bailId: bailbondId,
+        artifactNumber: artifactNumber,
         mobileNumber: mobileNumber,
       });
       if (!res || Object.keys(res).length === 0) {
         setError(true);
         return;
       }
-      history.replace(`/${window?.contextPath}/citizen/dristi/home/bail-bond-sign?tenantId=${tenantId}&bailbondId=${bailbondId}`, {
+      history.replace(`/${window?.contextPath}/citizen/dristi/home/evidence-esign-page?tenantId=${tenantId}&artifactNumber=${artifactNumber}`, {
         mobileNumber: mobileNumber,
         tenantId: tenantId,
-        isAuthorised : true,
+        isAuthorised: true,
       });
     } catch (error) {
       setError(true);
@@ -73,7 +73,7 @@ const BailBondLoginPage = () => {
       `}
       </style>
       <div className="user-registration" style={{ display: "flex", flexDirection: "column" }}>
-        <div style={{ fontSize: "40px", fontWeight: 700, height: "5vw" }}>Sign Bail Bond</div>
+        <div style={{ fontSize: "40px", fontWeight: 700, height: "5vw" }}>Sign Witness Deposition</div>
         <div style={{ width: "100%", height: "20vw" }}>
           <div className="citizen-form-wrapper" style={{ width: "100%" }}>
             <div className="login-form" style={{ width: "35vw" }}>
@@ -81,7 +81,7 @@ const BailBondLoginPage = () => {
                 <div style={{ marginBottom: "8px" }}>{t(config.label)}</div>
                 <div style={{ display: "flex" }}>
                   {config?.componentInFront ? (
-                    <span className="citizen-card-input citizen-card-input--front bailbondloginPage" style={error ? { borderColor: "#BB2C2F" } : {}}>
+                    <span className="citizen-card-input citizen-card-input--front" style={error ? { borderColor: "#BB2C2F" } : {}}>
                       {config?.componentInFront}
                     </span>
                   ) : null}
@@ -125,12 +125,12 @@ const BailBondLoginPage = () => {
                         </defs>
                       </svg>
                     </div>
-                    {t("ERROR_BAIL_BOND_LOGIN_NUMBER")}
+                    {t("ERROR_WITNESS_DEPOSITION_LOGIN_NUMBER")}
                   </div>
                 )}
                 <div style={{ display: "flex", justifyContent: "center", paddingTop: "20px" }}>
                   <Button
-                    label={t("CONFIRM")}
+                    label={t("PROCEED")}
                     style={{ boxShadow: "none", padding: "10px 24px", width: "30%", gap: "4px" }}
                     onButtonClick={handleSubmit}
                     isDisabled={isDisabled}
@@ -145,4 +145,4 @@ const BailBondLoginPage = () => {
   );
 };
 
-export default BailBondLoginPage;
+export default WitnessDepositionLoginPage;

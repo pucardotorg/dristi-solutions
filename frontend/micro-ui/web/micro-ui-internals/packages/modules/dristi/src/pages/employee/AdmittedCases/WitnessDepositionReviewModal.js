@@ -3,7 +3,7 @@ import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import React, { useMemo, useState } from "react";
 import { useQuery } from "react-query";
 import Axios from "axios";
-import { Urls } from "../hooks/services/Urls";
+import { Urls } from "../../../hooks";
 
 const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;
@@ -22,46 +22,44 @@ const onDocumentUpload = async (fileData, filename) => {
   return { file: fileUploadRes?.data, fileType: fileData.type, filename };
 };
 
-const bailBondPreviewSubmissionTypeMap = {
-  BAIL_BOND: "bail-bond",
+const witnessDepositionPreviewSubmissionTypeMap = {
+  WITNESS_DEPOSITION: "witness-deposition",
 };
 
-const BailBondReviewModal = ({
+const WitnessDepositionReviewModal = ({
   t,
   handleBack,
-  bailBondDetails,
-  documents = [],
-  setBailBondFileStoreId,
-  setShowBailBondReview,
+  currentEvidence,
+
+  setWitnessDepositionFileStoreId,
+  setShowWitnessDepositionReview,
   setShowsignatureModal,
   courtId,
+  cnrNumber,
 }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [showErrorToast, setShowErrorToast] = useState(null);
 
-  const {
-    data: { file: bailBondPreviewPdf, fileName: bailBondPreviewFileName } = {},
-    isFetching: isLoading,
-  } = useQuery({
+  const { data: { file: witnessDepositionPreviewPdf, fileName: witnessDepositionPreviewFilename } = {}, isFetching: isLoading } = useQuery({
     queryKey: [
-      "bailBondPreviewPdf",
+      "witnessPreviewPdf",
       tenantId,
-      bailBondDetails?.bailId,
-      bailBondDetails?.cnrNumber,
-      bailBondPreviewSubmissionTypeMap["BAIL_BOND"],
+      currentEvidence?.artifactNumber, // artifact number
+      cnrNumber, // pick from case
+      witnessDepositionPreviewSubmissionTypeMap["WITNESS_DEPOSITION"],
     ],
     cacheTime: 0,
     queryFn: async () => {
       return Axios({
         method: "POST",
-        url: Urls.bailBond.bailBondPreviewPdf,
+        url: Urls.hearing.witnessDepositionPreviewPdf,
         params: {
           tenantId: tenantId,
-          bailBondId: bailBondDetails?.bailId, // need to change
-          cnrNumber: bailBondDetails?.cnrNumber,
+          artifactNumber: currentEvidence?.artifactNumber, // need to change
+          cnrNumber: cnrNumber,
           qrCode: false,
-          bailBondPdfType: bailBondPreviewSubmissionTypeMap["BAIL_BOND"], // need to change
+          hearingPdfType: witnessDepositionPreviewSubmissionTypeMap["WITNESS_DEPOSITION"], // need to change
           courtId: courtId,
         },
         data: {
@@ -78,51 +76,62 @@ const BailBondReviewModal = ({
         fileName: res.headers["content-disposition"]?.split("filename=")[1],
       }));
     },
-    enabled: !!bailBondDetails?.bailId && !!bailBondDetails?.cnrNumber && !!bailBondPreviewSubmissionTypeMap["BAIL_BOND"],
+    enabled: !!currentEvidence?.artifactNumber && !!cnrNumber && !!witnessDepositionPreviewSubmissionTypeMap["WITNESS_DEPOSITION"],
   });
 
-    const showDocument = useMemo(() => {
-      return (
-        <React.Fragment>
-          {bailBondPreviewPdf ? (
-            <DocViewerWrapper
-              docWidth={"calc(100vw* 76/ 100)"}
-              selectedDocs={[bailBondPreviewPdf]}
-              displayFilename={bailBondPreviewFileName}
-              showDownloadOption={false}
-              docHeight={"unset"}
-            />
-          ) : isLoading ? (
-            <h2>{t("LOADING")}</h2>
-          ) : (
-            <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
-          )}
-        </React.Fragment>
-      );
-    }, [bailBondPreviewPdf, isLoading, t]);
+  const showDocument = useMemo(() => {
+    return (
+      <React.Fragment>
+        {witnessDepositionPreviewPdf ? (
+          <DocViewerWrapper
+            docWidth={"calc(100vw* 76/ 100)"}
+            selectedDocs={[witnessDepositionPreviewPdf]}
+            displayFilename={witnessDepositionPreviewFilename}
+            showDownloadOption={false}
+            docHeight={"unset"}
+          />
+        ) : isLoading ? (
+          <h2>{t("LOADING")}</h2>
+        ) : (
+          <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
+        )}
+      </React.Fragment>
+    );
+  }, [witnessDepositionPreviewPdf, isLoading, t]);
 
   return (
     <React.Fragment>
+      <style>
+        {`
+         .bail-bond .popup-module-main .popup-module-action-bar .selector-button-primary {
+           background-color: #007e7e !important;
+         }
+
+         .bail-bond .popup-module-main .popup-module-action-bar .selector-button-primary h2 {
+           color: white !important;
+         }
+        `}
+      </style>
       <Modal
-        headerBarMain={<Heading label={t("REVIEW_BAIL_BOND")} />}
+        headerBarMain={<Heading label={t("REVIEW_WITNESS_DEPOSITION")} />}
         headerBarEnd={<CloseBtn onClick={handleBack} />}
         actionCancelLabel={t("CS_COMMON_BACK")}
         actionCancelOnSubmit={handleBack}
         actionSaveLabel={t("PROCEED_TO_SIGN")}
         isDisabled={false}
         actionSaveOnSubmit={() => {
-          const pdfFile = new File([bailBondPreviewPdf], bailBondPreviewFileName, { type: "application/pdf" });
+          const pdfFile = new File([witnessDepositionPreviewPdf], witnessDepositionPreviewFilename, { type: "application/pdf" });
 
           onDocumentUpload(pdfFile, pdfFile.name)
             .then((document) => {
               const fileStoreId = document.file?.files?.[0]?.fileStoreId;
               if (fileStoreId) {
-                setBailBondFileStoreId(fileStoreId);
+                setWitnessDepositionFileStoreId(fileStoreId);
               }
             })
             .then(() => {
               setShowsignatureModal(true);
-              setShowBailBondReview(false);
+              setShowWitnessDepositionReview(false);
             })
             .catch((e) => {
               setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
@@ -132,20 +141,7 @@ const BailBondReviewModal = ({
       >
         <div className="review-submission-appl-body-main">
           <div className="application-details">
-            <div className="application-view">
-              {showDocument}
-              {documents?.map((docs) => (
-                <DocViewerWrapper
-                  key={docs.fileStore}
-                  fileStoreId={docs.fileStore}
-                  tenantId={tenantId}
-                  docWidth="100%"
-                  docHeight={"unset"}
-                  showDownloadOption={false}
-                  documentName={docs?.name}
-                />
-              ))}
-            </div>
+            <div className="application-view">{showDocument}</div>
           </div>
         </div>
       </Modal>
@@ -153,4 +149,4 @@ const BailBondReviewModal = ({
   );
 };
 
-export default BailBondReviewModal;
+export default WitnessDepositionReviewModal;

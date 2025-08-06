@@ -79,6 +79,17 @@ async function getCourtAndJudgeDetails(
   };
 }
 
+function getPartyType(witnessType) {
+  if (witnessType?.includes("PW")) {
+    return "Prosecution";
+  } else if (witnessType?.includes("DW")) {
+    return "Defence";
+  } else {
+    return "Court";
+  }
+}
+
 module.exports = {
   getCourtAndJudgeDetails,
+  getPartyType,
 };

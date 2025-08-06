@@ -14,7 +14,7 @@ const CloseBtn = (props) => {
   );
 };
 
-const BailUploadSignatureModal = ({
+const WitnessDepositionSignatureModal = ({
   t,
   handleCloseSignatureModal,
   handleDownload,
@@ -24,7 +24,7 @@ const BailUploadSignatureModal = ({
   showUploadSignature,
   setLoader,
   loader,
-  bailBondFileStoreId,
+  witnessDepositionFileStoreId,
 }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
@@ -79,6 +79,63 @@ const BailUploadSignatureModal = ({
 
   return (
     <React.Fragment>
+      <style>
+        {`
+            .bail-signature-modal {
+                width:638px;
+                height:230px;
+                border-radius:4px;
+            }
+
+            .bail-signature-modal .popup-module-main .popup-module-action-bar{
+                display: flex;
+                justify-content: flex-start;
+                gap: 16px;
+            }
+            
+            .bail-signature-modal .popup-module-main .popup-module-action-bar button:nth-child(2) {
+                margin-left: auto;
+            }
+
+            .bail-signature-modal .popup-module-main .popup-module-action-bar .selector-button-border{
+                border: 1px solid rgb(0, 126, 126);
+                background-color : white;
+            }
+
+            .bail-signature-modal .popup-module-main .popup-module-action-bar .selector-button-border h2{
+                color: rgb(0, 126, 126);
+            }
+
+            .bail-signature-modal .popup-module-main .popup-module-action-bar .bail-cancel-className {
+              border: none !important;
+              background-color: white;
+              position: relative;
+              padding-left: 32px;
+            }
+
+            .bail-signature-modal .popup-module-main .popup-module-action-bar .bail-cancel-className h2 {
+              color: rgb(0, 126, 126);
+              display: inline-flex;
+              align-items: center;
+              gap: 8px;
+              font-size: 16px;
+            }
+
+            .bail-signature-modal .popup-module-main .popup-module-action-bar .bail-cancel-className::before {
+              content: '';
+              background-image: url('data:image/svg+xml;utf8,<svg width="10" height="12" viewBox="0 0 10 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.66634 4H6.99967V0H2.99967V4H0.333008L4.99967 8.66667L9.66634 4ZM0.333008 10V11.3333H9.66634V10H0.333008Z" fill="%23007E7E"/></svg>');
+              background-repeat: no-repeat;
+              background-size: 10px 21px;
+              position: absolute;
+              left: 10px;
+              top: 50%;
+              transform: translateY(-50%);
+              width: 20px;
+              height: 20px;
+            }
+
+        `}
+      </style>
       <Modal
         headerBarMain={<Heading label={t("SELECT_MODE_SIGNING")} />}
         headerBarEnd={<CloseBtn onClick={handleCloseSignatureModal} />}
@@ -112,7 +169,7 @@ const BailUploadSignatureModal = ({
           infoHeader={"CS_PLEASE_COMMON_NOTE"}
           infoText={"PLEASE_ENSURE_SIGN"}
           showDownloadText={true}
-          fileStoreId={bailBondFileStoreId}
+          fileStoreId={witnessDepositionFileStoreId}
           cancelLabel={"SUBMIT"}
         />
       )}
@@ -120,4 +177,4 @@ const BailUploadSignatureModal = ({
   );
 };
 
-export default BailUploadSignatureModal;
+export default WitnessDepositionSignatureModal;
