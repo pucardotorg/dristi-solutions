@@ -362,7 +362,7 @@ public class SummonsService {
             case SUMMON -> taskDetails.getSummonDetails() != null ? taskDetails.getSummonDetails().getDocSubType() : null;
             case WARRANT -> taskDetails.getWarrantDetails() != null ? taskDetails.getWarrantDetails().getDocSubType() : null;
             case NOTICE -> taskDetails.getNoticeDetails() != null ? taskDetails.getNoticeDetails().getDocSubType() : null;
-            case PROCLAMATION -> taskDetails.getProclamationDetails() != null ? taskDetails.getProclamationDetails().getDocSubType() : null;
+            case PROCLAMATION -> null;
             default -> throw new CustomException("INVALID_TASK_TYPE", "Task Type must be valid. Provided: " + taskType);
         };
     }
