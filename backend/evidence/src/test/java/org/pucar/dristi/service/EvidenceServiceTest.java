@@ -84,6 +84,21 @@ class EvidenceServiceTest {
     @Mock
     private org.pucar.dristi.util.XmlRequestGenerator xmlRequestGenerator;
 
+    @Mock
+    private org.pucar.dristi.util.HearingUtil hearingUtil;
+
+    @Mock
+    private org.pucar.dristi.util.DateUtil dateUtil;
+
+    @Mock
+    private org.pucar.dristi.util.ADiaryUtil aDiaryUtil;
+
+    @Mock
+    private SmsNotificationService notificationService;
+
+    @Mock
+    private IndividualService individualService;
+
     @Spy
     @InjectMocks
     private EvidenceService evidenceService;
@@ -523,5 +538,305 @@ class EvidenceServiceTest {
         return request;
     }
 
+    @Test
+    void testCreateADiaryEntriesSuccess() {
+        // Arrange
+        Artifact artifact = new Artifact();
+        artifact.setFilingNumber("CASE-001");
+        artifact.setTenantId("pb");
+        artifact.setArtifactNumber("ART-001");
 
+        Map<String, Object> additionalDetails = new HashMap<>();
+        additionalDetails.put("botd", "Document submission");
+        artifact.setAdditionalDetails(additionalDetails);
+
+        RequestInfo requestInfo = new RequestInfo();
+
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setCourtCaseNumber("CC-001");
+        courtCase.setCourtId("court-123");
+        List<CourtCase> cases = Arrays.asList(courtCase);
+
+        Hearing hearing = new Hearing();
+        hearing.setStatus("SCHEDULED");
+        hearing.setStartTime(1234567890L);
+        List<Hearing> hearings = Arrays.asList(hearing);
+
+        Long currentTime = System.currentTimeMillis();
+        Long startOfDay = currentTime - (currentTime % 86400000L); // Start of day
+
+        // Mock dependencies
+        when(caseUtil.getCaseDetailsForSingleTonCriteria(any(CaseSearchRequest.class)))
+                .thenReturn(cases);
+        when(hearingUtil.fetchHearing(any(HearingSearchRequest.class)))
+                .thenReturn(hearings);
+        when(dateUtil.getCurrentTimeInMilis()).thenReturn(currentTime);
+        when(dateUtil.getStartOfTheDayForEpoch(currentTime)).thenReturn(startOfDay);
+
+        // Act
+        List<CaseDiaryEntry> result = evidenceService.createADiaryEntries(artifact, requestInfo);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        CaseDiaryEntry entry = result.get(0);
+        assertEquals(artifact.getTenantId(), entry.getTenantId());
+        assertEquals(startOfDay, entry.getEntryDate());
+        assertEquals("CC-001", entry.getCaseNumber());
+        assertEquals(courtCase.getId().toString(), entry.getCaseId());
+        assertEquals("court-123", entry.getCourtId());
+        assertEquals("Document submission", entry.getBusinessOfDay());
+        assertEquals("ART-001", entry.getReferenceId());
+        assertEquals("Documents", entry.getReferenceType());
+        assertEquals(1234567890L, entry.getHearingDate());
+
+        // Verify additional details
+        Map<String, Object> entryAdditionalDetails = (Map<String, Object>) entry.getAdditionalDetails();
+        assertEquals("CASE-001", entryAdditionalDetails.get("filingNumber"));
+        assertEquals(courtCase.getId(), entryAdditionalDetails.get("caseId"));
+    }
+
+    @Test
+    void testCreateADiaryEntriesNoCaseFound() {
+        // Arrange
+        Artifact artifact = new Artifact();
+        artifact.setFilingNumber("CASE-001");
+        artifact.setTenantId("pb");
+
+        RequestInfo requestInfo = new RequestInfo();
+
+        // Mock empty case list
+        when(caseUtil.getCaseDetailsForSingleTonCriteria(any(CaseSearchRequest.class)))
+                .thenReturn(Collections.emptyList());
+
+        // Act & Assert
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            evidenceService.createADiaryEntries(artifact, requestInfo);
+        });
+
+        assertEquals("CASE_NOT_FOUND", exception.getCode());
+        assertTrue(exception.getMessage().contains("Court case not found for filing number: CASE-001"));
+    }
+
+    @Test
+    void testCreateADiaryEntriesNullCaseList() {
+        // Arrange
+        Artifact artifact = new Artifact();
+        artifact.setFilingNumber("CASE-001");
+        artifact.setTenantId("pb");
+
+        RequestInfo requestInfo = new RequestInfo();
+
+        // Mock null case list
+        when(caseUtil.getCaseDetailsForSingleTonCriteria(any(CaseSearchRequest.class)))
+                .thenReturn(null);
+
+        // Act & Assert
+        CustomException exception = assertThrows(CustomException.class, () -> {
+            evidenceService.createADiaryEntries(artifact, requestInfo);
+        });
+
+        assertEquals("CASE_NOT_FOUND", exception.getCode());
+        assertTrue(exception.getMessage().contains("Court case not found for filing number: CASE-001"));
+    }
+
+    @Test
+    void testCreateADiaryEntriesNoScheduledHearing() {
+        // Arrange
+        Artifact artifact = new Artifact();
+        artifact.setFilingNumber("CASE-001");
+        artifact.setTenantId("pb");
+        artifact.setArtifactNumber("ART-001");
+
+        RequestInfo requestInfo = new RequestInfo();
+
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setCourtCaseNumber("CC-001");
+        courtCase.setCourtId("court-123");
+        List<CourtCase> cases = Arrays.asList(courtCase);
+
+        // No scheduled hearings
+        Hearing hearing = new Hearing();
+        hearing.setStatus("COMPLETED");
+        hearing.setStartTime(1234567890L);
+        List<Hearing> hearings = Arrays.asList(hearing);
+
+        Long currentTime = System.currentTimeMillis();
+        Long startOfDay = currentTime - (currentTime % 86400000L);
+
+        // Mock dependencies
+        when(caseUtil.getCaseDetailsForSingleTonCriteria(any(CaseSearchRequest.class)))
+                .thenReturn(cases);
+        when(hearingUtil.fetchHearing(any(HearingSearchRequest.class)))
+                .thenReturn(hearings);
+        when(dateUtil.getCurrentTimeInMilis()).thenReturn(currentTime);
+        when(dateUtil.getStartOfTheDayForEpoch(currentTime)).thenReturn(startOfDay);
+
+        // Act
+        List<CaseDiaryEntry> result = evidenceService.createADiaryEntries(artifact, requestInfo);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        CaseDiaryEntry entry = result.get(0);
+        assertNull(entry.getHearingDate()); // No scheduled hearing, so hearing date should be null
+    }
+
+    @Test
+    void testCreateADiaryEntriesWithNonMapAdditionalDetails() {
+        // Arrange
+        Artifact artifact = new Artifact();
+        artifact.setFilingNumber("CASE-001");
+        artifact.setTenantId("pb");
+        artifact.setArtifactNumber("ART-001");
+        artifact.setAdditionalDetails("not a map"); // Non-map additional details
+
+        RequestInfo requestInfo = new RequestInfo();
+
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setCourtCaseNumber("CC-001");
+        courtCase.setCourtId("court-123");
+        List<CourtCase> cases = Arrays.asList(courtCase);
+
+        List<Hearing> hearings = Collections.emptyList();
+
+        Long currentTime = System.currentTimeMillis();
+        Long startOfDay = currentTime - (currentTime % 86400000L);
+
+        // Mock dependencies
+        when(caseUtil.getCaseDetailsForSingleTonCriteria(any(CaseSearchRequest.class)))
+                .thenReturn(cases);
+        when(hearingUtil.fetchHearing(any(HearingSearchRequest.class)))
+                .thenReturn(hearings);
+        when(dateUtil.getCurrentTimeInMilis()).thenReturn(currentTime);
+        when(dateUtil.getStartOfTheDayForEpoch(currentTime)).thenReturn(startOfDay);
+
+        // Act
+        List<CaseDiaryEntry> result = evidenceService.createADiaryEntries(artifact, requestInfo);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        CaseDiaryEntry entry = result.get(0);
+        assertNull(entry.getBusinessOfDay()); // Should be null since additionalDetails is not a Map
+    }
+
+    @Test
+    void testGetCaseReferenceNumberWithCourtCaseNumber() {
+        // Arrange
+        CourtCase courtCase = new CourtCase();
+        courtCase.setCourtCaseNumber("CC-001");
+        courtCase.setCmpNumber("CMP-001");
+        courtCase.setFilingNumber("FILING-001");
+
+        // Act
+        String result = evidenceService.getCaseReferenceNumber(courtCase);
+
+        // Assert
+        assertEquals("CC-001", result);
+    }
+
+    @Test
+    void testGetCaseReferenceNumberWithCmpNumber() {
+        // Arrange
+        CourtCase courtCase = new CourtCase();
+        courtCase.setCourtCaseNumber(null); // No court case number
+        courtCase.setCmpNumber("CMP-001");
+        courtCase.setFilingNumber("FILING-001");
+
+        // Act
+        String result = evidenceService.getCaseReferenceNumber(courtCase);
+
+        // Assert
+        assertEquals("CMP-001", result);
+    }
+
+    @Test
+    void testGetCaseReferenceNumberWithEmptyCourtCaseNumber() {
+        // Arrange
+        CourtCase courtCase = new CourtCase();
+        courtCase.setCourtCaseNumber(""); // Empty court case number
+        courtCase.setCmpNumber("CMP-001");
+        courtCase.setFilingNumber("FILING-001");
+
+        // Act
+        String result = evidenceService.getCaseReferenceNumber(courtCase);
+
+        // Assert
+        assertEquals("CMP-001", result);
+    }
+
+    @Test
+    void testGetCaseReferenceNumberWithFilingNumber() {
+        // Arrange
+        CourtCase courtCase = new CourtCase();
+        courtCase.setCourtCaseNumber(null); // No court case number
+        courtCase.setCmpNumber(null); // No CMP number
+        courtCase.setFilingNumber("FILING-001");
+
+        // Act
+        String result = evidenceService.getCaseReferenceNumber(courtCase);
+
+        // Assert
+        assertEquals("FILING-001", result);
+    }
+
+    @Test
+    void testGetCaseReferenceNumberWithEmptyCmpNumber() {
+        // Arrange
+        CourtCase courtCase = new CourtCase();
+        courtCase.setCourtCaseNumber(null);
+        courtCase.setCmpNumber(""); // Empty CMP number
+        courtCase.setFilingNumber("FILING-001");
+
+        // Act
+        String result = evidenceService.getCaseReferenceNumber(courtCase);
+
+        // Assert
+        assertEquals("FILING-001", result);
+    }
+
+    @Test
+    void testCreateCaseDiaryEntry() {
+        // Arrange
+        Artifact artifact = new Artifact();
+        artifact.setTenantId("pb");
+        artifact.setFilingNumber("CASE-001");
+        artifact.setArtifactNumber("ART-001");
+
+        CourtCase courtCase = new CourtCase();
+        courtCase.setId(UUID.randomUUID());
+        courtCase.setCourtCaseNumber("CC-001");
+        courtCase.setCourtId("court-123");
+
+        String botd = "Document submission";
+        Long hearingDate = 1234567890L;
+        Long entryDate = System.currentTimeMillis();
+
+        when(dateUtil.getStartOfTheDayForEpoch(anyLong())).thenReturn(entryDate);
+        when(dateUtil.getCurrentTimeInMilis()).thenReturn(entryDate);
+
+        // Act
+        CaseDiaryEntry result = evidenceService.createCaseDiaryEntry(artifact, courtCase, botd, hearingDate);
+
+        // Assert
+        assertNotNull(result);
+        assertEquals("pb", result.getTenantId());
+        assertEquals(entryDate, result.getEntryDate());
+        assertEquals("CC-001", result.getCaseNumber());
+        assertEquals(courtCase.getId().toString(), result.getCaseId());
+        assertEquals("court-123", result.getCourtId());
+        assertEquals("Document submission", result.getBusinessOfDay());
+        assertEquals("ART-001", result.getReferenceId());
+        assertEquals("Documents", result.getReferenceType());
+        assertEquals(1234567890L, result.getHearingDate());
+
+        // Verify additional details
+        Map<String, Object> additionalDetails = (Map<String, Object>) result.getAdditionalDetails();
+        assertEquals("CASE-001", additionalDetails.get("filingNumber"));
+        assertEquals(courtCase.getId(), additionalDetails.get("caseId"));
+    }
 }

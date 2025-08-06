@@ -1003,6 +1003,8 @@ public class EvidenceService {
                             workflow.setAction(E_SIGN);
                             existingArtifact.setIsEvidenceMarkedFlow(Boolean.TRUE);
                             existingArtifact.setIsEvidence(Boolean.TRUE);
+
+                            log.info("creating case diary entries for artifactNumber: {}", existingArtifact.getArtifactNumber());
                             List<CaseDiaryEntry> diaryEntries = createADiaryEntries(existingArtifact, requestInfo);
                             caseDiaryEntries.addAll(diaryEntries);
                         }
@@ -1084,7 +1086,7 @@ public class EvidenceService {
     }
 
 
-    private List<CaseDiaryEntry> createADiaryEntries(Artifact artifact, RequestInfo requestInfo) {
+    public List<CaseDiaryEntry> createADiaryEntries(Artifact artifact, RequestInfo requestInfo) {
 
         log.info("finding case for filingNumber: {}", artifact.getFilingNumber());
 
@@ -1119,7 +1121,7 @@ public class EvidenceService {
             if (botdObj != null) botd = botdObj.toString();
         }
 
-        log.info("creating case diary entry filingNumber: {}", artifact.getFilingNumber());
+        log.info("creating case diary entry for filingNumber: {}", artifact.getFilingNumber());
 
         CaseDiaryEntry caseDiaryEntry = createCaseDiaryEntry(artifact, courtCase, botd, hearingDate);
 
@@ -1127,7 +1129,7 @@ public class EvidenceService {
 
     }
 
-    private CaseDiaryEntry createCaseDiaryEntry(Artifact artifact, CourtCase courtCase, String botd, Long hearingDate) {
+    public CaseDiaryEntry createCaseDiaryEntry(Artifact artifact, CourtCase courtCase, String botd, Long hearingDate) {
         return CaseDiaryEntry.builder()
                 .tenantId(artifact.getTenantId())
                 .entryDate(dateUtil.getStartOfTheDayForEpoch(dateUtil.getCurrentTimeInMilis()))
@@ -1143,7 +1145,7 @@ public class EvidenceService {
                 .build();
     }
 
-    private String getCaseReferenceNumber(CourtCase courtCase) {
+    public String getCaseReferenceNumber(CourtCase courtCase) {
         if (courtCase.getCourtCaseNumber() != null && !courtCase.getCourtCaseNumber().isEmpty()) {
             return courtCase.getCourtCaseNumber();
         } else if (courtCase.getCmpNumber() != null && !courtCase.getCmpNumber().isEmpty()) {
@@ -1151,6 +1153,7 @@ public class EvidenceService {
         } else {
             return courtCase.getFilingNumber();
         }
+    }
 
     private boolean hasNumberSuffix(String tag) {
         if (tag == null || tag.trim().isEmpty()) {

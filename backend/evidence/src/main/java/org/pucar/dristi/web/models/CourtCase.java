@@ -68,9 +68,6 @@ public class CourtCase {
     @JsonProperty("outcome")
     private String outcome = null;
 
-    @JsonProperty("pendingAdvocateRequests")
-    private List<PendingAdvocateRequest> pendingAdvocateRequests;
-
     @JsonProperty("courtId")
     //@Size(min = 2, max = 64)
     private String courtId = null;
@@ -78,10 +75,6 @@ public class CourtCase {
     @JsonProperty("benchId")
     //@Size(min = 2, max = 64)
     private String benchId = null;
-
-    @JsonProperty("linkedCases")
-    @Valid
-    private List<LinkedCase> linkedCases = new ArrayList<>();
 
     @JsonProperty("filingDate")
     //@NotNull
@@ -115,21 +108,6 @@ public class CourtCase {
     //@Size(min = 2, max = 64)
     private String natureOfPleading = null;
 
-    @JsonProperty("statutesAndSections")
-    //@NotNull
-    @Valid
-    private List<StatuteSection> statutesAndSections = new ArrayList<>();
-
-    @JsonProperty("litigants")
-    //@NotNull
-    @Valid
-    //@Size(min = 2) //FIX
-    private List<Party> litigants = new ArrayList<>();
-
-    @JsonProperty("representatives")
-    @Valid
-    private List<AdvocateMapping> representatives = new ArrayList<>();
-
     @JsonProperty("status")
     private String status = null;
 
@@ -153,10 +131,5 @@ public class CourtCase {
 
     @JsonProperty("advocateStatus")
     private String advocateStatus = null;
-
-
-    @JsonProperty("poaHolders")
-    @Valid
-    private List<POAHolder> poaHolders = new ArrayList<>();
 }
 
