@@ -4344,43 +4344,20 @@ public class CaseService {
     private void updateCourtCaseObjectPOA(CourtCase courtCase, POAJoinCaseTaskRequest joinCaseRequest, RequestInfo requestInfo) {
 
         try {
+            log.info("operation=updateCourtCaseObjectPOA, status=IN_PROGRESS, poaJoinCaseRequest: {}", joinCaseRequest);
+
             String poaIndividualId = joinCaseRequest.getPoaDetails().getIndividualId();
-
-            log.info("operation=updateCourtCaseObjectPOA, status=IN_PROGRESS, poaJoinCaseRequest, poaIndividualId : {}, {}", joinCaseRequest, poaIndividualId);
-
             if (courtCase.getPoaHolders() == null) {
                 courtCase.setPoaHolders(new ArrayList<>());
             }
-            List<POAHolder> poaHolders = courtCase.getPoaHolders();
 
-            POAHolder existingPoaHolder = poaHolders.stream().filter(poaHolder -> poaHolder.getIndividualId().equals(poaIndividualId)).findFirst().orElse(null);
             AuditDetails auditDetails = enrichAuditDetails(requestInfo);
-
-            if (existingPoaHolder == null) {
-                existingPoaHolder = new POAHolder();
-                existingPoaHolder.setIndividualId(poaIndividualId);
-                existingPoaHolder.setCaseId(courtCase.getId().toString());
-                existingPoaHolder.setHasSigned(false);
-                List<String> nameParts = Stream.of(joinCaseRequest.getPoaDetails().getFirstName(),
-                                joinCaseRequest.getPoaDetails().getMiddleName(),
-                                joinCaseRequest.getPoaDetails().getLastName())
-                        .filter(part -> part != null && !part.isEmpty())
-                        .toList();
-
-                String fullName = String.join(" ", nameParts);
-                existingPoaHolder.setName(fullName);
-                existingPoaHolder.setId(UUID.randomUUID().toString());
-                existingPoaHolder.setAuditDetails(auditDetails);
-                existingPoaHolder.setIsActive(true);
-                existingPoaHolder.setPoaType("poa.regular");
-                existingPoaHolder.setTenantId(courtCase.getTenantId());
-                existingPoaHolder.setDocuments(Collections.singletonList(joinCaseRequest.getPoaDetails().getIdDocument()));
-                existingPoaHolder.setRepresentingLitigants(new ArrayList<>());
-            }
 
             List<POAIndividualDetails> poaIndividualDetailsList = joinCaseRequest.getIndividualDetails();
 
             for (POAIndividualDetails poaIndividualDetails : poaIndividualDetailsList) {
+                log.info("Poa party :: {}", poaIndividualDetails);
+                //revoking existing poa
                 if (poaIndividualDetails.getIsRevoking()) {
                     POAHolder poaHolderToBeReplaced = courtCase.getPoaHolders().stream().filter(poaHolder -> poaHolder.getIndividualId().equals(poaIndividualDetails.getExistingPoaIndividualId())).findFirst().orElse(null);
                     poaHolderToBeReplaced.getRepresentingLitigants().stream().filter(poaParty -> poaParty.getIndividualId().equals(poaIndividualDetails.getIndividualId())).findFirst().ifPresent(poaParty -> poaParty.setIsActive(false));
@@ -4391,6 +4368,7 @@ public class CaseService {
                     removePOAFromAdditionalDetails(courtCase, poaIndividualDetails);
                 }
 
+                //adding new poa/party if litigant is not revoking his own poa
                 if (!poaIndividualId.equalsIgnoreCase(poaIndividualDetails.getIndividualId())) {
                     Document documentPoaAuth = poaIndividualDetails.getPoaAuthDocument();
                     String uuid = UUID.randomUUID().toString();
@@ -4404,7 +4382,37 @@ public class CaseService {
                             .id(UUID.randomUUID().toString())
                             .documents(Collections.singletonList(documentPoaAuth))
                             .build();
-                    existingPoaHolder.getRepresentingLitigants().add(newPoaParty);
+
+                        Optional<POAHolder> existingPoaHolder = courtCase.getPoaHolders()
+                                .stream()
+                                .filter(poaHolder -> poaHolder.getIndividualId().equalsIgnoreCase(poaIndividualId))
+                                .findFirst();
+
+                        if (existingPoaHolder.isPresent()) {
+                            existingPoaHolder.get().getRepresentingLitigants().add(newPoaParty);
+                        } else {
+                            POAHolder newPoaHolder = new POAHolder();
+                            newPoaHolder.setIndividualId(poaIndividualId);
+                            newPoaHolder.setCaseId(courtCase.getId().toString());
+                            newPoaHolder.setHasSigned(false);
+                            List<String> nameParts = Stream.of(joinCaseRequest.getPoaDetails().getFirstName(),
+                                            joinCaseRequest.getPoaDetails().getMiddleName(),
+                                            joinCaseRequest.getPoaDetails().getLastName())
+                                    .filter(part -> part != null && !part.isEmpty())
+                                    .toList();
+
+                            String fullName = String.join(" ", nameParts);
+                            newPoaHolder.setName(fullName);
+                            newPoaHolder.setId(UUID.randomUUID().toString());
+                            newPoaHolder.setAuditDetails(auditDetails);
+                            newPoaHolder.setIsActive(true);
+                            newPoaHolder.setPoaType("poa.regular");
+                            newPoaHolder.setTenantId(courtCase.getTenantId());
+                            newPoaHolder.setDocuments(Collections.singletonList(joinCaseRequest.getPoaDetails().getIdDocument()));
+
+                            newPoaHolder.setRepresentingLitigants(new ArrayList<>(List.of(newPoaParty)));
+                            courtCase.getPoaHolders().add(newPoaHolder);
+                        }
 
                     if (poaIndividualDetails.getUniqueId() == null) {
                         enrichAdditionalDetailsPOAComplainant(courtCase, joinCaseRequest.getPoaDetails(), poaIndividualDetails);
@@ -4414,16 +4422,17 @@ public class CaseService {
                 }
             }
 
-            courtCase.getPoaHolders().add(existingPoaHolder);
-
             courtCase.getAuditdetails().setLastModifiedBy(requestInfo.getUserInfo().getUuid());
             courtCase.getAuditdetails().setLastModifiedTime(System.currentTimeMillis());
 
             CourtCase encrptedCourtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
             updateCourtCaseInRedis(courtCase.getTenantId(), encrptedCourtCase);
 
-            encrptedCourtCase.getPoaHolders().clear(); // Remove all existing POA holders
-            encrptedCourtCase.getPoaHolders().add(existingPoaHolder);
+            List<POAHolder> filteredPoaHolders = encrptedCourtCase.getPoaHolders().stream()
+                    .filter(poaHolder -> Boolean.FALSE.equals(poaHolder.getIsActive()) || poaIndividualId.equals(poaHolder.getIndividualId()))
+                    .collect(Collectors.toList());
+
+            encrptedCourtCase.setPoaHolders(filteredPoaHolders);
 
             producer.push(config.getPoaJoinCaseKafkaTopic(), encrptedCourtCase);
 
@@ -4438,70 +4447,68 @@ public class CaseService {
     }
 
     public void removePOAFromAdditionalDetails(CourtCase courtCase, POAIndividualDetails poaIndividualDetails) {
-        ObjectNode additionalDetails = (ObjectNode) courtCase.getAdditionalDetails();
         String key = poaIndividualDetails.getUniqueId() == null ? "complainantDetails" : "respondentDetails";
 
-        if (additionalDetails.has(key)) {
-            ObjectNode partyDetails = (ObjectNode) additionalDetails.get(key);
+        Object additionalDetails = courtCase.getAdditionalDetails();
+        JsonNode additionalDetailsJsonNode = objectMapper.convertValue(additionalDetails, JsonNode.class);
+        ArrayNode formData = (ArrayNode) additionalDetailsJsonNode.get(key).get("formdata");
 
-            if (partyDetails.has("formdata") && partyDetails.get("formdata").isArray() && poaIndividualDetails.getUniqueId() != null) {
-                ArrayNode formData = (ArrayNode) partyDetails.get("formdata");
+        if (poaIndividualDetails.getUniqueId() != null) {
 
-                for (int i = 0; i < formData.size(); i++) {
-                    ObjectNode dataNode = (ObjectNode) formData.get(i).path("data");
+            for (int i = 0; i < formData.size(); i++) {
+                ObjectNode dataNode = (ObjectNode) formData.get(i).path("data");
 
-                    log.info("dataNode :: {}", dataNode);
-                    String uniqueIdRespondent = formData.get(i).get("uniqueId").asText();
+                log.info("respondent dataNode :: {}", dataNode);
+                String uniqueIdRespondent = formData.get(i).get("uniqueId").asText();
 
-                    if (uniqueIdRespondent.equalsIgnoreCase(poaIndividualDetails.getUniqueId())) {
-                        dataNode.remove("poaFirstName");
-                        dataNode.remove("poaMiddleName");
-                        dataNode.remove("poaLastName");
-                        dataNode.remove("poaVerification");
-                        dataNode.remove("poaComplainantId");
-                        dataNode.remove("poaAddressDetails");
-                        dataNode.remove("poaAddressDetails-select");
-                        dataNode.remove("poaAuthorizationDocument");
-                        ObjectNode transferredPOA = (ObjectNode) dataNode.get("transferredPOA");
-                        if (transferredPOA != null) {
-                            transferredPOA.put("code", "NO");
-                            transferredPOA.put("name", "NO");
-                            transferredPOA.put("showPoaDetails", false);
-                        }
-                        break;
+                if (uniqueIdRespondent.equalsIgnoreCase(poaIndividualDetails.getUniqueId())) {
+                    dataNode.remove("poaFirstName");
+                    dataNode.remove("poaMiddleName");
+                    dataNode.remove("poaLastName");
+                    dataNode.remove("poaVerification");
+                    dataNode.remove("poaComplainantId");
+                    dataNode.remove("poaAddressDetails");
+                    dataNode.remove("poaAddressDetails-select");
+                    dataNode.remove("poaAuthorizationDocument");
+                    ObjectNode transferredPOA = (ObjectNode) dataNode.get("transferredPOA");
+                    if (transferredPOA != null) {
+                        transferredPOA.put("code", "NO");
+                        transferredPOA.put("name", "NO");
+                        transferredPOA.put("showPoaDetails", false);
                     }
+                    break;
                 }
-            } else {
-                ArrayNode formData = (ArrayNode) partyDetails.get("formdata");
-                for (JsonNode formNode : formData) {
-                    ObjectNode dataNode = (ObjectNode) formNode.get("data");
+            }
+        } else {
+            for (JsonNode formNode : formData) {
+                ObjectNode dataNode = (ObjectNode) formNode.get("data");
 
-                    JsonNode verification = dataNode.path("complainantVerification")
-                            .path("individualDetails")
-                            .path("individualId");
+                JsonNode verification = dataNode.path("complainantVerification")
+                        .path("individualDetails")
+                        .path("individualId");
 
-                    if (verification.isTextual() &&
-                            poaIndividualDetails.getIndividualId().equalsIgnoreCase(verification.asText())) {
+                if (verification.isTextual() &&
+                        poaIndividualDetails.getIndividualId().equalsIgnoreCase(verification.asText())) {
 
-                        dataNode.remove("poaFirstName");
-                        dataNode.remove("poaMiddleName");
-                        dataNode.remove("poaLastName");
-                        dataNode.remove("poaVerification");
-                        dataNode.remove("poaComplainantId");
-                        dataNode.remove("poaAddressDetails");
-                        dataNode.remove("poaAddressDetails-select");
-                        dataNode.remove("poaAuthorizationDocument");
-                        ObjectNode transferredPOA = (ObjectNode) dataNode.get("transferredPOA");
-                        if (transferredPOA != null) {
-                            transferredPOA.put("code", "NO");
-                            transferredPOA.put("name", "NO");
-                            transferredPOA.put("showPoaDetails", false);
-                        }
-                        break;
+                    dataNode.remove("poaFirstName");
+                    dataNode.remove("poaMiddleName");
+                    dataNode.remove("poaLastName");
+                    dataNode.remove("poaVerification");
+                    dataNode.remove("poaComplainantId");
+                    dataNode.remove("poaAddressDetails");
+                    dataNode.remove("poaAddressDetails-select");
+                    dataNode.remove("poaAuthorizationDocument");
+                    ObjectNode transferredPOA = (ObjectNode) dataNode.get("transferredPOA");
+                    if (transferredPOA != null) {
+                        transferredPOA.put("code", "NO");
+                        transferredPOA.put("name", "NO");
+                        transferredPOA.put("showPoaDetails", false);
                     }
+                    break;
                 }
             }
         }
+        courtCase.setAdditionalDetails(objectMapper.convertValue(additionalDetailsJsonNode, Object.class));
     }
 
     public void enrichAdditionalDetailsPOAComplainant(CourtCase courtCase, POADetails poaDetails, POAIndividualDetails poaIndividualDetails) {
@@ -5596,7 +5603,7 @@ public class CaseService {
                     .build();
             List<CaseCriteria> courtCaseList = caseRepository.getCases(Collections.singletonList(caseCriteria), body.getRequestInfo());
             if (courtCaseList.isEmpty() || courtCaseList.get(0).getResponseList().isEmpty()) {
-                throw new CustomException(INVALID_CASE,"No case found for filing number "+body.getCaseFilingNumber());
+                throw new CustomException(INVALID_CASE, "No case found for filing number " + body.getCaseFilingNumber());
             }
             CourtCase courtCase = encryptionDecryptionUtil.decryptObject(courtCaseList.get(0).getResponseList().get(0), config.getCaseDecryptSelf(), CourtCase.class, body.getRequestInfo());
             validator.validateWitnessRequest(body, courtCase);
@@ -5627,7 +5634,7 @@ public class CaseService {
             witnessDetailsNode.set("formdata", formdataArray);
         }
 
-        for(WitnessDetails witnessDetails : updatedWitnessDetails) {
+        for (WitnessDetails witnessDetails : updatedWitnessDetails) {
             String uniqueId = witnessDetails.getUniqueId();
             boolean found = false;
 
@@ -5701,9 +5708,9 @@ public class CaseService {
             // Update case in Redis cache
             updateCourtCaseInRedis(courtCase.getTenantId(), encryptedCourtCase);
             CaseRequest caseRequest = CaseRequest.builder()
-                            .requestInfo(body.getRequestInfo())
-                            .cases(encryptedCourtCase)
-                            .build();
+                    .requestInfo(body.getRequestInfo())
+                    .cases(encryptedCourtCase)
+                    .build();
             producer.push(config.getCaseUpdateTopic(), caseRequest);
             log.info("Method=updateCaseWithoutWorkflow,Result=SUCCESS, CaseId={}, TenantId={}",
                     courtCase.getId(), courtCase.getTenantId());
