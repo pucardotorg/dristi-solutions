@@ -7,7 +7,7 @@ const DOMPurify = createDOMPurify(window);
 
 /**
  * Converts HTML or plain text to safe formatted text
- * Supports **bold**, _italic_, and keeps formatting inside lists
+ * Supports **bold**, *italic*, and keeps bullet points for unordered lists
  *
  * @param {string} input - The HTML or plain text input
  * @returns {string} Formatted plain text
@@ -17,7 +17,8 @@ function htmlToFormattedText(input) {
 
   if (isHtml) {
     const cleanHtml = DOMPurify.sanitize(input);
-    return convert(cleanHtml, {
+
+    let result = convert(cleanHtml, {
       wordwrap: false,
       format: {
         strong: "asterisk", // **bold**
@@ -25,9 +26,22 @@ function htmlToFormattedText(input) {
       },
       selectors: [
         { selector: "a", options: { ignoreHref: true } },
-        { selector: "li", format: "inline" }, // Keeps formatting inside <li>
+        {
+          selector: "ul",
+          options: {
+            itemPrefix: "• ", // Use bullet point for unordered lists
+          },
+        },
+        {
+          selector: "ol",
+          options: {
+            itemPrefix: "1. ", // Keep numbers for ordered lists (will auto-increment)
+          },
+        },
       ],
     });
+
+    return result;
   }
 
   return input;
