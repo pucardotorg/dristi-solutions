@@ -479,7 +479,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
         poaAuthorizationDocument,
         poaVerification,
         isAdvocateRepresenting: !!isAdvocateRepresenting,
-        advocateRepresentingLength: representatives?.length,
+        advocateRepresentingLength: representatives?.length || 0,
       };
     });
 
@@ -550,7 +550,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             poaAuthorizationDocument,
             poaVerification,
             isAdvocateRepresenting: !!isAdvocateRepresenting,
-            advocateRepresentingLength: representatives?.length,
+            advocateRepresentingLength: representatives?.length || 0,
             uniqueId: data?.uniqueId,
             isPip,
           };

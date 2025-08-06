@@ -224,7 +224,6 @@ const SelectParty = ({
         />
       </LabelFieldPair>
 
-      {/** TODO: Change here */}
       {selectPartyData?.userType?.value === "Litigant" && selectPartyData?.partyInvolve?.value && (
         <LabelFieldPair className="case-label-field-pair">
           <CardLabel className="case-input-label">{`${t("Are you claiming/revoking PoA-holder rights?")}`}</CardLabel>
@@ -327,7 +326,7 @@ const SelectParty = ({
                   )
                   ?.map((party) => ({
                     ...party,
-                    isDisabled: party?.isPoaAvailable?.code === "NO" && party?.uuid === userInfo?.uuid,
+                    isDisabled: party?.advocateRepresentingLength > 0 ? party?.isPoaAvailable?.code === "NO" && party?.uuid === userInfo?.uuid : true,
                   }))}
                 selected={party}
                 optionsKey={"fullName"}

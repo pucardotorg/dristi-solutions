@@ -157,24 +157,22 @@ function ReviewSubmissionModal({
       actionSaveLabel={t("ADD_SIGNATURE")}
       isDisabled={isLoading}
       actionSaveOnSubmit={() => {
-        setShowsignatureModal(true);
-        setShowReviewModal(false);
-        // const pdfFile = new File([applicationPreviewPdf], applicationPreviewFileName, { type: "application/pdf" });
+        const pdfFile = new File([applicationPreviewPdf], applicationPreviewFileName, { type: "application/pdf" });
 
-        // onDocumentUpload(pdfFile, pdfFile.name)
-        //   .then((document) => {
-        //     const fileStoreId = document.file?.files?.[0]?.fileStoreId;
-        //     if (fileStoreId) {
-        //       setApplicationPdfFileStoreId(fileStoreId);
-        //     }
-        //   })
-        //   .then(() => {
-        //     setShowsignatureModal(true);
-        //     setShowReviewModal(false);
-        //   })
-        //   .catch((e) => {
-        //     setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
-        //   });
+        onDocumentUpload(pdfFile, pdfFile.name)
+          .then((document) => {
+            const fileStoreId = document.file?.files?.[0]?.fileStoreId;
+            if (fileStoreId) {
+              setApplicationPdfFileStoreId(fileStoreId);
+            }
+          })
+          .then(() => {
+            setShowsignatureModal(true);
+            setShowReviewModal(false);
+          })
+          .catch((e) => {
+            setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
+          });
       }}
       className={"review-submission-appl-modal"}
     >
