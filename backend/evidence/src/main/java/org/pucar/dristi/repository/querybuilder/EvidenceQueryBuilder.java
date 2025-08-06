@@ -93,12 +93,12 @@ public class EvidenceQueryBuilder {
         if (searchCriteria.getOwner() == null) {
             queryBuilder.append(" AND ( ");
             queryBuilder.append(addUserCriteria(loggedInUserUuid, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
-            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
             queryBuilder.append(" )) ");
         }
 
         else if(!searchCriteria.getOwner().toString().equals(loggedInUserUuid)) {
-            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
         }
 
         return queryBuilder.toString();
@@ -112,16 +112,16 @@ public class EvidenceQueryBuilder {
             if (searchCriteria.getOwner() == null) {
                 queryBuilder.append(" AND ( ");
                 queryBuilder.append(addUserCriteria(loggedInUserUuid, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
-                queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+                queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
                 queryBuilder.append(" )) ");
             }
 
             else if(!searchCriteria.getOwner().toString().equals(loggedInUserUuid)) {
-                queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+                queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
             }
         }
         else{
-            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList));
+            queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
         }
 
         return queryBuilder.toString();
@@ -144,7 +144,8 @@ public class EvidenceQueryBuilder {
         return queryBuilder.toString();
     }
 
-    public String getStatusQuery(List<String> statusList, List<Object> preparedStmtList, List<Integer> preparedStmtArgsList) {
+    public String getStatusQuery(List<String> statusList, List<Object> preparedStmtList, List<Integer> preparedStmtArgsList, EvidenceSearchCriteria searchCriteria) {
+        String loggedInUserUuid = searchCriteria.getUserUuid();
         StringBuilder queryBuilder = new StringBuilder(" AND ");
 
         if (statusList != null && !statusList.isEmpty()) {
@@ -157,7 +158,9 @@ public class EvidenceQueryBuilder {
                 preparedStmtList.add(statusList.get(i));
                 preparedStmtArgsList.add(java.sql.Types.VARCHAR);
             }
-            queryBuilder.append(" ) OR ");
+            queryBuilder.append(" ) and artifactType != 'WITNESS_DEPOSITION'  OR (artifactType = 'WITNESS_DEPOSITION' AND sourceId = ? ))");
+            preparedStmtList.add(loggedInUserUuid);
+            preparedStmtArgsList.add(java.sql.Types.VARCHAR);
         }
         queryBuilder.append(" status IS NULL )");
 
