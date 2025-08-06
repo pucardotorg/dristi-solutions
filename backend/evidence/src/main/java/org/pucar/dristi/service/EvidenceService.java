@@ -1,5 +1,6 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -1024,7 +1025,7 @@ public class EvidenceService {
 
             if(!caseDiaryEntries.isEmpty()) {
                 try {
-                    log.info("creating case diary entry for order, result= IN_PROGRESS, caseDiaryEntries:{}", caseDiaryEntries.size());
+                        log.info("creating case diary entry for order, result= IN_PROGRESS, caseDiaryEntries:{}", caseDiaryEntries.size());
                     aDiaryUtil.createBulkADiaryEntry(BulkDiaryEntryRequest.builder()
                             .requestInfo(request.getRequestInfo())
                             .caseDiaryList(caseDiaryEntries)
@@ -1118,9 +1119,15 @@ public class EvidenceService {
 
         String botd = null;
         Object addDetailsObj = artifact.getAdditionalDetails();
-        if (addDetailsObj instanceof Map) {
-            Object botdObj = ((Map<?, ?>) addDetailsObj).get("botd");
-            if (botdObj != null) botd = botdObj.toString();
+        try {
+            Map<String, JsonNode> addDetailsObjMap = new ObjectMapper().convertValue(addDetailsObj, new TypeReference<Map<String, JsonNode>>() {});
+            JsonNode botdNode = addDetailsObjMap.get("botd");
+            if (botdNode != null) {
+                botd = botdNode.asText();
+            }
+        } catch (IllegalArgumentException e) {
+            // additionalDetails is not a Map, so botd remains null
+            log.debug("additionalDetails is not a Map, cannot extract botd: {}", e.getMessage());
         }
 
         log.info("creating case diary entry for filingNumber: {}", artifact.getFilingNumber());
