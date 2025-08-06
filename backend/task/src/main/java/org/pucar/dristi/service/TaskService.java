@@ -205,7 +205,7 @@ public class TaskService {
 
             boolean isValidTask = true;
 
-            if (body.getTask().getTaskType().equalsIgnoreCase(JOIN_CASE)) {
+            if (body.getTask().getTaskType().equalsIgnoreCase(JOIN_CASE) && !("poaJoinCase".equalsIgnoreCase(body.getTask().getTaskDescription()))) {
                 isValidTask = validator.isValidJoinCasePendingTask(body);
                 if (!isValidTask) {
                     body.getTask().getWorkflow().setAction(REJECT);

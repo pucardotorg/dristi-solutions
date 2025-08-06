@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.minidev.json.JSONArray;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
+import org.jetbrains.annotations.NotNull;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.CaseRepository;
 import org.pucar.dristi.service.IndividualService;
@@ -302,6 +303,73 @@ public class CaseRegistrationValidator {
             }
         }
         return true;
+    }
+
+    public Individual validatePOAIndividual(JoinCaseV2Request joinCaseRequest) {
+        JoinCasePOA joinCasePOA = joinCaseRequest.getJoinCaseData().getPoa();
+
+        if (joinCasePOA.getIndividualId() != null) {
+            List<Individual> individual = individualService.getIndividualsByIndividualId(joinCaseRequest.getRequestInfo(), joinCasePOA.getIndividualId());
+            if (individual.isEmpty())
+                throw new CustomException(INDIVIDUAL_NOT_FOUND, "POA individual not found");
+
+            return individual.get(0);
+        } else {
+            throw new CustomException(INDIVIDUAL_NOT_FOUND, "POA individual not found");
+        }
+    }
+
+    public void validatePOAJoinCase(CourtCase courtCase, JoinCaseDataV2 joinCaseData) {
+        List<POARepresentingJoinCase> poaRepresenting = joinCaseData.getPoa().getPoaRepresenting();
+        Map<String, String> poaHolderRepresentingMap = getPoaHolderRepresentingMap(courtCase);
+
+        String individualIdPOA = joinCaseData.getPoa().getIndividualId();
+        for (POARepresentingJoinCase poaRepresentingJoinCase : poaRepresenting) {
+            String individualIdRepresenting = poaRepresentingJoinCase.getIndividualId();
+            Boolean isRevoking = poaRepresentingJoinCase.getIsRevoking();
+
+            validatePOAJoinCase(isRevoking, poaHolderRepresentingMap, individualIdRepresenting, individualIdPOA);
+        }
+    }
+
+    public void isStillValidPOAJoinCase(CourtCase courtCase, POAJoinCaseTaskRequest joinCaseTaskRequest) {
+        List<POAIndividualDetails> poaRepresenting = joinCaseTaskRequest.getIndividualDetails();
+        Map<String, String> poaHolderRepresentingMap = getPoaHolderRepresentingMap(courtCase);
+
+        String individualIdPOA = joinCaseTaskRequest.getPoaDetails().getIndividualId();
+        for (POAIndividualDetails poaRepresentingJoinCase : poaRepresenting) {
+            String individualIdRepresenting = poaRepresentingJoinCase.getIndividualId();
+            Boolean isRevoking = poaRepresentingJoinCase.getIsRevoking();
+            validatePOAJoinCase(isRevoking, poaHolderRepresentingMap, individualIdRepresenting, individualIdPOA);
+        }
+    }
+
+    private Map<String, String> getPoaHolderRepresentingMap(CourtCase courtCase) {
+        if(courtCase.getPoaHolders() == null){
+            courtCase.setPoaHolders(new ArrayList<>());
+        }
+        List<POAHolder> poaHolders = courtCase.getPoaHolders();
+
+        Map<String, String> poaHolderRepresentingMap = new HashMap<>();
+        for (POAHolder poaHolder : poaHolders) {
+            for (PoaParty party : poaHolder.getRepresentingLitigants()) {
+                poaHolderRepresentingMap.put(party.getIndividualId(), poaHolder.getIndividualId());
+            }
+        }
+        return poaHolderRepresentingMap;
+    }
+
+    private static void validatePOAJoinCase(Boolean isRevoking, Map<String, String> poaHolderRepresentingMap, String individualIdRepresenting, String individualIdPOA) {
+        if (isRevoking) {
+            if (!poaHolderRepresentingMap.containsKey(individualIdRepresenting))
+                throw new CustomException(VALIDATION_ERR, "Litigant with individualId " + individualIdRepresenting + " don't have poa holder");
+            else if (poaHolderRepresentingMap.containsKey(individualIdRepresenting) && poaHolderRepresentingMap.get(individualIdRepresenting).equals(individualIdPOA)) {
+                throw new CustomException(VALIDATION_ERR, "POA individualId " + individualIdPOA + " already a POA holder for the litigant " + individualIdRepresenting);
+            }
+        }else {
+            if (poaHolderRepresentingMap.containsKey(individualIdRepresenting))
+                throw new CustomException(VALIDATION_ERR, "Litigant with individualId " + individualIdRepresenting + " have poa holder");
+        }
     }
 
     public void validateEditCase(CaseRequest caseRequest) throws CustomException {
