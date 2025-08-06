@@ -882,6 +882,7 @@ const WitnessDrawerV2 = ({
       let workflow = { ...currentEvidence?.artifact?.workflow, action };
       if (action === "INITIATE_E-SIGN") {
         workflow.assignes = [currentEvidence?.sourceID];
+        workflow.additionalDetails = { excludeRoles: ["EVIDENCE_CREATOR"] };
       }
 
       const updateEvidenceReqBody = {
