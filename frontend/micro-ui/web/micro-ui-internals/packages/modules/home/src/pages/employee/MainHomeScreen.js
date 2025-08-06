@@ -12,7 +12,7 @@ import BulkBailBondSignView from "./BulkBailBondSignView";
 import { BailBondSignModal } from "./BailBondSignModal";
 import BailBondModal from "./BailBondModal";
 import BulkWitnessDepositionView from "./BulkWitnessDepositionView";
-
+import BulkMarkAsEvidenceView from "./BulkMarkAsEvidenceView";
 const sectionsParentStyle = {
   height: "50%",
   display: "flex",
@@ -425,6 +425,10 @@ const MainHomeScreen = () => {
         ) : activeTab === "BULK_BAIL_BOND_SIGN" ? (
           <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
             <BulkBailBondSignView showToast={showToast} />
+          </div>
+        ) : activeTab === "BULK_EVIDENCE_SIGN" ? (
+          <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
+            <BulkMarkAsEvidenceView showToast={showToast} />
           </div>
         ) : activeTab === "BULK_WITNESS_DEPOSITION_SIGN" ? (
           <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>

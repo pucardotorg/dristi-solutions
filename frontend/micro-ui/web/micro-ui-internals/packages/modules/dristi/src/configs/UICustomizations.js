@@ -1217,6 +1217,12 @@ export const UICustomizations = {
           return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="FilingsConfig" />;
         case "EVIDENCE_NUMBER":
           return modifiedEvidenceNumber(value);
+        case "EVIDENCE_STATUS":
+          return row?.evidenceMarkedStatus ? (
+            <CustomChip text={t(row?.evidenceMarkedStatus) || ""} shade={row?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"} />
+          ) : (
+            ""
+          );
         default:
           return "N/A";
       }
@@ -1239,19 +1245,30 @@ export const UICustomizations = {
               },
             ]
           : []),
-        ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") &&
+        ...(userInfo.roles.map((role) => role.code).includes("EMPLOYEE") &&
         !row.isEvidence &&
+        row?.artifactType !== "WITNESS_DEPOSITION" &&
         !row?.isVoid &&
         !(row?.status !== "SUBMITTED" && row?.filingType === "DIRECT")
-          ? [
-              {
-                label: "MARK_AS_EVIDENCE",
-                id: "mark_as_evidence",
-                hide: false,
-                disabled: false,
-                action: column.clickFunc,
-              },
-            ]
+          ? row?.evidenceMarkedStatus !== null
+            ? [
+                {
+                  label: "VIEW_MARK_AS_EVIDENCE",
+                  id: "view_mark_as_evidence",
+                  hide: false,
+                  disabled: false,
+                  action: column.clickFunc,
+                },
+              ]
+            : [
+                {
+                  label: "MARK_AS_EVIDENCE",
+                  id: "mark_as_evidence",
+                  hide: false,
+                  disabled: false,
+                  action: column.clickFunc,
+                },
+              ]
           : []),
         // ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") && row.isEvidence
         //   ? [

@@ -7,8 +7,12 @@ import { useQueries } from "react-query";
 import { DRISTIService } from "../../../services";
 import { Urls } from "../../../hooks";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
+import useDownloadFiles from "../../../hooks/dristi/useDownloadFiles";
 import { Loader } from "@egovernments/digit-ui-react-components";
 import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
+import MarkAsEvidence from "./MarkAsEvidence";
+import DownloadButton from "../../../components/DownloadButton";
+import CustomChip from "../../../components/CustomChip";
 
 function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const [expandedItems, setExpandedItems] = useState({
@@ -39,6 +43,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const [publishedOrderData, setPublishedOrderData] = useState([]);
   const [contextMenu, setContextMenu] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
+  const { downloadFilesAsZip } = useDownloadFiles();
   const evidenceUpdateMutation = Digit.Hooks.useCustomAPIMutationHook(reqEvidenceUpdate);
   const [showEvidenceConfirmationModal, setShowEvidenceConfirmationModal] = useState(false);
   const [isEvidenceSubmitDisabled, setIsEvidenceSubmitDisabled] = useState(false);
@@ -53,6 +58,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       setSelectedFileStoreId(complaintDoc?.fileStore);
     }
   }, [caseDetails, selectedFileStoreId]);
+  useEffect(() => {
+    if (sessionStorage.getItem("markAsEvidenceSelectedItem")) {
+      setShowEvidenceConfirmationModal(true);
+    }
+  }, [setShowEvidenceConfirmationModal]);
 
   const collectDescendantIds = (item) => {
     let ids = [];
@@ -234,15 +244,47 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     filingNumber + "applicationEvidence",
     filingNumber
   );
+  const {
+    data: completeEvidenceData,
+    isLoading: isCompleteEvidenceLoading, // renamed to match convention and fix lint warning
+    refetch: completeEvidenceRefetch,
+  } = Digit.Hooks.submissions.useSearchEvidenceService(
+    {
+      criteria: {
+        courtId: courtId,
+        filingNumber: filingNumber,
+        tenantId,
+      },
+      pagination: {
+        sortBy: "createdTime",
+        order: "asc",
+        limit: 100,
+      },
+    },
+    {},
+    filingNumber + "completeEvidence",
+    filingNumber
+  );
 
   const combinedEvidenceList = useMemo(() => {
     const directEvidenceList = directEvidenceData?.artifacts || [];
     const applicationEvidenceList = applicationEvidenceData?.artifacts || [];
 
-    const newEvidenceList = [...directEvidenceList, ...applicationEvidenceList];
-
-    return newEvidenceList.sort((a, b) => a?.auditdetails?.createdTime - b?.auditdetails?.createdTime);
+    return [...directEvidenceList, ...applicationEvidenceList];
   }, [directEvidenceData, applicationEvidenceData]);
+
+  // Create a map of fileStoreId to evidence data for quick lookups
+  const evidenceFileStoreMap = useMemo(() => {
+    const map = new Map();
+    if (completeEvidenceData?.artifacts && Array.isArray(completeEvidenceData?.artifacts)) {
+      completeEvidenceData.artifacts.forEach((evidence) => {
+        if (evidence?.file?.fileStore) {
+          map.set(evidence.file.fileStore, evidence);
+        }
+      });
+    }
+    return map;
+  }, [completeEvidenceData]);
 
   const { data: ordersData, isLoading: isMandatoryOrdersLoading } = Digit.Hooks.dristi.useGetOrders(
     {
@@ -1290,6 +1332,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           accusedEvidenceRefetch();
           courtEvidenceRefetch();
           courtDepositionRefetch();
+          completeEvidenceRefetch(); // Refresh the complete evidence data
         });
     } catch (error) {
       console.error("error: ", error);
@@ -1495,28 +1538,72 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     return mainStructure;
   };
 
+  // Handle download for either single PDF or ZIP containing evidence file and seal
+  const handleDownload = (fileStoreId) => {
+    if (evidenceFileStoreMap?.has(fileStoreId)) {
+      const evidenceData = evidenceFileStoreMap.get(fileStoreId);
+      // Check if evidence is marked as COMPLETED and has a seal object
+      if (evidenceData?.evidenceMarkedStatus === "COMPLETED" && evidenceData?.seal?.fileStore) {
+        // Download both evidence and seal files as a ZIP
+        const filesToDownload = [
+          { fileStoreId: fileStoreId, fileName: `Evidence_${evidenceData.evidenceNumber || "File"}` },
+          { fileStoreId: evidenceData.seal.fileStore, fileName: `Seal_${evidenceData.evidenceNumber || "File"}` },
+        ];
+        downloadFilesAsZip(tenantId, filesToDownload, `Evidence_${evidenceData.evidenceNumber || "Files"}`);
+      } else {
+        // Normal PDF download if not completed or no seal
+        downloadPdf(tenantId, fileStoreId);
+      }
+    } else {
+      // Normal PDF download for non-evidence files
+      downloadPdf(tenantId, fileStoreId);
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = () => setContextMenu(false);
     window?.addEventListener("click", handleClickOutside);
     return () => window?.removeEventListener("click", handleClickOutside);
   }, []);
-  const MemoDocViewerWrapper = useMemo(
-    () => (
-      <DocViewerWrapper
-        key={"selectedFileStoreId"}
-        tenantId={tenantId}
-        fileStoreId={selectedFileStoreId}
-        showDownloadOption={false}
-        docHeight="100%"
-        docWidth="100%"
-        docViewerStyle={{ maxWidth: "100%" }}
-      />
-    ),
-    [selectedFileStoreId, tenantId]
-  );
+  const MemoDocViewerWrapper = useMemo(() => {
+    return (
+      <React.Fragment>
+        <DocViewerWrapper
+          key={"selectedFileStoreId"}
+          tenantId={tenantId}
+          fileStoreId={selectedFileStoreId}
+          showDownloadOption={false}
+          docHeight="100%"
+          docWidth="100%"
+          docViewerStyle={{ maxWidth: "100%" }}
+        />
+
+        {evidenceFileStoreMap?.get(selectedFileStoreId)?.seal?.fileStore &&
+          evidenceFileStoreMap?.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED" && (
+            <DocViewerWrapper
+              key={"seal-document"}
+              tenantId={tenantId}
+              fileStoreId={evidenceFileStoreMap?.get(selectedFileStoreId)?.seal?.fileStore}
+              showDownloadOption={false}
+              docHeight="100%"
+              docWidth="100%"
+              docViewerStyle={{ maxWidth: "100%" }}
+            />
+          )}
+      </React.Fragment>
+    );
+  }, [evidenceFileStoreMap, selectedFileStoreId, tenantId]);
 
   const dynamicCaseFileStructure = generateCaseFileStructure(caseDetails?.documents || []);
+  const selectedDocumentData = useMemo(() => {
+    if (!selectedDocument || !dynamicCaseFileStructure) return null;
 
+    return dynamicCaseFileStructure
+      ?.flatMap((item) =>
+        item.hasChildren ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))] : [item]
+      )
+      ?.find((item) => item.id === selectedDocument);
+  }, [selectedDocument, dynamicCaseFileStructure]);
   if (
     loading ||
     isDirectEvidenceLoading ||
@@ -1623,8 +1710,75 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       </div>
 
       {/* Right Content Area - Independent scrolling */}
-      <div className="doc-viewer-container">{MemoDocViewerWrapper}</div>
-      {contextMenu && (
+      <div className="doc-viewer-container">
+        <div
+          className="doc-viewer-header-container"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "8px 0px",
+          }}
+        >
+          <div>
+            {selectedDocument && selectedFileStoreId && (
+              <span style={{ display: "flex", gap: "10px", fontFamily: "Roboto", fontWeight: "700", fontStyle: "bold", fontSize: "20px" }}>
+                {selectedDocumentData?.title && t(selectedDocumentData.title)}
+                {evidenceFileStoreMap &&
+                  evidenceFileStoreMap.has(selectedFileStoreId) &&
+                  evidenceFileStoreMap?.get(selectedFileStoreId)?.evidenceMarkedStatus !== null && (
+                    <CustomChip
+                      text={t(evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus) || ""}
+                      shade={evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"}
+                    />
+                  )}
+              </span>
+            )}
+          </div>
+          {selectedDocument && selectedFileStoreId && (
+            <div className="doc-action-buttons" style={{ display: "flex", gap: "10px" }}>
+              <DownloadButton onClick={() => handleDownload(selectedFileStoreId)} label="DOWNLOAD_PDF" t={t} />
+              {isJudge &&
+                selectedFileStoreId &&
+                evidenceFileStoreMap.has(selectedFileStoreId) &&
+                evidenceFileStoreMap?.get(selectedFileStoreId)?.evidenceMarkedStatus !== "COMPLETED" && (
+                  <button
+                    className="mark-asevidence-button"
+                    onClick={() => {
+                      setMenuData({
+                        fileStoreId: selectedFileStoreId,
+                        isEvidence: false,
+                        isEvidenceMenu: true,
+                        artifactNumber: dynamicCaseFileStructure
+                          ?.flatMap((item) =>
+                            item.hasChildren
+                              ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))]
+                              : [item]
+                          )
+                          ?.find((item) => item.id === selectedDocument)?.artifactNumber,
+                        artifactList: dynamicCaseFileStructure
+                          ?.flatMap((item) =>
+                            item.hasChildren
+                              ? [item, ...item.children?.flatMap((child) => (child.hasChildren ? [child, ...child.children] : [child]))]
+                              : [item]
+                          )
+                          ?.find((item) => item.id === selectedDocument)?.artifactList,
+                      });
+                      setShowEvidenceConfirmationModal(true);
+                    }}
+                    // data-tip="This feature is not available"
+                    // disabled={evidenceFileStoreMap?.get(selectedFileStoreId)?.evidenceMarkedStatus !== "PENDING_BULK_E-SIGN" ? true : false}
+                    style={{}}
+                  >
+                    {t("MARK_AS_EVIDENCE")}
+                  </button>
+                )}
+            </div>
+          )}
+        </div>
+        {MemoDocViewerWrapper}
+      </div>
+      {/* {contextMenu && (
         <div
           className="context-menu"
           style={{
@@ -1642,7 +1796,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           >
             {t("DOWNLOAD_PDF")}
           </div>
-          {isJudge && menuData?.isEvidenceMenu && menuData?.isEvidence === false && (
+          {isJudge && menuData?.fileStoreId && !evidenceFileStoreMap.has(menuData?.fileStoreId) && (
             <div
               style={{ padding: "10px", cursor: "pointer" }}
               onClick={() => {
@@ -1653,8 +1807,15 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
             </div>
           )}
         </div>
-      )}
+      )} */}
       {showEvidenceConfirmationModal && (
+        <MarkAsEvidence
+          t={t}
+          setShowMakeAsEvidenceModal={setShowEvidenceConfirmationModal}
+          evidenceDetailsObj={evidenceFileStoreMap.get(selectedFileStoreId)}
+        />
+      )}
+      {/* {showEvidenceConfirmationModal && (
         <ConfirmEvidenceAction
           t={t}
           setShowConfirmationModal={setShowEvidenceConfirmationModal}
@@ -1664,7 +1825,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           isFromActions={true}
           setMenuData={setMenuData}
         />
-      )}
+      )} */}
     </React.Fragment>
   );
 }

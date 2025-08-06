@@ -602,12 +602,9 @@ export const UICustomizations = {
   bulkBailBondSignConfig: {
     preProcess: (requestCriteria, additionalDetails) => {
       const tenantId = window?.Digit.ULBService.getStateId();
-      const entityType = "Order"; // "BailBond";
 
       const effectiveSearchForm = requestCriteria?.state?.searchForm || {};
       const caseTitle = sessionStorage.getItem("bulkBailBondSignCaseTitle") || effectiveSearchForm?.caseTitle;
-      const status = effectiveSearchForm?.status;
-      const startOfTheDay = effectiveSearchForm?.startOfTheDay;
       const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
       const setbulkBailBondSignList = additionalDetails?.setbulkBailBondSignList;
       const setBailBondPaginationData = additionalDetails?.setBailBondPaginationData;
@@ -756,6 +753,80 @@ export const UICustomizations = {
           return formatNoticeDeliveryDate(value);
         case "ADVOCATES":
           return <AdvocateName value={value} />;
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
+        default:
+          return value || "";
+      }
+    },
+  },
+
+  BulkMarkAsEvidenceConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const effectiveSearchForm = requestCriteria?.state?.searchForm || {};
+      const caseTitle = sessionStorage.getItem("bulkMarkAsEvidenceCaseTitle") || effectiveSearchForm?.caseTitle;
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+      const setMarkAsEvidenceSignList = additionalDetails?.setbulkEvidenceList;
+      const setMarkAsEvidencePaginationData = additionalDetails?.setMarkAsEvidencePaginationData;
+      const setNeedConfigRefresh = additionalDetails?.setNeedConfigRefresh;
+      const limit = parseInt(sessionStorage.getItem("bulkMarkAsEvidenceLimit")) || parseInt(requestCriteria?.state?.tableForm?.limit) || 10;
+      const offset = parseInt(sessionStorage.getItem("bulkMarkAsEvidenceOffset")) || parseInt(requestCriteria?.state?.tableForm?.offset) || 0;
+
+      const moduleSearchCriteria = {
+        tenantId,
+        evidenceMarkedStatus: "PENDING_BULK_E-SIGN",
+        ...(caseTitle && { searchableFields: caseTitle }),
+        ...(courtId && { courtId }),
+      };
+      const bulkEvidenceCaseTitle = requestCriteria?.state?.searchForm && requestCriteria?.state?.searchForm?.caseTitle;
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            limit: limit,
+            offset: offset,
+            tenantId: tenantId,
+            moduleSearchCriteria: moduleSearchCriteria,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            const markAsEvidenceItems = data?.items?.map((item) => {
+              return {
+                ...item,
+                isSelected: true,
+              };
+            });
+            sessionStorage.removeItem("bulkMarkAsEvidenceLimit");
+            sessionStorage.removeItem("bulkMarkAsEvidenceOffset");
+            if (sessionStorage.getItem("bulkMarkAsEvidenceCaseTitle")) {
+              sessionStorage.removeItem("bulkMarkAsEvidenceCaseTitle"); //we are storing this for search inbox
+              setNeedConfigRefresh((prev) => !prev);
+            }
+
+            if (setMarkAsEvidenceSignList) setMarkAsEvidenceSignList(markAsEvidenceItems);
+            if (setMarkAsEvidencePaginationData) setMarkAsEvidencePaginationData({ limit: limit, offset: offset, caseTitle: bulkEvidenceCaseTitle });
+
+            return {
+              ...data,
+              items: markAsEvidenceItems,
+            };
+          },
+        },
+      };
+    },
+
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "CASE_TITLE":
+          return <OrderName rowData={row} colData={column} value={value} />;
+        case "DOCUMENT_HEADING":
+          return t(value) || "";
         case "SELECT":
           return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
         default:

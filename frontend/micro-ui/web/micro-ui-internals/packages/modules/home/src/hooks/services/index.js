@@ -1,5 +1,7 @@
 import { Request } from "@egovernments/digit-ui-libraries";
 export const Urls = {
+  getEvidencesToSign: "/evidence/v1/_getArtifactsToSign",
+  updateSignedEvidences: "/evidence/v1/_updateSignedArtifacts",
   getPendingTaskFields: "/inbox/v2/_getFields",
   caseSearch: "/case/v1/_search",
   caseSearchList: "/case/v2/search/list",
@@ -161,6 +163,22 @@ export const HomeService = {
       url: Urls.witnessDepositionSearch,
       useCache: false,
       userService: false,
+      data,
+      params,
+    }),
+  getEvidencesToSign: (data, params) =>
+    Request({
+      url: Urls.getEvidencesToSign,
+      useCache: false,
+      userService: true,
+      data,
+      params,
+    }),
+  updateSignedEvidences: (data, params) =>
+    Request({
+      url: Urls.updateSignedEvidences,
+      useCache: false,
+      userService: true,
       data,
       params,
     }),

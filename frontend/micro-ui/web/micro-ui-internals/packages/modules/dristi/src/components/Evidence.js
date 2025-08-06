@@ -41,7 +41,12 @@ export const Evidence = ({ rowData, colData, value = "", showAsHeading = false, 
 
   return (
     <React.Fragment>
-      <div className="fack-check-icon" onClick={() => colData?.clickFunc(docObj)}>
+      <div
+        className="fack-check-icon"
+        onClick={() => {
+          colData?.clickFunc(docObj);
+        }}
+      >
         {userRoles?.includes("JUDGE_ROLE") && (
           <ReactTooltip id={`mark-unmark-tooltip-${rowData.artifactNumber}`} place="left">
             {t(rowData.isEvidence ? "UNMARK_EVIDENCE_TOOLTIP" : "MARK_EVIDENCE_TOOLTIP")}

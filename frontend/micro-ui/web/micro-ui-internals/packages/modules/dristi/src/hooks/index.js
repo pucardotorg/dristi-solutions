@@ -25,6 +25,7 @@ import { useGetPendingTask } from "./dristi/useGetPendingTask.js";
 import useEvidenceDetails from "./dristi/useEvidenceDetails.js";
 import useGetStatuteSection from "./dristi/useGetStatuteSection.js";
 import useDownloadCasePdf from "./dristi/useDownloadCasePdf.js";
+import useDownloadFiles from "./dristi/useDownloadFiles.js";
 import useWorkflowDetails from "./dristi/useWorkflowDetails.js";
 import useSummonsPaymentBreakUp from "./dristi/useSummonsPaymentBreakUp.js";
 import { extractFeeMedium, getTaskType, combineMultipleFiles, getFilingType } from "../Utils/index.js";
@@ -38,6 +39,7 @@ import useFetchBill from "./dristi/useFetchBill.js";
 export const Urls = {
   Authenticate: "/user/oauth/token",
   dristi: {
+    getMarkAsEvidencePdf: "/egov-pdf/evidence",
     individual: "/individual/v1/_create",
     updateIndividual: "/individual/v1/_update",
     searchIndividual: "/individual/v1/_search",
@@ -137,6 +139,7 @@ const dristi = {
   useJudgeAvailabilityDates,
   useGetOCRData,
   useDownloadCasePdf,
+  useDownloadFiles,
   useSummonsPaymentBreakUp,
   useRepondentPincodeDetails,
   downloadPdfFromFile,
