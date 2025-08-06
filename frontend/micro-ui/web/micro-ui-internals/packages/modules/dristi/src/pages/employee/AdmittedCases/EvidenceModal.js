@@ -706,7 +706,6 @@ const EvidenceModal = ({
       return acceptedApplicationTypes.includes(applicationType);
     }
   }, [documentSubmission, showConfirmationModal?.type]);
-
   const showDocument = useMemo(() => {
     return (
       <React.Fragment>
