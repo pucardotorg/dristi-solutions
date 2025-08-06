@@ -78,7 +78,7 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       code: "RPAD",
       values: [],
     },
-    (orderType === "WARRANT" || orderType === "PROCLAMATION" ) && { label: "VIA_POLICE", type: "Via Police", code: "POLICE", values: [] },
+    orderType === "WARRANT" && { label: "VIA_POLICE", type: "Via Police", code: "POLICE", values: [] },
   ]);
 
   const { data: caseData, refetch } = useSearchCaseService(
@@ -323,7 +323,7 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             code: "RPAD",
             values: address || [],
           },
-          (orderType === "WARRANT" || orderType === "PROCLAMATION" ) && { label: "SEND_ICOPS", type: "Via Police", code: "POLICE", values: address || [] },
+          orderType === "WARRANT" && { label: "SEND_ICOPS", type: "Via Police", code: "POLICE", values: address || [] },
         ]
           .filter((item) => Boolean(item))
           .map((item) => item)

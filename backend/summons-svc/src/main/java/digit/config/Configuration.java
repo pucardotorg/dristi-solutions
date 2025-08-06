@@ -69,9 +69,6 @@ public class Configuration {
     @Value("${task.warrant.generic.pdf.template.key}")
     private String taskWarrantGenericPdfTemplateKey;
 
-    @Value("${task.proclamation.generic.pdf.template.key}")
-    private String taskProclamationGenericPdfTemplateKey;
-
     //MDMS
     @Value("${egov.mdms.host}")
     private String mdmsHost;
@@ -198,10 +195,10 @@ public class Configuration {
     @Value(("${task.summon.business.service}"))
     private String taskSummonBusinessService;
 
-    @Value("${task.warrant.business.service}")
+    @Value(("${task.warrant.business.service}"))
     private String taskWarrantBusinessService;
 
-    @Value("${task.notice.business.service}")
+    @Value(("${task.notice.business.service}"))
     private String taskNoticeBusinessService;
 
     //Payment Calculator Service
