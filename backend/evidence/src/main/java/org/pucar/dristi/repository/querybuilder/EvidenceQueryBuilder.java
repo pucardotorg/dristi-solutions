@@ -159,14 +159,19 @@ public class EvidenceQueryBuilder {
                 preparedStmtArgsList.add(java.sql.Types.VARCHAR);
             }
             queryBuilder.append(") AND artifactType != 'WITNESS_DEPOSITION') ");
-            queryBuilder.append(" OR (artifactType = 'WITNESS_DEPOSITION' AND sourceId = ?)");
+            queryBuilder.append(" OR (status IN (?") ;
+            queryBuilder.append(" ) AND artifactType = 'WITNESS_DEPOSITION' AND sourceId = ?)");
+            preparedStmtList.add("PENDING_E-SIGN");
+            preparedStmtArgsList.add(java.sql.Types.VARCHAR);
             preparedStmtList.add(loggedInUserUuid);
             preparedStmtArgsList.add(java.sql.Types.VARCHAR);
-            queryBuilder.append(") OR status IS NULL");
+            queryBuilder.append(")");
         } else {
             queryBuilder.append("status IS NULL");
         }
-        queryBuilder.append(")");
+        queryBuilder.append(") AND (status != ? OR status IS NULL)");
+        preparedStmtList.add("DRAFT_IN_PROGRESS");
+        preparedStmtArgsList.add(java.sql.Types.VARCHAR);
 
         return queryBuilder.toString();
     }
