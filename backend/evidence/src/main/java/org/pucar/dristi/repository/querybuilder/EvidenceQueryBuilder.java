@@ -113,7 +113,7 @@ public class EvidenceQueryBuilder {
                 queryBuilder.append(" AND ( ");
                 queryBuilder.append(addUserCriteria(loggedInUserUuid, searchCriteria.getFilingNumber(), preparedStmtList, preparedStmtArgList));
                 queryBuilder.append(getStatusQuery(statusList, preparedStmtList, preparedStmtArgList, searchCriteria));
-                queryBuilder.append(" )) ");
+                queryBuilder.append(" ) OR status IS NULL) ");
             }
 
             else if(!searchCriteria.getOwner().toString().equals(loggedInUserUuid)) {
