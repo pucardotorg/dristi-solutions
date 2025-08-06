@@ -157,7 +157,7 @@ public class EvidenceQueryBuilder {
                 preparedStmtList.add(statusList.get(i));
                 preparedStmtArgsList.add(java.sql.Types.VARCHAR);
             }
-            queryBuilder.append(") AND artifactType != 'WITNESS_DEPOSITION'");
+            queryBuilder.append(")");
             queryBuilder.append(" OR ");
         }
         queryBuilder.append("(status IN ('PENDING_E-SIGN') AND artifactType = 'WITNESS_DEPOSITION' AND sourceId = ?)) AND status != 'DRAFT_IN_PROGRESS')");
