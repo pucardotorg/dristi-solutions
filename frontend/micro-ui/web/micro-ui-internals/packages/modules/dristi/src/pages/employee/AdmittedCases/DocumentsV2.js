@@ -24,6 +24,7 @@ const DocumentsV2 = ({
   setSelectedRow,
   setSelectedItem,
   counter,
+  setShowWitnessDepositionDoc,
 }) => {
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const roles = Digit.UserService.getUser()?.info?.roles;
@@ -81,7 +82,21 @@ const DocumentsV2 = ({
             );
           }
         }
-      } else {
+      }
+      else if(docObj?.[0]?.details?.applicationType === "WITNESS_DEPOSITION"){
+        const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
+        const status = docObj?.[0]?.applicationList?.status;
+        const createdByUuid = docObj?.[0]?.applicationList?.statuteSection?.auditdetails?.createdBy;
+        const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditdetails?.createdBy;
+        const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
+        const documentStatus = docObj?.[0]?.artifactList?.status;
+        const witnessDepositionDetails = {
+          doc: docObj?.[0],
+        }
+        setShowWitnessDepositionDoc({docObj: docObj?.[0], show: true})
+      }
+      
+      else {
         const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
         const status = docObj?.[0]?.applicationList?.status;
         const createdByUuid = docObj?.[0]?.applicationList?.statuteSection?.auditdetails?.createdBy;

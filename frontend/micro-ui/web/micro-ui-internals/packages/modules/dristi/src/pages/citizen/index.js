@@ -132,7 +132,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     },
   ];
 
-  const hideBackRoutes = ["/home/access-expired", "/home/bail-bond-login", "/home/bail-bond-sign", "/login", "/registration/email", "evidence-sign", "evidence-esign-page"];
+  const hideBackRoutes = ["/home/access-expired", "/home/bail-bond-login", "/home/bail-bond-sign", "/login", "/registration/email", "/home/evidence-sign", "/home/evidence-esign-page"];
 
   const whiteListedRoutes = [
     `${path}/home/register`,
@@ -157,7 +157,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     `${path}/home/evidence-sign`,
     `${path}/home/evidence-esign-page`,
   ];
-  const bailRoute = [`${path}/home/bail-bond-sign`]; // add evidence-esign-page ???
+  const openRoute = [`${path}/home/bail-bond-sign`, `${path}/home/evidence-esign-page`]; // add evidence-esign-page ???
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = Boolean(eSignWindowObject) ? JSON.parse(eSignWindowObject) : null;
@@ -170,12 +170,12 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     individualId &&
     !isLitigantPartialRegistered &&
     whiteListedRoutes.includes(location.pathname) &&
-    !bailRoute.includes(location.pathname)
+    !openRoute.includes(location.pathname)
   ) {
     history.push(`${path}/home`);
   }
 
-  if (retrievedObject && bailRoute.includes(retrievedObject?.path)) {
+  if (retrievedObject && openRoute.includes(retrievedObject?.path)) {
     if (result) {
       sessionStorage.setItem("isSignSuccess", result);
     }
@@ -189,7 +189,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     sessionStorage.removeItem("eSignWindowObject");
   }
 
-  if (isUserLoggedIn && !location.pathname.includes(`${path}/home`) && !bailRoute.includes(location.pathname)) {
+  if (isUserLoggedIn && !location.pathname.includes(`${path}/home`) && !openRoute.includes(location.pathname)) {
     history.push(`${path}/home`);
   }
   if (isUserLoggedIn && registerScreenRoute.includes(location.pathname)) {
