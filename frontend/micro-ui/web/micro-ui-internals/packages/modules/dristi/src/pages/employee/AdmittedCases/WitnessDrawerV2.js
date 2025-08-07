@@ -567,49 +567,6 @@ const WitnessDrawerV2 = ({
     return !isEmpty(selectedWitness);
   }, [selectedWitness]);
 
-  // Save witness deposition - either as draft or final
-  const saveWitnessDeposition = async (saveAsDraft = false) => {
-    if (!selectedWitness?.uuid) {
-      setShowErrorToast({ message: "Please select a witness first", variant: "error" });
-      return;
-    }
-
-    if (saveAsDraft) {
-      try {
-        // Save as draft using the draft API
-        const draftData = {
-          hearingId,
-          witnessId: selectedWitness.uuid,
-          witnessName: getFormattedName(
-            selectedWitness?.firstName || selectedWitness?.name || selectedWitness?.additionalDetails?.advocateName,
-            selectedWitness?.middleName,
-            selectedWitness?.lastName,
-            selectedWitness?.witnessDesignation
-          ),
-          witnessType: selectedWitnessType.value,
-          content: witnessDepositionText,
-          tenantId,
-          id: activeTabIndex >= 0 && activeTabIndex < activeTabs.length ? activeTabs[activeTabIndex].id : undefined,
-        };
-
-        const response = await Digit.DRISTIService.saveDraftDeposition(draftData);
-
-        if (response?.id) {
-          // Refresh drafts list
-          evidenceRefetch();
-          setShowErrorToast({ message: "Draft saved successfully", variant: "success" });
-        }
-      } catch (error) {
-        console.error("Error saving draft:", error);
-        setShowErrorToast({ message: "Error saving draft", variant: "error" });
-      }
-      return;
-    }
-
-    // Continue with regular save process for final deposition
-    // setWitnessModalOpen(true);
-  };
-
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
@@ -620,14 +577,28 @@ const WitnessDrawerV2 = ({
     setWitnessModalOpen(false);
   };
 
-  const handleSaveDraft = async (submit = false, newCurrentArtifactNumber = null) => {
+  const handleSaveDraft = async (submit = false, newCurrentArtifactNumber = null, backAction = false) => {
     if (!selectedWitness?.value) {
-      setShowErrorToast({ message: "Please select a witness first", variant: "error" });
+      setShowErrorToast({ label: t("PLEASE_SELECT_WITNESS_FIRST"), error: true });
+      if (backAction) {
+        onClose();
+      }
+      return;
+    }
+
+    if (!selectedWitnessType?.value) {
+      setShowErrorToast({ label: t("PLEASE_MARK_WITNESS"), error: true });
+      if (backAction) {
+        onClose();
+      }
       return;
     }
 
     if (!witnessDepositionText.trim()) {
-      setShowErrorToast({ message: "Please enter deposition content", variant: "error" });
+      setShowErrorToast({ label: t("PLEASE_ENTER_DEPOSITION"), error: true });
+      if (backAction) {
+        onClose();
+      }
       return;
     }
 
@@ -752,6 +723,9 @@ const WitnessDrawerV2 = ({
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
       setLoader(false);
+      if (backAction) {
+        onClose();
+      }
       if (submit) {
         if (!disableWitnessType) {
           setShowConfirmWitnessModal(true);
@@ -969,6 +943,10 @@ const WitnessDrawerV2 = ({
     }
   };
 
+  const handleCloseWitnessDrawer = () => {
+    handleSaveDraft(null, null, true);
+  };
+
   if (isFilingTypeLoading || isEvidenceLoading) {
     return <Loader />;
   }
@@ -998,7 +976,7 @@ const WitnessDrawerV2 = ({
       <div className={`bottom-drawer ${isOpen ? "open" : ""}`}>
         <div className="drawer-header">
           <div className="header-content">
-            <button className="drawer-close-button" onClick={onClose}>
+            <button className="drawer-close-button" onClick={handleCloseWitnessDrawer}>
               <LeftArrow color="#0b0c0c" />
             </button>
             <h2>{t("CS_WITNESS_DEPOSITION")}</h2>
