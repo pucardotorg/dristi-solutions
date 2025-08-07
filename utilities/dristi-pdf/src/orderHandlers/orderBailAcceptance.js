@@ -120,6 +120,7 @@ const orderBailAcceptance = async (
           caseName: courtCase.caseTitle,
           partyName: order?.orderDetails?.bailParty?.name,
           date: formattedToday,
+          briefSummaryOfBail: order?.orderDetails?.bailSummary || "",
           bailType:
             messagesMap?.[order?.orderDetails?.bailType] ||
             order?.orderDetails?.bailType,
