@@ -80,21 +80,20 @@ const DocumentsV2 = ({
             );
           }
         }
-      }
-      else if(docObj?.[0]?.details?.applicationType === "WITNESS_DEPOSITION"){
-        const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
-        const status = docObj?.[0]?.applicationList?.status;
-        const createdByUuid = docObj?.[0]?.applicationList?.statuteSection?.auditdetails?.createdBy;
-        const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditdetails?.createdBy;
+      } else if (docObj?.[0]?.details?.applicationType === "WITNESS_DEPOSITION") {
         const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
         const documentStatus = docObj?.[0]?.artifactList?.status;
-        const witnessDepositionDetails = {
-          doc: docObj?.[0],
-        }
-        setShowWitnessDepositionDoc({docObj: docObj?.[0], show: true})
-      }
-      
-      else {
+        const sourceID = docObj?.[0]?.artifactList?.sourceID;
+        const token = window.localStorage.getItem("token");
+        const isUserLoggedIn = Boolean(token);
+        if (documentStatus === "PENDING_E-SIGN" && sourceID === userInfo?.uuid && isUserLoggedIn) {
+          history.push(
+            `/${
+              window?.contextPath
+            }/${"citizen"}/dristi/home/evidence-esign-page?tenantId=${tenantId}&artifactNumber=${artifactNumber}&filingNumber=${filingNumber}`
+          );
+        } else setShowWitnessDepositionDoc({ docObj: docObj?.[0], show: true });
+      } else {
         const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
         const status = docObj?.[0]?.applicationList?.status;
         const createdByUuid = docObj?.[0]?.applicationList?.statuteSection?.auditdetails?.createdBy;
