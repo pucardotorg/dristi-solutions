@@ -35,6 +35,9 @@ public class JoinCaseDataV2 {
     @JsonProperty("litigant")
     private List<JoinCaseLitigant> litigant = null;
 
+    @JsonProperty("poa")
+    private JoinCasePOA poa = null;
+
     @JsonProperty("additionalDetails")
     private Object additionalDetails = null;
 }
