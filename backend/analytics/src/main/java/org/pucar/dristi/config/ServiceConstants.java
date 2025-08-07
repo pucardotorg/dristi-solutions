@@ -262,4 +262,6 @@ public class ServiceConstants {
 
     public static final String EXCLUDED_ASSIGNED_UUIDS = "excludedAssignedUuids";
 
+    public static final String POA_JOIN_CASE_TOPIC = "poa-join-case";
+
 }

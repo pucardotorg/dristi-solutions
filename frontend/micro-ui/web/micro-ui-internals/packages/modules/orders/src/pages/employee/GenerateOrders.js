@@ -451,7 +451,6 @@ const GenerateOrders = () => {
       } else {
         updatedConfig[0].body[0].populators.mdmsConfig.select =
           "(data) => {return data['Order'].OrderType?.filter((item)=>[`TAKE_COGNIZANCE`, `DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
-
       }
     }
     return updatedConfig;
@@ -712,7 +711,7 @@ const GenerateOrders = () => {
       const cleanupTimer = setTimeout(() => {
         sessionStorage.removeItem("esignProcess");
         sessionStorage.removeItem("orderPDF");
-      }, 200);
+      }, 2000);
 
       return () => clearTimeout(cleanupTimer);
     }
@@ -2490,7 +2489,6 @@ const GenerateOrders = () => {
               newCompositeItems?.push(matchedItem);
             }
           }
-
         } else if (["NOTICE", "SUMMONS", "WARRANT"]?.includes(order?.orderType)) {
           const payloads = await createTaskPayload(order?.orderType, { order });
           taskDetails = JSON.stringify(payloads);
