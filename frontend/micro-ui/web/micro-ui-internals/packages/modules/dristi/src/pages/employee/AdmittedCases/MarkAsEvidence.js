@@ -414,7 +414,6 @@ const MarkAsEvidence = ({
             }
           : null;
       });
-      debugger;
       const combined = [...witnessList, ...LitigantList, ...advList, ...poaList];
       if (evidenceDetails?.tag) {
         setWitnessTag(combined?.find((user) => user?.code === evidenceDetails?.tag));
@@ -468,7 +467,6 @@ const MarkAsEvidence = ({
   };
 
   useEffect(() => {
-    debugger;
     if (!evidenceDetailsObj && !sessionStorage.getItem("markAsEvidenceSelectedItem")) {
       getEvidenceDetails();
     } else if (sessionStorage.getItem("markAsEvidenceSelectedItem")) {
