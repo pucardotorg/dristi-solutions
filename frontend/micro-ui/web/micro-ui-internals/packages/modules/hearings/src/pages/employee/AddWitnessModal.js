@@ -322,6 +322,18 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isJudge, 
         })
         .reduce((acc, curr) => acc.concat(curr), []) || [];
 
+    const advocateMobileNumbersArray =
+      caseDetails?.additionalDetails?.advocateDetails?.formdata
+        ?.filter((data) => {
+          return data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.length > 0;
+        })
+        ?.map((data) => {
+          return data?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails
+            ?.filter((advocate) => advocate?.advocateNameDetails?.advocateMobileNumber)
+            ?.map((advocate) => advocate?.advocateNameDetails?.advocateMobileNumber);
+        })
+        ?.reduce((acc, curr) => acc.concat(curr), []) || [];
+
     const respondentEmailsArray =
       caseDetails?.additionalDetails?.respondentDetails?.formdata
         .filter((data) => {
@@ -351,7 +363,8 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isJudge, 
       currentMobileNumber &&
       (complainantMobileNumbersArray.some((number) => number === currentMobileNumber) ||
         respondentMobileNumbersArray.some((number) => number === currentMobileNumber) ||
-        witnessMobileNumbersArray.some((number) => number === currentMobileNumber))
+        witnessMobileNumbersArray.some((number) => number === currentMobileNumber) ||
+        advocateMobileNumbersArray.some((number) => number === currentMobileNumber))
     ) {
       setError("phonenumbers", { mobileNumber: "WITNESS_MOB_NUM_CAN_NOT_BE_SAME_AS_OTHER_USER_MOB_NUM" });
     } else if (
