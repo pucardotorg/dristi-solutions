@@ -28,7 +28,6 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const BailBondLoginPage = Digit?.ComponentRegistryService?.getComponent("BailBondLoginPage");
   const WitnessDepositionLoginPage = Digit?.ComponentRegistryService?.getComponent("WitnessDepositionLoginPage");
 
-  
   const BailBondLinkExpiredPage = Digit?.ComponentRegistryService?.getComponent("BailBondLinkExpiredPage");
   const Login = Digit?.ComponentRegistryService?.getComponent("DRISTILogin");
   const FileCase = Digit?.ComponentRegistryService?.getComponent("FileCase");
@@ -132,7 +131,15 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     },
   ];
 
-  const hideBackRoutes = ["/home/access-expired", "/home/bail-bond-login", "/home/bail-bond-sign", "/login", "/registration/email", "evidence-sign", "evidence-esign-page"];
+  const hideBackRoutes = [
+    "/home/access-expired",
+    "/home/bail-bond-login",
+    "/home/bail-bond-sign",
+    "/login",
+    "/registration/email",
+    "/home/evidence-sign",
+    "/home/evidence-login",
+  ];
 
   const whiteListedRoutes = [
     `${path}/home/register`,
@@ -155,9 +162,9 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     `${path}/home/bail-bond-login`,
     `${path}/home/access-expired`,
     `${path}/home/evidence-sign`,
-    `${path}/home/evidence-esign-page`,
+    `${path}/home/evidence-login`,
   ];
-  const bailRoute = [`${path}/home/bail-bond-sign`]; // add evidence-esign-page ???
+  const openRoute = [`${path}/home/bail-bond-sign`, `${path}/home/evidence-sign`];
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = Boolean(eSignWindowObject) ? JSON.parse(eSignWindowObject) : null;
@@ -170,12 +177,12 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     individualId &&
     !isLitigantPartialRegistered &&
     whiteListedRoutes.includes(location.pathname) &&
-    !bailRoute.includes(location.pathname)
+    !openRoute.includes(location.pathname)
   ) {
     history.push(`${path}/home`);
   }
 
-  if (retrievedObject && bailRoute.includes(retrievedObject?.path)) {
+  if (retrievedObject && openRoute.includes(retrievedObject?.path)) {
     if (result) {
       sessionStorage.setItem("isSignSuccess", result);
     }
@@ -189,7 +196,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     sessionStorage.removeItem("eSignWindowObject");
   }
 
-  if (isUserLoggedIn && !location.pathname.includes(`${path}/home`) && !bailRoute.includes(location.pathname)) {
+  if (isUserLoggedIn && !location.pathname.includes(`${path}/home`) && !openRoute.includes(location.pathname)) {
     history.push(`${path}/home`);
   }
   if (isUserLoggedIn && registerScreenRoute.includes(location.pathname)) {
@@ -295,11 +302,11 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
             <BailBondSignaturePage />
           </Route>
 
-          <Route path={`${path}/home/evidence-sign`}>
+          <Route path={`${path}/home/evidence-login`}>
             <WitnessDepositionLoginPage />
           </Route>
 
-          <Route path={`${path}/home/evidence-esign-page`}>
+          <Route path={`${path}/home/evidence-sign`}>
             <WitnessDepositionSignaturePage />
           </Route>
         </React.Fragment>

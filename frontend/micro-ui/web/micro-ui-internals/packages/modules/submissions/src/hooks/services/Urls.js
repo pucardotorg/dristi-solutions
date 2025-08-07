@@ -26,5 +26,6 @@ export const Urls = {
     bailSearch:"/openapi/v1/bail/search",
     updateBailBond: "/openapi/v1/updateBailBond",
     witnessDepositionSearch:"/openapi/v1/witness_deposition/search",
+    updateWitnessDeposition: "/openapi/v1/witness_deposition/update",
   }
 };
