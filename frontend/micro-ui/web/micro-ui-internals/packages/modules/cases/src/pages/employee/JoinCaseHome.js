@@ -1354,6 +1354,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                     },
                   },
                   caseTitle: caseDetails?.caseTitle,
+                  caseNumber: caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber,
                   partyType: selectPartyData?.partyInvolve?.value === "COMPLAINANTS" ? "COMPLAINANTS" : "ACCUSED",
                   owner: cleanString(userInfo?.name),
                   onBehalOfName: cleanString(userInfo?.name),

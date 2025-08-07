@@ -21,6 +21,7 @@ const { search_application } = require("../api");
 const { getCourtAndJudgeDetails } = require("../utils/commonUtils");
 const applicationProfileEdit = require("../applicationHandlers/applicationProfileEdit");
 const applicationWitnessDeposition = require("../applicationHandlers/applicationWitnessDeposition");
+const applicationPoaClaim = require("../applicationHandlers/applicationPoaClaim");
 
 function renderError(res, errorMessage, errorCode, errorObject) {
   if (errorCode == undefined) errorCode = 500;
@@ -194,6 +195,15 @@ router.post(
             courtCaseJudgeDetails
           );
           break;
+          case "poa-claim-application":
+            await applicationPoaClaim(
+              req,
+              res,
+              qrCode,
+              application,
+              courtCaseJudgeDetails
+            );
+            break;
         default:
           await applicationGeneric(
             req,

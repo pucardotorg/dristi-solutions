@@ -43,7 +43,7 @@ const SubmissionPreviewSubmissionTypeMap = {
   DELAY_CONDONATION: "application-delay-condonation",
   CORRECTION_IN_COMPLAINANT_DETAILS: "application-profile-edit",
   ADDING_WITNESSES: "application-witness-deposition",
-  APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS: "application-generic",
+  APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS: "poa-claim-application",
 };
 
 const onDocumentUpload = async (fileData, filename) => {
@@ -100,7 +100,7 @@ function ReviewSubmissionModal({
           cnrNumber: application?.cnrNumber,
           qrCode: false,
           applicationType: SubmissionPreviewSubmissionTypeMap[application?.applicationType],
-          courtId: courtId,
+          courtId: courtId || application?.courtId,
         },
         data: {
           RequestInfo: {
