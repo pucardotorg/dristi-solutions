@@ -782,7 +782,6 @@ const EvidenceModal = ({
       </React.Fragment>
     );
   }, [modalType, currentDiaryEntry, artifact, tenantId, documentSubmission, allCombineDocs, isLoading, t]);
-  console.log(documentSubmission, "documentSubmission");
 
   const setApplicationStatus = (type, applicationType) => {
     if (["SUBMIT_BAIL_DOCUMENTS", "REQUEST_FOR_BAIL"].includes(applicationType)) {
