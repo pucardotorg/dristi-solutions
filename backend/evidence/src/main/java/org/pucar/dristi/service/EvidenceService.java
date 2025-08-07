@@ -1,5 +1,6 @@
 package org.pucar.dristi.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -51,9 +52,12 @@ public class EvidenceService {
     private final FileStoreUtil fileStoreUtil;
     private final CipherUtil cipherUtil;
     private final XmlRequestGenerator xmlRequestGenerator;
+    private final HearingUtil hearingUtil;
+    private final DateUtil dateUtil;
+    private final ADiaryUtil aDiaryUtil;
 
     @Autowired
-    public EvidenceService(EvidenceValidator validator, EvidenceEnrichment evidenceEnrichment, WorkflowService workflowService, EvidenceRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, UrlShortenerUtil urlShortenerUtil, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, XmlRequestGenerator xmlRequestGenerator) {
+    public EvidenceService(EvidenceValidator validator, EvidenceEnrichment evidenceEnrichment, WorkflowService workflowService, EvidenceRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, UrlShortenerUtil urlShortenerUtil, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, XmlRequestGenerator xmlRequestGenerator, HearingUtil hearingUtil, DateUtil dateUtil, ADiaryUtil aDiaryUtil) {
         this.validator = validator;
         this.evidenceEnrichment = evidenceEnrichment;
         this.workflowService = workflowService;
@@ -70,6 +74,9 @@ public class EvidenceService {
         this.fileStoreUtil = fileStoreUtil;
         this.cipherUtil = cipherUtil;
         this.xmlRequestGenerator = xmlRequestGenerator;
+        this.hearingUtil = hearingUtil;
+        this.dateUtil = dateUtil;
+        this.aDiaryUtil = aDiaryUtil;
     }
 
     private boolean shouldUpdateWorkflowStatusForUpdate(EvidenceRequest evidenceRequest, String filingType){
@@ -945,6 +952,7 @@ public class EvidenceService {
     public List<Artifact> updateArtifactWithSignDoc(@Valid UpdateSignedArtifactRequest request) {
         log.info("Updating Artifact With Signed Doc, result= IN_PROGRESS, signedArtifacts:{}", request.getSignedArtifacts() != null ? request.getSignedArtifacts().size() : 0);
         List<Artifact> updatedArtifacts = new ArrayList<>();
+        List<CaseDiaryEntry> caseDiaryEntries = new ArrayList<>();
         RequestInfo requestInfo = request.getRequestInfo();
         if (request.getSignedArtifacts() != null) {
             for (SignedArtifact signedArtifact : request.getSignedArtifacts()) {
@@ -996,6 +1004,10 @@ public class EvidenceService {
                             workflow.setAction(E_SIGN);
                             existingArtifact.setIsEvidenceMarkedFlow(Boolean.TRUE);
                             existingArtifact.setIsEvidence(Boolean.TRUE);
+
+                            log.info("creating case diary entries for artifactNumber: {}", existingArtifact.getArtifactNumber());
+                            List<CaseDiaryEntry> diaryEntries = createADiaryEntries(existingArtifact, requestInfo);
+                            caseDiaryEntries.addAll(diaryEntries);
                         }
                         existingArtifact.setWorkflow(workflow);
 
@@ -1008,6 +1020,18 @@ public class EvidenceService {
                         log.error("Error while updating artifact, artifactNumber: {}", artifactNumber, e);
                         throw new CustomException(ARTIFACT_BULK_SIGN_EXCEPTION, "Error while updating artifact: " + e.getMessage());
                     }
+                }
+            }
+
+            if(!caseDiaryEntries.isEmpty()) {
+                try {
+                        log.info("creating case diary entry for order, result= IN_PROGRESS, caseDiaryEntries:{}", caseDiaryEntries.size());
+                    aDiaryUtil.createBulkADiaryEntry(BulkDiaryEntryRequest.builder()
+                            .requestInfo(request.getRequestInfo())
+                            .caseDiaryList(caseDiaryEntries)
+                            .build());
+                } catch (Exception ex) {
+                    log.error("Error occurred while creating bulk case diary entries: {}", ex.getMessage(), ex);
                 }
             }
         }
@@ -1060,6 +1084,88 @@ public class EvidenceService {
         attrData.put(VALUE, value);
         attribute.put(ATTRIBUTE, attrData);
         return attribute;
+    }
+
+
+    public List<CaseDiaryEntry> createADiaryEntries(Artifact artifact, RequestInfo requestInfo) {
+
+        log.info("finding case for filingNumber: {}", artifact.getFilingNumber());
+
+        JsonNode caseDetails = null;
+        try {
+
+            caseDetails = caseUtil.searchCaseDetails(CaseSearchRequest.builder()
+                    .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(artifact.getFilingNumber()).tenantId(artifact.getTenantId()).defaultFields(false).build()))
+                    .requestInfo(requestInfo).build());
+
+        } catch (Exception e) {
+            log.error("Unexpected error occurred while fetching case details", e);
+            throw new CustomException(ERROR_WHILE_FETCHING_FROM_CASE,
+                    "Failed to retrieve case details for filing number: " + artifact.getFilingNumber());
+        }
+
+        List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder()
+                .criteria(HearingCriteria.builder().tenantId(artifact.getTenantId())
+                        .filingNumber(artifact.getFilingNumber()).build())
+                .requestInfo(requestInfo).build());
+
+        log.info("finding scheduled hearing for filingNumber: {}", artifact.getFilingNumber());
+        Optional<Hearing> scheduledHearing = hearings.stream().filter((hearing) -> SCHEDULED.equalsIgnoreCase(hearing.getStatus())).findFirst();
+
+        Long hearingDate = null;
+        if (scheduledHearing.isPresent()) {
+            hearingDate = scheduledHearing.get().getStartTime();
+        }
+
+        String botd = null;
+        Object addDetailsObj = artifact.getAdditionalDetails();
+        try {
+            Map<String, JsonNode> addDetailsObjMap = new ObjectMapper().convertValue(addDetailsObj, new TypeReference<Map<String, JsonNode>>() {});
+            JsonNode botdNode = addDetailsObjMap.get("botd");
+            if (botdNode != null) {
+                botd = botdNode.asText();
+            }
+        } catch (IllegalArgumentException e) {
+            // additionalDetails is not a Map, so botd remains null
+            log.debug("additionalDetails is not a Map, cannot extract botd: {}", e.getMessage());
+        }
+
+        log.info("creating case diary entry for filingNumber: {}", artifact.getFilingNumber());
+
+        CaseDiaryEntry caseDiaryEntry = createCaseDiaryEntry(artifact, caseDetails, botd, hearingDate);
+
+        return new ArrayList<>(Collections.singletonList(caseDiaryEntry));
+
+    }
+
+    public CaseDiaryEntry createCaseDiaryEntry(Artifact artifact, JsonNode caseDetails, String botd, Long hearingDate) {
+        String cmpNumber = caseDetails.has("cmpNumber") ? (caseDetails.get("cmpNumber").textValue() != null ? caseDetails.get("cmpNumber").textValue() : null) : null;
+        String courtCaseNumber = caseDetails.has("courtCaseNumber") ? (caseDetails.get("courtCaseNumber").textValue() != null ? caseDetails.get("courtCaseNumber").textValue() : null) : null;
+        String caseId = caseDetails.has("id") ? (caseDetails.get("id").textValue() != null ? caseDetails.get("id").textValue() : null) : null;
+
+        return CaseDiaryEntry.builder()
+                .tenantId(artifact.getTenantId())
+                .entryDate(dateUtil.getStartOfTheDayForEpoch(dateUtil.getCurrentTimeInMilis()))
+                .caseNumber(getCaseReferenceNumber(courtCaseNumber, cmpNumber, artifact.getFilingNumber()))
+                .caseId(caseId)
+                .courtId(artifact.getCourtId())
+                .businessOfDay(botd)
+                .referenceId(artifact.getArtifactNumber())
+                .referenceType("Documents")
+                .hearingDate(hearingDate)
+                .additionalDetails(Map.of("filingNumber", artifact.getFilingNumber(),
+                        "caseId", caseId))
+                .build();
+    }
+
+    public String getCaseReferenceNumber(String courtCaseNumber, String cmpNumber, String filingNumber) {
+        if (courtCaseNumber != null && !courtCaseNumber.isEmpty()) {
+            return courtCaseNumber;
+        } else if (cmpNumber != null && !cmpNumber.isEmpty()) {
+            return cmpNumber;
+        } else {
+            return filingNumber;
+        }
     }
 
     private boolean hasNumberSuffix(String tag) {

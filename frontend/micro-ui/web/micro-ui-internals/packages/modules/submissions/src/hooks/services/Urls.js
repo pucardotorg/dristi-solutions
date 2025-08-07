@@ -25,5 +25,6 @@ export const Urls = {
     FileFetchByFileStore: "/openapi/v1/landing_page/file",
     bailSearch:"/openapi/v1/bail/search",
     updateBailBond: "/openapi/v1/updateBailBond",
+    witnessDepositionSearch:"/openapi/v1/witness_deposition/search",
   }
 };

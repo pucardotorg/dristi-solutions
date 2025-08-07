@@ -838,7 +838,7 @@ export const UICustomizations = {
           //Need to change the shade as per the value
           return <CustomChip text={t(value)} shade={value === "PUBLISHED" ? "green" : "orange"} />;
         case "OWNER":
-          return removeInvalidNameParts(value);
+          return value ? removeInvalidNameParts(value) : "-";
         case "SUBMISSION_ID":
           return value ? value : "-";
         case "CS_ACTIONS":
@@ -1217,6 +1217,12 @@ export const UICustomizations = {
           return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="FilingsConfig" />;
         case "EVIDENCE_NUMBER":
           return modifiedEvidenceNumber(value);
+        case "EVIDENCE_STATUS":
+          return row?.evidenceMarkedStatus ? (
+            <CustomChip text={t(row?.evidenceMarkedStatus) || ""} shade={row?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"} />
+          ) : (
+            ""
+          );
         default:
           return "N/A";
       }
@@ -1239,19 +1245,30 @@ export const UICustomizations = {
               },
             ]
           : []),
-        ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") &&
+        ...(userInfo.roles.map((role) => role.code).includes("EMPLOYEE") &&
         !row.isEvidence &&
+        row?.artifactType !== "WITNESS_DEPOSITION" &&
         !row?.isVoid &&
         !(row?.status !== "SUBMITTED" && row?.filingType === "DIRECT")
-          ? [
-              {
-                label: "MARK_AS_EVIDENCE",
-                id: "mark_as_evidence",
-                hide: false,
-                disabled: false,
-                action: column.clickFunc,
-              },
-            ]
+          ? row?.evidenceMarkedStatus !== null
+            ? [
+                {
+                  label: "VIEW_MARK_AS_EVIDENCE",
+                  id: "view_mark_as_evidence",
+                  hide: false,
+                  disabled: false,
+                  action: column.clickFunc,
+                },
+              ]
+            : [
+                {
+                  label: "MARK_AS_EVIDENCE",
+                  id: "mark_as_evidence",
+                  hide: false,
+                  disabled: false,
+                  action: column.clickFunc,
+                },
+              ]
           : []),
         // ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") && row.isEvidence
         //   ? [
@@ -1414,12 +1431,31 @@ export const UICustomizations = {
                 };
               });
 
+            const witnessDetails =
+              data?.criteria[0]?.responseList[0]?.additionalDetails?.witnessDetails?.formdata?.map((itemData) => {
+                const fullName = constructFullName(itemData?.data?.firstName, itemData?.data?.middleName, itemData?.data?.lastName);
+                return {
+                  code: fullName,
+                  name: fullName,
+                  uniqueId: itemData?.uniqueId,
+                  isJoined: false,
+                  associatedWith: itemData?.data?.ownerType || "COMPLAINANT",
+                  partyType: "witness",
+                  caseId: data?.criteria[0]?.responseList[0]?.id,
+                  isEditable: false,
+                  auditDetails: itemData?.data?.createdTime
+                    ? { createdTime: itemData?.data?.createdTime }
+                    : data?.criteria[0]?.responseList[0]?.auditDetails,
+                };
+              }) || [];
+
             const allParties = [
               ...finalLitigantsData,
               ...unjoinedAccused,
               ...joinedAndPartiallyJoinedAdvocates,
               ...joinStatusPendingAdvocates,
               ...finalPoaHoldersData,
+              ...witnessDetails,
             ];
             const paginatedParties = allParties.slice(offset, offset + limit);
             return {
@@ -1443,7 +1479,12 @@ export const UICustomizations = {
           return removeInvalidNameParts(value) || "";
 
         case "ASSOCIATED_WITH":
-          const associatedWith = row?.partyType === "ADVOCATE" || ["poa.regular"]?.includes(row?.partyType) ? row?.representingList : "";
+          const associatedWith =
+            row?.partyType === "ADVOCATE" || ["poa.regular"]?.includes(row?.partyType)
+              ? row?.representingList
+              : row?.partyType === "witness"
+              ? t(row?.associatedWith)
+              : "";
           return associatedWith || "";
         case "STATUS":
           const caseJoinStatus = ["respondent.primary", "respondent.additional"].includes(row?.partyType)
@@ -1469,7 +1510,7 @@ export const UICustomizations = {
           return <span>{formattedDate}</span>;
         case "PARTY_TYPE":
           const partyType = value === "ADVOCATE" ? `${t("ADVOCATE")}` : partyTypes[value] ? t(partyTypes[value]) : t(value);
-          return partyType === "unJoinedAccused" ? "Accused" : partyType;
+          return partyType === "unJoinedAccused" ? "Accused" : partyType === "witness" ? t("WITNESS") : partyType;
         case "ACTIONS":
           return row?.isEditable ? (
             <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center" }}>

@@ -868,26 +868,6 @@ const GenerateBailBond = () => {
 
   return (
     <React.Fragment>
-      <style>
-        {`
-          .bail-action-bar {
-            display: flex;
-            flex-direction: row-reverse;
-            gap: 16px;
-          }
-
-          .submit-bar {
-            width: fit-content;
-            padding-inline: 20px;
-            box-shadow: none;
-          }
-          
-          .card .label-field-pair .card-label{
-          font-weight : unset !important;
-          margin-bottom : 8px !important
-          }
-        `}
-      </style>
       {loader && (
         <div
           style={{

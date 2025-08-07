@@ -1,5 +1,8 @@
 const { search_evidence_v2 } = require("../../api");
 const {
+  combineMultipleFilestores,
+} = require("../utils/combineMultipleFilestores");
+const {
   duplicateExistingFileStore,
 } = require("../utils/duplicateExistingFileStore");
 const {
@@ -98,9 +101,19 @@ async function processCourtEvidence(
     if (courtList?.length !== 0) {
       const innerLineItems = await Promise.all(
         courtList?.map(async (evidence, index) => {
-          const evidenceFileStoreId = evidence?.file?.fileStore;
+          let evidenceFileStoreId = evidence?.file?.fileStore;
           if (!evidenceFileStoreId) {
             return null;
+          }
+
+          const sealFileStore = evidence?.seal?.fileStore;
+          if (sealFileStore) {
+            evidenceFileStoreId = await combineMultipleFilestores(
+              [evidenceFileStoreId, sealFileStore],
+              tenantId,
+              requestInfo,
+              TEMP_FILES_DIR
+            );
           }
 
           const newEvidenceFileStoreId = await duplicateExistingFileStore(

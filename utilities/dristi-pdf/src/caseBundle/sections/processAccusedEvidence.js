@@ -7,6 +7,9 @@ const {
   duplicateExistingFileStore,
 } = require("../utils/duplicateExistingFileStore");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const {
+  combineMultipleFilestores,
+} = require("../utils/combineMultipleFilestores");
 
 async function processAccusedEvidence(
   courtCase,
@@ -56,9 +59,19 @@ async function processAccusedEvidence(
     if (accusedList?.length !== 0) {
       const accusedEvidenceLineItems = await Promise.all(
         accusedList?.map(async (evidence, index) => {
-          const evidenceFileStoreId = evidence?.file?.fileStore;
+          let evidenceFileStoreId = evidence?.file?.fileStore;
           if (!evidenceFileStoreId) {
             return null;
+          }
+
+          const sealFileStore = evidence?.seal?.fileStore;
+          if (sealFileStore) {
+            evidenceFileStoreId = await combineMultipleFilestores(
+              [evidenceFileStoreId, sealFileStore],
+              tenantId,
+              requestInfo,
+              TEMP_FILES_DIR
+            );
           }
 
           let newEvidenceFileStoreId = evidenceFileStoreId;

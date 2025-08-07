@@ -103,17 +103,6 @@ const BailBondReviewModal = ({
 
   return (
     <React.Fragment>
-      <style>
-        {`
-         .bail-bond .popup-module-main .popup-module-action-bar .selector-button-primary {
-           background-color: #007e7e !important;
-         }
-
-         .bail-bond .popup-module-main .popup-module-action-bar .selector-button-primary h2 {
-           color: white !important;
-         }
-        `}
-      </style>
       <Modal
         headerBarMain={<Heading label={t("REVIEW_BAIL_BOND")} />}
         headerBarEnd={<CloseBtn onClick={handleBack} />}
