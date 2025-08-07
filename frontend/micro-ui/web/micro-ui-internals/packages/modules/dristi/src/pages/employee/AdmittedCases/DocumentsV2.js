@@ -92,7 +92,7 @@ const DocumentsV2 = ({
           history.push(
             `/${
               window?.contextPath
-            }/${"citizen"}/dristi/home/evidence-esign-page?tenantId=${tenantId}&artifactNumber=${artifactNumber}&filingNumber=${filingNumber}`
+            }/${"citizen"}/dristi/home/evidence-sign?tenantId=${tenantId}&artifactNumber=${artifactNumber}&filingNumber=${filingNumber}`
           );
         } else setShowWitnessDepositionDoc({ docObj: docObj?.[0], show: true });
       } else {
