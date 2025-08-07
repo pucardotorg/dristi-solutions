@@ -100,7 +100,6 @@ public class ServiceConstants {
     public static final String SUBMIT_BAIL_DOCUMENTS = "Submission Bail Document";
     public static final String PROFILE_EDIT_REQUEST = "PROFILE_EDIT_REQUEST";
     public static final String PAYMENT_PENDING_FOR_WARRANT = "PAYMENT_PENDING_FOR_WARRANT";
-    public static final String PAYMENT_PENDING_FOR_PROCLAMATION = "PAYMENT_PENDING_FOR_PROCLAMATION";
     public static final String PAYMENT_PENDING = "PAYMENT_PENDING_";
     public static final String MAKE_PAYMENT_FOR_SUMMONS = "MAKE_PAYMENT_FOR_SUMMONS";
     public static final String MAKE_PAYMENT_FOR_NOTICE = "MAKE_PAYMENT_FOR_NOTICE";
@@ -141,8 +140,6 @@ public class ServiceConstants {
     public static final String SETTLEMENT = "SETTLEMENT";
     public static final String SUMMONS = "SUMMONS";
     public static final String WARRANT = "WARRANT";
-    public static final String PROCLAMATION = "PROCLAMATION";
-    public static final String ATTACHMENT = "ATTACHMENT";
     public static final String WITHDRAWAL = "WITHDRAWAL";
 
     public static final String SMS = "SMS";
@@ -150,4 +147,5 @@ public class ServiceConstants {
     public static final String EMAIL = "EMAIL";
     public static final String APPROVAL_REJECTION_ADD_WITNESS = "APPROVAL_REJECTION_ADD_WITNESS";
     public static final String ERROR_ADDING_WITNESS="ERROR_ADDING_WITNESS";
+    public static final String ADDING_WITNESSES = "ADDING_WITNESSES";
 }
