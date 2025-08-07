@@ -4518,9 +4518,13 @@ export const configsIssueBailAcceptance = [
         disable: false,
         schemaKeyPath: "orderDetails.bailParty",
         populators: {
+          required: true,
+          isMandatory: true,
           name: "bailParty",
+          optionsKey:"name",
           styles: { maxWidth: "100%" },
           error: "required ",
+          options: [],
         },
       },
       {
