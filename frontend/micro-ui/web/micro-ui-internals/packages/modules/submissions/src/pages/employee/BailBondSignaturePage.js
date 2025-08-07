@@ -251,7 +251,7 @@ const BailBondSignaturePage = () => {
   const handleCloseSuccessModal = () => {
     sessionStorage.removeItem("isAuthorised");
     sessionStorage.removeItem("fileStoreId");
-    history.replace(`/${window?.contextPath}/citizen/dristi/home/login`);
+    history.replace(`/${window?.contextPath}/citizen/dristi/home`);
   };
 
   const handleEditBailBondSubmit = async () => {

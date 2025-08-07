@@ -7,11 +7,8 @@ import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { useQuery } from "react-query";
 import Axios from "axios";
 import { Urls } from "../../hooks/services/Urls";
-import useOpenApiSearchBailBond from "../../hooks/submissions/useOpenApiSearchBailBond";
 import { submissionService } from "../../hooks/services";
 import { useLocation } from "react-router-dom/cjs/react-router-dom";
-import useSearchBailBondService from "../../hooks/submissions/useSearchBailBondService";
-import { bailBondWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow";
 import useOpenApiSearchWitnessDeposition from "../../hooks/submissions/useOpenApiSearchWitnessDeposition";
 import useSearchEvidenceService from "../../hooks/submissions/useSearchEvidenceService";
 
@@ -203,7 +200,7 @@ const WitnessDepositionSignaturePage = () => {
   const handleCloseSuccessModal = () => {
     sessionStorage.removeItem("isAuthorised");
     sessionStorage.removeItem("fileStoreId");
-    history.replace(`/${window?.contextPath}/citizen/dristi/home/login`);
+    history.replace(`/${window?.contextPath}/citizen/dristi/home`);
   };
 
   useEffect(() => {
@@ -227,7 +224,7 @@ const WitnessDepositionSignaturePage = () => {
       history.replace(`/${window?.contextPath}/citizen/dristi/home/evidence-login?tenantId=${tenantId}&artifactNumber=${artifactNumber}`);
     }
 
-    if (!artifactNumber || !isCitizen) {
+    if (!artifactNumber) {
       history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`);
     }
   }, [artifactNumber, history, isAuthorised, isCitizen, isUserLoggedIn, tenantId, userType]);

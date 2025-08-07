@@ -694,7 +694,6 @@ const GenerateOrders = () => {
 
     if (currentSelectedOrderIndex) {
       setSelectedOrder(currentSelectedOrderIndex);
-      sessionStorage.removeItem("currentSelectedOrder");
     } else if (defaultIndex && defaultIndex !== -1 && orderNumber && defaultIndex !== selectedOrder && !isOrderChanged) {
       setSelectedOrder(defaultIndex);
     }
@@ -711,6 +710,7 @@ const GenerateOrders = () => {
       const cleanupTimer = setTimeout(() => {
         sessionStorage.removeItem("esignProcess");
         sessionStorage.removeItem("orderPDF");
+        sessionStorage.removeItem("currentSelectedOrder");
       }, 2000);
 
       return () => clearTimeout(cleanupTimer);
