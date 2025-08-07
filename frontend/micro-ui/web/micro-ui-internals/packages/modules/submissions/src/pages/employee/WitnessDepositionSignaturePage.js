@@ -224,7 +224,7 @@ const WitnessDepositionSignaturePage = () => {
 
   useEffect(() => {
     if (!isUserLoggedIn && !isAuthorised) {
-      history.replace(`/${window?.contextPath}/citizen/dristi/home/evidence-sign?tenantId=${tenantId}&artifactNumber=${artifactNumber}`);
+      history.replace(`/${window?.contextPath}/citizen/dristi/home/evidence-login?tenantId=${tenantId}&artifactNumber=${artifactNumber}`);
     }
 
     if (!artifactNumber || !isCitizen) {

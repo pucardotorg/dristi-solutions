@@ -44,7 +44,7 @@ const WitnessDepositionLoginPage = () => {
         setError(true);
         return;
       }
-      history.replace(`/${window?.contextPath}/citizen/dristi/home/evidence-esign-page?tenantId=${tenantId}&artifactNumber=${artifactNumber}`, {
+      history.replace(`/${window?.contextPath}/citizen/dristi/home/evidence-sign?tenantId=${tenantId}&artifactNumber=${artifactNumber}`, {
         mobileNumber: mobileNumber,
         tenantId: tenantId,
         isAuthorised: true,

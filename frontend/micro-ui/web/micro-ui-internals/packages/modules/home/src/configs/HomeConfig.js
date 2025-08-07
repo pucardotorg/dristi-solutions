@@ -867,7 +867,7 @@ export const pendingTaskForWitnessDepositionActions = {
     actorName: [""],
     actionName: "E-Sign Pending",
     redirectDetails: {
-      url: "/dristi/home/evidence-esign-page", 
+      url: "/dristi/home/evidence-sign", 
       params: [{ key: "artifactNumber", value: "referenceId" }, { key: "filingNumber", value: "filingNumber" }],
     },
   },
