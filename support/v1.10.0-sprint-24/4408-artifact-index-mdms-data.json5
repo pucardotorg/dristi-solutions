@@ -55,6 +55,11 @@
               "name": "filingNumber",
               "path": "Data.artifactDetails.filingNumber.keyword",
               "isMandatory": false
+            },
+            {
+              "name": "evidenceMarkedStatus",
+              "path": "Data.artifactDetails.evidenceMarkedStatus.keyword",
+              "isMandatory": false
             }
           ]
         },

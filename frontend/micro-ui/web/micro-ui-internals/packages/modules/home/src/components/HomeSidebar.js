@@ -81,6 +81,13 @@ const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hea
           active={activeTab === "BULK_BAIL_BOND_SIGN"}
           onClick={() => onTabChange("BULK_BAIL_BOND_SIGN")}
         />
+        <SidebarItem
+          t={t}
+          label="BULK_WITNESS_DEPOSITION_SIGN"
+          active={activeTab === "BULK_WITNESS_DEPOSITION_SIGN"}
+          onClick={() => onTabChange("BULK_WITNESS_DEPOSITION_SIGN")}
+        />
+        <SidebarItem t={t} label="BULK_EVIDENCE_SIGN" active={activeTab === "BULK_EVIDENCE_SIGN"} onClick={() => onTabChange("BULK_EVIDENCE_SIGN")} />
       </HomeAccordian>
 
       <SideBarTitle t={t} title="CS_HOME_BULK_RESCHEDULE" onClick={() => setStepper((prev) => prev + 1)} />

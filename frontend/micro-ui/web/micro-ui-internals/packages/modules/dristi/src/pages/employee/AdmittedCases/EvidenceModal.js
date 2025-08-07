@@ -14,14 +14,14 @@ import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../../Util
 import { getAdvocates } from "../../citizen/FileCase/EfilingValidationUtils";
 import DocViewerWrapper from "../docViewerWrapper";
 import SelectCustomDocUpload from "../../../components/SelectCustomDocUpload";
-import ESignSignatureModal from "../../../components/ESignSignatureModal";
 import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import { cleanString, getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { useToast } from "../../../components/Toast/useToast";
-import Button from "../../../components/Button";
 import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders/src/pages/employee/GenerateOrders";
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
+import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
+import CustomChip from "../../../components/CustomChip";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,
@@ -41,6 +41,7 @@ const EvidenceModal = ({
   setIsDelayApplicationPending,
   currentDiaryEntry,
   artifact,
+  setShowMakeAsEvidenceModal,
 }) => {
   const [comments, setComments] = useState(documentSubmission[0]?.comments ? documentSubmission[0].comments : artifact?.comments || []);
   const [showConfirmationModal, setShowConfirmationModal] = useState(null);
@@ -91,15 +92,17 @@ const EvidenceModal = ({
     return (
       <div className="evidence-title">
         <h1 className="heading-m">{props.label}</h1>
+        {props?.evidenceMarkedStatus && (
+          <CustomChip text={t(props?.evidenceMarkedStatus) || ""} shade={props?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"} />
+        )}
+
         {props.showStatus && <h3 className={props.isStatusRed ? "status-false" : "status"}>{props?.status}</h3>}
       </div>
     );
   };
 
   const computeDefaultBOTD = useMemo(() => {
-    return `${documentSubmission?.[0]?.artifactList?.artifactNumber} ${
-      documentSubmission?.[0]?.artifactList?.isEvidence ? "unmarked" : "marked"
-    } as evidence`;
+    return `Document marked as evidence exhibit number ${documentSubmission?.[0]?.artifactList?.artifactNumber}`;
   }, [documentSubmission]);
 
   useEffect(() => {
@@ -171,7 +174,15 @@ const EvidenceModal = ({
         }
       }
     } else {
-      label = !documentSubmission?.[0]?.artifactList?.isEvidence ? t("MARK_AS_EVIDENCE") : t("UNMARK_AS_EVIDENCE");
+      if (
+        documentSubmission?.[0]?.artifactList?.isEvidence ||
+        documentSubmission?.[0]?.artifactList?.isVoid ||
+        documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus !== null
+      ) {
+        label = false;
+      } else {
+        label = t("MARK_AS_EVIDENCE");
+      }
     }
     return label;
   }, [allAdvocates, applicationStatus, createdBy, documentSubmission, isLitigent, modalType, respondingUuids, t, userInfo?.uuid, userType]);
@@ -686,13 +697,36 @@ const EvidenceModal = ({
         {modalType !== "Submissions" ? (
           currentDiaryEntry && artifact ? (
             <div className="application-view">
-              <DocViewerWrapper
+              <React.Fragment>
+                <DocViewerWrapper
+                  key={"selectedFileStoreId"}
+                  tenantId={tenantId}
+                  fileStoreId={artifact?.file?.fileStore}
+                  showDownloadOption={false}
+                  docHeight="100%"
+                  docWidth="100%"
+                  docViewerStyle={{ maxWidth: "100%" }}
+                />
+
+                {artifact?.seal?.fileStore && artifact?.evidenceMarkedStatus === "COMPLETED" && (
+                  <DocViewerWrapper
+                    key={"selectedFileStoreId"}
+                    tenantId={tenantId}
+                    fileStoreId={artifact?.seal?.fileStore}
+                    showDownloadOption={false}
+                    docHeight="100%"
+                    docWidth="100%"
+                    docViewerStyle={{ maxWidth: "100%" }}
+                  />
+                )}
+              </React.Fragment>
+              {/* <DocViewerWrapper
                 fileStoreId={artifact?.file?.fileStore}
                 tenantId={tenantId}
                 docWidth={"calc(80vw * 62 / 100)"}
                 docHeight={"unset"}
                 showDownloadOption={false}
-              />
+              /> */}
             </div>
           ) : (
             documentSubmission?.map((docSubmission, index) => (
@@ -1087,7 +1121,16 @@ const EvidenceModal = ({
         await handleApplicationAction(true, "accept");
       } else if (modalType === "Submissions" && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION") {
         await handleApplicationAction(true, "accept");
-      } else modalType === "Documents" ? setShowConfirmationModal({ type: "documents-confirmation" }) : setShowConfirmationModal({ type: "accept" });
+      } else {
+        if (modalType === "Documents") {
+          //need to add logic for bitd save
+          setShow(false);
+          setShowMakeAsEvidenceModal(true);
+        } else {
+          setShowConfirmationModal({ type: "accept" });
+        }
+        // modalType === "Documents" ? setShowConfirmationModal({ type: "documents-confirmation" }) :;
+      }
     } else {
       if (actionSaveLabel === t("ADD_COMMENT")) {
         try {
@@ -1286,6 +1329,7 @@ const EvidenceModal = ({
                     : "Action Pending"
                   : t(applicationStatus)
               }
+              evidenceMarkedStatus={modalType === "Documents" ? documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus : null}
               showStatus={modalType === "Documents" ? false : true}
               isStatusRed={modalType === "Documents" ? !documentSubmission?.[0]?.artifactList?.isEvidence : applicationStatus}
             />
@@ -1305,7 +1349,37 @@ const EvidenceModal = ({
           //     : {}
           // }
         >
-          <div className="evidence-modal-main">
+          {documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus !== null && (
+            <div style={{ margin: "16px 24px" }}>
+              <div className="custom-note-main-div" style={{ padding: "8px 16px", flexDirection: "row", justifyContent: "space-between" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <CustomErrorTooltip message={t("CS_EVIDENCE_MARKED_INFO_TEXT")} showTooltip={true} />
+                  <div className="custom-note-heading-div">
+                    <h2>{t("CS_PLEASE_COMMON_NOTE")}</h2>
+                  </div>
+                  <div className="custom-note-info-div" style={{ display: "flex", alignItems: "center" }}>
+                    {<p>{t("CS_EVIDENCE_MARKED_INFO_TEXT")}</p>}
+                  </div>
+                </div>
+                <div>
+                  <button
+                    className="custom-note-close-button"
+                    style={{ fontWeight: "700", fontSize: "18px", fontStyle: "large", backgroundColor: "transparent", color: "#0F3B8C" }}
+                    onClick={() => {
+                      setShow(false);
+                      setShowMakeAsEvidenceModal(true);
+                    }}
+                  >
+                    {t("VIEW_DETAILS")}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          <div
+            className="evidence-modal-main "
+            style={documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus !== null ? { height: "calc(100% - 140px)" } : {}}
+          >
             <div className={"application-details"}>
               <div style={{ display: "flex", flexDirection: "column", overflowY: "auto", height: "fit-content" }}>
                 {isJudge && documentSubmission?.[0]?.applicationList?.applicationType === "DELAY_CONDONATION" && !Boolean(applicationNumber) && (
@@ -1401,7 +1475,7 @@ const EvidenceModal = ({
                 </div>
                 <div style={{ display: "flex", flexDirection: "column" }}>{showDocument}</div>
               </div>
-              {modalType === "Documents" && isJudge && (
+              {/* {modalType === "Documents" && isJudge && (
                 <div>
                   <h3 style={{ marginTop: 0, marginBottom: "2px" }}>{t("BUSINESS_OF_THE_DAY")} </h3>
                   <div style={{ display: "flex", gap: "10px" }}>
@@ -1427,7 +1501,7 @@ const EvidenceModal = ({
                     )}
                   </div>
                 </div>
-              )}
+              )} */}
             </div>
             {(userRoles.includes("SUBMISSION_RESPONDER") || userRoles.includes("JUDGE_ROLE")) && (
               <div className={`application-comment ${isCourtRoomManager && "disabled"}`}>

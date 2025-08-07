@@ -3,14 +3,12 @@ const config = require("../config");
 const {
   search_case,
   search_sunbirdrc_credential_service,
-  search_application,
   create_pdf,
   search_message,
   create_pdf_v2,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
-const { getAdvocates } = require("../applicationHandlers/getAdvocates");
 const { handleApiCall } = require("../utils/handleApiCall");
 
 const orderBailAcceptance = async (
@@ -69,45 +67,7 @@ const orderBailAcceptance = async (
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
     const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
-    const resApplication = await handleApiCall(
-      res,
-      () =>
-        search_application(
-          tenantId,
-          order?.additionalDetails?.formdata?.refApplicationId,
-          requestInfo,
-          order?.courtId
-        ),
-      "Failed to query application service"
-    );
-    const application = resApplication?.data?.applicationList[0];
-    if (!application) {
-      return renderError(res, "Application not found", 404);
-    }
-
-    const applicationDocuments =
-      application?.applicationDetails?.applicationDocuments;
-    const documentList =
-      applicationDocuments?.length > 0
-        ? applicationDocuments.map((item) => ({
-            ...item,
-            documentType:
-              messagesMap?.[item?.documentType] || item?.documentType,
-          }))
-        : [{ documentType: "" }];
-    const allAdvocates = getAdvocates(courtCase);
-    const onBehalfOfuuid = application?.onBehalfOf?.[0];
-    const advocate = allAdvocates?.[onBehalfOfuuid]?.[0]?.additionalDetails
-      ?.advocateName
-      ? allAdvocates[onBehalfOfuuid]?.[0]
-      : {};
-    const advocateName = advocate?.additionalDetails?.advocateName || "";
-    const partyName = application?.additionalDetails?.onBehalOfName || "";
-    const applicationDate = formatDate(
-      new Date(application?.createdDate),
-      "DD-MM-YYYY"
-    );
-
+    
     // Handle QR code if enabled
     let base64Url = "";
     if (qrCode === "true") {
@@ -158,12 +118,9 @@ const orderBailAcceptance = async (
           caseNumber: caseNumber,
           caseYear: caseYear,
           caseName: courtCase.caseTitle,
-          applicantName: advocateName || partyName,
-          partyName,
-          dateOfApplication: applicationDate,
-          briefSummaryOfBail: order?.orderDetails?.bailSummary || "",
+          partyName: order?.orderDetails?.bailParty?.name,
           date: formattedToday,
-          documentList,
+          briefSummaryOfBail: order?.orderDetails?.bailSummary || "",
           bailType:
             messagesMap?.[order?.orderDetails?.bailType] ||
             order?.orderDetails?.bailType,

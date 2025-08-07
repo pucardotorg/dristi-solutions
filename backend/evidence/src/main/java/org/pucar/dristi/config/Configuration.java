@@ -166,6 +166,9 @@ public class Configuration {
 	@Value("${egov.hearing.path}")
 	private String hearingExistsPath;
 
+	@Value("${egov.hearing.search.endpoint}")
+	private String hearingSearchEndPoint;
+
 	@Value("${evidence.kafka.comments.update.topic}")
 	private String evidenceUpdateCommentsTopic;
 
@@ -288,5 +291,14 @@ public class Configuration {
 	//Email
 	@Value("${egov.mail.notification.topic}")
 	private String mailNotificationTopic;
+
+	// ADiary config
+
+	@Value("${egov.adiary.host}")
+	private String aDiaryHost;
+
+	@Value("${egov.adiary.create.bulk}")
+	private String aDiaryCreateBulkEndPoint;
+
 
 }
