@@ -51,7 +51,7 @@ const handleUpdateBusinessOfDayEntry = async (evidenceDetails, currentDiaryEntry
           },
         },
         {}
-      ).then((res) => console.log(res, "fdsf"));
+      );
     }
     await DRISTIService.aDiaryEntryUpdate(
       {
@@ -393,7 +393,7 @@ const MarkAsEvidence = ({
       setWitnessTagValues(witnessList?.filter(Boolean));
       setCaseDetails(response?.criteria[0]?.responseList[0]);
     } catch (error) {
-      console.log("error fetching case details", error);
+      console.error("error fetching case details", error);
       showToast({
         isError: true,
         message: t("ERROR_FETCHING_CASE_DETAILS"),
@@ -719,7 +719,6 @@ const MarkAsEvidence = ({
   };
 
   if (isLoading) return <Loader />;
-  console.log(evidenceDetails);
 
   return (
     <React.Fragment>
