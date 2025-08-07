@@ -742,6 +742,19 @@ const EvidenceModal = ({
                       showDownloadOption={false}
                       documentName={docSubmission.applicationContent.fileName}
                     />
+                    <React.Fragment>
+                      {docSubmission?.artifactList?.seal?.fileStore && docSubmission?.artifactList?.evidenceMarkedStatus === "COMPLETED" && (
+                        <DocViewerWrapper
+                          key={"selectedFileStoreId"}
+                          tenantId={tenantId}
+                          fileStoreId={docSubmission?.artifactList?.seal?.fileStore}
+                          showDownloadOption={false}
+                          docHeight="100%"
+                          docWidth="100%"
+                          docViewerStyle={{ maxWidth: "100%" }}
+                        />
+                      )}
+                    </React.Fragment>
                   </div>
                 )}
               </React.Fragment>
@@ -768,7 +781,8 @@ const EvidenceModal = ({
         )}
       </React.Fragment>
     );
-  }, [allCombineDocs, documentSubmission, modalType, tenantId, isLoading, t]);
+  }, [modalType, currentDiaryEntry, artifact, tenantId, documentSubmission, allCombineDocs, isLoading, t]);
+  console.log(documentSubmission, "documentSubmission");
 
   const setApplicationStatus = (type, applicationType) => {
     if (["SUBMIT_BAIL_DOCUMENTS", "REQUEST_FOR_BAIL"].includes(applicationType)) {
