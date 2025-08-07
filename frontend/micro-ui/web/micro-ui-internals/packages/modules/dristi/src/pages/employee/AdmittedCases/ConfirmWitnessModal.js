@@ -14,7 +14,7 @@ function ConfirmWitnessModal({ t, selectedWitness, witnessTag, onCancel, onSubmi
     return <h1 className="heading-m">{props.label}</h1>;
   };
 
-  const sourceName = allParties?.find((p) => p?.uuid === selectedWitness?.uuid || p?.uniqueId === selectedWitness?.uuid)?.sourceName;
+  const sourceName = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value)?.sourceName;
 
   return (
     <React.Fragment>

@@ -409,18 +409,6 @@ const WitnessDrawerV2 = ({
   useEffect(() => {
     if (!isEvidenceLoading && evidenceList?.length > 0) {
       const evidenceWithUnsaved = [...evidenceList];
-
-      // if (artifactNumber) {
-      //   const artifact = evidenceWithUnsaved?.find((tab) => tab?.artifactNumber === artifactNumber);
-      //   if (artifact) {
-      //     setActiveTabs([artifact]); // basically we show only that particular tab when editing an evidence(it will have corresponding artifact number)
-      //     setActiveTabIndex(0);
-      //     setCurrentEvidence(artifact);
-      //     setSelectedWitnessType({ label: artifact?.tag, value: artifact?.tag });
-      //     setWitnessDepositionText(artifact?.description || "");
-      //     return;
-      //   }
-      // }
       if (currentArtifactNumber) {
         const artifact = evidenceWithUnsaved?.find((tab) => tab?.artifactNumber === currentArtifactNumber);
         if (artifact) {
@@ -512,14 +500,6 @@ const WitnessDrawerV2 = ({
   // Handle tab change
   const handleTabChange = async (tab) => {
     const currentArtifact = activeTabs?.find((t) => t?.artifactNumber === tab?.artifactNumber);
-    // if (currentArtifact) {
-    //   setCurrentArtifactNumber(currentArtifact?.artifactNumber);
-
-    //   // setActiveTabIndex(tab?.index);
-    //   // setCurrentEvidence(tab);
-    //   // setWitnessDepositionText(tab?.description || "");
-    //   // setSelectedWitnessType({ label: tab?.tag, value: tab?.tag });
-    // }
     if (activeTabs?.find((tab) => tab?.isNew && selectedWitness?.value)) {
       handleSaveDraft(false, currentArtifact?.artifactNumber);
     } else {
@@ -528,34 +508,6 @@ const WitnessDrawerV2 = ({
   };
 
   const handleDropdownChange = (selectedPartyOption) => {
-    // let selectedData = additionalDetails?.witnessDetails?.formdata?.find((w) => w.data.uuid === selectedUUID)?.data;
-    // if (!selectedData) {
-    //   const attendee = hearingData?.attendees?.find((a) => a.individualId === selectedUUID);
-    //   if (attendee) {
-    //     selectedData = {
-    //       ...attendee,
-    //       uuid: attendee.individualId,
-    //     };
-    //   }
-    // }
-    // if (!selectedData) {
-    //   const party = allParties?.find((p) => p.partyUuid === selectedUUID);
-    //   if (party) {
-    //     selectedData = {
-    //       ...party,
-    //       uuid: party.partyUuid,
-    //     };
-    //   }
-    // }
-    // if (!selectedData) {
-    //   const advocate = caseDetails?.representatives?.find((adv) => adv?.advocateId === selectedUUID);
-    //   if (advocate) {
-    //     selectedData = {
-    //       ...advocate,
-    //       uuid: advocate?.advocateId,
-    //     };
-    //   }
-    // }
     const selectedUUID = selectedPartyOption?.value;
     const matchingWitness = options.find((opt) => opt?.value === selectedUUID);
     setSelectedWitness({ label: matchingWitness?.label, value: matchingWitness?.value });
@@ -570,12 +522,6 @@ const WitnessDrawerV2 = ({
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
-
-  const filingNumber = useMemo(() => caseDetails?.filingNumber, [caseDetails]);
-
-  const handleClose = () => {
-    setWitnessModalOpen(false);
-  };
 
   const handleSaveDraft = async (submit = false, newCurrentArtifactNumber = null, backAction = false) => {
     if (!selectedWitness?.value) {
@@ -603,15 +549,6 @@ const WitnessDrawerV2 = ({
     }
 
     try {
-      // if (!selectedWitness?.uuid) {
-      //   setShowErrorToast({ label: "Please select a witness first", error: true });
-      //   return;
-      // }
-
-      // if (!witnessDepositionText.trim()) {
-      //   setShowErrorToast({ label: "Please enter deposition content", error: true });
-      //   return;
-      // }
       setLoader(true);
 
       const party = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value);
@@ -624,17 +561,10 @@ const WitnessDrawerV2 = ({
         const updateEvidenceReqBody = {
           artifact: {
             ...evidence,
-            // artifactType: "WITNESS_DEPOSITION",
-            // artifactNumber: evidence.artifactNumber,
-            // caseId: caseDetails?.id,
-            // filingNumber: caseDetails?.filingNumber,
-            // tenantId,
             sourceType: selectedWitnessType.value === "PW" ? "COMPLAINANT" : selectedWitnessType.value === "DW" ? "ACCUSED" : "COURT",
             sourceID: selectedWitness.value,
             sourceName: party?.sourceName,
-            // filingType: filingType,
             description: witnessDepositionText,
-            // additionalDetails: { ...party },
             additionalDetails: {
               witnessDetails: {
                 address: evidence?.additionalDetails?.witnessDetails?.address || "",
@@ -654,7 +584,6 @@ const WitnessDrawerV2 = ({
         // Update the tab in activeTabs directly
         if (updatedEvidence?.artifact) {
           const updatedTabs = [...activeTabs];
-          //   updatedTabs[tabIndex] = updatedEvidence.artifact;
           if (newCurrentArtifactNumber) {
             setCurrentArtifactNumber(newCurrentArtifactNumber);
           } else {
@@ -736,72 +665,8 @@ const WitnessDrawerV2 = ({
     }
   };
 
-  const handleProceed = async () => {
-    try {
-      setIsProceeding(true);
-      const updatedHearing = structuredClone(hearingData || {});
-      updatedHearing.additionalDetails = updatedHearing.additionalDetails || {};
-      updatedHearing.additionalDetails.witnessDepositions = updatedHearing.additionalDetails.witnessDepositions || [];
-      const witnessIndex = updatedHearing.additionalDetails.witnessDepositions.findIndex((witness) => witness.uuid === selectedWitness?.uuid);
-
-      const documents = Array.isArray(hearingData?.documents) ? hearingData.documents : [];
-      const documentsFile =
-        signedDocumentUploadID !== ""
-          ? {
-              documentType: "SIGNED",
-              fileStore: signedDocumentUploadID,
-            }
-          : null;
-
-      const reqBody = {
-        hearing: {
-          ...hearingData,
-          documents: documentsFile ? [...documents, documentsFile] : documents,
-        },
-      };
-      const docs = {
-        // documentType: "image/png",
-        fileStore: signedDocumentUploadID,
-        additionalDetails: {
-          name: "Witness Deposition",
-        },
-      };
-
-      const evidenceReqBody = {
-        artifact: {
-          artifactType: "WITNESS_DEPOSITION",
-          caseId: caseDetails?.id,
-          filingNumber: caseDetails?.filingNumber,
-          tenantId,
-          comments: [],
-          file: docs,
-          sourceType: "COURT",
-          sourceID: userInfo?.uuid,
-          filingType: filingType,
-          additionalDetails: {
-            uuid: userInfo?.uuid,
-          },
-        },
-      };
-      await Digit?.DRISTIService.createEvidence(evidenceReqBody);
-
-      const updateWitness = await hearingService.customApiService(
-        Urls.hearing.uploadWitnesspdf,
-        { tenantId: tenantId, hearing: reqBody?.hearing, hearingType: "", status: "" },
-        { applicationNumber: "", cnrNumber: "" }
-      );
-      setIsProceeding(false);
-      setWitnessModalOpen(false);
-    } catch (error) {
-      setIsProceeding(false);
-      console.error("Error updating witness:", error);
-    }
-  };
-
   const handleConfirmWitnessAndSign = async (evidence) => {
     try {
-      const party = allParties?.find((p) => p?.uuid === selectedWitness?.uuid || p?.uniqueId === selectedWitness?.uuid);
-
       // Check if we need to create or update evidence
       const evidence = activeTabs?.find((tab) => tab?.artifactNumber === currentArtifactNumber);
       if (evidence?.artifactNumber) {
@@ -823,7 +688,6 @@ const WitnessDrawerV2 = ({
         // Update the tab in activeTabs directly
         if (updatedEvidence?.artifact) {
           const updatedTabs = [...activeTabs];
-          //   updatedTabs[tabIndex] = updatedEvidence.artifact;
           setActiveTabs(updatedTabs);
         }
 
