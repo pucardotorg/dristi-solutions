@@ -92,6 +92,11 @@ const WitnessDrawerV2 = ({
     setShowErrorToast(null);
   };
 
+  // Sync currentArtifactNumber with artifactNumber prop
+  useEffect(() => {
+    setCurrentArtifactNumber(artifactNumber || null);
+  }, [artifactNumber]);
+
   useEffect(() => {
     if (showErrorToast) {
       const timer = setTimeout(() => {
@@ -117,8 +122,13 @@ const WitnessDrawerV2 = ({
     Boolean(caseDetails?.filingNumber && caseDetails?.courtId)
   );
 
-  const evidenceList = useMemo(() => evidenceData?.artifacts?.filter((artifact) => artifact?.status === "DRAFT_IN_PROGRESS"), [evidenceData]);
-
+  const evidenceList = useMemo(
+    () =>
+      evidenceData?.artifacts
+        ?.filter((artifact) => artifact?.status === "DRAFT_IN_PROGRESS")
+        ?.filter((artifact) => (artifactNumber ? artifactNumber === artifact?.artifactNumber : true)),
+    [evidenceData, artifactNumber]
+  );
   const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "FilingType" },
   ]);
@@ -400,17 +410,18 @@ const WitnessDrawerV2 = ({
     if (!isEvidenceLoading && evidenceList?.length > 0) {
       const evidenceWithUnsaved = [...evidenceList];
 
-      if (artifactNumber) {
-        const artifact = evidenceWithUnsaved?.find((tab) => tab?.artifactNumber === artifactNumber);
-        if (artifact) {
-          setActiveTabs([artifact]); // basically we show only that particular tab when editing an evidence(it will have corresponding artifact number)
-          setActiveTabIndex(0);
-          setCurrentEvidence(artifact);
-          setSelectedWitnessType({ label: artifact?.tag, value: artifact?.tag });
-          setWitnessDepositionText(artifact?.description || "");
-          return;
-        }
-      } else if (currentArtifactNumber) {
+      // if (artifactNumber) {
+      //   const artifact = evidenceWithUnsaved?.find((tab) => tab?.artifactNumber === artifactNumber);
+      //   if (artifact) {
+      //     setActiveTabs([artifact]); // basically we show only that particular tab when editing an evidence(it will have corresponding artifact number)
+      //     setActiveTabIndex(0);
+      //     setCurrentEvidence(artifact);
+      //     setSelectedWitnessType({ label: artifact?.tag, value: artifact?.tag });
+      //     setWitnessDepositionText(artifact?.description || "");
+      //     return;
+      //   }
+      // }
+      if (currentArtifactNumber) {
         const artifact = evidenceWithUnsaved?.find((tab) => tab?.artifactNumber === currentArtifactNumber);
         if (artifact) {
           const activeindex = evidenceWithUnsaved?.findIndex((tab) => tab?.artifactNumber === currentArtifactNumber);
@@ -556,49 +567,6 @@ const WitnessDrawerV2 = ({
     return !isEmpty(selectedWitness);
   }, [selectedWitness]);
 
-  // Save witness deposition - either as draft or final
-  const saveWitnessDeposition = async (saveAsDraft = false) => {
-    if (!selectedWitness?.uuid) {
-      setShowErrorToast({ message: "Please select a witness first", variant: "error" });
-      return;
-    }
-
-    if (saveAsDraft) {
-      try {
-        // Save as draft using the draft API
-        const draftData = {
-          hearingId,
-          witnessId: selectedWitness.uuid,
-          witnessName: getFormattedName(
-            selectedWitness?.firstName || selectedWitness?.name || selectedWitness?.additionalDetails?.advocateName,
-            selectedWitness?.middleName,
-            selectedWitness?.lastName,
-            selectedWitness?.witnessDesignation
-          ),
-          witnessType: selectedWitnessType.value,
-          content: witnessDepositionText,
-          tenantId,
-          id: activeTabIndex >= 0 && activeTabIndex < activeTabs.length ? activeTabs[activeTabIndex].id : undefined,
-        };
-
-        const response = await Digit.DRISTIService.saveDraftDeposition(draftData);
-
-        if (response?.id) {
-          // Refresh drafts list
-          evidenceRefetch();
-          setShowErrorToast({ message: "Draft saved successfully", variant: "success" });
-        }
-      } catch (error) {
-        console.error("Error saving draft:", error);
-        setShowErrorToast({ message: "Error saving draft", variant: "error" });
-      }
-      return;
-    }
-
-    // Continue with regular save process for final deposition
-    // setWitnessModalOpen(true);
-  };
-
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
 
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
@@ -609,14 +577,28 @@ const WitnessDrawerV2 = ({
     setWitnessModalOpen(false);
   };
 
-  const handleSaveDraft = async (submit = false, newCurrentArtifactNumber = null) => {
+  const handleSaveDraft = async (submit = false, newCurrentArtifactNumber = null, backAction = false) => {
     if (!selectedWitness?.value) {
-      setShowErrorToast({ message: "Please select a witness first", variant: "error" });
+      setShowErrorToast({ label: t("PLEASE_SELECT_WITNESS_FIRST"), error: true });
+      if (backAction) {
+        onClose();
+      }
+      return;
+    }
+
+    if (!selectedWitnessType?.value) {
+      setShowErrorToast({ label: t("PLEASE_MARK_WITNESS"), error: true });
+      if (backAction) {
+        onClose();
+      }
       return;
     }
 
     if (!witnessDepositionText.trim()) {
-      setShowErrorToast({ message: "Please enter deposition content", variant: "error" });
+      setShowErrorToast({ label: t("PLEASE_ENTER_DEPOSITION"), error: true });
+      if (backAction) {
+        onClose();
+      }
       return;
     }
 
@@ -731,16 +713,19 @@ const WitnessDrawerV2 = ({
           }
         }
 
-        setShowErrorToast({ label: "New draft created successfully", error: false });
+        setShowErrorToast({ label: t("WITNESS_DEPOSITION_CREATED_SUCCESSFULLY"), error: false });
       }
 
       // Also refresh evidence list to ensure server and client are in sync
       evidenceRefetch();
     } catch (error) {
       console.error("Error saving draft:", error);
-      setShowErrorToast({ label: "Failed to save draft", error: true });
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
       setLoader(false);
+      if (backAction) {
+        onClose();
+      }
       if (submit) {
         if (!disableWitnessType) {
           setShowConfirmWitnessModal(true);
@@ -958,6 +943,10 @@ const WitnessDrawerV2 = ({
     }
   };
 
+  const handleCloseWitnessDrawer = () => {
+    handleSaveDraft(null, null, true);
+  };
+
   if (isFilingTypeLoading || isEvidenceLoading) {
     return <Loader />;
   }
@@ -987,7 +976,7 @@ const WitnessDrawerV2 = ({
       <div className={`bottom-drawer ${isOpen ? "open" : ""}`}>
         <div className="drawer-header">
           <div className="header-content">
-            <button className="drawer-close-button" onClick={onClose}>
+            <button className="drawer-close-button" onClick={handleCloseWitnessDrawer}>
               <LeftArrow color="#0b0c0c" />
             </button>
             <h2>{t("CS_WITNESS_DEPOSITION")}</h2>
@@ -1021,19 +1010,21 @@ const WitnessDrawerV2 = ({
                   </div>
                 ))}
               {/* Add new tab button */}
-              <div
-                className="witness-tab add-tab"
-                onClick={() => handleAddNewDraft()}
-                style={{
-                  padding: "8px 18px",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  fill: "#0B6265",
-                }}
-              >
-                <CustomAddIcon width="17" height="17" fill="#0A5757" />
-              </div>
+              {!artifactNumber && (
+                <div
+                  className="witness-tab add-tab"
+                  onClick={() => handleAddNewDraft()}
+                  style={{
+                    padding: "8px 18px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    fill: "#0B6265",
+                  }}
+                >
+                  <CustomAddIcon width="17" height="17" fill="#0A5757" />
+                </div>
+              )}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", margin: "16px 0px 0px" }}>
               <LabelFieldPair>

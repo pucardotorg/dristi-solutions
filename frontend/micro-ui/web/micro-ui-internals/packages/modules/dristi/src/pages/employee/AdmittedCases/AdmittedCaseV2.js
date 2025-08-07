@@ -58,6 +58,7 @@ import DocumentsV2 from "./DocumentsV2";
 import MarkAsEvidence from "./MarkAsEvidence";
 import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
 import WitnessDrawerV2 from "./WitnessDrawerV2";
+import WitnessDepositionDocModal from "./WitnessDepositionDocModal";
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
   NOTICE: 3 * 24 * 3600 * 1000,
@@ -234,6 +235,8 @@ const AdmittedCaseV2 = () => {
   const [isBailBondTaskExists, setIsBailBondTaskExists] = useState(false);
   const [bailBondLoading, setBailBondLoading] = useState(false);
   const [showAddWitnessModal, setShowAddWitnessModal] = useState(false);
+  const [showWitnessDepositionDoc, setShowWitnessDepositionDoc] = useState({ docObj: null, show: false });
+  const [editWitnessDepositionArtifact, setEditWitnessDepositionArtifact] = useState(null);
 
   const JoinCaseHome = useMemo(() => Digit.ComponentRegistryService.getComponent("JoinCaseHome"), []);
   const history = useHistory();
@@ -2175,13 +2178,16 @@ const AdmittedCaseV2 = () => {
   const ordersData = historyOrderData || apiOrdersData;
 
   const onTabChange = useCallback(
-    (_, i) => {
-      history.replace(`${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${i?.label}${fromHome ? `&fromHome=${fromHome}` : ""}`, {
-        caseData,
-        orderData: ordersData,
-        homeFilteredData: homeFilteredData,
-        homeActiveTab: homeActiveTab,
-      });
+    (_, i, label = "") => {
+      history.replace(
+        `${path}?caseId=${caseId}&filingNumber=${filingNumber}&tab=${i?.label ? i?.label : label}${fromHome ? `&fromHome=${fromHome}` : ""}`,
+        {
+          caseData,
+          orderData: ordersData,
+          homeFilteredData: homeFilteredData,
+          homeActiveTab: homeActiveTab,
+        }
+      );
     },
     [caseData, caseId, filingNumber, history, ordersData, path, fromHome]
   );
@@ -2887,10 +2893,6 @@ const AdmittedCaseV2 = () => {
                 label: "END_HEARING",
               },
               {
-                value: "TAKE_WITNESS_DEPOSITION", // added witness dep, option
-                label: "TAKE_WITNESS_DEPOSITION",
-              },
-              {
                 value: "GENERATE_ORDER",
                 label: "GENERATE_ORDER",
               },
@@ -2920,6 +2922,10 @@ const AdmittedCaseV2 = () => {
         {
           value: "ADD_WITNESS",
           label: "ADD_WITNESS",
+        },
+        {
+          value: "TAKE_WITNESS_DEPOSITION",
+          label: "TAKE_WITNESS_DEPOSITION",
         },
       ];
     else if (isBenchClerk) {
@@ -2957,6 +2963,10 @@ const AdmittedCaseV2 = () => {
               value: "ADD_WITNESS",
               label: "ADD_WITNESS",
             },
+            {
+              value: "TAKE_WITNESS_DEPOSITION",
+              label: "TAKE_WITNESS_DEPOSITION",
+            },
           ]
         : [
             {
@@ -2970,6 +2980,10 @@ const AdmittedCaseV2 = () => {
             {
               value: "ADD_WITNESS",
               label: "ADD_WITNESS",
+            },
+            {
+              value: "TAKE_WITNESS_DEPOSITION",
+              label: "TAKE_WITNESS_DEPOSITION",
             },
           ];
     } else if (isTypist) {
@@ -3007,6 +3021,10 @@ const AdmittedCaseV2 = () => {
               value: "ADD_WITNESS",
               label: "ADD_WITNESS",
             },
+            {
+              value: "TAKE_WITNESS_DEPOSITION",
+              label: "TAKE_WITNESS_DEPOSITION",
+            },
           ]
         : [
             {
@@ -3024,6 +3042,10 @@ const AdmittedCaseV2 = () => {
             {
               value: "ADD_WITNESS",
               label: "ADD_WITNESS",
+            },
+            {
+              value: "TAKE_WITNESS_DEPOSITION",
+              label: "TAKE_WITNESS_DEPOSITION",
             },
           ];
     }
@@ -3250,6 +3272,7 @@ const AdmittedCaseV2 = () => {
         setSelectedItem={setSelectedItem}
         counter={documentCounter}
         // handleFilingAction={handleFilingAction}
+        setShowWitnessDepositionDoc={setShowWitnessDepositionDoc}
       />
     );
   }, [caseDetails, courtId, tenantId, filingNumber, caseId, cnrNumber, documentCounter]);
@@ -3643,6 +3666,17 @@ const AdmittedCaseV2 = () => {
           <CaseBundleView caseDetails={caseDetails} tenantId={tenantId} filingNumber={filingNumber} />
         </div>
       )}
+      {showWitnessDepositionDoc?.show && (
+        <WitnessDepositionDocModal
+          t={t}
+          docObj={showWitnessDepositionDoc?.docObj}
+          setShowWitnessDepositionDoc={setShowWitnessDepositionDoc}
+          showWitnessModal={showWitnessModal}
+          setShowWitnessModal={setShowWitnessModal}
+          setEditWitnessDepositionArtifact={setEditWitnessDepositionArtifact}
+          editWitnessDepositionArtifact={editWitnessDepositionArtifact}
+        />
+      )}
       {show && (
         <EvidenceModal
           documentSubmission={documentSubmission}
@@ -3994,7 +4028,9 @@ const AdmittedCaseV2 = () => {
           isOpen={showWitnessModal}
           onClose={() => {
             setShowWitnessModal(false);
+            setEditWitnessDepositionArtifact(null);
             refetchHearing();
+            onTabChange(0, {}, "Documents");
           }}
           onSubmit={(action) => {
             if (action === "end-hearing") {
@@ -4013,6 +4049,7 @@ const AdmittedCaseV2 = () => {
           setAddPartyModal={setAddPartyModal}
           tenantId={tenantId}
           refetchCaseData={refetchCaseData}
+          artifactNumber={editWitnessDepositionArtifact}
         />
       )}
       {addPartyModal && (

@@ -1183,7 +1183,7 @@ export const UICustomizations = {
     additionalCustomizations: (row, key, column, value, t) => {
       switch (key) {
         case "FILING_NAME":
-          const showValue = row?.additionalDetails?.formdata?.documentTitle ? row?.additionalDetails?.formdata?.documentTitle : value;
+          const showValue = row?.additionalDetails?.formdata?.documentTitle ? row?.additionalDetails?.formdata?.documentTitle : row?.artifactType === "WITNESS_DEPOSITION" ? `${t(value)} (${row?.tag})` : value;
           return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={showValue} showAsHeading={true} />;
         case "TYPE":
           return t(row?.filingType) || "";

@@ -12,6 +12,8 @@ import { submissionService } from "../../hooks/services";
 import { useLocation } from "react-router-dom/cjs/react-router-dom";
 import useSearchBailBondService from "../../hooks/submissions/useSearchBailBondService";
 import { bailBondWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow";
+import useOpenApiSearchWitnessDeposition from "../../hooks/submissions/useOpenApiSearchWitnessDeposition";
+import useSearchEvidenceService from "../../hooks/submissions/useSearchEvidenceService";
 
 const getStyles = () => ({
   header: { fontSize: "26px", padding: "12px 40px", fontWeight: 700, borderBottom: "1px solid #E8E8E8" },
@@ -91,7 +93,7 @@ const getStyles = () => ({
 const WitnessDepositionSignaturePage = () => {
   const { t } = useTranslation();
   const location = useLocation();
-  const { bailbondId } = Digit.Hooks.useQueryParams();
+  const { artifactNumber, filingNumber } = Digit.Hooks.useQueryParams();
   const mobileNumber = location?.state?.mobileNumber;
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const styles = getStyles();
@@ -107,96 +109,45 @@ const WitnessDepositionSignaturePage = () => {
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);
+  const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+  const isCitizen = userRoles?.includes("CITIZEN");
+
   const [esignMobileNumber, setEsignMobileNumber] = useState("");
 
-  const { data: bailBondOpenData, isLoading: isBailBondLoading } = useOpenApiSearchBailBond(
+  const { data: witnessDepositionOpenData, isLoading: isWitnessDepositionOpenLoading } = useOpenApiSearchWitnessDeposition(
     {
       tenantId,
-      bailId: bailbondId,
+      artifactNumber: artifactNumber,
       mobileNumber: mobileNumber || esignMobileNumber,
     },
     {},
-    `bail-bond-details-${bailbondId}`,
-    Boolean(bailbondId && !isUserLoggedIn)
+    `witness-deposition-details-${artifactNumber}`,
+    Boolean(artifactNumber && !isUserLoggedIn)
   );
 
-  const { data: bailBond, isLoading: isBailDataLoading } = useSearchBailBondService(
+  const { data: witnessDeposition, isLoading: isWitnessDepositionLoading } = useSearchEvidenceService(
     {
       criteria: {
-        bailId: bailbondId,
+        artifactNumber: artifactNumber,
+        filingNumber: filingNumber,
       },
       tenantId,
     },
     {},
-    `bail-bond-details-${bailbondId}`,
-    Boolean(bailbondId && isUserLoggedIn)
+    `witness-deposition-details-${artifactNumber}`,
+    Boolean(artifactNumber && isUserLoggedIn)
   );
 
-  const bailBondDetails = useMemo(() => {
-    return bailBond?.bails?.[0] || bailBondOpenData;
-  }, [bailBond, bailBondOpenData]);
-
-  const isCreator = useMemo(() => {
-    if (!isUserLoggedIn) return false;
-
-    const createdByUuid = bailBondDetails?.auditDetails?.createdBy;
-    const loggedInUserUuid = userInfo?.uuid;
-
-    return Boolean(createdByUuid && loggedInUserUuid && createdByUuid === loggedInUserUuid);
-  }, [isUserLoggedIn, bailBondDetails?.auditDetails?.createdBy, userInfo?.uuid]);
+  const witnessDepositionDetails = useMemo(() => {
+    return witnessDeposition?.artifacts?.[0] || witnessDepositionOpenData;
+  }, [witnessDeposition, witnessDepositionOpenData]);
 
   const fileStoreId = useMemo(() => {
-    return bailBondDetails?.documents?.[0]?.fileStore;
-  }, [bailBondDetails]);
-
-  const dummyLitigants = useMemo(() => {
-    const data = [];
-    const litigant = {
-      additionalDetails: {
-        fullName: bailBondDetails?.litigantName || "",
-        type: "Accused",
-      },
-      hasSigned: bailBondDetails?.litigantSigned || false,
-      mobileNumber: bailBondDetails?.litigantMobileNumber || bailBondDetails?.phoneNumber,
-      placeHolder: "Accused Signature",
-    };
-
-    if (Array.isArray(bailBondDetails?.sureties)) {
-      bailBondDetails.sureties.forEach((surety, index) => {
-        data.push({
-          additionalDetails: {
-            fullName: surety?.name || "",
-            type: `Surety ${index + 1}`,
-          },
-          hasSigned: surety?.hasSigned || false,
-          mobileNumber: surety?.phoneNumber,
-          placeHolder: `Surety${index + 1} Signature`,
-        });
-      });
-    }
-
-    return [litigant, ...data];
-  }, [bailBondDetails]);
-
-  const signingUserDetails = useMemo(() => {
-    let matchedMobileNumber = "";
-    if (isUserLoggedIn) {
-      matchedMobileNumber = userInfo?.mobileNumber;
-    } else {
-      matchedMobileNumber = mobileNumber;
-    }
-
-    const matched = dummyLitigants?.find((person) => person?.mobileNumber === matchedMobileNumber);
-
-    return {
-      mobileNumber: matched?.mobileNumber,
-      placeHolder: matched?.placeHolder || "",
-      hasSigned: matched?.hasSigned,
-    };
-  }, [dummyLitigants, isUserLoggedIn, mobileNumber, userInfo?.mobileNumber]);
+    return witnessDepositionDetails?.file?.fileStore;
+  }, [witnessDepositionDetails]);
 
   const { data: { file: orderPreviewPdf, fileName: orderPreviewFileName } = {}, isFetching: isLoading } = useQuery({
-    queryKey: ["bailBondSignaturePdf", tenantId, bailbondId, userInfo?.uuid],
+    queryKey: ["witnessDepositionSignaturePdf", tenantId, artifactNumber, userInfo?.uuid],
     retry: 3,
     cacheTime: 0,
     queryFn: async () => {
@@ -232,12 +183,13 @@ const WitnessDepositionSignaturePage = () => {
       const fileStoreId = sessionStorage.getItem("fileStoreId");
       const payload = {
         tenantId,
-        bailId: bailbondId,
+        artifactNumber: artifactNumber,
+        partyType: witnessDepositionDetails?.sourceType,
         mobileNumber: mobileNumber || esignMobileNumber,
         fileStoreId: fileStoreId,
       };
       sessionStorage.removeItem("fileStoreId");
-      const res = await submissionService.updateOpenBailBond(payload, { tenantId });
+      const res = await submissionService.updateOpenWitnessDeposition(payload, { tenantId });
       setShowSignatureModal(false);
       setShowSuccessModal(true);
     } catch (error) {
@@ -252,32 +204,6 @@ const WitnessDepositionSignaturePage = () => {
     sessionStorage.removeItem("isAuthorised");
     sessionStorage.removeItem("fileStoreId");
     history.replace(`/${window?.contextPath}/citizen/dristi/home/login`);
-  };
-
-  const handleEditBailBondSubmit = async () => {
-    // TODO : Update Api CAll
-    try {
-      sessionStorage.removeItem("isAuthorised");
-      if (isUserLoggedIn) {
-        const payload = {
-          bail: {
-            ...bailBondDetails,
-            workflow: { ...bailBondDetails.workflow, action: bailBondWorkflowAction.EDIT, documents: [{}] },
-          },
-        };
-        const res = await submissionService.updateBailBond(payload, { tenantId });
-        history.replace(
-          `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${bailBondDetails?.filingNumber}&bailBondId=${bailbondId}`
-        );
-      } else {
-        history.replace(`/${window?.contextPath}/citizen/dristi/home/login`);
-      }
-    } catch (error) {
-      console.error("Error while updating bail bond:", error);
-      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
-    } finally {
-      setEditCaseModal(false);
-    }
   };
 
   useEffect(() => {
@@ -298,13 +224,13 @@ const WitnessDepositionSignaturePage = () => {
 
   useEffect(() => {
     if (!isUserLoggedIn && !isAuthorised) {
-      history.replace(`/${window?.contextPath}/citizen/dristi/home/bail-bond-login?tenantId=${tenantId}&bailbondId=${bailbondId}`);
+      history.replace(`/${window?.contextPath}/citizen/dristi/home/evidence-login?tenantId=${tenantId}&artifactNumber=${artifactNumber}`);
     }
 
-    if (!bailbondId) {
+    if (!artifactNumber || !isCitizen) {
       history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`);
     }
-  }, []);
+  }, [artifactNumber, history, isAuthorised, isCitizen, isUserLoggedIn, tenantId, userType]);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -319,34 +245,14 @@ const WitnessDepositionSignaturePage = () => {
     }
   }, [showErrorToast]);
 
-  if (isBailDataLoading || isBailBondLoading) {
+  if (isWitnessDepositionOpenLoading || isLoading) {
     return <Loader />;
   }
 
   return (
     <React.Fragment>
-      <div style={styles.header}>{t("BAIL_BOND")}</div>
+      <div style={styles.header}>{`${t("WITNESS_DEPOSITION")} ${witnessDepositionDetails?.tag}`}</div>
       <div style={styles.container}>
-        <div style={styles.leftPanel}>
-          <div style={styles.detailsSection}>
-            <div style={styles.details}>
-              <div>{t("E-sign Status")}</div>
-            </div>
-            <div>
-              {dummyLitigants?.map((litigant, index) => (
-                <div key={index} style={{ ...styles.litigantDetails, marginTop: "5px", fontSize: "16px" }}>
-                  {litigant?.additionalDetails?.fullName}
-                  {` (${litigant?.additionalDetails?.type})`}
-                  {litigant?.hasSigned ? (
-                    <span style={{ ...styles.signedLabel, alignItems: "right" }}>{t("SIGNED")}</span>
-                  ) : (
-                    <span style={{ ...styles.unSignedLabel, alignItems: "right" }}>{t("PENDING")}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
         <div style={styles.rightPanel}>
           <div style={styles.docViewer}>
             {!isLoading ? (
@@ -365,25 +271,7 @@ const WitnessDepositionSignaturePage = () => {
         </div>
         <ActionBar>
           <div style={styles.actionBar}>
-            {isCreator && (
-              <Button
-                label={t("EDIT")}
-                variation={"secondary"}
-                onButtonClick={() => {
-                  setEditCaseModal(true);
-                }}
-                style={{ backgroundColor: "#fff", padding: "10px", width: "90px", marginRight: "20px" }}
-                textStyles={{
-                  fontFamily: "Roboto",
-                  fontSize: "16px",
-                  fontWeight: 700,
-                  lineHeight: "18.75px",
-                  textAlign: "center",
-                  color: "#007E7E",
-                }}
-              />
-            )}
-            {signingUserDetails?.mobileNumber && !signingUserDetails?.hasSigned && (
+            {true && (
               <SubmitBar
                 label={
                   <div style={{ boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
@@ -397,28 +285,21 @@ const WitnessDepositionSignaturePage = () => {
           </div>
         </ActionBar>
       </div>
-      {isEditCaseModal && (
-        <EditSendBackModal
-          t={t}
-          handleCancel={() => setEditCaseModal(false)}
-          handleSubmit={handleEditBailBondSubmit}
-          headerLabel={"CONFIRM_EDIT_BAIL_BOND"}
-          saveLabel={"CONFIRM_BAIL_BOND"}
-          cancelLabel={"CANCEL_EDIT"}
-          contentText={"INVALIDATE_ALL_SIGN"}
-        />
-      )}
+
       {showSignatureModal && (
         <BailEsignModal
           t={t}
           handleCloseSignaturePopup={handleCloseSignatureModal}
           handleProceed={handleEsignProceed}
           fileStoreId={fileStoreId}
-          signPlaceHolder={signingUserDetails?.placeHolder}
-          mobileNumber={signingUserDetails?.mobileNumber}
+          signPlaceHolder={"witness-deposition-sign"}
+          mobileNumber={isUserLoggedIn ? userInfo?.mobileNumber : mobileNumber}
+          forWitnessDeposition={true}
         />
       )}
-      {showSuccessModal && <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"SIGNED_BAIL_BOND_MESSAGE"} />}
+      {showSuccessModal && (
+        <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"SIGNED_WITNESS_DEPOSITION_MESSAGE"} />
+      )}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </React.Fragment>
   );
