@@ -182,14 +182,14 @@ const SelectParty = ({
       />
 
       <LabelFieldPair className="case-label-field-pair">
-        <CardLabel className="case-input-label">{`${t("JOINING_THIS_CASE_AS")}`}</CardLabel> {/* TODO: localisation change*/}
+        <CardLabel className="case-input-label">{`${t("JOINING_THIS_CASE_AS")}`}</CardLabel>
         <RadioButtons
           selectedOption={selectPartyData?.userType}
           disabled={true}
           optionsKey={"label"}
           options={[
             { label: t("ADVOCATE_OPT"), value: "Advocate" },
-            { label: t("LITIGANT_OPT"), value: "Litigant" }, // TODO: localisation change
+            { label: t("LITIGANT_OPT"), value: "Litigant" },
           ]}
           additionalWrapperClass={"radio-disabled"}
         />
@@ -226,7 +226,7 @@ const SelectParty = ({
 
       {selectPartyData?.userType?.value === "Litigant" && selectPartyData?.partyInvolve?.value && (
         <LabelFieldPair className="case-label-field-pair">
-          <CardLabel className="case-input-label">{`${t("Are you claiming/revoking PoA-holder rights?")}`}</CardLabel>
+          <CardLabel className="case-input-label">{`${t("ARE_YOU_CLAIMING_REVOKING_POA_HOLDER_RIGHTS")}`}</CardLabel>
           <RadioButtons
             selectedOption={selectPartyData?.isPoaRightsClaiming}
             onSelect={(value) => {

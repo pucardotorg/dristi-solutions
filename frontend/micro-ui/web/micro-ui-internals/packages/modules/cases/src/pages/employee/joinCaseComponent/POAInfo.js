@@ -7,17 +7,15 @@ import { useEffect } from "react";
 const fieldStyle = { marginRight: 0, width: "100%" };
 
 const POAInfo = ({ t, poaJoinedParties, setIsDisabled, onProceed, goBack, isApiCalled, isDisabled, setFormData, formdata }) => {
-  const modalRef = useRef(null);
-
-  useEffect(() => {
-    setIsDisabled(!formdata?.prayer);
-  }, [formdata?.prayer, setIsDisabled]);
-
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors) => {
     if (!isEqual(formData, formdata)) {
       setFormData(formData);
     }
   };
+
+  useEffect(() => {
+    setIsDisabled(!formdata?.prayer);
+  }, [formdata?.prayer, setIsDisabled]);
 
   return (
     <React.Fragment>

@@ -306,10 +306,10 @@ export const getUserUUID = async (individualId, tenantId) => {
   return individualData;
 };
 
-export const getTaskDetails = async (taskNumber, tenentId) => {
+export const getTaskDetails = async (taskNumber, tenantId) => {
   const taskDetails = await window?.Digit.DRISTIService?.searchTask({
     criteria: {
-      tenantId: tenentId,
+      tenantId: tenantId,
       taskNumber: taskNumber,
     },
   });
@@ -333,14 +333,14 @@ export const createPendingTask = async ({
   caseTitle,
   applicationType,
 }) => {
-  const assignes = !isAssignedRole ? [userInfo?.uuid] || [] : [];
+  const assignees = !isAssignedRole ? [userInfo?.uuid] || [] : [];
   await DRISTIService.customApiService(Urls.task.pendingTask, {
     pendingTask: {
       name,
       entityType,
       referenceId: `MANUAL_${refId}`,
       status,
-      assignedTo: assignes?.map((uuid) => ({ uuid })),
+      assignedTo: assignees?.map((uuid) => ({ uuid })),
       assignedRole: assignedRole,
       cnrNumber: cnrNumber,
       filingNumber: filingNumber,

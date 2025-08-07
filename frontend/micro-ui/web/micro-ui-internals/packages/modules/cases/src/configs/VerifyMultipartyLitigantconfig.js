@@ -195,7 +195,7 @@ export const VerifyPoaClaiming = [
           inputs: [
             {
               infoHeader: "CS_COMMON_NOTE",
-              infoText: "This Person has already poa, pls upload both authorisation and revoke",
+              infoText: "POA_CLAIMING_INFO_TEXT",
               type: "InfoComponent",
               showTooltip : true,
             },
