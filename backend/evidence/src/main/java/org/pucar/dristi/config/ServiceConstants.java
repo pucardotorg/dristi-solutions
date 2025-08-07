@@ -173,4 +173,5 @@ public class ServiceConstants {
 	public static final String PROSECUTION_WITNESS="PW";
 	public static final String DEFENCE_WITNESS="DW";
 	public static final String COURT_WITNESS="CW";
+	public static final String SYSTEM = "SYSTEM";
 }
