@@ -286,6 +286,8 @@ module.exports = {
       process.env.APPLICATION_WITNESS_DEPOSITION_QR ||
       "application-witness-deposition-qr",
     evidence: process.env.EVIDENCE || "evidence",
+    poa_claim: process.env.POA_CLAIM || "application-poa-change",
+    poa_claim_qr: process.env.POA_CLAIM_QR || "application-poa-change-qr",
   },
 
   app: {

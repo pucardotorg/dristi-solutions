@@ -43,6 +43,7 @@ const SubmissionPreviewSubmissionTypeMap = {
   DELAY_CONDONATION: "application-delay-condonation",
   CORRECTION_IN_COMPLAINANT_DETAILS: "application-profile-edit",
   ADDING_WITNESSES: "application-witness-deposition",
+  APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS: "poa-claim-application",
 };
 
 const onDocumentUpload = async (fileData, filename) => {
@@ -99,7 +100,7 @@ function ReviewSubmissionModal({
           cnrNumber: application?.cnrNumber,
           qrCode: false,
           applicationType: SubmissionPreviewSubmissionTypeMap[application?.applicationType],
-          courtId: courtId,
+          courtId: courtId || application?.courtId,
         },
         data: {
           RequestInfo: {
@@ -151,7 +152,7 @@ function ReviewSubmissionModal({
     <Modal
       headerBarMain={<Heading label={t("REVIEW_SUBMISSION_APPLICATION_HEADING")} />}
       headerBarEnd={<CloseBtn onClick={handleBack} />}
-      actionCancelLabel={t("CS_COMMON_BACK")}
+      actionCancelLabel={applicationType !== "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS" && t("CS_COMMON_BACK")}
       actionCancelOnSubmit={handleBack}
       actionSaveLabel={t("ADD_SIGNATURE")}
       isDisabled={isLoading}
