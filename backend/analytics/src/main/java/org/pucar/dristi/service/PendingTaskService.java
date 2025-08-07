@@ -74,7 +74,7 @@ public class PendingTaskService {
                 updatePendingTaskForLitigant(joinCaseJson, pendingTaskNode);
             } else if (Objects.equals(topic, REPRESENTATIVE_JOIN_CASE_TOPIC) || Objects.equals(topic, REPRESENTATIVE_REPLACE_JOIN_CASE)) {
                 updatePendingTaskForAdvocate(joinCaseJson, pendingTaskNode);
-            } else if (Objects.equals(topic, "poa-join-case") && joinCaseJson.get("poaHolders") != null) {
+            } else if (Objects.equals(topic, POA_JOIN_CASE_TOPIC) && joinCaseJson.get("poaHolders") != null) {
                 updatePendingTaskForPOA(joinCaseJson, pendingTaskNode);
             }
             log.info("operation=updatePendingTask, result=SUCCESS, topic={}, filingNumber={}", topic, filingNumber);
@@ -90,7 +90,12 @@ public class PendingTaskService {
             JsonNode hitsNode = pendingTaskNode.path("hits").path("hits");
             JsonNode poaHolders = objectMapper.convertValue(joinCaseJson.get("poaHolders"), JsonNode.class);
             for(JsonNode poaHolder: poaHolders) {
-                String poaUuid = poaHolder.get("additionalDetails").get("uuid").textValue();
+                JsonNode additionalDetails = poaHolder.get("additionalDetails");
+                if (additionalDetails == null || additionalDetails.get("uuid") == null) {
+                    log.warn("POA holder missing additionalDetails.uuid, skipping");
+                    continue;
+                }
+                String poaUuid = additionalDetails.get("uuid").textValue();
                 JsonNode representingLitigants = poaHolder.get("representingLitigants");
                 List<String> individualIds = new ArrayList<>();
                 
@@ -104,7 +109,11 @@ public class PendingTaskService {
                     }
                 }
                 List<JsonNode> filteredTask = filterPendingTask(hitsNode, individualIds);
-                addAssigneeToPendingTask(filteredTask, poaUuid);
+                if(poaHolder.get("isActive").asBoolean()) {
+                    addAssigneeToPendingTask(filteredTask, poaUuid);
+                } else {
+                    removeAssignedToPendingTask(filteredTask, poaUuid);
+                }
                 pendingTaskUtil.updatePendingTask(filteredTask);
             }
             log.info("operation=updatePendingTaskForPOA, status=SUCCESS");
