@@ -11,7 +11,7 @@ import { useHistory } from "react-router-dom";
 import { InfoCard } from "@egovernments/digit-ui-components";
 
 // Helper functions for button labels and actions
-const getButtonLabels = (isJudge, evidenceDetails, t, currentDiaryEntry = false) => {
+const getButtonLabels = (isJudge, evidenceDetails, currentDiaryEntry = false, t) => {
   return {
     // Primary action button label
     saveLabel: isJudge
@@ -20,9 +20,12 @@ const getButtonLabels = (isJudge, evidenceDetails, t, currentDiaryEntry = false)
           ? t("CORE_COMMON_SAVE")
           : false
         : t("CS_ESIGN")
-      : evidenceDetails?.evidenceMarkedStatus === "COMPLETED"
+      : evidenceDetails?.evidenceMarkedStatus === "DRAFT_IN_PROGRESS"
+      ? t("SEND_FOR_SIGN")
+      : (evidenceDetails?.evidenceMarkedStatus === "COMPLETED" && currentDiaryEntry) ||
+        evidenceDetails?.evidenceMarkedStatus === "PENDING_BULK_E-SIGN"
       ? t("CORE_COMMON_SAVE")
-      : t("SEND_FOR_SIGN"),
+      : false,
 
     // Custom action button label (only shown conditionally)
     customLabel: isJudge && evidenceDetails?.evidenceMarkedStatus === "DRAFT_IN_PROGRESS" ? t("SEND_FOR_SIGN") : false,
@@ -56,7 +59,7 @@ const handleUpdateBusinessOfDayEntry = async (evidenceDetails, currentDiaryEntry
     await DRISTIService.aDiaryEntryUpdate(
       {
         diaryEntry: {
-          ...oldAdiaryEntry,
+          ...currentDiaryEntry,
           businessOfDay: businessOfTheDay,
         },
       },
@@ -167,6 +170,9 @@ const MarkAsEvidence = ({
   const history = useHistory();
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const [witnessTag, setWitnessTag] = useState(null);
+  const isFormValid = useMemo(() => {
+    return witnessTag !== null && evidenceNumber?.trim().length > 0;
+  }, [witnessTag, evidenceNumber]);
   const filingNumber = useMemo(() => {
     if (evidenceDetailsObj?.filingNumber) {
       return evidenceDetailsObj?.filingNumber;
@@ -389,8 +395,44 @@ const MarkAsEvidence = ({
             }
           : null;
       });
-
-      setWitnessTagValues(witnessList?.filter(Boolean));
+      const LitigantList = response?.criteria?.[0]?.responseList?.[0]?.litigants?.map((litigant) => {
+        const data = litigant?.additionalDetails?.tag || null;
+        return data
+          ? {
+              witnessTag: data || "",
+              fullName: litigant?.additionalDetails?.fullName,
+              code: data,
+              displayName: data + " (" + litigant?.additionalDetails?.fullName + ")",
+            }
+          : null;
+      });
+      const advList = response?.criteria?.[0]?.responseList?.[0]?.representatives?.map((adv) => {
+        const data = adv?.additionalDetails?.tag || null;
+        return data
+          ? {
+              witnessTag: data || "",
+              fullName: adv?.additionalDetails?.advocateName,
+              code: data,
+              displayName: data + " (" + adv?.additionalDetails?.advocateName + ")",
+            }
+          : null;
+      });
+      const poaList = response?.criteria?.[0]?.responseList?.[0]?.poaHolders?.map((poa) => {
+        const data = poa?.additionalDetails?.tag || null;
+        return data
+          ? {
+              witnessTag: data || "",
+              fullName: poa?.name,
+              code: data,
+              displayName: data + " (" + poa?.name + ")",
+            }
+          : null;
+      });
+      const combined = [...witnessList, ...LitigantList, ...advList, ...poaList];
+      if (evidenceDetails?.tag) {
+        setWitnessTag(combined?.find((user) => user?.code === evidenceDetails?.tag));
+      }
+      setWitnessTagValues(combined?.filter(Boolean));
       setCaseDetails(response?.criteria[0]?.responseList[0]);
     } catch (error) {
       console.error("error fetching case details", error);
@@ -507,7 +549,7 @@ const MarkAsEvidence = ({
       const payload = {
         ...evidenceDetails,
         evidenceNumber: `${evidenceTag}${evidenceNumber}`,
-        isEvidenceMarkedFlow: true,
+        isEvidenceMarkedFlow: action ? true : false,
         tag: witnessTag?.code,
         isEvidence: isEvidence,
         additionalDetails: {
@@ -748,7 +790,7 @@ const MarkAsEvidence = ({
           actionSaveOnSubmit={handleSubmit}
           actionCancelLabel={t("CS_COMMON_CANCEL")}
           isBackButtonDisabled={isEvidenceLoading}
-          isDisabled={isEvidenceLoading}
+          isDisabled={isEvidenceLoading || !isFormValid}
           actionCancelOnSubmit={handleCancel}
           formId="modal-action"
           headerBarMain={<Heading label={t("ACTIONS_MARK_EVIDENCE_TEXT")} />}
@@ -841,11 +883,22 @@ const MarkAsEvidence = ({
               }}
             />
           }
-          actionSaveLabel={getButtonLabels(isJudge, evidenceDetails, t).saveLabel}
+          actionSaveLabel={getButtonLabels(isJudge, evidenceDetails, currentDiaryEntry, t).saveLabel}
           actionCustomLabelSubmit={
-            getButtonActions(isJudge, handleSubmit, onESignClick, handleCancel, MarkAsEvidenceAction, evidenceDetails).customAction
+            getButtonActions(
+              isJudge,
+              handleSubmit,
+              onESignClick,
+              handleCancel,
+              MarkAsEvidenceAction,
+              handleUpdateBusinessOfDayEntry,
+              evidenceDetails,
+              currentDiaryEntry,
+              businessOfDay,
+              history
+            ).customAction
           }
-          actionCustomLabel={getButtonLabels(isJudge, evidenceDetails, t).customLabel}
+          actionCustomLabel={getButtonLabels(isJudge, evidenceDetails, currentDiaryEntry, t).customLabel}
           actionSaveOnSubmit={
             getButtonActions(
               isJudge,
@@ -860,11 +913,22 @@ const MarkAsEvidence = ({
               history
             ).saveAction
           }
-          actionCancelLabel={getButtonLabels(isJudge, evidenceDetails, t).cancelLabel}
+          actionCancelLabel={getButtonLabels(isJudge, evidenceDetails, currentDiaryEntry, t).cancelLabel}
           isBackButtonDisabled={isEvidenceLoading}
           isDisabled={isEvidenceLoading}
           actionCancelOnSubmit={
-            getButtonActions(isJudge, handleSubmit, onESignClick, handleCancel, MarkAsEvidenceAction, evidenceDetails).cancelAction
+            getButtonActions(
+              isJudge,
+              handleSubmit,
+              onESignClick,
+              handleCancel,
+              MarkAsEvidenceAction,
+              handleUpdateBusinessOfDayEntry,
+              evidenceDetails,
+              currentDiaryEntry,
+              businessOfDay,
+              history
+            ).cancelAction
           }
           formId="modal-action"
           customActionTextStyle={{ color: "#007e7e" }}
@@ -996,6 +1060,7 @@ const MarkAsEvidence = ({
         <SuccessBannerModal
           t={t}
           handleCloseSuccessModal={() => {
+            clearEvidenceSessionData();
             setShowMakeAsEvidenceModal(false);
             setDocumentCounter((prevCount) => prevCount + 1);
           }}

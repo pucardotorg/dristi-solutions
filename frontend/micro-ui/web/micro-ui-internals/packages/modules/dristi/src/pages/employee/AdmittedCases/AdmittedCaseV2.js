@@ -3831,7 +3831,7 @@ const AdmittedCaseV2 = () => {
         <MarkAsEvidence
           showToast={showToast}
           t={t}
-          evidenceDetailsObj={documentSubmission?.[0]?.artifactList || artifact || selectedRow}
+          evidenceDetailsObj={artifact || documentSubmission?.[0]?.artifactList || selectedRow}
           setDocumentCounter={setDocumentCounter}
           isEvidenceLoading={false}
           handleAction={handleEvidenceAction}
