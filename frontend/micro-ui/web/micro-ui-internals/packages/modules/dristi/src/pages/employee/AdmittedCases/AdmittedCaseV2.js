@@ -4028,8 +4028,9 @@ const AdmittedCaseV2 = () => {
           isOpen={showWitnessModal}
           onClose={() => {
             setShowWitnessModal(false);
-            // setEditWitnessDepositionArtifact(null);
+            setEditWitnessDepositionArtifact(null);
             refetchHearing();
+            onTabChange(0, {}, "Documents");
           }}
           onSubmit={(action) => {
             if (action === "end-hearing") {
