@@ -1374,7 +1374,13 @@ function EFilingCases({ path }) {
                 if (selected === "complainantDetails" && formComponent.component === "VerificationComponent" && key === "poaComplainantId") {
                   key = "poaVerification.individualDetails.document";
                 }
-                const modifiedFormComponent = cloneDeep(formComponent);
+                const { labelChildren, state, tooltipValue, ...safePart } = formComponent;
+
+                let modifiedFormComponent = structuredClone
+                  ? { ...structuredClone(safePart), labelChildren, state, tooltipValue }
+                  : { ...JSON.parse(JSON.stringify(safePart)), labelChildren, state, tooltipValue };
+                // const modifiedFormComponent = cloneDeep(formComponent);
+
                 if (modifiedFormComponent?.labelChildren === "optional") {
                   modifiedFormComponent.labelChildren = <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>;
                 }
