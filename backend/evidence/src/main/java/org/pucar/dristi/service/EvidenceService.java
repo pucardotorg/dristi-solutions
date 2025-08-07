@@ -147,9 +147,6 @@ public class EvidenceService {
                 body.getArtifact() != null ? body.getArtifact().getFilingNumber() : null);
 
         try {
-            if (body.getRequestInfo() != null && body.getRequestInfo().getUserInfo().getType() != null && body.getRequestInfo().getUserInfo().getType().equals(SYSTEM)) {
-                body.getRequestInfo().getUserInfo().setType("EMPLOYEE");
-            }
             String filingNumber = body.getArtifact().getFilingNumber();
             String uniqueId = body.getArtifact().getSourceID();
 

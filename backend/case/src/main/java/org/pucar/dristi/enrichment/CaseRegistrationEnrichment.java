@@ -393,6 +393,7 @@ public class CaseRegistrationEnrichment {
         switch (type.toLowerCase()) {
             case "employee" -> enrichEmployeeUserId(roles, caseSearchRequests);
             case "citizen" -> enrichCitizenUserId(roles, caseSearchRequests);
+            case "system" -> log.info("System User is searching for cases");
             default -> throw new IllegalArgumentException("Unknown user type: " + type);
         }
     }
