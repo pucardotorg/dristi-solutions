@@ -109,8 +109,10 @@ const WitnessDepositionSignaturePage = () => {
   const [showSignatureModal, setShowSignatureModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);
-  const [esignMobileNumber, setEsignMobileNumber] = useState("");
+  const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
+  const isCitizen = userRoles?.includes("CITIZEN");
 
+  const [esignMobileNumber, setEsignMobileNumber] = useState("");
 
   const { data: witnessDepositionOpenData, isLoading: isWitnessDepositionOpenLoading } = useOpenApiSearchWitnessDeposition(
     {
@@ -140,64 +142,9 @@ const WitnessDepositionSignaturePage = () => {
     return witnessDeposition?.artifacts?.[0] || witnessDepositionOpenData;
   }, [witnessDeposition, witnessDepositionOpenData]);
 
-  // const isCreator = useMemo(() => {
-  //   if (!isUserLoggedIn) return false;
-
-  //   const createdByUuid = bailBondDetails?.auditDetails?.createdBy;
-  //   const loggedInUserUuid = userInfo?.uuid;
-
-  //   return Boolean(createdByUuid && loggedInUserUuid && createdByUuid === loggedInUserUuid);
-  // }, [isUserLoggedIn, bailBondDetails?.auditDetails?.createdBy, userInfo?.uuid]);
-
   const fileStoreId = useMemo(() => {
     return witnessDepositionDetails?.file?.fileStore;
   }, [witnessDepositionDetails]);
-
-  // const dummyLitigants = useMemo(() => {
-  //   const data = [];
-  //   const litigant = {
-  //     additionalDetails: {
-  //       fullName: bailBondDetails?.litigantName || "",
-  //       type: "Accused",
-  //     },
-  //     hasSigned: bailBondDetails?.litigantSigned || false,
-  //     mobileNumber: bailBondDetails?.litigantMobileNumber || bailBondDetails?.phoneNumber,
-  //     placeHolder: "Accused Signature",
-  //   };
-
-  //   if (Array.isArray(bailBondDetails?.sureties)) {
-  //     bailBondDetails.sureties.forEach((surety, index) => {
-  //       data.push({
-  //         additionalDetails: {
-  //           fullName: surety?.name || "",
-  //           type: `Surety ${index + 1}`,
-  //         },
-  //         hasSigned: surety?.hasSigned || false,
-  //         mobileNumber: surety?.phoneNumber,
-  //         placeHolder: `Surety${index + 1} Signature`,
-  //       });
-  //     });
-  //   }
-
-  //   return [litigant, ...data];
-  // }, [bailBondDetails]);
-
-  // const signingUserDetails = useMemo(() => {
-  //   let matchedMobileNumber = "";
-  //   if (isUserLoggedIn) {
-  //     matchedMobileNumber = userInfo?.mobileNumber;
-  //   } else {
-  //     matchedMobileNumber = mobileNumber;
-  //   }
-
-  //   const matched = dummyLitigants?.find((person) => person?.mobileNumber === matchedMobileNumber);
-
-  //   return {
-  //     mobileNumber: matched?.mobileNumber,
-  //     placeHolder: matched?.placeHolder || "",
-  //     hasSigned: matched?.hasSigned,
-  //   };
-  // }, [dummyLitigants, isUserLoggedIn, mobileNumber, userInfo?.mobileNumber]);
 
   const { data: { file: orderPreviewPdf, fileName: orderPreviewFileName } = {}, isFetching: isLoading } = useQuery({
     queryKey: ["witnessDepositionSignaturePdf", tenantId, artifactNumber, userInfo?.uuid],
@@ -259,32 +206,6 @@ const WitnessDepositionSignaturePage = () => {
     history.replace(`/${window?.contextPath}/citizen/dristi/home/login`);
   };
 
-  // const handleEditBailBondSubmit = async () => {
-  //   // TODO : Update Api CAll
-  //   try {
-  //     sessionStorage.removeItem("isAuthorised");
-  //     if (isUserLoggedIn) {
-  //       const payload = {
-  //         bail: {
-  //           ...bailBondDetails,
-  //           workflow: { ...bailBondDetails.workflow, action: bailBondWorkflowAction.EDIT, documents: [{}] },
-  //         },
-  //       };
-  //       const res = await submissionService.updateBailBond(payload, { tenantId });
-  //       history.replace(
-  //         `/${window?.contextPath}/${userType}/submissions/bail-bond?filingNumber=${bailBondDetails?.filingNumber}&bailBondId=${bailbondId}`
-  //       );
-  //     } else {
-  //       history.replace(`/${window?.contextPath}/citizen/dristi/home/login`);
-  //     }
-  //   } catch (error) {
-  //     console.error("Error while updating bail bond:", error);
-  //     setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
-  //   } finally {
-  //     setEditCaseModal(false);
-  //   }
-  // };
-
   useEffect(() => {
     const isSignSuccess = sessionStorage.getItem("esignProcess");
     const mobileNumber = sessionStorage.getItem("mobileNumber");
@@ -306,10 +227,10 @@ const WitnessDepositionSignaturePage = () => {
       history.replace(`/${window?.contextPath}/citizen/dristi/home/evidence-sign?tenantId=${tenantId}&artifactNumber=${artifactNumber}`);
     }
 
-    if (!artifactNumber) {
+    if (!artifactNumber || !isCitizen) {
       history.replace(`/${window?.contextPath}/${userType}/home/home-pending-task`);
     }
-  }, []);
+  }, [artifactNumber, history, isAuthorised, isCitizen, isUserLoggedIn, tenantId, userType]);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -330,28 +251,8 @@ const WitnessDepositionSignaturePage = () => {
 
   return (
     <React.Fragment>
-      <div style={styles.header}>{`${t("WITNESS_DEPOSITION")} ${t("SIGNATURE")}`}</div>
+      <div style={styles.header}>{`${t("WITNESS_DEPOSITION")} ${witnessDepositionDetails?.tag}`}</div>
       <div style={styles.container}>
-        {/* <div style={styles.leftPanel}>
-          <div style={styles.detailsSection}>
-            <div style={styles.details}>
-              <div>{t("E-sign Status")}</div>
-            </div>
-            <div>
-              {dummyLitigants?.map((litigant, index) => (
-                <div key={index} style={{ ...styles.litigantDetails, marginTop: "5px", fontSize: "16px" }}>
-                  {litigant?.additionalDetails?.fullName}
-                  {` (${litigant?.additionalDetails?.type})`}
-                  {litigant?.hasSigned ? (
-                    <span style={{ ...styles.signedLabel, alignItems: "right" }}>{t("SIGNED")}</span>
-                  ) : (
-                    <span style={{ ...styles.unSignedLabel, alignItems: "right" }}>{t("PENDING")}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div> */}
         <div style={styles.rightPanel}>
           <div style={styles.docViewer}>
             {!isLoading ? (
@@ -370,24 +271,6 @@ const WitnessDepositionSignaturePage = () => {
         </div>
         <ActionBar>
           <div style={styles.actionBar}>
-            {/* {isCreator && (
-              <Button
-                label={t("EDIT")}
-                variation={"secondary"}
-                onButtonClick={() => {
-                  setEditCaseModal(true);
-                }}
-                style={{ backgroundColor: "#fff", padding: "10px", width: "90px", marginRight: "20px" }}
-                textStyles={{
-                  fontFamily: "Roboto",
-                  fontSize: "16px",
-                  fontWeight: 700,
-                  lineHeight: "18.75px",
-                  textAlign: "center",
-                  color: "#007E7E",
-                }}
-              />
-            )} */}
             {true && (
               <SubmitBar
                 label={
@@ -402,17 +285,7 @@ const WitnessDepositionSignaturePage = () => {
           </div>
         </ActionBar>
       </div>
-      {/* {isEditCaseModal && (
-        <EditSendBackModal
-          t={t}
-          handleCancel={() => setEditCaseModal(false)}
-          handleSubmit={handleEditBailBondSubmit}
-          headerLabel={"CONFIRM_EDIT_BAIL_BOND"}
-          saveLabel={"CONFIRM_BAIL_BOND"}
-          cancelLabel={"CANCEL_EDIT"}
-          contentText={"INVALIDATE_ALL_SIGN"}
-        />
-      )} */}
+
       {showSignatureModal && (
         <BailEsignModal
           t={t}
@@ -424,7 +297,9 @@ const WitnessDepositionSignaturePage = () => {
           forWitnessDeposition={true}
         />
       )}
-      {showSuccessModal && <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"SIGNED_WITNESS_DEPOSITION_MESSAGE"} />}
+      {showSuccessModal && (
+        <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"SIGNED_WITNESS_DEPOSITION_MESSAGE"} />
+      )}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </React.Fragment>
   );

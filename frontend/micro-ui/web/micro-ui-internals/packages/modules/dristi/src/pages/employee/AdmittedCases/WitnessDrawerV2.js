@@ -92,6 +92,11 @@ const WitnessDrawerV2 = ({
     setShowErrorToast(null);
   };
 
+  // Sync currentArtifactNumber with artifactNumber prop
+  useEffect(() => {
+    setCurrentArtifactNumber(artifactNumber || null);
+  }, [artifactNumber]);
+
   useEffect(() => {
     if (showErrorToast) {
       const timer = setTimeout(() => {
@@ -117,8 +122,13 @@ const WitnessDrawerV2 = ({
     Boolean(caseDetails?.filingNumber && caseDetails?.courtId)
   );
 
-  const evidenceList = useMemo(() => evidenceData?.artifacts?.filter((artifact) => artifact?.status === "DRAFT_IN_PROGRESS"), [evidenceData]);
-
+  const evidenceList = useMemo(
+    () =>
+      evidenceData?.artifacts
+        ?.filter((artifact) => artifact?.status === "DRAFT_IN_PROGRESS")
+        ?.filter((artifact) => (artifactNumber ? artifactNumber === artifact?.artifactNumber : true)),
+    [evidenceData, artifactNumber]
+  );
   const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "FilingType" },
   ]);
@@ -400,17 +410,18 @@ const WitnessDrawerV2 = ({
     if (!isEvidenceLoading && evidenceList?.length > 0) {
       const evidenceWithUnsaved = [...evidenceList];
 
-      if (artifactNumber) {
-        const artifact = evidenceWithUnsaved?.find((tab) => tab?.artifactNumber === artifactNumber);
-        if (artifact) {
-          setActiveTabs([artifact]); // basically we show only that particular tab when editing an evidence(it will have corresponding artifact number)
-          setActiveTabIndex(0);
-          setCurrentEvidence(artifact);
-          setSelectedWitnessType({ label: artifact?.tag, value: artifact?.tag });
-          setWitnessDepositionText(artifact?.description || "");
-          return;
-        }
-      } else if (currentArtifactNumber) {
+      // if (artifactNumber) {
+      //   const artifact = evidenceWithUnsaved?.find((tab) => tab?.artifactNumber === artifactNumber);
+      //   if (artifact) {
+      //     setActiveTabs([artifact]); // basically we show only that particular tab when editing an evidence(it will have corresponding artifact number)
+      //     setActiveTabIndex(0);
+      //     setCurrentEvidence(artifact);
+      //     setSelectedWitnessType({ label: artifact?.tag, value: artifact?.tag });
+      //     setWitnessDepositionText(artifact?.description || "");
+      //     return;
+      //   }
+      // }
+      if (currentArtifactNumber) {
         const artifact = evidenceWithUnsaved?.find((tab) => tab?.artifactNumber === currentArtifactNumber);
         if (artifact) {
           const activeindex = evidenceWithUnsaved?.findIndex((tab) => tab?.artifactNumber === currentArtifactNumber);
@@ -731,14 +742,14 @@ const WitnessDrawerV2 = ({
           }
         }
 
-        setShowErrorToast({ label: "New draft created successfully", error: false });
+        setShowErrorToast({ label: t("WITNESS_DEPOSITION_CREATED_SUCCESSFULLY"), error: false });
       }
 
       // Also refresh evidence list to ensure server and client are in sync
       evidenceRefetch();
     } catch (error) {
       console.error("Error saving draft:", error);
-      setShowErrorToast({ label: "Failed to save draft", error: true });
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
       setLoader(false);
       if (submit) {
@@ -1021,19 +1032,21 @@ const WitnessDrawerV2 = ({
                   </div>
                 ))}
               {/* Add new tab button */}
-              <div
-                className="witness-tab add-tab"
-                onClick={() => handleAddNewDraft()}
-                style={{
-                  padding: "8px 18px",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  fill: "#0B6265",
-                }}
-              >
-                <CustomAddIcon width="17" height="17" fill="#0A5757" />
-              </div>
+              {!artifactNumber && (
+                <div
+                  className="witness-tab add-tab"
+                  onClick={() => handleAddNewDraft()}
+                  style={{
+                    padding: "8px 18px",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    fill: "#0B6265",
+                  }}
+                >
+                  <CustomAddIcon width="17" height="17" fill="#0A5757" />
+                </div>
+              )}
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", margin: "16px 0px 0px" }}>
               <LabelFieldPair>
