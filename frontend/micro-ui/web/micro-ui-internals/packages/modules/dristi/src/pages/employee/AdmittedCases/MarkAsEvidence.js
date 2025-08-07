@@ -381,7 +381,7 @@ const MarkAsEvidence = ({
             }
           : null;
       });
-      const LitigantList = response?.criteria?.[0]?.responseList?.[0]?.litigants?.map((litigant) => {
+      const LitigantList = (response?.criteria?.[0]?.responseList?.[0]?.litigants || [])?.map((litigant) => {
         const data = litigant?.additionalDetails?.tag || null;
         return data
           ? {
@@ -392,7 +392,7 @@ const MarkAsEvidence = ({
             }
           : null;
       });
-      const advList = response?.criteria?.[0]?.responseList?.[0]?.representatives?.map((adv) => {
+      const advList = (response?.criteria?.[0]?.responseList?.[0]?.representatives || [])?.map((adv) => {
         const data = adv?.additionalDetails?.tag || null;
         return data
           ? {
@@ -403,7 +403,7 @@ const MarkAsEvidence = ({
             }
           : null;
       });
-      const poaList = response?.criteria?.[0]?.responseList?.[0]?.poaHolders?.map((poa) => {
+      const poaList = (response?.criteria?.[0]?.responseList?.[0]?.poaHolders || [])?.map((poa) => {
         const data = poa?.additionalDetails?.tag || null;
         return data
           ? {
@@ -414,7 +414,7 @@ const MarkAsEvidence = ({
             }
           : null;
       });
-      const combined = [...witnessList, ...LitigantList, ...advList, ...poaList];
+      const combined = [...(witnessList || []), ...(LitigantList || []), ...(advList || []), ...(poaList || [])];
       if (evidenceDetails?.tag) {
         setWitnessTag(combined?.find((user) => user?.code === evidenceDetails?.tag));
       }
