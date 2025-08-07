@@ -393,6 +393,7 @@ public class CaseRegistrationEnrichment {
         switch (type.toLowerCase()) {
             case "employee" -> enrichEmployeeUserId(roles, caseSearchRequests);
             case "citizen" -> enrichCitizenUserId(roles, caseSearchRequests);
+            case "system" -> log.info("System User is searching for cases");
             default -> throw new IllegalArgumentException("Unknown user type: " + type);
         }
     }
@@ -462,6 +463,7 @@ public class CaseRegistrationEnrichment {
         switch (type.toLowerCase()) {
             case "employee" -> enrichEmployeeUserId(roles, caseSearchRequest.getCriteria(), requestInfo);
             case "citizen" -> enrichCitizenUserId(roles, caseSearchRequest.getCriteria(),requestInfo);
+            case "system" -> log.info("System User is searching for cases");
             default -> throw new IllegalArgumentException("Unknown user type: " + type);
         }
     }
@@ -517,6 +519,7 @@ public class CaseRegistrationEnrichment {
         switch (type.toLowerCase()) {
             case "employee" -> enrichEmployeeUserId(roles, caseListRequest.getCriteria(), requestInfo);
             case "citizen" -> enrichCitizenUserId(roles, caseListRequest.getCriteria(),requestInfo);
+            case "system" -> log.info("System User is searching for cases");
             default -> throw new IllegalArgumentException("Unknown user type: " + type);
         }
     }
