@@ -5,7 +5,6 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
 
 import java.util.HashMap;
@@ -15,7 +14,6 @@ import java.util.Map;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.tracer.model.CustomException;
 import org.egov.tracer.model.ServiceCallException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,11 +23,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
-import org.pucar.dristi.web.models.CaseExists;
-import org.pucar.dristi.web.models.CaseExistsRequest;
-import org.pucar.dristi.web.models.CaseExistsResponse;
-import org.pucar.dristi.web.models.WitnessDetailsRequest;
-import org.pucar.dristi.web.models.WitnessDetails;
+import org.pucar.dristi.web.models.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -56,6 +50,7 @@ public class CaseUtilTest {
         lenient().when(configs.getCaseHost()).thenReturn("http://localhost:8080");
         lenient().when(configs.getCaseExistsPath()).thenReturn("/caseExists");
         lenient().when(configs.getAddWitnessEndpoint()).thenReturn("/witness/add");
+        lenient().when(configs.getCaseSearchPath()).thenReturn("/case/search");
     }
 
     @Test
@@ -165,5 +160,4 @@ public class CaseUtilTest {
         verify(repository, times(1)).fetchResult(any(StringBuilder.class), eq(request));
         verify(mapper, times(1)).valueToTree(mockResponse);
     }
-
 }
