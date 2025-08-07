@@ -1096,9 +1096,8 @@ public class CaseService {
             );
         }
         if (!advocateId.isEmpty()) {
-            advocateId = advocateUtil.getAdvocate(caseRequest.getRequestInfo(), advocateId.stream().toList());
+            individualIds.addAll(advocateUtil.getAdvocate(caseRequest.getRequestInfo(), advocateId.stream().toList()));
         }
-        individualIds.addAll(advocateId);
     }
 
     private Set<String> getLitigantIndividualId(CourtCase courtCase) {
@@ -1567,8 +1566,6 @@ public class CaseService {
                 joinCaseV2Response.setPaymentTaskNumber(taskResponse.getTask().getTaskNumber());
             }
 
-            joinCaseNotificationsForDirectJoinOfAdvocate(joinCaseRequest, courtCase);
-
         } catch (CustomException e) {
             throw e;
         } catch (Exception e) {
@@ -1621,6 +1618,7 @@ public class CaseService {
                 return;
             }
             addAdvocateToCase(joinCaseRequest, caseObj, courtCase, auditDetails, existingRepresentative);
+            joinCaseNotificationsForDirectJoinOfAdvocate(joinCaseRequest, courtCase);
         }
     }
 
@@ -4155,6 +4153,7 @@ public class CaseService {
                     POAJoinCaseTaskRequest joinCaseTaskRequest = objectMapper.convertValue(task.getTaskDetails(), POAJoinCaseTaskRequest.class);
                     validator.isStillValidPOAJoinCase(courtCase, joinCaseTaskRequest);
                     updateCourtCaseObjectPOA(courtCase, joinCaseTaskRequest, requestInfo);
+                    poaJoinCaseNotificationsAfterApproval(joinCaseTaskRequest, courtCase, requestInfo);
                 } else {
                     // get the pending requests of advocates in the case
                     List<PendingAdvocateRequest> pendingAdvocateRequests = courtCase.getPendingAdvocateRequests();
@@ -4190,6 +4189,37 @@ public class CaseService {
             log.error("Unexpected error in updateJoinCaseRejected: {}", e.getMessage(), e);
             throw new CustomException("APPROVAL_REQUEST_ERROR", "An unexpected error occurred");
         }
+
+    }
+
+    private void poaJoinCaseNotificationsAfterApproval(POAJoinCaseTaskRequest joinCaseTaskRequest, CourtCase courtCase, RequestInfo requestInfo) {
+
+        try {
+            Set<String> individualIdSet = joinCaseTaskRequest.getIndividualDetails().stream().map(POAIndividualDetails::getIndividualId).collect(Collectors.toSet());
+            individualIdSet.add(joinCaseTaskRequest.getPoaDetails().getIndividualId());
+            individualIdSet.addAll(getPocHolderIndividualIdsOfLitigants(courtCase, individualIdSet));
+            individualIdSet.addAll(getLitigantIndividualId(courtCase));
+
+            CaseRequest caseRequest = CaseRequest.builder().requestInfo(requestInfo).cases(courtCase).build();
+            getAdvocateIndividualId(caseRequest, individualIdSet);
+
+            SmsTemplateData smsTemplateData = SmsTemplateData.builder()
+                    .cmpNumber(courtCase.getCmpNumber())
+                    .efilingNumber(courtCase.getFilingNumber())
+                    .tenantId(courtCase.getTenantId())
+                    .build();
+
+            Set<String> phoneNumbersOfUsers = callIndividualService(requestInfo, individualIdSet);
+
+            log.info("sending new user join sms to {} users", phoneNumbersOfUsers.size());
+
+            for (String phoneNumber : phoneNumbersOfUsers) {
+                notificationService.sendNotification(requestInfo, smsTemplateData, NEW_USER_JOIN, phoneNumber);
+            }
+        } catch (Exception e) {
+            log.error("Error occurred while sending notification: {}", e.toString());
+        }
+
 
     }
 
