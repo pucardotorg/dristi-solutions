@@ -109,7 +109,7 @@ public class    EvidenceRepository {
             log.info("Getting next sequence value for sequence: {}", sequenceName);
             
             String sql = "SELECT last_value + 1 FROM " + sequenceName;
-            Integer nextValue = jdbcTemplate.queryForObject(sql, Integer.class, sequenceName);
+            Integer nextValue = jdbcTemplate.queryForObject(sql, Integer.class);
             log.info("Next sequence value for {}: {}", sequenceName, nextValue);
             return nextValue;
 
