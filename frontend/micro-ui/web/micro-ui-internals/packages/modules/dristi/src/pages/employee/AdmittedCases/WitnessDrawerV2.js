@@ -697,6 +697,7 @@ const WitnessDrawerV2 = ({
 
         setShowErrorToast({ label: "Draft updated successfully", error: false });
       }
+      setDisableWitnessType(true);
 
       // Also refresh evidence list to ensure server and client are in sync
       evidenceRefetch();
