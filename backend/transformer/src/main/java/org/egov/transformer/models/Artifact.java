@@ -177,6 +177,18 @@ public class Artifact {
     @Valid
     private WorkflowObject workflow = null;
 
+    @JsonProperty("shortenedUrl")
+    private String shortenedUrl = null;
+
+    @JsonProperty("witnessMobileNumbers")
+    private List<String> witnessMobileNumbers = null;
+
+    @JsonProperty("witnessEmails")
+    private List<String> witnessEmails = null;
+
+    @JsonProperty("tag")
+    private String tag = null;
+
     @JsonProperty("evidenceMarkedStatus")
     private String evidenceMarkedStatus = null;
 
