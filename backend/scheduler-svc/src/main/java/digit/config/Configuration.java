@@ -312,4 +312,7 @@ public class Configuration {
 
     @Value("${egov.inbox.search.endpoint}")
     private String indexSearchEndPoint;
+
+    @Value("${enable.dashboard.metrics.update}")
+    private boolean enableDashboardMetricsUpdate;
 }
