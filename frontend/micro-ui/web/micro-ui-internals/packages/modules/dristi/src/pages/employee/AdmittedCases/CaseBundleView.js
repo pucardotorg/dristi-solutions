@@ -32,6 +32,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   };
 
   const userInfo = Digit.UserService.getUser()?.info;
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+
   const isJudge = useMemo(() => userInfo?.roles?.some((role) => ["JUDGE_ROLE"].includes(role?.code)), [userInfo?.roles]);
   const [selectedDocument, setSelectedDocument] = useState("complaint");
   const [selectedFileStoreId, setSelectedFileStoreId] = useState(null);
@@ -1726,7 +1728,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
                 {selectedDocumentData?.title && t(selectedDocumentData.title)}
                 {evidenceFileStoreMap &&
                   evidenceFileStoreMap.has(selectedFileStoreId) &&
-                  evidenceFileStoreMap?.get(selectedFileStoreId)?.evidenceMarkedStatus !== null && (
+                  evidenceFileStoreMap?.get(selectedFileStoreId)?.evidenceMarkedStatus !== null &&
+                  (evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED" || userType === "employee") && (
                     <CustomChip
                       text={t(evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus) || ""}
                       shade={evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"}
@@ -1738,7 +1741,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           {selectedDocument && selectedFileStoreId && (
             <div className="doc-action-buttons" style={{ display: "flex", gap: "10px" }}>
               <DownloadButton onClick={() => handleDownload(selectedFileStoreId)} label="DOWNLOAD_PDF" t={t} />
-              {isJudge &&
+              {userType === "employee" &&
                 selectedFileStoreId &&
                 evidenceFileStoreMap.has(selectedFileStoreId) &&
                 evidenceFileStoreMap?.get(selectedFileStoreId)?.evidenceMarkedStatus !== "COMPLETED" && (

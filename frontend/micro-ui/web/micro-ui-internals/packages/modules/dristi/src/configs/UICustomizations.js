@@ -1181,9 +1181,15 @@ export const UICustomizations = {
       };
     },
     additionalCustomizations: (row, key, column, value, t) => {
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+      const isEmployee = userInfo?.type !== "CITIZEN";
       switch (key) {
         case "FILING_NAME":
-          const showValue = row?.additionalDetails?.formdata?.documentTitle ? row?.additionalDetails?.formdata?.documentTitle : row?.artifactType === "WITNESS_DEPOSITION" ? `${t(value)} (${row?.tag})` : value;
+          const showValue = row?.additionalDetails?.formdata?.documentTitle
+            ? row?.additionalDetails?.formdata?.documentTitle
+            : row?.artifactType === "WITNESS_DEPOSITION"
+            ? `${t(value)} (${row?.tag})`
+            : value;
           return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={showValue} showAsHeading={true} />;
         case "TYPE":
           return t(row?.filingType) || "";
@@ -1216,9 +1222,9 @@ export const UICustomizations = {
         case "CS_ACTIONS":
           return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="FilingsConfig" />;
         case "EVIDENCE_NUMBER":
-          return modifiedEvidenceNumber(value);
+          return (row?.isEvidence || isEmployee) && modifiedEvidenceNumber(value);
         case "EVIDENCE_STATUS":
-          return row?.evidenceMarkedStatus ? (
+          return row?.evidenceMarkedStatus && (row?.evidenceMarkedStatus === "COMPLETED" || isEmployee) ? (
             <CustomChip text={t(row?.evidenceMarkedStatus) || ""} shade={row?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"} />
           ) : (
             ""
@@ -1246,11 +1252,10 @@ export const UICustomizations = {
             ]
           : []),
         ...(userInfo.roles.map((role) => role.code).includes("EMPLOYEE") &&
-        !row.isEvidence &&
         row?.artifactType !== "WITNESS_DEPOSITION" &&
         !row?.isVoid &&
         !(row?.status !== "SUBMITTED" && row?.filingType === "DIRECT")
-          ? row?.evidenceMarkedStatus !== null
+          ? row?.evidenceMarkedStatus !== null || row.isEvidence
             ? [
                 {
                   label: "VIEW_MARK_AS_EVIDENCE",

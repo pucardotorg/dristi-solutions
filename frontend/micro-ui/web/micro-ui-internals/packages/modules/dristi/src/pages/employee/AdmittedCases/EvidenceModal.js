@@ -1342,7 +1342,11 @@ const EvidenceModal = ({
                     : "Action Pending"
                   : t(applicationStatus)
               }
-              evidenceMarkedStatus={modalType === "Documents" ? documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus : null}
+              evidenceMarkedStatus={
+                (modalType === "Documents" && documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus === "COMPLETED") || userType === "employee"
+                  ? documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus
+                  : null
+              }
               showStatus={modalType === "Documents" ? false : true}
               isStatusRed={modalType === "Documents" ? !documentSubmission?.[0]?.artifactList?.isEvidence : applicationStatus}
             />
@@ -1362,7 +1366,7 @@ const EvidenceModal = ({
           //     : {}
           // }
         >
-          {documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus !== null && (
+          {documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus !== null && userType === "employee" && (
             <div style={{ margin: "16px 24px" }}>
               <div className="custom-note-main-div" style={{ padding: "8px 16px", flexDirection: "row", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
