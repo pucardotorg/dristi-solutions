@@ -5,7 +5,14 @@ import { Urls } from "../hooks/services/Urls";
 import { FileUploadIcon } from "../../../dristi/src/icons/svgIndex";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
 
-function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup, setSignedDocumentUploadID, applicationPdfFileStoreId }) {
+function SubmissionSignatureModal({
+  t,
+  handleProceed,
+  handleCloseSignaturePopup,
+  setSignedDocumentUploadID,
+  applicationPdfFileStoreId,
+  applicationType,
+}) {
   const [isSigned, setIsSigned] = useState(false);
   const { handleEsign, checkSignStatus } = Digit.Hooks.orders.useESign();
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
@@ -18,6 +25,14 @@ function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup,
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${applicationPdfFileStoreId}`;
   const name = "Signature";
   const advocatePlaceholder = "Advocate Signature";
+
+  const applicationPlaceHolder = useMemo(() => {
+    if (applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS") {
+      return name;
+    } else {
+      return advocatePlaceholder;
+    }
+  }, [applicationType]);
 
   const uploadModalConfig = useMemo(() => {
     return {
@@ -108,7 +123,7 @@ function SubmissionSignatureModal({ t, handleProceed, handleCloseSignaturePopup,
                   // setOpenAadharModal(true);
                   // setIsSigned(true);
                   sessionStorage.setItem("applicationPDF", applicationPdfFileStoreId);
-                  handleEsign(name, pageModule, applicationPdfFileStoreId, advocatePlaceholder);
+                  handleEsign(name, pageModule, applicationPdfFileStoreId, applicationPlaceHolder);
                 }}
                 className={"aadhar-sign-in"}
                 labelClassName={"submission-aadhar-sign-in"}
