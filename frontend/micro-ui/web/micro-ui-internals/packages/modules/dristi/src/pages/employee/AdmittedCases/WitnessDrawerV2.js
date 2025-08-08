@@ -540,7 +540,7 @@ const WitnessDrawerV2 = ({
       return;
     }
 
-    if (!witnessDepositionText.trim()) {
+    if (!witnessDepositionText.trim() && submit) {
       setShowErrorToast({ label: t("PLEASE_ENTER_DEPOSITION"), error: true });
       if (backAction) {
         onClose();
@@ -562,14 +562,15 @@ const WitnessDrawerV2 = ({
           artifact: {
             ...evidence,
             sourceType: selectedWitnessType.value === "PW" ? "COMPLAINANT" : selectedWitnessType.value === "DW" ? "ACCUSED" : "COURT",
+            tag: selectedWitnessType?.value,
             sourceID: selectedWitness.value,
             sourceName: party?.sourceName,
             description: witnessDepositionText,
             additionalDetails: {
               witnessDetails: {
-                address: evidence?.additionalDetails?.witnessDetails?.address || "",
-                designation: evidence?.additionalDetails?.witnessDetails?.designation || "",
-                age: evidence?.additionalDetails?.witnessDetails?.age || "",
+                address: party?.address || "",
+                designation: party?.designation || "",
+                age: party?.age || "",
               },
             },
             isEvidenceMarkedFlow: false,
@@ -669,13 +670,16 @@ const WitnessDrawerV2 = ({
     try {
       // Check if we need to create or update evidence
       const evidence = activeTabs?.find((tab) => tab?.artifactNumber === currentArtifactNumber);
+      const party = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value);
       if (evidence?.artifactNumber) {
         // Update existing evidence
         const updateEvidenceReqBody = {
           artifact: {
             ...evidence,
             filingType: "CASE_FILING",
-            tag: obtainedTag,
+            tag: selectedWitnessType?.value,
+            sourceID: selectedWitness?.value,
+            sourceName: party?.sourceName,
             workflow: {
               action: "SUBMIT",
             },
@@ -702,6 +706,7 @@ const WitnessDrawerV2 = ({
     } finally {
       setShowConfirmWitnessModal(false);
       setShowWitnessDepositionReview(true);
+      evidenceRefetch();
     }
   };
 
@@ -734,10 +739,16 @@ const WitnessDrawerV2 = ({
         workflow.additionalDetails = { excludeRoles: ["EVIDENCE_CREATOR"] };
       }
 
+      const evidence = activeTabs?.find((tab) => tab?.artifactNumber === currentArtifactNumber);
+      const party = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value);
+
       const updateEvidenceReqBody = {
         artifact: {
-          ...currentEvidence,
+          ...evidence,
           file: documentsFile ? documentsFile?.[0] : documents,
+          tag: selectedWitnessType?.value,
+          sourceID: selectedWitness?.value,
+          sourceName: party?.sourceName,
           workflow,
           isEvidenceMarkedFlow: false,
           witnessMobileNumbers: witnessMobileNumbers ? witnessMobileNumbers : currentEvidence?.witnessMobileNumbers || [],
@@ -781,10 +792,13 @@ const WitnessDrawerV2 = ({
       setShowAddWitnessMobileNumberModal(false);
       setShowsignatureModal(false);
       setShowWitnessDepositionESign(true);
+      evidenceRefetch();
+      setCurrentArtifactNumber(null);
     } catch (error) {
       console.error("Error while updating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
+      // evidenceRefetch();
       setShowsignatureModal(false);
     }
   };
@@ -797,6 +811,8 @@ const WitnessDrawerV2 = ({
       setShowsignatureModal(false);
       setShowUploadSignature(false);
       setShowSuccessModal(true);
+      evidenceRefetch();
+      setCurrentArtifactNumber(null);
     } catch (error) {
       console.error("Error while updating bail bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
@@ -1072,7 +1088,15 @@ const WitnessDrawerV2 = ({
         />
       )}
       {showSuccessModal && (
-        <SuccessBannerModal t={t} handleCloseSuccessModal={() => setShowSuccessModal(false)} message={"WITNESS_DEPOSITION_SUCCESS_BANNER_HEADER"} />
+        <SuccessBannerModal
+          t={t}
+          handleCloseSuccessModal={() => {
+            setShowSuccessModal(false);
+            evidenceRefetch();
+            setCurrentEvidence(null);
+          }}
+          message={"WITNESS_DEPOSITION_SUCCESS_BANNER_HEADER"}
+        />
       )}
 
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
