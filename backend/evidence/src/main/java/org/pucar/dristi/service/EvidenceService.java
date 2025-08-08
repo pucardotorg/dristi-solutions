@@ -84,7 +84,7 @@ public class EvidenceService {
         boolean hasWorkflow = evidenceRequest.getArtifact().getWorkflow() != null;
         boolean isArtifactTypeDeposition = DEPOSITION.equalsIgnoreCase(artifactType);
         boolean isFilingTypeDirect = DIRECT.equalsIgnoreCase(filingType);
-        boolean isEvidenceMarkedFlow = evidenceRequest.getArtifact().getIsEvidenceMarkedFlow();
+        boolean isEvidenceMarkedFlow = Boolean.TRUE.equals(evidenceRequest.getArtifact().getIsEvidenceMarkedFlow());
         boolean isArtifactTypeWitnessDeposition = WITNESS_DEPOSITION.equalsIgnoreCase(artifactType);
 
         return ((isEvidenceMarkedFlow || isArtifactTypeDeposition || isFilingTypeDirect) && hasWorkflow) || isArtifactTypeWitnessDeposition;
