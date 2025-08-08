@@ -80,10 +80,14 @@ public class EvidenceService {
     }
 
     private boolean shouldUpdateWorkflowStatusForUpdate(EvidenceRequest evidenceRequest, String filingType){
-        return evidenceRequest.getArtifact().getWorkflow() != null && (evidenceRequest.getArtifact().getArtifactType() != null &&
-                evidenceRequest.getArtifact().getArtifactType().equals(DEPOSITION)) ||
-                (filingType!= null && filingType.equalsIgnoreCase(SUBMISSION)) || evidenceRequest.getArtifact().getIsEvidenceMarkedFlow()
-                || (evidenceRequest.getArtifact().getArtifactType() != null && WITNESS_DEPOSITION.equalsIgnoreCase(evidenceRequest.getArtifact().getArtifactType()));
+        String artifactType = evidenceRequest.getArtifact().getArtifactType();
+        boolean hasWorkflow = evidenceRequest.getArtifact().getWorkflow() != null;
+        boolean isArtifactTypeDeposition = DEPOSITION.equalsIgnoreCase(artifactType);
+        boolean isFilingTypeDirect = DIRECT.equalsIgnoreCase(filingType);
+        boolean isEvidenceMarkedFlow = evidenceRequest.getArtifact().getIsEvidenceMarkedFlow();
+        boolean isArtifactTypeWitnessDeposition = WITNESS_DEPOSITION.equalsIgnoreCase(artifactType);
+
+        return ((isEvidenceMarkedFlow || isArtifactTypeDeposition || isFilingTypeDirect) && hasWorkflow) || isArtifactTypeWitnessDeposition;
     }
 
     public Artifact createEvidence(EvidenceRequest body) {
