@@ -222,7 +222,8 @@ public class EvidenceEnrichment {
                     idFormat = configuration.getCourtWitnessFormat();
                 }
             }
-            List<String> tags = idgenUtil.getIdList(body.getRequestInfo(), body.getArtifact().getTenantId(), idName, idFormat, 1, false);
+            String tenantId = getTenantId(body.getArtifact().getFilingNumber());
+            List<String> tags = idgenUtil.getIdList(body.getRequestInfo(), tenantId, idName, idFormat, 1, false);
             body.getArtifact().setTag(tags.get(0));
             log.info("Tag generated id: {} is {}", body.getArtifact().getId(), body.getArtifact().getTag());
         } catch (CustomException e) {
