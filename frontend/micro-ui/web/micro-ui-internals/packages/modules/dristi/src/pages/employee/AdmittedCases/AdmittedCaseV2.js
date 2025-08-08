@@ -696,6 +696,15 @@ const AdmittedCaseV2 = () => {
     }, duration);
   }, []);
 
+  const showToastMsg = useCallback((type, message, duration = 5000) => {
+    setToast(true);
+    setToast({ isError: type, message: message });
+    setTimeout(() => {
+      setToast(false);
+      setToast({ alreadyShown: true });
+    }, duration);
+  }, []);
+
   const onSuccess = async (response, data) => {
     showToast({
       isError: false,
@@ -3863,7 +3872,7 @@ const AdmittedCaseV2 = () => {
       )}
       {showMakeAsEvidenceModal && (
         <MarkAsEvidence
-          showToast={showToast}
+          showToast={showToastMsg}
           t={t}
           evidenceDetailsObj={artifact || documentSubmission?.[0]?.artifactList || selectedRow}
           setDocumentCounter={setDocumentCounter}

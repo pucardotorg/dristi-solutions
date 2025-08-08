@@ -312,6 +312,7 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
           setShowMakeAsEvidenceModal={setShowMakeAsEvidenceModal}
           evidenceDetailsObj={selectedEvidence?.businessObject?.artifactDetails}
           paginatedData={paginatedData}
+          setDocumentCounter={setCounter}
           showToast={showToast}
         />
       )}
@@ -343,7 +344,6 @@ function BulkMarkAsEvidenceView({ showToast = () => {} }) {
           </div>
         </Modal>
       )}
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </React.Fragment>
   );
 }
