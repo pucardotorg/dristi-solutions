@@ -8,7 +8,7 @@ import { submissionService } from "../../../../submissions/src/hooks/services/in
 import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow.js";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min.js";
 
-const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isJudge, showToast, onAddSuccess }) => {
+const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isJudge, showToast, onAddSuccess, style }) => {
   const { t } = useTranslation();
   const history = useHistory();
   const DRISTIService = Digit?.ComponentRegistryService?.getComponent("DRISTIService");
@@ -423,7 +423,7 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isJudge, 
           minWidth: "600px",
           position: "absolute",
           height: "calc(100% - 100px)",
-          top: "50%",
+          top: style?.top || "50%",
           left: "50%",
           transform: "translate(-50%, -50%)",
           justify: "space-between",
