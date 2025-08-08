@@ -1022,6 +1022,7 @@ const WitnessDrawerV2 = ({
             refetchCaseData();
           }}
           showToast={setShowErrorToast}
+          style={{ top: "57%" }}
         ></AddWitnessModal>
       )}
 
