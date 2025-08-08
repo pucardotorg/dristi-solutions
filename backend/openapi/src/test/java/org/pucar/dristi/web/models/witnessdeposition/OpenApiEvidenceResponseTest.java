@@ -24,6 +24,8 @@ class OpenApiEvidenceResponseTest {
                 "artifact123",
                 "9876543210",
                 "SOURCE_TYPE",
+                "PW1",
+                "PENDING_E-SIGN",
                 document
         );
 

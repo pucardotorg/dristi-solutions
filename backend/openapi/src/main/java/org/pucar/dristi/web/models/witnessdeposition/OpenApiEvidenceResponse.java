@@ -22,6 +22,12 @@ public class OpenApiEvidenceResponse {
     @JsonProperty("sourceType")
     private String sourceType = null;
 
+    @JsonProperty("tag")
+    private String tag = null;
+
+    @JsonProperty("status")
+    private String status = null;
+
     @JsonProperty("file")
     private Document file = null;
 
