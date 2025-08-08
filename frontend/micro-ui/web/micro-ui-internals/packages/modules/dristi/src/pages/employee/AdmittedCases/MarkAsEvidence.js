@@ -15,14 +15,14 @@ const getButtonLabels = (isJudge, evidenceDetails, currentDiaryEntry = false, t)
   return {
     // Primary action button label
     saveLabel: isJudge
-      ? evidenceDetails?.evidenceMarkedStatus === "COMPLETED"
+      ? evidenceDetails?.isEvidence || evidenceDetails?.evidenceMarkedStatus === "COMPLETED"
         ? currentDiaryEntry
           ? t("CORE_COMMON_SAVE")
           : false
         : t("CS_ESIGN")
       : evidenceDetails?.evidenceMarkedStatus === "DRAFT_IN_PROGRESS"
       ? t("SEND_FOR_SIGN")
-      : (evidenceDetails?.evidenceMarkedStatus === "COMPLETED" && currentDiaryEntry) ||
+      : ((evidenceDetails?.isEvidence || evidenceDetails?.evidenceMarkedStatus === "COMPLETED") && currentDiaryEntry) ||
         evidenceDetails?.evidenceMarkedStatus === "PENDING_BULK_E-SIGN"
       ? t("CORE_COMMON_SAVE")
       : false,
@@ -34,7 +34,7 @@ const getButtonLabels = (isJudge, evidenceDetails, currentDiaryEntry = false, t)
     cancelLabel:
       evidenceDetails?.evidenceMarkedStatus === "DRAFT_IN_PROGRESS" || evidenceDetails?.evidenceMarkedStatus === null
         ? t("CS_BULK_BACK")
-        : evidenceDetails?.evidenceMarkedStatus === "COMPLETED"
+        : evidenceDetails?.isEvidence || evidenceDetails?.evidenceMarkedStatus === "COMPLETED"
         ? currentDiaryEntry && t("CS_BULK_CANCEL")
         : t("EDIT_DETAILS"),
   };
@@ -87,7 +87,7 @@ const getButtonActions = (
   return {
     // Primary action handler
     saveAction: () => {
-      if (evidenceDetails?.evidenceMarkedStatus === "COMPLETED" && currentDiaryEntry) {
+      if ((evidenceDetails?.isEvidence || evidenceDetails?.evidenceMarkedStatus === "COMPLETED") && currentDiaryEntry) {
         return handleUpdateBusinessOfDayEntry(evidenceDetails, currentDiaryEntry, businessOfDay, history);
       }
       if (evidenceDetails?.evidenceMarkedStatus === "PENDING_BULK_E-SIGN" && !isJudge) {
@@ -154,7 +154,7 @@ const MarkAsEvidence = ({
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
-  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "JUDGE_ROLE"), [roles]);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [evidenceDetails, setEvidenceDetails] = useState(evidenceDetailsObj || {});
   const [caseDetails, setCaseDetails] = useState({});
@@ -264,7 +264,7 @@ const MarkAsEvidence = ({
             courtId: courtId,
             markedAs: `${evidenceTag}${evidenceNumber}`,
             caseNumber: filingNumber,
-            markedThrough: businessOfDay || "Evidence Portal", // NEED TO UPDATE THIS VALUE
+            markedThrough: witnessTag?.displayName,
           },
         },
         {
@@ -595,7 +595,11 @@ const MarkAsEvidence = ({
           }
         });
       } else if (stepper === 1 && !isSigned) {
-        const fileStoreId = await getMarkAsEvidencePdf();
+        let fileStoreId = evidenceDetails?.seal?.fileStore;
+        if (action) {
+          fileStoreId = await getMarkAsEvidencePdf();
+        }
+        debugger;
         if (fileStoreId && action !== null) {
           const seal = {
             documentType: "unsignedSeal",
@@ -704,7 +708,10 @@ const MarkAsEvidence = ({
         }
         if (evidenceDetails?.evidenceMarkedStatus === "DRAFT_IN_PROGRESS" || evidenceDetails?.evidenceMarkedStatus === null) {
           setStepper(0);
-        } else if (evidenceDetails?.evidenceMarkedStatus !== "COMPLETED" && evidenceDetails?.evidenceMarkedStatus !== "DRAFT_IN_PROGRESS") {
+        } else if (
+          (!evidenceDetails?.isEvidence || evidenceDetails?.evidenceMarkedStatus !== "COMPLETED") &&
+          evidenceDetails?.evidenceMarkedStatus !== "DRAFT_IN_PROGRESS"
+        ) {
           await handleMarkEvidence(MarkAsEvidenceAction?.EDIT).then((res) => {
             if (res) {
               setStepper(0);
@@ -818,7 +825,7 @@ const MarkAsEvidence = ({
               <TextInput
                 className="disabled text-input"
                 type="text"
-                value={memoEvidenceValues?.owner || ownerName}
+                value={evidenceDetails?.sourceType === "COURT" ? t("COURT") : memoEvidenceValues?.owner || ownerName}
                 disabled
                 style={{ minWidth: 120, textAlign: "start", marginBottom: "0px" }}
               />
@@ -828,13 +835,16 @@ const MarkAsEvidence = ({
               <CardLabel className="case-input-label">{t("EVIDENCE_MARKED_THROUGH")}</CardLabel>
               <Dropdown
                 t={t}
-                placeholder={`${t("WITNESS")}`}
+                placeholder={
+                  Array?.isArray(witnessTagValues) && witnessTagValues?.length > 0 ? t("CS_WITNESS_DEPOSITION") : t("NO_WITNESS_DEPOSITION")
+                }
                 option={witnessTagValues ? witnessTagValues : []}
                 selected={witnessTag}
                 optionKey={"displayName"}
                 select={(e) => {
                   setWitnessTag(e);
                 }}
+                disable={Array?.isArray(witnessTagValues) && witnessTagValues?.length > 0 ? false : true}
                 topbarOptionsClassName={"top-bar-option"}
                 style={{
                   marginBottom: "1px",
@@ -950,35 +960,35 @@ const MarkAsEvidence = ({
           <div className="mark-evidence-modal-body">
             <div className="application-info" style={{ display: "flex", flexDirection: "column" }}>
               <div className="info-row" style={{ display: "flex" }}>
-                <div className="info-key" style={{ width: "300px", minWidth: "300px" }}>
+                <div className="info-key" style={{ width: "200px", minWidth: "200px" }}>
                   <h3>{t("DOCUMENT_TITLE")}</h3>
                 </div>
-                <div className="info-value" style={{ flex: 1 }}>
+                <div className="info-value" style={{ flex: 1, maxWidth: "300px", overflowY: "auto" }}>
                   <h3>{t(memoEvidenceValues?.title)}</h3>
                 </div>
               </div>
               <div className="info-row" style={{ display: "flex" }}>
-                <div className="info-key" style={{ width: "300px", minWidth: "300px" }}>
+                <div className="info-key" style={{ width: "200px", minWidth: "200px" }}>
                   <h3>{t("UPLOADED_BY")}</h3>
                 </div>
-                <div className="info-value" style={{ flex: 1 }}>
-                  <h3>{memoEvidenceValues?.owner || ownerName}</h3>
+                <div className="info-value" style={{ flex: 1, maxWidth: "300px", overflowY: "auto" }}>
+                  <h3>{evidenceDetails?.sourceType === "COURT" ? t("COURT") : memoEvidenceValues?.owner || ownerName}</h3>
                 </div>
               </div>
 
               <div className="info-row" style={{ display: "flex" }}>
-                <div className="info-key" style={{ width: "300px", minWidth: "300px" }}>
+                <div className="info-key" style={{ width: "200px", minWidth: "200px" }}>
                   <h3>{t("EVIDENCE_MARKED_THROUGH")}</h3>
                 </div>
-                <div className="info-value" style={{ flex: 1 }}>
+                <div className="info-value" style={{ flex: 1, maxWidth: "300px", overflowY: "auto" }}>
                   <h3>{witnessTag?.displayName}</h3>
                 </div>
               </div>
               <div className="info-row" style={{ display: "flex" }}>
-                <div className="info-key" style={{ width: "300px", minWidth: "300px" }}>
+                <div className="info-key" style={{ width: "200px", minWidth: "200px" }}>
                   <h3>{t("EVIDENCE_NUMBER")}</h3>
                 </div>
-                <div className="info-value" style={{ flex: 1 }}>
+                <div className="info-value" style={{ flex: 1, maxWidth: "300px", overflowY: "auto" }}>
                   <h3>{`${evidenceTag}${evidenceNumber}`}</h3>
                 </div>
               </div>
@@ -986,10 +996,11 @@ const MarkAsEvidence = ({
             <LabelFieldPair>
               <CardLabel className="case-input-label">{t("BUSINESS_OF_THE_DAY")}</CardLabel>
               <TextInput
-                className="text-input"
+                className={evidenceDetails?.isEvidence && !currentDiaryEntry ? "text-input disabled" : "text-input"}
                 type="text"
                 value={businessOfDay}
                 onChange={(e) => setBusinessOfDay(e.target.value)}
+                disabled={evidenceDetails?.isEvidence && !currentDiaryEntry}
                 style={{ minWidth: 120, textAlign: "start", marginBottom: "0px" }}
               />
             </LabelFieldPair>
