@@ -1372,9 +1372,7 @@ const SubmissionsCreate = ({ path }) => {
   const handleBack = () => {
     if (!paymentLoader) {
       if (applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS") {
-        history.replace(
-          `/${window?.contextPath}/${userType}/dristi/home`
-        );
+        history.replace(`/${window?.contextPath}/${userType}/dristi/home`);
       } else {
         history.replace(
           `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
@@ -1606,6 +1604,7 @@ const SubmissionsCreate = ({ path }) => {
           handleCloseSignaturePopup={handleCloseSignaturePopup}
           setSignedDocumentUploadID={setSignedDocumentUploadID}
           applicationPdfFileStoreId={applicationPdfFileStoreId}
+          applicationType={applicationType}
         />
       )}
       {showPaymentModal && (
@@ -1633,7 +1632,9 @@ const SubmissionsCreate = ({ path }) => {
           createdDate={getFormattedDate(applicationDetails?.createdDate)}
           makePayment={makePaymentLabel}
           paymentStatus={paymentStatus}
-          bannerlabel={applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS" ? t("SUBMISSION_SUCCESSFUL_POA"): t("SUBMISSION_SUCCESSFUL")}
+          bannerlabel={
+            applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS" ? t("SUBMISSION_SUCCESSFUL_POA") : t("SUBMISSION_SUCCESSFUL")
+          }
         />
       )}
     </div>
