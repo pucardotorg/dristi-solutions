@@ -571,7 +571,6 @@ const MarkAsEvidence = ({
         if (action) {
           fileStoreId = await getMarkAsEvidencePdf();
         }
-        debugger;
         if (fileStoreId && action !== null) {
           const seal = {
             documentType: "unsignedSeal",
