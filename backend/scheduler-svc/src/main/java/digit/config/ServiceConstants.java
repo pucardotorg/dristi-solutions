@@ -12,6 +12,7 @@ public class ServiceConstants {
     public static final String IDGEN_ERROR = "IDGEN ERROR";
     public static final String NO_IDS_FOUND_ERROR = "No ids returned from idgen Service";
     public static final String ERROR_WHILE_FETCHING_FROM_MDMS = "Exception occurred while fetching category lists from mdms: ";
+    public static final String ERROR_WHILE_UPDATING_FROM_MDMS = "Exception occurred while updating mdms: ";
     public static final String RES_MSG_ID = "uief87324";
     public static final String SUCCESSFUL = "successful";
     public static final String FAILED = "failed";
@@ -111,5 +112,15 @@ public class ServiceConstants {
     public static final String IN_PROGRESS = "IN_PROGRESS";
 
     public static final String EMPLOYEE = "EMPLOYEE";
+
+    public static final String ERRORS_PATH = "$.errors";
+
+    public static final String ES_UPDATE_HEADER_FORMAT = "{\"update\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
+
+    public static final String ES_UPDATE_DOCUMENT_FORMAT = "{\"doc\":{\"Data\":{\"hearingDetails\":{\"serialNumber\":%d}}}}\n";
+
+    public static final String PAYMENT_COLLECTOR = "PAYMENT_COLLECTOR";
+
+    public static final String EXPIRED = "EXPIRED";
 
 }

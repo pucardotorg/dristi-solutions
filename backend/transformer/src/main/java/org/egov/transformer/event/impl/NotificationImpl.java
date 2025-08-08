@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 @Component
 @Slf4j
@@ -36,6 +37,8 @@ public class NotificationImpl implements EventListener<Notification, RequestInfo
         CourtCase courtCase =  null;
         courtCase = caseService.getCaseByCaseSearchText(event.getCaseNumber().get(0), event.getTenantId(), requestInfo);
 
+        String businessOfTheDay = event.getAdditionalDetails() != null ? getBusinessOfTheDay(event.getAdditionalDetails()) : null;
+
         OrderAndNotification orderAndNotification = OrderAndNotification.builder()
                 .type(event.getNotificationType())
                 .id(event.getNotificationNumber())
@@ -45,6 +48,7 @@ public class NotificationImpl implements EventListener<Notification, RequestInfo
                 .date(event.getCreatedDate())
                 .entityType("Notification")
                 .title(event.getNotificationType())
+                .businessOfTheDay(businessOfTheDay)
                 .tenantId(event.getTenantId())
                 .filingNumbers( new ArrayList<>())
                 .caseNumbers(event.getCaseNumber() != null ? event.getCaseNumber() : new ArrayList<>())
@@ -61,4 +65,14 @@ public class NotificationImpl implements EventListener<Notification, RequestInfo
         producer.push(properties.getOrderAndNotificationTopic(), request);
 
     }
+
+    private String getBusinessOfTheDay(Object additionalDetails) {
+        if (additionalDetails instanceof Map) {
+            Map<?, ?> detailsMap = (Map<?, ?>) additionalDetails;
+            Object botd = detailsMap.get("businessOfTheDay");
+            return botd != null ? botd.toString() : null;
+        }
+        return null;
+    }
+
 }

@@ -26,9 +26,9 @@ exports.generateCasePdf = async (req, res, next) => {
       caseService.getComplainantsDetailsForComplaint(caseData);
     const accuseds = caseService.getRespondentsDetailsForComplaint(caseData);
     const advocates = caseService.getAdvocateDetailsForComplainant(caseData);
-    const prayer = await caseService.getPrayerSwornStatementDetails(
-      caseData
-    )?.[0]?.prayer;
+    const prayer = htmlToFormattedText(
+      caseService.getPrayerSwornStatementDetails(caseData)?.[0]?.prayer
+    );
     const complaint = htmlToFormattedText(
       caseService.getPrayerSwornStatementDetails(caseData)?.[0]
         ?.memorandumOfComplaintText
@@ -135,9 +135,9 @@ exports.caseComplaintPdf = async (req, res, next) => {
     const complainants =
       caseService.getComplainantsDetailsForComplaint(caseData);
     const accuseds = caseService.getRespondentsDetailsForComplaint(caseData);
-    const prayer = await caseService.getPrayerSwornStatementDetails(
-      caseData
-    )?.[0]?.prayer;
+    const prayer = htmlToFormattedText(
+      caseService.getPrayerSwornStatementDetails(caseData)?.[0]?.prayer
+    );
     const complaint = htmlToFormattedText(
       caseService.getPrayerSwornStatementDetails(caseData)?.[0]
         ?.memorandumOfComplaintText

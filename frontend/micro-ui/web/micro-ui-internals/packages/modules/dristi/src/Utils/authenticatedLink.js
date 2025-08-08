@@ -48,6 +48,7 @@ const AuthenticatedLink = ({ t, uri, displayFilename = false, pdf = false }) => 
         textOverflow: "ellipsis",
         cursor: "pointer",
         textDecoration: "underline",
+        marginLeft: "5px",
       }}
     >
       {displayFilename ? t(displayFilename) : t("CS_CLICK_TO_DOWNLOAD")}

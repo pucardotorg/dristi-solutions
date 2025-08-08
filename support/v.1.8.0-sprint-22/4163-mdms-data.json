@@ -1,0 +1,180 @@
+[
+  {
+    "moduleName": "BillingService",
+    "masterName": "TaxHeadMaster",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "BillingService.TaxHeadMaster",
+        "uniqueIdentifier": "TASK_GENERIC_ADVANCE_CARRYFORWARD_FEES",
+        "data": {
+          "code": "TASK_GENERIC_ADVANCE_CARRYFORWARD_FEES",
+          "name": "Task Generic Fees",
+          "order": "0",
+          "isDebit": true,
+          "service": "task-generic",
+          "category": "ADVANCE_COLLECTION",
+          "isRequired": false,
+          "isActualDemand": false
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "moduleName": "BillingService",
+    "masterName": "TaxPeriod",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "BillingService.TaxPeriod",
+        "uniqueIdentifier": null,
+        "data": {
+          "code": "TPGEN202330",
+          "toDate": 1901145600000,
+          "fromDate": 1680287400000,
+          "service": "task-generic",
+          "periodCycle": "ANNUAL",
+          "financialYear": "2023-30"
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "moduleName": "BillingService",
+    "masterName": "BusinessService",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "BillingService.BusinessService",
+        "uniqueIdentifier": null,
+        "data": {
+          "collectionModesNotAllowed": [
+            "OFFLINE_NEFT",
+            "OFFLINE_RTGS",
+            "POSTAL_ORDER"
+          ],
+          "demandUpdateTime": 604800000,
+          "businessService": "task-generic",
+          "code": "task-generic",
+          "isAdvanceAllowed": false,
+          "minAmountPayable": 0,
+          "partPaymentAllowed": false,
+          "isVoucherCreationEnabled": false,
+          "billGineiURL": "N/A"
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "moduleName": "common-masters",
+    "masterName": "PendingTaskType",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "common-masters.PendingTaskType",
+        "uniqueIdentifier": null,
+        "data": {
+          "closerAction": [
+            "MAKE_PAYMENT",
+            "REJECT"
+          ],
+          "triggerAction": [
+            "CREATE"
+          ],
+          "id": "25",
+          "actor": "Advocate/Litigant",
+          "state": "PENDING_PAYMENT",
+          "isgeneric": false,
+          "screenType": "home",
+          "pendingTask": "Pending task for generic task",
+          "workflowModule": "task-generic"
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "moduleName": "payment",
+    "masterName": "PaymentType",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "payment.paymentType",
+        "uniqueIdentifier": "20",
+        "data": {
+          "id": 20,
+          "suffix": "GENERIC",
+          "paymentType": "Generic Task Fees",
+          "businessService": [
+            {
+              "id": -11,
+              "businessCode": "task-generic"
+            }
+          ],
+          "deliveryChannel": "Online"
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "moduleName": "payment",
+    "masterName": "paymentTypeToBreakupMapping",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "payment.paymentTypeToBreakupMapping",
+        "uniqueIdentifier": "20",
+        "data": {
+          "breakUpList": [
+            {
+              "breakUpCode": "ADVOCATE_WELFARE_FUND",
+              "breakUpName": "Advocate Welfare Fund"
+            },
+            {
+              "breakUpCode": "ADVOCATE_CLERK_WELFARE_FUND",
+              "breakUpName": "Advocate Clerk Welfare Fund"
+            },
+            {
+              "breakUpCode": "LEGAL_BENEFIT_FEE",
+              "breakUpName": "Legal Benefit Fee"
+            },
+            {
+              "breakUpCode": "COURT_FEE",
+              "breakUpName": "Court Fee"
+            }
+          ],
+          "paymentType": "20"
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "moduleName": "payment",
+    "masterName": "paymentMode",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "payment.paymentMode",
+        "uniqueIdentifier": null,
+        "data": {
+          "paymentMode": [
+            "ONLINE",
+            "OFFLINE"
+          ],
+          "id": 16,
+          "suffix": "GENERIC",
+          "gateway": "eTreasury"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]
