@@ -518,6 +518,15 @@ const AdmittedCases = () => {
     }, duration);
   }, []);
 
+  const showToastMsg = useCallback((type, message, duration = 5000) => {
+    setToast(true);
+    setToast({ isError: type, message: message });
+    setTimeout(() => {
+      setToast(false);
+      setToast({ alreadyShown: true });
+    }, duration);
+  }, []);
+
   const onSuccess = async (response, data) => {
     showToast({
       isError: false,
@@ -1254,7 +1263,6 @@ const AdmittedCases = () => {
     }));
   }, [activeTab]);
   const [updateCounter, setUpdateCounter] = useState(0);
-  const [documentCounter, setDocumentCounter] = useState(0);
 
   const [toastDetails, setToastDetails] = useState({});
   const [showOtherMenu, setShowOtherMenu] = useState(false);
@@ -3281,10 +3289,10 @@ const AdmittedCases = () => {
       )}
       {showMakeAsEvidenceModal && (
         <MarkAsEvidence
-          showToast={showToast}
+          showToast={showToastMsg}
           t={t}
           evidenceDetailsObj={artifact || documentSubmission?.[0]?.artifactList || selectedRow}
-          setDocumentCounter={setDocumentCounter}
+          setDocumentCounter={setUpdateCounter}
           isEvidenceLoading={false}
           handleAction={handleEvidenceAction}
           setShowMakeAsEvidenceModal={setShowMakeAsEvidenceModal}

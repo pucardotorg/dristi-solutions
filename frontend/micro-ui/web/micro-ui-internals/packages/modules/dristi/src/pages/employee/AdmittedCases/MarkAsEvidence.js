@@ -277,10 +277,7 @@ const MarkAsEvidence = ({
       }
     } catch (error) {
       console.error("Error creating PDF seal:", error);
-      showToast({
-        isError: true,
-        message: t("ERROR_CREATING_EVIDENCE_SEAL"),
-      });
+      showToast("error", t("ERROR_CREATING_EVIDENCE_SEAL"), 5000);
       return null;
     }
   };
@@ -343,11 +340,7 @@ const MarkAsEvidence = ({
         getIndividualDetails(response?.artifacts?.[0]?.sourceID);
       }
     } catch (error) {
-      showToast({
-        isError: true,
-        message: t("ERROR_FETCHING_EVIDENCE_DETAILS"),
-      });
-      console.log("error fetching evidence details", error);
+      showToast("error", t("ERROR_FETCHING_EVIDENCE_DETAILS"), 5000);
     } finally {
       setLoader(false);
     }
@@ -421,11 +414,7 @@ const MarkAsEvidence = ({
       setWitnessTagValues(combined?.filter(Boolean));
       setCaseDetails(response?.criteria[0]?.responseList[0]);
     } catch (error) {
-      console.log("error fetching case details", error);
-      showToast({
-        isError: true,
-        message: t("ERROR_FETCHING_CASE_DETAILS"),
-      });
+      showToast("error", t("ERROR_FETCHING_CASE_DETAILS"), 5000);
     } finally {
       setLoader(false);
     }
@@ -558,10 +547,7 @@ const MarkAsEvidence = ({
         setEvidenceNumberError(error?.response?.data?.Errors?.[0]?.code);
         setStepper(0);
       }
-      showToast({
-        isError: true,
-        message: t("EVIDENCE_UPDATE_ERROR_MESSAGE"),
-      });
+      showToast("error", t("EVIDENCE_UPDATE_ERROR_MESSAGE"), 5000);
       return false;
     }
   };
@@ -602,19 +588,13 @@ const MarkAsEvidence = ({
             if (res && action === "SUBMIT_BULK_E-SIGN") {
               setShowMakeAsEvidenceModal(false);
               setDocumentCounter((prevCount) => prevCount + 1);
-              showToast({
-                isError: false,
-                message: t("SUCCESSFULLY_SENT_FOR_E-SIGNING_MARKED_MESSAGE"),
-              });
+              showToast("success", t("SUCCESSFULLY_SENT_FOR_E-SIGNING_MARKED_MESSAGE"), 5000);
             }
           });
         }
       } else if (stepper === 1 && isSigned) {
         if (sessionStorage.getItem("fileStoreId") === null) {
-          showToast({
-            isError: true,
-            message: t("EVIDENCE_UPDATE_ERROR_MESSAGE"),
-          });
+          showToast("error", t("EVIDENCE_UPDATE_ERROR_MESSAGE"), 5000);
           return;
         }
         const seal = {
@@ -670,11 +650,7 @@ const MarkAsEvidence = ({
         });
       }
     } catch (error) {
-      console.error("Error in handleSubmit:", error);
-      showToast({
-        isError: true,
-        message: t("ERROR_UPDATING_EVIDENCE"),
-      });
+      showToast("error", t("EVIDENCE_UPDATE_ERROR_MESSAGE"), 5000);
     }
   };
 
@@ -742,11 +718,7 @@ const MarkAsEvidence = ({
       sessionStorage.removeItem("fileStoreId");
       handleEsign(name, pageModule, file, "Judge/Magistrate");
     } catch (error) {
-      console.log("E-sign navigation error:", error);
-      showToast({
-        isError: true,
-        message: t("ERROR_ESIGN_EVIDENCE"),
-      });
+      showToast("error", t("ERROR_ESIGN_EVIDENCE"), 5000);
       setLoader(false);
     } finally {
       setLoader(false);
