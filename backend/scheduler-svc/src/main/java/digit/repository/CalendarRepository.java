@@ -4,7 +4,9 @@ package digit.repository;
 import digit.repository.querybuilder.CalendarQueryBuilder;
 import digit.repository.rowmapper.CalendarRowMapper;
 import digit.web.models.JudgeCalendarRule;
+import digit.web.models.JudgeCalenderSearchRequest;
 import digit.web.models.SearchCriteria;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -35,4 +37,11 @@ public class CalendarRepository {
         return jdbcTemplate.query(query, preparedStmtList.toArray(), rowMapper);
     }
 
+    public List<JudgeCalendarRule> findJudgeRule(JudgeCalenderSearchRequest request) {
+        List<Object> preparedStmtList = new ArrayList<>();
+        List<Integer> preparedStmtArgList = new ArrayList<>();
+        String query = queryBuilder.findJudgeCalendarQuery(request, preparedStmtList, preparedStmtArgList);
+        log.debug("query: " + query);
+        return jdbcTemplate.query(query, preparedStmtList.toArray(), preparedStmtArgList.stream().mapToInt(Integer::intValue).toArray(), rowMapper);
+    }
 }

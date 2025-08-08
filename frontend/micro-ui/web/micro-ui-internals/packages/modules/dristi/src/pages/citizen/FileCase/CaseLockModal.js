@@ -118,11 +118,7 @@ function CaseLockModal({
         }
       });
       await Promise.all(promises);
-      if (isAdvocateFilingCase) {
-        history.replace(`/${window?.contextPath}/${userInfoType}/dristi/landing-page`);
-      } else {
-        history.replace(`${path}/sign-complaint?filingNumber=${filingNumber}`);
-      }
+      history.replace(`${path}/sign-complaint?filingNumber=${filingNumber}`);
     } catch (error) {
       console.error("An error occurred:", error);
       toast.error(t("SOMETHING_WENT_WRONG"));

@@ -33,16 +33,29 @@ public class CdacSmsServiceImpl extends BaseSMSService {
                 // TODO: remove default mobile number for production
                 if (smsProperties.isDefaultMobileNumber()) sms.setMobileNumber(smsProperties.getDefaultMobileNumber());
 
-                if (sms.getCategory() == Category.OTP) cdacSmsClient.sendOtpSMS(sms, smsProperties);
+                if (sms.getCategory() == Category.OTP) 
+                    cdacSmsClient.sendOtpSMS(sms, smsProperties)
+                        .subscribe(
+                            resp -> log.info("OTP SMS sent! Response: {}", resp),
+                            err -> log.error("Error sending OTP SMS", err)
+                        );
                 if (sms.getCategory() == Category.NOTIFICATION)
                 {
                     switch (sms.getContentType())
                     {
                         case TEXT:
-                            cdacSmsClient.sendSingleSMS(sms, smsProperties);
+                            cdacSmsClient.sendSingleSMS(sms, smsProperties)
+                                .subscribe(
+                                    resp -> log.info("Single SMS sent! Response: {}", resp),
+                                    err -> log.error("Error sending single SMS", err)
+                                );
                             break;
                         case UNICODE:
-                            cdacSmsClient.sendUnicodeSMS(sms, smsProperties);
+                            cdacSmsClient.sendUnicodeSMS(sms, smsProperties)
+                                .subscribe(
+                                    resp -> log.info("Unicode SMS sent! Response: {}", resp),
+                                    err -> log.error("Error sending unicode SMS", err)
+                                );
                             break;
                         default:
                             break;

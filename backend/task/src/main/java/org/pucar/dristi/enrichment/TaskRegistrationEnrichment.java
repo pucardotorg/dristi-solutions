@@ -8,7 +8,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.util.CaseUtil;
+import org.pucar.dristi.util.HrmsUtil;
 import org.pucar.dristi.util.IdgenUtil;
+import org.pucar.dristi.web.models.CourtCase;
 import org.pucar.dristi.web.models.Task;
 import org.pucar.dristi.web.models.TaskRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +20,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.UUID;
 
-import static org.pucar.dristi.config.ServiceConstants.ENRICHMENT_EXCEPTION;
-import static org.pucar.dristi.config.ServiceConstants.JOIN_CASE_PAYMENT;
+import static org.pucar.dristi.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -27,12 +29,14 @@ public class TaskRegistrationEnrichment {
     private final IdgenUtil idgenUtil;
     private final Configuration config;
     private final ObjectMapper objectMapper;
+    private final CaseUtil caseUtil;
 
     @Autowired
-    public TaskRegistrationEnrichment(IdgenUtil idgenUtil, Configuration config, ObjectMapper objectMapper) {
+    public TaskRegistrationEnrichment(IdgenUtil idgenUtil, Configuration config, ObjectMapper objectMapper, CaseUtil caseUtil, HrmsUtil hrmsUtil) {
         this.idgenUtil = idgenUtil;
         this.config = config;
         this.objectMapper = objectMapper;
+        this.caseUtil = caseUtil;
     }
 
     public void enrichTaskRegistration(TaskRequest taskRequest) {
@@ -48,8 +52,9 @@ public class TaskRegistrationEnrichment {
 
             AuditDetails auditDetails = AuditDetails.builder().createdBy(taskRequest.getRequestInfo().getUserInfo().getUuid()).createdTime(System.currentTimeMillis()).lastModifiedBy(taskRequest.getRequestInfo().getUserInfo().getUuid()).lastModifiedTime(System.currentTimeMillis()).build();
             task.setAuditDetails(auditDetails);
-            task.setCourtId(config.getCourtId());
+
             task.setId(UUID.randomUUID());
+            enrichCourtId(taskRequest);
 
             if (task.getDocuments() != null) {
                 task.getDocuments().forEach(document -> {
@@ -66,10 +71,40 @@ public class TaskRegistrationEnrichment {
                 enrichConsumerCodeInTaskDetails(task);
             }
 
+            if (task.getCaseId() == null || task.getCaseTitle() == null) {
+                enrichCaseDetails(taskRequest);
+            }
+
         } catch (Exception e) {
             log.error("Error enriching task application :: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, e.getMessage());
         }
+    }
+
+    private void enrichCaseDetails(TaskRequest taskRequest) {
+        log.info("case details not found in task, enriching case details for task {}", taskRequest.getTask().getTaskNumber());
+        List<CourtCase> cases = caseUtil.getCaseDetails(taskRequest);
+        if (cases.isEmpty()) {
+            log.error("No case found for the given task.");
+            return;
+        }
+        String caseId = cases.get(0).getId().toString();
+        String caseTitle = cases.get(0).getCaseTitle();
+        taskRequest.getTask().setCaseTitle(caseTitle);
+        taskRequest.getTask().setCaseId(caseId);
+    }
+
+    private void enrichCourtId(TaskRequest taskRequest) {
+
+        taskRequest.getRequestInfo().getUserInfo().setType("EMPLOYEE");
+        List<CourtCase> caseDetails = caseUtil.getCaseDetails(taskRequest);
+
+        if (caseDetails.isEmpty()) {
+            throw new CustomException(ENRICHMENT_EXCEPTION, "case not found");
+        }
+        String courtId = caseDetails.get(0).getCourtId();
+        taskRequest.getTask().setCourtId(courtId);
+
     }
 
     private void enrichConsumerCodeInTaskDetails(Task task) {
@@ -94,6 +129,10 @@ public class TaskRegistrationEnrichment {
                         document.setDocumentUid(document.getId());
                     }
                 });
+            }
+
+            if (task.getCaseId() == null || task.getCaseTitle() == null) {
+                enrichCaseDetails(taskRequest);
             }
 
         } catch (Exception e) {

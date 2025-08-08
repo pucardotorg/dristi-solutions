@@ -1,0 +1,10 @@
+[
+    [
+        // add this role for typist and bench clerk
+        {
+            "name": "COLLECTION_VIEWER",
+            "code": "COLLECTION_VIEWER",
+            "tenantId": "kl"
+        }
+    ]
+]

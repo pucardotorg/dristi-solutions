@@ -144,4 +144,21 @@ export const UICustomizations = {
       pattern: /^[a-zA-Z0-9 ]+$/i,
     };
   },
+
+  patternValidation: (key) => {
+    switch (key) {
+      case "contact":
+        return /^[6-9]\d{9}$/;
+      case "email":
+        return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+      case "userName":
+        return /^[^{0-9}^\$\"<>?\\\\~!@#$%^()+={}\[\]*,/_:;“”‘’]{1,50}$/i;
+      case "address":
+        return /^[^\$\"<>?\\\\~`!@$%^()={}\[\]*:;“”‘’]{2,256}$/i;
+      case "nonNumericString":
+        return /^[^0-9]{1,}$/i;
+      default:
+        return;
+    }
+  },
 };

@@ -50,10 +50,10 @@ public class StorageController {
 	@GetMapping("/id")
 	@ResponseBody
 	public ResponseEntity<Resource> getFile(@RequestParam(value = "tenantId") String tenantId,
-			@RequestParam("fileStoreId") String fileStoreId) {
+			@RequestParam("fileStoreId") String fileStoreId, @RequestParam(value = "module" , required = false) String module) {
 		org.egov.filestore.domain.model.Resource resource =null;
 		try {
-			resource = storageService.retrieve(fileStoreId, tenantId);
+			resource = storageService.retrieve(fileStoreId, tenantId, module);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			logger.error("Error while retrieving file: " + e.getMessage());
@@ -70,7 +70,7 @@ public class StorageController {
 			@RequestParam(value = "tenantId") String tenantId, @RequestParam("fileStoreId") String fileStoreId) {
 		org.egov.filestore.domain.model.Resource resource =null;
 		try {
-		    resource = storageService.retrieve(fileStoreId, tenantId);
+		    resource = storageService.retrieve(fileStoreId, tenantId, null);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			logger.error("Error while fetching metadata: " + e.getMessage());

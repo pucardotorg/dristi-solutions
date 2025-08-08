@@ -136,18 +136,6 @@ public class PublishOrderInitiatingReschedulingOfHearingDate implements OrderUpd
 
         Long scheduleAfter = availableAfter == null ? dateUtil.getCurrentTimeInMilis() : dateUtil.getEpochFromDateString(availableAfter, "yyyy-MM-dd");
         log.info("creating reschedule entry with scheduleAfter:{}", scheduleAfter);
-        schedulerUtil.createRescheduleRequest(ReScheduleHearingRequest.builder()
-                .reScheduleHearing(Collections.singletonList(ReScheduleHearing.builder()
-
-                        .rescheduledRequestId(order.getOrderNumber())
-                        .hearingBookingId(order.getHearingNumber())
-                        .tenantId(order.getTenantId())
-                        .judgeId("JUDGE_ID")  ///  this need to come from order
-                        .caseId(order.getFilingNumber())
-                        .reason(order.getComments())
-                        .availableAfter(scheduleAfter)
-                        .build()))
-                .requestInfo(requestInfo).build());
 
         // call case here
         log.info("case search for filingNumber:{}", order.getFilingNumber());
@@ -157,6 +145,19 @@ public class PublishOrderInitiatingReschedulingOfHearingDate implements OrderUpd
 
         // add validation here
         CourtCase courtCase = cases.get(0);
+
+        schedulerUtil.createRescheduleRequest(ReScheduleHearingRequest.builder()
+                .reScheduleHearing(Collections.singletonList(ReScheduleHearing.builder()
+
+                        .rescheduledRequestId(order.getOrderNumber())
+                        .hearingBookingId(order.getHearingNumber())
+                        .tenantId(order.getTenantId())
+                        .judgeId(courtCase.getJudgeId())  ///  this need to come from order
+                        .caseId(order.getFilingNumber())
+                        .reason(order.getComments())
+                        .availableAfter(scheduleAfter)
+                        .build()))
+                .requestInfo(requestInfo).build());
 
         Map<String, List<String>> litigantAdvocateMapping = advocateUtil.getLitigantAdvocateMapping(courtCase);
 

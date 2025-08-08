@@ -169,6 +169,7 @@ function ScheduleHearing({
   const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const OrderWorkflowAction = Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {};
+  const courtId = localStorage.getItem("courtId");
   const { t } = useTranslation();
   const history = useHistory();
   const shortCaseInfo = useMemo(() => {
@@ -190,6 +191,7 @@ function ScheduleHearing({
       criteria: [
         {
           filingNumber: filingNumber,
+          ...(courtId && userInfoType === "employee" && { courtId }),
         },
       ],
       tenantId,
@@ -201,21 +203,6 @@ function ScheduleHearing({
   );
   const caseDetails = useMemo(() => caseData?.criteria[0]?.responseList[0], [caseData]);
   const cnrNumber = useMemo(() => caseDetails?.cnrNumber, [caseDetails]);
-
-  const { data: applicationData } = Digit.Hooks.submissions.useSearchSubmissionService(
-    {
-      criteria: {
-        filingNumber: filingNumber,
-        tenantId: tenantId,
-        applicationType: "RE_SCHEDULE",
-        status: "COMPLETED",
-      },
-      tenantId,
-    },
-    {},
-    "",
-    true
-  );
 
   const { data: dateResponse } = Digit.Hooks.home.useSearchReschedule(
     {
@@ -363,7 +350,7 @@ function ScheduleHearing({
         });
     } else if (status && status === "OPTOUT") {
       const individualId = await fetchBasicUserInfo();
-      const judgeId = window?.globalConfigs?.getConfig("JUDGE_ID") || "JUDGE_ID";
+      const judgeId = localStorage.getItem("judgeId");
 
       setIsSubmitDisabled(true);
       HomeService.customApiService(

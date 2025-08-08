@@ -134,7 +134,7 @@ function SelectCustomDragDrop({ t, config, formData = {}, onSelect, errors, setE
                   <h1 className="card-label custom-document-header" style={{ ...input?.documentHeaderStyle, margin: 0 }}>
                     {t(input?.documentHeader)}
                   </h1>
-                  {input?.isOptional && <span style={{ color: "#77787B", verticalAlign: "middle" }}>&nbsp;{`${t(input?.isOptional)}`}</span>}
+                  {input?.isOptional && <span style={{ ...input?.documentOptionalStyle, color: "#77787B", verticalAlign: "middle" }}>&nbsp;{`${t(input?.isOptional)}`}</span>}
                   <CustomErrorTooltip message={t(input?.infoTooltipMessage)} showTooltip={Boolean(input?.infoTooltipMessage)} icon />
                 </div>
               )}

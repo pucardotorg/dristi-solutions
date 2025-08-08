@@ -14,4 +14,7 @@ public class TreasuryParams {
     private String rek;
     private String hmac;
     private String data;
+
+    //fields for treasury mock
+    private boolean mockEnabled;
 }

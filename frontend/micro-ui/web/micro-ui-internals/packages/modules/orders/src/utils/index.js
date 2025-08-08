@@ -127,7 +127,9 @@ export const constructFullName = (firstName, middleName, lastName) => {
 export const getFormattedName = (firstName, middleName, lastName, designation, partyTypeLabel) => {
   const nameParts = [firstName, middleName, lastName].filter(Boolean).join(" ");
 
-  const nameWithDesignation = designation && nameParts ? `${nameParts} - ${designation}` : designation || nameParts;
+  const nameWithDesignation = (designation && nameParts) 
+  ? (`${nameParts} - ${designation}`) 
+  : (designation || nameParts);
 
   return partyTypeLabel ? `${nameWithDesignation} ${partyTypeLabel}` : nameWithDesignation;
 };
@@ -198,6 +200,6 @@ export const numberToWords = (num) => {
 };
 
 export const formatAddress = (value) => {
-  const parts = [value.locality, value.city, value.district, value.pincode];
+  const parts = [value?.locality, value?.city, value?.district, value?.pincode];
   return parts.filter((part) => part !== undefined && part !== null && part !== "").join(", ");
 };

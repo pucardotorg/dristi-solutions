@@ -7,7 +7,7 @@ import { EditorState, convertToRaw, ContentState } from "draft-js";
 import draftToHtml from "draftjs-to-html";
 import htmlToDraft from "html-to-draftjs";
 import "react-draft-wysiwyg/dist/react-draft-wysiwyg.css";
-import DOMPurify from 'dompurify';
+import DOMPurify from "dompurify";
 
 const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, errors }) => {
   const inputs = useMemo(
@@ -25,17 +25,46 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
 
   const defaultSanitizeOptions = {
     ALLOWED_TAGS: [
-      "h1", "h2", "h3", "h4", "h5", "h6", "blockquote", "p", "a", "ul", "ol", "nl", "li", "b", "i", "strong",
-      "em", "strike", "code", "hr", "br", "div", "table", "thead", "caption", "tbody", "tr", "th", "td",
-      "pre", "span", "img"
+      "h1",
+      "h2",
+      "h3",
+      "h4",
+      "h5",
+      "h6",
+      "blockquote",
+      "p",
+      "a",
+      "ul",
+      "ol",
+      "nl",
+      "li",
+      "b",
+      "i",
+      "strong",
+      "em",
+      "strike",
+      "code",
+      "hr",
+      "br",
+      "div",
+      "table",
+      "thead",
+      "caption",
+      "tbody",
+      "tr",
+      "th",
+      "td",
+      "pre",
+      "span",
+      "img",
     ],
     ALLOWED_ATTR: {
       a: ["href", "name", "target"],
       img: ["src", "alt", "title", "width", "height"],
       p: ["class", "style"],
       div: ["class", "style"],
-      span: ["class", "style"]
-    }
+      span: ["class", "style"],
+    },
   };
 
   const [editorState, setEditorState] = useState(() => EditorState.createEmpty());
@@ -46,7 +75,7 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
 
   useEffect(() => {
     const rawHtml = formData?.[configKey]?.[inputName] || "";
-    const sanitizedIncomingHtml =  DOMPurify.sanitize(rawHtml, defaultSanitizeOptions);
+    const sanitizedIncomingHtml = DOMPurify.sanitize(rawHtml, defaultSanitizeOptions);
 
     const currentHtml = draftToHtml(convertToRaw(editorState.getCurrentContent()));
     const normalize = (str) => str.replace(/\s/g, "");
@@ -140,7 +169,7 @@ const SelectCustomFormatterTextArea = ({ t, config, formData = {}, onSelect, err
       {inputs.map((input) => (
         <div className="custom-text-area-main-div" style={input?.style} key={input.name}>
           <div className="custom-text-area-header-div">
-            {input.textAreaHeader && (
+            {input?.textAreaHeader && (
               <h1 className={`custom-text-area-header ${input?.headerClassName}`} style={{ margin: "0px 0px 8px", ...input.textAreaStyle }}>
                 {t(input?.textAreaHeader)}
               </h1>

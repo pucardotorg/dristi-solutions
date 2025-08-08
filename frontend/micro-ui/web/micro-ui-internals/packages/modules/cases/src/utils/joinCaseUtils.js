@@ -112,6 +112,9 @@ export const createRespondentIndividualUser = async (data, documentData, tenantI
             "CASE_RESPONDER",
             "HEARING_ACCEPTOR",
             "PENDING_TASK_CREATOR",
+            "BAIL_BOND_CREATOR",
+            "BAIL_BOND_VIEWER",
+            "BAIL_BOND_EDITOR",
           ]?.map((role) => ({
             code: role,
             name: role,
@@ -203,6 +206,9 @@ export const registerIndividualWithNameAndMobileNumber = async (data, tenantId) 
             "CASE_RESPONDER",
             "HEARING_ACCEPTOR",
             "PENDING_TASK_CREATOR",
+            "BAIL_BOND_CREATOR",
+            "BAIL_BOND_VIEWER",
+            "BAIL_BOND_EDITOR",
           ]?.map((role) => ({
             code: role,
             name: role,

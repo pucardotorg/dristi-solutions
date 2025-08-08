@@ -61,4 +61,13 @@ public class JudgeCalendarApiController {
         return ResponseEntity.accepted().body(updatedJudgeCalendarRule);
     }
 
+    @RequestMapping(value = "/calendar/v1/_search", method = RequestMethod.POST)
+    public ResponseEntity<JudgeRuleResponse> getJudgeRule(@Parameter(in = ParameterIn.DEFAULT, description = "Judge calendar search criteria and Request info", required = true, schema = @Schema()) @Valid @RequestBody JudgeCalenderSearchRequest request) {
+        log.info("api=/calendar/v1/_search, result = IN_PROGRESS");
+        List<JudgeCalendarRule> judgeCalendar = calendarService.getJudgeRule(request);
+        JudgeRuleResponse response = JudgeRuleResponse.builder().judgeCalendarRules(judgeCalendar).ResponseInfo(ResponseInfoFactory.createResponseInfo(request.getRequestInfo(), true)).build();
+        log.info("api=/calendar/v1/_search, result = SUCCESS");
+        return ResponseEntity.accepted().body(response);
+    }
+
 }
