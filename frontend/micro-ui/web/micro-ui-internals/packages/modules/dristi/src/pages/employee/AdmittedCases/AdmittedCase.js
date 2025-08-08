@@ -520,10 +520,10 @@ const AdmittedCases = () => {
 
   const showToastMsg = useCallback((type, message, duration = 5000) => {
     setToast(true);
-    setToast({ isError: type, message: message });
+    setToastDetails({ isError: type === "error", message: message });
     setTimeout(() => {
       setToast(false);
-      setToast({ alreadyShown: true });
+      setToastStatus({ alreadyShown: true });
     }, duration);
   }, []);
 
@@ -3169,7 +3169,13 @@ const AdmittedCases = () => {
         />
       )}
       {toast && toastDetails && (
-        <Toast error={toastDetails?.isError} label={t(toastDetails?.message)} onClose={() => setToast(false)} style={{ maxWidth: "670px" }} />
+        <Toast
+          error={toastDetails?.isError}
+          label={t(toastDetails?.message)}
+          isDleteBtn={true}
+          onClose={() => setToast(false)}
+          style={{ maxWidth: "670px" }}
+        />
       )}
       {showActionBar &&
         !isWorkFlowFetching &&
