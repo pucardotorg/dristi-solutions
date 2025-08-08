@@ -44,7 +44,6 @@ const WitnessDrawerV2 = ({
   caseDetails,
   hearing,
   hearingId,
-  setAddPartyModal,
   artifactNumber = null,
   refetchCaseData,
 }) => {
