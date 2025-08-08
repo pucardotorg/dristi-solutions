@@ -47,6 +47,7 @@ import CaseBundleView from "./CaseBundleView";
 import Breadcrumb from "../../../components/BreadCrumb";
 import PaymentDemandModal from "./PaymentDemandModal";
 import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
+import MarkAsEvidence from "./MarkAsEvidence";
 
 const stateSla = {
   SCHEDULE_HEARING: 3 * 24 * 3600 * 1000,
@@ -203,6 +204,8 @@ const AdmittedCases = () => {
   const [currentNotification, setCurrentNotification] = useState(null);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [showMakeAsEvidenceModal, setShowMakeAsEvidenceModal] = useState(false);
+
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
   const [selectedRow, setSelectedRow] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -698,10 +701,12 @@ const AdmittedCases = () => {
           artifactList: row,
         },
       ];
-      if ("mark_as_evidence" === item.id || "unmark_as_evidence" === item.id) {
+      if ("mark_as_evidence" === item.id || "unmark_as_evidence" === item.id || "view_mark_as_evidence" === item.id) {
         setSelectedRow(row);
+        setDocumentSubmission(docObj);
         setSelectedItem(item); // Store row before showing the modal
-        setShowConfirmationModal(true);
+        setShowMakeAsEvidenceModal(true);
+        // setShowConfirmationModal(true);
       } else if ("mark_as_void" === item.id || "view_reason_for_voiding" === item.id) {
         setDocumentSubmission(docObj);
         setVoidReason(row?.reason);
@@ -1249,6 +1254,8 @@ const AdmittedCases = () => {
     }));
   }, [activeTab]);
   const [updateCounter, setUpdateCounter] = useState(0);
+  const [documentCounter, setDocumentCounter] = useState(0);
+
   const [toastDetails, setToastDetails] = useState({});
   const [showOtherMenu, setShowOtherMenu] = useState(false);
   const [showScheduleHearingModal, setShowScheduleHearingModal] = useState(false);
@@ -1290,7 +1297,7 @@ const AdmittedCases = () => {
       const fullName = getFullName(" ", individualData?.name?.givenName, individualData?.name?.otherNames, individualData?.name?.familyName);
       if (evidence) {
         setArtifact({ ...evidence, sender: fullName });
-        setShow(true);
+        setShowMakeAsEvidenceModal(true);
       }
     } catch (error) {
       console.error("Error fetching evidence:", error);
@@ -3106,6 +3113,7 @@ const AdmittedCases = () => {
           setIsDelayApplicationPending={setIsDelayApplicationPending}
           currentDiaryEntry={currentDiaryEntry}
           artifact={artifact}
+          setShowMakeAsEvidenceModal={setShowMakeAsEvidenceModal}
         />
       )}
       {showOrderReviewModal && (
@@ -3269,6 +3277,17 @@ const AdmittedCases = () => {
           cmpNumber={caseDetails?.cmpNumber}
           stNumber={caseDetails?.courtCaseNumber}
           handleOrdersTab={handleOrdersTab}
+        />
+      )}
+      {showMakeAsEvidenceModal && (
+        <MarkAsEvidence
+          showToast={showToast}
+          t={t}
+          evidenceDetailsObj={artifact || documentSubmission?.[0]?.artifactList || selectedRow}
+          setDocumentCounter={setDocumentCounter}
+          isEvidenceLoading={false}
+          handleAction={handleEvidenceAction}
+          setShowMakeAsEvidenceModal={setShowMakeAsEvidenceModal}
         />
       )}
       {showConfirmationModal && (
