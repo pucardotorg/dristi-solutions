@@ -117,6 +117,7 @@ const orderBailAcceptance = async (
           caseNumber: caseNumber,
           caseYear: caseYear,
           caseName: courtCase.caseTitle,
+          partyName: order?.orderDetails?.bailParty?.name,
           briefSummaryOfBail: order?.orderDetails?.bailSummary || "",
           date: formattedToday,
           bailType:
