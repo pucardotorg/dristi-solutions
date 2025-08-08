@@ -1371,9 +1371,15 @@ const SubmissionsCreate = ({ path }) => {
 
   const handleBack = () => {
     if (!paymentLoader) {
-      history.replace(
-        `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
-      );
+      if (applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS") {
+        history.replace(
+          `/${window?.contextPath}/${userType}/dristi/home`
+        );
+      } else {
+        history.replace(
+          `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Submissions`
+        );
+      }
     }
   };
 
@@ -1627,6 +1633,7 @@ const SubmissionsCreate = ({ path }) => {
           createdDate={getFormattedDate(applicationDetails?.createdDate)}
           makePayment={makePaymentLabel}
           paymentStatus={paymentStatus}
+          bannerlabel={applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS" ? t("SUBMISSION_SUCCESSFUL_POA"): t("SUBMISSION_SUCCESSFUL")}
         />
       )}
     </div>
