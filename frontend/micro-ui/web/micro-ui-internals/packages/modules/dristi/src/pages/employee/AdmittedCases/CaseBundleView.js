@@ -13,6 +13,7 @@ import ConfirmEvidenceAction from "../../../components/ConfirmEvidenceAction";
 import MarkAsEvidence from "./MarkAsEvidence";
 import DownloadButton from "../../../components/DownloadButton";
 import CustomChip from "../../../components/CustomChip";
+import { Toast } from "@egovernments/digit-ui-react-components";
 
 function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const [expandedItems, setExpandedItems] = useState({
@@ -50,8 +51,9 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const [showEvidenceConfirmationModal, setShowEvidenceConfirmationModal] = useState(false);
   const [isEvidenceSubmitDisabled, setIsEvidenceSubmitDisabled] = useState(false);
   const [menuData, setMenuData] = useState(null);
-
+  const [counter, setCounter] = useState(0);
   const { t } = useTranslation();
+  const [toastMsg, setToastMsg] = useState(null);
 
   const courtId = caseDetails?.courtId;
   useEffect(() => {
@@ -267,6 +269,10 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     filingNumber + "completeEvidence",
     filingNumber
   );
+
+  useEffect(() => {
+    completeEvidenceRefetch();
+  }, [counter]);
 
   const combinedEvidenceList = useMemo(() => {
     const directEvidenceList = directEvidenceData?.artifacts || [];
@@ -1624,7 +1630,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     isPendingReviewApplicationLoading ||
     isPendingApprovalApplicationLoading ||
     isMandatoryOrdersLoading ||
-    isBailBondLoading
+    isBailBondLoading ||
+    isCompleteEvidenceLoading
   ) {
     return (
       <div style={{ width: "100%", paddingTop: "50px" }}>
@@ -1700,6 +1707,12 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         )}
       </div>
     );
+  };
+  const showToast = (type, message, duration = 5000) => {
+    setToastMsg({ key: type, action: message });
+    setTimeout(() => {
+      setToastMsg(null);
+    }, duration);
   };
 
   return (
@@ -1816,6 +1829,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           t={t}
           setShowMakeAsEvidenceModal={setShowEvidenceConfirmationModal}
           evidenceDetailsObj={evidenceFileStoreMap.get(selectedFileStoreId)}
+          setDocumentCounter={setCounter}
+          showToast={showToast}
         />
       )}
       {/* {showEvidenceConfirmationModal && (
@@ -1829,6 +1844,15 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           setMenuData={setMenuData}
         />
       )} */}
+      {toastMsg && (
+        <Toast
+          error={toastMsg.key === "error"}
+          label={t(toastMsg.action)}
+          onClose={() => setToastMsg(null)}
+          isDleteBtn={true}
+          style={{ maxWidth: "500px" }}
+        />
+      )}
     </React.Fragment>
   );
 }
