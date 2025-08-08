@@ -734,10 +734,14 @@ const WitnessDrawerV2 = ({
           ]
         : null;
 
+      const currentParty = allParties?.find((p) => (p?.uuid || p?.uniqueId) === selectedWitness?.value);
+
       let workflow = { ...currentEvidence?.artifact?.workflow, action };
       if (action === "INITIATE_E-SIGN") {
-        workflow.assignes = [currentEvidence?.sourceID];
         workflow.additionalDetails = { excludeRoles: ["EVIDENCE_CREATOR"] };
+        if (currentParty?.partyType !== "witness") {
+          workflow.assignes = [currentEvidence?.sourceID];
+        }
       }
 
       const evidence = activeTabs?.find((tab) => tab?.artifactNumber === currentArtifactNumber);
