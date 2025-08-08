@@ -1066,8 +1066,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                         fileStore: uploadedData?.file?.files?.[0]?.fileStoreId || document?.[0]?.fileStore || "",
                         additionalDetails: {
                           documentName: "poaAuthorization.pdf",
-                          fileName: "Company documents"
-                        }
+                          fileName: "Company documents",
+                        },
                       },
                     ],
                   },
@@ -1377,6 +1377,39 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             };
 
             const resApplication = await DRISTIService.createApplication(applicationReqBody, { tenantId });
+            const documents =
+              taskDetails?.individualDetails?.map((res, index) => {
+                const poaDoc = res?.poaAuthDocument || {};
+                return {
+                  documentType: poaDoc?.documentType,
+                  fileStore: poaDoc?.fileStore,
+                  additionalDetails: {
+                    name: poaDoc?.additionalDetails?.documentName,
+                  },
+                };
+              }) || [];
+
+            let evidenceReqBodyList = documents?.map((docs) => {
+              return {
+                artifact: {
+                  artifactType: "DOCUMENTARY",
+                  caseId: caseDetails?.id,
+                  application: resApplication?.application?.applicationNumber,
+                  filingNumber: caseDetails?.filingNumber,
+                  tenantId,
+                  comments: [],
+                  file: docs,
+                  sourceType: selectPartyData?.partyInvolve?.value === "COMPLAINANTS" ? "COMPLAINANT" : "ACCUSED",
+                  sourceID: individualId,
+                  filingType: "APPLICATION",
+                  additionalDetails: {
+                    uuid: userInfo?.uuid,
+                  },
+                },
+              };
+            });
+
+            await Promise.allSettled(evidenceReqBodyList?.map((body) => DRISTIService.createEvidence(body)));
             if (resApplication) {
               await createPendingTask({
                 name: t("ESIGN_THE_SUBMISSION_FOR_POA_CLAIM"),
