@@ -249,7 +249,7 @@ const WitnessDepositionSignaturePage = () => {
 
   return (
     <React.Fragment>
-      <div style={styles.header}>{`${t("WITNESS_DEPOSITION")} ${witnessDepositionDetails?.tag}`}</div>
+      <div style={styles.header}>{`${t("WITNESS_DEPOSITION")} (${witnessDepositionDetails?.tag})`}</div>
       <div style={styles.container}>
         <div style={styles.rightPanel}>
           <div style={styles.docViewer}>
@@ -269,7 +269,25 @@ const WitnessDepositionSignaturePage = () => {
         </div>
         <ActionBar>
           <div style={styles.actionBar}>
-            {true && (
+            {
+              <Button
+                label={t("BACK")}
+                variation={"secondary"}
+                onButtonClick={() => {
+                  history.goBack();
+                }}
+                style={{ backgroundColor: "#fff", padding: "10px", width: "90px", marginRight: "20px" }}
+                textStyles={{
+                  fontFamily: "Roboto",
+                  fontSize: "16px",
+                  fontWeight: 700,
+                  lineHeight: "18.75px",
+                  textAlign: "center",
+                  color: "#007E7E",
+                }}
+              />
+            }
+            {witnessDepositionDetails?.status === "PENDING_E-SIGN" && (
               <SubmitBar
                 label={
                   <div style={{ boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
