@@ -138,6 +138,10 @@ public class Artifact {
     @Valid
     private Document file = null;
 
+    @JsonProperty("seal")
+    @Valid
+    private Document seal = null;
+
     @JsonProperty("description")
 
     private String description = null;
@@ -169,6 +173,18 @@ public class Artifact {
 
     @JsonProperty("witnessMobileNumbers")
     private List<String> witnessMobileNumbers = null;
+
+    @JsonProperty("witnessEmails")
+    private List<String> witnessEmails = null;
+
+    @JsonProperty("tag")
+    private String tag = null;
+
+    @JsonProperty("evidenceMarkedStatus")
+    private String evidenceMarkedStatus = null;
+
+    @JsonProperty("isEvidenceMarkedFlow")
+    private Boolean isEvidenceMarkedFlow = false;
 
     public Artifact addApplicableToItem(String applicableToItem) {
         if (this.applicableTo == null) {

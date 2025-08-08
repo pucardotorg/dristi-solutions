@@ -36,6 +36,7 @@ class ArtifactTest {
         WorkflowObject workflow = new WorkflowObject();
         List<String> applicableTo = Arrays.asList("role1", "role2");
         List<String> witnessMobileNumbers = List.of("9999999999");
+        List<String> witnessEmails = List.of("s6V0C@example.com");
         Comment comment = new Comment();
 
         Artifact artifact = new Artifact(
@@ -66,6 +67,7 @@ class ArtifactTest {
                 true,
                 "duplicate",
                 document,
+                document,
                 "desc",
                 null,
                 List.of(comment),
@@ -73,7 +75,11 @@ class ArtifactTest {
                 auditDetails,
                 workflow,
                 "short.ly/xyz",
-                witnessMobileNumbers
+                witnessMobileNumbers,
+                witnessEmails,
+                "PW1",
+                "PENDING_E-SIGN",
+                false
         );
 
         assertEquals(id, artifact.getId());
