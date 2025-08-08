@@ -453,10 +453,13 @@ public class EvidenceService {
                     }
                 }
             }
+            String pseudoTag = null;
             if(WITNESS_DEPOSITION.equalsIgnoreCase(evidenceRequest.getArtifact().getArtifactType())) {
                 if(SUBMIT.equalsIgnoreCase(evidenceRequest.getArtifact().getWorkflow().getAction()) &&
                         !hasNumberSuffix(evidenceRequest.getArtifact().getTag())) {
-                        evidenceEnrichment.enrichTag(evidenceRequest);
+                    evidenceEnrichment.enrichTag(evidenceRequest);
+                } else if(!hasNumberSuffix(evidenceRequest.getArtifact().getTag())) {
+                    pseudoTag = evidenceEnrichment.enrichPseudoTag(evidenceRequest);
                 }
                 updateCaseWitnessDeposition(evidenceRequest);
             }
@@ -473,6 +476,9 @@ public class EvidenceService {
                 producer.push(config.getUpdateEvidenceKafkaTopic(), evidenceRequest);
             } else {
                 producer.push(config.getUpdateEvidenceWithoutWorkflowKafkaTopic(), evidenceRequest);
+            }
+            if(pseudoTag != null) {
+                evidenceRequest.getArtifact().setTag(pseudoTag);
             }
             callNotificationService(evidenceRequest,isEvidence,false);
             return evidenceRequest.getArtifact();
