@@ -194,6 +194,7 @@ const WitnessDepositionSignaturePage = () => {
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
       setShowSignatureModal(false);
+      sessionStorage.removeItem("isSignSuccess");
     }
   };
 
