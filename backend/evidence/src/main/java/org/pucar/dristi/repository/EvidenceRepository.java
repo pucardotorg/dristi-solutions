@@ -98,35 +98,24 @@ public class    EvidenceRepository {
     }
 
     /**
-     * Fetches the next sequence value for the given sequence name using nextval().
-     * This increments the sequence and returns the new value.
-     * If the sequence doesn't exist, returns 1.
+     * Fetches the next sequence value for the given sequence name without incrementing it.
+     * This method gets the next value without consuming/incrementing the sequence.
      * 
      * @param sequenceName the name of the sequence
      * @return the next sequence value or 1 if sequence doesn't exist
      */
     public Integer getNextValForSequence(String sequenceName) {
         try {
-            log.debug("Fetching next sequence value for sequence: {}", sequenceName);
+            log.info("Getting next sequence value for sequence: {}", sequenceName);
             
-            // First check if sequence exists
-            String checkSequenceQuery = "SELECT EXISTS (SELECT 1 FROM information_schema.sequences WHERE sequence_name = ?)";
-            Boolean sequenceExists = jdbcTemplate.queryForObject(checkSequenceQuery, Boolean.class, sequenceName);
-            
-            if (Boolean.FALSE.equals(sequenceExists)) {
-                log.warn("Sequence {} does not exist, returning default value 1", sequenceName);
-                return 1;
-            }
-            // Get the next value using nextval()
-            String nextValQuery = "SELECT nextval(?)";
-            Long nextVal = jdbcTemplate.queryForObject(nextValQuery, Long.class, sequenceName);
-            
-            log.debug("Next sequence value for {}: {}", sequenceName, nextVal);
-            return nextVal != null ? nextVal.intValue() : 1;
-            
+            String sql = "SELECT last_value + 1 FROM " + sequenceName;
+            Integer nextValue = jdbcTemplate.queryForObject(sql, Integer.class, sequenceName);
+            log.info("Next sequence value for {}: {}", sequenceName, nextValue);
+            return nextValue;
+
         } catch (Exception e) {
-            log.error("Error fetching sequence value for {}: {}", sequenceName, e.getMessage());
-            log.warn("Returning default value 1 due to error");
+            log.error("Error getting sequence value for {}: {}", sequenceName, e.getMessage());
+            log.warn("Returning default value 1 due to error or sequence not found");
             return 1;
         }
     }
