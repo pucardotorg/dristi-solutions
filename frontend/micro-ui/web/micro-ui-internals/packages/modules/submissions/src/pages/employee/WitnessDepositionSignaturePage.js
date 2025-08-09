@@ -14,14 +14,7 @@ import useSearchEvidenceService from "../../hooks/submissions/useSearchEvidenceS
 
 const getStyles = () => ({
   header: { fontSize: "26px", padding: "12px 40px", fontWeight: 700, borderBottom: "1px solid #E8E8E8" },
-  container: {
-    display: "flex",
-    flexDirection: "row",
-    marginBottom: "50px",
-    paddingRight: "24px",
-    paddingLeft: "24px",
-    height: "100%",
-  },
+
   details: { color: "#0A0A0A", fontWeight: 700, fontSize: "18px", paddingBottom: "22px" },
   detailsSection: {
     display: "flex",
@@ -38,22 +31,13 @@ const getStyles = () => ({
     flexDirection: "column",
     gap: "16px",
   },
-  rightPanel: {
-    flex: 1,
-    padding: "24px",
-    height: "100%",
-    boxSizing: "border-box",
-    overflow: "hidden",
-    display: "flex",
-    flexDirection: "column",
-  },
   docViewer: {
-    flex: 1,
-    marginTop: "24px",
+    width: "70vw",
+    height: "calc(100vh - 200px)",
+    margin: "24px auto",
     border: "1px solid #e0e0e0",
     overflow: "auto",
     borderRadius: "8px",
-    background: "#fafafa",
   },
   litigantDetails: {
     display: "flex",
@@ -243,64 +227,60 @@ const WitnessDepositionSignaturePage = () => {
     }
   }, [showErrorToast]);
 
-  if (isWitnessDepositionOpenLoading || isLoading) {
+  if (isWitnessDepositionOpenLoading || isWitnessDepositionLoading || isLoading) {
     return <Loader />;
   }
 
   return (
     <React.Fragment>
       <div style={styles.header}>{`${t("WITNESS_DEPOSITION")} (${witnessDepositionDetails?.tag})`}</div>
-      <div style={styles.container}>
-        <div style={styles.rightPanel}>
-          <div style={styles.docViewer}>
-            {!isLoading ? (
-              <DocViewerWrapper
-                docWidth={"100%"}
-                docHeight={"100%"}
-                selectedDocs={orderPreviewPdf ? [orderPreviewPdf] : []}
-                tenantId={tenantId}
-                docViewerCardClassName={"doc-card"}
-                showDownloadOption={false}
-              />
-            ) : (
-              <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
-            )}
-          </div>
-        </div>
-        <ActionBar>
-          <div style={styles.actionBar}>
-            {
-              <Button
-                label={t("BACK")}
-                variation={"secondary"}
-                onButtonClick={() => {
-                  history.goBack();
-                }}
-                style={{ backgroundColor: "#fff", padding: "10px", width: "90px", marginRight: "20px" }}
-                textStyles={{
-                  fontFamily: "Roboto",
-                  fontSize: "16px",
-                  fontWeight: 700,
-                  lineHeight: "18.75px",
-                  textAlign: "center",
-                  color: "#007E7E",
-                }}
-              />
-            }
-            {witnessDepositionDetails?.status === "PENDING_E-SIGN" && (
-              <SubmitBar
-                label={
-                  <div style={{ boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
-                    <span>{t("PROCEED_TO_E_SIGN")}</span>
-                  </div>
-                }
-                onSubmit={handleSubmit}
-                style={styles.submitButton}
-              />
-            )}
-          </div>
-        </ActionBar>
+      <div style={styles.docViewer}>
+        {!isLoading ? (
+          <DocViewerWrapper
+            docWidth={"67vw"}
+            docHeight={"100%"}
+            selectedDocs={orderPreviewPdf ? [orderPreviewPdf] : []}
+            tenantId={tenantId}
+            docViewerCardClassName={"doc-card"}
+            showDownloadOption={false}
+          />
+        ) : (
+          <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
+        )}
       </div>
+      <ActionBar>
+        <div style={styles.actionBar}>
+          {
+            <Button
+              label={t("BACK")}
+              variation={"secondary"}
+              onButtonClick={() => {
+                history.goBack();
+              }}
+              style={{ backgroundColor: "#fff", padding: "10px", width: "90px", marginRight: "20px" }}
+              textStyles={{
+                fontFamily: "Roboto",
+                fontSize: "16px",
+                fontWeight: 700,
+                lineHeight: "18.75px",
+                textAlign: "center",
+                color: "#007E7E",
+              }}
+            />
+          }
+          {witnessDepositionDetails?.status === "PENDING_E-SIGN" && (
+            <SubmitBar
+              label={
+                <div style={{ boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
+                  <span>{t("PROCEED_TO_E_SIGN")}</span>
+                </div>
+              }
+              onSubmit={handleSubmit}
+              style={styles.submitButton}
+            />
+          )}
+        </div>
+      </ActionBar>
 
       {showSignatureModal && (
         <BailEsignModal
