@@ -38,6 +38,7 @@ import { combineMultipleFiles, getFilingType } from "@egovernments/digit-ui-modu
 import { editRespondentConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editRespondentConfig";
 import { editComplainantDetailsConfig } from "@egovernments/digit-ui-module-dristi/src/pages/citizen/view-case/Config/editComplainantDetailsConfig";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
+import { sanitizeFormData } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const fieldStyle = { marginRight: 0, width: "100%" };
 
@@ -1007,21 +1008,22 @@ const SubmissionsCreate = ({ path }) => {
   const createSubmission = async () => {
     try {
       let documentsList = [];
-      if (formdata?.listOfProducedDocuments?.documents?.length > 0) {
-        documentsList = [...documentsList, ...formdata?.listOfProducedDocuments?.documents];
+      const sanitizedFormData = sanitizeFormData(formdata);
+      if (sanitizedFormData?.listOfProducedDocuments?.documents?.length > 0) {
+        documentsList = [...documentsList, ...sanitizedFormData?.listOfProducedDocuments?.documents];
       }
-      if (formdata?.reasonForDocumentsSubmission?.documents?.length > 0) {
-        documentsList = [...documentsList, ...formdata?.reasonForDocumentsSubmission?.documents];
+      if (sanitizedFormData?.reasonForDocumentsSubmission?.documents?.length > 0) {
+        documentsList = [...documentsList, ...sanitizedFormData?.reasonForDocumentsSubmission?.documents];
       }
-      if (formdata?.submissionDocuments?.documents?.length > 0) {
-        documentsList = [...documentsList, ...formdata?.submissionDocuments?.documents];
+      if (sanitizedFormData?.submissionDocuments?.documents?.length > 0) {
+        documentsList = [...documentsList, ...sanitizedFormData?.submissionDocuments?.documents];
       }
-      if (formdata?.othersDocument?.documents?.length > 0) {
-        documentsList = [...documentsList, ...formdata?.othersDocument?.documents];
+      if (sanitizedFormData?.othersDocument?.documents?.length > 0) {
+        documentsList = [...documentsList, ...sanitizedFormData?.othersDocument?.documents];
       }
 
       const applicationDocuments = ["REQUEST_FOR_BAIL", "SUBMIT_BAIL_DOCUMENTS", "DELAY_CONDONATION"].includes(applicationType)
-        ? formdata?.supportingDocuments?.map((supportDocs) => ({
+        ? sanitizedFormData?.supportingDocuments?.map((supportDocs) => ({
             fileType: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.documentType,
             fileStore: supportDocs?.submissionDocuments?.uploadedDocs?.[0]?.fileStore,
             additionalDetails: {
@@ -1030,7 +1032,7 @@ const SubmissionsCreate = ({ path }) => {
               documentTitle: supportDocs?.documentTitle,
             },
           })) || []
-        : formdata?.submissionDocuments?.submissionDocuments?.map((item) => ({
+        : sanitizedFormData?.submissionDocuments?.submissionDocuments?.map((item) => ({
             fileType: item?.document?.documentType,
             fileStore: item?.document?.fileStore,
             additionalDetails: {
@@ -1063,7 +1065,7 @@ const SubmissionsCreate = ({ path }) => {
 
       let applicationSchema = {};
       try {
-        applicationSchema = Digit.Customizations.dristiOrders.ApplicationFormSchemaUtils.formToSchema(formdata, modifiedFormConfig);
+        applicationSchema = Digit.Customizations.dristiOrders.ApplicationFormSchemaUtils.formToSchema(sanitizedFormData, modifiedFormConfig);
       } catch (error) {
         console.error(error);
       }
@@ -1109,7 +1111,7 @@ const SubmissionsCreate = ({ path }) => {
           statuteSection: { tenantId },
           additionalDetails: {
             formdata: {
-              ...formdata,
+              ...sanitizedFormData,
               refOrderId: isComposite ? `${itemId}_${orderDetails?.orderNumber}` : orderDetails?.orderNumber,
             },
             ...(orderDetails && { orderDate: formatDate(new Date(orderDetails?.auditDetails?.lastModifiedTime)) }),
@@ -1118,7 +1120,7 @@ const SubmissionsCreate = ({ path }) => {
                   documentName: compositeMandatorySubmissionItem?.orderSchema?.additionalDetails?.formdata?.documentName,
                 }
               : orderDetails?.additionalDetails?.formdata?.documentName && { documentName: orderDetails?.additionalDetails?.formdata?.documentName }),
-            onBehalOfName: formdata?.selectComplainant?.code,
+            onBehalOfName: sanitizedFormData?.selectComplainant?.code,
             partyType: sourceType?.toLowerCase(),
             ...(orderDetails && isComposite
               ? compositeMandatorySubmissionItem?.orderSchema?.orderDetails?.isResponseRequired?.code === true && {
@@ -1137,7 +1139,7 @@ const SubmissionsCreate = ({ path }) => {
             owner: cleanString(userInfo?.name),
           },
           documents,
-          onBehalfOf: [formdata?.selectComplainant?.uuid],
+          onBehalfOf: [sanitizedFormData?.selectComplainant?.uuid],
           comment: [],
           workflow: {
             id: "workflow123",
