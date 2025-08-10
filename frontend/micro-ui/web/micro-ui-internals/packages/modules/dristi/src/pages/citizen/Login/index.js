@@ -212,8 +212,9 @@ const Login = ({ stateCode }) => {
         }));
       }
     } catch (err) {
-      setCanSubmitOtp(true);
+      // setCanSubmitOtp(true);
       setOtpError(err?.response?.data?.error_description === "Account locked" ? t("MAX_RETRIES_EXCEEDED") : t("CS_INVALID_OTP"));
+      setCanSubmitOtp(err?.response?.data?.error_description === "Account locked" ? false : true);
       setParmas((prev) => ({
         ...prev,
         otp: "",
