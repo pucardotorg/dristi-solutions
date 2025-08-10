@@ -610,7 +610,7 @@ const OrderDrawer = ({
               </LabelFieldPair>
             </div>
           </div>
-          <div className="drawer-section">
+          {/* <div className="drawer-section">
             <div className="drawer-sub-section">
               <LabelFieldPair className="case-label-field-pair">
                 <RadioButtons
@@ -634,7 +634,7 @@ const OrderDrawer = ({
                 />
               </LabelFieldPair>
             </div>
-          </div>
+          </div> */}
         </div>
         <div className="drawer-footer">
           <Button
