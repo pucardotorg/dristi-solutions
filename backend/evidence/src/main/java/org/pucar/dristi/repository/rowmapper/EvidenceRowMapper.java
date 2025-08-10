@@ -69,7 +69,7 @@ public class EvidenceRowMapper implements ResultSetExtractor<List<Artifact>> {
                             .reason(rs.getString("reason"))
                             .filingType(rs.getString("filingType"))
                             .file(getObjectFromJson(rs.getString("file"), new TypeReference<Document>(){}))
-                            .createdDate(rs.getLong("createdDate"))
+                            .createdDate(parseDateToLong(rs.getString("createdDate")))
                             .isActive(rs.getBoolean("isActive"))
                             .isEvidence(rs.getBoolean("isEvidence"))
                             .status(rs.getString("status"))
@@ -134,5 +134,18 @@ public class EvidenceRowMapper implements ResultSetExtractor<List<Artifact>> {
         Class<?> rawClass = TypeFactory.defaultInstance().constructType(typeRef.getType()).getRawClass();
         return List.class.isAssignableFrom(rawClass);
     }
+    private Long parseDateToLong(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            return Long.valueOf(dateStr);
+        } catch (NumberFormatException e) {
+            log.error("Invalid date format: {}", dateStr);
+            throw new CustomException("INVALID_DATE_FORMAT",
+                    "Date must be a valid timestamp: " + dateStr);
+        }
+    }
+
 }
 
