@@ -1011,7 +1011,7 @@ const WitnessDrawerV2 = ({
           onDismiss={() => setWitnessModalOpen(false)}
           tenantId={tenantId}
           caseDetails={caseDetails}
-          isJudge={true}
+          isEmployee={true}
           onAddSuccess={() => {
             setWitnessModalOpen(false);
             refetchCaseData();

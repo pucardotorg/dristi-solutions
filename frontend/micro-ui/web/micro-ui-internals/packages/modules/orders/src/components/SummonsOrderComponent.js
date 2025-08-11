@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { formatAddress, getFormattedName } from "../utils";
 import GetPoliceStationModal from "./GetPoliceStationModal";
 import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
+import { Toast } from "@egovernments/digit-ui-components";
 
 // Helper function to compare addresses without police station data
 const compareAddressValues = (value1, value2) => {
@@ -221,6 +222,7 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   const [userList, setUserList] = useState([]);
   const [policeStationIdMapping, setPoliceStationIdMapping] = useState([]);
   const courtId = localStorage.getItem("courtId");
+  const [showErrorToast, setShowErrorToast] = useState(null);
   const [deliveryChannels, setDeliveryChannels] = useState([
     { label: "SMS", type: "SMS", code: "SMS", values: [] },
     { label: "EMAIL", type: "E-mail", code: "EMAIL", values: [] },
@@ -276,6 +278,19 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       ...(address?.geoLocationDetails && { geoLocationDetails: address.geoLocationDetails }),
     }));
   };
+
+  const closeToast = () => {
+    setShowErrorToast(null);
+  };
+
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -589,13 +604,15 @@ const SummonsOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
           tenantId={tenantId}
           onCancel={handleAddParty}
           caseDetails={caseDetails}
-          isJudge={true}
+          isEmployee={true}
           onAddSuccess={() => {
             handleAddParty();
             refetch();
           }}
+          showToast={setShowErrorToast}
         ></AddWitnessModal>
       )}
+      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.message} isDleteBtn={true} onClose={closeToast} />}
     </div>
   );
 };
