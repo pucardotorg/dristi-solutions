@@ -6,6 +6,7 @@ import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services
 import { getFormattedName } from "../utils";
 import WarrantRenderDeliveryChannels from "./WarrantRenderDeliveryChannels";
 import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
+import { Toast } from "@egovernments/digit-ui-components";
 
 // Helper function to compare addresses without police station data
 const compareAddressValues = (value1, value2) => {
@@ -64,6 +65,7 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   const orderType = useMemo(() => formData?.orderType?.code, [formData?.orderType?.code]);
   const [userList, setUserList] = useState([]);
   const [policeStationIdMapping, setPoliceStationIdMapping] = useState([]);
+  const [showErrorToast, setShowErrorToast] = useState(null);
   const courtId = localStorage.getItem("courtId");
   const [deliveryChannels, setDeliveryChannels] = useState([
     {
@@ -118,12 +120,25 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       ...(address?.geoLocationDetails && { geoLocationDetails: address.geoLocationDetails }),
     }));
   };
+  const closeToast = () => {
+    setShowErrorToast(null);
+  };
+
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
 
   useEffect(() => {
     const fetchUsers = async () => {
       let users = [];
       if (caseDetails?.additionalDetails) {
         const respondentData = caseDetails?.additionalDetails?.respondentDetails?.formdata || [];
+        const witnessData = caseDetails?.additionalDetails?.witnessDetails?.formdata || [];
 
         const updatedRespondentData = respondentData.map((item, index) => ({
           ...item,
@@ -144,8 +159,23 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             uniqueId: item?.uniqueId,
           },
         }));
+        const updatedWitnessData = witnessData.map((item, index) => ({
+          ...item,
+          data: {
+            ...item?.data,
+            firstName: item?.data?.firstName,
+            lastName: item?.data?.lastName,
+            witnessDesignation: item?.data?.witnessDesignation,
+            address: mapAddressDetails(item?.data?.addressDetails),
+            partyType: "Witness",
+            phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
+            email: item?.data?.emails?.emailId || [],
+            uuid: item?.data?.uuid,
+            partyIndex: `Witness_${index}`,
+          },
+        }));
 
-        users = [...updatedRespondentData];
+        users = [...updatedRespondentData, ...updatedWitnessData];
       }
       setUserList(users);
     };
@@ -420,13 +450,15 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
           tenantId={tenantId}
           onCancel={handleAddParty}
           caseDetails={caseDetails}
-          isJudge={true}
+          isEmployee={true}
           onAddSuccess={() => {
             handleAddParty();
             refetch();
           }}
+          showToast={setShowErrorToast}
         ></AddWitnessModal>
       )}
+      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.message} isDleteBtn={true} onClose={closeToast} />}
     </div>
   );
 };
