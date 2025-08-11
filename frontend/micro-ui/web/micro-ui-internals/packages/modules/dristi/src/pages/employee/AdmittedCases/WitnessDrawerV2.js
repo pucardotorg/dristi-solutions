@@ -121,13 +121,7 @@ const WitnessDrawerV2 = ({
     Boolean(caseDetails?.filingNumber && caseDetails?.courtId)
   );
 
-  const evidenceList = useMemo(
-    () =>
-      evidenceData?.artifacts
-        ?.filter((artifact) => artifact?.status === "DRAFT_IN_PROGRESS")
-        ?.filter((artifact) => (artifactNumber ? artifactNumber === artifact?.artifactNumber : true)),
-    [evidenceData, artifactNumber]
-  );
+  const evidenceList = useMemo(() => evidenceData?.artifacts?.filter((artifact) => artifact?.status === "DRAFT_IN_PROGRESS"), [evidenceData]);
   const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "FilingType" },
   ]);
@@ -895,7 +889,7 @@ const WitnessDrawerV2 = ({
                   </div>
                 ))}
               {/* Add new tab button */}
-              {!artifactNumber && (
+              {
                 <div
                   className="witness-tab add-tab"
                   onClick={() => handleAddNewDraft()}
@@ -909,7 +903,7 @@ const WitnessDrawerV2 = ({
                 >
                   <CustomAddIcon width="17" height="17" fill="#0A5757" />
                 </div>
-              )}
+              }
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", margin: "16px 0px 0px" }}>
               <LabelFieldPair>
