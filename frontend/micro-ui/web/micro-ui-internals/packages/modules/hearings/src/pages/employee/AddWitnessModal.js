@@ -8,7 +8,7 @@ import { submissionService } from "../../../../submissions/src/hooks/services/in
 import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow.js";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min.js";
 
-const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isJudge, showToast, onAddSuccess, style }) => {
+const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmployee, showToast, onAddSuccess, style }) => {
   const { t } = useTranslation();
   const history = useHistory();
   const DRISTIService = Digit?.ComponentRegistryService?.getComponent("DRISTIService");
@@ -183,7 +183,7 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isJudge, 
     e?.preventDefault();
 
     try {
-      if (isJudge) {
+      if (isEmployee) {
         const newWitnesses = witnessFormList?.map((data) => {
           return {
             ...data?.data,
@@ -499,6 +499,7 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isJudge, 
               textAlign: "end",
               color: "#007E7E",
             }}
+            isDisabled={formConfigs?.length === 1 || witnessFormList?.length === 1}
           />
         </div>
       </Modal>
