@@ -362,20 +362,20 @@ public class EvidenceService {
 
     private void removeDuplicateEmails(EvidenceRequest body, WitnessDetails witness) {
         JsonNode witnessEmails = objectMapper.convertValue(witness.getEmails(), JsonNode.class);
-        for(JsonNode emailNode : witnessEmails) {
-            if(body.getArtifact().getWitnessEmails() != null && body.getArtifact().getWitnessEmails().contains(emailNode.get("emailId").textValue())) {
+        for(JsonNode emailNode : witnessEmails.get("emailId")) {
+            if(body.getArtifact().getWitnessEmails() != null && body.getArtifact().getWitnessEmails().contains(emailNode.textValue())) {
                 //remove this email from witnessEmails
-                body.getArtifact().getWitnessEmails().remove(emailNode.get("emailId").textValue());
+                body.getArtifact().getWitnessEmails().remove(emailNode.textValue());
             }
         }
     }
 
     private void removeDuplicateMobileNumbers(EvidenceRequest body, WitnessDetails witness) {
         JsonNode witnessMobileNumbers = objectMapper.convertValue(witness.getPhoneNumbers(), JsonNode.class);
-        for(JsonNode mobileNumberNode : witnessMobileNumbers) {
-            if(body.getArtifact().getWitnessMobileNumbers() != null && body.getArtifact().getWitnessMobileNumbers().contains(mobileNumberNode.get("mobileNumber").textValue())) {
+        for(JsonNode mobileNumberNode : witnessMobileNumbers.get("mobileNumber")) {
+            if(body.getArtifact().getWitnessMobileNumbers() != null && body.getArtifact().getWitnessMobileNumbers().contains(mobileNumberNode.textValue())) {
                 //remove this mobile number from witnessMobileNumbers
-                body.getArtifact().getWitnessMobileNumbers().remove(mobileNumberNode.get("mobileNumber").textValue());
+                body.getArtifact().getWitnessMobileNumbers().remove(mobileNumberNode.textValue());
             }
         }
     }
