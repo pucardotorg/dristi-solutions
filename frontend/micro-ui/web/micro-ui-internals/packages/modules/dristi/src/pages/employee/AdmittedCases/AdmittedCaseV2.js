@@ -3754,7 +3754,7 @@ const AdmittedCaseV2 = () => {
           label={t(toastDetails?.message)}
           isDleteBtn={true}
           onClose={() => setToast(false)}
-          style={{ maxWidth: "670px" }}
+          style={{ maxWidth: "500px" }}
         />
       )}
       {/* {viewActionBar && (
