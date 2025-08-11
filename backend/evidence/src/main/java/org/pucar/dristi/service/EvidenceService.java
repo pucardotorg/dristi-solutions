@@ -320,8 +320,9 @@ public class EvidenceService {
         witness.setUniqueId(uniqueId);
         witness.setWitnessTag(body.getArtifact().getTag());
 
-        updateWitnessEmails(body, uniqueId, witness);
-        updateWitnessMobileNumbers(body, uniqueId, witness);
+        // Remark: may need to add email laters to witness details
+//        updateWitnessEmails(body, witness);
+        updateWitnessMobileNumbers(body, witness);
 
         WitnessDetailsRequest witnessDetailsRequest = WitnessDetailsRequest.builder()
                 .requestInfo(body.getRequestInfo())
@@ -341,11 +342,25 @@ public class EvidenceService {
         }
     }
 
-    private void updateWitnessMobileNumbers(EvidenceRequest body, String uniqueId, WitnessDetails witness) {
-        if (body.getArtifact().getWitnessMobileNumbers() != null &&
-                !body.getArtifact().getWitnessMobileNumbers().isEmpty()) {
+
+    private void updateWitnessMobileNumbers(EvidenceRequest body, WitnessDetails witness) {
+        if (witness.getPhoneNumbers() == null) {
+            if (body.getArtifact() != null && body.getArtifact().getWitnessMobileNumbers() != null) {
+                ObjectNode phonenumbers = objectMapper.createObjectNode();
+                ArrayNode mobileNumbersArray = objectMapper.valueToTree(body.getArtifact().getWitnessMobileNumbers());
+                phonenumbers.set("mobileNumber", mobileNumbersArray);
+                witness.setPhoneNumbers(phonenumbers);
+            } else {
+                witness.setPhoneNumbers(null);
+            }
+            return;
+        }
+
+        List<String> mobileNumbers = getMobileNumbers(body, witness);
+
+        if (!mobileNumbers.isEmpty()) {
             ObjectNode phonenumbers = objectMapper.createObjectNode();
-            ArrayNode mobileNumbersArray = objectMapper.valueToTree(body.getArtifact().getWitnessMobileNumbers());
+            ArrayNode mobileNumbersArray = objectMapper.valueToTree(mobileNumbers);
             phonenumbers.set("mobileNumber", mobileNumbersArray);
             witness.setPhoneNumbers(phonenumbers);
         } else {
@@ -353,17 +368,60 @@ public class EvidenceService {
         }
     }
 
+
     private void updateWitnessEmails(EvidenceRequest body, String uniqueId, WitnessDetails witness) {
         if (body.getArtifact().getWitnessEmails() != null &&
                 !body.getArtifact().getWitnessEmails().isEmpty()) {
+    private List<String> getMobileNumbers(EvidenceRequest body, WitnessDetails witness) {
+        List<String> mobileNumbers = new ArrayList<>();
+        JsonNode witnessMobileNumbers = objectMapper.convertValue(witness.getPhoneNumbers(), JsonNode.class);
+        for(JsonNode mobileNumberNode : witnessMobileNumbers.get("mobileNumber")) {
+            if(body.getArtifact().getWitnessMobileNumbers() != null
+                    && !body.getArtifact().getWitnessMobileNumbers().contains(mobileNumberNode.textValue())) {
+                mobileNumbers.add(mobileNumberNode.textValue());
+            }
+        }
+        return mobileNumbers;
+    }
+
+    private void updateWitnessEmails(EvidenceRequest body, WitnessDetails witness) {
+        if (witness.getEmails() == null) {
+            if (body.getArtifact() != null && body.getArtifact().getWitnessEmails() != null) {
+                ObjectNode emails = objectMapper.createObjectNode();
+                ArrayNode emailArray = objectMapper.valueToTree(body.getArtifact().getWitnessEmails());
+                emails.set("emailId", emailArray);
+                witness.setEmails(emails);
+            } else {
+                witness.setEmails(null);
+            }
+            return;
+        }
+
+        List<String> emailIds = getEmailIds(body, witness);
+
+        if (!emailIds.isEmpty()) {
             ObjectNode emails = objectMapper.createObjectNode();
-            ArrayNode emailArray = objectMapper.valueToTree(body.getArtifact().getWitnessEmails());
+            ArrayNode emailArray = objectMapper.valueToTree(emailIds);
             emails.set("emailId", emailArray);
             witness.setEmails(emails);
         } else {
             witness.setEmails(null);
         }
     }
+
+
+    private List<String> getEmailIds(EvidenceRequest body, WitnessDetails witness) {
+        List<String> emailIds = new ArrayList<>();
+        JsonNode witnessEmails = objectMapper.convertValue(witness.getEmails(), JsonNode.class);
+        for(JsonNode emailNode : witnessEmails.get("emailId")) {
+            if(body.getArtifact().getWitnessEmails() != null &&
+             !body.getArtifact().getWitnessEmails().contains(emailNode.textValue())) {
+                emailIds.add(emailNode.textValue());
+            }
+        }
+        return emailIds;
+    }
+
 
     private String getFilingTypeMdms(RequestInfo requestInfo, Artifact artifact) {
         try{
