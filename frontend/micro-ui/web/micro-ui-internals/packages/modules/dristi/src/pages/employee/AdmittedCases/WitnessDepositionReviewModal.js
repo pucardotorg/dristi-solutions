@@ -30,7 +30,7 @@ const WitnessDepositionReviewModal = ({
   t,
   handleBack,
   currentEvidence,
-
+  tag,
   setWitnessDepositionFileStoreId,
   setShowWitnessDepositionReview,
   setShowsignatureModal,
@@ -113,7 +113,7 @@ const WitnessDepositionReviewModal = ({
         `}
       </style>
       <Modal
-        headerBarMain={<Heading label={t("REVIEW_WITNESS_DEPOSITION")} />}
+        headerBarMain={<Heading label={`${t("WITNESS_DEPOSITION")} (${tag})`} />}
         headerBarEnd={<CloseBtn onClick={handleBack} />}
         actionCancelLabel={t("CS_COMMON_BACK")}
         actionCancelOnSubmit={handleBack}
