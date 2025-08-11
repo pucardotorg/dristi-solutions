@@ -3281,6 +3281,8 @@ const AdmittedCaseV2 = () => {
         counter={documentCounter}
         // handleFilingAction={handleFilingAction}
         setShowWitnessDepositionDoc={setShowWitnessDepositionDoc}
+        setEditWitnessDepositionArtifact={setEditWitnessDepositionArtifact}
+        setShowWitnessModal={setShowWitnessModal}
       />
     );
   }, [caseDetails, courtId, tenantId, filingNumber, caseId, cnrNumber, documentCounter]);

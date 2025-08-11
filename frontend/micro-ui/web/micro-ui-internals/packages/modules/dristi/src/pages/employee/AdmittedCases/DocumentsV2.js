@@ -25,6 +25,8 @@ const DocumentsV2 = ({
   setSelectedItem,
   setShowWitnessDepositionDoc,
   counter,
+  setShowWitnessModal,
+  setEditWitnessDepositionArtifact,
 }) => {
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const roles = Digit.UserService.getUser()?.info?.roles;
@@ -94,6 +96,10 @@ const DocumentsV2 = ({
               window?.contextPath
             }/${"citizen"}/dristi/home/evidence-sign?tenantId=${tenantId}&artifactNumber=${artifactNumber}&filingNumber=${filingNumber}`
           );
+        }
+        if (documentStatus === "DRAFT_IN_PROGRESS" && (isBenchClerk || isTypist || isJudge)) {
+          setShowWitnessModal(true);
+          setEditWitnessDepositionArtifact(artifactNumber);
         } else setShowWitnessDepositionDoc({ docObj: docObj?.[0], show: true });
       } else {
         const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
