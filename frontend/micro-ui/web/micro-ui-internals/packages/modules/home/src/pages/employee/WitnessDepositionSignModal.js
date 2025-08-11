@@ -227,7 +227,6 @@ export const WitnessDepositionSignModal = ({
                 if (queryStrings?.artifactNumber) {
                   clearWitnessDepositionSessionData();
                   if (userType && caseId && filingNumber) {
-                    sessionStorage.setItem("documents-activeTab", "Bail Bonds");
                     history.push(
                       `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`
                     );
@@ -249,7 +248,6 @@ export const WitnessDepositionSignModal = ({
       if (queryStrings?.artifactNumber) {
         clearWitnessDepositionSessionData();
         if (userType && caseId && filingNumber) {
-          sessionStorage.setItem("documents-activeTab", "Bail Bonds");
           history.push(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`);
         } else history.push(`/${window?.contextPath}/${userType}/home/home-screen`);
       }
@@ -263,7 +261,6 @@ export const WitnessDepositionSignModal = ({
       if (queryStrings?.artifactNumber) {
         clearWitnessDepositionSessionData();
         if (userType && caseId && filingNumber) {
-          sessionStorage.setItem("documents-activeTab", "Bail Bonds");
           history.push(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`);
         } else history.push(`/${window?.contextPath}/${userType}/home/home-screen`);
       }
@@ -569,8 +566,7 @@ export const WitnessDepositionSignModal = ({
             if (queryStrings?.artifactNumber) {
               clearWitnessDepositionSessionData();
               if (userType && caseId && filingNumber) {
-                sessionStorage.setItem("documents-activeTab", "Bail Bonds");
-                history.push(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`);
+                history.push(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`);
               } else {
                 history.push(`/${window?.contextPath}/${userType}/home/home-screen`);
               }
