@@ -99,6 +99,7 @@ const WitnessDrawerV2 = ({
   const [obtainedTag, setObtainedTag] = useState("");
   const [showConfirmDeleteDepositionModal, setShowConfirmDeleteDepositionModal] = useState({ show: false, tab: {} });
   const [advocatesData, setAdvocatesData] = useState([]);
+  const [respondentsData, setRespondentsData] = useState([]);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -140,7 +141,6 @@ const WitnessDrawerV2 = ({
 
   // Fetch mobile numbers for advocates when missing from local data
   useEffect(() => {
-    debugger;
     const fetchAdvocateData = async () => {
       const advocatesWithFetchedData = await Promise.all(
         (caseDetails?.representatives || []).map(async (rep) => {
@@ -159,12 +159,9 @@ const WitnessDrawerV2 = ({
           }
 
           let individualData = {};
-          debugger;
-          // Only call API if mobile number is not found locally (!mobileNumber)
-          if (true && rep?.additionalDetails?.uuid && tenantId) {
+          if (rep?.additionalDetails?.uuid && tenantId) {
             try {
               individualData = await searchIndividualUserWithUuid(rep?.additionalDetails?.uuid, tenantId);
-              console.log("individualData", individualData);
               mobileNumber = individualData?.Individual?.[0]?.mobileNumber || individualData?.Individual?.[0]?.userDetails?.username || "";
             } catch (error) {
               console.error("Error fetching individual data:", error);
@@ -192,6 +189,72 @@ const WitnessDrawerV2 = ({
     };
 
     fetchAdvocateData();
+  }, [caseDetails, tenantId]);
+
+  // Fetch mobile numbers for respondents when missing from local data
+  useEffect(() => {
+    const fetchRespondentData = async () => {
+      const respondentsWithFetchedData = await Promise.all(
+        caseDetails?.litigants
+          ?.filter((item) => item?.partyType?.includes("respondent"))
+          .map(async (item) => {
+            const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
+            const userData = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
+              (obj) => obj?.data?.respondentVerification?.individualDetails?.individualId === item?.individualId
+            );
+            const uniqueId = userData?.uniqueId;
+            let mobileNumber = userData?.data?.phonenumbers?.mobileNumber || [];
+            const age = userData?.data?.respondentAge || "";
+            let address = formatAddress(userData?.data?.addressDetails?.[0]?.addressDetails);
+            const designation = "";
+            const tag = item?.additionalDetails?.tag || "";
+
+            let individualData = {};
+            if (item?.additionalDetails?.uuid && tenantId) {
+              try {
+                individualData = await searchIndividualUserWithUuid(item?.additionalDetails?.uuid, tenantId);
+                // Use API data if local data is missing or append if new number found
+                const newMobileNumber = individualData?.Individual?.[0]?.mobileNumber
+                  ? individualData?.Individual?.[0]?.mobileNumber
+                  : individualData?.Individual?.[0]?.userDetails?.username
+                  ? individualData?.Individual?.[0]?.userDetails?.username
+                  : "";
+
+                if (!mobileNumber || mobileNumber?.length === 0) {
+                  mobileNumber = newMobileNumber ? [newMobileNumber] : [];
+                } else if (newMobileNumber && !mobileNumber?.includes(newMobileNumber)) {
+                  mobileNumber = [...mobileNumber, newMobileNumber];
+                }
+                if (!address) {
+                  address = formatAddressFromIndividualData(individualData?.Individual?.[0]?.address?.[0]);
+                }
+              } catch (error) {
+                console.error("Error fetching respondent individual data:", error);
+              }
+            }
+
+            return {
+              code: fullName,
+              name: `${fullName} (Accused)`,
+              uuid: item?.additionalDetails?.uuid,
+              individualId: item?.individualId,
+              isJoined: true,
+              partyType: "respondent",
+              uniqueId,
+              witnessMobileNumbers: mobileNumber?.length > 0 ? mobileNumber : [],
+              sourceName: fullName,
+              age,
+              address: address || "",
+              designation,
+              tag,
+            };
+          }) || []
+      );
+
+      setRespondentsData(respondentsWithFetchedData);
+    };
+
+    fetchRespondentData();
   }, [caseDetails, tenantId]);
 
   // API to fetch draft depositions
@@ -331,41 +394,7 @@ const WitnessDrawerV2 = ({
     );
   }, [caseDetails, complainants, allAdvocates]);
 
-  const respondents = useMemo(() => {
-    return (
-      caseDetails?.litigants
-        ?.filter((item) => item?.partyType?.includes("respondent"))
-        .map((item) => {
-          const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
-          const userData = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
-            (obj) => obj?.data?.respondentVerification?.individualDetails?.individualId === item?.individualId
-          );
-          const uniqueId = userData?.uniqueId;
-          const mobileNumber = userData?.data?.phonenumbers?.mobileNumber;
-          const age = userData?.data?.respondentAge || "";
-          const address = formatAddress(userData?.data?.addressDetails?.[0]?.addressDetails);
-          const designation = "";
-          const tag = item?.additionalDetails?.tag;
-
-          return {
-            code: fullName,
-            name: `${fullName} (Accused)`,
-            representedByUuid: allAdvocates[item?.additionalDetails?.uuid],
-            uuid: item?.additionalDetails?.uuid,
-            individualId: item?.individualId,
-            isJoined: true,
-            partyType: "respondent",
-            uniqueId,
-            witnessMobileNumbers: mobileNumber?.length > 0 ? mobileNumber : [],
-            sourceName: fullName,
-            age,
-            address,
-            designation,
-            tag,
-          };
-        }) || []
-    );
-  }, [caseDetails, allAdvocates]);
+  const respondents = useMemo(() => respondentsData, [respondentsData]);
 
   const advocates = useMemo(() => advocatesData, [advocatesData]);
 
