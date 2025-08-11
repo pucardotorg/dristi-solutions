@@ -854,21 +854,34 @@ export const pendingTaskForBailBondActions = {
     actorName: ["LITIGANT/ADVOCATE"],
     actionName: "E-Sign Pending",
     redirectDetails: {
-      url: "/dristi/home/bail-bond-sign",  // checkkkk
+      url: "/dristi/home/bail-bond-sign", // checkkkk
       params: [{ key: "bailbondId", value: "referenceId" }],
     },
   },
 };
 
-
 export const pendingTaskForWitnessDepositionActions = {
-  
   "PENDING_E-SIGN": {
     actorName: [""],
     actionName: "E-Sign Pending",
     redirectDetails: {
-      url: "/dristi/home/evidence-sign", 
-      params: [{ key: "artifactNumber", value: "referenceId" }, { key: "filingNumber", value: "filingNumber" }],
+      url: "/dristi/home/evidence-sign",
+      params: [
+        { key: "artifactNumber", value: "referenceId" },
+        { key: "filingNumber", value: "filingNumber" },
+      ],
+    },
+  },
+  PENDING_REVIEW: {
+    actorName: ["JUDGE"],
+    actionName: "Review the witness deposition",
+    redirectDetails: {
+      url: "/home/sign-witness-deposition",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "artifactNumber", value: "referenceId" },
+        { key: "caseId", value: "id" },
+      ],
     },
   },
 };
