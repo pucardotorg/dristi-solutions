@@ -316,8 +316,8 @@ public class EvidenceService {
         witness.setUniqueId(uniqueId);
         witness.setWitnessTag(body.getArtifact().getTag());
 
-        updateWitnessEmails(body, uniqueId, witness);
-        updateWitnessMobileNumbers(body, uniqueId, witness);
+        updateWitnessEmails(body, witness);
+        updateWitnessMobileNumbers(body, witness);
 
         WitnessDetailsRequest witnessDetailsRequest = WitnessDetailsRequest.builder()
                 .requestInfo(body.getRequestInfo())
@@ -337,7 +337,10 @@ public class EvidenceService {
         }
     }
 
-    private void updateWitnessMobileNumbers(EvidenceRequest body, String uniqueId, WitnessDetails witness) {
+    private void updateWitnessMobileNumbers(EvidenceRequest body, WitnessDetails witness) {
+        if(witness.getPhoneNumbers() != null) {
+            removeDuplicateMobileNumbers(body, witness);
+        }
         if (body.getArtifact().getWitnessMobileNumbers() != null &&
             !body.getArtifact().getWitnessMobileNumbers().isEmpty()) {
             ObjectNode phonenumbers = objectMapper.createObjectNode();
@@ -349,7 +352,10 @@ public class EvidenceService {
         }
     }
 
-    private void updateWitnessEmails(EvidenceRequest body, String uniqueId, WitnessDetails witness) {
+    private void updateWitnessEmails(EvidenceRequest body, WitnessDetails witness) {
+        if(witness.getEmails() != null) {
+            removeDuplicateEmails(body, witness);
+        }
         if (body.getArtifact().getWitnessEmails() != null &&
             !body.getArtifact().getWitnessEmails().isEmpty()) {
             ObjectNode emails = objectMapper.createObjectNode();
@@ -361,6 +367,25 @@ public class EvidenceService {
         }
     }
 
+    private void removeDuplicateEmails(EvidenceRequest body, WitnessDetails witness) {
+        JsonNode witnessEmails = objectMapper.convertValue(witness.getEmails(), JsonNode.class);
+        for(JsonNode emailNode : witnessEmails) {
+            if(body.getArtifact().getWitnessEmails() != null && body.getArtifact().getWitnessEmails().contains(emailNode.get("emailId").textValue())) {
+                //remove this email from witnessEmails
+                body.getArtifact().getWitnessEmails().remove(emailNode.get("emailId").textValue());
+            }
+        }
+    }
+
+    private void removeDuplicateMobileNumbers(EvidenceRequest body, WitnessDetails witness) {
+        JsonNode witnessMobileNumbers = objectMapper.convertValue(witness.getPhoneNumbers(), JsonNode.class);
+        for(JsonNode mobileNumberNode : witnessMobileNumbers) {
+            if(body.getArtifact().getWitnessMobileNumbers() != null && body.getArtifact().getWitnessMobileNumbers().contains(mobileNumberNode.get("mobileNumber").textValue())) {
+                //remove this mobile number from witnessMobileNumbers
+                body.getArtifact().getWitnessMobileNumbers().remove(mobileNumberNode.get("mobileNumber").textValue());
+            }
+        }
+    }
     private String getFilingTypeMdms(RequestInfo requestInfo, Artifact artifact) {
          try{
              Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(requestInfo, artifact.getTenantId(), config.getFilingTypeModule(), Collections.singletonList(config.getFilingTypeMaster()));
