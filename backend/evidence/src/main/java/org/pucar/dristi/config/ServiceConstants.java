@@ -65,6 +65,7 @@ public class ServiceConstants {
 	public static final String PUBLISHED_STATE = "PUBLISHED";
 	public static final String ABATED_STATE = "ABATED";
 	public static final String DELETED_STATE = "DELETED";
+	public static final String DELETED_DRAFT_STATE = "DELETED_DRAFT";
 	public static final String SUBMITTED_STATE = "SUBMITTED";
 	public static final String ARTIFACT_ID_NAME = "artifact.artifact_number";
 	public static final String AFFIDAVIT = "AFFIDAVIT";
