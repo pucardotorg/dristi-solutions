@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Dropdown, LabelFieldPair, CardLabel, Loader, Toast } from "@egovernments/digit-ui-react-components";
-import { LeftArrow, CustomAddIcon } from "../../../icons/svgIndex";
+import { LeftArrow, CustomAddIcon, CustomDeleteIcon } from "../../../icons/svgIndex";
 import Button from "../../../components/Button";
 import { getFormattedName } from "../../../../../hearings/src/utils";
 import isEmpty from "lodash/isEmpty";
@@ -25,6 +25,8 @@ import WitnessDepositionESignLockModal from "./WitnessDepositionESignLockModal";
 import AddWitnessMobileNumberModal from "./AddWitnessMobileNumberModal";
 import SuccessBannerModal from "../../../../../submissions/src/components/SuccessBannerModal";
 import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
+import ConfirmDepositionDeleteModal from "./ConfirmDepositionDeleteModal";
+import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
 
 const formatAddress = (addr) => {
   if (!addr) return "";
@@ -41,11 +43,12 @@ const WitnessDrawerV2 = ({
   tenantId,
   onSubmit,
   attendees,
-  caseDetails,
+  // caseDetails,
   hearing,
   hearingId,
   artifactNumber = null,
-  refetchCaseData,
+  caseId,
+  courtId,
 }) => {
   const { t } = useTranslation();
   const textAreaRef = useRef(null);
@@ -74,7 +77,7 @@ const WitnessDrawerV2 = ({
   const [witnessDepositionFileStoreId, setWitnessDepositionFileStoreId] = useState("");
   const [showSignatureModal, setShowsignatureModal] = useState(false);
   const [showConfirmWitnessModal, setShowConfirmWitnessModal] = useState(false);
-  const [currentArtifactNumber, setCurrentArtifactNumber] = useState(null);
+  const [currentArtifactNumber, setCurrentArtifactNumber] = useState(artifactNumber || null);
   const [witnessDepositionUploadLoader, setWitnessDepositionUploadLoader] = useState(false);
   const [showWitnessDepositionESign, setShowWitnessDepositionESign] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
@@ -84,8 +87,9 @@ const WitnessDrawerV2 = ({
   const [showUploadSignature, setShowUploadSignature] = useState(false);
   const [loader, setLoader] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [disableWitnessType, setDisableWitnessType] = useState(false);
+  // const [disableWitnessType, setDisableWitnessType] = useState(false);
   const [obtainedTag, setObtainedTag] = useState("");
+  const [showConfirmDeleteDepositionModal, setShowConfirmDeleteDepositionModal] = useState({ show: false, tab: {} });
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -93,8 +97,12 @@ const WitnessDrawerV2 = ({
 
   // Sync currentArtifactNumber with artifactNumber prop
   useEffect(() => {
-    setCurrentArtifactNumber(artifactNumber || null);
-  }, [artifactNumber]);
+    if (localStorage.getItem("artifactNumber")) {
+      setCurrentArtifactNumber(localStorage.getItem("artifactNumber"));
+      setShowWitnessDepositionReview(true);
+      localStorage.removeItem("artifactNumber");
+    }
+  }, []);
 
   useEffect(() => {
     if (showErrorToast) {
@@ -104,6 +112,22 @@ const WitnessDrawerV2 = ({
       return () => clearTimeout(timer);
     }
   }, [showErrorToast]);
+
+  const { data: apiCaseData, isLoading: caseApiLoading, refetch: refetchCaseData, isFetching: isCaseFetching } = useCaseDetailSearchService(
+    {
+      criteria: {
+        caseId: caseId,
+        ...(courtId && { courtId }),
+      },
+      tenantId,
+    },
+    {},
+    `dristi-admitted-${caseId}`,
+    caseId,
+    Boolean(caseId)
+  );
+
+  const caseDetails = useMemo(() => apiCaseData?.cases || {}, [apiCaseData]);
 
   // API to fetch draft depositions
   const { data: evidenceData, isloading: isEvidenceLoading, refetch: evidenceRefetch } = useSearchEvidenceService(
@@ -453,13 +477,15 @@ const WitnessDrawerV2 = ({
     const isTag = allParties?.find((party) => (party?.uuid || party?.uniqueId) === selectedWitness?.value)?.tag;
     if (isTag && isTag !== selectedWitnessType?.value) {
       setSelectedWitnessType({ label: isTag, value: isTag });
-      setDisableWitnessType(true);
-    } else if (isTag && isTag === selectedWitnessType?.value && !disableWitnessType) {
-      setDisableWitnessType(true);
-    } else if (!isTag && disableWitnessType) {
-      setDisableWitnessType(false);
+      // setDisableWitnessType(true);
     }
-  }, [selectedWitness, selectedWitnessType, allParties, disableWitnessType]);
+
+    // else if (isTag && isTag === selectedWitnessType?.value && !disableWitnessType) {
+    //   setDisableWitnessType(true);
+    // } else if (!isTag && disableWitnessType) {
+    //   setDisableWitnessType(false);
+    // }
+  }, [selectedWitness, selectedWitnessType, allParties]);
 
   // Handle witness type dropdown change
   const handleWitnessTypeChange = (option) => {
@@ -650,7 +676,7 @@ const WitnessDrawerV2 = ({
         onClose();
       }
       if (submit) {
-        if (!disableWitnessType) {
+        if (!isWitnessTypeDisabled) {
           setShowConfirmWitnessModal(true);
         } else {
           setShowWitnessDepositionReview(true);
@@ -658,6 +684,14 @@ const WitnessDrawerV2 = ({
       }
     }
   };
+
+  const isWitnessTypeDisabled = useMemo(() => {
+    const party = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value);
+    if (party?.tag) {
+      return true;
+    }
+    return false;
+  }, [selectedWitness, allParties]);
 
   const handleConfirmWitnessAndSign = async (evidence) => {
     try {
@@ -683,14 +717,18 @@ const WitnessDrawerV2 = ({
         const updatedEvidence = await DRISTIService.updateEvidence(updateEvidenceReqBody);
 
         // Update the tab in activeTabs directly
-        if (updatedEvidence?.artifact) {
-          const updatedTabs = [...activeTabs];
-          setActiveTabs(updatedTabs);
-        }
+        // if (updatedEvidence?.artifact) {
+        //   const updatedTabs = [...activeTabs];
+        //   setActiveTabs(updatedTabs);
+        //   setCurrentEvidence(updatedEvidence?.artifact);
+        // }
 
         setShowErrorToast({ label: t("WITNESS_MARKED_SUCCESSFULLY"), error: false });
+        localStorage.setItem("artifactNumber", updatedEvidence?.artifact?.artifactNumber);
+        setCurrentEvidence(updatedEvidence?.artifact);
+        setCurrentArtifactNumber(updatedEvidence?.artifact?.artifactNumber);
 
-        setDisableWitnessType(true);
+        // setDisableWitnessType(true);
         setShowWitnessDepositionReview(true);
         setShowConfirmWitnessModal(false);
       }
@@ -701,7 +739,6 @@ const WitnessDrawerV2 = ({
       console.error("Failed to save witness marking:", error);
       setShowErrorToast({ label: t("FAILED_TO_SAVE_WITNESS_MARKING"), error: true });
     } finally {
-      evidenceRefetch();
     }
   };
 
@@ -826,7 +863,76 @@ const WitnessDrawerV2 = ({
     handleSaveDraft(null, null, true);
   };
 
-  if (isFilingTypeLoading || isEvidenceLoading) {
+  const handleConfirmDeleteDeposition = async (selectedTab) => {
+    try {
+      if (!selectedTab?.artifactNumber) {
+        const updatedActiveTabs = activeTabs?.filter((tab) => !activeTabs?.artifactNumber);
+        setActiveTabs(updatedActiveTabs);
+        setShowErrorToast({ label: t(" WITNESS_DEPOSITION_DELETED_SUCCESSFULLY"), error: false });
+        const deletedEvidenceIndex = activeTabs?.findIndex((tab) => tab?.artifactNumber === selectedTab?.artifactNumber);
+        setActiveTabs(updatedActiveTabs);
+        const newCurrentEvidence = updatedActiveTabs?.[deletedEvidenceIndex - 1];
+        if (newCurrentEvidence?.artifactNumber) {
+          setCurrentEvidence(newCurrentEvidence);
+          setCurrentArtifactNumber(newCurrentEvidence?.artifactNumber);
+        } else {
+          setCurrentArtifactNumber(null);
+        }
+        setShowConfirmDeleteDepositionModal({ show: false, tab: {} });
+        evidenceRefetch();
+        return;
+      }
+
+      // If the witness deposition has artifact number.
+      const evidence = activeTabs?.find((tab) => tab?.artifactNumber === selectedTab?.artifactNumber);
+      const party = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value);
+      if (evidence?.artifactNumber) {
+        // Update existing evidence
+        const updateEvidenceReqBody = {
+          artifact: {
+            ...evidence,
+            tag: selectedWitnessType?.value,
+            sourceID: selectedWitness?.value,
+            sourceName: party?.sourceName,
+            isActive: false,
+            workflow: {
+              action: "DELETE_DRAFT",
+            },
+          },
+        };
+
+        const updatedEvidence = await DRISTIService.updateEvidence(updateEvidenceReqBody);
+        setShowErrorToast({ label: t(" WITNESS_DEPOSITION_DELETED_SUCCESSFULLY"), error: false });
+        const deletedEvidenceIndex = activeTabs?.findIndex((tab) => tab?.artifactNumber === selectedTab?.artifactNumber);
+        const updatedActiveTabs = activeTabs?.filter((tab) => tab?.artifactNumber !== selectedTab?.artifactNumber);
+        setActiveTabs(updatedActiveTabs);
+        if (deletedEvidenceIndex === activeTabs?.length - 1) {
+          const newCurrentEvidence = updatedActiveTabs?.[deletedEvidenceIndex - 1];
+          if (newCurrentEvidence?.artifactNumber) {
+            setCurrentEvidence(newCurrentEvidence);
+            setCurrentArtifactNumber(newCurrentEvidence?.artifactNumber);
+          } else {
+            setCurrentArtifactNumber(null);
+          }
+        } else {
+          const newCurrentEvidence = updatedActiveTabs?.[deletedEvidenceIndex];
+          if (newCurrentEvidence?.artifactNumber) {
+            setCurrentEvidence(newCurrentEvidence);
+            setCurrentArtifactNumber(newCurrentEvidence?.artifactNumber);
+          } else {
+            setCurrentArtifactNumber(null);
+          }
+        }
+        setShowConfirmDeleteDepositionModal({ show: false, tab: {} });
+        evidenceRefetch();
+      }
+    } catch (error) {
+      console.error("Error while deleting witness deposition bond:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    }
+  };
+
+  if (isFilingTypeLoading || isEvidenceLoading || caseApiLoading) {
     return <Loader />;
   }
 
@@ -867,27 +973,44 @@ const WitnessDrawerV2 = ({
 
             <div className="witness-tabs" style={{ display: "flex", marginTop: "16px", borderBottom: "1px solid #d6d5d4", overflowX: "scroll" }}>
               {/* Display tabs for both evidence list items and unsaved drafts */}
-              {activeTabs
-                ?.filter((tab) => !tab?.isNew)
-                .map((tab, index) => (
-                  <div
-                    key={tab.artifactNumber || `new-tab-${index}`}
-                    className={`witness-tab ${activeTabIndex === index ? "active" : ""}`}
-                    onClick={() => handleTabChange(tab)}
+              {activeTabs?.map((tab, index) => (
+                <div
+                  key={tab.artifactNumber || `new-tab-${index}`}
+                  className={`witness-tab ${activeTabIndex === index ? "active" : ""}`}
+                  onClick={() => handleTabChange(tab)}
+                  style={{
+                    padding: "8px 16px",
+                    marginRight: "8px",
+                    cursor: "pointer",
+                    fontSize: "16px",
+                    backgroundColor: "transparent",
+                    color: activeTabIndex === index ? "#0A5757" : "#6F767E",
+                    borderBottom: activeTabIndex === index ? "2px solid #0A5757" : "none",
+                    fontWeight: activeTabIndex === index ? "bold" : "normal",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "8px",
+                  }}
+                >
+                  <span>{tab?.isNew ? `${t("CS_DEPOSITION")} (${t("UNSAVED_DRAFT")})` : `${t("CS_DEPOSITION")} (${tab?.sourceName})`}</span>
+                  <span
                     style={{
-                      padding: "8px 16px",
-                      marginRight: "8px",
                       cursor: "pointer",
-                      fontSize: "16px",
-                      backgroundColor: "transparent",
-                      color: activeTabIndex === index ? "#0A5757" : "#6F767E",
-                      borderBottom: activeTabIndex === index ? "2px solid #0A5757" : "none",
-                      fontWeight: activeTabIndex === index ? "bold" : "normal",
+                      display: "flex",
+                      alignItems: "center",
+                      marginLeft: "8px",
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Prevent tab change when clicking delete
+                      // Add delete functionality here
+                      setShowConfirmDeleteDepositionModal({ show: true, tab: tab });
                     }}
                   >
-                    {`${t("CS_DEPOSITION")} (${tab?.sourceName})`}
-                  </div>
-                ))}
+                    <CustomDeleteIcon />
+                  </span>
+                </div>
+              ))}
               {/* Add new tab button */}
               {
                 <div
@@ -927,7 +1050,7 @@ const WitnessDrawerV2 = ({
                   optionKey={"label"}
                   select={handleWitnessTypeChange}
                   freeze={true}
-                  disable={isProceeding || disableWitnessType}
+                  disable={isProceeding || isWitnessTypeDisabled}
                   selected={selectedWitnessType}
                   style={{ width: "100%", height: "40px", fontSize: "16px", marginBottom: "0px" }}
                 />
@@ -1033,6 +1156,7 @@ const WitnessDrawerV2 = ({
           courtId={caseCourtId}
           cnrNumber={cnrNumber}
           setWitnessDepositionFileStoreId={setWitnessDepositionFileStoreId}
+          tag={obtainedTag || selectedWitnessType?.value}
         />
       )}
 
@@ -1085,6 +1209,16 @@ const WitnessDrawerV2 = ({
           onCancel={() => setShowConfirmWitnessModal(false)}
           onSubmit={handleConfirmWitnessAndSign}
           allParties={allParties}
+        />
+      )}
+
+      {showConfirmDeleteDepositionModal?.show && (
+        <ConfirmDepositionDeleteModal
+          t={t}
+          selectedWitness={selectedWitness}
+          allParties={allParties}
+          onCancel={() => setShowConfirmDeleteDepositionModal({ show: false, tab: {} })}
+          onSubmit={() => handleConfirmDeleteDeposition(showConfirmDeleteDepositionModal?.tab)}
         />
       )}
       {showSuccessModal && (

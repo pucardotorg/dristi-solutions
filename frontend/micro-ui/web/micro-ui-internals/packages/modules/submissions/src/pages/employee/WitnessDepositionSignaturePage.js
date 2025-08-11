@@ -288,7 +288,7 @@ const WitnessDepositionSignaturePage = () => {
           handleCloseSignaturePopup={handleCloseSignatureModal}
           handleProceed={handleEsignProceed}
           fileStoreId={fileStoreId}
-          signPlaceHolder={"witness-deposition-sign"}
+          signPlaceHolder={"Deponent"}
           mobileNumber={isUserLoggedIn ? userInfo?.mobileNumber : mobileNumber}
           forWitnessDeposition={true}
         />
