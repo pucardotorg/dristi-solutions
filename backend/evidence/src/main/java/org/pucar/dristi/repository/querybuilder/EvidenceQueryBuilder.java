@@ -56,6 +56,7 @@ public class EvidenceQueryBuilder {
             List<String> status = criteria.getStatus();
             List<String> workflowStatus = criteria.getWorkflowStatus();
             String evidenceNumber = criteria.getEvidenceNumber();
+            boolean isActive = criteria.getIsActive();
 
             // Build the query using the extracted fields
             firstCriteria = addArtifactCriteria(id, query, preparedStmtList, firstCriteria, "art.id = ?",preparedStmtArgList);
@@ -77,6 +78,7 @@ public class EvidenceQueryBuilder {
             firstCriteria = addArtifactCriteria(fileStoreId, query, preparedStmtList, firstCriteria, "art.file ->> 'fileStore' = ?",preparedStmtArgList);
             firstCriteria = addArtifactCriteriaList(status, query, preparedStmtList, firstCriteria, "art.status", preparedStmtArgList);
             firstCriteria = addArtifactCriteriaList(workflowStatus, query, preparedStmtList, firstCriteria, "art.evidenceMarkedStatus", preparedStmtArgList);
+            firstCriteria = addArtifactCriteria(isActive, query,"art.isActive = ?", preparedStmtList, firstCriteria,preparedStmtArgList);
             addArtifactPartialCriteria(artifactNumber, query, preparedStmtList, firstCriteria,preparedStmtArgList, criteria.getFuzzySearch());
 
             return query.toString();
