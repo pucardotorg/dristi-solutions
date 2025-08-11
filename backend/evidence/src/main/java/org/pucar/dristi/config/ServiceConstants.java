@@ -96,6 +96,7 @@ public class ServiceConstants {
 
     public static final String APPLICATION_STATUS_PATH = "$.application.status";
 	public static final String FILING_NUMBER_PATH = "$.application.filingNumber";
+	public static final String COURT_CASE_JSON_PATH="$.criteria[0].responseList[0]";
 
 	public static final String SUBMITTED = "SUBMITTED";
 	public static final String EVIDENCE_SUBMISSION_CODE = "EVIDENCE_SUBMISSION,EVIDENCE_SUBMISSION_MESSAGE_FILING,EVIDENCE_SUBMISSION_MESSAGE_OPPOSITE_PARTY";
@@ -178,4 +179,59 @@ public class ServiceConstants {
 	public static final String COURT_WITNESS="CW";
 
 	public static final String DRAFT_IN_PROGRESS = "DRAFT_IN_PROGRESS";
+	public static final String ERROR_CASE_SEARCH = "error executing case search query";
+	public static final String ERRORS_PATH = "$.errors";
+
+	public static final String ES_INDEX_HEADER_FORMAT = "{\"index\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
+
+	public static final String ES_INDEX_DOCUMENT_FORMAT = "{"
+			+ "\"Data\": {"
+			+ "\"artifactDetails\": {"
+			+ "\"id\": \"%s\","
+			+ "\"tenantId\": \"%s\","
+			+ "\"artifactNumber\": \"%s\","
+			+ "\"evidenceNumber\": \"%s\","
+			+ "\"filingNumber\": \"%s\","
+			+ "\"externalRefNumber\": \"%s\","
+			+ "\"courtId\": \"%s\","
+			+ "\"caseId\": \"%s\","
+			+ "\"caseNumber\": \"%s\","
+			+ "\"caseTitle\": \"%s\","
+			+ "\"advocate\": %s,"
+			+ "\"application\": \"%s\","
+			+ "\"hearing\": \"%s\","
+			+ "\"order\": \"%s\","
+			+ "\"cnrNumber\": \"%s\","
+			+ "\"mediaType\": \"%s\","
+			+ "\"artifactType\": \"%s\","
+			+ "\"sourceType\": \"%s\","
+			+ "\"sourceID\": \"%s\","
+			+ "\"sourceName\": \"%s\","
+			+ "\"applicableTo\": %s,"
+			+ "\"createdDate\": %d,"
+			+ "\"publishedDate\": %d,"
+			+ "\"isActive\": %b,"
+			+ "\"isEvidence\": %b,"
+			+ "\"status\": \"%s\","
+			+ "\"filingType\": \"%s\","
+			+ "\"isVoid\": %b,"
+			+ "\"reason\": \"%s\","
+			+ "\"file\": %s,"
+			+ "\"seal\": %s,"
+			+ "\"description\": \"%s\","
+			+ "\"artifactDetails\": %s,"
+			+ "\"searchableFields\": %s,"
+			+ "\"comments\": %s,"
+			+ "\"additionalDetails\": %s,"
+			+ "\"auditdetails\": %s,"
+			+ "\"workflow\": %s,"
+			+ "\"evidenceMarkedStatus\": \"%s\","
+			+ "\"isEvidenceMarkedFlow\": %b,"
+			+ "\"tag\": \"%s\","
+			+ "\"shortenedUrl\": \"%s\","
+			+ "\"witnessMobileNumbers\": %s,"
+			+ "\"witnessEmails\": %s"
+			+ "}"
+			+ "}"
+			+ "}\n";
 }

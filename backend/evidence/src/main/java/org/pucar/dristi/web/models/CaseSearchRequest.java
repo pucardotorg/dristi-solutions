@@ -31,6 +31,9 @@ public class CaseSearchRequest {
     @Valid
     private List<CaseCriteria> criteria = new ArrayList<>();
 
+    @JsonProperty("tenantId")
+    private String tenantId;
+
 	public CaseSearchRequest addCriteriaItem(CaseCriteria criteriaItem) {
 		this.criteria.add(criteriaItem);
 		return this;
