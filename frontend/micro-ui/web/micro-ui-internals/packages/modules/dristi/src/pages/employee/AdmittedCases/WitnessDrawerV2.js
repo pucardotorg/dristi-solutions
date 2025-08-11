@@ -44,7 +44,6 @@ const WitnessDrawerV2 = ({
   caseDetails,
   hearing,
   hearingId,
-  setAddPartyModal,
   artifactNumber = null,
   refetchCaseData,
 }) => {
@@ -122,13 +121,7 @@ const WitnessDrawerV2 = ({
     Boolean(caseDetails?.filingNumber && caseDetails?.courtId)
   );
 
-  const evidenceList = useMemo(
-    () =>
-      evidenceData?.artifacts
-        ?.filter((artifact) => artifact?.status === "DRAFT_IN_PROGRESS")
-        ?.filter((artifact) => (artifactNumber ? artifactNumber === artifact?.artifactNumber : true)),
-    [evidenceData, artifactNumber]
-  );
+  const evidenceList = useMemo(() => evidenceData?.artifacts?.filter((artifact) => artifact?.status === "DRAFT_IN_PROGRESS"), [evidenceData]);
   const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "FilingType" },
   ]);
@@ -594,7 +587,7 @@ const WitnessDrawerV2 = ({
           setObtainedTag(updatedEvidence?.artifact?.tag);
         }
 
-        setShowErrorToast({ label: "Draft updated successfully", error: false });
+        setShowErrorToast({ label: "WITNESS_DEPOSITION_UPDATED_SUCCESSFULLY", error: false });
       } else {
         // Create new evidence
         const createEvidenceReqBody = {
@@ -695,18 +688,19 @@ const WitnessDrawerV2 = ({
           setActiveTabs(updatedTabs);
         }
 
-        setShowErrorToast({ label: "Draft updated successfully", error: false });
-      }
-      setDisableWitnessType(true);
+        setShowErrorToast({ label: t("WITNESS_MARKED_SUCCESSFULLY"), error: false });
 
-      // Also refresh evidence list to ensure server and client are in sync
+        setDisableWitnessType(true);
+        setShowWitnessDepositionReview(true);
+        setShowConfirmWitnessModal(false);
+      }
+
       evidenceRefetch();
+      refetchCaseData();
     } catch (error) {
-      console.error("Error saving draft:", error);
-      setShowErrorToast({ label: "Failed to save draft", error: true });
+      console.error("Failed to save witness marking:", error);
+      setShowErrorToast({ label: t("FAILED_TO_SAVE_WITNESS_MARKING"), error: true });
     } finally {
-      setShowConfirmWitnessModal(false);
-      setShowWitnessDepositionReview(true);
       evidenceRefetch();
     }
   };
@@ -734,10 +728,14 @@ const WitnessDrawerV2 = ({
           ]
         : null;
 
+      const currentParty = allParties?.find((p) => (p?.uuid || p?.uniqueId) === selectedWitness?.value);
+
       let workflow = { ...currentEvidence?.artifact?.workflow, action };
       if (action === "INITIATE_E-SIGN") {
-        workflow.assignes = [currentEvidence?.sourceID];
         workflow.additionalDetails = { excludeRoles: ["EVIDENCE_CREATOR"] };
+        if (currentParty?.partyType !== "witness") {
+          workflow.assignes = [currentEvidence?.sourceID];
+        }
       }
 
       const evidence = activeTabs?.find((tab) => tab?.artifactNumber === currentArtifactNumber);
@@ -891,7 +889,7 @@ const WitnessDrawerV2 = ({
                   </div>
                 ))}
               {/* Add new tab button */}
-              {!artifactNumber && (
+              {
                 <div
                   className="witness-tab add-tab"
                   onClick={() => handleAddNewDraft()}
@@ -905,7 +903,7 @@ const WitnessDrawerV2 = ({
                 >
                   <CustomAddIcon width="17" height="17" fill="#0A5757" />
                 </div>
-              )}
+              }
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", margin: "16px 0px 0px" }}>
               <LabelFieldPair>
@@ -1019,6 +1017,7 @@ const WitnessDrawerV2 = ({
             refetchCaseData();
           }}
           showToast={setShowErrorToast}
+          style={{ top: "57%" }}
         ></AddWitnessModal>
       )}
 
