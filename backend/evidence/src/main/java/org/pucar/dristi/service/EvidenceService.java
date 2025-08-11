@@ -1044,6 +1044,7 @@ public class EvidenceService {
                                     .additionalDetails(Map.of(NAME, fileName))
                                     .build();
                             existingArtifact.setFile(document);
+                            existingArtifact.setIsEvidence(true);
                             workflow.setAction(SIGN);
                             existingArtifact.setIsEvidenceMarkedFlow(Boolean.FALSE);
                         }
