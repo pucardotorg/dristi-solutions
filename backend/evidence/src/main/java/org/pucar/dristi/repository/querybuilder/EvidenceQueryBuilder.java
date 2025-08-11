@@ -164,11 +164,11 @@ public class EvidenceQueryBuilder {
         }
         if (!searchCriteria.getIsCourtEmployee()) {
             queryBuilder.append("(status IN ('PENDING_E-SIGN') AND artifactType = 'WITNESS_DEPOSITION' AND sourceId = ?)) AND status != 'DRAFT_IN_PROGRESS')");
+            preparedStmtList.add(searchCriteria.getUserUuid());
+            preparedStmtArgsList.add(java.sql.Types.VARCHAR);
         } else {
             queryBuilder.append("(status IN ('PENDING_E-SIGN') AND artifactType = 'WITNESS_DEPOSITION'))");
         }
-        preparedStmtList.add(searchCriteria.getUserUuid());
-        preparedStmtArgsList.add(java.sql.Types.VARCHAR);
         queryBuilder.append(" OR status IS NULL )");
         return queryBuilder.toString();
     }
