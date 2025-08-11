@@ -186,7 +186,6 @@ const AdmittedCaseV2 = () => {
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showEndHearingModal, setShowEndHearingModal] = useState({ isNextHearingDrafted: false, openEndHearingModal: false });
   const [showWitnessModal, setShowWitnessModal] = useState(false);
-  const [addPartyModal, setAddPartyModal] = useState(false);
   const [show, setShow] = useState(false);
   const [openAdmitCaseModal, setOpenAdmitCaseModal] = useState(true);
   const [documentSubmission, setDocumentSubmission] = useState();
@@ -305,7 +304,7 @@ const AdmittedCaseV2 = () => {
     Boolean(caseId && (shouldRefetchCaseData || !historyCaseData))
   );
 
-  const caseData = historyCaseData || apiCaseData;
+  const caseData = apiCaseData || historyCaseData;
   const caseDetails = useMemo(() => caseData?.cases || {}, [caseData]);
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const latestCaseDetails = useMemo(() => apiCaseData?.cases || historyCaseData?.cases || {}, [apiCaseData, historyCaseData]);
@@ -3282,6 +3281,8 @@ const AdmittedCaseV2 = () => {
         counter={documentCounter}
         // handleFilingAction={handleFilingAction}
         setShowWitnessDepositionDoc={setShowWitnessDepositionDoc}
+        setEditWitnessDepositionArtifact={setEditWitnessDepositionArtifact}
+        setShowWitnessModal={setShowWitnessModal}
       />
     );
   }, [caseDetails, courtId, tenantId, filingNumber, caseId, cnrNumber, documentCounter]);
@@ -4061,24 +4062,10 @@ const AdmittedCaseV2 = () => {
           caseDetails={latestCaseDetails}
           hearing={currentActiveHearing}
           hearingId={currentInProgressHearingId}
-          setAddPartyModal={setAddPartyModal}
           tenantId={tenantId}
           refetchCaseData={refetchCaseData}
           artifactNumber={editWitnessDepositionArtifact}
         />
-      )}
-      {addPartyModal && (
-        <AddParty
-          onCancel={() => setAddPartyModal(false)}
-          onAddSuccess={() => {
-            setShouldRefetchCaseData(true);
-            refetchCaseData();
-          }}
-          caseDetails={latestCaseDetails}
-          tenantId={tenantId}
-          hearing={currentActiveHearing}
-          refetchHearing={() => {}}
-        ></AddParty>
       )}
       {(showPaymentDemandModal || showPaymentConfirmationModal) && (
         <PaymentDemandModal
