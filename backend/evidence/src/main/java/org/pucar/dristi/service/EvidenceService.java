@@ -368,10 +368,6 @@ public class EvidenceService {
         }
     }
 
-
-    private void updateWitnessEmails(EvidenceRequest body, String uniqueId, WitnessDetails witness) {
-        if (body.getArtifact().getWitnessEmails() != null &&
-                !body.getArtifact().getWitnessEmails().isEmpty()) {
     private List<String> getMobileNumbers(EvidenceRequest body, WitnessDetails witness) {
         List<String> mobileNumbers = new ArrayList<>();
         JsonNode witnessMobileNumbers = objectMapper.convertValue(witness.getPhoneNumbers(), JsonNode.class);
@@ -415,7 +411,7 @@ public class EvidenceService {
         JsonNode witnessEmails = objectMapper.convertValue(witness.getEmails(), JsonNode.class);
         for(JsonNode emailNode : witnessEmails.get("emailId")) {
             if(body.getArtifact().getWitnessEmails() != null &&
-             !body.getArtifact().getWitnessEmails().contains(emailNode.textValue())) {
+                    !body.getArtifact().getWitnessEmails().contains(emailNode.textValue())) {
                 emailIds.add(emailNode.textValue());
             }
         }
