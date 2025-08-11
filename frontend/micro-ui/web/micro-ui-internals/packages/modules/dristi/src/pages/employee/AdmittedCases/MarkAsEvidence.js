@@ -9,6 +9,7 @@ import { Urls } from "../../../hooks";
 import Axios from "axios";
 import { useHistory } from "react-router-dom";
 import { InfoCard } from "@egovernments/digit-ui-components";
+import { set } from "lodash";
 
 // Helper functions for button labels and actions
 const getButtonLabels = (isJudge, evidenceDetails, currentDiaryEntry = false, t) => {
@@ -249,8 +250,8 @@ const MarkAsEvidence = ({
           Evidence: {
             courtId: courtId,
             markedAs: `${evidenceTag}${evidenceNumber}`,
-            caseNumber: filingNumber,
-            markedThrough: witnessTag?.displayName,
+            caseNumber: caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber,
+            markedThrough: witnessTag?.code,
           },
         },
         {
@@ -408,8 +409,12 @@ const MarkAsEvidence = ({
           : null;
       });
       const combined = [...(witnessList || []), ...(LitigantList || []), ...(advList || []), ...(poaList || [])];
-      if (evidenceDetails?.tag) {
-        setWitnessTag(combined?.find((user) => user?.code === evidenceDetails?.tag));
+      const sessionData = JSON.parse(sessionStorage.getItem("markAsEvidenceSelectedItem"));
+
+      const evidenceTag = evidenceDetails?.tag || sessionData?.tag;
+
+      if (evidenceTag) {
+        setWitnessTag(combined?.find((user) => user?.code === evidenceTag));
       }
       setWitnessTagValues(combined?.filter(Boolean));
       setCaseDetails(response?.criteria[0]?.responseList[0]);
@@ -546,14 +551,14 @@ const MarkAsEvidence = ({
       if (error?.response?.data?.Errors?.[0]?.code === "EVIDENCE_NUMBER_EXISTS_EXCEPTION") {
         setEvidenceNumberError(error?.response?.data?.Errors?.[0]?.code);
         setStepper(0);
-      }
-      showToast("error", t("EVIDENCE_UPDATE_ERROR_MESSAGE"), 5000);
+      } else showToast("error", t("EVIDENCE_UPDATE_ERROR_MESSAGE"), 5000);
       return false;
     }
   };
 
   const handleSubmit = async (action) => {
     try {
+      setLoader(true);
       if (stepper === 0) {
         clearEvidenceSessionData();
         if (businessOfDay === null || businessOfDay === "") {
@@ -650,6 +655,8 @@ const MarkAsEvidence = ({
       }
     } catch (error) {
       showToast("error", t("EVIDENCE_UPDATE_ERROR_MESSAGE"), 5000);
+    } finally {
+      setLoader(false);
     }
   };
 
@@ -825,6 +832,7 @@ const MarkAsEvidence = ({
                     type="text"
                     value={evidenceNumber}
                     onChange={(e) => setEvidenceNumber(e.target.value)}
+                    maxlength={63}
                     style={{ textAlign: "start", marginBottom: "0px" }}
                   />
                 </div>
@@ -840,6 +848,7 @@ const MarkAsEvidence = ({
           headerBarEnd={
             <CloseBtn
               onClick={() => {
+                clearEvidenceSessionData();
                 if (currentDiaryEntry) {
                   history.goBack();
                 }
