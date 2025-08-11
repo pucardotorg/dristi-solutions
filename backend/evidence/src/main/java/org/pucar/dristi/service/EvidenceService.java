@@ -1251,65 +1251,64 @@ public class EvidenceService {
         // search for open Artifact
         try {
             Artifact artifact = evidenceRequest.getArtifact();
-            String tenantId = artifact.getTenantId();
             RequestInfo requestInfo = evidenceRequest.getRequestInfo();
-            String artifactNumber = artifact.getArtifactNumber();
-            InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenArtifact(tenantId, requestInfo, artifactNumber);
-            List<OpenArtifact> openArtifacts = inboxUtil.getOpenArtifacts(inboxRequest);
 
-            if (!(openArtifacts == null || openArtifacts.isEmpty())) {
-                OpenArtifact openArtifact = openArtifacts.get(0);
-                enrichOpenArtifactIndex(openArtifact, requestInfo);
+            OpenArtifact openArtifact = enrichOpenArtifactIndex(artifact, requestInfo);
 
-                try {
-                    String request = esUtil.buildPayload(openArtifact);
-                    String uri = config.getEsHostUrl() + config.getBulkPath();
-                    esUtil.manualIndex(uri, request);
-                } catch (Exception e) {
-                    log.error("Error occurred while updating open Artifact in es");
-                    log.error("ERROR_FROM_ES: {}", e.getMessage());
-                }
+            if (openArtifact == null) {
+                throw new CustomException(ERROR_WHILE_ENRICHING_OPEN_ARTIFACT,
+                        "Failed to enrich OPenArtifact with ArtifactNumber: " + artifact.getArtifactNumber());
             }
-        } catch (Exception e) {
+
+            try {
+                String request = esUtil.buildPayload(openArtifact);
+                String uri = config.getEsHostUrl() + config.getBulkPath();
+                esUtil.manualIndex(uri, request);
+            } catch (Exception e) {
+                log.error("Error occurred while updating open Artifact in es");
+                log.error("ERROR_FROM_ES: {}", e.getMessage());
+            }
+    } catch (Exception e) {
             log.error("Something went wrong while updating status of open Artifact with artifactNumber {}", evidenceRequest.getArtifact().getArtifactNumber());
             log.error("ERROR: {}", e.getMessage());
         }
 
     }
 
-    private void enrichOpenArtifactIndex(OpenArtifact openArtifact, RequestInfo requestInfo) {
+    private OpenArtifact enrichOpenArtifactIndex(Artifact artifact, RequestInfo requestInfo) {
         try {
-            log.info("Enriching openArtifact for filingNumber: {}, tenantId: {}", openArtifact.getFilingNumber(), openArtifact.getTenantId());
+            log.info("Enriching artifact for filingNumber: {}, tenantId: {}", artifact.getFilingNumber(), artifact.getTenantId());
 
-            CourtCase courtCase = caseUtil.getCase(openArtifact.getFilingNumber(), openArtifact.getTenantId(), requestInfo);
+            CourtCase courtCase = caseUtil.getCase(artifact.getFilingNumber(), artifact.getTenantId(), requestInfo);
             if (courtCase == null) {
-                log.error("No CourtCase found for filingNumber: {}, tenantId: {}", openArtifact.getFilingNumber(), openArtifact.getTenantId());
-                return;
+                log.error("No CourtCase found for filingNumber: {}, tenantId: {}", artifact.getFilingNumber(), artifact.getTenantId());
+                return null;
             }
+            String caseNumber = getCaseReferenceNumber(courtCase);
+            String caseTitle = courtCase.getCaseTitle();
 
-            openArtifact.setCaseTitle(courtCase.getCaseTitle());
-            openArtifact.setCaseNumber(getCaseReferenceNumber(courtCase));
-            log.info("Court case enrichment successful: caseTitle={}, caseNumber={}", openArtifact.getCaseTitle(), openArtifact.getCaseNumber());
-
+            Advocate advocate = null;
             try {
                 List<AdvocateMapping> representatives = courtCase.getRepresentatives();
-                Advocate advocate = hearingUtil.getAdvocates(representatives, courtCase.getLitigants(), requestInfo);
-                openArtifact.setAdvocate(advocate);
+                advocate = hearingUtil.getAdvocates(representatives, courtCase.getLitigants(), requestInfo);
                 log.info("Advocate enrichment successful: Complainant: {}, Accused: {}", advocate.getComplainant() != null ? advocate.getComplainant() : "No  complainant found", advocate.getAccused() != null ? advocate.getAccused() : "No advocate found");
             } catch (Exception e) {
                 log.error("Error while fetching advocate details for caseId: {}", courtCase.getId(), e);
             }
 
+
+
             // Populate searchable fields
             List<String> searchableFields = new ArrayList<>();
-            if (openArtifact.getCaseTitle() != null) searchableFields.add(openArtifact.getCaseTitle());
-            if (openArtifact.getCaseNumber() != null) searchableFields.add(openArtifact.getCaseNumber());
-            if (openArtifact.getArtifactNumber() != null) searchableFields.add(openArtifact.getArtifactNumber());
-            openArtifact.setSearchableFields(searchableFields);
+            if (caseTitle != null) searchableFields.add(caseTitle);
+            if (caseNumber != null) searchableFields.add(caseNumber);
+            if (artifact.getArtifactNumber() != null) searchableFields.add(artifact.getArtifactNumber());
+            return artifactToOpenArtifact(artifact, caseNumber, caseTitle, advocate, searchableFields);
 
         } catch (Exception e) {
-            log.error("Failed to enrich openArtifact for filingNumber: {}, tenantId: {}", openArtifact.getFilingNumber(), openArtifact.getTenantId(), e);
+            log.error("Failed to enrich artifact for filingNumber: {}, tenantId: {}", artifact.getFilingNumber(), artifact.getTenantId(), e);
         }
+        return null;
     }
 
     private String getCaseReferenceNumber(CourtCase courtCase) {
@@ -1320,5 +1319,63 @@ public class EvidenceService {
         } else {
             return courtCase.getFilingNumber();
         }
+    }
+
+    public static OpenArtifact artifactToOpenArtifact(Artifact artifact,
+                                              String caseNumber,
+                                              String caseTitle,
+                                              Advocate advocate,
+                                              List<String> searchableFields) {
+
+        if (artifact == null) {
+            return null;
+        }
+
+        return OpenArtifact.builder()
+                .id(artifact.getId())
+                .tenantId(artifact.getTenantId())
+                .artifactNumber(artifact.getArtifactNumber())
+                .evidenceNumber(artifact.getEvidenceNumber())
+                .filingNumber(artifact.getFilingNumber())
+                .externalRefNumber(artifact.getExternalRefNumber())
+                .courtId(artifact.getCourtId())
+                .caseId(artifact.getCaseId())
+                .caseNumber(caseNumber) // enrichment
+                .caseTitle(caseTitle)   // enrichment
+                .advocate(advocate)     // enrichment
+                .application(artifact.getApplication())
+                .hearing(artifact.getHearing())
+                .order(artifact.getOrder())
+                .cnrNumber(artifact.getCnrNumber())
+                .mediaType(artifact.getMediaType())
+                .artifactType(artifact.getArtifactType())
+                .sourceType(artifact.getSourceType())
+                .sourceID(artifact.getSourceID())
+                .sourceName(artifact.getSourceName())
+                .applicableTo(artifact.getApplicableTo())
+                .seal(artifact.getSeal())
+                .createdDate(artifact.getCreatedDate())
+                .publishedDate(artifact.getPublishedDate())
+                .isActive(artifact.getIsActive())
+                .isEvidence(artifact.getIsEvidence())
+                .status(artifact.getStatus())
+                .filingType(artifact.getFilingType())
+                .isVoid(artifact.getIsVoid())
+                .reason(artifact.getReason())
+                .file(artifact.getFile())
+                .description(artifact.getDescription())
+                .artifactDetails(artifact.getArtifactDetails())
+                .searchableFields(searchableFields) // enrichment
+                .comments(artifact.getComments())
+                .additionalDetails(artifact.getAdditionalDetails())
+                .auditdetails(artifact.getAuditdetails())
+                .workflow(artifact.getWorkflow())
+                .shortenedUrl(artifact.getShortenedUrl())
+                .witnessMobileNumbers(artifact.getWitnessMobileNumbers())
+                .witnessEmails(artifact.getWitnessEmails())
+                .tag(artifact.getTag())
+                .evidenceMarkedStatus(artifact.getEvidenceMarkedStatus())
+                .isEvidenceMarkedFlow(artifact.getIsEvidenceMarkedFlow())
+                .build();
     }
 }
