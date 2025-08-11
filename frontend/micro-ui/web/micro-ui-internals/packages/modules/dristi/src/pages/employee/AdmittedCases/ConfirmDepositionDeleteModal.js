@@ -2,7 +2,7 @@ import React from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { CloseSvg } from "@egovernments/digit-ui-react-components";
 
-function ConfirmWitnessModal({ t, selectedWitness, witnessTag, onCancel, onSubmit, allParties }) {
+function ConfirmDepositionDeleteModal({ t, selectedWitness, allParties, onCancel, onSubmit }) {
   const CloseBtn = (props) => {
     return (
       <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
@@ -22,21 +22,19 @@ function ConfirmWitnessModal({ t, selectedWitness, witnessTag, onCancel, onSubmi
         actionCancelLabel={t("CS_BACK")}
         actionCancelOnSubmit={onCancel}
         actionSaveOnSubmit={onSubmit}
-        actionSaveLabel={t("SUBMIT_AND_E_SIGN")}
+        actionSaveLabel={t("CS_CONFIRM_DELETE_DEPOSITION")}
         formId="modal-action"
-        headerBarMain={<Heading label={t("CS_CONFIRM_CORRECTION")} />}
+        headerBarMain={<Heading label={t("DELETE_WITNESS_DEPOSITION")} />}
         headerBarEnd={<CloseBtn onClick={onCancel} />}
       >
         <div style={{ padding: "30px 0" }}>
-          <span>{t("ARE_YOU_SURE_YOU_WANT_TO_MARK")}</span>
+          <span>{t("ARE_YOU_SURE_YOU_WANT_TO_DELETE_DEPOSITION")}</span>
           <span>{sourceName}</span>
-          <span>{t("AS")}</span>
-          <span>{witnessTag}</span>
-          <span>{t("THIS_ACTION_CAN_NOT_BE_REVERSED_LATER")}</span>
+          <span>{t("PLEASE_CONFIRM_DELETE_DEPOSITION")}</span>
         </div>
       </Modal>
     </React.Fragment>
   );
 }
 
-export default ConfirmWitnessModal;
+export default ConfirmDepositionDeleteModal;
