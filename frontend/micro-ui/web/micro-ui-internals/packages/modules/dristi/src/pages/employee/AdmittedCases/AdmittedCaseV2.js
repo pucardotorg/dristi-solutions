@@ -4059,12 +4059,14 @@ const AdmittedCaseV2 = () => {
             setShowWitnessModal(false);
           }}
           attendees={currentActiveHearing?.attendees}
-          caseDetails={latestCaseDetails}
+          // caseDetails={latestCaseDetails}
           hearing={currentActiveHearing}
           hearingId={currentInProgressHearingId}
           tenantId={tenantId}
-          refetchCaseData={refetchCaseData}
+          // refetchCaseData={refetchCaseData}
           artifactNumber={editWitnessDepositionArtifact}
+          caseId={caseId}
+          courtId={courtId}
         />
       )}
       {(showPaymentDemandModal || showPaymentConfirmationModal) && (
