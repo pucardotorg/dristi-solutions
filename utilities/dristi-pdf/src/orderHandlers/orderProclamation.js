@@ -9,6 +9,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { handleApiCall } = require("../utils/handleApiCall");
+const {logger} = require("../logger");
 
 function formatToIndianCurrency(number) {
   if (!number) return "";
@@ -132,6 +133,8 @@ async function orderProclamation(
       qrCode === "true"
         ? config.pdf.order_issue_proclamation_qr
         : config.pdf.order_issue_proclamation;
+
+    logger.info("pdfKey", pdfKey);
 
     if (compositeOrder) {
       const pdfResponse = await handleApiCall(
