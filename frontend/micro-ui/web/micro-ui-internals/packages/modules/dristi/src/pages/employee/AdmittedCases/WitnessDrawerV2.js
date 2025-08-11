@@ -145,6 +145,16 @@ const WitnessDrawerV2 = ({
       const advocatesWithFetchedData = await Promise.all(
         (caseDetails?.representatives || []).map(async (rep) => {
           const advocates = caseDetails?.additionalDetails?.advocateDetails?.formdata;
+          let ownerType = "";
+          for (let i = 0; i < rep?.representing?.length; i++) {
+            const represetingObj = rep?.representing?.[i];
+            if (represetingObj?.partyType?.toLowerCase().includes("respondent")) {
+              ownerType = "ACCUSED";
+            } else if (represetingObj?.partyType?.toLowerCase().includes("complainant")) {
+              ownerType = "COMPLAINANT";
+            }
+            break;
+          }
 
           // First try to get mobile number from local data (your original logic)
           let mobileNumber = null;
@@ -181,6 +191,7 @@ const WitnessDrawerV2 = ({
             age: "",
             designation: "",
             tag,
+            ownerType,
           };
         })
       );
@@ -247,6 +258,7 @@ const WitnessDrawerV2 = ({
               address: address || "",
               designation,
               tag,
+              ownerType: "ACCUSED",
             };
           }) || []
       );
@@ -327,6 +339,7 @@ const WitnessDrawerV2 = ({
               address,
               designation: "",
               tag,
+              ownerType: "COMPLAINANT",
             };
           }
 
@@ -353,6 +366,7 @@ const WitnessDrawerV2 = ({
             witnessMobileNumbers: mobileNumber ? [mobileNumber] : [],
             sourceName: fullName,
             tag,
+            ownerType: "COMPLAINANT",
           };
         }) || []
     );
@@ -389,6 +403,7 @@ const WitnessDrawerV2 = ({
             address,
             designation: "",
             tag,
+            ownerType: "COMPLAINANT",
           };
         }) || []
     );
@@ -428,6 +443,7 @@ const WitnessDrawerV2 = ({
             witness?.data?.witnessDesignation
           ),
           tag,
+          ownerType: witness?.data?.ownerType || "",
         };
       }) || [],
     [caseDetails]
@@ -654,6 +670,7 @@ const WitnessDrawerV2 = ({
                 address: party?.address || "",
                 designation: party?.designation || "",
                 age: party?.age || "",
+                ownerType: party?.ownerType || "",
               },
             },
             isEvidenceMarkedFlow: false,
@@ -697,6 +714,7 @@ const WitnessDrawerV2 = ({
                 address: party?.address || "",
                 designation: party?.designation || "",
                 age: party?.age || "",
+                ownerType: party?.ownerType || "",
               },
             },
             comments: [],
