@@ -27,6 +27,8 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   const courtId = localStorage.getItem("courtId");
   const userInfo = Digit.UserService.getUser()?.info;
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
+
   const canSignBailBond = useMemo(() => roles?.some((role) => role.code === "BAIL_BOND_APPROVER"), [roles]);
   const isCitizen = useMemo(() => roles?.some((role) => role.code === "CITIZEN"), [roles]);
 
@@ -328,7 +330,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
   };
 
   const isSign = useMemo(() => {
-    if (isCitizen) {
+    if (isCitizen || !isJudge) {
       return false;
     } else {
       if (["VOID", "COMPLETED"]?.includes(effectiveRowData?.status)) {
@@ -336,7 +338,7 @@ export const BailBondSignModal = ({ selectedBailBond, setShowBulkSignModal = () 
       }
       return true;
     }
-  }, [effectiveRowData?.status, isCitizen]);
+  }, [effectiveRowData?.status, isCitizen, isJudge]);
 
   const customStyles = `
   .popup-module.review-submission-appl-modal .popup-module-main .popup-module-action-bar .selector-button-primary  {

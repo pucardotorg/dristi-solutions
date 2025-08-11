@@ -34,6 +34,7 @@ export const WitnessDepositionSignModal = ({
   const userInfo = Digit.UserService.getUser()?.info;
   const roles = useMemo(() => userInfo?.roles, [userInfo]);
   const isCitizen = useMemo(() => roles?.some((role) => role.code === "CITIZEN"), [roles]);
+  const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
 
   const [stepper, setStepper] = useState(() => {
     const bulkWitnessDepositionSignSelectedItem = sessionStorage.getItem("bulkWitnessDepositionSignSelectedItem");
@@ -95,6 +96,7 @@ export const WitnessDepositionSignModal = ({
             criteria: {
               tenantId: tenantId,
               courtId: courtId,
+              filingNumber: filingNumber || selectedWitnessDeposition?.businessObject?.artifactDetails?.filingNumber,
               artifactNumber:
                 queryStrings.artifactNumber ||
                 selectedWitnessDeposition?.businessObject?.artifactDetails?.artifactNumber ||
@@ -333,7 +335,7 @@ export const WitnessDepositionSignModal = ({
   };
 
   const isSign = useMemo(() => {
-    if (isCitizen) {
+    if (isCitizen || !isJudge) {
       return false;
     } else {
       if (["VOID", "COMPLETED"]?.includes(effectiveRowData?.status)) {
@@ -341,7 +343,7 @@ export const WitnessDepositionSignModal = ({
       }
       return true;
     }
-  }, [effectiveRowData?.status, isCitizen]);
+  }, [effectiveRowData?.status, isCitizen, isJudge]);
 
   const customStyles = `
   .popup-module.review-submission-appl-modal .popup-module-main .popup-module-action-bar .selector-button-primary  {
