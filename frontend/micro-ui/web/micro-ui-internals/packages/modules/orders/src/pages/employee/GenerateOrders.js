@@ -3070,7 +3070,7 @@ const GenerateOrders = () => {
             email: "",
             status: "",
             statusChangeDate: "",
-            fees: await getCourtFee("POLICE", respondentAddress?.[0]?.pincode, orderType),
+            fees: await getCourtFee("POLICE", respondentAddress?.[0]?.pincode, orderType === 'WARRANT' || orderType === 'PROCLAMATION' ? 'WARRANT' : orderType),
             feesStatus: "",
           },
         };
@@ -3110,7 +3110,7 @@ const GenerateOrders = () => {
             email: "",
             status: "",
             statusChangeDate: "",
-            fees: await getCourtFee("POLICE", respondentAddress?.[0]?.pincode, orderType),
+            fees: await getCourtFee("POLICE", respondentAddress?.[0]?.pincode, orderType === 'WARRANT' || orderType === 'PROCLAMATION' ? 'WARRANT' : orderType),
             feesStatus: "",
           },
         };
@@ -3150,7 +3150,7 @@ const GenerateOrders = () => {
             ? item?.value?.pincode
             : clonedPayload?.respondentDetails?.address?.pincode;
 
-          let courtFees = await getCourtFee(item?.code, pincode, orderType);
+          let courtFees = await getCourtFee(item?.code, pincode, orderType === 'WARRANT' || orderType === 'PROCLAMATION' ? 'WARRANT' : orderType);
 
           if ("deliveryChannels" in clonedPayload) {
             clonedPayload.deliveryChannels = {
