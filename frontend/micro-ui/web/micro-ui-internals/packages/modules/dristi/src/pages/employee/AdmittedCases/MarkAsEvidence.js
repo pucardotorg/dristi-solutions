@@ -565,8 +565,7 @@ const MarkAsEvidence = ({
       if (error?.response?.data?.Errors?.[0]?.code === "EVIDENCE_NUMBER_EXISTS_EXCEPTION") {
         setEvidenceNumberError(error?.response?.data?.Errors?.[0]?.code);
         setStepper(0);
-      }
-      showToast("error", t("EVIDENCE_UPDATE_ERROR_MESSAGE"), 5000);
+      } else showToast("error", t("EVIDENCE_UPDATE_ERROR_MESSAGE"), 5000);
       return false;
     }
   };
