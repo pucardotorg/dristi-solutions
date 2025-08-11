@@ -1757,7 +1757,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
               {userType === "employee" &&
                 selectedFileStoreId &&
                 evidenceFileStoreMap.has(selectedFileStoreId) &&
-                evidenceFileStoreMap?.get(selectedFileStoreId)?.evidenceMarkedStatus !== "COMPLETED" && (
+                evidenceFileStoreMap.get(selectedFileStoreId)?.artifactType !== "WITNESS_DEPOSITION" &&
+                !evidenceFileStoreMap?.get(selectedFileStoreId)?.isEvidence && (
                   <button
                     className="mark-asevidence-button"
                     onClick={() => {
