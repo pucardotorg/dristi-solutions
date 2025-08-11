@@ -53,13 +53,6 @@ public class EvidenceConsumer {
         publishArtifact(payload, topic);
     }
 
-    @KafkaListener(topics = {"${transformer.consumer.update.artifact.topic}",
-            "${transformer.consumer.update.withoutworkflow.artifact.topic}"})
-    public void updateArtifact(ConsumerRecord<String, Object> payload,
-                               @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
-        publishArtifact(payload, topic);
-    }
-
     private void publishArtifact(ConsumerRecord<String, Object> payload, String targetTopic) {
         try {
 
