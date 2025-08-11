@@ -316,7 +316,8 @@ public class EvidenceService {
         witness.setUniqueId(uniqueId);
         witness.setWitnessTag(body.getArtifact().getTag());
 
-        updateWitnessEmails(body, witness);
+        // Remark: may need to add email laters to witness details
+//        updateWitnessEmails(body, witness);
         updateWitnessMobileNumbers(body, witness);
 
         WitnessDetailsRequest witnessDetailsRequest = WitnessDetailsRequest.builder()
