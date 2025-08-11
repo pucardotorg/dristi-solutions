@@ -27,6 +27,7 @@ import SuccessBannerModal from "../../../../../submissions/src/components/Succes
 import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
 import ConfirmDepositionDeleteModal from "./ConfirmDepositionDeleteModal";
 import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
+import { searchIndividualUserWithUuid } from "../../../../../cases/src/utils/joinCaseUtils";
 
 const formatAddress = (addr) => {
   if (!addr) return "";
@@ -35,6 +36,13 @@ const formatAddress = (addr) => {
   const { locality = "", city = "", district = "", state = "", pincode = "" } = addr;
 
   return `${locality}, ${city}, ${district}, ${state}, ${pincode}`.trim();
+};
+
+const formatAddressFromIndividualData = (addr) => {
+  if (!addr) return "";
+  const { addressLine1 = "", addressLine2 = "", buildingName = "", street = "", city = "", pincode = "" } = addr;
+
+  return `${addressLine1}, ${addressLine2}, ${buildingName}, ${street}, ${city}, ${pincode}`.trim();
 };
 
 const WitnessDrawerV2 = ({
@@ -90,6 +98,7 @@ const WitnessDrawerV2 = ({
   // const [disableWitnessType, setDisableWitnessType] = useState(false);
   const [obtainedTag, setObtainedTag] = useState("");
   const [showConfirmDeleteDepositionModal, setShowConfirmDeleteDepositionModal] = useState({ show: false, tab: {} });
+  const [advocatesData, setAdvocatesData] = useState([]);
 
   const closeToast = () => {
     setShowErrorToast(null);
@@ -128,6 +137,62 @@ const WitnessDrawerV2 = ({
   );
 
   const caseDetails = useMemo(() => apiCaseData?.cases || {}, [apiCaseData]);
+
+  // Fetch mobile numbers for advocates when missing from local data
+  useEffect(() => {
+    debugger;
+    const fetchAdvocateData = async () => {
+      const advocatesWithFetchedData = await Promise.all(
+        (caseDetails?.representatives || []).map(async (rep) => {
+          const advocates = caseDetails?.additionalDetails?.advocateDetails?.formdata;
+
+          // First try to get mobile number from local data (your original logic)
+          let mobileNumber = null;
+          for (let i = 0; i < advocates?.length; i++) {
+            for (let j = 0; j < advocates[i]?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.length; j++) {
+              const advocateData = advocates[i]?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.[j];
+              if (advocateData?.advocateBarRegNumberWithName?.advocateUuid === rep?.additionalDetails?.uuid) {
+                mobileNumber = advocateData?.advocateNameDetails?.advocateMobileNumber;
+                break;
+              }
+            }
+          }
+
+          let individualData = {};
+          debugger;
+          // Only call API if mobile number is not found locally (!mobileNumber)
+          if (true && rep?.additionalDetails?.uuid && tenantId) {
+            try {
+              individualData = await searchIndividualUserWithUuid(rep?.additionalDetails?.uuid, tenantId);
+              console.log("individualData", individualData);
+              mobileNumber = individualData?.Individual?.[0]?.mobileNumber || individualData?.Individual?.[0]?.userDetails?.username || "";
+            } catch (error) {
+              console.error("Error fetching individual data:", error);
+            }
+          }
+
+          const tag = rep?.additionalDetails?.tag;
+          const address = formatAddressFromIndividualData(individualData?.Individual?.[0]?.address?.[0]);
+          return {
+            name: `${rep?.additionalDetails?.advocateName} (Advocate)`,
+            partyType: `ADVOCATE`,
+            uuid: rep?.additionalDetails?.uuid,
+            representingList: rep?.representing?.map((client) => removeInvalidNameParts(client?.additionalDetails?.fullName))?.join(", "),
+            witnessMobileNumbers: mobileNumber ? [mobileNumber] : [],
+            sourceName: rep?.additionalDetails?.advocateName,
+            address: address || "",
+            age: "",
+            designation: "",
+            tag,
+          };
+        })
+      );
+
+      setAdvocatesData(advocatesWithFetchedData);
+    };
+
+    fetchAdvocateData();
+  }, [caseDetails, tenantId]);
 
   // API to fetch draft depositions
   const { data: evidenceData, isloading: isEvidenceLoading, refetch: evidenceRefetch } = useSearchEvidenceService(
@@ -302,37 +367,7 @@ const WitnessDrawerV2 = ({
     );
   }, [caseDetails, allAdvocates]);
 
-  const advocates = useMemo(
-    () =>
-      caseDetails?.representatives?.map((rep) => {
-        const advocates = caseDetails?.additionalDetails?.advocateDetails?.formdata;
-
-        let mobileNumber = null;
-        for (let i = 0; i < advocates?.length; i++) {
-          for (let j = 0; j < advocates[i]?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.length; j++) {
-            const advocateData = advocates[i]?.data?.multipleAdvocatesAndPip?.multipleAdvocateNameDetails?.[j];
-            if (advocateData?.advocateBarRegNumberWithName?.advocateUuid === rep?.additionalDetails?.uuid) {
-              mobileNumber = advocateData?.advocateNameDetails?.advocateMobileNumber;
-              break;
-            }
-          }
-        }
-        const tag = rep?.additionalDetails?.tag;
-        return {
-          name: `${rep?.additionalDetails?.advocateName} (Advocate)`,
-          partyType: `ADVOCATE`,
-          uuid: rep?.additionalDetails?.uuid,
-          representingList: rep?.representing?.map((client) => removeInvalidNameParts(client?.additionalDetails?.fullName))?.join(", "),
-          witnessMobileNumbers: mobileNumber ? [mobileNumber] : [],
-          sourceName: rep?.additionalDetails?.advocateName,
-          address: "",
-          age: "",
-          designation: "",
-          tag,
-        };
-      }) || [],
-    [caseDetails]
-  );
+  const advocates = useMemo(() => advocatesData, [advocatesData]);
 
   const witnesses = useMemo(
     () =>
