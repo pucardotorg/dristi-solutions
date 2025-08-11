@@ -3335,7 +3335,7 @@ const AdmittedCases = () => {
           onDismiss={() => setShowAddWitnessModal(false)}
           tenantId={tenantId}
           caseDetails={caseDetails}
-          isJudge={isJudge}
+          isEmployee={isJudge || isBenchClerk || isTypist || isCourtStaff}
           showToast={showToast}
           onAddSuccess={() => {
             setShowAddWitnessModal(false);
