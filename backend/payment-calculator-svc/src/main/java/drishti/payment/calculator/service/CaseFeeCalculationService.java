@@ -56,17 +56,13 @@ public class CaseFeeCalculationService {
             Map<String, List<JsonNode>> litigantAdvocateMap = caseUtil.getAdvocateForLitigant(request.getRequestInfo(), criteria.getFilingNumber(), criteria.getTenantId());
             Double advocateFee = 0.0;
 
-            Double calculatedCourtFee = 0.0;
-            Double calculatedLegalBasicFund = 0.0;
-            Double calculatedAdvocateClerkWelfareFund = 0.0;
+            Double calculatedCourtFee =  courtFee;
+            Double calculatedLegalBasicFund = legalBasicFund;
+            Double calculatedAdvocateClerkWelfareFund = advocateClerkWelfareFund;
 
             for (Map.Entry<String, List<JsonNode>> entry : litigantAdvocateMap.entrySet()) {
                 int advocateCount = entry.getValue().size();
                 advocateFee += getAdvocateFee(noOfAdvocateFees, advocateCount);
-                calculatedCourtFee += courtFee;
-                calculatedLegalBasicFund += legalBasicFund;
-                calculatedAdvocateClerkWelfareFund += advocateClerkWelfareFund;
-
             }
 
             calculatedCourtFee = Math.ceil(calculatedCourtFee);
@@ -157,17 +153,14 @@ public class CaseFeeCalculationService {
         List<Calculation> result = new ArrayList<>();
         for (JoinCaseCriteria joinCaseCriteria : request.getJoinCaseCriteria()) {
 
-            Double calculatedCourtFee = 0.0;
-            Double calculatedLegalBasicFund = 0.0;
-            Double calculatedAdvocateClerkWelfareFund = 0.0;
+            Double calculatedCourtFee = courtFee;
+            Double calculatedLegalBasicFund = legalBasicFund;
+            Double calculatedAdvocateClerkWelfareFund = advocateClerkWelfareFund;
             Double calculatedAdvocateFee = 0.0;
 
             for (LitigantAdvocateMap litigantAdvocateMap : joinCaseCriteria.getLitigantAdvocateMap()) {
                 if (litigantAdvocateMap.getAdvocateCount() > 0) {
                     Double advocateFee = getAdvocateFee(eFillingDefaultData.getNoOfAdvocateFees(), litigantAdvocateMap.getAdvocateCount());
-                    calculatedCourtFee += courtFee;
-                    calculatedLegalBasicFund += legalBasicFund;
-                    calculatedAdvocateClerkWelfareFund += advocateClerkWelfareFund;
                     calculatedAdvocateFee += advocateFee;
                 }
             }
