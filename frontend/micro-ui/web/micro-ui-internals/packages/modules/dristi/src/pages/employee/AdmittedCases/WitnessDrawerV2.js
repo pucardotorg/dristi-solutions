@@ -593,7 +593,7 @@ const WitnessDrawerV2 = ({
           setObtainedTag(updatedEvidence?.artifact?.tag);
         }
 
-        setShowErrorToast({ label: "Draft updated successfully", error: false });
+        setShowErrorToast({ label: "WITNESS_DEPOSITION_UPDATED_SUCCESSFULLY", error: false });
       } else {
         // Create new evidence
         const createEvidenceReqBody = {
@@ -694,18 +694,19 @@ const WitnessDrawerV2 = ({
           setActiveTabs(updatedTabs);
         }
 
-        setShowErrorToast({ label: "Draft updated successfully", error: false });
-      }
-      setDisableWitnessType(true);
+        setShowErrorToast({ label: t("WITNESS_MARKED_SUCCESSFULLY"), error: false });
 
-      // Also refresh evidence list to ensure server and client are in sync
+        setDisableWitnessType(true);
+        setShowWitnessDepositionReview(true);
+        setShowConfirmWitnessModal(false);
+      }
+
       evidenceRefetch();
+      refetchCaseData();
     } catch (error) {
-      console.error("Error saving draft:", error);
-      setShowErrorToast({ label: "Failed to save draft", error: true });
+      console.error("Failed to save witness marking:", error);
+      setShowErrorToast({ label: t("FAILED_TO_SAVE_WITNESS_MARKING"), error: true });
     } finally {
-      setShowConfirmWitnessModal(false);
-      setShowWitnessDepositionReview(true);
       evidenceRefetch();
     }
   };
