@@ -10,7 +10,7 @@
       "state": "PENDING_REVIEW",
       "isgeneric": false,
       "screenType": "home",
-      "pendingTask": "review the evidence",
+      "pendingTask": "Review Witness Deposition",
       "closerAction": [
         "SIGN"
       ],
@@ -32,7 +32,7 @@
       "state": "PENDING_E-SIGN",
       "isgeneric": false,
       "screenType": "home",
-      "pendingTask": "sign the evidence",
+      "pendingTask": "Sign Witness Deposition",
       "closerAction": [
         "E-SIGN"
       ],
