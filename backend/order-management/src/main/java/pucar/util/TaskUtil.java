@@ -116,7 +116,7 @@ public class TaskUtil {
         }
 
         WorkflowObject workflowObject = new WorkflowObject();
-        if (EMAIL.equalsIgnoreCase(channel) || SMS.equalsIgnoreCase(channel)) {
+        if (EMAIL.equalsIgnoreCase(channel) || SMS.equalsIgnoreCase(channel) || isCourtWitness(order)) {
             workflowObject.setAction("CREATE_WITH_OUT_PAYMENT");
         }
         else {
@@ -142,6 +142,39 @@ public class TaskUtil {
                 .build();
 
          return TaskRequest.builder().requestInfo(requestInfo).task(task).build();
+    }
+
+    private boolean isCourtWitness(Order order) {
+        String orderType = order.getOrderType();
+        if(WARRANT.equalsIgnoreCase(orderType) || SUMMONS.equalsIgnoreCase(orderType)) {
+            switch (orderType) {
+                case WARRANT:
+                    return isWarrantForWitness(order.getAdditionalDetails());
+                case SUMMONS:
+                    return isSummonForWitness(order.getAdditionalDetails());
+            }
+        }
+        return false;
+    }
+
+    private boolean isSummonForWitness(Object additionalDetails) {
+        JsonNode additionalDetailsNode = objectMapper.valueToTree(additionalDetails);
+        JsonNode witnessDetails = additionalDetailsNode.get("formdata").get("SummonsOrder").get("party").get("data");
+        if(witnessDetails.get("partyType").textValue().equalsIgnoreCase(WITNESS) &&
+            witnessDetails.get("ownerType").textValue().equalsIgnoreCase("-")) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isWarrantForWitness(Object additionalDetails) {
+        JsonNode additionalDetailsNode = objectMapper.valueToTree(additionalDetails);
+        JsonNode witnessDetails = additionalDetailsNode.get("formdata").get("warrantForm").get("party").get("data");
+        if(witnessDetails.get("partyType").textValue().equalsIgnoreCase(WITNESS) &&
+            witnessDetails.get("ownerType").textValue().equalsIgnoreCase("-")) {
+            return true;
+        }
+        return false;
     }
 
 
