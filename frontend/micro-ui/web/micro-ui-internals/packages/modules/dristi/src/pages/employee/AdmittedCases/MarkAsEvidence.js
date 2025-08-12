@@ -526,14 +526,14 @@ const MarkAsEvidence = ({
         setEvidenceNumber(customEvidenceNumber);
 
         // Set business of day from props
-        setBusinessOfDay(evidenceDetailsObj?.additionalDetails?.botd || `Document marked as evidence exhibit number ${artifactNumber}`);
+        setBusinessOfDay(evidenceDetailsObj?.additionalDetails?.botd || null);
       }
     }
     // Get case details if filing number is available
     if (filingNumber) {
       getCaseDetails();
     }
-  }, [filingNumber, courtId, userType, tenantId, artifactNumber, evidenceDetailsObj, t]);
+  }, [filingNumber, courtId, userType, tenantId, artifactNumber, evidenceDetailsObj, t, evidenceTag]);
   useEffect(() => {
     checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
   }, [checkSignStatus, name, formData, uploadModalConfig, setIsSigned]);
@@ -576,7 +576,7 @@ const MarkAsEvidence = ({
       if (stepper === 0) {
         clearEvidenceSessionData();
         if (businessOfDay === null || businessOfDay === "") {
-          setBusinessOfDay(`Document marked as evidence exhibit number ${artifactNumber}`);
+          setBusinessOfDay(`Document marked as evidence exhibit number ${evidenceTag}${evidenceNumber}`);
         }
         await handleMarkEvidence(
           evidenceDetails?.evidenceMarkedStatus === null ? MarkAsEvidenceAction?.CREATE : MarkAsEvidenceAction?.SAVEDRAFT
