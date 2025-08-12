@@ -144,7 +144,7 @@ public class TaskUtil {
          return TaskRequest.builder().requestInfo(requestInfo).task(task).build();
     }
 
-    private boolean isCourtWitness(Order order) {
+    public boolean isCourtWitness(Order order) {
         String orderType = order.getOrderType();
         if(WARRANT.equalsIgnoreCase(orderType) || SUMMONS.equalsIgnoreCase(orderType)) {
             switch (orderType) {
