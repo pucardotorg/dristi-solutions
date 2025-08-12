@@ -1835,16 +1835,36 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         >
           <div>
             {selectedDocument && selectedFileStoreId && (
-              <span style={{ display: "flex", gap: "10px", fontFamily: "Roboto", fontWeight: "700", fontStyle: "bold", fontSize: "20px" }}>
-                {selectedDocumentData?.title && t(selectedDocumentData.title)}
+              <span style={{ display: "flex", gap: "10px", fontFamily: "Roboto" }}>
+                <span style={{ fontWeight: "700", fontStyle: "bold", fontSize: "20px" }}>
+                  {" "}
+                  {selectedDocumentData?.title && t(selectedDocumentData.title)}
+                </span>
+
                 {evidenceFileStoreMap &&
                   evidenceFileStoreMap.has(selectedFileStoreId) &&
                   evidenceFileStoreMap?.get(selectedFileStoreId)?.evidenceMarkedStatus !== null &&
                   (evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED" || userType === "employee") && (
-                    <CustomChip
-                      text={t(evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus) || ""}
-                      shade={evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"}
-                    />
+                    <React.Fragment>
+                      <CustomChip
+                        text={
+                          t(
+                            evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED"
+                              ? "SIGNED"
+                              : evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus
+                          ) || ""
+                        }
+                        shade={evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"}
+                      />
+                      {evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED" && (
+                        <span>
+                          <span style={{ fontSize: "20px", paddingLeft: "5px", paddingRight: "5px" }}> | </span>
+                          <span style={{ fontSize: "14px", fontWeight: "400" }}>
+                            {t("EVIDENCE_NUMBER")}: {evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceNumber}
+                          </span>
+                        </span>
+                      )}
+                    </React.Fragment>
                   )}
               </span>
             )}
