@@ -24,12 +24,11 @@ function WitnessDepositionDocModal({
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  const isCitizen = userRoles?.includes("CITIZEN");
-  const isJudge = userRoles?.includes("JUDGE_ROLE");
-  const isFSO = userRoles?.some((role) => role.code === "FSO_ROLE");
-  const isCourtRoomManager = userRoles?.some((role) => role.code === "COURT_ROOM_MANAGER");
-  const isBenchClerk = userRoles?.some((role) => role.code === "BENCH_CLERK");
-  const isTypist = userRoles?.some((role) => role.code === "TYPIST_ROLE");
+  const isCitizen = useMemo(() => userRoles?.includes("CITIZEN"), [userRoles]);
+  const isJudge = useMemo(() => userRoles?.includes("JUDGE_ROLE"), [userRoles]);
+  const isCourtRoomManager = useMemo(() => userRoles?.includes("COURT_ROOM_MANAGER"), [userRoles]);
+  const isBenchClerk = useMemo(() => userRoles?.includes("BENCH_CLERK"), [userRoles]);
+  const isTypist = useMemo(() => userRoles?.includes("TYPIST_ROLE"), [userRoles]);
 
   const closeToast = () => {
     setShowErrorToast(null);
