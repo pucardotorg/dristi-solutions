@@ -2,6 +2,7 @@ package org.pucar.dristi.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jayway.jsonpath.JsonPath;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
@@ -15,11 +16,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import static org.pucar.dristi.config.ServiceConstants.ERROR_WHILE_FETCHING_FROM_CASE;
-import static org.pucar.dristi.config.ServiceConstants.EXTERNAL_SERVICE_EXCEPTION;
+import static org.pucar.dristi.config.ServiceConstants.*;
 
 @Slf4j
 @Component
@@ -105,6 +107,26 @@ public class CaseUtil {
         } catch (CustomException e) {
             log.error(EXTERNAL_SERVICE_EXCEPTION, e);
             throw new ServiceCallException(e.getMessage());
+        }
+    }
+
+    public CourtCase getCase(String filingNumber, String tenantId, RequestInfo requestInfo) {
+        StringBuilder uri = new StringBuilder();
+        uri.append(configs.getCaseHost()).append(configs.getCaseSearchPath());
+        CaseSearchRequest request = CaseSearchRequest.builder()
+                .requestInfo(requestInfo)
+                .criteria(Collections.singletonList(CaseCriteria.builder()
+                        .filingNumber(filingNumber)
+                        .defaultFields(false)
+                        .build()))
+                .tenantId(tenantId)
+                .build();
+        try {
+            Object response = repository.fetchResult(uri, request);
+            return mapper.convertValue(JsonPath.read(response, COURT_CASE_JSON_PATH), CourtCase.class);
+        } catch (Exception e) {
+            log.error("Error executing case search query", e);
+            throw new CustomException("Error fetching case: ", ERROR_CASE_SEARCH);
         }
     }
 }
