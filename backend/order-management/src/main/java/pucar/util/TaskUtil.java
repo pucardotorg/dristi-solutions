@@ -161,7 +161,7 @@ public class TaskUtil {
         JsonNode additionalDetailsNode = objectMapper.valueToTree(additionalDetails);
         JsonNode witnessDetails = additionalDetailsNode.get("formdata").get("SummonsOrder").get("party").get("data");
         if(witnessDetails.get("partyType").textValue().equalsIgnoreCase(WITNESS) &&
-            witnessDetails.get("ownerType").textValue().equalsIgnoreCase("-")) {
+                (witnessDetails.get("ownerType").isNull() || witnessDetails.get("ownerType").textValue().equalsIgnoreCase("-"))) {
             return true;
         }
         return false;
@@ -171,7 +171,7 @@ public class TaskUtil {
         JsonNode additionalDetailsNode = objectMapper.valueToTree(additionalDetails);
         JsonNode witnessDetails = additionalDetailsNode.get("formdata").get("warrantForm").get("party").get("data");
         if(witnessDetails.get("partyType").textValue().equalsIgnoreCase(WITNESS) &&
-            witnessDetails.get("ownerType").textValue().equalsIgnoreCase("-")) {
+            (witnessDetails.get("ownerType").textValue().equalsIgnoreCase("-") || witnessDetails.get("ownerType").isNull())) {
             return true;
         }
         return false;
