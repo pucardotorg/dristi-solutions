@@ -57,7 +57,7 @@ public class ICopsChannel implements ExternalChannel {
         } else if(task.getTaskType().equals(PROCLAMATION)) {
                 task.getTaskDetails().getProclamationDetails().setDocSubType(PROCLAMATION_DOC_SUB_TYPE);
         } else if(task.getTaskType().equals(ATTACHMENT)) {
-            task.getTaskDetails().getProclamationDetails().setDocSubType(ATTACHMENT_DOC_SUB_TYPE);
+            task.getTaskDetails().getAttachmentDetails().setDocSubType(ATTACHMENT_DOC_SUB_TYPE);
         }
     }
 }
