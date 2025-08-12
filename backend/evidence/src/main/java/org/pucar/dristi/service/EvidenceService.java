@@ -55,11 +55,10 @@ public class EvidenceService {
     private final HearingUtil hearingUtil;
     private final DateUtil dateUtil;
     private final ADiaryUtil aDiaryUtil;
-    private final InboxUtil inboxUtil;
     private final EsUtil esUtil;
 
     @Autowired
-    public EvidenceService(EvidenceValidator validator, EvidenceEnrichment evidenceEnrichment, WorkflowService workflowService, EvidenceRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, UrlShortenerUtil urlShortenerUtil, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, XmlRequestGenerator xmlRequestGenerator, HearingUtil hearingUtil, DateUtil dateUtil, ADiaryUtil aDiaryUtil, InboxUtil inboxUtil, EsUtil esUtil) {
+    public EvidenceService(EvidenceValidator validator, EvidenceEnrichment evidenceEnrichment, WorkflowService workflowService, EvidenceRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, UrlShortenerUtil urlShortenerUtil, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, XmlRequestGenerator xmlRequestGenerator, HearingUtil hearingUtil, DateUtil dateUtil, ADiaryUtil aDiaryUtil, EsUtil esUtil) {
         this.validator = validator;
         this.evidenceEnrichment = evidenceEnrichment;
         this.workflowService = workflowService;
@@ -79,7 +78,6 @@ public class EvidenceService {
         this.hearingUtil = hearingUtil;
         this.dateUtil = dateUtil;
         this.aDiaryUtil = aDiaryUtil;
-        this.inboxUtil = inboxUtil;
         this.esUtil = esUtil;
     }
 
