@@ -166,6 +166,9 @@ public class Configuration {
 	@Value("${egov.hearing.path}")
 	private String hearingExistsPath;
 
+	@Value("${egov.hearing.search.endpoint}")
+	private String hearingSearchEndPoint;
+
 	@Value("${evidence.kafka.comments.update.topic}")
 	private String evidenceUpdateCommentsTopic;
 
@@ -288,5 +291,44 @@ public class Configuration {
 	//Email
 	@Value("${egov.mail.notification.topic}")
 	private String mailNotificationTopic;
+
+	// ADiary config
+
+	@Value("${egov.adiary.host}")
+	private String aDiaryHost;
+
+	@Value("${egov.adiary.create.bulk}")
+	private String aDiaryCreateBulkEndPoint;
+
+	// Advocate Config
+	@Value("${egov.advocate.host}")
+	private String advocateHost;
+
+	@Value("${egov.advocate.path}")
+	private String advocatePath;
+
+	//ES configs
+	@Value("${egov.indexer.es.username}")
+	private String esUsername;
+
+	@Value("${egov.indexer.es.password}")
+	private String esPassword;
+
+	@Value("${egov.infra.indexer.host}")
+	private String esHostUrl;
+
+	@Value("${egov.bulk.index.path}")
+	private String bulkPath;
+
+	// inbox config
+	@Value("${egov.inbox.host}")
+	private String inboxHost;
+
+	@Value("${egov.inbox.search.endpoint}")
+	private String indexSearchEndPoint;
+
+	@Value("${egov.bulk.open.artifact.index}")
+	private String openArtifactIndex;
+
 
 }
