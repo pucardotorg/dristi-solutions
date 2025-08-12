@@ -103,14 +103,63 @@ public class EsUtil {
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
-                config.getOpenArtifactIndex(), artifactNumber,
-                id, tenantId, artifactNumber, evidenceNumber, filingNumber, externalRefNumber, courtId, caseId,
-                caseNumber, caseTitle, advocateString, application, hearing, order, cnrNumber, mediaType, artifactType,
-                sourceType, sourceID, sourceName, applicableToString, createdDate, publishedDate, isActive, isEvidence,
-                status, filingType, isVoid, reason, fileString, sealString, description, artifactDetailsString,
-                searchableFieldsString, commentsString, additionalDetailsString, auditDetailsString, workflowString,
-                evidenceMarkedStatus, isEvidenceMarkedFlow, tag, shortenedUrl, witnessMobileNumbersString, witnessEmailsString
+                config.getOpenArtifactIndex(),
+                nullSafe(artifactNumber),
+                nullSafe(id),
+                nullSafe(tenantId),
+                nullSafe(artifactNumber),
+                nullSafe(evidenceNumber),
+                nullSafe(filingNumber),
+                nullSafe(externalRefNumber),
+                nullSafe(courtId),
+                nullSafe(caseId),
+                nullSafe(caseNumber),
+                nullSafe(caseTitle),
+                nullSafeJson(advocateString),
+                nullSafe(application),
+                nullSafe(hearing),
+                nullSafe(order),
+                nullSafe(cnrNumber),
+                nullSafe(mediaType),
+                nullSafe(artifactType),
+                nullSafe(sourceType),
+                nullSafe(sourceID),
+                nullSafe(sourceName),
+                nullSafeJson(applicableToString),
+                createdDate,
+                publishedDate,
+                isActive,
+                isEvidence,
+                nullSafe(status),
+                nullSafe(filingType),
+                isVoid,
+                nullSafe(reason),
+                nullSafeJson(fileString),
+                nullSafeJson(sealString),
+                nullSafe(description),
+                nullSafeJson(artifactDetailsString),
+                nullSafeJson(searchableFieldsString),
+                nullSafeJson(commentsString),
+                nullSafeJson(additionalDetailsString),
+                nullSafeJson(auditDetailsString),
+                nullSafeJson(workflowString),
+                nullSafe(evidenceMarkedStatus),
+                isEvidenceMarkedFlow,
+                nullSafe(tag),
+                nullSafe(shortenedUrl),
+                nullSafeJson(witnessMobileNumbersString),
+                nullSafeJson(witnessEmailsString)
         );
+    }
+
+    // Helper method to handle null string values
+    private String nullSafe(String value) {
+        return value != null ? "\"" + value.replace("\"", "\\\"") + "\"" : "null";
+    }
+
+    // Helper method to handle null JSON values (already formatted as JSON)
+    private String nullSafeJson(String jsonValue) {
+        return jsonValue != null ? jsonValue : "null";
     }
 
 
