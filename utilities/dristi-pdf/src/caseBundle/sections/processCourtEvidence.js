@@ -36,8 +36,8 @@ async function processCourtEvidence(
       {
         courtId: courtCase.courtId,
         filingNumber: courtCase.filingNumber,
-        sourceType: "COURT",
         artifactType: "WITNESS_DEPOSITION",
+        status: "COMPLETED",
         isVoid: false,
         tenantId,
       },
@@ -48,7 +48,15 @@ async function processCourtEvidence(
       }
     );
 
-    const courtList = courtDocs?.data?.artifacts;
+    const courtDepositions = courtDocs?.data?.artifacts?.filter(
+      (artifact) =>
+        artifact?.additionalDetails?.witnessDetails?.ownerType === "-"
+    );
+    const noOwnerType = courtDocs?.data?.artifacts?.filter(
+      (artifact) => !artifact?.additionalDetails?.witnessDetails?.ownerType
+    );
+
+    const courtList = [...new Set([...courtDepositions, ...noOwnerType])];
 
     if (courtList?.length !== 0) {
       const innerLineItems = await Promise.all(
@@ -137,13 +145,11 @@ async function processCourtEvidence(
   }
 
   if (courtEvidenceLineItems.length > 0) {
-    {
-      const courtEvidenceIndexSection = indexCopy.sections.find(
-        (section) => section.name === "courtevidence"
-      );
-      courtEvidenceIndexSection.lineItems =
-        courtEvidenceLineItems.filter(Boolean);
-    }
+    const courtEvidenceIndexSection = indexCopy.sections.find(
+      (section) => section.name === "courtevidence"
+    );
+    courtEvidenceIndexSection.lineItems =
+      courtEvidenceLineItems.filter(Boolean);
   }
 }
 

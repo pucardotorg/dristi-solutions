@@ -391,17 +391,13 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     filingNumber
   );
 
-  const {
-    data: courtEvidenceDepositionData,
-    isLoading: isCourtDepositionEvidenceLoading,
-    refetch: courtDepositionRefetch,
-  } = Digit.Hooks.submissions.useSearchEvidenceService(
+  const { data: depositionData, isLoading: depositionLoading, refetch: depositionRefetch } = Digit.Hooks.submissions.useSearchEvidenceService(
     {
       criteria: {
         courtId: courtId,
         filingNumber: filingNumber,
-        sourceType: "COURT",
         artifactType: "WITNESS_DEPOSITION",
+        status: ["COMPLETED"],
         isVoid: false,
         tenantId,
       },
@@ -412,9 +408,32 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       },
     },
     {},
-    filingNumber + "courtEvidenceDepositionData",
+    filingNumber + "depositionData",
     filingNumber
   );
+
+  const complainantDepositions = useMemo(() => {
+    if (depositionData?.artifacts?.length > 0) {
+      return depositionData?.artifacts?.filter((artifact) => artifact?.additionalDetails?.witnessDetails?.ownerType === "COMPLAINANT");
+    }
+    return null;
+  }, [depositionData]);
+
+  const accusedDepositions = useMemo(() => {
+    if (depositionData?.artifacts?.length > 0) {
+      return depositionData?.artifacts?.filter((artifact) => artifact?.additionalDetails?.witnessDetails?.ownerType === "ACCUSED");
+    }
+    return null;
+  }, [depositionData]);
+
+  const courtDepositions = useMemo(() => {
+    if (depositionData?.artifacts?.length > 0) {
+      const courtDepositions = depositionData?.artifacts?.filter((artifact) => artifact?.additionalDetails?.witnessDetails?.ownerType === "-");
+      const noOwnerType = depositionData.artifacts.filter((artifact) => !artifact?.additionalDetails?.witnessDetails?.ownerType);
+      return [...new Set([...courtDepositions, ...noOwnerType])];
+    }
+    return null;
+  }, [depositionData]);
 
   const { data: completedApplicationData, isLoading: isCompletedApplicationLoading } = Digit.Hooks.submissions.useSearchSubmissionService(
     {
@@ -851,41 +870,119 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
   const evidenceChildren = generateEvidenceStructure(combinedEvidenceList);
 
   const generateCompliantEvidenceStructure = (complaintEvidenceData) => {
-    if (!complaintEvidenceData?.artifacts || !Array.isArray(complaintEvidenceData?.artifacts)) return [];
-    return complaintEvidenceData?.artifacts
-      ?.filter((artifact) => artifact?.file?.fileStore)
-      ?.map((artifact, idx) => ({
-        id: `complaint-evidence-${idx}`,
-        title:
-          artifact?.additionalDetails?.formdata?.documentTitle ||
-          artifact?.file?.additionalDetails?.documentTitle ||
-          artifact?.file?.additionalDetails?.documentType ||
-          artifact?.artifactType,
-        fileStoreId: artifact?.file?.fileStore,
-        hasChildren: false,
-      }));
+    const depositions = Array.isArray(complainantDepositions)
+      ? complainantDepositions
+          ?.filter((artifact) => artifact?.file?.fileStore)
+          ?.map((artifact, idx) => ({
+            id: `complainant-deposition-${idx}`,
+            title:
+              artifact?.additionalDetails?.formdata?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentType ||
+              artifact?.file?.additionalDetails?.name ||
+              artifact?.artifactType,
+            fileStoreId: artifact?.file?.fileStore,
+            hasChildren: false,
+          }))
+      : [];
+
+    const evidences = Array.isArray(complaintEvidenceData?.artifacts)
+      ? complaintEvidenceData?.artifacts
+          ?.filter((artifact) => artifact?.file?.fileStore)
+          ?.map((artifact, idx) => ({
+            id: `complainant-evidence-${idx}`,
+            title:
+              artifact?.additionalDetails?.formdata?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentType ||
+              artifact?.artifactType,
+            fileStoreId: artifact?.file?.fileStore,
+            hasChildren: false,
+          }))
+      : [];
+
+    const result = [];
+
+    if (depositions?.length > 0) {
+      result.push({
+        id: "complainant-depositions",
+        title: "DEPOSITIONS_PDF_HEADING",
+        hasChildren: true,
+        children: depositions,
+      });
+    }
+
+    if (evidences?.length > 0) {
+      result.push({
+        id: "complainant-evidences",
+        title: "EVIDENCES_PDF_HEADING",
+        hasChildren: evidences?.length > 0,
+        children: evidences,
+      });
+    }
+
+    return result;
   };
 
   const generateAccusedEvidenceStructure = (accusedEvidenceData) => {
-    if (!accusedEvidenceData?.artifacts || !Array.isArray(accusedEvidenceData?.artifacts)) return [];
-    return accusedEvidenceData?.artifacts
-      ?.filter((evidence) => evidence?.file?.fileStore)
-      ?.map((evidence, idx) => ({
-        id: `accused-evidence-${idx}`,
-        title:
-          evidence?.additionalDetails?.formdata?.documentTitle ||
-          evidence?.file?.additionalDetails?.documentTitle ||
-          evidence?.file?.additionalDetails?.documentType ||
-          evidence?.artifactType,
-        fileStoreId: evidence?.file?.fileStore,
-        hasChildren: false,
-      }));
+    const depositions = Array.isArray(accusedDepositions)
+      ? accusedDepositions
+          ?.filter((artifact) => artifact?.file?.fileStore)
+          ?.map((artifact, idx) => ({
+            id: `accused-deposition-${idx}`,
+            title:
+              artifact?.additionalDetails?.formdata?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentTitle ||
+              artifact?.file?.additionalDetails?.documentType ||
+              artifact?.file?.additionalDetails?.name ||
+              artifact?.artifactType,
+            fileStoreId: artifact?.file?.fileStore,
+            hasChildren: false,
+          }))
+      : [];
+
+    const evidences = Array.isArray(accusedEvidenceData?.artifacts)
+      ? accusedEvidenceData?.artifacts
+          ?.filter((evidence) => evidence?.file?.fileStore)
+          ?.map((evidence, idx) => ({
+            id: `accused-evidence-${idx}`,
+            title:
+              evidence?.additionalDetails?.formdata?.documentTitle ||
+              evidence?.file?.additionalDetails?.documentTitle ||
+              evidence?.file?.additionalDetails?.documentType ||
+              evidence?.artifactType,
+            fileStoreId: evidence?.file?.fileStore,
+            hasChildren: false,
+          }))
+      : [];
+
+    const result = [];
+
+    if (depositions?.length > 0) {
+      result.push({
+        id: "accused-depositions",
+        title: "DEPOSITIONS_PDF_HEADING",
+        hasChildren: true,
+        children: depositions,
+      });
+    }
+
+    if (evidences?.length > 0) {
+      result.push({
+        id: "accused-evidences",
+        title: "EVIDENCES_PDF_HEADING",
+        hasChildren: evidences?.length > 0,
+        children: evidences,
+      });
+    }
+
+    return result;
   };
 
   const generateCourtEvidenceStructure = (courtEvidenceData, courtEvidenceDepositionData) => {
     // "Depositions" children from courtEvidenceDepositionData
-    const depositions = Array.isArray(courtEvidenceDepositionData?.artifacts)
-      ? courtEvidenceDepositionData?.artifacts
+    const depositions = Array.isArray(courtEvidenceDepositionData)
+      ? courtEvidenceDepositionData
           ?.filter((artifact) => artifact?.file?.fileStore)
           ?.map((artifact, idx) => ({
             id: `court-deposition-${idx}`,
@@ -893,6 +990,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
               artifact?.additionalDetails?.formdata?.documentTitle ||
               artifact?.file?.additionalDetails?.documentTitle ||
               artifact?.file?.additionalDetails?.documentType ||
+              artifact?.file?.additionalDetails?.name ||
               artifact?.artifactType,
             fileStoreId: artifact?.file?.fileStore,
             hasChildren: false,
@@ -1339,7 +1437,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
           complainantEvidenceRefetch();
           accusedEvidenceRefetch();
           courtEvidenceRefetch();
-          courtDepositionRefetch();
+          depositionRefetch();
           completeEvidenceRefetch(); // Refresh the complete evidence data
         });
     } catch (error) {
@@ -1413,7 +1511,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     const vakalatnamaChildren = generateVakalatnamaStructure(caseDetails);
     const complaintEvidenceChildren = generateCompliantEvidenceStructure(complaintEvidenceData);
     const accusedEvidenceChildren = generateAccusedEvidenceStructure(accusedEvidenceData);
-    const courtEvidenceChildren = generateCourtEvidenceStructure(courtEvidenceData, courtEvidenceDepositionData);
+    const courtEvidenceChildren = generateCourtEvidenceStructure(courtEvidenceData, courtDepositions);
 
     // const casePaymentFilestoreId = getFileStoreByType("PAYMENT_RECEIPT");
 
@@ -1478,19 +1576,19 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
       {
         id: "complaint-evidence",
         title: "EVIDENCE_OF_COMPLAINANT",
-        hasChildren: complaintEvidenceData?.artifacts?.length > 0,
+        hasChildren: complaintEvidenceData?.artifacts?.length > 0 || courtDepositions?.length > 0,
         children: complaintEvidenceChildren,
       },
       {
         id: "accused-evidence",
         title: "EVIDENCE_OF_ACCUSED",
-        hasChildren: accusedEvidenceData?.artifacts?.length > 0,
+        hasChildren: accusedEvidenceData?.artifacts?.length > 0 || courtDepositions?.length > 0,
         children: accusedEvidenceChildren,
       },
       {
         id: "court-evidence",
         title: "COURT_EVIDENCE",
-        hasChildren: courtEvidenceData?.artifacts?.length > 0 || courtEvidenceDepositionData?.artifacts?.length > 0,
+        hasChildren: courtEvidenceData?.artifacts?.length > 0 || courtDepositions?.length > 0,
         children: courtEvidenceChildren,
       },
       {
@@ -1624,7 +1722,7 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     isAccusedEvidenceLoading ||
     isComplaintEvidenceLoading ||
     isCourtEvidenceLoading ||
-    isCourtDepositionEvidenceLoading ||
+    depositionLoading ||
     isBailApplicationLoading ||
     isHearingLoading ||
     isPendingReviewApplicationLoading ||

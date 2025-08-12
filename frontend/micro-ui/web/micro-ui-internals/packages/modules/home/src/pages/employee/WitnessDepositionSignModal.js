@@ -122,6 +122,8 @@ export const WitnessDepositionSignModal = ({
     courtId,
     selectedWitnessDeposition?.artifactNumber,
     selectedWitnessDeposition?.businessObject?.artifactDetails?.artifactNumber,
+    selectedWitnessDeposition?.businessObject?.artifactDetails?.filingNumber,
+    filingNumber,
   ]);
 
   const CloseBtn = useCallback((props) => {
@@ -197,6 +199,7 @@ export const WitnessDepositionSignModal = ({
           tenantId: tenantId,
           courtId: courtId,
           artifactNumber: artifactNumber,
+          filingNumber: filingNumber || selectedWitnessDeposition?.businessObject?.artifactDetails?.filingNumber,
         },
         pagination: {
           limit: 10,
