@@ -41,7 +41,7 @@ public class EvidenceSearchCriteria {
     private Boolean fuzzySearch = true;
     private List<String> workflowStatus = new ArrayList<>();
     private String evidenceNumber;
-    private boolean isActive = true;
+    private Boolean isActive = true;
 
     @JsonIgnore
     private String userUuid;
@@ -157,7 +157,11 @@ public class EvidenceSearchCriteria {
         return fuzzySearch;
     }
 
-    public boolean getIsActive() {
+    public Boolean getIsActive() {
+        if(isActive == null) {
+            isActive = true;
+        }
+
         return isActive;
     }
 }
