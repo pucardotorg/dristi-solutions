@@ -419,8 +419,6 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
     return null;
   }, [depositionData]);
 
-  debugger;
-
   const accusedDepositions = useMemo(() => {
     if (depositionData?.artifacts?.length > 0) {
       return depositionData?.artifacts?.filter((artifact) => artifact?.additionalDetails?.witnessDetails?.ownerType === "ACCUSED");
