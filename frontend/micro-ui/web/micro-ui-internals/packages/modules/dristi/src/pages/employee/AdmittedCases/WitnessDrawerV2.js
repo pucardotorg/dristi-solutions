@@ -1269,6 +1269,7 @@ const WitnessDrawerV2 = ({
           submit={(mobileNumber) => handleESign(mobileNumber)}
           witnesMobileNumber={witnesMobileNumber}
           setWitnessMobileNumber={setWitnessMobileNumber}
+          allParties={allParties}
         />
       )}
 
