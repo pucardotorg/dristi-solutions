@@ -56,7 +56,7 @@ public class EvidenceQueryBuilder {
             List<String> status = criteria.getStatus();
             List<String> workflowStatus = criteria.getWorkflowStatus();
             String evidenceNumber = criteria.getEvidenceNumber();
-            boolean isActive = criteria.getIsActive();
+            Boolean isActive = criteria.getIsActive();
 
             // Build the query using the extracted fields
             firstCriteria = addArtifactCriteria(id, query, preparedStmtList, firstCriteria, "art.id = ?",preparedStmtArgList);
