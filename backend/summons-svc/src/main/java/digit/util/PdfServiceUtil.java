@@ -104,7 +104,21 @@ public class PdfServiceUtil {
                 }
             }
 
-            if (taskRequest.getTask().getTaskType().equalsIgnoreCase(SUMMON) || taskRequest.getTask().getTaskType().equalsIgnoreCase(NOTICE) || taskRequest.getTask().getTaskType().equalsIgnoreCase(WARRANT) || taskRequest.getTask().getTaskType().equalsIgnoreCase(PROCLAMATION)) {
+            if (ATTACHMENT.equalsIgnoreCase(taskRequest.getTask().getTaskType())) {
+                String executorName = getExecutorName(taskRequest);
+                var attachmentDetails = taskRequest.getTask().getTaskDetails().getAttachmentDetails();
+                summonsPdf.setExecutorName(executorName);
+
+                if(GENERIC.equals(attachmentDetails.getTemplateType())){
+                    summonsPdf.setAttachmentText(attachmentDetails.getAttachmentText());
+                }
+            }
+
+            if (taskRequest.getTask().getTaskType().equalsIgnoreCase(SUMMON) ||
+                    taskRequest.getTask().getTaskType().equalsIgnoreCase(NOTICE) ||
+                    taskRequest.getTask().getTaskType().equalsIgnoreCase(WARRANT) ||
+                    taskRequest.getTask().getTaskType().equalsIgnoreCase(PROCLAMATION) ||
+                    taskRequest.getTask().getTaskType().equalsIgnoreCase(ATTACHMENT)) {
                 CaseSearchRequest caseSearchRequest = createCaseSearchRequest(taskRequest.getRequestInfo(), taskRequest.getTask());
                 JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
                 String accessCode = caseDetails.has("accessCode") ? caseDetails.get("accessCode").asText() : "";
@@ -191,6 +205,10 @@ public class PdfServiceUtil {
         else if(PROCLAMATION.equals(task.getTaskType())){
             issueDate = task.getTaskDetails().getProclamationDetails().getIssueDate();
             docSubType = task.getTaskDetails().getProclamationDetails().getDocSubType();
+        }
+        else if(ATTACHMENT.equals(task.getTaskType())){
+            issueDate = task.getTaskDetails().getAttachmentDetails().getIssueDate();
+            docSubType = task.getTaskDetails().getAttachmentDetails().getDocSubType();
         }
 
         String issueDateString = Optional.ofNullable(issueDate)

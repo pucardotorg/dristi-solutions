@@ -46,7 +46,7 @@ public class SummonsConsumer {
             String status = taskRequest.getTask().getStatus();
 
             // Process for generating summons bill
-            boolean isValid = ((taskType.equalsIgnoreCase(SUMMON) || taskType.equalsIgnoreCase(NOTICE) || taskType.equalsIgnoreCase(WARRANT) || taskType.equalsIgnoreCase(PROCLAMATION))
+            boolean isValid = ((taskType.equalsIgnoreCase(SUMMON) || taskType.equalsIgnoreCase(NOTICE) || taskType.equalsIgnoreCase(WARRANT) || taskType.equalsIgnoreCase(PROCLAMATION) || taskType.equalsIgnoreCase(ATTACHMENT))
                     && PENDING_PAYMENT.equalsIgnoreCase(status));
             if (isValid) {
                 try {

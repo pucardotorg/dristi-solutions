@@ -173,7 +173,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
     const filteredOrders = ordersData?.list?.flatMap((order) => {
       if (order?.orderCategory === "COMPOSITE") {
         return order?.compositeItems
-          ?.filter((item) => ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION"].includes(item?.orderType))
+          ?.filter((item) => ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(item?.orderType))
           ?.map((item) => ({
             ...order,
             orderType: item?.orderType,
@@ -182,7 +182,7 @@ const NoticeProcessModal = ({ handleClose, filingNumber, currentHearingId, caseD
             itemId: item?.id,
           }));
       } else {
-        return ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION"].includes(order?.orderType) ? [order] : [];
+        return ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"].includes(order?.orderType) ? [order] : [];
       }
     });
 

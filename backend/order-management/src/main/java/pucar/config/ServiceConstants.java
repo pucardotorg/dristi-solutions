@@ -101,6 +101,7 @@ public class ServiceConstants {
     public static final String PROFILE_EDIT_REQUEST = "PROFILE_EDIT_REQUEST";
     public static final String PAYMENT_PENDING_FOR_WARRANT = "PAYMENT_PENDING_FOR_WARRANT";
     public static final String PAYMENT_PENDING_FOR_PROCLAMATION = "PAYMENT_PENDING_FOR_PROCLAMATION";
+    public static final String PAYMENT_PENDING_FOR_ATTACHMENT = "PAYMENT_PENDING_FOR_ATTACHMENT";
     public static final String PAYMENT_PENDING = "PAYMENT_PENDING_";
     public static final String MAKE_PAYMENT_FOR_SUMMONS = "MAKE_PAYMENT_FOR_SUMMONS";
     public static final String MAKE_PAYMENT_FOR_NOTICE = "MAKE_PAYMENT_FOR_NOTICE";

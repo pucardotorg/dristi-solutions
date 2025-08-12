@@ -72,6 +72,9 @@ public class Configuration {
     @Value("${task.proclamation.generic.pdf.template.key}")
     private String taskProclamationGenericPdfTemplateKey;
 
+    @Value("${task.attachment.generic.pdf.template.key}")
+    private String taskAttachmentGenericPdfTemplateKey;
+
     //MDMS
     @Value("${egov.mdms.host}")
     private String mdmsHost;

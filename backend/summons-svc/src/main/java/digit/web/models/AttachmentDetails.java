@@ -12,10 +12,10 @@ import org.springframework.validation.annotation.Validated;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProclamationDetails {
+public class AttachmentDetails {
 
-    @JsonProperty("proclamationId")
-    private String proclamationId = null;
+    @JsonProperty("attachmentId")
+    private String attachmentId = null;
 
     @JsonProperty("issueDate")
     private Long issueDate;
@@ -26,6 +26,6 @@ public class ProclamationDetails {
     @JsonProperty("templateType")
     private String templateType;
 
-    @JsonProperty("proclamationText")
-    private String proclamationText;
+    @JsonProperty("attachmentText")
+    private String attachmentText;
 }

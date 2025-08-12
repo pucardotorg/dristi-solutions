@@ -54,7 +54,7 @@ public class PublishOrderAttachment implements OrderUpdateStrategy {
     public boolean supportsPostProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
         String action = order.getWorkflow().getAction();
-        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && WARRANT.equalsIgnoreCase(order.getOrderType());
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && ATTACHMENT.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
@@ -145,7 +145,7 @@ public class PublishOrderAttachment implements OrderUpdateStrategy {
                 if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))) {
 
                     PendingTask pendingTask = PendingTask.builder()
-                            .name(PAYMENT_PENDING_FOR_WARRANT)
+                            .name(PAYMENT_PENDING_FOR_ATTACHMENT)
                             .referenceId(MANUAL + taskResponse.getTask().getTaskNumber())
                             .entityType("order-default")
                             .status("PAYMENT_PENDING_POLICE")

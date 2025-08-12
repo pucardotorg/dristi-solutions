@@ -111,4 +111,7 @@ public class SummonsPdf  {
 
     @JsonProperty("proclamationText")
     private String proclamationText;
+
+    @JsonProperty("attachmentText")
+    private String attachmentText;
 }
