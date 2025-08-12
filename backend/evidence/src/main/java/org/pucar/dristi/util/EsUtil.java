@@ -81,13 +81,13 @@ public class EsUtil {
         String sealString = seal != null ? new JSONObject(seal).toString() : null;
         String description = openArtifact.getDescription();
         Object artifactDetails = openArtifact.getArtifactDetails();
-        String artifactDetailsString = artifactDetails != null ? new JSONObject(artifactDetails).toString() : null;
+        String artifactDetailsString = getJsonStringOrNull(artifactDetails);
         List<String> searchableFields = openArtifact.getSearchableFields();
         String searchableFieldsString = searchableFields != null ? new JSONArray(searchableFields).toString() : null;
         List<Comment> comments = openArtifact.getComments();
         String commentsString = comments != null ? new JSONArray(comments).toString() : null;
         Object additionalDetails = openArtifact.getAdditionalDetails();
-        String additionalDetailsString = additionalDetails != null ? new JSONObject(additionalDetails).toString() : null;
+        String additionalDetailsString = getJsonStringOrNull(additionalDetails);
         AuditDetails auditDetails = openArtifact.getAuditdetails();
         String auditDetailsString = auditDetails != null ? new JSONObject(auditDetails).toString() : null;
         WorkflowObject workflow = openArtifact.getWorkflow();
@@ -160,6 +160,43 @@ public class EsUtil {
     // Helper method to handle null JSON values (already formatted as JSON)
     private String nullSafeJson(String jsonValue) {
         return jsonValue != null ? jsonValue : "null";
+    }
+
+    // Helper method to handle Object to JSON conversion with empty check
+    private String getJsonStringOrNull(Object obj) {
+        if (obj == null) {
+            return null;
+        }
+
+        if (obj instanceof java.util.Map) {
+            java.util.Map<?, ?> map = (java.util.Map<?, ?>) obj;
+
+            // Check if map is completely empty
+            if (map.isEmpty()) {
+                return null;
+            }
+
+            // Create JSONObject that preserves null values
+            JSONObject jsonObject = new JSONObject();
+            for (java.util.Map.Entry<?, ?> entry : map.entrySet()) {
+                Object key = entry.getKey();
+                Object value = entry.getValue();
+
+                // Convert empty strings to null, preserve other values
+                if (value instanceof String && ((String) value).trim().isEmpty()) {
+                    jsonObject.put(key.toString(), JSONObject.NULL);
+                } else if (value == null) {
+                    jsonObject.put(key.toString(), JSONObject.NULL);
+                } else {
+                    jsonObject.put(key.toString(), value);
+                }
+            }
+
+            return jsonObject.toString();
+        }
+
+        // For other object types, use default JSONObject handling
+        return new JSONObject(obj).toString();
     }
 
 
