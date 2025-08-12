@@ -1,6 +1,7 @@
 package org.pucar.dristi.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
@@ -164,7 +165,7 @@ public class EsUtil {
 
     // Helper method to handle Object to JSON conversion with empty check
     private String getJsonStringOrNull(Object obj) {
-        if (obj == null) {
+        if (obj == null || obj instanceof NullNode) {
             return null;
         }
 
@@ -186,6 +187,8 @@ public class EsUtil {
                 if (value instanceof String && ((String) value).trim().isEmpty()) {
                     jsonObject.put(key.toString(), JSONObject.NULL);
                 } else if (value == null) {
+                    jsonObject.put(key.toString(), JSONObject.NULL);
+                } else if (value instanceof NullNode) {
                     jsonObject.put(key.toString(), JSONObject.NULL);
                 } else {
                     jsonObject.put(key.toString(), value);
