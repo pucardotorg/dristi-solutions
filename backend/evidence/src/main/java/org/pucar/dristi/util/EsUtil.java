@@ -187,6 +187,8 @@ public class EsUtil {
                     jsonObject.put(key.toString(), JSONObject.NULL);
                 } else if (value == null) {
                     jsonObject.put(key.toString(), JSONObject.NULL);
+                } else if (value instanceof com.fasterxml.jackson.databind.node.NullNode) {
+                    jsonObject.put(key.toString(), JSONObject.NULL);
                 } else {
                     jsonObject.put(key.toString(), value);
                 }
