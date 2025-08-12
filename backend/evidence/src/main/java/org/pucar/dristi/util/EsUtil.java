@@ -55,7 +55,7 @@ public class EsUtil {
         String caseNumber = openArtifact.getCaseNumber();
         String caseTitle = openArtifact.getCaseTitle();
         Advocate advocate = openArtifact.getAdvocate();
-        String advocateString = advocate != null ? new JSONObject(advocate).toString() : "null";
+        String advocateString = advocate != null ? new JSONObject(advocate).toString() : null;
         String application = openArtifact.getApplication();
         String hearing = openArtifact.getHearing();
         String order = openArtifact.getOrder();
@@ -66,7 +66,7 @@ public class EsUtil {
         String sourceID = openArtifact.getSourceID();
         String sourceName = openArtifact.getSourceName();
         List<String> applicableTo = openArtifact.getApplicableTo();
-        String applicableToString = applicableTo != null ? new JSONArray(applicableTo).toString() : "[]";
+        String applicableToString = applicableTo != null ? new JSONArray(applicableTo).toString() : null;
         Long createdDate = openArtifact.getCreatedDate() != null ? openArtifact.getCreatedDate() : 0L;
         Long publishedDate = openArtifact.getPublishedDate() != null ? openArtifact.getPublishedDate() : 0L;
         Boolean isActive = openArtifact.getIsActive();
@@ -76,30 +76,30 @@ public class EsUtil {
         Boolean isVoid = openArtifact.getIsVoid();
         String reason = openArtifact.getReason();
         Document file = openArtifact.getFile();
-        String fileString = file != null ? new JSONObject(file).toString() : "null";
+        String fileString = file != null ? new JSONObject(file).toString() : null;
         Document seal = openArtifact.getSeal();
-        String sealString = seal != null ? new JSONObject(seal).toString() : "null";
+        String sealString = seal != null ? new JSONObject(seal).toString() : null;
         String description = openArtifact.getDescription();
         Object artifactDetails = openArtifact.getArtifactDetails();
-        String artifactDetailsString = artifactDetails != null ? new JSONObject(artifactDetails).toString() : "null";
+        String artifactDetailsString = artifactDetails != null ? new JSONObject(artifactDetails).toString() : null;
         List<String> searchableFields = openArtifact.getSearchableFields();
-        String searchableFieldsString = searchableFields != null ? new JSONArray(searchableFields).toString() : "[]";
+        String searchableFieldsString = searchableFields != null ? new JSONArray(searchableFields).toString() : null;
         List<Comment> comments = openArtifact.getComments();
-        String commentsString = comments != null ? new JSONArray(comments).toString() : "[]";
+        String commentsString = comments != null ? new JSONArray(comments).toString() : null;
         Object additionalDetails = openArtifact.getAdditionalDetails();
-        String additionalDetailsString = additionalDetails != null ? new JSONObject(additionalDetails).toString() : "null";
+        String additionalDetailsString = additionalDetails != null ? new JSONObject(additionalDetails).toString() : null;
         AuditDetails auditDetails = openArtifact.getAuditdetails();
-        String auditDetailsString = auditDetails != null ? new JSONObject(auditDetails).toString() : "null";
+        String auditDetailsString = auditDetails != null ? new JSONObject(auditDetails).toString() : null;
         WorkflowObject workflow = openArtifact.getWorkflow();
-        String workflowString = workflow != null ? new JSONObject(workflow).toString() : "null";
+        String workflowString = workflow != null ? new JSONObject(workflow).toString() : null;
         String evidenceMarkedStatus = openArtifact.getEvidenceMarkedStatus();
         Boolean isEvidenceMarkedFlow = openArtifact.getIsEvidenceMarkedFlow();
         String tag = openArtifact.getTag();
         String shortenedUrl = openArtifact.getShortenedUrl();
         List<String> witnessMobileNumbers = openArtifact.getWitnessMobileNumbers();
-        String witnessMobileNumbersString = witnessMobileNumbers != null ? new JSONArray(witnessMobileNumbers).toString() : "[]";
+        String witnessMobileNumbersString = witnessMobileNumbers != null ? new JSONArray(witnessMobileNumbers).toString() : null;
         List<String> witnessEmails = openArtifact.getWitnessEmails();
-        String witnessEmailsString = witnessEmails != null ? new JSONArray(witnessEmails).toString() : "[]";
+        String witnessEmailsString = witnessEmails != null ? new JSONArray(witnessEmails).toString() : null;
 
         return String.format(
                 ES_INDEX_HEADER_FORMAT + ES_INDEX_DOCUMENT_FORMAT,
