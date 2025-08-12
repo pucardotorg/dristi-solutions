@@ -1225,7 +1225,10 @@ export const UICustomizations = {
           return (row?.isEvidence || isEmployee) && modifiedEvidenceNumber(value);
         case "EVIDENCE_STATUS":
           return row?.evidenceMarkedStatus && (row?.evidenceMarkedStatus === "COMPLETED" || isEmployee) ? (
-            <CustomChip text={t(row?.evidenceMarkedStatus) || ""} shade={row?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"} />
+            <CustomChip
+              text={row?.evidenceMarkedStatus === "COMPLETED" ? t("SIGNED") : t(row?.evidenceMarkedStatus) || ""}
+              shade={row?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"}
+            />
           ) : (
             ""
           );

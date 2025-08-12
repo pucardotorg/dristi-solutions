@@ -55,9 +55,10 @@ public class EvidenceService {
     private final HearingUtil hearingUtil;
     private final DateUtil dateUtil;
     private final ADiaryUtil aDiaryUtil;
+    private final EsUtil esUtil;
 
     @Autowired
-    public EvidenceService(EvidenceValidator validator, EvidenceEnrichment evidenceEnrichment, WorkflowService workflowService, EvidenceRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, UrlShortenerUtil urlShortenerUtil, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, XmlRequestGenerator xmlRequestGenerator, HearingUtil hearingUtil, DateUtil dateUtil, ADiaryUtil aDiaryUtil) {
+    public EvidenceService(EvidenceValidator validator, EvidenceEnrichment evidenceEnrichment, WorkflowService workflowService, EvidenceRepository repository, Producer producer, Configuration config, MdmsUtil mdmsUtil, CaseUtil caseUtil, ObjectMapper objectMapper, SmsNotificationService notificationService, IndividualService individualService, UrlShortenerUtil urlShortenerUtil, ESignUtil eSignUtil, FileStoreUtil fileStoreUtil, CipherUtil cipherUtil, XmlRequestGenerator xmlRequestGenerator, HearingUtil hearingUtil, DateUtil dateUtil, ADiaryUtil aDiaryUtil, EsUtil esUtil) {
         this.validator = validator;
         this.evidenceEnrichment = evidenceEnrichment;
         this.workflowService = workflowService;
@@ -77,6 +78,7 @@ public class EvidenceService {
         this.hearingUtil = hearingUtil;
         this.dateUtil = dateUtil;
         this.aDiaryUtil = aDiaryUtil;
+        this.esUtil = esUtil;
     }
 
     private boolean shouldUpdateWorkflowStatusForUpdate(EvidenceRequest evidenceRequest, String filingType){
@@ -103,7 +105,7 @@ public class EvidenceService {
 
             String tag = body.getArtifact().getTag();
             if(WITNESS_DEPOSITION.equalsIgnoreCase(body.getArtifact().getArtifactType()) &&
-             SAVE_DRAFT.equalsIgnoreCase(body.getArtifact().getWorkflow().getAction())) {
+                    SAVE_DRAFT.equalsIgnoreCase(body.getArtifact().getWorkflow().getAction())) {
                 validateWitnessDeposition(body);
                 if(tag != null && !hasNumberSuffix(tag)){
                     tag = evidenceEnrichment.enrichPseudoTag(body);
@@ -301,7 +303,7 @@ public class EvidenceService {
                         i, filingNumber, e);
                 throw new CustomException(UPDATE_CASE_WITNESS_ERR,
                         "Unexpected error processing witness record at index " + i +
-                        " for filing number: " + filingNumber);
+                                " for filing number: " + filingNumber);
             }
         }
 
@@ -316,8 +318,9 @@ public class EvidenceService {
         witness.setUniqueId(uniqueId);
         witness.setWitnessTag(body.getArtifact().getTag());
 
-        updateWitnessEmails(body, uniqueId, witness);
-        updateWitnessMobileNumbers(body, uniqueId, witness);
+        // Remark: may need to add email laters to witness details
+//        updateWitnessEmails(body, witness);
+        updateWitnessMobileNumbers(body, witness);
 
         WitnessDetailsRequest witnessDetailsRequest = WitnessDetailsRequest.builder()
                 .requestInfo(body.getRequestInfo())
@@ -333,15 +336,29 @@ public class EvidenceService {
                     uniqueId, body.getArtifact().getFilingNumber(), e);
             throw new CustomException(UPDATE_CASE_WITNESS_ERR,
                     "Failed to update witness details for uniqueId: " + uniqueId +
-                    " in filing number: " + body.getArtifact().getFilingNumber());
+                            " in filing number: " + body.getArtifact().getFilingNumber());
         }
     }
 
-    private void updateWitnessMobileNumbers(EvidenceRequest body, String uniqueId, WitnessDetails witness) {
-        if (body.getArtifact().getWitnessMobileNumbers() != null &&
-            !body.getArtifact().getWitnessMobileNumbers().isEmpty()) {
+
+    private void updateWitnessMobileNumbers(EvidenceRequest body, WitnessDetails witness) {
+        if (witness.getPhoneNumbers() == null) {
+            if (body.getArtifact() != null && body.getArtifact().getWitnessMobileNumbers() != null) {
+                ObjectNode phonenumbers = objectMapper.createObjectNode();
+                ArrayNode mobileNumbersArray = objectMapper.valueToTree(body.getArtifact().getWitnessMobileNumbers());
+                phonenumbers.set("mobileNumber", mobileNumbersArray);
+                witness.setPhoneNumbers(phonenumbers);
+            } else {
+                witness.setPhoneNumbers(null);
+            }
+            return;
+        }
+
+        List<String> mobileNumbers = getMobileNumbers(body, witness);
+
+        if (!mobileNumbers.isEmpty()) {
             ObjectNode phonenumbers = objectMapper.createObjectNode();
-            ArrayNode mobileNumbersArray = objectMapper.valueToTree(body.getArtifact().getWitnessMobileNumbers());
+            ArrayNode mobileNumbersArray = objectMapper.valueToTree(mobileNumbers);
             phonenumbers.set("mobileNumber", mobileNumbersArray);
             witness.setPhoneNumbers(phonenumbers);
         } else {
@@ -349,11 +366,36 @@ public class EvidenceService {
         }
     }
 
-    private void updateWitnessEmails(EvidenceRequest body, String uniqueId, WitnessDetails witness) {
-        if (body.getArtifact().getWitnessEmails() != null &&
-            !body.getArtifact().getWitnessEmails().isEmpty()) {
+    private List<String> getMobileNumbers(EvidenceRequest body, WitnessDetails witness) {
+        List<String> mobileNumbers = new ArrayList<>();
+        JsonNode witnessMobileNumbers = objectMapper.convertValue(witness.getPhoneNumbers(), JsonNode.class);
+        for(JsonNode mobileNumberNode : witnessMobileNumbers.get("mobileNumber")) {
+            if(body.getArtifact().getWitnessMobileNumbers() != null
+                    && !body.getArtifact().getWitnessMobileNumbers().contains(mobileNumberNode.textValue())) {
+                mobileNumbers.add(mobileNumberNode.textValue());
+            }
+        }
+        return mobileNumbers;
+    }
+
+    private void updateWitnessEmails(EvidenceRequest body, WitnessDetails witness) {
+        if (witness.getEmails() == null) {
+            if (body.getArtifact() != null && body.getArtifact().getWitnessEmails() != null) {
+                ObjectNode emails = objectMapper.createObjectNode();
+                ArrayNode emailArray = objectMapper.valueToTree(body.getArtifact().getWitnessEmails());
+                emails.set("emailId", emailArray);
+                witness.setEmails(emails);
+            } else {
+                witness.setEmails(null);
+            }
+            return;
+        }
+
+        List<String> emailIds = getEmailIds(body, witness);
+
+        if (!emailIds.isEmpty()) {
             ObjectNode emails = objectMapper.createObjectNode();
-            ArrayNode emailArray = objectMapper.valueToTree(body.getArtifact().getWitnessEmails());
+            ArrayNode emailArray = objectMapper.valueToTree(emailIds);
             emails.set("emailId", emailArray);
             witness.setEmails(emails);
         } else {
@@ -361,25 +403,39 @@ public class EvidenceService {
         }
     }
 
+
+    private List<String> getEmailIds(EvidenceRequest body, WitnessDetails witness) {
+        List<String> emailIds = new ArrayList<>();
+        JsonNode witnessEmails = objectMapper.convertValue(witness.getEmails(), JsonNode.class);
+        for(JsonNode emailNode : witnessEmails.get("emailId")) {
+            if(body.getArtifact().getWitnessEmails() != null &&
+                    !body.getArtifact().getWitnessEmails().contains(emailNode.textValue())) {
+                emailIds.add(emailNode.textValue());
+            }
+        }
+        return emailIds;
+    }
+
+
     private String getFilingTypeMdms(RequestInfo requestInfo, Artifact artifact) {
-         try{
-             Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(requestInfo, artifact.getTenantId(), config.getFilingTypeModule(), Collections.singletonList(config.getFilingTypeMaster()));
-             JSONArray jsonArray = mdmsData.get(config.getFilingTypeModule()).get(config.getFilingTypeMaster());
-             String filingType = null;
-             for(Object obj : jsonArray) {
-                 JSONObject jsonObject = objectMapper.convertValue(obj, JSONObject.class);
-                 if(jsonObject.get("code").equals(artifact.getFilingType())) {
-                     filingType = jsonObject.get("code").toString();
-                 }
-             }
-             if(filingType == null) {
-                 throw new CustomException(MDMS_DATA_NOT_FOUND, "Filing type not found in mdms");
-             }
-             return filingType;
-         } catch (Exception e){
-                log.error("Error fetching filing type from mdms: {}", e.toString());
-                throw new CustomException("MDMS_FETCH_ERR", "Error fetching filing type from mdms: " + e.toString());
-         }
+        try{
+            Map<String, Map<String, JSONArray>> mdmsData = mdmsUtil.fetchMdmsData(requestInfo, artifact.getTenantId(), config.getFilingTypeModule(), Collections.singletonList(config.getFilingTypeMaster()));
+            JSONArray jsonArray = mdmsData.get(config.getFilingTypeModule()).get(config.getFilingTypeMaster());
+            String filingType = null;
+            for(Object obj : jsonArray) {
+                JSONObject jsonObject = objectMapper.convertValue(obj, JSONObject.class);
+                if(jsonObject.get("code").equals(artifact.getFilingType())) {
+                    filingType = jsonObject.get("code").toString();
+                }
+            }
+            if(filingType == null) {
+                throw new CustomException(MDMS_DATA_NOT_FOUND, "Filing type not found in mdms");
+            }
+            return filingType;
+        } catch (Exception e){
+            log.error("Error fetching filing type from mdms: {}", e.toString());
+            throw new CustomException("MDMS_FETCH_ERR", "Error fetching filing type from mdms: " + e.toString());
+        }
     }
 
     public List<Artifact> searchEvidence(RequestInfo requestInfo, EvidenceSearchCriteria evidenceSearchCriteria, Pagination pagination) {
@@ -477,6 +533,9 @@ public class EvidenceService {
             } else {
                 producer.push(config.getUpdateEvidenceWithoutWorkflowKafkaTopic(), evidenceRequest);
             }
+            // update status entry in es, if this will break need to handle other so that process should complete
+            updateOpenArtifactIndex(evidenceRequest);
+
             if(pseudoTag != null) {
                 evidenceRequest.getArtifact().setTag(pseudoTag);
             }
@@ -659,7 +718,7 @@ public class EvidenceService {
             smsTopic = "DOCUMENT_MARKED_EXHIBIT";
         }
         if ((!(status == null) && status.equalsIgnoreCase(SUBMITTED) && filingType.equalsIgnoreCase(DIRECT) && (!isEvidence && isCreateCall))
-        || ( (filingType.equalsIgnoreCase(CASE_FILING) || filingType.equalsIgnoreCase(APPLICATION)) && (!isEvidence && isCreateCall))) {
+                || ( (filingType.equalsIgnoreCase(CASE_FILING) || filingType.equalsIgnoreCase(APPLICATION)) && (!isEvidence && isCreateCall))) {
             smsTopic = EVIDENCE_SUBMISSION_CODE;
         }
         return smsTopic;
@@ -706,10 +765,10 @@ public class EvidenceService {
             for (JsonNode advocateNode : representatives) {
                 JsonNode representingNode = advocateNode.get("representing");
                 if (representingNode.isArray()) {
-                        String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
-                        if (uuid.equals(receiverUUID)) {
-                            return representingNode.get(0).get("partyType").textValue();
-                        }
+                    String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
+                    if (uuid.equals(receiverUUID)) {
+                        return representingNode.get(0).get("partyType").textValue();
+                    }
                 }
             }
         }
@@ -1035,7 +1094,7 @@ public class EvidenceService {
 
             if(!caseDiaryEntries.isEmpty()) {
                 try {
-                        log.info("creating case diary entry for order, result= IN_PROGRESS, caseDiaryEntries:{}", caseDiaryEntries.size());
+                    log.info("creating case diary entry for order, result= IN_PROGRESS, caseDiaryEntries:{}", caseDiaryEntries.size());
                     aDiaryUtil.createBulkADiaryEntry(BulkDiaryEntryRequest.builder()
                             .requestInfo(request.getRequestInfo())
                             .caseDiaryList(caseDiaryEntries)
@@ -1183,5 +1242,138 @@ public class EvidenceService {
             return false;
         }
         return tag.matches(".*\\d+$");
+    }
+
+    private void updateOpenArtifactIndex(EvidenceRequest evidenceRequest) {
+
+        // search for open Artifact
+        try {
+            Artifact artifact = evidenceRequest.getArtifact();
+            RequestInfo requestInfo = evidenceRequest.getRequestInfo();
+
+            OpenArtifact openArtifact = enrichOpenArtifactIndex(artifact, requestInfo);
+
+            if (openArtifact == null) {
+                throw new CustomException(ERROR_WHILE_ENRICHING_OPEN_ARTIFACT,
+                        "Failed to enrich OPenArtifact with ArtifactNumber: " + artifact.getArtifactNumber());
+            }
+
+            try {
+                String request = esUtil.buildPayload(openArtifact);
+                String uri = config.getEsHostUrl() + config.getBulkPath();
+                esUtil.manualIndex(uri, request);
+            } catch (Exception e) {
+                log.error("Error occurred while updating open Artifact in es");
+                log.error("ERROR_FROM_ES: {}", e.getMessage());
+            }
+    } catch (Exception e) {
+            log.error("Something went wrong while updating status of open Artifact with artifactNumber {}", evidenceRequest.getArtifact().getArtifactNumber());
+            log.error("ERROR: {}", e.getMessage());
+        }
+
+    }
+
+    private OpenArtifact enrichOpenArtifactIndex(Artifact artifact, RequestInfo requestInfo) {
+        try {
+            log.info("Enriching artifact for filingNumber: {}, tenantId: {}", artifact.getFilingNumber(), artifact.getTenantId());
+
+            CourtCase courtCase = caseUtil.getCase(artifact.getFilingNumber(), artifact.getTenantId(), requestInfo);
+            if (courtCase == null) {
+                log.error("No CourtCase found for filingNumber: {}, tenantId: {}", artifact.getFilingNumber(), artifact.getTenantId());
+                return null;
+            }
+            String caseNumber = getCaseReferenceNumber(courtCase);
+            String caseTitle = courtCase.getCaseTitle();
+
+            Advocate advocate = null;
+            try {
+                List<AdvocateMapping> representatives = courtCase.getRepresentatives();
+                advocate = hearingUtil.getAdvocates(representatives, courtCase.getLitigants(), requestInfo);
+                log.info("Advocate enrichment successful: Complainant: {}, Accused: {}", advocate.getComplainant() != null ? advocate.getComplainant() : "No  complainant found", advocate.getAccused() != null ? advocate.getAccused() : "No advocate found");
+            } catch (Exception e) {
+                log.error("Error while fetching advocate details for caseId: {}", courtCase.getId(), e);
+            }
+
+
+
+            // Populate searchable fields
+            List<String> searchableFields = new ArrayList<>();
+            if (caseTitle != null) searchableFields.add(caseTitle);
+            if (caseNumber != null) searchableFields.add(caseNumber);
+            if (artifact.getArtifactNumber() != null) searchableFields.add(artifact.getArtifactNumber());
+            return artifactToOpenArtifact(artifact, caseNumber, caseTitle, advocate, searchableFields);
+
+        } catch (Exception e) {
+            log.error("Failed to enrich artifact for filingNumber: {}, tenantId: {}", artifact.getFilingNumber(), artifact.getTenantId(), e);
+        }
+        return null;
+    }
+
+    private String getCaseReferenceNumber(CourtCase courtCase) {
+        if (courtCase.getCourtCaseNumber() != null && !courtCase.getCourtCaseNumber().isEmpty()) {
+            return courtCase.getCourtCaseNumber();
+        } else if (courtCase.getCmpNumber() != null && !courtCase.getCmpNumber().isEmpty()) {
+            return courtCase.getCmpNumber();
+        } else {
+            return courtCase.getFilingNumber();
+        }
+    }
+
+    public static OpenArtifact artifactToOpenArtifact(Artifact artifact,
+                                              String caseNumber,
+                                              String caseTitle,
+                                              Advocate advocate,
+                                              List<String> searchableFields) {
+
+        if (artifact == null) {
+            return null;
+        }
+
+        return OpenArtifact.builder()
+                .id(artifact.getId())
+                .tenantId(artifact.getTenantId())
+                .artifactNumber(artifact.getArtifactNumber())
+                .evidenceNumber(artifact.getEvidenceNumber())
+                .filingNumber(artifact.getFilingNumber())
+                .externalRefNumber(artifact.getExternalRefNumber())
+                .courtId(artifact.getCourtId())
+                .caseId(artifact.getCaseId())
+                .caseNumber(caseNumber) // enrichment
+                .caseTitle(caseTitle)   // enrichment
+                .advocate(advocate)     // enrichment
+                .application(artifact.getApplication())
+                .hearing(artifact.getHearing())
+                .order(artifact.getOrder())
+                .cnrNumber(artifact.getCnrNumber())
+                .mediaType(artifact.getMediaType())
+                .artifactType(artifact.getArtifactType())
+                .sourceType(artifact.getSourceType())
+                .sourceID(artifact.getSourceID())
+                .sourceName(artifact.getSourceName())
+                .applicableTo(artifact.getApplicableTo())
+                .seal(artifact.getSeal())
+                .createdDate(artifact.getCreatedDate())
+                .publishedDate(artifact.getPublishedDate())
+                .isActive(artifact.getIsActive())
+                .isEvidence(artifact.getIsEvidence())
+                .status(artifact.getStatus())
+                .filingType(artifact.getFilingType())
+                .isVoid(artifact.getIsVoid())
+                .reason(artifact.getReason())
+                .file(artifact.getFile())
+                .description(artifact.getDescription())
+                .artifactDetails(artifact.getArtifactDetails())
+                .searchableFields(searchableFields) // enrichment
+                .comments(artifact.getComments())
+                .additionalDetails(artifact.getAdditionalDetails())
+                .auditdetails(artifact.getAuditdetails())
+                .workflow(artifact.getWorkflow())
+                .shortenedUrl(artifact.getShortenedUrl())
+                .witnessMobileNumbers(artifact.getWitnessMobileNumbers())
+                .witnessEmails(artifact.getWitnessEmails())
+                .tag(artifact.getTag())
+                .evidenceMarkedStatus(artifact.getEvidenceMarkedStatus())
+                .isEvidenceMarkedFlow(artifact.getIsEvidenceMarkedFlow())
+                .build();
     }
 }

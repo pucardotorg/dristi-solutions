@@ -56,7 +56,7 @@ public class EvidenceQueryBuilder {
             List<String> status = criteria.getStatus();
             List<String> workflowStatus = criteria.getWorkflowStatus();
             String evidenceNumber = criteria.getEvidenceNumber();
-            boolean isActive = criteria.getIsActive();
+            Boolean isActive = criteria.getIsActive();
 
             // Build the query using the extracted fields
             firstCriteria = addArtifactCriteria(id, query, preparedStmtList, firstCriteria, "art.id = ?",preparedStmtArgList);
@@ -162,9 +162,13 @@ public class EvidenceQueryBuilder {
             queryBuilder.append(")");
             queryBuilder.append(" OR ");
         }
-        queryBuilder.append("(status IN ('PENDING_E-SIGN') AND artifactType = 'WITNESS_DEPOSITION' AND sourceId = ?)) AND status != 'DRAFT_IN_PROGRESS')");
-        preparedStmtList.add(searchCriteria.getUserUuid());
-        preparedStmtArgsList.add(java.sql.Types.VARCHAR);
+        if (!searchCriteria.getIsCourtEmployee()) {
+            queryBuilder.append("(status IN ('PENDING_E-SIGN') AND artifactType = 'WITNESS_DEPOSITION' AND sourceId = ?)) AND status != 'DRAFT_IN_PROGRESS')");
+            preparedStmtList.add(searchCriteria.getUserUuid());
+            preparedStmtArgsList.add(java.sql.Types.VARCHAR);
+        } else {
+            queryBuilder.append("(status IN ('PENDING_E-SIGN') AND artifactType = 'WITNESS_DEPOSITION')))");
+        }
         queryBuilder.append(" OR status IS NULL )");
         return queryBuilder.toString();
     }

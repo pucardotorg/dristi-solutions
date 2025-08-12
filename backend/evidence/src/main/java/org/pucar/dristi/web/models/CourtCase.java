@@ -111,6 +111,14 @@ public class CourtCase {
     @JsonProperty("status")
     private String status = null;
 
+    @JsonProperty("litigants")
+    @Valid
+    private List<Party> litigants = new ArrayList<>();
+
+    @JsonProperty("representatives")
+    @Valid
+    private List<AdvocateMapping> representatives = new ArrayList<>();
+
     @JsonProperty("documents")
     @Valid
     private List<Document> documents = new ArrayList<>();

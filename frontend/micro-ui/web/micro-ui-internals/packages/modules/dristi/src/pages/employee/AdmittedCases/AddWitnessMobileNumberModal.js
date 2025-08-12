@@ -2,10 +2,9 @@ import React, { useState } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { CloseSvg, TextInput } from "@egovernments/digit-ui-react-components";
 
-function AddWitnessMobileNumberModal({ t, handleClose, submit, witnesMobileNumber, setWitnessMobileNumber }) {
+function AddWitnessMobileNumberModal({ t, handleClose, allParties, submit, witnesMobileNumber, setWitnessMobileNumber }) {
   const [mobileNumber, setMobileNumber] = useState("");
   const [error, setError] = useState("");
-
 
   const CloseBtn = (props) => {
     return (
@@ -18,33 +17,32 @@ function AddWitnessMobileNumberModal({ t, handleClose, submit, witnesMobileNumbe
     return <h1 className="heading-m">{props.label}</h1>;
   };
 
-
   const validateMobileNumber = (number) => {
     // Check if the number contains only digits
     const isNumeric = /^[0-9]+$/.test(number);
-    
+
     if (!number) {
       return "Mobile number is required";
     }
-    
+
     if (!isNumeric) {
       return "Mobile number should contain only digits";
     }
-    
+
     if (number.length !== 10) {
       return "Mobile number should be exactly 10 digits";
     }
-    
+
     return "";
   };
 
   const handleMobileNumberChange = (e) => {
     const value = e.target.value;
-    
+
     // Allow only numeric input and limit to 10 characters
     if (/^[0-9]*$/.test(value) && value.length <= 10) {
       setMobileNumber(value);
-      
+
       // Clear error when user starts typing valid input
       if (error) {
         setError("");
@@ -54,17 +52,24 @@ function AddWitnessMobileNumberModal({ t, handleClose, submit, witnesMobileNumbe
 
   const handlesubmit = () => {
     const validationError = validateMobileNumber(mobileNumber);
-    
+
     if (validationError) {
       setError(validationError);
       return;
     }
-    
+
+    // Check if mobile number already exists in any party's witnessMobileNumbers array
+    const isDuplicateMobile = allParties?.some((party) => party?.witnessMobileNumbers?.includes(mobileNumber));
+
+    if (isDuplicateMobile) {
+      setError("THIS_NUMBER_ALREADY_EXISTS");
+      return;
+    }
+
     setError("");
     setWitnessMobileNumber(mobileNumber);
     submit(mobileNumber);
-  }
- 
+  };
 
   return (
     <React.Fragment>
@@ -80,35 +85,40 @@ function AddWitnessMobileNumberModal({ t, handleClose, submit, witnesMobileNumbe
         formId="modal-action"
         headerBarMain={<Heading label={t("CS_ADD_WITNESS_MOBILE_NUMBER")} />}
         headerBarEnd={<CloseBtn onClick={handleClose} />}
-
       >
         <div style={{ padding: "20px 0" }}>
           <div style={{ marginBottom: "16px" }}>
-            <label style={{ 
-              display: "block", 
-              marginBottom: "8px", 
-              fontSize: "16px", 
-              fontWeight: "400", 
-              color: "#0B0C0C" 
-            }}>
+            <label
+              style={{
+                display: "block",
+                marginBottom: "8px",
+                fontSize: "16px",
+                fontWeight: "400",
+                color: "#0B0C0C",
+              }}
+            >
               Phone Number
             </label>
-            <div style={{ 
-              display: "flex", 
-              border: "1px solid #D6D5D4", 
-              borderRadius: "4px",
-              overflow: "hidden"
-            }}>
-              <div style={{
-                backgroundColor: "#F6F6F6",
-                padding: "12px 16px",
-                borderRight: "1px solid #D6D5D4",
+            <div
+              style={{
                 display: "flex",
-                alignItems: "center",
-                fontSize: "16px",
-                color: "#0B0C0C",
-                justifyContent: "center"
-              }}>
+                border: "1px solid #D6D5D4",
+                borderRadius: "4px",
+                overflow: "hidden",
+              }}
+            >
+              <div
+                style={{
+                  backgroundColor: "#F6F6F6",
+                  padding: "12px 16px",
+                  borderRight: "1px solid #D6D5D4",
+                  display: "flex",
+                  alignItems: "center",
+                  fontSize: "16px",
+                  color: "#0B0C0C",
+                  justifyContent: "center",
+                }}
+              >
                 +91
               </div>
               <input
@@ -123,19 +133,21 @@ function AddWitnessMobileNumberModal({ t, handleClose, submit, witnesMobileNumbe
                   outline: "none",
                   fontSize: "16px",
                   // color: "#0B0C0C"
-                  color: "#77787B"
+                  color: "#77787B",
                 }}
                 maxLength={10}
               />
             </div>
             {error && (
-              <div style={{
-                marginTop: "8px",
-                fontSize: "14px",
-                color: "#D4351C",
-                fontWeight: "400"
-              }}>
-                {error}
+              <div
+                style={{
+                  marginTop: "8px",
+                  fontSize: "14px",
+                  color: "#D4351C",
+                  fontWeight: "400",
+                }}
+              >
+                {t(error)}
               </div>
             )}
           </div>

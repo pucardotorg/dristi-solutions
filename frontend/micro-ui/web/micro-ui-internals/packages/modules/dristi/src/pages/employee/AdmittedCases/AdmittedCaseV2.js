@@ -3754,7 +3754,7 @@ const AdmittedCaseV2 = () => {
           label={t(toastDetails?.message)}
           isDleteBtn={true}
           onClose={() => setToast(false)}
-          style={{ maxWidth: "670px" }}
+          style={{ maxWidth: "500px" }}
         />
       )}
       {/* {viewActionBar && (
@@ -4059,12 +4059,14 @@ const AdmittedCaseV2 = () => {
             setShowWitnessModal(false);
           }}
           attendees={currentActiveHearing?.attendees}
-          caseDetails={latestCaseDetails}
+          // caseDetails={latestCaseDetails}
           hearing={currentActiveHearing}
           hearingId={currentInProgressHearingId}
           tenantId={tenantId}
-          refetchCaseData={refetchCaseData}
+          // refetchCaseData={refetchCaseData}
           artifactNumber={editWitnessDepositionArtifact}
+          caseId={caseId}
+          courtId={courtId}
         />
       )}
       {(showPaymentDemandModal || showPaymentConfirmationModal) && (

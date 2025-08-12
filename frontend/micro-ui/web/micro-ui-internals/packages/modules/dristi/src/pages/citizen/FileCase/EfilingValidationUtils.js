@@ -2747,6 +2747,7 @@ export const updateCaseDetails = async ({
       if (!obj?.uniqueId) {
         obj.uniqueId = generateUUID();
       }
+      obj.data.ownerType = "COMPLAINANT";
     }
 
     data.additionalDetails = {
