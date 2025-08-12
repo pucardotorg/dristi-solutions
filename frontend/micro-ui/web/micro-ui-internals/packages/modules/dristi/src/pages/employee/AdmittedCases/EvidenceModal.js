@@ -93,7 +93,10 @@ const EvidenceModal = ({
       <div className="evidence-title">
         <h1 className="heading-m">{props.label}</h1>
         {props?.evidenceMarkedStatus && (
-          <CustomChip text={t(props?.evidenceMarkedStatus) || ""} shade={props?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"} />
+          <CustomChip
+            text={props?.evidenceMarkedStatus === "COMPLETED" ? t("SIGNED") : t(props?.evidenceMarkedStatus) || ""}
+            shade={props?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"}
+          />
         )}
 
         {props.showStatus && <h3 className={props.isStatusRed ? "status-false" : "status"}>{props?.status}</h3>}
@@ -1366,7 +1369,7 @@ const EvidenceModal = ({
           //     : {}
           // }
         >
-          {documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus !== null && userType === "employee" && (
+          {documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus && userType === "employee" && (
             <div style={{ margin: "16px 24px" }}>
               <div className="custom-note-main-div" style={{ padding: "8px 16px", flexDirection: "row", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
