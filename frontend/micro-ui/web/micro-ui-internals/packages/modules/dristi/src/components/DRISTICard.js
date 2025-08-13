@@ -16,6 +16,7 @@ const DRISTICard = () => {
   const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
+  const isProcessViewer = useMemo(() => roles?.some((role) => role.code === "PROCESS_VIEWER"), [roles]);
   const isNyayMitra = ["ADVOCATE_APPLICATION_VIEWER", "ADVOCATE_APPROVER", "ADVOCATE_CLERK_APPROVER"].reduce((res, curr) => {
     if (!res) return res;
     res = roles?.some((role) => role.code === curr);
@@ -28,6 +29,8 @@ const DRISTICard = () => {
     history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
   } else if (isCitizen) {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
+  } else if (isProcessViewer) {
+    history.push(`/${window?.contextPath}/employee/orders/Summons&Notice`);
   }
 
   let roleType = isJudge ? "isJudge" : "default";
