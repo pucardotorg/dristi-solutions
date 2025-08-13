@@ -78,7 +78,11 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
         CourtCase courtCase = cases.get(0);
 
         Map<String, List<String>> litigantAdvocateMapping = advocateUtil.getLitigantAdvocateMapping(courtCase);
-        List<Party> complainants = caseUtil.getRespondentOrComplainant(courtCase, "complainant");
+
+        String type = "complainant";
+        if(isSummonForAccusedWitness(order))
+            type = "respondent";
+        List<Party> complainants = caseUtil.getRespondentOrComplainant(courtCase, type);
         List<String> assignees = new ArrayList<>();
         List<User> uniqueAssignee = new ArrayList<>();
         Set<String> uniqueSet = new HashSet<>();
@@ -178,6 +182,16 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
         return null;
     }
 
+    private boolean isSummonForAccusedWitness(Order order) {
+        JsonNode taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), JsonNode.class);
+        JsonNode taskDetail = taskDetails.get(0);
+        if(taskDetail.get("witnessDetails") != null
+                && taskDetail.get("witnessDetails").get("ownerType") != null
+                && taskDetail.get("witnessDetails").get("ownerType").textValue().equalsIgnoreCase(ACCUSED)){
+            return true;
+        }
+        return false;
+    }
     @Override
     public boolean supportsCommon(OrderRequest orderRequest) {
         return false;
