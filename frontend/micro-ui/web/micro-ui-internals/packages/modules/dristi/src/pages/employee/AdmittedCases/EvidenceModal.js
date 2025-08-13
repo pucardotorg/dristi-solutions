@@ -1398,7 +1398,7 @@ const EvidenceModal = ({
           )}
           <div
             className="evidence-modal-main "
-            style={documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus !== null ? { height: "calc(100% - 140px)" } : {}}
+            style={documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus ? { height: "calc(100% - 140px)" } : {}}
           >
             <div className={"application-details"}>
               <div style={{ display: "flex", flexDirection: "column", overflowY: "auto", height: "fit-content" }}>
