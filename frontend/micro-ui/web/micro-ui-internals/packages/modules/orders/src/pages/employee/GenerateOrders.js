@@ -3072,6 +3072,7 @@ const GenerateOrders = () => {
             email: respondentEmail?.[0] || "",
             age: "",
             gender: "",
+            ...(ownerType && { ownerType: ownerType }),
           },
           caseDetails: {
             caseTitle: caseDetails?.caseTitle,
