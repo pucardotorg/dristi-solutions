@@ -2964,6 +2964,7 @@ const GenerateOrders = () => {
       locality: locality,
     };
     const courtDetails = courtRoomData?.Court_Rooms?.find((data) => data?.code === caseDetails?.courtId);
+    const ownerType = orderFormData?.party?.data?.ownerType;
 
     const respondentDetails = {
       name: respondentName,
@@ -2972,6 +2973,7 @@ const GenerateOrders = () => {
       email: respondentEmail[0] || "",
       age: "",
       gender: "",
+      ...(ownerType && { ownerType: ownerType }),
     };
     const caseRespondent = {
       name: caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.respondentFirstName || "",
