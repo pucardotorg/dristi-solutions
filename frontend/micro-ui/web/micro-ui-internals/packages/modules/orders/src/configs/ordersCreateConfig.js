@@ -5366,6 +5366,54 @@ export const configsCreateOrderAttachment = [
       {
         type: "component",
         component: "SelectCustomTextArea",
+        key: "chargeDays",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "chargeDays",
+              textAreaSubHeader: "Number of Days for Answering Charge",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "district",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "district",
+              textAreaSubHeader: "Name of Accused District",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "village",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "village",
+              textAreaSubHeader: "Name of Accused Village",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
         key: "attachmentText",
         isMandatory: true,
         populators: {

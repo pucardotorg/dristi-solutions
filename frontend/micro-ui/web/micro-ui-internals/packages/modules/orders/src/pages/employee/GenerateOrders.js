@@ -2130,6 +2130,36 @@ const GenerateOrders = () => {
       ) {
         setFormErrors?.current?.[index]?.("attachmentText", { message: t("CORE_REQUIRED_FIELD_ERROR") });
       }
+
+      if (formData?.village && Object.keys(formState?.errors).includes("village")) {
+        clearFormErrors?.current?.[index]?.("village");
+      } else if (
+        formState?.submitCount &&
+        !formData?.village &&
+        !Object.keys(formState?.errors).includes("village")
+      ) {
+        setFormErrors?.current?.[index]?.("village", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      }
+
+      if (formData?.district && Object.keys(formState?.errors).includes("district")) {
+        clearFormErrors?.current?.[index]?.("district");
+      } else if (
+        formState?.submitCount &&
+        !formData?.district &&
+        !Object.keys(formState?.errors).includes("district")
+      ) {
+        setFormErrors?.current?.[index]?.("district", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      }
+
+      if (formData?.chargeDays && Object.keys(formState?.errors).includes("chargeDays")) {
+        clearFormErrors?.current?.[index]?.("chargeDays");
+      } else if (
+        formState?.submitCount &&
+        !formData?.chargeDays &&
+        !Object.keys(formState?.errors).includes("chargeDays")
+      ) {
+        setFormErrors?.current?.[index]?.("chargeDays", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      }
     }
 
     if (
@@ -3105,6 +3135,7 @@ const GenerateOrders = () => {
             docSubType: "Proclamation requiring the apperance of a person accused",
             templateType: "GENERIC",
             proclamationText: orderFormValue?.proclamationText?.proclamationText || "",
+            partyType: respondentNameData?.partyType?.toLowerCase() || "accused",
           },
           respondentDetails: {
             name: respondentName,
@@ -3145,6 +3176,10 @@ const GenerateOrders = () => {
             docSubType: "Attachment requiring the apperance of a person accused",
             templateType: "GENERIC",
             attachmentText: orderFormValue?.attachmentText?.attachmentText || "",
+            district: orderFormValue?.district?.district || "",
+            village: orderFormValue?.village?.village || "",
+            chargeDays: orderFormValue?.chargeDays?.chargeDays || "",
+            partyType: respondentNameData?.partyType?.toLowerCase() || "accused",
           },
           respondentDetails: {
             name: respondentName,
