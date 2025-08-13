@@ -149,4 +149,5 @@ public class ServiceConstants {
     public static final String ERROR_ADDING_WITNESS="ERROR_ADDING_WITNESS";
     public static final String ADDING_WITNESSES = "ADDING_WITNESSES";
     public static final String COURT_WITNESS = "-";
+    public static final String ACCUSED = "ACCUSED";
 }
