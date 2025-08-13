@@ -62,9 +62,15 @@ async function processTaskProcesses(
     const warrantsTasks = taskList.filter(
       (task) => task.orderType === "WARRANT"
     );
+    const proclamationTasks = taskList.filter(
+      (task) => task.orderType === "PROCLAMATION"
+    );
+    const attachmentTasks = taskList.filter(
+        (task) => task.orderType === "ATTACHMENT"
+    );
 
     // Concatenate groups to get final ordered list
-    const orderedTaskList = [...noticeTasks, ...summonsTasks, ...warrantsTasks];
+    const orderedTaskList = [...noticeTasks, ...summonsTasks, ...warrantsTasks, ...proclamationTasks, ...attachmentTasks];
 
     if (orderedTaskList.length !== 0) {
       const processesLineItems = await Promise.all(

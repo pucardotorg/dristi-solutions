@@ -23,4 +23,8 @@ public class ServiceConstants {
     public static final String SIGNED_TASK_DOCUMENT = "SIGNED_TASK_DOCUMENT";
 
     public static final String WARRANT = "WARRANT";
+
+    public static final String PROCLAMATION = "PROCLAMATION";
+
+    public static final String ATTACHMENT = "ATTACHMENT";
 }
