@@ -76,6 +76,10 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
       txt = "Summons";
     } else if (rowData?.orderType === "WARRANT") {
       txt = "Warrant";
+    } else if (rowData?.orderType === "PROCLAMATION") {
+      txt = "Proclamation";
+    } else if (rowData?.orderType === "ATTACHMENT") {
+      txt = "Attachment";
     } else {
       txt = "Notice";
     }

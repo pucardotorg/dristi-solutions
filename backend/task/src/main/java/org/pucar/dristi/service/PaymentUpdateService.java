@@ -199,7 +199,7 @@ public class PaymentUpdateService {
                     TaskRequest taskRequest = TaskRequest.builder().requestInfo(requestInfo).task(task).build();
                     producer.push(config.getTaskUpdateTopic(), taskRequest);
                 }
-                case WARRANT -> {
+                case WARRANT, PROCLAMATION, ATTACHMENT -> {
                     WorkflowObject workflow = new WorkflowObject();
                     workflow.setAction(MAKE_PAYMENT);
                     task.setWorkflow(workflow);
@@ -446,7 +446,7 @@ public class PaymentUpdateService {
 
     public void createPendingTaskForRPAD(Task task, RequestInfo requestInfo) {
         if ((task.getTaskType().equalsIgnoreCase(SUMMON) || task.getTaskType().equalsIgnoreCase(WARRANT)
-                || task.getTaskType().equalsIgnoreCase(NOTICE)) && (isRPADdeliveryChannel(task))) {
+                || task.getTaskType().equalsIgnoreCase(NOTICE) || task.getTaskType().equalsIgnoreCase(PROCLAMATION) || task.getTaskType().equalsIgnoreCase(ATTACHMENT)) && (isRPADdeliveryChannel(task))) {
             createPendingTaskForEnvelope(task, requestInfo);
         }
     }
@@ -574,7 +574,7 @@ public class PaymentUpdateService {
 
         return switch (taskType) {
             case SUMMON -> "task-summons";
-            case WARRANT -> "task-warrant";
+            case WARRANT, PROCLAMATION, ATTACHMENT -> "task-warrant";
             case NOTICE -> "task-notice";
             default -> null;
         };

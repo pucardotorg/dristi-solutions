@@ -37,6 +37,10 @@ const CustomStepperSuccess = ({
       txt = "Summons";
     } else if (orderType === "WARRANT") {
       txt = "Warrant";
+    } else if (orderType === "PROCLAMATION") {
+      txt = "Proclamation";
+    } else if (orderType === "ATTACHMENT") {
+      txt = "Attachment";
     } else {
       txt = "Notice";
     }
