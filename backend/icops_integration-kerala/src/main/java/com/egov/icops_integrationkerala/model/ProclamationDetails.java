@@ -28,4 +28,7 @@ public class ProclamationDetails {
 
     @JsonProperty("proclamationText")
     private String proclamationText;
+
+    @JsonProperty("partyType")
+    private String partyType;
 }

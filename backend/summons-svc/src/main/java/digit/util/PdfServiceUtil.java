@@ -101,6 +101,7 @@ public class PdfServiceUtil {
 
                 if(GENERIC.equals(proclamationDetails.getTemplateType())){
                     summonsPdf.setProclamationText(proclamationDetails.getProclamationText());
+                    summonsPdf.setPartyType(proclamationDetails.getPartyType());
                 }
             }
 
@@ -111,6 +112,10 @@ public class PdfServiceUtil {
 
                 if(GENERIC.equals(attachmentDetails.getTemplateType())){
                     summonsPdf.setAttachmentText(attachmentDetails.getAttachmentText());
+                    summonsPdf.setPartyType(attachmentDetails.getPartyType());
+                    summonsPdf.setVillage(attachmentDetails.getVillage());
+                    summonsPdf.setDistrict(attachmentDetails.getDistrict());
+                    summonsPdf.setChargeDays(attachmentDetails.getChargeDays());
                 }
             }
 
