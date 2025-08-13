@@ -116,7 +116,7 @@ public class TaskUtil {
         }
 
         WorkflowObject workflowObject = new WorkflowObject();
-        if (EMAIL.equalsIgnoreCase(channel) || SMS.equalsIgnoreCase(channel) || isCourtWitness(objectMapper.convertValue(taskDetails, JsonNode.class))) {
+        if (EMAIL.equalsIgnoreCase(channel) || SMS.equalsIgnoreCase(channel) || isCourtWitness(order.getOrderType(), objectMapper.convertValue(taskDetails, JsonNode.class))) {
             workflowObject.setAction("CREATE_WITH_OUT_PAYMENT");
         }
         else {
@@ -144,9 +144,15 @@ public class TaskUtil {
          return TaskRequest.builder().requestInfo(requestInfo).task(task).build();
     }
 
-    public boolean isCourtWitness(JsonNode taskDetails) {
-        return taskDetails.get("witnessDetails") != null && (taskDetails.get("witnessDetails").get("ownerType") == null ||
-                taskDetails.get("witnessDetails").get("ownerType").textValue().equalsIgnoreCase(COURT_WITNESS));
+    public boolean isCourtWitness(String orderType, JsonNode taskDetails) {
+        if(WARRANT.equalsIgnoreCase(orderType)){
+            return taskDetails.get("respondentDetails")!=null && (taskDetails.get("respondentDetails").get("ownerType") == null ||
+                    taskDetails.get("respondentDetails").get("ownerType").textValue().equalsIgnoreCase(COURT_WITNESS));
+        } if(SUMMONS.equalsIgnoreCase(orderType)) {
+            return taskDetails.get("witnessDetails") != null && (taskDetails.get("witnessDetails").get("ownerType") == null ||
+                    taskDetails.get("witnessDetails").get("ownerType").textValue().equalsIgnoreCase(COURT_WITNESS));
+        }
+        return false;
     }
 
     public String constructFullName(String firstName, String middleName, String lastName) {
