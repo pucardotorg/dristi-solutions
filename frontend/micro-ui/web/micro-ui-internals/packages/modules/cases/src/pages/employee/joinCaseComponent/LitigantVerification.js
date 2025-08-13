@@ -19,6 +19,7 @@ const LitigantVerification = ({
   selectPartyData,
   isApiCalled,
   poa,
+  userInfo
 }) => {
   const modalRef = useRef(null);
   const [index, setIndex] = useState(0);
@@ -66,7 +67,7 @@ const LitigantVerification = ({
       ...config,
       head: litigants?.some((litigant) => litigant?.isComplainant) ? t("COMPLAINANT_BASIC_DETAILS") : t("ACCUSED_BASIC_DETAILS"),
       body: config?.body
-        ?.filter((body) => (litigants?.[index]?.isPoaAvailable?.code === "YES" ? true : !["poaCustomInfo"].includes(body?.key)))
+        ?.filter((body) => (litigants?.[index]?.isPoaAvailable?.code === "YES" && litigants?.[index]?.uuid === userInfo?.uuid ? true : !["poaCustomInfo"].includes(body?.key)))
         ?.map((body) => {
           let tempBody = {
             ...body,
@@ -75,17 +76,6 @@ const LitigantVerification = ({
             tempBody = {
               ...tempBody,
               labelChildren: <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>,
-            };
-          }
-
-          if (body?.key === "poaAuthorizationDocument") {
-            const isPoaAvailable = litigants?.[index]?.isPoaAvailable?.code === "YES";
-            tempBody.populators = {
-              ...tempBody.populators,
-              inputs: tempBody.populators.inputs?.map((input) => ({
-                ...input,
-                isMultipleUpload: isPoaAvailable,
-              })),
             };
           }
 
@@ -157,41 +147,29 @@ const LitigantVerification = ({
 
   const areFileArraysEqual = (arr1 = [], arr2 = []) => {
     if (arr1.length !== arr2.length) return false;
-  
-    return arr1?.every((file1) =>
-      arr2?.some((file2) => areFilesEqual(file1, file2))
-    );
-  };  
+
+    return arr1?.every((file1) => arr2?.some((file2) => areFilesEqual(file1, file2)));
+  };
 
   const shouldUpdateStatePOA = (selectedParty, formData) => {
     const commonFields = ["firstName", "middleName", "lastName"];
-  
-    const hasBasicInfoChanged = commonFields.some(
-      (field) => selectedParty[field] !== formData[field]
-    );
-  
+
+    const hasBasicInfoChanged = commonFields.some((field) => selectedParty[field] !== formData[field]);
+
     const hasPhoneNumberChanged =
       selectedParty?.phoneNumberVerification?.mobileNumber !== formData?.phoneNumberVerification?.mobileNumber ||
       selectedParty?.phoneNumberVerification?.otpNumber !== formData?.phoneNumberVerification?.otpNumber ||
       selectedParty?.phoneNumberVerification?.isUserVerified !== formData?.phoneNumberVerification?.isUserVerified;
-  
+
     const selectedDocs = selectedParty?.poaAuthorizationDocument?.poaDocument || [];
     const formDocs = formData?.poaAuthorizationDocument?.poaDocument || [];
-  
+
     const hasDocumentChanged = !areFileArraysEqual(selectedDocs, formDocs);
-  
-    const isDocumentNull =
-      formData?.poaAuthorizationDocument === null &&
-      selectedParty?.poaAuthorizationDocument !== null;
-  
-    return (
-      hasBasicInfoChanged ||
-      hasPhoneNumberChanged ||
-      hasDocumentChanged ||
-      isDocumentNull
-    );
+
+    const isDocumentNull = formData?.poaAuthorizationDocument === null && selectedParty?.poaAuthorizationDocument !== null;
+
+    return hasBasicInfoChanged || hasPhoneNumberChanged || hasDocumentChanged || isDocumentNull;
   };
-  
 
   useEffect(() => {
     const isValidWithoutPOA = litigants?.every((litigant) => {

@@ -452,7 +452,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       const { firstName, middleName, lastName } = data?.data;
 
       const fullName = getFullName(" ", firstName, middleName, lastName);
-      const poaAuthorizationDocument = data?.data?.poaAuthorizationDocument;
+      const complaintUuid = data?.data?.complainantVerification?.individualDetails?.userUuid;
+      const poaAuthorizationDocument = complaintUuid === userInfo?.uuid ? data?.data?.poaAuthorizationDocument : null;
       const isAlreadyPoa = data?.data?.transferredPOA || { code: "NO", name: "NO", showPoaDetails: false };
       const poaVerification = data?.data?.poaVerification;
 
@@ -476,7 +477,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           },
         },
         isPoaAvailable: isAlreadyPoa,
-        poaAuthorizationDocument,
+        poaAuthorizationDocument : poaAuthorizationDocument,
         poaVerification,
         isAdvocateRepresenting: !!isAdvocateRepresenting,
         advocateRepresentingLength: representatives?.length || 0,
@@ -520,7 +521,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           const { respondentFirstName, respondentMiddleName, respondentLastName } = data?.data;
 
           fullName = getFullName(" ", respondentFirstName, respondentMiddleName, respondentLastName);
-          const poaAuthorizationDocument = data?.data?.poaAuthorizationDocument;
+          const respondentUUID = response?.Individual?.[0]?.userUuid || "";
+          const poaAuthorizationDocument = respondentUUID === userInfo?.uuid ? data?.data?.poaAuthorizationDocument : null;
           const isAlreadyPoa = data?.data?.transferredPOA || { code: "NO", name: "NO", showPoaDetails: false };
           const poaVerification = data?.data?.poaVerification;
 
@@ -547,7 +549,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
               },
             }),
             isPoaAvailable: isAlreadyPoa,
-            poaAuthorizationDocument,
+            poaAuthorizationDocument : poaAuthorizationDocument,
             poaVerification,
             isAdvocateRepresenting: !!isAdvocateRepresenting,
             advocateRepresentingLength: representatives?.length || 0,
@@ -1644,6 +1646,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           selectPartyData={selectPartyData}
           isApiCalled={isApiCalled}
           poa={poa}
+          userInfo={userInfo}
         />
       ),
     },
