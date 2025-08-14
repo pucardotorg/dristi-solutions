@@ -83,6 +83,44 @@ public class ServiceConstants {
     public static final String NOTIFICATION_MODULE_CODE = "notification";
     public static final String NOTIFICATION_LOCALIZATION_CODES_JSONPATH = "$.messages.*.code";
     public static final String NOTIFICATION_LOCALIZATION_MSGS_JSONPATH = "$.messages.*.message";
+    public static final String CLOSE = "CLOSE";
+    public static final String START = "START";
+    public static final String PASS_OVER = "PASS_OVER";
+    public static final String ABANDON = "ABANDON";
+    public static final String HEARING_MODULE_NAME = "Hearing";
+    public static final String HEARING_STATUS_MASTER_NAME = "HearingStatus";
+    public static final String ERRORS_PATH = "$.errors";
+    public static final String ES_INDEX_HEADER_FORMAT = "{\"index\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
+    public static final String ES_INDEX_DOCUMENT_FORMAT = "{"
+            + "\"Data\": {"
+            + "\"hearingDetails\": {"
+            + "\"hearingUuid\": \"%s\","
+            + "\"tenantId\": \"%s\","
+            + "\"filingNumber\": \"%s\","
+            + "\"caseTitle\": \"%s\","
+            + "\"caseUuid\": \"%s\","
+            + "\"hearingNumber\": \"%s\","
+            + "\"caseNumber\": \"%s\","
+            + "\"stage\": \"%s\","
+            + "\"status\": \"%s\","
+            + "\"fromDate\": %d,"
+            + "\"toDate\": %d,"
+            + "\"subStage\": \"%s\","
+            + "\"courtId\": \"%s\","
+            + "\"advocate\": {"
+            + "\"accused\": %s,"
+            + "\"complainant\": %s"
+            + "},"
+            + "\"searchableFields\": %s,"
+            + "\"hearingType\": \"%s\","
+            + "\"caseFilingDate\": %d,"
+            + "\"statusOrder\": %d,"
+            + "\"hearingTypeOrder\": %d,"
+            + "\"serialNumber\": %d"
+            + "}"
+            + "}"
+            + "}\n";
+
 
     // module for localized hearing types
     public static final String HEARING_TYPE_MODULE_CODE = "hearingTypes";
@@ -104,5 +142,26 @@ public class ServiceConstants {
     // generic message code for all hearing types
     public static final String VARIABLE_HEARING_SCHEDULED = "VARIABLE_HEARING_SCHEDULED";
 
+    public static final String ERROR_WHILE_FETCHING_FROM_ORDER = "ERROR_WHILE_FETCHING_FROM_ORDER";
+
+    public static final String PUBLISHED = "PUBLISHED";
+
+    public static final String NOTICE = "NOTICE";
+
+    public static final String SUMMONS = "SUMMONS";
+
+    public static final String PENDING_PAYMENT = "PENDING_PAYMENT";
+
+    public static final String EXPIRE = "EXPIRE";
+
+    public static final String ABANDONED = "ABANDONED";
+
+    public static final String PAYMENTTYPE = "paymentType";
+
+    public static final String SUMMON = "SUMMONS";
+
+    public static final String MANUAL = "MANUAL_";
+
+    public static final String PAYMENT_COLLECTOR = "PAYMENT_COLLECTOR";
 
 }

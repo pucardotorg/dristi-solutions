@@ -164,6 +164,10 @@ public class Configuration {
 	private String aDiaryBusinessServices;
 	private List<String> aDiaryBusinessServiceList;
 
+	@Value("${egov.bail.bond.business.services}")
+	private String bailBondBusinessServices;
+	private List<String> bailBondBusinessServiceList;
+
 	//Localization
 	@Value("${egov.localization.host}")
 	private String localizationHost;
@@ -206,6 +210,19 @@ public class Configuration {
 	@Value("${elastic.pending.task.search}")
 	private String pendingTaskSearchPath;
 
+	// User Config
+	@Value("${egov.user.host}")
+	private String userHost;
+
+	@Value("${egov.user.search.path}")
+	private String userSearchEndpoint;
+
+	@Value("${egov.user.create.path}")
+	private String userCreateEndpoint;
+
+	//Tenant Id
+	@Value("${egov-state-level-tenant-id}")
+	private String egovStateTenantId;
 
 	@PostConstruct
 	public void init() {
@@ -216,6 +233,7 @@ public class Configuration {
 		applicationBusinessServiceList = Arrays.asList(applicationBusinessServices.split(","));
 		orderBusinessServiceList = Arrays.asList(orderBusinessServices.split(","));
 		aDiaryBusinessServiceList = Arrays.asList(aDiaryBusinessServices.split(","));
+		bailBondBusinessServiceList = Arrays.asList(bailBondBusinessServices.split(","));
 	}
 
 

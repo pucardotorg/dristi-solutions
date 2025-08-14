@@ -39,9 +39,6 @@ public class Artifact {
 
 	private String tenantId = null;
 
-	@JsonProperty("courtId")
-	private String courtId = null;
-
 	@JsonProperty("artifactNumber")
 
 	@Size(min = 2, max = 64)
@@ -59,6 +56,9 @@ public class Artifact {
 
 	@Size(min = 2, max = 128)
 	private String externalRefNumber = null;
+
+	@JsonProperty("courtId")
+	private String courtId = null;
 
 	@JsonProperty("caseId")
 	@NotNull

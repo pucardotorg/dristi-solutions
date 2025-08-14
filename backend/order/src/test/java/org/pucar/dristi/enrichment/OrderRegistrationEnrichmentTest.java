@@ -1,5 +1,6 @@
 package org.pucar.dristi.enrichment;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -12,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.web.models.Order;
 import org.pucar.dristi.web.models.OrderRequest;
@@ -34,6 +36,9 @@ class OrderRegistrationEnrichmentTest {
 
     @Mock
     private ObjectMapper objectMapper;
+
+    @Mock
+    private CaseUtil caseUtil;
 
     @InjectMocks
     private OrderRegistrationEnrichment orderRegistrationEnrichment;
@@ -59,30 +64,40 @@ class OrderRegistrationEnrichmentTest {
     @Test
     void testEnrichOrderRegistration_Success() {
         // Given
-        OrderRequest orderRequest = createMockOrderRequest();  // Ensure mock request is fully initialized
+        OrderRequest orderRequest = createMockOrderRequest();
         String mockTenantId = "tenant123";
-        String mockOrderId = "ORDER123";  // Mock ID to return
+        String mockOrderId = "ORDER123";
         String mockOrderNumber = "tenant-123" + "-" + mockOrderId;
 
-        // Mock configuration and ID generation utility behavior
-        when(configuration.getOrderConfig()).thenReturn("orderConfigValue");  // Mock return for getOrderConfig
-        when(configuration.getOrderFormat()).thenReturn("orderFormatValue");  // Mock return for getOrderFormat
-        when(idgenUtil.getIdList(any(),any(), any(),any(), eq(1), eq(false)))
-                .thenReturn(Collections.singletonList(mockOrderId));  // Return list with one element
+        // Prepare mock courtId node
+        JsonNode mockedCaseDetails = mock(JsonNode.class);
+        JsonNode courtIdNode = mock(JsonNode.class);
+
+        when(courtIdNode.isNull()).thenReturn(false);
+        when(courtIdNode.textValue()).thenReturn("COURT123");
+
+        when(configuration.getOrderConfig()).thenReturn("orderConfigValue");
+        when(configuration.getOrderFormat()).thenReturn("orderFormatValue");
+        when(idgenUtil.getIdList(any(), eq("tenant123"), any(), any(), eq(1), eq(false)))
+                .thenReturn(Collections.singletonList(mockOrderId));
+
+        when(caseUtil.searchCaseDetails(any())).thenReturn(mockedCaseDetails);
+        when(mockedCaseDetails.get("courtId")).thenReturn(courtIdNode);
 
         // When
         orderRegistrationEnrichment.enrichOrderRegistration(orderRequest);
 
         // Then
-        // Check that enrichment added correct fields
         assertNotNull(orderRequest.getOrder().getAuditDetails());
         assertNotNull(orderRequest.getOrder().getId());
         assertEquals(mockOrderNumber, orderRequest.getOrder().getOrderNumber());
         assertNotNull(orderRequest.getOrder().getStatuteSection().getId());
+        assertEquals("COURT123", orderRequest.getOrder().getCourtId());
 
-        // Verify that the ID generation utility was called
-        verify(idgenUtil).getIdList(any(), eq(mockTenantId), any(), any(), eq(1), eq(false));
+        // Verify ID generation
+        verify(idgenUtil).getIdList(any(), eq("tenant123"), any(), any(), eq(1), eq(false));
     }
+
 
 
     @Test

@@ -26,6 +26,7 @@ const CustomStepperSuccess = ({
   submitButtonText,
   closeButtonText,
   orderType,
+  isSubmitting = false,
 }) => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const fileStore = sessionStorage.getItem("SignedFileStoreID");
@@ -111,6 +112,7 @@ const CustomStepperSuccess = ({
                 submitButtonAction();
               }}
               textStyles={submitButtonStyle}
+              isDisabled={submitButtonText !== "CS_CLOSE" && isSubmitting}
             >
               {/* <RightArrow /> */}
             </Button>

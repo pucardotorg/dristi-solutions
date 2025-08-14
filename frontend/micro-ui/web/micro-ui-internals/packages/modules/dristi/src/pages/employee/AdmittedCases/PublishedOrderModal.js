@@ -27,9 +27,9 @@ function PublishedOrderModal({
   const DocViewerWrapper = Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const isCitizen = useMemo(() => Boolean(Digit?.UserService?.getUser()?.info?.type === "CITIZEN"), [Digit]);
-  const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+  const courtId = localStorage.getItem("courtId");
 
-  const { documents, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments();
+  const { documents, isLoading, fetchRecursiveData } = useGetAllOrderApplicationRelatedDocuments({ ...(!isCitizen && { courtId }) });
   const [loading, setLoading] = useState(false);
   const Heading = (props) => {
     return <h1 className="heading-m">{props.label}</h1>;
@@ -48,6 +48,7 @@ function PublishedOrderModal({
       criteria: [
         {
           filingNumber: order?.filingNumber,
+          ...(courtId && !isCitizen && { courtId }),
         },
       ],
       tenantId,
@@ -58,7 +59,7 @@ function PublishedOrderModal({
     Boolean(order?.filingNumber)
   );
   const caseDetails = useMemo(() => caseData?.criteria?.[0]?.responseList?.[0] || {}, [caseData]);
-
+  const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
   const signedOrder = useMemo(() => order?.documents?.filter((item) => item?.documentType === "SIGNED")[0], [order]);
   const userInfo = Digit.UserService.getUser()?.info;
   const allAdvocates = useMemo(() => getAdvocates(caseDetails), [caseDetails]);
@@ -68,13 +69,13 @@ function PublishedOrderModal({
       criteria: {
         referenceId: order?.orderNumber,
         tenantId,
-        courtId: courtId,
+        courtId: caseCourtId,
         caseId: caseDetails?.cmpNumber,
       },
     },
     {},
     order?.orderNumber + caseDetails?.id,
-    Boolean(order?.orderNumber) && !Boolean(isCitizen) && Boolean(caseDetails?.id)
+    Boolean(order?.orderNumber && caseCourtId) && !Boolean(isCitizen) && Boolean(caseDetails?.id)
   );
 
   const isComposite = useMemo(() => order?.orderCategory === "COMPOSITE", [order]);
@@ -127,12 +128,13 @@ function PublishedOrderModal({
         filingNumber: order?.filingNumber,
         tenantId: tenantId,
         applicationNumber: applicationNumberSetTerms,
+        ...(caseCourtId && { courtId: caseCourtId }),
       },
       tenantId,
     },
     {},
     applicationNumberSetTerms + order?.filingNumber,
-    Boolean(applicationNumberSetTerms && order?.filingNumber)
+    Boolean(applicationNumberSetTerms && order?.filingNumber && caseCourtId)
   );
   const applicationDetails = useMemo(() => applicationData?.applicationList?.[0], [applicationData]);
 
