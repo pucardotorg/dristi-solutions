@@ -22,6 +22,9 @@ export const userTypeOptions = [
       "HEARING_ACCEPTOR",
       "ADVOCATE_VIEWER",
       "PENDING_TASK_CREATOR",
+      "BAIL_BOND_CREATOR",
+      "BAIL_BOND_VIEWER",
+      "BAIL_BOND_EDITOR",
     ],
     subText: "LITIGANT_SUB_TEXT",
   },
@@ -52,6 +55,9 @@ export const userTypeOptions = [
       "ADVOCATE_VIEWER",
       "ADVOCATE_APPLICATION_VIEWER",
       "PENDING_TASK_CREATOR",
+      "BAIL_BOND_CREATOR",
+      "BAIL_BOND_VIEWER",
+      "BAIL_BOND_EDITOR",
     ],
     apiDetails: {
       serviceName: "/advocate/v1/_create",
@@ -164,8 +170,8 @@ export const newConfig = [
         type: "component",
         component: "AddressComponent",
         key: "addressDetails",
-        label:"PRESENT_ADDRESS",
-        labelBold:true,
+        label: "PRESENT_ADDRESS",
+        labelBold: true,
         // withoutLabel: true,
         populators: {
           customStyle: { paddingBottom: "15px" },
@@ -286,7 +292,7 @@ export const newConfig = [
         type: "component",
         component: "AddressComponent",
         key: "currentAddress",
-        label:"CURRENT_ADDRESS",
+        label: "CURRENT_ADDRESS",
         // withoutLabel: true,
         populators: {
           inputs: [

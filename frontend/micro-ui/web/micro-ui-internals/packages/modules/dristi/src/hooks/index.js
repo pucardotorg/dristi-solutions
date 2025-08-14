@@ -74,6 +74,7 @@ export const Urls = {
     billFileStoreId: "/etreasury/payment/v1/_getPaymentReceipt",
     eSign: "/e-sign-svc/v1/_esign",
     paymentCalculator: "/payment-calculator/v1/case/fees/_calculate",
+    getTreasuryPaymentBreakup: "/etreasury/payment/v1/_getHeadBreakDown",
     fetchBill: "/billing-service/bill/v2/_fetchbill",
     searchBill: "/billing-service/bill/v2/_search",
     eTreasury: "/etreasury/payment/v1/_processChallan",
@@ -97,6 +98,8 @@ export const Urls = {
   },
   case: {
     addWitness: "/case/v1/add/witness",
+    taskCreate: "/task/v1/create",
+    searchTasks: "/task/v1/search",
   },
   hearing: {
     hearingUpdateTranscript: "/hearing/v1/update_transcript_additional_attendees",

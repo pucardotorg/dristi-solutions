@@ -23,6 +23,9 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const history = useHistory();
   const Registration = Digit?.ComponentRegistryService?.getComponent("DRISTIRegistration");
   const Response = Digit?.ComponentRegistryService?.getComponent("DRISTICitizenResponse");
+  const BailBondSignaturePage = Digit?.ComponentRegistryService?.getComponent("BailBondSignaturePage");
+  const BailBondLoginPage = Digit?.ComponentRegistryService?.getComponent("BailBondLoginPage");
+  const BailBondLinkExpiredPage = Digit?.ComponentRegistryService?.getComponent("BailBondLinkExpiredPage");
   const Login = Digit?.ComponentRegistryService?.getComponent("DRISTILogin");
   const FileCase = Digit?.ComponentRegistryService?.getComponent("FileCase");
   const token = window.localStorage.getItem("token");
@@ -125,6 +128,8 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     },
   ];
 
+  const hideBackRoutes = ["/home/access-expired", "/home/bail-bond-login", "/home/bail-bond-sign", "/login", "/registration/email"];
+
   const whiteListedRoutes = [
     `${path}/home/register`,
     `${path}/home/register/otp`,
@@ -142,18 +147,43 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     `${path}/home/registration/additional-details`,
     `${path}/home/registration/upload-id`,
     `${path}/home/registration/terms-condition`,
+    `${path}/home/bail-bond-sign`,
+    `${path}/home/bail-bond-login`,
+    `${path}/home/access-expired`,
   ];
+  const bailRoute = [`${path}/home/bail-bond-sign`];
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
-  const retrievedObject = JSON.parse(eSignWindowObject);
+  const retrievedObject = Boolean(eSignWindowObject) ? JSON.parse(eSignWindowObject) : null;
+
   if (!isUserLoggedIn && !whiteListedRoutes.includes(location.pathname)) {
     history.push(`${path}/home/login`);
   }
-  if (!isRejected && individualId && !isLitigantPartialRegistered && whiteListedRoutes.includes(location.pathname)) {
+  if (
+    !isRejected &&
+    individualId &&
+    !isLitigantPartialRegistered &&
+    whiteListedRoutes.includes(location.pathname) &&
+    !bailRoute.includes(location.pathname)
+  ) {
     history.push(`${path}/home`);
   }
 
-  if (isUserLoggedIn && !location.pathname.includes(`${path}/home`)) {
+  if (retrievedObject && bailRoute.includes(retrievedObject?.path)) {
+    if (result) {
+      sessionStorage.setItem("isSignSuccess", result);
+    }
+    if (fileStoreId) {
+      sessionStorage.setItem("fileStoreId", fileStoreId);
+    }
+    history.push(`${retrievedObject?.path}${retrievedObject?.param}`, {
+      mobileNumber: Boolean(sessionStorage.getItem("mobileNumber")) ? JSON.parse(sessionStorage.getItem("mobileNumber")) : null,
+      isAuthorised: true,
+    });
+    sessionStorage.removeItem("eSignWindowObject");
+  }
+
+  if (isUserLoggedIn && !location.pathname.includes(`${path}/home`) && !bailRoute.includes(location.pathname)) {
     history.push(`${path}/home`);
   }
   if (isUserLoggedIn && registerScreenRoute.includes(location.pathname)) {
@@ -177,7 +207,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     <div className={"pt-citizen"}>
       <Switch>
         <React.Fragment>
-          {!hideBack && !(location.pathname.includes("/login") || location.pathname.includes("/registration/email") || individualId) && (
+          {!hideBack && !(hideBackRoutes.some((route) => location.pathname.includes(route)) || individualId) && (
             <div className="back-button-home">
               <BackButton />
             </div>
@@ -245,6 +275,18 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
 
           <Route path={`${path}/landing-page`}>
             <LandingPage />
+          </Route>
+
+          <Route path={`${path}/home/access-expired`}>
+            <BailBondLinkExpiredPage />
+          </Route>
+
+          <Route path={`${path}/home/bail-bond-login`}>
+            <BailBondLoginPage />
+          </Route>
+
+          <Route path={`${path}/home/bail-bond-sign`}>
+            <BailBondSignaturePage />
           </Route>
         </React.Fragment>
       </Switch>

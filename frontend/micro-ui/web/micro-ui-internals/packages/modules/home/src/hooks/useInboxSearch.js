@@ -5,6 +5,12 @@ function useInboxSearch({ limit = 300, offset = 0 } = {}) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const getTodayRange = () => {
+    const currentDate = new Date();
+    const fromDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 0, 0, 0, 0).getTime();
+    const toDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate(), 23, 59, 59, 999).getTime();
+    return { fromDate, toDate };
+  };
 
   const fetchInbox = useCallback(
     async (filters, setHearingCount) => {
@@ -16,6 +22,8 @@ function useInboxSearch({ limit = 300, offset = 0 } = {}) {
           const dateObj = new Date(filters.date);
           fromDate = new Date(dateObj.setHours(0, 0, 0, 0)).getTime();
           toDate = new Date(dateObj.setHours(23, 59, 59, 999)).getTime();
+        } else {
+          ({ fromDate, toDate } = getTodayRange());
         }
         const payload = {
           inbox: {

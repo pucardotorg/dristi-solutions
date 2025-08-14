@@ -51,9 +51,9 @@ jobs:
         with:
           sarif_file: reports/dependency-check-report.sarif
         if: always()
-      # Login to Azure Container Registry
-      - name: Login to Azure Container Registry
-        run: docker login -u pucarsolutionsdev -p ${{ secrets.ACR_PASSWORD }} pucarsolutionsdev.azurecr.io
+      # Login to Docker Registry
+      - name: Login to Docker Registry
+        run: docker login -u venkatramireddyb -p ${{ secrets.ACR_PASSWORD }}
       - name: Set Version from Tag or Branch
         id: set_version
         run: |
@@ -74,13 +74,13 @@ jobs:
 
       - name: Build and Push Docker image for egov-indexer
         run: |
-          docker build --build-arg WORK_DIR="common/egov-indexer" -t pucarsolutionsdev.azurecr.io/egov-indexer:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/egov-indexer:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker build --build-arg WORK_DIR="common/egov-indexer" -t docker.io/venkatramireddyb/egov-indexer:${{ env.VERSION }}-${{ env.commit_hash }} -f build/maven/Dockerfile .
+          docker push docker.io/venkatramireddyb/egov-indexer:${{ env.VERSION }}-${{ env.commit_hash }}
 
       - name: Build and Push Docker image for egov-indexer_DB
         run: |
-          docker build  -t pucarsolutionsdev.azurecr.io/egov-indexer-db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
-          docker push pucarsolutionsdev.azurecr.io/egov-indexer-db:${{ env.VERSION }}-${{ env.commit_hash }}
+          docker build  -t docker.io/venkatramireddyb/egov-indexer-db:${{ env.VERSION }}-${{ env.commit_hash }} -f  Dockerfile .
+          docker push docker.io/venkatramireddyb/egov-indexer-db:${{ env.VERSION }}-${{ env.commit_hash }}
         working-directory: common/egov-indexer/src/main/resources/db
 
   Workflow_Trigger:

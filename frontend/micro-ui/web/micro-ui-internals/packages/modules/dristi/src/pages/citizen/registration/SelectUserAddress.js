@@ -9,8 +9,12 @@ const SelectUserAddress = ({ config, onSelect, t, params, pathOnRefresh }) => {
   const [formdata, setformData] = useState({});
 
   const onFormValueChange = (setValue, formData, formState) => {
-    if (formData?.isBothAddressSame?.code === "YES" && !formData?.currentAddress) {
-      setValue("currentAddress", { ...formData?.addressDetails, temp: 1 });
+    if (formData?.isBothAddressSame?.code === "YES") {
+      const existing = formData?.currentAddress;
+      const target = { ...formData?.addressDetails, temp: 1 };
+      if (!isEqual(existing, target)) {
+        setValue("currentAddress", target);
+      }
     } else if (formData?.isBothAddressSame?.code === "NO" && formData?.currentAddress?.temp) {
       setValue("currentAddress", undefined);
     }

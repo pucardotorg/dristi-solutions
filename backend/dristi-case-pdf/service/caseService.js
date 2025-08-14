@@ -2,6 +2,7 @@ const config = require("../config/config");
 const axios = require("axios");
 var url = require("url");
 const { getUniqueAcronym } = require("../util/formatUtil");
+const { htmlToFormattedText } = require("../util/htmlToFormattedText");
 
 /**
  * Extracts case section from the case object.
@@ -882,7 +883,9 @@ function getWitnessDetailsForComplaint(cases) {
       witnessPhoneNumber: data?.phonenumbers?.mobileNumber?.join(", ") || "",
       witnessEmail: data?.emails?.emailId?.join(", ") || "",
       witnessAddress: addresses?.join(", ") || "",
-      witnessAdditionalDetails: data?.witnessAdditionalDetails?.text || "",
+      witnessAdditionalDetails: htmlToFormattedText(
+        data?.witnessAdditionalDetails?.text || ""
+      ),
     };
   });
 }

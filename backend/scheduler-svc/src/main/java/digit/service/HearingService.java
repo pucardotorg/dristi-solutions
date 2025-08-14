@@ -314,6 +314,14 @@ public class HearingService {
                         .name(WORKFLOW_ABANDON)
                         .tenantId(config.getEgovStateTenantId())
                 .build());
+        userInfo.getRoles().add(Role.builder().code(PAYMENT_COLLECTOR)
+                        .name(PAYMENT_COLLECTOR)
+                        .tenantId(config.getEgovStateTenantId())
+                        .build());
+        userInfo.getRoles().add(Role.builder().code(serviceConstants.SYSTEM_ADMIN)
+                        .name(serviceConstants.SYSTEM_ADMIN)
+                        .tenantId(config.getEgovStateTenantId())
+                .build());
         userInfo.setType(EMPLOYEE);
         userInfo.setTenantId(config.getEgovStateTenantId());
         return RequestInfo.builder().userInfo(userInfo).msgId(msgId).build();
