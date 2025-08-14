@@ -32,6 +32,8 @@ const orderTypeEnum = {
   SUMMONS: "Summons",
   NOTICE: "Notice",
   WARRANT: "Warrant",
+  PROCLAMATION: "Proclamation",
+  ATTACHMENT: "Attachment",
 };
 
 const PaymentForSummonComponent = ({
