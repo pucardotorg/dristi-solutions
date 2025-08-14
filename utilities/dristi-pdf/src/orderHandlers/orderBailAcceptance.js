@@ -67,7 +67,6 @@ const orderBailAcceptance = async (
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
     const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
-    
     // Handle QR code if enabled
     let base64Url = "";
     if (qrCode === "true") {
