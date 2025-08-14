@@ -4458,12 +4458,6 @@ public class CaseService {
             CourtCase encrptedCourtCase = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
             updateCourtCaseInRedis(courtCase.getTenantId(), encrptedCourtCase);
 
-            List<POAHolder> filteredPoaHolders = encrptedCourtCase.getPoaHolders().stream()
-                    .filter(poaHolder -> Boolean.FALSE.equals(poaHolder.getIsActive()) || poaIndividualId.equals(poaHolder.getIndividualId()))
-                    .collect(Collectors.toList());
-
-            encrptedCourtCase.setPoaHolders(filteredPoaHolders);
-
             producer.push(config.getPoaJoinCaseKafkaTopic(), encrptedCourtCase);
 
         } catch (CustomException e) {
