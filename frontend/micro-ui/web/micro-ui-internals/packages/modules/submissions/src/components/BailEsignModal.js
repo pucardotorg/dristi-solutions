@@ -15,7 +15,15 @@ const CloseBtn = (props) => {
   );
 };
 
-const BailEsignModal = ({ t, handleProceed, handleCloseSignaturePopup, fileStoreId, signPlaceHolder, mobileNumber, forWitnessDeposition = false }) => {
+const BailEsignModal = ({
+  t,
+  handleProceed,
+  handleCloseSignaturePopup,
+  fileStoreId,
+  signPlaceHolder,
+  mobileNumber,
+  forWitnessDeposition = false,
+}) => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [isSigned, setIsSigned] = useState(false);
   const { handleEsign, checkSignStatus } = useESignOpenApi();
@@ -45,7 +53,8 @@ const BailEsignModal = ({ t, handleProceed, handleCloseSignaturePopup, fileStore
           label={t("PLEASE_NOTE")}
           additionalElements={[
             <p>
-              {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")} <span style={{ fontWeight: "bold" }}>{forWitnessDeposition ? t("WITNESS_DEPOSITION") : t("BAIL_BOND")}</span>
+              {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}{" "}
+              <span style={{ fontWeight: "bold" }}>{forWitnessDeposition ? t("WITNESS_DEPOSITION") : t("BAIL_BOND")}</span>
             </p>,
           ]}
           inline

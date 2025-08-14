@@ -82,7 +82,6 @@ export const compositeOrderAllowedTypes = [
   {
     key: "no_restriction",
     orderTypes: ["NOTICE", "OTHERS", "WARRANT", "SUMMONS", "MANDATORY_SUBMISSIONS_RESPONSES", "SECTION_202_CRPC", "ACCEPT_BAIL"],
-
     unAllowedOrderTypes: [],
   },
   {
@@ -1552,7 +1551,6 @@ const GenerateOrders = () => {
             };
           });
         }
-
         newConfig = [...newConfig, ...orderTypeForm];
       }
       const updatedConfig = newConfig.map((config) => {

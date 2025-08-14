@@ -35,7 +35,6 @@ const componentsToRegister = {
   BailBondLinkExpiredPage,
   WitnessDepositionLoginPage,
   WitnessDepositionSignaturePage,
-
 };
 
 export const initSubmissionsComponents = () => {

@@ -1263,7 +1263,6 @@ const AdmittedCases = () => {
     }));
   }, [activeTab]);
   const [updateCounter, setUpdateCounter] = useState(0);
-
   const [toastDetails, setToastDetails] = useState({});
   const [showOtherMenu, setShowOtherMenu] = useState(false);
   const [showScheduleHearingModal, setShowScheduleHearingModal] = useState(false);
@@ -1436,13 +1435,10 @@ const AdmittedCases = () => {
     if (newWitnesToast) {
       showToast({ message: t("NEW_WITNESS_SUCCESSFULLY_ADDED"), error: false });
     }
-  }, [newWitnesToast, showToast, t]);
 
   useEffect(() => {
     if (applicationData && applicationNumber) {
       const applicationDetails = applicationData?.applicationList?.filter((application) => application?.applicationNumber === applicationNumber)?.[0];
-      setDocumentSubmission(
-        applicationDetails?.documents?.map((doc) => {
           return {
             status: applicationDetails?.status,
             details: {

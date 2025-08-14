@@ -47,7 +47,7 @@ const BailBondLoginPage = () => {
       history.replace(`/${window?.contextPath}/citizen/dristi/home/bail-bond-sign?tenantId=${tenantId}&bailbondId=${bailbondId}`, {
         mobileNumber: mobileNumber,
         tenantId: tenantId,
-        isAuthorised : true,
+        isAuthorised: true,
       });
     } catch (error) {
       setError(true);

@@ -40,17 +40,8 @@ const BailBondReviewModal = ({
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
   const [showErrorToast, setShowErrorToast] = useState(null);
 
-  const {
-    data: { file: bailBondPreviewPdf, fileName: bailBondPreviewFileName } = {},
-    isFetching: isLoading,
-  } = useQuery({
-    queryKey: [
-      "bailBondPreviewPdf",
-      tenantId,
-      bailBondDetails?.bailId,
-      bailBondDetails?.cnrNumber,
-      bailBondPreviewSubmissionTypeMap["BAIL_BOND"],
-    ],
+  const { data: { file: bailBondPreviewPdf, fileName: bailBondPreviewFileName } = {}, isFetching: isLoading } = useQuery({
+    queryKey: ["bailBondPreviewPdf", tenantId, bailBondDetails?.bailId, bailBondDetails?.cnrNumber, bailBondPreviewSubmissionTypeMap["BAIL_BOND"]],
     cacheTime: 0,
     queryFn: async () => {
       return Axios({
@@ -81,25 +72,25 @@ const BailBondReviewModal = ({
     enabled: !!bailBondDetails?.bailId && !!bailBondDetails?.cnrNumber && !!bailBondPreviewSubmissionTypeMap["BAIL_BOND"],
   });
 
-    const showDocument = useMemo(() => {
-      return (
-        <React.Fragment>
-          {bailBondPreviewPdf ? (
-            <DocViewerWrapper
-              docWidth={"calc(100vw* 76/ 100)"}
-              selectedDocs={[bailBondPreviewPdf]}
-              displayFilename={bailBondPreviewFileName}
-              showDownloadOption={false}
-              docHeight={"unset"}
-            />
-          ) : isLoading ? (
-            <h2>{t("LOADING")}</h2>
-          ) : (
-            <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
-          )}
-        </React.Fragment>
-      );
-    }, [bailBondPreviewPdf, isLoading, t]);
+  const showDocument = useMemo(() => {
+    return (
+      <React.Fragment>
+        {bailBondPreviewPdf ? (
+          <DocViewerWrapper
+            docWidth={"calc(100vw* 76/ 100)"}
+            selectedDocs={[bailBondPreviewPdf]}
+            displayFilename={bailBondPreviewFileName}
+            showDownloadOption={false}
+            docHeight={"unset"}
+          />
+        ) : isLoading ? (
+          <h2>{t("LOADING")}</h2>
+        ) : (
+          <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
+        )}
+      </React.Fragment>
+    );
+  }, [bailBondPreviewPdf, isLoading, t]);
 
   return (
     <React.Fragment>
