@@ -4433,6 +4433,7 @@ export const configsJudgement = [
         key: "sentence",
         schemaKeyPath: "caseDetails.sentence",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4523,7 +4524,7 @@ export const configsIssueBailAcceptance = [
           required: true,
           isMandatory: true,
           name: "bailParty",
-          optionsKey:"name",
+          optionsKey: "name",
           styles: { maxWidth: "100%" },
           error: "required ",
           options: [],
@@ -4602,7 +4603,7 @@ export const configsIssueBailAcceptance = [
             },
           ],
         },
-      }
+      },
     ],
   },
 ];
