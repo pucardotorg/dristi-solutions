@@ -168,6 +168,23 @@ const SelectParty = ({
     scrollToDiv();
   }, [selectPartyData?.partyInvolve, party, partyInPerson]);
 
+  const getDisableParty  = (party) => {
+    if(party?.advocateRepresentingLength > 0){
+      if(party?.isPoaAvailable?.code === "NO" && party?.uuid === userInfo?.uuid) {
+        return true;
+      }
+      else if(party?.isPoaAvailable?.code === "YES" && party?.poaVerification?.individualDetails?.userUuid === userInfo?.uuid) {
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+    else {
+      return true;
+    }
+  }
+
   return (
     <div ref={targetRef} className="select-user-join-case" style={{ width: "712px" }}>
       <CustomCaseInfoDiv t={t} data={caseInfo?.slice(0, 4)} column={4} />
@@ -326,7 +343,7 @@ const SelectParty = ({
                   )
                   ?.map((party) => ({
                     ...party,
-                    isDisabled: party?.advocateRepresentingLength > 0 ? party?.isPoaAvailable?.code === "NO" && party?.uuid === userInfo?.uuid : true,
+                    isDisabled: getDisableParty(party),
                   }))}
                 selected={party}
                 optionsKey={"fullName"}
