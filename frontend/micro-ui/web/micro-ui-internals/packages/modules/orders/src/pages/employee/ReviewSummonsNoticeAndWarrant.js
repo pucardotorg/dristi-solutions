@@ -482,8 +482,12 @@ const ReviewSummonsNoticeAndWarrant = () => {
     if (documents && !isViaPolice) {
       if (orderType === "NOTICE") {
         msg = t("SUCCESSFULLY_SIGNED_NOTICE");
-      } else if (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT") {
+      } else if (orderType === "WARRANT") {
         msg = t("SUCCESSFULLY_SIGNED_WARRANT");
+      } else if (orderType === "PROCLAMATION") {
+        msg = t("SUCCESSFULLY_SIGNED_PROCLAMATION");
+      } else if (orderType === "ATTACHMENT") {
+        msg = t("SUCCESSFULLY_SIGNED_ATTACHMENT");
       } else {
         msg = t("SUCCESSFULLY_SIGNED_SUMMON");
       }
