@@ -58,4 +58,14 @@ public class ServiceConstants {
                                                                "\"caseNumber\":\"%s\"," +
                                                                "\"searchableFields\":%s" +
                                                                "}}}}\n";
+
+   public static final String ES_UPDATE_ARTIFACT_HEADER_FORMAT = "{\"update\":{\"_index\":\"%s\",\"_id\":\"%s\"}}\n";
+   public static final String ES_UPDATE_ARTIFACT_DOCUMENT_FORMAT = "{\"doc\":{\"Data\":{\"artifactDetails\":{" +
+           "\"caseNumber\":\"%s\"," +
+           "\"searchableFields\":%s" +
+           "}}}}\n";
+
+   public static final String ARTIFACT_INDEX_BUSINESS_OBJECT_KEY = "artifactDetails";
+   public static final String OPEN_HEARING_INDEX_BUSINESS_OBJECT_KEY = "hearingDetails";
+
 }

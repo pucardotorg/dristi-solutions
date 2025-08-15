@@ -126,4 +126,19 @@ public class TransformerProperties {
     @Value("${egov.bulk.index.path}")
     private String bulkPath;
 
+    @Value("${transformer.consumer.save.artifact.topic}")
+    private String saveArtifactTopic;
+
+    @Value("${transformer.consumer.update.artifact.topic}")
+    private String updateArtifactTopic;
+
+    @Value("${transformer.producer.open.artifact.index.topic}")
+    private String openArtifactIndexTopic;
+
+    @Value("${open.artifact.index}")
+    private String openArtifactIndex;
+
+    @Value("${inox.search.limit}")
+    private String inboxSearchLimit;
+
 }

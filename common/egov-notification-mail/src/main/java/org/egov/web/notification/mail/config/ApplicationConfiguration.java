@@ -49,6 +49,7 @@ import org.springframework.mail.javamail.JavaMailSenderImpl;
 
 import lombok.Getter;
 
+import java.util.List;
 import java.util.Properties;
 
 @Getter
@@ -148,5 +149,8 @@ public class ApplicationConfiguration {
 
     @Value("${egov.mdms.search.endpoint}")
     private String mdmsEndPoint;
+
+    @Value("${custom.email.subject}")
+    private List<String> customEmailSubject;
 
 }

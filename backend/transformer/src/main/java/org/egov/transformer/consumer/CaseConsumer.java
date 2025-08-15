@@ -10,11 +10,13 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.models.*;
+import org.egov.transformer.models.inbox.InboxRequest;
 import org.egov.transformer.producer.TransformerProducer;
 import org.egov.transformer.repository.DBRepository;
 import org.egov.transformer.service.CaseService;
 import org.egov.transformer.service.UserService;
 import org.egov.transformer.util.EsUtil;
+import org.egov.transformer.util.InboxUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,12 +26,12 @@ import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.egov.transformer.config.ServiceConstants.FLOW_JAC;
-import static org.egov.transformer.config.ServiceConstants.msgId;
+import static org.egov.transformer.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -44,11 +46,12 @@ public class CaseConsumer {
     private final DBRepository repository;
     private final UserService userService;
     private final EsUtil esUtil;
+    private InboxUtil inboxUtil;
 
     @Autowired
     public CaseConsumer(ObjectMapper objectMapper,
                         TransformerProducer producer,
-                        TransformerProperties transformerProperties, CaseService caseService, DBRepository repository, UserService userService, EsUtil esUtil) {
+                        TransformerProperties transformerProperties, CaseService caseService, DBRepository repository, UserService userService, EsUtil esUtil, InboxUtil inboxUtil) {
         this.objectMapper = objectMapper;
         this.producer = producer;
         this.transformerProperties = transformerProperties;
@@ -56,6 +59,7 @@ public class CaseConsumer {
         this.repository = repository;
         this.userService = userService;
         this.esUtil = esUtil;
+        this.inboxUtil = inboxUtil;
     }
 
     public CaseRequest deserializeConsumerRecordIntoCaseRequest(ConsumerRecord<String, Object> payload){
@@ -339,6 +343,32 @@ public class CaseConsumer {
 
         String caseNumber = getCaseReferenceNumber(caseReferenceNumberUpdateRequest);
 
+        InboxRequest inboxRequest = inboxUtil.getInboxRequestForArtifacts(caseReferenceNumberUpdateRequest.getCourtId(), caseReferenceNumberUpdateRequest.getFilingNumber());
+        List<Artifact> artifactList = null;
+        try {
+            artifactList = inboxUtil.getInboxEntities(inboxRequest, ARTIFACT_INDEX_BUSINESS_OBJECT_KEY, Artifact.class);
+        } catch (Exception ex) {
+            log.error("Error while getting artifacts: {}, for filingNumber: {}", ex.getMessage(), caseReferenceNumberUpdateRequest.getFilingNumber(), ex);
+        }
+
+        if (artifactList != null && !artifactList.isEmpty()) {
+            artifactList.forEach(artifact -> {
+                artifact.setCaseNumber(caseNumber);
+                artifact.setSearchableFields(Arrays.asList(
+                        artifact.getCaseTitle(),
+                        caseNumber,
+                        artifact.getArtifactNumber()
+                ));
+            });
+            try {
+                esUtil.updateArtifactCaseNumbers(artifactList);
+            }
+            catch (Exception ex) {
+                log.error("Error while updating artifacts: {}, for filingNumber: {}", ex.getMessage(), caseReferenceNumberUpdateRequest.getFilingNumber(), ex);
+            }
+
+        }
+
         if (bailUuids != null && !bailUuids.isEmpty()) {
             String filingNumber = caseReferenceNumberUpdateRequest.getFilingNumber();
             String cmpNumber = caseReferenceNumberUpdateRequest.getCmpNumber();
@@ -355,8 +385,12 @@ public class CaseConsumer {
                             caseTitle
                     ))
                     .collect(Collectors.toList());
-
-            esUtil.updateBailCaseNumbers(updates);
+            try {
+                esUtil.updateBailCaseNumbers(updates);
+            }
+            catch (Exception ex) {
+                log.error("Error while updating bail: {}, for filingNumber: {}", ex.getMessage(), caseReferenceNumberUpdateRequest.getFilingNumber(), ex);
+            }
         }
 
     }

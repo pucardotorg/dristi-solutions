@@ -2897,6 +2897,7 @@ export const configsIssueSummons = [
             {
               name: "select party",
               type: "dropdown",
+              addWitness: true,
             },
             {
               name: "select deleivery channels",
@@ -3047,6 +3048,7 @@ export const configsIssueNotice = [
             {
               name: "select party",
               type: "dropdown",
+              addWitness: false,
             },
             {
               name: "select deleivery channels",

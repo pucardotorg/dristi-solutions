@@ -32,4 +32,7 @@ public class CaseReferenceNumberUpdateRequest {
 
     @JsonProperty("tenantId")
     private String tenantId = null;
+
+    @JsonProperty("courtId")
+    private String courtId = null;
 }

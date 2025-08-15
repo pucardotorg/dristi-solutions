@@ -35,6 +35,7 @@ public class EvidenceUtil {
 		JSONObject criteria = new JSONObject();
 		if (artifactNumber != null) {
 			criteria.put("artifactNumber", artifactNumber);
+			criteria.put("tenantId", tenantId);
 		}
 		request.put("criteria", criteria);
 

@@ -2744,6 +2744,10 @@ export const updateCaseDetails = async ({
       if (obj?.data?.emails) {
         obj.data.emails.textfieldValue = "";
       }
+      if (!obj?.uniqueId) {
+        obj.uniqueId = generateUUID();
+      }
+      obj.data.ownerType = "COMPLAINANT";
     }
 
     data.additionalDetails = {

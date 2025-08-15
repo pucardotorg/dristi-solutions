@@ -73,4 +73,29 @@ public class ArtifactsApiController {
 		return new ResponseEntity<>(applicationAddCommentResponse, HttpStatus.OK);
 	}
 
+    @RequestMapping(value = "/v1/_getArtifactsToSign", method = RequestMethod.POST)
+    public ResponseEntity<ArtifactsToSignResponse> getArtifactsToSign(
+            @Parameter(in = ParameterIn.DEFAULT, required = true, schema = @Schema())
+            @Valid @RequestBody ArtifactsToSignRequest request) {
+
+        List<ArtifactToSign> artifactToSignList = evidenceService.createArtifactsToSignRequest(request);
+        ArtifactsToSignResponse response = ArtifactsToSignResponse.builder()
+                .responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true))
+                .artifactList(artifactToSignList)
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @RequestMapping(value = "/v1/_updateSignedArtifacts", method = RequestMethod.POST)
+    public ResponseEntity<UpdateSignedArtifactResponse> updateSignedArtifacts(
+            @Parameter(in = ParameterIn.DEFAULT, required = true, schema = @Schema())
+            @Valid @RequestBody UpdateSignedArtifactRequest request) {
+
+        List<Artifact> updatedArtifacts = evidenceService.updateArtifactWithSignDoc(request);
+        UpdateSignedArtifactResponse response = UpdateSignedArtifactResponse.builder()
+                .responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true))
+                .artifacts(updatedArtifacts)
+                .build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }

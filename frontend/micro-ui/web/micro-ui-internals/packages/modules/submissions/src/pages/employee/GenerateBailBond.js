@@ -855,12 +855,13 @@ const GenerateBailBond = () => {
     setFormdata(convertToFormData(t, bailBondDetails || {}));
   }, [bailBondDetails, t]);
 
-  useEffect(()=> {
-    if(!isCaseDetailsLoading && !isBailBondLoading && bailBondId && bailBondDetails?.status !== "DRAFT_IN_PROGRESS"){
-      history.replace(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Documents`);
+  useEffect(() => {
+    if (!isCaseDetailsLoading && !isBailBondLoading && bailBondId && bailBondDetails?.status !== "DRAFT_IN_PROGRESS") {
+      history.replace(
+        `/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseDetails?.id}&filingNumber=${filingNumber}&tab=Documents`
+      );
     }
-  },[isCaseDetailsLoading, isBailBondLoading, bailBondId, bailBondDetails,  caseDetails, filingNumber])
-
+  }, [isCaseDetailsLoading, isBailBondLoading, bailBondId, bailBondDetails, caseDetails, filingNumber]);
 
   if (isCaseDetailsLoading || !caseDetails || isBailBondLoading) {
     return <Loader />;
@@ -868,26 +869,6 @@ const GenerateBailBond = () => {
 
   return (
     <React.Fragment>
-      <style>
-        {`
-          .bail-action-bar {
-            display: flex;
-            flex-direction: row-reverse;
-            gap: 16px;
-          }
-
-          .submit-bar {
-            width: fit-content;
-            padding-inline: 20px;
-            box-shadow: none;
-          }
-          
-          .card .label-field-pair .card-label{
-          font-weight : unset !important;
-          margin-bottom : 8px !important
-          }
-        `}
-      </style>
       {loader && (
         <div
           style={{
