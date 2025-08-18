@@ -1435,10 +1435,13 @@ const AdmittedCases = () => {
     if (newWitnesToast) {
       showToast({ message: t("NEW_WITNESS_SUCCESSFULLY_ADDED"), error: false });
     }
+  }, [newWitnesToast, t, showToast]);
 
   useEffect(() => {
     if (applicationData && applicationNumber) {
       const applicationDetails = applicationData?.applicationList?.filter((application) => application?.applicationNumber === applicationNumber)?.[0];
+      setDocumentSubmission(
+        applicationDetails?.documents?.map((doc) => {
           return {
             status: applicationDetails?.status,
             details: {
