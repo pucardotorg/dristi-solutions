@@ -4437,6 +4437,12 @@ public class CaseService {
                             newPoaHolder.setAuditDetails(auditDetails);
                             newPoaHolder.setIsActive(true);
                             newPoaHolder.setPoaType("poa.regular");
+
+                            Map<String, String> additionalDetails = new HashMap<>();
+                            additionalDetails.put("uuid", joinCaseRequest.getPoaDetails().getUserUuid());
+
+                            newPoaHolder.setAdditionalDetails(additionalDetails);
+
                             newPoaHolder.setTenantId(courtCase.getTenantId());
                             newPoaHolder.setDocuments(Collections.singletonList(joinCaseRequest.getPoaDetails().getIdDocument()));
 
