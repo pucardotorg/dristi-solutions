@@ -39,6 +39,7 @@ const WitnessDepositionReviewModal = ({
 }) => {
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const DocViewerWrapper = window?.Digit?.ComponentRegistryService?.getComponent("DocViewerWrapper");
+
   const [showErrorToast, setShowErrorToast] = useState(null);
 
   const { data: { file: witnessDepositionPreviewPdf, fileName: witnessDepositionPreviewFilename } = {}, isFetching: isLoading } = useQuery({
@@ -132,6 +133,8 @@ const WitnessDepositionReviewModal = ({
             .then(() => {
               setShowsignatureModal(true);
               setShowWitnessDepositionReview(false);
+              localStorage.removeItem("artifactNumber");
+              localStorage.removeItem("showPdfPreview");
             })
             .catch((e) => {
               setShowErrorToast({ label: t("INTERNAL_ERROR_OCCURRED"), error: true });
