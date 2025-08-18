@@ -151,6 +151,13 @@ public class CaseOverallStatusUtil {
 	}
 
 	private org.pucar.dristi.web.models.CaseOverallStatus determineCaseStage(String filingNumber, String tenantId, String status, String action,RequestInfo requestInfo) {
+		JSONObject request = new JSONObject();
+		request.put("RequestInfo", requestInfo);
+		Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+		Boolean isLprCase = JsonPath.read(caseObject.toString(), IS_LPR_CASE_PATH);
+		if (isLprCase != null && isLprCase) {
+			return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, config.getLprStage(), config.getLprSubStage());
+		}
 		for (org.pucar.dristi.web.models.CaseOverallStatusType statusType : caseOverallStatusTypeList) {
 			log.info("CaseOverallStatusType MDMS action ::{} and status :: {}",statusType.getAction(),statusType.getState());
 			if (statusType.getAction().equalsIgnoreCase(action) && statusType.getState().equalsIgnoreCase(status)){

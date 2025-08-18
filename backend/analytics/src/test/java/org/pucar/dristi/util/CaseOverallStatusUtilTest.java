@@ -86,11 +86,14 @@ class CaseOverallStatusUtilTest {
         Map<String, List<CaseOverallStatusType>> caseOverallStatusTypeMap = new HashMap<>();
         caseOverallStatusTypeMap.put("case",List.of(CaseOverallStatusType.builder().action(action).state(status).build()));
 
+        Object courtCase = "123";
+
         // Mock configuration
         when(config.getCaseBusinessServiceList()).thenReturn(List.of("case"));
         when(mapper.readValue(anyString(), eq(RequestInfo.class))).thenReturn(requestInfo);
         when(config.getCaseOverallStatusTopic()).thenReturn("topic");
         when(mdmsDataConfig.getCaseOverallStatusTypeMap()).thenReturn(caseOverallStatusTypeMap);
+        when(caseUtil.getCase(any(), anyString(), anyString(), anyString(), anyString())).thenReturn(courtCase);
         // Call the method
         Object result = caseOverallStatusUtil.checkCaseOverAllStatus(entityType, referenceId, status, action, tenantId, requestInfoJson);
 
