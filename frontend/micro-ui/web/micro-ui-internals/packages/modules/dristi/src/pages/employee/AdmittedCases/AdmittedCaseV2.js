@@ -4045,6 +4045,7 @@ const AdmittedCaseV2 = () => {
             setShowWitnessModal(false);
             setEditWitnessDepositionArtifact(null);
             refetchHearing();
+            refetchCaseData();
             onTabChange(0, {}, "Documents");
           }}
           onSubmit={(action) => {

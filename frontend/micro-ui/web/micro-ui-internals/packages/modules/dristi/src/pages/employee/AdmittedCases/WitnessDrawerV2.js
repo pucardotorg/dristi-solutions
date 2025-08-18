@@ -105,9 +105,14 @@ const WitnessDrawerV2 = ({
     setShowErrorToast(null);
   };
 
+  useEffect(() => {
+    console.log("here12345", currentArtifactNumber);
+  }, []);
+
   // Sync currentArtifactNumber with artifactNumber prop
   useEffect(() => {
     if (localStorage.getItem("artifactNumber")) {
+      console.log("here1", localStorage.getItem("artifactNumber"), currentArtifactNumber);
       setCurrentArtifactNumber(localStorage.getItem("artifactNumber"));
       setShowWitnessDepositionReview(true);
       localStorage.removeItem("artifactNumber");
@@ -285,7 +290,7 @@ const WitnessDrawerV2 = ({
     Boolean(caseDetails?.filingNumber && caseDetails?.courtId)
   );
 
-  const evidenceList = useMemo(() => evidenceData?.artifacts?.filter((artifact) => artifact?.status === "DRAFT_IN_PROGRESS"), [evidenceData]);
+  const evidenceList = useMemo(() => evidenceData?.artifacts?.filter((artifact) => artifact?.status === "DRAFT_IN_PROGRESS") || [], [evidenceData]);
   const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "FilingType" },
   ]);
@@ -459,7 +464,7 @@ const WitnessDrawerV2 = ({
 
   // Create a new draft
   const createNewDraft = useCallback(
-    async (evidenceList = []) => {
+    async (evidenceList = [], isEvidenceRefetch = false) => {
       try {
         const newTab = {
           artifactNumber: null, // Will be set after saving
@@ -478,8 +483,13 @@ const WitnessDrawerV2 = ({
         const updatedTabs = [...evidenceList, newTab];
         setActiveTabs(updatedTabs);
         setActiveTabIndex(updatedTabs.length - 1);
-        setWitnessDepositionText(""); // Clear the text area for new draft
+        console.log("here123", localStorage.getItem("artifactNumber"), currentArtifactNumber);
 
+        setCurrentArtifactNumber(null);
+        setSelectedWitness({});
+        setSelectedWitnessType({});
+        setWitnessDepositionText(""); // Clear the text area for new draft
+        isEvidenceRefetch && evidenceRefetch();
         // No need to call API yet - we'll create the evidence when user saves the draft
       } catch (error) {
         console.error("Error creating draft:", error);
@@ -499,17 +509,22 @@ const WitnessDrawerV2 = ({
   }, [caseDetails, hearingData, allParties, activeTabs.length]);
 
   useEffect(() => {
-    createNewDraft([]);
+    !currentArtifactNumber && createNewDraft([]);
   }, []);
 
   // Process evidence list when data is loaded
   useEffect(() => {
+    debugger;
     if (!isEvidenceLoading && evidenceList?.length > 0) {
       const evidenceWithUnsaved = [...evidenceList];
-      if (currentArtifactNumber) {
-        const artifact = evidenceWithUnsaved?.find((tab) => tab?.artifactNumber === currentArtifactNumber);
+      console.log("here12", localStorage.getItem("artifactNumber"), currentArtifactNumber);
+
+      const artifactNumber = localStorage.getItem("artifactNumber");
+      const artifactNum = currentArtifactNumber || artifactNumber;
+      if (artifactNum) {
+        const artifact = evidenceWithUnsaved?.find((tab) => tab?.artifactNumber === artifactNum);
         if (artifact) {
-          const activeindex = evidenceWithUnsaved?.findIndex((tab) => tab?.artifactNumber === currentArtifactNumber);
+          const activeindex = evidenceWithUnsaved?.findIndex((tab) => tab?.artifactNumber === artifactNum);
           const selectedUUID = artifact?.sourceID;
           const matchingWitness = options.find((opt) => opt?.value === selectedUUID);
           setActiveTabs(evidenceWithUnsaved); // basically we show only that particular tab when editing an evidence(it will have corresponding artifact number)
@@ -540,7 +555,9 @@ const WitnessDrawerV2 = ({
         };
 
         // Add the new tab to the list and set it as active
+
         const updatedTabs = [...evidenceList, newTab];
+        console.log("here1234", updatedTabs, currentArtifactNumber);
 
         if (!isEqual(updatedTabs, activeTabs)) {
           setActiveTabs(updatedTabs);
@@ -598,12 +615,30 @@ const WitnessDrawerV2 = ({
 
   // Handle tab change
   const handleTabChange = async (tab) => {
-    const currentArtifact = activeTabs?.find((t) => t?.artifactNumber === tab?.artifactNumber);
-    if (activeTabs?.find((tab) => tab?.isNew && selectedWitness?.value)) {
-      handleSaveDraft(false, currentArtifact?.artifactNumber);
-    } else {
-      setCurrentArtifactNumber(currentArtifact?.artifactNumber);
+    debugger;
+    const currentArtifact = activeTabs?.find((t) => t?.artifactNumber === currentArtifactNumber);
+    const newArtifact = activeTabs?.find((t) => t?.artifactNumber === tab?.artifactNumber);
+
+    if (currentArtifact?.artifactNumber) {
+      if (
+        !isEqual(selectedWitness?.value, currentArtifact?.sourceID) ||
+        !isEqual(selectedWitnessType?.value, currentArtifact?.tag) ||
+        !isEqual(witnessDepositionText, currentArtifact?.description)
+      ) {
+        handleSaveDraft(false, tab?.artifactNumber);
+      }
+      setCurrentArtifactNumber(tab?.artifactNumber);
+    } else if (activeTabs?.find((tab) => tab?.isNew && selectedWitness?.value)) {
+      handleSaveDraft(false, currentArtifactNumber);
     }
+    setCurrentArtifactNumber(tab?.artifactNumber);
+
+    console.log("currentArtifact");
+    // if (activeTabs?.find((tab) => tab?.isNew && selectedWitness?.value)) {
+    //   handleSaveDraft(false, currentArtifact?.artifactNumber);
+    // } else {
+    //   setCurrentArtifactNumber(currentArtifact?.artifactNumber);
+    // }
   };
 
   const handleDropdownChange = (selectedPartyOption) => {
@@ -656,45 +691,54 @@ const WitnessDrawerV2 = ({
       const artifactNum = artifactNumber || currentArtifactNumber;
       if (artifactNum) {
         const evidence = activeTabs?.find((tab) => tab?.artifactNumber === artifactNum);
-        // Update existing evidence
-        const updateEvidenceReqBody = {
-          artifact: {
-            ...evidence,
-            sourceType: selectedWitnessType.value === "PW" ? "COMPLAINANT" : selectedWitnessType.value === "DW" ? "ACCUSED" : "COURT",
-            tag: selectedWitnessType?.value,
-            sourceID: selectedWitness.value,
-            sourceName: party?.sourceName,
-            description: witnessDepositionText,
-            additionalDetails: {
-              witnessDetails: {
-                address: party?.address || "",
-                designation: party?.designation || "",
-                age: party?.age || "",
-                ownerType: party?.ownerType || "",
+
+        if (
+          !backAction ||
+          (backAction &&
+            (!isEqual(selectedWitness?.value, evidence?.sourceID) ||
+              !isEqual(selectedWitnessType?.value, evidence?.tag) ||
+              !isEqual(witnessDepositionText, evidence?.description)))
+        ) {
+          // Update existing evidence
+          const updateEvidenceReqBody = {
+            artifact: {
+              ...evidence,
+              sourceType: selectedWitnessType.value === "PW" ? "COMPLAINANT" : selectedWitnessType.value === "DW" ? "ACCUSED" : "COURT",
+              tag: selectedWitnessType?.value,
+              sourceID: selectedWitness.value,
+              sourceName: party?.sourceName,
+              description: witnessDepositionText,
+              additionalDetails: {
+                witnessDetails: {
+                  address: party?.address || "",
+                  designation: party?.designation || "",
+                  age: party?.age || "",
+                  ownerType: party?.ownerType || "",
+                },
+              },
+              isEvidenceMarkedFlow: false,
+              workflow: {
+                action: "SAVE_DRAFT",
               },
             },
-            isEvidenceMarkedFlow: false,
-            workflow: {
-              action: "SAVE_DRAFT",
-            },
-          },
-        };
+          };
 
-        const updatedEvidence = await DRISTIService.updateEvidence(updateEvidenceReqBody);
+          const updatedEvidence = await DRISTIService.updateEvidence(updateEvidenceReqBody);
 
-        // Update the tab in activeTabs directly
-        if (updatedEvidence?.artifact) {
-          const updatedTabs = [...activeTabs];
-          if (newCurrentArtifactNumber) {
-            setCurrentArtifactNumber(newCurrentArtifactNumber);
-          } else {
-            setCurrentArtifactNumber(updatedEvidence?.artifact?.artifactNumber);
+          // Update the tab in activeTabs directly
+          if (updatedEvidence?.artifact) {
+            const updatedTabs = [...activeTabs];
+            if (newCurrentArtifactNumber) {
+              setCurrentArtifactNumber(newCurrentArtifactNumber);
+            } else {
+              setCurrentArtifactNumber(updatedEvidence?.artifact?.artifactNumber);
+            }
+            setActiveTabs(updatedTabs);
+            setObtainedTag(updatedEvidence?.artifact?.tag);
           }
-          setActiveTabs(updatedTabs);
-          setObtainedTag(updatedEvidence?.artifact?.tag);
-        }
 
-        setShowErrorToast({ label: "WITNESS_DEPOSITION_UPDATED_SUCCESSFULLY", error: false });
+          setShowErrorToast({ label: "WITNESS_DEPOSITION_UPDATED_SUCCESSFULLY", error: false });
+        }
       } else {
         // Create new evidence
         const createEvidenceReqBody = {
@@ -948,10 +992,8 @@ const WitnessDrawerV2 = ({
   const handleConfirmDeleteDeposition = async (selectedTab) => {
     try {
       if (!selectedTab?.artifactNumber) {
-        const updatedActiveTabs = activeTabs?.filter((tab) => !activeTabs?.artifactNumber);
-        setActiveTabs(updatedActiveTabs);
-        setShowErrorToast({ label: t(" WITNESS_DEPOSITION_DELETED_SUCCESSFULLY"), error: false });
-        const deletedEvidenceIndex = activeTabs?.findIndex((tab) => tab?.artifactNumber === selectedTab?.artifactNumber);
+        const deletedEvidenceIndex = activeTabs?.length - 1;
+        const updatedActiveTabs = activeTabs?.filter((tab) => tab?.artifactNumber);
         setActiveTabs(updatedActiveTabs);
         const newCurrentEvidence = updatedActiveTabs?.[deletedEvidenceIndex - 1];
         if (newCurrentEvidence?.artifactNumber) {
@@ -960,22 +1002,23 @@ const WitnessDrawerV2 = ({
         } else {
           setCurrentArtifactNumber(null);
         }
-        setShowConfirmDeleteDepositionModal({ show: false, tab: {} });
-        evidenceRefetch();
+        // evidenceRefetch();
         return;
       }
 
       // If the witness deposition has artifact number.
       const evidence = activeTabs?.find((tab) => tab?.artifactNumber === selectedTab?.artifactNumber);
       const party = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value);
+      const deletedEvidenceIndex = activeTabs?.findIndex((tab) => tab?.artifactNumber === selectedTab?.artifactNumber);
+
       if (evidence?.artifactNumber) {
         // Update existing evidence
         const updateEvidenceReqBody = {
           artifact: {
             ...evidence,
-            tag: selectedWitnessType?.value,
-            sourceID: selectedWitness?.value,
-            sourceName: party?.sourceName,
+            tag: evidence?.tag,
+            sourceID: evidence?.sourceID,
+            sourceName: evidence?.sourceName,
             isActive: false,
             workflow: {
               action: "DELETE_DRAFT",
@@ -985,7 +1028,6 @@ const WitnessDrawerV2 = ({
 
         const updatedEvidence = await DRISTIService.updateEvidence(updateEvidenceReqBody);
         setShowErrorToast({ label: t(" WITNESS_DEPOSITION_DELETED_SUCCESSFULLY"), error: false });
-        const deletedEvidenceIndex = activeTabs?.findIndex((tab) => tab?.artifactNumber === selectedTab?.artifactNumber);
         const updatedActiveTabs = activeTabs?.filter((tab) => tab?.artifactNumber !== selectedTab?.artifactNumber);
         setActiveTabs(updatedActiveTabs);
         if (deletedEvidenceIndex === activeTabs?.length - 1) {
@@ -1002,7 +1044,7 @@ const WitnessDrawerV2 = ({
             setCurrentEvidence(newCurrentEvidence);
             setCurrentArtifactNumber(newCurrentEvidence?.artifactNumber);
           } else {
-            setCurrentArtifactNumber(null);
+            setCurrentArtifactNumber(null); // check
           }
         }
         setShowConfirmDeleteDepositionModal({ show: false, tab: {} });
@@ -1011,6 +1053,131 @@ const WitnessDrawerV2 = ({
     } catch (error) {
       console.error("Error while deleting witness deposition bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    }
+  };
+
+  const handleAddNewDepositionDraft = async () => {
+    if (!selectedWitness?.value) {
+      setShowErrorToast({ label: t("PLEASE_SELECT_WITNESS_FIRST"), error: true });
+
+      return;
+    }
+
+    if (!selectedWitnessType?.value) {
+      setShowErrorToast({ label: t("PLEASE_MARK_WITNESS"), error: true });
+      return;
+    }
+
+    try {
+      setLoader(true);
+
+      const party = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value);
+      // Check if we need to create or update evidence
+      const artifactNum = artifactNumber || currentArtifactNumber;
+      if (artifactNum) {
+        const currentActiveIndex = activeTabs?.findIndex((tab) => tab?.artifactNumber === artifactNum);
+        const evidence = activeTabs?.find((tab) => tab?.artifactNumber === artifactNum);
+
+        if (
+          !isEqual(selectedWitness?.value, evidence?.sourceID) ||
+          !isEqual(selectedWitnessType?.value, evidence?.tag) ||
+          !isEqual(witnessDepositionText, evidence?.description)
+        ) {
+          // Update existing evidence
+          const updateEvidenceReqBody = {
+            artifact: {
+              ...evidence,
+              sourceType: selectedWitnessType.value === "PW" ? "COMPLAINANT" : selectedWitnessType.value === "DW" ? "ACCUSED" : "COURT",
+              tag: selectedWitnessType?.value,
+              sourceID: selectedWitness.value,
+              sourceName: party?.sourceName,
+              description: witnessDepositionText,
+              additionalDetails: {
+                witnessDetails: {
+                  address: party?.address || "",
+                  designation: party?.designation || "",
+                  age: party?.age || "",
+                  ownerType: party?.ownerType || "",
+                },
+              },
+              isEvidenceMarkedFlow: false,
+              workflow: {
+                action: "SAVE_DRAFT",
+              },
+            },
+          };
+
+          const updatedEvidence = await DRISTIService.updateEvidence(updateEvidenceReqBody);
+
+          if (updatedEvidence?.artifact) {
+            // Update the activeTabs array by replacing the updated evidence object
+            const updatedTabs = [...activeTabs];
+            if (currentActiveIndex !== -1) {
+              updatedTabs[currentActiveIndex] = updatedEvidence.artifact;
+              setActiveTabs(updatedTabs);
+              setCurrentEvidence(updatedEvidence.artifact);
+              setShowErrorToast({ label: "WITNESS_DEPOSITION_UPDATED_SUCCESSFULLY", error: false });
+              setCurrentArtifactNumber(null);
+              createNewDraft(updatedTabs, true);
+            }
+          }
+        } else {
+          setCurrentArtifactNumber(null);
+          createNewDraft(activeTabs, true);
+        }
+      } else {
+        // Create new evidence
+        const currentActiveIndex = activeTabs?.findIndex((tab) => !tab?.artifactNumber);
+
+        const createEvidenceReqBody = {
+          artifact: {
+            artifactType: "WITNESS_DEPOSITION",
+            caseId: caseDetails?.id,
+            filingNumber: caseDetails?.filingNumber,
+            tenantId,
+            sourceType: selectedWitnessType?.value === "PW" ? "COMPLAINANT" : selectedWitnessType?.value === "DW" ? "ACCUSED" : "COURT",
+            tag: selectedWitnessType?.value,
+            sourceID: selectedWitness?.value,
+            sourceName: party?.sourceName, // confirm?
+            filingType: filingType,
+            description: witnessDepositionText,
+            additionalDetails: {
+              witnessDetails: {
+                address: party?.address || "",
+                designation: party?.designation || "",
+                age: party?.age || "",
+                ownerType: party?.ownerType || "",
+              },
+            },
+            comments: [],
+            workflow: {
+              action: "SAVE_DRAFT",
+            },
+          },
+        };
+
+        const updatedEvidence = await submissionService.createEvidence(createEvidenceReqBody);
+
+        if (updatedEvidence?.artifact) {
+          // Update the activeTabs array by replacing the updated evidence object
+          const updatedTabs = [...activeTabs];
+          if (currentActiveIndex !== -1) {
+            updatedTabs[currentActiveIndex] = updatedEvidence.artifact;
+            setActiveTabs(updatedTabs);
+            setCurrentEvidence(updatedEvidence.artifact);
+            setShowErrorToast({ label: "WITNESS_DEPOSITION_UPDATED_SUCCESSFULLY", error: false });
+            setCurrentArtifactNumber(null);
+            createNewDraft(updatedTabs, true);
+          }
+        }
+      }
+
+      // Also refresh evidence list to ensure server and client are in sync
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setLoader(false);
     }
   };
 
@@ -1085,8 +1252,11 @@ const WitnessDrawerV2 = ({
                     }}
                     onClick={(e) => {
                       e.stopPropagation(); // Prevent tab change when clicking delete
-                      // Add delete functionality here
-                      setShowConfirmDeleteDepositionModal({ show: true, tab: tab });
+                      if (tab?.artifactNumber) {
+                        setShowConfirmDeleteDepositionModal({ show: true, tab: tab });
+                      } else {
+                        handleConfirmDeleteDeposition(tab);
+                      }
                     }}
                   >
                     <CustomDeleteIcon />
@@ -1097,7 +1267,7 @@ const WitnessDrawerV2 = ({
               {
                 <div
                   className="witness-tab add-tab"
-                  onClick={() => handleAddNewDraft()}
+                  onClick={() => handleAddNewDepositionDraft()}
                   style={{
                     padding: "8px 18px",
                     cursor: "pointer",
@@ -1299,6 +1469,7 @@ const WitnessDrawerV2 = ({
         <ConfirmDepositionDeleteModal
           t={t}
           selectedWitness={selectedWitness}
+          selectedTab={showConfirmDeleteDepositionModal?.tab}
           allParties={allParties}
           onCancel={() => setShowConfirmDeleteDepositionModal({ show: false, tab: {} })}
           onSubmit={() => handleConfirmDeleteDeposition(showConfirmDeleteDepositionModal?.tab)}

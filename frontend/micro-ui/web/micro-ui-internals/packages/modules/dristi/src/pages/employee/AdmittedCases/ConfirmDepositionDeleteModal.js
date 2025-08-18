@@ -2,7 +2,7 @@ import React from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { CloseSvg } from "@egovernments/digit-ui-react-components";
 
-function ConfirmDepositionDeleteModal({ t, selectedWitness, allParties, onCancel, onSubmit }) {
+function ConfirmDepositionDeleteModal({ t, selectedWitness, selectedTab, allParties, onCancel, onSubmit }) {
   const CloseBtn = (props) => {
     return (
       <div onClick={props?.onClick} style={{ height: "100%", display: "flex", alignItems: "center", paddingRight: "20px", cursor: "pointer" }}>
