@@ -499,8 +499,15 @@ public class EvidenceService {
             // Enrich application upon update
             evidenceEnrichment.enrichEvidenceRegistrationUponUpdate(evidenceRequest);
 
+            String evidenceNumber = evidenceRequest.getArtifact().getEvidenceNumber();
+            String filingNumber = evidenceRequest.getArtifact().getFilingNumber();
+
+            if(evidenceNumber != null && !evidenceNumber.startsWith(filingNumber)){
+                throw new CustomException(EVIDENCE_UPDATE_EXCEPTION, "Evidence Number must start with case Filing Number");
+            }
+
             if (evidenceRequest.getArtifact().getIsEvidenceMarkedFlow()) {
-                if (ObjectUtils.isEmpty(evidenceRequest.getArtifact().getEvidenceNumber())) {
+                if (ObjectUtils.isEmpty(evidenceNumber)) {
                     throw new CustomException(ILLEGAL_ARGUMENT_EXCEPTION_CODE, "Evidence number is required for Evidence Marked Flow");
                 } else {
                     // check if the evidence number exists for the case only when mark as evidence workflow begins
