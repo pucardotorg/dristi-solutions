@@ -63,6 +63,7 @@ async function getCourtAndJudgeDetails(
   return {
     mdmsCourtRoom: {
       name: "Before The " + mdmsCourtRoom.name,
+      courtName: mdmsCourtRoom.name,
       place:
         assignment.district.charAt(0).toUpperCase() +
         assignment.district.slice(1).toLowerCase(),
