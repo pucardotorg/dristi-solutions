@@ -84,7 +84,7 @@ const Evidence = async (req, res, qrCode) => {
     const data = {
       Data: [
         {
-          courtName: "The" + mdmsCourtRoom.courtName,
+          courtName: "The " + mdmsCourtRoom.courtName,
           caseNumber: caseNumber,
           markedAs: markedAs,
           markedThrough: markedThrough,
