@@ -1211,7 +1211,10 @@ export const UICustomizations = {
               {t("VOID")}
             </div>
           ) : row?.status ? (
-            <CustomChip text={t(row?.status)} shade={"green"} />
+            <CustomChip
+              text={t(row?.artifactType === "WITNESS_DEPOSITION" && row?.status === "COMPLETED" ? "SIGNED" : row?.status)}
+              shade={"green"}
+            />
           ) : (
             ""
           );

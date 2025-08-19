@@ -1417,7 +1417,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
               await createPendingTask({
                 name: t("ESIGN_THE_SUBMISSION_FOR_POA_CLAIM"),
                 status: "ESIGN_THE_SUBMISSION",
-                assignedRole: ["SUBMISSION_CREATOR"],
+                assignedRole: [],
                 refId: resApplication?.application?.applicationNumber,
                 entityType: "application-voluntary-submission",
                 userInfo: userInfo,
