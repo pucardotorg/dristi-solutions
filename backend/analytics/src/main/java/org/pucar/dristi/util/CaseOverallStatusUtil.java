@@ -151,13 +151,6 @@ public class CaseOverallStatusUtil {
 	}
 
 	private org.pucar.dristi.web.models.CaseOverallStatus determineCaseStage(String filingNumber, String tenantId, String status, String action,RequestInfo requestInfo) {
-		JSONObject request = new JSONObject();
-		request.put("RequestInfo", requestInfo);
-		Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
-		Boolean isLprCase = JsonPath.read(caseObject.toString(), IS_LPR_CASE_PATH);
-		if (isLprCase != null && isLprCase) {
-			return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, config.getLprStage(), config.getLprSubStage());
-		}
 		for (org.pucar.dristi.web.models.CaseOverallStatusType statusType : caseOverallStatusTypeList) {
 			log.info("CaseOverallStatusType MDMS action ::{} and status :: {}",statusType.getAction(),statusType.getState());
 			if (statusType.getAction().equalsIgnoreCase(action) && statusType.getState().equalsIgnoreCase(status)){
@@ -231,8 +224,9 @@ public class CaseOverallStatusUtil {
 
 	private org.pucar.dristi.web.models.CaseOverallStatus determineOrderStage(String filingNumber, String tenantId, String orderType, String status) {
 		for (CaseOverallStatusType statusType : caseOverallStatusTypeList){
-			if(statusType.getTypeIdentifier().equalsIgnoreCase(orderType) && statusType.getState().equalsIgnoreCase(status))
-                return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
+			if(statusType.getTypeIdentifier().equalsIgnoreCase(orderType) && statusType.getState().equalsIgnoreCase(status)) {
+				return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
+			}
 		}
 		return null;
 	}
@@ -251,16 +245,18 @@ public class CaseOverallStatusUtil {
                 request.put("RequestInfo", requestInfo);
                 Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
                 Boolean isLprCase = JsonPath.read(caseObject.toString(), IS_LPR_CASE_PATH);
+				String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
                 if (isLprCase != null && isLprCase) {
-                    caseOverallStatus.setStageBackup(caseOverallStatus.getStage());
-                    caseOverallStatus.setSubstageBackup(caseOverallStatus.getSubstage());
-                    caseOverallStatus.setStage(config.getLprStage());
-                    caseOverallStatus.setSubstage(config.getLprSubStage());
+                    if (!config.getLprStage().equalsIgnoreCase(caseStage)) {
+                        caseOverallStatus.setStage(config.getLprStage());
+                        caseOverallStatus.setSubstage(config.getLprSubStage());
+                    } else {
+                        log.info("case is already in lpr stage : {} ", filingNumber);
+                        return;
+                    }
                 } else {
                     caseOverallStatus.setStage(caseOverallStatus.getStage());
                     caseOverallStatus.setSubstage(caseOverallStatus.getSubstage());
-                    caseOverallStatus.setStageBackup(caseOverallStatus.getStage());
-                    caseOverallStatus.setSubstageBackup(caseOverallStatus.getSubstage());
                 }
 				AuditDetails auditDetails = new AuditDetails();
 				auditDetails.setLastModifiedBy(requestInfo.getUserInfo().getUuid());

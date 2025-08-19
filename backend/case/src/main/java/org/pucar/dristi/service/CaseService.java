@@ -5767,11 +5767,15 @@ public class CaseService {
             if (courtCase.getIsLPRCase()) {
                 // moving the case into LPR
                 enrichmentUtil.enrichLPRNumber(caseRequest);
+                courtCase.setStageBackup(courtCase.getStage());
+                courtCase.setSubstageBackup(courtCase.getSubstage());
             } else {
                 // moving the case out of LPR
                 String courtCaseNumber = courtCase.getCourtCaseNumber();
                 enrichmentUtil.enrichCourtCaseNumber(caseRequest);
                 courtCase.setCourtCaseNumberBackup(courtCaseNumber);
+                courtCase.setStage(courtCase.getStageBackup());
+                courtCase.setSubstage(courtCase.getSubstageBackup());
             }
 
             producer.push(config.getLprCaseDetailsUpdateTopic(), caseRequest);
