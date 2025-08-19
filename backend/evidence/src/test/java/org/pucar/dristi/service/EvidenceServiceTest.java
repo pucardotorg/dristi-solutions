@@ -6,12 +6,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.minidev.json.JSONArray;
 import net.minidev.json.JSONObject;
 import org.egov.common.contract.models.AuditDetails;
-import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
-import org.egov.common.contract.workflow.ProcessInstance;
-import org.egov.common.contract.workflow.State;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -494,8 +491,9 @@ class EvidenceServiceTest {
 
     @Test
     void shouldThrowExceptionIfEvidenceNumberExists() {
-        EvidenceRequest request = buildEvidenceRequest("FN123", "EV123");
+        EvidenceRequest request = buildEvidenceRequest();
         Artifact artifact = new Artifact(); // mock artifact
+        artifact.setArtifactNumber("AR124");
 
         // Simulate duplicate found
         when(evidenceService.searchEvidence(any(), any(), any()))
@@ -512,7 +510,7 @@ class EvidenceServiceTest {
 
     @Test
     void shouldNotThrowExceptionIfEvidenceNumberIsUnique() {
-        EvidenceRequest request = buildEvidenceRequest("FN123", "EV123");
+        EvidenceRequest request = buildEvidenceRequest();
         when(evidenceService.searchEvidence(any(), any(), any()))
                 .thenReturn(Collections.emptyList()); // simulate no duplicates
 
@@ -520,10 +518,11 @@ class EvidenceServiceTest {
     }
 
     // Utility method to build test data
-    private EvidenceRequest buildEvidenceRequest(String filingNumber, String evidenceNumber) {
+    private EvidenceRequest buildEvidenceRequest() {
         Artifact artifact = new Artifact();
-        artifact.setFilingNumber(filingNumber);
-        artifact.setEvidenceNumber(evidenceNumber);
+        artifact.setFilingNumber("FN123");
+        artifact.setEvidenceNumber("EV123");
+        artifact.setArtifactNumber("AR123");
 
         RequestInfo requestInfo = new RequestInfo();
         User user = User.builder()
