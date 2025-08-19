@@ -58,6 +58,7 @@ const InsideHearingMainPage = () => {
 
   const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isCourtRoomManager = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
 
   const onCancel = () => {
@@ -70,7 +71,7 @@ const InsideHearingMainPage = () => {
 
   const userType = Digit?.UserService?.getType?.();
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  if (isJudge || isTypist || isBenchClerk || isCourtRoomManager) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
 
   const { data: caseData, isLoading: isCaseLoading, refetch: refetchCase } = Digit.Hooks.dristi.useSearchCaseService(
     {

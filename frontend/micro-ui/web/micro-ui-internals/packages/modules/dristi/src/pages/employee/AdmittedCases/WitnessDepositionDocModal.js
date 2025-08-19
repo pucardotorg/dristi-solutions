@@ -90,14 +90,14 @@ function WitnessDepositionDocModal({
   }, [docObj, t, tenantId]);
 
   const saveLabel = useMemo(() => {
-    if (isBenchClerk || isTypist || isJudge) {
+    if (isBenchClerk || isTypist || isJudge || isCourtRoomManager) {
       if (artifact?.status === "PENDING_E-SIGN") {
         return t("EDIT_DETAILS_DEPOSITION");
       } else return null;
     } else if (isCitizen && userInfo?.uuid !== artifact?.sourceId) {
       return null;
     } else return null;
-  }, [isBenchClerk, isCitizen, isJudge, isTypist, artifact, t, userInfo?.uuid]);
+  }, [isBenchClerk, isCitizen, isJudge, isTypist, artifact, t, userInfo?.uuid, isCourtRoomManager]);
 
   const handleSubmit = async () => {
     if (saveLabel === t("EDIT_DETAILS_DEPOSITION")) {
