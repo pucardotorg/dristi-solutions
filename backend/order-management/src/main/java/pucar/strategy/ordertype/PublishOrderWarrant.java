@@ -189,13 +189,19 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
     }
 
     private boolean isWarrantForAccusedWitness(Order order) {
-        JsonNode taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), JsonNode.class);
-        JsonNode taskDetail = taskDetails.get(0);
-        if(taskDetail.get("respondentDetails") != null
-                && taskDetail.get("respondentDetails").get("ownerType") != null
-                && taskDetail.get("respondentDetails").get("ownerType").textValue().equalsIgnoreCase(ACCUSED)){
-            return true;
+        String taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), String.class);
+        try {
+            JsonNode taskDetailsArray = objectMapper.readTree(taskDetails);
+            JsonNode taskDetail = taskDetailsArray.get(0);
+            if(taskDetail.get("respondentDetails") != null
+                    && taskDetail.get("respondentDetails").get("ownerType") != null
+                    && taskDetail.get("respondentDetails").get("ownerType").textValue().equalsIgnoreCase(ACCUSED)){
+                return true;
+            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
+
         return false;
     }
 }

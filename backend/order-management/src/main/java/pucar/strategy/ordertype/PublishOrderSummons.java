@@ -183,12 +183,18 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
     }
 
     private boolean isSummonForAccusedWitness(Order order) {
-        JsonNode taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), JsonNode.class);
-        JsonNode taskDetail = taskDetails.get(0);
-        if(taskDetail.get("witnessDetails") != null
-                && taskDetail.get("witnessDetails").get("ownerType") != null
-                && taskDetail.get("witnessDetails").get("ownerType").textValue().equalsIgnoreCase(ACCUSED)){
-            return true;
+        String taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), String.class);
+        JsonNode taskDetailsArray = null;
+        try {
+            taskDetailsArray = objectMapper.readTree(taskDetails);
+            JsonNode taskDetail = taskDetailsArray.get(0);
+            if(taskDetail.get("witnessDetails") != null
+                    && taskDetail.get("witnessDetails").get("ownerType") != null
+                    && taskDetail.get("witnessDetails").get("ownerType").textValue().equalsIgnoreCase(ACCUSED)){
+                return true;
+            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
         }
         return false;
     }
