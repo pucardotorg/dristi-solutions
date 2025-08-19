@@ -56,7 +56,7 @@ public class PublishOrderMoveCaseOutOfLongPendingRegister implements OrderUpdate
                 .requestInfo(requestInfo).build());
 
         if (cases.isEmpty()) {
-            log.info("No cases found");
+            log.info("No cases found : {}", order.getFilingNumber());
             return orderRequest;
         }
 

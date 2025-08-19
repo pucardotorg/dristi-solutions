@@ -123,8 +123,14 @@ public class CourtCase {
     @JsonProperty("stage")
     private String stage = null;
 
+    @JsonProperty("stageBackup")
+    private String stageBackup = null;
+
     @JsonProperty("substage")
     private String substage = null;
+
+    @JsonProperty("substageBackup")
+    private String substageBackup = null;
 
     @JsonProperty("natureOfPleading")
     //@Size(min = 2, max = 64)

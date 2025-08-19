@@ -53,7 +53,7 @@ public class PublishOrderMoveCaseToLongPendingRegister implements OrderUpdateStr
                 .requestInfo(requestInfo).build());
 
         if (cases.isEmpty()) {
-            log.info("No cases found");
+            log.info("No cases found : {}", order.getFilingNumber());
             return orderRequest;
         }
 
@@ -68,13 +68,13 @@ public class PublishOrderMoveCaseToLongPendingRegister implements OrderUpdateStr
         }
 
         if (courtCase.getCourtCaseNumberBackup() != null) {
-            throw new CustomException(MOVE_CASE_TO_LONG_PENDING_REGISTER_EXCEPTION, "Case is already a LPR case : " + courtCase.getFilingNumber());
+            throw new CustomException(MOVE_CASE_TO_LONG_PENDING_REGISTER_EXCEPTION, "Case is already move to LPR case once : " + courtCase.getFilingNumber());
         }
         courtCase.setIsLPRCase(true);
 
         CaseRequest caseRequest = CaseRequest.builder().cases(courtCase).requestInfo(requestInfo).build();
         log.info("Moving case to LPR : {}", courtCase.getFilingNumber());
-        caseUtil.updateCase(caseRequest);
+        caseUtil.updateLprDetailsInCase(caseRequest);
         log.info("Moved case to LPR : {}", courtCase.getFilingNumber());
         return orderRequest;
     }

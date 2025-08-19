@@ -247,6 +247,21 @@ public class CaseOverallStatusUtil {
 			}
 			else{
 				RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
+                String filingNumber = caseOverallStatus.getFilingNumber();
+                request.put("RequestInfo", requestInfo);
+                Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+                Boolean isLprCase = JsonPath.read(caseObject.toString(), IS_LPR_CASE_PATH);
+                if (isLprCase != null && isLprCase) {
+                    caseOverallStatus.setStageBackup(caseOverallStatus.getStage());
+                    caseOverallStatus.setSubstageBackup(caseOverallStatus.getSubstage());
+                    caseOverallStatus.setStage(config.getLprStage());
+                    caseOverallStatus.setSubstage(config.getLprSubStage());
+                } else {
+                    caseOverallStatus.setStage(caseOverallStatus.getStage());
+                    caseOverallStatus.setSubstage(caseOverallStatus.getSubstage());
+                    caseOverallStatus.setStageBackup(caseOverallStatus.getStage());
+                    caseOverallStatus.setSubstageBackup(caseOverallStatus.getSubstage());
+                }
 				AuditDetails auditDetails = new AuditDetails();
 				auditDetails.setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 				auditDetails.setLastModifiedTime(System.currentTimeMillis());

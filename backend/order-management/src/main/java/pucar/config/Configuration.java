@@ -117,6 +117,9 @@ public class Configuration {
     @Value("${dristi.case.add.witness.endpoint}")
     private String addWitnessEndPoint;
 
+    @Value("${dristi.case.update.lpr.details.endpoint}")
+    private String updateLprDetailsEndPoint;
+
     //Hearing config
     @Value("${dristi.hearing.host}")
     private String HearingHost;

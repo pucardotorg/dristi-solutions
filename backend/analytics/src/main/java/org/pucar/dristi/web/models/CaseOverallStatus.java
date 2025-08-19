@@ -31,6 +31,12 @@ public class CaseOverallStatus {
     @JsonProperty("substage")
     private String substage = null;
 
+    @JsonProperty("stageBackup")
+    private String stageBackup = null;
+
+    @JsonProperty("substageBackup")
+    private String substageBackup = null;
+
     @JsonProperty("auditDetails")
     @Valid
     private AuditDetails auditDetails = null;

@@ -372,7 +372,7 @@ public class CaseRegistrationEnrichment {
         }
 
         // Match the pattern "ST/xxx/yyyy" in the court case number
-        Pattern pattern = Pattern.compile("ST/\\d+/(\\d{4})");
+        Pattern pattern = Pattern.compile(REGEX_TO_EXTRACT_YEAR);
         Matcher matcher = pattern.matcher(courtCaseNumber);
 
         if (matcher.find()) {

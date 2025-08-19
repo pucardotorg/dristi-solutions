@@ -249,6 +249,8 @@ public class ServiceConstants {
     public static final String E_SIGN_COMPLETE_WITH_PAYMENT = "E-SIGN_COMPLETE_WITH_PAYMENT";
     public static final String ERROR_ADDING_WITNESS = "ERROR_ADDING_WITNESS";
     public static final String ERROR_VALIDATING_WITNESS = "ERROR_VALIDATING_WITNESS";
+
+    public static final String REGEX_TO_EXTRACT_YEAR = "ST/\\d+/(\\d{4})";
     private ServiceConstants() {
     }
 }

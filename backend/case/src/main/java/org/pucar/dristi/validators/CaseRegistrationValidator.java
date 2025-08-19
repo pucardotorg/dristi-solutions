@@ -647,7 +647,7 @@ public class CaseRegistrationValidator {
         if (courtCase.getIsLPRCase() && (courtCase.getLprNumber() != null || courtCase.getCourtCaseNumberBackup() != null)) {
             // If trying to convert case to Long Pending Registration, it should not have LPR number or backup court case number
             // case can only go to LPR once
-            throw new CustomException(VALIDATION_ERR, "to convert to LPR, case cannot have LPR number or backup court case number");
+            throw new CustomException(VALIDATION_ERR, "To convert to LPR, case cannot have LPR number or backup court case number");
         }
 
     }
