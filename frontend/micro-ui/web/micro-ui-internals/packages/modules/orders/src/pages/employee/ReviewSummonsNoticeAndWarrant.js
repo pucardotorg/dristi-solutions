@@ -310,7 +310,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
               referenceId: `MANUAL_${orderData?.list[0]?.hearingNumber}`,
               status: `RE-ISSUE_${orderType === "NOTICE" ? "NOTICE" : "SUMMON"}`,
               assignedTo: [],
-              assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "TYPIST_ROLE", "COURT_ROOM_MANAGER"], //checkForCourtRoomManager?
+              assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "TYPIST_ROLE"],
               cnrNumber: tasksData?.list[0]?.cnrNumber,
               filingNumber: tasksData?.list[0]?.filingNumber,
               caseId: tasksData?.list[0]?.caseId,
