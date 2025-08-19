@@ -72,8 +72,6 @@ const HomeHearingsTab = ({
 
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
-  console.log("check-here");
-  const isCourtRoomManager = useMemo(() => roles?.some((role) => role?.code === "COURT_ROOM_MANAGER"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
 
   const userType = useMemo(() => {
@@ -248,7 +246,7 @@ const HomeHearingsTab = ({
           );
         }
         return;
-      } else if (isBenchClerk || isCourtRoomManager) {
+      } else if (isBenchClerk) {
         if (["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status)) {
           try {
             setLoader(true);
@@ -287,7 +285,7 @@ const HomeHearingsTab = ({
             setLoader(false);
             showToast("error", t("ISSUE_IN_START_HEARING"), 5000);
           }
-        } else if ((isBenchClerk || isCourtRoomManager) && ["IN_PROGRESS"].includes(hearingDetails?.status)) {
+        } else if (isBenchClerk && ["IN_PROGRESS"].includes(hearingDetails?.status)) {
           //for bench clerk action he will have end hearing instead of edit icon
           try {
             setLoader(true);
@@ -322,7 +320,7 @@ const HomeHearingsTab = ({
         }
       }
     },
-    [history, isBenchClerk, isCourtRoomManager, isJudge, isTypist, t]
+    [history, isBenchClerk, isJudge, isTypist, t]
   );
 
   const tableRows = useMemo(() => {
@@ -608,7 +606,7 @@ const HomeHearingsTab = ({
                     }}
                     className="edit-icon"
                   >
-                    {(isBenchClerk || isCourtRoomManager) ? (
+                    {isBenchClerk ? (
                       hearingDetails?.status === "PASSED_OVER" || hearingDetails?.status === "SCHEDULED" ? (
                         <span style={{ color: "green", fontWeight: "700", cursor: "pointer" }}>{t("START_HEARING")}</span>
                       ) : (
@@ -619,7 +617,7 @@ const HomeHearingsTab = ({
                     )}
                   </div>
                 )}
-                {["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status) && (isBenchClerk || isCourtRoomManager) && (
+                {["SCHEDULED", "PASSED_OVER"].includes(hearingDetails?.status) && isBenchClerk && (
                   <div
                     style={{ position: "relative", cursor: "pointer", display: "flex", justifyContent: "start", maxWidth: "80px" }}
                     onClick={() => {

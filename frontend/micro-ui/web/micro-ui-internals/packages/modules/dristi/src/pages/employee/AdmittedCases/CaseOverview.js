@@ -43,10 +43,9 @@ const CaseOverview = ({
   const userRoles = useMemo(() => userInfo?.roles?.map((role) => role.code), [userInfo]);
   const isJudge = useMemo(() => userRoles.some((role) => role.code === "CASE_APPROVER"), [userRoles]);
   const isBenchClerk = useMemo(() => userRoles.some((role) => role.code === "BENCH_CLERK"), [userRoles]);
-  const isCourtRoomManager = useMemo(() => userRoles.some((role) => role.code === "COURT_ROOM_MANAGER"), [userRoles]);
   const isTypist = useMemo(() => userRoles.some((role) => role.code === "TYPIST_ROLE"), [userRoles]);
   let homePath = `/${window?.contextPath}/${userInfoType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk || isCourtRoomManager) homePath = `/${window?.contextPath}/${userInfoType}/home/home-screen`;
+  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userInfoType}/home/home-screen`;
   const advocateIds = caseData?.case?.representatives?.map((representative) => {
     return {
       id: representative?.advocateId,

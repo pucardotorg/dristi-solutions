@@ -51,7 +51,6 @@ const MainHomeScreen = () => {
 
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
-  const isCourtRoomManager = useMemo(() => roles?.some((role) => role?.code === "COURT_ROOM_MANAGER"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
   const today = new Date();
 
@@ -71,11 +70,11 @@ const MainHomeScreen = () => {
   }, [userInfo]);
 
   useEffect(() => {
-    if (!isJudge && !isBenchClerk && !isTypist && !isCourtRoomManager) {
+    if (!isJudge && !isBenchClerk && !isTypist) {
       history.push(`/${window?.contextPath}/${userType}/home/home-pending-task`);
     }
     // sessionStorage.removeItem("homeActiveTab");
-  }, [isJudge, isBenchClerk, userType, history, isTypist, isCourtRoomManager]);
+  }, [isJudge, isBenchClerk, userType, history, isTypist]);
 
   useEffect(() => {
     setUpdateCounter((prev) => prev + 1);
