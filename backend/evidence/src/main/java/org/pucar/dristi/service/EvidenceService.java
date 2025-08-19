@@ -510,10 +510,8 @@ public class EvidenceService {
                 if (ObjectUtils.isEmpty(evidenceNumber)) {
                     throw new CustomException(ILLEGAL_ARGUMENT_EXCEPTION_CODE, "Evidence number is required for Evidence Marked Flow");
                 } else {
-                    // check if the evidence number exists for the case only when mark as evidence workflow begins
-                    if(CREATE.equalsIgnoreCase(evidenceRequest.getArtifact().getWorkflow().getAction())){
-                        checkUniqueEvidenceNumberForCase(evidenceRequest);
-                    }
+                    // check if the evidence number already exists for the case
+                    checkUniqueEvidenceNumberForCase(evidenceRequest);
                 }
             }
             String pseudoTag = null;
@@ -584,7 +582,9 @@ public class EvidenceService {
                 .build();
         Pagination pagination = Pagination.builder()
                 .build();
-        List<Artifact> artifactsList = searchEvidence(body.getRequestInfo(), criteria, pagination);
+        List<Artifact> artifactsList = searchEvidence(body.getRequestInfo(), criteria, pagination).stream()
+                .filter(artifact -> !Objects.equals(artifact.getArtifactNumber(), body.getArtifact().getArtifactNumber()))
+                .toList();
         if(!artifactsList.isEmpty()){
             throw new CustomException(EVIDENCE_NUMBER_EXISTS_EXCEPTION, String.format("Evidence Number %s already exists for case: %s", body.getArtifact().getEvidenceNumber(), body.getArtifact().getFilingNumber()));
         }
