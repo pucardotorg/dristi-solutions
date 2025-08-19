@@ -97,7 +97,7 @@ const DocumentsV2 = ({
             }/${"citizen"}/dristi/home/evidence-sign?tenantId=${tenantId}&artifactNumber=${artifactNumber}&filingNumber=${filingNumber}`
           );
         }
-        if (documentStatus === "DRAFT_IN_PROGRESS" && (isBenchClerk || isTypist || isJudge)) {
+        if (documentStatus === "DRAFT_IN_PROGRESS" && (isBenchClerk || isTypist || isJudge || isCourtRoomManager)) {
           setShowWitnessModal(true);
           setEditWitnessDepositionArtifact(artifactNumber);
         } else setShowWitnessDepositionDoc({ docObj: docObj?.[0], show: true });
@@ -108,7 +108,7 @@ const DocumentsV2 = ({
         const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditdetails?.createdBy;
         const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
         const documentStatus = docObj?.[0]?.artifactList?.status;
-        if (isCitizen || isBenchClerk || isTypist || isJudge) {
+        if (isCitizen || isBenchClerk || isTypist || isJudge || isCourtRoomManager) {
           if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
             history.push(
               `/${window?.contextPath}/${
