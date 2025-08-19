@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
@@ -30,46 +30,198 @@ function applyMultiSelectDropdownFix(setValue, formData, keys) {
   });
 }
 
-const AddOrderTypeModal = ({ t, headerLabel, saveLabel, cancelLabel, handleCancel, handleSubmit, modifiedFormConfig, defaultFormValue, currentOrder, index }) => {
+const AddOrderTypeModal = ({
+  t,
+  headerLabel,
+  saveLabel,
+  cancelLabel,
+  handleCancel,
+  handleSubmit,
+  modifiedFormConfig,
+  defaultFormValue,
+  currentOrder,
+  index,
+  setFormErrors,
+  clearFormErrors,
+  orderType,
+}) => {
   const [formdata, setFormData] = useState({});
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
 
+  // needs to be change
   const multiSelectDropdownKeys = useMemo(() => {
-      const foundKeys = [];
-      modifiedFormConfig?.forEach((modified) => {
-        modified?.forEach((config) => {
-          config.body.forEach((field) => {
-            if (field.type === "dropdown" && field.populators.allowMultiSelect) {
-              foundKeys.push(field.key);
-            }
-          });
-        });
+    const foundKeys = [];
+    modifiedFormConfig?.forEach((config) => {
+      config.body.forEach((field) => {
+        if (field.type === "dropdown" && field.populators.allowMultiSelect) {
+          foundKeys.push(field.key);
+        }
       });
-      return foundKeys;
-    }, [modifiedFormConfig]);
+    });
+    return foundKeys;
+  }, [modifiedFormConfig]);
 
+  // all validation need to be fixed
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
+    applyMultiSelectDropdownFix(setValue, formData, multiSelectDropdownKeys);
+    const orderType = currentOrder?.orderCategory === "COMPOSITE" ? currentOrder?.compositeItems?.[index]?.orderType : currentOrder?.orderType;
 
-    // if (currentOrder?.orderCategory === "COMPOSITE") {
-    //   // Validation for order Types check
-    //   if (formData?.orderType?.code) {
-    //     const orderTypeValidationObj = checkOrderValidation(formData?.orderType?.code, index);
-    //     if (orderTypeValidationObj?.showModal) {
-    //       setShowOrderValidationModal(orderTypeValidationObj);
-    //       if (!currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails?.formdata?.orderType?.code) {
-    //         setValue("orderType", undefined); // If we are adding new order- set order type to null if validation fails.
-    //         return;
-    //       }
-    //       return;
-    //     }
-    //   }
-    // }
+    if (orderType && ["MANDATORY_SUBMISSIONS_RESPONSES"].includes(orderType)) {
+      if (formData?.submissionDeadline && formData?.responseInfo?.responseDeadline) {
+        if (new Date(formData?.submissionDeadline).getTime() >= new Date(formData?.responseInfo?.responseDeadline).getTime()) {
+          setValue("responseInfo", {
+            ...formData.responseInfo,
+            responseDeadline: "",
+          });
+          setFormErrors?.current?.[index]?.("responseDeadline", { message: t("PROPOSED_DATE_CAN_NOT_BE_BEFORE_SUBMISSION_DEADLINE") });
+        } else if (Object.keys(formState?.errors).includes("responseDeadline")) {
+          setValue("responseInfo", formData?.responseInfo);
+          clearFormErrors?.current?.[index]?.("responseDeadline");
+        }
+      }
+      if (formData?.responseInfo?.isResponseRequired && Object.keys(formState?.errors).includes("isResponseRequired")) {
+        clearFormErrors?.current?.[index]?.("isResponseRequired");
+      } else if (
+        formState?.submitCount &&
+        !formData?.responseInfo?.isResponseRequired &&
+        !Object.keys(formState?.errors).includes("isResponseRequired")
+      ) {
+        setFormErrors?.current?.[index]?.("isResponseRequired", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      }
+      if (
+        formData?.responseInfo?.responseDeadline &&
+        new Date(formData?.submissionDeadline).getTime() < new Date(formData?.responseInfo?.responseDeadline).getTime() &&
+        Object.keys(formState?.errors).includes("responseDeadline")
+      ) {
+        clearFormErrors?.current?.[index]?.("responseDeadline");
+      } else if (formData?.responseInfo?.isResponseRequired?.code === false && Object.keys(formState?.errors).includes("responseDeadline")) {
+        clearFormErrors?.current?.[index]?.("responseDeadline");
+      } else if (
+        formState?.submitCount &&
+        !formData?.responseInfo?.responseDeadline &&
+        formData?.responseInfo?.isResponseRequired?.code === true &&
+        !Object.keys(formState?.errors).includes("responseDeadline")
+      ) {
+        setFormErrors?.current?.[index]?.("responseDeadline", { message: t("PROPOSED_DATE_CAN_NOT_BE_BEFORE_SUBMISSION_DEADLINE") });
+      }
+      if (formData?.responseInfo?.respondingParty?.length > 0 && Object.keys(formState?.errors).includes("respondingParty")) {
+        clearFormErrors?.current?.[index]?.("respondingParty");
+      } else if (formData?.responseInfo?.isResponseRequired?.code === false && Object.keys(formState?.errors).includes("respondingParty")) {
+        clearFormErrors?.current?.[index]?.("respondingParty");
+      } else if (
+        formState?.submitCount &&
+        (!formData?.responseInfo?.respondingParty || formData?.responseInfo?.respondingParty?.length === 0) &&
+        formData?.responseInfo?.isResponseRequired?.code === true &&
+        !Object.keys(formState?.errors).includes("respondingParty")
+      ) {
+        setFormErrors?.current?.[index]?.("respondingParty", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      }
+    }
 
-    // applyMultiSelectDropdownFix(setValue, formData, multiSelectDropdownKeys);
+    if (orderType && ["WARRANT"].includes(orderType)) {
+      if (
+        formData?.warrantSubType?.templateType === "SPECIFIC" &&
+        formData?.bailInfo?.isBailable &&
+        Object.keys(formState?.errors).includes("isBailable")
+      ) {
+        clearFormErrors?.current?.[index]?.("isBailable");
+      } else if (
+        formState?.submitCount &&
+        formData?.warrantSubType?.templateType === "SPECIFIC" &&
+        !formData?.bailInfo?.isBailable &&
+        !Object.keys(formState?.errors).includes("isBailable")
+      ) {
+        setFormErrors?.current?.[index]?.("isBailable", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      }
 
+      if (formData?.warrantSubType?.templateType === "GENERIC" && formData?.warrantText && Object.keys(formState?.errors).includes("warrantText")) {
+        clearFormErrors?.current?.[index]?.("warrantText");
+      } else if (
+        formState?.submitCount &&
+        formData?.warrantSubType?.templateType === "GENERIC" &&
+        !formData?.warrantText &&
+        !Object.keys(formState?.errors).includes("warrantText")
+      ) {
+        setFormErrors?.current?.[index]?.("warrantText", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      }
 
+      if (formData?.bailInfo?.noOfSureties && Object.keys(formState?.errors).includes("noOfSureties")) {
+        clearFormErrors?.current?.[index]?.("noOfSureties");
+      } else if (formData?.bailInfo?.isBailable?.code === false && Object.keys(formState?.errors).includes("noOfSureties")) {
+        clearFormErrors?.current?.[index]?.("noOfSureties");
+      } else if (
+        formState?.submitCount &&
+        !formData?.bailInfo?.noOfSureties &&
+        formData?.bailInfo?.isBailable?.code === true &&
+        !Object.keys(formState?.errors).includes("noOfSureties")
+      ) {
+        setFormErrors?.current?.[index]?.("noOfSureties", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      }
+      if (
+        formData?.bailInfo?.bailableAmount &&
+        formData?.bailInfo?.bailableAmount?.slice(-1) !== "." &&
+        Object.keys(formState?.errors).includes("bailableAmount")
+      ) {
+        clearFormErrors?.current?.[index]?.("bailableAmount");
+      } else if (formData?.bailInfo?.isBailable?.code === false && Object.keys(formState?.errors).includes("bailableAmount")) {
+        clearFormErrors?.current?.[index]?.("bailableAmount");
+      } else if (
+        formState?.submitCount &&
+        formData?.bailInfo?.isBailable?.code === true &&
+        formData?.bailInfo?.bailableAmount?.slice(-1) === "." &&
+        !Object.keys(formState?.errors).includes("bailableAmount")
+      ) {
+        setFormErrors?.current?.[index]?.("bailableAmount", { message: t("CS_VALID_AMOUNT_DECIMAL") });
+      } else if (
+        formState?.submitCount &&
+        !formData?.bailInfo?.bailableAmount &&
+        formData?.bailInfo?.isBailable?.code === true &&
+        !Object.keys(formState?.errors).includes("bailableAmount")
+      ) {
+        setFormErrors?.current?.[index]?.("bailableAmount", { message: t("CS_VALID_AMOUNT_DECIMAL") });
+      }
 
+      const warrantType = formData?.warrantSubType?.templateType;
+      if (warrantType !== "GENERIC" && formData?.bailInfo?.warrantText) {
+        setValue("bailInfo", undefined);
+      } else if (warrantType === "GENERIC" && formData?.warrantText?.isBailable) {
+        setValue("warrantText", undefined);
+      }
+    }
 
+    if (orderType && ["PROCLAMATION"].includes(orderType)) {
+      if (formData?.proclamationText && Object.keys(formState?.errors).includes("proclamationText")) {
+        clearFormErrors?.current?.[index]?.("proclamationText");
+      } else if (formState?.submitCount && !formData?.proclamationText && !Object.keys(formState?.errors).includes("proclamationText")) {
+        setFormErrors?.current?.[index]?.("proclamationText", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      }
+    }
+
+    if (orderType && ["ATTACHMENT"].includes(orderType)) {
+      if (formData?.attachmentText && Object.keys(formState?.errors).includes("attachmentText")) {
+        clearFormErrors?.current?.[index]?.("attachmentText");
+      } else if (formState?.submitCount && !formData?.attachmentText && !Object.keys(formState?.errors).includes("attachmentText")) {
+        setFormErrors?.current?.[index]?.("attachmentText", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      }
+
+      if (formData?.village && Object.keys(formState?.errors).includes("village")) {
+        clearFormErrors?.current?.[index]?.("village");
+      } else if (formState?.submitCount && !formData?.village && !Object.keys(formState?.errors).includes("village")) {
+        setFormErrors?.current?.[index]?.("village", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      }
+
+      if (formData?.district && Object.keys(formState?.errors).includes("district")) {
+        clearFormErrors?.current?.[index]?.("district");
+      } else if (formState?.submitCount && !formData?.district && !Object.keys(formState?.errors).includes("district")) {
+        setFormErrors?.current?.[index]?.("district", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      }
+
+      if (formData?.chargeDays && Object.keys(formState?.errors).includes("chargeDays")) {
+        clearFormErrors?.current?.[index]?.("chargeDays");
+      } else if (formState?.submitCount && !formData?.chargeDays && !Object.keys(formState?.errors).includes("chargeDays")) {
+        setFormErrors?.current?.[index]?.("chargeDays", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      }
+    }
 
     if (!isEqual(formdata, formData)) {
       setFormData(formData);
@@ -90,7 +242,10 @@ const AddOrderTypeModal = ({ t, headerLabel, saveLabel, cancelLabel, handleCance
         actionSaveLabel={t(saveLabel)}
         actionCancelLabel={t(cancelLabel)}
         actionCancelOnSubmit={handleCancel}
-        actionSaveOnSubmit={() => handleSubmit(formdata)}
+        actionSaveOnSubmit={() => {
+          const updatedFormData = { ...formdata, orderType: orderType };
+          handleSubmit(updatedFormData);
+        }}
         isDisabled={isSubmitDisabled}
         className="add-order-type-modal"
       >
