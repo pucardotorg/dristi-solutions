@@ -860,6 +860,32 @@ export const pendingTaskForBailBondActions = {
   },
 };
 
+export const pendingTaskForWitnessDepositionActions = {
+  "PENDING_E-SIGN": {
+    actorName: [""],
+    actionName: "E-Sign Pending",
+    redirectDetails: {
+      url: "/dristi/home/evidence-sign",
+      params: [
+        { key: "artifactNumber", value: "referenceId" },
+        { key: "filingNumber", value: "filingNumber" },
+      ],
+    },
+  },
+  PENDING_REVIEW: {
+    actorName: ["JUDGE"],
+    actionName: "Review the witness deposition",
+    redirectDetails: {
+      url: "/home/sign-witness-deposition",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "artifactNumber", value: "referenceId" },
+        { key: "caseId", value: "id" },
+      ],
+    },
+  },
+};
+
 export const selectTaskType = {
   "case-default": pendingTaskCaseActions,
   "hearing-default": pendingTaskHearingActions,
@@ -877,4 +903,5 @@ export const selectTaskType = {
   "task-generic": pendingTaskCaseGeneratePaymentActions,
   "bail bond": pendingTaskForBailBondActions,
   "bail-bond-default": pendingTaskForBailBondActions,
+  "witness-deposition-default": pendingTaskForWitnessDepositionActions,
 };

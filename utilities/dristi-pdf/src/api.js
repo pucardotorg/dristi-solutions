@@ -10,18 +10,8 @@ const axios = Axios.create();
 axios.interceptors.response.use(
   (res) => res,
   (error) => {
-    const errorDetails = {
-      message: error.message,
-      stack: error.stack,
-      status: error.response?.status, // HTTP status code if available
-      data: error.response?.data, // Response body if available
-      url: error.config?.url, // Requested URL
-      method: error.config?.method, // HTTP method
-    };
-
-    // Log error using Winston
-    logger.error("Error during API call", errorDetails);
-    return Promise.reject(error);
+    const { handleApiError } = require("./utils/errorHandler");
+    return handleApiError(error, "API Request Interceptor");
   }
 );
 

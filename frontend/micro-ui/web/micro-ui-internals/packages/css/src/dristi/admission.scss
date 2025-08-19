@@ -553,3 +553,61 @@
 .evidence-header-wrapper .evidence-hearing-header .evidence-actions .menu-wrap div {
   height: auto !important;
 }
+
+.mark-evidence-modal {
+  .mark-evidence-modal-main {
+    padding: 0% !important;
+  }
+  .mark-evidence-modal-body {
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    border-bottom: 1px solid #e8e8e8;
+    gap: 24px;
+
+    .text-input {
+      margin: 0;
+    }
+
+    .disabled {
+      background-color: #d9d9d9;
+      .input {
+        color: #0b0c0c !important;
+      }
+    }
+  }
+}
+
+.download-button-container {
+  color: #007e7e;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: "Roboto";
+  font-weight: 700;
+  font-style: bold;
+  font-size: 16px;
+  line-height: 100%;
+  height: 40px;
+  opacity: 1;
+  padding: 8px 12px;
+  text-align: center;
+  background-color: transparent;
+}
+
+.mark-asevidence-button {
+  padding: 8px 12px;
+  color: #007e7e;
+  border-radius: 4px;
+  cursor: pointer;
+  border: 1px solid #007e7e;
+  background-color: white;
+  height: 40px;
+  font-family: Roboto;
+  font-weight: 700;
+  font-style: bold;
+  font-size: 16px;
+  text-align: center;
+}

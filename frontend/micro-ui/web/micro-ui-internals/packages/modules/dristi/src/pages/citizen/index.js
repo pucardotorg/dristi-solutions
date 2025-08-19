@@ -24,7 +24,10 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const Registration = Digit?.ComponentRegistryService?.getComponent("DRISTIRegistration");
   const Response = Digit?.ComponentRegistryService?.getComponent("DRISTICitizenResponse");
   const BailBondSignaturePage = Digit?.ComponentRegistryService?.getComponent("BailBondSignaturePage");
+  const WitnessDepositionSignaturePage = Digit?.ComponentRegistryService?.getComponent("WitnessDepositionSignaturePage");
   const BailBondLoginPage = Digit?.ComponentRegistryService?.getComponent("BailBondLoginPage");
+  const WitnessDepositionLoginPage = Digit?.ComponentRegistryService?.getComponent("WitnessDepositionLoginPage");
+
   const BailBondLinkExpiredPage = Digit?.ComponentRegistryService?.getComponent("BailBondLinkExpiredPage");
   const Login = Digit?.ComponentRegistryService?.getComponent("DRISTILogin");
   const FileCase = Digit?.ComponentRegistryService?.getComponent("FileCase");
@@ -37,6 +40,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
 
   const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isCourtStaff = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
 
   const moduleCode = "DRISTI";
@@ -62,7 +66,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
   const userType = useMemo(() => data?.Individual?.[0]?.additionalFields?.fields?.find((obj) => obj.key === "userType")?.value, [data?.Individual]);
 
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  if (isJudge || isTypist || isBenchClerk || isCourtStaff) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const individualId = useMemo(() => data?.Individual?.[0]?.individualId, [data?.Individual]);
 
   const isLitigantPartialRegistered = useMemo(() => {
@@ -128,7 +132,15 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     },
   ];
 
-  const hideBackRoutes = ["/home/access-expired", "/home/bail-bond-login", "/home/bail-bond-sign", "/login", "/registration/email"];
+  const hideBackRoutes = [
+    "/home/access-expired",
+    "/home/bail-bond-login",
+    "/home/bail-bond-sign",
+    "/login",
+    "/registration/email",
+    "/home/evidence-sign",
+    "/home/evidence-login",
+  ];
 
   const whiteListedRoutes = [
     `${path}/home/register`,
@@ -150,8 +162,10 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     `${path}/home/bail-bond-sign`,
     `${path}/home/bail-bond-login`,
     `${path}/home/access-expired`,
+    `${path}/home/evidence-sign`,
+    `${path}/home/evidence-login`,
   ];
-  const bailRoute = [`${path}/home/bail-bond-sign`];
+  const openRoute = [`${path}/home/bail-bond-sign`, `${path}/home/evidence-sign`];
   const registerScreenRoute = [`${path}/home/login`, `${path}/home/registration/mobile-number`, `${path}/home/registration/otp`];
   const eSignWindowObject = sessionStorage.getItem("eSignWindowObject");
   const retrievedObject = Boolean(eSignWindowObject) ? JSON.parse(eSignWindowObject) : null;
@@ -164,12 +178,12 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     individualId &&
     !isLitigantPartialRegistered &&
     whiteListedRoutes.includes(location.pathname) &&
-    !bailRoute.includes(location.pathname)
+    !openRoute.includes(location.pathname)
   ) {
     history.push(`${path}/home`);
   }
 
-  if (retrievedObject && bailRoute.includes(retrievedObject?.path)) {
+  if (retrievedObject && openRoute.includes(retrievedObject?.path)) {
     if (result) {
       sessionStorage.setItem("isSignSuccess", result);
     }
@@ -183,7 +197,7 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
     sessionStorage.removeItem("eSignWindowObject");
   }
 
-  if (isUserLoggedIn && !location.pathname.includes(`${path}/home`) && !bailRoute.includes(location.pathname)) {
+  if (isUserLoggedIn && !location.pathname.includes(`${path}/home`) && !openRoute.includes(location.pathname)) {
     history.push(`${path}/home`);
   }
   if (isUserLoggedIn && registerScreenRoute.includes(location.pathname)) {
@@ -287,6 +301,14 @@ const App = ({ stateCode, tenantId, result, fileStoreId }) => {
 
           <Route path={`${path}/home/bail-bond-sign`}>
             <BailBondSignaturePage />
+          </Route>
+
+          <Route path={`${path}/home/evidence-login`}>
+            <WitnessDepositionLoginPage />
+          </Route>
+
+          <Route path={`${path}/home/evidence-sign`}>
+            <WitnessDepositionSignaturePage />
           </Route>
         </React.Fragment>
       </Switch>

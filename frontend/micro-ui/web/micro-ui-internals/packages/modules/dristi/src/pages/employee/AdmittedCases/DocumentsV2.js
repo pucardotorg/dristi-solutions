@@ -1,6 +1,6 @@
 import { DocumentSearchConfig } from "./DocumentsV2Config";
 import { InboxSearchComposer } from "@egovernments/digit-ui-react-components";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import "./tabs.css";
@@ -17,11 +17,16 @@ const DocumentsV2 = ({
   cnrNumber,
   setDocumentSubmission,
   setShow,
+  setShowMakeAsEvidenceModal,
   setShowConfirmationModal,
   setVoidReason,
   setShowVoidModal,
   setSelectedRow,
   setSelectedItem,
+  counter,
+  setShowWitnessDepositionDoc,
+  setShowWitnessModal,
+  setEditWitnessDepositionArtifact,
 }) => {
   const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role.code);
   const roles = Digit.UserService.getUser()?.info?.roles;
@@ -79,6 +84,23 @@ const DocumentsV2 = ({
             );
           }
         }
+      } else if (docObj?.[0]?.details?.applicationType === "WITNESS_DEPOSITION") {
+        const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
+        const documentStatus = docObj?.[0]?.artifactList?.status;
+        const sourceID = docObj?.[0]?.artifactList?.sourceID;
+        const token = window.localStorage.getItem("token");
+        const isUserLoggedIn = Boolean(token);
+        if (documentStatus === "PENDING_E-SIGN" && sourceID === userInfo?.uuid && isUserLoggedIn) {
+          history.push(
+            `/${
+              window?.contextPath
+            }/${"citizen"}/dristi/home/evidence-sign?tenantId=${tenantId}&artifactNumber=${artifactNumber}&filingNumber=${filingNumber}`
+          );
+        }
+        if (documentStatus === "DRAFT_IN_PROGRESS" && (isBenchClerk || isTypist || isJudge || isCourtRoomManager)) {
+          setShowWitnessModal(true);
+          setEditWitnessDepositionArtifact(artifactNumber);
+        } else setShowWitnessDepositionDoc({ docObj: docObj?.[0], show: true });
       } else {
         const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
         const status = docObj?.[0]?.applicationList?.status;
@@ -86,7 +108,7 @@ const DocumentsV2 = ({
         const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditdetails?.createdBy;
         const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
         const documentStatus = docObj?.[0]?.artifactList?.status;
-        if (isCitizen || isBenchClerk || isTypist || isJudge) {
+        if (isCitizen || isBenchClerk || isTypist || isJudge || isCourtRoomManager) {
           if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
             history.push(
               `/${window?.contextPath}/${
@@ -146,10 +168,12 @@ const DocumentsV2 = ({
           artifactList: row,
         },
       ];
-      if ("mark_as_evidence" === item.id || "unmark_as_evidence" === item.id) {
+      if ("mark_as_evidence" === item.id || "unmark_as_evidence" === item.id || "view_mark_as_evidence" === item.id) {
         setSelectedRow(row);
+        setDocumentSubmission(docObj);
         setSelectedItem(item); // Store row before showing the modal
-        setShowConfirmationModal(true);
+        setShowMakeAsEvidenceModal(true);
+        // setShowConfirmationModal(true);
       } else if ("mark_as_void" === item.id || "view_reason_for_voiding" === item.id) {
         setDocumentSubmission(docObj);
         setVoidReason(row?.reason);
@@ -280,6 +304,12 @@ const DocumentsV2 = ({
       displayLabel: configItem?.displayLabel,
     }));
   }, [activeTab]);
+
+  useEffect(() => {
+    if (sessionStorage.getItem("markAsEvidenceSelectedItem")) {
+      setShowMakeAsEvidenceModal(true);
+    }
+  }, [setShowMakeAsEvidenceModal]);
   const config = useMemo(() => {
     return newTabSearchConfig?.TabSearchconfig;
   }, [newTabSearchConfig?.TabSearchconfig]);
@@ -314,7 +344,7 @@ const DocumentsV2 = ({
         })}
       </div>
 
-      <InboxSearchComposer key={`${config?.label}`} configs={config} showTab={false}></InboxSearchComposer>
+      <InboxSearchComposer key={`${config?.label}-${counter}`} configs={config} showTab={false}></InboxSearchComposer>
     </React.Fragment>
   );
 };

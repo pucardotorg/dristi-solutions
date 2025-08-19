@@ -80,6 +80,9 @@ public class BailSearchCriteria {
     @JsonProperty("bailType")
     private BailTypeEnum bailType = null;
 
+    /**
+     * Type of the case.
+     */
     public enum CaseTypeEnum {
         ST("ST"),
 

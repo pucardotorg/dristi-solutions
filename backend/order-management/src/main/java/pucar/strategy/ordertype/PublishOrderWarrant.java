@@ -79,7 +79,11 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
         CourtCase courtCase = cases.get(0);
         log.info("fetching litigant advocate mapping for caseId:{}", courtCase.getId());
         Map<String, List<String>> litigantAdvocateMapping = advocateUtil.getLitigantAdvocateMapping(courtCase);
-        List<Party> complainants = caseUtil.getRespondentOrComplainant(courtCase, "complainant");
+
+        String type = "complainant";
+        if(isWarrantForAccusedWitness(order))
+            type = "respondent";
+        List<Party> complainants = caseUtil.getRespondentOrComplainant(courtCase, type);
         List<String> assignees = new ArrayList<>();
         List<User> uniqueAssignee = new ArrayList<>();
         Set<String> uniqueSet = new HashSet<>();
@@ -142,7 +146,7 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
 
                 // create pending task
 
-                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))) {
+                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel)) && !taskUtil.isCourtWitness(order.getOrderType(), taskDetail)) {
 
                     PendingTask pendingTask = PendingTask.builder()
                             .name(PAYMENT_PENDING_FOR_WARRANT)
@@ -184,6 +188,16 @@ public class PublishOrderWarrant implements OrderUpdateStrategy {
         return null;
     }
 
+    private boolean isWarrantForAccusedWitness(Order order) {
+        JsonNode taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), JsonNode.class);
+        JsonNode taskDetail = taskDetails.get(0);
+        if(taskDetail.get("respondentDetails") != null
+                && taskDetail.get("respondentDetails").get("ownerType") != null
+                && taskDetail.get("respondentDetails").get("ownerType").textValue().equalsIgnoreCase(ACCUSED)){
+            return true;
+        }
+        return false;
+    }
 }
 
 

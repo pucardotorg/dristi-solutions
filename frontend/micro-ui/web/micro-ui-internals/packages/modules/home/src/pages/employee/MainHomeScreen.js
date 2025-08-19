@@ -11,7 +11,8 @@ import { useLocation } from "react-router-dom/cjs/react-router-dom.min";
 import BulkBailBondSignView from "./BulkBailBondSignView";
 import { BailBondSignModal } from "./BailBondSignModal";
 import BailBondModal from "./BailBondModal";
-
+import BulkWitnessDepositionView from "./BulkWitnessDepositionView";
+import BulkMarkAsEvidenceView from "./BulkMarkAsEvidenceView";
 const sectionsParentStyle = {
   height: "50%",
   display: "flex",
@@ -50,6 +51,7 @@ const MainHomeScreen = () => {
 
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
+  const isCourtRoomManager = useMemo(() => roles?.some((role) => role?.code === "COURT_ROOM_MANAGER"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role?.code === "TYPIST_ROLE"), [roles]);
   const today = new Date();
 
@@ -69,11 +71,11 @@ const MainHomeScreen = () => {
   }, [userInfo]);
 
   useEffect(() => {
-    if (!isJudge && !isBenchClerk && !isTypist) {
+    if (!isJudge && !isBenchClerk && !isTypist && !isCourtRoomManager) {
       history.push(`/${window?.contextPath}/${userType}/home/home-pending-task`);
     }
     // sessionStorage.removeItem("homeActiveTab");
-  }, [isJudge, isBenchClerk, userType, history, isTypist]);
+  }, [isJudge, isBenchClerk, userType, history, isTypist, isCourtRoomManager]);
 
   useEffect(() => {
     setUpdateCounter((prev) => prev + 1);
@@ -424,6 +426,14 @@ const MainHomeScreen = () => {
         ) : activeTab === "BULK_BAIL_BOND_SIGN" ? (
           <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
             <BulkBailBondSignView showToast={showToast} />
+          </div>
+        ) : activeTab === "BULK_EVIDENCE_SIGN" ? (
+          <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
+            <BulkMarkAsEvidenceView showToast={showToast} />
+          </div>
+        ) : activeTab === "BULK_WITNESS_DEPOSITION_SIGN" ? (
+          <div style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
+            <BulkWitnessDepositionView showToast={showToast} />
           </div>
         ) : (
           <div className="inbox-search-wrapper" style={{ width: "100%", maxHeight: "calc(100vh - 173px)", overflowY: "auto" }}>
