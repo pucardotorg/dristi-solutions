@@ -1222,7 +1222,7 @@ export const UICustomizations = {
         case "CS_ACTIONS":
           return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="FilingsConfig" />;
         case "EVIDENCE_NUMBER":
-          return (row?.isEvidence || isEmployee) && modifiedEvidenceNumber(value);
+          return (row?.isEvidence || isEmployee) && modifiedEvidenceNumber(value, row?.filingNumber);
         case "EVIDENCE_STATUS":
           return row?.evidenceMarkedStatus && (row?.evidenceMarkedStatus === "COMPLETED" || isEmployee) ? (
             <CustomChip
