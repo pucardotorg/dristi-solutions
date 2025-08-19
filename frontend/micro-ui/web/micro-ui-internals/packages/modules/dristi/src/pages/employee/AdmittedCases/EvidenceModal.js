@@ -687,6 +687,7 @@ const EvidenceModal = ({
       "SURETY",
       "EXTENSION_SUBMISSION_DEADLINE",
       "CHECKOUT_REQUEST",
+      "ADDING_WITNESSES",
     ];
     if (type === "reject") {
       return false;
@@ -1316,6 +1317,17 @@ const EvidenceModal = ({
        .popup-module.evidence-modal .info-value ol {
           list-style-type: decimal;
           margin-top: 0;
+        }
+        .confirm-submission-checkbox {
+          .checkbox-wrap {
+            .label {
+              margin-left: 32px;
+            }
+          .custom-checkbox {
+              height: 20px;
+              width: 20px;
+            }
+          }
         }
       .popup-module.evidence-modal .info-value li {
         margin: 0;
