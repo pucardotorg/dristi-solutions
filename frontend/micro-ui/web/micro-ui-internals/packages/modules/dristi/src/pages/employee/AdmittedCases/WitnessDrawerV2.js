@@ -859,7 +859,7 @@ const WitnessDrawerV2 = ({
             {
               fileStore: fileStoreId,
               documentType: action === "UPLOAD" ? "SIGNED" : "UNSIGNED",
-              additionalDetails: { name: `${t("WITNESS_DEPOSITION")}.pdf` },
+              additionalDetails: { name: `${t("WITNESS_DEPOSITION")} (${selectedWitnessType?.value || ""})` },
               tenantId,
             },
           ]
