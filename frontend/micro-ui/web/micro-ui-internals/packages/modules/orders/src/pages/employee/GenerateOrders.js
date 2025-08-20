@@ -605,6 +605,7 @@ const GenerateOrders = () => {
       criteria: {
         filingNumber,
         applicationNumber: "",
+        orderNumber,
         status: OrderWorkflowState.DRAFT_IN_PROGRESS,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
@@ -1651,6 +1652,9 @@ const GenerateOrders = () => {
 
   const getDefaultValue = useCallback(
     (index) => {
+
+      console.log(index, "index in getDefaultValue");
+      
       if (currentOrder?.orderType && !currentOrder?.additionalDetails?.formdata) {
         return {
           orderType: {

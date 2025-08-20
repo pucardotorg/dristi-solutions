@@ -38,7 +38,7 @@ const AddOrderTypeModal = ({
   handleCancel,
   handleSubmit,
   modifiedFormConfig,
-  defaultFormValue,
+  getDefaultValue,
   currentOrder,
   index,
   setFormErrors,
@@ -238,6 +238,9 @@ const AddOrderTypeModal = ({
     }
   };
 
+  console.log(modifiedFormConfig, "modifiedFormConfig");
+  
+
   return (
     <React.Fragment>
       <Modal
@@ -250,7 +253,7 @@ const AddOrderTypeModal = ({
           <div className="view-order order-type-form-modal">
             <FormComposerV2
               className={"generate-orders order-type-modal"}
-              defaultValues={defaultFormValue}
+              defaultValues={getDefaultValue(index)}
               config={modifiedFormConfig}
               fieldStyle={{ width: "100%" }}
               cardClassName={`order-type-form-composer`}
