@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
 import {
@@ -11,6 +11,7 @@ import {
   TextInput,
   ActionBar,
   SubmitBar,
+  Loader,
 } from "@egovernments/digit-ui-react-components";
 import { CustomAddIcon } from "../../../../dristi/src/icons/svgIndex";
 import ReactTooltip from "react-tooltip";
@@ -54,6 +55,9 @@ import {
   configsCreateOrderProclamation,
   configsCreateOrderAttachment,
 } from "../../configs/ordersCreateConfig";
+import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
+import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
+import CustomDatePickerV2 from "@egovernments/digit-ui-module-hearings/src/components/CustomDatePickerV2";
 
 const configKeys = {
   SECTION_202_CRPC: configsOrderSection202CRPC,
@@ -129,7 +133,16 @@ const GenerateOrdersV2 = () => {
   const setFormErrors = useRef([]);
   const [compositeOrderIndex, setCompositeOrderIndex] = useState(0);
   const [currentOrder, setCurrentOrder] = useState({});
-
+  const [caseData, setCaseData] = useState(undefined);
+  const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
+  const { orderNumber, filingNumber } = Digit.Hooks.useQueryParams();
+  const tenantId = Digit.ULBService.getCurrentTenantId();
+  const courtId = localStorage.getItem("courtId");
+  const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
+  const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
+  const [caseApiError, setCaseApiError] = useState(undefined);
+  // Flag to prevent multiple breadcrumb updates
+  const isBreadCrumbsParamsDataSet = useRef(false);
   const options = [
     { code: "COMPLAINANT", name: "Complainant" },
     { code: "COMPLAINANT_ADVOCATE", name: "Complainant's Advocate" },
@@ -184,14 +197,13 @@ const GenerateOrdersV2 = () => {
   };
 
   const nextDateOfHearing = {
-    label: "NEXT_DATE_OF_HEARING",
-    isMandatory: true,
+    type: "component",
+    component: "CustomDatePicker",
     key: "hearingDate",
-    schemaKeyPath: "orderDetails.hearingDate",
-    transformer: "date",
-    type: "date",
-    labelChildren: "OutlinedInfoIcon",
-    tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",
+    label: "Next Date of Hearing",
+    className: "order-date-picker",
+    isMandatory: true,
+    customStyleLabelField: { display: "flex", justifyContent: "space-between" },
     populators: {
       name: "hearingDate",
       error: "CORE_REQUIRED_FIELD_ERROR",
@@ -251,6 +263,70 @@ const GenerateOrdersV2 = () => {
     return currentOrder || {};
   }, [currentOrder]);
 
+  const fetchCaseDetails = async () => {
+    try {
+      setIsCaseDetailsLoading(true);
+      const caseData = await DRISTIService.searchCaseService(
+        {
+          criteria: [
+            {
+              filingNumber: filingNumber,
+              ...(courtId && { courtId }),
+            },
+          ],
+          tenantId,
+        },
+        {}
+      );
+      const caseId = caseData?.criteria?.[0]?.responseList?.[0]?.id;
+      setCaseData(caseData);
+      // Only update breadcrumb data if it's different from current and hasn't been set yet
+      if (!(caseIdFromBreadCrumbs === caseId && filingNumberFromBreadCrumbs === filingNumber) && !isBreadCrumbsParamsDataSet.current) {
+        setBreadCrumbsParamsData({
+          caseId,
+          filingNumber,
+        });
+        isBreadCrumbsParamsDataSet.current = true;
+      }
+    } catch (err) {
+      setCaseApiError(err);
+    } finally {
+      setIsCaseDetailsLoading(false);
+    }
+  };
+
+  // Fetch case details on component mount
+  useEffect(() => {
+    fetchCaseDetails();
+  }, [courtId]);
+
+  const caseDetails = useMemo(
+    () => ({
+      ...caseData?.criteria?.[0]?.responseList?.[0],
+    }),
+    [caseData]
+  );
+
+  const caseCourtId = useMemo(() => caseDetails?.courtId || localStorage.getItem("courtId"), [caseDetails]);
+
+  const { data: hearingDetails, isFetching: isHearingFetching, refetch: refetchHearing } = Digit.Hooks.hearings.useGetHearings(
+    {
+      hearing: { tenantId },
+      criteria: {
+        tenantID: tenantId,
+        filingNumber: filingNumber,
+        ...(caseCourtId && { courtId: caseCourtId }),
+      },
+    },
+    {},
+    filingNumber,
+    Boolean(filingNumber && caseCourtId)
+  );
+
+  const currentInProgressHearing = useMemo(() => hearingDetails?.HearingList?.find((list) => list?.status === "IN_PROGRESS"), [
+    hearingDetails?.HearingList,
+  ]);
+
   const handleEditOrder = () => {
     setEditOrderModal(true);
   };
@@ -264,6 +340,10 @@ const GenerateOrdersV2 = () => {
     setAddOrderModal(false);
   };
 
+  if (isCaseDetailsLoading || isHearingFetching) {
+    return <Loader />;
+  }
+
   return (
     <React.Fragment>
       <div className="generate-orders-v2-content">
@@ -272,57 +352,61 @@ const GenerateOrdersV2 = () => {
         <div className="generate-orders-v2-columns">
           {/* Left Column */}
           <div className="generate-orders-v2-column">
-            <LabelFieldPair style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "left" }}>
-              <CardHeader styles={{ fontSize: "16px", fontWeight: "bold" }}>Mark Who Is Present</CardHeader>
+            {currentInProgressHearing && (
+              <React.Fragment>
+                <LabelFieldPair style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "left" }}>
+                  <CardHeader styles={{ fontSize: "16px", fontWeight: "bold" }}>Mark Who Is Present</CardHeader>
 
-              <div className="checkbox-group">
-                {options?.map((option, index) => (
-                  <div className="checkbox-item" key={index}>
-                    <input
-                      id={`present-${option.code}`}
-                      type="checkbox"
-                      className="custom-checkbox"
-                      onChange={(e) => {
-                        let tempData = value;
-                        const isFound = value?.some((val) => val?.code === option?.code);
-                        if (isFound) tempData = value?.filter((val) => val?.code !== option?.code);
-                        else tempData.push(option);
-                        setValue(tempData);
-                      }}
-                      checked={value?.find((val) => val?.code === option?.code)}
-                      style={{ cursor: "pointer", width: "20px", height: "20px" }}
-                    />
-                    <label htmlFor={`present-${option.code}`}>{t(option?.name)}</label>
+                  <div className="checkbox-group">
+                    {options?.map((option, index) => (
+                      <div className="checkbox-item" key={index}>
+                        <input
+                          id={`present-${option.code}`}
+                          type="checkbox"
+                          className="custom-checkbox"
+                          onChange={(e) => {
+                            let tempData = value;
+                            const isFound = value?.some((val) => val?.code === option?.code);
+                            if (isFound) tempData = value?.filter((val) => val?.code !== option?.code);
+                            else tempData.push(option);
+                            setValue(tempData);
+                          }}
+                          checked={value?.find((val) => val?.code === option?.code)}
+                          style={{ cursor: "pointer", width: "20px", height: "20px" }}
+                        />
+                        <label htmlFor={`present-${option.code}`}>{t(option?.name)}</label>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </LabelFieldPair>
+                </LabelFieldPair>
 
-            <LabelFieldPair style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "left", marginTop: "12px" }}>
-              <CardHeader styles={{ fontSize: "16px", fontWeight: "bold" }}>Mark Who Is Absent</CardHeader>
+                <LabelFieldPair style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "left", marginTop: "12px" }}>
+                  <CardHeader styles={{ fontSize: "16px", fontWeight: "bold" }}>Mark Who Is Absent</CardHeader>
 
-              <div className="checkbox-group">
-                {options?.map((option, index) => (
-                  <div className="checkbox-item" key={index}>
-                    <input
-                      id={`present-${option.code}`}
-                      type="checkbox"
-                      className="custom-checkbox"
-                      onChange={(e) => {
-                        let tempData = value;
-                        const isFound = value?.some((val) => val?.code === option?.code);
-                        if (isFound) tempData = value?.filter((val) => val?.code !== option?.code);
-                        else tempData.push(option);
-                        setValue(tempData);
-                      }}
-                      checked={value?.find((val) => val?.code === option?.code)}
-                      style={{ cursor: "pointer", width: "20px", height: "20px" }}
-                    />
-                    <label htmlFor={`present-${option.code}`}>{t(option?.name)}</label>
+                  <div className="checkbox-group">
+                    {options?.map((option, index) => (
+                      <div className="checkbox-item" key={index}>
+                        <input
+                          id={`present-${option.code}`}
+                          type="checkbox"
+                          className="custom-checkbox"
+                          onChange={(e) => {
+                            let tempData = value;
+                            const isFound = value?.some((val) => val?.code === option?.code);
+                            if (isFound) tempData = value?.filter((val) => val?.code !== option?.code);
+                            else tempData.push(option);
+                            setValue(tempData);
+                          }}
+                          checked={value?.find((val) => val?.code === option?.code)}
+                          style={{ cursor: "pointer", width: "20px", height: "20px" }}
+                        />
+                        <label htmlFor={`present-${option.code}`}>{t(option?.name)}</label>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </LabelFieldPair>
+                </LabelFieldPair>
+              </React.Fragment>
+            )}
 
             <LabelFieldPair style={{ alignItems: "flex-start", fontSize: "16px", fontWeight: 400 }}>
               <CardLabel style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px" }}>{t(orderTypeConfig?.label)}</CardLabel>
@@ -350,89 +434,88 @@ const GenerateOrdersV2 = () => {
               </div>
             </LabelFieldPair>
 
-            <div className="checkbox-item">
-              <input
-                id="skip-scheduling"
-                type="checkbox"
-                className="custom-checkbox"
-                // onChange={() => {
-                //   setChecked(!checked);
-                //   colData?.updateOrderFunc(rowData, !checked);
-                // }}
-                // checked={checked}
-                style={{ cursor: "pointer", width: "20px", height: "20px" }}
-              />
-              <label htmlFor="skip-scheduling">Skip Scheduling Next Hearing</label>
-            </div>
+            {currentInProgressHearing && (
+              <React.Fragment>
+                <div className="checkbox-item">
+                  <input
+                    id="skip-scheduling"
+                    type="checkbox"
+                    className="custom-checkbox"
+                    // onChange={() => {
+                    //   setChecked(!checked);
+                    //   colData?.updateOrderFunc(rowData, !checked);
+                    // }}
+                    // checked={checked}
+                    style={{ cursor: "pointer", width: "20px", height: "20px" }}
+                  />
+                  <label htmlFor="skip-scheduling">Skip Scheduling Next Hearing</label>
+                </div>
 
-            <LabelFieldPair style={{ alignItems: "flex-start", fontSize: "16px", fontWeight: 400 }}>
-              <CardLabel style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px" }}>{t(purposeOfHearingConfig?.label)}</CardLabel>
-              <CustomDropdown
-                t={t}
-                // onChange={(e) => {
-                //   setModeOfPayment(e);
-                //   setAdditionalDetails("");
-                // }}
-                // value={modeOfPayment}
-                config={purposeOfHearingConfig?.populators}
-              ></CustomDropdown>
-            </LabelFieldPair>
+                <LabelFieldPair style={{ alignItems: "flex-start", fontSize: "16px", fontWeight: 400 }}>
+                  <CardLabel style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px" }}>{t(purposeOfHearingConfig?.label)}</CardLabel>
+                  <CustomDropdown
+                    t={t}
+                    // onChange={(e) => {
+                    //   setModeOfPayment(e);
+                    //   setAdditionalDetails("");
+                    // }}
+                    // value={modeOfPayment}
+                    config={purposeOfHearingConfig?.populators}
+                  ></CustomDropdown>
+                </LabelFieldPair>
 
-            <LabelFieldPair style={{ alignItems: "flex-start", fontSize: "16px", fontWeight: 400 }}>
-              <CardLabel style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px" }}>Next Date of Hearing</CardLabel>
-              <TextInput
-                className="field desktop-w-full"
-                key={nextDateOfHearing.key}
-                type={"date"}
-                // value={formData && formData[config.key] ? formData[config.key][input.name] : undefined}
-                // onChange={(e) => {
-                //   setValue(e.target.value, nextDateOfHearing.key, nextDateOfHearing);
-                // }}
-                min={new Date().toISOString().split("T")[0]}
-                // disable={input.isDisabled}
-                // textInputStyle={input?.textInputStyle}
-                style={{ paddingRight: "3px" }}
-                defaultValue={undefined}
-                // errorStyle={errors?.[input.name]}
-                // customIcon={input?.customIcon}
-                // {...input.validation}
-              />
-            </LabelFieldPair>
+                <LabelFieldPair className={`case-label-field-pair`}>
+                  <CardLabel className="case-input-label">Next Date of Hearing</CardLabel>
+                  <CustomDatePickerV2
+                    t={t}
+                    config={nextDateOfHearing}
+                    // formData={orderData}
+                    onDateChange={(date) => {
+                      // setOrderData((orderData) => ({ ...orderData, hearingDate: new Date(date).setHours(0, 0, 0, 0) }));
+                      // setOrderError((orderError) => ({ ...orderError, hearingDate: null }));
+                    }}
+                  />
+                  {/* {orderError?.hearingDate && <CardLabelError style={{ margin: 0, padding: 0 }}> {t(orderError?.hearingDate)} </CardLabelError>} */}
+                </LabelFieldPair>
 
-            <div className="checkbox-item">
-              <input
-                id="bail-bond-required"
-                type="checkbox"
-                className="custom-checkbox"
-                // onChange={() => {
-                //   setChecked(!checked);
-                //   colData?.updateOrderFunc(rowData, !checked);
-                // }}
-                // checked={checked}
-                style={{ cursor: "pointer", width: "20px", height: "20px" }}
-              />
-              <label htmlFor="bail-bond-required">Bail Bond Required</label>
-            </div>
+                <div className="checkbox-item">
+                  <input
+                    id="bail-bond-required"
+                    type="checkbox"
+                    className="custom-checkbox"
+                    // onChange={() => {
+                    //   setChecked(!checked);
+                    //   colData?.updateOrderFunc(rowData, !checked);
+                    // }}
+                    // checked={checked}
+                    style={{ cursor: "pointer", width: "20px", height: "20px" }}
+                  />
+                  <label htmlFor="bail-bond-required">Bail Bond Required</label>
+                </div>
+              </React.Fragment>
+            )}
           </div>
 
           {/* Right Column */}
           <div className="generate-orders-v2-column">
             <div className="section-header">Order Text</div>
-            <div>
-              <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>Attendance</div>
-              <textarea
-                // value={formdata?.[config.key]?.[input.name]}
-                // onChange={(data) => {
-                //   handleChange(data, input);
-                // }}
-                rows={3}
-                maxLength={1000}
-                className={`custom-textarea-style`}
-                // placeholder={t(input?.placeholder)}
-                // disabled={config.disable}
-              ></textarea>
-              {/* {errors[config.key] && <CardLabelError style={input?.errorStyle}>{t(errors[config.key].msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>} */}
-            </div>
+            {currentInProgressHearing && (
+              <div>
+                <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>Attendance</div>
+                <textarea
+                  // value={formdata?.[config.key]?.[input.name]}
+                  // onChange={(data) => {
+                  //   handleChange(data, input);
+                  // }}
+                  rows={3}
+                  maxLength={1000}
+                  className={`custom-textarea-style`}
+                  // placeholder={t(input?.placeholder)}
+                  // disabled={config.disable}
+                ></textarea>
+                {/* {errors[config.key] && <CardLabelError style={input?.errorStyle}>{t(errors[config.key].msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>} */}
+              </div>
+            )}
 
             <div>
               <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>Item Text</div>
@@ -441,7 +524,7 @@ const GenerateOrdersV2 = () => {
                 // onChange={(data) => {
                 //   handleChange(data, input);
                 // }}
-                rows={8}
+                rows={currentInProgressHearing ? 8 : 20}
                 maxLength={1000}
                 className={`custom-textarea-style`}
                 // placeholder={t(input?.placeholder)}
@@ -450,21 +533,23 @@ const GenerateOrdersV2 = () => {
               {/* {errors[config.key] && <CardLabelError style={input?.errorStyle}>{t(errors[config.key].msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>} */}
             </div>
 
-            <div>
-              <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>Next Hearing</div>
-              <textarea
-                // value={formdata?.[config.key]?.[input.name]}
-                // onChange={(data) => {
-                //   handleChange(data, input);
-                // }}
-                rows={3}
-                maxLength={1000}
-                className={`custom-textarea-style`}
-                // placeholder={t(input?.placeholder)}
-                // disabled={config.disable}
-              ></textarea>
-              {/* {errors[config.key] && <CardLabelError style={input?.errorStyle}>{t(errors[config.key].msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>} */}
-            </div>
+            {currentInProgressHearing && (
+              <div>
+                <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>Next Hearing</div>
+                <textarea
+                  // value={formdata?.[config.key]?.[input.name]}
+                  // onChange={(data) => {
+                  //   handleChange(data, input);
+                  // }}
+                  rows={3}
+                  maxLength={1000}
+                  className={`custom-textarea-style`}
+                  // placeholder={t(input?.placeholder)}
+                  // disabled={config.disable}
+                ></textarea>
+                {/* {errors[config.key] && <CardLabelError style={input?.errorStyle}>{t(errors[config.key].msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>} */}
+              </div>
+            )}
           </div>
         </div>
         <ActionBar
@@ -481,7 +566,7 @@ const GenerateOrdersV2 = () => {
         >
           <div style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
             <Button
-              label={t("EDIT_A_CASE")}
+              label={t("SAVE_AS_DRAFT")}
               variation={"secondary"}
               // onButtonClick={() => {
               //   setEditCaseModal(true);
@@ -497,7 +582,7 @@ const GenerateOrdersV2 = () => {
               }}
             />
             <SubmitBar
-              label={t("CS_GENERATE_RECEIPT")}
+              label={t("PREVIEW_ORDER_PDF")}
               // disabled={
               //   Object.keys(!modeOfPayment ? {} : modeOfPayment).length === 0 ||
               //   (["CHEQUE", "DD"].includes(modeOfPayment?.code) ? additionDetails.length !== 6 : false) ||

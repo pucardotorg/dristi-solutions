@@ -23,6 +23,40 @@ const CustomDatePickerV2 = ({ t, config, formData, onSelect, errors, onDateChang
       return () => clearTimeout(timer);
     }
   }, [showErrorToast]);
+  
+  // Add event listener to handle clicks outside the modal
+  useEffect(() => {
+    // Function to handle clicks on the popup-wrap element (modal backdrop)
+    const handleBackdropClick = (event) => {
+      // Check if the click is directly on the popup-wrap element (the overlay)
+      // and not on any of its children
+      if (event.target.className && 
+          typeof event.target.className === 'string' && 
+          event.target.className.includes('popup-wrap') && 
+          event.target === event.currentTarget) {
+        setShowModal(false);
+      }
+    };
+    
+    // Add event listener when modal is shown
+    if (showModal) {
+      // Find the popup-wrap element after a short delay to ensure it's in the DOM
+      setTimeout(() => {
+        const popupWrapElement = document.querySelector('.popup-wrap');
+        if (popupWrapElement) {
+          popupWrapElement.addEventListener('click', handleBackdropClick);
+        }
+      }, 100);
+    }
+    
+    // Clean up function
+    return () => {
+      const popupWrapElement = document.querySelector('.popup-wrap');
+      if (popupWrapElement) {
+        popupWrapElement.removeEventListener('click', handleBackdropClick);
+      }
+    };
+  }, [showModal]);
 
   const closeToast = () => {
     setShowErrorToast(null);
