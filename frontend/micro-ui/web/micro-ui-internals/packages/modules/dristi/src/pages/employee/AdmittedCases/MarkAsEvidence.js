@@ -780,7 +780,7 @@ const MarkAsEvidence = ({
         ...evidenceDetails,
         additionalDetails: {
           ...(evidenceDetails?.additionalDetails || {}),
-          businessOfDay: businessOfDay,
+          botd: businessOfDay,
         },
       };
 
