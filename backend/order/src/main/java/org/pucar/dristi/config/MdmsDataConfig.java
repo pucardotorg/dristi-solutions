@@ -98,9 +98,9 @@ public class MdmsDataConfig {
                 ItemTextMdms itemTextMdms = objectMapper.convertValue(o, ItemTextMdms.class);
                 itemTextMdmsData.add(itemTextMdms);
             }
-            log.info("NonRepeatingOrdersMdmsData ::{}", nonRepeatingOrdersMdmsData);
+            log.info("ItemTextMdmsData ::{}", itemTextMdmsData);
         } catch (Exception e) {
-            log.error("Unable to create NonRepeatingOrdersMdmsData :: {}", e.getMessage());
+            log.error("Unable to create ItemTextMdmsData :: {}", e.getMessage());
         }
     }
 }
