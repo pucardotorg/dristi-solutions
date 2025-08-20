@@ -827,7 +827,7 @@ export const UICustomizations = {
         case "CASE_TITLE":
           return <OrderName rowData={row} colData={column} value={value} />;
         case "DOCUMENT_HEADING":
-          return t(value) || "";
+          return row?.businessObject?.artifactDetails?.additionalDetails?.formdata?.documentTitle || t(value) || "";
         case "SELECT":
           return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
         case "EVIDENCE_NUMBER":
