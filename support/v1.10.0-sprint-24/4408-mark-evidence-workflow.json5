@@ -52,7 +52,7 @@
                 "action": "SUBMIT_BULK_E-SIGN",
                 "nextState": "PENDING_BULK_E-SIGN",
                 "roles": [
-                  "EVIDENCE_APPROVER"
+                  "EVIDENCE_CREATOR"
                 ]
               }
             ]
