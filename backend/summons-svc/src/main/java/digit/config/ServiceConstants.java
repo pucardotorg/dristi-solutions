@@ -84,7 +84,7 @@ public class ServiceConstants {
     public static final String SUMMON_TO_ACCUSED="Summons to an accused 138";
     public static final String SUMMON_TO_WITNESS="Summons to witness";
     public static final String WARRANT_TO_ACCUSED="Warrant of arrest of accused 138";
-    public static final String PROCLAMATION_DOC_SUB_TYPE="Proclamation requiring the apperance of a person accused";
+    public static final String PROCLAMATION_DOC_SUB_TYPE="Proclamation requiring the appearance of a person accused";
     public static final String ATTACHMENT_DOC_SUB_TYPE="Order authorising an attachment by the district magistrate or collector";
     public static final String POLICE_REPORT = "POLICE_REPORT";
     public static final String DIRECT = "DIRECT";

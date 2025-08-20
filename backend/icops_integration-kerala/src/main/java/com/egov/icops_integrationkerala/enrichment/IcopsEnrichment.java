@@ -78,7 +78,7 @@ public class IcopsEnrichment {
                     break;
                 case "PROCLAMATION":
                     docSubType = Optional.ofNullable(taskDetails.getProclamationDetails().getDocSubType())
-                            .orElse("Proclamation requiring the apperance of a person accused");
+                            .orElse("Proclamation requiring the appearance of a person accused");
                     issueDate = taskDetails.getProclamationDetails().getIssueDate();
                     break;
                 case "ATTACHMENT":
