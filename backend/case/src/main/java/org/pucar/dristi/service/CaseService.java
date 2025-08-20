@@ -5637,7 +5637,7 @@ public class CaseService {
             }
             CourtCase courtCase = encryptionDecryptionUtil.decryptObject(courtCaseList.get(0).getResponseList().get(0), config.getCaseDecryptSelf(), CourtCase.class, body.getRequestInfo());
             validator.validateWitnessRequest(body, courtCase);
-            updateCaseAdditionalDetails(body.getWitnessDetails(), courtCase);
+            updateWitnessDetailsInCase(body.getWitnessDetails(), courtCase);
             CourtCase caseObj = encryptionDecryptionUtil.encryptObject(courtCase, config.getCourtCaseEncrypt(), CourtCase.class);
             updateCourtCaseInRedis(body.getTenantId(), caseObj);
             producer.push(config.getCaseUpdateTopic(), CaseRequest.builder().requestInfo(body.getRequestInfo()).cases(caseObj).build());
@@ -5649,6 +5649,26 @@ public class CaseService {
         }
     }
 
+    private void updateWitnessDetailsInCase(List<WitnessDetails> witnessDetails, CourtCase courtCase) {
+        Map<String, WitnessDetails> mergedMap = new LinkedHashMap<>(); // preserves order
+        List<WitnessDetails> existing = Optional.ofNullable(courtCase.getWitnessDetails()).orElse(Collections.emptyList());
+        List<WitnessDetails> updates = Optional.ofNullable(witnessDetails).orElse(Collections.emptyList());
+        for (WitnessDetails w : existing) {
+            if (w != null && w.getUniqueId() != null) {
+                mergedMap.put(w.getUniqueId(), w);
+            }
+        }
+
+        for (WitnessDetails w : updates) {
+            if (w != null && w.getUniqueId() != null) {
+                mergedMap.put(w.getUniqueId(), w);  // replaces the element if uniqueId already exists
+            }
+        }
+
+        courtCase.setWitnessDetails(new ArrayList<>(mergedMap.values()));
+    }
+
+    // old implementation, not in use now
     private void updateCaseAdditionalDetails(List<WitnessDetails> updatedWitnessDetails, CourtCase courtCase) {
         if (updatedWitnessDetails == null || courtCase == null) {
             log.warn("WitnessDetails or CourtCase is null, skipping enrichment.");

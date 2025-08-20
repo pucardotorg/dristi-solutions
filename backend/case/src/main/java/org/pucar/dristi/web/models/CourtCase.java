@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.egov.common.contract.models.AuditDetails;
+import org.pucar.dristi.web.models.v2.WitnessDetails;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.ArrayList;
@@ -174,4 +175,7 @@ public class CourtCase {
     @Valid
     private List<POAHolder> poaHolders = new ArrayList<>();
 
+    @JsonProperty("witnessDetails")
+    @Valid
+    private List<WitnessDetails> witnessDetails = null;
 }
