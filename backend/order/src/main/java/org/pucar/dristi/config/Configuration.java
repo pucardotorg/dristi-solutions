@@ -130,6 +130,9 @@ public class Configuration {
     @Value("${egov.mdms.order.nonrepeating.composite.orders}")
     private String mdmsNonRepeatingCompositeOrders;
 
+    @Value("${egov.mdms.itemtext}")
+    private String mdmsItemText;
+
     // Filestore Config
     @Value("${egov.filestore.host}")
     private String fileStoreHost;
@@ -221,4 +224,10 @@ public class Configuration {
 
     @Value("${egov.tenantId}")
     private String tenantId;
+
+    @Value("${dristi.application.host}")
+    private String applicationHost;
+
+    @Value("${dristi.application.search.endpoint}")
+    private String applicationSearchEndPoint;
 }

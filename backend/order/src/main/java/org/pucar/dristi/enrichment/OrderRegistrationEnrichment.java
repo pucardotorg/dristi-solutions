@@ -11,18 +11,27 @@ import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.config.MdmsDataConfig;
+import org.pucar.dristi.util.ApplicationUtil;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.IdgenUtil;
-import org.pucar.dristi.web.models.CaseCriteria;
-import org.pucar.dristi.web.models.CaseSearchRequest;
-import org.pucar.dristi.web.models.Order;
-import org.pucar.dristi.web.models.CompositeItem;
-import org.pucar.dristi.web.models.OrderRequest;
+import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.application.Application;
+import org.pucar.dristi.web.models.application.ApplicationCriteria;
+import org.pucar.dristi.web.models.application.ApplicationSearchRequest;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
+import static org.pucar.dristi.config.ServiceConstants.COMPOSITE;
 import static org.pucar.dristi.config.ServiceConstants.ENRICHMENT_EXCEPTION;
 
 @Component
@@ -33,12 +42,16 @@ public class OrderRegistrationEnrichment {
     private Configuration configuration;
     private ObjectMapper objectMapper;
     private CaseUtil caseUtil;
+    private final MdmsDataConfig mdmsDataConfig;
+    private final ApplicationUtil applicationUtil;
 
-    public OrderRegistrationEnrichment(IdgenUtil idgenUtil, Configuration configuration, ObjectMapper objectMapper, CaseUtil caseUtil) {
+    public OrderRegistrationEnrichment(IdgenUtil idgenUtil, Configuration configuration, ObjectMapper objectMapper, CaseUtil caseUtil, MdmsDataConfig mdmsDataConfig, ApplicationUtil applicationUtil) {
         this.idgenUtil = idgenUtil;
         this.configuration = configuration;
         this.objectMapper = objectMapper;
         this.caseUtil = caseUtil;
+        this.mdmsDataConfig = mdmsDataConfig;
+        this.applicationUtil = applicationUtil;
     }
 
     public void enrichOrderRegistration(OrderRequest orderRequest) {
@@ -147,4 +160,262 @@ public class OrderRegistrationEnrichment {
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in order enrichment service during add item: " + e.getMessage());
         }
     }
+
+    public void enrichItemText(OrderRequest orderRequest) {
+        try {
+            Order order = orderRequest.getOrder();
+            RequestInfo requestInfo = orderRequest.getRequestInfo();
+
+            if (COMPOSITE.equalsIgnoreCase(order.getOrderType()) && order.getCompositeItems() != null) {
+                ArrayNode arrayNode = objectMapper.convertValue(order.getCompositeItems(), ArrayNode.class);
+                if (arrayNode != null && !arrayNode.isEmpty()) {
+                    List<String> itemText = new ArrayList<>();
+                    for (int i = 0; i < arrayNode.size(); i++) {
+                        ObjectNode itemNode = (ObjectNode) arrayNode.get(i);
+
+                        if (itemNode.has("orderType")) {
+                            String orderType = itemNode.get("orderType").asText();
+
+                            if (itemNode.has("orderSchema")) {
+                                JsonNode orderSchemaNode = itemNode.get("orderSchema");
+                                if (orderSchemaNode.has("orderDetails")) {
+                                    JsonNode orderDetailsNode = orderSchemaNode.get("orderDetails");
+                                    String itemTextMdms = getItemTextByOrderType(orderType, orderDetailsNode, order, requestInfo);
+                                    if (itemTextMdms != null) {
+                                        itemText.add(itemTextMdms);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    order.setItemText(String.join(" ", itemText));
+                }
+            } else {
+                JsonNode orderDetailsNode = objectMapper.convertValue(order.getOrderDetails(), JsonNode.class);
+                order.setItemText(getItemTextByOrderType(order.getOrderType(), orderDetailsNode, order, requestInfo));
+            }
+        } catch (Exception e) {
+            log.error("Error enriching composite order item :: {}", e.toString());
+            throw new CustomException(ENRICHMENT_EXCEPTION,
+                    "Error in order enrichment service during add item: " + e.getMessage());
+        }
+    }
+
+    public String getItemTextByOrderType(String orderType, JsonNode orderDetailsNode, Order order, RequestInfo requestInfo) {
+
+        List<ItemTextMdms> matches = mdmsDataConfig.getItemTextMdmsData().stream()
+                .filter(mdms -> mdms.getOrderType().equalsIgnoreCase(orderType))
+                .toList();
+
+        if (matches.size() == 1) {
+            String text = matches.get(0).getItemText();
+            if ("ADVOCATE_REPLACEMENT_APPROVAL".equalsIgnoreCase(orderType)) {
+
+                String replaceAdvocateStatus = orderDetailsNode.path("replaceAdvocateStatus").asText();
+
+                if ("GRANT".equalsIgnoreCase(replaceAdvocateStatus)) {
+                    text = text.replace("[GRANTED/REJECTED]", "GRANTED");
+                } else {
+                    text = text.replace("[GRANTED/REJECTED]", "REJECTED");
+                }
+            }
+            if ("APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE".equalsIgnoreCase(orderType)) {
+                String applicationGrantedRejected = orderDetailsNode.path("applicationGrantedRejected").asText();
+
+                if ("GRANTED".equalsIgnoreCase(applicationGrantedRejected)) {
+                    text = text.replace("[Approved]/[Rejected]", "Approved");
+                } else {
+                    text = text.replace("[Approved]/[Rejected]", "Rejected");
+                }
+            }
+            if ("TAKE_COGNIZANCE".equalsIgnoreCase(orderType)) {
+                CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, order);
+                JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
+
+                String caseNumber = "";
+                if (caseDetails != null) {
+                    if (caseDetails.hasNonNull("courtCaseNumber")) {
+                        caseNumber = caseDetails.get("courtCaseNumber").asText("");
+                    }
+
+                    if (caseNumber.isEmpty() && caseDetails.hasNonNull("cmpNumber")) {
+                        caseNumber = caseDetails.get("cmpNumber").asText("");
+                    }
+                }
+                text = text.replace("[ST No.]", caseNumber);
+            }
+            if ("NOTICE".equalsIgnoreCase(orderType)) {
+                JsonNode partiesNode = orderDetailsNode.path("parties");
+
+                List<String> partyNames = new ArrayList<>();
+                if (partiesNode != null && partiesNode.isArray()) {
+                    for (JsonNode party : partiesNode) {
+                        String partyName = party.path("partyName").asText();
+                        if (partyName != null && !partyName.isEmpty()) {
+                            partyNames.add(partyName);
+                        }
+                    }
+                }
+
+                String partiesString = String.join(", ", partyNames);
+                text = text.replace("[name]", partiesString);
+            }
+            if ("WARRANT".equalsIgnoreCase(orderType)) {
+                JsonNode partiesNode = orderDetailsNode.path("parties");
+                String type = orderDetailsNode.path("warrantType").asText();
+                text = text.replace("[type]", type);
+
+                List<String> partyNames = new ArrayList<>();
+                if (partiesNode != null && partiesNode.isArray()) {
+                    for (JsonNode party : partiesNode) {
+                        String partyName = party.path("partyName").asText();
+                        if (partyName != null && !partyName.isEmpty()) {
+                            partyNames.add(partyName);
+                        }
+                    }
+                }
+
+                String partiesString = String.join(", ", partyNames);
+                text = text.replace("[name]", partiesString);
+            }
+            if ("SUMMONS".equalsIgnoreCase(orderType)) {
+                JsonNode partiesNode = orderDetailsNode.path("parties");
+
+                List<String> partyNames = new ArrayList<>();
+                if (partiesNode != null && partiesNode.isArray()) {
+                    for (JsonNode party : partiesNode) {
+                        String partyName = party.path("partyName").asText();
+                        if (partyName != null && !partyName.isEmpty()) {
+                            partyNames.add(partyName);
+                        }
+                    }
+                }
+
+                String partiesString = String.join(", ", partyNames);
+                text = text.replace("[name]", partiesString);
+            }
+            if ("APPROVE_VOLUNTARY_SUBMISSIONS".equalsIgnoreCase(orderType)) {
+                ApplicationCriteria criteria = ApplicationCriteria.builder()
+                        .tenantId(order.getTenantId())
+                        .applicationNumber(order.getApplicationNumber().get(0))
+                        .build();
+                ApplicationSearchRequest applicationSearchRequest = ApplicationSearchRequest.builder().build();
+                applicationSearchRequest.setCriteria(criteria);
+                applicationSearchRequest.setRequestInfo(requestInfo);
+
+                List<Application> application = applicationUtil.searchApplications(applicationSearchRequest);
+                if (application != null && !application.isEmpty()) {
+                    JsonNode applicationDetailsNode = objectMapper.convertValue(order.getOrderDetails(), JsonNode.class);
+                    if (applicationDetailsNode != null && applicationDetailsNode.has("applicationTitle")) {
+                        String applicationTitle = applicationDetailsNode.path("applicationTitle").asText();
+                        text = text.replace("[title of application]", applicationTitle);
+                    }
+                }
+            }
+            if ("REJECT_VOLUNTARY_SUBMISSIONS".equalsIgnoreCase(orderType)) {
+                ApplicationCriteria criteria = ApplicationCriteria.builder()
+                        .tenantId(order.getTenantId())
+                        .applicationNumber(order.getApplicationNumber().get(0))
+                        .build();
+                ApplicationSearchRequest applicationSearchRequest = ApplicationSearchRequest.builder().build();
+                applicationSearchRequest.setCriteria(criteria);
+                applicationSearchRequest.setRequestInfo(requestInfo);
+
+                List<Application> application = applicationUtil.searchApplications(applicationSearchRequest);
+                if (application != null && !application.isEmpty()) {
+                    JsonNode applicationDetailsNode = objectMapper.convertValue(order.getOrderDetails(), JsonNode.class);
+                    if (applicationDetailsNode != null && applicationDetailsNode.has("applicationTitle")) {
+                        String applicationTitle = applicationDetailsNode.path("applicationTitle").asText();
+                        text = text.replace("[title of application]", applicationTitle);
+                    }
+                }
+            }
+            if ("REFERRAL_CASE_TO_ADR".equalsIgnoreCase(orderType)) {
+                int adrMode = orderDetailsNode.path("documentType").path("value").asInt();
+                String modeOfAdr = "";
+                if (adrMode == 1) {
+                    modeOfAdr = "ARBITRATION";
+                } else if (adrMode == 2) {
+                    modeOfAdr = "MEDIATION";
+                } else if (adrMode == 3) {
+                    modeOfAdr = "CONCILIATION";
+                }
+                text = text.replace("[mode of ADR]", modeOfAdr);
+            }
+            if ("MANDATORY_SUBMISSIONS_RESPONSES".equalsIgnoreCase(orderType)) {
+                String documentType = orderDetailsNode.path("documentType").path("value").asText();
+                text = text.replace("[Type]", documentType);
+
+                JsonNode partyArray = orderDetailsNode.path("partyDetails").path("partyToMakeSubmission");
+
+                String partyToMakeSubmission = "";
+                if (partyArray != null && partyArray.isArray() && !partyArray.isEmpty()) {
+                    partyToMakeSubmission = StreamSupport.stream(partyArray.spliterator(), false)
+                            .map(JsonNode::asText)
+                            .collect(Collectors.joining(", "));
+                }
+                text = text.replace("[party to make submission]", partyToMakeSubmission);
+
+                long submissionMillis = orderDetailsNode.path("dates").path("submissionDeadlineDate").asLong();
+                LocalDate submissionDate = Instant.ofEpochMilli(submissionMillis)
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate();
+
+                // Current date
+                LocalDate today = LocalDate.now();
+
+                // Difference in days
+                long daysRemaining = Duration.between(today.atStartOfDay(), submissionDate.atStartOfDay()).toDays();
+                text = text.replace("[days]", Long.toString(daysRemaining));
+
+            }
+
+            return text;
+        } else if (matches.size() > 1) {
+            for (ItemTextMdms mdms : matches) {
+                if (mdms.getAction() != null && "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE".equalsIgnoreCase(mdms.getOrderType())) {
+                    String applicationStatus = orderDetailsNode.path("applicationStatus").asText();
+                    String action = "APPROVED".equalsIgnoreCase(applicationStatus) ? "APPROVE" : "REJECT";
+
+                    if (action.equalsIgnoreCase(mdms.getAction())) {
+                        // Document Name
+                        String documentName = orderDetailsNode.path("documentName").asText("");
+                        String text = mdms.getItemText().replace("[type]", documentName);
+
+                        if (action.equalsIgnoreCase("APPROVE")) {
+                            {
+                                // New Submission Date
+                                long submissionMillis = orderDetailsNode.path("newSubmissionDate").asLong(0);
+                                LocalDate newSubmissionDate = null;
+                                long dueDays = 0;
+                                if (submissionMillis > 0) {
+                                    newSubmissionDate = Instant.ofEpochMilli(submissionMillis)
+                                            .atZone(ZoneId.systemDefault())
+                                            .toLocalDate();
+
+                                    LocalDate today = LocalDate.now();
+                                    dueDays = Duration.between(today.atStartOfDay(), newSubmissionDate.atStartOfDay()).toDays();
+                                }
+
+                                text = text.replace("[Date]", Long.toString(dueDays));
+
+                                JsonNode partiesArray = orderDetailsNode.path("parties");
+                                String partyNames = "";
+                                if (partiesArray != null && partiesArray.isArray() && !partiesArray.isEmpty()) {
+                                    partyNames = StreamSupport.stream(partiesArray.spliterator(), false)
+                                            .map(node -> node.path("partyName").asText())
+                                            .collect(Collectors.joining(", "));
+                                }
+
+                                text = text.replace("[name of party]", partyNames);
+                            }
+                            return text;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
 }

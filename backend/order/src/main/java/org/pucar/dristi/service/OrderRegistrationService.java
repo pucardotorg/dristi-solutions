@@ -73,6 +73,7 @@ public class OrderRegistrationService {
 
             enrichmentUtil.enrichOrderRegistration(body);
             enrichmentUtil.enrichCompositeOrderItemIdOnAddItem(body);
+            enrichmentUtil.enrichItemText(body);
 
             workflowUpdate(body);
 
@@ -115,7 +116,7 @@ public class OrderRegistrationService {
             // Enrich application upon update
             enrichmentUtil.enrichOrderRegistrationUponUpdate(body);
             enrichmentUtil.enrichCompositeOrderItemIdOnAddItem(body);
-
+            enrichmentUtil.enrichItemText(body);
 
             workflowUpdate(body);
 
@@ -186,6 +187,7 @@ public class OrderRegistrationService {
             // Enrich application upon update
             enrichmentUtil.enrichOrderRegistrationUponUpdate(body);
             enrichmentUtil.enrichCompositeOrderItemIdOnAddItem(body);
+            enrichmentUtil.enrichItemText(body);
 
             WorkflowObject workflow = body.getOrder().getWorkflow();
             workflow.setAction(SAVE_DRAFT);
@@ -215,6 +217,7 @@ public class OrderRegistrationService {
             orderRequest.setRequestInfo(body.getRequestInfo());
             orderRequest.setOrder(order);
             enrichmentUtil.enrichAuditDetails(orderRequest);
+            enrichmentUtil.enrichItemText(orderRequest);
 
             producer.push(config.getUpdateOrderKafkaTopic(), orderRequest);
 

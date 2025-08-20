@@ -100,6 +100,18 @@ public class Order {
     @JsonProperty("compositeItems")
     private Object compositeItems = null;
 
+    @JsonProperty("attendance")
+    private String attendance = null;
+
+    @JsonProperty("itemText")
+    private String itemText = null;
+
+    @JsonProperty("purposeOfNextHearing")
+    private String purposeOfNextHearing = null;
+
+    @JsonProperty("nextHearingDate")
+    private Long nextHearingDate = null;
+
     @JsonProperty("orderTitle")
     @NotNull
     private String orderTitle = null;

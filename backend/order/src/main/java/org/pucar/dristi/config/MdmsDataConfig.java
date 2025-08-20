@@ -9,6 +9,7 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.mdms.model.MdmsResponse;
 import org.pucar.dristi.util.MdmsUtil;
 import org.pucar.dristi.web.models.CompositeOrderMdms;
+import org.pucar.dristi.web.models.ItemTextMdms;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +30,9 @@ public class MdmsDataConfig {
     @Getter
     private List<CompositeOrderMdms> nonRepeatingOrdersMdmsData;
 
+    @Getter
+    private List<ItemTextMdms> itemTextMdmsData;
+
     @Autowired
     public MdmsDataConfig(MdmsUtil mdmsUtil, ObjectMapper objectMapper, Configuration configuration) {
         this.mdmsUtil = mdmsUtil;
@@ -40,6 +44,7 @@ public class MdmsDataConfig {
     public void loadConfigData(){
         loadNonOverlappingMdmsData();
         loadNonRepeatingOrdersMdmsData();
+        loadItemTextMdmsData();
     }
 
     private void loadNonOverlappingMdmsData(){
@@ -73,6 +78,25 @@ public class MdmsDataConfig {
             for (Object o : mdmsData) {
                 CompositeOrderMdms compositeOrderMdmsMdmsData = objectMapper.convertValue(o, CompositeOrderMdms.class);
                 nonRepeatingOrdersMdmsData.add(compositeOrderMdmsMdmsData);
+            }
+            log.info("NonRepeatingOrdersMdmsData ::{}", nonRepeatingOrdersMdmsData);
+        } catch (Exception e) {
+            log.error("Unable to create NonRepeatingOrdersMdmsData :: {}", e.getMessage());
+        }
+    }
+
+    private void loadItemTextMdmsData() {
+        try {
+            RequestInfo requestInfo = RequestInfo.builder().build();
+            String mdmsDataResponse = mdmsUtil.fetchMdmsData(requestInfo, configuration.getTenantId(), configuration.getOrderModule(), List.of(configuration.getMdmsItemText()));
+            MdmsResponse mdmsResponse = objectMapper.readValue(mdmsDataResponse, MdmsResponse.class);
+            JSONArray mdmsData = mdmsResponse.getMdmsRes().get(configuration.getOrderModule()).get(configuration.getMdmsItemText());
+
+            itemTextMdmsData = new ArrayList<>();
+
+            for (Object o : mdmsData) {
+                ItemTextMdms itemTextMdms = objectMapper.convertValue(o, ItemTextMdms.class);
+                itemTextMdmsData.add(itemTextMdms);
             }
             log.info("NonRepeatingOrdersMdmsData ::{}", nonRepeatingOrdersMdmsData);
         } catch (Exception e) {
