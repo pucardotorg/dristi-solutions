@@ -166,7 +166,7 @@ public class OrderRegistrationEnrichment {
             Order order = orderRequest.getOrder();
             RequestInfo requestInfo = orderRequest.getRequestInfo();
 
-            if (COMPOSITE.equalsIgnoreCase(order.getOrderType()) && order.getCompositeItems() != null) {
+            if (COMPOSITE.equalsIgnoreCase(order.getOrderCategory()) && order.getCompositeItems() != null) {
                 ArrayNode arrayNode = objectMapper.convertValue(order.getCompositeItems(), ArrayNode.class);
                 if (arrayNode != null && !arrayNode.isEmpty()) {
                     List<String> itemText = new ArrayList<>();
