@@ -45,6 +45,7 @@ const AddOrderTypeModal = ({
   clearFormErrors,
   setValueRef,
   orderType,
+  addOrderTypeLoader,
 }) => {
   const [formdata, setFormData] = useState({});
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
@@ -238,9 +239,6 @@ const AddOrderTypeModal = ({
     }
   };
 
-  console.log(modifiedFormConfig, "modifiedFormConfig");
-  
-
   return (
     <React.Fragment>
       <Modal
@@ -264,10 +262,10 @@ const AddOrderTypeModal = ({
               showSecondaryLabel={true}
               onSubmit={() => {
                 const updatedFormData = { ...formdata, orderType: orderType };
-                handleSubmit(updatedFormData);
+                handleSubmit(updatedFormData, index);
               }}
               onSecondayActionClick={handleCancel}
-              isDisabled={isSubmitDisabled}
+              isDisabled={isSubmitDisabled || addOrderTypeLoader}
             />
           </div>
         </div>
