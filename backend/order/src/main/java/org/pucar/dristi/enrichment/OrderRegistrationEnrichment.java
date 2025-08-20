@@ -25,6 +25,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -212,7 +213,9 @@ public class OrderRegistrationEnrichment {
             if ("ADVOCATE_REPLACEMENT_APPROVAL".equalsIgnoreCase(orderType)) {
 
                 String replaceAdvocateStatus = orderDetailsNode.path("replaceAdvocateStatus").asText();
+                String advocateName = orderDetailsNode.path("advocateName").asText();
 
+                text = text.replace("[Advocate Name]", advocateName);
                 if ("GRANT".equalsIgnoreCase(replaceAdvocateStatus)) {
                     text = text.replace("[GRANTED/REJECTED]", "GRANTED");
                 } else {
@@ -221,6 +224,8 @@ public class OrderRegistrationEnrichment {
             }
             if ("APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE".equalsIgnoreCase(orderType)) {
                 String applicationGrantedRejected = orderDetailsNode.path("applicationGrantedRejected").asText();
+                String applicantName = orderDetailsNode.path("applicantName").asText();
+                text = text.replace("[Applicant Name]", applicantName);
 
                 if ("GRANTED".equalsIgnoreCase(applicationGrantedRejected)) {
                     text = text.replace("[Approved]/[Rejected]", "Approved");
@@ -294,7 +299,7 @@ public class OrderRegistrationEnrichment {
                 String partiesString = String.join(", ", partyNames);
                 text = text.replace("[name]", partiesString);
             }
-            if ("APPROVE_VOLUNTARY_SUBMISSIONS".equalsIgnoreCase(orderType)) {
+            if ("APPROVE_VOLUNTARY_SUBMISSIONS".equalsIgnoreCase(orderType) || "REJECT_VOLUNTARY_SUBMISSIONS".equalsIgnoreCase(orderType)) {
                 ApplicationCriteria criteria = ApplicationCriteria.builder()
                         .tenantId(order.getTenantId())
                         .applicationNumber(order.getApplicationNumber().get(0))
@@ -305,25 +310,7 @@ public class OrderRegistrationEnrichment {
 
                 List<Application> application = applicationUtil.searchApplications(applicationSearchRequest);
                 if (application != null && !application.isEmpty()) {
-                    JsonNode applicationDetailsNode = objectMapper.convertValue(order.getOrderDetails(), JsonNode.class);
-                    if (applicationDetailsNode != null && applicationDetailsNode.has("applicationTitle")) {
-                        String applicationTitle = applicationDetailsNode.path("applicationTitle").asText();
-                        text = text.replace("[title of application]", applicationTitle);
-                    }
-                }
-            }
-            if ("REJECT_VOLUNTARY_SUBMISSIONS".equalsIgnoreCase(orderType)) {
-                ApplicationCriteria criteria = ApplicationCriteria.builder()
-                        .tenantId(order.getTenantId())
-                        .applicationNumber(order.getApplicationNumber().get(0))
-                        .build();
-                ApplicationSearchRequest applicationSearchRequest = ApplicationSearchRequest.builder().build();
-                applicationSearchRequest.setCriteria(criteria);
-                applicationSearchRequest.setRequestInfo(requestInfo);
-
-                List<Application> application = applicationUtil.searchApplications(applicationSearchRequest);
-                if (application != null && !application.isEmpty()) {
-                    JsonNode applicationDetailsNode = objectMapper.convertValue(order.getOrderDetails(), JsonNode.class);
+                    JsonNode applicationDetailsNode = objectMapper.convertValue(application.get(0).getApplicationDetails(), JsonNode.class);
                     if (applicationDetailsNode != null && applicationDetailsNode.has("applicationTitle")) {
                         String applicationTitle = applicationDetailsNode.path("applicationTitle").asText();
                         text = text.replace("[title of application]", applicationTitle);
@@ -366,7 +353,7 @@ public class OrderRegistrationEnrichment {
 
                 // Difference in days
                 long daysRemaining = Duration.between(today.atStartOfDay(), submissionDate.atStartOfDay()).toDays();
-                text = text.replace("[days]", Long.toString(daysRemaining));
+                text = text.replace("[days]", Long.toString(daysRemaining)+" days");
 
             }
 
@@ -387,17 +374,14 @@ public class OrderRegistrationEnrichment {
                                 // New Submission Date
                                 long submissionMillis = orderDetailsNode.path("newSubmissionDate").asLong(0);
                                 LocalDate newSubmissionDate = null;
-                                long dueDays = 0;
                                 if (submissionMillis > 0) {
                                     newSubmissionDate = Instant.ofEpochMilli(submissionMillis)
                                             .atZone(ZoneId.systemDefault())
                                             .toLocalDate();
-
-                                    LocalDate today = LocalDate.now();
-                                    dueDays = Duration.between(today.atStartOfDay(), newSubmissionDate.atStartOfDay()).toDays();
                                 }
 
-                                text = text.replace("[Date]", Long.toString(dueDays));
+                                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+                                text = text.replace("[Date]", newSubmissionDate != null ? newSubmissionDate.format(formatter) : "");
 
                                 JsonNode partiesArray = orderDetailsNode.path("parties");
                                 String partyNames = "";
