@@ -112,7 +112,12 @@ public class OrderQueryBuilder {
             firstCriteria = addCriteria(criteria.getStatus(), query, firstCriteria, "orders.status = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
             firstCriteria = addCriteria(criteria.getHearingNumber(), query, firstCriteria, "orders.hearingNumber = ?", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
 
-             addCriteria(criteria.getOrderNumber() == null? null : "%" + criteria.getOrderNumber() + "%", query, firstCriteria, "LOWER(orders.orderNumber) LIKE LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+            if (criteria.getIsFuzzySearch() == null || !criteria.getIsFuzzySearch()) {
+                addCriteria(criteria.getOrderNumber() , query, firstCriteria, "LOWER(orders.orderNumber) = LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+            } else {
+                addCriteria(criteria.getOrderNumber() == null ? null : "%" + criteria.getOrderNumber() + "%", query, firstCriteria, "LOWER(orders.orderNumber) LIKE LOWER(?)", preparedStmtList, preparedStmtArgList, Types.VARCHAR);
+            }
+
             return query.toString();
         } catch (Exception e) {
             log.error("Error while building order search query :: {}",e.toString());
