@@ -38,9 +38,13 @@ const ProjectBreadCrumb = ({ location }) => {
 
   const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isCourtRoomManager = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
+  const isProcessViewer = useMemo(() => roles?.some((role) => role.code === "PROCESS_VIEWER"), [roles]);
+
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  if (isJudge || isTypist || isBenchClerk || isCourtRoomManager) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  if (isProcessViewer) homePath = `/${window?.contextPath}/${userType}/orders/Summons&Notice`;
   const crumbs = useMemo(
     () => [
       {
@@ -81,21 +85,21 @@ const App = ({ path, stateCode, userType, tenants }) => {
 
   const isJudge = useMemo(() => roles?.some((role) => role.code === "CASE_APPROVER"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role.code === "BENCH_CLERK"), [roles]);
+  const isCourtRoomManager = useMemo(() => roles?.some((role) => role.code === "COURT_ROOM_MANAGER"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
   if (isCitizen && !hasCitizenRoute && Boolean(userInfo)) {
     history.push(`/${window?.contextPath}/citizen/home/home-pending-task`);
   } else if (!isCitizen && hasCitizenRoute && Boolean(userInfo)) {
-    if (isJudge || isTypist || isBenchClerk) {
+    if (isJudge || isTypist || isBenchClerk || isCourtRoomManager) {
       history.push(`/${window?.contextPath}/employee/home/home-screen`);
     } else history.push(`/${window?.contextPath}/employee/home/home-pending-task`);
   }
+  const isProcessViewer = useMemo(() => roles?.some((role) => role.code === "PROCESS_VIEWER"), [roles]);
 
   return (
     <Switch>
       <AppContainer className="ground-container order-submission">
-        <React.Fragment>
-          <ProjectBreadCrumb location={window.location} />
-        </React.Fragment>
+        <React.Fragment>{isProcessViewer ? null : <ProjectBreadCrumb location={window.location} />}</React.Fragment>
         <PrivateRoute path={`${path}/orders-response`} component={() => <OrdersResponse></OrdersResponse>} />
         <PrivateRoute path={`${path}/orders-create`} component={() => <OrdersCreate />} />
         <PrivateRoute path={`${path}/orders-home`} component={() => <OrdersHome />} />

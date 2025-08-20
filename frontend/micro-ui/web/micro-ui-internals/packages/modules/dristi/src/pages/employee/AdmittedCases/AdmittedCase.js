@@ -2040,7 +2040,7 @@ const AdmittedCases = () => {
   const hasAnyRelevantOrderType = useMemo(() => {
     if (!ordersData?.list) return false;
 
-    const validTypes = ["NOTICE", "SUMMONS", "WARRANT"];
+    const validTypes = ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"];
 
     return ordersData.list.some((item) => {
       if (item?.orderCategory === "COMPOSITE") {

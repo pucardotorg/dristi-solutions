@@ -33,7 +33,8 @@ const getButtonLabels = (isJudge, evidenceDetails, currentDiaryEntry = false, t)
 
     // Cancel/back button label
     cancelLabel:
-      evidenceDetails?.evidenceMarkedStatus === "DRAFT_IN_PROGRESS" || evidenceDetails?.evidenceMarkedStatus === null
+      evidenceDetails?.evidenceMarkedStatus === "DRAFT_IN_PROGRESS" ||
+      (evidenceDetails?.evidenceMarkedStatus === null && !evidenceDetails?.isEvidence)
         ? t("CS_BULK_BACK")
         : evidenceDetails?.isEvidence || evidenceDetails?.evidenceMarkedStatus === "COMPLETED"
         ? currentDiaryEntry && t("CS_BULK_CANCEL")
@@ -199,7 +200,7 @@ const MarkAsEvidence = ({
 
   const memoEvidenceValues = useMemo(() => {
     return {
-      title: evidenceDetails?.artifactType,
+      title: evidenceDetails?.additionalDetails?.formdata?.documentTitle || evidenceDetails?.artifactType,
       artifactNumber: evidenceDetails?.artifactNumber,
       sourceType: evidenceDetails?.sourceType,
       owner: evidenceDetails?.owner,
@@ -302,6 +303,27 @@ const MarkAsEvidence = ({
     };
   }, [name]);
 
+  const getCustomEvidenceNumber = (evidenceNumber, filingNumber) => {
+    try {
+      if (typeof evidenceNumber !== "string" || typeof filingNumber !== "string") {
+        throw new Error("Both evidenceNumber and filingNumber must be strings");
+      }
+
+      if (evidenceNumber.length > 1) {
+        if (filingNumber && evidenceNumber.startsWith(filingNumber) && evidenceNumber.length > filingNumber.length + 2) {
+          return evidenceNumber.slice(filingNumber.length + 2).trim();
+        } else {
+          return evidenceNumber.slice(1);
+        }
+      }
+
+      return evidenceNumber;
+    } catch (error) {
+      console.error("Error getting custom evidence number:", error);
+      return null;
+    }
+  };
+
   const getEvidenceDetails = async () => {
     try {
       setLoader(true);
@@ -318,10 +340,11 @@ const MarkAsEvidence = ({
         },
         {}
       );
-      const customEvidenceNumber =
-        response?.artifacts?.[0]?.evidenceNumber?.length > 1
-          ? response?.artifacts?.[0]?.evidenceNumber?.slice(1)
-          : response?.artifacts?.[0]?.evidenceNumber;
+      // const customEvidenceNumber =
+      //   response?.artifacts?.[0]?.evidenceNumber?.length > 1
+      //     ? response?.artifacts?.[0]?.evidenceNumber?.slice(1)
+      //     : response?.artifacts?.[0]?.evidenceNumber;
+      const customEvidenceNumber = getCustomEvidenceNumber(response?.artifacts?.[0]?.evidenceNumber, response?.artifacts?.[0]?.filingNumber);
       setStepper(response?.artifacts?.[0]?.evidenceMarkedStatus === null ? 0 : 1);
       setEvidenceNumber(customEvidenceNumber);
       setEvidenceDetails(response?.artifacts?.[0]);
@@ -416,6 +439,9 @@ const MarkAsEvidence = ({
       if (evidenceTag) {
         setWitnessTag(combined?.find((user) => user?.code === evidenceTag));
       }
+      if (evidenceDetails?.isEvidence && !evidenceDetails?.additionalDetails?.botd) {
+        getAdiaryEntries(response?.criteria[0]?.responseList[0]?.cmpNumber || filingNumber);
+      }
       setWitnessTagValues(combined?.filter(Boolean));
       setCaseDetails(response?.criteria[0]?.responseList[0]);
     } catch (error) {
@@ -459,7 +485,33 @@ const MarkAsEvidence = ({
       setLoader(false);
     }
   };
-
+  const getAdiaryEntries = async (caseNumber) => {
+    try {
+      setLoader(true);
+      const adiaryResponse = await DRISTIService.aDiaryEntrySearch(
+        {
+          criteria: {
+            tenantId: tenantId,
+            courtId: courtId,
+            caseId: caseNumber || caseDetails?.cmpNumber || filingNumber,
+            referenceId: artifactNumber,
+          },
+          pagination: {
+            limit: 10,
+            offSet: 0,
+          },
+        },
+        { tenantId }
+      );
+      if (!businessOfDay || businessOfDay === "" || businessOfDay === null) {
+        setBusinessOfDay(adiaryResponse?.entries?.[0]?.businessOfDay);
+      }
+    } catch (error) {
+      console.error("Error fetching adiary entries:", error);
+    } finally {
+      setLoader(false);
+    }
+  };
   useEffect(() => {
     if (!evidenceDetailsObj && !sessionStorage.getItem("markAsEvidenceSelectedItem")) {
       getEvidenceDetails();
@@ -469,7 +521,9 @@ const MarkAsEvidence = ({
 
       // Set evidence details from session storage
       if (sessionData?.evidenceNumber) {
-        const customEvidenceNumber = sessionData.evidenceNumber.length > 1 ? sessionData.evidenceNumber.slice(1) : sessionData.evidenceNumber;
+        // const customEvidenceNumber = sessionData.evidenceNumber.length > 1 ? sessionData.evidenceNumber.slice(1) : sessionData.evidenceNumber;
+        const customEvidenceNumber = getCustomEvidenceNumber(sessionData.evidenceNumber, sessionData?.filingNumber);
+
         setEvidenceNumber(customEvidenceNumber);
       }
 
@@ -507,19 +561,21 @@ const MarkAsEvidence = ({
         setStepper(evidenceDetailsObj?.evidenceNumber === null ? 0 : 1);
 
         // Set evidence number
-        const customEvidenceNumber =
-          evidenceDetailsObj?.evidenceNumber?.length > 1 ? evidenceDetailsObj.evidenceNumber.slice(1) : evidenceDetailsObj.evidenceNumber;
+        // const customEvidenceNumber =
+        //   evidenceDetailsObj?.evidenceNumber?.length > 1 ? evidenceDetailsObj.evidenceNumber.slice(1) : evidenceDetailsObj.evidenceNumber;
+        const customEvidenceNumber = getCustomEvidenceNumber(evidenceDetailsObj?.evidenceNumber, evidenceDetailsObj?.filingNumber);
+
         setEvidenceNumber(customEvidenceNumber);
 
         // Set business of day from props
-        setBusinessOfDay(evidenceDetailsObj?.additionalDetails?.botd || `Document marked as evidence exhibit number ${artifactNumber}`);
+        setBusinessOfDay(evidenceDetailsObj?.additionalDetails?.botd || null);
       }
     }
     // Get case details if filing number is available
     if (filingNumber) {
       getCaseDetails();
     }
-  }, [filingNumber, courtId, userType, tenantId, artifactNumber, evidenceDetailsObj, t]);
+  }, [filingNumber, courtId, userType, tenantId, artifactNumber, evidenceDetailsObj, t, evidenceTag]);
   useEffect(() => {
     checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
   }, [checkSignStatus, name, formData, uploadModalConfig, setIsSigned]);
@@ -528,13 +584,13 @@ const MarkAsEvidence = ({
     try {
       const payload = {
         ...evidenceDetails,
-        evidenceNumber: `${evidenceTag}${evidenceNumber}`,
+        evidenceNumber: `${filingNumber}-${evidenceTag}${evidenceNumber}`,
         isEvidenceMarkedFlow: action ? true : false,
         tag: witnessTag?.code,
         isEvidence: isEvidence,
         additionalDetails: {
           ...evidenceDetails?.additionalDetails,
-          botd: businessOfDay,
+          botd: businessOfDay || `Document marked as evidence exhibit number ${evidenceTag}${evidenceNumber}`,
           ownerName: ownerName,
         },
         ...(seal !== null && { seal }),
@@ -561,8 +617,8 @@ const MarkAsEvidence = ({
       setLoader(true);
       if (stepper === 0) {
         clearEvidenceSessionData();
-        if (businessOfDay === null || businessOfDay === "") {
-          setBusinessOfDay(`Document marked as evidence exhibit number ${artifactNumber}`);
+        if (businessOfDay === null || businessOfDay === "" || !businessOfDay) {
+          setBusinessOfDay(`Document marked as evidence exhibit number ${evidenceTag}${evidenceNumber}`);
         }
         await handleMarkEvidence(
           evidenceDetails?.evidenceMarkedStatus === null ? MarkAsEvidenceAction?.CREATE : MarkAsEvidenceAction?.SAVEDRAFT
@@ -710,7 +766,7 @@ const MarkAsEvidence = ({
         ...evidenceDetails,
         additionalDetails: {
           ...(evidenceDetails?.additionalDetails || {}),
-          businessOfDay: businessOfDay,
+          botd: businessOfDay,
         },
       };
 

@@ -241,7 +241,6 @@ const AdmittedCaseV2 = () => {
   const history = useHistory();
   const isCitizen = userRoles?.includes("CITIZEN");
   const isJudge = userRoles?.includes("JUDGE_ROLE");
-  const isCourtStaff = userRoles?.includes("COURT_ROOM_MANAGER");
   const OrderWorkflowAction = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderWorkflowActionEnum") || {}, []);
   const ordersService = useMemo(() => Digit.ComponentRegistryService.getComponent("OrdersService") || {}, []);
   const OrderReviewModal = useMemo(() => Digit.ComponentRegistryService.getComponent("OrderReviewModal") || {}, []);
@@ -263,7 +262,7 @@ const AdmittedCaseV2 = () => {
   const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
   const courtId = localStorage.getItem("courtId");
   let homePath = `/${window?.contextPath}/${userType}/home/home-pending-task`;
-  if (isJudge || isTypist || isBenchClerk) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
+  if (isJudge || isTypist || isBenchClerk || isCourtRoomManager) homePath = `/${window?.contextPath}/${userType}/home/home-screen`;
   const reqEvidenceUpdate = {
     url: Urls.dristi.evidenceUpdate,
     params: {},
@@ -778,7 +777,7 @@ const AdmittedCaseV2 = () => {
       const documentCreatedByUuid = docObj?.[0]?.artifactList?.auditdetails?.createdBy;
       const artifactNumber = docObj?.[0]?.artifactList?.artifactNumber;
       const documentStatus = docObj?.[0]?.artifactList?.status;
-      if (isCitizen || isBenchClerk || isTypist || isJudge) {
+      if (isCitizen || isBenchClerk || isTypist || isJudge || isCourtRoomManager) {
         if (documentStatus === "PENDING_E-SIGN" && documentCreatedByUuid === userInfo?.uuid) {
           history.push(
             `/${window?.contextPath}/${
@@ -1208,6 +1207,7 @@ const AdmittedCaseV2 = () => {
     artifacts,
     userType,
     isBenchClerk,
+    isCourtRoomManager,
     downloadPdf,
     ordersService,
     caseCourtId,
@@ -2203,7 +2203,7 @@ const AdmittedCaseV2 = () => {
   const hasAnyRelevantOrderType = useMemo(() => {
     if (!ordersData?.list) return false;
 
-    const validTypes = ["NOTICE", "SUMMONS", "WARRANT"];
+    const validTypes = ["NOTICE", "SUMMONS", "WARRANT", "PROCLAMATION", "ATTACHMENT"];
 
     return ordersData.list.some((item) => {
       if (item?.orderCategory === "COMPOSITE") {
@@ -2936,7 +2936,7 @@ const AdmittedCaseV2 = () => {
           label: "TAKE_WITNESS_DEPOSITION",
         },
       ];
-    else if (isBenchClerk) {
+    else if (isBenchClerk || isCourtRoomManager) {
       return currentInProgressHearing
         ? [
             {
@@ -3057,7 +3057,7 @@ const AdmittedCaseV2 = () => {
             },
           ];
     }
-  }, [isJudge, currentInProgressHearing, isBenchClerk, isTypist]);
+  }, [isJudge, currentInProgressHearing, isBenchClerk, isTypist, isCourtRoomManager]);
 
   const courtActionOptions = useMemo(
     () => [
@@ -3136,7 +3136,6 @@ const AdmittedCaseV2 = () => {
         tertiaryAction.action ||
         ([CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(caseDetails?.status) && !isCitizen)) &&
       !caseDetails?.outcome &&
-      !isCourtRoomManager,
     [
       primaryAction.action,
       secondaryAction.action,
@@ -3420,7 +3419,7 @@ const AdmittedCaseV2 = () => {
             )}
             {showTakeAction && (
               <div className="judge-action-block" style={{ display: "flex", gap: "20px" }}>
-                {!isCourtRoomManager && (
+                {
                   <div className="evidence-header-wrapper">
                     <div className="evidence-hearing-header" style={{ background: "transparent", padding: "0px" }}>
                       <div className="evidence-actions" style={{ ...(isTabDisabled ? { pointerEvents: "none" } : {}) }}>
@@ -3434,13 +3433,13 @@ const AdmittedCaseV2 = () => {
                             ></Button>
                             <Button
                               variation={"primary"}
-                              label={t(isBenchClerk ? "CS_CASE_END_HEARING" : isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : "")}
-                              children={isBenchClerk ? null : isJudge || isTypist ? <RightArrow /> : null}
+                              label={t((isBenchClerk || isCourtRoomManager) ? "CS_CASE_END_HEARING" : isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : "")}
+                              children={(isBenchClerk || isCourtRoomManager) ? null : isJudge || isTypist ? <RightArrow /> : null}
                               isSuffix={true}
                               onButtonClick={() =>
-                                handleEmployeeAction({ value: isBenchClerk ? "END_HEARING" : isJudge || isTypist ? "NEXT_HEARING" : "" })
+                                handleEmployeeAction({ value: (isBenchClerk || isCourtRoomManager) ? "END_HEARING" : isJudge || isTypist ? "NEXT_HEARING" : "" })
                               }
-                              style={{ boxShadow: "none", ...(isBenchClerk ? { backgroundColor: "#BB2C2F", border: "none" } : {}) }}
+                              style={{ boxShadow: "none", ...((isBenchClerk || isCourtRoomManager) ? { backgroundColor: "#BB2C2F", border: "none" } : {}) }}
                             ></Button>
                           </React.Fragment>
                         ) : (
@@ -3461,7 +3460,7 @@ const AdmittedCaseV2 = () => {
                       </div>
                     </div>
                   </div>
-                )}
+                }
                 <div className="evidence-header-wrapper">
                   <div className="evidence-hearing-header" style={{ background: "transparent", padding: "0px" }}>
                     <div className="evidence-actions">
@@ -3586,7 +3585,7 @@ const AdmittedCaseV2 = () => {
                 {t("DOWNLOAD_ALL_LINK")}
               </div>
             )} */}
-          {(showMakeSubmission || isJudge || isBenchClerk || isTypist || isCourtStaff) && config?.label === "Parties" && (
+          {(showMakeSubmission || isJudge || isBenchClerk || isTypist || isCourtRoomManager) && config?.label === "Parties" && (
             <Button
               label={t("ADD_NEW_WITNESS")}
               variation={"secondary"}
@@ -4046,6 +4045,7 @@ const AdmittedCaseV2 = () => {
             setShowWitnessModal(false);
             setEditWitnessDepositionArtifact(null);
             refetchHearing();
+            refetchCaseData();
             onTabChange(0, {}, "Documents");
           }}
           onSubmit={(action) => {
@@ -4123,7 +4123,7 @@ const AdmittedCaseV2 = () => {
           onDismiss={() => setShowAddWitnessModal(false)}
           tenantId={tenantId}
           caseDetails={caseDetails}
-          isEmployee={isJudge || isBenchClerk || isTypist || isCourtStaff}
+          isEmployee={isJudge || isBenchClerk || isTypist || isCourtRoomManager}
           showToast={showToast}
           onAddSuccess={() => {
             setShowAddWitnessModal(false);

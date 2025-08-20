@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { CustomArrowDownIcon, CustomArrowUpIcon } from "../../../icons/svgIndex";
 import DocViewerWrapper from "../docViewerWrapper";
-import { caseFileLabels } from "../../../Utils";
+import { caseFileLabels, modifiedEvidenceNumber } from "../../../Utils";
 import { useTranslation } from "react-i18next";
 import { useQueries } from "react-query";
 import { DRISTIService } from "../../../services";
@@ -1835,16 +1835,40 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
         >
           <div>
             {selectedDocument && selectedFileStoreId && (
-              <span style={{ display: "flex", gap: "10px", fontFamily: "Roboto", fontWeight: "700", fontStyle: "bold", fontSize: "20px" }}>
-                {selectedDocumentData?.title && t(selectedDocumentData.title)}
+              <span style={{ display: "flex", gap: "10px", fontFamily: "Roboto" }}>
+                <span style={{ fontWeight: "700", fontStyle: "bold", fontSize: "20px" }}>
+                  {" "}
+                  {selectedDocumentData?.title && t(selectedDocumentData.title)}
+                </span>
+
                 {evidenceFileStoreMap &&
                   evidenceFileStoreMap.has(selectedFileStoreId) &&
                   evidenceFileStoreMap?.get(selectedFileStoreId)?.evidenceMarkedStatus !== null &&
                   (evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED" || userType === "employee") && (
-                    <CustomChip
-                      text={t(evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus) || ""}
-                      shade={evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"}
-                    />
+                    <React.Fragment>
+                      <CustomChip
+                        text={
+                          t(
+                            evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED"
+                              ? "SIGNED"
+                              : evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus
+                          ) || ""
+                        }
+                        shade={evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"}
+                      />
+                      {evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceMarkedStatus === "COMPLETED" && (
+                        <span>
+                          <span style={{ fontSize: "20px", paddingLeft: "5px", paddingRight: "5px" }}> | </span>
+                          <span style={{ fontSize: "14px", fontWeight: "400" }}>
+                            {t("EVIDENCE_NUMBER")}:{" "}
+                            {modifiedEvidenceNumber(
+                              evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceNumber,
+                              evidenceFileStoreMap.get(selectedFileStoreId)?.filingNumber
+                            )}
+                          </span>
+                        </span>
+                      )}
+                    </React.Fragment>
                   )}
               </span>
             )}

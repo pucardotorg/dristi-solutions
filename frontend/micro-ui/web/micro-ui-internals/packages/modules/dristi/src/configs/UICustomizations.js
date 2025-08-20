@@ -1211,7 +1211,10 @@ export const UICustomizations = {
               {t("VOID")}
             </div>
           ) : row?.status ? (
-            <CustomChip text={t(row?.status)} shade={"green"} />
+            <CustomChip
+              text={t(row?.artifactType === "WITNESS_DEPOSITION" && row?.status === "COMPLETED" ? "SIGNED" : row?.status)}
+              shade={"green"}
+            />
           ) : (
             ""
           );
@@ -1222,10 +1225,13 @@ export const UICustomizations = {
         case "CS_ACTIONS":
           return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="FilingsConfig" />;
         case "EVIDENCE_NUMBER":
-          return (row?.isEvidence || isEmployee) && modifiedEvidenceNumber(value);
+          return (row?.isEvidence || isEmployee) && modifiedEvidenceNumber(value, row?.filingNumber);
         case "EVIDENCE_STATUS":
           return row?.evidenceMarkedStatus && (row?.evidenceMarkedStatus === "COMPLETED" || isEmployee) ? (
-            <CustomChip text={t(row?.evidenceMarkedStatus) || ""} shade={row?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"} />
+            <CustomChip
+              text={row?.evidenceMarkedStatus === "COMPLETED" ? t("SIGNED") : t(row?.evidenceMarkedStatus) || ""}
+              shade={row?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"}
+            />
           ) : (
             ""
           );

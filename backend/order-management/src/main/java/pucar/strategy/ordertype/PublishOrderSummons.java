@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.util.Json;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
@@ -78,7 +79,11 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
         CourtCase courtCase = cases.get(0);
 
         Map<String, List<String>> litigantAdvocateMapping = advocateUtil.getLitigantAdvocateMapping(courtCase);
-        List<Party> complainants = caseUtil.getRespondentOrComplainant(courtCase, "complainant");
+
+        String type = "complainant";
+        if(isSummonForAccusedWitness(order))
+            type = "respondent";
+        List<Party> complainants = caseUtil.getRespondentOrComplainant(courtCase, type);
         List<String> assignees = new ArrayList<>();
         List<User> uniqueAssignee = new ArrayList<>();
         Set<String> uniqueSet = new HashSet<>();
@@ -141,7 +146,7 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
 
                 // create pending task
 
-                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel))) {
+                if (channel != null && (!EMAIL.equalsIgnoreCase(channel) && !SMS.equalsIgnoreCase(channel)) && !taskUtil.isCourtWitness(order.getOrderType(), taskDetail)) {
                     String name = pendingTaskUtil.getPendingTaskNameForSummonAndNotice(channel, order.getOrderType());
                     String status = PAYMENT_PENDING + channel;
 
@@ -176,6 +181,23 @@ public class PublishOrderSummons implements OrderUpdateStrategy {
 
 
         return null;
+    }
+
+    private boolean isSummonForAccusedWitness(Order order) {
+        String taskDetails = jsonUtil.getNestedValue(order.getAdditionalDetails(), List.of("taskDetails"), String.class);
+        JsonNode taskDetailsArray = null;
+        try {
+            taskDetailsArray = objectMapper.readTree(taskDetails);
+            JsonNode taskDetail = taskDetailsArray.get(0);
+            if(taskDetail.get("witnessDetails") != null
+                    && taskDetail.get("witnessDetails").get("ownerType") != null
+                    && taskDetail.get("witnessDetails").get("ownerType").textValue().equalsIgnoreCase(ACCUSED)){
+                return true;
+            }
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+        return false;
     }
 
     @Override
