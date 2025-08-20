@@ -93,7 +93,10 @@ const EvidenceModal = ({
       <div className="evidence-title">
         <h1 className="heading-m">{props.label}</h1>
         {props?.evidenceMarkedStatus && (
-          <CustomChip text={t(props?.evidenceMarkedStatus) || ""} shade={props?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"} />
+          <CustomChip
+            text={props?.evidenceMarkedStatus === "COMPLETED" ? t("SIGNED") : t(props?.evidenceMarkedStatus) || ""}
+            shade={props?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"}
+          />
         )}
 
         {props.showStatus && <h3 className={props.isStatusRed ? "status-false" : "status"}>{props?.status}</h3>}
@@ -684,6 +687,7 @@ const EvidenceModal = ({
       "SURETY",
       "EXTENSION_SUBMISSION_DEADLINE",
       "CHECKOUT_REQUEST",
+      "ADDING_WITNESSES",
     ];
     if (type === "reject") {
       return false;
@@ -1314,6 +1318,17 @@ const EvidenceModal = ({
           list-style-type: decimal;
           margin-top: 0;
         }
+        .confirm-submission-checkbox {
+          .checkbox-wrap {
+            .label {
+              margin-left: 32px;
+            }
+          .custom-checkbox {
+              height: 20px;
+              width: 20px;
+            }
+          }
+        }
       .popup-module.evidence-modal .info-value li {
         margin: 0;
       }`}
@@ -1366,7 +1381,7 @@ const EvidenceModal = ({
           //     : {}
           // }
         >
-          {documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus !== null && userType === "employee" && (
+          {documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus && userType === "employee" && (
             <div style={{ margin: "16px 24px" }}>
               <div className="custom-note-main-div" style={{ padding: "8px 16px", flexDirection: "row", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -1395,7 +1410,7 @@ const EvidenceModal = ({
           )}
           <div
             className="evidence-modal-main "
-            style={documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus !== null ? { height: "calc(100% - 140px)" } : {}}
+            style={documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus ? { height: "calc(100% - 140px)" } : {}}
           >
             <div className={"application-details"}>
               <div style={{ display: "flex", flexDirection: "column", overflowY: "auto", height: "fit-content" }}>

@@ -20,7 +20,7 @@ import JoinCaseSuccess from "./joinCaseComponent/JoinCaseSuccess";
 import LitigantVerification from "./joinCaseComponent/LitigantVerification";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import POAInfo from "./joinCaseComponent/POAInfo";
-import { cleanString, combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { cleanString, combineMultipleFiles, removeInvalidNameParts } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-orders/src/utils/submissionWorkflow";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
@@ -452,7 +452,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       const { firstName, middleName, lastName } = data?.data;
 
       const fullName = getFullName(" ", firstName, middleName, lastName);
-      const poaAuthorizationDocument = data?.data?.poaAuthorizationDocument;
+      const complaintUuid = data?.data?.complainantVerification?.individualDetails?.userUuid;
+      const poaAuthorizationDocument = complaintUuid === userInfo?.uuid ? data?.data?.poaAuthorizationDocument : null;
       const isAlreadyPoa = data?.data?.transferredPOA || { code: "NO", name: "NO", showPoaDetails: false };
       const poaVerification = data?.data?.poaVerification;
 
@@ -476,7 +477,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           },
         },
         isPoaAvailable: isAlreadyPoa,
-        poaAuthorizationDocument,
+        poaAuthorizationDocument : poaAuthorizationDocument,
         poaVerification,
         isAdvocateRepresenting: !!isAdvocateRepresenting,
         advocateRepresentingLength: representatives?.length || 0,
@@ -520,7 +521,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           const { respondentFirstName, respondentMiddleName, respondentLastName } = data?.data;
 
           fullName = getFullName(" ", respondentFirstName, respondentMiddleName, respondentLastName);
-          const poaAuthorizationDocument = data?.data?.poaAuthorizationDocument;
+          const respondentUUID = response?.Individual?.[0]?.userUuid || "";
+          const poaAuthorizationDocument = respondentUUID === userInfo?.uuid ? data?.data?.poaAuthorizationDocument : null;
           const isAlreadyPoa = data?.data?.transferredPOA || { code: "NO", name: "NO", showPoaDetails: false };
           const poaVerification = data?.data?.poaVerification;
 
@@ -547,7 +549,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
               },
             }),
             isPoaAvailable: isAlreadyPoa,
-            poaAuthorizationDocument,
+            poaAuthorizationDocument : poaAuthorizationDocument,
             poaVerification,
             isAdvocateRepresenting: !!isAdvocateRepresenting,
             advocateRepresentingLength: representatives?.length || 0,
@@ -1324,6 +1326,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             const taskNumber = res?.paymentTaskNumber;
             const taskSearchResponse = await getTaskDetails(taskNumber, tenantId);
             const taskDetails = taskSearchResponse?.list?.[0]?.taskDetails;
+            const ownerName = cleanString(userInfo?.name);
 
             const applicationReqBody = {
               tenantId,
@@ -1356,8 +1359,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                   caseTitle: caseDetails?.caseTitle,
                   caseNumber: caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber,
                   partyType: selectPartyData?.partyInvolve?.value === "COMPLAINANTS" ? "COMPLAINANTS" : "ACCUSED",
-                  owner: cleanString(userInfo?.name),
-                  onBehalOfName: cleanString(userInfo?.name),
+                  owner: removeInvalidNameParts(ownerName),
+                  onBehalOfName: removeInvalidNameParts(ownerName),
                 },
                 documents: [],
                 onBehalfOf: [userInfo?.uuid],
@@ -1414,7 +1417,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
               await createPendingTask({
                 name: t("ESIGN_THE_SUBMISSION_FOR_POA_CLAIM"),
                 status: "ESIGN_THE_SUBMISSION",
-                assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
+                assignedRole: [],
                 refId: resApplication?.application?.applicationNumber,
                 entityType: "application-voluntary-submission",
                 userInfo: userInfo,
@@ -1644,6 +1647,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           selectPartyData={selectPartyData}
           isApiCalled={isApiCalled}
           poa={poa}
+          userInfo={userInfo}
         />
       ),
     },

@@ -200,7 +200,7 @@ function ReviewSubmissionModal({
                 <h3>{t("SENDER")}</h3>
               </div>
               <div className="info-value">
-                <h3>{sender}</h3>
+                <h3>{sender || application?.additionalDetails?.owner || ""}</h3>
               </div>
             </div>
             {additionalDetails && (

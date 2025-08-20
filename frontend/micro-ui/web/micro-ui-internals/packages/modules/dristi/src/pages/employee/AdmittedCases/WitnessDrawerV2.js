@@ -28,6 +28,7 @@ import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/em
 import ConfirmDepositionDeleteModal from "./ConfirmDepositionDeleteModal";
 import useCaseDetailSearchService from "../../../hooks/dristi/useCaseDetailSearchService";
 import { searchIndividualUserWithUuid } from "../../../../../cases/src/utils/joinCaseUtils";
+import SelectCustomFormatterTextArea from "../../../components/SelectCustomFormatterTextArea";
 
 const formatAddress = (addr) => {
   if (!addr) return "";
@@ -81,11 +82,11 @@ const WitnessDrawerV2 = ({
   const [showErrorToast, setShowErrorToast] = useState(null);
   const userInfo = Digit?.UserService?.getUser?.()?.info;
   const urlParams = new URLSearchParams(window.location.search);
-  const [showWitnessDepositionReview, setShowWitnessDepositionReview] = useState(false);
+  const [showWitnessDepositionReview, setShowWitnessDepositionReview] = useState(localStorage.getItem("showPdfPreview") || false);
   const [witnessDepositionFileStoreId, setWitnessDepositionFileStoreId] = useState("");
   const [showSignatureModal, setShowsignatureModal] = useState(false);
   const [showConfirmWitnessModal, setShowConfirmWitnessModal] = useState(false);
-  const [currentArtifactNumber, setCurrentArtifactNumber] = useState(artifactNumber || null);
+  const [currentArtifactNumber, setCurrentArtifactNumber] = useState(artifactNumber || localStorage.getItem("artifactNumber") || null);
   const [witnessDepositionUploadLoader, setWitnessDepositionUploadLoader] = useState(false);
   const [showWitnessDepositionESign, setShowWitnessDepositionESign] = useState(false);
   const { downloadPdf } = useDownloadCasePdf();
@@ -104,15 +105,6 @@ const WitnessDrawerV2 = ({
   const closeToast = () => {
     setShowErrorToast(null);
   };
-
-  // Sync currentArtifactNumber with artifactNumber prop
-  useEffect(() => {
-    if (localStorage.getItem("artifactNumber")) {
-      setCurrentArtifactNumber(localStorage.getItem("artifactNumber"));
-      setShowWitnessDepositionReview(true);
-      localStorage.removeItem("artifactNumber");
-    }
-  }, []);
 
   useEffect(() => {
     if (showErrorToast) {
@@ -285,7 +277,7 @@ const WitnessDrawerV2 = ({
     Boolean(caseDetails?.filingNumber && caseDetails?.courtId)
   );
 
-  const evidenceList = useMemo(() => evidenceData?.artifacts?.filter((artifact) => artifact?.status === "DRAFT_IN_PROGRESS"), [evidenceData]);
+  const evidenceList = useMemo(() => evidenceData?.artifacts?.filter((artifact) => artifact?.status === "DRAFT_IN_PROGRESS") || [], [evidenceData]);
   const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "FilingType" },
   ]);
@@ -459,7 +451,7 @@ const WitnessDrawerV2 = ({
 
   // Create a new draft
   const createNewDraft = useCallback(
-    async (evidenceList = []) => {
+    async (evidenceList = [], isEvidenceRefetch = false) => {
       try {
         const newTab = {
           artifactNumber: null, // Will be set after saving
@@ -478,8 +470,11 @@ const WitnessDrawerV2 = ({
         const updatedTabs = [...evidenceList, newTab];
         setActiveTabs(updatedTabs);
         setActiveTabIndex(updatedTabs.length - 1);
+        setCurrentArtifactNumber(null);
+        setSelectedWitness({});
+        setSelectedWitnessType({});
         setWitnessDepositionText(""); // Clear the text area for new draft
-
+        isEvidenceRefetch && evidenceRefetch();
         // No need to call API yet - we'll create the evidence when user saves the draft
       } catch (error) {
         console.error("Error creating draft:", error);
@@ -499,17 +494,21 @@ const WitnessDrawerV2 = ({
   }, [caseDetails, hearingData, allParties, activeTabs.length]);
 
   useEffect(() => {
-    createNewDraft([]);
+    if (!(currentArtifactNumber || localStorage.getItem("artifactNumber"))) {
+      createNewDraft([]);
+    }
   }, []);
 
   // Process evidence list when data is loaded
   useEffect(() => {
-    if (!isEvidenceLoading && evidenceList?.length > 0) {
+    if (!isEvidenceLoading) {
       const evidenceWithUnsaved = [...evidenceList];
-      if (currentArtifactNumber) {
-        const artifact = evidenceWithUnsaved?.find((tab) => tab?.artifactNumber === currentArtifactNumber);
+      const artifactNumber = localStorage.getItem("artifactNumber");
+      const artifactNum = currentArtifactNumber || artifactNumber;
+      if (artifactNum) {
+        const artifact = evidenceWithUnsaved?.find((tab) => tab?.artifactNumber === artifactNum);
         if (artifact) {
-          const activeindex = evidenceWithUnsaved?.findIndex((tab) => tab?.artifactNumber === currentArtifactNumber);
+          const activeindex = evidenceWithUnsaved?.findIndex((tab) => tab?.artifactNumber === artifactNum);
           const selectedUUID = artifact?.sourceID;
           const matchingWitness = options.find((opt) => opt?.value === selectedUUID);
           setActiveTabs(evidenceWithUnsaved); // basically we show only that particular tab when editing an evidence(it will have corresponding artifact number)
@@ -598,12 +597,22 @@ const WitnessDrawerV2 = ({
 
   // Handle tab change
   const handleTabChange = async (tab) => {
-    const currentArtifact = activeTabs?.find((t) => t?.artifactNumber === tab?.artifactNumber);
-    if (activeTabs?.find((tab) => tab?.isNew && selectedWitness?.value)) {
-      handleSaveDraft(false, currentArtifact?.artifactNumber);
-    } else {
-      setCurrentArtifactNumber(currentArtifact?.artifactNumber);
+    const currentArtifact = activeTabs?.find((t) => t?.artifactNumber === currentArtifactNumber);
+    const newArtifact = activeTabs?.find((t) => t?.artifactNumber === tab?.artifactNumber);
+
+    if (currentArtifact?.artifactNumber) {
+      if (
+        !isEqual(selectedWitness?.value, currentArtifact?.sourceID) ||
+        !isEqual(selectedWitnessType?.value, currentArtifact?.tag) ||
+        !isEqual(witnessDepositionText, currentArtifact?.description)
+      ) {
+        handleSaveDraft(false, tab?.artifactNumber);
+      }
+      setCurrentArtifactNumber(tab?.artifactNumber);
+    } else if (activeTabs?.find((tab) => tab?.isNew && selectedWitness?.value)) {
+      handleSaveDraft(false, currentArtifactNumber);
     }
+    setCurrentArtifactNumber(tab?.artifactNumber);
   };
 
   const handleDropdownChange = (selectedPartyOption) => {
@@ -656,45 +665,54 @@ const WitnessDrawerV2 = ({
       const artifactNum = artifactNumber || currentArtifactNumber;
       if (artifactNum) {
         const evidence = activeTabs?.find((tab) => tab?.artifactNumber === artifactNum);
-        // Update existing evidence
-        const updateEvidenceReqBody = {
-          artifact: {
-            ...evidence,
-            sourceType: selectedWitnessType.value === "PW" ? "COMPLAINANT" : selectedWitnessType.value === "DW" ? "ACCUSED" : "COURT",
-            tag: selectedWitnessType?.value,
-            sourceID: selectedWitness.value,
-            sourceName: party?.sourceName,
-            description: witnessDepositionText,
-            additionalDetails: {
-              witnessDetails: {
-                address: party?.address || "",
-                designation: party?.designation || "",
-                age: party?.age || "",
-                ownerType: party?.ownerType || "",
+
+        if (
+          !backAction ||
+          (backAction &&
+            (!isEqual(selectedWitness?.value, evidence?.sourceID) ||
+              !isEqual(selectedWitnessType?.value, evidence?.tag) ||
+              !isEqual(witnessDepositionText, evidence?.description)))
+        ) {
+          // Update existing evidence
+          const updateEvidenceReqBody = {
+            artifact: {
+              ...evidence,
+              sourceType: selectedWitnessType.value === "PW" ? "COMPLAINANT" : selectedWitnessType.value === "DW" ? "ACCUSED" : "COURT",
+              tag: selectedWitnessType?.value,
+              sourceID: selectedWitness.value,
+              sourceName: party?.sourceName,
+              description: witnessDepositionText,
+              additionalDetails: {
+                witnessDetails: {
+                  address: party?.address || "",
+                  designation: party?.designation || "",
+                  age: party?.age || "",
+                  ownerType: party?.ownerType || "",
+                },
+              },
+              isEvidenceMarkedFlow: false,
+              workflow: {
+                action: "SAVE_DRAFT",
               },
             },
-            isEvidenceMarkedFlow: false,
-            workflow: {
-              action: "SAVE_DRAFT",
-            },
-          },
-        };
+          };
 
-        const updatedEvidence = await DRISTIService.updateEvidence(updateEvidenceReqBody);
+          const updatedEvidence = await DRISTIService.updateEvidence(updateEvidenceReqBody);
 
-        // Update the tab in activeTabs directly
-        if (updatedEvidence?.artifact) {
-          const updatedTabs = [...activeTabs];
-          if (newCurrentArtifactNumber) {
-            setCurrentArtifactNumber(newCurrentArtifactNumber);
-          } else {
-            setCurrentArtifactNumber(updatedEvidence?.artifact?.artifactNumber);
+          // Update the tab in activeTabs directly
+          if (updatedEvidence?.artifact) {
+            const updatedTabs = [...activeTabs];
+            if (newCurrentArtifactNumber) {
+              setCurrentArtifactNumber(newCurrentArtifactNumber);
+            } else {
+              setCurrentArtifactNumber(updatedEvidence?.artifact?.artifactNumber);
+            }
+            setActiveTabs(updatedTabs);
+            setObtainedTag(updatedEvidence?.artifact?.tag);
           }
-          setActiveTabs(updatedTabs);
-          setObtainedTag(updatedEvidence?.artifact?.tag);
-        }
 
-        setShowErrorToast({ label: "WITNESS_DEPOSITION_UPDATED_SUCCESSFULLY", error: false });
+          setShowErrorToast({ label: t("WITNESS_DEPOSITION_UPDATED_SUCCESSFULLY"), error: false });
+        }
       } else {
         // Create new evidence
         const createEvidenceReqBody = {
@@ -807,6 +825,7 @@ const WitnessDrawerV2 = ({
 
         setShowErrorToast({ label: t("WITNESS_MARKED_SUCCESSFULLY"), error: false });
         localStorage.setItem("artifactNumber", updatedEvidence?.artifact?.artifactNumber);
+        localStorage.setItem("showPdfPreview", true);
         setCurrentEvidence(updatedEvidence?.artifact);
         setCurrentArtifactNumber(updatedEvidence?.artifact?.artifactNumber);
 
@@ -841,7 +860,7 @@ const WitnessDrawerV2 = ({
             {
               fileStore: fileStoreId,
               documentType: action === "UPLOAD" ? "SIGNED" : "UNSIGNED",
-              additionalDetails: { name: `${t("WITNESS_DEPOSITION")}.pdf` },
+              additionalDetails: { name: `${t("WITNESS_DEPOSITION")} (${selectedWitnessType?.value || ""})` },
               tenantId,
             },
           ]
@@ -948,10 +967,8 @@ const WitnessDrawerV2 = ({
   const handleConfirmDeleteDeposition = async (selectedTab) => {
     try {
       if (!selectedTab?.artifactNumber) {
-        const updatedActiveTabs = activeTabs?.filter((tab) => !activeTabs?.artifactNumber);
-        setActiveTabs(updatedActiveTabs);
-        setShowErrorToast({ label: t(" WITNESS_DEPOSITION_DELETED_SUCCESSFULLY"), error: false });
-        const deletedEvidenceIndex = activeTabs?.findIndex((tab) => tab?.artifactNumber === selectedTab?.artifactNumber);
+        const deletedEvidenceIndex = activeTabs?.length - 1;
+        const updatedActiveTabs = activeTabs?.filter((tab) => tab?.artifactNumber);
         setActiveTabs(updatedActiveTabs);
         const newCurrentEvidence = updatedActiveTabs?.[deletedEvidenceIndex - 1];
         if (newCurrentEvidence?.artifactNumber) {
@@ -960,22 +977,24 @@ const WitnessDrawerV2 = ({
         } else {
           setCurrentArtifactNumber(null);
         }
-        setShowConfirmDeleteDepositionModal({ show: false, tab: {} });
-        evidenceRefetch();
+        // evidenceRefetch();
         return;
       }
 
       // If the witness deposition has artifact number.
       const evidence = activeTabs?.find((tab) => tab?.artifactNumber === selectedTab?.artifactNumber);
       const party = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value);
+      const deletedEvidenceIndex = activeTabs?.findIndex((tab) => tab?.artifactNumber === selectedTab?.artifactNumber);
+
       if (evidence?.artifactNumber) {
         // Update existing evidence
+        setLoader(true);
         const updateEvidenceReqBody = {
           artifact: {
             ...evidence,
-            tag: selectedWitnessType?.value,
-            sourceID: selectedWitness?.value,
-            sourceName: party?.sourceName,
+            tag: evidence?.tag,
+            sourceID: evidence?.sourceID,
+            sourceName: evidence?.sourceName,
             isActive: false,
             workflow: {
               action: "DELETE_DRAFT",
@@ -985,7 +1004,6 @@ const WitnessDrawerV2 = ({
 
         const updatedEvidence = await DRISTIService.updateEvidence(updateEvidenceReqBody);
         setShowErrorToast({ label: t(" WITNESS_DEPOSITION_DELETED_SUCCESSFULLY"), error: false });
-        const deletedEvidenceIndex = activeTabs?.findIndex((tab) => tab?.artifactNumber === selectedTab?.artifactNumber);
         const updatedActiveTabs = activeTabs?.filter((tab) => tab?.artifactNumber !== selectedTab?.artifactNumber);
         setActiveTabs(updatedActiveTabs);
         if (deletedEvidenceIndex === activeTabs?.length - 1) {
@@ -1003,6 +1021,7 @@ const WitnessDrawerV2 = ({
             setCurrentArtifactNumber(newCurrentEvidence?.artifactNumber);
           } else {
             setCurrentArtifactNumber(null);
+            setActiveTabs(updatedActiveTabs);
           }
         }
         setShowConfirmDeleteDepositionModal({ show: false, tab: {} });
@@ -1011,313 +1030,481 @@ const WitnessDrawerV2 = ({
     } catch (error) {
       console.error("Error while deleting witness deposition bond:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setLoader(false);
+    }
+  };
+
+  const handleAddNewDepositionDraft = async () => {
+    if (!selectedWitness?.value) {
+      setShowErrorToast({ label: t("PLEASE_SELECT_WITNESS_FIRST"), error: true });
+
+      return;
+    }
+
+    if (!selectedWitnessType?.value) {
+      setShowErrorToast({ label: t("PLEASE_MARK_WITNESS"), error: true });
+      return;
+    }
+
+    try {
+      setLoader(true);
+
+      const party = allParties?.find((p) => p?.uuid === selectedWitness?.value || p?.uniqueId === selectedWitness?.value);
+      // Check if we need to create or update evidence
+      const artifactNum = artifactNumber || currentArtifactNumber;
+      if (artifactNum) {
+        const currentActiveIndex = activeTabs?.findIndex((tab) => tab?.artifactNumber === artifactNum);
+        const evidence = activeTabs?.find((tab) => tab?.artifactNumber === artifactNum);
+
+        if (
+          !isEqual(selectedWitness?.value, evidence?.sourceID) ||
+          !isEqual(selectedWitnessType?.value, evidence?.tag) ||
+          !isEqual(witnessDepositionText, evidence?.description)
+        ) {
+          // Update existing evidence
+          const updateEvidenceReqBody = {
+            artifact: {
+              ...evidence,
+              sourceType: selectedWitnessType.value === "PW" ? "COMPLAINANT" : selectedWitnessType.value === "DW" ? "ACCUSED" : "COURT",
+              tag: selectedWitnessType?.value,
+              sourceID: selectedWitness.value,
+              sourceName: party?.sourceName,
+              description: witnessDepositionText,
+              additionalDetails: {
+                witnessDetails: {
+                  address: party?.address || "",
+                  designation: party?.designation || "",
+                  age: party?.age || "",
+                  ownerType: party?.ownerType || "",
+                },
+              },
+              isEvidenceMarkedFlow: false,
+              workflow: {
+                action: "SAVE_DRAFT",
+              },
+            },
+          };
+
+          const updatedEvidence = await DRISTIService.updateEvidence(updateEvidenceReqBody);
+
+          if (updatedEvidence?.artifact) {
+            // Update the activeTabs array by replacing the updated evidence object
+            const updatedTabs = [...activeTabs];
+            if (currentActiveIndex !== -1) {
+              updatedTabs[currentActiveIndex] = updatedEvidence.artifact;
+              setActiveTabs(updatedTabs);
+              setCurrentEvidence(updatedEvidence.artifact);
+              setShowErrorToast({ label: t("WITNESS_DEPOSITION_UPDATED_SUCCESSFULLY"), error: false });
+              setCurrentArtifactNumber(null);
+              createNewDraft(updatedTabs, true);
+            }
+          }
+        } else {
+          setCurrentArtifactNumber(null);
+          createNewDraft(activeTabs, true);
+        }
+      } else {
+        // Create new evidence
+        const currentActiveIndex = activeTabs?.findIndex((tab) => !tab?.artifactNumber);
+
+        const createEvidenceReqBody = {
+          artifact: {
+            artifactType: "WITNESS_DEPOSITION",
+            caseId: caseDetails?.id,
+            filingNumber: caseDetails?.filingNumber,
+            tenantId,
+            sourceType: selectedWitnessType?.value === "PW" ? "COMPLAINANT" : selectedWitnessType?.value === "DW" ? "ACCUSED" : "COURT",
+            tag: selectedWitnessType?.value,
+            sourceID: selectedWitness?.value,
+            sourceName: party?.sourceName, // confirm?
+            filingType: filingType,
+            description: witnessDepositionText,
+            additionalDetails: {
+              witnessDetails: {
+                address: party?.address || "",
+                designation: party?.designation || "",
+                age: party?.age || "",
+                ownerType: party?.ownerType || "",
+              },
+            },
+            comments: [],
+            workflow: {
+              action: "SAVE_DRAFT",
+            },
+          },
+        };
+
+        const updatedEvidence = await submissionService.createEvidence(createEvidenceReqBody);
+
+        if (updatedEvidence?.artifact) {
+          // Update the activeTabs array by replacing the updated evidence object
+          const updatedTabs = [...activeTabs];
+          if (currentActiveIndex !== -1) {
+            updatedTabs[currentActiveIndex] = updatedEvidence.artifact;
+            setActiveTabs(updatedTabs);
+            setCurrentEvidence(updatedEvidence.artifact);
+            setShowErrorToast({ label: t("WITNESS_DEPOSITION_UPDATED_SUCCESSFULLY"), error: false });
+            setCurrentArtifactNumber(null);
+            createNewDraft(updatedTabs, true);
+          }
+        }
+      }
+
+      // Also refresh evidence list to ensure server and client are in sync
+    } catch (error) {
+      console.error("Error saving draft:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setLoader(false);
     }
   };
 
   if (isFilingTypeLoading || isEvidenceLoading || caseApiLoading) {
     return <Loader />;
   }
+  const CONFIG_KEY = "witnessDeposition";
+  const FIELD_NAME = "comment";
 
+  const formData = {
+    [CONFIG_KEY]: {
+      [FIELD_NAME]: IsSelectedWitness ? witnessDepositionText : "",
+    },
+  };
+
+  const onSelect = (key, value) => {
+    if (key === CONFIG_KEY && value?.[FIELD_NAME] !== undefined) {
+      setWitnessDepositionText(value[FIELD_NAME]);
+    }
+  };
+
+  const isDisabled = isProceeding;
+
+  const config = {
+    key: CONFIG_KEY,
+    disable: isDisabled,
+    populators: {
+      inputs: [
+        {
+          name: FIELD_NAME,
+          rows: 10,
+          isOptional: false,
+          style: {
+            width: "100%",
+            minHeight: "40vh",
+            fontSize: "large",
+            opacity: isDisabled ? 0.5 : 1,
+            pointerEvents: !IsSelectedWitness ? "unset !important" : "auto",
+            backgroundColor: isDisabled ? "#f5f5f5" : "white",
+            color: isDisabled ? "#666" : "black",
+          },
+        },
+      ],
+    },
+    disableScrutinyHeader: true,
+  };
   return (
-    <div className="bottom-drawer-wrapper">
-      {loader && (
-        <div
-          style={{
-            width: "100vw",
-            height: "100vh",
-            zIndex: "9999",
-            position: "fixed",
-            right: "0",
-            display: "flex",
-            top: "0",
-            background: "rgb(234 234 245 / 50%)",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          className="submit-loader"
-        >
-          <Loader />
-        </div>
-      )}
-      <div className="bottom-drawer-overlay" onClick={onClose} />
-      <div className={`bottom-drawer ${isOpen ? "open" : ""}`}>
-        <div className="drawer-header">
-          <div className="header-content">
-            <button className="drawer-close-button" onClick={handleCloseWitnessDrawer}>
-              <LeftArrow color="#0b0c0c" />
-            </button>
-            <h2>{t("CS_WITNESS_DEPOSITION")}</h2>
+    <React.Fragment>
+      <style>
+        {`
+        .rdw-editor-wrapper{
+          height: 375px;
+          }
+        `}
+      </style>
+      <div className="bottom-drawer-wrapper">
+        {loader && (
+          <div
+            style={{
+              width: "100vw",
+              height: "100vh",
+              zIndex: "9999",
+              position: "fixed",
+              right: "0",
+              display: "flex",
+              top: "0",
+              background: "rgb(234 234 245 / 50%)",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            className="submit-loader"
+          >
+            <Loader />
           </div>
-        </div>
-        <div className="drawer-content">
-          <div className="drawer-section">
-            {/* Tabs UI for draft depositions */}
+        )}
+        <div className="bottom-drawer-overlay" onClick={onClose} />
+        <div className={`bottom-drawer ${isOpen ? "open" : ""}`}>
+          <div className="drawer-header">
+            <div className="header-content">
+              <button className="drawer-close-button" onClick={handleCloseWitnessDrawer}>
+                <LeftArrow color="#0b0c0c" />
+              </button>
+              <h2>{t("CS_WITNESS_DEPOSITION")}</h2>
+            </div>
+          </div>
+          <div className="drawer-content">
+            <div className="drawer-section">
+              {/* Tabs UI for draft depositions */}
 
-            <div className="witness-tabs" style={{ display: "flex", marginTop: "16px", borderBottom: "1px solid #d6d5d4", overflowX: "scroll" }}>
-              {/* Display tabs for both evidence list items and unsaved drafts */}
-              {activeTabs?.map((tab, index) => (
-                <div
-                  key={tab.artifactNumber || `new-tab-${index}`}
-                  className={`witness-tab ${activeTabIndex === index ? "active" : ""}`}
-                  onClick={() => handleTabChange(tab)}
-                  style={{
-                    padding: "8px 16px",
-                    marginRight: "8px",
-                    cursor: "pointer",
-                    fontSize: "16px",
-                    backgroundColor: "transparent",
-                    color: activeTabIndex === index ? "#0A5757" : "#6F767E",
-                    borderBottom: activeTabIndex === index ? "2px solid #0A5757" : "none",
-                    fontWeight: activeTabIndex === index ? "bold" : "normal",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: "8px",
-                  }}
-                >
-                  <span>{tab?.isNew ? `${t("CS_DEPOSITION")} (${t("UNSAVED_DRAFT")})` : `${t("CS_DEPOSITION")} (${tab?.sourceName})`}</span>
-                  <span
+              <div className="witness-tabs" style={{ display: "flex", marginTop: "16px", borderBottom: "1px solid #d6d5d4", overflowX: "scroll" }}>
+                {/* Display tabs for both evidence list items and unsaved drafts */}
+                {activeTabs?.map((tab, index) => (
+                  <div
+                    key={tab.artifactNumber || `new-tab-${index}`}
+                    className={`witness-tab ${activeTabIndex === index ? "active" : ""}`}
+                    onClick={() => handleTabChange(tab)}
                     style={{
+                      padding: "8px 16px",
+                      marginRight: "8px",
+                      cursor: "pointer",
+                      fontSize: "16px",
+                      backgroundColor: "transparent",
+                      color: activeTabIndex === index ? "#0A5757" : "#6F767E",
+                      borderBottom: activeTabIndex === index ? "2px solid #0A5757" : "none",
+                      fontWeight: activeTabIndex === index ? "bold" : "normal",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: "8px",
+                    }}
+                  >
+                    <span>{tab?.isNew ? `${t("CS_DEPOSITION")} (${t("UNSAVED")})` : `${t("CS_DEPOSITION")} (${tab?.sourceName})`}</span>
+                    <span
+                      style={{
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        marginLeft: "8px",
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent tab change when clicking delete
+                        if (tab?.artifactNumber) {
+                          setShowConfirmDeleteDepositionModal({ show: true, tab: tab });
+                        } else {
+                          handleConfirmDeleteDeposition(tab);
+                        }
+                      }}
+                    >
+                      <CustomDeleteIcon />
+                    </span>
+                  </div>
+                ))}
+                {/* Add new tab button */}
+                {
+                  <div
+                    className="witness-tab add-tab"
+                    onClick={() => handleAddNewDepositionDraft()}
+                    style={{
+                      padding: "8px 18px",
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
-                      marginLeft: "8px",
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation(); // Prevent tab change when clicking delete
-                      // Add delete functionality here
-                      setShowConfirmDeleteDepositionModal({ show: true, tab: tab });
+                      fill: "#0B6265",
                     }}
                   >
-                    <CustomDeleteIcon />
-                  </span>
-                </div>
-              ))}
-              {/* Add new tab button */}
-              {
-                <div
-                  className="witness-tab add-tab"
-                  onClick={() => handleAddNewDraft()}
+                    <CustomAddIcon width="17" height="17" fill="#0A5757" />
+                  </div>
+                }
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", margin: "16px 0px 0px" }}>
+                <LabelFieldPair>
+                  <CardLabel className="case-input-label">{t("ALL_PARTIES")}</CardLabel>
+                  <Dropdown
+                    t={t}
+                    option={options}
+                    optionKey={"label"}
+                    select={handleDropdownChange}
+                    freeze={true}
+                    disable={isProceeding}
+                    selected={selectedWitness}
+                    style={{ width: "100%", height: "40px", fontSize: "16px", marginBottom: "0px" }}
+                  />
+                </LabelFieldPair>
+                <LabelFieldPair>
+                  <CardLabel className="case-input-label">{t("WITNESS_MARKED_AS")}</CardLabel>
+                  <Dropdown
+                    t={t}
+                    option={witnessTypeOptions}
+                    optionKey={"label"}
+                    select={handleWitnessTypeChange}
+                    freeze={true}
+                    disable={isProceeding || isWitnessTypeDisabled}
+                    selected={selectedWitnessType}
+                    style={{ width: "100%", height: "40px", fontSize: "16px", marginBottom: "0px" }}
+                  />
+                </LabelFieldPair>
+              </div>
+
+              <div style={{ height: "19px", color: "#007E7E", marginTop: "2px" }}>
+                <button
                   style={{
-                    padding: "8px 18px",
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    margin: 0,
                     cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    fill: "#0B6265",
+                    fontSize: "14px",
+                    color: "rgb(0, 126, 126)",
+                    fontWeight: 700,
                   }}
+                  onClick={onClickAddWitness}
                 >
-                  <CustomAddIcon width="17" height="17" fill="#0A5757" />
-                </div>
-              }
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", margin: "16px 0px 0px" }}>
-              <LabelFieldPair>
-                <CardLabel className="case-input-label">{t("ALL_PARTIES")}</CardLabel>
-                <Dropdown
-                  t={t}
-                  option={options}
-                  optionKey={"label"}
-                  select={handleDropdownChange}
-                  freeze={true}
-                  disable={isProceeding}
-                  selected={selectedWitness}
-                  style={{ width: "100%", height: "40px", fontSize: "16px", marginBottom: "0px" }}
+                  + {t("ADD_NEW_WITNESS")}
+                </button>
+              </div>
+
+              <div style={{ marginTop: "16px" }}>{t("CS_DESCRIPTION")}</div>
+
+              <div style={{ gap: "16px", border: "1px solid" }}>
+                <SelectCustomFormatterTextArea t={t} config={config} formData={formData} onSelect={onSelect} errors={{}} />
+                {IsSelectedWitness && (
+                  <TranscriptComponent
+                    setWitnessDepositionText={setWitnessDepositionText}
+                    isRecording={isRecording}
+                    setIsRecording={setIsRecording}
+                    activeTab={"Witness Deposition"}
+                  ></TranscriptComponent>
+                )}
+              </div>
+              <div className="drawer-footer" style={{ display: "flex", justifyContent: "end", flexDirection: "row", gap: "16px" }}>
+                <Button
+                  label={t("SAVE_DRAFT")}
+                  isDisabled={!IsSelectedWitness || isProceeding}
+                  onButtonClick={() => handleSaveDraft()}
+                  style={{
+                    width: "130px",
+                    backgroundColor: "#fff",
+                    color: "#0B6265",
+                    border: "1px solid #0B6265",
+                    boxShadow: "none",
+                  }}
                 />
-              </LabelFieldPair>
-              <LabelFieldPair>
-                <CardLabel className="case-input-label">{t("WITNESS_MARKED_AS")}</CardLabel>
-                <Dropdown
-                  t={t}
-                  option={witnessTypeOptions}
-                  optionKey={"label"}
-                  select={handleWitnessTypeChange}
-                  freeze={true}
-                  disable={isProceeding || isWitnessTypeDisabled}
-                  selected={selectedWitnessType}
-                  style={{ width: "100%", height: "40px", fontSize: "16px", marginBottom: "0px" }}
+                <Button
+                  label={t("SUBMIT_BUTTON")}
+                  isDisabled={!IsSelectedWitness || isProceeding || witnessDepositionText?.length === 0}
+                  className={"order-drawer-save-btn"}
+                  onButtonClick={() => handleSaveDraft(true)}
+                  style={{
+                    width: "110px",
+                  }}
                 />
-              </LabelFieldPair>
-            </div>
-
-            <div style={{ height: "19px", color: "#007E7E", marginTop: "2px" }}>
-              <button
-                style={{
-                  background: "none",
-                  border: "none",
-                  padding: 0,
-                  margin: 0,
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  color: "rgb(0, 126, 126)",
-                  fontWeight: 700,
-                }}
-                onClick={onClickAddWitness}
-              >
-                + {t("ADD_NEW_WITNESS")}
-              </button>
-            </div>
-
-            <div style={{ marginTop: "16px" }}>{t("CS_DESCRIPTION")}</div>
-
-            <div style={{ gap: "16px", border: "1px solid" }}>
-              <TextArea
-                ref={textAreaRef}
-                style={{
-                  width: "100%",
-                  minHeight: "40vh",
-                  fontSize: "large",
-                  ...(!IsSelectedWitness && {
-                    pointerEvents: "unset !important",
-                  }),
-                }}
-                value={IsSelectedWitness ? witnessDepositionText || "" : ""}
-                onChange={(e) => setWitnessDepositionText(e.target.value)}
-                disabled={isProceeding}
-              />
-              {IsSelectedWitness && (
-                <TranscriptComponent
-                  setWitnessDepositionText={setWitnessDepositionText}
-                  isRecording={isRecording}
-                  setIsRecording={setIsRecording}
-                  activeTab={"Witness Deposition"}
-                ></TranscriptComponent>
-              )}
-            </div>
-            <div className="drawer-footer" style={{ display: "flex", justifyContent: "end", flexDirection: "row", gap: "16px" }}>
-              <Button
-                label={t("SAVE_DRAFT")}
-                isDisabled={!IsSelectedWitness || isProceeding}
-                onButtonClick={() => handleSaveDraft()}
-                style={{
-                  width: "130px",
-                  backgroundColor: "#fff",
-                  color: "#0B6265",
-                  border: "1px solid #0B6265",
-                  boxShadow: "none",
-                }}
-              />
-              <Button
-                label={t("SUBMIT_BUTTON")}
-                isDisabled={!IsSelectedWitness || isProceeding || witnessDepositionText?.length === 0}
-                className={"order-drawer-save-btn"}
-                onButtonClick={() => handleSaveDraft(true)}
-                style={{
-                  width: "110px",
-                }}
-              />
+              </div>
             </div>
           </div>
         </div>
+
+        {witnessModalOpen && (
+          <AddWitnessModal
+            onCancel={() => setWitnessModalOpen(false)}
+            onDismiss={() => setWitnessModalOpen(false)}
+            tenantId={tenantId}
+            caseDetails={caseDetails}
+            isEmployee={true}
+            onAddSuccess={() => {
+              setWitnessModalOpen(false);
+              refetchCaseData();
+            }}
+            showToast={setShowErrorToast}
+            style={{ top: "57%" }}
+          ></AddWitnessModal>
+        )}
+
+        {showWitnessDepositionReview && (
+          <WitnessDepositionReviewModal
+            t={t}
+            handleBack={() => {
+              setShowWitnessDepositionReview(false);
+              localStorage.removeItem("artifactNumber");
+              localStorage.removeItem("showPdfPreview");
+            }}
+            setShowWitnessDepositionReview={setShowWitnessDepositionReview}
+            setShowsignatureModal={setShowsignatureModal}
+            currentEvidence={currentEvidence}
+            courtId={caseCourtId}
+            cnrNumber={cnrNumber}
+            setWitnessDepositionFileStoreId={setWitnessDepositionFileStoreId}
+            tag={obtainedTag || selectedWitnessType?.value}
+          />
+        )}
+
+        {showSignatureModal && (
+          <WitnessDepositionSignatureModal
+            t={t}
+            handleCloseSignatureModal={handleCloseSignatureModal}
+            handleDownload={handleDownload}
+            handleESign={() => handleESign("")}
+            setShowUploadSignature={setShowUploadSignature}
+            showUploadSignature={showUploadSignature}
+            handleSubmit={handleSubmitSignature}
+            setLoader={setWitnessDepositionUploadLoader}
+            loader={witnessDepositionUploadLoader}
+            witnessDepositionFileStoreId={witnessDepositionFileStoreId}
+          />
+        )}
+
+        {showAddWitnessMobileNumberModal && (
+          <AddWitnessMobileNumberModal
+            t={t}
+            handleClose={() => {
+              setShowAddWitnessMobileNumberModal(false);
+              setShowAddWitnessMobileNumberModal(false);
+              setShowsignatureModal(true);
+              setWitnessMobileNumber("");
+            }}
+            submit={(mobileNumber) => handleESign(mobileNumber)}
+            witnesMobileNumber={witnesMobileNumber}
+            setWitnessMobileNumber={setWitnessMobileNumber}
+            allParties={allParties}
+          />
+        )}
+
+        {showWitnessDepositionESign && (
+          <WitnessDepositionESignLockModal
+            t={t}
+            handleSaveOnSubmit={() => {
+              setShowWitnessDepositionESign(false);
+              evidenceRefetch();
+            }}
+            witnessDepositionSignatureURL={witnessDepositionSignatureURL}
+          />
+        )}
+
+        {showConfirmWitnessModal && (
+          <ConfirmWitnessModal
+            t={t}
+            selectedWitness={selectedWitness}
+            witnessTag={obtainedTag}
+            onCancel={() => setShowConfirmWitnessModal(false)}
+            onSubmit={handleConfirmWitnessAndSign}
+            allParties={allParties}
+          />
+        )}
+
+        {showConfirmDeleteDepositionModal?.show && (
+          <ConfirmDepositionDeleteModal
+            t={t}
+            selectedWitness={selectedWitness}
+            selectedTab={showConfirmDeleteDepositionModal?.tab}
+            allParties={allParties}
+            onCancel={() => setShowConfirmDeleteDepositionModal({ show: false, tab: {} })}
+            onSubmit={() => handleConfirmDeleteDeposition(showConfirmDeleteDepositionModal?.tab)}
+          />
+        )}
+        {showSuccessModal && (
+          <SuccessBannerModal
+            t={t}
+            handleCloseSuccessModal={() => {
+              setShowSuccessModal(false);
+              evidenceRefetch();
+              setCurrentEvidence(null);
+            }}
+            message={"WITNESS_DEPOSITION_SUCCESS_BANNER_HEADER"}
+          />
+        )}
+
+        {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
       </div>
-
-      {witnessModalOpen && (
-        <AddWitnessModal
-          onCancel={() => setWitnessModalOpen(false)}
-          onDismiss={() => setWitnessModalOpen(false)}
-          tenantId={tenantId}
-          caseDetails={caseDetails}
-          isEmployee={true}
-          onAddSuccess={() => {
-            setWitnessModalOpen(false);
-            refetchCaseData();
-          }}
-          showToast={setShowErrorToast}
-          style={{ top: "57%" }}
-        ></AddWitnessModal>
-      )}
-
-      {showWitnessDepositionReview && (
-        <WitnessDepositionReviewModal
-          t={t}
-          handleBack={() => {
-            setShowWitnessDepositionReview(false);
-          }}
-          setShowWitnessDepositionReview={setShowWitnessDepositionReview}
-          setShowsignatureModal={setShowsignatureModal}
-          currentEvidence={currentEvidence}
-          courtId={caseCourtId}
-          cnrNumber={cnrNumber}
-          setWitnessDepositionFileStoreId={setWitnessDepositionFileStoreId}
-          tag={obtainedTag || selectedWitnessType?.value}
-        />
-      )}
-
-      {showSignatureModal && (
-        <WitnessDepositionSignatureModal
-          t={t}
-          handleCloseSignatureModal={handleCloseSignatureModal}
-          handleDownload={handleDownload}
-          handleESign={() => handleESign("")}
-          setShowUploadSignature={setShowUploadSignature}
-          showUploadSignature={showUploadSignature}
-          handleSubmit={handleSubmitSignature}
-          setLoader={setWitnessDepositionUploadLoader}
-          loader={witnessDepositionUploadLoader}
-          witnessDepositionFileStoreId={witnessDepositionFileStoreId}
-        />
-      )}
-
-      {showAddWitnessMobileNumberModal && (
-        <AddWitnessMobileNumberModal
-          t={t}
-          handleClose={() => {
-            setShowAddWitnessMobileNumberModal(false);
-            setShowAddWitnessMobileNumberModal(false);
-            setShowsignatureModal(true);
-            setWitnessMobileNumber("");
-          }}
-          submit={(mobileNumber) => handleESign(mobileNumber)}
-          witnesMobileNumber={witnesMobileNumber}
-          setWitnessMobileNumber={setWitnessMobileNumber}
-          allParties={allParties}
-        />
-      )}
-
-      {showWitnessDepositionESign && (
-        <WitnessDepositionESignLockModal
-          t={t}
-          handleSaveOnSubmit={() => {
-            setShowWitnessDepositionESign(false);
-            evidenceRefetch();
-          }}
-          witnessDepositionSignatureURL={witnessDepositionSignatureURL}
-        />
-      )}
-
-      {showConfirmWitnessModal && (
-        <ConfirmWitnessModal
-          t={t}
-          selectedWitness={selectedWitness}
-          witnessTag={obtainedTag}
-          onCancel={() => setShowConfirmWitnessModal(false)}
-          onSubmit={handleConfirmWitnessAndSign}
-          allParties={allParties}
-        />
-      )}
-
-      {showConfirmDeleteDepositionModal?.show && (
-        <ConfirmDepositionDeleteModal
-          t={t}
-          selectedWitness={selectedWitness}
-          allParties={allParties}
-          onCancel={() => setShowConfirmDeleteDepositionModal({ show: false, tab: {} })}
-          onSubmit={() => handleConfirmDeleteDeposition(showConfirmDeleteDepositionModal?.tab)}
-        />
-      )}
-      {showSuccessModal && (
-        <SuccessBannerModal
-          t={t}
-          handleCloseSuccessModal={() => {
-            setShowSuccessModal(false);
-            evidenceRefetch();
-            setCurrentEvidence(null);
-          }}
-          message={"WITNESS_DEPOSITION_SUCCESS_BANNER_HEADER"}
-        />
-      )}
-
-      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
-    </div>
+    </React.Fragment>
   );
 };
 
