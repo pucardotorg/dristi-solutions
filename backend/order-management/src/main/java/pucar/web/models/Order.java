@@ -98,7 +98,7 @@ public class Order {
     private Object compositeItems = null;
 
     @JsonProperty("attendance")
-    private String attendance = null;
+    private Object attendance = null;
 
     @JsonProperty("itemText")
     private String itemText = null;
