@@ -11,6 +11,8 @@ import {
   ActionBar,
   SubmitBar,
   Loader,
+  CloseSvg,
+  Toast,
 } from "@egovernments/digit-ui-react-components";
 import { CustomAddIcon, CustomDeleteIcon, EditPencilIcon } from "../../../../dristi/src/icons/svgIndex";
 import ReactTooltip from "react-tooltip";
@@ -57,6 +59,9 @@ import {
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import CustomDatePickerV2 from "@egovernments/digit-ui-module-hearings/src/components/CustomDatePickerV2";
+import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
+import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
+import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 
 const configKeys = {
   SECTION_202_CRPC: configsOrderSection202CRPC,
@@ -146,6 +151,15 @@ const GenerateOrdersV2 = () => {
   const [caseApiError, setCaseApiError] = useState(undefined);
   // Flag to prevent multiple breadcrumb updates
   const isBreadCrumbsParamsDataSet = useRef(false);
+  const [isBailBondTaskExists, setIsBailBondTaskExists] = useState(false);
+  const [bailBondLoading, setBailBondLoading] = useState(false);
+  const userInfo = useMemo(() => Digit.UserService.getUser()?.info, []);
+  const roles = useMemo(() => userInfo?.roles, [userInfo]);
+  const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+  const todayDate = new Date().getTime();
+  const [showBailBondModal, setShowBailBondModal] = useState(false);
+  const [showErrorToast, setShowErrorToast] = useState(null);
+
   const options = [
     { code: "COMPLAINANT", name: "Complainant" },
     { code: "COMPLAINANT_ADVOCATE", name: "Complainant's Advocate" },
@@ -212,6 +226,72 @@ const GenerateOrdersV2 = () => {
       name: "nextHearingDate",
       error: "CORE_REQUIRED_FIELD_ERROR",
     },
+  };
+
+  const closeToast = () => {
+    setShowErrorToast(null);
+  };
+
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
+
+  useEffect(() => {
+    const isBailBondPendingTaskPresent = async () => {
+      try {
+        const bailBondPendingTask = await HomeService.getPendingTaskService(
+          {
+            SearchCriteria: {
+              tenantId,
+              moduleName: "Pending Tasks Service",
+              moduleSearchCriteria: {
+                isCompleted: false,
+                assignedRole: [...roles], //judge.clerk,typist
+                filingNumber: filingNumber,
+                courtId: courtId,
+                entityType: "bail bond",
+              },
+              limit: 10000,
+              offset: 0,
+            },
+          },
+          { tenantId }
+        );
+        if (bailBondPendingTask?.data?.length > 0) {
+          setIsBailBondTaskExists(true);
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    if (userType === "employee") isBailBondPendingTaskPresent();
+  }, [userType]);
+
+  const Heading = (props) => {
+    return <h1 className="heading-m">{props.label}</h1>;
+  };
+
+  const CloseBtn = (props) => {
+    return (
+      <div
+        onClick={props?.onClick}
+        style={{
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          paddingRight: "20px",
+          cursor: "pointer",
+          ...(props?.backgroundColor && { backgroundColor: props.backgroundColor }),
+        }}
+      >
+        <CloseSvg />
+      </div>
+    );
   };
 
   // TODO: temporary Form Config, need to be replaced with the actual config
@@ -331,6 +411,20 @@ const GenerateOrdersV2 = () => {
     hearingDetails?.HearingList,
   ]);
 
+  const { data: bailPendingTaskExpiry } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "common-masters",
+    [{ name: "pendingTaskExpiry" }],
+    {
+      select: (data) => {
+        return data?.["common-masters"]?.pendingTaskExpiry || [];
+      },
+    }
+  );
+  const bailPendingTaskExpiryDays = useMemo(() => {
+    return bailPendingTaskExpiry?.find((data) => data?.enitiyName === "BAIL_BONDS_REVIEW")?.noofdaysforexpiry || 0;
+  }, [bailPendingTaskExpiry]);
+
   const handleEditOrder = () => {
     setEditOrderModal(true);
   };
@@ -344,7 +438,74 @@ const GenerateOrdersV2 = () => {
     setAddOrderModal(false);
   };
 
-  if (isCaseDetailsLoading || isHearingFetching) {
+  const createBailBondTask = async () => {
+    setBailBondLoading(true);
+    try {
+      const bailBondPendingTask = await HomeService.getPendingTaskService(
+        {
+          SearchCriteria: {
+            tenantId,
+            moduleName: "Pending Tasks Service",
+            moduleSearchCriteria: {
+              isCompleted: false,
+              assignedRole: [...roles],
+              filingNumber: filingNumber,
+              courtId: courtId,
+              entityType: "bail bond",
+            },
+            limit: 10,
+            offset: 0,
+          },
+        },
+        { tenantId }
+      );
+
+      if (bailBondPendingTask?.data?.length > 0) {
+        setIsBailBondTaskExists(true);
+        setShowErrorToast({
+          label: t("BAIL_BOND_TASK_ALREADY_EXISTS"),
+          error: true,
+        });
+        return;
+      } else {
+        await DRISTIService.customApiService(Urls.dristi.pendingTask, {
+          pendingTask: {
+            name: t("CS_COMMON_BAIL_BOND"),
+            entityType: "bail bond",
+            referenceId: `MANUAL_BAIL_BOND_${filingNumber}`,
+            status: "PENDING_SIGN",
+            assignedTo: [],
+            assignedRole: ["JUDGE_ROLE", "BENCH_CLERK", "COURT_ROOM_MANAGER"],
+            actionCategory: "Bail Bond",
+            cnrNumber: caseDetails?.cnrNumber,
+            filingNumber,
+            caseId: caseDetails?.id,
+            caseTitle: caseDetails?.caseTitle,
+            isCompleted: false,
+            expiryDate: bailPendingTaskExpiryDays * 24 * 60 * 60 * 1000 + todayDate,
+            stateSla: todayDate,
+            additionalDetails: {},
+            tenantId,
+          },
+        });
+        setTimeout(() => {
+          setBailBondLoading(false);
+          setIsBailBondTaskExists(true);
+          setShowBailBondModal(false);
+        }, 1000);
+      }
+    } catch (e) {
+      console.log(e);
+      setBailBondLoading(false);
+
+      setShowErrorToast({
+        label: t("UNABLE_TO_CREATE_BAIL_BOND_TASK"),
+        error: true,
+      });
+    }
+  };
+
+  if (isCaseDetailsLoading || isHearingFetching || bailBondLoading) {
     return <Loader />;
   }
 
@@ -526,13 +687,12 @@ const GenerateOrdersV2 = () => {
                     id="bail-bond-required"
                     type="checkbox"
                     className="custom-checkbox"
-                    // onChange={() => {
-                    //   setChecked(!checked);
-                    //   colData?.updateOrderFunc(rowData, !checked);
-                    // }}
-                    // checked={checked}
+                    onChange={() => {
+                      setShowBailBondModal(true);
+                    }}
+                    checked={isBailBondTaskExists}
                     style={{ cursor: "pointer", width: "20px", height: "20px" }}
-                    disabled={skipScheduling}
+                    disabled={isBailBondTaskExists || skipScheduling}
                   />
                   <label htmlFor="bail-bond-required">Bail Bond Required</label>
                 </div>
@@ -671,6 +831,24 @@ const GenerateOrdersV2 = () => {
           setValueRef={setValueRef}
         />
       )}
+      {showBailBondModal && !isBailBondTaskExists && (
+        <Modal
+          headerBarEnd={<CloseBtn onClick={() => !bailBondLoading && setShowBailBondModal(false)} />}
+          actionSaveLabel={t("CS_COMMON_CONFIRM")}
+          actionSaveOnSubmit={createBailBondTask}
+          actionCancelLabel={t("CS_COMMON_CANCEL")}
+          isBackButtonDisabled={bailBondLoading}
+          isDisabled={bailBondLoading}
+          actionCancelOnSubmit={() => setShowBailBondModal(false)}
+          formId="modal-action"
+          headerBarMain={<Heading label={t("CREATE_BAIL_BOND_TASK")} />}
+          className="upload-signature-modal"
+          submitTextClassName="upload-signature-button"
+        >
+          <div style={{ margin: "16px 16px" }}>{t("CREATE_BAIL_BOND_TASK_TEXT")}</div>
+        </Modal>
+      )}
+      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </React.Fragment>
   );
 };

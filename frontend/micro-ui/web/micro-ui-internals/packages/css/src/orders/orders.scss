@@ -952,8 +952,8 @@
   background-color: white;
 
   textarea:disabled {
-    background-color: #EEEEEE;
-    border: 1px solid #505A5F;
+    background-color: #eeeeee;
+    border: 1px solid #505a5f;
   }
   .order-type-dropdown {
     align-items: flex-start;
@@ -991,12 +991,12 @@
       margin-bottom: 5px;
     }
     .purpose-hearing-dropdown-label.disabled {
-      color: #BBBBBD;
+      color: #bbbbbd;
     }
   }
   .case-label-field-pair {
     .case-input-label.disabled {
-      color: #BBBBBD;
+      color: #bbbbbd;
     }
   }
   .add-new-form {
@@ -1043,6 +1043,15 @@
     left: 50%;
     transform: translate(-50%, -50%);
     font-weight: 400;
+  }
+
+  .custom-checkbox:disabled {
+    border: 1px solid #bbbbbd;
+    cursor: not-allowed;
+  }
+
+  .custom-checkbox:disabled:checked::after {
+    color: #bbbbbd;
   }
 }
 
