@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.Valid;
 import lombok.Data;
 
+import java.util.List;
+
 
 @Data
 public class ItemTextMdms {
@@ -22,7 +24,7 @@ public class ItemTextMdms {
 
     @JsonProperty("path")
     @Valid
-    private String path = null;
+    private List<String> path = null;
 
     @JsonProperty("id")
     @Valid

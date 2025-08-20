@@ -174,7 +174,7 @@ public class OrderRegistrationEnrichment {
                                 JsonNode orderSchemaNode = itemNode.get("orderSchema");
                                 if (orderSchemaNode.has("orderDetails")) {
                                     JsonNode orderDetailsNode = orderSchemaNode.get("orderDetails");
-                                    String itemTextMdms = getItemTextByOrderType(orderType, orderDetailsNode, order, requestInfo);
+                                    String itemTextMdms = processOrderText(orderType, orderDetailsNode);
                                     if (itemTextMdms != null) {
                                         itemText.add(itemTextMdms);
                                     }
@@ -186,7 +186,7 @@ public class OrderRegistrationEnrichment {
                 }
             } else {
                 JsonNode orderDetailsNode = objectMapper.convertValue(order.getOrderDetails(), JsonNode.class);
-                order.setItemText(getItemTextByOrderType(order.getOrderType(), orderDetailsNode, order, requestInfo));
+                order.setItemText(processOrderText(order.getOrderType(), orderDetailsNode));
             }
         } catch (Exception e) {
             log.error("Error enriching composite order item :: {}", e.toString());
@@ -195,7 +195,8 @@ public class OrderRegistrationEnrichment {
         }
     }
 
-    public String getItemTextByOrderType(String orderType, JsonNode orderDetailsNode, Order order, RequestInfo requestInfo) {
+
+    public String processOrderText(String orderType, JsonNode orderDetailsNode) {
 
         List<ItemTextMdms> matches = mdmsDataConfig.getItemTextMdmsData().stream()
                 .filter(mdms -> mdms.getOrderType().equalsIgnoreCase(orderType))
@@ -203,162 +204,137 @@ public class OrderRegistrationEnrichment {
 
         if (matches.size() == 1) {
             String text = matches.get(0).getItemText();
+            List<String> paths = matches.get(0).getPath();
 
-            if ("ADVOCATE_REPLACEMENT_APPROVAL".equalsIgnoreCase(orderType)) {
-                String replaceAdvocateStatus = orderDetailsNode.path("replaceAdvocateStatus").asText();
-                String advocateName = orderDetailsNode.path("advocateName").asText();
+            return switch (orderType.toUpperCase()) {
+                case "ADVOCATE_REPLACEMENT_APPROVAL" ->
+                        handleAdvocateReplacementApproval(text, orderDetailsNode, paths);
+                case "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE" ->
+                        handleLitigantDetailsChange(text, orderDetailsNode, paths);
+                case "TAKE_COGNIZANCE" -> handleTakeCognizance(text, orderDetailsNode, paths);
+                case "NOTICE" -> handleNotice(text, orderDetailsNode, paths);
+                case "WARRANT" -> handleWarrant(text, orderDetailsNode, paths);
+                case "SUMMONS" -> handleSummons(text, orderDetailsNode, paths);
+                case "APPROVE_VOLUNTARY_SUBMISSIONS", "REJECT_VOLUNTARY_SUBMISSIONS" ->
+                        handleVoluntarySubmissions(text, orderDetailsNode, paths);
+                case "REFERRAL_CASE_TO_ADR" -> handleReferralCaseToAdr(text, orderDetailsNode, paths);
+                case "MANDATORY_SUBMISSIONS_RESPONSES" -> handleMandatorySubmissions(text, orderDetailsNode, paths);
+                default -> "";
+            };
 
-                text = text.replace("[advocateName]", advocateName);
-                if ("GRANT".equalsIgnoreCase(replaceAdvocateStatus)) {
-                    text = text.replace("[replaceAdvocateStatus]", "GRANTED");
-                } else {
-                    text = text.replace("[replaceAdvocateStatus]", "REJECTED");
-                }
-            }
-            if ("APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE".equalsIgnoreCase(orderType)) {
-                String applicationGrantedRejected = orderDetailsNode.path("applicationGrantedRejected").asText();
-                String applicantName = orderDetailsNode.path("applicantName").asText();
-                text = text.replace("[applicantName]", applicantName);
-
-                if ("GRANTED".equalsIgnoreCase(applicationGrantedRejected)) {
-                    text = text.replace("[applicationGrantedRejected]", "Approved");
-                } else {
-                    text = text.replace("[applicationGrantedRejected]", "Rejected");
-                }
-            }
-            if ("TAKE_COGNIZANCE".equalsIgnoreCase(orderType)) {
-                String caseNumber = orderDetailsNode.path("caseNumber").asText();
-                text = text.replace("[caseNumber]", caseNumber);
-            }
-            if ("NOTICE".equalsIgnoreCase(orderType)) {
-                JsonNode partiesNode = orderDetailsNode.path("parties");
-
-                List<String> partyNames = new ArrayList<>();
-                if (partiesNode != null && partiesNode.isArray()) {
-                    for (JsonNode party : partiesNode) {
-                        String partyName = party.path("partyName").asText();
-                        if (partyName != null && !partyName.isEmpty()) {
-                            partyNames.add(partyName);
-                        }
-                    }
-                }
-
-                String partiesString = String.join(", ", partyNames);
-                text = text.replace("[name]", partiesString);
-            }
-            if ("WARRANT".equalsIgnoreCase(orderType)) {
-                JsonNode partiesNode = orderDetailsNode.path("parties");
-                String type = orderDetailsNode.path("warrantType").asText();
-                text = text.replace("[type]", type);
-
-                List<String> partyNames = new ArrayList<>();
-                if (partiesNode != null && partiesNode.isArray()) {
-                    for (JsonNode party : partiesNode) {
-                        String partyName = party.path("partyName").asText();
-                        if (partyName != null && !partyName.isEmpty()) {
-                            partyNames.add(partyName);
-                        }
-                    }
-                }
-
-                String partiesString = String.join(", ", partyNames);
-                text = text.replace("[name]", partiesString);
-            }
-            if ("SUMMONS".equalsIgnoreCase(orderType)) {
-                JsonNode partiesNode = orderDetailsNode.path("parties");
-
-                List<String> partyNames = new ArrayList<>();
-                if (partiesNode != null && partiesNode.isArray()) {
-                    for (JsonNode party : partiesNode) {
-                        String partyName = party.path("partyName").asText();
-                        if (partyName != null && !partyName.isEmpty()) {
-                            partyNames.add(partyName);
-                        }
-                    }
-                }
-
-                String partiesString = String.join(", ", partyNames);
-                text = text.replace("[name]", partiesString);
-            }
-            if ("APPROVE_VOLUNTARY_SUBMISSIONS".equalsIgnoreCase(orderType) || "REJECT_VOLUNTARY_SUBMISSIONS".equalsIgnoreCase(orderType)) {
-                String applicationTitle = orderDetailsNode.path("applicationTitle").asText();
-                text = text.replace("[applicationTitle]", applicationTitle);
-            }
-            if ("REFERRAL_CASE_TO_ADR".equalsIgnoreCase(orderType)) {
-                String adrModeName = orderDetailsNode.path("adrModeName").asText();
-                text = text.replace("[adrModeName]", adrModeName);
-            }
-            if ("MANDATORY_SUBMISSIONS_RESPONSES".equalsIgnoreCase(orderType)) {
-                String documentType = orderDetailsNode.path("documentType").path("value").asText();
-                text = text.replace("[type]", documentType);
-
-                JsonNode partyArray = orderDetailsNode.path("partyDetails").path("partyToMakeSubmission");
-
-                String partyToMakeSubmission = "";
-                if (partyArray != null && partyArray.isArray() && !partyArray.isEmpty()) {
-                    partyToMakeSubmission = StreamSupport.stream(partyArray.spliterator(), false)
-                            .map(JsonNode::asText)
-                            .collect(Collectors.joining(", "));
-                }
-                text = text.replace("[partyToMakeSubmission]", partyToMakeSubmission);
-
-                long submissionMillis = orderDetailsNode.path("dates").path("submissionDeadlineDate").asLong();
-                LocalDate submissionDate = Instant.ofEpochMilli(submissionMillis)
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDate();
-
-                // Current date
-                LocalDate today = LocalDate.now();
-
-                // Difference in days
-                long daysRemaining = Duration.between(today.atStartOfDay(), submissionDate.atStartOfDay()).toDays();
-                text = text.replace("[days]", Long.toString(daysRemaining));
-
-            }
-
-            return text;
-        } else if (matches.size() > 1) {
-            for (ItemTextMdms mdms : matches) {
-                if (mdms.getAction() != null && "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE".equalsIgnoreCase(mdms.getOrderType())) {
-                    String applicationStatus = orderDetailsNode.path("applicationStatus").asText();
-                    String action = "APPROVED".equalsIgnoreCase(applicationStatus) ? "APPROVE" : "REJECT";
-
-                    if (action.equalsIgnoreCase(mdms.getAction())) {
-                        // Document Name
-                        String documentName = orderDetailsNode.path("documentName").asText("");
-                        String text = mdms.getItemText().replace("[type]", documentName);
-
-                        if (action.equalsIgnoreCase("APPROVE")) {
-                            {
-                                // New Submission Date
-                                long submissionMillis = orderDetailsNode.path("newSubmissionDate").asLong(0);
-                                LocalDate newSubmissionDate = null;
-                                if (submissionMillis > 0) {
-                                    newSubmissionDate = Instant.ofEpochMilli(submissionMillis)
-                                            .atZone(ZoneId.systemDefault())
-                                            .toLocalDate();
-                                }
-
-                                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-                                text = text.replace("[date]", newSubmissionDate != null ? newSubmissionDate.format(formatter) : "");
-
-                                JsonNode partiesArray = orderDetailsNode.path("parties");
-                                String partyNames = "";
-                                if (partiesArray != null && partiesArray.isArray() && !partiesArray.isEmpty()) {
-                                    partyNames = StreamSupport.stream(partiesArray.spliterator(), false)
-                                            .map(node -> node.path("partyName").asText())
-                                            .collect(Collectors.joining(", "));
-                                }
-
-                                text = text.replace("[partyName]", partyNames);
-                            }
-                            return text;
-                        }
-                    }
-                }
+        } else if (matches.size() == 2) {
+            if ("EXTENSION_OF_DOCUMENT_SUBMISSION_DATE".equalsIgnoreCase(matches.get(0).getOrderType())) {
+                return handleExtensionOfDocumentSubmissionDate(matches, orderDetailsNode);
             }
         }
+
         return null;
     }
+
+    private String handleAdvocateReplacementApproval(String text, JsonNode node, List<String> paths) {
+        String advocateName = node.path("advocateName").asText();
+        String status = node.path("replaceAdvocateStatus").asText();
+
+        text = text.replace("[advocateName]", advocateName);
+        text = text.replace("[replaceAdvocateStatus]", "GRANT".equalsIgnoreCase(status) ? "GRANTED" : "REJECTED");
+        return text;
+    }
+
+    private String handleLitigantDetailsChange(String text, JsonNode node, List<String> paths) {
+        String applicantName = node.path("applicantName").asText();
+        String status = node.path("applicationGrantedRejected").asText();
+
+        text = text.replace("[applicantName]", applicantName);
+        text = text.replace("[applicationGrantedRejected]",
+                "GRANTED".equalsIgnoreCase(status) ? "Approved" : "Rejected");
+        return text;
+    }
+
+    private String handleTakeCognizance(String text, JsonNode node, List<String> paths) {
+        String caseNumber = node.path("caseNumber").asText();
+        return text.replace("[caseNumber]", caseNumber);
+    }
+
+    private String handleNotice(String text, JsonNode node, List<String> paths) {
+        String parties = extractPartyNames(node.path("parties"));
+        return text.replace("[name]", parties);
+    }
+
+    private String handleWarrant(String text, JsonNode node, List<String> paths) {
+        String type = node.path("warrantType").asText();
+        String parties = extractPartyNames(node.path("parties"));
+
+        text = text.replace("[type]", type);
+        return text.replace("[name]", parties);
+    }
+
+    private String handleSummons(String text, JsonNode node, List<String> paths) {
+        String parties = extractPartyNames(node.path("parties"));
+        return text.replace("[name]", parties);
+    }
+
+    private String handleVoluntarySubmissions(String text, JsonNode node, List<String> paths) {
+        String title = node.path("applicationTitle").asText();
+        return text.replace("[applicationTitle]", title);
+    }
+
+    private String handleReferralCaseToAdr(String text, JsonNode node, List<String> paths) {
+        String adrMode = node.path("adrModeName").asText();
+        return text.replace("[adrModeName]", adrMode);
+    }
+
+    private String handleMandatorySubmissions(String text, JsonNode node, List<String> paths) {
+        String docType = node.path("documentType").path("value").asText();
+        text = text.replace("[type]", docType);
+
+        String partyToMakeSubmission = extractPartyToMakeSubmission(node.path("partyDetails").path("partyToMakeSubmission"));
+        text = text.replace("[partyToMakeSubmission]", partyToMakeSubmission);
+
+        long submissionMillis = node.path("dates").path("submissionDeadlineDate").asLong();
+        LocalDate submissionDate = Instant.ofEpochMilli(submissionMillis).atZone(ZoneId.systemDefault()).toLocalDate();
+        long daysRemaining = Duration.between(LocalDate.now().atStartOfDay(), submissionDate.atStartOfDay()).toDays();
+
+        return text.replace("[days]", Long.toString(daysRemaining));
+    }
+
+    private String handleExtensionOfDocumentSubmissionDate(List<ItemTextMdms> matches, JsonNode node) {
+
+        String applicationStatus = node.path("applicationStatus").asText();
+        String action = "APPROVED".equalsIgnoreCase(applicationStatus) ? "APPROVE" : "REJECT";
+        ItemTextMdms itemTextMdms = matches.stream().filter(mdms -> mdms.getAction() != null && mdms.getAction().equalsIgnoreCase(action)).findFirst().orElse(null);
+        assert itemTextMdms != null;
+
+        String text = itemTextMdms.getItemText().replace("[type]", node.path("documentName").asText(""));
+
+        if ("APPROVE".equalsIgnoreCase(itemTextMdms.getAction())) {
+            long submissionMillis = node.path("newSubmissionDate").asLong(0);
+            LocalDate newDate = submissionMillis > 0 ? Instant.ofEpochMilli(submissionMillis).atZone(ZoneId.systemDefault()).toLocalDate() : null;
+
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+            text = text.replace("[date]", newDate != null ? newDate.format(formatter) : "");
+
+            String parties = extractPartyNames(node.path("parties"));
+            text = text.replace("[partyName]", parties);
+        }
+
+        return text;
+    }
+
+    private String extractPartyNames(JsonNode partiesNode) {
+        if (partiesNode == null || !partiesNode.isArray()) return "";
+        return StreamSupport.stream(partiesNode.spliterator(), false)
+                .map(p -> p.path("partyName").asText())
+                .filter(name -> name != null && !name.isEmpty())
+                .collect(Collectors.joining(", "));
+    }
+
+    private String extractPartyToMakeSubmission(JsonNode arrayNode) {
+        if (arrayNode == null || !arrayNode.isArray()) return "";
+        return StreamSupport.stream(arrayNode.spliterator(), false)
+                .map(JsonNode::asText)
+                .filter(s -> s != null && !s.isEmpty())
+                .collect(Collectors.joining(", "));
+    }
+
 
 }
