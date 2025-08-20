@@ -3173,7 +3173,7 @@ const GenerateOrders = () => {
           attachmentDetails: {
             issueDate: orderData?.auditDetails?.lastModifiedTime,
             caseFilingDate: caseDetails?.filingDate,
-            docSubType: "Attachment requiring the apperance of a person accused",
+            docSubType: "Order authorising an attachment by the district magistrate or collector",
             templateType: "GENERIC",
             attachmentText: orderFormValue?.attachmentText?.attachmentText || "",
             district: orderFormValue?.district?.district || "",
