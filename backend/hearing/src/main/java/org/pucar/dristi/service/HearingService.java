@@ -740,7 +740,10 @@ public class HearingService {
             for (Hearing hearing : hearingList) {
                 hearing.setCourtCaseNumber(body.get("courtCaseNumber") != null ? body.get("courtCaseNumber").toString() : null);
                 hearing.setCmpNumber(body.get("cmpNumber") != null ? body.get("cmpNumber").toString() : null);
-                if (body.get("courtCaseNumber") != null) {
+                if ((body.get("isLPRCase") != null && (Boolean) body.get("isLPRCase")) && (body.get("lprNumber") != null && !body.get("lprNumber").toString().isEmpty())) {
+                    hearing.setCaseReferenceNumber(body.get("lprNumber").toString());
+                }
+                else if (body.get("courtCaseNumber") != null) {
                     hearing.setCaseReferenceNumber(body.get("courtCaseNumber").toString());
                 } else if (body.get("cmpNumber") != null) {
                     hearing.setCaseReferenceNumber(body.get("cmpNumber").toString());
