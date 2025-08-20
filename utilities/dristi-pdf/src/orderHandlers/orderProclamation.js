@@ -68,7 +68,7 @@ async function orderProclamation(
     const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
     const reasonForProclamation =
-      order?.additionalDetails?.formdata?.proclamationSubType?.subType || "";
+      order?.additionalDetails?.formdata?.proclamationText?.proclamationText || "";
     const personName =
       order?.orderDetails?.respondentName?.name ||
       order?.orderDetails?.respondentName ||
