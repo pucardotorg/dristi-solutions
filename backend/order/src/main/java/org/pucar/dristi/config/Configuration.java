@@ -224,10 +224,4 @@ public class Configuration {
 
     @Value("${egov.tenantId}")
     private String tenantId;
-
-    @Value("${dristi.application.host}")
-    private String applicationHost;
-
-    @Value("${dristi.application.search.endpoint}")
-    private String applicationSearchEndPoint;
 }

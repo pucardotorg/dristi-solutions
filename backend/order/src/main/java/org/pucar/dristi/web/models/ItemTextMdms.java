@@ -19,5 +19,13 @@ public class ItemTextMdms {
     @JsonProperty("itemText")
     @Valid
     private String itemText = null;
+
+    @JsonProperty("path")
+    @Valid
+    private String path = null;
+
+    @JsonProperty("id")
+    @Valid
+    private Integer id = null;
 }
 

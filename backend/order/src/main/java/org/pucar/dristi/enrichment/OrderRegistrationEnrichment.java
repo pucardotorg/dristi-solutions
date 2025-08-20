@@ -1,7 +1,6 @@
 package org.pucar.dristi.enrichment;
 
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -12,13 +11,9 @@ import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.config.MdmsDataConfig;
-import org.pucar.dristi.util.ApplicationUtil;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.IdgenUtil;
 import org.pucar.dristi.web.models.*;
-import org.pucar.dristi.web.models.application.Application;
-import org.pucar.dristi.web.models.application.ApplicationCriteria;
-import org.pucar.dristi.web.models.application.ApplicationSearchRequest;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -44,15 +39,13 @@ public class OrderRegistrationEnrichment {
     private ObjectMapper objectMapper;
     private CaseUtil caseUtil;
     private final MdmsDataConfig mdmsDataConfig;
-    private final ApplicationUtil applicationUtil;
 
-    public OrderRegistrationEnrichment(IdgenUtil idgenUtil, Configuration configuration, ObjectMapper objectMapper, CaseUtil caseUtil, MdmsDataConfig mdmsDataConfig, ApplicationUtil applicationUtil) {
+    public OrderRegistrationEnrichment(IdgenUtil idgenUtil, Configuration configuration, ObjectMapper objectMapper, CaseUtil caseUtil, MdmsDataConfig mdmsDataConfig) {
         this.idgenUtil = idgenUtil;
         this.configuration = configuration;
         this.objectMapper = objectMapper;
         this.caseUtil = caseUtil;
         this.mdmsDataConfig = mdmsDataConfig;
-        this.applicationUtil = applicationUtil;
     }
 
     public void enrichOrderRegistration(OrderRequest orderRequest) {
@@ -210,44 +203,32 @@ public class OrderRegistrationEnrichment {
 
         if (matches.size() == 1) {
             String text = matches.get(0).getItemText();
-            if ("ADVOCATE_REPLACEMENT_APPROVAL".equalsIgnoreCase(orderType)) {
 
+            if ("ADVOCATE_REPLACEMENT_APPROVAL".equalsIgnoreCase(orderType)) {
                 String replaceAdvocateStatus = orderDetailsNode.path("replaceAdvocateStatus").asText();
                 String advocateName = orderDetailsNode.path("advocateName").asText();
 
-                text = text.replace("[Advocate Name]", advocateName);
+                text = text.replace("[advocateName]", advocateName);
                 if ("GRANT".equalsIgnoreCase(replaceAdvocateStatus)) {
-                    text = text.replace("[GRANTED/REJECTED]", "GRANTED");
+                    text = text.replace("[replaceAdvocateStatus]", "GRANTED");
                 } else {
-                    text = text.replace("[GRANTED/REJECTED]", "REJECTED");
+                    text = text.replace("[replaceAdvocateStatus]", "REJECTED");
                 }
             }
             if ("APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE".equalsIgnoreCase(orderType)) {
                 String applicationGrantedRejected = orderDetailsNode.path("applicationGrantedRejected").asText();
                 String applicantName = orderDetailsNode.path("applicantName").asText();
-                text = text.replace("[Applicant Name]", applicantName);
+                text = text.replace("[applicantName]", applicantName);
 
                 if ("GRANTED".equalsIgnoreCase(applicationGrantedRejected)) {
-                    text = text.replace("[Approved]/[Rejected]", "Approved");
+                    text = text.replace("[applicationGrantedRejected]", "Approved");
                 } else {
-                    text = text.replace("[Approved]/[Rejected]", "Rejected");
+                    text = text.replace("[applicationGrantedRejected]", "Rejected");
                 }
             }
             if ("TAKE_COGNIZANCE".equalsIgnoreCase(orderType)) {
-                CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, order);
-                JsonNode caseDetails = caseUtil.searchCaseDetails(caseSearchRequest);
-
-                String caseNumber = "";
-                if (caseDetails != null) {
-                    if (caseDetails.hasNonNull("courtCaseNumber")) {
-                        caseNumber = caseDetails.get("courtCaseNumber").asText("");
-                    }
-
-                    if (caseNumber.isEmpty() && caseDetails.hasNonNull("cmpNumber")) {
-                        caseNumber = caseDetails.get("cmpNumber").asText("");
-                    }
-                }
-                text = text.replace("[ST No.]", caseNumber);
+                String caseNumber = orderDetailsNode.path("caseNumber").asText();
+                text = text.replace("[caseNumber]", caseNumber);
             }
             if ("NOTICE".equalsIgnoreCase(orderType)) {
                 JsonNode partiesNode = orderDetailsNode.path("parties");
@@ -268,7 +249,7 @@ public class OrderRegistrationEnrichment {
             if ("WARRANT".equalsIgnoreCase(orderType)) {
                 JsonNode partiesNode = orderDetailsNode.path("parties");
                 String type = orderDetailsNode.path("warrantType").asText();
-                text = text.replace("[Type]", type);
+                text = text.replace("[type]", type);
 
                 List<String> partyNames = new ArrayList<>();
                 if (partiesNode != null && partiesNode.isArray()) {
@@ -300,38 +281,16 @@ public class OrderRegistrationEnrichment {
                 text = text.replace("[name]", partiesString);
             }
             if ("APPROVE_VOLUNTARY_SUBMISSIONS".equalsIgnoreCase(orderType) || "REJECT_VOLUNTARY_SUBMISSIONS".equalsIgnoreCase(orderType)) {
-                ApplicationCriteria criteria = ApplicationCriteria.builder()
-                        .tenantId(order.getTenantId())
-                        .applicationNumber(order.getApplicationNumber().get(0))
-                        .build();
-                ApplicationSearchRequest applicationSearchRequest = ApplicationSearchRequest.builder().build();
-                applicationSearchRequest.setCriteria(criteria);
-                applicationSearchRequest.setRequestInfo(requestInfo);
-
-                List<Application> application = applicationUtil.searchApplications(applicationSearchRequest);
-                if (application != null && !application.isEmpty()) {
-                    JsonNode applicationDetailsNode = objectMapper.convertValue(application.get(0).getApplicationDetails(), JsonNode.class);
-                    if (applicationDetailsNode != null && applicationDetailsNode.has("applicationTitle")) {
-                        String applicationTitle = applicationDetailsNode.path("applicationTitle").asText();
-                        text = text.replace("[title of application]", applicationTitle);
-                    }
-                }
+                String applicationTitle = orderDetailsNode.path("applicationTitle").asText();
+                text = text.replace("[applicationTitle]", applicationTitle);
             }
             if ("REFERRAL_CASE_TO_ADR".equalsIgnoreCase(orderType)) {
-                int adrMode = orderDetailsNode.path("adrMode").asInt();
-                String modeOfAdr = "";
-                if (adrMode == 1) {
-                    modeOfAdr = "ARBITRATION";
-                } else if (adrMode == 2) {
-                    modeOfAdr = "MEDIATION";
-                } else if (adrMode == 3) {
-                    modeOfAdr = "CONCILIATION";
-                }
-                text = text.replace("[mode of ADR]", modeOfAdr);
+                String adrModeName = orderDetailsNode.path("adrModeName").asText();
+                text = text.replace("[adrModeName]", adrModeName);
             }
             if ("MANDATORY_SUBMISSIONS_RESPONSES".equalsIgnoreCase(orderType)) {
                 String documentType = orderDetailsNode.path("documentType").path("value").asText();
-                text = text.replace("[Type]", documentType);
+                text = text.replace("[type]", documentType);
 
                 JsonNode partyArray = orderDetailsNode.path("partyDetails").path("partyToMakeSubmission");
 
@@ -341,7 +300,7 @@ public class OrderRegistrationEnrichment {
                             .map(JsonNode::asText)
                             .collect(Collectors.joining(", "));
                 }
-                text = text.replace("[party to make submission]", partyToMakeSubmission);
+                text = text.replace("[partyToMakeSubmission]", partyToMakeSubmission);
 
                 long submissionMillis = orderDetailsNode.path("dates").path("submissionDeadlineDate").asLong();
                 LocalDate submissionDate = Instant.ofEpochMilli(submissionMillis)
@@ -353,14 +312,14 @@ public class OrderRegistrationEnrichment {
 
                 // Difference in days
                 long daysRemaining = Duration.between(today.atStartOfDay(), submissionDate.atStartOfDay()).toDays();
-                text = text.replace("[days]", Long.toString(daysRemaining)+" days");
+                text = text.replace("[days]", Long.toString(daysRemaining));
 
             }
 
             return text;
         } else if (matches.size() > 1) {
             for (ItemTextMdms mdms : matches) {
-                if (mdms.getAction() != null && "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE".equalsIgnoreCase(mdms.getOrderType()))  {
+                if (mdms.getAction() != null && "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE".equalsIgnoreCase(mdms.getOrderType())) {
                     String applicationStatus = orderDetailsNode.path("applicationStatus").asText();
                     String action = "APPROVED".equalsIgnoreCase(applicationStatus) ? "APPROVE" : "REJECT";
 
@@ -381,7 +340,7 @@ public class OrderRegistrationEnrichment {
                                 }
 
                                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-                                text = text.replace("[Date]", newSubmissionDate != null ? newSubmissionDate.format(formatter) : "");
+                                text = text.replace("[date]", newSubmissionDate != null ? newSubmissionDate.format(formatter) : "");
 
                                 JsonNode partiesArray = orderDetailsNode.path("parties");
                                 String partyNames = "";
@@ -391,7 +350,7 @@ public class OrderRegistrationEnrichment {
                                             .collect(Collectors.joining(", "));
                                 }
 
-                                text = text.replace("[name of party]", partyNames);
+                                text = text.replace("[partyName]", partyNames);
                             }
                             return text;
                         }
