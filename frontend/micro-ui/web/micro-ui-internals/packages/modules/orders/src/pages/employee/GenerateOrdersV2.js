@@ -8,12 +8,11 @@ import {
   CardHeader,
   CardLabel,
   CustomDropdown,
-  TextInput,
   ActionBar,
   SubmitBar,
   Loader,
 } from "@egovernments/digit-ui-react-components";
-import { CustomAddIcon } from "../../../../dristi/src/icons/svgIndex";
+import { CustomAddIcon, CustomDeleteIcon, EditPencilIcon } from "../../../../dristi/src/icons/svgIndex";
 import ReactTooltip from "react-tooltip";
 import AddOrderTypeModal from "../../pageComponents/AddOrderTypeModal";
 import {
@@ -162,7 +161,7 @@ const GenerateOrdersV2 = () => {
       name: "orderType",
       optionsKey: "name",
       error: "required ",
-      styles: { maxWidth: "100%" },
+      styles: { maxWidth: "75%" },
       mdmsConfig: {
         moduleName: "Order",
         masterName: "OrderType",
@@ -408,19 +407,37 @@ const GenerateOrdersV2 = () => {
               </React.Fragment>
             )}
 
-            <LabelFieldPair style={{ alignItems: "flex-start", fontSize: "16px", fontWeight: 400 }}>
-              <CardLabel style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px" }}>{t(orderTypeConfig?.label)}</CardLabel>
-              <CustomDropdown
-                t={t}
-                onChange={(e) => {
-                  // setModeOfPayment(e);
-                  // setAdditionalDetails("");
-                  setOrderType(e);
-                  setAddOrderModal(true);
-                }}
-                value={orderType}
-                config={orderTypeConfig?.populators}
-              ></CustomDropdown>
+            <LabelFieldPair className="order-type-dropdown">
+              <CardLabel className="order-type-dropdown-label">{t(orderTypeConfig?.label)}</CardLabel>
+              <div style={{ display: "flex", width: "100%", alignItems: "center" }}>
+                <CustomDropdown
+                  t={t}
+                  onChange={(e) => {
+                    // setModeOfPayment(e);
+                    // setAdditionalDetails("");
+                    setOrderType(e);
+                    setAddOrderModal(true);
+                  }}
+                  value={orderType}
+                  config={{
+                    ...orderTypeConfig?.populators,
+                    styles: { ...orderTypeConfig?.populators?.styles, flex: 1 },
+                  }}
+                />
+                <Button
+                  className={"edit-button"}
+                  variation="secondary"
+                  onButtonClick={handleEditOrder}
+                  label={t("Edit")}
+                  icon={<EditPencilIcon width="20" height="20" />}
+                />
+                <Button
+                  className={"delete-button"}
+                  variation="secondary"
+                  label={t("Delete")}
+                  icon={<CustomDeleteIcon color="#BB2C2F" width="20" height="20" />}
+                />
+              </div>
 
               <div style={{ marginBottom: "10px" }}>
                 <Button
@@ -451,7 +468,7 @@ const GenerateOrdersV2 = () => {
                   <label htmlFor="skip-scheduling">Skip Scheduling Next Hearing</label>
                 </div>
 
-                <LabelFieldPair style={{ alignItems: "flex-start", fontSize: "16px", fontWeight: 400 }}>
+                <LabelFieldPair style={{ alignItems: "flex-start", fontSize: "16px", fontWeight: 400, width: "75%" }}>
                   <CardLabel style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px" }}>{t(purposeOfHearingConfig?.label)}</CardLabel>
                   <CustomDropdown
                     t={t}
@@ -464,7 +481,7 @@ const GenerateOrdersV2 = () => {
                   ></CustomDropdown>
                 </LabelFieldPair>
 
-                <LabelFieldPair className={`case-label-field-pair`}>
+                <LabelFieldPair className={`case-label-field-pair`} style={{ width: "75%" }}>
                   <CardLabel className="case-input-label">Next Date of Hearing</CardLabel>
                   <CustomDatePickerV2
                     t={t}
@@ -511,7 +528,8 @@ const GenerateOrdersV2 = () => {
                   maxLength={1000}
                   className={`custom-textarea-style`}
                   // placeholder={t(input?.placeholder)}
-                  // disabled={config.disable}
+                  disabled={true}
+                  readOnly={true}
                 ></textarea>
                 {/* {errors[config.key] && <CardLabelError style={input?.errorStyle}>{t(errors[config.key].msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>} */}
               </div>
@@ -545,7 +563,8 @@ const GenerateOrdersV2 = () => {
                   maxLength={1000}
                   className={`custom-textarea-style`}
                   // placeholder={t(input?.placeholder)}
-                  // disabled={config.disable}
+                  disabled={true}
+                  readOnly={true}
                 ></textarea>
                 {/* {errors[config.key] && <CardLabelError style={input?.errorStyle}>{t(errors[config.key].msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>} */}
               </div>

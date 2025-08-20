@@ -166,11 +166,11 @@ const JoinCaseIcon = () => (
   </svg>
 );
 
-const CustomDeleteIcon = () => (
-  <svg width="16" height="19" viewBox="0 0 16 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+const CustomDeleteIcon = ({ color = "#C62326", width = "16", height = "19" }) => (
+  <svg width={width} height={height} viewBox="0 0 16 19" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
       d="M3 18.5C2.45 18.5 1.97917 18.3042 1.5875 17.9125C1.19583 17.5208 1 17.05 1 16.5V3.5H0V1.5H5V0.5H11V1.5H16V3.5H15V16.5C15 17.05 14.8042 17.5208 14.4125 17.9125C14.0208 18.3042 13.55 18.5 13 18.5H3ZM13 3.5H3V16.5H13V3.5ZM5 14.5H7V5.5H5V14.5ZM9 14.5H11V5.5H9V14.5Z"
-      fill="#C62326"
+      fill={color}
     />
   </svg>
 );
@@ -1734,6 +1734,17 @@ const WarningInfoRedIcon = () => {
   );
 };
 
+const EditPencilIcon = ({ color = "#007E7E", width = "12", height = "12" }) => {
+  return (
+    <svg width={width} height={height} viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M6.084 3.41719L7.37533 2.12586L9.87333 4.62386L8.582 5.91586L6.084 3.41719ZM11.8067 1.75386L10.2467 0.193862C10.1218 0.0696945 9.95279 0 9.77667 0C9.60054 0 9.43157 0.0696945 9.30667 0.193862L8.08667 1.41386L10.5867 3.91386L11.8067 2.66719C11.9229 2.54356 11.9876 2.38024 11.9876 2.21053C11.9876 2.04082 11.9229 1.8775 11.8067 1.75386ZM3.75333 5.75386L0 9.50053V12.0005H2.5L6.25333 8.25386L8.582 5.91586L6.084 3.41719L3.75333 5.75386Z"
+        fill={color}
+      />
+    </svg>
+  );
+};
+
 export {
   AdvocateIcon,
   CalendarLeftArrow,
@@ -1807,4 +1818,5 @@ export {
   TriangleIcon,
   BlackTickIcon,
   WarningInfoRedIcon,
+  EditPencilIcon,
 };

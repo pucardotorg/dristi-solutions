@@ -938,7 +938,7 @@
   display: flex;
   gap: 12px;
   flex: 1;
-  background-color: #F7F5F3;
+  background-color: #f7f5f3;
 }
 
 .generate-orders-v2-column {
@@ -951,6 +951,35 @@
   padding-left: 24px;
   background-color: white;
 
+  textarea:disabled {
+    background-color: #EEEEEE;
+    border: 1px solid #505A5F;
+  }
+  .order-type-dropdown {
+    align-items: flex-start;
+    font-size: 16px;
+    font-weight: 400;
+    .order-type-dropdown-label {
+      font-size: 16px !important;
+      font-weight: 400 !important;
+      margin-bottom: 5px;
+    }
+    .select-wrap {
+      margin-bottom: 0px;
+    }
+    .edit-button {
+      border: none;
+      color: #007e7e;
+      font-size: 16px;
+      font-weight: 700;
+    }
+    .delete-button {
+      border: none;
+      color: #bb2c2f;
+      font-size: 16px;
+      font-weight: 700;
+    }
+  }
   .add-new-form {
     font-weight: 700;
     font-size: 16px;
@@ -961,7 +990,7 @@
 .section-header {
   font-size: 20px;
   font-weight: 700;
-  color: #231F20;
+  color: #231f20;
 }
 
 .checkbox-group {
@@ -1019,63 +1048,6 @@
   text-align: left;
 }
 
-.form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-field label {
-  font-size: 14px;
-  color: #505a5f;
-}
-
-.dropdown-field {
-  padding: 8px 12px;
-  border: 1px solid #d6d5d4;
-  border-radius: 4px;
-  font-size: 14px;
-  height: 40px;
-}
-
-.date-field {
-  padding: 8px 12px;
-  border: 1px solid #d6d5d4;
-  border-radius: 4px;
-  font-size: 14px;
-  height: 40px;
-}
-
-.textarea-field {
-  padding: 8px 12px;
-  border: 1px solid #d6d5d4;
-  border-radius: 4px;
-  font-size: 14px;
-  min-height: 80px;
-  resize: vertical;
-}
-
-.textarea-field.large {
-  min-height: 200px;
-}
-
-.generate-orders-v2-footer {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 24px;
-  padding: 16px 0;
-}
-
-.footer-left {
-  display: flex;
-  gap: 16px;
-}
-
-.footer-right {
-  display: flex;
-  gap: 16px;
-}
-
 .edit-send-back-modal {
   width: 550px;
   border-radius: 4px;
@@ -1121,9 +1093,9 @@
     padding: 24px;
     overflow-y: auto;
     max-height: 60vh;
-  } 
+  }
 
-  .action-bar-wrap.order-type-action{
+  .action-bar-wrap.order-type-action {
     display: flex;
     gap: 16px;
     border-top: none;
@@ -1134,14 +1106,13 @@
   }
 }
 
-.order-type-modal{
+.order-type-modal {
   flex-direction: column !important;
   gap: 0px !important;
 }
 
-.order-type-form-modal{
+.order-type-form-modal {
   width: 100% !important;
   margin-bottom: 0 !important;
   padding-bottom: 0 !important;
 }
-
