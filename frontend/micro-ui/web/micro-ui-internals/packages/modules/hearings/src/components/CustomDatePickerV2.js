@@ -2,7 +2,18 @@ import React, { useEffect, useState } from "react";
 import { LabelFieldPair, TextInput, CloseSvg, CardLabelError, Toast } from "@egovernments/digit-ui-react-components";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 
-const CustomDatePickerV2 = ({ t, config, formData, onSelect, errors, onDateChange }) => {
+const CustomDatePickerV2 = ({
+  t,
+  config,
+  formData,
+  onSelect,
+  errors,
+  onDateChange,
+  disable = false,
+  disableColor = "#9e9e9e",
+  disableBorderColor = "#9e9e9e",
+  disableBackgroundColor = "#D9D9D9",
+}) => {
   const [showModal, setShowModal] = useState(false);
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const CustomCalendar = Digit.ComponentRegistryService.getComponent("CustomCalendarV2");
@@ -23,37 +34,39 @@ const CustomDatePickerV2 = ({ t, config, formData, onSelect, errors, onDateChang
       return () => clearTimeout(timer);
     }
   }, [showErrorToast]);
-  
+
   // Add event listener to handle clicks outside the modal
   useEffect(() => {
     // Function to handle clicks on the popup-wrap element (modal backdrop)
     const handleBackdropClick = (event) => {
       // Check if the click is directly on the popup-wrap element (the overlay)
       // and not on any of its children
-      if (event.target.className && 
-          typeof event.target.className === 'string' && 
-          event.target.className.includes('popup-wrap') && 
-          event.target === event.currentTarget) {
+      if (
+        event.target.className &&
+        typeof event.target.className === "string" &&
+        event.target.className.includes("popup-wrap") &&
+        event.target === event.currentTarget
+      ) {
         setShowModal(false);
       }
     };
-    
+
     // Add event listener when modal is shown
     if (showModal) {
       // Find the popup-wrap element after a short delay to ensure it's in the DOM
       setTimeout(() => {
-        const popupWrapElement = document.querySelector('.popup-wrap');
+        const popupWrapElement = document.querySelector(".popup-wrap");
         if (popupWrapElement) {
-          popupWrapElement.addEventListener('click', handleBackdropClick);
+          popupWrapElement.addEventListener("click", handleBackdropClick);
         }
       }, 100);
     }
-    
+
     // Clean up function
     return () => {
-      const popupWrapElement = document.querySelector('.popup-wrap');
+      const popupWrapElement = document.querySelector(".popup-wrap");
       if (popupWrapElement) {
-        popupWrapElement.removeEventListener('click', handleBackdropClick);
+        popupWrapElement.removeEventListener("click", handleBackdropClick);
       }
     };
   }, [showModal]);
@@ -88,24 +101,25 @@ const CustomDatePickerV2 = ({ t, config, formData, onSelect, errors, onDateChang
     <div style={{ marginBottom: "24px" }} className="custom-date-picker">
       <LabelFieldPair
         style={{
-          border: config?.disable ? "1px solid #9e9e9e" : "1px solid black",
-          background: config?.disable ? "#D9D9D9" : "transparent",
+          border: config?.disable || disable ? `1px solid ${disableBorderColor}` : "1px solid black",
+          background: config?.disable || disable ? disableBackgroundColor : "transparent",
           ...(config?.customStyleLabelField && config?.customStyleLabelField),
         }}
         className={config?.className}
       >
         <TextInput
           type="text"
-          style={{ border: 0, margin: 0, color: config?.disable ? "#9e9e9e" : "black" }}
+          style={{ border: 0, margin: 0, color: config?.disable || disable ? disableColor : "black" }}
           value={formData?.[config?.key] ? new Date(formData?.[config?.key]).toLocaleDateString() : ""}
           placeholder={t(config.placeholder || t("mm/dd/yyyy"))}
+          disabled={true}
           readOnly
         />
         <button
           type="button"
           onClick={() => setShowModal(true)}
           style={{ background: "transparent", border: "none", cursor: "pointer" }}
-          disabled={config?.disable}
+          disabled={config?.disable || disable}
         >
           <CalendarIcon />
         </button>

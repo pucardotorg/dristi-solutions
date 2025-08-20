@@ -980,6 +980,25 @@
       font-weight: 700;
     }
   }
+  .purpose-hearing-dropdown {
+    align-items: flex-start;
+    font-size: 16px;
+    font-weight: 400;
+    width: 75%;
+    .purpose-hearing-dropdown-label {
+      font-size: 16px !important;
+      font-weight: 400 !important;
+      margin-bottom: 5px;
+    }
+    .purpose-hearing-dropdown-label.disabled {
+      color: #BBBBBD;
+    }
+  }
+  .case-label-field-pair {
+    .case-input-label.disabled {
+      color: #BBBBBD;
+    }
+  }
   .add-new-form {
     font-weight: 700;
     font-size: 16px;
@@ -1030,6 +1049,16 @@
 .checkbox-item input[type="checkbox"] {
   width: 20px;
   height: 20px;
+}
+
+.custom-checkbox:disabled {
+  border-color: #bbbbbd;
+  cursor: not-allowed;
+}
+
+.custom-checkbox:disabled + label {
+  color: #bbbbbd;
+  cursor: not-allowed;
 }
 
 .checkbox-item label {

@@ -118,7 +118,11 @@ const GenerateOrdersV2 = () => {
   const { t } = useTranslation();
   const history = useHistory();
   // Component state and hooks can be added here as needed
-  const [value, setValue] = useState([]);
+  const [presentAttendees, setPresentAttendees] = useState([]);
+  const [absentAttendees, setAbsentAttendees] = useState([]);
+  const [purposeOfHearing, setPurposeOfHearing] = useState("");
+  const [nextHearingDate, setNextHearingDate] = useState("");
+  const [skipScheduling, setSkipScheduling] = useState(false);
   const [showEditOrderModal, setEditOrderModal] = useState(false);
   const [showAddOrderModal, setAddOrderModal] = useState(false);
   const EditSendBackModal = Digit?.ComponentRegistryService?.getComponent("EditSendBackModal");
@@ -198,13 +202,14 @@ const GenerateOrdersV2 = () => {
   const nextDateOfHearing = {
     type: "component",
     component: "CustomDatePicker",
-    key: "hearingDate",
+    key: "nextHearingDate",
     label: "Next Date of Hearing",
     className: "order-date-picker",
     isMandatory: true,
+    placeholder: "DD/MM/YYYY",
     customStyleLabelField: { display: "flex", justifyContent: "space-between" },
     populators: {
-      name: "hearingDate",
+      name: "nextHearingDate",
       error: "CORE_REQUIRED_FIELD_ERROR",
     },
   };
@@ -364,13 +369,18 @@ const GenerateOrdersV2 = () => {
                           type="checkbox"
                           className="custom-checkbox"
                           onChange={(e) => {
-                            let tempData = value;
-                            const isFound = value?.some((val) => val?.code === option?.code);
-                            if (isFound) tempData = value?.filter((val) => val?.code !== option?.code);
-                            else tempData.push(option);
-                            setValue(tempData);
+                            if (e.target.checked) {
+                              // Add to present attendees
+                              setPresentAttendees([...presentAttendees, option]);
+                              // Remove from absent attendees if present there
+                              setAbsentAttendees(absentAttendees.filter((item) => item.code !== option.code));
+                            } else {
+                              // Remove from present attendees
+                              setPresentAttendees(presentAttendees.filter((item) => item.code !== option.code));
+                            }
                           }}
-                          checked={value?.find((val) => val?.code === option?.code)}
+                          checked={presentAttendees.some((item) => item.code === option.code)}
+                          disabled={absentAttendees.some((item) => item.code === option.code)}
                           style={{ cursor: "pointer", width: "20px", height: "20px" }}
                         />
                         <label htmlFor={`present-${option.code}`}>{t(option?.name)}</label>
@@ -386,20 +396,25 @@ const GenerateOrdersV2 = () => {
                     {options?.map((option, index) => (
                       <div className="checkbox-item" key={index}>
                         <input
-                          id={`present-${option.code}`}
+                          id={`absent-${option.code}`}
                           type="checkbox"
                           className="custom-checkbox"
                           onChange={(e) => {
-                            let tempData = value;
-                            const isFound = value?.some((val) => val?.code === option?.code);
-                            if (isFound) tempData = value?.filter((val) => val?.code !== option?.code);
-                            else tempData.push(option);
-                            setValue(tempData);
+                            if (e.target.checked) {
+                              // Add to absent attendees
+                              setAbsentAttendees([...absentAttendees, option]);
+                              // Remove from present attendees if present there
+                              setPresentAttendees(presentAttendees?.filter((item) => item?.code !== option?.code));
+                            } else {
+                              // Remove from absent attendees
+                              setAbsentAttendees(absentAttendees?.filter((item) => item?.code !== option?.code));
+                            }
                           }}
-                          checked={value?.find((val) => val?.code === option?.code)}
+                          checked={absentAttendees?.some((item) => item?.code === option?.code)}
+                          disabled={presentAttendees?.some((item) => item?.code === option?.code)}
                           style={{ cursor: "pointer", width: "20px", height: "20px" }}
                         />
-                        <label htmlFor={`present-${option.code}`}>{t(option?.name)}</label>
+                        <label htmlFor={`absent-${option.code}`}>{t(option?.name)}</label>
                       </div>
                     ))}
                   </div>
@@ -458,39 +473,50 @@ const GenerateOrdersV2 = () => {
                     id="skip-scheduling"
                     type="checkbox"
                     className="custom-checkbox"
-                    // onChange={() => {
-                    //   setChecked(!checked);
-                    //   colData?.updateOrderFunc(rowData, !checked);
-                    // }}
-                    // checked={checked}
+                    onChange={() => {
+                      const newSkipValue = !skipScheduling;
+                      setSkipScheduling(newSkipValue);
+                      if (newSkipValue) {
+                        // Clear purpose and date when skipping
+                        setPurposeOfHearing("");
+                        setNextHearingDate("");
+                      }
+                    }}
+                    checked={skipScheduling}
                     style={{ cursor: "pointer", width: "20px", height: "20px" }}
                   />
                   <label htmlFor="skip-scheduling">Skip Scheduling Next Hearing</label>
                 </div>
 
-                <LabelFieldPair style={{ alignItems: "flex-start", fontSize: "16px", fontWeight: 400, width: "75%" }}>
-                  <CardLabel style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px" }}>{t(purposeOfHearingConfig?.label)}</CardLabel>
+                <LabelFieldPair className="purpose-hearing-dropdown">
+                  <CardLabel className={`purpose-hearing-dropdown-label ${skipScheduling ? "disabled" : ""}`}>
+                    {t(purposeOfHearingConfig?.label)}
+                  </CardLabel>
                   <CustomDropdown
                     t={t}
-                    // onChange={(e) => {
-                    //   setModeOfPayment(e);
-                    //   setAdditionalDetails("");
-                    // }}
-                    // value={modeOfPayment}
+                    onChange={(e) => {
+                      setPurposeOfHearing(e);
+                    }}
+                    value={purposeOfHearing}
                     config={purposeOfHearingConfig?.populators}
+                    disable={skipScheduling}
                   ></CustomDropdown>
                 </LabelFieldPair>
 
                 <LabelFieldPair className={`case-label-field-pair`} style={{ width: "75%" }}>
-                  <CardLabel className="case-input-label">Next Date of Hearing</CardLabel>
+                  <CardLabel className={`case-input-label ${skipScheduling ? "disabled" : ""}`}>Next Date of Hearing</CardLabel>
                   <CustomDatePickerV2
                     t={t}
                     config={nextDateOfHearing}
-                    // formData={orderData}
+                    formData={{ nextHearingDate: nextHearingDate }}
                     onDateChange={(date) => {
-                      // setOrderData((orderData) => ({ ...orderData, hearingDate: new Date(date).setHours(0, 0, 0, 0) }));
-                      // setOrderError((orderError) => ({ ...orderError, hearingDate: null }));
+                      setNextHearingDate(new Date(date).setHours(0, 0, 0, 0));
                     }}
+                    value={nextHearingDate}
+                    disable={skipScheduling}
+                    disableColor="#D6D5D4"
+                    disableBorderColor="#D6D5D4"
+                    disableBackgroundColor="white"
                   />
                   {/* {orderError?.hearingDate && <CardLabelError style={{ margin: 0, padding: 0 }}> {t(orderError?.hearingDate)} </CardLabelError>} */}
                 </LabelFieldPair>
@@ -506,6 +532,7 @@ const GenerateOrdersV2 = () => {
                     // }}
                     // checked={checked}
                     style={{ cursor: "pointer", width: "20px", height: "20px" }}
+                    disabled={skipScheduling}
                   />
                   <label htmlFor="bail-bond-required">Bail Bond Required</label>
                 </div>
@@ -520,14 +547,12 @@ const GenerateOrdersV2 = () => {
               <div>
                 <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>Attendance</div>
                 <textarea
-                  // value={formdata?.[config.key]?.[input.name]}
-                  // onChange={(data) => {
-                  //   handleChange(data, input);
-                  // }}
+                  value={`${presentAttendees?.length > 0 ? `Present: ${presentAttendees?.map((item) => t(item?.name))?.join(", ")}` : ``}${
+                    presentAttendees?.length > 0 && absentAttendees?.length > 0 ? "\n" : ""
+                  }${absentAttendees?.length > 0 ? `Absent: ${absentAttendees?.map((item) => t(item?.name))?.join(", ")}` : ``}`}
                   rows={3}
                   maxLength={1000}
                   className={`custom-textarea-style`}
-                  // placeholder={t(input?.placeholder)}
                   disabled={true}
                   readOnly={true}
                 ></textarea>
@@ -555,14 +580,16 @@ const GenerateOrdersV2 = () => {
               <div>
                 <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>Next Hearing</div>
                 <textarea
-                  // value={formdata?.[config.key]?.[input.name]}
-                  // onChange={(data) => {
-                  //   handleChange(data, input);
-                  // }}
+                  value={
+                    skipScheduling
+                      ? "No Next Hearing"
+                      : `${purposeOfHearing ? `Purpose of Next Hearing: ${t(purposeOfHearing?.code || purposeOfHearing)}` : ``}${
+                          purposeOfHearing && nextHearingDate ? "\n" : ""
+                        }${nextHearingDate ? `Date: ${new Date(nextHearingDate).toLocaleDateString()}` : ``}`
+                  }
                   rows={3}
                   maxLength={1000}
                   className={`custom-textarea-style`}
-                  // placeholder={t(input?.placeholder)}
                   disabled={true}
                   readOnly={true}
                 ></textarea>
