@@ -1121,7 +1121,22 @@
     padding: 24px;
     overflow-y: auto;
     max-height: 60vh;
+  } 
+
+  .action-bar-wrap.order-type-action{
+    display: flex;
+    gap: 16px;
+    border-top: none;
+    background: #fff;
+    position: sticky;
+    bottom: 0;
+    padding: 0 !important;
   }
+}
+
+.order-type-modal{
+  flex-direction: column !important;
+  gap: 0px !important;
 }
 
 .order-type-form-modal{

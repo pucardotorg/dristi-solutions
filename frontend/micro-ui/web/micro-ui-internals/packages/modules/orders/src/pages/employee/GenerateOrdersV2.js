@@ -622,6 +622,7 @@ const GenerateOrdersV2 = () => {
           index={compositeOrderIndex}
           setFormErrors={setFormErrors}
           clearFormErrors={clearFormErrors}
+          setValueRef={setValueRef}
         />
       )}
     </React.Fragment>

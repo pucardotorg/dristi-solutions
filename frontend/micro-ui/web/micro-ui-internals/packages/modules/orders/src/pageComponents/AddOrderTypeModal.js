@@ -43,6 +43,7 @@ const AddOrderTypeModal = ({
   index,
   setFormErrors,
   clearFormErrors,
+  setValueRef,
   orderType,
 }) => {
   const [formdata, setFormData] = useState({});
@@ -61,7 +62,6 @@ const AddOrderTypeModal = ({
     return foundKeys;
   }, [modifiedFormConfig]);
 
-  // all validation need to be fixed
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     applyMultiSelectDropdownFix(setValue, formData, multiSelectDropdownKeys);
     const orderType = currentOrder?.orderCategory === "COMPOSITE" ? currentOrder?.compositeItems?.[index]?.orderType : currentOrder?.orderType;
@@ -227,6 +227,10 @@ const AddOrderTypeModal = ({
       setFormData(formData);
     }
 
+    setFormErrors.current[index] = setError;
+    clearFormErrors.current[index] = clearErrors;
+    setValueRef.current[index] = setValue;
+
     if (Object.keys(formState?.errors).length) {
       setIsSubmitDisabled(true);
     } else {
@@ -239,26 +243,28 @@ const AddOrderTypeModal = ({
       <Modal
         headerBarMain={<Heading label={t(headerLabel)} />}
         headerBarEnd={<CloseBtn onClick={handleCancel} />}
-        actionSaveLabel={t(saveLabel)}
-        actionCancelLabel={t(cancelLabel)}
-        actionCancelOnSubmit={handleCancel}
-        actionSaveOnSubmit={() => {
-          const updatedFormData = { ...formdata, orderType: orderType };
-          handleSubmit(updatedFormData);
-        }}
-        isDisabled={isSubmitDisabled}
+        hideModalActionbar={true}
         className="add-order-type-modal"
       >
         <div className="generate-orders">
           <div className="view-order order-type-form-modal">
             <FormComposerV2
-              className={"generate-orders"}
+              className={"generate-orders order-type-modal"}
               defaultValues={defaultFormValue}
               config={modifiedFormConfig}
               fieldStyle={{ width: "100%" }}
               cardClassName={`order-type-form-composer`}
               actionClassName={"order-type-action"}
               onFormValueChange={onFormValueChange}
+              label={t(saveLabel)}
+              secondaryLabel={t(cancelLabel)}
+              showSecondaryLabel={true}
+              onSubmit={() => {
+                const updatedFormData = { ...formdata, orderType: orderType };
+                handleSubmit(updatedFormData);
+              }}
+              onSecondayActionClick={handleCancel}
+              isDisabled={isSubmitDisabled}
             />
           </div>
         </div>
