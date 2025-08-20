@@ -831,7 +831,7 @@ export const UICustomizations = {
         case "SELECT":
           return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
         case "EVIDENCE_NUMBER":
-          return modifiedEvidenceNumber(value, row?.filingNumber);
+          return modifiedEvidenceNumber(value, row?.businessObject?.artifactDetails?.filingNumber);
         default:
           return value || "";
       }
