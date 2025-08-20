@@ -263,7 +263,7 @@ public class OrderRegistrationEnrichment {
             if ("WARRANT".equalsIgnoreCase(orderType)) {
                 JsonNode partiesNode = orderDetailsNode.path("parties");
                 String type = orderDetailsNode.path("warrantType").asText();
-                text = text.replace("[type]", type);
+                text = text.replace("[Type]", type);
 
                 List<String> partyNames = new ArrayList<>();
                 if (partiesNode != null && partiesNode.isArray()) {
@@ -331,7 +331,7 @@ public class OrderRegistrationEnrichment {
                 }
             }
             if ("REFERRAL_CASE_TO_ADR".equalsIgnoreCase(orderType)) {
-                int adrMode = orderDetailsNode.path("documentType").path("value").asInt();
+                int adrMode = orderDetailsNode.path("adrMode").asInt();
                 String modeOfAdr = "";
                 if (adrMode == 1) {
                     modeOfAdr = "ARBITRATION";
@@ -373,7 +373,7 @@ public class OrderRegistrationEnrichment {
             return text;
         } else if (matches.size() > 1) {
             for (ItemTextMdms mdms : matches) {
-                if (mdms.getAction() != null && "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE".equalsIgnoreCase(mdms.getOrderType())) {
+                if (mdms.getAction() != null && "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE".equalsIgnoreCase(mdms.getOrderType()))  {
                     String applicationStatus = orderDetailsNode.path("applicationStatus").asText();
                     String action = "APPROVED".equalsIgnoreCase(applicationStatus) ? "APPROVE" : "REJECT";
 
