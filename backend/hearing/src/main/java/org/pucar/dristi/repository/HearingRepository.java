@@ -12,10 +12,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -124,5 +121,10 @@ public class HearingRepository {
         log.info("Final update query: {}", hearingUpdateQuery);
         int check = writerJdbcTemplate.update(hearingUpdateQuery, preparedStmtList.toArray());
         if(check==0) throw new CustomException(HEARING_UPDATE_EXCEPTION,"Error while updating hearing");
+    }
+
+    public List<Hearing> getHearingsWithMultipleHearings() {
+        String sql = "SELECT * FROM dristi_hearing WHERE filingNumber->>0 IN (SELECT filingNumber->>0 FROM dristi_hearing GROUP BY filingNumber->>0 HAVING COUNT(*) > 1) ORDER BY filingNumber->>0, createdTime;";
+        return readerJdbcTemplate.query(sql, rowMapper);
     }
 }

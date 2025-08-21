@@ -1,6 +1,5 @@
 package org.pucar.dristi.service;
 
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
@@ -17,18 +16,21 @@ import org.pucar.dristi.repository.HearingRepository;
 import org.pucar.dristi.util.*;
 import org.pucar.dristi.validator.HearingRegistrationValidator;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.inbox.InboxRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
-import static org.pucar.dristi.config.ServiceConstants.HEARING_TYPE_MODULE_CODE;
 
 @Service
 @Slf4j
@@ -48,6 +50,9 @@ public class HearingService {
     private final DateUtil dateUtil;
     private final SchedulerUtil schedulerUtil;
     private final FileStoreUtil fileStoreUtil;
+    private final InboxUtil inboxUtil;
+    private final JsonUtil jsonUtil;
+    private final EsUtil esUtil;
 
     @Autowired
     public HearingService(
@@ -56,7 +61,7 @@ public class HearingService {
             WorkflowService workflowService,
             HearingRepository hearingRepository,
             Producer producer,
-            Configuration config, CaseUtil caseUtil, ObjectMapper objectMapper, IndividualService individualService, SmsNotificationService notificationService, MdmsUtil mdmsUtil, DateUtil dateUtil, SchedulerUtil schedulerUtil, FileStoreUtil fileStoreUtil) {
+            Configuration config, CaseUtil caseUtil, ObjectMapper objectMapper, IndividualService individualService, SmsNotificationService notificationService, MdmsUtil mdmsUtil, DateUtil dateUtil, SchedulerUtil schedulerUtil, FileStoreUtil fileStoreUtil, InboxUtil inboxUtil, JsonUtil jsonUtil, EsUtil esUtil) {
         this.validator = validator;
         this.enrichmentUtil = enrichmentUtil;
         this.workflowService = workflowService;
@@ -71,6 +76,9 @@ public class HearingService {
         this.dateUtil = dateUtil;
         this.schedulerUtil = schedulerUtil;
         this.fileStoreUtil = fileStoreUtil;
+        this.inboxUtil = inboxUtil;
+        this.jsonUtil = jsonUtil;
+        this.esUtil = esUtil;
     }
 
     public Hearing createHearing(HearingRequest body) {
@@ -90,7 +98,7 @@ public class HearingService {
 
             // send the sms after creating hearing
 
-            callNotificationService(body,body.getHearing().getStatus());
+            callNotificationService(body, body.getHearing().getStatus());
 
             return body.getHearing();
         } catch (CustomException e) {
@@ -145,12 +153,20 @@ public class HearingService {
 
             if (hearing.getWorkflow() != null) {
                 workflowService.updateWorkflowStatus(hearingRequest);
+                // update status entry in es, if this will break need to handle other so that process should complete
+                updateOpenHearingStatus(hearingRequest);
             }
 
             producer.push(config.getHearingUpdateTopic(), hearingRequest);
 
             String updatedState = hearingRequest.getHearing().getStatus();
             callNotificationService(hearingRequest, updatedState);
+
+            filterDocuments(new ArrayList<>() {{
+                                add(hearing);
+                            }},
+                    Hearing::getDocuments,
+                    Hearing::setDocuments);
 
             return hearingRequest.getHearing();
 
@@ -164,26 +180,94 @@ public class HearingService {
 
     }
 
-    private void deleteFileStoreDocumentsIfInactive(Hearing hearing){
+    private void updateOpenHearingStatus(HearingRequest hearingRequest) {
+
+        // search for open hearing
+        try {
+            String tenantId = hearingRequest.getHearing().getTenantId();
+            RequestInfo requestInfo = hearingRequest.getRequestInfo();
+            String hearingNumber = hearingRequest.getHearing().getHearingId();
+            InboxRequest inboxRequest = inboxUtil.getInboxRequestForOpenHearing(tenantId, requestInfo, hearingNumber);
+            List<OpenHearing> openHearings = inboxUtil.getOpenHearings(inboxRequest);
+
+            if (!(openHearings == null || openHearings.isEmpty())) {
+                OpenHearing openHearing = openHearings.get(0);
+                String status = hearingRequest.getHearing().getStatus();
+                openHearing.setStatus(status);
+                enrichStatusOrderInOpenHearing(requestInfo, openHearing);
+
+                try {
+                    String request = esUtil.buildPayload(openHearing);
+                    String uri = config.getEsHostUrl() + config.getBulkPath();
+                    esUtil.manualIndex(uri, request);
+                    // search the open hearing index here for confirmation
+                    InboxRequest confirmationRequest = inboxUtil.getInboxRequestForOpenHearing(tenantId, requestInfo, hearingNumber,status);
+                   List<OpenHearing> openHearingList = inboxUtil.getOpenHearings(confirmationRequest);
+                   if (openHearingList == null || openHearingList.isEmpty()) {
+                       log.error("Update of status is not reflected yet in ES");
+                   }
+                } catch (Exception e) {
+                    log.error("Error occurred while updating open hearing status in es");
+                    log.error("ERROR_FROM_ES: {}", e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            log.error("Something went wrong while updating status of open hearing with hearing number {}", hearingRequest.getHearing().getHearingId());
+            log.error("ERROR: {}", e.getMessage());
+        }
 
 
-        if (hearing.getDocuments() != null){
+    }
 
-         List<String> fileStoreIds = new ArrayList<>();
+    private void enrichStatusOrderInOpenHearing(RequestInfo requestInfo, OpenHearing openHearing) {
 
+        Map<String, Map<String, JSONArray>> hearingStatusData =
+                mdmsUtil.fetchMdmsData(requestInfo, openHearing.getTenantId(),
+                        HEARING_MODULE_NAME,
+                        Collections.singletonList(HEARING_STATUS_MASTER_NAME));
+        JSONArray hearingStatusJsonArray = hearingStatusData.get(HEARING_MODULE_NAME).get(HEARING_STATUS_MASTER_NAME);
 
-        for (Document document : hearing.getDocuments()) {
+        for (Object hearingStatusObject : hearingStatusJsonArray) {
+
+            String status = jsonUtil.getNestedValue(hearingStatusObject, List.of("status"), String.class);
+            if (openHearing.getStatus().equalsIgnoreCase(status)) {
+                Integer priority = jsonUtil.getNestedValue(hearingStatusObject, List.of("priority"), Integer.class);
+                openHearing.setStatusOrder(priority);
+                break;
+            }
+        }
+    }
+
+    private <T> void filterDocuments(List<T> entities,
+                                     Function<T, List<Document>> getDocs,
+                                     BiConsumer<T, List<Document>> setDocs) {
+        if (entities == null) return;
+
+        for (T entity : entities) {
+            List<Document> docs = getDocs.apply(entity);
+            if (docs != null) {
+                List<Document> activeDocs = docs.stream()
+                        .filter(Document::getIsActive)
+                        .collect(Collectors.toList());
+                setDocs.accept(entity, activeDocs); // ✅ set it back
+            }
+        }
+    }
+
+    private void deleteFileStoreDocumentsIfInactive(Hearing hearing) {
+
+        if (hearing.getDocuments() != null) {
+            List<String> fileStoreIds = new ArrayList<>();
+            for (Document document : hearing.getDocuments()) {
                 if (!document.getIsActive()) {
                     fileStoreIds.add(document.getFileStore());
                 }
             }
-        if (!fileStoreIds.isEmpty()) {
+            if (!fileStoreIds.isEmpty()) {
                 fileStoreUtil.deleteFilesByFileStore(fileStoreIds, hearing.getTenantId());
                 log.info("Deleted files from file store with ids: {}", fileStoreIds);
+            }
         }
-        }
-
-
     }
 
     public HearingExists isHearingExist(HearingExistsRequest body) {
@@ -290,7 +374,7 @@ public class HearingService {
             boolean caseAdjourned = additionalData.has("purposeOfAdjournment");
             String hearingType = hearingRequest.getHearing().getHearingType();
 
-            String messageCode = updatedState != null ? getMessageCode(updatedState, caseAdjourned,hearingType) : null;
+            String messageCode = updatedState != null ? getMessageCode(updatedState, caseAdjourned, hearingType) : null;
             assert messageCode != null;
             log.info("Message code: {}", messageCode);
 
@@ -306,7 +390,7 @@ public class HearingService {
 
             String localizedHearingType = "";
             if (hearingType != null && messageCode.equals(VARIABLE_HEARING_SCHEDULED)) {
-                localizedHearingType = getLocalizedMessageOfHearingType(hearingRequest,hearingType);
+                localizedHearingType = getLocalizedMessageOfHearingType(hearingRequest, hearingType);
             }
 
             SmsTemplateData smsTemplateData = SmsTemplateData.builder()
@@ -333,7 +417,7 @@ public class HearingService {
         return caseSearchRequest;
     }
 
-    private String getMessageCode(String updatedStatus, Boolean hearingAdjourned,String hearingType) {
+    private String getMessageCode(String updatedStatus, Boolean hearingAdjourned, String hearingType) {
 
         log.info("Operation: getMessage, UpdatedStatus: {}", updatedStatus);
         if (!hearingType.isEmpty() && updatedStatus.equalsIgnoreCase(SCHEDULED)) {
@@ -345,7 +429,7 @@ public class HearingService {
         return null;
     }
 
-    public  Set<String> extractIndividualIds(JsonNode caseDetails) {
+    public Set<String> extractIndividualIds(JsonNode caseDetails) {
         JsonNode litigantNode = caseDetails.get("litigants");
         JsonNode representativeNode = caseDetails.get("representatives");
         Set<String> uuids = new HashSet<>();
@@ -353,7 +437,7 @@ public class HearingService {
         if (litigantNode.isArray()) {
             for (JsonNode node : litigantNode) {
                 String uuid = node.path("additionalDetails").get("uuid").asText();
-                if (!uuid.isEmpty() ) {
+                if (!uuid.isEmpty()) {
                     uuids.add(uuid);
                 }
             }
@@ -363,7 +447,7 @@ public class HearingService {
                 JsonNode representingNode = advocateNode.get("representing");
                 if (representingNode.isArray()) {
                     String uuid = advocateNode.path("additionalDetails").get("uuid").asText();
-                    if (!uuid.isEmpty() ) {
+                    if (!uuid.isEmpty()) {
                         uuids.add(uuid);
                     }
                 }
@@ -388,7 +472,7 @@ public class HearingService {
 
         Set<String> mobileNumber = new HashSet<>();
         List<Individual> individuals = individualService.getIndividuals(requestInfo, new ArrayList<>(ids));
-        for(Individual individual : individuals) {
+        for (Individual individual : individuals) {
             if (individual.getMobileNumber() != null) {
                 mobileNumber.add(individual.getMobileNumber());
             }
@@ -402,6 +486,7 @@ public class HearingService {
         Set<Integer> slotIds = bulkReschedule.getSlotIds();
 
         validator.validateBulkRescheduleRequest(requestInfo, bulkReschedule);
+        updateJudgeCalendar(request);
 
         List<Hearing> hearingsToReschedule = getHearingsForBulkReschedule(slotIds, bulkReschedule, requestInfo);
 
@@ -435,6 +520,39 @@ public class HearingService {
         }
 
         return scheduleHearings;
+    }
+
+    private void updateJudgeCalendar(@Valid BulkRescheduleRequest request) {
+        log.info("operation=updateJudgeCalendar, status=IN_PROGRESS");
+        Long startTime = request.getBulkReschedule().getStartTime();
+        Long endTime = request.getBulkReschedule().getEndTime();
+        String judgeId = request.getBulkReschedule().getJudgeId();
+        String tenantId = request.getBulkReschedule().getTenantId();
+        String courtId = request.getBulkReschedule().getCourtId();
+
+        Long startOfTheDay = dateUtil.getStartOfTheDayForEpoch(startTime);
+
+        log.info("startOfTheDay: {}, endTime: {}", startOfTheDay, endTime);
+        List<JudgeCalendarRule> judgeCalendars = new ArrayList<>();
+
+        for (Long i = startOfTheDay; i < endTime; i = i + 86400000) {
+            JudgeCalendarRule judgeCalendarRule = new JudgeCalendarRule();
+            judgeCalendarRule.setTenantId(tenantId);
+            judgeCalendarRule.setJudgeId(judgeId);
+            judgeCalendarRule.setDate(i);
+            judgeCalendarRule.setRuleType("RESCHEDULE");
+            judgeCalendarRule.setCourtIds(Collections.singletonList(courtId));
+            judgeCalendars.add(judgeCalendarRule);
+        }
+        JudgeCalendarUpdateRequest calendarUpdateRequest = JudgeCalendarUpdateRequest.builder()
+                .requestInfo(request.getRequestInfo())
+                .judgeCalendarRule(judgeCalendars)
+                .build();
+
+        schedulerUtil.updateJudgeCalendar(calendarUpdateRequest);
+
+        log.info("operation=updateJudgeCalendar, status=COMPLETED");
+
     }
 
 
@@ -480,7 +598,7 @@ public class HearingService {
                     criteria.setFromDate(fromDate);
                     criteria.setToDate(toDate);
 
-                    if (fromDate == null || toDate == null ) {
+                    if (fromDate == null || toDate == null) {
                         throw new CustomException("SOMETHING_WENT_WRONG", "Start date and end date are required");
 
                     }
@@ -508,17 +626,16 @@ public class HearingService {
                 hearingType.equalsIgnoreCase(REPORTS) || hearingType.equalsIgnoreCase(ARGUMENTS) || hearingType.equalsIgnoreCase(PLEA) ||
                 hearingType.equalsIgnoreCase(EXECUTION) || hearingType.equalsIgnoreCase(EXAMINATION_UNDER_S351_BNSS) ||
                 hearingType.equalsIgnoreCase(EVIDENCE_COMPLAINANT) || hearingType.equalsIgnoreCase(EVIDENCE_ACCUSED) ||
-                hearingType.equalsIgnoreCase(APPEARANCE) || hearingType.equalsIgnoreCase(ADMISSION) || hearingType.equalsIgnoreCase(JUDGEMENT))
-        {
+                hearingType.equalsIgnoreCase(APPEARANCE) || hearingType.equalsIgnoreCase(ADMISSION) || hearingType.equalsIgnoreCase(JUDGEMENT)) {
             return VARIABLE_HEARING_SCHEDULED;
         }
         return null;
     }
 
-    private String getLocalizedMessageOfHearingType(HearingRequest request,String hearingType) {
+    private String getLocalizedMessageOfHearingType(HearingRequest request, String hearingType) {
         RequestInfo requestInfo = request.getRequestInfo();
         String tenantId = request.getHearing().getTenantId();
-        Map<String, Map<String, String>> localizedMessageMap = notificationService.getLocalisedMessages(requestInfo,tenantId,
+        Map<String, Map<String, String>> localizedMessageMap = notificationService.getLocalisedMessages(requestInfo, tenantId,
                 NOTIFICATION_ENG_LOCALE_CODE, HEARING_TYPE_MODULE_CODE);
         if (localizedMessageMap.isEmpty()) {
             return null;
@@ -561,7 +678,7 @@ public class HearingService {
             }
             // If manualUpdateDateHearings is not empty,
             if (!manualUpdateDateHearings.isEmpty()) {
-                List<ScheduleHearing> manualHearingDateUpdate = schedulerUtil.createScheduleHearing(manualUpdateDateHearings,request.getRequestInfo());
+                List<ScheduleHearing> manualHearingDateUpdate = schedulerUtil.createScheduleHearing(manualUpdateDateHearings, request.getRequestInfo());
                 for (ScheduleHearing scheduleHearing : manualHearingDateUpdate) {
                     Hearing hearing = hearingMap.get(scheduleHearing.getHearingBookingId());
                     if (hearing != null) {
@@ -599,9 +716,9 @@ public class HearingService {
     @NotNull
     private List<Hearing> getExistingHearings(List<Hearing> hearingList) {
         List<Hearing> updatedBulkHearings = new ArrayList<>();
-        for(Hearing hearing : hearingList) {
+        for (Hearing hearing : hearingList) {
             Hearing existingHearing = hearingRepository.checkHearingsExist(hearing).get(0);
-            if(existingHearing == null) {
+            if (existingHearing == null) {
                 log.error("Hearing does not present for hearingId :: {}", hearing.getHearingId());
                 continue;
             }
@@ -623,9 +740,9 @@ public class HearingService {
             for (Hearing hearing : hearingList) {
                 hearing.setCourtCaseNumber(body.get("courtCaseNumber") != null ? body.get("courtCaseNumber").toString() : null);
                 hearing.setCmpNumber(body.get("cmpNumber") != null ? body.get("cmpNumber").toString() : null);
-                if(body.get("courtCaseNumber") != null){
+                if (body.get("courtCaseNumber") != null) {
                     hearing.setCaseReferenceNumber(body.get("courtCaseNumber").toString());
-                } else if(body.get("cmpNumber") != null){
+                } else if (body.get("cmpNumber") != null) {
                     hearing.setCaseReferenceNumber(body.get("cmpNumber").toString());
                 } else {
                     hearing.setCaseReferenceNumber(filingNumber);
@@ -637,9 +754,58 @@ public class HearingService {
                 updateHearing(hearingRequest);
             }
             log.info("operation=updateCaseReferenceHearing, status=SUCCESS, filingNumber={}", body.get("filingNumber").toString());
-        } catch (Exception e){
+        } catch (Exception e) {
             log.info("operation=updateCaseReferenceHearing, status=FAILURE, filingNumber={}", body.get("filingNumber").toString());
             throw new CustomException("Error updating case reference number: {}", e.getMessage());
         }
     }
+
+    public List<Integer> getAvgNoOfDaysToHearingForEachCase() {
+        try {
+            log.info("operation=getAvgNoOfDaysToHearingForEachCase, status=IN_PROGRESS");
+
+            List<Hearing> hearings = hearingRepository.getHearingsWithMultipleHearings();
+
+            Map<String, List<Hearing>> hearingsGroupedByFilingNumber = hearings.stream()
+                    .filter(h -> h.getFilingNumber() != null && !h.getFilingNumber().isEmpty())
+                    .collect(Collectors.groupingBy(h -> h.getFilingNumber().get(0)));
+
+            List<Integer> averages = computeAverageDaysBetweenHearings(hearingsGroupedByFilingNumber);
+
+            log.info("operation=getAvgNoOfDaysToHearingForEachCase, status=SUCCESS");
+            return averages;
+
+        } catch (Exception e) {
+            log.error("operation=getAvgNoOfDaysToHearingForEachCase, status=FAILURE, message={}", e.getMessage());
+            throw new CustomException("Error occurred while getting avg no of days to hearing for each case: ", e.getMessage());
+        }
+    }
+
+    private static List<Integer> computeAverageDaysBetweenHearings(Map<String, List<Hearing>> groupedHearings) {
+        List<Integer> averageDaysList = new ArrayList<>();
+
+        for (List<Hearing> hearings : groupedHearings.values()) {
+            // Sort hearings chronologically by startTime
+            List<Hearing> sortedHearings = hearings.stream()
+                    .filter(h -> h.getStartTime() != null)
+                    .sorted(Comparator.comparingLong(Hearing::getStartTime))
+                    .toList();
+
+            List<Long> differences = new ArrayList<>();
+
+            for (int i = 0; i < sortedHearings.size() - 1; i++) {
+                long start = sortedHearings.get(i).getStartTime();
+                long nextStart = sortedHearings.get(i + 1).getStartTime();
+                differences.add(Duration.ofMillis(nextStart - start).toDays());
+            }
+
+            if (!differences.isEmpty()) {
+                double average = differences.stream().mapToLong(Long::longValue).average().orElse(0);
+                averageDaysList.add((int) average);
+            }
+        }
+
+        return averageDaysList;
+    }
+
 }

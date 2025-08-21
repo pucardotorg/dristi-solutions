@@ -1,6 +1,7 @@
 package digit.web.models.hearing;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import digit.web.models.WorkflowObject;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.models.Document;
 import org.egov.common.contract.models.Workflow;
@@ -104,10 +105,13 @@ public class Hearing {
 
     @JsonProperty("workflow")
     @Valid
-    private Workflow workflow = null;
+    private WorkflowObject workflow = null;
 
     @JsonProperty("notes")
     private String notes = null;
+
+    @JsonProperty("hearingSummary")
+    private String hearingSummary = null;
 
 
     public Hearing addFilingNumberItem(String filingNumberItem) {

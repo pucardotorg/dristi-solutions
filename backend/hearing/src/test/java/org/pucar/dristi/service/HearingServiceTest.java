@@ -15,6 +15,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.HearingRegistrationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.HearingRepository;
+import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.SchedulerUtil;
 import org.pucar.dristi.validator.HearingRegistrationValidator;
 import org.pucar.dristi.web.models.*;
@@ -56,6 +57,9 @@ public class HearingServiceTest {
 
     @Mock
     private HearingService hearingServiceMock;
+
+    @Mock
+    private FileStoreUtil fileStoreUtil;
 
     @InjectMocks
     private HearingService hearingService;
@@ -494,4 +498,56 @@ public class HearingServiceTest {
         CustomException thrown = assertThrows(CustomException.class, () -> hearingService.updateCaseReferenceHearing(body));
 
     }
+
+    @Test
+    void testUpdateHearing_filtersInactiveDocumentsAndCallsDependencies() {
+        // Arrange
+        Hearing existingHearing = new Hearing();
+        existingHearing.setStatus("PENDING");
+
+        Document activeDoc = new Document();
+        activeDoc.setIsActive(true);
+        activeDoc.setFileStore("file-active");
+
+        Document inactiveDoc = new Document();
+        inactiveDoc.setIsActive(false);
+        inactiveDoc.setFileStore("file-inactive");
+
+        existingHearing.setDocuments(List.of(activeDoc, inactiveDoc));
+
+        WorkflowObject workflow = new WorkflowObject();
+        workflow.setAction("APPROVE");
+
+        Hearing incomingHearing = new Hearing();
+        incomingHearing.setWorkflow(workflow);
+        incomingHearing.setNotes("Some notes");
+        incomingHearing.setDocuments(List.of(activeDoc, inactiveDoc));
+        incomingHearing.setAdditionalDetails("details");
+        incomingHearing.setVcLink("http://vc.link");
+        incomingHearing.setCmpNumber("CMP123");
+        incomingHearing.setCourtCaseNumber("CCN456");
+        incomingHearing.setCaseReferenceNumber("CRN789");
+        incomingHearing.setStatus("HEARING_UPDATED");
+
+        RequestInfo requestInfo = new RequestInfo();
+
+        HearingRequest hearingRequest = new HearingRequest();
+        hearingRequest.setRequestInfo(requestInfo);
+        hearingRequest.setHearing(incomingHearing);
+
+        // Mocks
+        when(validator.validateHearingExistence(requestInfo, incomingHearing)).thenReturn(existingHearing);
+
+        when(config.getHearingUpdateTopic()).thenReturn("hearing-update-topic");
+
+        // Act
+        Hearing updatedHearing = hearingService.updateHearing(hearingRequest);
+
+        // Assert
+        assertNotNull(updatedHearing);
+        assertEquals(1, updatedHearing.getDocuments().size());
+        assertTrue(updatedHearing.getDocuments().get(0).getIsActive());
+
+    }
+
 }

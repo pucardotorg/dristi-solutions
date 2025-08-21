@@ -49,6 +49,7 @@ public class ServiceConstants {
     public static final String CREATE_CASE_ERR = "CREATE_CASE_ERR";
     public static final String SEARCH_CASE_ERR = "CASE_NOT_FOUND";
     public static final String UPDATE_CASE_ERR = "UPDATE_CASE_ERR";
+    public static final String UPDATE_CASE_WITHOUT_WORKFLOW_ERR = "UPDATE_CASE_WITHOUT_WORKFLOW_ERR";
     public static final String EDIT_CASE_ERR = "EDIT_CASE_ERR";
     public static final String ADD_WITNESS_TO_CASE_ERR = "ADD_WITNESS_TO_CASE_ERR";
     public static final String CREATE_WITNESS_ERR = "CREATE_WITNESS_ERR";
@@ -79,7 +80,6 @@ public class ServiceConstants {
     public static final String REGISTERED_STATUS = "REGISTERED";
     public static final String INWORKFLOW_STATUS = "INWORKFLOW";
     public static final String INVALID_LINKEDCASE_ID = "INVALID_LINKEDCASE_ID";
-    public static final String PENDING_ADMISSION_HEARING_STATUS = "PENDING_ADMISSION_HEARING";
     public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
     public static final String CASE_PDF_UTILITY_EXCEPTION = "CASE_PDF_UTILITY_EXCEPTION";
     public static final String FILE_STORE_UTILITY_EXCEPTION = "FILE_STORE_UTILITY_EXCEPTION";
@@ -144,8 +144,6 @@ public class ServiceConstants {
 
     public static final String JUDGE_SEND_BACK = "JUDGE_SEND_BACK";
 
-    public static final String PENDING_ADMISSION_HEARING = "PENDING_ADMISSION_HEARING";
-
 
     public static final String CASE_REGISTERED = "CASE_REGISTERED";
 
@@ -162,7 +160,6 @@ public class ServiceConstants {
     public static final String CASE_ADMITTED = "CASE_ADMITTED";
     public static final String CASE_DISMISSED = "CASE_DISMISSED";
     public static final String PENDING_RESPONSE = "PENDING_RESPONSE";
-    public static final String PENDING_NOTICE = "PENDING_NOTICE";
     public static final String HEARING_REJECTED = "HEARING_REJECTED";
     public static final String HIGH_COURT_LOCALIZATION_CODE = "HIGH_COURT_KERALA";
     public static final String NOTIFICATION_ENG_LOCALE_CODE = "en_IN";
@@ -242,6 +239,15 @@ public class ServiceConstants {
     public static final String PAYMENT_RECEIPT = "PAYMENT_RECEIPT";
     public static final String ONLINE = "ONLINE";
     public static final String COMPLAINANT_ID_PROOF = "COMPLAINANT_ID_PROOF";
+    public static final String DIRECT = "DIRECT";
+    public static final String COMPLAINANT = "COMPLAINANT";
+    public static final String ACCUSED = "ACCUSED";
+    public static final String SUBMITTED = "SUBMITTED";
+    public static final String UPLOAD_WITH_PAYMENT = "UPLOAD_WITH_PAYMENT";
+    public static final String PENDING_RE_SIGN = "PENDING_RE_SIGN";
+    public static final String E_SIGN_COMPLETE_WITH_PAYMENT = "E-SIGN_COMPLETE_WITH_PAYMENT";
+    public static final String ERROR_ADDING_WITNESS = "ERROR_ADDING_WITNESS";
+    public static final String ERROR_VALIDATING_WITNESS = "ERROR_VALIDATING_WITNESS";
     private ServiceConstants() {
     }
 }

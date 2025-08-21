@@ -8,6 +8,9 @@ import CustomChip from "@egovernments/digit-ui-module-dristi/src/components/Cust
 import OverlayDropdown from "@egovernments/digit-ui-module-dristi/src/components/OverlayDropdown";
 import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Utils/orderWorkflow";
 import { BulkCheckBox } from "@egovernments/digit-ui-module-dristi/src/components/BulkCheckbox";
+import { BailBondSignModal } from "../pages/employee/BailBondSignModal";
+import { AdvocateName } from "@egovernments/digit-ui-module-dristi/src/components/AdvocateName";
+import { modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
@@ -469,6 +472,7 @@ export const UICustomizations = {
       }
       const isCompleteStatus = Boolean(Object.keys(filterList?.completeStatus || {}).length);
       const isIssueDate = Boolean(Object.keys(filterList?.sortCaseListByDate || {}).length);
+      const courtId = requestCriteria?.body?.criteria?.courtId;
       return {
         ...requestCriteria,
         body: {
@@ -479,12 +483,15 @@ export const UICustomizations = {
             orderType: filterList?.orderType ? [filterList?.orderType?.code] : [],
             applicationStatus: filterList?.applicationStatus?.code || "",
             ...(isCompleteStatus && { completeStatus: [filterList?.completeStatus?.code] }),
+            ...(courtId && { courtId }),
           },
           tenantId,
           pagination: {
             limit: requestCriteria?.state?.tableForm?.limit,
             offSet: requestCriteria?.state?.tableForm?.offset,
             ...(isIssueDate && filterList?.sortCaseListByDate),
+            sortBy: "lastmodifiedtime",
+            order: "desc",
           },
         },
         config: {
@@ -529,6 +536,8 @@ export const UICustomizations = {
       const caseTitle = requestCriteria?.state?.searchForm?.caseTitle;
       const status = requestCriteria?.state?.searchForm?.status;
       const startOfTheDay = requestCriteria?.state?.searchForm?.startOfTheDay;
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+
       const moduleSearchCriteria = {
         entityType,
         tenantId,
@@ -538,6 +547,7 @@ export const UICustomizations = {
           startOfTheDay: new Date(startOfTheDay + "T00:00:00").getTime(),
           endOfTheDay: new Date(startOfTheDay + "T23:59:59.999").getTime(),
         }),
+        ...(courtId && { courtId }),
       };
 
       return {
@@ -587,6 +597,244 @@ export const UICustomizations = {
           },
         },
       ];
+    },
+  },
+
+  bulkBailBondSignConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+
+      const effectiveSearchForm = requestCriteria?.state?.searchForm || {};
+      const caseTitle = sessionStorage.getItem("bulkBailBondSignCaseTitle") || effectiveSearchForm?.caseTitle;
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+      const setbulkBailBondSignList = additionalDetails?.setbulkBailBondSignList;
+      const setBailBondPaginationData = additionalDetails?.setBailBondPaginationData;
+      const setNeedConfigRefresh = additionalDetails?.setNeedConfigRefresh;
+      const limit = parseInt(sessionStorage.getItem("bulkBailBondSignlimit")) || parseInt(requestCriteria?.state?.tableForm?.limit) || 10;
+      const offset = parseInt(sessionStorage.getItem("bulkBailBondSignoffset")) || parseInt(requestCriteria?.state?.tableForm?.offset) || 0;
+
+      const moduleSearchCriteria = {
+        // entityType,
+        tenantId,
+        status: "PENDING_REVIEW",
+        ...(caseTitle && { searchableFields: caseTitle }),
+        ...(courtId && { courtId }),
+      };
+      const bulkBailBondSignCaseTitle = requestCriteria?.state?.searchForm && requestCriteria?.state?.searchForm?.caseTitle;
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            limit: limit,
+            offset: offset,
+            tenantId: tenantId,
+            moduleSearchCriteria: moduleSearchCriteria,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            const bailBondItems = data?.items?.map((item) => {
+              return {
+                ...item,
+                isSelected: true,
+              };
+            });
+            sessionStorage.removeItem("bulkBailBondSignlimit");
+            sessionStorage.removeItem("bulkBailBondSignoffset");
+            if (sessionStorage.getItem("bulkBailBondSignCaseTitle")) {
+              sessionStorage.removeItem("bulkBailBondSignCaseTitle"); //we are storing this for search inbox
+              setNeedConfigRefresh((prev) => !prev);
+            }
+
+            if (setbulkBailBondSignList) setbulkBailBondSignList(bailBondItems);
+            if (setBailBondPaginationData) setBailBondPaginationData({ limit: limit, offset: offset, caseTitle: bulkBailBondSignCaseTitle });
+
+            return {
+              ...data,
+              items: bailBondItems,
+            };
+          },
+        },
+      };
+    },
+
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "CASE_TITLE":
+          return <OrderName rowData={row} colData={column} value={value} />;
+        // return <BailBondSignModal rowData={row} colData={column} value={value} />;
+        case "LITIGANT":
+          return value || "";
+        case "CS_CASE_NUMBER_HOME":
+          return <span>{value || ""}</span>;
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
+        default:
+          return value || "";
+      }
+    },
+  },
+
+  bulkWitnessDepositionSignConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+
+      const effectiveSearchForm = requestCriteria?.state?.searchForm || {};
+      const caseTitle = sessionStorage.getItem("bulkWitnessDepositionSignCaseTitle") || effectiveSearchForm?.caseTitle;
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+      const setbulkWitnessDepositionSignList = additionalDetails?.setbulkWitnessDepositionSignList;
+      const setWitnessDepositionPaginationData = additionalDetails?.setWitnessDepositionPaginationData;
+      const setNeedConfigRefresh = additionalDetails?.setNeedConfigRefresh;
+      const limit = parseInt(sessionStorage.getItem("bulkWitnessDepositionSignlimit")) || parseInt(requestCriteria?.state?.tableForm?.limit) || 10;
+      const offset = parseInt(sessionStorage.getItem("bulkWitnessDepositionSignoffset")) || parseInt(requestCriteria?.state?.tableForm?.offset) || 0;
+
+      const moduleSearchCriteria = {
+        // entityType,
+        tenantId,
+        status: "PENDING_REVIEW",
+        ...(caseTitle && { searchableFields: caseTitle }),
+        ...(courtId && { courtId }),
+      };
+      const bulkWitnessDepositionSignCaseTitle = requestCriteria?.state?.searchForm && requestCriteria?.state?.searchForm?.caseTitle;
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            limit: limit,
+            offset: offset,
+            tenantId: tenantId,
+            moduleSearchCriteria: moduleSearchCriteria,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            const witnessDepositionItems = data?.items?.map((item) => {
+              return {
+                ...item,
+                isSelected: true,
+              };
+            });
+            sessionStorage.removeItem("bulkWitnessDepositionSignlimit");
+            sessionStorage.removeItem("bulkWitnessDepositionSignoffset");
+            if (sessionStorage.getItem("bulkWitnessDepositionSignCaseTitle")) {
+              sessionStorage.removeItem("bulkWitnessDepositionSignCaseTitle"); //we are storing this for search inbox
+              setNeedConfigRefresh((prev) => !prev);
+            }
+
+            if (setbulkWitnessDepositionSignList) setbulkWitnessDepositionSignList(witnessDepositionItems);
+            if (setWitnessDepositionPaginationData)
+              setWitnessDepositionPaginationData({ limit: limit, offset: offset, caseTitle: bulkWitnessDepositionSignCaseTitle });
+
+            return {
+              ...data,
+              items: witnessDepositionItems,
+            };
+          },
+        },
+      };
+    },
+
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "CASE_TITLE":
+          return <OrderName rowData={row} colData={column} value={value} />;
+        case "CS_CASE_NUMBER_HOME":
+          return <span>{value || ""}</span>;
+        case "WITNESS_NAME":
+          return <span>{value || ""}</span>;
+        case "DATE_OF_DEPOSITION":
+          return formatNoticeDeliveryDate(value);
+        case "ADVOCATES":
+          return <AdvocateName value={value} />;
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
+        default:
+          return value || "";
+      }
+    },
+  },
+
+  BulkMarkAsEvidenceConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const effectiveSearchForm = requestCriteria?.state?.searchForm || {};
+      const caseTitle = sessionStorage.getItem("bulkMarkAsEvidenceCaseTitle") || effectiveSearchForm?.caseTitle;
+      const courtId = requestCriteria?.body?.inbox?.moduleSearchCriteria?.courtId;
+      const setMarkAsEvidenceSignList = additionalDetails?.setbulkEvidenceList;
+      const setMarkAsEvidencePaginationData = additionalDetails?.setMarkAsEvidencePaginationData;
+      const setNeedConfigRefresh = additionalDetails?.setNeedConfigRefresh;
+      const limit = parseInt(sessionStorage.getItem("bulkMarkAsEvidenceLimit")) || parseInt(requestCriteria?.state?.tableForm?.limit) || 10;
+      const offset = parseInt(sessionStorage.getItem("bulkMarkAsEvidenceOffset")) || parseInt(requestCriteria?.state?.tableForm?.offset) || 0;
+
+      const moduleSearchCriteria = {
+        tenantId,
+        evidenceMarkedStatus: "PENDING_BULK_E-SIGN",
+        ...(caseTitle && { searchableFields: caseTitle }),
+        ...(courtId && { courtId }),
+      };
+      const bulkEvidenceCaseTitle = requestCriteria?.state?.searchForm && requestCriteria?.state?.searchForm?.caseTitle;
+
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          inbox: {
+            ...requestCriteria?.body?.inbox,
+            limit: limit,
+            offset: offset,
+            tenantId: tenantId,
+            moduleSearchCriteria: moduleSearchCriteria,
+          },
+        },
+        config: {
+          ...requestCriteria.config,
+          select: (data) => {
+            const markAsEvidenceItems = data?.items?.map((item) => {
+              return {
+                ...item,
+                isSelected: true,
+              };
+            });
+            sessionStorage.removeItem("bulkMarkAsEvidenceLimit");
+            sessionStorage.removeItem("bulkMarkAsEvidenceOffset");
+            if (sessionStorage.getItem("bulkMarkAsEvidenceCaseTitle")) {
+              sessionStorage.removeItem("bulkMarkAsEvidenceCaseTitle"); //we are storing this for search inbox
+              setNeedConfigRefresh((prev) => !prev);
+            }
+
+            if (setMarkAsEvidenceSignList) setMarkAsEvidenceSignList(markAsEvidenceItems);
+            if (setMarkAsEvidencePaginationData) setMarkAsEvidencePaginationData({ limit: limit, offset: offset, caseTitle: bulkEvidenceCaseTitle });
+
+            return {
+              ...data,
+              items: markAsEvidenceItems,
+            };
+          },
+        },
+      };
+    },
+
+    additionalCustomizations: (row, key, column, value, t, searchResult) => {
+      switch (key) {
+        case "CASE_TITLE":
+          return <OrderName rowData={row} colData={column} value={value} />;
+        case "DOCUMENT_HEADING":
+          return row?.businessObject?.artifactDetails?.additionalDetails?.formdata?.documentTitle || t(value) || "";
+        case "SELECT":
+          return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
+        case "EVIDENCE_NUMBER":
+          return modifiedEvidenceNumber(value, row?.businessObject?.artifactDetails?.filingNumber);
+        default:
+          return value || "";
+      }
     },
   },
 };

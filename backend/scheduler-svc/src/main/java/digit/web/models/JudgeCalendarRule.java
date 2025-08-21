@@ -3,12 +3,13 @@ package digit.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import digit.models.coremodels.AuditDetails;
-import digit.web.models.enums.JudgeRuleType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.validation.annotation.Validated;
+
+import java.util.List;
 
 /**
  * JudgeCalendarRule
@@ -38,6 +39,9 @@ public class JudgeCalendarRule {
 
     @JsonProperty("tenantId")
     private String tenantId;
+
+    @JsonProperty("courtIds")
+    private List<String> courtIds;
 
     @JsonProperty("auditDetails")
     private AuditDetails auditDetails;

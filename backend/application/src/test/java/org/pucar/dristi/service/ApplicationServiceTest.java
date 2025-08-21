@@ -4,9 +4,11 @@ import static org.mockito.Mockito.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.pucar.dristi.config.ServiceConstants.*;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.Role;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +20,7 @@ import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.enrichment.ApplicationEnrichment;
 import org.pucar.dristi.kafka.Producer;
 import org.pucar.dristi.repository.ApplicationRepository;
+import org.pucar.dristi.util.FileStoreUtil;
 import org.pucar.dristi.util.SmsNotificationUtil;
 import org.pucar.dristi.validator.ApplicationValidator;
 import org.pucar.dristi.web.models.*;
@@ -65,6 +68,12 @@ class ApplicationServiceTest {
 
     @Mock
     private RequestInfo requestInfo;
+
+    @Mock
+    private FileStoreUtil fileStoreUtil;
+
+    @Mock
+    private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
@@ -385,5 +394,66 @@ class ApplicationServiceTest {
         verify(applicationRepository).getApplications(any());
         verify(producer, never()).push(anyString(), any());
     }
+
+    @Test
+    void testUpdateApplication_filtersInactiveDocuments() {
+        // Setup application and documents
+        Application application = new Application();
+        application.setApplicationType("SUBMIT_BAIL_DOCUMENTS");
+        application.setStatus("PENDINGAPPROVAL"); // to match enrichment logic
+        application.setTenantId("tenant123");
+
+        WorkflowObject workflow = new WorkflowObject();
+        workflow.setAction("APPROVE");
+        application.setWorkflow(workflow);
+
+        Document activeDoc = new Document();
+        activeDoc.setIsActive(true);
+        activeDoc.setFileStore("file-active");
+
+        Document inactiveDoc = new Document();
+        inactiveDoc.setIsActive(false);
+        inactiveDoc.setFileStore("file-inactive");
+
+        application.setDocuments(List.of(activeDoc, inactiveDoc));
+
+
+        ApplicationRequest applicationRequest = new ApplicationRequest();
+        applicationRequest.setApplication(application);
+        RequestInfo requestInfo = new RequestInfo();
+        User user = new User();
+        user.setUuid("user-uuid");
+        user.setTenantId("tenant123");
+        user.setRoles(new ArrayList<>());
+        requestInfo.setUserInfo(user);
+        applicationRequest.setRequestInfo(requestInfo);
+
+        // Mocks
+        when(validator.validateApplicationExistence(any(), any())).thenReturn(true);
+        doNothing().when(enrichmentUtil).enrichApplicationUponUpdate(applicationRequest);
+        doNothing().when(validator).validateOrderDetails(applicationRequest);
+        doNothing().when(workflowService).updateWorkflowStatus(applicationRequest);
+        doNothing().when(enrichmentUtil).enrichApplicationNumberByCMPNumber(applicationRequest);
+        doNothing().when(fileStoreUtil).deleteFilesByFileStore(anyList(), eq("tenant123"));
+        doNothing().when(smsNotificationUtil).callNotificationService(any(), anyString(), anyString());
+        doNothing().when(producer).push(anyString(), any());
+
+        when(config.getApplicationUpdateTopic()).thenReturn("app-update-topic");
+
+        // Method call
+        Application result = applicationService.updateApplication(applicationRequest, false);
+
+        // Assertions
+        assertNotNull(result);
+        assertNotNull(result.getDocuments());
+        assertEquals(1, result.getDocuments().size());
+        assertTrue(result.getDocuments().get(0).getIsActive());
+
+        // Verify side effects
+        verify(fileStoreUtil).deleteFilesByFileStore(eq(List.of("file-inactive")), eq("tenant123"));
+        verify(producer).push("app-update-topic", applicationRequest);
+        verify(smsNotificationUtil).callNotificationService(applicationRequest, "PENDINGAPPROVAL", "SUBMIT_BAIL_DOCUMENTS");
+    }
+
 
 }

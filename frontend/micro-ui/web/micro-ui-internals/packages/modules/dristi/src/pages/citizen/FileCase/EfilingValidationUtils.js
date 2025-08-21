@@ -824,10 +824,10 @@ export const getAdvocatesAndPipRemainingFields = (formdata, t) => {
         if (!vakalatnamaFileUpload || vakalatnamaFileUpload?.document?.length === 0) {
           isVakalatnamaFileMissing = true;
         }
-        if(!numberOfAdvocates) {
+        if (!numberOfAdvocates) {
           isNumberOfAdvocatesMissing = true;
         }
-        if(numberOfAdvocates && multipleAdvocateNameDetails?.length !== numberOfAdvocates) {
+        if (numberOfAdvocates && multipleAdvocateNameDetails?.length !== numberOfAdvocates) {
           isAdvocateCountDiffer = true;
         }
       }
@@ -1037,7 +1037,7 @@ export const accusedAddressValidation = ({ formData, selected, setAddressError, 
           const isEmpty = /^\s*$/.test(address?.[addressKey]?.[data?.name]);
           return (
             isEmpty ||
-            !address?.[addressKey]?.[data?.name].match(window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern)
+            !address?.[addressKey]?.[data?.name]?.match(window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern)
           );
         })
       )
@@ -1060,7 +1060,7 @@ export const addressValidation = ({ formData, selected, setAddressError, config 
         );
         return (
           isEmpty ||
-          !formData?.[formData?.[selected]?.code === "INDIVIDUAL" ? "addressDetails" : "addressCompanyDetails"]?.[data?.name].match(
+          !formData?.[formData?.[selected]?.code === "INDIVIDUAL" ? "addressDetails" : "addressCompanyDetails"]?.[data?.name]?.match(
             window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
           )
         );
@@ -1075,7 +1075,7 @@ export const addressValidation = ({ formData, selected, setAddressError, config 
           const isEmpty = /^\s*$/.test(formData?.poaAddressDetails?.[data?.name]);
           return (
             isEmpty ||
-            !formData?.poaAddressDetails?.[data?.name].match(
+            !formData?.poaAddressDetails?.[data?.name]?.match(
               window?.Digit.Utils.getPattern(data?.validation?.patternType) || data?.validation?.pattern
             )
           );
@@ -1200,7 +1200,7 @@ export const createIndividualUser = async ({ data, documentData, tenantId, isCom
     : {};
   const identifierType = documentData
     ? isComplainant
-      ? data?.complainantId?.complainantId?.selectIdTypeType?.type
+      ? data?.complainantId?.complainantId?.selectIdTypeType?.type || data?.complainantId?.complainantId?.complainantId?.selectIdTypeType?.type
       : data?.poaComplainantId?.poaComplainantId?.selectIdTypeType?.type
     : "AADHAR";
   let Individual = {
@@ -1239,6 +1239,9 @@ export const createIndividualUser = async ({ data, documentData, tenantId, isCom
             "CASE_RESPONDER",
             "HEARING_ACCEPTOR",
             "PENDING_TASK_CREATOR",
+            "BAIL_BOND_CREATOR",
+            "BAIL_BOND_VIEWER",
+            "BAIL_BOND_EDITOR",
           ]?.map((role) => ({
             code: role,
             name: role,
@@ -1627,6 +1630,25 @@ export const updateCaseDetails = async ({
     }
   };
 
+  function transformFileData(inputArray, tenantId = "kl", fileType = "application/pdf") {
+    if (!Array.isArray(inputArray) || inputArray.length === 0) return null;
+
+    const { fileStore, documentName } = inputArray[0];
+
+    return {
+      file: {
+        files: [
+          {
+            fileStoreId: fileStore,
+            tenantId,
+          },
+        ],
+      },
+      fileType,
+      filename: documentName,
+    };
+  }
+
   if (selected === "complainantDetails") {
     let litigants = [];
     let poaHolders = [];
@@ -1641,7 +1663,10 @@ export const updateCaseDetails = async ({
         updatedFormData
           .filter((item) => item.isenabled)
           .map(async (data, index) => {
-            if (data?.data?.complainantVerification?.individualDetails?.document) {
+            if (
+              data?.data?.complainantVerification?.individualDetails?.document &&
+              data?.data?.complainantVerification?.individualDetails?.individualId
+            ) {
               const Individual = await DRISTIService.searchIndividualUser(
                 {
                   Individual: {
@@ -1712,12 +1737,19 @@ export const updateCaseDetails = async ({
             } else {
               if (data?.data?.complainantId?.complainantId && data?.data?.complainantVerification?.isUserVerified) {
                 if (data?.data?.complainantId?.verificationType !== "AADHAR") {
-                  const documentData = await onDocumentUpload(
-                    documentsTypeMapping["complainantId"],
-                    data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
-                    data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
-                    tenantId
-                  );
+                  let documentData = {};
+
+                  if (data?.data?.complainantVerification?.individualDetails?.document) {
+                    documentData = transformFileData(data?.data?.complainantVerification?.individualDetails?.document);
+                  } else {
+                    documentData = await onDocumentUpload(
+                      documentsTypeMapping["complainantId"],
+                      data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file,
+                      data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[0],
+                      tenantId
+                    );
+                  }
+
                   litigantFilestoreIds[index] = documentData;
                   !!setFormDataValue &&
                     setFormDataValue("complainantVerification", {
@@ -2159,6 +2191,8 @@ export const updateCaseDetails = async ({
           const poaIdProof = {
             poaComplainantId: { poaComplainantId: { poaComplainantId: {} } },
           };
+
+          const userSelectedIdType = isCompleted ? null : data?.data?.complainantId?.complainantId?.selectIdTypeType;
           const individualDetails = {};
           const poaIndividualDetails = {};
           if (data?.data?.complainantId?.complainantId?.ID_Proof?.[0]?.[1]?.file) {
@@ -2189,6 +2223,7 @@ export const updateCaseDetails = async ({
                   },
                 ],
               ],
+              ...(userSelectedIdType && { selectIdTypeType: userSelectedIdType }),
             };
             docList.push(doc);
             individualDetails.document = [uploadedData];
@@ -2709,6 +2744,10 @@ export const updateCaseDetails = async ({
       if (obj?.data?.emails) {
         obj.data.emails.textfieldValue = "";
       }
+      if (!obj?.uniqueId) {
+        obj.uniqueId = generateUUID();
+      }
+      obj.data.ownerType = "COMPLAINANT";
     }
 
     data.additionalDetails = {
@@ -3004,7 +3043,10 @@ export const updateCaseDetails = async ({
                 }
               })
             );
-            setFormDataValue("vakalatnamaFileUpload", vakalatnamaDocumentData?.vakalatnamaFileUpload);
+            let updatedAdvocateDetails = data?.data?.multipleAdvocatesAndPip;
+            updatedAdvocateDetails.vakalatnamaFileUpload = vakalatnamaDocumentData?.vakalatnamaFileUpload;
+
+            setFormDataValue("MultipleAdvocatesAndPip", updatedAdvocateDetails);
           }
           const pipAffidavitDocumentData = { pipAffidavitFileUpload: null };
           if (data?.data?.multipleAdvocatesAndPip?.pipAffidavitFileUpload?.document) {
@@ -3029,7 +3071,11 @@ export const updateCaseDetails = async ({
                 }
               })
             );
-            setFormDataValue("pipAffidavitFileUpload", pipAffidavitDocumentData?.pipAffidavitFileUpload);
+            let updatedPipDetails = data?.data?.multipleAdvocatesAndPip;
+            updatedPipDetails.pipAffidavitFileUpload = pipAffidavitDocumentData?.pipAffidavitFileUpload;
+
+            setFormDataValue("MultipleAdvocatesAndPip", updatedPipDetails);
+            // setFormDataValue("pipAffidavitFileUpload", pipAffidavitDocumentData?.pipAffidavitFileUpload);
           }
           const advocateDetailsDocTypes = [documentsTypeMapping["vakalatnamaFileUpload"], documentsTypeMapping["pipAffidavitFileUpload"]];
           updateTempDocListMultiForm(docList, advocateDetailsDocTypes);

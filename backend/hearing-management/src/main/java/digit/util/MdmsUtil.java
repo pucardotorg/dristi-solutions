@@ -32,25 +32,17 @@ public class MdmsUtil {
     private Configuration configs;
 
 
-
-
-    public Map<String, Map<String, JSONArray>> fetchMdmsData(RequestInfo requestInfo, String tenantId, String moduleName,
-                                                                                List<String> masterNameList) {
+    public String fetchMdmsData(RequestInfo requestInfo, String tenantId, String moduleName, List<String> masterNameList) {
+        String response = "";
         StringBuilder uri = new StringBuilder();
         uri.append(configs.getMdmsHost()).append(configs.getMdmsEndPoint());
         MdmsCriteriaReq mdmsCriteriaReq = getMdmsRequest(requestInfo, tenantId, moduleName, masterNameList);
-        Object response = new HashMap<>();
-        Integer rate = 0;
-        MdmsResponse mdmsResponse = new MdmsResponse();
         try {
-            response = restTemplate.postForObject(uri.toString(), mdmsCriteriaReq, Map.class);
-            mdmsResponse = mapper.convertValue(response, MdmsResponse.class);
+            response = restTemplate.postForObject(uri.toString(), mdmsCriteriaReq, String.class);
         }catch(Exception e) {
             log.error(ERROR_WHILE_FETCHING_FROM_MDMS,e);
         }
-
-        return mdmsResponse.getMdmsRes();
-        //log.info(ulbToCategoryListMap.toString());
+        return response;
     }
 
     private MdmsCriteriaReq getMdmsRequest(RequestInfo requestInfo, String tenantId,

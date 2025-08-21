@@ -1,6 +1,5 @@
 package digit.util;
 
-
 import digit.config.Configuration;
 import digit.web.models.EvidenceRequest;
 import lombok.extern.slf4j.Slf4j;

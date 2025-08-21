@@ -47,7 +47,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
 
   const Modal = window?.Digit?.ComponentRegistryService?.getComponent("Modal");
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const courtId = window?.globalConfigs?.getConfig("COURT_ID") || "KLKM52";
+  const courtId = localStorage.getItem("courtId");
 
   const [show, setShow] = useState(false);
 
@@ -102,6 +102,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   const [isAdvocateJoined, setIsAdvocateJoined] = useState(false);
   const [alreadyJoinedMobileNumber, setAlreadyJoinedMobileNumber] = useState([]);
   const [taskNumber, setTaskNumber] = useState("");
+  const [bailBondRequired, setBailBondRequired] = useState(false);
 
   const [isVerified, setIsVerified] = useState(false);
 
@@ -141,7 +142,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             {
               criteria: {
                 filingNumber: caseNumber,
-                courtId,
+                ...(courtId && { courtId }),
                 pagination: {
                   limit: 5,
                   offSet: 0,
@@ -358,16 +359,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   }, [setShowJoinCase]);
 
   const onSelect = (option) => {
-    if (
-      [
-        "PENDING_RESPONSE",
-        "PENDING_ADMISSION_HEARING",
-        "ADMISSION_HEARING_SCHEDULED",
-        "PENDING_NOTICE",
-        "CASE_ADMITTED",
-        "PENDING_ADMISSION",
-      ].includes(option?.status)
-    ) {
+    if (["PENDING_RESPONSE", "ADMISSION_HEARING_SCHEDULED", "CASE_ADMITTED", "PENDING_ADMISSION"].includes(option?.status)) {
       setIsDisabled(false);
       setCaseDetails(option);
 
@@ -758,6 +750,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                   litigants: [individual?.individualId],
                 },
                 tenantId,
+                courtId: caseDetails?.courtId,
               },
             });
           } catch (err) {
@@ -777,6 +770,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
   }, [
     caseDetails?.caseTitle,
     caseDetails?.cnrNumber,
+    caseDetails?.courtId,
     caseDetails?.filingNumber,
     caseDetails?.id,
     caseDetails?.litigants,
@@ -837,7 +831,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
               });
             }
           } catch (error) {
-            console.log("error :>> ", error);
+            console.error("error :>> ", error);
           }
         } else {
           setStep(step + 1);
@@ -951,6 +945,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                         stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
                         additionalDetails: { individualId: individual?.individualId, caseId: caseDetails?.id, litigants: [individual?.individualId] },
                         tenantId,
+                        courtId: caseDetails?.courtId,
                       },
                     });
                   } catch (err) {
@@ -1162,6 +1157,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                           stateSla: todayDate + 20 * 24 * 60 * 60 * 1000,
                           additionalDetails: { individualId: user?.individualId, caseId: caseDetails?.id, litigants: [user?.individualId] },
                           tenantId,
+                          courtId: caseDetails?.courtId,
                         },
                       });
                     });
@@ -1201,7 +1197,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             setSuccess(true);
           }
         } catch (error) {
-          console.log("error", error);
+          console.error("error", error);
         }
         setIsApiCalled(false);
       }
@@ -1210,15 +1206,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       step,
       validationCode,
       isDisabled,
-      caseDetails?.cnrNumber,
-      caseDetails?.litigants,
-      caseDetails?.filingNumber,
-      caseDetails?.representatives,
-      caseDetails?.id,
-      caseDetails?.status,
-      caseDetails?.additionalDetails?.respondentDetails,
-      caseDetails?.caseTitle,
-      caseDetails?.poaHolders,
+      caseDetails,
       selectPartyData?.userType,
       selectPartyData?.partyInvolve?.value,
       selectPartyData?.isReplaceAdvocate?.value,
@@ -1252,6 +1240,66 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
       openPaymentPortal,
     ]
   );
+
+  const searchApplications = useCallback(
+    async (uuid) => {
+      try {
+        const response = await DRISTIService.searchSubmissions({
+          criteria: {
+            filingNumber: caseDetails?.filingNumber,
+            tenantId,
+            courtId: caseDetails?.courtId,
+            applicationType: "REQUEST_FOR_BAIL",
+            onBehalfOf: [uuid],
+          },
+        });
+
+        return response?.applicationList?.length > 0;
+      } catch (error) {
+        console.error("Error searching applications:", error);
+        return false;
+      }
+    },
+    [caseDetails?.courtId, caseDetails?.filingNumber, tenantId]
+  );
+
+  useEffect(() => {
+    const checkBailBondRequirement = async () => {
+      try {
+        let isBondRequired = true;
+
+        if (selectPartyData?.userType?.value === "Advocate" && selectPartyData?.isReplaceAdvocate?.value === "NO") {
+          const representedPersonUuids = party?.map((item) => item?.uuid).filter(Boolean);
+
+          if (representedPersonUuids?.length > 0) {
+            const applicationChecks = await Promise.all(representedPersonUuids.map((uuid) => searchApplications(uuid)));
+
+            const hasExistingApplication = applicationChecks.some((exists) => exists);
+            isBondRequired = !hasExistingApplication;
+          }
+        } else if (selectPartyData?.userType?.value === "Litigant" && partyInPerson?.value === "YES") {
+          const litigantUuid = individual?.userUuid;
+          if (litigantUuid) {
+            const hasExistingApplication = await searchApplications(litigantUuid);
+            isBondRequired = !hasExistingApplication;
+          }
+        }
+
+        setBailBondRequired(isBondRequired);
+      } catch (error) {
+        console.error("Error in checkBailBondRequirement:", error);
+        setBailBondRequired(true);
+      }
+    };
+
+    // Only run the check if we have the necessary data
+    if (
+      (selectPartyData?.userType?.value === "Advocate" && selectPartyData?.isReplaceAdvocate?.value === "NO" && party?.length > 0) ||
+      (selectPartyData?.userType?.value === "Litigant" && partyInPerson?.value === "YES" && individual?.userUuid)
+    ) {
+      checkBailBondRequirement();
+    }
+  }, [selectPartyData, party, individual, partyInPerson, searchApplications]);
 
   const handleKeyDown = useCallback(
     (event) => {
@@ -1349,7 +1397,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     },
     // 4
     {
-      modalMain: <JoinCasePayment type="join-case-flow" filingNumber={caseDetails?.filingNumber} taskNumber={taskNumber} />,
+      modalMain: <JoinCasePayment type="join-case-flow" taskNumber={taskNumber} />,
     },
     // 5
     {
@@ -1363,6 +1411,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           successScreenData={successScreenData}
           isCaseViewDisabled={selectPartyData?.isReplaceAdvocate?.value === "YES" && !isAdvocateJoined}
           type={type}
+          isBailBondRequired={bailBondRequired}
         />
       ),
     },
