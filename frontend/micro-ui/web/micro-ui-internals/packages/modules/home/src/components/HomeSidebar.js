@@ -75,11 +75,13 @@ const HomeSidebar = ({ t, onTabChange, activeTab, options, isOptionsLoading, hea
         />
         <SidebarItem t={t} label="CS_HOME_PROCESS" href={`/${window.contextPath}/employee/orders/Summons&Notice`} />
         <SidebarItem t={t} label="CS_HOME_A_DAIRY" href={`/${window.contextPath}/employee/home/dashboard/adiary`} />
-        <SidebarItem
+        {/* <SidebarItem
           t={t}
           label="BULK_BAIL_BOND_SIGN"
           active={activeTab === "BULK_BAIL_BOND_SIGN"}
           onClick={() => onTabChange("BULK_BAIL_BOND_SIGN")}
+        /> */}
+
         />
         <SidebarItem
           t={t}

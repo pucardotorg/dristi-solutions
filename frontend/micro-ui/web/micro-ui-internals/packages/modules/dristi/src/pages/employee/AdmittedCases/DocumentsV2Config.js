@@ -140,108 +140,108 @@ export const DocumentSearchConfig = {
         },
       },
     },
-    {
-      label: "Bail Bonds",
-      displayLabel: "BAIL_BONDS_TAB",
-      type: "search",
+    // {
+    //   label: "Bail Bonds",
+    //   displayLabel: "BAIL_BONDS_TAB",
+    //   type: "search",
 
-      apiDetails: {
-        serviceName: "/bail-bond/v1/_search",
-        requestParam: {
-          tenantId: Digit.ULBService.getCurrentTenantId(),
-        },
-        requestBody: {
-          criteria: {
-            fuzzySearch: true,
-          },
-          pagination: {
-            limit: 10,
-            offSet: 0,
-            sortBy: "bailCreatedTime",
-            order: "desc",
-          },
-        },
+    //   apiDetails: {
+    //     serviceName: "/bail-bond/v1/_search",
+    //     requestParam: {
+    //       tenantId: Digit.ULBService.getCurrentTenantId(),
+    //     },
+    //     requestBody: {
+    //       criteria: {
+    //         fuzzySearch: true,
+    //       },
+    //       pagination: {
+    //         limit: 10,
+    //         offSet: 0,
+    //         sortBy: "bailCreatedTime",
+    //         order: "desc",
+    //       },
+    //     },
 
-        masterName: "commonUiConfig",
-        moduleName: "BailBondConfig",
-        minParametersForSearchForm: 0,
-        tableFormJsonPath: "requestBody.pagination",
-        filterFormJsonPath: "requestBody.criteria",
-        searchFormJsonPath: "requestBody.criteria",
-      },
-      sections: {
-        search: {
-          uiConfig: {
-            formClassName: "custom-both-clear-search",
-            primaryLabel: "ES_COMMON_SEARCH",
-            secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
-            minReqFields: 0,
-            defaultValues: defaultBailValues,
-            fields: [
-              //   {
-              //     label: "TYPE",
-              //     isMandatory: false,
-              //     key: "artifactType",
-              //     type: "dropdown",
-              //     populators: {
-              //       name: "artifactType",
-              //       optionsKey: "name",
-              //       mdmsConfig: {
-              //         masterName: "EvidenceType",
-              //         moduleName: "Evidence",
-              //         localePrefix: "EVIDENCE_TYPE",
-              //         select:
-              //           "(data) => {return data['Evidence'].EvidenceType?.map((item) => {return { ...item, name: item.subtype && item.subtype.trim() !== '' ? `${item.type}_${item.subtype}` : item.type };});}",
-              //         // localePrefix: "SUBMISSION_TYPE",
-              //       },
-              //     },
-              //   },
-              {
-                label: "SEARCH_BAIL_ID",
-                isMandatory: false,
-                key: "bailId",
-                type: "text",
-                populators: {
-                  name: "bailId",
-                },
-              },
-            ],
-          },
+    //     masterName: "commonUiConfig",
+    //     moduleName: "BailBondConfig",
+    //     minParametersForSearchForm: 0,
+    //     tableFormJsonPath: "requestBody.pagination",
+    //     filterFormJsonPath: "requestBody.criteria",
+    //     searchFormJsonPath: "requestBody.criteria",
+    //   },
+    //   sections: {
+    //     search: {
+    //       uiConfig: {
+    //         formClassName: "custom-both-clear-search",
+    //         primaryLabel: "ES_COMMON_SEARCH",
+    //         secondaryLabel: "ES_COMMON_CLEAR_SEARCH",
+    //         minReqFields: 0,
+    //         defaultValues: defaultBailValues,
+    //         fields: [
+    //           //   {
+    //           //     label: "TYPE",
+    //           //     isMandatory: false,
+    //           //     key: "artifactType",
+    //           //     type: "dropdown",
+    //           //     populators: {
+    //           //       name: "artifactType",
+    //           //       optionsKey: "name",
+    //           //       mdmsConfig: {
+    //           //         masterName: "EvidenceType",
+    //           //         moduleName: "Evidence",
+    //           //         localePrefix: "EVIDENCE_TYPE",
+    //           //         select:
+    //           //           "(data) => {return data['Evidence'].EvidenceType?.map((item) => {return { ...item, name: item.subtype && item.subtype.trim() !== '' ? `${item.type}_${item.subtype}` : item.type };});}",
+    //           //         // localePrefix: "SUBMISSION_TYPE",
+    //           //       },
+    //           //     },
+    //           //   },
+    //           {
+    //             label: "SEARCH_BAIL_ID",
+    //             isMandatory: false,
+    //             key: "bailId",
+    //             type: "text",
+    //             populators: {
+    //               name: "bailId",
+    //             },
+    //           },
+    //         ],
+    //       },
 
-          show: true,
-        },
-        searchResult: {
-          tenantId: Digit.ULBService.getCurrentTenantId(),
-          uiConfig: {
-            columns: [
-              {
-                label: "BAIL_TYPE",
-                jsonPath: "bailType",
-                additionalCustomization: true,
-              },
-              {
-                label: "BAIL_ID",
-                jsonPath: "bailId",
-                additionalCustomization: true,
-              },
-              {
-                label: "STATUS",
-                jsonPath: "status",
-                additionalCustomization: true,
-              },
-              {
-                label: "LITIGANT_NAME",
-                jsonPath: "litigantName",
-                additionalCustomization: true,
-              },
-            ],
+    //       show: true,
+    //     },
+    //     searchResult: {
+    //       tenantId: Digit.ULBService.getCurrentTenantId(),
+    //       uiConfig: {
+    //         columns: [
+    //           {
+    //             label: "BAIL_TYPE",
+    //             jsonPath: "bailType",
+    //             additionalCustomization: true,
+    //           },
+    //           {
+    //             label: "BAIL_ID",
+    //             jsonPath: "bailId",
+    //             additionalCustomization: true,
+    //           },
+    //           {
+    //             label: "STATUS",
+    //             jsonPath: "status",
+    //             additionalCustomization: true,
+    //           },
+    //           {
+    //             label: "LITIGANT_NAME",
+    //             jsonPath: "litigantName",
+    //             additionalCustomization: true,
+    //           },
+    //         ],
 
-            enableColumnSort: true,
-            resultsJsonPath: "bails",
-          },
-          show: true,
-        },
-      },
-    },
+    //         enableColumnSort: true,
+    //         resultsJsonPath: "bails",
+    //       },
+    //       show: true,
+    //     },
+    //   },
+    // },
   ],
 };
