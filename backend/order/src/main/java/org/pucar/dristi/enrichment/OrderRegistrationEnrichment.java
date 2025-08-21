@@ -209,22 +209,26 @@ public class OrderRegistrationEnrichment {
             List<String> paths = matches.get(0).getPath();
 
             for (String path : paths) {
-                text = text.replace("[" + path + "]", orderDetailsNode.path(path).asText());
+                if (orderDetailsNode.has(path)) {
+                    String value = orderDetailsNode.path(path).asText("");
+                    text = text.replace("[" + path + "]", value);
+                }
             }
             return text;
 
         } else if (matches.size() == 2) {
             String action = orderDetailsNode.path("action").asText();
-            if (action != null) {
-                ItemTextMdms itemTextMdms = matches.stream().filter(mdms -> mdms.getAction().equalsIgnoreCase(action)).findFirst().get();
-                String text = itemTextMdms.getItemText();
-                List<String> paths = itemTextMdms.getPath();
+            ItemTextMdms itemTextMdms = matches.stream().filter(mdms -> mdms.getAction().equalsIgnoreCase(action)).findFirst().get();
+            String text = itemTextMdms.getItemText();
+            List<String> paths = itemTextMdms.getPath();
 
-                for (String path : paths) {
-                    text = text.replace("[" + path + "]", orderDetailsNode.path(path).asText());
+            for (String path : paths) {
+                if (orderDetailsNode.has(path)) {
+                    String value = orderDetailsNode.path(path).asText("");
+                    text = text.replace("[" + path + "]", value);
                 }
-                return text;
             }
+            return text;
         }
 
         return null;
