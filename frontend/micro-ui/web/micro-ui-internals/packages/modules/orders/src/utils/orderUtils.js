@@ -1,28 +1,5 @@
 import { CloseSvg } from "@egovernments/digit-ui-components";
-import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import React from "react";
-
-export const getCourtFee = async (channelId, receiverPincode, taskType, tenantId) => {
-  try {
-    const breakupResponse = await DRISTIService.getSummonsPaymentBreakup(
-      {
-        Criteria: [
-          {
-            channelId: channelId,
-            receiverPincode: receiverPincode,
-            tenantId: tenantId,
-            taskType: taskType,
-          },
-        ],
-      },
-      {}
-    );
-    return breakupResponse?.Calculation?.[0]?.breakDown?.filter((data) => data?.type === "Court Fee").reduce((sum, fee) => (sum += fee.amount), 0);
-  } catch (error) {
-    console.error("error", error);
-    return 0;
-  }
-};
 
 export const Heading = (props) => {
   return <h1 className="heading-m">{props.label}</h1>;

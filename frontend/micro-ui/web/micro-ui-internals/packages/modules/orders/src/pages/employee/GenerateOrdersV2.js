@@ -79,7 +79,6 @@ import {
   CloseBtn,
   formatDate,
   generateAddress,
-  getCourtFee,
   getFormData,
   getOrderData,
   getParties,
@@ -88,6 +87,7 @@ import {
   prepareUpdatedOrderData,
 } from "../../utils/orderUtils";
 import OrderItemDeleteModal from "./OrderItemDeleteModal";
+import { addOrderItem, createOrder, deleteOrderItem, getCourtFee } from "../../utils/orderApiCallUtils";
 
 const configKeys = {
   SECTION_202_CRPC: configsOrderSection202CRPC,
@@ -1019,6 +1019,8 @@ const GenerateOrdersV2 = () => {
   }, [
     currentOrder,
     applicationTypeConfigUpdated,
+    compositeOrderIndex,
+    orderType?.code,
     complainants,
     respondents,
     attendeeOptions,
@@ -1029,7 +1031,6 @@ const GenerateOrdersV2 = () => {
     caseDetails?.filingNumber,
     t,
     groupedWarrantOptions,
-    orderType,
   ]);
 
   const getDefaultValue = useCallback(
@@ -1936,39 +1937,6 @@ const GenerateOrdersV2 = () => {
     }
   };
 
-  const createOrder = async (order) => {
-    try {
-      let orderSchema = {};
-      try {
-        let orderTypeDropDownConfig = order?.orderNumber
-          ? applicationTypeConfigUpdated?.map((item) => ({ body: item.body.map((input) => ({ ...input, disable: true })) }))
-          : structuredClone(applicationTypeConfigUpdated);
-        let orderFormConfig = configKeys.hasOwnProperty(order?.orderType) ? configKeys[order?.orderType] : [];
-        const modifiedPlainFormConfig = [...orderTypeDropDownConfig, ...orderFormConfig];
-        orderSchema = Digit.Customizations.dristiOrders.OrderFormSchemaUtils.formToSchema(order.additionalDetails.formdata, modifiedPlainFormConfig);
-      } catch (error) {
-        console.error("error :>> ", error);
-      }
-      const parties = getParties(order?.orderType, {
-        ...orderSchema,
-        orderDetails: { ...orderSchema?.orderDetails, ...(order?.orderDetails || {}) },
-      });
-      orderSchema = { ...orderSchema, orderDetails: { ...orderSchema?.orderDetails, parties: parties } };
-
-      return await ordersService.createOrder(
-        {
-          order: {
-            ...order,
-            ...orderSchema,
-          },
-        },
-        { tenantId }
-      );
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   const handleAddOrder = async (orderFormData, compOrderIndex) => {
     try {
       if (checkValidation(t, orderFormData, compOrderIndex, setFormErrors, setShowErrorToast)) {
@@ -1977,23 +1945,56 @@ const GenerateOrdersV2 = () => {
       setAddOrderTypeLoader(true);
       const updatedOrderData = prepareUpdatedOrderData(currentOrder, orderFormData, compOrderIndex);
       let updatedOrder;
+      let updateOrderResponse = {};
       if (updatedOrderData?.orderCategory === "INTERMEDIATE") {
         if (updatedOrderData?.orderType) {
           updatedOrder = structuredClone(updatedOrderData);
           updatedOrder.orderTitle = t(updatedOrderData?.orderTitle);
 
           if (updatedOrder?.orderNumber) {
-            await updateOrder(updatedOrder, OrderWorkflowAction.SAVE_DRAFT);
+            updateOrderResponse = await updateOrder(updatedOrder, OrderWorkflowAction.SAVE_DRAFT);
           } else {
-            await createOrder(updatedOrder);
+            updateOrderResponse = await createOrder(updatedOrder);
           }
         }
       } else {
-        // TODO: Handle for Composite Orders
+        if (updatedOrderData?.orderNumber) {
+          updatedOrder = {
+            ...updatedOrderData,
+            compositeItems: updatedOrderData?.compositeItems?.filter((item) => item?.isEnabled),
+          };
+          updateOrderResponse = await addOrderItem(updatedOrder, OrderWorkflowAction.SAVE_DRAFT, tenantId, applicationTypeConfigUpdated, configKeys);
+        } else {
+          const totalEnabled = updatedOrderData?.compositeItems?.filter((compItem) => compItem?.isEnabled && compItem?.orderType)?.length;
+          if (totalEnabled === 1) {
+            const updatedOrder = structuredClone(updatedOrderData);
+            const compositeItem = updatedOrderData?.compositeItems?.find((item) => item?.isEnabled && item?.orderType);
+            updatedOrder.additionalDetails = compositeItem?.orderSchema?.additionalDetails;
+            updatedOrder.compositeItems = null;
+            updatedOrder.orderType = t(compositeItem?.orderType);
+            updatedOrder.orderCategory = "INTERMEDIATE";
+            updatedOrder.orderTitle = t(compositeItem?.orderType);
+            updateOrderResponse = await createOrder(updatedOrder);
+          } else {
+            const updatedOrder = structuredClone(updatedOrderData);
+            const enabledCompositeItems = updatedOrderData?.compositeItems?.filter((item) => item?.isEnabled);
+            updatedOrder.compositeItems = enabledCompositeItems;
+            updateOrderResponse = await addOrderItem(updatedOrder, OrderWorkflowAction.SAVE_DRAFT);
+          }
+        }
       }
-      setCurrentOrder(updatedOrder);
-      setAddOrderModal(false);
+      setCurrentOrder(updateOrderResponse?.order);
       setAddOrderTypeLoader(false);
+      setAddOrderModal(false);
+      setEditOrderModal(false);
+
+      if (!orderNumber) {
+        history.replace(
+          `/${window.contextPath}/employee/orders/generate-orders-v2?filingNumber=${caseDetails?.filingNumber}&orderNumber=${updateOrderResponse?.order?.orderNumber}`
+        );
+      } else {
+        await refetchOrdersData();
+      }
     } catch (error) {
       console.error("Error while saving draft:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
@@ -2065,23 +2066,6 @@ const GenerateOrdersV2 = () => {
         label: t("UNABLE_TO_CREATE_BAIL_BOND_TASK"),
         error: true,
       });
-    }
-  };
-
-  const deleteOrderItem = async (order, itemID) => {
-    try {
-      return await ordersService.removeOrderItem(
-        {
-          order: {
-            tenantId: order?.tenantId,
-            itemID: itemID,
-            orderNumber: order?.orderNumber,
-          },
-        },
-        { tenantId }
-      );
-    } catch (error) {
-      console.error(error);
     }
   };
 
@@ -2163,7 +2147,7 @@ const GenerateOrdersV2 = () => {
       const deletedItemId = currentOrder?.compositeItems?.find((item, index) => index === deleteOrderItemIndex)?.id;
       if (deletedItemId) {
         try {
-          const response = await deleteOrderItem(currentOrder, deletedItemId);
+          const response = await deleteOrderItem(currentOrder, deletedItemId, tenantId);
           if (response?.order?.orderNumber) {
             await refetchOrdersData();
             await refetchOrdersData(); // hard refresh

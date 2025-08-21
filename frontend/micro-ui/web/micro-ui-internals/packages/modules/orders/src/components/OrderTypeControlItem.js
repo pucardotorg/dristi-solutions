@@ -43,6 +43,7 @@ const OrderTypeControlItem = ({
           ...orderTypeConfig?.populators,
           styles: { ...orderTypeConfig?.populators?.styles, flex: 1 },
         }}
+        disable={orderType}
       />
 
       {/* Edit Button */}
@@ -53,7 +54,12 @@ const OrderTypeControlItem = ({
           if (index !== null) {
             setCompositeOrderIndex(index);
           }
-          setOrderType(orderTypeData?.find((type) => type.code === orderType) || {});
+          setOrderType(
+            {
+              ...orderTypeData?.find((type) => type?.code === orderType),
+              name: `ORDER_TYPE_${orderType}`,
+            } || {}
+          );
           handleEditOrder();
         }}
         label={t("Edit")}

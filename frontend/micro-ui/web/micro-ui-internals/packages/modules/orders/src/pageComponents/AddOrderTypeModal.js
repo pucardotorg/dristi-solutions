@@ -262,8 +262,7 @@ const AddOrderTypeModal = ({
               secondaryLabel={t(cancelLabel)}
               showSecondaryLabel={true}
               onSubmit={() => {
-                const updatedFormData = { ...formdata, orderType: orderType };
-                handleSubmit(updatedFormData, index);
+                handleSubmit(formdata, index);
               }}
               onSecondayActionClick={handleCancel}
               isDisabled={isSubmitDisabled || addOrderTypeLoader}
