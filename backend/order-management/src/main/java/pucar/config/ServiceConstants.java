@@ -146,7 +146,7 @@ public class ServiceConstants {
     public static final String ATTACHMENT = "ATTACHMENT";
     public static final String WITHDRAWAL = "WITHDRAWAL";
     public static final String MOVE_CASE_TO_LONG_PENDING_REGISTER = "MOVE_CASE_TO_LONG_PENDING_REGISTER";
-    public static final String MOVE_CASE_OUT_OF_PENDING_REGISTER = "MOVE_CASE_OUT_OF_PENDING_REGISTER";
+    public static final String MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER = "MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER";
 
     public static final String SMS = "SMS";
 

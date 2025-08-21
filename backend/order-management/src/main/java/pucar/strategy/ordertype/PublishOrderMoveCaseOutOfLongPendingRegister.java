@@ -18,7 +18,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static pucar.config.ServiceConstants.E_SIGN;
-import static pucar.config.ServiceConstants.MOVE_CASE_OUT_OF_PENDING_REGISTER;
+import static pucar.config.ServiceConstants.MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER;
 
 @Slf4j
 @Component
@@ -35,7 +35,7 @@ public class PublishOrderMoveCaseOutOfLongPendingRegister implements OrderUpdate
     public boolean supportsPreProcessing(OrderRequest orderRequest) {
         Order order = orderRequest.getOrder();
         String action = order.getWorkflow().getAction();
-        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && MOVE_CASE_OUT_OF_PENDING_REGISTER.equalsIgnoreCase(order.getOrderType());
+        return order.getOrderType() != null && E_SIGN.equalsIgnoreCase(action) && MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER.equalsIgnoreCase(order.getOrderType());
     }
 
     @Override
