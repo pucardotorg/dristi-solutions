@@ -229,6 +229,9 @@ public class OrderRegistrationEnrichment {
             String text = itemTextMdmsMatches.get(0).getItemText();
             List<String> paths = itemTextMdmsMatches.get(0).getPath();
 
+            if(paths == null || paths.isEmpty()) {
+                return text;
+            }
             for (String path : paths) {
                 if (orderDetailsNode.has(path)) {
                     String value = orderDetailsNode.path(path).asText("");
@@ -242,7 +245,9 @@ public class OrderRegistrationEnrichment {
             ItemTextMdms itemTextMdms = itemTextMdmsMatches.stream().filter(mdms -> mdms.getAction().equalsIgnoreCase(action)).findFirst().get();
             String text = itemTextMdms.getItemText();
             List<String> paths = itemTextMdms.getPath();
-
+            if(paths == null || paths.isEmpty()) {
+                return text;
+            }
             for (String path : paths) {
                 if (orderDetailsNode.has(path)) {
                     String value = orderDetailsNode.path(path).asText("");
