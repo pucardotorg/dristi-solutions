@@ -1652,8 +1652,6 @@ const GenerateOrders = () => {
 
   const getDefaultValue = useCallback(
     (index) => {
-
-      console.log(index, "index in getDefaultValue");
       
       if (currentOrder?.orderType && !currentOrder?.additionalDetails?.formdata) {
         return {

@@ -708,7 +708,16 @@ const GenerateOrdersV2 = () => {
 
   // TODO: temporary Form Config, need to be replaced with the actual config
   const modifiedFormConfig = useMemo(() => {
-    let formConfig = [];
+    const newConfig =
+      applicationTypeConfigUpdated?.map((item) => ({
+        ...item,
+        body: item.body.map((input) => ({
+          ...input,
+          disable: true,
+        })),
+      })) || [];
+
+    let formConfig = [...newConfig];
     let selectedOrderType = "";
     if (currentOrder?.orderCategory === "COMPOSITE") {
       selectedOrderType = currentOrder?.compositeItems?.[compositeOrderIndex]?.orderType || orderType?.code || "";
@@ -961,7 +970,7 @@ const GenerateOrdersV2 = () => {
         });
       }
 
-      formConfig = [...orderTypeForm];
+      formConfig = [...formConfig, ...orderTypeForm];
     }
 
     const updatedConfig = formConfig?.map((config) => {
@@ -1044,11 +1053,11 @@ const GenerateOrdersV2 = () => {
           : currentOrder;
 
       let updatedFormdata = newCurrentOrder?.additionalDetails?.formdata || {};
-      const orderType = newCurrentOrder?.orderType;
+      const currentOrderType = newCurrentOrder?.orderType || orderType?.code || "";
       const newApplicationDetails = applicationData?.applicationList?.find(
         (application) => application?.applicationNumber === newCurrentOrder?.additionalDetails?.formdata?.refApplicationId
       );
-      if (orderType === "JUDGEMENT") {
+      if (currentOrderType === "JUDGEMENT") {
         const complainantPrimary = caseDetails?.litigants?.find((item) => item?.partyType?.includes("complainant.primary"));
         const respondentPrimary = caseDetails?.litigants?.find((item) => item?.partyType?.includes("respondent.primary"));
 
@@ -1100,7 +1109,7 @@ const GenerateOrdersV2 = () => {
         setValueRef?.current?.[index]?.("offense", updatedFormdata.offense);
       }
 
-      if (orderType === "BAIL") {
+      if (currentOrderType === "BAIL") {
         updatedFormdata.bailType = { type: newApplicationDetails?.applicationType };
         setValueRef?.current?.[index]?.("bailType", updatedFormdata.bailType);
 
@@ -1111,11 +1120,11 @@ const GenerateOrdersV2 = () => {
         setValueRef?.current?.[index]?.("bailOf", updatedFormdata.bailOf);
       }
 
-      if (orderType === "SET_BAIL_TERMS") {
+      if (currentOrderType === "SET_BAIL_TERMS") {
         updatedFormdata.partyId = newApplicationDetails?.createdBy;
         setValueRef?.current?.[index]?.("partyId", updatedFormdata.partyId);
       }
-      if (orderType === "REJECT_BAIL") {
+      if (currentOrderType === "REJECT_BAIL") {
         updatedFormdata.bailParty = newApplicationDetails?.additionalDetails?.onBehalOfName;
         updatedFormdata.submissionDocuments = {
           uploadedDocs:
@@ -1134,7 +1143,7 @@ const GenerateOrdersV2 = () => {
 
       // }
 
-      if (orderType === "WITHDRAWAL_ACCEPT") {
+      if (currentOrderType === "WITHDRAWAL_ACCEPT") {
         if (newApplicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
           updatedFormdata.applicationOnBehalfOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
           setValueRef?.current?.[index]?.("applicationOnBehalfOf", updatedFormdata.applicationOnBehalfOf);
@@ -1147,7 +1156,7 @@ const GenerateOrdersV2 = () => {
         }
       }
 
-      if (orderType === "WITHDRAWAL_REJECT") {
+      if (currentOrderType === "WITHDRAWAL_REJECT") {
         if (newApplicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
           updatedFormdata.applicationOnBehalfOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
           setValueRef?.current?.[index]?.("applicationOnBehalfOf", updatedFormdata.applicationOnBehalfOf);
@@ -1160,7 +1169,7 @@ const GenerateOrdersV2 = () => {
         }
       }
 
-      if (orderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE") {
+      if (currentOrderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE") {
         if (newApplicationDetails?.applicationType === applicationTypes.EXTENSION_SUBMISSION_DEADLINE) {
           updatedFormdata.documentName = newApplicationDetails?.additionalDetails?.formdata?.documentType?.value;
           setValueRef?.current?.[index]?.("documentName", updatedFormdata.documentName);
@@ -1176,7 +1185,7 @@ const GenerateOrdersV2 = () => {
         }
       }
 
-      if (orderType === "SUMMONS") {
+      if (currentOrderType === "SUMMONS") {
         const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
           (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
         );
@@ -1218,7 +1227,7 @@ const GenerateOrdersV2 = () => {
           setValueRef?.current?.[index]?.("SummonsOrder", updatedFormdata.SummonsOrder);
         }
       }
-      if (orderType === "NOTICE") {
+      if (currentOrderType === "NOTICE") {
         const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
           (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
         );
@@ -1263,7 +1272,7 @@ const GenerateOrdersV2 = () => {
           setValueRef?.current?.[index]?.("noticeOrder", updatedFormdata.noticeOrder);
         }
       }
-      if (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT") {
+      if (currentOrderType === "WARRANT" || currentOrderType === "PROCLAMATION" || currentOrderType === "ATTACHMENT") {
         const scheduleHearingOrderItem = newCurrentOrder?.compositeItems?.find(
           (item) => item?.isEnabled && ["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(item?.orderType)
         );
@@ -1289,7 +1298,7 @@ const GenerateOrdersV2 = () => {
           "INITIATING_RESCHEDULING_OF_HEARING_DATE",
           "CHECKOUT_ACCEPTANCE",
           "CHECKOUT_REJECT",
-        ].includes(orderType)
+        ].includes(currentOrderType)
       ) {
         updatedFormdata.originalHearingDate =
           newCurrentOrder?.additionalDetails?.formdata?.originalHearingDate ||
@@ -1298,9 +1307,33 @@ const GenerateOrdersV2 = () => {
         setValueRef?.current?.[index]?.("originalHearingDate", updatedFormdata.originalHearingDate);
       }
       // setCurrentFormData(updatedFormdata); // TODO: check and update setCurrentFormData here and update where ever currentFormData is being used.
-      return updatedFormdata;
+      return {
+        ...updatedFormdata,
+        orderType: orderType,
+      };
     },
-    [currentOrder, hearingDetails, applicationData, caseDetails]
+    [
+      currentOrder,
+      orderType,
+      applicationData?.applicationList,
+      orderTypeData,
+      caseDetails?.litigants,
+      caseDetails?.courtCaseNumber,
+      caseDetails?.additionalDetails?.respondentDetails?.formdata,
+      caseDetails?.caseDetails?.chequeDetails?.formdata,
+      caseDetails?.filingDate,
+      caseDetails?.courtId,
+      uuidNameMap,
+      allAdvocates,
+      courtRooms,
+      publishedBailOrder?.auditDetails?.lastModifiedTime,
+      hearingsList,
+      t,
+      isHearingScheduled,
+      isHearingInPassedOver,
+      isHearingInProgress,
+      hearingDetails?.startTime,
+    ]
   );
 
   const defaultOrderData = useMemo(
