@@ -217,7 +217,6 @@ public class OrderRegistrationService {
             orderRequest.setRequestInfo(body.getRequestInfo());
             orderRequest.setOrder(order);
             enrichmentUtil.enrichAuditDetails(orderRequest);
-            enrichmentUtil.enrichItemText(orderRequest);
 
             producer.push(config.getUpdateOrderKafkaTopic(), orderRequest);
 
