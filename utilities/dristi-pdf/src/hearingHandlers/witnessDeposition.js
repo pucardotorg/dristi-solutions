@@ -11,7 +11,6 @@ const {
   getPartyType,
   getCourtAndJudgeDetails,
 } = require("../utils/commonUtils");
-const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -150,9 +149,6 @@ const witnessDeposition = async (req, res, qrCode) => {
 
     const ordinalSuffix = getOrdinalSuffix(day);
     const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
-    const witnessDepositionText = htmlToFormattedText(
-      witnessEvidence?.description || ""
-    );
     const data = {
       Data: [
         {
@@ -171,7 +167,7 @@ const witnessDeposition = async (req, res, qrCode) => {
           month: month,
           year: year,
           depositionType: "",
-          witnessDeposition: witnessDepositionText,
+          witnessDeposition: witnessEvidence?.description,
           witnessPlaceholder: "Deponent",
           judgePlaceholder: "Judicial Magistrate of First Class",
           qrCodeUrl: base64Url,
