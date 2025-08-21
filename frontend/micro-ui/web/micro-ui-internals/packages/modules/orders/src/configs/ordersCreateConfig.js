@@ -5618,3 +5618,48 @@ export const configsMoveCaseOutOfLongPendingRegister = [
     ],
   },
 ];
+
+export const attendeesOptions = [
+  { code: "COMPLAINANT", name: "Complainant" },
+  { code: "COMPLAINANT_ADVOCATE", name: "Complainant's Advocate" },
+  { code: "ACCUSED", name: "Accused" },
+  { code: "ACCUSED_ADVOCATE", name: "Accused Advocate" },
+];
+
+export const purposeOfHearingConfig = {
+  label: "HEARING_PURPOSE",
+  isMandatory: true,
+  key: "hearingPurpose",
+  schemaKeyPath: "orderDetails.purposeOfHearing",
+  transformer: "mdmsDropdown",
+  type: "dropdown",
+  populators: {
+    name: "hearingPurpose",
+    optionsKey: "code",
+    error: "CORE_REQUIRED_FIELD_ERROR",
+    styles: { maxWidth: "100%" },
+    required: true,
+    isMandatory: true,
+    hideInForm: false,
+    mdmsConfig: {
+      masterName: "HearingType",
+      moduleName: "Hearing",
+      localePrefix: "HEARING_PURPOSE",
+    },
+  },
+};
+
+export const nextDateOfHearing = {
+  type: "component",
+  component: "CustomDatePicker",
+  key: "nextHearingDate",
+  label: "NEXT_DATE_OF_HEARING",
+  className: "order-date-picker",
+  isMandatory: true,
+  placeholder: "DD/MM/YYYY",
+  customStyleLabelField: { display: "flex", justifyContent: "space-between" },
+  populators: {
+    name: "nextHearingDate",
+    error: "CORE_REQUIRED_FIELD_ERROR",
+  },
+};

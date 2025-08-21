@@ -57,6 +57,9 @@ import {
   configsCreateOrderAttachment,
   configsMoveCaseToLongPendingRegister,
   configsMoveCaseOutOfLongPendingRegister,
+  attendeesOptions,
+  purposeOfHearingConfig,
+  nextDateOfHearing,
 } from "../../configs/ordersCreateConfig";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -86,7 +89,6 @@ import {
   Heading,
   prepareUpdatedOrderData,
 } from "../../utils/orderUtils";
-import OrderItemDeleteModal from "./OrderItemDeleteModal";
 import { addOrderItem, createOrder, deleteOrderItem, getCourtFee } from "../../utils/orderApiCallUtils";
 
 const configKeys = {
@@ -129,74 +131,6 @@ const configKeys = {
   ADVOCATE_REPLACEMENT_APPROVAL: replaceAdvocateConfig,
   MOVE_CASE_TO_LONG_PENDING_REGISTER: configsMoveCaseToLongPendingRegister,
   MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER: configsMoveCaseOutOfLongPendingRegister,
-};
-
-const options = [
-  { code: "COMPLAINANT", name: "Complainant" },
-  { code: "COMPLAINANT_ADVOCATE", name: "Complainant's Advocate" },
-  { code: "ACCUSED", name: "Accused" },
-  { code: "ACCUSED_ADVOCATE", name: "Accused Advocate" },
-];
-
-const orderTypeConfig = {
-  isMandatory: true,
-  key: "orderType",
-  type: "dropdown",
-  label: "CHOOSE_ITEM",
-  schemaKeyPath: "orderType",
-  transformer: "mdmsDropdown",
-  disable: false,
-  populators: {
-    name: "orderType",
-    optionsKey: "name",
-    error: "required ",
-    styles: { maxWidth: "75%" },
-    mdmsConfig: {
-      moduleName: "Order",
-      masterName: "OrderType",
-      localePrefix: "ORDER_TYPE",
-      select:
-        "(data) => {return data['Order'].OrderType?.filter((item)=>[`SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}",
-    },
-  },
-};
-
-const purposeOfHearingConfig = {
-  label: "HEARING_PURPOSE",
-  isMandatory: true,
-  key: "hearingPurpose",
-  schemaKeyPath: "orderDetails.purposeOfHearing",
-  transformer: "mdmsDropdown",
-  type: "dropdown",
-  populators: {
-    name: "hearingPurpose",
-    optionsKey: "code",
-    error: "CORE_REQUIRED_FIELD_ERROR",
-    styles: { maxWidth: "100%" },
-    required: true,
-    isMandatory: true,
-    hideInForm: false,
-    mdmsConfig: {
-      masterName: "HearingType",
-      moduleName: "Hearing",
-      localePrefix: "HEARING_PURPOSE",
-    },
-  },
-};
-
-const nextDateOfHearing = {
-  type: "component",
-  component: "CustomDatePicker",
-  key: "nextHearingDate",
-  label: "Next Date of Hearing",
-  className: "order-date-picker",
-  isMandatory: true,
-  placeholder: "DD/MM/YYYY",
-  customStyleLabelField: { display: "flex", justifyContent: "space-between" },
-  populators: {
-    name: "nextHearingDate",
-    error: "CORE_REQUIRED_FIELD_ERROR",
-  },
 };
 
 const GenerateOrdersV2 = () => {
@@ -2193,10 +2127,10 @@ const GenerateOrdersV2 = () => {
             {currentInProgressHearing && (
               <React.Fragment>
                 <LabelFieldPair style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "left" }}>
-                  <CardHeader styles={{ fontSize: "16px", fontWeight: "bold" }}>Mark Who Is Present</CardHeader>
+                  <CardHeader styles={{ fontSize: "16px", fontWeight: "bold" }}>{t("MARK_WHO_IS_PRESENT")}</CardHeader>
 
                   <div className="checkbox-group">
-                    {options?.map((option, index) => (
+                    {attendeesOptions?.map((option, index) => (
                       <div className="checkbox-item" key={index}>
                         <input
                           id={`present-${option.code}`}
@@ -2224,10 +2158,10 @@ const GenerateOrdersV2 = () => {
                 </LabelFieldPair>
 
                 <LabelFieldPair style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "left", marginTop: "12px" }}>
-                  <CardHeader styles={{ fontSize: "16px", fontWeight: "bold" }}>Mark Who Is Absent</CardHeader>
+                  <CardHeader styles={{ fontSize: "16px", fontWeight: "bold" }}>{t("MARK_WHO_IS_ABSENT")}</CardHeader>
 
                   <div className="checkbox-group">
-                    {options?.map((option, index) => (
+                    {attendeesOptions?.map((option, index) => (
                       <div className="checkbox-item" key={index}>
                         <input
                           id={`absent-${option.code}`}
@@ -2257,12 +2191,17 @@ const GenerateOrdersV2 = () => {
             )}
 
             <LabelFieldPair className="order-type-dropdown">
-              <CardLabel className="order-type-dropdown-label">{t(orderTypeConfig?.label)}</CardLabel>
               <OrderTypeControls
                 t={t}
                 currentOrder={currentOrder}
                 orderTypeData={orderTypeData}
-                orderTypeConfig={orderTypeConfig}
+                orderTypeConfig={{
+                  ...applicationTypeConfigUpdated?.[0]?.body[0],
+                  populators: {
+                    ...applicationTypeConfigUpdated?.[0]?.body[0]?.populators,
+                    styles: { maxWidth: "75%" },
+                  },
+                }}
                 setOrderType={setOrderType}
                 setAddOrderModal={setAddOrderModal}
                 setCompositeOrderIndex={setCompositeOrderIndex}
@@ -2302,7 +2241,7 @@ const GenerateOrdersV2 = () => {
                     checked={skipScheduling}
                     style={{ cursor: "pointer", width: "20px", height: "20px" }}
                   />
-                  <label htmlFor="skip-scheduling">Skip Scheduling Next Hearing</label>
+                  <label htmlFor="skip-scheduling">{t("SKIP_SCHEDULING_NEXT_HEARING")}</label>
                 </div>
 
                 <LabelFieldPair className="purpose-hearing-dropdown">
@@ -2321,7 +2260,7 @@ const GenerateOrdersV2 = () => {
                 </LabelFieldPair>
 
                 <LabelFieldPair className={`case-label-field-pair`} style={{ width: "75%" }}>
-                  <CardLabel className={`case-input-label ${skipScheduling ? "disabled" : ""}`}>Next Date of Hearing</CardLabel>
+                  <CardLabel className={`case-input-label ${skipScheduling ? "disabled" : ""}`}> {t(nextDateOfHearing?.label)}</CardLabel>
                   <CustomDatePickerV2
                     t={t}
                     config={nextDateOfHearing}
@@ -2350,7 +2289,7 @@ const GenerateOrdersV2 = () => {
                     style={{ cursor: "pointer", width: "20px", height: "20px" }}
                     disabled={isBailBondTaskExists || skipScheduling}
                   />
-                  <label htmlFor="bail-bond-required">Bail Bond Required</label>
+                  <label htmlFor="bail-bond-required">{t("BAIL_BOND_REQUIRED")}</label>
                 </div>
               </React.Fragment>
             )}
@@ -2358,10 +2297,10 @@ const GenerateOrdersV2 = () => {
 
           {/* Right Column */}
           <div className="generate-orders-v2-column">
-            <div className="section-header">Order Text</div>
+            <div className="section-header">{t("ORDER_TEXT")}</div>
             {currentInProgressHearing && (
               <div>
-                <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>Attendance</div>
+                <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>{t("ORDER_ATTENDANCE")}</div>
                 <textarea
                   value={`${presentAttendees?.length > 0 ? `Present: ${presentAttendees?.map((item) => t(item?.name))?.join(", ")}` : ``}${
                     presentAttendees?.length > 0 && absentAttendees?.length > 0 ? "\n" : ""
@@ -2377,7 +2316,7 @@ const GenerateOrdersV2 = () => {
             )}
 
             <div>
-              <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>Item Text</div>
+              <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>{t("ITEM_TEXT")}</div>
               <textarea
                 // value={formdata?.[config.key]?.[input.name]}
                 // onChange={(data) => {
@@ -2394,14 +2333,14 @@ const GenerateOrdersV2 = () => {
 
             {currentInProgressHearing && (
               <div>
-                <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>Next Hearing</div>
+                <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>{t("NEXT_HEARING_TEXT")}</div>
                 <textarea
                   value={
                     skipScheduling
-                      ? "No Next Hearing"
-                      : `${purposeOfHearing ? `Purpose of Next Hearing: ${t(purposeOfHearing?.code || purposeOfHearing)}` : ``}${
+                      ? `${t("NO_NEXT_HEARING")}`
+                      : `${purposeOfHearing ? `${t("PURPOSE_OF_NEXT_HEARING")} ${t(purposeOfHearing?.code || purposeOfHearing)}` : ``}${
                           purposeOfHearing && nextHearingDate ? "\n" : ""
-                        }${nextHearingDate ? `Date: ${new Date(nextHearingDate).toLocaleDateString()}` : ``}`
+                        }${nextHearingDate ? `${t("DATE_TEXT")} ${new Date(nextHearingDate).toLocaleDateString()}` : ``}`
                   }
                   rows={3}
                   maxLength={1000}
@@ -2463,9 +2402,9 @@ const GenerateOrdersV2 = () => {
           handleCancel={() => setEditOrderModal(false)}
           handleSubmit={handleEditConfirmationOrder}
           headerLabel={"GENERATE_ORDER_CONFIRM_EDIT"}
-          saveLabel={"GENERATE_ORDER_CONFIRM_EDIT"}
+          saveLabel={"GENERATE_ORDER_CONFIRM"}
           cancelLabel={"GENERATE_ORDER_CANCEL_EDIT"}
-          contentText={"CONFIRM_EDIT_GENERATE_ORDER"}
+          contentText={"GENERATE_ORDER_CONFIRM_EDIT_TEXT"}
           className={"edit-send-back-modal"}
         />
       )}
@@ -2475,9 +2414,9 @@ const GenerateOrdersV2 = () => {
           handleCancel={() => setDeleteOrderItemIndex(null)}
           handleSubmit={() => handleDeleteOrderItem(deleteOrderItemIndex)}
           headerLabel={"GENERATE_ORDER_CONFIRM_DELETE"}
-          saveLabel={"GENERATE_ORDER_CONFIRM_DELETE"}
-          cancelLabel={"GENERATE_ORDER_CANCEL_DELETE"}
-          contentText={"CONFIRM_DELETE_GENERATE_ORDER"}
+          saveLabel={"GENERATE_ORDER_DELETE"}
+          cancelLabel={"GENERATE_ORDER_CANCEL_EDIT"}
+          contentText={"GENERATE_ORDER_CONFIRM_EDIT_TEXT"}
           className={"edit-send-back-modal"}
           submitButtonStyle={{ backgroundColor: "#C7222A" }}
         />
