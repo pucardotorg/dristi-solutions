@@ -9,6 +9,7 @@ const HomeHeader = ({ t }) => {
 
   const isJudge = useMemo(() => roles?.some((role) => role?.code === "JUDGE_ROLE"), [roles]);
   const isBenchClerk = useMemo(() => roles?.some((role) => role?.code === "BENCH_CLERK"), [roles]);
+  const isCourtRoomManager = useMemo(() => roles?.some((role) => role?.code === "COURT_ROOM_MANAGER"), [roles]);
   const isTypist = useMemo(() => roles?.some((role) => role.code === "TYPIST_ROLE"), [roles]);
 
   const { data: hearingLink } = useGetHearingLink();
@@ -76,7 +77,7 @@ gap: 6px;
         <div style={{ fontSize: "28px", fontWeight: "700" }}>
           {curHr < 12 ? t("GOOD_MORNING") : curHr < 18 ? t("GOOD_AFTERNOON") : t("GOOD_EVENING")}, <span className="userName">{name}</span>
         </div>
-        {(isJudge || isBenchClerk || isTypist) && (
+        {(isJudge || isBenchClerk || isTypist || isCourtRoomManager) && (
           <div className="home-top-left-bar">
             <a href={`/${window.contextPath}/employee/home/dashboard`} className="home-btn" target="_self" rel="noopener noreferrer">
               {t("OPEN_DASHBOARD")} <ArrowIcon />

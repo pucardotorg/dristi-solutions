@@ -54,9 +54,10 @@ const SubmissionDocuments = ({ path }) => {
   const entityType = "voluntary-document-submission";
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
-  const isEmployee = useMemo(() => userInfo?.roles?.some((role) => ["BENCH_CLERK", "JUDGE_ROLE", "TYPIST_ROLE"].includes(role?.code)), [
-    userInfo?.roles,
-  ]);
+  const isEmployee = useMemo(
+    () => userInfo?.roles?.some((role) => ["BENCH_CLERK", "JUDGE_ROLE", "TYPIST_ROLE", "COURT_ROOM_MANAGER"].includes(role?.code)),
+    [userInfo?.roles]
+  );
 
   const { data: filingTypeData, isLoading: isFilingTypeLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "FilingType" },
