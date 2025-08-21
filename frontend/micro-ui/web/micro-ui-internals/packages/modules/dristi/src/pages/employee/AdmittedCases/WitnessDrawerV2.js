@@ -1002,7 +1002,7 @@ const WitnessDrawerV2 = ({
         };
 
         const updatedEvidence = await DRISTIService.updateEvidence(updateEvidenceReqBody);
-        setShowErrorToast({ label: t("WITNESS_DEPOSITION_DELETED_SUCCESSFULLY"), error: false });
+        setShowErrorToast({ label: t(" WITNESS_DEPOSITION_DELETED_SUCCESSFULLY"), error: false });
         const updatedActiveTabs = activeTabs?.filter((tab) => tab?.artifactNumber !== selectedTab?.artifactNumber);
         setActiveTabs(updatedActiveTabs);
         if (deletedEvidenceIndex === activeTabs?.length - 1) {
