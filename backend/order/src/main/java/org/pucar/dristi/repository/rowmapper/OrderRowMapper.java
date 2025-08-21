@@ -62,6 +62,9 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
                             .isActive(rs.getBoolean("isactive"))
                             .orderType(rs.getString("ordertype"))
                             .courtId(rs.getString("courtId"))
+                            .itemText(rs.getString("itemtext"))
+                            .purposeOfNextHearing(rs.getString("purposeofnexthearing"))
+                            .nextHearingDate(rs.getLong("nexthearingdate"))
                             .createdDate(rs.getLong("createddate"))
                             .comments(rs.getString("comments"))
                             .filingNumber(rs.getString("filingnumber"))
@@ -83,6 +86,10 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
                 PGobject pgObject3 = (PGobject) rs.getObject("orderDetails");
                 if(pgObject3!=null)
                     order.setOrderDetails(objectMapper.readTree(pgObject3.getValue()));
+
+                PGobject pgObject4 = (PGobject) rs.getObject("attendance");
+                if(pgObject4!=null)
+                    order.setAttendance(objectMapper.readValue(pgObject4.getValue(),List.class));
 
                 orderMap.put(uuid, order);
             }
