@@ -83,6 +83,7 @@ import {
   formatDate,
   generateAddress,
   getFormData,
+  getMandatoryFieldsErrors,
   getOrderData,
   getParties,
   getUpdateDocuments,
@@ -95,6 +96,7 @@ import OrderSignatureModal from "../../pageComponents/OrderSignatureModal";
 import OrderSucessModal from "../../pageComponents/OrderSucessModal";
 import OrderAddToBulkSuccessModal from "../../pageComponents/OrderAddToBulkSuccessModal";
 import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
+import MandatoryFieldsErrorModal from "./MandatoryFieldsErrorModal";
 
 const configKeys = {
   SECTION_202_CRPC: configsOrderSection202CRPC,
@@ -237,6 +239,7 @@ const GenerateOrdersV2 = () => {
   const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
   const [createdSummon, setCreatedSummon] = useState(null);
   const [createdNotice, setCreatedNotice] = useState(null);
+  const [showMandatoryFieldsErrorModal, setShowMandatoryFieldsErrorModal] = useState({ showModal: false, errorsData: [] });
 
   const fetchCaseDetails = async () => {
     try {
@@ -751,331 +754,333 @@ const GenerateOrdersV2 = () => {
   }, [userType]);
 
   // TODO: temporary Form Config, need to be replaced with the actual config
-  const modifiedFormConfig = useMemo(() => {
-    const newConfig =
-      applicationTypeConfigUpdated?.map((item) => ({
-        ...item,
-        body: item.body.map((input) => ({
-          ...input,
-          disable: true,
-        })),
-      })) || [];
+  const getModifiedFormConfig = useCallback(
+    (compositeActiveOrderIndex) => {
+      const newConfig =
+        applicationTypeConfigUpdated?.map((item) => ({
+          ...item,
+          body: item.body.map((input) => ({
+            ...input,
+            disable: true,
+          })),
+        })) || [];
 
-    let formConfig = [...newConfig];
-    let selectedOrderType = "";
-    if (currentOrder?.orderCategory === "COMPOSITE") {
-      selectedOrderType = currentOrder?.compositeItems?.[compositeOrderIndex]?.orderType || orderType?.code || "";
-    } else {
-      selectedOrderType = currentOrder?.orderType || orderType?.code || "";
-    }
-
-    if (selectedOrderType && configKeys.hasOwnProperty(selectedOrderType)) {
-      let orderTypeForm = configKeys[selectedOrderType];
-      if (selectedOrderType === "SECTION_202_CRPC") {
-        orderTypeForm = orderTypeForm?.map((section) => {
-          return {
-            ...section,
-            body: section.body.map((field) => {
-              if (field.key === "applicationFilledBy") {
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    options: [...complainants, ...respondents],
-                  },
-                };
-              }
-              if (field.key === "detailsSeekedOf") {
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    options: [...complainants, ...respondents],
-                  },
-                };
-              }
-              return field;
-            }),
-          };
-        });
+      let formConfig = [...newConfig];
+      let selectedOrderType = "";
+      if (currentOrder?.orderCategory === "COMPOSITE") {
+        selectedOrderType = currentOrder?.compositeItems?.[compositeActiveOrderIndex]?.orderType || orderType?.code || "";
+      } else {
+        selectedOrderType = currentOrder?.orderType || orderType?.code || "";
       }
-      if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(selectedOrderType)) {
-        orderTypeForm = orderTypeForm?.map((section) => {
-          return {
-            ...section,
-            body: section.body.map((field) => {
-              if (field.key === "attendees") {
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    options: attendeeOptions,
-                  },
-                };
-              }
-              if (field.key === "namesOfPartiesRequired") {
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    options: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
-                  },
-                };
-              }
-              if (field.key === "hearingPurpose") {
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    mdmsConfig: {
-                      ...field.populators?.mdmsConfig,
-                      select: `(data) => {
+
+      if (selectedOrderType && configKeys.hasOwnProperty(selectedOrderType)) {
+        let orderTypeForm = configKeys[selectedOrderType];
+        if (selectedOrderType === "SECTION_202_CRPC") {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "applicationFilledBy") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...complainants, ...respondents],
+                    },
+                  };
+                }
+                if (field.key === "detailsSeekedOf") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...complainants, ...respondents],
+                    },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
+        }
+        if (["SCHEDULE_OF_HEARING_DATE", "SCHEDULING_NEXT_HEARING"].includes(selectedOrderType)) {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "attendees") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: attendeeOptions,
+                    },
+                  };
+                }
+                if (field.key === "namesOfPartiesRequired") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
+                    },
+                  };
+                }
+                if (field.key === "hearingPurpose") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      mdmsConfig: {
+                        ...field.populators?.mdmsConfig,
+                        select: `(data) => {
                                 return (  // based on isDcaFiled condition, we can filter out DCA hearing here if needed.
                                   data?.Hearing?.HearingType|| []
                                 );
                               }`,
+                      },
                     },
-                  },
-                };
-              }
-              if (field.key === "unjoinedPartiesNote") {
-                const parties = [...unJoinedLitigant, ...witnesses];
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    inputs: [
-                      {
-                        ...field.populators.inputs[0],
-                        children: (
-                          <React.Fragment>
-                            {parties.map((party, index) => (
-                              <div className="list-div" key={index}>
-                                <p style={{ margin: "0px", fontSize: "14px" }}>
-                                  {index + 1}. {party?.name}
-                                </p>
-                              </div>
-                            ))}
-                          </React.Fragment>
-                        ),
-                      },
-                    ],
-                  },
-                };
-              }
-              return field;
-            }),
-          };
-        });
-      }
-      if (selectedOrderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
-        orderTypeForm = orderTypeForm?.map((section) => {
-          return {
-            ...section,
-            body: section.body.map((field) => {
-              if (field.key === "submissionParty") {
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    options: [...complainants, ...respondents],
-                  },
-                };
-              }
-              if (field?.populators?.inputs?.some((input) => input?.name === "respondingParty")) {
-                return {
-                  ...field,
-                  populators: {
-                    ...field?.populators,
-                    inputs: field?.populators?.inputs.map((input) =>
-                      input.name === "respondingParty"
-                        ? {
-                            ...input,
-                            options: [...complainants, ...respondents],
-                          }
-                        : input
-                    ),
-                  },
-                };
-              }
-              return field;
-            }),
-          };
-        });
-      }
-
-      if (selectedOrderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE") {
-        orderTypeForm = orderTypeForm?.map((section) => {
-          return {
-            ...section,
-            body: section.body.map((field) => {
-              if (field.key === "applicationGrantedRejected") {
-                return {
-                  ...field,
-                  disable: true,
-                };
-              }
-              return field;
-            }),
-          };
-        });
-      }
-      if (selectedOrderType === "JUDGEMENT") {
-        orderTypeForm = orderTypeForm?.map((section) => {
-          return {
-            ...section,
-            body: section.body.map((field) => {
-              if (field.key === "witnessNote" || field.key === "evidenceNote") {
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    inputs: [
-                      {
-                        ...field.populators.inputs[0],
-                        caseId: caseDetails?.id,
-                        filingNumber: caseDetails?.filingNumber,
-                        tab: field?.key === "witnessNote" ? "Complaint" : field?.key === "evidenceNote" ? "Documents" : "Overview",
-                        // customFunction: () => handleSaveDraft({ showReviewModal: false }),
-                      },
-                    ],
-                  },
-                };
-              }
-              return field;
-            }),
-          };
-        });
-      }
-      if (selectedOrderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE") {
-        orderTypeForm = orderTypeForm?.map((section) => {
-          return {
-            ...section,
-            body: section.body.filter((field) => {
-              const isRejected = currentOrder?.additionalDetails?.applicationStatus === t("REJECTED");
-              return !(field.key === "newSubmissionDate" && isRejected);
-            }),
-          };
-        });
-      }
-
-      if (selectedOrderType === "WARRANT") {
-        const warrantSubtypeCode = currentOrder?.additionalDetails?.formdata?.warrantSubType?.templateType;
-        orderTypeForm = orderTypeForm?.map((section) => {
-          const updatedBody = section.body
-            .map((field) => {
-              if (field.key === "warrantSubType") {
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    options: [...groupedWarrantOptions],
-                  },
-                };
-              }
-              return field;
-            })
-            .filter((field) => {
-              if (field.key === "warrantText" || field.key === "bailInfo") {
-                if (warrantSubtypeCode === "GENERIC") {
-                  return field.key === "warrantText";
-                } else if (warrantSubtypeCode === "SPECIFIC") {
-                  return field.key === "bailInfo";
+                  };
                 }
-                return false;
-              }
-              return true;
-            });
-
-          return {
-            ...section,
-            body: updatedBody,
-          };
-        });
-      }
-
-      if (selectedOrderType === "ACCEPT_BAIL") {
-        orderTypeForm = orderTypeForm?.map((section) => {
-          return {
-            ...section,
-            body: section.body.map((field) => {
-              if (field.key === "bailParty") {
-                return {
-                  ...field,
-                  populators: {
-                    ...field.populators,
-                    options: [...complainants, ...respondents],
-                  },
-                };
-              }
-              return field;
-            }),
-          };
-        });
-      }
-
-      formConfig = [...formConfig, ...orderTypeForm];
-    }
-
-    const updatedConfig = formConfig?.map((config) => {
-      return {
-        ...config,
-        body: config?.body.map((body) => {
-          if (body?.labelChildren === "OutlinedInfoIcon") {
-            body.labelChildren = (
-              <React.Fragment>
-                <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`${body.label}-tooltip`}>
-                  {" "}
-                  <OutlinedInfoIcon />
-                </span>
-                <ReactTooltip id={`${body.label}-tooltip`} place="bottom" content={body?.tooltipValue || ""}>
-                  {t(body?.tooltipValue || body.label)}
-                </ReactTooltip>
-              </React.Fragment>
-            );
-          }
-
-          if (body?.populators?.validation?.customValidationFn) {
-            const customValidations =
-              Digit.Customizations[body.populators.validation.customValidationFn.moduleName][
-                body.populators.validation.customValidationFn.masterName
-              ];
-
-            body.populators.validation = {
-              ...body.populators.validation,
-              ...customValidations(),
+                if (field.key === "unjoinedPartiesNote") {
+                  const parties = [...unJoinedLitigant, ...witnesses];
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      inputs: [
+                        {
+                          ...field.populators.inputs[0],
+                          children: (
+                            <React.Fragment>
+                              {parties.map((party, index) => (
+                                <div className="list-div" key={index}>
+                                  <p style={{ margin: "0px", fontSize: "14px" }}>
+                                    {index + 1}. {party?.name}
+                                  </p>
+                                </div>
+                              ))}
+                            </React.Fragment>
+                          ),
+                        },
+                      ],
+                    },
+                  };
+                }
+                return field;
+              }),
             };
-          }
-          if (body?.labelChildren === "optional") {
+          });
+        }
+        if (selectedOrderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "submissionParty") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...complainants, ...respondents],
+                    },
+                  };
+                }
+                if (field?.populators?.inputs?.some((input) => input?.name === "respondingParty")) {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field?.populators,
+                      inputs: field?.populators?.inputs.map((input) =>
+                        input.name === "respondingParty"
+                          ? {
+                              ...input,
+                              options: [...complainants, ...respondents],
+                            }
+                          : input
+                      ),
+                    },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
+        }
+
+        if (selectedOrderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE") {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "applicationGrantedRejected") {
+                  return {
+                    ...field,
+                    disable: true,
+                  };
+                }
+                return field;
+              }),
+            };
+          });
+        }
+        if (selectedOrderType === "JUDGEMENT") {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "witnessNote" || field.key === "evidenceNote") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      inputs: [
+                        {
+                          ...field.populators.inputs[0],
+                          caseId: caseDetails?.id,
+                          filingNumber: caseDetails?.filingNumber,
+                          tab: field?.key === "witnessNote" ? "Complaint" : field?.key === "evidenceNote" ? "Documents" : "Overview",
+                          // customFunction: () => handleSaveDraft({ showReviewModal: false }),
+                        },
+                      ],
+                    },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
+        }
+        if (selectedOrderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE") {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.filter((field) => {
+                const isRejected = currentOrder?.additionalDetails?.applicationStatus === t("REJECTED");
+                return !(field.key === "newSubmissionDate" && isRejected);
+              }),
+            };
+          });
+        }
+
+        if (selectedOrderType === "WARRANT") {
+          const warrantSubtypeCode = currentOrder?.additionalDetails?.formdata?.warrantSubType?.templateType;
+          orderTypeForm = orderTypeForm?.map((section) => {
+            const updatedBody = section.body
+              .map((field) => {
+                if (field.key === "warrantSubType") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...groupedWarrantOptions],
+                    },
+                  };
+                }
+                return field;
+              })
+              .filter((field) => {
+                if (field.key === "warrantText" || field.key === "bailInfo") {
+                  if (warrantSubtypeCode === "GENERIC") {
+                    return field.key === "warrantText";
+                  } else if (warrantSubtypeCode === "SPECIFIC") {
+                    return field.key === "bailInfo";
+                  }
+                  return false;
+                }
+                return true;
+              });
+
+            return {
+              ...section,
+              body: updatedBody,
+            };
+          });
+        }
+
+        if (selectedOrderType === "ACCEPT_BAIL") {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "bailParty") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...complainants, ...respondents],
+                    },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
+        }
+
+        formConfig = [...formConfig, ...orderTypeForm];
+      }
+
+      const updatedConfig = formConfig?.map((config) => {
+        return {
+          ...config,
+          body: config?.body.map((body) => {
+            if (body?.labelChildren === "OutlinedInfoIcon") {
+              body.labelChildren = (
+                <React.Fragment>
+                  <span style={{ color: "#77787B", position: "relative" }} data-tip data-for={`${body.label}-tooltip`}>
+                    {" "}
+                    <OutlinedInfoIcon />
+                  </span>
+                  <ReactTooltip id={`${body.label}-tooltip`} place="bottom" content={body?.tooltipValue || ""}>
+                    {t(body?.tooltipValue || body.label)}
+                  </ReactTooltip>
+                </React.Fragment>
+              );
+            }
+
+            if (body?.populators?.validation?.customValidationFn) {
+              const customValidations =
+                Digit.Customizations[body.populators.validation.customValidationFn.moduleName][
+                  body.populators.validation.customValidationFn.masterName
+                ];
+
+              body.populators.validation = {
+                ...body.populators.validation,
+                ...customValidations(),
+              };
+            }
+            if (body?.labelChildren === "optional") {
+              return {
+                ...body,
+                labelChildren: <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>,
+              };
+            }
             return {
               ...body,
-              labelChildren: <span style={{ color: "#77787B" }}>&nbsp;{`${t("CS_IS_OPTIONAL")}`}</span>,
             };
-          }
-          return {
-            ...body,
-          };
-        }),
-      };
-    });
+          }),
+        };
+      });
 
-    return updatedConfig;
-  }, [
-    currentOrder,
-    applicationTypeConfigUpdated,
-    compositeOrderIndex,
-    orderType?.code,
-    complainants,
-    respondents,
-    attendeeOptions,
-    poaHolders,
-    unJoinedLitigant,
-    witnesses,
-    caseDetails?.id,
-    caseDetails?.filingNumber,
-    t,
-    groupedWarrantOptions,
-  ]);
+      return updatedConfig;
+    },
+    [
+      currentOrder,
+      applicationTypeConfigUpdated,
+      orderType?.code,
+      complainants,
+      respondents,
+      attendeeOptions,
+      poaHolders,
+      unJoinedLitigant,
+      witnesses,
+      caseDetails?.id,
+      caseDetails?.filingNumber,
+      t,
+      groupedWarrantOptions,
+    ]
+  );
 
   const successModalActionSaveLabel = useMemo(() => {
     if (
@@ -1519,6 +1524,7 @@ const GenerateOrdersV2 = () => {
 
   const handleEditConfirmationOrder = () => {
     setAddOrderModal(true);
+    setEditOrderModal(false);
   };
 
   const createTaskPayload = async (orderType, orderDetails) => {
@@ -2259,6 +2265,14 @@ const GenerateOrdersV2 = () => {
           break;
         }
       }
+    }
+
+    // ✅ Works for both COMPOSITE and Non-COMPOSITE
+    const errors = getMandatoryFieldsErrors(getModifiedFormConfig, currentOrder);
+
+    if (errors?.some((obj) => obj?.errors?.length > 0)) {
+      setShowMandatoryFieldsErrorModal({ showModal: true, errorsData: errors });
+      return;
     }
 
     if (!hasError) {
@@ -3043,7 +3057,7 @@ const GenerateOrdersV2 = () => {
           cancelLabel={"CANCEL_EDIT"}
           handleSubmit={handleAddOrder}
           orderType={orderType}
-          modifiedFormConfig={modifiedFormConfig}
+          modifiedFormConfig={getModifiedFormConfig(compositeOrderIndex)}
           getDefaultValue={getDefaultValue}
           currentOrder={currentOrder}
           index={compositeOrderIndex}
@@ -3069,6 +3083,13 @@ const GenerateOrdersV2 = () => {
         >
           <div style={{ margin: "16px 16px" }}>{t("CREATE_BAIL_BOND_TASK_TEXT")}</div>
         </Modal>
+      )}
+      {showMandatoryFieldsErrorModal?.showModal && (
+        <MandatoryFieldsErrorModal
+          t={t}
+          showMandatoryFieldsErrorModal={showMandatoryFieldsErrorModal}
+          setShowMandatoryFieldsErrorModal={setShowMandatoryFieldsErrorModal}
+        ></MandatoryFieldsErrorModal>
       )}
       {showReviewModal && (
         <OrderReviewModal

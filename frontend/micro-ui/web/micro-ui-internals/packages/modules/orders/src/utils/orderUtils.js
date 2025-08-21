@@ -302,3 +302,74 @@ export const checkValidation = (t, formData, index, setFormErrors, setShowErrorT
 
   return hasError;
 };
+
+export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder) => {
+  let errors = [];
+
+  if (currentOrder?.orderCategory === "COMPOSITE") {
+    for (let i = 0; i < currentOrder?.compositeItems?.length; i++) {
+      const item = currentOrder?.compositeItems?.[i];
+      if (!item?.isEnabled) continue;
+
+      const formdata = item?.orderSchema?.additionalDetails?.formdata;
+      const orderType = item?.orderType;
+
+      const configForThisItem = getModifiedFormConfig(i);
+      const itemErrors = [];
+
+      if (!formdata) {
+        itemErrors.push({ key: "ORDER_TYPE", errorMessage: "SELECT_ORDER_TYPE" });
+        errors.push({ index: i, orderType: "NOT_PRESENT", errors: itemErrors });
+        continue;
+      }
+
+      for (let p = 0; p < configForThisItem?.length; p++) {
+        const body = configForThisItem?.[p]?.body || [];
+        for (let k = 0; k < body.length; k++) {
+          const field = body[k];
+          if (field?.populators?.hideInForm) continue;
+
+          if (field?.isMandatory && !formdata[field?.key]) {
+            itemErrors.push({
+              key: field?.label || field?.key,
+              errorMessage: "THIS_IS_MANDATORY_FIELD",
+            });
+          }
+        }
+      }
+
+      errors.push({ index: i, orderType, errors: itemErrors });
+    }
+  } else {
+    const formdata = currentOrder?.additionalDetails?.formdata;
+    const orderType = currentOrder?.orderType;
+
+    const configForThisItem = getModifiedFormConfig(0);
+    const itemErrors = [];
+
+    if (!formdata) {
+      itemErrors.push({ key: "ORDER_TYPE", errorMessage: "SELECT_ORDER_TYPE" });
+      errors.push({ index: 0, orderType: "NOT_PRESENT", errors: itemErrors });
+      return errors;
+    }
+
+    for (let p = 0; p < configForThisItem?.length; p++) {
+      const body = configForThisItem?.[p]?.body || [];
+      for (let k = 0; k < body.length; k++) {
+        const field = body[k];
+        if (field?.populators?.hideInForm) continue;
+
+        if (field?.isMandatory && !formdata[field?.key]) {
+          itemErrors.push({
+            key: field?.label || field?.key,
+            errorMessage: "THIS_IS_MANDATORY_FIELD",
+          });
+        }
+      }
+    }
+
+    errors.push({ index: 0, orderType, errors: itemErrors });
+  }
+
+  return errors;
+};
