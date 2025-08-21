@@ -242,7 +242,6 @@ public class CaseOverallStatusUtil {
 			else{
 				RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
                 String filingNumber = caseOverallStatus.getFilingNumber();
-                request.put("RequestInfo", requestInfo);
                 Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
                 Boolean isLprCase = JsonPath.read(caseObject.toString(), IS_LPR_CASE_PATH);
 				String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
