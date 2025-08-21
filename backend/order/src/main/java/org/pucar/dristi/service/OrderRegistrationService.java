@@ -187,7 +187,6 @@ public class OrderRegistrationService {
             // Enrich application upon update
             enrichmentUtil.enrichOrderRegistrationUponUpdate(body);
             enrichmentUtil.enrichCompositeOrderItemIdOnAddItem(body);
-            enrichmentUtil.enrichItemText(body);
 
             WorkflowObject workflow = body.getOrder().getWorkflow();
             workflow.setAction(SAVE_DRAFT);

@@ -147,6 +147,27 @@ public class OrderRegistrationEnrichment {
                             String newId = UUID.randomUUID().toString();
                             itemNode.put("id", newId);
                             log.info("Enriched CompositeItem ID with new value: {}", newId);
+
+                            if (itemNode.has("orderType")) {
+                                String orderType = itemNode.get("orderType").asText();
+
+                                if (itemNode.has("orderSchema")) {
+                                    JsonNode orderSchemaNode = itemNode.get("orderSchema");
+                                    if (orderSchemaNode.has("orderDetails")) {
+                                        JsonNode orderDetailsNode = orderSchemaNode.get("orderDetails");
+                                        String itemTextMdms = processOrderText(orderType, orderDetailsNode);
+                                        if (itemTextMdms != null) {
+                                            String itemText = orderRequest.getOrder().getItemText();
+                                            if(itemText != null) {
+                                                itemText = itemText + " " + itemTextMdms;
+                                            }else {
+                                                itemText = itemTextMdms;
+                                            }
+                                            orderRequest.getOrder().setItemText(itemText);
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -200,13 +221,13 @@ public class OrderRegistrationEnrichment {
 
     public String processOrderText(String orderType, JsonNode orderDetailsNode) {
 
-        List<ItemTextMdms> matches = mdmsDataConfig.getItemTextMdmsData().stream()
+        List<ItemTextMdms> itemTextMdmsMatches = mdmsDataConfig.getItemTextMdmsData().stream()
                 .filter(mdms -> mdms.getOrderType().equalsIgnoreCase(orderType))
                 .toList();
 
-        if (matches.size() == 1) {
-            String text = matches.get(0).getItemText();
-            List<String> paths = matches.get(0).getPath();
+        if (itemTextMdmsMatches.size() == 1) {
+            String text = itemTextMdmsMatches.get(0).getItemText();
+            List<String> paths = itemTextMdmsMatches.get(0).getPath();
 
             for (String path : paths) {
                 if (orderDetailsNode.has(path)) {
@@ -216,9 +237,9 @@ public class OrderRegistrationEnrichment {
             }
             return text;
 
-        } else if (matches.size() == 2) {
+        } else if (itemTextMdmsMatches.size() == 2) {
             String action = orderDetailsNode.path("action").asText();
-            ItemTextMdms itemTextMdms = matches.stream().filter(mdms -> mdms.getAction().equalsIgnoreCase(action)).findFirst().get();
+            ItemTextMdms itemTextMdms = itemTextMdmsMatches.stream().filter(mdms -> mdms.getAction().equalsIgnoreCase(action)).findFirst().get();
             String text = itemTextMdms.getItemText();
             List<String> paths = itemTextMdms.getPath();
 
