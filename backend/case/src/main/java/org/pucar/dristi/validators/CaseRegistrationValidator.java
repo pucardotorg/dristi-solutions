@@ -626,4 +626,29 @@ public class CaseRegistrationValidator {
 
         return mobileNumbers;
     }
+
+    public void validateUpdateLPRDetails(CaseRequest caseRequest) {
+
+        CourtCase courtCase = caseRequest.getCases();
+        if (courtCase == null || ObjectUtils.isEmpty(courtCase)) {
+            throw new CustomException(VALIDATION_ERR, "courtCase cannot be empty");
+        }
+        if (ObjectUtils.isEmpty(courtCase.getId())) {
+            throw new CustomException(VALIDATION_ERR, "case Id cannot be empty");
+        }
+        if (courtCase.getCourtCaseNumber() == null) {
+            throw new CustomException(VALIDATION_ERR, "courtCaseNumber cannot be empty or null");
+        }
+
+        if (courtCase.getIsLPRCase() == null || ObjectUtils.isEmpty(courtCase.getIsLPRCase())) {
+            throw new CustomException(VALIDATION_ERR, "isLPRCase cannot be empty or null");
+        }
+
+        if (courtCase.getIsLPRCase() && (courtCase.getLprNumber() != null || courtCase.getCourtCaseNumberBackup() != null)) {
+            // If trying to convert case to Long Pending Registration, it should not have LPR number or backup court case number
+            // case can only go to LPR once
+            throw new CustomException(VALIDATION_ERR, "To convert to LPR, case cannot have LPR number or backup court case number");
+        }
+
+    }
 }
