@@ -114,6 +114,8 @@ public class Configuration {
     @Value("${dristi.case.process.profile.endpoint}")
     private String processProfileEndPoint;
 
+    @Value("${dristi.case.add.witness.endpoint}")
+    private String addWitnessEndPoint;
 
     //Hearing config
     @Value("${dristi.hearing.host}")
@@ -187,4 +189,9 @@ public class Configuration {
     @Value("${egov.hrms.search.endpoint}")
     private String hrmsEndPoint;
 
+    @Value("${file.max.size}")
+    private long maxFileSize;
+
+    @Value("${allowed.content.types}")
+    private String[] allowedContentTypes;
 }

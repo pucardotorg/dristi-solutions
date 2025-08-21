@@ -2,24 +2,33 @@ package org.pucar.dristi.web.controllers;
 
 
 import org.pucar.dristi.service.OpenApiService;
-import org.pucar.dristi.web.models.CaseListResponse;
-import org.pucar.dristi.web.models.CaseSummaryResponse;
+import org.pucar.dristi.util.FileStoreUtil;
+import org.pucar.dristi.util.HrmsUtil;
+import org.pucar.dristi.validator.FileStoreValidator;
+import org.pucar.dristi.web.models.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import io.swagger.v3.oas.annotations.media.Schema;
+import org.pucar.dristi.web.models.LandingPageCaseListRequest;
+import org.pucar.dristi.web.models.LandingPageCaseListResponse;
+import org.pucar.dristi.web.models.bailbond.OpenApiBailResponse;
+import org.pucar.dristi.web.models.bailbond.OpenApiBailSearchRequest;
+import org.pucar.dristi.web.models.bailbond.OpenApiUpdateBailBondRequest;
+import org.pucar.dristi.web.models.esign.ESignParameter;
+import org.pucar.dristi.web.models.esign.ESignResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.constraints.*;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
+
+import java.util.List;
 
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-12-03T13:11:23.212020900+05:30[Asia/Calcutta]")
 @Controller
@@ -32,11 +41,20 @@ public class OpenapiApiController {
 
     private final OpenApiService openApiService;
 
+    private final HrmsUtil hrmsUtil;
+
+    private final FileStoreUtil fileStoreUtil;
+
+    private final FileStoreValidator fileStoreValidator;
+
     @Autowired
-    public OpenapiApiController(ObjectMapper objectMapper, HttpServletRequest request, OpenApiService openApiService) {
+    public OpenapiApiController(ObjectMapper objectMapper, HttpServletRequest request, OpenApiService openApiService, HrmsUtil hrmsUtil, FileStoreUtil fileStoreUtil, FileStoreValidator fileStoreValidator) {
         this.objectMapper = objectMapper;
         this.request = request;
         this.openApiService = openApiService;
+        this.hrmsUtil = hrmsUtil;
+        this.fileStoreUtil = fileStoreUtil;
+        this.fileStoreValidator = fileStoreValidator;
     }
 
     @RequestMapping(value = "/openapi/v1/{tenantId}/case/cnr/{cnrNumber}", method = RequestMethod.GET)
@@ -58,4 +76,73 @@ public class OpenapiApiController {
         return new ResponseEntity<>(caseList, HttpStatus.OK);
     }
 
+    @PostMapping("/openapi/v1/hearings")
+    public ResponseEntity<OpenApiHearingsResponse> getHearingsForDisplayBoard(@Parameter(description = "Details for fetching hearings in landing page", required = true)
+                                                                        @Valid @RequestBody OpenAPiHearingRequest body) {
+
+        List<OpenHearing> hearingList = openApiService.getHearings(body);
+        OpenApiHearingsResponse response = OpenApiHearingsResponse.builder().openHearings(hearingList).build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+
+
+    @PostMapping(value = "/openapi/v1/{tenantId}/case")
+    public ResponseEntity<LandingPageCaseListResponse> getLandingPageCaseList(
+            @Pattern(regexp = "^[a-zA-Z]{2}$") @Size(min = 2, max = 2)
+            @Parameter(in = ParameterIn.PATH, description = "tenant ID", required = true)
+            @PathVariable("tenantId") String tenantId,
+
+            @RequestBody @Valid LandingPageCaseListRequest landingPageCaseListRequest
+    ) {
+        LandingPageCaseListResponse landingPageCaseList = openApiService.getLandingPageCaseList(tenantId, landingPageCaseListRequest);
+        return new ResponseEntity<>(landingPageCaseList, HttpStatus.OK);
+    }
+
+
+    @PostMapping("/openapi/v1/orders_tasks")
+    public ResponseEntity<OpenApiOrderTaskResponse> getOrdersAndPaymentTaskForCaseDetails(@Parameter(description = "Details for fetching orders and payment tasks in case details page", required = true) @Valid @RequestBody OpenApiOrdersTaskIRequest body) {
+        OpenApiOrderTaskResponse response = openApiService.getOrdersAndPaymentTasks(body);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @GetMapping("/openapi/v1/magistrate_name/{courtId}/{tenantId}")
+    public ResponseEntity<String> getMagistrateName(@PathVariable("courtId") String courtId, @PathVariable("tenantId") String tenantId) {
+        String magistrateName = hrmsUtil.getJudgeName(courtId,tenantId);
+        return new ResponseEntity<>(magistrateName, HttpStatus.OK);
+    }
+
+
+    @GetMapping("/openapi/v1/file/{tenantId}/{orderId}")
+    public ResponseEntity<Resource> getFile(@PathVariable("tenantId") String tenantId, @PathVariable("orderId") String orderId) {
+        String fileStoreId = openApiService.getOrderByIdFromIndex(tenantId,orderId);
+        return fileStoreUtil.getFilesByFileStore(fileStoreId, tenantId, null);
+    }
+
+    @PostMapping("/openapi/v1/landing_page/file")
+    public ResponseEntity<Resource> getFiles(@RequestBody @Valid LandingPageFileRequest landingPageFileRequest) {
+        String tenantId = landingPageFileRequest.getTenantId();
+        String fileStoreId = landingPageFileRequest.getFileStoreId();
+        String moduleName = landingPageFileRequest.getModuleName();
+        fileStoreValidator.validatePayLoad(landingPageFileRequest);
+        return fileStoreUtil.getFilesByFileStore(fileStoreId, tenantId, moduleName);
+    }
+
+    @RequestMapping(value = "/openapi/v1/bail/search", method = RequestMethod.POST)
+    public ResponseEntity<OpenApiBailResponse> searchBailByPartyMobile(@Parameter(description = "Details for searching bail by mobile number and id", required = true, schema = @Schema(implementation = OpenApiBailSearchRequest.class)) @RequestBody @Valid OpenApiBailSearchRequest openApiBailSearchRequest) {
+        OpenApiBailResponse response = openApiService.getBailByPartyMobile(openApiBailSearchRequest);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/openapi/v1/updateBailBond")
+    public ResponseEntity<OpenApiBailResponse> updateBailBond(@RequestBody @Valid OpenApiUpdateBailBondRequest openApiUpdateBailBondRequest) {
+        OpenApiBailResponse response = openApiService.updateBailBond(openApiUpdateBailBondRequest);
+        return new ResponseEntity<>(response,HttpStatus.OK);
+    }
+
+    @PostMapping(value = "/openapi/v1/{tenantId}/esign")
+    public ResponseEntity<ESignResponse> eSignDocument(@Pattern(regexp = "^[a-zA-Z]{2}$") @Size(min = 2, max = 2) @Parameter(in = ParameterIn.PATH, description = "tenant ID", required = true) @PathVariable("tenantId") String tenantId, @RequestBody @Valid ESignParameter eSignParameter, HttpServletRequest servletRequest) {
+        ESignResponse response = openApiService.eSignDocument(tenantId, eSignParameter, servletRequest);
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
 }

@@ -63,6 +63,7 @@ async function getCourtAndJudgeDetails(
   return {
     mdmsCourtRoom: {
       name: "Before The " + mdmsCourtRoom.name,
+      courtName: mdmsCourtRoom.name,
       place:
         assignment.district.charAt(0).toUpperCase() +
         assignment.district.slice(1).toLowerCase(),
@@ -79,6 +80,17 @@ async function getCourtAndJudgeDetails(
   };
 }
 
+function getPartyType(witnessType) {
+  if (witnessType?.includes("PW")) {
+    return "Prosecution";
+  } else if (witnessType?.includes("DW")) {
+    return "Defence";
+  } else {
+    return "Court";
+  }
+}
+
 module.exports = {
   getCourtAndJudgeDetails,
+  getPartyType,
 };

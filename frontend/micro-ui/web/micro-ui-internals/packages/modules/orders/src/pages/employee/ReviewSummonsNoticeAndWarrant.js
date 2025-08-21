@@ -92,6 +92,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [showNoticeModal, setshowNoticeModal] = useState(false);
   const [isSigned, setIsSigned] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isIcops, setIsIcops] = useState({ state: null, message: "", icopsAcknowledgementNumber: "" });
   const [actionModalType, setActionModalType] = useState("");
   const [isDisabled, setIsDisabled] = useState(true);
@@ -222,6 +223,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   }, [history, reload, taskNumber]);
 
   const handleSubmit = useCallback(async () => {
+    setIsSubmitting(true);
     sessionStorage.removeItem("SignedFileStoreID");
     const { data: tasksData } = await refetch();
     if (tasksData) {
@@ -252,6 +254,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
         console.error("Error updating task data:", error);
       }
     }
+    setIsSubmitting(false);
   }, [refetch, reload, tasksData, tenantId]);
 
   const handleUpdateStatus = useCallback(async () => {
@@ -648,6 +651,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
                       documents={documents}
                       deliveryChannel={deliveryChannel}
                       orderType={orderType}
+                      isSubmitting={isSubmitting}
                     />
                   ),
               },

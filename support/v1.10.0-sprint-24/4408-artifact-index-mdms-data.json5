@@ -1,0 +1,70 @@
+[
+  {
+    "tenantId": "kl",
+    "masterName": "INBOX",
+    "moduleName": "InboxQueryConfiguration",
+    "mdmsPayload": [
+      {
+        "id": "094ed19b-d2c8-4ef4-be2c-f231551ee474",
+        "tenantId": "kl",
+        "schemaCode": "INBOX.InboxQueryConfiguration",
+        "uniqueIdentifier": "open-artifact-index",
+        "data": {
+          "index": "open-artifact-index",
+          "module": "Evidence Service",
+          "sortBy": {
+            "path": "Data.artifactDetails.caseNumber.keyword",
+            "defaultOrder": "DESC"
+          },
+          "sourceFilterPathList": [
+            "Data"
+          ],
+          "allowedSearchCriteria": [
+            {
+              "name": "searchableFields",
+              "path": "Data.artifactDetails.searchableFields.keyword",
+              "operator": "WILDCARD",
+              "isMandatory": false
+            },
+            {
+              "name": "tenantId",
+              "path": "Data.artifactDetails.tenantId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "artifactNumber",
+              "path": "Data.artifactDetails.artifactNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "artifactType",
+              "path": "Data.artifactDetails.artifactType.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "status",
+              "path": "Data.artifactDetails.status.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "courtId",
+              "path": "Data.artifactDetails.courtId.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "filingNumber",
+              "path": "Data.artifactDetails.filingNumber.keyword",
+              "isMandatory": false
+            },
+            {
+              "name": "evidenceMarkedStatus",
+              "path": "Data.artifactDetails.evidenceMarkedStatus.keyword",
+              "isMandatory": false
+            }
+          ]
+        },
+        "isActive": true,
+      }
+    ]
+  }
+]

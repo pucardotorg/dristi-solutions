@@ -112,10 +112,16 @@ export const removeInvalidNameParts = (name) => {
     .join(" ");
 };
 
-export const modifiedEvidenceNumber = (value) => {
-  return value && typeof value === "string" ? value.split("-").pop() : value;
+export const modifiedEvidenceNumber = (value, filingNumber = null) => {
+  if (value && typeof value === "string") {
+    if (filingNumber && typeof filingNumber === "string" && value.startsWith(filingNumber)) {
+      return value.slice(filingNumber.length + 1).trim();
+    } else {
+      return value.split("-").pop();
+    }
+  }
+  return value;
 };
-
 export const getFilteredPaymentData = (paymentType, paymentData, bill) => {
   const processedPaymentType = paymentType?.toLowerCase()?.includes("application");
   return processedPaymentType ? [{ key: "Total Amount", value: bill?.totalAmount }] : paymentData;

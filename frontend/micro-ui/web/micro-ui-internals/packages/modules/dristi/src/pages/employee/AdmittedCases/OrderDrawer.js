@@ -14,7 +14,17 @@ import { OrderWorkflowAction, OrderWorkflowState } from "@egovernments/digit-ui-
 import { ordersService } from "@egovernments/digit-ui-module-orders/src/hooks/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom";
 
-const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId, setUpdateCounter }) => {
+const OrderDrawer = ({
+  isOpen,
+  onClose,
+  attendees,
+  caseDetails,
+  currentHearingId,
+  setUpdateCounter,
+  isBailBondTaskExists,
+  setIsBailBondTaskExists,
+  setShowBailBondModal,
+}) => {
   const { t } = useTranslation();
   const targetRef = useRef(null);
   const history = useHistory();
@@ -600,6 +610,31 @@ const OrderDrawer = ({ isOpen, onClose, attendees, caseDetails, currentHearingId
               </LabelFieldPair>
             </div>
           </div>
+          {/* <div className="drawer-section">
+            <div className="drawer-sub-section">
+              <LabelFieldPair className="case-label-field-pair">
+                <RadioButtons
+                  selectedOption={isBailBondTaskExists ? { label: `Bail Bond Required`, value: "CASE_DISPOSED" } : orderData?.isCaseDisposed}
+                  disabled={isBailBondTaskExists}
+                  optionsKey={"label"}
+                  options={[{ label: `Bail Bond Required`, value: "CASE_DISPOSED" }]}
+                  additionalWrapperClass={"radio-disabled"}
+                  onSelect={(value) => {
+                    setShowBailBondModal(true);
+                    // setIsBailBondTaskExists(true);
+                    // setOrderData((orderData) => ({
+                    //   ...orderData,
+                    //   isCaseDisposed: orderData?.isCaseDisposed?.value === value?.value ? {} : value,
+                    // }));
+                    // setOrderError((orderError) => ({
+                    //   ...orderError,
+                    //   isCaseDisposed: null,
+                    // }));
+                  }}
+                />
+              </LabelFieldPair>
+            </div>
+          </div> */}
         </div>
         <div className="drawer-footer">
           <Button

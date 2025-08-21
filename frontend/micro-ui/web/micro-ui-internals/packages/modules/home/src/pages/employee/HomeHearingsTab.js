@@ -540,7 +540,7 @@ const HomeHearingsTab = ({
       const offset = page * rowsPerPage;
       return (
         <tr key={row?.id || idx} className="custom-table-row">
-          <td>{offset + idx + 1}</td>
+          <td>{hearingDetails?.serialNumber || offset + idx + 1}</td>
           <td>
             <Link
               to={{

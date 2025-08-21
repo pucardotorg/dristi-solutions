@@ -3,7 +3,12 @@ import React from "react";
 import { useRouteMatch } from "react-router-dom";
 import { default as EmployeeApp } from "./pages/employee";
 import SubmissionsCard from "./components/SubmissionsCard";
+import BailBondSignaturePage from "./pages/employee/BailBondSignaturePage";
+import BailBondLoginPage from "./pages/employee/BailBondLoginPage";
+import BailBondLinkExpiredPage from "./pages/employee/BailBondExpirePage";
 import { overrideHooks, updateCustomConfigs } from "./utils";
+import WitnessDepositionLoginPage from "./pages/employee/WitnessDepositionLoginPage";
+import WitnessDepositionSignaturePage from "./pages/employee/WitnessDepositionSignaturePage";
 
 export const SubmissionsModule = ({ stateCode, userType, tenants }) => {
   const { path, url } = useRouteMatch();
@@ -25,6 +30,11 @@ export const SubmissionsModule = ({ stateCode, userType, tenants }) => {
 const componentsToRegister = {
   SubmissionsModule,
   SubmissionsCard,
+  BailBondSignaturePage,
+  BailBondLoginPage,
+  BailBondLinkExpiredPage,
+  WitnessDepositionLoginPage,
+  WitnessDepositionSignaturePage,
 };
 
 export const initSubmissionsComponents = () => {

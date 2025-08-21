@@ -1,5 +1,8 @@
 const { search_evidence_v2 } = require("../../api");
 const {
+  combineMultipleFilestores,
+} = require("../utils/combineMultipleFilestores");
+const {
   duplicateExistingFileStore,
 } = require("../utils/duplicateExistingFileStore");
 const {
@@ -33,8 +36,8 @@ async function processCourtEvidence(
       {
         courtId: courtCase.courtId,
         filingNumber: courtCase.filingNumber,
-        sourceType: "COURT",
         artifactType: "WITNESS_DEPOSITION",
+        status: "COMPLETED",
         isVoid: false,
         tenantId,
       },
@@ -45,7 +48,15 @@ async function processCourtEvidence(
       }
     );
 
-    const courtList = courtDocs?.data?.artifacts;
+    const courtDepositions = courtDocs?.data?.artifacts?.filter(
+      (artifact) =>
+        artifact?.additionalDetails?.witnessDetails?.ownerType === "-"
+    );
+    const noOwnerType = courtDocs?.data?.artifacts?.filter(
+      (artifact) => !artifact?.additionalDetails?.witnessDetails?.ownerType
+    );
+
+    const courtList = [...new Set([...courtDepositions, ...noOwnerType])];
 
     if (courtList?.length !== 0) {
       const innerLineItems = await Promise.all(
@@ -98,9 +109,19 @@ async function processCourtEvidence(
     if (courtList?.length !== 0) {
       const innerLineItems = await Promise.all(
         courtList?.map(async (evidence, index) => {
-          const evidenceFileStoreId = evidence?.file?.fileStore;
+          let evidenceFileStoreId = evidence?.file?.fileStore;
           if (!evidenceFileStoreId) {
             return null;
+          }
+
+          const sealFileStore = evidence?.seal?.fileStore;
+          if (sealFileStore) {
+            evidenceFileStoreId = await combineMultipleFilestores(
+              [evidenceFileStoreId, sealFileStore],
+              tenantId,
+              requestInfo,
+              TEMP_FILES_DIR
+            );
           }
 
           const newEvidenceFileStoreId = await duplicateExistingFileStore(
@@ -124,13 +145,11 @@ async function processCourtEvidence(
   }
 
   if (courtEvidenceLineItems.length > 0) {
-    {
-      const courtEvidenceIndexSection = indexCopy.sections.find(
-        (section) => section.name === "courtevidence"
-      );
-      courtEvidenceIndexSection.lineItems =
-        courtEvidenceLineItems.filter(Boolean);
-    }
+    const courtEvidenceIndexSection = indexCopy.sections.find(
+      (section) => section.name === "courtevidence"
+    );
+    courtEvidenceIndexSection.lineItems =
+      courtEvidenceLineItems.filter(Boolean);
   }
 }
 

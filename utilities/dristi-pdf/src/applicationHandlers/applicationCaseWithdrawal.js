@@ -10,6 +10,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
+const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
 
 const applicationCaseWithdrawal = async (
   req,
@@ -97,8 +98,9 @@ const applicationCaseWithdrawal = async (
 
     const onBehalfOfuuid = application?.onBehalfOf?.[0];
     const partyName = application?.additionalDetails?.onBehalOfName || "";
-    const additionalComments =
-      application?.applicationDetails?.additionalComments || "";
+    const additionalComments = htmlToFormattedText(
+      application?.applicationDetails?.additionalComments || ""
+    );
     const localreasonForWithdrawal =
       application?.applicationDetails?.reasonForWithdrawal || "";
     const reasonForWithdrawal =

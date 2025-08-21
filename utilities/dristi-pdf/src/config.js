@@ -273,6 +273,19 @@ module.exports = {
       process.env.APPLICATION_PROFILE_EDIT || "application-profile-edit",
     application_profile_edit_qr:
       process.env.APPLICATION_PROFILE_EDIT_QR || "application-profile-edit-qr",
+    bail_bond: process.env.BAIL_BOND || "bail-bond",
+    bail_bond_qr: process.env.BAIL_BOND_QR || "bail-bond-qr",
+    new_witness_deposition:
+      process.env.NEW_WITNESS_DEPOSITION || "new-witness-deposition",
+    new_witness_deposition_qr:
+      process.env.NEW_WITNESS_DEPOSITION_QR || "new-witness-deposition-qr",
+    application_witness_deposition:
+      process.env.APPLICATION_WITNESS_DEPOSITION ||
+      "application-witness-deposition",
+    application_witness_deposition_qr:
+      process.env.APPLICATION_WITNESS_DEPOSITION_QR ||
+      "application-witness-deposition-qr",
+    evidence: process.env.EVIDENCE || "evidence",
   },
 
   app: {
@@ -298,6 +311,7 @@ module.exports = {
     filestore:
       process.env.EGOV_FILESTORE_SERVICE_HOST || "http://localhost:8084",
     evidence: process.env.DRISTI_EVIDENCE_HOST || "http://localhost:8090",
+    bailBond: process.env.DRISTI_BAIL_BOND_HOST || "http://localhost:8097",
   },
 
   paths: {
@@ -321,6 +335,7 @@ module.exports = {
     task_search: "task/v1/search",
     task_table_search: "/task/v1/table/search",
     evidence_search: "/evidence/v1/_search",
+    bail_bond_search: "/bail-bond/v1/_search",
   },
 
   constraints: {

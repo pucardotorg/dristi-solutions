@@ -7,6 +7,9 @@ const {
   duplicateExistingFileStore,
 } = require("../utils/duplicateExistingFileStore");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const {
+  combineMultipleFilestores,
+} = require("../utils/combineMultipleFilestores");
 
 async function processComplainantEvidence(
   courtCase,
@@ -17,6 +20,11 @@ async function processComplainantEvidence(
   indexCopy,
   messagesMap
 ) {
+  const complainantDepositionSection = filterCaseBundleBySection(
+    caseBundleMaster,
+    "complainantevidencedepositions"
+  );
+
   const complainantEvidenceSection = filterCaseBundleBySection(
     caseBundleMaster,
     "complainantevidence"
@@ -30,6 +38,59 @@ async function processComplainantEvidence(
     indexCopy,
     sectionPosition
   );
+
+  const complainantEvidenceLineItems = [];
+
+  if (complainantDepositionSection?.length !== 0) {
+    const courtDocs = await search_evidence_v2(
+      tenantId,
+      requestInfo,
+      {
+        courtId: courtCase.courtId,
+        filingNumber: courtCase.filingNumber,
+        artifactType: "WITNESS_DEPOSITION",
+        status: "COMPLETED",
+        isVoid: false,
+        tenantId,
+      },
+      {
+        sortBy: complainantDepositionSection[0].sorton,
+        order: "asc",
+        limit: 100,
+      }
+    );
+
+    const courtList = courtDocs?.data?.artifacts?.filter(
+      (artifact) =>
+        artifact?.additionalDetails?.witnessDetails?.ownerType === "COMPLAINANT"
+    );
+
+    if (courtList?.length !== 0) {
+      const innerLineItems = await Promise.all(
+        courtList?.map(async (evidence, index) => {
+          const evidenceFileStoreId = evidence?.file?.fileStore;
+          if (!evidenceFileStoreId) {
+            return null;
+          }
+
+          const newEvidenceFileStoreId = await duplicateExistingFileStore(
+            tenantId,
+            evidenceFileStoreId,
+            requestInfo,
+            TEMP_FILES_DIR
+          );
+          return {
+            sourceId: evidenceFileStoreId,
+            fileStoreId: newEvidenceFileStoreId,
+            sortParam: index + 1,
+            createPDF: false,
+            content: "complainantevidencedepositions",
+          };
+        })
+      );
+      complainantEvidenceLineItems.push(...innerLineItems);
+    }
+  }
 
   if (complainantEvidenceSection?.length !== 0) {
     const section = complainantEvidenceSection[0];
@@ -54,11 +115,20 @@ async function processComplainantEvidence(
     const complainantList = complainantDocs?.data?.artifacts;
 
     if (complainantList?.length !== 0) {
-      const complainantEvidenceLineItems = await Promise.all(
+      const innerLineItems = await Promise.all(
         complainantList?.map(async (evidence, index) => {
-          const evidenceFileStoreId = evidence?.file?.fileStore;
+          let evidenceFileStoreId = evidence?.file?.fileStore;
           if (!evidenceFileStoreId) {
             return null;
+          }
+          const sealFileStore = evidence?.seal?.fileStore;
+          if (sealFileStore) {
+            evidenceFileStoreId = await combineMultipleFilestores(
+              [evidenceFileStoreId, sealFileStore],
+              tenantId,
+              requestInfo,
+              TEMP_FILES_DIR
+            );
           }
 
           let newEvidenceFileStoreId = evidenceFileStoreId;
@@ -113,7 +183,13 @@ async function processComplainantEvidence(
                   evidence?.artifactType
               ];
 
-            const documentPath = `${dynamicSectionNumber}.${
+            const evidencePosition = !complainantEvidenceLineItems?.filter(
+              Boolean
+            )?.length
+              ? "1"
+              : "2";
+
+            const documentPath = `${dynamicSectionNumber}.${evidencePosition}.${
               index + 1
             } ${artifactName} in ${dynamicSectionNumber} ${section.section}`;
 
@@ -153,12 +229,16 @@ async function processComplainantEvidence(
           };
         })
       );
-      const complainantEvidenceIndexSection = indexCopy.sections.find(
-        (section) => section.name === "complainantevidence"
-      );
-      complainantEvidenceIndexSection.lineItems =
-        complainantEvidenceLineItems.filter(Boolean);
+      complainantEvidenceLineItems.push(...innerLineItems);
     }
+  }
+
+  if (complainantEvidenceLineItems.length > 0) {
+    const complainantEvidenceIndexSection = indexCopy.sections.find(
+      (section) => section.name === "complainantevidence"
+    );
+    complainantEvidenceIndexSection.lineItems =
+      complainantEvidenceLineItems.filter(Boolean);
   }
 }
 

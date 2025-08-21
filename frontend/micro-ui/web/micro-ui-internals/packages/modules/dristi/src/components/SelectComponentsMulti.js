@@ -249,10 +249,19 @@ const SelectComponentsMulti = ({ t, config, onSelect, formData, errors, setError
                     : t("CS_COMMON_ADDRESS_DETAIL")
                 } ${index + 1}`}</h1>
               </b>
-              {(config?.state === "DRAFT_IN_PROGRESS" || index >= config?.addressLength || config?.isJudgeSendBack) && (
+              {(config?.state === "DRAFT_IN_PROGRESS" ||
+                index >= config?.addressLength ||
+                config?.isJudgeSendBack ||
+                config?.formType === "Witness") && (
                 <span
                   onClick={() => {
-                    if (!config?.disable && (config?.state === "DRAFT_IN_PROGRESS" || index >= config?.addressLength || config?.isJudgeSendBack)) {
+                    if (
+                      !config?.disable &&
+                      (config?.state === "DRAFT_IN_PROGRESS" ||
+                        index >= config?.addressLength ||
+                        config?.isJudgeSendBack ||
+                        config?.formType === "Witness")
+                    ) {
                       handleDeleteLocation(data.id);
                     }
                   }}
