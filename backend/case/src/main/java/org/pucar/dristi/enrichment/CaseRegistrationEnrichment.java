@@ -330,11 +330,14 @@ public class CaseRegistrationEnrichment {
 
     public void enrichCourtCaseNumber(CaseRequest caseRequest) {
         try {
-            String tenantId = caseRequest.getCases().getCourtId() +  getYearForEnrichingCourtCaseNumber(caseRequest);
+            String year = getYearForEnrichingCourtCaseNumber(caseRequest);
+            String tenantId = caseRequest.getCases().getCourtId();
             String idName = config.getCourtCaseConfig();
             String idFormat = config.getCourtCaseSTFormat();
             List<String> courtCaseRegistrationCaseNumberIdList = idgenUtil.getIdList(caseRequest.getRequestInfo(), tenantId, idName, idFormat, 1, false);
-            caseRequest.getCases().setCourtCaseNumber(courtCaseRegistrationCaseNumberIdList.get(0));
+            String courtCaseNumber = courtCaseRegistrationCaseNumberIdList.get(0);
+            courtCaseNumber = courtCaseNumber + "/" + year;
+            caseRequest.getCases().setCourtCaseNumber(courtCaseNumber);
         } catch (Exception e) {
             log.error("Error enriching case number and court case number: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching case number and court case number: " + e.getMessage());
@@ -358,6 +361,9 @@ public class CaseRegistrationEnrichment {
     }
 
     private boolean isAdmittingCase(CourtCase courtCase) {
+        if (courtCase == null || courtCase.getWorkflow() == null || courtCase.getWorkflow().getAction() == null) {
+            return false;
+        }
         return CASE_ADMIT_STATUS.equals(courtCase.getWorkflow().getAction());
     }
 
