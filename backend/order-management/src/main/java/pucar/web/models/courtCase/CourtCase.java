@@ -159,4 +159,8 @@ public class CourtCase {
     @JsonProperty("poaHolders")
     @Valid
     private List<POAHolder> poaHolders = new ArrayList<>();
+
+    @JsonProperty("witnessDetails")
+    @Valid
+    private List<WitnessDetails> witnessDetails = null;
 }
