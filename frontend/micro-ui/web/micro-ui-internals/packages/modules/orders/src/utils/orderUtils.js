@@ -218,3 +218,110 @@ export const getParties = (type, orderSchema, allParties) => {
   });
   return updatedParties;
 };
+
+export const checkValidation = (t, formData, index, setFormErrors, setShowErrorToast) => {
+  let hasError = false;
+  const currentOrderType = formData?.orderType?.code || "";
+  if (currentOrderType === "MANDATORY_SUBMISSIONS_RESPONSES") {
+    if (!formData?.responseInfo?.responseDeadline && formData?.responseInfo?.isResponseRequired?.code === true) {
+      setFormErrors?.current?.[index]?.("responseDeadline", { message: t("PROPOSED_DATE_CAN_NOT_BE_BEFORE_SUBMISSION_DEADLINE") });
+      hasError = true;
+    }
+    if (
+      (!formData?.responseInfo?.respondingParty || formData?.responseInfo?.respondingParty?.length === 0) &&
+      formData?.responseInfo?.isResponseRequired?.code === true
+    ) {
+      setFormErrors?.current?.[index]?.("respondingParty", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      hasError = true;
+    }
+  }
+
+  if (currentOrderType === "NOTICE") {
+    if (formData?.noticeOrder?.selectedChannels?.length === 0) {
+      setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_NOTICE_ORDER"), error: true });
+      hasError = true;
+    }
+  }
+
+  if (currentOrderType === "SUMMONS") {
+    if (formData?.SummonsOrder?.selectedChannels?.length === 0) {
+      setShowErrorToast({ label: t("PLESE_SELECT_A_DELIVERY_CHANNEL_FOR_SUMMONS_ORDER"), error: true });
+      hasError = true;
+    } else if (
+      formData?.SummonsOrder?.selectedChannels?.some(
+        (channel) => channel?.code === "POLICE" && (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
+      )
+    ) {
+      setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
+      hasError = true;
+    }
+  }
+
+  if (currentOrderType === "WARRANT") {
+    if (!formData?.bailInfo?.noOfSureties && formData?.bailInfo?.isBailable?.code === true) {
+      setFormErrors?.current?.[index]?.("noOfSureties", { message: t("CORE_REQUIRED_FIELD_ERROR") });
+      hasError = true;
+    }
+    if (
+      (!formData?.bailInfo?.bailableAmount || formData?.bailInfo?.bailableAmount?.slice(-1) === ".") &&
+      formData?.bailInfo?.isBailable?.code === true
+    ) {
+      setFormErrors?.current?.[index]?.("bailableAmount", { message: t("CS_VALID_AMOUNT_DECIMAL") });
+      hasError = true;
+    }
+
+    if (formData?.warrantFor?.selectedChannels?.length === 0) {
+      setShowErrorToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
+      hasError = true;
+    }
+
+    if (
+      formData?.warrantFor?.selectedChannels?.some(
+        (channel) =>
+          (channel?.code === "RPAD" || channel?.code === "POLICE") &&
+          (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
+      )
+    ) {
+      setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
+      hasError = true;
+    }
+  }
+
+  if (currentOrderType === "PROCLAMATION") {
+    if (formData?.proclamationFor?.selectedChannels?.length === 0) {
+      setShowErrorToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
+      hasError = true;
+    }
+
+    if (
+      formData?.proclamationFor?.selectedChannels?.some(
+        (channel) =>
+          (channel?.code === "RPAD" || channel?.code === "POLICE") &&
+          (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
+      )
+    ) {
+      setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
+      hasError = true;
+    }
+  }
+
+  if (currentOrderType === "ATTACHMENT") {
+    if (formData?.attachmentFor?.selectedChannels?.length === 0) {
+      setShowErrorToast({ label: t("PLESE_SELECT_ADDRESSS"), error: true });
+      hasError = true;
+    }
+
+    if (
+      formData?.attachmentFor?.selectedChannels?.some(
+        (channel) =>
+          (channel?.code === "RPAD" || channel?.code === "POLICE") &&
+          (!channel?.value?.geoLocationDetails || !channel?.value?.geoLocationDetails?.policeStation)
+      )
+    ) {
+      setShowErrorToast({ label: t("CS_POLICE_STATION_ERROR"), error: true });
+      hasError = true;
+    }
+  }
+
+  return hasError;
+};

@@ -54,6 +54,8 @@ import {
   replaceAdvocateConfig,
   configsCreateOrderProclamation,
   configsCreateOrderAttachment,
+  configsMoveCaseToLongPendingRegister,
+  configsMoveCaseOutOfLongPendingRegister,
 } from "../../configs/ordersCreateConfig";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -72,6 +74,7 @@ import { ordersService } from "../../hooks/services";
 import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName } from "../../utils";
 import {
   channelTypeEnum,
+  checkValidation,
   CloseBtn,
   formatDate,
   generateAddress,
@@ -122,6 +125,8 @@ const configKeys = {
   DISMISS_CASE: configsDismissCase,
   APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE: configsApproveRejectLitigantDetailsChange,
   ADVOCATE_REPLACEMENT_APPROVAL: replaceAdvocateConfig,
+  MOVE_CASE_TO_LONG_PENDING_REGISTER: configsMoveCaseToLongPendingRegister,
+  MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER: configsMoveCaseOutOfLongPendingRegister,
 };
 
 const options = [
@@ -1924,6 +1929,9 @@ const GenerateOrdersV2 = () => {
 
   const handleAddOrder = async (orderFormData, compOrderIndex) => {
     try {
+      if (checkValidation(t, orderFormData, compOrderIndex, setFormErrors, setShowErrorToast)) {
+        return;
+      }
       setAddOrderTypeLoader(true);
       const updatedOrderData = prepareUpdatedOrderData(currentOrder, orderFormData, compOrderIndex);
       let updatedOrder;

@@ -65,9 +65,10 @@ const AddOrderTypeModal = ({
 
   const onFormValueChange = (setValue, formData, formState, reset, setError, clearErrors, trigger, getValues) => {
     applyMultiSelectDropdownFix(setValue, formData, multiSelectDropdownKeys);
-    const orderType = currentOrder?.orderCategory === "COMPOSITE" ? currentOrder?.compositeItems?.[index]?.orderType : currentOrder?.orderType;
 
-    if (orderType && ["MANDATORY_SUBMISSIONS_RESPONSES"].includes(orderType)) {
+    const currentOrderType = orderType?.code || "";
+
+    if (currentOrderType && ["MANDATORY_SUBMISSIONS_RESPONSES"].includes(currentOrderType)) {
       if (formData?.submissionDeadline && formData?.responseInfo?.responseDeadline) {
         if (new Date(formData?.submissionDeadline).getTime() >= new Date(formData?.responseInfo?.responseDeadline).getTime()) {
           setValue("responseInfo", {
@@ -119,7 +120,7 @@ const AddOrderTypeModal = ({
       }
     }
 
-    if (orderType && ["WARRANT"].includes(orderType)) {
+    if (currentOrderType && ["WARRANT"].includes(currentOrderType)) {
       if (
         formData?.warrantSubType?.templateType === "SPECIFIC" &&
         formData?.bailInfo?.isBailable &&
@@ -190,7 +191,7 @@ const AddOrderTypeModal = ({
       }
     }
 
-    if (orderType && ["PROCLAMATION"].includes(orderType)) {
+    if (currentOrderType && ["PROCLAMATION"].includes(currentOrderType)) {
       if (formData?.proclamationText && Object.keys(formState?.errors).includes("proclamationText")) {
         clearFormErrors?.current?.[index]?.("proclamationText");
       } else if (formState?.submitCount && !formData?.proclamationText && !Object.keys(formState?.errors).includes("proclamationText")) {
@@ -198,7 +199,7 @@ const AddOrderTypeModal = ({
       }
     }
 
-    if (orderType && ["ATTACHMENT"].includes(orderType)) {
+    if (currentOrderType && ["ATTACHMENT"].includes(currentOrderType)) {
       if (formData?.attachmentText && Object.keys(formState?.errors).includes("attachmentText")) {
         clearFormErrors?.current?.[index]?.("attachmentText");
       } else if (formState?.submitCount && !formData?.attachmentText && !Object.keys(formState?.errors).includes("attachmentText")) {

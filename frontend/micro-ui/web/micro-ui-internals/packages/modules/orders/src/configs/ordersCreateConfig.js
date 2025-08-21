@@ -5543,3 +5543,78 @@ export const configsCreateOrderAttachment = [
     ],
   },
 ];
+
+export const configsMoveCaseToLongPendingRegister = [
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "longPendingComments",
+        schemaKeyPath: "orderDetails.comments",
+        transformer: "customTextArea",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "Reason for Moving Case to Long Pending Register",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        key: "lprDocuments",
+        component: "SelectMultiUpload",
+        disable: false,
+        populators: {
+          inputs: [
+            {
+              name: "document",
+              isMandatory: true,
+              documentHeader: "IDENTITY_PROOF",
+              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
+              uploadGuidelines: "UPLOAD_DOC_50",
+              maxFileSize: 50,
+              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+              isMultipleUpload: true,
+              textAreaStyle: {
+                fontSize: "16px",
+                fontWeight: 400,
+                marginBottom: "8px",
+              },
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+export const configsMoveCaseOutOfLongPendingRegister = [
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "outOfLongPendingComments",
+        schemaKeyPath: "orderDetails.comments",
+        transformer: "customTextArea",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "Reason for Moving Case out of Long Pending Register",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
