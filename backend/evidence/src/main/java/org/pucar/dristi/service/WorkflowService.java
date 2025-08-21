@@ -6,6 +6,7 @@ import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.common.contract.workflow.*;
+import org.egov.common.contract.workflow.ProcessInstance;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.repository.ServiceRequestRepository;
@@ -17,7 +18,6 @@ import org.springframework.util.CollectionUtils;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
 
@@ -41,7 +41,11 @@ public class WorkflowService {
                 ProcessInstanceObject processInstance = getProcessInstanceForArtifact(evidenceRequest.getArtifact(), filingType);
                 ProcessInstanceRequest workflowRequest = new ProcessInstanceRequest(evidenceRequest.getRequestInfo(), Collections.singletonList(processInstance));
                 String state=callWorkFlow(workflowRequest).getState();
-                evidenceRequest.getArtifact().setStatus(state);
+                if (evidenceRequest.getArtifact().getIsEvidenceMarkedFlow()) {
+                    evidenceRequest.getArtifact().setEvidenceMarkedStatus(state);
+                } else {
+                    evidenceRequest.getArtifact().setStatus(state);
+                }
             } catch (CustomException e){
                 throw e;
             } catch (Exception e) {
@@ -66,11 +70,16 @@ public class WorkflowService {
         try {
             WorkflowObject workflow = artifact.getWorkflow();
             ProcessInstanceObject processInstance = new ProcessInstanceObject();
-            processInstance.setBusinessId(artifact.getArtifactNumber());
+            String businessId = artifact.getArtifactNumber();
+            if(artifact.getIsEvidenceMarkedFlow()){
+                // add suffix to avoid duplicate businessId (ME = Mark Evidence)
+                businessId = businessId + "-ME";
+            }
+            processInstance.setBusinessId(businessId);
             processInstance.setAction(workflow.getAction());
-            processInstance.setModuleName(getBusinessModule(filingType));
+            processInstance.setModuleName(getBusinessModule(filingType, artifact.getArtifactType()));
             processInstance.setTenantId(artifact.getTenantId());
-            processInstance.setBusinessService(getBusinessServiceName(filingType));
+            processInstance.setBusinessService(getBusinessServiceName(filingType, artifact.getArtifactType(), artifact.getIsEvidenceMarkedFlow()));
             processInstance.setDocuments(workflow.getDocuments());
             processInstance.setComment(workflow.getComments());
             processInstance.setAdditionalDetails(workflow.getAdditionalDetails());
@@ -92,17 +101,23 @@ public class WorkflowService {
         }
     }
 
-    private String getBusinessModule(String filingType) {
-        if (filingType.equalsIgnoreCase(SUBMISSION)){
+    private String getBusinessModule(String filingType, String artifactType) {
+        if (SUBMISSION.equalsIgnoreCase(filingType)){
             return config.getSubmissionBusinessServiceModule();
         } else {
             return config.getBusinessServiceModule();
         }
     }
 
-    private String getBusinessServiceName(String filingType) {
-        if (filingType.equalsIgnoreCase(SUBMISSION)){
+    private String getBusinessServiceName(String filingType, String artifactType, Boolean isEvidenceMarkedFlow) {
+        if(isEvidenceMarkedFlow){
+            return config.getEvidenceBusinessServiceName();
+        }
+        else if(SUBMISSION.equalsIgnoreCase(filingType)){
             return config.getSubmissionBusinessServiceName();
+        }
+        else if (WITNESS_DEPOSITION.equalsIgnoreCase(artifactType)){
+            return config.getWitnessDepositionBusinessServiceName();
         } else {
             return config.getBusinessServiceName();
         }

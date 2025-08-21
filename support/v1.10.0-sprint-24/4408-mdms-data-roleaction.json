@@ -1,0 +1,43 @@
+[
+  {
+    "moduleName": "ACCESSCONTROL-ACTIONS-TEST",
+    "masterName": "actions-test",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ACTIONS-TEST.actions-test",
+        "uniqueIdentifier": "2753",
+        "data": {
+          "id": 2753,
+          "url": "/egov-pdf/evidence",
+          "code": "2753",
+          "name": "egov pdf evidence",
+          "displayName": "egov pdf evidence",
+          "serviceCode": "egov-pdf"
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "moduleName": "ACCESSCONTROL-ROLEACTIONS",
+    "masterName": "roleactions",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLEACTIONS.roleactions",
+        "uniqueIdentifier": "497",
+        "data": {
+          "id": 497,
+          "actionid": 2753,
+          "rolecode": "EMPLOYEE",
+          "tenantid": "kl",
+          "actioncode": "2753"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

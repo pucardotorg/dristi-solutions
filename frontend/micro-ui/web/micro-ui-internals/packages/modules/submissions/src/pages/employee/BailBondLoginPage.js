@@ -47,7 +47,7 @@ const BailBondLoginPage = () => {
       history.replace(`/${window?.contextPath}/citizen/dristi/home/bail-bond-sign?tenantId=${tenantId}&bailbondId=${bailbondId}`, {
         mobileNumber: mobileNumber,
         tenantId: tenantId,
-        isAuthorised : true,
+        isAuthorised: true,
       });
     } catch (error) {
       setError(true);
@@ -81,7 +81,7 @@ const BailBondLoginPage = () => {
                 <div style={{ marginBottom: "8px" }}>{t(config.label)}</div>
                 <div style={{ display: "flex" }}>
                   {config?.componentInFront ? (
-                    <span className="citizen-card-input citizen-card-input--front" style={error ? { borderColor: "#BB2C2F" } : {}}>
+                    <span className="citizen-card-input citizen-card-input--front bailbondloginPage" style={error ? { borderColor: "#BB2C2F" } : {}}>
                       {config?.componentInFront}
                     </span>
                   ) : null}

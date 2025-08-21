@@ -15,15 +15,17 @@ export const Urls = {
     evidenceUpdate: "/evidence/v1/_update",
   },
   FileFetchById: "/filestore/v1/files/id",
-  bailBond : {
+  bailBond: {
     bailBondCreate: "/bail-bond/v1/_create",
     bailBondUpdate: "/bail-bond/v1/_update",
     bailBondSearch: "/bail-bond/v1/_search",
     bailBondPreviewPdf: "/egov-pdf/bailBond",
   },
-  openApi:{
+  openApi: {
     FileFetchByFileStore: "/openapi/v1/landing_page/file",
-    bailSearch:"/openapi/v1/bail/search",
+    bailSearch: "/openapi/v1/bail/search",
     updateBailBond: "/openapi/v1/updateBailBond",
-  }
+    witnessDepositionSearch: "/openapi/v1/witness_deposition/search",
+    updateWitnessDeposition: "/openapi/v1/witness_deposition/update",
+  },
 };

@@ -58,6 +58,22 @@ export const submissionService = {
       data,
       params,
     }),
+  createEvidence: (data, params) =>
+    Request({
+      url: Urls.evidence.evidenceCreate,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  updateEvidence: (data, params) =>
+    Request({
+      url: Urls.evidence.evidenceUpdate,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
   createBailBond: (data, params) =>
     Request({
       url: Urls.bailBond.bailBondCreate,
@@ -90,9 +106,25 @@ export const submissionService = {
       data,
       params,
     }),
+  searchOpenApiWitnessDeposition: (data, params) =>
+    Request({
+      url: Urls.openApi.witnessDepositionSearch,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
   updateOpenBailBond: (data, params) =>
     Request({
       url: Urls.openApi.updateBailBond,
+      useCache: false,
+      userService: false,
+      data,
+      params,
+    }),
+  updateOpenWitnessDeposition: (data, params) =>
+    Request({
+      url: Urls.openApi.updateWitnessDeposition,
       useCache: false,
       userService: false,
       data,

@@ -2,10 +2,11 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import useSearchCaseService from "../../../dristi/src/hooks/dristi/useSearchCaseService";
 import { Button, Dropdown } from "@egovernments/digit-ui-react-components";
 import _ from "lodash";
-import AddParty from "../../../hearings/src/pages/employee/AddParty";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { getFormattedName } from "../utils";
 import WarrantRenderDeliveryChannels from "./WarrantRenderDeliveryChannels";
+import AddWitnessModal from "@egovernments/digit-ui-module-hearings/src/pages/employee/AddWitnessModal";
+import { Toast } from "@egovernments/digit-ui-components";
 
 // Helper function to compare addresses without police station data
 const compareAddressValues = (value1, value2) => {
@@ -64,6 +65,7 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
   const orderType = useMemo(() => formData?.orderType?.code, [formData?.orderType?.code]);
   const [userList, setUserList] = useState([]);
   const [policeStationIdMapping, setPoliceStationIdMapping] = useState([]);
+  const [showErrorToast, setShowErrorToast] = useState(null);
   const courtId = localStorage.getItem("courtId");
   const [deliveryChannels, setDeliveryChannels] = useState([
     {
@@ -118,12 +120,25 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
       ...(address?.geoLocationDetails && { geoLocationDetails: address.geoLocationDetails }),
     }));
   };
+  const closeToast = () => {
+    setShowErrorToast(null);
+  };
+
+  useEffect(() => {
+    if (showErrorToast) {
+      const timer = setTimeout(() => {
+        setShowErrorToast(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [showErrorToast]);
 
   useEffect(() => {
     const fetchUsers = async () => {
       let users = [];
       if (caseDetails?.additionalDetails) {
         const respondentData = caseDetails?.additionalDetails?.respondentDetails?.formdata || [];
+        const witnessData = caseDetails?.additionalDetails?.witnessDetails?.formdata || [];
 
         const updatedRespondentData = respondentData.map((item, index) => ({
           ...item,
@@ -144,8 +159,23 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
             uniqueId: item?.uniqueId,
           },
         }));
+        const updatedWitnessData = witnessData.map((item, index) => ({
+          ...item,
+          data: {
+            ...item?.data,
+            firstName: item?.data?.firstName,
+            lastName: item?.data?.lastName,
+            witnessDesignation: item?.data?.witnessDesignation,
+            address: mapAddressDetails(item?.data?.addressDetails),
+            partyType: "Witness",
+            phone_numbers: item?.data?.phonenumbers?.mobileNumber || [],
+            email: item?.data?.emails?.emailId || [],
+            uuid: item?.data?.uuid,
+            partyIndex: `Witness_${index}`,
+          },
+        }));
 
-        users = [...updatedRespondentData];
+        users = [...updatedRespondentData, ...updatedWitnessData];
       }
       setUserList(users);
     };
@@ -374,6 +404,29 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
                 style={{ maxWidth: "100%", marginBottom: 8 }}
                 className="party-dropdown"
               />
+              <Button
+                onButtonClick={handleAddParty}
+                className="add-party-btn"
+                style={{
+                  backgroundColor: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  WebkitBoxShadow: "none",
+                  boxShadow: "none",
+                  height: "auto",
+                }}
+                textStyles={{
+                  marginTop: 0,
+                  fontFamily: "Roboto",
+                  fontSize: "16px",
+                  fontWeight: 700,
+                  lineHeight: "18.75px",
+                  textAlign: "center",
+                  color: "#007E7E",
+                }}
+                label={t("+ Add new witness")}
+              />
             </div>
           )}
           {input.type !== "dropdown" && selectedParty && (
@@ -393,17 +446,19 @@ const WarrantOrderComponent = ({ t, config, formData, onSelect, clearErrors }) =
         </div>
       ))}
       {isPartyModalOpen && (
-        <AddParty
-          onCancel={handleAddParty}
-          onDismiss={handleAddParty}
+        <AddWitnessModal
           tenantId={tenantId}
+          onCancel={handleAddParty}
           caseDetails={caseDetails}
+          isEmployee={true}
           onAddSuccess={() => {
             handleAddParty();
             refetch();
           }}
-        ></AddParty>
+          showToast={setShowErrorToast}
+        ></AddWitnessModal>
       )}
+      {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.message} isDleteBtn={true} onClose={closeToast} />}
     </div>
   );
 };

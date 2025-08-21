@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.transformer.config.TransformerProperties;
+import org.egov.transformer.models.Artifact;
 import org.egov.transformer.models.BailUpdateRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
@@ -69,6 +70,35 @@ public class EsUtil {
         }
     }
 
+    public String buildArtifactPayload(Artifact artifact) {
+        try {
+            List<String> searchableFields = new ArrayList<>();
+            if (StringUtils.hasText(artifact.getCaseTitle())) {
+                searchableFields.add(artifact.getCaseTitle());
+            }
+            if (StringUtils.hasText(artifact.getCaseNumber())) {
+                searchableFields.add(artifact.getCaseNumber());
+            }
+            if (StringUtils.hasText(artifact.getArtifactNumber())) {
+                searchableFields.add(artifact.getArtifactNumber());
+            }
+
+            String searchableFieldsJson = mapper.writeValueAsString(searchableFields);
+
+            return String.format(
+                    ES_UPDATE_ARTIFACT_HEADER_FORMAT + ES_UPDATE_ARTIFACT_DOCUMENT_FORMAT,
+                    config.getOpenArtifactIndex(),
+                    artifact.getArtifactNumber(),
+                    artifact.getCaseNumber(),
+                    searchableFieldsJson
+            );
+        } catch (Exception e) {
+            log.error("Failed to build payload for artifactNumber: {}", artifact.getArtifactNumber(), e);
+            return "";
+        }
+    }
+
+
 
     // Bulk update method for multiple Bail records
     public void updateBailCaseNumbers(List<BailUpdateRequest> bailUpdates) {
@@ -85,6 +115,23 @@ public class EsUtil {
             log.error("Error occurred while updating caseNumber in bail index", e);
         }
     }
+
+    public void updateArtifactCaseNumbers(List<Artifact> artifactList) {
+        try {
+            if (artifactList != null && !artifactList.isEmpty()) {
+                String bulkPayload = artifactList.stream()
+                        .map(this::buildArtifactPayload)
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.joining());
+
+                String uri = config.getEsHostUrl() + config.getBulkPath();
+                manualIndex(uri, bulkPayload);
+            }
+        } catch (Exception e) {
+            log.error("Error occurred while updating caseNumber in artifact index", e);
+        }
+    }
+
 
 
     public void manualIndex(String uri, String request) throws Exception {

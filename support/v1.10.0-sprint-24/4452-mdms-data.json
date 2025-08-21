@@ -1,0 +1,60 @@
+[
+  {
+    "moduleName": "egov-hrms",
+    "masterName": "EmployeeType",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "egov-hrms.EmployeeType",
+        "uniqueIdentifier": "E-Sewa",
+        "data": {
+          "code": "E-Sewa",
+          "active": true
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "moduleName": "egov-hrms",
+    "masterName": "EmployeeRolesMapping",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "egov-hrms.EmployeeRolesMapping",
+        "uniqueIdentifier": "E-Sewa",
+        "data": {
+          "roleCodes": [
+            "EMPLOYEE",
+            "TASK_EDITOR",
+            "TASK_VIEWER",
+            "ORDER_VIEWER",
+            "PROCESS_VIEWER"
+          ],
+          "employeeCode": "E-Sewa"
+        },
+        "isActive": true
+      }
+    ]
+  },
+  {
+    "moduleName": "ACCESSCONTROL-ROLES",
+    "masterName": "roles",
+    "tenantId": "kl",
+    "mdmsPayload": [
+      {
+        "tenantId": "kl",
+        "schemaCode": "ACCESSCONTROL-ROLES.roles",
+        "uniqueIdentifier": null,
+        "data": {
+          "code": "PROCESS_VIEWER",
+          "name": "PROCESS_VIEWER",
+          "description": "PROCESS_VIEWER"
+        },
+        "isActive": true
+      }
+    ]
+  }
+]

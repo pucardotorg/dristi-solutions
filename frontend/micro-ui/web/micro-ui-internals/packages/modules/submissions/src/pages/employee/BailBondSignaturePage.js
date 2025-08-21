@@ -245,13 +245,14 @@ const BailBondSignaturePage = () => {
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
     } finally {
       setShowSignatureModal(false);
+      sessionStorage.removeItem("isSignSuccess");
     }
   };
 
   const handleCloseSuccessModal = () => {
     sessionStorage.removeItem("isAuthorised");
     sessionStorage.removeItem("fileStoreId");
-    history.replace(`/${window?.contextPath}/citizen/dristi/home/login`);
+    history.replace(`/${window?.contextPath}/citizen/dristi/home`);
   };
 
   const handleEditBailBondSubmit = async () => {

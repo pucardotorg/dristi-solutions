@@ -52,7 +52,7 @@ export const applicationTypeConfig = [
             moduleName: "Application",
             localePrefix: "APPLICATION_TYPE",
             select:
-              "(data) => {return data['Application'].ApplicationType?.filter((item)=>![`EXTENSION_SUBMISSION_DEADLINE`,`DOCUMENT`,`RE_SCHEDULE`,`CHECKOUT_REQUEST`, `SUBMIT_BAIL_DOCUMENTS`].includes(item.type)).map((item) => {return { ...item, name: 'APPLICATION_TYPE_'+item.type };});}",
+              "(data) => {return data['Application'].ApplicationType?.filter((item)=>![`ADDING_WITNESSES`,`EXTENSION_SUBMISSION_DEADLINE`,`DOCUMENT`,`RE_SCHEDULE`,`CHECKOUT_REQUEST`, `SUBMIT_BAIL_DOCUMENTS`].includes(item.type)).map((item) => {return { ...item, name: 'APPLICATION_TYPE_'+item.type };});}",
           },
           customStyle: { display: "flex", flexDirection: "column", alignItems: "flex-start" },
         },
@@ -1079,7 +1079,7 @@ export const configsProductionOfDocuments = [
       {
         inline: true,
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectCustomFormatterTextArea",
         schemaKeyPath: "applicationDetails.reasonForApplication",
         transformer: "customTextArea",
         key: "reasonForApplication",
@@ -1104,7 +1104,7 @@ export const configsProductionOfDocuments = [
       {
         inline: true,
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectCustomFormatterTextArea",
         schemaKeyPath: "applicationDetails.additionalComments",
         transformer: "customTextArea",
         key: "comments",
@@ -1296,7 +1296,7 @@ export const configsCaseWithdrawal = [
       {
         inline: true,
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectCustomFormatterTextArea",
         schemaKeyPath: "applicationDetails.additionalComments",
         transformer: "customTextArea",
         key: "comments",
@@ -1494,7 +1494,7 @@ export const configsCaseTransfer = [
       {
         inline: true,
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectCustomFormatterTextArea",
         key: "comments",
         schemaKeyPath: "applicationDetails.additionalComments",
         transformer: "customTextArea",
@@ -1664,7 +1664,7 @@ export const configsSettlement = [
       {
         inline: true,
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectCustomFormatterTextArea",
         schemaKeyPath: "applicationDetails.additionalComments",
         transformer: "customTextArea",
         key: "comments",
@@ -2031,7 +2031,7 @@ export const configsOthers = [
       },
       {
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectCustomFormatterTextArea",
         schemaKeyPath: "applicationDetails.reasonForApplication",
         transformer: "customTextArea",
         key: "applicationDetails",
@@ -2082,7 +2082,7 @@ export const requestForBail = [
       {
         inline: true,
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectCustomFormatterTextArea",
         key: "reasonForApplicationOfBail",
         schemaKeyPath: "applicationDetails.reasonForApplicationOfBail",
         transformer: "customTextArea",
@@ -2146,7 +2146,7 @@ export const requestForBail = [
       {
         inline: true,
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectCustomFormatterTextArea",
         key: "additionalInformation",
         schemaKeyPath: "applicationDetails.additionalInformation",
         transformer: "customTextArea",
@@ -2490,7 +2490,7 @@ export const submitDelayCondonation = [
       {
         inline: true,
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectCustomFormatterTextArea",
         key: "reasonForDelay",
         schemaKeyPath: "applicationDetails.reasonForDelay",
         transformer: "customTextArea",
@@ -2547,7 +2547,7 @@ export const submitDelayCondonation = [
       {
         inline: true,
         type: "component",
-        component: "SelectCustomTextArea",
+        component: "SelectCustomFormatterTextArea",
         key: "additionalInformation",
         schemaKeyPath: "applicationDetails.additionalInformation",
         transformer: "customTextArea",

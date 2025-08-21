@@ -7,6 +7,9 @@ const {
   duplicateExistingFileStore,
 } = require("../utils/duplicateExistingFileStore");
 const { getDynamicSectionNumber } = require("../utils/getDynamicSectionNumber");
+const {
+  combineMultipleFilestores,
+} = require("../utils/combineMultipleFilestores");
 
 async function processAccusedEvidence(
   courtCase,
@@ -17,6 +20,11 @@ async function processAccusedEvidence(
   indexCopy,
   messagesMap
 ) {
+  const complainantDepositionSection = filterCaseBundleBySection(
+    caseBundleMaster,
+    "accusedevidencedepositions"
+  );
+
   const accusedEvidenceSection = filterCaseBundleBySection(
     caseBundleMaster,
     "accusedevidence"
@@ -30,6 +38,59 @@ async function processAccusedEvidence(
     indexCopy,
     sectionPosition
   );
+
+  const accusedEvidenceLineItems = [];
+
+  if (complainantDepositionSection?.length !== 0) {
+    const courtDocs = await search_evidence_v2(
+      tenantId,
+      requestInfo,
+      {
+        courtId: courtCase.courtId,
+        filingNumber: courtCase.filingNumber,
+        artifactType: "WITNESS_DEPOSITION",
+        status: "COMPLETED",
+        isVoid: false,
+        tenantId,
+      },
+      {
+        sortBy: complainantDepositionSection[0].sorton,
+        order: "asc",
+        limit: 100,
+      }
+    );
+
+    const courtList = courtDocs?.data?.artifacts?.filter(
+      (artifact) =>
+        artifact?.additionalDetails?.witnessDetails?.ownerType === "ACCUSED"
+    );
+
+    if (courtList?.length !== 0) {
+      const innerLineItems = await Promise.all(
+        courtList?.map(async (evidence, index) => {
+          const evidenceFileStoreId = evidence?.file?.fileStore;
+          if (!evidenceFileStoreId) {
+            return null;
+          }
+
+          const newEvidenceFileStoreId = await duplicateExistingFileStore(
+            tenantId,
+            evidenceFileStoreId,
+            requestInfo,
+            TEMP_FILES_DIR
+          );
+          return {
+            sourceId: evidenceFileStoreId,
+            fileStoreId: newEvidenceFileStoreId,
+            sortParam: index + 1,
+            createPDF: false,
+            content: "accusedevidencedepositions",
+          };
+        })
+      );
+      accusedEvidenceLineItems.push(...innerLineItems);
+    }
+  }
 
   if (accusedEvidenceSection?.length !== 0) {
     const section = accusedEvidenceSection[0];
@@ -54,11 +115,21 @@ async function processAccusedEvidence(
     const accusedList = accusedDocs?.data?.artifacts;
 
     if (accusedList?.length !== 0) {
-      const accusedEvidenceLineItems = await Promise.all(
+      const innerLineItems = await Promise.all(
         accusedList?.map(async (evidence, index) => {
-          const evidenceFileStoreId = evidence?.file?.fileStore;
+          let evidenceFileStoreId = evidence?.file?.fileStore;
           if (!evidenceFileStoreId) {
             return null;
+          }
+
+          const sealFileStore = evidence?.seal?.fileStore;
+          if (sealFileStore) {
+            evidenceFileStoreId = await combineMultipleFilestores(
+              [evidenceFileStoreId, sealFileStore],
+              tenantId,
+              requestInfo,
+              TEMP_FILES_DIR
+            );
           }
 
           let newEvidenceFileStoreId = evidenceFileStoreId;
@@ -113,7 +184,12 @@ async function processAccusedEvidence(
                   evidence?.artifactType
               ];
 
-            const documentPath = `${dynamicSectionNumber}.${
+            const evidencePosition = !accusedEvidenceLineItems?.filter(Boolean)
+              ?.length
+              ? "1"
+              : "2";
+
+            const documentPath = `${dynamicSectionNumber}.${evidencePosition}.${
               index + 1
             } ${artifactName} in ${dynamicSectionNumber} ${section.section}`;
 
@@ -153,12 +229,16 @@ async function processAccusedEvidence(
           };
         })
       );
-      const accusedEvidenceIndexSection = indexCopy.sections.find(
-        (section) => section.name === "accusedevidence"
-      );
-      accusedEvidenceIndexSection.lineItems =
-        accusedEvidenceLineItems.filter(Boolean);
+      accusedEvidenceLineItems.push(...innerLineItems);
     }
+  }
+
+  if (accusedEvidenceLineItems.length > 0) {
+    const accusedEvidenceIndexSection = indexCopy.sections.find(
+      (section) => section.name === "accusedevidence"
+    );
+    accusedEvidenceIndexSection.lineItems =
+      accusedEvidenceLineItems.filter(Boolean);
   }
 }
 
