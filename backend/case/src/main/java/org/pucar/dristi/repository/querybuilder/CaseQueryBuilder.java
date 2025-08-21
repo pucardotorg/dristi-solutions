@@ -178,6 +178,15 @@ public class CaseQueryBuilder {
                 firstCriteria = addFilingDateCriteria(criteria, firstCriteria, query, preparedStmtList, preparedStmtArgList);
 
                 addRegistrationDateCriteria(criteria, firstCriteria, query, preparedStmtList, preparedStmtArgList);
+
+                // Filter by isLPRCase if specified
+                if (criteria.getIsLPRCase() != null) {
+                    addClauseIfRequired(query, firstCriteria);
+                    query.append("cases.isLPRCase = ?");
+                    preparedStmtList.add(criteria.getIsLPRCase());
+                    preparedStmtArgList.add(Types.BOOLEAN);
+                    firstCriteria = false;
+                }
             }
 
             return query.toString();
