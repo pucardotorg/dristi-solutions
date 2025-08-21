@@ -89,7 +89,7 @@ public class OrderRowMapper implements ResultSetExtractor<List<Order>> {
 
                 PGobject pgObject4 = (PGobject) rs.getObject("attendance");
                 if(pgObject4!=null)
-                    order.setAttendance(objectMapper.readValue(pgObject4.getValue(),List.class));
+                    order.setAttendance(objectMapper.readTree(pgObject4.getValue()));
 
                 orderMap.put(uuid, order);
             }
