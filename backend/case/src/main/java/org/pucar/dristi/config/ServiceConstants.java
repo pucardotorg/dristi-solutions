@@ -50,6 +50,7 @@ public class ServiceConstants {
     public static final String SEARCH_CASE_ERR = "CASE_NOT_FOUND";
     public static final String UPDATE_CASE_ERR = "UPDATE_CASE_ERR";
     public static final String UPDATE_CASE_WITHOUT_WORKFLOW_ERR = "UPDATE_CASE_WITHOUT_WORKFLOW_ERR";
+    public static final String UPDATE_LPR_CASE_ERR = "UPDATE_LPR_CASE_ERR";
     public static final String EDIT_CASE_ERR = "EDIT_CASE_ERR";
     public static final String ADD_WITNESS_TO_CASE_ERR = "ADD_WITNESS_TO_CASE_ERR";
     public static final String CREATE_WITNESS_ERR = "CREATE_WITNESS_ERR";
@@ -248,6 +249,8 @@ public class ServiceConstants {
     public static final String E_SIGN_COMPLETE_WITH_PAYMENT = "E-SIGN_COMPLETE_WITH_PAYMENT";
     public static final String ERROR_ADDING_WITNESS = "ERROR_ADDING_WITNESS";
     public static final String ERROR_VALIDATING_WITNESS = "ERROR_VALIDATING_WITNESS";
+
+    public static final String REGEX_TO_EXTRACT_YEAR = "ST/\\d+/(\\d{4})";
     private ServiceConstants() {
     }
 }

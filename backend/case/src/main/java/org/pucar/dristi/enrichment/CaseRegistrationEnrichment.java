@@ -17,7 +17,11 @@ import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.pucar.dristi.config.ServiceConstants.*;
@@ -326,7 +330,7 @@ public class CaseRegistrationEnrichment {
 
     public void enrichCourtCaseNumber(CaseRequest caseRequest) {
         try {
-            String tenantId = caseRequest.getCases().getCourtId();
+            String tenantId = caseRequest.getCases().getCourtId() +  getYearForEnrichingCourtCaseNumber(caseRequest);
             String idName = config.getCourtCaseConfig();
             String idFormat = config.getCourtCaseSTFormat();
             List<String> courtCaseRegistrationCaseNumberIdList = idgenUtil.getIdList(caseRequest.getRequestInfo(), tenantId, idName, idFormat, 1, false);
@@ -336,6 +340,49 @@ public class CaseRegistrationEnrichment {
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching case number and court case number: " + e.getMessage());
         }
     }
+
+    private String getYearForEnrichingCourtCaseNumber(CaseRequest caseRequest) {
+        CourtCase courtCase = caseRequest.getCases();
+
+        // Case for admitting the court case
+        if (isAdmittingCase(courtCase)) {
+            return getCurrentYearAsString();
+        }
+
+        // Case for LPR (Legal Person Registration) cases with a court case number
+        else if (!courtCase.getIsLPRCase() && courtCase.getLprNumber() != null) {
+            return extractYearFromCourtCaseNumber(courtCase.getCourtCaseNumber());
+        } else {
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Invalid case for enriching court case number");
+        }
+    }
+
+    private boolean isAdmittingCase(CourtCase courtCase) {
+        return CASE_ADMIT_STATUS.equals(courtCase.getWorkflow().getAction());
+    }
+
+    private String getCurrentYearAsString() {
+        LocalDate currentDate = LocalDate.now(ZoneId.of("Asia/Kolkata"));
+        return String.valueOf(currentDate.getYear());
+    }
+
+    private String extractYearFromCourtCaseNumber(String courtCaseNumber) {
+        if (courtCaseNumber == null) {
+            return null;
+        }
+
+        // Match the pattern "ST/xxx/yyyy" in the court case number
+        Pattern pattern = Pattern.compile(REGEX_TO_EXTRACT_YEAR);
+        Matcher matcher = pattern.matcher(courtCaseNumber);
+
+        if (matcher.find()) {
+            return matcher.group(1);  // Extracts the year
+        } else {
+            log.error("Invalid court case number format");
+            return null;
+        }
+    }
+
 
     public void enrichCNRNumber(CaseRequest caseRequest) {
         try {
@@ -589,5 +636,18 @@ public class CaseRegistrationEnrichment {
         Map<String, Object> additionalDetails = new HashMap<>();
         additionalDetails.put("consumerCode", consumerCode);
         return additionalDetails;
+    }
+
+    public void enrichLPRNumber(CaseRequest caseRequest) {
+        try {
+            String tenantId = caseRequest.getCases().getCourtId();
+            String idName = config.getLprConfig();
+            String idFormat = config.getLprFormat();
+            List<String> lprNumberIdList = idgenUtil.getIdList(caseRequest.getRequestInfo(), tenantId, idName, idFormat, 1, false);
+            caseRequest.getCases().setLprNumber(lprNumberIdList.get(0));
+        } catch (Exception e) {
+            log.error("Error enriching lpr number: {}", e.toString());
+            throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching lpr number: " + e.getMessage());
+        }
     }
 }
