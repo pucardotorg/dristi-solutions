@@ -1694,6 +1694,23 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     },
   ];
 
+  const getCaseHeaderLabel = (step, type, t) => {
+    const stepLabels = {
+      3: "VERIFY_LITIGANT_DETAILS",
+      4: "PAY_TO_JOIN_CASE",
+    };
+
+    if (stepLabels[step]) {
+      return t(stepLabels[step]);
+    }
+
+    if (type === "external") {
+      return t("CS_CASE_MANAGE_CASE_ACCESS");
+    }
+
+    return t("SEARCH_NEW_CASE");
+  };
+
   return (
     <div>
       {type !== "external" && (
@@ -1795,7 +1812,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           }
           actionSaveOnSubmit={onProceed}
           formId="modal-action"
-          headerBarMain={<Heading label={step === 3 ? t("VERIFY_LITIGANT_DETAILS") : step === 4 ? t("PAY_TO_JOIN_CASE") : t("SEARCH_NEW_CASE")} />}
+          headerBarMain={<Heading label={getCaseHeaderLabel(step, type, t)} />}
           className={`join-a-case-modal${success ? " case-join-success" : ""}${step === 4 ? " join-case-modal-payment" : ""}`}
           isDisabled={isDisabled || isApiCalled}
           isBackButtonDisabled={step === 1 && !isVerified}
