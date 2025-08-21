@@ -13,9 +13,10 @@ import {
   Loader,
   Toast,
 } from "@egovernments/digit-ui-react-components";
-import { CustomAddIcon, CustomDeleteIcon, EditPencilIcon, OutlinedInfoIcon } from "../../../../dristi/src/icons/svgIndex";
+import { CustomAddIcon, OutlinedInfoIcon } from "../../../../dristi/src/icons/svgIndex";
 import ReactTooltip from "react-tooltip";
 import AddOrderTypeModal from "../../pageComponents/AddOrderTypeModal";
+import OrderTypeControls from "../../components/OrderTypeControls";
 import {
   applicationTypeConfig,
   configCheckout,
@@ -63,13 +64,13 @@ import CustomDatePickerV2 from "@egovernments/digit-ui-module-hearings/src/compo
 import { HomeService } from "@egovernments/digit-ui-module-home/src/hooks/services";
 import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
-import { SubmissionWorkflowAction, SubmissionWorkflowState } from "../../utils/submissionWorkflow";
+import { SubmissionWorkflowState } from "../../utils/submissionWorkflow";
 import { getAdvocates, getuuidNameMap } from "../../utils/caseUtils";
 import _ from "lodash";
 import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
 import { OrderWorkflowAction, OrderWorkflowState } from "../../utils/orderWorkflow";
 import { applicationTypes } from "../../utils/applicationTypes";
-import { HearingWorkflowAction, HearingWorkflowState } from "../../utils/hearingWorkflow";
+import { HearingWorkflowState } from "../../utils/hearingWorkflow";
 import { ordersService } from "../../hooks/services";
 import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName } from "../../utils";
 import {
@@ -86,6 +87,7 @@ import {
   Heading,
   prepareUpdatedOrderData,
 } from "../../utils/orderUtils";
+import OrderItemDeleteModal from "./OrderItemDeleteModal";
 
 const configKeys = {
   SECTION_202_CRPC: configsOrderSection202CRPC,
@@ -148,7 +150,7 @@ const orderTypeConfig = {
     name: "orderType",
     optionsKey: "name",
     error: "required ",
-    styles: { maxWidth: "100%" },
+    styles: { maxWidth: "75%" },
     mdmsConfig: {
       moduleName: "Order",
       masterName: "OrderType",
@@ -185,13 +187,14 @@ const purposeOfHearingConfig = {
 const nextDateOfHearing = {
   type: "component",
   component: "CustomDatePicker",
-  key: "hearingDate",
+  key: "nextHearingDate",
   label: "Next Date of Hearing",
   className: "order-date-picker",
   isMandatory: true,
+  placeholder: "DD/MM/YYYY",
   customStyleLabelField: { display: "flex", justifyContent: "space-between" },
   populators: {
-    name: "hearingDate",
+    name: "nextHearingDate",
     error: "CORE_REQUIRED_FIELD_ERROR",
   },
 };
@@ -210,7 +213,7 @@ const GenerateOrdersV2 = () => {
   const EditSendBackModal = Digit?.ComponentRegistryService?.getComponent("EditSendBackModal");
   const [orderType, setOrderType] = useState({}); // not sure it needed
   const [showOrderValidationModal, setShowOrderValidationModal] = useState({ showModal: false, errorMessage: "" });
-  const [OrderTitles, setOrderTitles] = useState([]);
+  const [orderTitle, setOrderTitle] = useState(null);
   const submitButtonRefs = useRef([]);
   const setValueRef = useRef([]);
   const formStateRef = useRef([]);
@@ -220,7 +223,7 @@ const GenerateOrdersV2 = () => {
   const [currentOrder, setCurrentOrder] = useState({});
   const [caseData, setCaseData] = useState(undefined);
   const [isCaseDetailsLoading, setIsCaseDetailsLoading] = useState(false);
-  const { orderNumber, filingNumber, orderId } = Digit.Hooks.useQueryParams();
+  const { orderNumber, filingNumber } = Digit.Hooks.useQueryParams();
   const tenantId = Digit.ULBService.getCurrentTenantId();
   const courtId = localStorage.getItem("courtId");
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
@@ -243,6 +246,7 @@ const GenerateOrdersV2 = () => {
   const [orderPdfFileStoreID, setOrderPdfFileStoreID] = useState(null); // TODO: need to check usage
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [prevOrder, setPrevOrder] = useState();
+  const [deleteOrderItemIndex, setDeleteOrderItemIndex] = useState(null);
 
   const fetchCaseDetails = async () => {
     try {
@@ -297,7 +301,7 @@ const GenerateOrdersV2 = () => {
       criteria: {
         filingNumber,
         applicationNumber: "",
-        orderNumber: orderNumber, // TODO: comes from payload
+        orderNumber: orderNumber,
         status: OrderWorkflowState.DRAFT_IN_PROGRESS,
         ...(caseCourtId && { courtId: caseCourtId }),
       },
@@ -389,13 +393,18 @@ const GenerateOrdersV2 = () => {
     return isPresent;
   }, [hearingsData]);
 
-  const { data: orderTypeData } = Digit.Hooks.useCustomMDMS(Digit.ULBService.getStateId(), "Order", [{ name: "OrderType" }], {
-    select: (data) => {
-      return _.get(data, "Order.OrderType", [])
-        .filter((opt) => (opt?.hasOwnProperty("isactive") ? opt.isactive : true))
-        .map((opt) => ({ ...opt }));
-    },
-  });
+  const { data: orderTypeData, isLoading: isOrderTypeLoading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "Order",
+    [{ name: "OrderType" }],
+    {
+      select: (data) => {
+        return _.get(data, "Order.OrderType", [])
+          .filter((opt) => (opt?.hasOwnProperty("isactive") ? opt.isactive : true))
+          .map((opt) => ({ ...opt }));
+      },
+    }
+  );
 
   const { data: courtRoomDetails, isLoading: isCourtIdsLoading } = Digit.Hooks.dristi.useGetStatuteSection("common-masters", [
     { name: "Court_Rooms" },
@@ -2026,7 +2035,133 @@ const GenerateOrdersV2 = () => {
     }
   };
 
-  if (isCaseDetailsLoading || isHearingFetching || bailBondLoading) {
+  const deleteOrderItem = async (order, itemID) => {
+    try {
+      return await ordersService.removeOrderItem(
+        {
+          order: {
+            tenantId: order?.tenantId,
+            itemID: itemID,
+            orderNumber: order?.orderNumber,
+          },
+        },
+        { tenantId }
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleAddForm = () => {
+    const updatedCompositeItems = (obj) => {
+      let orderTitleNew = obj?.orderTitle;
+      let compositeItemsNew = obj?.compositeItems ? [...obj.compositeItems] : [];
+      const totalEnabled = compositeItemsNew?.filter((o) => o?.isEnabled)?.length;
+
+      if (compositeItemsNew.length === 0) {
+        compositeItemsNew = [
+          {
+            orderType: obj?.orderType,
+            ...(obj?.orderNumber && {
+              orderSchema: { orderDetails: obj?.orderDetails, additionalDetails: obj?.additionalDetails, orderType: obj?.orderType },
+            }),
+            isEnabled: true,
+            displayindex: 0,
+          },
+        ];
+        orderTitleNew = `${t(obj?.orderType)} and Other Items`;
+      }
+
+      return {
+        compositeItems: [
+          ...compositeItemsNew,
+          {
+            orderType: null,
+            isEnabled: true,
+            displayindex: totalEnabled === 0 ? 1 : totalEnabled,
+          },
+        ],
+        orderTitle: orderTitleNew,
+      };
+    };
+    const updatedItems = updatedCompositeItems(currentOrder);
+    setCurrentOrder({
+      ...currentOrder,
+      orderCategory: "COMPOSITE",
+      orderTitle: updatedItems.orderTitle,
+      compositeItems: updatedItems.compositeItems,
+    });
+
+    if (
+      !currentOrder?.orderNumber ||
+      ordersData?.list?.find((order) => order?.orderNumber === currentOrder?.orderNumber)?.orderCategory === "INTERMEDIATE"
+    ) {
+      let compositeItemsNew = currentOrder?.compositeItems ? [...currentOrder.compositeItems] : [];
+      const totalEnabled = currentOrder?.compositeItems?.filter((o) => o?.isEnabled)?.length;
+
+      if (compositeItemsNew?.length === 0) {
+        setOrderTitle(`${t(currentOrder?.orderType)} and Other Items`);
+      }
+
+      if (totalEnabled === 1) {
+        const enabledItem = currentOrder?.compositeItems?.find((item) => item?.isEnabled && item?.orderType);
+        setOrderTitle(`${t(enabledItem?.orderType)} and Other Items`);
+      }
+    }
+  };
+
+  const handleDeleteOrderItem = async (deleteOrderItemIndex) => {
+    if (!currentOrder?.orderNumber) {
+      let updatedCompositeItems = currentOrder?.compositeItems?.map((compositeItem, index) => {
+        if (index === deleteOrderItemIndex) {
+          return { ...compositeItem, isEnabled: false, displayindex: -Infinity };
+        }
+
+        return {
+          ...compositeItem,
+          displayindex: index > deleteOrderItemIndex ? compositeItem.displayindex - 1 : compositeItem.displayindex,
+        };
+      });
+      setCurrentOrder({
+        ...currentOrder,
+        compositeItems: updatedCompositeItems,
+      });
+    } else {
+      const deletedItemId = currentOrder?.compositeItems?.find((item, index) => index === deleteOrderItemIndex)?.id;
+      if (deletedItemId) {
+        try {
+          const response = await deleteOrderItem(currentOrder, deletedItemId);
+          if (response?.order?.orderNumber) {
+            await refetchOrdersData();
+            await refetchOrdersData(); // hard refresh
+          } else {
+            console.error("Delete operation was not successful.");
+          }
+        } catch (error) {
+          console.error("Error deleting order item:", error);
+        }
+      } else {
+        let updatedCompositeItems = currentOrder?.compositeItems?.map((compositeItem, index) => {
+          if (index === deleteOrderItemIndex) {
+            return { ...compositeItem, isEnabled: false, displayindex: -Infinity };
+          }
+
+          return {
+            ...compositeItem,
+            displayindex: index > deleteOrderItemIndex ? compositeItem.displayindex - 1 : compositeItem.displayindex,
+          };
+        });
+
+        setCurrentOrder({
+          ...currentOrder,
+          compositeItems: updatedCompositeItems,
+        });
+      }
+    }
+    setDeleteOrderItemIndex(null);
+  };
+
+  if (isCaseDetailsLoading || isHearingFetching || bailBondLoading || isOrderTypeLoading) {
     return <Loader />;
   }
 
@@ -2106,40 +2241,23 @@ const GenerateOrdersV2 = () => {
 
             <LabelFieldPair className="order-type-dropdown">
               <CardLabel className="order-type-dropdown-label">{t(orderTypeConfig?.label)}</CardLabel>
-              <div style={{ display: "flex", width: "100%", alignItems: "center" }}>
-                <CustomDropdown
-                  t={t}
-                  onChange={(e) => {
-                    // setModeOfPayment(e);
-                    // setAdditionalDetails("");
-                    setOrderType(e);
-                    setAddOrderModal(true);
-                  }}
-                  value={orderType}
-                  config={{
-                    ...orderTypeConfig?.populators,
-                    styles: { ...orderTypeConfig?.populators?.styles, flex: 1 },
-                  }}
-                />
-                <Button
-                  className={"edit-button"}
-                  variation="secondary"
-                  onButtonClick={handleEditOrder}
-                  label={t("Edit")}
-                  icon={<EditPencilIcon width="20" height="20" />}
-                />
-                <Button
-                  className={"delete-button"}
-                  variation="secondary"
-                  label={t("Delete")}
-                  icon={<CustomDeleteIcon color="#BB2C2F" width="20" height="20" />}
-                />
-              </div>
-
+              <OrderTypeControls
+                t={t}
+                currentOrder={currentOrder}
+                orderTypeData={orderTypeData}
+                orderTypeConfig={orderTypeConfig}
+                setOrderType={setOrderType}
+                setAddOrderModal={setAddOrderModal}
+                setCompositeOrderIndex={setCompositeOrderIndex}
+                handleEditOrder={handleEditOrder}
+                setDeleteOrderItemIndex={setDeleteOrderItemIndex}
+              />
               <div style={{ marginBottom: "10px" }}>
                 <Button
                   variation="secondary"
-                  // onButtonClick={handleAddForm}
+                  onButtonClick={() => {
+                    handleAddForm();
+                  }}
                   className="add-new-form"
                   icon={<CustomAddIcon width="16px" height="16px" />}
                   label={t("ADD_ITEM")}
@@ -2333,6 +2451,14 @@ const GenerateOrdersV2 = () => {
           contentText={"Are you sure you want to make these changes in this item. This will not update the order text on the right side."}
           className={"edit-send-back-modal"}
         />
+      )}
+      {deleteOrderItemIndex !== null && (
+        <OrderItemDeleteModal
+          t={t}
+          handleDeleteOrderItem={handleDeleteOrderItem}
+          deleteOrderItemIndex={deleteOrderItemIndex}
+          setDeleteOrderItemIndex={setDeleteOrderItemIndex}
+        ></OrderItemDeleteModal>
       )}
       {showAddOrderModal && (
         <AddOrderTypeModal
