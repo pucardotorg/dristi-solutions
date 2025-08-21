@@ -2168,7 +2168,7 @@ const GenerateOrdersV2 = () => {
   return (
     <React.Fragment>
       <div className="generate-orders-v2-content">
-        <Header className="generate-orders-v2-header">{t("Order : Case Ashutosh vs Ranjit")}</Header>
+        <Header className="generate-orders-v2-header">{`${t("CS_ORDER")} : ${caseDetails?.caseTitle}`}</Header>
 
         <div className="generate-orders-v2-columns">
           {/* Left Column */}
@@ -2445,20 +2445,25 @@ const GenerateOrdersV2 = () => {
           t={t}
           handleCancel={() => setEditOrderModal(false)}
           handleSubmit={handleEditConfirmationOrder}
-          headerLabel={"Confirm Edit"}
-          saveLabel={"CONFIRM"}
-          cancelLabel={"CANCEL_EDIT"}
-          contentText={"Are you sure you want to make these changes in this item. This will not update the order text on the right side."}
+          headerLabel={"GENERATE_ORDER_CONFIRM_EDIT"}
+          saveLabel={"GENERATE_ORDER_CONFIRM_EDIT"}
+          cancelLabel={"GENERATE_ORDER_CANCEL_EDIT"}
+          contentText={"CONFIRM_EDIT_GENERATE_ORDER"}
           className={"edit-send-back-modal"}
         />
       )}
       {deleteOrderItemIndex !== null && (
-        <OrderItemDeleteModal
+        <EditSendBackModal
           t={t}
-          handleDeleteOrderItem={handleDeleteOrderItem}
-          deleteOrderItemIndex={deleteOrderItemIndex}
-          setDeleteOrderItemIndex={setDeleteOrderItemIndex}
-        ></OrderItemDeleteModal>
+          handleCancel={() => setDeleteOrderItemIndex(null)}
+          handleSubmit={() => handleDeleteOrderItem(deleteOrderItemIndex)}
+          headerLabel={"GENERATE_ORDER_CONFIRM_DELETE"}
+          saveLabel={"GENERATE_ORDER_CONFIRM_DELETE"}
+          cancelLabel={"GENERATE_ORDER_CANCEL_DELETE"}
+          contentText={"CONFIRM_DELETE_GENERATE_ORDER"}
+          className={"edit-send-back-modal"}
+          submitButtonStyle={{ backgroundColor: "#C7222A" }}
+        />
       )}
       {showAddOrderModal && (
         <AddOrderTypeModal

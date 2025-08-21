@@ -18,7 +18,7 @@ const OrderTypeControlItem = ({
   handleEditOrder,
   setDeleteOrderItemIndex,
   index = null,
-  style = {}
+  style = {},
 }) => {
   return (
     <div style={{ display: "flex", width: "100%", alignItems: "center", ...style }}>
@@ -27,6 +27,7 @@ const OrderTypeControlItem = ({
         t={t}
         type={dropdownType}
         onChange={(e) => {
+          setCompositeOrderIndex(index !== null ? index : 0);
           setOrderType(e);
           setAddOrderModal(true);
         }}
@@ -43,7 +44,7 @@ const OrderTypeControlItem = ({
           styles: { ...orderTypeConfig?.populators?.styles, flex: 1 },
         }}
       />
-      
+
       {/* Edit Button */}
       <Button
         className={"edit-button"}
@@ -59,7 +60,7 @@ const OrderTypeControlItem = ({
         isDisabled={!orderType}
         icon={<EditPencilIcon width="20" height="20" />}
       />
-      
+
       {/* Delete Button */}
       <Button
         className={"delete-button"}

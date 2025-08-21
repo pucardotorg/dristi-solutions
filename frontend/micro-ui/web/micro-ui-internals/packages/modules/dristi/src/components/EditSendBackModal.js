@@ -24,7 +24,17 @@ const CloseBtn = (props) => {
   );
 };
 
-const EditSendBackModal = ({ t, handleCancel, handleSubmit, headerLabel, saveLabel, cancelLabel, contentText, className }) => {
+const EditSendBackModal = ({
+  t,
+  handleCancel,
+  handleSubmit,
+  headerLabel,
+  saveLabel,
+  cancelLabel,
+  contentText,
+  className,
+  submitButtonStyle = { backgroundColor: "#007E7E" },
+}) => {
   return (
     <Modal
       headerBarMain={<Heading label={t(headerLabel)} />}
@@ -32,9 +42,7 @@ const EditSendBackModal = ({ t, handleCancel, handleSubmit, headerLabel, saveLab
       actionSaveLabel={t(saveLabel)}
       actionCancelLabel={t(cancelLabel)}
       actionCancelOnSubmit={handleCancel}
-      style={{
-        backgroundColor: "#007E7E",
-      }}
+      style={submitButtonStyle}
       children={
         <div className={"popup-module-content"} style={{ margin: "16px 0px" }}>
           {t(contentText)}
