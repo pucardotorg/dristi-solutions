@@ -53,4 +53,7 @@ public class WitnessDetails {
 
     @JsonProperty("createdTime")
     private Long createdTime;
+
+    @JsonProperty("uiData")
+    private Object uiData;
 }

@@ -136,5 +136,9 @@ public class CourtCase {
 
     @JsonProperty("advocateStatus")
     private String advocateStatus = null;
+
+    @JsonProperty("witnessDetails")
+    @Valid
+    private List<WitnessDetails> witnessDetails = null;
 }
 
