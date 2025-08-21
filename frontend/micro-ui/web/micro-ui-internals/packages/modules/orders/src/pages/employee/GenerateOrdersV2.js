@@ -69,12 +69,12 @@ import { Urls } from "@egovernments/digit-ui-module-dristi/src/hooks";
 import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { SubmissionWorkflowState } from "../../utils/submissionWorkflow";
 import { getAdvocates, getuuidNameMap } from "../../utils/caseUtils";
-import _ from "lodash";
+import _, { set } from "lodash";
 import useSearchOrdersService from "../../hooks/orders/useSearchOrdersService";
 import { OrderWorkflowAction, OrderWorkflowState } from "../../utils/orderWorkflow";
 import { applicationTypes } from "../../utils/applicationTypes";
 import { HearingWorkflowState } from "../../utils/hearingWorkflow";
-import { ordersService } from "../../hooks/services";
+import { ordersService, taskService } from "../../hooks/services";
 import { getRespondantName, getComplainantName, constructFullName, removeInvalidNameParts, getFormattedName } from "../../utils";
 import {
   channelTypeEnum,
@@ -90,6 +90,11 @@ import {
   prepareUpdatedOrderData,
 } from "../../utils/orderUtils";
 import { addOrderItem, createOrder, deleteOrderItem, getCourtFee } from "../../utils/orderApiCallUtils";
+import OrderReviewModal from "../../pageComponents/OrderReviewModal";
+import OrderSignatureModal from "../../pageComponents/OrderSignatureModal";
+import OrderSucessModal from "../../pageComponents/OrderSucessModal";
+import OrderAddToBulkSuccessModal from "../../pageComponents/OrderAddToBulkSuccessModal";
+import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
 
 const configKeys = {
   SECTION_202_CRPC: configsOrderSection202CRPC,
@@ -133,6 +138,43 @@ const configKeys = {
   MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER: configsMoveCaseOutOfLongPendingRegister,
 };
 
+const stateSlaMap = {
+  SECTION_202_CRPC: 3,
+  MANDATORY_SUBMISSIONS_RESPONSES: 3,
+  EXTENSION_OF_DOCUMENT_SUBMISSION_DATE: 3,
+  REFERRAL_CASE_TO_ADR: 3,
+  SCHEDULE_OF_HEARING_DATE: 3,
+  RESCHEDULE_OF_HEARING_DATE: 3,
+  REJECTION_RESCHEDULE_REQUEST: 3,
+  APPROVAL_RESCHEDULE_REQUEST: 3,
+  INITIATING_RESCHEDULING_OF_HEARING_DATE: 1,
+  ASSIGNING_DATE_RESCHEDULED_HEARING: 3,
+  ASSIGNING_NEW_HEARING_DATE: 3,
+  CASE_TRANSFER_ACCEPT: 3,
+  CASE_TRANSFER_REJECT: 3,
+  SETTLEMENT_ACCEPT: 3,
+  SETTLEMENT_REJECT: 3,
+  SUMMONS: 3,
+  NOTICE: 3,
+  BAIL: 3,
+  WARRANT: 3,
+  PROCLAMATION: 3,
+  ATTACHMENT: 3,
+  WITHDRAWAL_ACCEPT: 3,
+  WITHDRAWAL_REJECT: 3,
+  OTHERS: 3,
+  APPROVE_VOLUNTARY_SUBMISSIONS: 3,
+  REJECT_VOLUNTARY_SUBMISSIONS: 3,
+  REJECT_BAIL: 3,
+  ACCEPT_BAIL: 3,
+  SET_BAIL_TERMS: 3,
+  JUDGEMENT: 3,
+  CHECKOUT_ACCEPTANCE: 1,
+  CHECKOUT_REJECT: 1,
+};
+
+const dayInMillisecond = 24 * 3600 * 1000;
+
 const GenerateOrdersV2 = () => {
   const { t } = useTranslation();
   const history = useHistory();
@@ -174,6 +216,7 @@ const GenerateOrdersV2 = () => {
   const [showBailBondModal, setShowBailBondModal] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [addOrderTypeLoader, setAddOrderTypeLoader] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const judgeName = localStorage.getItem("judgeName");
   const [signedDoucumentUploadedID, setSignedDocumentUploadID] = useState("");
   const [fileStoreIds, setFileStoreIds] = useState(new Set()); // TODO: need to check usage
@@ -181,6 +224,19 @@ const GenerateOrdersV2 = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [prevOrder, setPrevOrder] = useState();
   const [deleteOrderItemIndex, setDeleteOrderItemIndex] = useState(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [showsignatureModal, setShowsignatureModal] = useState(null);
+  const [showBulkModal, setShowBulkModal] = useState(false);
+  const [currentPublishedOrder, setCurrentPublishedOrder] = useState(null);
+  const canESign = roles?.some((role) => role.code === "ORDER_ESIGN");
+  const canSaveSignLater = roles?.some((role) => role.code === "ORDER_APPROVER");
+  const currentDiaryEntry = history.location?.state?.diaryEntry;
+  const [businessOfTheDay, setBusinessOfTheDay] = useState(null);
+  const toast = useToast();
+  const { downloadPdf } = Digit.Hooks.dristi.useDownloadCasePdf();
+  const userInfoType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo]);
+  const [createdSummon, setCreatedSummon] = useState(null);
+  const [createdNotice, setCreatedNotice] = useState(null);
 
   const fetchCaseDetails = async () => {
     try {
@@ -610,6 +666,60 @@ const GenerateOrdersV2 = () => {
   }, [showErrorToast]);
 
   useEffect(() => {
+    const isSignSuccess = sessionStorage.getItem("esignProcess");
+    const savedOrderPdf = sessionStorage.getItem("orderPDF");
+    if (isSignSuccess) {
+      setShowsignatureModal(true);
+      setOrderPdfFileStoreID(savedOrderPdf);
+    }
+  }, [orderNumber]);
+
+  useEffect(() => {
+    if (showsignatureModal) {
+      const cleanupTimer = setTimeout(() => {
+        sessionStorage.removeItem("esignProcess");
+        sessionStorage.removeItem("orderPDF");
+        sessionStorage.removeItem("currentSelectedOrder");
+      }, 2000);
+
+      return () => clearTimeout(cleanupTimer);
+    }
+  }, [showsignatureModal]);
+
+  useEffect(() => {
+    const getOrder = async () => {
+      try {
+        const response = await DRISTIService.searchOrders(
+          {
+            criteria: {
+              filingNumber: filingNumber,
+              orderNumber: orderNumber,
+              status: "PUBLISHED",
+              ...(caseCourtId && { courtId: caseCourtId }),
+            },
+            tenantId,
+          },
+          { tenantId: tenantId }
+        );
+
+        const order = response?.list?.[0];
+
+        if (order) {
+          setCurrentPublishedOrder(order);
+          setBusinessOfTheDay(currentDiaryEntry?.businessOfDay);
+          setShowReviewModal(true);
+        }
+      } catch (error) {
+        console.error("Error fetching order:", error);
+      }
+    };
+
+    if (orderNumber && currentDiaryEntry) {
+      getOrder();
+    }
+  }, [currentDiaryEntry, filingNumber, orderNumber, tenantId, caseCourtId]);
+
+  useEffect(() => {
     const isBailBondPendingTaskPresent = async () => {
       try {
         const bailBondPendingTask = await HomeService.getPendingTaskService(
@@ -966,6 +1076,62 @@ const GenerateOrdersV2 = () => {
     t,
     groupedWarrantOptions,
   ]);
+
+  const successModalActionSaveLabel = useMemo(() => {
+    if (
+      (prevOrder?.orderCategory === "COMPOSITE"
+        ? prevOrder?.compositeItems?.some((item) => item?.orderType === "RESCHEDULE_OF_HEARING_DATE")
+        : prevOrder?.orderType === "RESCHEDULE_OF_HEARING_DATE" ||
+          (currentOrder?.orderCategory === "COMPOSITE"
+            ? currentOrder?.compositeItems?.some(
+                (item) =>
+                  item?.orderType === "SCHEDULE_OF_HEARING_DATE" &&
+                  item?.orderSchema?.additionalDetails?.formdata?.namesOfPartiesRequired?.some((data) => data?.partyType?.includes("respondent"))
+              )
+            : currentOrder?.orderType === "SCHEDULE_OF_HEARING_DATE" &&
+              currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.some((data) => data?.partyType?.includes("respondent")))) &&
+      isCaseAdmitted
+    ) {
+      if (
+        currentOrder?.orderCategory === "COMPOSITE"
+          ? currentOrder?.compositeItems?.some((item) => item?.orderSchema?.additionalDetails?.isReIssueNotice)
+          : currentOrder?.additionalDetails?.isReIssueNotice
+      ) {
+        return t("ISSUE_NOTICE_BUTTON");
+      }
+      return t("ISSUE_SUMMONS_BUTTON");
+    } else if (
+      prevOrder?.orderCategory === "COMPOSITE"
+        ? prevOrder?.compositeItems?.some((item) => item?.orderType === "RESCHEDULE_OF_HEARING_DATE")
+        : prevOrder?.orderType === "RESCHEDULE_OF_HEARING_DATE" ||
+          ((prevOrder?.orderCategory === "COMPOSITE"
+            ? prevOrder?.compositeItems?.some((item) => item?.orderType === "SCHEDULE_OF_HEARING_DATE")
+            : prevOrder?.orderType === "SCHEDULE_OF_HEARING_DATE") &&
+            !isCaseAdmitted)
+    ) {
+      return t("ISSUE_NOTICE_BUTTON");
+    }
+    return t("CS_COMMON_CLOSE");
+  }, [currentOrder, prevOrder?.orderType, t, isCaseAdmitted]);
+
+  const extractedHearingDate = useMemo(() => {
+    if (currentOrder?.orderCategory === "INTERMEDIATE") {
+      // check and add condition for ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes orderType if its needed,
+      // and take "newHearingDate" value
+      return currentOrder?.additionalDetails?.formdata?.hearingDate;
+    } else {
+      let updatedHearingDate = "";
+      // check and add condition for ["RESCHEDULE_OF_HEARING_DATE", "CHECKOUT_ACCEPTANCE"].includes orderType if its needed,
+      // and take "newHearingDate" value
+      const scheduleHearingOrderItem = currentOrder?.compositeItems?.find(
+        (item) => item?.isEnabled && item?.orderType === "SCHEDULE_OF_HEARING_DATE"
+      );
+      if (scheduleHearingOrderItem) {
+        updatedHearingDate = scheduleHearingOrderItem?.orderSchema?.additionalDetails?.formdata?.hearingDate;
+      }
+      return updatedHearingDate;
+    }
+  }, [currentOrder]);
 
   const getDefaultValue = useCallback(
     (index) => {
@@ -1871,13 +2037,9 @@ const GenerateOrdersV2 = () => {
     }
   };
 
-  const handleAddOrder = async (orderFormData, compOrderIndex) => {
+  const handleSaveDraft = async (updatedOrderData) => {
     try {
-      if (checkValidation(t, orderFormData, compOrderIndex, setFormErrors, setShowErrorToast)) {
-        return;
-      }
-      setAddOrderTypeLoader(true);
-      const updatedOrderData = prepareUpdatedOrderData(currentOrder, orderFormData, compOrderIndex);
+      setIsLoading(true);
       let updatedOrder;
       let updateOrderResponse = {};
       if (updatedOrderData?.orderCategory === "INTERMEDIATE") {
@@ -1917,6 +2079,23 @@ const GenerateOrdersV2 = () => {
           }
         }
       }
+      return updateOrderResponse;
+    } catch (error) {
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAddOrder = async (orderFormData, compOrderIndex) => {
+    try {
+      if (checkValidation(t, orderFormData, compOrderIndex, setFormErrors, setShowErrorToast)) {
+        return;
+      }
+      setAddOrderTypeLoader(true);
+      const updatedOrderData = prepareUpdatedOrderData(currentOrder, orderFormData, compOrderIndex);
+      const updateOrderResponse = await handleSaveDraft(updatedOrderData);
       setCurrentOrder(updateOrderResponse?.order);
       setAddOrderTypeLoader(false);
       setAddOrderModal(false);
@@ -1933,6 +2112,164 @@ const GenerateOrdersV2 = () => {
       console.error("Error while saving draft:", error);
       setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
       setAddOrderTypeLoader(false);
+    }
+  };
+
+  const handleReviewOrderClick = async () => {
+    const items = structuredClone(currentOrder?.orderCategory === "INTERMEDIATE" ? [currentOrder] : currentOrder?.compositeItems);
+    let hasError = false;
+    for (let index = 0; index < items?.length; index++) {
+      const item = items[index];
+
+      if (currentOrder?.orderCategory === "INTERMEDIATE" || item?.isEnabled) {
+        const additionalDetails =
+          currentOrder?.orderCategory === "INTERMEDIATE"
+            ? currentOrder?.additionalDetails
+            : currentOrder?.compositeItems?.[index]?.orderSchema?.additionalDetails;
+        const formData = additionalDetails?.formdata;
+        const orderType = item?.orderType;
+        const newApplicationDetails = applicationData?.applicationList?.find(
+          (application) => application?.applicationNumber === formData?.refApplicationId
+        );
+
+        if (["APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE"].includes(orderType)) {
+          // we will check if for the current referenceid, if an order is already published for a
+          // previous profile request(check by dateofApplication) -> then  don't allow another oorder get published.
+          const isPublished = publishedLitigantDetailsChangeOrders?.some((order) => {
+            const itemAdditionalDetails =
+              order?.orderCategory === "INTERMEDIATE"
+                ? order?.additionalDetails
+                : order?.compositeItems?.find((item) => item?.orderSchema?.orderType === "APPROVAL_REJECTION_LITIGANT_DETAILS_CHANGE")?.orderSchema
+                    ?.additionalDetails;
+            if (
+              itemAdditionalDetails?.dateOfApplication === additionalDetails?.dateOfApplication &&
+              itemAdditionalDetails?.pendingTaskRefId === additionalDetails?.pendingTaskRefId
+            ) {
+              return true;
+            }
+            return false;
+          });
+          if (isPublished) {
+            setShowErrorToast({
+              label: t("AN_ORDER_HAS_ALREADY_BEEN_PUBLISHED_FOR_THIS_PROFILE_EDIT_REQUEST"),
+              error: true,
+            });
+            hasError = true;
+            break;
+          }
+        }
+
+        if ("ADVOCATE_REPLACEMENT_APPROVAL" === orderType) {
+          const taskSearch = await taskService?.searchTask({
+            criteria: {
+              tenantId: tenantId,
+              taskNumber: additionalDetails?.taskNumber,
+              ...(caseDetails?.courtId && { courtId: caseDetails?.courtId }),
+            },
+          });
+          if (["APPROVED", "REJECTED"].includes(taskSearch?.list?.[0]?.status)) {
+            setShowErrorToast({
+              label: t("AN_ORDER_HAS_ALREADY_BEEN_PUBLISHED_FOR_THIS_ADVOCATE_REPLACEMENT_REQUEST"),
+              error: true,
+            });
+            hasError = true;
+            break;
+          }
+        }
+
+        if (
+          formData?.refApplicationId &&
+          "ACCEPTANCE_REJECTION_DCA" === orderType &&
+          [SubmissionWorkflowState.COMPLETED, SubmissionWorkflowState.REJECTED].includes(newApplicationDetails?.status)
+        ) {
+          setShowErrorToast({
+            label:
+              newApplicationDetails?.status === SubmissionWorkflowState.COMPLETED ? t("DCA_APPLICATION_ACCEPTED") : t("DCA_APPLICATION_REJECTED"),
+            error: true,
+          });
+          hasError = true;
+          break;
+        }
+
+        if (["TAKE_COGNIZANCE", "DISMISS_CASE"].includes(orderType) && ["CASE_DISMISSED", "CASE_ADMITTED"].includes(caseDetails?.status)) {
+          setShowErrorToast({
+            label: "CASE_ADMITTED" === caseDetails?.status ? t("CASE_ALREADY_ADMITTED") : t("CASE_ALREADY_REJECTED"),
+            error: true,
+          });
+          hasError = true;
+          break;
+        }
+
+        if (["SCHEDULE_OF_HEARING_DATE"].includes(orderType) && (isHearingScheduled || isHearingInProgress || isHearingOptout)) {
+          setShowErrorToast({
+            label: isHearingScheduled
+              ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE")
+              : isHearingInProgress
+              ? t("HEARING_IS_ALREADY_IN_PROGRESS_FOR_THIS_CASE")
+              : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
+            error: true,
+          });
+          hasError = true;
+          break;
+        }
+
+        if (["SCHEDULING_NEXT_HEARING"].includes(orderType) && (isHearingScheduled || isHearingOptout)) {
+          setShowErrorToast({
+            label: isHearingScheduled ? t("HEARING_IS_ALREADY_SCHEDULED_FOR_THIS_CASE") : t("CURRENTLY_A_HEARING_IS_IN_OPTOUT_STATE"),
+            error: true,
+          });
+          hasError = true;
+          break;
+        }
+
+        if (["INITIATING_RESCHEDULING_OF_HEARING_DATE"].includes(orderType) && !isHearingScheduled) {
+          setShowErrorToast({
+            label: t("CURRENTLY_NO_HEARING_IS_IN_SCHEDULED_STATE"),
+            error: true,
+          });
+          hasError = true;
+          break;
+        }
+
+        if (["ASSIGNING_DATE_RESCHEDULED_HEARING"].includes(orderType) && !isHearingOptout) {
+          setShowErrorToast({
+            label: t("CURRENTLY_NO_HEARING_IS_IN_OPTOUT_STATE"),
+            error: true,
+          });
+          hasError = true;
+          break;
+        }
+
+        if (
+          formData?.refApplicationId &&
+          ![SubmissionWorkflowState.PENDINGAPPROVAL, SubmissionWorkflowState.PENDINGREVIEW].includes(newApplicationDetails?.status)
+        ) {
+          setShowErrorToast({
+            label:
+              SubmissionWorkflowState.COMPLETED === newApplicationDetails?.status
+                ? t("SUBMISSION_ALREADY_ACCEPTED")
+                : SubmissionWorkflowState.REJECTED === newApplicationDetails?.status
+                ? t("SUBMISSION_ALREADY_REJECTED")
+                : t("SUBMISSION_NO_LONGER_VALID"),
+            error: true,
+          });
+          setShowReviewModal(false);
+          setShowsignatureModal(false);
+          hasError = true;
+          break;
+        }
+      }
+    }
+
+    if (!hasError) {
+      try {
+        await handleSaveDraft(currentOrder);
+        setShowReviewModal(true);
+      } catch (error) {
+        setShowErrorToast({ label: t("ERROR_CREATING_ORDER"), error: true });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -2112,7 +2449,293 @@ const GenerateOrdersV2 = () => {
     setDeleteOrderItemIndex(null);
   };
 
-  if (isCaseDetailsLoading || isHearingFetching || bailBondLoading || isOrderTypeLoading) {
+  const handleUpdateBusinessOfDayEntry = async () => {
+    try {
+      await DRISTIService.aDiaryEntryUpdate(
+        {
+          diaryEntry: {
+            ...currentDiaryEntry,
+            businessOfDay: businessOfTheDay,
+          },
+        },
+        {}
+      ).then(async () => {
+        history.goBack();
+      });
+    } catch (error) {
+      console.error("error: ", error);
+      toast.error(t("SOMETHING_WENT_WRONG"));
+    }
+  };
+
+  const handleReviewGoBack = () => {
+    if (currentDiaryEntry) {
+      history.goBack();
+    } else {
+      setShowReviewModal(false);
+    }
+  };
+
+  const processHandleIssueOrder = async () => {
+    setIsLoading(true);
+    try {
+      await updateOrder(
+        {
+          ...currentOrder,
+          additionalDetails: {
+            ...currentOrder?.additionalDetails,
+            businessOfTheDay: businessOfTheDay,
+          },
+        },
+        OrderWorkflowAction.ESIGN
+      );
+    } catch (error) {
+      console.error("Error in processHandleIssueOrder:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoBackSignatureModal = () => {
+    sessionStorage.removeItem("fileStoreId");
+    sessionStorage.removeItem("businessOfTheDay");
+    setShowsignatureModal(false);
+    setShowReviewModal(true);
+  };
+
+  const handleDownloadOrders = () => {
+    const fileStoreId = sessionStorage.getItem("fileStoreId");
+    downloadPdf(tenantId, signedDoucumentUploadedID || fileStoreId);
+  };
+
+  const handleBulkDownloadOrder = () => {
+    const fileStoreId = prevOrder?.documents?.find((doc) => doc?.documentType === "UNSIGNED")?.fileStore;
+    downloadPdf(tenantId, fileStoreId);
+  };
+
+  const handleBulkCloseSuccessModal = () => {
+    setShowBulkModal(false);
+    history.replace(`/${window.contextPath}/${userInfoType}/home/bulk-esign-order`);
+  };
+
+  const createPendingTask = async ({ order, createTask = false, taskStatus = "CREATE_SUBMISSION", taskName = "", orderEntityType = null }) => {
+    let create = createTask;
+    let name = taskName;
+    let assignees = [];
+    let referenceId = order?.orderNumber;
+    let assignedRole = [];
+    let additionalDetails = {};
+    let entityType = orderEntityType;
+    let status = taskStatus;
+
+    create &&
+      (await ordersService.customApiService(Urls.orders.pendingTask, {
+        pendingTask: {
+          name,
+          entityType,
+          referenceId: `MANUAL_${referenceId}`,
+          status,
+          assignedTo: assignees,
+          assignedRole,
+          cnrNumber: cnrNumber,
+          filingNumber: filingNumber,
+          caseId: caseDetails?.id,
+          caseTitle: caseDetails?.caseTitle,
+          isCompleted: false,
+          stateSla: stateSlaMap?.[order?.orderType] * dayInMillisecond + todayDate,
+          additionalDetails: additionalDetails,
+          tenantId,
+        },
+      }));
+    return;
+  };
+
+  const handleIssueSummons = async (hearingDate, hearingNumber) => {
+    try {
+      const orderbody = {
+        createdDate: null,
+        tenantId,
+        cnrNumber,
+        filingNumber,
+        statuteSection: {
+          tenantId,
+        },
+        orderTitle: "SUMMONS",
+        orderCategory: "INTERMEDIATE",
+        orderType: "SUMMONS",
+        status: "",
+        isActive: true,
+        workflow: {
+          action: OrderWorkflowAction.SAVE_DRAFT,
+          comments: "Creating order",
+          assignes: null,
+          rating: null,
+          documents: [{}],
+        },
+        documents: [],
+        ...(hearingNumber && { hearingNumber }),
+        additionalDetails: {
+          formdata: {
+            orderType: {
+              code: "SUMMONS",
+              type: "SUMMONS",
+              name: "ORDER_TYPE_SUMMONS",
+            },
+            hearingDate,
+          },
+        },
+      };
+
+      const summonsArray =
+        currentOrder?.orderCategory === "COMPOSITE"
+          ? currentOrder?.compositeItems?.some((item) => item?.orderSchema?.additionalDetails?.isReIssueSummons)
+          : currentOrder?.additionalDetails?.isReIssueSummons
+          ? [{}]
+          : currentOrder?.orderCategory === "COMPOSITE"
+          ? currentOrder.compositeItems
+              .map((item) =>
+                (item?.orderSchema?.additionalDetails?.formdata?.namesOfPartiesRequired || []).filter((data) => data?.partyType === "respondent")
+              )
+              .flat()
+          : currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.filter((data) => data?.partyType === "respondent");
+      const promiseList = summonsArray?.map((data) =>
+        ordersService.createOrder(
+          {
+            order: {
+              ...orderbody,
+              additionalDetails: {
+                ...orderbody?.additionalDetails,
+                selectedParty: data,
+              },
+            },
+          },
+          { tenantId }
+        )
+      );
+      const resList = await Promise.all(promiseList);
+      setCreatedSummon(resList[0]?.order?.orderNumber);
+      await Promise.all(
+        resList.forEach((res) =>
+          createPendingTask({
+            order: res?.order,
+            createTask: true,
+            taskStatus: "DRAFT_IN_PROGRESS",
+            taskName: t("DRAFT_IN_PROGRESS_ISSUE_SUMMONS"),
+            orderEntityType: "order-default",
+          })
+        )
+      );
+    } catch (error) {}
+  };
+
+  const handleIssueNotice = async (hearingDate, hearingNumber) => {
+    try {
+      const orderbody = {
+        createdDate: null,
+        tenantId,
+        cnrNumber,
+        filingNumber,
+        statuteSection: {
+          tenantId,
+        },
+        orderTitle: "NOTICE",
+        orderCategory: "INTERMEDIATE",
+        orderType: "NOTICE",
+        status: "",
+        isActive: true,
+        workflow: {
+          action: OrderWorkflowAction.SAVE_DRAFT,
+          comments: "Creating order",
+          assignes: null,
+          rating: null,
+          documents: [{}],
+        },
+        documents: [],
+        ...(hearingNumber && { hearingNumber }),
+        additionalDetails: {
+          formdata: {
+            orderType: {
+              code: "NOTICE",
+              type: "NOTICE",
+              name: "ORDER_TYPE_NOTICE",
+            },
+            hearingDate,
+          },
+        },
+      };
+
+      const summonsArray =
+        currentOrder?.orderCategory === "COMPOSITE"
+          ? currentOrder?.compositeItems?.some((item) => item?.orderSchema?.additionalDetails?.isReIssueSummons)
+          : currentOrder?.additionalDetails?.isReIssueSummons
+          ? [{}]
+          : currentOrder?.orderCategory === "COMPOSITE"
+          ? currentOrder.compositeItems
+              .map((item) =>
+                (item?.orderSchema?.additionalDetails?.formdata?.namesOfPartiesRequired || []).filter((data) => data?.partyType === "respondent")
+              )
+              .flat()
+          : currentOrder?.additionalDetails?.formdata?.namesOfPartiesRequired?.filter((data) => data?.partyType === "respondent");
+
+      const promiseList = summonsArray?.map((data) =>
+        ordersService.createOrder(
+          {
+            order: {
+              ...orderbody,
+              additionalDetails: {
+                ...orderbody?.additionalDetails,
+                selectedParty: data,
+              },
+            },
+          },
+          { tenantId }
+        )
+      );
+
+      const resList = await Promise.all(promiseList);
+      setCreatedNotice(resList[0]?.order?.orderNumber);
+      await Promise.all(
+        resList.forEach((res) =>
+          createPendingTask({
+            order: res?.order,
+            createTask: true,
+            taskStatus: "DRAFT_IN_PROGRESS",
+            taskName: t("DRAFT_IN_PROGRESS_ISSUE_NOTICE"),
+            orderEntityType: "order-default",
+          })
+        )
+      );
+    } catch (error) {}
+  };
+
+  const handleClose = async () => {
+    sessionStorage.removeItem("fileStoreId");
+    if (successModalActionSaveLabel === t("CS_COMMON_CLOSE")) {
+      setShowSuccessModal(false);
+      history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
+        from: "orderSuccessModal",
+      });
+      return;
+    }
+    if (successModalActionSaveLabel === t("ISSUE_SUMMONS_BUTTON")) {
+      await handleIssueSummons(extractedHearingDate, hearingId || hearingNumber);
+      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${createdSummon}`);
+    }
+    if (successModalActionSaveLabel === t("ISSUE_NOTICE_BUTTON")) {
+      await handleIssueNotice(extractedHearingDate, hearingId || hearingNumber);
+      history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${filingNumber}&orderNumber=${createdNotice}`);
+    }
+  };
+
+  const handleCloseSuccessModal = () => {
+    sessionStorage.removeItem("fileStoreId");
+    setShowSuccessModal(false);
+    history.push(`/${window.contextPath}/employee/dristi/home/view-case?tab=${"Orders"}&caseId=${caseDetails?.id}&filingNumber=${filingNumber}`, {
+      from: "orderSuccessModal",
+    });
+  };
+
+  if (isLoading || isCaseDetailsLoading || isHearingFetching || bailBondLoading || isOrderTypeLoading) {
     return <Loader />;
   }
 
@@ -2369,9 +2992,9 @@ const GenerateOrdersV2 = () => {
             <Button
               label={t("SAVE_AS_DRAFT")}
               variation={"secondary"}
-              // onButtonClick={() => {
-              //   setEditCaseModal(true);
-              // }}
+              onButtonClick={() => {
+                handleSaveDraft(currentOrder);
+              }}
               style={{ boxShadow: "none", backgroundColor: "#fff", padding: "10px", width: "240px", marginRight: "20px" }}
               textStyles={{
                 fontFamily: "Roboto",
@@ -2382,17 +3005,7 @@ const GenerateOrdersV2 = () => {
                 color: "#007E7E",
               }}
             />
-            <SubmitBar
-              label={t("PREVIEW_ORDER_PDF")}
-              // disabled={
-              //   Object.keys(!modeOfPayment ? {} : modeOfPayment).length === 0 ||
-              //   (["CHEQUE", "DD"].includes(modeOfPayment?.code) ? additionDetails.length !== 6 : false) ||
-              //   isDisabled
-              // }
-              // onSubmit={() => {
-              //   onSubmitCase();
-              // }}
-            />
+            <SubmitBar label={t("PREVIEW_ORDER_PDF")} onSubmit={handleReviewOrderClick} />
           </div>
         </ActionBar>
       </div>
@@ -2456,6 +3069,55 @@ const GenerateOrdersV2 = () => {
         >
           <div style={{ margin: "16px 16px" }}>{t("CREATE_BAIL_BOND_TASK_TEXT")}</div>
         </Modal>
+      )}
+      {showReviewModal && (
+        <OrderReviewModal
+          t={t}
+          order={currentPublishedOrder || currentOrder}
+          setShowReviewModal={setShowReviewModal}
+          setShowsignatureModal={setShowsignatureModal}
+          setOrderPdfFileStoreID={setOrderPdfFileStoreID}
+          showActions={canESign && !currentDiaryEntry}
+          saveSignLater={canSaveSignLater}
+          setBusinessOfTheDay={setBusinessOfTheDay}
+          currentDiaryEntry={currentDiaryEntry}
+          handleUpdateBusinessOfDayEntry={handleUpdateBusinessOfDayEntry}
+          handleReviewGoBack={handleReviewGoBack}
+          businessOfDay={businessOfTheDay}
+          updateOrder={updateOrder}
+          setShowBulkModal={setShowBulkModal}
+          courtId={caseCourtId}
+        />
+      )}
+      {showsignatureModal && (
+        <OrderSignatureModal
+          t={t}
+          order={currentOrder}
+          handleIssueOrder={processHandleIssueOrder}
+          handleGoBackSignatureModal={handleGoBackSignatureModal}
+          setSignedDocumentUploadID={setSignedDocumentUploadID}
+          orderPdfFileStoreID={orderPdfFileStoreID}
+          saveOnsubmitLabel={"ISSUE_ORDER"}
+          businessOfDay={businessOfTheDay}
+        />
+      )}
+      {showSuccessModal && (
+        <OrderSucessModal
+          t={t}
+          order={prevOrder}
+          handleDownloadOrders={handleDownloadOrders}
+          handleClose={handleClose}
+          handleCloseSuccessModal={handleCloseSuccessModal}
+          actionSaveLabel={successModalActionSaveLabel}
+        />
+      )}
+      {showBulkModal && (
+        <OrderAddToBulkSuccessModal
+          t={t}
+          order={currentOrder}
+          handleDownloadOrders={handleBulkDownloadOrder}
+          handleCloseSuccessModal={handleBulkCloseSuccessModal}
+        ></OrderAddToBulkSuccessModal>
       )}
       {showErrorToast && <Toast error={showErrorToast?.error} label={showErrorToast?.label} isDleteBtn={true} onClose={closeToast} />}
     </React.Fragment>
