@@ -11,7 +11,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.pucar.dristi.config.ServiceConstants.CASE_ADMIT_STATUS;
+import static org.pucar.dristi.config.ServiceConstants.ADMIT_CASE_WORKFLOW_ACTION;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -226,7 +226,7 @@ class CaseRegistrationEnrichmentTest {
         courtCase.setFilingNumber("2022-12345");
         courtCase.setCourtId("KLKM52");
         WorkflowObject workflow = new WorkflowObject();
-        workflow.setAction(CASE_ADMIT_STATUS);
+        workflow.setAction(ADMIT_CASE_WORKFLOW_ACTION);
         courtCase.setWorkflow(workflow);
         caseRequest.setCases(courtCase);
         when(idgenUtil.getIdList(any(), any(), any(), any(), any(),any())).thenReturn(Collections.singletonList("12345"));
