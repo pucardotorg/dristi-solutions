@@ -742,6 +742,7 @@ public class OpenApiServiceTest {
 
         // If your code uses config.getZoneId() elsewhere, mock it as well
         when(configuration.getZoneId()).thenReturn("Asia/Kolkata");
+        when(configuration.getAllowedCaseStatuses()).thenReturn(expectedStatuses);
 
         // Act
         openApiService.getLandingPageCaseList("tenantId", request);
