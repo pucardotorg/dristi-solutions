@@ -1632,6 +1632,7 @@ public class CaseServiceTest {
         witnessDetails.setFirstName("John");
         witnessDetails.setLastName("Doe");
         witnessDetails.setMiddleName("Smith");
+        witnessDetails.setUniqueId("witness-001");
         
         return WitnessDetailsRequest.builder()
                 .requestInfo(requestInfo)
