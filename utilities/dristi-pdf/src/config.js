@@ -201,9 +201,9 @@ module.exports = {
     order_issue_proclamation:
       process.env.ORDER_ISSUE_PROCLAMATION || "order-issue-proclamation",
     order_issue_attachment_qr:
-        process.env.ORDER_ISSUE_ATTACHMENT_QR || "order-issue-attachment-qr",
+      process.env.ORDER_ISSUE_ATTACHMENT_QR || "order-issue-attachment-qr",
     order_issue_attachment:
-        process.env.ORDER_ISSUE_ATTACHMENT || "order-issue-attachment",
+      process.env.ORDER_ISSUE_ATTACHMENT || "order-issue-attachment",
     order_case_withdrawal_acceptance_qr:
       process.env.ORDER_CASE_WITHDRAWAL_ACCEPTANCE_QR ||
       "order-case-withdrawal-acceptance-qr",
@@ -296,6 +296,9 @@ module.exports = {
     evidence: process.env.EVIDENCE || "evidence",
     poa_claim: process.env.POA_CLAIM || "application-poa-change",
     poa_claim_qr: process.env.POA_CLAIM_QR || "application-poa-change-qr",
+    new_order_generic: process.env.NEW_ORDER_GENERIC || "new-order-generic",
+    new_order_generic_qr:
+      process.env.NEW_ORDER_GENERIC_QR || "new-order-generic-qr",
   },
 
   app: {
