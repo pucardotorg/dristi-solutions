@@ -376,7 +376,24 @@ public class OpenApiService {
                 moduleSearchCriteria.put("caseSubStage", filterCriteria.getCaseSubStage());
             }
             if (filterCriteria.getCaseStatus() != null) {
-                moduleSearchCriteria.put("caseStatus", filterCriteria.getCaseStatus());
+                String caseStatus = filterCriteria.getCaseStatus();
+
+                if (DISPOSED.equalsIgnoreCase(caseStatus)) {
+                    List<String> outcomes = Arrays.asList(
+                            "DISMISSED",
+                            "ALLOWED",
+                            "PARTIALLYALLOWED",
+                            "CONVICTED",
+                            "PARTIALLYCONVICTED",
+                            "ABATED",
+                            "WITHDRAWN",
+                            "SETTLED",
+                            "TRANSFERRED"
+                    );
+                    moduleSearchCriteria.put("outcome", outcomes);
+                } else if (PENDING.equalsIgnoreCase(caseStatus)) {
+                    moduleSearchCriteria.put("outcome", null);
+                }
             }
             if (filterCriteria.getYearOfFiling() != null) {
                 moduleSearchCriteria.put("yearOfFiling", filterCriteria.getYearOfFiling());
@@ -384,6 +401,22 @@ public class OpenApiService {
             if(filterCriteria.getCaseTitle() != null) {
                 moduleSearchCriteria.put("caseTitle", filterCriteria.getCaseTitle());
             }
+
+            List<String> allowedCaseStatuses = Arrays.asList(
+                    "UNDER_SCRUTINY",
+                    "PENDING_REGISTRATION",
+                    "CASE_REASSIGNED",
+                    "PENDING_RE_E-SIGN",
+                    "PENDING_RE_SIGN",
+                    "PENDING_NOTICE",
+                    "PENDING_RESPONSE",
+                    "PENDING_ADMISSION",
+                    "CASE_ADMITTED",
+                    "CASE_DISMISSED",
+                    "RE_PENDING_PAYMENT"
+            );
+
+            moduleSearchCriteria.put("caseStatus", allowedCaseStatuses);
         }
 
         InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()

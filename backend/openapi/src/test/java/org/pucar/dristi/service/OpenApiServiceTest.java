@@ -706,7 +706,7 @@ public class OpenApiServiceTest {
 
     // --- For all the following tests, provide a valid ALL criteria ---
     @Test
-    void buildInboxRequest_HandlesFilterCriteria() {
+    void    buildInboxRequest_HandlesFilterCriteria() {
         FilterCriteria filterCriteria = new FilterCriteria();
         filterCriteria.setCourtName("Supreme Court");
         filterCriteria.setCaseType("Criminal");
@@ -716,6 +716,19 @@ public class OpenApiServiceTest {
         filterCriteria.setCaseStatus("Active");
         filterCriteria.setYearOfFiling("2022");
         filterCriteria.setCaseTitle("Test1 vs Test2");
+        List<String> expectedStatuses = Arrays.asList(
+                "UNDER_SCRUTINY",
+                "PENDING_REGISTRATION",
+                "CASE_REASSIGNED",
+                "PENDING_RE_E-SIGN",
+                "PENDING_RE_SIGN",
+                "PENDING_NOTICE",
+                "PENDING_RESPONSE",
+                "PENDING_ADMISSION",
+                "CASE_ADMITTED",
+                "CASE_DISMISSED",
+                "RE_PENDING_PAYMENT"
+        );
 
         LandingPageCaseListRequest request = new LandingPageCaseListRequest();
         request.setFilterCriteria(filterCriteria);
@@ -743,7 +756,7 @@ public class OpenApiServiceTest {
         assertEquals("1672501800000", moduleCriteria.get("hearingDateFrom"));
         assertEquals("1704047399999", moduleCriteria.get("hearingDateTo"));
         assertEquals("Appearance", moduleCriteria.get("caseSubStage"));
-        assertEquals("Active", moduleCriteria.get("caseStatus"));
+        assertEquals(expectedStatuses, moduleCriteria.get("caseStatus"));
         assertEquals("2022", moduleCriteria.get("yearOfFiling"));
         assertEquals("Test1 vs Test2", moduleCriteria.get("caseTitle"));
         assertEquals("tenantId", moduleCriteria.get("tenantId"));
