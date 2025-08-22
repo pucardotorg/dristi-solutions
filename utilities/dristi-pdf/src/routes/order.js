@@ -13,7 +13,7 @@ const {
 } = require("../utils/orderUtils");
 
 const { getCourtAndJudgeDetails } = require("../utils/commonUtils");
-const {logger} = require("../logger");
+const { logger } = require("../logger");
 
 router.post(
   "",
@@ -23,6 +23,7 @@ router.post(
     const requestInfo = req.body.RequestInfo;
     const orderId = req.query.orderId;
     const courtId = req.query.courtId;
+    const orderPreviewKey = req.query.orderPreviewKey;
 
     // Set qrCode to false if it is undefined, null, or empty
     if (!qrCode) {
@@ -52,25 +53,7 @@ router.post(
         requestInfo
       );
 
-      if (order?.orderCategory === "COMPOSITE") {
-        await handleCompositePDF(
-          req,
-          res,
-          qrCode,
-          order,
-          courtCaseJudgeDetails
-        );
-      } else {
-        const applicationStatus = applicationStatusType(
-          order?.additionalDetails?.applicationStatus
-        );
-        const orderType = order?.orderType;
-        logger.info("orderType", orderType);
-        const orderPreviewKey =
-          OrderPreviewOrderTypeMap[
-            orderPDFMap?.[orderType]?.[applicationStatus] || orderType
-          ];
-        logger.info("orderPreviewKey", orderPreviewKey);
+      if (orderPreviewKey) {
         await processOrder(
           req,
           res,
@@ -79,6 +62,35 @@ router.post(
           orderPreviewKey,
           courtCaseJudgeDetails
         );
+      } else {
+        if (order?.orderCategory === "COMPOSITE") {
+          await handleCompositePDF(
+            req,
+            res,
+            qrCode,
+            order,
+            courtCaseJudgeDetails
+          );
+        } else {
+          const applicationStatus = applicationStatusType(
+            order?.additionalDetails?.applicationStatus
+          );
+          const orderType = order?.orderType;
+          logger.info("orderType", orderType);
+          const orderPreviewKey =
+            OrderPreviewOrderTypeMap[
+              orderPDFMap?.[orderType]?.[applicationStatus] || orderType
+            ];
+          logger.info("orderPreviewKey", orderPreviewKey);
+          await processOrder(
+            req,
+            res,
+            qrCode,
+            order,
+            orderPreviewKey,
+            courtCaseJudgeDetails
+          );
+        }
       }
     } catch (error) {
       renderError(
