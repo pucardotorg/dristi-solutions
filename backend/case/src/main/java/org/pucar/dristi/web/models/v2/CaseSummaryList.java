@@ -68,4 +68,10 @@ public class CaseSummaryList {
 
     @JsonProperty("advocateStatus")
     private String advocateStatus;
+
+    @JsonProperty("lprNumber")
+    private String lprNumber = null;
+
+    @JsonProperty("isLPRCase")
+    private Boolean isLPRCase = false;
 }

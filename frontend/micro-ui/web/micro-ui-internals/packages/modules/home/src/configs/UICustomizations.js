@@ -10,6 +10,7 @@ import { OrderWorkflowState } from "@egovernments/digit-ui-module-dristi/src/Uti
 import { BulkCheckBox } from "@egovernments/digit-ui-module-dristi/src/components/BulkCheckbox";
 import { BailBondSignModal } from "../pages/employee/BailBondSignModal";
 import { AdvocateName } from "@egovernments/digit-ui-module-dristi/src/components/AdvocateName";
+import { modifiedEvidenceNumber } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const customColumnStyle = { whiteSpace: "nowrap" };
 
@@ -826,9 +827,11 @@ export const UICustomizations = {
         case "CASE_TITLE":
           return <OrderName rowData={row} colData={column} value={value} />;
         case "DOCUMENT_HEADING":
-          return t(value) || "";
+          return row?.businessObject?.artifactDetails?.additionalDetails?.formdata?.documentTitle || t(value) || "";
         case "SELECT":
           return <BulkCheckBox rowData={row} colData={column} isBailBond={true} />;
+        case "EVIDENCE_NUMBER":
+          return modifiedEvidenceNumber(value, row?.businessObject?.artifactDetails?.filingNumber);
         default:
           return value || "";
       }

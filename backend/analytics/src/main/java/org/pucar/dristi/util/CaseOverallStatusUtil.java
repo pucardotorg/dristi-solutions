@@ -224,8 +224,9 @@ public class CaseOverallStatusUtil {
 
 	private org.pucar.dristi.web.models.CaseOverallStatus determineOrderStage(String filingNumber, String tenantId, String orderType, String status) {
 		for (CaseOverallStatusType statusType : caseOverallStatusTypeList){
-			if(statusType.getTypeIdentifier().equalsIgnoreCase(orderType) && statusType.getState().equalsIgnoreCase(status))
-                return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
+			if(statusType.getTypeIdentifier().equalsIgnoreCase(orderType) && statusType.getState().equalsIgnoreCase(status)) {
+				return new org.pucar.dristi.web.models.CaseOverallStatus(filingNumber, tenantId, statusType.getStage(), statusType.getSubstage());
+			}
 		}
 		return null;
 	}
@@ -240,6 +241,22 @@ public class CaseOverallStatusUtil {
 			}
 			else{
 				RequestInfo requestInfo = mapper.readValue(request.getJSONObject("RequestInfo").toString(), RequestInfo.class);
+                String filingNumber = caseOverallStatus.getFilingNumber();
+                Object caseObject = caseUtil.getCase(request, config.getStateLevelTenantId(), null, filingNumber, null);
+                Boolean isLprCase = JsonPath.read(caseObject.toString(), IS_LPR_CASE_PATH);
+				String caseStage = JsonPath.read(caseObject.toString(), CASE_STAGE_PATH);
+                if (isLprCase != null && isLprCase) {
+                    if (!config.getLprStage().equalsIgnoreCase(caseStage)) {
+                        caseOverallStatus.setStage(config.getLprStage());
+                        caseOverallStatus.setSubstage(config.getLprSubStage());
+                    } else {
+                        log.info("case is already in lpr stage : {} ", filingNumber);
+                        return;
+                    }
+                } else {
+                    caseOverallStatus.setStage(caseOverallStatus.getStage());
+                    caseOverallStatus.setSubstage(caseOverallStatus.getSubstage());
+                }
 				AuditDetails auditDetails = new AuditDetails();
 				auditDetails.setLastModifiedBy(requestInfo.getUserInfo().getUuid());
 				auditDetails.setLastModifiedTime(System.currentTimeMillis());

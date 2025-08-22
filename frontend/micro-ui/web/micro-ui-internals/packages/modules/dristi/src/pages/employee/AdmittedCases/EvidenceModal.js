@@ -127,6 +127,17 @@ const EvidenceModal = ({
   const showSubmit = useMemo(() => {
     if (userType === "employee") {
       if (!isJudge) {
+        if (
+          modalType === "Documents" &&
+          !(
+            documentSubmission?.[0]?.artifactList?.isEvidence ||
+            documentSubmission?.[0]?.artifactList?.isVoid ||
+            documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus !== null
+          )
+        ) {
+          return true;
+        }
+
         return false;
       }
       if (modalType === "Documents") {
@@ -156,7 +167,7 @@ const EvidenceModal = ({
       }
       return false;
     }
-  }, [userType, modalType, userRoles, applicationStatus, userInfo?.uuid, createdBy, isLitigent, allAdvocates]);
+  }, [userType, isJudge, modalType, userRoles, applicationStatus, isBail, documentSubmission, userInfo?.uuid, createdBy, isLitigent, allAdvocates]);
 
   const actionSaveLabel = useMemo(() => {
     let label = "";
@@ -687,6 +698,7 @@ const EvidenceModal = ({
       "SURETY",
       "EXTENSION_SUBMISSION_DEADLINE",
       "CHECKOUT_REQUEST",
+      "ADDING_WITNESSES",
     ];
     if (type === "reject") {
       return false;
@@ -1317,6 +1329,17 @@ const EvidenceModal = ({
           list-style-type: decimal;
           margin-top: 0;
         }
+        .confirm-submission-checkbox {
+          .checkbox-wrap {
+            .label {
+              margin-left: 32px;
+            }
+          .custom-checkbox {
+              height: 20px;
+              width: 20px;
+            }
+          }
+        }
       .popup-module.evidence-modal .info-value li {
         margin: 0;
       }`}
@@ -1369,36 +1392,41 @@ const EvidenceModal = ({
           //     : {}
           // }
         >
-          {documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus && userType === "employee" && (
-            <div style={{ margin: "16px 24px" }}>
-              <div className="custom-note-main-div" style={{ padding: "8px 16px", flexDirection: "row", justifyContent: "space-between" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <CustomErrorTooltip message={t("CS_EVIDENCE_MARKED_INFO_TEXT")} showTooltip={true} />
-                  <div className="custom-note-heading-div">
-                    <h2>{t("CS_PLEASE_COMMON_NOTE")}</h2>
+          {(documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus || documentSubmission?.[0]?.artifactList?.isEvidence) &&
+            userType === "employee" && (
+              <div style={{ margin: "16px 24px" }}>
+                <div className="custom-note-main-div" style={{ padding: "8px 16px", flexDirection: "row", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <CustomErrorTooltip message={t("CS_EVIDENCE_MARKED_INFO_TEXT")} showTooltip={true} />
+                    <div className="custom-note-heading-div">
+                      <h2>{t("CS_PLEASE_COMMON_NOTE")}</h2>
+                    </div>
+                    <div className="custom-note-info-div" style={{ display: "flex", alignItems: "center" }}>
+                      {<p>{t("CS_EVIDENCE_MARKED_INFO_TEXT")}</p>}
+                    </div>
                   </div>
-                  <div className="custom-note-info-div" style={{ display: "flex", alignItems: "center" }}>
-                    {<p>{t("CS_EVIDENCE_MARKED_INFO_TEXT")}</p>}
+                  <div>
+                    <button
+                      className="custom-note-close-button"
+                      style={{ fontWeight: "700", fontSize: "18px", fontStyle: "large", backgroundColor: "transparent", color: "#0F3B8C" }}
+                      onClick={() => {
+                        setShow(false);
+                        setShowMakeAsEvidenceModal(true);
+                      }}
+                    >
+                      {t("VIEW_DETAILS")}
+                    </button>
                   </div>
-                </div>
-                <div>
-                  <button
-                    className="custom-note-close-button"
-                    style={{ fontWeight: "700", fontSize: "18px", fontStyle: "large", backgroundColor: "transparent", color: "#0F3B8C" }}
-                    onClick={() => {
-                      setShow(false);
-                      setShowMakeAsEvidenceModal(true);
-                    }}
-                  >
-                    {t("VIEW_DETAILS")}
-                  </button>
                 </div>
               </div>
-            </div>
-          )}
+            )}
           <div
             className="evidence-modal-main "
-            style={documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus ? { height: "calc(100% - 140px)" } : {}}
+            style={
+              documentSubmission?.[0]?.artifactList?.evidenceMarkedStatus || documentSubmission?.[0]?.artifactList?.isEvidence
+                ? { height: "calc(100% - 140px)" }
+                : {}
+            }
           >
             <div className={"application-details"}>
               <div style={{ display: "flex", flexDirection: "column", overflowY: "auto", height: "fit-content" }}>

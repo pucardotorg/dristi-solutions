@@ -164,4 +164,14 @@ public class CourtCase {
     @Valid
     @Builder.Default
     private List<WitnessDetails> witnessDetails = new ArrayList<>();
+
+    @JsonProperty("lprNumber")
+    private String lprNumber = null;
+
+    @JsonProperty("isLPRCase")
+    private Boolean isLPRCase = false;
+
+    @JsonProperty("courtCaseNumberBackup")
+    private String courtCaseNumberBackup = null;
+
 }

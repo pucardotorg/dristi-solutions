@@ -415,4 +415,14 @@ public class Configuration {
 	@Value("${egov.evidence.search.path}")
 	private String evidenceServiceSearchPath;
 
+	// LPR config
+	@Value("${egov.idgen.lprConfig}")
+	private String lprConfig;
+
+	@Value("${egov.idgen.lprFormat}")
+	private String lprFormat;
+
+	@Value("${lpr.case.details.update.kafka.topic}")
+	private String lprCaseDetailsUpdateTopic;
+
 }
