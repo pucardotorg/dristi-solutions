@@ -700,7 +700,7 @@ public class OpenApiServiceTest {
         Map<String, Object> moduleCriteria = captor.getValue().getInbox().getModuleSearchCriteria();
 
         // The only key should be tenantId
-        assertEquals(1, moduleCriteria.size());
+        assertEquals(2, moduleCriteria.size());
         assertEquals(TENANT_ID, moduleCriteria.get("tenantId"));
     }
 

@@ -390,8 +390,8 @@ public class OpenApiService {
             if(filterCriteria.getCaseTitle() != null) {
                 moduleSearchCriteria.put("caseTitle", filterCriteria.getCaseTitle());
             }
-            moduleSearchCriteria.put("caseStatus", configuration.getAllowedCaseStatuses());
         }
+        moduleSearchCriteria.put("caseStatus", configuration.getAllowedCaseStatuses());
 
         InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
                 .tenantId(tenantId)
