@@ -991,7 +991,7 @@ export const configsOrderTranferToADR = [
         isMandatory: true,
         key: "ADRMode",
         schemaKeyPath: "orderDetails.adrMode",
-        transformer: "mdmsDropdown",
+        transformer: "adrDropDown",
         type: "dropdown",
         populators: {
           name: "ADRMode",

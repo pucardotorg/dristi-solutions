@@ -11,6 +11,7 @@ function ConfirmSubmissionAction({
   setReasonOfApplication,
   reasonOfApplication,
   handleBack,
+  applicationType,
 }) {
   const [generateOrder, setGenerateOrder] = useState(true);
   const CloseBtn = (props) => {
@@ -41,7 +42,7 @@ function ConfirmSubmissionAction({
   return (
     <Modal
       headerBarEnd={<CloseBtn onClick={handleBack} />}
-      headerBarMain={<Heading label={"Add Take Cognizance Details"} />}
+      headerBarMain={<Heading label={`${t("ADD")} ${t(applicationType)} ${t("DETAILS")}`} />}
       actionCancelLabel={t("CS_COMMON_BACK")}
       actionSaveLabel={t("CONFIRM")}
       actionCancelOnSubmit={handleBack}
@@ -70,10 +71,10 @@ function ConfirmSubmissionAction({
         </div> */}
 
         <div style={{ padding: "10px 0px" }}>
-          <h3 style={{ margin: "10px 0px 6px 0px" }}>{type === "reject" ? t("Reason For Rejection") : t("Reason For Acceptance")}</h3>
+          <h3 style={{ margin: "10px 0px 6px 0px" }}>{type === "reject" ? t("REASON_FOR_REJECTTION") : t("REASON_FOR_ACCEPTANCE")}</h3>
           <TextArea
             style={{ marginTop: "0px", height: "120px" }}
-            placeholder={t("TYPE_HERE_PLACEHOLDER")}
+            placeholder={t("")}
             name={type === "reject" ? "reasonForRejection" : "reasonForAcceptance"}
             value={reasonOfApplication}
             onChange={(e) => setReasonOfApplication(e.target.value)}

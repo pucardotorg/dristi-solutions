@@ -1719,6 +1719,7 @@ const EvidenceModal = ({
           setReasonOfApplication={setReasonOfApplication}
           reasonOfApplication={reasonOfApplication}
           handleBack={handleBack}
+          applicationType={documentSubmission?.[0]?.applicationList?.applicationType}
         />
       )}
       {showConfirmationModal && !showSuccessModal && modalType === "Documents" && (

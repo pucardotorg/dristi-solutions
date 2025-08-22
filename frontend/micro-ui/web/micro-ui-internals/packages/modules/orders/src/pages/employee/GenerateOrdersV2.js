@@ -1527,7 +1527,6 @@ const GenerateOrdersV2 = () => {
 
   const handleEditConfirmationOrder = () => {
     setAddOrderModal(true);
-    setEditOrderModal(false);
   };
 
   const createTaskPayload = async (orderType, orderDetails) => {
@@ -3087,8 +3086,11 @@ const GenerateOrdersV2 = () => {
       {showAddOrderModal && (
         <AddOrderTypeModal
           t={t}
-          handleCancel={() => setAddOrderModal(false)}
-          headerLabel={"Add Order"}
+          handleCancel={() => {
+            setEditOrderModal(false);
+            setAddOrderModal(false);
+          }}
+          headerLabel={showEditOrderModal ? `${t("EDIT")} ${t(orderType?.code)} ${t("ORDER")}` : `${t("ADD")} ${t(orderType?.code)} ${t("ORDER")}`}
           saveLabel={"CONFIRM"}
           cancelLabel={"CANCEL_EDIT"}
           handleSubmit={handleAddOrder}

@@ -1151,6 +1151,19 @@
   width: 100% !important;
   margin-bottom: 0 !important;
   padding-bottom: 0 !important;
+
+  .label-field-pair {
+    .field {
+      .field-container {
+        .component-in-front {
+          border-top: 1px solid #000 !important;
+          border-bottom: 1px solid #000 !important;
+          border-left: 1px solid #000 !important;
+          margin-top: 0px !important;
+        }
+      }
+    }
+  }
 }
 
 .order-task-container {
