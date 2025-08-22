@@ -31,7 +31,7 @@ public class HearingUpdateConsumer {
         this.orderUtil = orderUtil;
     }
 
-    @KafkaListener(topics = {"${hearing.case.reference.number.update}"})
+    @KafkaListener(topics = {"${hearing.case.reference.number.update}","${lpr.case.details.update.kafka.topic}"})
     public void updateCaseReferenceConsumer(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
             log.info("Received case reference number details on topic: {}", topic);

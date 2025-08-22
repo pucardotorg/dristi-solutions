@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { CustomArrowDownIcon, CustomArrowUpIcon } from "../../../icons/svgIndex";
 import DocViewerWrapper from "../docViewerWrapper";
-import { caseFileLabels } from "../../../Utils";
+import { caseFileLabels, modifiedEvidenceNumber } from "../../../Utils";
 import { useTranslation } from "react-i18next";
 import { useQueries } from "react-query";
 import { DRISTIService } from "../../../services";
@@ -1860,7 +1860,11 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
                         <span>
                           <span style={{ fontSize: "20px", paddingLeft: "5px", paddingRight: "5px" }}> | </span>
                           <span style={{ fontSize: "14px", fontWeight: "400" }}>
-                            {t("EVIDENCE_NUMBER")}: {evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceNumber}
+                            {t("EVIDENCE_NUMBER")}:{" "}
+                            {modifiedEvidenceNumber(
+                              evidenceFileStoreMap.get(selectedFileStoreId)?.evidenceNumber,
+                              evidenceFileStoreMap.get(selectedFileStoreId)?.filingNumber
+                            )}
                           </span>
                         </span>
                       )}

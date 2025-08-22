@@ -224,6 +224,13 @@ public class Configuration {
 	@Value("${egov-state-level-tenant-id}")
 	private String egovStateTenantId;
 
+	// LPR config
+	@Value("${lpr.stage}")
+	private String lprStage;
+
+	@Value("${lpr.sub.stage}")
+	private String lprSubStage;
+
 	@PostConstruct
 	public void init() {
 		hearingBusinessServiceList = Arrays.asList(hearingBusinessServices.split(","));
