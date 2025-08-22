@@ -97,6 +97,7 @@ import OrderSucessModal from "../../pageComponents/OrderSucessModal";
 import OrderAddToBulkSuccessModal from "../../pageComponents/OrderAddToBulkSuccessModal";
 import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
 import MandatoryFieldsErrorModal from "./MandatoryFieldsErrorModal";
+import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
 
 const configKeys = {
   SECTION_202_CRPC: configsOrderSection202CRPC,
@@ -538,10 +539,10 @@ const GenerateOrdersV2 = () => {
 
       if (isDelayApplicationPending) {
         updatedConfig[0].body[0].populators.mdmsConfig.select =
-          "(data) => {return data['Order'].OrderType?.filter((item)=>[`DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+          "(data) => {return data['Order'].OrderType?.filter((item)=>[`MOVE_CASE_TO_LONG_PENDING_REGISTER`,`DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
       } else {
         updatedConfig[0].body[0].populators.mdmsConfig.select =
-          "(data) => {return data['Order'].OrderType?.filter((item)=>[`TAKE_COGNIZANCE`, `DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+          "(data) => {return data['Order'].OrderType?.filter((item)=>[`MOVE_CASE_TO_LONG_PENDING_REGISTER`,`TAKE_COGNIZANCE`, `DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
       }
     }
     return updatedConfig;
@@ -2094,13 +2095,35 @@ const GenerateOrdersV2 = () => {
     }
   };
 
+  const onDocumentUpload = async (fileData, filename) => {
+    if (fileData?.fileStore) return fileData;
+    const fileUploadRes = await window?.Digit.UploadServices.Filestorage("DRISTI", fileData, tenantId);
+    return { file: fileUploadRes?.data, fileType: fileData.type, filename };
+  };
+
+  const replaceUploadedDocsWithCombinedFile = async (formData) => {
+    if (formData?.lprDocuments?.documents?.length) {
+      const combinedDocName = `${t("LPR_DOCS")}.pdf`;
+      const combinedDocumentFile = await combineMultipleFiles(formData?.lprDocuments?.documents, combinedDocName, "lprDocument");
+      const docs = await onDocumentUpload(combinedDocumentFile?.[0], combinedDocName);
+      const file = {
+        documentType: docs?.fileType,
+        fileStore: docs?.file?.files?.[0]?.fileStoreId,
+        additionalDetails: { name: docs?.filename || combinedDocName },
+      };
+      formData.lprDocuments.documents = [file];
+    }
+    return formData;
+  };
+
   const handleAddOrder = async (orderFormData, compOrderIndex) => {
     try {
       if (checkValidation(t, orderFormData, compOrderIndex, setFormErrors, setShowErrorToast)) {
         return;
       }
       setAddOrderTypeLoader(true);
-      const updatedOrderData = prepareUpdatedOrderData(currentOrder, orderFormData, compOrderIndex);
+      const updatedFormData = await replaceUploadedDocsWithCombinedFile(orderFormData);
+      const updatedOrderData = prepareUpdatedOrderData(currentOrder, updatedFormData, compOrderIndex);
       const updateOrderResponse = await handleSaveDraft(updatedOrderData);
       setCurrentOrder(updateOrderResponse?.order);
       setAddOrderTypeLoader(false);

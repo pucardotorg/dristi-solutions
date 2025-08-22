@@ -19,7 +19,7 @@ export const applicationTypeConfig = [
             masterName: "OrderType",
             localePrefix: "ORDER_TYPE",
             select:
-              "(data) => {return data['Order'].OrderType?.filter((item)=>[`SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}",
+              "(data) => {return data['Order'].OrderType?.filter((item)=>[`MOVE_CASE_TO_LONG_PENDING_REGISTER`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}",
           },
         },
       },
@@ -5573,7 +5573,7 @@ export const configsMoveCaseToLongPendingRegister = [
         populators: {
           inputs: [
             {
-              name: "document",
+              name: "documents",
               isMandatory: true,
               documentHeader: "IDENTITY_PROOF",
               fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
@@ -5581,6 +5581,7 @@ export const configsMoveCaseToLongPendingRegister = [
               maxFileSize: 50,
               maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
               isMultipleUpload: true,
+              popupModuleMianStyles: { maxHeight: "100%" },
               textAreaStyle: {
                 fontSize: "16px",
                 fontWeight: 400,

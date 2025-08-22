@@ -74,6 +74,7 @@ function OrderReviewModal({
           cnrNumber: order?.cnrNumber,
           qrCode: false,
           courtId: courtId,
+          orderPreviewKey: "new-order-generic",
         },
         data: {
           RequestInfo: {
