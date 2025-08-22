@@ -162,5 +162,6 @@ public class CourtCase {
 
     @JsonProperty("witnessDetails")
     @Valid
-    private List<WitnessDetails> witnessDetails = null;
+    @Builder.Default
+    private List<WitnessDetails> witnessDetails = new ArrayList<>();
 }

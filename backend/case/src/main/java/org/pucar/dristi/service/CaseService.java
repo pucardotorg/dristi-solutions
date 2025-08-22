@@ -5653,6 +5653,9 @@ public class CaseService {
         Map<String, WitnessDetails> mergedMap = new LinkedHashMap<>(); // preserves order
         List<WitnessDetails> existing = Optional.ofNullable(courtCase.getWitnessDetails()).orElse(Collections.emptyList());
         List<WitnessDetails> updates = Optional.ofNullable(witnessDetails).orElse(Collections.emptyList());
+        if (updates.stream().anyMatch(w -> w == null || w.getUniqueId() == null)) {
+            throw new CustomException(VALIDATION_ERR, "Each witnessDetails item must have non-null uniqueId");
+        }
         for (WitnessDetails w : existing) {
             if (w != null && w.getUniqueId() != null) {
                 mergedMap.put(w.getUniqueId(), w);
@@ -5668,7 +5671,7 @@ public class CaseService {
         courtCase.setWitnessDetails(new ArrayList<>(mergedMap.values()));
     }
 
-    // old implementation, not in use now
+    @Deprecated
     private void updateCaseAdditionalDetails(List<WitnessDetails> updatedWitnessDetails, CourtCase courtCase) {
         if (updatedWitnessDetails == null || courtCase == null) {
             log.warn("WitnessDetails or CourtCase is null, skipping enrichment.");
