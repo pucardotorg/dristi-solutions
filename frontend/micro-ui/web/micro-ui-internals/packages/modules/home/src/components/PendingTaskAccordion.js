@@ -31,6 +31,7 @@ function PendingTaskAccordion({
   setResponsePendingTask,
   setPendingTaskActionModals,
   tableView = false,
+  isApplicationCompositeOrder = false,
 }) {
   const history = useHistory();
   const [isOpen, setIsOpen] = useState(isAccordionOpen);
@@ -240,9 +241,56 @@ function PendingTaskAccordion({
     [history, isJudge, redirectPendingTaskUrl, setPendingTaskActionModals, setResponsePendingTask, setShowSubmitResponseModal, t, sortedPendingTasks]
   );
 
+  const orderPageTaskView = useCallback(() => {
+    return (
+      <div className="order-task-container">
+        {pendingTasks?.map((task, idx) => {
+          return (
+            <div key={idx} className="order-task-row">
+              <div className="order-task-title">
+                <strong>{`${t("PENDING")} - ${t(task?.actionName)}`}</strong>
+              </div>
+              <div className="order-task-actions">
+                <button className="btn-view" onClick={() => redirectPendingTaskUrl(task?.redirectUrl, task?.isCustomFunction, task?.params)}>
+                  {t("VIEW")}
+                </button>
+                <button
+                  className="btn-reject"
+                  onClick={() => {
+                    const params = {
+                      ...task?.params,
+                      isApplicationAccepted: false,
+                    };
+                    redirectPendingTaskUrl(task?.redirectUrl, task?.isCustomFunction, params);
+                  }}
+                >
+                  {t("REJECT")}
+                </button>
+                <button
+                  className="btn-accept"
+                  onClick={() => {
+                    const params = {
+                      ...task?.params,
+                      isApplicationAccepted: true,
+                    };
+                    redirectPendingTaskUrl(task?.redirectUrl, task?.isCustomFunction, params);
+                  }}
+                >
+                  {t("ACCEPT")}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }, [pendingTasks, redirectPendingTaskUrl, t]);
+
   return (
     <React.Fragment>
-      {!tableView ? (
+      {isApplicationCompositeOrder ? (
+        <React.Fragment>{orderPageTaskView()}</React.Fragment>
+      ) : !tableView ? (
         <div
           key={`${accordionKey}-${pendingTasks?.map((task) => task.filingNumber).join(",")}`}
           className="accordion-wrapper"

@@ -42,6 +42,7 @@ const EvidenceModal = ({
   currentDiaryEntry,
   artifact,
   setShowMakeAsEvidenceModal,
+  isApplicationAccepted,
 }) => {
   const [comments, setComments] = useState(documentSubmission[0]?.comments ? documentSubmission[0].comments : artifact?.comments || []);
   const [showConfirmationModal, setShowConfirmationModal] = useState(null);
@@ -76,6 +77,7 @@ const EvidenceModal = ({
   const urlParams = new URLSearchParams(window.location.search);
   const applicationNumber = urlParams.get("applicationNumber");
   const compositeOrderObj = history.location?.state?.compositeOrderObj;
+  const [reasonOfApplication, setReasonOfApplication] = useState("");
 
   const setData = (data) => {
     setFormData(data);
@@ -910,7 +912,10 @@ const EvidenceModal = ({
                 orderType: orderType,
                 orderSchema: {
                   additionalDetails: additionalDetails,
-                  ...(parties && { orderDetails: parties }),
+                  orderDetails: {
+                    ...(parties || {}),
+                    ...(type === "reject" ? { reasonForRejection: reasonOfApplication } : { reasonForAcceptance: reasonOfApplication }),
+                  },
                   ...(hearingNumber && {
                     hearingNumber: hearingNumber,
                   }),
@@ -955,7 +960,10 @@ const EvidenceModal = ({
                 orderType: orderType,
                 orderSchema: {
                   additionalDetails: additionalDetails,
-                  ...(parties && { orderDetails: parties }),
+                  orderDetails: {
+                    ...(parties || {}),
+                    ...(type === "reject" ? { reasonForRejection: reasonOfApplication } : { reasonForAcceptance: reasonOfApplication }),
+                  },
                   ...(hearingNumber && {
                     hearingNumber: hearingNumber,
                   }),
@@ -1042,7 +1050,10 @@ const EvidenceModal = ({
             },
             documents: [],
             additionalDetails: additionalDetails,
-            ...(parties && { orderDetails: parties }),
+            orderDetails: {
+              ...(parties || {}),
+              ...(type === "reject" ? { reasonForRejection: reasonOfApplication } : { reasonForAcceptance: reasonOfApplication }),
+            },
             ...(hearingNumber && {
               hearingNumber: hearingNumber,
             }),
@@ -1298,6 +1309,12 @@ const EvidenceModal = ({
       fetchRecursiveData(documentSubmission?.[0]?.applicationList);
     }
   }, [artifact, currentDiaryEntry, documentSubmission, fetchRecursiveData]);
+
+  useEffect(() => {
+    if (isApplicationAccepted) {
+      setShowConfirmationModal({ type: isApplicationAccepted?.value ? "accept" : "reject" });
+    }
+  }, [isApplicationAccepted]);
 
   // const customLabelShow = useMemo(() => {
   //   return (
@@ -1699,6 +1716,9 @@ const EvidenceModal = ({
           setShow={setShow}
           handleAction={handleApplicationAction}
           disableCheckBox={isMandatoryOrderCreation}
+          setReasonOfApplication={setReasonOfApplication}
+          reasonOfApplication={reasonOfApplication}
+          handleBack={handleBack}
         />
       )}
       {showConfirmationModal && !showSuccessModal && modalType === "Documents" && (

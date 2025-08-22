@@ -2,7 +2,16 @@ import React, { useState } from "react";
 import Modal from "./Modal";
 import { CheckBox, CloseSvg, TextArea } from "@egovernments/digit-ui-react-components";
 
-function ConfirmSubmissionAction({ t, type, setShowConfirmationModal, handleAction, disableCheckBox }) {
+function ConfirmSubmissionAction({
+  t,
+  type,
+  setShowConfirmationModal,
+  handleAction,
+  disableCheckBox,
+  setReasonOfApplication,
+  reasonOfApplication,
+  handleBack,
+}) {
   const [generateOrder, setGenerateOrder] = useState(true);
   const CloseBtn = (props) => {
     return (
@@ -31,25 +40,20 @@ function ConfirmSubmissionAction({ t, type, setShowConfirmationModal, handleActi
 
   return (
     <Modal
-      headerBarEnd={
-        <CloseBtn
-          onClick={() => {
-            setShowConfirmationModal(null);
-          }}
-        />
-      }
-      headerBarMain={<Heading label={header} />}
+      headerBarEnd={<CloseBtn onClick={handleBack} />}
+      headerBarMain={<Heading label={"Add Take Cognizance Details"} />}
       actionCancelLabel={t("CS_COMMON_BACK")}
-      actionSaveLabel={actionSaveLabel}
-      actionCancelOnSubmit={() => {
-        setShowConfirmationModal(null);
-      }}
+      actionSaveLabel={t("CONFIRM")}
+      actionCancelOnSubmit={handleBack}
       actionSaveOnSubmit={() => {
         handleAction(generateOrder, type);
       }}
+      popupStyles={{ borderRadius: "4px" }}
+      headerBarMainStyle={{ height: "55px" }}
+      isDisabled={!reasonOfApplication}
     >
       <div>
-        <div style={{ marginTop: 10 }}>{t("REJECT_ACCEPT_SUBMISSION_TEXT")}</div>
+        {/* <div style={{ marginTop: 10 }}>{t("REJECT_ACCEPT_SUBMISSION_TEXT")}</div>
         {!generateOrder && type === "reject" && <h1 style={{ margin: "10px 0px 3px 0px" }}>{t("PURPOSE_OF_REJECTION")}</h1>}
         {!generateOrder && type === "reject" && (
           <TextArea style={{ marginTop: "0px" }} placeholder={t("TYPE_HERE_PLACEHOLDER")} name={t("PURPOSE_OF_REJECTION")} />
@@ -62,6 +66,17 @@ function ConfirmSubmissionAction({ t, type, setShowConfirmationModal, handleActi
             label={checkBoxLabel}
             checked={generateOrder}
             disable={disableCheckBox}
+          />
+        </div> */}
+
+        <div style={{ padding: "10px 0px" }}>
+          <h3 style={{ margin: "10px 0px 6px 0px" }}>{type === "reject" ? t("Reason For Rejection") : t("Reason For Acceptance")}</h3>
+          <TextArea
+            style={{ marginTop: "0px", height: "120px" }}
+            placeholder={t("TYPE_HERE_PLACEHOLDER")}
+            name={type === "reject" ? "reasonForRejection" : "reasonForAcceptance"}
+            value={reasonOfApplication}
+            onChange={(e) => setReasonOfApplication(e.target.value)}
           />
         </div>
       </div>

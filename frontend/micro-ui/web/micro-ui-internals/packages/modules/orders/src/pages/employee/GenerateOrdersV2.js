@@ -98,6 +98,7 @@ import OrderAddToBulkSuccessModal from "../../pageComponents/OrderAddToBulkSucce
 import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
 import MandatoryFieldsErrorModal from "./MandatoryFieldsErrorModal";
 import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import TasksComponent from "../../../../home/src/components/TaskComponent";
 
 const configKeys = {
   SECTION_202_CRPC: configsOrderSection202CRPC,
@@ -241,6 +242,7 @@ const GenerateOrdersV2 = () => {
   const [createdSummon, setCreatedSummon] = useState(null);
   const [createdNotice, setCreatedNotice] = useState(null);
   const [showMandatoryFieldsErrorModal, setShowMandatoryFieldsErrorModal] = useState({ showModal: false, errorsData: [] });
+  const [taskType, setTaskType] = useState({});
 
   const fetchCaseDetails = async () => {
     try {
@@ -2784,6 +2786,17 @@ const GenerateOrdersV2 = () => {
         <div className="generate-orders-v2-columns">
           {/* Left Column */}
           <div className="generate-orders-v2-column">
+            <TasksComponent
+              taskType={taskType}
+              setTaskType={setTaskType}
+              uuid={userInfo?.uuid}
+              userInfoType={userInfoType}
+              filingNumber={filingNumber}
+              inCase={true}
+              hideFilters={true}
+              isApplicationCompositeOrder={true}
+              compositeOrderObj={currentOrder}
+            />
             {currentInProgressHearing && (
               <React.Fragment>
                 <LabelFieldPair style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "left" }}>

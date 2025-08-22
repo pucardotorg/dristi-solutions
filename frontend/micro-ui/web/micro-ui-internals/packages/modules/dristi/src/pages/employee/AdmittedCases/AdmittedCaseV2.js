@@ -257,6 +257,7 @@ const AdmittedCaseV2 = () => {
   const historyCaseData = location?.state?.caseData;
   const historyOrderData = location?.state?.orderData;
   const newWitnesToast = history.location?.state?.newWitnesToast;
+  const [isApplicationAccepted, setIsApplicationAccepted] = useState(null);
 
   const openOrder = location?.state?.openOrder;
   const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
@@ -1600,7 +1601,11 @@ const AdmittedCaseV2 = () => {
       setDocumentSubmission(history.location?.state?.applicationDocObj);
       setShow(true);
     }
-  }, [history.location?.state?.applicationDocObj, show]);
+
+    if (history.location?.state?.applicationDocObj && !show && history.location?.state?.isApplicationAccepted) {
+      setIsApplicationAccepted({ value: history.location?.state?.isApplicationAccepted });
+    }
+  }, [history.location?.state?.applicationDocObj, history.location?.state?.isApplicationAccepted, show]);
 
   useEffect(() => {
     if (currentDiaryEntry && artifactNumber) {
@@ -3135,17 +3140,16 @@ const AdmittedCaseV2 = () => {
         secondaryAction.action ||
         tertiaryAction.action ||
         ([CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(caseDetails?.status) && !isCitizen)) &&
-      !caseDetails?.outcome &&
-    [
-      primaryAction.action,
-      secondaryAction.action,
-      tertiaryAction.action,
-      caseDetails?.status,
-      caseDetails?.outcome,
-      isCitizen,
-      isCourtRoomManager,
-      currentInProgressHearing,
-    ]
+      !caseDetails?.outcome && [
+        primaryAction.action,
+        secondaryAction.action,
+        tertiaryAction.action,
+        caseDetails?.status,
+        caseDetails?.outcome,
+        isCitizen,
+        isCourtRoomManager,
+        currentInProgressHearing,
+      ]
   );
 
   const viewActionBar = useMemo(() => {
@@ -3433,13 +3437,20 @@ const AdmittedCaseV2 = () => {
                             ></Button>
                             <Button
                               variation={"primary"}
-                              label={t((isBenchClerk || isCourtRoomManager) ? "CS_CASE_END_HEARING" : isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : "")}
-                              children={(isBenchClerk || isCourtRoomManager) ? null : isJudge || isTypist ? <RightArrow /> : null}
+                              label={t(
+                                isBenchClerk || isCourtRoomManager ? "CS_CASE_END_HEARING" : isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : ""
+                              )}
+                              children={isBenchClerk || isCourtRoomManager ? null : isJudge || isTypist ? <RightArrow /> : null}
                               isSuffix={true}
                               onButtonClick={() =>
-                                handleEmployeeAction({ value: (isBenchClerk || isCourtRoomManager) ? "END_HEARING" : isJudge || isTypist ? "NEXT_HEARING" : "" })
+                                handleEmployeeAction({
+                                  value: isBenchClerk || isCourtRoomManager ? "END_HEARING" : isJudge || isTypist ? "NEXT_HEARING" : "",
+                                })
                               }
-                              style={{ boxShadow: "none", ...((isBenchClerk || isCourtRoomManager) ? { backgroundColor: "#BB2C2F", border: "none" } : {}) }}
+                              style={{
+                                boxShadow: "none",
+                                ...(isBenchClerk || isCourtRoomManager ? { backgroundColor: "#BB2C2F", border: "none" } : {}),
+                              }}
                             ></Button>
                           </React.Fragment>
                         ) : (
@@ -3701,6 +3712,8 @@ const AdmittedCaseV2 = () => {
           currentDiaryEntry={currentDiaryEntry}
           artifact={artifact}
           setShowMakeAsEvidenceModal={setShowMakeAsEvidenceModal}
+          isApplicationAccepted={isApplicationAccepted}
+          history={history}
         />
       )}
       {showOrderReviewModal && (

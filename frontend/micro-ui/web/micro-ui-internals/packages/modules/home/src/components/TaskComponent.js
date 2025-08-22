@@ -54,7 +54,9 @@ const TasksComponent = ({
   const todayDate = useMemo(() => new Date().getTime(), []);
   const [totalPendingTask, setTotalPendingTask] = useState(0);
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
-  const isJudgeOrBenchClerk = userInfo?.roles?.some((role) => role.code === "JUDGE_ROLE" || role.code === "BENCH_CLERK" || role.code === "COURT_ROOM_MANAGER");
+  const isJudgeOrBenchClerk = userInfo?.roles?.some(
+    (role) => role.code === "JUDGE_ROLE" || role.code === "BENCH_CLERK" || role.code === "COURT_ROOM_MANAGER"
+  );
   const isScrutiny = userInfo?.roles?.some((role) => role.code === "CASE_REVIEWER");
   const [showSubmitResponseModal, setShowSubmitResponseModal] = useState(false);
   const [responsePendingTask, setResponsePendingTask] = useState({});
@@ -177,7 +179,7 @@ const TasksComponent = ({
   );
 
   const handleReviewSubmission = useCallback(
-    async ({ filingNumber, caseId, referenceId, isOpenInNewTab }) => {
+    async ({ filingNumber, caseId, referenceId, isApplicationAccepted, isOpenInNewTab }) => {
       const getDate = (value) => {
         const date = new Date(value);
         const day = date.getDate().toString().padStart(2, "0");
@@ -233,6 +235,7 @@ const TasksComponent = ({
         history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`, {
           applicationDocObj: docObj,
           compositeOrderObj: compositeOrderObj,
+          isApplicationAccepted: isApplicationAccepted,
         });
       } else {
         history.push(`/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Submissions`, {
@@ -366,7 +369,7 @@ const TasksComponent = ({
         searchParams.set(item?.key, item?.value ? defaultObj?.[item?.value] : item?.defaultValue);
       });
 
-      if(applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS"){
+      if (applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS") {
         searchParams.set("applicationType", applicationType);
       }
       const redirectUrl = isCustomFunction
@@ -665,6 +668,29 @@ const TasksComponent = ({
   .digit-dropdown-select-wrap .digit-dropdown-options-card span {
     height:unset !important;
   }`;
+
+  if (isApplicationCompositeOrder) {
+    if (pendingTasks?.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="task-section">
+        <PendingTaskAccordion
+          pendingTasks={pendingTasks}
+          allPendingTasks={[...pendingTaskDataInWeek, ...allOtherPendingTask]}
+          accordionHeader={"ALL_OTHER_TASKS"}
+          t={t}
+          totalCount={allOtherPendingTask?.length}
+          setShowSubmitResponseModal={setShowSubmitResponseModal}
+          setResponsePendingTask={setResponsePendingTask}
+          setPendingTaskActionModals={setPendingTaskActionModals}
+          isApplicationCompositeOrder={isApplicationCompositeOrder}
+        />
+      </div>
+    );
+  }
+
   return !tableView ? (
     <div className="tasks-component">
       <React.Fragment>
