@@ -5754,4 +5754,40 @@ public class CaseService {
                     "An unexpected error occurred while updating case without workflow: " + e.getMessage());
         }
     }
+
+    public CourtCase updateLPRDetails(CaseRequest caseRequest) {
+        try {
+
+            CourtCase courtCase = caseRequest.getCases();
+
+            log.info("Method=updateLPRDetails,Result=IN_PROGRESS, caseId={}, tenantId={}", courtCase.getId(), courtCase.getTenantId());
+
+            validator.validateUpdateLPRDetails(caseRequest);
+
+            if (courtCase.getIsLPRCase()) {
+                // moving the case into LPR
+                enrichmentUtil.enrichLPRNumber(caseRequest);
+                courtCase.setStageBackup(courtCase.getStage());
+                courtCase.setSubstageBackup(courtCase.getSubstage());
+            } else {
+                // moving the case out of LPR
+                String courtCaseNumber = courtCase.getCourtCaseNumber();
+                enrichmentUtil.enrichCourtCaseNumber(caseRequest);
+                courtCase.setCourtCaseNumberBackup(courtCaseNumber);
+                courtCase.setStage(courtCase.getStageBackup());
+                courtCase.setSubstage(courtCase.getSubstageBackup());
+            }
+
+            producer.push(config.getLprCaseDetailsUpdateTopic(), caseRequest);
+
+            log.info("Method=updateLPRDetails,Result=SUCCESS, CaseId={}, TenantId={}", courtCase.getId(), courtCase.getTenantId());
+            return courtCase;
+
+        } catch (CustomException e) {
+            log.error("Method=updateLPRDetails,Result=FAILURE, Error=Unexpected exception occurred, Message={}",
+                    e.getMessage(), e);
+            throw new CustomException(UPDATE_LPR_CASE_ERR,
+                    "An unexpected error occurred while updating LPR details : " + e.getMessage());
+        }
+    }
 }
