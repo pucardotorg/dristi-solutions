@@ -12,6 +12,7 @@ import {
   SubmitBar,
   Loader,
   Toast,
+  CardLabelError,
 } from "@egovernments/digit-ui-react-components";
 import { CustomAddIcon, OutlinedInfoIcon } from "../../../../dristi/src/icons/svgIndex";
 import ReactTooltip from "react-tooltip";
@@ -243,6 +244,7 @@ const GenerateOrdersV2 = () => {
   const [createdNotice, setCreatedNotice] = useState(null);
   const [showMandatoryFieldsErrorModal, setShowMandatoryFieldsErrorModal] = useState({ showModal: false, errorsData: [] });
   const [taskType, setTaskType] = useState({});
+  const [errors, setErrors] = useState({});
 
   const fetchCaseDetails = async () => {
     try {
@@ -396,6 +398,19 @@ const GenerateOrdersV2 = () => {
     {
       select: (data) => {
         return _.get(data, "Order.OrderType", [])
+          .filter((opt) => (opt?.hasOwnProperty("isactive") ? opt.isactive : true))
+          .map((opt) => ({ ...opt }));
+      },
+    }
+  );
+
+  const { data: purposeOfHearingData, isLoading: isPurposeOfHearingLoading } = Digit.Hooks.useCustomMDMS(
+    Digit.ULBService.getStateId(),
+    "Hearing",
+    [{ name: "HearingType" }],
+    {
+      select: (data) => {
+        return _.get(data, "Hearing.HearingType", [])
           .filter((opt) => (opt?.hasOwnProperty("isactive") ? opt.isactive : true))
           .map((opt) => ({ ...opt }));
       },
@@ -755,6 +770,23 @@ const GenerateOrdersV2 = () => {
     };
     if (userType === "employee") isBailBondPendingTaskPresent();
   }, [userType]);
+
+  // Initialize presentAttendees and absentAttendees from currentOrder.attendance
+  useEffect(() => {
+    if (currentOrder?.attendance) {
+      // Find present attendees from currentOrder.attendance.Present
+      if (Array.isArray(currentOrder?.attendance?.Present) && currentOrder?.attendance?.Present?.length > 0) {
+        const presentAttendeesFromOrder = attendeesOptions?.filter((option) => currentOrder?.attendance?.Present?.includes(option?.code)) || [];
+        setPresentAttendees(presentAttendeesFromOrder);
+      }
+
+      // Find absent attendees from currentOrder.attendance.Absent
+      if (Array.isArray(currentOrder.attendance.Absent) && currentOrder.attendance.Absent.length > 0) {
+        const absentAttendeesFromOrder = attendeesOptions?.filter((option) => currentOrder.attendance.Absent.includes(option.code)) || [];
+        setAbsentAttendees(absentAttendeesFromOrder);
+      }
+    }
+  }, [currentOrder.attendance]);
 
   // TODO: temporary Form Config, need to be replaced with the actual config
   const getModifiedFormConfig = useCallback(
@@ -2773,7 +2805,7 @@ const GenerateOrdersV2 = () => {
     });
   };
 
-  if (isLoading || isCaseDetailsLoading || isHearingFetching || bailBondLoading || isOrderTypeLoading) {
+  if (isLoading || isCaseDetailsLoading || isHearingFetching || bailBondLoading || isOrderTypeLoading || isPurposeOfHearingLoading) {
     return <Loader />;
   }
 
@@ -2809,15 +2841,31 @@ const GenerateOrdersV2 = () => {
                           type="checkbox"
                           className="custom-checkbox"
                           onChange={(e) => {
+                            let updatedPresentAttendees;
+                            let updatedAbsentAttendees;
                             if (e.target.checked) {
                               // Add to present attendees
-                              setPresentAttendees([...presentAttendees, option]);
+                              updatedPresentAttendees = [...presentAttendees, option];
+                              setPresentAttendees(updatedPresentAttendees);
+
                               // Remove from absent attendees if present there
-                              setAbsentAttendees(absentAttendees.filter((item) => item.code !== option.code));
+                              updatedAbsentAttendees = absentAttendees.filter((item) => item.code !== option.code);
+                              setAbsentAttendees(updatedAbsentAttendees);
                             } else {
                               // Remove from present attendees
-                              setPresentAttendees(presentAttendees.filter((item) => item.code !== option.code));
+                              updatedPresentAttendees = presentAttendees.filter((item) => item.code !== option.code);
+                              setPresentAttendees(updatedPresentAttendees);
+                              updatedAbsentAttendees = absentAttendees;
                             }
+
+                            // Update currentOrder.attendance
+                            setCurrentOrder({
+                              ...currentOrder,
+                              attendance: {
+                                Present: updatedPresentAttendees.map((item) => item.code),
+                                Absent: updatedAbsentAttendees.map((item) => item.code),
+                              },
+                            });
                           }}
                           checked={presentAttendees.some((item) => item.code === option.code)}
                           disabled={absentAttendees.some((item) => item.code === option.code)}
@@ -2826,6 +2874,9 @@ const GenerateOrdersV2 = () => {
                         <label htmlFor={`present-${option.code}`}>{t(option?.name)}</label>
                       </div>
                     ))}
+                    {errors["presentAttendees"] && (
+                      <CardLabelError> {t(errors["presentAttendees"]?.msg || "CORE_REQUIRED_FIELD_ERROR")} </CardLabelError>
+                    )}
                   </div>
                 </LabelFieldPair>
 
@@ -2840,15 +2891,32 @@ const GenerateOrdersV2 = () => {
                           type="checkbox"
                           className="custom-checkbox"
                           onChange={(e) => {
+                            let updatedPresentAttendees;
+                            let updatedAbsentAttendees;
+
                             if (e.target.checked) {
                               // Add to absent attendees
-                              setAbsentAttendees([...absentAttendees, option]);
+                              updatedAbsentAttendees = [...absentAttendees, option];
+                              setAbsentAttendees(updatedAbsentAttendees);
+
                               // Remove from present attendees if present there
-                              setPresentAttendees(presentAttendees?.filter((item) => item?.code !== option?.code));
+                              updatedPresentAttendees = presentAttendees?.filter((item) => item?.code !== option?.code);
+                              setPresentAttendees(updatedPresentAttendees);
                             } else {
                               // Remove from absent attendees
-                              setAbsentAttendees(absentAttendees?.filter((item) => item?.code !== option?.code));
+                              updatedAbsentAttendees = absentAttendees?.filter((item) => item?.code !== option?.code);
+                              setAbsentAttendees(updatedAbsentAttendees);
+                              updatedPresentAttendees = presentAttendees;
                             }
+
+                            // Update currentOrder.attendance
+                            setCurrentOrder({
+                              ...currentOrder,
+                              attendance: {
+                                Present: updatedPresentAttendees.map((item) => item.code),
+                                Absent: updatedAbsentAttendees.map((item) => item.code),
+                              },
+                            });
                           }}
                           checked={absentAttendees?.some((item) => item?.code === option?.code)}
                           disabled={presentAttendees?.some((item) => item?.code === option?.code)}
@@ -2857,6 +2925,9 @@ const GenerateOrdersV2 = () => {
                         <label htmlFor={`absent-${option.code}`}>{t(option?.name)}</label>
                       </div>
                     ))}
+                    {errors["absentAttendees"] && (
+                      <CardLabelError> {t(errors["absentAttendees"]?.msg || "CORE_REQUIRED_FIELD_ERROR")} </CardLabelError>
+                    )}
                   </div>
                 </LabelFieldPair>
               </React.Fragment>
@@ -2906,6 +2977,7 @@ const GenerateOrdersV2 = () => {
                       setSkipScheduling(newSkipValue);
                       if (newSkipValue) {
                         // Clear purpose and date when skipping
+                        setCurrentOrder({ ...currentOrder, purposeOfNextHearing: "", nextHearingDate: "" });
                         setPurposeOfHearing("");
                         setNextHearingDate("");
                       }
@@ -2923,12 +2995,16 @@ const GenerateOrdersV2 = () => {
                   <CustomDropdown
                     t={t}
                     onChange={(e) => {
+                      setCurrentOrder({ ...currentOrder, purposeOfNextHearing: e?.code });
                       setPurposeOfHearing(e);
                     }}
-                    value={purposeOfHearing}
+                    value={purposeOfHearing || purposeOfHearingData?.find((item) => item?.code === currentOrder?.purposeOfNextHearing)}
                     config={purposeOfHearingConfig?.populators}
                     disable={skipScheduling}
                   ></CustomDropdown>
+                  {errors[purposeOfHearingConfig?.key] && (
+                    <CardLabelError> {t(errors[purposeOfHearingConfig?.key]?.msg || "CORE_REQUIRED_FIELD_ERROR")} </CardLabelError>
+                  )}
                 </LabelFieldPair>
 
                 <LabelFieldPair className={`case-label-field-pair`} style={{ width: "75%" }}>
@@ -2938,15 +3014,18 @@ const GenerateOrdersV2 = () => {
                     config={nextDateOfHearing}
                     formData={{ nextHearingDate: nextHearingDate }}
                     onDateChange={(date) => {
+                      setCurrentOrder({ ...currentOrder, nextHearingDate: new Date(date).setHours(0, 0, 0, 0) });
                       setNextHearingDate(new Date(date).setHours(0, 0, 0, 0));
                     }}
-                    value={nextHearingDate}
+                    value={nextHearingDate || currentOrder?.nextHearingDate}
                     disable={skipScheduling}
                     disableColor="#D6D5D4"
                     disableBorderColor="#D6D5D4"
                     disableBackgroundColor="white"
                   />
-                  {/* {orderError?.hearingDate && <CardLabelError style={{ margin: 0, padding: 0 }}> {t(orderError?.hearingDate)} </CardLabelError>} */}
+                  {errors[nextDateOfHearing?.key] && (
+                    <CardLabelError> {t(errors[nextDateOfHearing?.key]?.msg || "CORE_REQUIRED_FIELD_ERROR")} </CardLabelError>
+                  )}
                 </LabelFieldPair>
 
                 <div className="checkbox-item">
@@ -2974,33 +3053,56 @@ const GenerateOrdersV2 = () => {
               <div>
                 <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>{t("ORDER_ATTENDANCE")}</div>
                 <textarea
-                  value={`${presentAttendees?.length > 0 ? `Present: ${presentAttendees?.map((item) => t(item?.name))?.join(", ")}` : ``}${
-                    presentAttendees?.length > 0 && absentAttendees?.length > 0 ? "\n" : ""
-                  }${absentAttendees?.length > 0 ? `Absent: ${absentAttendees?.map((item) => t(item?.name))?.join(", ")}` : ``}`}
+                  value={(() => {
+                    // Use presentAttendees if available, otherwise use currentOrder.attendance.Present
+                    const presentNames =
+                      presentAttendees?.length > 0
+                        ? presentAttendees?.map((item) => t(item?.name))?.join(", ")
+                        : currentOrder?.attendance?.Present?.length > 0
+                        ? attendeeOptions
+                            ?.filter((option) => currentOrder.attendance.Present.includes(option.code))
+                            ?.map((item) => t(item?.name))
+                            ?.join(", ")
+                        : "";
+
+                    // Use absentAttendees if available, otherwise use currentOrder.attendance.Absent
+                    const absentNames =
+                      absentAttendees?.length > 0
+                        ? absentAttendees?.map((item) => t(item?.name))?.join(", ")
+                        : currentOrder?.attendance?.Absent?.length > 0
+                        ? attendeeOptions
+                            ?.filter((option) => currentOrder.attendance.Absent.includes(option.code))
+                            ?.map((item) => t(item?.name))
+                            ?.join(", ")
+                        : "";
+
+                    const presentText = presentNames ? `Present: ${presentNames}` : "";
+                    const absentText = absentNames ? `Absent: ${absentNames}` : "";
+                    const newline = presentText && absentText ? "\n" : "";
+
+                    return `${presentText}${newline}${absentText}`;
+                  })()}
                   rows={3}
                   maxLength={1000}
                   className={`custom-textarea-style`}
                   disabled={true}
                   readOnly={true}
                 ></textarea>
-                {/* {errors[config.key] && <CardLabelError style={input?.errorStyle}>{t(errors[config.key].msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>} */}
               </div>
             )}
 
             <div>
               <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>{t("ITEM_TEXT")}</div>
               <textarea
-                // value={formdata?.[config.key]?.[input.name]}
-                // onChange={(data) => {
-                //   handleChange(data, input);
-                // }}
+                value={currentOrder?.itemText}
+                onChange={(data) => {
+                  setCurrentOrder({ ...currentOrder, itemText: data.target.value });
+                }}
                 rows={currentInProgressHearing ? 8 : 20}
                 maxLength={1000}
                 className={`custom-textarea-style`}
-                // placeholder={t(input?.placeholder)}
-                // disabled={config.disable}
               ></textarea>
-              {/* {errors[config.key] && <CardLabelError style={input?.errorStyle}>{t(errors[config.key].msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>} */}
+              {errors["itemText"] && <CardLabelError>{t(errors["itemText"]?.msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>}
             </div>
 
             {currentInProgressHearing && (
@@ -3020,7 +3122,6 @@ const GenerateOrdersV2 = () => {
                   disabled={true}
                   readOnly={true}
                 ></textarea>
-                {/* {errors[config.key] && <CardLabelError style={input?.errorStyle}>{t(errors[config.key].msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>} */}
               </div>
             )}
           </div>
