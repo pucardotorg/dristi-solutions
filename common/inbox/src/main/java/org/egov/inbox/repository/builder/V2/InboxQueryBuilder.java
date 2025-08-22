@@ -462,9 +462,6 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
         if (value == null) {
             return true;
         }
-        if (value instanceof String) {
-            return ((String) value).trim().isEmpty();
-        }
         if (value instanceof List) {
             return ((List<?>) value).isEmpty();
         }
@@ -477,12 +474,16 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
         boolClause.put("bool", new HashMap<>());
         Map<String, Object> boolInner = (Map<String, Object>) boolClause.get("bool");
 
-        Map<String, Object> mustNotClause = new HashMap<>();
-        mustNotClause.put("exists", new HashMap<>());
-        Map<String, Object> existsClause = (Map<String, Object>) mustNotClause.get("exists");
-        existsClause.put("field", addDataPathToSearchParamKey(key, nameToPathMap));
+        Map<String, Object> existsClause = new HashMap<>();
+        Map<String, Object> existsInner = new HashMap<>();
+        String path = addDataPathToSearchParamKey(key, nameToPathMap);
+        if (path.endsWith(".keyword")) path = path.substring(0, path.length() - ".keyword".length());
+        existsInner.put("field", path);
+        existsClause.put("exists", existsInner);
 
-        boolInner.put("must_not", mustNotClause);
+        List<Object> mustNot = new ArrayList<>();
+        mustNot.add(existsClause);
+        boolInner.put("must_not", mustNot);
         return boolClause;
     }
 
