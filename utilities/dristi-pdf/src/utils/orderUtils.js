@@ -33,6 +33,7 @@ const orderAdmitCase = require("../orderHandlers/orderAdmitCase");
 const orderDismissCase = require("../orderHandlers/orderDismissCase");
 const orderApprovalRejectionLitigantDetails = require("../orderHandlers/orderApprovalRejectionLitigantDetails");
 const orderChangeAdvocate = require("../orderHandlers/orderChangeAdvocate");
+const newOrderGeneric = require("../orderHandlers/newOrderGeneric");
 
 const OrderPreviewOrderTypeMap = {
   MANDATORY_SUBMISSIONS_RESPONSES: "mandatory-async-submissions-responses",
@@ -319,12 +320,12 @@ async function processOrder(
       );
     case "order-attachment":
       return await orderAttachment(
-          req,
-          res,
-          qrCode,
-          order,
-          compositeOrder,
-          courtCaseJudgeDetails
+        req,
+        res,
+        qrCode,
+        order,
+        compositeOrder,
+        courtCaseJudgeDetails
       );
     case "order-case-withdrawal-acceptance":
       return await orderWithdrawalAccept(
@@ -405,6 +406,14 @@ async function processOrder(
         qrCode,
         order,
         compositeOrder,
+        courtCaseJudgeDetails
+      );
+    case "new-order-generic":
+      return await newOrderGeneric(
+        req,
+        res,
+        qrCode,
+        order,
         courtCaseJudgeDetails
       );
     default:
