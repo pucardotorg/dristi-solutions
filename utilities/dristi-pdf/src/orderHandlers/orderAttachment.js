@@ -68,7 +68,7 @@ async function orderAttachment(
         const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
         const reasonForAttachment =
-            order?.additionalDetails?.formdata?.attachmentSubType?.subType || "";
+            order?.additionalDetails?.formdata?.attachmentText?.attachmentText || "";
         const personName =
             order?.orderDetails?.respondentName?.name ||
             order?.orderDetails?.respondentName ||

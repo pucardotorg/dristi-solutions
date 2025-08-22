@@ -20,7 +20,7 @@ import JoinCaseSuccess from "./joinCaseComponent/JoinCaseSuccess";
 import LitigantVerification from "./joinCaseComponent/LitigantVerification";
 import usePaymentProcess from "../../../../home/src/hooks/usePaymentProcess";
 import POAInfo from "./joinCaseComponent/POAInfo";
-import { cleanString, combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
+import { cleanString, combineMultipleFiles, removeInvalidNameParts } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import { SubmissionWorkflowAction } from "@egovernments/digit-ui-module-orders/src/utils/submissionWorkflow";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 
@@ -1326,6 +1326,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
             const taskNumber = res?.paymentTaskNumber;
             const taskSearchResponse = await getTaskDetails(taskNumber, tenantId);
             const taskDetails = taskSearchResponse?.list?.[0]?.taskDetails;
+            const ownerName = cleanString(userInfo?.name);
 
             const applicationReqBody = {
               tenantId,
@@ -1358,8 +1359,8 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                   caseTitle: caseDetails?.caseTitle,
                   caseNumber: caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber,
                   partyType: selectPartyData?.partyInvolve?.value === "COMPLAINANTS" ? "COMPLAINANTS" : "ACCUSED",
-                  owner: cleanString(userInfo?.name),
-                  onBehalOfName: cleanString(userInfo?.name),
+                  owner: removeInvalidNameParts(ownerName),
+                  onBehalOfName: removeInvalidNameParts(ownerName),
                 },
                 documents: [],
                 onBehalfOf: [userInfo?.uuid],
@@ -1416,7 +1417,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
               await createPendingTask({
                 name: t("ESIGN_THE_SUBMISSION_FOR_POA_CLAIM"),
                 status: "ESIGN_THE_SUBMISSION",
-                assignedRole: ["SUBMISSION_CREATOR", "SUBMISSION_RESPONDER"],
+                assignedRole: [],
                 refId: resApplication?.application?.applicationNumber,
                 entityType: "application-voluntary-submission",
                 userInfo: userInfo,
@@ -1693,6 +1694,23 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
     },
   ];
 
+  const getCaseHeaderLabel = (step, type, t) => {
+    const stepLabels = {
+      3: "VERIFY_LITIGANT_DETAILS",
+      4: "PAY_TO_JOIN_CASE",
+    };
+
+    if (stepLabels[step]) {
+      return t(stepLabels[step]);
+    }
+
+    if (type === "external") {
+      return t("CS_CASE_MANAGE_CASE_ACCESS");
+    }
+
+    return t("SEARCH_NEW_CASE");
+  };
+
   return (
     <div>
       {type !== "external" && (
@@ -1794,7 +1812,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           }
           actionSaveOnSubmit={onProceed}
           formId="modal-action"
-          headerBarMain={<Heading label={step === 3 ? t("VERIFY_LITIGANT_DETAILS") : step === 4 ? t("PAY_TO_JOIN_CASE") : t("SEARCH_NEW_CASE")} />}
+          headerBarMain={<Heading label={getCaseHeaderLabel(step, type, t)} />}
           className={`join-a-case-modal${success ? " case-join-success" : ""}${step === 4 ? " join-case-modal-payment" : ""}`}
           isDisabled={isDisabled || isApiCalled}
           isBackButtonDisabled={step === 1 && !isVerified}

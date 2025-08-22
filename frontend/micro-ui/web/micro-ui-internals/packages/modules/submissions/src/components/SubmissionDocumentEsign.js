@@ -12,7 +12,9 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
   const UploadSignatureModal = window?.Digit?.ComponentRegistryService?.getComponent("UploadSignatureModal");
   const [pageModule, setPageModule] = useState(() =>
-    Digit.UserService.getUser()?.info?.roles?.some((role) => ["BENCH_CLERK", "JUDGE_ROLE", "TYPIST_ROLE"].includes(role.code)) ? "en" : "ci"
+    Digit.UserService.getUser()?.info?.roles?.some((role) => ["BENCH_CLERK", "JUDGE_ROLE", "TYPIST_ROLE", "COURT_ROOM_MANAGER"].includes(role.code))
+      ? "en"
+      : "ci"
   );
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${combinedFileStoreId}`;

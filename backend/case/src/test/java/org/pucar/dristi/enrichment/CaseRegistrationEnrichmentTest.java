@@ -11,6 +11,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.pucar.dristi.config.ServiceConstants.ADMIT_CASE_WORKFLOW_ACTION;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,7 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.egov.common.contract.models.AuditDetails;
-import org.pucar.dristi.web.models.Document;
+import org.pucar.dristi.web.models.*;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
@@ -32,12 +33,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.pucar.dristi.config.Configuration;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.IdgenUtil;
-import org.pucar.dristi.web.models.AdvocateMapping;
-import org.pucar.dristi.web.models.CaseRequest;
-import org.pucar.dristi.web.models.CourtCase;
-import org.pucar.dristi.web.models.LinkedCase;
-import org.pucar.dristi.web.models.Party;
-import org.pucar.dristi.web.models.StatuteSection;
 
 @ExtendWith(MockitoExtension.class)
 class CaseRegistrationEnrichmentTest {
@@ -229,6 +224,10 @@ class CaseRegistrationEnrichmentTest {
     void enrichCaseNumberAndCourtCaseNumber_generatesCaseNumberAndCourtCaseNumber() {
         CourtCase courtCase = new CourtCase();
         courtCase.setFilingNumber("2022-12345");
+        courtCase.setCourtId("KLKM52");
+        WorkflowObject workflow = new WorkflowObject();
+        workflow.setAction(ADMIT_CASE_WORKFLOW_ACTION);
+        courtCase.setWorkflow(workflow);
         caseRequest.setCases(courtCase);
         when(idgenUtil.getIdList(any(), any(), any(), any(), any(),any())).thenReturn(Collections.singletonList("12345"));
         caseRegistrationEnrichment.enrichCourtCaseNumber(caseRequest);
