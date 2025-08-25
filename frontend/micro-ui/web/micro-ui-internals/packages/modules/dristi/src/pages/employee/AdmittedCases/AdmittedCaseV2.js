@@ -2566,7 +2566,7 @@ const AdmittedCaseV2 = () => {
       } else if (option.value === "VIEW_CALENDAR") {
         setShowCalendarModal(true);
       } else if (option.value === "GENERATE_ORDER") {
-        setShowOrderModal(true);
+        handleSelect("GENERATE_ORDER");
       } else if (option.value === "END_HEARING") {
         try {
           setApiCalled(true);

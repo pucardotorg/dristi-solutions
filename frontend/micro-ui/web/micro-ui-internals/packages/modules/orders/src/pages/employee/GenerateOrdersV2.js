@@ -2165,7 +2165,7 @@ const GenerateOrdersV2 = () => {
 
       if (!orderNumber) {
         history.replace(
-          `/${window.contextPath}/employee/orders/generate-orders-v2?filingNumber=${caseDetails?.filingNumber}&orderNumber=${updateOrderResponse?.order?.orderNumber}`
+          `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${updateOrderResponse?.order?.orderNumber}`
         );
       } else {
         await refetchOrdersData();
@@ -2321,6 +2321,33 @@ const GenerateOrdersV2 = () => {
           break;
         }
       }
+    }
+
+    const mandatoryOrderFields = [
+      { presentAttendees: currentOrder?.attendance?.Present },
+      { absentAttendees: currentOrder?.attendance?.Absent },
+      { itemText: currentOrder?.itemText },
+    ];
+
+    if (!skipScheduling) {
+      mandatoryOrderFields?.push({ nextHearingDate: currentOrder?.nextHearingDate }, { hearingPurpose: currentOrder?.purposeOfNextHearing });
+    }
+
+    // Collect all errors first
+    const allErrors = {};
+    mandatoryOrderFields?.forEach((field) => {
+      const [key, value] = Object?.entries(field)[0];
+      if (!value || (Array?.isArray(value) && value?.length === 0)) {
+        // Format errors according to the expected structure
+        // The component expects an object with msg property
+        allErrors[key] = { msg: "CORE_REQUIRED_FIELD_ERROR" };
+      }
+    });
+
+    // Set all errors at once if there are any
+    if (Object.keys(allErrors).length > 0) {
+      setErrors(allErrors);
+      return;
     }
 
     // ✅ Works for both COMPOSITE and Non-COMPOSITE
@@ -2851,6 +2878,11 @@ const GenerateOrdersV2 = () => {
                               // Remove from absent attendees if present there
                               updatedAbsentAttendees = absentAttendees.filter((item) => item.code !== option.code);
                               setAbsentAttendees(updatedAbsentAttendees);
+                              setErrors((prevErrors) => {
+                                const newErrors = { ...prevErrors };
+                                delete newErrors["presentAttendees"];
+                                return newErrors;
+                              });
                             } else {
                               // Remove from present attendees
                               updatedPresentAttendees = presentAttendees.filter((item) => item.code !== option.code);
@@ -2874,10 +2906,10 @@ const GenerateOrdersV2 = () => {
                         <label htmlFor={`present-${option.code}`}>{t(option?.name)}</label>
                       </div>
                     ))}
-                    {errors["presentAttendees"] && (
-                      <CardLabelError> {t(errors["presentAttendees"]?.msg || "CORE_REQUIRED_FIELD_ERROR")} </CardLabelError>
-                    )}
                   </div>
+                  {errors["presentAttendees"] && (
+                    <CardLabelError> {t(errors["presentAttendees"]?.msg || "CORE_REQUIRED_FIELD_ERROR")} </CardLabelError>
+                  )}
                 </LabelFieldPair>
 
                 <LabelFieldPair style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "left", marginTop: "12px" }}>
@@ -2902,6 +2934,11 @@ const GenerateOrdersV2 = () => {
                               // Remove from present attendees if present there
                               updatedPresentAttendees = presentAttendees?.filter((item) => item?.code !== option?.code);
                               setPresentAttendees(updatedPresentAttendees);
+                              setErrors((prevErrors) => {
+                                const newErrors = { ...prevErrors };
+                                delete newErrors["absentAttendees"];
+                                return newErrors;
+                              });
                             } else {
                               // Remove from absent attendees
                               updatedAbsentAttendees = absentAttendees?.filter((item) => item?.code !== option?.code);
@@ -2925,10 +2962,8 @@ const GenerateOrdersV2 = () => {
                         <label htmlFor={`absent-${option.code}`}>{t(option?.name)}</label>
                       </div>
                     ))}
-                    {errors["absentAttendees"] && (
-                      <CardLabelError> {t(errors["absentAttendees"]?.msg || "CORE_REQUIRED_FIELD_ERROR")} </CardLabelError>
-                    )}
                   </div>
+                  {errors["absentAttendees"] && <CardLabelError> {t(errors["absentAttendees"]?.msg || "CORE_REQUIRED_FIELD_ERROR")} </CardLabelError>}
                 </LabelFieldPair>
               </React.Fragment>
             )}
@@ -2980,6 +3015,12 @@ const GenerateOrdersV2 = () => {
                         setCurrentOrder({ ...currentOrder, purposeOfNextHearing: "", nextHearingDate: "" });
                         setPurposeOfHearing("");
                         setNextHearingDate("");
+                        setErrors((prevErrors) => {
+                          const newErrors = { ...prevErrors };
+                          delete newErrors["hearingPurpose"];
+                          delete newErrors["nextHearingDate"];
+                          return newErrors;
+                        });
                       }
                     }}
                     checked={skipScheduling}
@@ -2997,6 +3038,13 @@ const GenerateOrdersV2 = () => {
                     onChange={(e) => {
                       setCurrentOrder({ ...currentOrder, purposeOfNextHearing: e?.code });
                       setPurposeOfHearing(e);
+                      if (e?.code) {
+                        setErrors((prevErrors) => {
+                          const newErrors = { ...prevErrors };
+                          delete newErrors["hearingPurpose"];
+                          return newErrors;
+                        });
+                      }
                     }}
                     value={purposeOfHearing || purposeOfHearingData?.find((item) => item?.code === currentOrder?.purposeOfNextHearing)}
                     config={purposeOfHearingConfig?.populators}
@@ -3016,6 +3064,11 @@ const GenerateOrdersV2 = () => {
                     onDateChange={(date) => {
                       setCurrentOrder({ ...currentOrder, nextHearingDate: new Date(date).setHours(0, 0, 0, 0) });
                       setNextHearingDate(new Date(date).setHours(0, 0, 0, 0));
+                      setErrors((prevErrors) => {
+                        const newErrors = { ...prevErrors };
+                        delete newErrors["nextHearingDate"];
+                        return newErrors;
+                      });
                     }}
                     value={nextHearingDate || currentOrder?.nextHearingDate}
                     disable={skipScheduling}
@@ -3097,6 +3150,13 @@ const GenerateOrdersV2 = () => {
                 value={currentOrder?.itemText}
                 onChange={(data) => {
                   setCurrentOrder({ ...currentOrder, itemText: data.target.value });
+                  if (data.target.value) {
+                    setErrors((prevErrors) => {
+                      const newErrors = { ...prevErrors };
+                      delete newErrors["itemText"];
+                      return newErrors;
+                    });
+                  }
                 }}
                 rows={currentInProgressHearing ? 8 : 20}
                 maxLength={1000}

@@ -135,7 +135,7 @@ function OrderSignatureModal({
                   // setOpenAadharModal(true);
                   // setIsSigned(true);
                   sessionStorage.setItem("orderPDF", orderPdfFileStoreID);
-                  sessionStorage.setItem("businessOfTheDay", businessOfDay);
+                  // sessionStorage.setItem("businessOfTheDay", businessOfDay);
                   // sessionStorage.setItem("currentSelectedOrder", selectedOrder);
                   handleEsign(name, pageModule, orderPdfFileStoreID, judgePlaceholder);
                 }}

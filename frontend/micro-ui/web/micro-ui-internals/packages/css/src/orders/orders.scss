@@ -74,16 +74,19 @@
         }
 
         .review-order-modal-document-div {
-          width: 65%;
+          width: 100%;
           padding: 24px;
 
           .docviewer-wrapper {
-            margin-top: auto;
+            width: 100%;
+            margin-top: 0px !important;
             margin-bottom: auto;
 
             .employeeCard {
-              margin-bottom: 16px !important;
-              margin-right: 5px;
+              margin-bottom: 20px;
+              margin-top: 20px;
+              margin-left: 20px;
+              margin-right: 10px;
               border: solid 1px #bbbbbd;
               border-radius: 0px !important;
             }
