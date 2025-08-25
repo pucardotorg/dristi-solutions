@@ -147,18 +147,6 @@ public class CaseConsumer {
     public void updateCaseOutcome(ConsumerRecord<String, Object> payload,
                                   @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         fetchAndPublishCaseForOutcome(payload, transformerProperties.getUpdateCaseTopic());
-
-        try {
-            Outcome outcome = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseOutcome>() {
-            })).getOutcome();
-            CourtCase courtCase = caseService.getCase(outcome.getFilingNumber(), outcome.getTenantId(), createInternalRequestInfo());
-            CaseRequest caseRequest = new CaseRequest();
-            caseRequest.setCases(courtCase);
-            publishCaseSearchFromCaseRequest(caseRequest);
-            pushToLegacyTopic(courtCase);
-        } catch (Exception exception) {
-            log.error("Error updating case outcome for payload: {}", payload.value(), exception);
-        }
     }
 
     private void publishCase(ConsumerRecord<String, Object> payload,
@@ -249,6 +237,7 @@ public class CaseConsumer {
             CaseRequest caseRequest = new CaseRequest();
             caseRequest.setCases(courtCase);
             logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCase));
+            publishCaseSearchFromCaseRequest(caseRequest);
             producer.push(updateCaseTopic, caseRequest);
             pushToLegacyTopic(courtCase);
         } catch (Exception exception) {
