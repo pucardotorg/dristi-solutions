@@ -151,7 +151,7 @@ public class CaseConsumer {
         try {
             Outcome outcome = (objectMapper.readValue((String) payload.value(), new TypeReference<CaseOutcome>() {
             })).getOutcome();
-            CourtCase courtCase = caseService.fetchCase(outcome.getFilingNumber());
+            CourtCase courtCase = caseService.getCase(outcome.getFilingNumber(), outcome.getTenantId(), createInternalRequestInfo());
             CaseRequest caseRequest = new CaseRequest();
             caseRequest.setCases(courtCase);
             publishCaseSearchFromCaseRequest(caseRequest);
