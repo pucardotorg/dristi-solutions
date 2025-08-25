@@ -162,6 +162,7 @@ class OrderRegistrationEnrichmentTest {
         ArrayNode compositeItems = new ObjectMapper().createArrayNode();
         compositeItems.add(new ObjectMapper().createObjectNode());
         orderRequest.getOrder().setCompositeItems(compositeItems);
+        orderRequest.getOrder().setOrderCategory("COMPOSITE");
 
         ObjectNode realObjectNode = new ObjectMapper().createObjectNode();
         ArrayNode realArrayNode = new ObjectMapper().createArrayNode();
