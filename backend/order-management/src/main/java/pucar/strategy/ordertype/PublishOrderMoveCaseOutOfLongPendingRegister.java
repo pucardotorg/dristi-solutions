@@ -64,7 +64,7 @@ public class PublishOrderMoveCaseOutOfLongPendingRegister implements OrderUpdate
 
         if (courtCase.getIsLPRCase()) {
             courtCase.setIsLPRCase(false);
-            caseUtil.updateCase(CaseRequest.builder().cases(courtCase).requestInfo(requestInfo).build());
+            caseUtil.updateLprDetailsInCase(CaseRequest.builder().cases(courtCase).requestInfo(requestInfo).build());
         }
 
         return orderRequest;
