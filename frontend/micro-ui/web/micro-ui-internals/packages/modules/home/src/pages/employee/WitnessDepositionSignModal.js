@@ -9,6 +9,7 @@ import { Urls } from "../../hooks";
 import { HomeService } from "../../hooks/services";
 import { useHistory } from "react-router-dom/cjs/react-router-dom.min";
 import { witnessDepositionWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow";
+import { useLocation } from "react-router-dom/cjs/react-router-dom";
 
 export const clearWitnessDepositionSessionData = () => {
   sessionStorage.removeItem("esignProcess");
@@ -28,6 +29,8 @@ export const WitnessDepositionSignModal = ({
   setShowErrorToast = () => {},
 }) => {
   const queryStrings = Digit.Hooks.useQueryParams();
+  const location = useLocation();
+  const docObj = location.state?.docObj;
 
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const courtId = localStorage.getItem("courtId");
@@ -51,7 +54,7 @@ export const WitnessDepositionSignModal = ({
 
   const [effectiveRowData, setEffectiveRowData] = useState(selectedWitnessDeposition);
   const selectedWitnessDepositionFilestoreid =
-    effectiveRowData?.businessObject?.artifactDetails?.file?.fileStore || effectiveRowData?.file?.fileStore;
+    effectiveRowData?.businessObject?.artifactDetails?.file?.fileStore || effectiveRowData?.file?.fileStore || docObj?.artifactList.file.fileStore;
 
   const [openUploadSignatureModal, setOpenUploadSignatureModal] = useState(false);
   const { t } = useTranslation();
@@ -78,10 +81,10 @@ export const WitnessDepositionSignModal = ({
   const { uploadDocuments } = Digit.Hooks.orders.useDocumentUpload();
 
   const witnessDepositionDocuments = useMemo(() => {
-    return effectiveRowData?.businessObject?.artifactDetails?.file || effectiveRowData?.file
-      ? [effectiveRowData?.businessObject?.artifactDetails?.file || effectiveRowData?.file]
+    return effectiveRowData?.businessObject?.artifactDetails?.file || effectiveRowData?.file || docObj?.artifactList.file
+      ? [effectiveRowData?.businessObject?.artifactDetails?.file || effectiveRowData?.file || docObj?.artifactList.file]
       : [];
-  }, [effectiveRowData]);
+  }, [docObj?.artifactList.file, effectiveRowData?.businessObject?.artifactDetails?.file, effectiveRowData?.file]);
 
   useEffect(() => {
     const fetchWitnessDepositionData = async () => {
@@ -90,7 +93,8 @@ export const WitnessDepositionSignModal = ({
         if (
           queryStrings?.artifactNumber ||
           selectedWitnessDeposition?.businessObject?.artifactDetails?.artifactNumber ||
-          selectedWitnessDeposition?.artifactNumber
+          selectedWitnessDeposition?.artifactNumber ||
+          docObj?.artifactList.artifactNumber
         ) {
           const searchWitnessDepositionResponse = await HomeService.searchWitnessDeposition({
             criteria: {
@@ -100,7 +104,8 @@ export const WitnessDepositionSignModal = ({
               artifactNumber:
                 queryStrings.artifactNumber ||
                 selectedWitnessDeposition?.businessObject?.artifactDetails?.artifactNumber ||
-                selectedWitnessDeposition?.artifactNumber,
+                selectedWitnessDeposition?.artifactNumber ||
+                docObj?.artifactList.artifactNumber,
             },
             pagination: {
               limit: 10,
@@ -124,6 +129,7 @@ export const WitnessDepositionSignModal = ({
     selectedWitnessDeposition?.businessObject?.artifactDetails?.artifactNumber,
     selectedWitnessDeposition?.businessObject?.artifactDetails?.filingNumber,
     filingNumber,
+    docObj?.artifactList.artifactNumber,
   ]);
 
   const CloseBtn = useCallback((props) => {
@@ -324,7 +330,10 @@ export const WitnessDepositionSignModal = ({
       //   fileStoreIds.delete(ADiarypdf);
       // }
       await updateWitnessDeposition({
-        artifactNumber: effectiveRowData?.businessObject?.artifactDetails?.artifactNumber || effectiveRowData?.artifactNumber,
+        artifactNumber:
+          effectiveRowData?.businessObject?.artifactDetails?.artifactNumber ||
+          effectiveRowData?.artifactNumber ||
+          docObj?.artifactList.artifactNumber,
         action: witnessDepositionWorkflowAction.SIGN,
         fileStoreId: newFilestore,
       });
@@ -402,7 +411,9 @@ export const WitnessDepositionSignModal = ({
               label={
                 witnessDepositionLoader
                   ? t(" ")
-                  : `${t("CS_WITNESS_DEPOSITION")} (${effectiveRowData?.businessObject?.artifactDetails?.tag || effectiveRowData?.tag || ""})`
+                  : `${t("CS_WITNESS_DEPOSITION")} (${
+                      effectiveRowData?.businessObject?.artifactDetails?.tag || effectiveRowData?.tag || docObj?.artifactList?.tag || ""
+                    })`
               }
             />
           }
@@ -570,7 +581,9 @@ export const WitnessDepositionSignModal = ({
             setWitnessDepositionSignedPdf("");
             if (queryStrings?.artifactNumber) {
               clearWitnessDepositionSessionData();
-              if (userType && caseId && filingNumber) {
+              if (docObj?.artifactList?.artifactNumber) {
+                history.push(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Documents`);
+              } else if (userType && caseId && filingNumber) {
                 history.push(`/${window?.contextPath}/${userType}/dristi/home/view-case?caseId=${caseId}&filingNumber=${filingNumber}&tab=Overview`);
               } else {
                 history.push(`/${window?.contextPath}/${userType}/home/home-screen`);
