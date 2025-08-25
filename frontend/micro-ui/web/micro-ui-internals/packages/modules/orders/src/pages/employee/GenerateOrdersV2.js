@@ -61,6 +61,8 @@ import {
   attendeesOptions,
   purposeOfHearingConfig,
   nextDateOfHearing,
+  configsCost,
+  configsWitnessBatta,
 } from "../../configs/ordersCreateConfig";
 import { DRISTIService } from "@egovernments/digit-ui-module-dristi/src/services";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
@@ -141,6 +143,8 @@ const configKeys = {
   ADVOCATE_REPLACEMENT_APPROVAL: replaceAdvocateConfig,
   MOVE_CASE_TO_LONG_PENDING_REGISTER: configsMoveCaseToLongPendingRegister,
   MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER: configsMoveCaseOutOfLongPendingRegister,
+  COST: configsCost,
+  WITNESS_BATTA: configsWitnessBatta,
 };
 
 const stateSlaMap = {
@@ -176,6 +180,8 @@ const stateSlaMap = {
   JUDGEMENT: 3,
   CHECKOUT_ACCEPTANCE: 1,
   CHECKOUT_REJECT: 1,
+  COST: 3,
+  WITNESS_BATTA: 3,
 };
 
 const dayInMillisecond = 24 * 3600 * 1000;
@@ -556,10 +562,10 @@ const GenerateOrdersV2 = () => {
 
       if (isDelayApplicationPending) {
         updatedConfig[0].body[0].populators.mdmsConfig.select =
-          "(data) => {return data['Order'].OrderType?.filter((item)=>[`MOVE_CASE_TO_LONG_PENDING_REGISTER`,`DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+          "(data) => {return data['Order'].OrderType?.filter((item)=>[`MOVE_CASE_TO_LONG_PENDING_REGISTER`,`DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`, `COST`, `WITNESS_BATTA`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
       } else {
         updatedConfig[0].body[0].populators.mdmsConfig.select =
-          "(data) => {return data['Order'].OrderType?.filter((item)=>[`MOVE_CASE_TO_LONG_PENDING_REGISTER`,`TAKE_COGNIZANCE`, `DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+          "(data) => {return data['Order'].OrderType?.filter((item)=>[`MOVE_CASE_TO_LONG_PENDING_REGISTER`,`TAKE_COGNIZANCE`, `DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`, `COST`, `WITNESS_BATTA`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
       }
     }
     return updatedConfig;
@@ -1053,6 +1059,35 @@ const GenerateOrdersV2 = () => {
           });
         }
 
+        if (["COST", "WITNESS_BATTA"]?.includes(selectedOrderType)) {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "paymentToBeMadeBy") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...complainants, ...respondents],
+                    },
+                  };
+                }
+                if (field.key === "paymentToBeMadeTo") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...witnesses],
+                    },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
+        }
+
         formConfig = [...formConfig, ...orderTypeForm];
       }
 
@@ -1284,31 +1319,31 @@ const GenerateOrdersV2 = () => {
 
       // }
 
-      if (currentOrderType === "WITHDRAWAL_ACCEPT") {
-        if (newApplicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
-          updatedFormdata.applicationOnBehalfOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
-          setValueRef?.current?.[index]?.("applicationOnBehalfOf", updatedFormdata.applicationOnBehalfOf);
+      // if (currentOrderType === "WITHDRAWAL_ACCEPT") {
+      //   if (newApplicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
+      //     updatedFormdata.applicationOnBehalfOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
+      //     setValueRef?.current?.[index]?.("applicationOnBehalfOf", updatedFormdata.applicationOnBehalfOf);
 
-          updatedFormdata.partyType = t(newApplicationDetails?.additionalDetails?.partyType);
-          setValueRef?.current?.[index]?.("partyType", updatedFormdata.partyType);
+      //     updatedFormdata.partyType = t(newApplicationDetails?.additionalDetails?.partyType);
+      //     setValueRef?.current?.[index]?.("partyType", updatedFormdata.partyType);
 
-          updatedFormdata.reasonForWithdrawal = t(newApplicationDetails?.additionalDetails?.formdata?.reasonForWithdrawal?.code);
-          setValueRef?.current?.[index]?.("reasonForWithdrawal", updatedFormdata.reasonForWithdrawal);
-        }
-      }
+      //     updatedFormdata.reasonForWithdrawal = t(newApplicationDetails?.additionalDetails?.formdata?.reasonForWithdrawal?.code);
+      //     setValueRef?.current?.[index]?.("reasonForWithdrawal", updatedFormdata.reasonForWithdrawal);
+      //   }
+      // }
 
-      if (currentOrderType === "WITHDRAWAL_REJECT") {
-        if (newApplicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
-          updatedFormdata.applicationOnBehalfOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
-          setValueRef?.current?.[index]?.("applicationOnBehalfOf", updatedFormdata.applicationOnBehalfOf);
+      // if (currentOrderType === "WITHDRAWAL_REJECT") {
+      //   if (newApplicationDetails?.applicationType === applicationTypes.WITHDRAWAL) {
+      //     updatedFormdata.applicationOnBehalfOf = newApplicationDetails?.additionalDetails?.onBehalOfName;
+      //     setValueRef?.current?.[index]?.("applicationOnBehalfOf", updatedFormdata.applicationOnBehalfOf);
 
-          updatedFormdata.partyType = t(newApplicationDetails?.additionalDetails?.partyType);
-          setValueRef?.current?.[index]?.("partyType", updatedFormdata.partyType);
+      //     updatedFormdata.partyType = t(newApplicationDetails?.additionalDetails?.partyType);
+      //     setValueRef?.current?.[index]?.("partyType", updatedFormdata.partyType);
 
-          updatedFormdata.reasonForWithdrawal = t(newApplicationDetails?.additionalDetails?.formdata?.reasonForWithdrawal?.code);
-          setValueRef?.current?.[index]?.("reasonForWithdrawal", updatedFormdata.reasonForWithdrawal);
-        }
-      }
+      //     updatedFormdata.reasonForWithdrawal = t(newApplicationDetails?.additionalDetails?.formdata?.reasonForWithdrawal?.code);
+      //     setValueRef?.current?.[index]?.("reasonForWithdrawal", updatedFormdata.reasonForWithdrawal);
+      //   }
+      // }
 
       if (currentOrderType === "EXTENSION_OF_DOCUMENT_SUBMISSION_DATE") {
         if (newApplicationDetails?.applicationType === applicationTypes.EXTENSION_SUBMISSION_DEADLINE) {
@@ -1318,11 +1353,11 @@ const GenerateOrdersV2 = () => {
           updatedFormdata.originalDeadline = newApplicationDetails?.additionalDetails?.formdata?.initialSubmissionDate;
           setValueRef?.current?.[index]?.("originalDeadline", updatedFormdata.originalDeadline);
 
-          updatedFormdata.proposedSubmissionDate = newApplicationDetails?.additionalDetails?.formdata?.changedSubmissionDate;
-          setValueRef?.current?.[index]?.("proposedSubmissionDate", updatedFormdata.proposedSubmissionDate);
+          // updatedFormdata.proposedSubmissionDate = newApplicationDetails?.additionalDetails?.formdata?.changedSubmissionDate;
+          // setValueRef?.current?.[index]?.("proposedSubmissionDate", updatedFormdata.proposedSubmissionDate);
 
-          updatedFormdata.originalSubmissionOrderDate = newApplicationDetails?.additionalDetails?.orderDate;
-          setValueRef?.current?.[index]?.("originalSubmissionOrderDate", updatedFormdata.originalSubmissionOrderDate);
+          // updatedFormdata.originalSubmissionOrderDate = newApplicationDetails?.additionalDetails?.orderDate;
+          // setValueRef?.current?.[index]?.("originalSubmissionOrderDate", updatedFormdata.originalSubmissionOrderDate);
         }
       }
 
@@ -3265,7 +3300,9 @@ const GenerateOrdersV2 = () => {
             setEditOrderModal(false);
             setAddOrderModal(false);
           }}
-          headerLabel={showEditOrderModal ? `${t("EDIT")} ${t(orderType?.code)} ${t("ORDER")}` : `${t("ADD")} ${t(orderType?.code)} ${t("ORDER")}`}
+          headerLabel={
+            showEditOrderModal ? `${t("EDIT")} ${t(orderType?.code)} ${t("CS_ORDER")}` : `${t("ADD")} ${t(orderType?.code)} ${t("CS_ORDER")}`
+          }
           saveLabel={"CONFIRM"}
           cancelLabel={"CANCEL_EDIT"}
           handleSubmit={handleAddOrder}
