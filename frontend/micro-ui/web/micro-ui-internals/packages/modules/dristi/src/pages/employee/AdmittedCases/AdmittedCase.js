@@ -1681,6 +1681,7 @@ const AdmittedCases = () => {
           },
         };
         if (generateOrder) {
+          const caseNumber = caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber;
           const reqbody = {
             order: {
               createdDate: null,
@@ -1707,7 +1708,10 @@ const AdmittedCases = () => {
                 formdata,
               },
               ...(documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName && {
-                orderDetails: { parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }] },
+                orderDetails: {
+                  parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }],
+                  caseNumber: caseNumber,
+                },
               }),
             },
           };

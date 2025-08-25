@@ -24,7 +24,7 @@ export const getCourtFee = async (channelId, receiverPincode, taskType, tenantId
   }
 };
 
-export const addOrderItem = async (order, action, tenantId, applicationTypeConfigUpdated, configKeys) => {
+export const addOrderItem = async (order, action, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails) => {
   const compositeItems = [];
   order?.compositeItems?.forEach((item, index) => {
     let orderSchema = {};
@@ -47,9 +47,11 @@ export const addOrderItem = async (order, action, tenantId, applicationTypeConfi
       ...orderSchema,
       orderDetails: { ...orderSchema?.orderDetails },
     });
+
+    const caseNumber = caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber;
     const orderSchemaUpdated = {
       ...orderSchema,
-      orderDetails: { ...orderSchema?.orderDetails, parties: parties },
+      orderDetails: { ...orderSchema?.orderDetails, parties: parties, caseNumber: caseNumber },
       additionalDetails: item?.orderSchema?.additionalDetails,
       ...(orderSchema?.orderDetails?.refApplicationId && {
         applicationNumber: [orderSchema.orderDetails.refApplicationId],
@@ -79,7 +81,7 @@ export const addOrderItem = async (order, action, tenantId, applicationTypeConfi
   return await ordersService.createOrder(payload, { tenantId });
 };
 
-export const createOrder = async (order, tenantId, applicationTypeConfigUpdated, configKeys) => {
+export const createOrder = async (order, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails) => {
   try {
     let orderSchema = {};
     try {
@@ -96,7 +98,9 @@ export const createOrder = async (order, tenantId, applicationTypeConfigUpdated,
       ...orderSchema,
       orderDetails: { ...orderSchema?.orderDetails, ...(order?.orderDetails || {}) },
     });
-    orderSchema = { ...orderSchema, orderDetails: { ...orderSchema?.orderDetails, parties: parties } };
+
+    const caseNumber = caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber;
+    orderSchema = { ...orderSchema, orderDetails: { ...orderSchema?.orderDetails, parties: parties, caseNumber: caseNumber } };
 
     return await ordersService.createOrder(
       {

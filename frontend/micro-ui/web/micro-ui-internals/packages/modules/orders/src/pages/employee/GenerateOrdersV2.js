@@ -781,12 +781,12 @@ const GenerateOrdersV2 = () => {
       }
 
       // Find absent attendees from currentOrder.attendance.Absent
-      if (Array.isArray(currentOrder.attendance.Absent) && currentOrder.attendance.Absent.length > 0) {
-        const absentAttendeesFromOrder = attendeesOptions?.filter((option) => currentOrder.attendance.Absent.includes(option.code)) || [];
+      if (Array.isArray(currentOrder?.attendance?.Absent) && currentOrder?.attendance?.Absent?.length > 0) {
+        const absentAttendeesFromOrder = attendeesOptions?.filter((option) => currentOrder?.attendance?.Absent?.includes(option?.code)) || [];
         setAbsentAttendees(absentAttendeesFromOrder);
       }
     }
-  }, [currentOrder.attendance]);
+  }, [currentOrder?.attendance]);
 
   // TODO: temporary Form Config, need to be replaced with the actual config
   const getModifiedFormConfig = useCallback(
@@ -2038,7 +2038,7 @@ const GenerateOrdersV2 = () => {
         },
         allParties
       );
-      orderSchema = { ...orderSchema, orderDetails: { ...orderSchema?.orderDetails, parties: parties } };
+      orderSchema = { ...orderSchema, orderDetails: { ...(order?.orderDetails || {}), ...orderSchema?.orderDetails, parties: parties } };
       return await ordersService
         .updateOrder(
           {
@@ -2090,7 +2090,7 @@ const GenerateOrdersV2 = () => {
           if (updatedOrder?.orderNumber) {
             updateOrderResponse = await updateOrder(updatedOrder, OrderWorkflowAction.SAVE_DRAFT);
           } else {
-            updateOrderResponse = await createOrder(updatedOrder);
+            updateOrderResponse = await createOrder(updatedOrder, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails);
           }
         }
       } else {
@@ -2099,7 +2099,14 @@ const GenerateOrdersV2 = () => {
             ...updatedOrderData,
             compositeItems: updatedOrderData?.compositeItems?.filter((item) => item?.isEnabled),
           };
-          updateOrderResponse = await addOrderItem(updatedOrder, OrderWorkflowAction.SAVE_DRAFT, tenantId, applicationTypeConfigUpdated, configKeys);
+          updateOrderResponse = await addOrderItem(
+            updatedOrder,
+            OrderWorkflowAction.SAVE_DRAFT,
+            tenantId,
+            applicationTypeConfigUpdated,
+            configKeys,
+            caseDetails
+          );
         } else {
           const totalEnabled = updatedOrderData?.compositeItems?.filter((compItem) => compItem?.isEnabled && compItem?.orderType)?.length;
           if (totalEnabled === 1) {
@@ -2110,12 +2117,19 @@ const GenerateOrdersV2 = () => {
             updatedOrder.orderType = t(compositeItem?.orderType);
             updatedOrder.orderCategory = "INTERMEDIATE";
             updatedOrder.orderTitle = t(compositeItem?.orderType);
-            updateOrderResponse = await createOrder(updatedOrder);
+            updateOrderResponse = await createOrder(updatedOrder, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails);
           } else {
             const updatedOrder = structuredClone(updatedOrderData);
             const enabledCompositeItems = updatedOrderData?.compositeItems?.filter((item) => item?.isEnabled);
             updatedOrder.compositeItems = enabledCompositeItems;
-            updateOrderResponse = await addOrderItem(updatedOrder, OrderWorkflowAction.SAVE_DRAFT);
+            updateOrderResponse = await addOrderItem(
+              updatedOrder,
+              OrderWorkflowAction.SAVE_DRAFT,
+              tenantId,
+              applicationTypeConfigUpdated,
+              configKeys,
+              caseDetails
+            );
           }
         }
       }

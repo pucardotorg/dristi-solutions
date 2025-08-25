@@ -915,6 +915,7 @@ const EvidenceModal = ({
                   orderDetails: {
                     ...(parties || {}),
                     ...(type === "reject" ? { reasonForRejection: reasonOfApplication } : { reasonForAcceptance: reasonOfApplication }),
+                    applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
                   },
                   ...(hearingNumber && {
                     hearingNumber: hearingNumber,
@@ -963,6 +964,7 @@ const EvidenceModal = ({
                   orderDetails: {
                     ...(parties || {}),
                     ...(type === "reject" ? { reasonForRejection: reasonOfApplication } : { reasonForAcceptance: reasonOfApplication }),
+                    applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
                   },
                   ...(hearingNumber && {
                     hearingNumber: hearingNumber,
@@ -1053,6 +1055,7 @@ const EvidenceModal = ({
             orderDetails: {
               ...(parties || {}),
               ...(type === "reject" ? { reasonForRejection: reasonOfApplication } : { reasonForAcceptance: reasonOfApplication }),
+              applicationTitle: t(documentSubmission?.[0]?.applicationList?.applicationType),
             },
             ...(hearingNumber && {
               hearingNumber: hearingNumber,
@@ -1311,10 +1314,10 @@ const EvidenceModal = ({
   }, [artifact, currentDiaryEntry, documentSubmission, fetchRecursiveData]);
 
   useEffect(() => {
-    if (isApplicationAccepted) {
+    if (isApplicationAccepted && documentSubmission?.[0]?.applicationList?.applicationType !== "CORRECTION_IN_COMPLAINANT_DETAILS") {
       setShowConfirmationModal({ type: isApplicationAccepted?.value ? "accept" : "reject" });
     }
-  }, [isApplicationAccepted]);
+  }, [documentSubmission, isApplicationAccepted]);
 
   // const customLabelShow = useMemo(() => {
   //   return (

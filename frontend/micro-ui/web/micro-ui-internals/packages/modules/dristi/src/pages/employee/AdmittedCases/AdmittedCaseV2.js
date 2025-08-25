@@ -1602,7 +1602,7 @@ const AdmittedCaseV2 = () => {
       setShow(true);
     }
 
-    if (history.location?.state?.applicationDocObj && !show && history.location?.state?.isApplicationAccepted) {
+    if (history.location?.state?.applicationDocObj && !show && history.location?.state?.isApplicationAccepted !== undefined) {
       setIsApplicationAccepted({ value: history.location?.state?.isApplicationAccepted });
     }
   }, [history.location?.state?.applicationDocObj, history.location?.state?.isApplicationAccepted, show]);
@@ -1824,6 +1824,7 @@ const AdmittedCaseV2 = () => {
   const handleAdmitDismissCaseOrder = useCallback(
     async (generateOrder, type) => {
       try {
+        const caseNumber = caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber;
         const orderType = type === "reject" ? "DISMISS_CASE" : type === "accept" ? "TAKE_COGNIZANCE" : null;
         const formdata = {
           orderType: {
@@ -1859,7 +1860,10 @@ const AdmittedCaseV2 = () => {
                 formdata,
               },
               ...(documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName && {
-                orderDetails: { parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }] },
+                orderDetails: {
+                  parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }],
+                  caseNumber: caseNumber,
+                },
               }),
             },
           };
