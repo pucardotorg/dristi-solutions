@@ -237,8 +237,8 @@ public class CaseConsumer {
             CaseRequest caseRequest = new CaseRequest();
             caseRequest.setCases(courtCase);
             logger.info("Transformed Object: {} ", objectMapper.writeValueAsString(courtCase));
-            publishCaseSearchFromCaseRequest(caseRequest);
             producer.push(updateCaseTopic, caseRequest);
+            publishCaseSearchFromCaseRequest(caseRequest);
             pushToLegacyTopic(courtCase);
         } catch (Exception exception) {
             log.error("error in saving case", exception);
