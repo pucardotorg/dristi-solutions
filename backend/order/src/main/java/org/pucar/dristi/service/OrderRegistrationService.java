@@ -73,7 +73,7 @@ public class OrderRegistrationService {
 
             enrichmentUtil.enrichOrderRegistration(body);
             enrichmentUtil.enrichCompositeOrderItemIdOnAddItem(body);
-            enrichmentUtil.enrichItemText(body);
+           // enrichmentUtil.enrichItemText(body);
 
             workflowUpdate(body);
 
@@ -116,7 +116,6 @@ public class OrderRegistrationService {
             // Enrich application upon update
             enrichmentUtil.enrichOrderRegistrationUponUpdate(body);
             enrichmentUtil.enrichCompositeOrderItemIdOnAddItem(body);
-            enrichmentUtil.enrichItemText(body);
 
             workflowUpdate(body);
 

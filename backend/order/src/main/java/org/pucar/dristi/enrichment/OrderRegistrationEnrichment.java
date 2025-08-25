@@ -153,18 +153,15 @@ public class OrderRegistrationEnrichment {
 
                                 if (itemNode.has("orderSchema")) {
                                     JsonNode orderSchemaNode = itemNode.get("orderSchema");
-                                    if (orderSchemaNode.has("orderDetails")) {
-                                        JsonNode orderDetailsNode = orderSchemaNode.get("orderDetails");
-                                        String itemTextMdms = processOrderText(orderType, orderDetailsNode);
-                                        if (itemTextMdms != null) {
-                                            String itemText = orderRequest.getOrder().getItemText();
-                                            if(itemText != null) {
-                                                itemText = itemText + " " + itemTextMdms;
-                                            }else {
-                                                itemText = itemTextMdms;
-                                            }
-                                            orderRequest.getOrder().setItemText(itemText);
+                                    String itemTextMdms = processOrderText(orderType, orderSchemaNode.toString());
+                                    if (itemTextMdms != null) {
+                                        String itemText = orderRequest.getOrder().getItemText();
+                                        if (itemText != null) {
+                                            itemText = itemText + " " + itemTextMdms;
+                                        } else {
+                                            itemText = itemTextMdms;
                                         }
+                                        orderRequest.getOrder().setItemText(itemText);
                                     }
                                 }
                             }
@@ -172,6 +169,10 @@ public class OrderRegistrationEnrichment {
                     }
                 }
                 orderRequest.getOrder().setCompositeItems(arrayNode);
+            }
+            if (!COMPOSITE.equalsIgnoreCase(orderRequest.getOrder().getOrderCategory()) && orderRequest.getOrder().getCompositeItems() == null) {
+                JsonNode orderNode = objectMapper.convertValue(orderRequest.getOrder(), JsonNode.class);
+                orderRequest.getOrder().setItemText(processOrderText(orderRequest.getOrder().getOrderType(), orderNode.toString()));
             }
         } catch (Exception e) {
             log.error("Error enriching composite order item id add item :: {}", e.toString());
@@ -195,12 +196,9 @@ public class OrderRegistrationEnrichment {
 
                             if (itemNode.has("orderSchema")) {
                                 JsonNode orderSchemaNode = itemNode.get("orderSchema");
-                                if (orderSchemaNode.has("orderDetails")) {
-                                    JsonNode orderDetailsNode = orderSchemaNode.get("orderDetails");
-                                    String itemTextMdms = processOrderText(orderType, orderDetailsNode);
-                                    if (itemTextMdms != null) {
-                                        itemText.add(itemTextMdms);
-                                    }
+                                String itemTextMdms = processOrderText(orderType, orderSchemaNode.toString());
+                                if (itemTextMdms != null) {
+                                    itemText.add(itemTextMdms);
                                 }
                             }
                         }
@@ -208,8 +206,6 @@ public class OrderRegistrationEnrichment {
                     order.setItemText(String.join(" ", itemText));
                 }
             } else {
-                JsonNode orderDetailsNode = objectMapper.convertValue(order.getOrderDetails(), JsonNode.class);
-                order.setItemText(processOrderText(order.getOrderType(), orderDetailsNode));
             }
         } catch (Exception e) {
             log.error("Error enriching composite order item :: {}", e.toString());
@@ -219,7 +215,7 @@ public class OrderRegistrationEnrichment {
     }
 
 
-    public String processOrderText(String orderType, JsonNode orderDetailsNode) {
+    public String processOrderText(String orderType, String orderSchema) {
 
         List<ItemTextMdms> itemTextMdmsMatches = mdmsDataConfig.getItemTextMdmsData().stream()
                 .filter(mdms -> mdms.getOrderType().equalsIgnoreCase(orderType))
@@ -229,30 +225,33 @@ public class OrderRegistrationEnrichment {
             String text = itemTextMdmsMatches.get(0).getItemText();
             List<String> paths = itemTextMdmsMatches.get(0).getPath();
 
-            if(paths == null || paths.isEmpty()) {
+            if (paths == null || paths.isEmpty()) {
                 return text;
             }
             for (String path : paths) {
-                if (orderDetailsNode.has(path)) {
-                    String value = orderDetailsNode.path(path).asText("");
-                    text = text.replace("[" + path + "]", value);
+                if (path.startsWith("GET_DUE_DATE")) {
+                    Long dueDateInMilliSecond = JsonPath.read(orderSchema, path.substring("GET_DUE_DATE".length()));
+                    LocalDate dueDate = Instant.ofEpochMilli(dueDateInMilliSecond).atZone(ZoneId.systemDefault()).toLocalDate();
+                    long daysRemaining = Duration.between(LocalDate.now().atStartOfDay(), dueDate.atStartOfDay()).toDays();
+                    text = text.replace("[" + path + "]", Long.toString(daysRemaining));
+                } else {
+                    String pathValue = JsonPath.read(orderSchema, path);
+                    text = text.replace("[" + path + "]", pathValue);
                 }
             }
             return text;
 
         } else if (itemTextMdmsMatches.size() == 2) {
-            String action = orderDetailsNode.path("action").asText();
+            String action = JsonPath.read(orderSchema, "$.orderDetails.action");
             ItemTextMdms itemTextMdms = itemTextMdmsMatches.stream().filter(mdms -> mdms.getAction().equalsIgnoreCase(action)).findFirst().get();
             String text = itemTextMdms.getItemText();
             List<String> paths = itemTextMdms.getPath();
-            if(paths == null || paths.isEmpty()) {
+            if (paths == null || paths.isEmpty()) {
                 return text;
             }
             for (String path : paths) {
-                if (orderDetailsNode.has(path)) {
-                    String value = orderDetailsNode.path(path).asText("");
-                    text = text.replace("[" + path + "]", value);
-                }
+                String value = JsonPath.read(orderSchema, path);
+                text = text.replace("[" + path + "]", value);
             }
             return text;
         }
