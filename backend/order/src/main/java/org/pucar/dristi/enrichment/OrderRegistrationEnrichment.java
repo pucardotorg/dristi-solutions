@@ -30,8 +30,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import static org.pucar.dristi.config.ServiceConstants.COMPOSITE;
-import static org.pucar.dristi.config.ServiceConstants.ENRICHMENT_EXCEPTION;
+import static org.pucar.dristi.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -170,13 +169,25 @@ public class OrderRegistrationEnrichment {
                 }
                 orderRequest.getOrder().setCompositeItems(arrayNode);
             }
-            if (!COMPOSITE.equalsIgnoreCase(orderRequest.getOrder().getOrderCategory()) && orderRequest.getOrder().getCompositeItems() == null) {
-                JsonNode orderNode = objectMapper.convertValue(orderRequest.getOrder(), JsonNode.class);
-                orderRequest.getOrder().setItemText(processOrderText(orderRequest.getOrder().getOrderType(), orderNode.toString()));
-            }
         } catch (Exception e) {
             log.error("Error enriching composite order item id add item :: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in order enrichment service during add item: " + e.getMessage());
+        }
+    }
+
+    public void enrichItemTextForIntermediateOrder(OrderRequest orderRequest) {
+        if (INTERMEDIATE.equalsIgnoreCase(orderRequest.getOrder().getOrderCategory()) && orderRequest.getOrder().getCompositeItems() == null) {
+            JsonNode orderNode = objectMapper.convertValue(orderRequest.getOrder(), JsonNode.class);
+            String itemTextMdms = processOrderText(orderRequest.getOrder().getOrderType(), orderNode.toString());
+            if (itemTextMdms != null) {
+                String itemText = orderRequest.getOrder().getItemText();
+                if (itemText != null) {
+                    itemText = itemText + " " + itemTextMdms;
+                } else {
+                    itemText = itemTextMdms;
+                }
+                orderRequest.getOrder().setItemText(itemText);
+            }
         }
     }
 
