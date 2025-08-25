@@ -35,7 +35,7 @@ public class HearingUpdateConsumer {
         this.orderUtil = orderUtil;
     }
 
-    @KafkaListener(topics = {"${hearing.case.reference.number.update}","${lpr.case.details.update.kafka.topic}"})
+    @KafkaListener(topics = {"${hearing.case.reference.number.update}", "${lpr.case.details.update.kafka.topic}"})
     public void updateCaseReferenceConsumer(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
             log.info("Received case reference number details on topic: {}", topic);
@@ -70,11 +70,10 @@ public class HearingUpdateConsumer {
                         .build();
 
                 OrderListResponse response = orderUtil.getOrders(searchRequest);
-                if (response == null || CollectionUtils.isEmpty(response.getList())) {
-                    log.info("No SCHEDULING_NEXT_HEARING in DRAFT state found for Hearing ID: {}", hearingRequest.getHearing().getHearingId());
+                if (response != null && !CollectionUtils.isEmpty(response.getList())) {
+                    log.info("Found existing SCHEDULING_NEXT_HEARING draft(s) for Hearing ID: {}; skipping creation.", hearingRequest.getHearing().getHearingId());
                     return;
-                }
-                else{
+                } else {
                     org.pucar.dristi.web.models.orders.Order order = Order.builder()
                             .hearingNumber(hearingRequest.getHearing().getHearingId())
                             .filingNumber(
@@ -100,7 +99,7 @@ public class HearingUpdateConsumer {
 
                     OrderRequest orderRequest = OrderRequest.builder()
                             .requestInfo(hearingRequest.getRequestInfo()).order(order).build();
-                     OrderResponse orderResponse = orderUtil.createOrder(orderRequest);
+                    OrderResponse orderResponse = orderUtil.createOrder(orderRequest);
                     log.info("Order created for Hearing ID: {}, orderNumber:: {}", hearingRequest.getHearing().getHearingId(), orderResponse.getOrder().getOrderNumber());
                 }
             }
