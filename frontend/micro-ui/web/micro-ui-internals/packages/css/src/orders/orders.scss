@@ -1170,9 +1170,10 @@
 }
 
 .order-task-container {
-  max-height: 150px;
+  max-height: 172px;
   overflow-y: auto;
   padding-right: 5px;
+  margin-bottom: 20px;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -1187,7 +1188,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 12px;
+  padding: 12px;
   min-height: 50px;
   background-color: #fff6e8;
   border-bottom: 1px solid #eee;
@@ -1198,7 +1199,8 @@
 }
 
 .order-task-title {
-  font-weight: bold;
+  font-weight: 500;
+  font-size: 16px;
 }
 
 .order-task-actions {
@@ -1208,9 +1210,10 @@
   button {
     border: none;
     cursor: pointer;
-    padding: 5px 15px;
+    padding: 8px 16px;
     height: 30px;
     font-weight: bold;
+    font-size: 14px;
 
     &.btn-view {
       background: transparent;
