@@ -63,4 +63,7 @@ public class LandingPageCase {
 
     @JsonProperty("caseSubStage")
     private String caseSubStage = null;
+
+    @JsonProperty("outcome")
+    private String outcome = null;
 }

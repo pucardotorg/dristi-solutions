@@ -178,4 +178,11 @@ public class Configuration {
     @Value("${evidence.service.update.endpoint}")
     private String evidenceServiceUpdateEndpoint;
 
+    // Case Status Configuration
+    @Value("${case.status.disposed.outcomes}")
+    private List<String> disposedOutcomes;
+
+    @Value("${case.status.allowed.statuses}")
+    private List<String> allowedCaseStatuses;
+
 }
