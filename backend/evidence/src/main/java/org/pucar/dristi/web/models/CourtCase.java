@@ -136,5 +136,10 @@ public class CourtCase {
 
     @JsonProperty("advocateStatus")
     private String advocateStatus = null;
+
+    @JsonProperty("witnessDetails")
+    @Valid
+    @Builder.Default
+    private List<WitnessDetails> witnessDetails = new ArrayList<>();
 }
 
