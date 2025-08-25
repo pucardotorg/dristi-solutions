@@ -36,7 +36,7 @@ public class WitnessDetails {
     private Object phoneNumbers;
 
     @JsonProperty("addressDetails")
-    List<Object> addressDetails = new ArrayList<>();
+    List<WitnessAddress> addressDetails = new ArrayList<>();
 
     @JsonProperty("witnessDesignation")
     private String witnessDesignation;
