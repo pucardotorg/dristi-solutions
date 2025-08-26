@@ -3,6 +3,7 @@ package org.egov.inbox.repository.builder.V2;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jayway.jsonpath.JsonPath;
+import java.util.Comparator;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.inbox.util.ErrorConstants;
 import org.egov.inbox.util.MDMSUtil;
@@ -99,6 +100,9 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
 
     private void addSortClauseToBaseQueryUsingConfig(Map<String, Object> baseEsQuery, List<SortOrder> sortOrder) {
 
+        // Sort by orderPriority ascending
+        sortOrder.sort(Comparator.comparing(SortOrder::getOrderPriority, Comparator.nullsLast(Integer::compareTo)));
+
         List<Map<String, Object>> sortList = new ArrayList<>();
         for (SortOrder sortOrderItem : sortOrder) {
             if (sortOrderItem.getIsActive()) {
@@ -112,7 +116,8 @@ public class InboxQueryBuilder implements QueryBuilderInterface {
                 }
             }
 
-            baseEsQuery.put(SORT_KEY, sortList);         }
+            baseEsQuery.put(SORT_KEY, sortList);
+        }
     }
 
     private Map<String, Object> addOuterSlotClause(String path, SortParam.Order order) {
