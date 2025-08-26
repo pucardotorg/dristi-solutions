@@ -112,7 +112,7 @@ async function orderRejectCheckout(
           "DD-MM-YYYY"
         )
       : "";
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = (courtCase?.isLPRCase ? courtCase?.lprNumber : courtCase?.courtCaseNumber) || courtCase?.cmpNumber || "";
     const data = {
       Data: [
         {

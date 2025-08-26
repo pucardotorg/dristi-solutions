@@ -166,7 +166,7 @@ const hearingBulkReschedule = async (req, res, qrCode) => {
         (hearing) => hearing?.filingNumber?.[0] === caseDate?.filingNumber
       );
 
-      const caseNumber = caseDate?.courtCaseNumber || caseDate?.cmpNumber || "";
+      const caseNumber = (caseDate?.isLPRCase ? caseDate?.lprNumber : caseDate?.courtCaseNumber) || caseDate?.cmpNumber || "";
       const caseTitle = caseDate?.caseTitle || "";
       const originalHearingDate =
         formatDate(

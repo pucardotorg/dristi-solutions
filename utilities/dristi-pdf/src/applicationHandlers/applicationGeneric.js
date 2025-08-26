@@ -190,7 +190,7 @@ async function applicationGeneric(
       application?.applicationDetails?.applicationTitle ||
       applicationNameMap[application?.applicationType] ||
       "General Application";
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = courtCase?.isLPRCase ? courtCase?.lprNumber : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const prayer = application?.applicationDetails?.prayer || "";
     const data = {
       Data: [
