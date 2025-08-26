@@ -46,7 +46,7 @@ const AddOrderTypeModal = ({
   setValueRef,
   orderType,
   addOrderTypeLoader,
-  setWarrantSubtypeCode
+  setWarrantSubtypeCode,
 }) => {
   const [formdata, setFormData] = useState({});
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
@@ -257,7 +257,7 @@ const AddOrderTypeModal = ({
               defaultValues={getDefaultValue(index)}
               config={modifiedFormConfig}
               fieldStyle={{ width: "100%" }}
-              cardClassName={`order-type-form-composer`}
+              cardClassName={`order-type-form-composer new-order`}
               actionClassName={"order-type-action"}
               onFormValueChange={onFormValueChange}
               label={t(saveLabel)}
