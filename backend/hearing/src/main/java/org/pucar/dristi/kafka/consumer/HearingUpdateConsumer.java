@@ -8,6 +8,8 @@ import org.pucar.dristi.service.HearingService;
 import org.pucar.dristi.util.OrderUtil;
 import org.pucar.dristi.web.models.HearingRequest;
 import org.pucar.dristi.web.models.WorkflowObject;
+import org.pucar.dristi.web.models.cases.CaseRequest;
+import org.pucar.dristi.web.models.cases.CourtCase;
 import org.pucar.dristi.web.models.orders.*;
 import org.pucar.dristi.web.models.Pagination;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -35,12 +37,25 @@ public class HearingUpdateConsumer {
         this.orderUtil = orderUtil;
     }
 
-    @KafkaListener(topics = {"${hearing.case.reference.number.update}", "${lpr.case.details.update.kafka.topic}"})
+    @KafkaListener(topics = {"${hearing.case.reference.number.update}"})
     public void updateCaseReferenceConsumer(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
         try {
             log.info("Received case reference number details on topic: {}", topic);
             hearingService.updateCaseReferenceHearing(objectMapper.convertValue(payload.value(), Map.class));
             log.info("Updated case reference number for hearings");
+        } catch (IllegalArgumentException e) {
+            log.error("Error while listening to case reference number details topic: {}: {}", topic, e.getMessage());
+        }
+
+    }
+
+    @KafkaListener(topics = {"${lpr.case.details.update.kafka.topic}"})
+    public void updateCaseReferenceConsumerLpr(ConsumerRecord<String, Object> payload, @Header(KafkaHeaders.RECEIVED_TOPIC) String topic) {
+        try {
+            log.info("Received case reference number details on lpr update topic: {}", topic);
+            CaseRequest caseRequest = objectMapper.convertValue(payload.value(), CaseRequest.class);
+            hearingService.updateCaseReferenceHearingAfterLpr(caseRequest);
+            log.info("Updated case reference number for hearings after lpr update");
         } catch (IllegalArgumentException e) {
             log.error("Error while listening to case reference number details topic: {}: {}", topic, e.getMessage());
         }
