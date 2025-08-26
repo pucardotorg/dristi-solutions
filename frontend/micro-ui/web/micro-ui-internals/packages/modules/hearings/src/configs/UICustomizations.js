@@ -314,11 +314,24 @@ export const UICustomizations = {
                   Police: "address",
                   RPAD: "address",
                 };
+                function mapStatus(status, taskType) {
+                  const mapping = {
+                    ISSUE_WARRANT: {
+                      PROCLAMATION: "ISSUE_PROCLAMATION",
+                      ATTACHMENT: "ISSUE_ATTACHMENT",
+                    },
+                    WARRANT_SENT: {
+                      PROCLAMATION: "PROCLAMATION_SENT",
+                      ATTACHMENT: "ATTACHMENT_SENT",
+                    },
+                  };
+                  return mapping[status]?.[taskType] || status; // fallback to original
+                }
                 const channelDetails = taskDetail?.respondentDetails?.[channelDetailsEnum?.[taskDetail?.deliveryChannels?.channelName]];
                 return {
                   deliveryChannel: taskDetail?.deliveryChannels?.channelName,
                   channelDetails: typeof channelDetails === "object" ? generateAddress({ ...channelDetails }) : channelDetails,
-                  status: data?.status,
+                  status: mapStatus(data?.status, data?.taskType),
                   remarks: taskDetail?.remarks?.remark,
                   statusChangeDate: taskDetail?.deliveryChannels?.statusChangeDate,
                   taskType: data?.taskType,
