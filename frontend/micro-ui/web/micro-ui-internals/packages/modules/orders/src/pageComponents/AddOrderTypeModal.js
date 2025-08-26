@@ -46,6 +46,7 @@ const AddOrderTypeModal = ({
   setValueRef,
   orderType,
   addOrderTypeLoader,
+  setWarrantSubtypeCode
 }) => {
   const [formdata, setFormData] = useState({});
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
@@ -227,6 +228,7 @@ const AddOrderTypeModal = ({
 
     if (!isEqual(formdata, formData)) {
       setFormData(formData);
+      setWarrantSubtypeCode(formData?.warrantSubType?.templateType);
     }
 
     setFormErrors.current[index] = setError;

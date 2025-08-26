@@ -251,6 +251,7 @@ const GenerateOrdersV2 = () => {
   const [showMandatoryFieldsErrorModal, setShowMandatoryFieldsErrorModal] = useState({ showModal: false, errorsData: [] });
   const [taskType, setTaskType] = useState({});
   const [errors, setErrors] = useState({});
+  const [warrantSubtypeCode, setWarrantSubtypeCode] = useState("");
 
   const fetchCaseDetails = async () => {
     try {
@@ -989,7 +990,7 @@ const GenerateOrdersV2 = () => {
                           caseId: caseDetails?.id,
                           filingNumber: caseDetails?.filingNumber,
                           tab: field?.key === "witnessNote" ? "Complaint" : field?.key === "evidenceNote" ? "Documents" : "Overview",
-                          // customFunction: () => handleSaveDraft({ showReviewModal: false }),
+                          customFunction: () => handleSaveDraft(currentOrder),
                         },
                       ],
                     },
@@ -1013,7 +1014,6 @@ const GenerateOrdersV2 = () => {
         }
 
         if (selectedOrderType === "WARRANT") {
-          const warrantSubtypeCode = currentOrder?.additionalDetails?.formdata?.warrantSubType?.templateType;
           orderTypeForm = orderTypeForm?.map((section) => {
             const updatedBody = section.body
               .map((field) => {
@@ -1157,6 +1157,7 @@ const GenerateOrdersV2 = () => {
       caseDetails?.filingNumber,
       t,
       groupedWarrantOptions,
+      warrantSubtypeCode
     ]
   );
 
@@ -2570,35 +2571,49 @@ const GenerateOrdersV2 = () => {
         compositeItems: updatedCompositeItems,
       });
     } else {
-      const deletedItemId = currentOrder?.compositeItems?.find((item, index) => index === deleteOrderItemIndex)?.id;
-      if (deletedItemId) {
-        try {
-          const response = await deleteOrderItem(currentOrder, deletedItemId, tenantId);
-          if (response?.order?.orderNumber) {
-            await refetchOrdersData();
-            await refetchOrdersData(); // hard refresh
-          } else {
-            console.error("Delete operation was not successful.");
-          }
-        } catch (error) {
-          console.error("Error deleting order item:", error);
-        }
+      if (currentOrder?.orderCategory === "INTERMEDIATE") {
+        await updateOrder(
+          {
+            ...currentOrder,
+            additionalDetails: null,
+            orderType: null,
+            orderDetails: null,
+          },
+          OrderWorkflowAction.SAVE_DRAFT
+        );
+        await refetchOrdersData();
+        await refetchOrdersData();
       } else {
-        let updatedCompositeItems = currentOrder?.compositeItems?.map((compositeItem, index) => {
-          if (index === deleteOrderItemIndex) {
-            return { ...compositeItem, isEnabled: false, displayindex: -Infinity };
+        const deletedItemId = currentOrder?.compositeItems?.find((item, index) => index === deleteOrderItemIndex)?.id;
+        if (deletedItemId) {
+          try {
+            const response = await deleteOrderItem(currentOrder, deletedItemId, tenantId);
+            if (response?.order?.orderNumber) {
+              await refetchOrdersData();
+              await refetchOrdersData(); // hard refresh
+            } else {
+              console.error("Delete operation was not successful.");
+            }
+          } catch (error) {
+            console.error("Error deleting order item:", error);
           }
+        } else {
+          let updatedCompositeItems = currentOrder?.compositeItems?.map((compositeItem, index) => {
+            if (index === deleteOrderItemIndex) {
+              return { ...compositeItem, isEnabled: false, displayindex: -Infinity };
+            }
 
-          return {
-            ...compositeItem,
-            displayindex: index > deleteOrderItemIndex ? compositeItem.displayindex - 1 : compositeItem.displayindex,
-          };
-        });
+            return {
+              ...compositeItem,
+              displayindex: index > deleteOrderItemIndex ? compositeItem.displayindex - 1 : compositeItem.displayindex,
+            };
+          });
 
-        setCurrentOrder({
-          ...currentOrder,
-          compositeItems: updatedCompositeItems,
-        });
+          setCurrentOrder({
+            ...currentOrder,
+            compositeItems: updatedCompositeItems,
+          });
+        }
       }
     }
     setDeleteOrderItemIndex(null);
@@ -3325,6 +3340,7 @@ const GenerateOrdersV2 = () => {
           clearFormErrors={clearFormErrors}
           setValueRef={setValueRef}
           addOrderTypeLoader={addOrderTypeLoader}
+          setWarrantSubtypeCode={setWarrantSubtypeCode}
         />
       )}
       {showBailBondModal && !isBailBondTaskExists && (

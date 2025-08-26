@@ -4670,6 +4670,7 @@ export const configsIssueBailAcceptance = [
         label: "CS_BAIL_CHEQUE_AMOUNT",
         isMandatory: true,
         schemaKeyPath: "orderDetails.chequeAmount",
+        key: "chequeAmount",
         populators: {
           error: "CORE_REQUIRED_FIELD_ERROR",
           componentInFront: "₹",
@@ -4681,6 +4682,7 @@ export const configsIssueBailAcceptance = [
         type: "number",
         label: "NO_OF_SURETIES",
         isMandatory: true,
+        key: "noOfSureties",
         schemaKeyPath: "orderDetails.noOfSureties",
         populators: {
           error: "CORE_REQUIRED_FIELD_ERROR",
@@ -4690,7 +4692,8 @@ export const configsIssueBailAcceptance = [
       {
         type: "radio",
         key: "plea",
-        schemaKeyPath: "judgementDetails.plea",
+        schemaKeyPath: "orderDetails.plea",
+        transformer: "mdmsDropdown",
         label: "PLEA",
         isMandatory: true,
         populators: {
@@ -5787,6 +5790,7 @@ export const configsCost = [
         label: "CS_COST_ORDER_AMOUNT",
         isMandatory: true,
         schemaKeyPath: "orderDetails.amount",
+        key: "amount",
         populators: {
           name: "amount",
           error: "CORE_REQUIRED_FIELD_ERROR",
@@ -5890,6 +5894,7 @@ export const configsWitnessBatta = [
         label: "CS_COST_ORDER_AMOUNT",
         isMandatory: true,
         schemaKeyPath: "orderDetails.amount",
+        key: "amount",
         populators: {
           name: "amount",
           error: "CORE_REQUIRED_FIELD_ERROR",
