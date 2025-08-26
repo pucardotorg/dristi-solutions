@@ -13,12 +13,12 @@ const OrderTypeControlItem = ({
   orderTypeData,
   orderTypeConfig,
   setOrderType,
-  setAddOrderModal,
   setCompositeOrderIndex,
   handleEditOrder,
   setDeleteOrderItemIndex,
   index = null,
   style = {},
+  handleOrderTypeChange,
 }) => {
   return (
     <React.Fragment>
@@ -28,11 +28,7 @@ const OrderTypeControlItem = ({
         <CustomDropdown
           t={t}
           type={dropdownType}
-          onChange={(e) => {
-            setCompositeOrderIndex(index !== null ? index : 0);
-            setOrderType(e);
-            setAddOrderModal(true);
-          }}
+          onChange={(e) => handleOrderTypeChange(index, e)}
           value={
             orderType
               ? {

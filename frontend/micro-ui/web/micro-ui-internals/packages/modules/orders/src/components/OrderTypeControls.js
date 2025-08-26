@@ -7,10 +7,10 @@ const OrderTypeControls = ({
   orderTypeData,
   orderTypeConfig,
   setOrderType,
-  setAddOrderModal,
   setCompositeOrderIndex,
   handleEditOrder,
   setDeleteOrderItemIndex,
+  handleOrderTypeChange,
 }) => {
   return (
     <React.Fragment>
@@ -27,12 +27,12 @@ const OrderTypeControls = ({
                   orderTypeData={orderTypeData}
                   orderTypeConfig={orderTypeConfig}
                   setOrderType={setOrderType}
-                  setAddOrderModal={setAddOrderModal}
                   setCompositeOrderIndex={setCompositeOrderIndex}
                   handleEditOrder={handleEditOrder}
                   setDeleteOrderItemIndex={setDeleteOrderItemIndex}
                   index={idx}
                   style={{ marginBottom: "10px" }}
+                  handleOrderTypeChange={handleOrderTypeChange}
                 />
               ))}
           </div>
@@ -44,10 +44,10 @@ const OrderTypeControls = ({
             orderTypeData={orderTypeData}
             orderTypeConfig={orderTypeConfig}
             setOrderType={setOrderType}
-            setAddOrderModal={setAddOrderModal}
             setCompositeOrderIndex={setCompositeOrderIndex}
             handleEditOrder={handleEditOrder}
             setDeleteOrderItemIndex={setDeleteOrderItemIndex}
+            handleOrderTypeChange={handleOrderTypeChange}
           />
         )}
       </div>

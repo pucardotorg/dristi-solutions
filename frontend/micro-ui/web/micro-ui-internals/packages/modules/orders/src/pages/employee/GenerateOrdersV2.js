@@ -83,6 +83,7 @@ import {
   channelTypeEnum,
   checkValidation,
   CloseBtn,
+  compositeOrderAllowedTypes,
   formatDate,
   generateAddress,
   getFormData,
@@ -103,6 +104,7 @@ import MandatoryFieldsErrorModal from "./MandatoryFieldsErrorModal";
 import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import TasksComponent from "../../../../home/src/components/TaskComponent";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
+import CompositeOrdersErrorModal from "./CompositeOrdersErrorModal";
 
 const configKeys = {
   SECTION_202_CRPC: configsOrderSection202CRPC,
@@ -2519,6 +2521,65 @@ const GenerateOrdersV2 = () => {
     }
   };
 
+  const checkOrderTypeValidation = (a, b) => {
+    let errorObj = { isIncompatible: false, isDuplicate: false };
+    for (let i = 0; i < compositeOrderAllowedTypes?.length; i++) {
+      const currentObj = compositeOrderAllowedTypes?.[i];
+      if (currentObj?.orderTypes?.includes(a)) {
+        if (currentObj?.unAllowedOrderTypes?.includes(b)) {
+          if (a === b) {
+            errorObj.isDuplicate = true;
+          } else {
+            errorObj.isIncompatible = true;
+          }
+          break;
+        }
+      }
+    }
+    return errorObj;
+  };
+
+  const checkOrderValidation = useCallback(
+    (orderType, index) => {
+      let error = { isIncompatible: false, isDuplicate: false };
+      let errorMessage = "";
+      for (let i = 0; i < currentOrder?.compositeItems?.length; i++) {
+        if (i === index) {
+          continue;
+        } else {
+          const orderTypeA = currentOrder?.compositeItems?.[i]?.orderSchema?.additionalDetails?.formdata?.orderType?.code;
+          const errorObj = checkOrderTypeValidation(orderTypeA, orderType);
+          error.isIncompatible = error.isIncompatible || errorObj?.isIncompatible;
+          error.isDuplicate = error.isDuplicate || errorObj?.isDuplicate;
+          if (error.isDuplicate || error.isIncompatible) {
+            break;
+          }
+        }
+      }
+      if (error?.isIncompatible && !error?.isDuplicate) {
+        errorMessage = t("ORDER_TYPES_CAN_NOT_BE_GROUPED_TOGETHER");
+      }
+      if (!error?.isIncompatible && error?.isDuplicate) {
+        errorMessage = t("ORDER_TYPES_ARE_DUPLICATED");
+      }
+      if (error?.isIncompatible || error?.isDuplicate) {
+        return { showModal: true, errorMessage };
+      } else return { showModal: false, errorMessage: "" };
+    },
+    [currentOrder, t]
+  );
+
+  const handleOrderTypeChange = (index, orderType) => {
+    const orderTypeValidationObj = checkOrderValidation(orderType?.code, index);
+    if (orderTypeValidationObj?.showModal) {
+      setShowOrderValidationModal(orderTypeValidationObj);
+      return;
+    }
+    setCompositeOrderIndex(index !== null ? index : 0);
+    setOrderType(orderType);
+    setAddOrderModal(true);
+  };
+
   const createBailBondTask = async () => {
     setBailBondLoading(true);
     try {
@@ -2702,10 +2763,24 @@ const GenerateOrdersV2 = () => {
             };
           });
 
-          setCurrentOrder({
-            ...currentOrder,
-            compositeItems: updatedCompositeItems,
-          });
+          const totalEnabled = updatedCompositeItems?.filter((o) => o?.isEnabled)?.length;
+          if (totalEnabled === 1) {
+            const enabledItem = updatedCompositeItems?.find((item) => item?.isEnabled);
+            setCurrentOrder({
+              ...currentOrder,
+              orderType: enabledItem?.orderType,
+              orderTitle: `${t(enabledItem?.orderType)}`,
+              additionalDetails: enabledItem?.orderSchema?.additionalDetails,
+              orderDetails: enabledItem?.orderSchema?.orderDetails,
+              orderCategory: "INTERMEDIATE",
+              compositeItems: null,
+            });
+          } else {
+            setCurrentOrder({
+              ...currentOrder,
+              compositeItems: updatedCompositeItems?.filter((o) => o?.orderType),
+            });
+          }
         }
       }
     }
@@ -3163,10 +3238,10 @@ const GenerateOrdersV2 = () => {
                   },
                 }}
                 setOrderType={setOrderType}
-                setAddOrderModal={setAddOrderModal}
                 setCompositeOrderIndex={setCompositeOrderIndex}
                 handleEditOrder={handleEditOrder}
                 setDeleteOrderItemIndex={setDeleteOrderItemIndex}
+                handleOrderTypeChange={handleOrderTypeChange}
               />
               <div style={{ marginBottom: "10px" }}>
                 <Button
@@ -3515,6 +3590,13 @@ const GenerateOrdersV2 = () => {
           handleCloseSuccessModal={handleCloseSuccessModal}
           actionSaveLabel={successModalActionSaveLabel}
         />
+      )}
+      {showOrderValidationModal?.showModal && (
+        <CompositeOrdersErrorModal
+          t={t}
+          showOrderValidationModal={showOrderValidationModal}
+          setShowOrderValidationModal={setShowOrderValidationModal}
+        ></CompositeOrdersErrorModal>
       )}
       {showBulkModal && (
         <OrderAddToBulkSuccessModal

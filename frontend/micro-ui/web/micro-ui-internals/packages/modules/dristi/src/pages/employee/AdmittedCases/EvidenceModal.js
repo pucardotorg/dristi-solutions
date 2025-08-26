@@ -18,10 +18,10 @@ import useDownloadCasePdf from "../../../hooks/dristi/useDownloadCasePdf";
 import { cleanString, getDate, modifiedEvidenceNumber, removeInvalidNameParts } from "../../../Utils";
 import useGetAllOrderApplicationRelatedDocuments from "../../../hooks/dristi/useGetAllOrderApplicationRelatedDocuments";
 import { useToast } from "../../../components/Toast/useToast";
-import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders/src/pages/employee/GenerateOrders";
 import useSearchEvidenceService from "../../../../../submissions/src/hooks/submissions/useSearchEvidenceService";
 import CustomErrorTooltip from "../../../components/CustomErrorTooltip";
 import CustomChip from "../../../components/CustomChip";
+import { compositeOrderAllowedTypes } from "@egovernments/digit-ui-module-orders/src/utils/orderUtils";
 
 const stateSla = {
   DRAFT_IN_PROGRESS: 2,

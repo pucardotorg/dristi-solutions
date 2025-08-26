@@ -373,3 +373,39 @@ export const getMandatoryFieldsErrors = (getModifiedFormConfig, currentOrder) =>
 
   return errors;
 };
+
+// any order type from orderTypes can not be paired with any order from unAllowedOrderTypes when creating composite order.
+export const compositeOrderAllowedTypes = [
+  {
+    key: "finalStageOrders",
+    orderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL_ACCEPT", "SETTLEMENT_ACCEPT", "CASE_TRANSFER_ACCEPT", "DISMISS_CASE"],
+    unAllowedOrderTypes: ["REFERRAL_CASE_TO_ADR", "JUDGEMENT", "WITHDRAWAL_ACCEPT", "SETTLEMENT_ACCEPT", "CASE_TRANSFER_ACCEPT", ""],
+  },
+  {
+    key: "schedule_Reschedule",
+    orderTypes: ["SCHEDULE_OF_HEARING_DATE", "RESCHEDULE_OF_HEARING_DATE"],
+    unAllowedOrderTypes: ["SCHEDULE_OF_HEARING_DATE", "RESCHEDULE_OF_HEARING_DATE"],
+  },
+  {
+    key: "no_restriction",
+    orderTypes: [
+      "NOTICE",
+      "OTHERS",
+      "WARRANT",
+      "SUMMONS",
+      "MANDATORY_SUBMISSIONS_RESPONSES",
+      "SECTION_202_CRPC",
+      "ACCEPT_BAIL",
+      "PROCLAMATION",
+      "ATTACHMENT",
+      "COST",
+      "WITNESS_BATTA",
+    ],
+    unAllowedOrderTypes: [],
+  },
+  {
+    key: "admit_case",
+    orderTypes: ["TAKE_COGNIZANCE"],
+    unAllowedOrderTypes: ["TAKE_COGNIZANCE", "DISMISS_CASE"],
+  },
+];
