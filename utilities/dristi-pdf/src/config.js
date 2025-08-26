@@ -366,6 +366,7 @@ module.exports = {
     hearing: {
       OPTOUT: "OPT_OUT",
       SCHEDULED: "SCHEDULED",
+      INPROGRESS: "IN_PROGRESS",
     },
   },
 };

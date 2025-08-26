@@ -258,6 +258,7 @@ const GenerateOrdersV2 = () => {
   const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
   const isBenchClerk = roles?.some((role) => role.code === "BENCH_CLERK");
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
+  const [itemTextNull, setItemTextNull] = useState(false);
 
   const fetchCaseDetails = async () => {
     try {
@@ -2232,6 +2233,7 @@ const GenerateOrdersV2 = () => {
           updatedOrder = {
             ...updatedOrderData,
             compositeItems: updatedOrderData?.compositeItems?.filter((item) => item?.isEnabled),
+            itemText: itemTextNull ? null : updatedOrderData?.itemText,
           };
           updateOrderResponse = await addOrderItem(
             updatedOrder,
@@ -2602,6 +2604,9 @@ const GenerateOrdersV2 = () => {
           },
         ];
         orderTitleNew = `${t(obj?.orderType)} and Other Items`;
+        setItemTextNull(true);
+      } else {
+        setItemTextNull(false);
       }
 
       return {
@@ -3237,7 +3242,7 @@ const GenerateOrdersV2 = () => {
                   <CustomDatePickerV2
                     t={t}
                     config={nextDateOfHearing}
-                    formData={{ nextHearingDate: nextHearingDate }}
+                    formData={{ nextHearingDate: nextHearingDate || currentOrder?.nextHearingDate }}
                     onDateChange={(date) => {
                       setCurrentOrder({ ...currentOrder, nextHearingDate: new Date(date).setHours(0, 0, 0, 0) });
                       setNextHearingDate(new Date(date).setHours(0, 0, 0, 0));

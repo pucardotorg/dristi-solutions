@@ -11,7 +11,7 @@ export const applicationTypeConfig = [
         disable: false,
         populators: {
           name: "orderType",
-          optionsKey: "name",
+          optionsKey: "code",
           error: "required ",
           styles: { maxWidth: "100%" },
           mdmsConfig: {
@@ -877,8 +877,8 @@ export const configsOrderSubmissionExtension = [
         key: "proposedSubmissionDate",
         disable: true,
         type: "date",
-        schemaKeyPath: "orderDetails.proposedSubmissionDate",
-        transformer: "date",
+        // schemaKeyPath: "orderDetails.proposedSubmissionDate",
+        // transformer: "date",
         populators: {
           name: "proposedSubmissionDate",
           hideInForm: true,
@@ -1201,6 +1201,7 @@ export const configsScheduleHearingDate = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -1869,7 +1870,7 @@ export const configsInitiateRescheduleHearingDate = [
         isMandatory: true,
         key: "reasonForRescheduling",
         type: "text",
-        schemaKeyPath: "orderDetails.reasonForReschedule",
+        // schemaKeyPath: "orderDetails.reasonForReschedule",
         populators: {
           name: "reasonForRescheduling",
           error: "CS_ALPHANUMERIC_ALLOWED",
@@ -3482,7 +3483,7 @@ export const configsCaseWithdrawalAccept = [
         label: "APPLICATION_ON_BEHALF_OF",
         isMandatory: false,
         key: "applicationOnBehalfOf",
-        schemaKeyPath: "orderDetails.appFilledOnBehalfOf",
+        // schemaKeyPath: "orderDetails.appFilledOnBehalfOf",
         disable: true,
         type: "text",
         populators: { name: "applicationOnBehalfOf", hideInForm: true },
@@ -3491,7 +3492,7 @@ export const configsCaseWithdrawalAccept = [
         label: "PARTY_TYPE",
         isMandatory: false,
         key: "partyType",
-        schemaKeyPath: "orderDetails.partyType",
+        // schemaKeyPath: "orderDetails.partyType",
         disable: true,
         type: "text",
         populators: { name: "partyType", hideInForm: true },
@@ -3550,7 +3551,7 @@ export const configsCaseWithdrawalReject = [
         label: "APPLICATION_ON_BEHALF_OF",
         isMandatory: false,
         key: "applicationOnBehalfOf",
-        schemaKeyPath: "orderDetails.appFilledOnBehalfOf",
+        // schemaKeyPath: "orderDetails.appFilledOnBehalfOf",
         disable: true,
         type: "text",
         populators: { name: "applicationOnBehalfOf", hideInForm: true },
@@ -3559,7 +3560,7 @@ export const configsCaseWithdrawalReject = [
         label: "PARTY_TYPE",
         isMandatory: false,
         key: "partyType",
-        schemaKeyPath: "orderDetails.partyType",
+        // schemaKeyPath: "orderDetails.partyType",
         disable: true,
         type: "text",
         populators: { name: "partyType", hideInForm: true },
@@ -4630,7 +4631,7 @@ export const configsIssueBailAcceptance = [
         type: "dropdown",
         label: "BAIL_PARTY",
         disable: false,
-        schemaKeyPath: "orderDetails.bailParty",
+        // schemaKeyPath: "orderDetails.bailParty",
         populators: {
           required: true,
           isMandatory: true,
@@ -4722,8 +4723,8 @@ export const configsIssueBailAcceptance = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "bailSummary",
-        schemaKeyPath: "orderDetails.bailSummary",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.bailSummary",
+        // transformer: "customTextArea",
         isMandatory: true,
         populators: {
           inputs: [
@@ -4743,8 +4744,8 @@ export const configsIssueBailAcceptance = [
         component: "SelectCustomTextArea",
         key: "otherConditions",
         isMandatory: false,
-        schemaKeyPath: "orderDetails.otherConditions",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.otherConditions",
+        // transformer: "customTextArea",
         populators: {
           inputs: [
             {
@@ -4937,8 +4938,8 @@ export const configsAcceptRejectDelayCondonation = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "reasonForSeekingDca",
-        schemaKeyPath: "orderDetails.reasonForSeekingDca",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.reasonForSeekingDca",
+        // transformer: "customTextArea",
         isMandatory: true,
         populators: {
           inputs: [
@@ -4956,8 +4957,8 @@ export const configsAcceptRejectDelayCondonation = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "reasonForAcceptanceOrRejectionDca",
-        schemaKeyPath: "orderDetails.reasonForAcceptanceOrRejectionDca",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.reasonForAcceptanceOrRejectionDca",
+        // transformer: "customTextArea",
         isMandatory: true,
         populators: {
           inputs: [
@@ -4975,8 +4976,8 @@ export const configsAcceptRejectDelayCondonation = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "additionalCommentsDca",
-        schemaKeyPath: "orderDetails.additionalCommentsDca",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.additionalCommentsDca",
+        // transformer: "customTextArea",
         isMandatory: false,
         populators: {
           inputs: [
@@ -5141,8 +5142,8 @@ export const replaceAdvocateConfig = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "additionalComments",
-        schemaKeyPath: "orderDetails.additionalComments",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.additionalComments",
+        // transformer: "customTextArea",
         isMandatory: false,
         populators: {
           inputs: [
@@ -5168,8 +5169,8 @@ export const configsAdmitCase = [
         label: "WAS_ACCUSED_EXAMINED",
         isMandatory: true,
         key: "wasExamined",
-        schemaKeyPath: "orderDetails.wasExamined",
-        transformer: "customDropdown",
+        // schemaKeyPath: "orderDetails.wasExamined",
+        // transformer: "customDropdown",
         type: "radio",
         populators: {
           name: "wasExamined",
@@ -5194,8 +5195,8 @@ export const configsAdmitCase = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "reasonForAdmitCase",
-        schemaKeyPath: "orderDetails.reasonForAdmitCase",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.reasonForAdmitCase",
+        // transformer: "customTextArea",
         isMandatory: true,
         populators: {
           inputs: [
@@ -5213,8 +5214,8 @@ export const configsAdmitCase = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "additionalCommentsAdmitCase",
-        schemaKeyPath: "orderDetails.additionalCommentsAdmitCase",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.additionalCommentsAdmitCase",
+        // transformer: "customTextArea",
         isMandatory: false,
         populators: {
           inputs: [
@@ -5240,8 +5241,8 @@ export const configsDismissCase = [
         label: "WAS_ACCUSED_EXAMINED",
         isMandatory: true,
         key: "wasAccusedExamined",
-        schemaKeyPath: "orderDetails.wasAccusedExamined",
-        transformer: "customDropdown",
+        // schemaKeyPath: "orderDetails.wasAccusedExamined",
+        // transformer: "customDropdown",
         type: "radio",
         populators: {
           name: "wasAccusedExamined",
@@ -5266,8 +5267,8 @@ export const configsDismissCase = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "reasonForDismissCase",
-        schemaKeyPath: "orderDetails.reasonForDismissCase",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.reasonForDismissCase",
+        // transformer: "customTextArea",
         isMandatory: true,
         populators: {
           inputs: [
@@ -5285,8 +5286,8 @@ export const configsDismissCase = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "additionalCommentsDismissCase",
-        schemaKeyPath: "orderDetails.additionalCommentsDismissCase",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.additionalCommentsDismissCase",
+        // transformer: "customTextArea",
         isMandatory: false,
         populators: {
           inputs: [
@@ -5363,8 +5364,8 @@ export const configsApproveRejectLitigantDetailsChange = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "additionalCommentsLitigantsDetailChange",
-        schemaKeyPath: "orderDetails.additionalCommentsLitigantsDetailChange",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.additionalCommentsLitigantsDetailChange",
+        // transformer: "customTextArea",
         isMandatory: false,
         populators: {
           inputs: [
