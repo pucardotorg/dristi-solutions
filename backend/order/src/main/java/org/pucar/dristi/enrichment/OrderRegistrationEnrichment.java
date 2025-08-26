@@ -1,29 +1,36 @@
 package org.pucar.dristi.enrichment;
 
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.jayway.jsonpath.JsonPath;
+import com.jayway.jsonpath.spi.json.JacksonJsonNodeJsonProvider;
+import com.jayway.jsonpath.spi.mapper.JacksonMappingProvider;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.tracer.model.CustomException;
 import org.pucar.dristi.config.Configuration;
+import org.pucar.dristi.config.MdmsDataConfig;
 import org.pucar.dristi.util.CaseUtil;
 import org.pucar.dristi.util.IdgenUtil;
-import org.pucar.dristi.web.models.CaseCriteria;
-import org.pucar.dristi.web.models.CaseSearchRequest;
-import org.pucar.dristi.web.models.Order;
-import org.pucar.dristi.web.models.CompositeItem;
-import org.pucar.dristi.web.models.OrderRequest;
+import org.pucar.dristi.web.models.*;
 import org.springframework.stereotype.Component;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
-import static org.pucar.dristi.config.ServiceConstants.ENRICHMENT_EXCEPTION;
+import static org.pucar.dristi.config.ServiceConstants.*;
 
 @Component
 @Slf4j
@@ -33,12 +40,14 @@ public class OrderRegistrationEnrichment {
     private Configuration configuration;
     private ObjectMapper objectMapper;
     private CaseUtil caseUtil;
+    private final MdmsDataConfig mdmsDataConfig;
 
-    public OrderRegistrationEnrichment(IdgenUtil idgenUtil, Configuration configuration, ObjectMapper objectMapper, CaseUtil caseUtil) {
+    public OrderRegistrationEnrichment(IdgenUtil idgenUtil, Configuration configuration, ObjectMapper objectMapper, CaseUtil caseUtil, MdmsDataConfig mdmsDataConfig) {
         this.idgenUtil = idgenUtil;
         this.configuration = configuration;
         this.objectMapper = objectMapper;
         this.caseUtil = caseUtil;
+        this.mdmsDataConfig = mdmsDataConfig;
     }
 
     public void enrichOrderRegistration(OrderRequest orderRequest) {
@@ -126,7 +135,7 @@ public class OrderRegistrationEnrichment {
 
     public void enrichCompositeOrderItemIdOnAddItem(OrderRequest orderRequest) {
         try {
-            if (orderRequest.getOrder().getCompositeItems() != null) {
+            if (COMPOSITE.equalsIgnoreCase(orderRequest.getOrder().getOrderCategory()) && orderRequest.getOrder().getCompositeItems() != null) {
                 Object compositeOrderItem = orderRequest.getOrder().getCompositeItems();
                 ArrayNode arrayNode = objectMapper.convertValue(compositeOrderItem, ArrayNode.class);
 
@@ -137,6 +146,24 @@ public class OrderRegistrationEnrichment {
                             String newId = UUID.randomUUID().toString();
                             itemNode.put("id", newId);
                             log.info("Enriched CompositeItem ID with new value: {}", newId);
+
+                            if (itemNode.has("orderType")) {
+                                String orderType = itemNode.get("orderType").asText();
+
+                                if (itemNode.has("orderSchema")) {
+                                    JsonNode orderSchemaNode = itemNode.get("orderSchema");
+                                    String itemTextMdms = processOrderText(orderType, orderSchemaNode.toString());
+                                    if (itemTextMdms != null) {
+                                        String itemText = orderRequest.getOrder().getItemText();
+                                        if (itemText != null) {
+                                            itemText = itemText + " " + itemTextMdms;
+                                        } else {
+                                            itemText = itemTextMdms;
+                                        }
+                                        orderRequest.getOrder().setItemText(itemText);
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -147,4 +174,86 @@ public class OrderRegistrationEnrichment {
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in order enrichment service during add item: " + e.getMessage());
         }
     }
+
+    public void enrichItemTextForIntermediateOrder(OrderRequest orderRequest) {
+        if (INTERMEDIATE.equalsIgnoreCase(orderRequest.getOrder().getOrderCategory()) && orderRequest.getOrder().getCompositeItems() == null) {
+            JsonNode orderNode = objectMapper.convertValue(orderRequest.getOrder(), JsonNode.class);
+            String itemTextMdms = processOrderText(orderRequest.getOrder().getOrderType(), orderNode.toString());
+            if (itemTextMdms != null) {
+                String itemText = orderRequest.getOrder().getItemText();
+                if (itemText != null) {
+                    itemText = itemText + " " + itemTextMdms;
+                } else {
+                    itemText = itemTextMdms;
+                }
+                orderRequest.getOrder().setItemText(itemText);
+            }
+        }
+    }
+
+    public String processOrderText(String orderType, String orderSchema) {
+
+        List<ItemTextMdms> itemTextMdmsMatches = mdmsDataConfig.getItemTextMdmsData().stream()
+                .filter(mdms -> mdms.getOrderType().equalsIgnoreCase(orderType))
+                .toList();
+
+        try {
+
+            if (itemTextMdmsMatches.size() == 1) {
+                String text = itemTextMdmsMatches.get(0).getItemText();
+                List<String> paths = itemTextMdmsMatches.get(0).getPath();
+
+                if (paths == null || paths.isEmpty()) {
+                    return text;
+                }
+                return getText(orderSchema, paths, text);
+
+            } else if (itemTextMdmsMatches.size() == 2) {
+                String action = JsonPath.read(orderSchema, "$.orderDetails.action");
+                ItemTextMdms itemTextMdms = itemTextMdmsMatches.stream().filter(mdms -> mdms.getAction().equalsIgnoreCase(action)).findFirst().get();
+                String text = itemTextMdms.getItemText();
+                List<String> paths = itemTextMdms.getPath();
+                if (paths == null || paths.isEmpty()) {
+                    return text;
+                }
+                return getText(orderSchema, paths, text);
+            }
+        } catch (Exception e) {
+            log.error("Error enriching item text :: {}", e.toString());
+        }
+
+        return null;
+    }
+
+    private static String getText(String orderSchema, List<String> paths, String text) {
+        for (String path : paths) {
+            if (path.startsWith("GET_DUE_DATE")) {
+                Long dueDateInMilliSecond = JsonPath.read(orderSchema, path.substring("GET_DUE_DATE".length()));
+                if (dueDateInMilliSecond != null) {
+                    LocalDate dueDate = Instant.ofEpochMilli(dueDateInMilliSecond).atZone(ZoneId.systemDefault()).toLocalDate();
+                    long daysRemaining = Duration.between(LocalDate.now().atStartOfDay(), dueDate.atStartOfDay()).toDays();
+                    text = text.replace("[" + path + "]", Long.toString(daysRemaining));
+                }
+            } else if (path.startsWith("GET_LOCAL_DATE")) {
+                Long dateInMilliSecond = JsonPath.read(orderSchema, path.substring("GET_LOCAL_DATE".length()));
+                if (dateInMilliSecond != null) {
+                    LocalDate date = Instant.ofEpochMilli(dateInMilliSecond).atZone(ZoneId.systemDefault()).toLocalDate();
+                    text = text.replace("[" + path + "]", date.toString());
+                }
+            } else if (path.startsWith("CONCAT_STRING")) {
+                List<String> parties = JsonPath.read(orderSchema, path.substring("CONCAT_STRING".length()));
+                if (parties != null && !parties.isEmpty()) {
+                    String partyToMakeSubmission = String.join(", ", parties);
+                    text = text.replace("[" + path + "]", partyToMakeSubmission);
+                }
+            } else {
+                String pathValue = JsonPath.read(orderSchema, path);
+                if (pathValue != null) {
+                    text = text.replace("[" + path + "]", pathValue);
+                }
+            }
+        }
+        return text;
+    }
+
 }

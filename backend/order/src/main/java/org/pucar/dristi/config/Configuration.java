@@ -130,6 +130,9 @@ public class Configuration {
     @Value("${egov.mdms.order.nonrepeating.composite.orders}")
     private String mdmsNonRepeatingCompositeOrders;
 
+    @Value("${egov.mdms.itemtext}")
+    private String mdmsItemText;
+
     // Filestore Config
     @Value("${egov.filestore.host}")
     private String fileStoreHost;
