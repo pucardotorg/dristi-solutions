@@ -44,4 +44,7 @@ public class OrderCriteria {
     @JsonProperty("hearingNumber")
     private String hearingNumber = null;
 
+    @JsonProperty("isFuzzySearch")
+    private Boolean isFuzzySearch = false;
+
 }

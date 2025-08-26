@@ -101,7 +101,7 @@ async function orderNotice(
       ? formatDate(new Date(order?.orderDetails?.hearingDate), "DD-MM-YYYY")
       : "";
     const partyName = order?.orderDetails?.respondentName || "";
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = (courtCase?.isLPRCase ? courtCase?.lprNumber : courtCase?.courtCaseNumber) || courtCase?.cmpNumber || "";
 
     const data = {
       Data: [

@@ -13,6 +13,8 @@ import pucar.config.Configuration;
 import pucar.repository.ServiceRequestRepository;
 import pucar.web.models.*;
 
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -155,15 +157,45 @@ public class OrderUtil {
         };
     }
 
-    public  String getBusinessOfTheDay(Object additionalDetails) {
+    public String getBusinessOfTheDay(Order order) {
+        StringBuilder sb = new StringBuilder();
 
-        return Optional.ofNullable(additionalDetails)
-                .filter(Map.class::isInstance)
-                .map(map -> (Map<?, ?>) map)
-                .map(map -> map.get("businessOfTheDay"))
-                .filter(String.class::isInstance)
-                .map(String.class::cast).orElse(null);
+        try {
+            // Attendance
+            if (order.getAttendance() != null) {
+                String attendanceStr = objectMapper.writeValueAsString(order.getAttendance());
+                sb.append(attendanceStr).append("\n");
+            }
+
+            // Item Text
+            if (order.getItemText() != null) {
+                sb.append(order.getItemText()).append("\n");
+            }
+
+            // Purpose of Next Hearing
+            if (order.getPurposeOfNextHearing() != null) {
+                sb.append("Purpose of Next Hearing: [")
+                        .append(order.getPurposeOfNextHearing()).append("]\n");
+            }
+
+            // Next Hearing Date
+            if (order.getNextHearingDate() != null) {
+                String dateStr = Instant.ofEpochMilli(order.getNextHearingDate())
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate()
+                        .toString();
+                sb.append("Date of Next Hearing: [")
+                        .append(dateStr).append("]\n");
+            }
+
+            return sb.toString().trim();
+
+        } catch (Exception e) {
+            log.error("Error extracting order text", e);
+            throw new CustomException("Error extracting business of the day: ", "ERROR_BUSINESS_OF_THE_DAY");
+        }
     }
+
 
     public OrderResponse  removeOrderItem(@Valid OrderRequest request) {
 

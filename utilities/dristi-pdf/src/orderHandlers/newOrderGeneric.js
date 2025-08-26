@@ -4,6 +4,7 @@ const {
   search_case,
   search_sunbirdrc_credential_service,
   create_pdf,
+  search_message,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
@@ -44,6 +45,17 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
       renderError(res, "Court case not found", 404);
     }
 
+    const resMessage = await handleApiCall(
+      res,
+      () => search_message(tenantId, "rainmaker-common", "en_IN", requestInfo),
+      "Failed to query Localized messages"
+    );
+    const messages = resMessage?.data?.messages;
+    const messagesMap = messages.reduce((acc, curr) => {
+      acc[curr.code] = curr.message;
+      return acc;
+    }, {});
+
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
     const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
@@ -75,7 +87,7 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
 
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = courtCase?.isLPRCase ? courtCase?.lprNumber : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
 
     const litigants = courtCase?.litigants?.map((litigant) => ({
       ...litigant,
@@ -138,8 +150,14 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
       };
     });
 
-    const listOfPresentAttendees = order?.attendance?.Present?.join(", ") || "";
-    const listOfAbsentAttendees = order?.attendance?.Absent?.join(", ") || "";
+    const listOfPresentAttendees =
+      order?.attendance?.Present?.map(
+        (attendee) => messagesMap[attendee] || attendee
+      )?.join(", ") || "";
+    const listOfAbsentAttendees =
+      order?.attendance?.Absent?.map(
+        (attendee) => messagesMap[attendee] || attendee
+      )?.join(", ") || "";
     const isHearingInProgress = Boolean(
       order?.attendance && order?.purposeOfNextHearing && order?.nextHearingDate
     );

@@ -30,4 +30,7 @@ public class SortOrder {
     @JsonProperty("script")
     private String script;
 
+    @JsonProperty("orderPriority")
+    private Integer orderPriority;
+
 }
