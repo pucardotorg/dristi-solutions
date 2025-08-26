@@ -255,6 +255,7 @@ const AdmittedCaseV2 = () => {
   const [isShow, setIsShow] = useState(false);
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const historyCaseData = location?.state?.caseData;
+  const needCaseRefetch = location?.state?.needCaseRefetch;
   const historyOrderData = location?.state?.orderData;
   const newWitnesToast = history.location?.state?.newWitnesToast;
   const [isApplicationAccepted, setIsApplicationAccepted] = useState(null);
@@ -301,8 +302,9 @@ const AdmittedCaseV2 = () => {
     {},
     `dristi-admitted-${caseId}`,
     caseId,
-    Boolean(caseId && (shouldRefetchCaseData || !historyCaseData))
+    Boolean(caseId && (needCaseRefetch || shouldRefetchCaseData || !historyCaseData))
   );
+
 
   const caseData = apiCaseData || historyCaseData;
   const caseDetails = useMemo(() => caseData?.cases || {}, [caseData]);
@@ -1582,6 +1584,8 @@ const AdmittedCaseV2 = () => {
   useEffect(() => {
     if (history?.location?.state?.from === "orderSuccessModal" && !toastStatus?.alreadyShown) {
       showToast(true);
+   
+      refetchCaseData();
       setToastDetails({
         isError: false,
         message: "ORDER_SUCCESSFULLY_ISSUED",
@@ -3507,7 +3511,9 @@ const AdmittedCaseV2 = () => {
         </div>
         <div className="admitted-case-details" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px" }}>
           <div className="case-details-title" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div className="sub-details-text">{caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber}</div>
+            <div className="sub-details-text">
+              {caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber}
+            </div>
             <hr className="vertical-line" />
             {(caseDetails?.courtCaseNumber || caseDetails?.cmpNumber) && (
               <React.Fragment>
