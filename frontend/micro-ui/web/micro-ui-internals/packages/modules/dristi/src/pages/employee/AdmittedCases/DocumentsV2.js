@@ -42,6 +42,7 @@ const DocumentsV2 = ({
   const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
   const isBenchClerk = roles?.some((role) => role.code === "BENCH_CLERK");
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
+  const canSign = roles?.some((role) => role.code === "CASE_APPROVER");
   const [activeTab, setActiveTab] = useState(sessionStorage.getItem("documents-activeTab") || "Documents");
   const configList = useMemo(() => {
     const docSetFunc = (docObj) => {
@@ -100,7 +101,16 @@ const DocumentsV2 = ({
         if (documentStatus === "DRAFT_IN_PROGRESS" && (isBenchClerk || isTypist || isJudge)) {
           setShowWitnessModal(true);
           setEditWitnessDepositionArtifact(artifactNumber);
-        } else setShowWitnessDepositionDoc({ docObj: docObj?.[0], show: true });
+        } else {
+          setShowWitnessDepositionDoc({ docObj: docObj?.[0], show: true });
+          if (canSign) {
+            history.push({
+              pathname: `/${window?.contextPath}/employee/home/sign-witness-deposition`,
+              search: `?filingNumber=${filingNumber}&artifactNumber=${artifactNumber}&caseId=${caseId}`,
+              state: { docObj: docObj?.[0] },
+            });
+          }
+        }
       } else {
         const applicationNumber = docObj?.[0]?.applicationList?.applicationNumber;
         const status = docObj?.[0]?.applicationList?.status;
