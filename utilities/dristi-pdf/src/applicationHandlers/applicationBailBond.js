@@ -196,7 +196,7 @@ const applicationBailBond = async (
 
     const ordinalSuffix = getOrdinalSuffix(day);
     const statuteAndAct = caseConfigDetails.statuteAndAct;
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = courtCase?.isLPRCase ? courtCase?.lprNumber : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const data = {
       Data: [
         {
