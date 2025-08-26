@@ -2373,15 +2373,24 @@ const GenerateOrdersV2 = () => {
         }
       }
     }
+    
+    // ✅ Works for both COMPOSITE and Non-COMPOSITE
+    const errors = getMandatoryFieldsErrors(getModifiedFormConfig, currentOrder);
 
-    const mandatoryOrderFields = [
-      { presentAttendees: currentOrder?.attendance?.Present },
-      { absentAttendees: currentOrder?.attendance?.Absent },
-      { itemText: currentOrder?.itemText },
-    ];
+    if (errors?.some((obj) => obj?.errors?.length > 0)) {
+      setShowMandatoryFieldsErrorModal({ showModal: true, errorsData: errors });
+      return;
+    }
+
+    const mandatoryOrderFields = [{ itemText: currentOrder?.itemText }];
 
     if (!skipScheduling) {
-      mandatoryOrderFields?.push({ nextHearingDate: currentOrder?.nextHearingDate }, { hearingPurpose: currentOrder?.purposeOfNextHearing });
+      mandatoryOrderFields?.push(
+        { presentAttendees: currentOrder?.attendance?.Present },
+        { absentAttendees: currentOrder?.attendance?.Absent },
+        { nextHearingDate: currentOrder?.nextHearingDate },
+        { hearingPurpose: currentOrder?.purposeOfNextHearing }
+      );
     }
 
     // Collect all errors first
@@ -2398,14 +2407,6 @@ const GenerateOrdersV2 = () => {
     // Set all errors at once if there are any
     if (Object.keys(allErrors).length > 0) {
       setErrors(allErrors);
-      return;
-    }
-
-    // ✅ Works for both COMPOSITE and Non-COMPOSITE
-    const errors = getMandatoryFieldsErrors(getModifiedFormConfig, currentOrder);
-
-    if (errors?.some((obj) => obj?.errors?.length > 0)) {
-      setShowMandatoryFieldsErrorModal({ showModal: true, errorsData: errors });
       return;
     }
 
