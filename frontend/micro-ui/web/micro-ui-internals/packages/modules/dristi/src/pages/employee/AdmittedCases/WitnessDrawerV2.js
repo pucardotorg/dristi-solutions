@@ -105,6 +105,12 @@ const WitnessDrawerV2 = ({
   const closeToast = () => {
     setShowErrorToast(null);
   };
+  
+const formatDepositionText = (text) => {
+  if (!text) return "";
+  return text.replace(/\\n/g, "<wbr>").replace(/\n/g, "<wbr>");
+};
+
 
   useEffect(() => {
     if (showErrorToast) {
@@ -521,7 +527,7 @@ const WitnessDrawerV2 = ({
             witnessType = isTag;
           }
           setSelectedWitnessType({ label: witnessType, value: witnessType });
-          setWitnessDepositionText(artifact?.description || "");
+          setWitnessDepositionText(formatDepositionText(artifact?.description) || "");
           return;
         }
       } else {
@@ -604,7 +610,7 @@ const WitnessDrawerV2 = ({
       if (
         !isEqual(selectedWitness?.value, currentArtifact?.sourceID) ||
         !isEqual(selectedWitnessType?.value, currentArtifact?.tag) ||
-        !isEqual(witnessDepositionText, currentArtifact?.description)
+        !isEqual(formatDepositionText(witnessDepositionText), formatDepositionText(currentArtifact?.description))
       ) {
         handleSaveDraft(false, tab?.artifactNumber);
       }
@@ -648,7 +654,8 @@ const WitnessDrawerV2 = ({
       return;
     }
 
-    if (!witnessDepositionText.trim() && submit) {
+    const formattedText = formatDepositionText(witnessDepositionText);
+    if (!formattedText.trim() && submit) {
       setShowErrorToast({ label: t("PLEASE_ENTER_DEPOSITION"), error: true });
       if (backAction) {
         onClose();
@@ -671,7 +678,7 @@ const WitnessDrawerV2 = ({
           (backAction &&
             (!isEqual(selectedWitness?.value, evidence?.sourceID) ||
               !isEqual(selectedWitnessType?.value, evidence?.tag) ||
-              !isEqual(witnessDepositionText, evidence?.description)))
+              !isEqual(formatDepositionText(witnessDepositionText), formatDepositionText(evidence?.description))))
         ) {
           // Update existing evidence
           const updateEvidenceReqBody = {
@@ -681,7 +688,7 @@ const WitnessDrawerV2 = ({
               tag: selectedWitnessType?.value,
               sourceID: selectedWitness.value,
               sourceName: party?.sourceName,
-              description: witnessDepositionText,
+              description: formatDepositionText(witnessDepositionText),
               additionalDetails: {
                 witnessDetails: {
                   address: party?.address || "",
@@ -726,7 +733,7 @@ const WitnessDrawerV2 = ({
             sourceID: selectedWitness?.value,
             sourceName: party?.sourceName, // confirm?
             filingType: filingType,
-            description: witnessDepositionText,
+            description: formatDepositionText(witnessDepositionText),
             additionalDetails: {
               witnessDetails: {
                 address: party?.address || "",
@@ -1060,7 +1067,7 @@ const WitnessDrawerV2 = ({
         if (
           !isEqual(selectedWitness?.value, evidence?.sourceID) ||
           !isEqual(selectedWitnessType?.value, evidence?.tag) ||
-          !isEqual(witnessDepositionText, evidence?.description)
+          !isEqual(formatDepositionText(witnessDepositionText), formatDepositionText(evidence?.description))
         ) {
           // Update existing evidence
           const updateEvidenceReqBody = {
@@ -1070,7 +1077,7 @@ const WitnessDrawerV2 = ({
               tag: selectedWitnessType?.value,
               sourceID: selectedWitness.value,
               sourceName: party?.sourceName,
-              description: witnessDepositionText,
+              description: formatDepositionText(witnessDepositionText),
               additionalDetails: {
                 witnessDetails: {
                   address: party?.address || "",
@@ -1119,7 +1126,7 @@ const WitnessDrawerV2 = ({
             sourceID: selectedWitness?.value,
             sourceName: party?.sourceName, // confirm?
             filingType: filingType,
-            description: witnessDepositionText,
+            description: formatDepositionText(witnessDepositionText),
             additionalDetails: {
               witnessDetails: {
                 address: party?.address || "",

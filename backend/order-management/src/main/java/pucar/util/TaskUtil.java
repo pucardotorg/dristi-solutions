@@ -146,8 +146,8 @@ public class TaskUtil {
     }
 
     public boolean isCourtWitness(String orderType, JsonNode taskDetails) {
-        if(WARRANT.equalsIgnoreCase(orderType)){
-            return taskDetails.get("respondentDetails")!=null && (taskDetails.get("respondentDetails").get("ownerType") == null ||
+        if(Set.of(WARRANT, PROCLAMATION, ATTACHMENT).contains(orderType.toUpperCase())){
+            return taskDetails.get("respondentDetails")!=null && (taskDetails.get("respondentDetails").get("ownerType") != null &&
                     taskDetails.get("respondentDetails").get("ownerType").textValue().equalsIgnoreCase(COURT_WITNESS));
         } if(SUMMONS.equalsIgnoreCase(orderType)) {
             return taskDetails.get("witnessDetails") != null && (taskDetails.get("witnessDetails").get("ownerType") == null ||
