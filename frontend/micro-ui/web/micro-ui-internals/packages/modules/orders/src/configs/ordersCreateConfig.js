@@ -5285,12 +5285,13 @@ export const configsCreateOrderProclamation = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "proclamationText",
-        isMandatory: true,
+        // isMandatory: true,
         populators: {
           inputs: [
             {
               name: "proclamationText",
-              textAreaSubHeader: "Proclamation Text",
+              isOptional: true,
+              textAreaSubHeader: "Comments",
               placeholder: "TYPE_HERE_PLACEHOLDER",
               type: "TextAreaComponent",
             },
@@ -5416,12 +5417,13 @@ export const configsCreateOrderAttachment = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "attachmentText",
-        isMandatory: true,
+        // isMandatory: true,
         populators: {
           inputs: [
             {
               name: "attachmentText",
-              textAreaSubHeader: "Attachment Text",
+              isOptional: true,
+              textAreaSubHeader: "Comments",
               placeholder: "TYPE_HERE_PLACEHOLDER",
               type: "TextAreaComponent",
             },
