@@ -1812,6 +1812,7 @@ const GenerateOrdersV2 = () => {
             email: respondentEmail?.[0] || "",
             age: "",
             gender: "",
+            ...(ownerType && { ownerType: ownerType }),
           },
           caseDetails: {
             caseTitle: caseDetails?.caseTitle,
@@ -1861,6 +1862,7 @@ const GenerateOrdersV2 = () => {
             email: respondentEmail?.[0] || "",
             age: "",
             gender: "",
+            ...(ownerType && { ownerType: ownerType }),
           },
           caseDetails: {
             caseTitle: caseDetails?.caseTitle,
