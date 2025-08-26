@@ -14,7 +14,7 @@ import {
   Toast,
   CardLabelError,
 } from "@egovernments/digit-ui-react-components";
-import { CustomAddIcon, OutlinedInfoIcon } from "../../../../dristi/src/icons/svgIndex";
+import { CustomAddIcon, OutlinedInfoIcon, RightArrow } from "../../../../dristi/src/icons/svgIndex";
 import ReactTooltip from "react-tooltip";
 import AddOrderTypeModal from "../../pageComponents/AddOrderTypeModal";
 import OrderTypeControls from "../../components/OrderTypeControls";
@@ -102,6 +102,7 @@ import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/To
 import MandatoryFieldsErrorModal from "./MandatoryFieldsErrorModal";
 import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import TasksComponent from "../../../../home/src/components/TaskComponent";
+import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 
 const configKeys = {
   SECTION_202_CRPC: configsOrderSection202CRPC,
@@ -252,6 +253,11 @@ const GenerateOrdersV2 = () => {
   const [taskType, setTaskType] = useState({});
   const [errors, setErrors] = useState({});
   const [warrantSubtypeCode, setWarrantSubtypeCode] = useState("");
+  const [data, setData] = useState([]);
+  const isJudge = roles?.some((role) => role.code === "JUDGE_ROLE");
+  const isCourtRoomManager = roles?.some((role) => role.code === "COURT_ROOM_MANAGER");
+  const isBenchClerk = roles?.some((role) => role.code === "BENCH_CLERK");
+  const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
 
   const fetchCaseDetails = async () => {
     try {
@@ -285,9 +291,41 @@ const GenerateOrdersV2 = () => {
     }
   };
 
+  const fetchInbox = useCallback(async () => {
+    try {
+      const now = new Date();
+      const fromDate = new Date(now.setHours(0, 0, 0, 0)).getTime();
+      const toDate = new Date(now.setHours(23, 59, 59, 999)).getTime();
+
+      const payload = {
+        inbox: {
+          processSearchCriteria: {
+            businessService: ["hearing-default"],
+            moduleName: "Hearing Service",
+            tenantId: "kl",
+          },
+          moduleSearchCriteria: {
+            tenantId: "kl",
+            ...(fromDate && toDate ? { fromDate, toDate } : {}),
+          },
+          tenantId: "kl",
+          limit: 300,
+          offset: 0,
+        },
+      };
+
+      const res = await HomeService.InboxSearch(payload, { tenantId: "kl" });
+      setData(res?.items || []);
+    } catch (err) {
+      console.error("error", err);
+    } finally {
+    }
+  }, []);
+
   // Fetch case details on component mount
   useEffect(() => {
     fetchCaseDetails();
+    fetchInbox();
   }, [courtId]);
 
   const caseDetails = useMemo(
@@ -803,6 +841,56 @@ const GenerateOrdersV2 = () => {
     }
   }, [currentOrder?.attendance]);
 
+  const nextHearing = useCallback(
+    (isStartHearing) => {
+      if (data?.length === 0) {
+        history.push(`/${window?.contextPath}/employee/home/home-screen`);
+      } else {
+        const validData = data?.filter((item) => ["SCHEDULED", "PASSED_OVER", "IN_PROGRESS"]?.includes(item?.businessObject?.hearingDetails?.status));
+        const index = validData?.findIndex((item) => item?.businessObject?.hearingDetails?.hearingNumber === currentInProgressHearing?.hearingId);
+        if (index === -1 || validData?.length === 1) {
+          history.push(`/${window?.contextPath}/employee/home/home-screen`);
+        } else {
+          const row = validData[(index + 1) % validData?.length];
+          if (["SCHEDULED", "PASSED_OVER"].includes(row?.businessObject?.hearingDetails?.status)) {
+            if (isStartHearing) {
+              hearingService
+                .searchHearings(
+                  {
+                    criteria: {
+                      hearingId: row?.businessObject?.hearingDetails?.hearingNumber,
+                      tenantId: row?.businessObject?.hearingDetails?.tenantId,
+                      ...(row?.businessObject?.hearingDetails?.courtId &&
+                        userType === "employee" && { courtId: row?.businessObject?.hearingDetails?.courtId }),
+                    },
+                  },
+                  { tenantId: row?.businessObject?.hearingDetails?.tenantId }
+                )
+                .then((response) => {
+                  hearingService.startHearing({ hearing: response?.HearingList?.[0] }).then(() => {
+                    window.location = `/${window.contextPath}/${userType}/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`;
+                  });
+                })
+                .catch((error) => {
+                  console.error("Error starting hearing", error);
+                  history.push(`/${window?.contextPath}/employee/home/home-screen`);
+                });
+            } else {
+              history.push(
+                `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
+              );
+            }
+          } else {
+            history.push(
+              `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${row?.businessObject?.hearingDetails?.caseUuid}&filingNumber=${row?.businessObject?.hearingDetails?.filingNumber}&tab=Overview`
+            );
+          }
+        }
+      }
+    },
+    [currentInProgressHearing?.hearingId, data, history, userType]
+  );
+
   // TODO: temporary Form Config, need to be replaced with the actual config
   const getModifiedFormConfig = useCallback(
     (compositeActiveOrderIndex) => {
@@ -1157,7 +1245,7 @@ const GenerateOrdersV2 = () => {
       caseDetails?.filingNumber,
       t,
       groupedWarrantOptions,
-      warrantSubtypeCode
+      warrantSubtypeCode,
     ]
   );
 
@@ -2913,7 +3001,22 @@ const GenerateOrdersV2 = () => {
   return (
     <React.Fragment>
       <div className="generate-orders-v2-content">
-        <Header className="generate-orders-v2-header">{`${t("CS_ORDER")} : ${caseDetails?.caseTitle}`}</Header>
+        <div className="generate-orders-v2-header">
+          <Header>{`${t("CS_ORDER")} : ${caseDetails?.caseTitle}`}</Header>
+          {currentInProgressHearing && (
+            <Button
+              variation={"primary"}
+              label={t(isBenchClerk || isCourtRoomManager ? "CS_CASE_END_HEARING" : isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : "")}
+              children={isBenchClerk || isCourtRoomManager ? null : isJudge || isTypist ? <RightArrow /> : null}
+              isSuffix={true}
+              onButtonClick={() => nextHearing(false)}
+              style={{
+                boxShadow: "none",
+                ...(isBenchClerk || isCourtRoomManager ? { backgroundColor: "#BB2C2F", border: "none" } : {}),
+              }}
+            ></Button>
+          )}
+        </div>
 
         <div className="generate-orders-v2-columns">
           {/* Left Column */}
@@ -3289,7 +3392,7 @@ const GenerateOrdersV2 = () => {
                 color: "#007E7E",
               }}
             />
-            <SubmitBar label={t("PREVIEW_ORDER_PDF")} onSubmit={handleReviewOrderClick} />
+            <SubmitBar label={t("PREVIEW_ORDER_PDF")} style={{ boxShadow: "none" }} onSubmit={handleReviewOrderClick} />
           </div>
         </ActionBar>
       </div>
