@@ -113,7 +113,6 @@ public class Order {
     private Long nextHearingDate = null;
 
     @JsonProperty("orderTitle")
-    @NotNull
     private String orderTitle = null;
 
     @JsonProperty("additionalDetails")
