@@ -1603,10 +1603,10 @@ const AdmittedCaseV2 = () => {
     if (history.location?.state?.applicationDocObj && !show) {
       setDocumentSubmission(history.location?.state?.applicationDocObj);
       setShow(true);
-    }
 
-    if (history.location?.state?.applicationDocObj && !show && history.location?.state?.isApplicationAccepted !== undefined) {
-      setIsApplicationAccepted({ value: history.location?.state?.isApplicationAccepted });
+      if (history.location?.state?.isApplicationAccepted !== undefined) {
+        setIsApplicationAccepted({ value: history.location?.state?.isApplicationAccepted });
+      }
     }
   }, [history.location?.state?.applicationDocObj, history.location?.state?.isApplicationAccepted, show]);
 

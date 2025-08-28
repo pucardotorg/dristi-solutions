@@ -230,7 +230,7 @@ const ReviewLitigantDetails = ({ path }) => {
           documents: [],
           orderDetails: {
             applicantName: getPersonNameByUUID(caseDetails?.litigants, caseDetails?.representatives, profileRequest?.editorDetails?.uuid),
-            applicationStatus: action === "ACCEPT" ? t("APPROVED") : t("REJECTED"),
+            applicationStatus: action === "ACCEPT" ? "APPROVED" : "REJECTED",
           },
           applicationNumber: [refApplicationNUmber],
           additionalDetails: {

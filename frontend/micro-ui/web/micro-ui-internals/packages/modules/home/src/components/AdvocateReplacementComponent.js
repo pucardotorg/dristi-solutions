@@ -128,7 +128,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
 
   const replaceAdvocateOrderCreate = async (type) => {
     const taskDetails = task?.taskDetails;
-    const { firstName, middleName, lastName } = taskDetails?.advocateDetails?.individualDetails;
+    const { firstName, middleName, lastName } = taskDetails?.advocateDetails?.individualDetails || {};
     const formdata = {
       orderType: {
         code: "ADVOCATE_REPLACEMENT_APPROVAL",
@@ -169,7 +169,7 @@ const AdvocateReplacementComponent = ({ filingNumber, taskNumber, setPendingTask
         additionalDetails: additionalDetails,
         orderDetails: {
           advocateName: getFullName(" ", firstName, middleName, lastName),
-          applicationStatus: type === "reject" ? t("REJECT") : type === "approve" ? t("GRANT") : null,
+          applicationStatus: type === "reject" ? "REJECT" : type === "approve" ? "GRANT" : null,
         },
       },
     };

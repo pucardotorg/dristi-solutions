@@ -3,24 +3,7 @@ import Modal from "@egovernments/digit-ui-module-dristi/src/components/Modal";
 import { CloseSvg } from "@egovernments/digit-ui-react-components";
 import { FormComposerV2 } from "@egovernments/digit-ui-react-components";
 import isEqual from "lodash/isEqual";
-
-const Heading = ({ label }) => <h1 className="heading-m">{label}</h1>;
-
-const CloseBtn = ({ onClick, backgroundColor }) => (
-  <div
-    onClick={onClick}
-    style={{
-      height: "100%",
-      display: "flex",
-      alignItems: "center",
-      paddingRight: "20px",
-      cursor: "pointer",
-      ...(backgroundColor && { backgroundColor }),
-    }}
-  >
-    <CloseSvg />
-  </div>
-);
+import { CloseBtn, Heading } from "../utils/orderUtils";
 
 function applyMultiSelectDropdownFix(setValue, formData, keys) {
   keys.forEach((key) => {
@@ -51,7 +34,6 @@ const AddOrderTypeModal = ({
   const [formdata, setFormData] = useState({});
   const [isSubmitDisabled, setIsSubmitDisabled] = useState(false);
 
-  // needs to be change
   const multiSelectDropdownKeys = useMemo(() => {
     const foundKeys = [];
     modifiedFormConfig?.forEach((config) => {
@@ -192,21 +174,7 @@ const AddOrderTypeModal = ({
       }
     }
 
-    if (currentOrderType && ["PROCLAMATION"].includes(currentOrderType)) {
-      if (formData?.proclamationText && Object.keys(formState?.errors).includes("proclamationText")) {
-        clearFormErrors?.current?.[index]?.("proclamationText");
-      } else if (formState?.submitCount && !formData?.proclamationText && !Object.keys(formState?.errors).includes("proclamationText")) {
-        setFormErrors?.current?.[index]?.("proclamationText", { message: t("CORE_REQUIRED_FIELD_ERROR") });
-      }
-    }
-
     if (currentOrderType && ["ATTACHMENT"].includes(currentOrderType)) {
-      if (formData?.attachmentText && Object.keys(formState?.errors).includes("attachmentText")) {
-        clearFormErrors?.current?.[index]?.("attachmentText");
-      } else if (formState?.submitCount && !formData?.attachmentText && !Object.keys(formState?.errors).includes("attachmentText")) {
-        setFormErrors?.current?.[index]?.("attachmentText", { message: t("CORE_REQUIRED_FIELD_ERROR") });
-      }
-
       if (formData?.village && Object.keys(formState?.errors).includes("village")) {
         clearFormErrors?.current?.[index]?.("village");
       } else if (formState?.submitCount && !formData?.village && !Object.keys(formState?.errors).includes("village")) {

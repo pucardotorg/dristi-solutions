@@ -71,7 +71,7 @@ function ConfirmSubmissionAction({
         </div> */}
 
         <div style={{ padding: "10px 0px" }}>
-          <h3 style={{ margin: "10px 0px 6px 0px" }}>{type === "reject" ? t("REASON_FOR_REJECTTION") : t("REASON_FOR_ACCEPTANCE")}</h3>
+          <h3 style={{ margin: "10px 0px 6px 0px" }}>{type === "reject" ? t("REASON_FOR_REJECTION_APPLICATION") : t("REASON_FOR_ACCEPTANCE")}</h3>
           <TextArea
             style={{ marginTop: "0px", height: "120px" }}
             placeholder={t("")}
