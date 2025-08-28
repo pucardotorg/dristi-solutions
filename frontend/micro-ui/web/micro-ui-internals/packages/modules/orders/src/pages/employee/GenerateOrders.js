@@ -2108,29 +2108,7 @@ const GenerateOrders = () => {
       }
     }
 
-    if (orderType && ["PROCLAMATION"].includes(orderType)) {
-      if (formData?.proclamationText && Object.keys(formState?.errors).includes("proclamationText")) {
-        clearFormErrors?.current?.[index]?.("proclamationText");
-      } else if (
-        formState?.submitCount &&
-        !formData?.proclamationText &&
-        !Object.keys(formState?.errors).includes("proclamationText")
-      ) {
-        setFormErrors?.current?.[index]?.("proclamationText", { message: t("CORE_REQUIRED_FIELD_ERROR") });
-      }
-    }
-
     if (orderType && ["ATTACHMENT"].includes(orderType)) {
-      if (formData?.attachmentText && Object.keys(formState?.errors).includes("attachmentText")) {
-        clearFormErrors?.current?.[index]?.("attachmentText");
-      } else if (
-        formState?.submitCount &&
-        !formData?.attachmentText &&
-        !Object.keys(formState?.errors).includes("attachmentText")
-      ) {
-        setFormErrors?.current?.[index]?.("attachmentText", { message: t("CORE_REQUIRED_FIELD_ERROR") });
-      }
-
       if (formData?.village && Object.keys(formState?.errors).includes("village")) {
         clearFormErrors?.current?.[index]?.("village");
       } else if (

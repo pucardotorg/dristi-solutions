@@ -194,7 +194,7 @@ async function rejectAdrApplication(req, res, qrCode) {
     } catch (error) {
       return renderError(res, "Cannot convert epoch time to date", 500, error);
     }
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = (courtCase?.isLPRCase ? courtCase?.lprNumber : courtCase?.courtCaseNumber) || courtCase?.cmpNumber || "";
     const data = {
       Data: [
         {

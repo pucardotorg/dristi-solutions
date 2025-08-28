@@ -5779,6 +5779,8 @@ public class CaseService {
             }
 
             producer.push(config.getLprCaseDetailsUpdateTopic(), caseRequest);
+            caseRequest.setCases(encryptionDecryptionUtil.encryptObject(caseRequest.getCases(), config.getCourtCaseEncrypt(), CourtCase.class));
+            cacheService.save(caseRequest.getCases().getTenantId() + ":" + caseRequest.getCases().getId(), caseRequest.getCases());
 
             log.info("Method=updateLPRDetails,Result=SUCCESS, CaseId={}, TenantId={}", courtCase.getId(), courtCase.getTenantId());
             return courtCase;
