@@ -69,6 +69,9 @@ public class SmsNotificationService {
         if (messageCode.equalsIgnoreCase(EVIDENCE_SUBMISSION_MESSAGE_OPPOSITE_PARTY)) {
             pushNotification(templateData,message,mobileNumber,config.getSmsNotificationDocumentSubmissionToOppositeParty());
         }
+        if (messageCode.equalsIgnoreCase(WITNESS_DEPOSITION_MESSAGE)) {
+            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationWitnessDeposition());
+        }
     }
 
     private void pushNotification(SmsTemplateData templateData, String message, String mobileNumber, String templateId) {
