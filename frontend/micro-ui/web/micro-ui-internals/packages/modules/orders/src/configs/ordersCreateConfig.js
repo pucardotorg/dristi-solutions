@@ -11,7 +11,7 @@ export const applicationTypeConfig = [
         disable: false,
         populators: {
           name: "orderType",
-          optionsKey: "name",
+          optionsKey: "code",
           error: "required ",
           styles: { maxWidth: "100%" },
           mdmsConfig: {
@@ -19,7 +19,7 @@ export const applicationTypeConfig = [
             masterName: "OrderType",
             localePrefix: "ORDER_TYPE",
             select:
-              "(data) => {return data['Order'].OrderType?.filter((item)=>[`SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}",
+              "(data) => {return data['Order'].OrderType?.filter((item)=>[`SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`, `COST`, `WITNESS_BATTA`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}",
           },
         },
       },
@@ -523,10 +523,6 @@ export const configsOrderMandatorySubmissions = [
           },
         },
       },
-    ],
-  },
-  {
-    body: [
       {
         type: "component",
         component: "SelectTranscriptTextArea",
@@ -539,12 +535,9 @@ export const configsOrderMandatorySubmissions = [
             placeholder: "TYPE_HERE_PLACEHOLDER",
             isOptional: true,
           },
+          hideInForm: true,
         },
       },
-    ],
-  },
-  {
-    body: [
       {
         isMandatory: true,
         type: "component",
@@ -644,7 +637,7 @@ export const configsOrderMandatorySubmissions = [
         populators: { name: "judgeDesignation", hideInForm: true },
       },
     ],
-  },
+  }
 ];
 
 export const configsOrderSubmissionExtension = [
@@ -743,6 +736,7 @@ export const configsOrderSubmissionExtension = [
         type: "date",
         populators: {
           name: "originalSubmissionOrderDate",
+          hideInForm: true,
         },
       },
       {
@@ -763,10 +757,11 @@ export const configsOrderSubmissionExtension = [
         key: "proposedSubmissionDate",
         disable: true,
         type: "date",
-        schemaKeyPath: "orderDetails.proposedSubmissionDate",
-        transformer: "date",
+        // schemaKeyPath: "orderDetails.proposedSubmissionDate",
+        // transformer: "date",
         populators: {
           name: "proposedSubmissionDate",
+          hideInForm: true,
         },
       },
       {
@@ -815,6 +810,7 @@ export const configsOrderSubmissionExtension = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -879,7 +875,7 @@ export const configsOrderTranferToADR = [
         isMandatory: true,
         key: "ADRMode",
         schemaKeyPath: "orderDetails.adrMode",
-        transformer: "mdmsDropdown",
+        transformer: "adrDropDown",
         type: "dropdown",
         populators: {
           name: "ADRMode",
@@ -921,6 +917,7 @@ export const configsOrderTranferToADR = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -1084,6 +1081,7 @@ export const configsScheduleHearingDate = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -1540,6 +1538,7 @@ export const configsRescheduleHearingDate = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -1751,7 +1750,7 @@ export const configsInitiateRescheduleHearingDate = [
         isMandatory: true,
         key: "reasonForRescheduling",
         type: "text",
-        schemaKeyPath: "orderDetails.reasonForReschedule",
+        // schemaKeyPath: "orderDetails.reasonForReschedule",
         populators: {
           name: "reasonForRescheduling",
           error: "CS_ALPHANUMERIC_ALLOWED",
@@ -1761,6 +1760,7 @@ export const configsInitiateRescheduleHearingDate = [
               masterName: "alphaNumericInputTextValidation",
             },
           },
+          hideInForm: true,
         },
       },
       {
@@ -1796,6 +1796,7 @@ export const configsInitiateRescheduleHearingDate = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -1983,6 +1984,7 @@ export const configsAssignNewHearingDate = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -2151,6 +2153,7 @@ export const configsVoluntarySubmissionStatus = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -2501,6 +2504,7 @@ export const configsCaseTransferAccept = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -2676,6 +2680,7 @@ export const configsCaseTransferReject = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -2837,6 +2842,7 @@ export const configsCaseSettlement = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -2967,6 +2973,7 @@ export const configsIssueSummons = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -3118,6 +3125,7 @@ export const configsIssueNotice = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -3355,19 +3363,19 @@ export const configsCaseWithdrawalAccept = [
         label: "APPLICATION_ON_BEHALF_OF",
         isMandatory: false,
         key: "applicationOnBehalfOf",
-        schemaKeyPath: "orderDetails.appFilledOnBehalfOf",
+        // schemaKeyPath: "orderDetails.appFilledOnBehalfOf",
         disable: true,
         type: "text",
-        populators: { name: "applicationOnBehalfOf" },
+        populators: { name: "applicationOnBehalfOf", hideInForm: true },
       },
       {
         label: "PARTY_TYPE",
         isMandatory: false,
         key: "partyType",
-        schemaKeyPath: "orderDetails.partyType",
+        // schemaKeyPath: "orderDetails.partyType",
         disable: true,
         type: "text",
-        populators: { name: "partyType" },
+        populators: { name: "partyType", hideInForm: true },
       },
       {
         label: "REASON_FOR_WITHDRAWAL",
@@ -3375,7 +3383,7 @@ export const configsCaseWithdrawalAccept = [
         key: "reasonForWithdrawal",
         disable: true,
         type: "text",
-        populators: { name: "reasonForWithdrawal" },
+        populators: { name: "reasonForWithdrawal", hideInForm: true },
       },
       {
         type: "component",
@@ -3392,6 +3400,7 @@ export const configsCaseWithdrawalAccept = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -3422,19 +3431,19 @@ export const configsCaseWithdrawalReject = [
         label: "APPLICATION_ON_BEHALF_OF",
         isMandatory: false,
         key: "applicationOnBehalfOf",
-        schemaKeyPath: "orderDetails.appFilledOnBehalfOf",
+        // schemaKeyPath: "orderDetails.appFilledOnBehalfOf",
         disable: true,
         type: "text",
-        populators: { name: "applicationOnBehalfOf" },
+        populators: { name: "applicationOnBehalfOf", hideInForm: true },
       },
       {
         label: "PARTY_TYPE",
         isMandatory: false,
         key: "partyType",
-        schemaKeyPath: "orderDetails.partyType",
+        // schemaKeyPath: "orderDetails.partyType",
         disable: true,
         type: "text",
-        populators: { name: "partyType" },
+        populators: { name: "partyType", hideInForm: true },
       },
       {
         label: "REASON_FOR_WITHDRAWAL",
@@ -3442,7 +3451,7 @@ export const configsCaseWithdrawalReject = [
         key: "reasonForWithdrawal",
         disable: true,
         type: "text",
-        populators: { name: "reasonForWithdrawal" },
+        populators: { name: "reasonForWithdrawal", hideInForm: true },
       },
       {
         type: "component",
@@ -3459,6 +3468,7 @@ export const configsCaseWithdrawalReject = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -3775,24 +3785,6 @@ export const configsCreateOrderWarrant = [
       },
     },
     body: [
-      {
-        isMandatory: true,
-        key: "Order Type",
-        type: "dropdown",
-        label: "ORDER_TYPE",
-        disable: true,
-        populators: {
-          name: "orderType",
-          optionsKey: "code",
-          error: "CORE_REQUIRED_FIELD_ERROR",
-          styles: { maxWidth: "100%" },
-          mdmsConfig: {
-            masterName: "OrderType",
-            moduleName: "Order",
-            localePrefix: "ORDER_TYPE",
-          },
-        },
-      },
       {
         label: "DATE_OF_HEARING",
         isMandatory: true,
@@ -4519,7 +4511,7 @@ export const configsIssueBailAcceptance = [
         type: "dropdown",
         label: "BAIL_PARTY",
         disable: false,
-        schemaKeyPath: "orderDetails.bailParty",
+        // schemaKeyPath: "orderDetails.bailParty",
         populators: {
           required: true,
           isMandatory: true,
@@ -4528,6 +4520,7 @@ export const configsIssueBailAcceptance = [
           styles: { maxWidth: "100%" },
           error: "required ",
           options: [],
+          hideInForm: true,
         },
       },
       {
@@ -4556,9 +4549,9 @@ export const configsIssueBailAcceptance = [
       {
         type: "amount",
         label: "CS_BAIL_CHEQUE_AMOUNT",
-        labelChildren: "optional",
-        isMandatory: false,
+        isMandatory: true,
         schemaKeyPath: "orderDetails.chequeAmount",
+        key: "chequeAmount",
         populators: {
           error: "CORE_REQUIRED_FIELD_ERROR",
           componentInFront: "₹",
@@ -4567,11 +4560,51 @@ export const configsIssueBailAcceptance = [
         },
       },
       {
+        type: "number",
+        label: "NO_OF_SURETIES",
+        isMandatory: true,
+        key: "noOfSureties",
+        schemaKeyPath: "orderDetails.noOfSureties",
+        populators: {
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          name: "noOfSureties",
+        },
+      },
+      {
+        type: "radio",
+        key: "plea",
+        schemaKeyPath: "orderDetails.plea",
+        transformer: "mdmsDropdown",
+        label: "PLEA",
+        isMandatory: true,
+        populators: {
+          label: "PLEA",
+          type: "radioButton",
+          name: "plea",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          options: [
+            {
+              code: "GUILTY",
+              name: "GUILTY",
+              isEnabled: true,
+            },
+            {
+              code: "NOTGUILTY",
+              name: "NOTGUILTY",
+              isEnabled: true,
+            },
+          ],
+        },
+      },
+      {
         type: "component",
         component: "SelectCustomTextArea",
         key: "bailSummary",
-        schemaKeyPath: "orderDetails.bailSummary",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.bailSummary",
+        // transformer: "customTextArea",
         isMandatory: true,
         populators: {
           inputs: [
@@ -4583,6 +4616,7 @@ export const configsIssueBailAcceptance = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
       {
@@ -4590,8 +4624,8 @@ export const configsIssueBailAcceptance = [
         component: "SelectCustomTextArea",
         key: "otherConditions",
         isMandatory: false,
-        schemaKeyPath: "orderDetails.otherConditions",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.otherConditions",
+        // transformer: "customTextArea",
         populators: {
           inputs: [
             {
@@ -4602,6 +4636,7 @@ export const configsIssueBailAcceptance = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -4783,8 +4818,8 @@ export const configsAcceptRejectDelayCondonation = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "reasonForSeekingDca",
-        schemaKeyPath: "orderDetails.reasonForSeekingDca",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.reasonForSeekingDca",
+        // transformer: "customTextArea",
         isMandatory: true,
         populators: {
           inputs: [
@@ -4795,14 +4830,15 @@ export const configsAcceptRejectDelayCondonation = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
       {
         type: "component",
         component: "SelectCustomTextArea",
         key: "reasonForAcceptanceOrRejectionDca",
-        schemaKeyPath: "orderDetails.reasonForAcceptanceOrRejectionDca",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.reasonForAcceptanceOrRejectionDca",
+        // transformer: "customTextArea",
         isMandatory: true,
         populators: {
           inputs: [
@@ -4813,14 +4849,15 @@ export const configsAcceptRejectDelayCondonation = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
       {
         type: "component",
         component: "SelectCustomTextArea",
         key: "additionalCommentsDca",
-        schemaKeyPath: "orderDetails.additionalCommentsDca",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.additionalCommentsDca",
+        // transformer: "customTextArea",
         isMandatory: false,
         populators: {
           inputs: [
@@ -4832,6 +4869,7 @@ export const configsAcceptRejectDelayCondonation = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -4984,8 +5022,8 @@ export const replaceAdvocateConfig = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "additionalComments",
-        schemaKeyPath: "orderDetails.additionalComments",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.additionalComments",
+        // transformer: "customTextArea",
         isMandatory: false,
         populators: {
           inputs: [
@@ -4997,6 +5035,7 @@ export const replaceAdvocateConfig = [
               isOptional: true,
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -5010,8 +5049,8 @@ export const configsAdmitCase = [
         label: "WAS_ACCUSED_EXAMINED",
         isMandatory: true,
         key: "wasExamined",
-        schemaKeyPath: "orderDetails.wasExamined",
-        transformer: "customDropdown",
+        // schemaKeyPath: "orderDetails.wasExamined",
+        // transformer: "customDropdown",
         type: "radio",
         populators: {
           name: "wasExamined",
@@ -5019,6 +5058,7 @@ export const configsAdmitCase = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           required: true,
           isMandatory: true,
+          hideInForm: true,
           options: [
             {
               code: "YES",
@@ -5035,8 +5075,8 @@ export const configsAdmitCase = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "reasonForAdmitCase",
-        schemaKeyPath: "orderDetails.reasonForAdmitCase",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.reasonForAdmitCase",
+        // transformer: "customTextArea",
         isMandatory: true,
         populators: {
           inputs: [
@@ -5047,14 +5087,15 @@ export const configsAdmitCase = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
       {
         type: "component",
         component: "SelectCustomTextArea",
         key: "additionalCommentsAdmitCase",
-        schemaKeyPath: "orderDetails.additionalCommentsAdmitCase",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.additionalCommentsAdmitCase",
+        // transformer: "customTextArea",
         isMandatory: false,
         populators: {
           inputs: [
@@ -5066,6 +5107,7 @@ export const configsAdmitCase = [
               isOptional: true,
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -5079,8 +5121,8 @@ export const configsDismissCase = [
         label: "WAS_ACCUSED_EXAMINED",
         isMandatory: true,
         key: "wasAccusedExamined",
-        schemaKeyPath: "orderDetails.wasAccusedExamined",
-        transformer: "customDropdown",
+        // schemaKeyPath: "orderDetails.wasAccusedExamined",
+        // transformer: "customDropdown",
         type: "radio",
         populators: {
           name: "wasAccusedExamined",
@@ -5088,6 +5130,7 @@ export const configsDismissCase = [
           error: "CORE_REQUIRED_FIELD_ERROR",
           required: true,
           isMandatory: true,
+          hideInForm: true,
           options: [
             {
               code: "YES",
@@ -5104,8 +5147,8 @@ export const configsDismissCase = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "reasonForDismissCase",
-        schemaKeyPath: "orderDetails.reasonForDismissCase",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.reasonForDismissCase",
+        // transformer: "customTextArea",
         isMandatory: true,
         populators: {
           inputs: [
@@ -5116,14 +5159,15 @@ export const configsDismissCase = [
               type: "TextAreaComponent",
             },
           ],
+          hideInForm: true,
         },
       },
       {
         type: "component",
         component: "SelectCustomTextArea",
         key: "additionalCommentsDismissCase",
-        schemaKeyPath: "orderDetails.additionalCommentsDismissCase",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.additionalCommentsDismissCase",
+        // transformer: "customTextArea",
         isMandatory: false,
         populators: {
           inputs: [
@@ -5135,6 +5179,7 @@ export const configsDismissCase = [
               isOptional: true,
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -5199,8 +5244,8 @@ export const configsApproveRejectLitigantDetailsChange = [
         type: "component",
         component: "SelectCustomTextArea",
         key: "additionalCommentsLitigantsDetailChange",
-        schemaKeyPath: "orderDetails.additionalCommentsLitigantsDetailChange",
-        transformer: "customTextArea",
+        // schemaKeyPath: "orderDetails.additionalCommentsLitigantsDetailChange",
+        // transformer: "customTextArea",
         isMandatory: false,
         populators: {
           inputs: [
@@ -5212,6 +5257,7 @@ export const configsApproveRejectLitigantDetailsChange = [
               isOptional: true,
             },
           ],
+          hideInForm: true,
         },
       },
     ],
@@ -5428,6 +5474,335 @@ export const configsCreateOrderAttachment = [
               type: "TextAreaComponent",
             },
           ],
+        },
+      },
+    ],
+  },
+];
+
+export const configsMoveCaseToLongPendingRegister = [
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "longPendingComments",
+        schemaKeyPath: "orderDetails.comments",
+        transformer: "customTextArea",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "Reason for Moving Case to Long Pending Register",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        type: "component",
+        key: "lprDocuments",
+        component: "SelectMultiUpload",
+        disable: false,
+        populators: {
+          inputs: [
+            {
+              name: "documents",
+              isMandatory: true,
+              documentHeader: "IDENTITY_PROOF",
+              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
+              uploadGuidelines: "UPLOAD_DOC_50",
+              maxFileSize: 50,
+              maxFileErrorMessage: "CS_FILE_LIMIT_50_MB",
+              isMultipleUpload: true,
+              popupModuleMianStyles: { maxHeight: "100%" },
+              textAreaStyle: {
+                fontSize: "16px",
+                fontWeight: 400,
+                marginBottom: "8px",
+              },
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+export const configsMoveCaseOutOfLongPendingRegister = [
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "outOfLongPendingComments",
+        schemaKeyPath: "orderDetails.comments",
+        transformer: "customTextArea",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "Reason for Moving Case out of Long Pending Register",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+    ],
+  },
+];
+
+export const attendeesOptions = [
+  { code: "COMPLAINANT", name: "Complainant" },
+  { code: "COMPLAINANT_ADVOCATE", name: "Complainant's Advocate" },
+  { code: "ACCUSED", name: "Accused" },
+  { code: "ACCUSED_ADVOCATE", name: "Accused Advocate" },
+];
+
+export const purposeOfHearingConfig = {
+  label: "HEARING_PURPOSE",
+  isMandatory: true,
+  key: "hearingPurpose",
+  schemaKeyPath: "orderDetails.purposeOfHearing",
+  transformer: "mdmsDropdown",
+  type: "dropdown",
+  populators: {
+    name: "hearingPurpose",
+    optionsKey: "code",
+    error: "CORE_REQUIRED_FIELD_ERROR",
+    styles: { maxWidth: "100%" },
+    required: true,
+    isMandatory: true,
+    hideInForm: false,
+    mdmsConfig: {
+      masterName: "HearingType",
+      moduleName: "Hearing",
+      localePrefix: "HEARING_PURPOSE",
+    },
+  },
+};
+
+export const nextDateOfHearing = {
+  type: "component",
+  component: "CustomDatePicker",
+  key: "nextHearingDate",
+  label: "NEXT_DATE_OF_HEARING",
+  className: "order-date-picker",
+  isMandatory: true,
+  placeholder: "DD/MM/YYYY",
+  customStyleLabelField: { display: "flex", justifyContent: "space-between" },
+  populators: {
+    name: "nextHearingDate",
+    error: "CORE_REQUIRED_FIELD_ERROR",
+  },
+};
+
+export const configsCost = [
+  {
+    body: [
+      {
+        label: "PAYMENT_TO_BE_MADE_BY",
+        isMandatory: true,
+        key: "paymentToBeMadeBy",
+        disable: false,
+        schemaKeyPath: "orderDetails.paymentToBeMadeBy",
+        transformer: "mdmsDropdown",
+        type: "dropdown",
+        populators: {
+          styles: { maxWidth: "100%" },
+          name: "paymentToBeMadeBy",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          selectedText: "party(s)",
+          options: [
+            {
+              code: "PARTY_1",
+              name: "PARTY_1",
+            },
+            {
+              code: "PARTY_2",
+              name: "PARTY_2",
+            },
+            {
+              code: "PARTY_3",
+              name: "PARTY_3",
+            },
+          ],
+        },
+      },
+      {
+        label: "PAYMENT_TO_BE_MADE_TO",
+        isMandatory: true,
+        key: "paymentToBeMadeTo",
+        disable: false,
+        schemaKeyPath: "orderDetails.paymentToBeMadeTo",
+        transformer: "mdmsDropdown",
+        type: "dropdown",
+        populators: {
+          styles: { maxWidth: "100%" },
+          name: "paymentToBeMadeTo",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          selectedText: "party(s)",
+          options: [
+            {
+              code: "PARTY_1",
+              name: "PARTY_1",
+            },
+            {
+              code: "PARTY_2",
+              name: "PARTY_2",
+            },
+            {
+              code: "PARTY_3",
+              name: "PARTY_3",
+            },
+          ],
+        },
+      },
+      {
+        type: "amount",
+        label: "CS_COST_ORDER_AMOUNT",
+        isMandatory: true,
+        schemaKeyPath: "orderDetails.amount",
+        key: "amount",
+        populators: {
+          name: "amount",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          componentInFront: "₹",
+          prefix: "",
+        },
+      },
+      {
+        label: "CS_COST_ORDER_DEADLINE",
+        isMandatory: true,
+        key: "deadline",
+        schemaKeyPath: "orderDetails.deadline",
+        transformer: "date",
+        type: "date",
+        labelChildren: "OutlinedInfoIcon",
+        tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",
+        populators: {
+          name: "deadline",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiOrders",
+              masterName: "minTodayDateValidation",
+            },
+          },
+        },
+      },
+    ],
+  },
+];
+
+export const configsWitnessBatta = [
+  {
+    body: [
+      {
+        label: "PAYMENT_TO_BE_MADE_BY",
+        isMandatory: true,
+        key: "paymentToBeMadeBy",
+        disable: false,
+        schemaKeyPath: "orderDetails.paymentToBeMadeBy",
+        transformer: "mdmsDropdown",
+        type: "dropdown",
+        populators: {
+          styles: { maxWidth: "100%" },
+          name: "paymentToBeMadeBy",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          selectedText: "party(s)",
+          options: [
+            {
+              code: "PARTY_1",
+              name: "PARTY_1",
+            },
+            {
+              code: "PARTY_2",
+              name: "PARTY_2",
+            },
+            {
+              code: "PARTY_3",
+              name: "PARTY_3",
+            },
+          ],
+        },
+      },
+      {
+        label: "PAYMENT_TO_BE_MADE_TO",
+        isMandatory: true,
+        key: "paymentToBeMadeTo",
+        disable: false,
+        schemaKeyPath: "orderDetails.paymentToBeMadeTo",
+        transformer: "mdmsDropdown",
+        type: "dropdown",
+        populators: {
+          styles: { maxWidth: "100%" },
+          name: "paymentToBeMadeTo",
+          optionsKey: "name",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          required: true,
+          isMandatory: true,
+          selectedText: "party(s)",
+          options: [
+            {
+              code: "PARTY_1",
+              name: "PARTY_1",
+            },
+            {
+              code: "PARTY_2",
+              name: "PARTY_2",
+            },
+            {
+              code: "PARTY_3",
+              name: "PARTY_3",
+            },
+          ],
+        },
+      },
+      {
+        type: "amount",
+        label: "CS_COST_ORDER_AMOUNT",
+        isMandatory: true,
+        schemaKeyPath: "orderDetails.amount",
+        key: "amount",
+        populators: {
+          name: "amount",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          componentInFront: "₹",
+          prefix: "",
+        },
+      },
+      {
+        label: "CS_COST_ORDER_DEADLINE",
+        isMandatory: true,
+        key: "deadline",
+        schemaKeyPath: "orderDetails.deadline",
+        transformer: "date",
+        type: "date",
+        labelChildren: "OutlinedInfoIcon",
+        tooltipValue: "ONLY_CURRENT_AND_FUTURE_DATES_ARE_ALLOWED",
+        populators: {
+          name: "deadline",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiOrders",
+              masterName: "minTodayDateValidation",
+            },
+          },
         },
       },
     ],

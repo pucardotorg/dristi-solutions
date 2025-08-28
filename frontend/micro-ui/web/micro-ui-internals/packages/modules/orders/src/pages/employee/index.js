@@ -9,7 +9,7 @@ import { Switch } from "react-router-dom";
 import OrdersResponse from "./OrdersResponse";
 import OrdersCreate from "./OrdersCreate";
 import OrdersHome from "./OrdersHome";
-import GenerateOrders from "./GenerateOrders";
+import GenerateOrdersV2 from "./GenerateOrdersV2";
 import PaymentStatus from "../../components/PaymentStatus";
 import EpostTrackingPage from "./E-PostTracking";
 import PaymentForSummonModal from "./PaymentForSummonModal";
@@ -103,7 +103,7 @@ const App = ({ path, stateCode, userType, tenants }) => {
         <PrivateRoute path={`${path}/orders-response`} component={() => <OrdersResponse></OrdersResponse>} />
         <PrivateRoute path={`${path}/orders-create`} component={() => <OrdersCreate />} />
         <PrivateRoute path={`${path}/orders-home`} component={() => <OrdersHome />} />
-        <PrivateRoute path={`${path}/generate-orders`} component={() => <GenerateOrders />} />
+        <PrivateRoute path={`${path}/generate-orders`} component={() => <GenerateOrdersV2 />} />
         {/* <PrivateRoute path={`${path}/make-submission`} component={() => <MakeSubmission />} /> */}
         <PrivateRoute path={`${path}/Summons&Notice`} component={() => <ReviewSummonsNoticeAndWarrant />} />
         <PrivateRoute path={`${path}/payment-screen`} component={() => <PaymentStatus />} />

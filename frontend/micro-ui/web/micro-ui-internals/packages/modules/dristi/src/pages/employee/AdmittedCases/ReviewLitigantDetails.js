@@ -196,6 +196,14 @@ const ReviewLitigantDetails = ({ path }) => {
     return false;
   }, [profileRequest, caseDetails]);
 
+  const getPersonNameByUUID = (litigantDetails, representative, uuid) => {
+    const combined = [...(litigantDetails || []), ...(representative || [])];
+
+    const person = combined?.find((item) => item?.additionalDetails?.uuid === uuid);
+
+    return person?.additionalDetails?.fullName || person?.additionalDetails?.advocateName || "";
+  };
+
   const handleApproveReject = async (action) => {
     try {
       const reqBody = {
@@ -220,6 +228,10 @@ const ReviewLitigantDetails = ({ path }) => {
             documents: [{}],
           },
           documents: [],
+          orderDetails: {
+            applicantName: getPersonNameByUUID(caseDetails?.litigants, caseDetails?.representatives, profileRequest?.editorDetails?.uuid),
+            applicationStatus: action === "ACCEPT" ? "APPROVED" : "REJECTED",
+          },
           applicationNumber: [refApplicationNUmber],
           additionalDetails: {
             formdata: {

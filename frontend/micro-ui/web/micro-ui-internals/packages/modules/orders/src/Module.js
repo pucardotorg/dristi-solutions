@@ -18,6 +18,8 @@ import PaymentForSummonModalSMSAndEmail from "./pages/employee/PaymentForSummonM
 import SBIEpostPayment from "./pages/employee/SBIEpostPayment";
 import SBIPaymentStatus from "./components/SBIPaymentStatus";
 import WarrantOrderComponent from "./components/WarrantOrderComponent";
+import OrderTypeControls from "./components/OrderTypeControls";
+import OrderTypeControlItem from "./components/OrderTypeControlItem";
 export const OrdersModule = ({ stateCode, userType, tenants }) => {
   const { path } = useRouteMatch();
   const moduleCode = ["orders", "hearings", "common", "case", "workflow"];
@@ -52,6 +54,8 @@ const componentsToRegister = {
   SBIPaymentStatus,
   PaymentForRPADModal,
   WarrantOrderComponent,
+  OrderTypeControls,
+  OrderTypeControlItem,
 };
 
 export const initOrdersComponents = () => {

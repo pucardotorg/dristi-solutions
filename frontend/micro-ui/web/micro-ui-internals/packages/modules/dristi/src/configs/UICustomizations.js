@@ -1252,7 +1252,7 @@ export const UICustomizations = {
                 label: "MARK_AS_VOID",
                 id: "mark_as_void",
                 hide: false,
-                disabled: row?.status !== "SUBMITTED",
+                disabled: row?.artifactType === "LPR_DOCUMENT_ARTIFACT" ? false : row?.status !== "SUBMITTED",
                 action: column.clickFunc,
               },
             ]
@@ -1260,7 +1260,7 @@ export const UICustomizations = {
         ...(userInfo.roles.map((role) => role.code).includes("EMPLOYEE") &&
         row?.artifactType !== "WITNESS_DEPOSITION" &&
         !row?.isVoid &&
-        !(row?.status !== "SUBMITTED" && row?.filingType === "DIRECT")
+        !((row?.artifactType === "LPR_DOCUMENT_ARTIFACT" ? false : row?.status !== "SUBMITTED") && row?.filingType === "DIRECT")
           ? row?.evidenceMarkedStatus !== null || row.isEvidence
             ? [
                 {
@@ -1308,7 +1308,7 @@ export const UICustomizations = {
           label: "DOWNLOAD_FILING",
           id: "download_filing",
           hide: false,
-          disabled: row?.status !== "SUBMITTED" && row?.filingType === "DIRECT",
+          disabled: (row?.artifactType === "LPR_DOCUMENT_ARTIFACT" ? false : row?.status !== "SUBMITTED") && row?.filingType === "DIRECT",
           action: column.clickFunc,
         },
       ];
