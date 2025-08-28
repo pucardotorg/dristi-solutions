@@ -65,7 +65,7 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
                 .documents(event.getDocuments())
                 .createdTime(event.getAuditDetails().getCreatedTime())
                 .caseTitle(enrichCaseTitle(courtCase))
-                .caseSTNumber(courtCase.getCourtCaseNumber() != null ? courtCase.getCourtCaseNumber() : courtCase.getCmpNumber())
+                .caseSTNumber(enrichCaseSTNumber(courtCase))
                 .build();
 
         OrderNotificationRequest request = OrderNotificationRequest.builder()
@@ -73,6 +73,14 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
 
         producer.push(properties.getOrderAndNotificationTopic(), request);
 
+    }
+
+    private String enrichCaseSTNumber(CourtCase courtCase) {
+        if (courtCase.getIsLPRCase()) {
+            return courtCase.getLprNumber();
+        } else {
+            return courtCase.getCourtCaseNumber() != null ? courtCase.getCourtCaseNumber() : courtCase.getCmpNumber();
+        }
     }
 
     private List<Map<String, Object>> getParties(Order event) {
