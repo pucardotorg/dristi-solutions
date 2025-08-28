@@ -1682,7 +1682,10 @@ const AdmittedCases = () => {
         };
         if (generateOrder) {
           const caseNumber =
-            (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) || caseDetails?.cmpNumber || caseDetails?.filingNumber;
+            (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+            caseDetails?.courtCaseNumber ||
+            caseDetails?.cmpNumber ||
+            caseDetails?.filingNumber;
           const reqbody = {
             order: {
               createdDate: null,

@@ -149,7 +149,7 @@ const witnessDeposition = async (req, res, qrCode) => {
     const year = currentDate.getFullYear();
 
     const ordinalSuffix = getOrdinalSuffix(day);
-    const caseNumber = (courtCase?.isLPRCase ? courtCase?.lprNumber : courtCase?.courtCaseNumber) || courtCase?.cmpNumber || "";
+    const caseNumber = (courtCase?.isLPRCase ? courtCase?.lprNumber : courtCase?.courtCaseNumber) || courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const witnessDepositionText = htmlToFormattedText(
       witnessEvidence?.description || ""
     );

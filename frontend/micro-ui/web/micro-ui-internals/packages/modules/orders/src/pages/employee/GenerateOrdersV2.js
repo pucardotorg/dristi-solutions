@@ -1348,7 +1348,7 @@ const GenerateOrdersV2 = () => {
         updatedFormdata.nameofRespondentAdvocate = uuidNameMap?.[allAdvocates?.[respondentPrimary?.additionalDetails?.uuid]] || "";
         setValueRef?.current?.[index]?.("nameofRespondentAdvocate", updatedFormdata.nameofRespondentAdvocate);
 
-        updatedFormdata.caseNumber = caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber;
+        updatedFormdata.caseNumber = (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) || caseDetails?.courtCaseNumber;
         setValueRef?.current?.[index]?.("caseNumber", updatedFormdata.caseNumber);
 
         updatedFormdata.nameOfCourt = courtRooms.find((room) => room.code === caseDetails?.courtId)?.name;

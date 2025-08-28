@@ -252,7 +252,10 @@ const MarkAsEvidence = ({
             courtId: courtId,
             markedAs: `${evidenceTag}${evidenceNumber}`,
             caseNumber:
-              (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) || caseDetails?.cmpNumber || caseDetails?.filingNumber,
+              (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+              caseDetails?.courtCaseNumber ||
+              caseDetails?.cmpNumber ||
+              caseDetails?.filingNumber,
             markedThrough: witnessTag?.code,
           },
         },
@@ -687,6 +690,7 @@ const MarkAsEvidence = ({
                   entryDate: new Date().setHours(0, 0, 0, 0),
                   caseNumber:
                     (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+                    caseDetails?.courtCaseNumber ||
                     caseDetails?.cmpNumber ||
                     caseDetails?.filingNumber,
                   referenceId: artifactNumber,

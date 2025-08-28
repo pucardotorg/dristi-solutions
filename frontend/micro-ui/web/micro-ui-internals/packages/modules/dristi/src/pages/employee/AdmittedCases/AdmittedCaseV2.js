@@ -1828,7 +1828,10 @@ const AdmittedCaseV2 = () => {
     async (generateOrder, type) => {
       try {
         const caseNumber =
-          (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) || caseDetails?.cmpNumber || caseDetails?.filingNumber;
+          (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+          caseDetails?.courtCaseNumber ||
+          caseDetails?.cmpNumber ||
+          caseDetails?.filingNumber;
         const orderType = type === "reject" ? "DISMISS_CASE" : type === "accept" ? "TAKE_COGNIZANCE" : null;
         const formdata = {
           orderType: {

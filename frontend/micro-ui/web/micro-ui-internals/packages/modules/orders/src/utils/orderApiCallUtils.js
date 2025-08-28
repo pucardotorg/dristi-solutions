@@ -49,7 +49,10 @@ export const addOrderItem = async (order, action, tenantId, applicationTypeConfi
     });
 
     const caseNumber =
-      (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) || caseDetails?.cmpNumber || caseDetails?.filingNumber;
+      (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+      caseDetails?.courtCaseNumber ||
+      caseDetails?.cmpNumber ||
+      caseDetails?.filingNumber;
     const orderSchemaUpdated = {
       ...orderSchema,
       orderDetails: { ...orderSchema?.orderDetails, parties: parties, caseNumber: caseNumber },
@@ -101,7 +104,10 @@ export const createOrder = async (order, tenantId, applicationTypeConfigUpdated,
     });
 
     const caseNumber =
-      (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) || caseDetails?.cmpNumber || caseDetails?.filingNumber;
+      (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+      caseDetails?.courtCaseNumber ||
+      caseDetails?.cmpNumber ||
+      caseDetails?.filingNumber;
     orderSchema = { ...orderSchema, orderDetails: { ...orderSchema?.orderDetails, parties: parties, caseNumber: caseNumber } };
 
     return await ordersService.createOrder(
