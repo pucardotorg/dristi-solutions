@@ -168,22 +168,19 @@ const SelectParty = ({
     scrollToDiv();
   }, [selectPartyData?.partyInvolve, party, partyInPerson]);
 
-  const getDisableParty  = (party) => {
-    if(party?.advocateRepresentingLength > 0){
-      if(party?.isPoaAvailable?.code === "NO" && party?.uuid === userInfo?.uuid) {
+  const getDisableParty = (party) => {
+    if (party?.advocateRepresentingLength > 0) {
+      if (party?.isPoaAvailable?.code === "NO" && party?.uuid === userInfo?.uuid) {
         return true;
-      }
-      else if(party?.isPoaAvailable?.code === "YES" && party?.poaVerification?.individualDetails?.userUuid === userInfo?.uuid) {
+      } else if (party?.isPoaAvailable?.code === "YES" && party?.poaVerification?.individualDetails?.userUuid === userInfo?.uuid) {
         return true;
-      }
-      else {
+      } else {
         return false;
       }
-    }
-    else {
+    } else {
       return true;
     }
-  }
+  };
 
   return (
     <div ref={targetRef} className="select-user-join-case" style={{ width: "712px" }}>
@@ -379,7 +376,8 @@ const SelectParty = ({
                   })
                   ?.map((party) => ({
                     ...party,
-                    isDisabled: party?.isAdvocateRepresenting,
+                    isDisabled:
+                      party?.isAdvocateRepresenting || (selectPartyData?.isReplaceAdvocate?.value !== "YES" && party?.advocateRepresentingLength < 1),
                   }))}
                 selected={party}
                 optionsKey={"fullName"}
