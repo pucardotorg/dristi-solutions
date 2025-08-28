@@ -143,6 +143,11 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
     }
 
     private String enrichCaseTitle(CourtCase courtCase) {
+        if (Boolean.TRUE.equals(courtCase.getIsLPRCase())) {
+            return (courtCase.getLprNumber() != null && !courtCase.getLprNumber().isEmpty())
+                    ? courtCase.getCaseTitle() + " , " + courtCase.getLprNumber()
+                    : courtCase.getCaseTitle();
+        }
         return (courtCase.getCourtCaseNumber() != null && !courtCase.getCourtCaseNumber().isEmpty())
                 ? courtCase.getCaseTitle() + " , " + courtCase.getCourtCaseNumber()
                 : courtCase.getCaseTitle() + " , " + courtCase.getCmpNumber();
