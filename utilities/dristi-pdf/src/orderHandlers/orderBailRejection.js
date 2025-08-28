@@ -153,7 +153,7 @@ const orderBailRejection = async (
     let bailType =
       messagesMap?.[order?.orderDetails?.bailType] ||
       order?.orderDetails?.bailType;
-    const caseNumber = (courtCase?.isLPRCase ? courtCase?.lprNumber : courtCase?.courtCaseNumber) || courtCase?.cmpNumber || "";
+    const caseNumber = (courtCase?.isLPRCase ? courtCase?.lprNumber : courtCase?.courtCaseNumber) || courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const data = {
       Data: [
         {

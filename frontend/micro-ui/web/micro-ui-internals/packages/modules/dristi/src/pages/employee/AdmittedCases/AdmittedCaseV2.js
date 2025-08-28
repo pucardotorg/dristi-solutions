@@ -255,8 +255,10 @@ const AdmittedCaseV2 = () => {
   const [isShow, setIsShow] = useState(false);
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const historyCaseData = location?.state?.caseData;
+  const needCaseRefetch = location?.state?.needCaseRefetch;
   const historyOrderData = location?.state?.orderData;
   const newWitnesToast = history.location?.state?.newWitnesToast;
+  const [isApplicationAccepted, setIsApplicationAccepted] = useState(null);
 
   const openOrder = location?.state?.openOrder;
   const [showOrderModal, setShowOrderModal] = useState(openOrder || false);
@@ -300,7 +302,7 @@ const AdmittedCaseV2 = () => {
     {},
     `dristi-admitted-${caseId}`,
     caseId,
-    Boolean(caseId && (shouldRefetchCaseData || !historyCaseData))
+    Boolean(caseId && (needCaseRefetch || shouldRefetchCaseData || !historyCaseData))
   );
 
   const caseData = apiCaseData || historyCaseData;
@@ -944,7 +946,7 @@ const AdmittedCaseV2 = () => {
                   ...tabConfig.apiDetails.requestBody.inbox,
                   moduleSearchCriteria: {
                     ...tabConfig.apiDetails.requestBody.inbox.moduleSearchCriteria,
-                    caseNumbers: [filingNumber, caseDetails?.cmpNumber, caseDetails?.courtCaseNumber]?.filter(Boolean),
+                    caseNumbers: [filingNumber, caseDetails?.cmpNumber, caseDetails?.courtCaseNumber, caseDetails?.lprNumber]?.filter(Boolean),
                     ...(caseCourtId && { courtId: caseCourtId }),
                   },
                 },
@@ -1581,6 +1583,8 @@ const AdmittedCaseV2 = () => {
   useEffect(() => {
     if (history?.location?.state?.from === "orderSuccessModal" && !toastStatus?.alreadyShown) {
       showToast(true);
+
+      refetchCaseData();
       setToastDetails({
         isError: false,
         message: "ORDER_SUCCESSFULLY_ISSUED",
@@ -1599,8 +1603,12 @@ const AdmittedCaseV2 = () => {
     if (history.location?.state?.applicationDocObj && !show) {
       setDocumentSubmission(history.location?.state?.applicationDocObj);
       setShow(true);
+
+      if (history.location?.state?.isApplicationAccepted !== undefined) {
+        setIsApplicationAccepted({ value: history.location?.state?.isApplicationAccepted });
+      }
     }
-  }, [history.location?.state?.applicationDocObj, show]);
+  }, [history.location?.state?.applicationDocObj, history.location?.state?.isApplicationAccepted, show]);
 
   useEffect(() => {
     if (currentDiaryEntry && artifactNumber) {
@@ -1819,6 +1827,11 @@ const AdmittedCaseV2 = () => {
   const handleAdmitDismissCaseOrder = useCallback(
     async (generateOrder, type) => {
       try {
+        const caseNumber =
+          (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+          caseDetails?.courtCaseNumber ||
+          caseDetails?.cmpNumber ||
+          caseDetails?.filingNumber;
         const orderType = type === "reject" ? "DISMISS_CASE" : type === "accept" ? "TAKE_COGNIZANCE" : null;
         const formdata = {
           orderType: {
@@ -1854,7 +1867,10 @@ const AdmittedCaseV2 = () => {
                 formdata,
               },
               ...(documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName && {
-                orderDetails: { parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }] },
+                orderDetails: {
+                  parties: [{ partyName: documentSubmission?.[0]?.applicationList?.additionalDetails?.onBehalOfName }],
+                  caseNumber: caseNumber,
+                },
               }),
             },
           };
@@ -1914,7 +1930,7 @@ const AdmittedCaseV2 = () => {
             tenantId: tenantId,
             filingNumber: [caseDetails.filingNumber],
             hearingType: purpose,
-            courtCaseNumber: caseDetails?.courtCaseNumber,
+            courtCaseNumber: caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber,
             cmpNumber: caseDetails?.cmpNumber,
             status: true,
             attendees: [
@@ -2561,7 +2577,7 @@ const AdmittedCaseV2 = () => {
       } else if (option.value === "VIEW_CALENDAR") {
         setShowCalendarModal(true);
       } else if (option.value === "GENERATE_ORDER") {
-        setShowOrderModal(true);
+        handleSelect("GENERATE_ORDER");
       } else if (option.value === "END_HEARING") {
         try {
           setApiCalled(true);
@@ -3135,17 +3151,16 @@ const AdmittedCaseV2 = () => {
         secondaryAction.action ||
         tertiaryAction.action ||
         ([CaseWorkflowState.PENDING_NOTICE, CaseWorkflowState.PENDING_RESPONSE].includes(caseDetails?.status) && !isCitizen)) &&
-      !caseDetails?.outcome &&
-    [
-      primaryAction.action,
-      secondaryAction.action,
-      tertiaryAction.action,
-      caseDetails?.status,
-      caseDetails?.outcome,
-      isCitizen,
-      isCourtRoomManager,
-      currentInProgressHearing,
-    ]
+      !caseDetails?.outcome && [
+        primaryAction.action,
+        secondaryAction.action,
+        tertiaryAction.action,
+        caseDetails?.status,
+        caseDetails?.outcome,
+        isCitizen,
+        isCourtRoomManager,
+        currentInProgressHearing,
+      ]
   );
 
   const viewActionBar = useMemo(() => {
@@ -3433,13 +3448,20 @@ const AdmittedCaseV2 = () => {
                             ></Button>
                             <Button
                               variation={"primary"}
-                              label={t((isBenchClerk || isCourtRoomManager) ? "CS_CASE_END_HEARING" : isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : "")}
-                              children={(isBenchClerk || isCourtRoomManager) ? null : isJudge || isTypist ? <RightArrow /> : null}
+                              label={t(
+                                isBenchClerk || isCourtRoomManager ? "CS_CASE_END_HEARING" : isJudge || isTypist ? "CS_CASE_NEXT_HEARING" : ""
+                              )}
+                              children={isBenchClerk || isCourtRoomManager ? null : isJudge || isTypist ? <RightArrow /> : null}
                               isSuffix={true}
                               onButtonClick={() =>
-                                handleEmployeeAction({ value: (isBenchClerk || isCourtRoomManager) ? "END_HEARING" : isJudge || isTypist ? "NEXT_HEARING" : "" })
+                                handleEmployeeAction({
+                                  value: isBenchClerk || isCourtRoomManager ? "END_HEARING" : isJudge || isTypist ? "NEXT_HEARING" : "",
+                                })
                               }
-                              style={{ boxShadow: "none", ...((isBenchClerk || isCourtRoomManager) ? { backgroundColor: "#BB2C2F", border: "none" } : {}) }}
+                              style={{
+                                boxShadow: "none",
+                                ...(isBenchClerk || isCourtRoomManager ? { backgroundColor: "#BB2C2F", border: "none" } : {}),
+                              }}
                             ></Button>
                           </React.Fragment>
                         ) : (
@@ -3492,7 +3514,9 @@ const AdmittedCaseV2 = () => {
         </div>
         <div className="admitted-case-details" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px" }}>
           <div className="case-details-title" style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div className="sub-details-text">{caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber}</div>
+            <div className="sub-details-text">
+              {caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber}
+            </div>
             <hr className="vertical-line" />
             {(caseDetails?.courtCaseNumber || caseDetails?.cmpNumber) && (
               <React.Fragment>
@@ -3701,6 +3725,8 @@ const AdmittedCaseV2 = () => {
           currentDiaryEntry={currentDiaryEntry}
           artifact={artifact}
           setShowMakeAsEvidenceModal={setShowMakeAsEvidenceModal}
+          isApplicationAccepted={isApplicationAccepted}
+          history={history}
         />
       )}
       {showOrderReviewModal && (

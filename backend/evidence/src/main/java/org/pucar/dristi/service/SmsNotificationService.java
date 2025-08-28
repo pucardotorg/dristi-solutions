@@ -69,6 +69,9 @@ public class SmsNotificationService {
         if (messageCode.equalsIgnoreCase(EVIDENCE_SUBMISSION_MESSAGE_OPPOSITE_PARTY)) {
             pushNotification(templateData,message,mobileNumber,config.getSmsNotificationDocumentSubmissionToOppositeParty());
         }
+        if (messageCode.equalsIgnoreCase(WITNESS_DEPOSITION_MESSAGE)) {
+            pushNotification(templateData, message, mobileNumber, config.getSmsNotificationWitnessDeposition());
+        }
     }
 
     private void pushNotification(SmsTemplateData templateData, String message, String mobileNumber, String templateId) {
@@ -101,6 +104,7 @@ public class SmsNotificationService {
         smsDetails.put("artifactNumber", smsTemplateData.getArtifactNumber());
         smsDetails.put("mobileNumber", mobileNumber);
         smsDetails.put("filingNumber",smsTemplateData.getFilingNumber());
+        smsDetails.put("shortenedUrl", smsTemplateData.getShortenedUrl());
 
         return smsDetails;
     }
@@ -140,7 +144,8 @@ public class SmsNotificationService {
                 .replace("{{date}}", Optional.ofNullable(userDetailsForSMS.get("date")).orElse(""))
                 .replace("{{cmpNumber}}", getPreferredCaseIdentifier(userDetailsForSMS))
                 .replace("{{artifactNumber}}", Optional.ofNullable(userDetailsForSMS.get("artifactNumber")).orElse(""))
-                .replace("{{filingNumber}}", getPreferredCaseIdentifier(userDetailsForSMS));
+                .replace("{{filingNumber}}", getPreferredCaseIdentifier(userDetailsForSMS))
+                .replace("{{shortenedUrl}}", Optional.ofNullable(userDetailsForSMS.get("shortenedUrl")).orElse(""));
 
         return message;
     }

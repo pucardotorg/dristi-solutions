@@ -251,7 +251,11 @@ const MarkAsEvidence = ({
           Evidence: {
             courtId: courtId,
             markedAs: `${evidenceTag}${evidenceNumber}`,
-            caseNumber: caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber,
+            caseNumber:
+              (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+              caseDetails?.courtCaseNumber ||
+              caseDetails?.cmpNumber ||
+              caseDetails?.filingNumber,
             markedThrough: witnessTag?.code,
           },
         },
@@ -684,7 +688,11 @@ const MarkAsEvidence = ({
                   businessOfDay: businessOfDay,
                   tenantId: tenantId,
                   entryDate: new Date().setHours(0, 0, 0, 0),
-                  caseNumber: caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber,
+                  caseNumber:
+                    (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+                    caseDetails?.courtCaseNumber ||
+                    caseDetails?.cmpNumber ||
+                    caseDetails?.filingNumber,
                   referenceId: artifactNumber,
                   referenceType: "Documents",
                   hearingDate: (Array.isArray(nextHearing) && nextHearing.length > 0 && nextHearing[0]?.startTime) || null,

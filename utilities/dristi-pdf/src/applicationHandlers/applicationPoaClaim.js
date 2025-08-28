@@ -8,12 +8,12 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 
-const getPoaClaimList = (individualDetails = []) => {
-  return individualDetails?.filter((item) => item?.isRevoking === false);
+const getPoaClaimList = (individualDetails = [], poaIndividualId) => {
+  return individualDetails?.filter((item) => item?.individualId !== poaIndividualId);
 };
 
-const getPoaRevokeList = (individualDetails = []) => {
-  return individualDetails?.filter((item) => item?.isRevoking === true);
+const getPoaRevokeList = (individualDetails = [], poaIndividualId) => {
+  return individualDetails?.filter((item) => item?.individualId === poaIndividualId);
 };
 
 async function applicationPoaClaim(
@@ -92,8 +92,9 @@ async function applicationPoaClaim(
       application?.additionalDetails?.formdata?.comments?.text || "";
     const prayer = application?.additionalDetails?.formdata?.prayer?.text || "";
     const taskDetails = application?.applicationDetails?.taskDetails;
-    const poaCliamList = getPoaClaimList(taskDetails?.individualDetails);
-    const poaRevokeList = getPoaRevokeList(taskDetails?.individualDetails);
+    const poaIndividualId = application?.applicationDetails?.taskDetails?.poaDetails?.individualId;
+    const poaCliamList = getPoaClaimList(taskDetails?.individualDetails, poaIndividualId);
+    const poaRevokeList = getPoaRevokeList(taskDetails?.individualDetails, poaIndividualId);
     const partyType =
       application?.additionalDetails?.partyType === "COMPLAINANTS"
         ? "Complainant"
