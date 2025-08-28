@@ -41,7 +41,7 @@ async function processTaskProcesses(
         searchText:
           courtCase.cnrNumber ||
           courtCase.cmpNumber ||
-          courtCase.courtCaseNumber,
+          (courtCase?.isLPRCase ? courtCase?.lprNumber : courtCase.courtCaseNumber),
         courtId: courtCase.courtId,
         tenantId,
       },

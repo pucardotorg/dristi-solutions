@@ -5,6 +5,7 @@ import com.jayway.jsonpath.JsonPath;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.producer.Producer;
+import org.egov.tracer.model.CustomException;
 import org.egov.transformer.config.TransformerProperties;
 import org.egov.transformer.event.EventListener;
 import org.egov.transformer.models.CourtCase;
@@ -17,6 +18,8 @@ import org.json.JSONException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.time.ZoneId;
 import java.util.*;
 
 import static org.egov.transformer.config.ServiceConstants.COMPOSITE;
@@ -43,7 +46,7 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
 
         CourtCase courtCase = caseService.getCase(event.getFilingNumber(), event.getTenantId(), requestInfo);
 
-        String businessOfTheDay = event.getAdditionalDetails() != null ? getBusinessOfTheDay(event.getAdditionalDetails()) : null;
+        String businessOfTheDay = getBusinessOfTheDay(event);
 
         OrderAndNotification orderAndNotification = OrderAndNotification.builder()
                 .type(COMPOSITE.equalsIgnoreCase(event.getOrderCategory()) ? event.getOrderCategory() : event.getOrderType())  // if its composite then order type is order category
@@ -137,13 +140,43 @@ public class OrderImpl implements EventListener<Order, RequestInfo> {
                 : courtCase.getCaseTitle() + " , " + courtCase.getCmpNumber();
     }
 
-    private String getBusinessOfTheDay(Object additionalDetails) {
-        if (additionalDetails instanceof Map) {
-            Map<?, ?> detailsMap = (Map<?, ?>) additionalDetails;
-            Object botd = detailsMap.get("businessOfTheDay");
-            return botd != null ? botd.toString() : null;
+    private String getBusinessOfTheDay(Order order) {
+        StringBuilder sb = new StringBuilder();
+
+        try {
+            // Attendance
+            if (order.getAttendance() != null) {
+                String attendanceStr = objectMapper.writeValueAsString(order.getAttendance());
+                sb.append(attendanceStr).append("\n");
+            }
+
+            // Item Text
+            if (order.getItemText() != null) {
+                sb.append(order.getItemText()).append("\n");
+            }
+
+            // Purpose of Next Hearing
+            if (order.getPurposeOfNextHearing() != null) {
+                sb.append("Purpose of Next Hearing: [")
+                        .append(order.getPurposeOfNextHearing()).append("]\n");
+            }
+
+            // Next Hearing Date
+            if (order.getNextHearingDate() != null) {
+                String dateStr = Instant.ofEpochMilli(order.getNextHearingDate())
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDate()
+                        .toString();
+                sb.append("Date of Next Hearing: [")
+                        .append(dateStr).append("]\n");
+            }
+
+            return sb.toString().trim();
+
+        } catch (Exception e) {
+            log.error("Error extracting order text", e);
+            throw new CustomException("Error extracting business of the day: ", "ERROR_BUSINESS_OF_THE_DAY");
         }
-        return null;
     }
 
 }

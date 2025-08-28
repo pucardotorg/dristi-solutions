@@ -305,7 +305,6 @@ const AdmittedCaseV2 = () => {
     Boolean(caseId && (needCaseRefetch || shouldRefetchCaseData || !historyCaseData))
   );
 
-
   const caseData = apiCaseData || historyCaseData;
   const caseDetails = useMemo(() => caseData?.cases || {}, [caseData]);
   const caseCourtId = useMemo(() => caseDetails?.courtId, [caseDetails]);
@@ -1584,7 +1583,7 @@ const AdmittedCaseV2 = () => {
   useEffect(() => {
     if (history?.location?.state?.from === "orderSuccessModal" && !toastStatus?.alreadyShown) {
       showToast(true);
-   
+
       refetchCaseData();
       setToastDetails({
         isError: false,

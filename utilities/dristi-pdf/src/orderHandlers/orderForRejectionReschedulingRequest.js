@@ -110,7 +110,7 @@ const orderForRejectionReschedulingRequest = async (
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
     const year = currentDate.getFullYear();
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = (courtCase?.isLPRCase ? courtCase?.lprNumber : courtCase?.courtCaseNumber) || courtCase?.cmpNumber || "";
     const data = {
       Data: [
         {

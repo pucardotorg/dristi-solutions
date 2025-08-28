@@ -245,7 +245,7 @@ async function applicationProfileEdit(
         ? oldData?.data?.respondentType?.code
         : oldData?.data?.complainantType?.code;
 
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = courtCase?.isLPRCase ? courtCase?.lprNumber : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const reasonForChange =
       application?.additionalDetails?.formdata?.reasonForChange?.text || "";
     const prayer = application?.additionalDetails?.formdata?.prayer?.text || "";

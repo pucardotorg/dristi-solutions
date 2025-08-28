@@ -235,6 +235,11 @@ public class HearingService {
     }
 
     private String enrichCaseNumber(Hearing hearing, CourtCase courtCase) {
+
+        if (courtCase.getIsLPRCase() != null && courtCase.getIsLPRCase()) {
+            return courtCase.getLprNumber();
+        }
+
         String caseRefNumber = hearing.getCaseReferenceNumber();
 
         if (caseRefNumber != null && !caseRefNumber.isEmpty()) {

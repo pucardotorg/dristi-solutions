@@ -191,7 +191,7 @@ async function applicationRescheduleRequest(
       application?.applicationDetails?.reasonForApplication || "";
     const additionalComments =
       application?.applicationDetails?.additionalComments || "";
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = courtCase?.isLPRCase ? courtCase?.lprNumber : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
     const prayer = application?.applicationDetails?.prayer || "";
     const data = {
       Data: [
