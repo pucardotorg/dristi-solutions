@@ -2882,10 +2882,10 @@ const AdmittedCaseV2 = () => {
         value: "SUBMIT_DOCUMENTS",
         label: "Submit Documents",
       },
-      // {
-      //   value: "GENERATE_BAIL_BOND",
-      //   label: "Generate Bail Bond",
-      // },
+      {
+        value: "GENERATE_BAIL_BOND",
+        label: "Generate Bail Bond",
+      },
     ],
     []
   );
@@ -2913,10 +2913,10 @@ const AdmittedCaseV2 = () => {
               },
             ]
           : [
-              // {
-              //   value: "CREATE_BAIL_BOND",
-              //   label: "CREATE_BAIL_BOND",
-              // },
+              {
+                value: "CREATE_BAIL_BOND",
+                label: "CREATE_BAIL_BOND",
+              },
             ]),
         {
           value: "DOWNLOAD_CASE_FILE",
@@ -3043,10 +3043,10 @@ const AdmittedCaseV2 = () => {
               label: "SHOW_TIMELINE",
             },
 
-            // {
-            //   value: "CREATE_BAIL_BOND",
-            //   label: "CREATE_BAIL_BOND",
-            // },
+            {
+              value: "CREATE_BAIL_BOND",
+              label: "CREATE_BAIL_BOND",
+            },
             {
               value: "ADD_WITNESS",
               label: "ADD_WITNESS",
