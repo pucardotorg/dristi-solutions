@@ -90,4 +90,8 @@ public class ServiceConstants {
 
     public static final String EVIDENCE_UPDATE_EXCEPTION = "EVIDENCE_UPDATE_EXCEPTION";
 
+    public static final String DISPOSED = "DISPOSED";
+
+    public static final String PENDING = "PENDING";
+
 }

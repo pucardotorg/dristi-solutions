@@ -376,7 +376,13 @@ public class OpenApiService {
                 moduleSearchCriteria.put("caseSubStage", filterCriteria.getCaseSubStage());
             }
             if (filterCriteria.getCaseStatus() != null) {
-                moduleSearchCriteria.put("caseStatus", filterCriteria.getCaseStatus());
+                String caseStatus = filterCriteria.getCaseStatus();
+
+                if (DISPOSED.equalsIgnoreCase(caseStatus)) {
+                    moduleSearchCriteria.put("outcome", configuration.getDisposedOutcomes());
+                } else if (PENDING.equalsIgnoreCase(caseStatus)) {
+                    moduleSearchCriteria.put("outcome", null);
+                }
             }
             if (filterCriteria.getYearOfFiling() != null) {
                 moduleSearchCriteria.put("yearOfFiling", filterCriteria.getYearOfFiling());
@@ -385,6 +391,7 @@ public class OpenApiService {
                 moduleSearchCriteria.put("caseTitle", filterCriteria.getCaseTitle());
             }
         }
+        moduleSearchCriteria.put("caseStatus", configuration.getAllowedCaseStatuses());
 
         InboxSearchCriteria inboxSearchCriteria = InboxSearchCriteria.builder()
                 .tenantId(tenantId)
