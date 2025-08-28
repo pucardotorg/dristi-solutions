@@ -158,6 +158,8 @@ const MarkAsEvidence = ({
   const history = useHistory();
   const currentDiaryEntry = history.location?.state?.diaryEntry;
   const [witnessTag, setWitnessTag] = useState(null);
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+
   const isFormValid = useMemo(() => {
     return witnessTag !== null && evidenceNumber?.trim().length > 0;
   }, [witnessTag, evidenceNumber]);
@@ -653,13 +655,19 @@ const MarkAsEvidence = ({
           });
         }
       } else if (stepper === 1 && isSigned) {
-        if (sessionStorage.getItem("fileStoreId") === null) {
+        if (!mockESignEnabled && sessionStorage.getItem("fileStoreId") === null) {
           showToast("error", t("EVIDENCE_UPDATE_ERROR_MESSAGE"), 5000);
           return;
         }
+        let fileStore = "";
+        if (mockESignEnabled) {
+          fileStore = sealFileStoreId;
+        } else {
+          fileStore = sessionStorage.getItem("fileStoreId");
+        }
         const seal = {
           documentType: "SIGNED",
-          fileStore: sessionStorage.getItem("fileStoreId"),
+          fileStore: fileStore,
           additionalDetails: {
             documentName: "markAsEvidenceSigned.pdf",
           },
@@ -760,6 +768,13 @@ const MarkAsEvidence = ({
         if (!file) {
           throw new Error("Failed to generate PDF file store ID");
         }
+      }
+
+      if (mockESignEnabled) {
+        setIsSigned(true);
+        setLoader(false);
+        setSealFileStoreId(file);
+        return;
       }
 
       const updatedEvidenceDetails = {
