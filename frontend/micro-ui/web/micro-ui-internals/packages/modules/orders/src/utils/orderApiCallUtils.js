@@ -48,7 +48,8 @@ export const addOrderItem = async (order, action, tenantId, applicationTypeConfi
       orderDetails: { ...orderSchema?.orderDetails },
     });
 
-    const caseNumber = caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber;
+    const caseNumber =
+      (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) || caseDetails?.cmpNumber || caseDetails?.filingNumber;
     const orderSchemaUpdated = {
       ...orderSchema,
       orderDetails: { ...orderSchema?.orderDetails, parties: parties, caseNumber: caseNumber },
@@ -99,7 +100,8 @@ export const createOrder = async (order, tenantId, applicationTypeConfigUpdated,
       orderDetails: { ...orderSchema?.orderDetails, ...(order?.orderDetails || {}) },
     });
 
-    const caseNumber = caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber;
+    const caseNumber =
+      (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) || caseDetails?.cmpNumber || caseDetails?.filingNumber;
     orderSchema = { ...orderSchema, orderDetails: { ...orderSchema?.orderDetails, parties: parties, caseNumber: caseNumber } };
 
     return await ordersService.createOrder(

@@ -101,7 +101,6 @@ import OrderSucessModal from "../../pageComponents/OrderSucessModal";
 import OrderAddToBulkSuccessModal from "../../pageComponents/OrderAddToBulkSuccessModal";
 import { useToast } from "@egovernments/digit-ui-module-dristi/src/components/Toast/useToast";
 import MandatoryFieldsErrorModal from "./MandatoryFieldsErrorModal";
-import { combineMultipleFiles } from "@egovernments/digit-ui-module-dristi/src/Utils";
 import TasksComponent from "../../../../home/src/components/TaskComponent";
 import { hearingService } from "@egovernments/digit-ui-module-hearings/src/hooks/services";
 import CompositeOrdersErrorModal from "./CompositeOrdersErrorModal";
@@ -1349,7 +1348,7 @@ const GenerateOrdersV2 = () => {
         updatedFormdata.nameofRespondentAdvocate = uuidNameMap?.[allAdvocates?.[respondentPrimary?.additionalDetails?.uuid]] || "";
         setValueRef?.current?.[index]?.("nameofRespondentAdvocate", updatedFormdata.nameofRespondentAdvocate);
 
-        updatedFormdata.caseNumber = caseDetails?.courtCaseNumber;
+        updatedFormdata.caseNumber = caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber;
         setValueRef?.current?.[index]?.("caseNumber", updatedFormdata.caseNumber);
 
         updatedFormdata.nameOfCourt = courtRooms.find((room) => room.code === caseDetails?.courtId)?.name;
@@ -2287,18 +2286,35 @@ const GenerateOrdersV2 = () => {
   };
 
   const replaceUploadedDocsWithCombinedFile = async (formData) => {
-    if (formData?.lprDocuments?.documents?.length) {
-      const combinedDocName = `${t("LPR_DOCS")}.pdf`;
-      const combinedDocumentFile = await combineMultipleFiles(formData?.lprDocuments?.documents, combinedDocName, "lprDocument");
-      const docs = await onDocumentUpload(combinedDocumentFile?.[0], combinedDocName);
-      const file = {
-        documentType: docs?.fileType,
-        fileStore: docs?.file?.files?.[0]?.fileStoreId,
-        additionalDetails: { name: docs?.filename || combinedDocName },
-      };
-      formData.lprDocuments.documents = [file];
+    try {
+      const docsArray = formData?.lprDocuments?.documents;
+      if (!Array.isArray(docsArray) || docsArray.length === 0) {
+        return formData;
+      }
+      const uploadedDocs = await Promise.all(
+        docsArray.map(async (fileData) => {
+          if (fileData?.fileStore) {
+            return fileData;
+          }
+          try {
+            const docs = await onDocumentUpload(fileData, fileData?.name);
+            return {
+              documentType: docs?.fileType || "application/pdf",
+              fileStore: docs?.file?.files?.[0]?.fileStoreId || null,
+              additionalDetails: { name: docs?.filename || fileData?.name || "lpr" },
+            };
+          } catch (err) {
+            console.error("Error uploading document:", fileData, err);
+            return null;
+          }
+        })
+      );
+      formData.lprDocuments.documents = uploadedDocs.filter(Boolean);
+      return formData;
+    } catch (err) {
+      console.error("replaceUploadedDocsWithCombinedFile failed:", err);
+      throw err;
     }
-    return formData;
   };
 
   const handleAddOrder = async (orderFormData, compOrderIndex) => {
@@ -2817,6 +2833,35 @@ const GenerateOrdersV2 = () => {
   const processHandleIssueOrder = async () => {
     setIsLoading(true);
     try {
+      const lprDocs =
+        currentOrder?.additionalDetails?.formdata?.lprDocuments?.documents ||
+        currentOrder?.compositeItems?.find?.((order) => order?.orderType === "MOVE_CASE_TO_LONG_PENDING_REGISTER")?.orderSchema?.additionalDetails
+          ?.formdata?.lprDocuments?.documents;
+
+      if (Array.isArray(lprDocs) && lprDocs.length > 0) {
+        await Promise.all(
+          lprDocs.map((file) => {
+            const evidenceReqBody = {
+              artifact: {
+                artifactType: "LPR_DOCUMENT_ARTIFACT",
+                caseId: caseDetails?.id,
+                filingNumber,
+                tenantId,
+                comments: [],
+                file, // already uploaded doc or file object
+                sourceType: "COURT",
+                sourceID: userInfo?.uuid,
+                filingType: "DIRECT",
+                additionalDetails: {
+                  uuid: userInfo?.uuid,
+                },
+              },
+            };
+            return DRISTIService.createEvidence(evidenceReqBody);
+          })
+        );
+      }
+
       await updateOrder(
         {
           ...currentOrder,

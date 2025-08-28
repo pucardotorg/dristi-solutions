@@ -770,7 +770,7 @@ const AdmittedCases = () => {
                   ...tabConfig.apiDetails.requestBody.inbox,
                   moduleSearchCriteria: {
                     ...tabConfig.apiDetails.requestBody.inbox.moduleSearchCriteria,
-                    caseNumbers: [filingNumber, caseDetails?.cmpNumber, caseDetails?.courtCaseNumber]?.filter(Boolean),
+                    caseNumbers: [filingNumber, caseDetails?.cmpNumber, caseDetails?.courtCaseNumber, caseDetails?.lprNumber]?.filter(Boolean),
                     ...(caseCourtId && { courtId: caseCourtId }),
                   },
                 },
@@ -1612,7 +1612,7 @@ const AdmittedCases = () => {
       },
       {
         key: "CS_CCST",
-        value: getDefaultValue(caseDetails?.courtCaseNumber),
+        value: getDefaultValue(caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber),
       },
       {
         key: "SUBMITTED_ON",
@@ -1681,7 +1681,8 @@ const AdmittedCases = () => {
           },
         };
         if (generateOrder) {
-          const caseNumber = caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber;
+          const caseNumber =
+            (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) || caseDetails?.cmpNumber || caseDetails?.filingNumber;
           const reqbody = {
             order: {
               createdDate: null,
@@ -1771,7 +1772,7 @@ const AdmittedCases = () => {
             tenantId: tenantId,
             filingNumber: [caseDetails.filingNumber],
             hearingType: purpose,
-            courtCaseNumber: caseDetails?.courtCaseNumber,
+            courtCaseNumber: caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber,
             cmpNumber: caseDetails?.cmpNumber,
             status: true,
             attendees: [

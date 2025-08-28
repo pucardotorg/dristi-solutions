@@ -207,7 +207,7 @@ const PaymentDemandModal = ({
           status: "",
           filingNumber: caseDetails?.filingNumber,
           cmpNumber: caseDetails?.cmpNumber,
-          courtCaseNumber: caseDetails?.courtCaseNumber,
+          courtCaseNumber: caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber,
           taskDescription: comments || null,
           taskType: "GENERIC",
           duedate: dueDateTimestamp,

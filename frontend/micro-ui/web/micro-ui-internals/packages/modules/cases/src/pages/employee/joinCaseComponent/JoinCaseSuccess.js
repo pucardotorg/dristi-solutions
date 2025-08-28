@@ -43,7 +43,8 @@ const JoinCaseSuccess = ({
         },
         {
           key: "CASE_NUMBER",
-          value: caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber,
+          value:
+            (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) || caseDetails?.cmpNumber || caseDetails?.filingNumber,
         },
         {
           key: "CASE_CATEGORY",

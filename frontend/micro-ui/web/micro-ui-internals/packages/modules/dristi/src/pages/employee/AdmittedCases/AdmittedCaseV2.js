@@ -946,7 +946,7 @@ const AdmittedCaseV2 = () => {
                   ...tabConfig.apiDetails.requestBody.inbox,
                   moduleSearchCriteria: {
                     ...tabConfig.apiDetails.requestBody.inbox.moduleSearchCriteria,
-                    caseNumbers: [filingNumber, caseDetails?.cmpNumber, caseDetails?.courtCaseNumber]?.filter(Boolean),
+                    caseNumbers: [filingNumber, caseDetails?.cmpNumber, caseDetails?.courtCaseNumber, caseDetails?.lprNumber]?.filter(Boolean),
                     ...(caseCourtId && { courtId: caseCourtId }),
                   },
                 },
@@ -1827,7 +1827,8 @@ const AdmittedCaseV2 = () => {
   const handleAdmitDismissCaseOrder = useCallback(
     async (generateOrder, type) => {
       try {
-        const caseNumber = caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber;
+        const caseNumber =
+          (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) || caseDetails?.cmpNumber || caseDetails?.filingNumber;
         const orderType = type === "reject" ? "DISMISS_CASE" : type === "accept" ? "TAKE_COGNIZANCE" : null;
         const formdata = {
           orderType: {
@@ -1926,7 +1927,7 @@ const AdmittedCaseV2 = () => {
             tenantId: tenantId,
             filingNumber: [caseDetails.filingNumber],
             hearingType: purpose,
-            courtCaseNumber: caseDetails?.courtCaseNumber,
+            courtCaseNumber: caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber,
             cmpNumber: caseDetails?.cmpNumber,
             status: true,
             attendees: [
