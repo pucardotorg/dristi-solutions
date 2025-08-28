@@ -907,6 +907,7 @@ public class EvidenceService {
                 .shortenedUrl(artifact.getShortenedUrl())
                 .cmpNumber(cmpNumber)
                 .tenantId(artifact.getTenantId())
+                .shortenedUrl(artifact.getShortenedUrl())
                 .build();
 
     }
