@@ -137,6 +137,7 @@ const SubmissionsCreate = ({ path }) => {
   const clearFormDataErrors = useRef(null);
   const { BreadCrumbsParamsData, setBreadCrumbsParamsData } = useContext(BreadCrumbsParamsDataContext);
   const { caseId: caseIdFromBreadCrumbs, filingNumber: filingNumberFromBreadCrumbs } = BreadCrumbsParamsData;
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
   const hasSubmissionRole = useMemo(
     () =>
@@ -1182,7 +1183,12 @@ const SubmissionsCreate = ({ path }) => {
     try {
       const localStorageID = sessionStorage.getItem("fileStoreId");
       const documents = Array.isArray(applicationDetails?.documents) ? applicationDetails.documents : [];
-      const newFileStoreId = localStorageID || signedDoucumentUploadedID;
+      let newFileStoreId = "";
+      if (mockESignEnabled) {
+        newFileStoreId = applicationPdfFileStoreId;
+      } else {
+        newFileStoreId = localStorageID || signedDoucumentUploadedID;
+      }
       fileStoreIds.delete(newFileStoreId);
 
       const documentsFile =

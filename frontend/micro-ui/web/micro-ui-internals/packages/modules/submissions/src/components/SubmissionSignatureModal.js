@@ -25,6 +25,7 @@ function SubmissionSignatureModal({
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${applicationPdfFileStoreId}`;
   const name = "Signature";
   const advocatePlaceholder = "Advocate Signature";
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
   const applicationPlaceHolder = useMemo(() => {
     if (applicationType === "APPLICATION_TO_CHANGE_POWER_OF_ATTORNEY_DETAILS") {
@@ -99,6 +100,15 @@ function SubmissionSignatureModal({
     );
   };
 
+  const handleClickEsign = () => {
+    if (mockESignEnabled) {
+      setIsSigned(true);
+    } else {
+      sessionStorage.setItem("applicationPDF", applicationPdfFileStoreId);
+      handleEsign(name, pageModule, applicationPdfFileStoreId, applicationPlaceHolder);
+    }
+  };
+
   return !openUploadSignatureModal ? (
     <Modal
       headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
@@ -119,12 +129,7 @@ function SubmissionSignatureModal({
             <div className="buttons-div">
               <Button
                 label={t("CS_ESIGN_AADHAR")}
-                onClick={() => {
-                  // setOpenAadharModal(true);
-                  // setIsSigned(true);
-                  sessionStorage.setItem("applicationPDF", applicationPdfFileStoreId);
-                  handleEsign(name, pageModule, applicationPdfFileStoreId, applicationPlaceHolder);
-                }}
+                onClick={handleClickEsign}
                 className={"aadhar-sign-in"}
                 labelClassName={"submission-aadhar-sign-in"}
               ></Button>
