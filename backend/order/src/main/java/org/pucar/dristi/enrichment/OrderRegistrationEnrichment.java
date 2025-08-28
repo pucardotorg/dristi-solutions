@@ -150,7 +150,7 @@ public class OrderRegistrationEnrichment {
                             if (itemNode.has("orderType")) {
                                 String orderType = itemNode.get("orderType").asText();
 
-                                if (itemNode.has("orderSchema")) {
+                                if (orderType != null && !orderType.equalsIgnoreCase(orderRequest.getOrder().getOrderType()) && itemNode.has("orderSchema")) {
                                     JsonNode orderSchemaNode = itemNode.get("orderSchema");
                                     String itemTextMdms = processOrderText(orderType, orderSchemaNode.toString());
                                     if (itemTextMdms != null) {
