@@ -19,6 +19,8 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${combinedFileStoreId}`;
   const { uploadDocuments } = useDocumentUpload();
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+
   const name = "Signature";
   const userInfo = Digit.UserService.getUser()?.info;
   const isAdvocate = userInfo?.roles?.some((role) => ["ADVOCATE_CLERK_ROLE", "ADVOCATE_ROLE"].includes(role.code));
@@ -86,6 +88,16 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
     checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned, setIsSignedHeading);
   }, [checkSignStatus]);
 
+  const handleClickEsign = () => {
+    if (mockESignEnabled) {
+      setIsSigned(true);
+      setIsSignedHeading(true);
+    } else {
+      sessionStorage.setItem("combineDocumentsPdf", combinedFileStoreId);
+      handleEsign(name, pageModule, combinedFileStoreId);
+    }
+  };
+
   return !openUploadSignatureModal ? (
     <div style={{ padding: "30px 30px 5px 30px", width: "80%" }}>
       {!isSigned ? (
@@ -101,10 +113,7 @@ function SubmissionDocumentEsign({ t, setSignedId, setIsSignedHeading, setSigned
           <div style={{ display: "flex" }}>
             <Button
               label={""}
-              onButtonClick={() => {
-                sessionStorage.setItem("combineDocumentsPdf", combinedFileStoreId);
-                handleEsign(name, pageModule, combinedFileStoreId);
-              }}
+              onButtonClick={handleClickEsign}
               style={{ boxShadow: "none", backgroundColor: "#007E7E", border: "none", padding: "20px 30px", maxWidth: "fit-content" }}
               textStyles={{
                 width: "unset",
