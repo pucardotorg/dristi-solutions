@@ -255,6 +255,9 @@ public class Configuration {
 	@Value("${egov.sms.notification.document.evidence.submission.opposite.party.template.id}")
 	private String smsNotificationDocumentSubmissionToOppositeParty;
 
+    @Value("${egov.sms.notification.witness.deposition.template.id}")
+    private String smsNotificationWitnessDeposition;
+
 	// zone id
 	@Value("${app.zone.id}")
 	private String zoneId;
