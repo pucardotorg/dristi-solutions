@@ -15,12 +15,31 @@ const CloseBtn = (props) => {
   );
 };
 
-const BailEsignModal = ({ t, handleProceed, handleCloseSignaturePopup, fileStoreId, signPlaceHolder, mobileNumber, forWitnessDeposition = false }) => {
+const BailEsignModal = ({
+  t,
+  handleProceed,
+  handleCloseSignaturePopup,
+  fileStoreId,
+  signPlaceHolder,
+  mobileNumber,
+  forWitnessDeposition = false,
+  handleMockESign,
+}) => {
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
   const [isSigned, setIsSigned] = useState(false);
   const { handleEsign, checkSignStatus } = useESignOpenApi();
   const [pageModule, setPageModule] = useState("ci");
   const name = "signature";
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+
+  const handleClickEsign = () => {
+    if (mockESignEnabled) {
+      handleMockESign();
+    } else {
+      sessionStorage.setItem("mobileNumber", mobileNumber);
+      handleEsign(name, pageModule, fileStoreId, signPlaceHolder);
+    }
+  };
 
   useEffect(() => {
     checkSignStatus(name, setIsSigned);
@@ -45,7 +64,8 @@ const BailEsignModal = ({ t, handleProceed, handleCloseSignaturePopup, fileStore
           label={t("PLEASE_NOTE")}
           additionalElements={[
             <p>
-              {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")} <span style={{ fontWeight: "bold" }}>{forWitnessDeposition ? t("WITNESS_DEPOSITION") : t("BAIL_BOND")}</span>
+              {t("YOU_ARE_ADDING_YOUR_SIGNATURE_TO_THE")}{" "}
+              <span style={{ fontWeight: "bold" }}>{forWitnessDeposition ? t("WITNESS_DEPOSITION") : t("BAIL_BOND")}</span>
             </p>,
           ]}
           inline
@@ -59,10 +79,7 @@ const BailEsignModal = ({ t, handleProceed, handleCloseSignaturePopup, fileStore
               <div className="buttons-div">
                 <Button
                   label={t("CS_ESIGN_AADHAR")}
-                  onClick={() => {
-                    sessionStorage.setItem("mobileNumber", mobileNumber);
-                    handleEsign(name, pageModule, fileStoreId, signPlaceHolder);
-                  }}
+                  onClick={handleClickEsign}
                   className={"upload-signature"}
                   labelClassName={"submission-upload-signature-label"}
                 ></Button>

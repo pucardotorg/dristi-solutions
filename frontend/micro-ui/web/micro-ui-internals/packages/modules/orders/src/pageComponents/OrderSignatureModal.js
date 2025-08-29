@@ -43,6 +43,8 @@ function OrderSignatureModal({
   const { uploadDocuments } = useDocumentUpload();
   const name = "Signature";
   const judgePlaceholder = order?.orderCategory === "COMPOSITE" ? "Fduy44hjb" : "Signature";
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
+
   const uploadModalConfig = useMemo(() => {
     return {
       key: "uploadSignature",
@@ -98,6 +100,15 @@ function OrderSignatureModal({
     checkSignStatus(name, formData, uploadModalConfig, onSelect, setIsSigned);
   }, [checkSignStatus]);
 
+  const handleClickEsign = () => {
+    if (mockESignEnabled) {
+      setIsSigned(true);
+    } else {
+      sessionStorage.setItem("orderPDF", orderPdfFileStoreID);
+      handleEsign(name, pageModule, orderPdfFileStoreID, judgePlaceholder);
+    }
+  };
+
   return !openUploadSignatureModal ? (
     <Modal
       headerBarMain={<Heading label={t("ADD_SIGNATURE")} />}
@@ -129,19 +140,7 @@ function OrderSignatureModal({
           <div className="not-signed">
             <h1>{t("YOUR_SIGNATURE")}</h1>
             <div className="sign-button-wrap">
-              <Button
-                label={t("CS_ESIGN")}
-                onButtonClick={() => {
-                  // setOpenAadharModal(true);
-                  // setIsSigned(true);
-                  sessionStorage.setItem("orderPDF", orderPdfFileStoreID);
-                  // sessionStorage.setItem("businessOfTheDay", businessOfDay);
-                  // sessionStorage.setItem("currentSelectedOrder", selectedOrder);
-                  handleEsign(name, pageModule, orderPdfFileStoreID, judgePlaceholder);
-                }}
-                className={"aadhar-sign-in"}
-                labelClassName={"aadhar-sign-in"}
-              />
+              <Button label={t("CS_ESIGN")} onButtonClick={handleClickEsign} className={"aadhar-sign-in"} labelClassName={"aadhar-sign-in"} />
               <Button
                 icon={<FileUploadIcon />}
                 label={t("UPLOAD_DIGITAL_SIGN_CERTI")}
