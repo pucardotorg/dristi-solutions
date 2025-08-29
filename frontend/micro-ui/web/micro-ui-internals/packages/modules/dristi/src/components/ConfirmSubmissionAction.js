@@ -54,7 +54,7 @@ function ConfirmSubmissionAction({ t, type, setShowConfirmationModal, handleActi
         {!generateOrder && type === "reject" && (
           <TextArea style={{ marginTop: "0px" }} placeholder={t("TYPE_HERE_PLACEHOLDER")} name={t("PURPOSE_OF_REJECTION")} />
         )}
-        <div>
+        <div className="confirm-submission-checkbox">
           <CheckBox
             onChange={() => {
               setGenerateOrder((prev) => !prev);

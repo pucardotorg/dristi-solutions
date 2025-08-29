@@ -81,7 +81,7 @@ export const compositeOrderAllowedTypes = [
   },
   {
     key: "no_restriction",
-    orderTypes: ["NOTICE", "OTHERS", "WARRANT", "SUMMONS", "MANDATORY_SUBMISSIONS_RESPONSES", "SECTION_202_CRPC"],
+    orderTypes: ["NOTICE", "OTHERS", "WARRANT", "SUMMONS", "MANDATORY_SUBMISSIONS_RESPONSES", "SECTION_202_CRPC", "ACCEPT_BAIL"],
     unAllowedOrderTypes: [],
   },
   {
@@ -441,18 +441,15 @@ const GenerateOrders = () => {
   const applicationTypeConfigUpdated = useMemo(() => {
     const updatedConfig = structuredClone(applicationTypeConfig);
     // Showing admit case/Dismiss case order type in the dropdown list depending on the case status.
-    if (["PENDING_NOTICE"].includes(caseDetails?.status)) {
-      updatedConfig[0].body[0].populators.mdmsConfig.select =
-        "(data) => {return data['Order'].OrderType?.filter((item)=>[`DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
-    } else if (["PENDING_RESPONSE", "PENDING_ADMISSION"].includes(caseDetails?.status)) {
+    if (["PENDING_RESPONSE", "PENDING_ADMISSION"].includes(caseDetails?.status)) {
       // case admit can not be allowed if there are pending review/approval of some Delay condonation application.
 
       if (isDelayApplicationPending) {
         updatedConfig[0].body[0].populators.mdmsConfig.select =
-          "(data) => {return data['Order'].OrderType?.filter((item)=>[`DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+          "(data) => {return data['Order'].OrderType?.filter((item)=>[`DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
       } else {
         updatedConfig[0].body[0].populators.mdmsConfig.select =
-          "(data) => {return data['Order'].OrderType?.filter((item)=>[`TAKE_COGNIZANCE`, `DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+          "(data) => {return data['Order'].OrderType?.filter((item)=>[`TAKE_COGNIZANCE`, `DISMISS_CASE`, `SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
       }
     }
     return updatedConfig;
@@ -696,7 +693,6 @@ const GenerateOrders = () => {
 
     if (currentSelectedOrderIndex) {
       setSelectedOrder(currentSelectedOrderIndex);
-      sessionStorage.removeItem("currentSelectedOrder");
     } else if (defaultIndex && defaultIndex !== -1 && orderNumber && defaultIndex !== selectedOrder && !isOrderChanged) {
       setSelectedOrder(defaultIndex);
     }
@@ -713,7 +709,8 @@ const GenerateOrders = () => {
       const cleanupTimer = setTimeout(() => {
         sessionStorage.removeItem("esignProcess");
         sessionStorage.removeItem("orderPDF");
-      }, 200);
+        sessionStorage.removeItem("currentSelectedOrder");
+      }, 2000);
 
       return () => clearTimeout(cleanupTimer);
     }
@@ -1240,6 +1237,26 @@ const GenerateOrders = () => {
               };
             });
           }
+
+          if (orderType === "ACCEPT_BAIL") {
+            orderTypeForm = orderTypeForm?.map((section) => {
+              return {
+                ...section,
+                body: section.body.map((field) => {
+                  if (field.key === "bailParty") {
+                    return {
+                      ...field,
+                      populators: {
+                        ...field.populators,
+                        options: [...complainants, ...respondents],
+                      },
+                    };
+                  }
+                  return field;
+                }),
+              };
+            });
+          }
           newConfig = [...newConfig, ...orderTypeForm];
         }
         const updatedConfig = newConfig.map((config) => {
@@ -1515,6 +1532,25 @@ const GenerateOrders = () => {
           });
         }
 
+        if (orderType === "ACCEPT_BAIL") {
+          orderTypeForm = orderTypeForm?.map((section) => {
+            return {
+              ...section,
+              body: section.body.map((field) => {
+                if (field.key === "bailParty") {
+                  return {
+                    ...field,
+                    populators: {
+                      ...field.populators,
+                      options: [...complainants, ...respondents],
+                    },
+                  };
+                }
+                return field;
+              }),
+            };
+          });
+        }
         newConfig = [...newConfig, ...orderTypeForm];
       }
       const updatedConfig = newConfig.map((config) => {
@@ -1698,7 +1734,7 @@ const GenerateOrders = () => {
         updatedFormdata.partyId = newApplicationDetails?.createdBy;
         setValueRef?.current?.[index]?.("partyId", updatedFormdata.partyId);
       }
-      if (orderType === "ACCEPT_BAIL" || orderType === "REJECT_BAIL") {
+      if (orderType === "REJECT_BAIL") {
         updatedFormdata.bailParty = newApplicationDetails?.additionalDetails?.onBehalOfName;
         updatedFormdata.submissionDocuments = {
           uploadedDocs:
@@ -2884,6 +2920,7 @@ const GenerateOrders = () => {
       locality: locality,
     };
     const courtDetails = courtRoomData?.Court_Rooms?.find((data) => data?.code === caseDetails?.courtId);
+    const ownerType = orderFormData?.party?.data?.ownerType;
 
     const respondentDetails = {
       name: respondentName,
@@ -2892,6 +2929,7 @@ const GenerateOrders = () => {
       email: respondentEmail[0] || "",
       age: "",
       gender: "",
+      ...(ownerType && { ownerType: ownerType }),
     };
     const caseRespondent = {
       name: caseDetails?.additionalDetails?.respondentDetails?.formdata?.[0]?.data?.respondentFirstName || "",
@@ -2990,6 +3028,7 @@ const GenerateOrders = () => {
             email: respondentEmail?.[0] || "",
             age: "",
             gender: "",
+            ...(ownerType && { ownerType: ownerType }),
           },
           caseDetails: {
             caseTitle: caseDetails?.caseTitle,
@@ -4220,8 +4259,7 @@ const GenerateOrders = () => {
           setShowReviewModal={setShowReviewModal}
           setShowsignatureModal={setShowsignatureModal}
           setOrderPdfFileStoreID={setOrderPdfFileStoreID}
-          showActions={canESign && !currentDiaryEntry}
-          saveSignLater={canSaveSignLater}
+          showActions={(canESign || canSaveSignLater) && !currentDiaryEntry}
           setBusinessOfTheDay={setBusinessOfTheDay}
           currentDiaryEntry={currentDiaryEntry}
           handleUpdateBusinessOfDayEntry={handleUpdateBusinessOfDayEntry}

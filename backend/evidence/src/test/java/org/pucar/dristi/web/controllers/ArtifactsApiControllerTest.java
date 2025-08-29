@@ -272,4 +272,31 @@ public class ArtifactsApiControllerTest {
 
         assertEquals("Invalid request", exception.getMessage());
     }
+
+    @Test
+    void testArtifactsToSign() {
+
+        ArtifactsToSignRequest requestBody = new ArtifactsToSignRequest();
+        requestBody.setRequestInfo(new RequestInfo());
+
+        ResponseEntity<ArtifactsToSignResponse> response = controller.getArtifactsToSign(requestBody);
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        ArtifactsToSignResponse actualResponse = response.getBody();
+        assertNotNull(actualResponse);
+
+    }
+
+    @Test
+    void testArtifactsToSign_InvalidRequest() {
+        ArtifactsToSignRequest requestBody = new ArtifactsToSignRequest();  // Missing required fields
+
+        Mockito.doThrow(new IllegalArgumentException("Invalid request")).when(evidenceService).createArtifactsToSignRequest(any(ArtifactsToSignRequest.class));
+
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            controller.getArtifactsToSign(requestBody);
+        });
+
+        assertEquals("Invalid request", exception.getMessage());
+    }
 }

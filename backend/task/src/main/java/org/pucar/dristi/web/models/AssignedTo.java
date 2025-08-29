@@ -12,6 +12,7 @@ import java.util.UUID;
 @jakarta.annotation.Generated(value = "org.egov.codegen.SpringBootCodegen", date = "2024-04-18T11:14:11.072458+05:30[Asia/Calcutta]")
 @Getter
 @Setter
+@Builder
 public class AssignedTo {
 
     @JsonProperty("individualId")

@@ -35,6 +35,9 @@ export const userTypeOptions = [
       "TASK_VIEWER",
       "ADVOCATE_VIEWER",
       "PENDING_TASK_CREATOR",
+      "BAIL_BOND_CREATOR",
+      "BAIL_BOND_VIEWER",
+      "BAIL_BOND_EDITOR",
     ],
     subText: "LITIGANT_SUB_TEXT",
   },
@@ -64,6 +67,9 @@ export const userTypeOptions = [
       "ADVOCATE_VIEWER",
       "ADVOCATE_APPLICATION_VIEWER",
       "PENDING_TASK_CREATOR",
+      "BAIL_BOND_CREATOR",
+      "BAIL_BOND_VIEWER",
+      "BAIL_BOND_EDITOR",
     ],
     apiDetails: {
       serviceName: "/advocate/v1/_create",
@@ -98,6 +104,9 @@ export const userTypeOptions = [
       "ADVOCATE_VIEWER",
       "ADVOCATE_APPLICATION_VIEWER",
       "PENDING_TASK_CREATOR",
+      "BAIL_BOND_CREATOR",
+      "BAIL_BOND_VIEWER",
+      "BAIL_BOND_EDITOR",
     ],
     apiDetails: {
       serviceName: "/advocate/clerk/v1/_create",
@@ -219,6 +228,13 @@ export const taskTypes = [
 ];
 export const pendingTaskCaseActions = {
   PENDING_PAYMENT: {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "Make Payment",
+    redirectDetails: {
+      url: "/home/home-pending-task/e-filing-payment-breakdown",
+    },
+  },
+  RE_PENDING_PAYMENT: {
     actorName: ["LITIGANT/ADVOCATE"],
     actionName: "Make Payment",
     redirectDetails: {
@@ -374,9 +390,7 @@ export const pendingTaskHearingActions = {
     // additionalDetailsKeys: ["orderType"],
     redirectDetails: {
       url: "/orders/generate-orders",
-      params: [
-        { key: "filingNumber", value: "filingNumber" },
-      ],
+      params: [{ key: "filingNumber", value: "filingNumber" }],
     },
   },
 };
@@ -800,6 +814,78 @@ export const pendingTaskVoluntarySubmissionBailActions = {
   },
 };
 
+export const pendingTaskCaseGeneratePaymentActions = {
+  PENDING_PAYMENT: {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "Make Payment",
+    redirectDetails: {
+      url: "/home/home-pending-task/case-payment-demand-breakdown",
+      params: [{ key: "taskNumber", value: "referenceId" }],
+    },
+  },
+};
+
+export const pendingTaskForBailBondActions = {
+  PENDING_SIGN: {
+    actorName: ["JUDGE"],
+    actionName: "E-Sign Pending",
+    redirectDetails: {
+      url: "/home/bail-bond",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "caseTitle", value: "caseTitle" },
+        { key: "caseId", value: "id" },
+      ],
+    },
+  },
+  PENDING_REVIEW: {
+    actorName: ["JUDGE"],
+    actionName: "Review the bail bond",
+    redirectDetails: {
+      url: "/home/sign-bail-bond",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "bailId", value: "referenceId" },
+        { key: "caseId", value: "id" },
+      ],
+    },
+  },
+  "PENDING_E-SIGN": {
+    actorName: ["LITIGANT/ADVOCATE"],
+    actionName: "E-Sign Pending",
+    redirectDetails: {
+      url: "/dristi/home/bail-bond-sign",
+      params: [{ key: "bailbondId", value: "referenceId" }],
+    },
+  },
+};
+
+export const pendingTaskForWitnessDepositionActions = {
+  "PENDING_E-SIGN": {
+    actorName: [""],
+    actionName: "E-Sign Pending",
+    redirectDetails: {
+      url: "/dristi/home/evidence-sign",
+      params: [
+        { key: "artifactNumber", value: "referenceId" },
+        { key: "filingNumber", value: "filingNumber" },
+      ],
+    },
+  },
+  PENDING_REVIEW: {
+    actorName: ["JUDGE"],
+    actionName: "Review the witness deposition",
+    redirectDetails: {
+      url: "/home/sign-witness-deposition",
+      params: [
+        { key: "filingNumber", value: "filingNumber" },
+        { key: "artifactNumber", value: "referenceId" },
+        { key: "caseId", value: "id" },
+      ],
+    },
+  },
+};
+
 export const selectTaskType = {
   "case-default": pendingTaskCaseActions,
   "hearing-default": pendingTaskHearingActions,
@@ -814,4 +900,8 @@ export const selectTaskType = {
   "voluntary-document-submission": pendingTaskForDocumentSubmissionActions,
   "voluntary-application-submission-bail-documents": pendingTaskVoluntarySubmissionBailDocumentsActions,
   "voluntary-application-submission-bail": pendingTaskVoluntarySubmissionBailActions,
+  "task-generic": pendingTaskCaseGeneratePaymentActions,
+  "bail bond": pendingTaskForBailBondActions,
+  "bail-bond-default": pendingTaskForBailBondActions,
+  "witness-deposition-default": pendingTaskForWitnessDepositionActions,
 };

@@ -104,12 +104,10 @@ public class ServiceConstants {
     public static final String MAKE_PAYMENT_FOR_SUMMONS = "MAKE_PAYMENT_FOR_SUMMONS";
     public static final String MAKE_PAYMENT_FOR_NOTICE = "MAKE_PAYMENT_FOR_NOTICE";
     public static final String SECTION_223 = "Section 223 Notice";
-    public static final String PENDING_NOTICE = "PENDING_NOTICE";
     public static final String ISSUE_ORDER = "ISSUE_ORDER";
     public static final String UNSIGNED = "UNSIGNED";
     public static final String DELETE = "DELETE";
     public static final String INDIVIDUAL_UTILITY_EXCEPTION = "INDIVIDUAL_UTILITY_EXCEPTION";
-    public static final String PENDING_ADMISSION_HEARING = "PENDING_ADMISSION_HEARING";
 
     // order type
     public static final String ACCEPTANCE_REJECTION_DCA = "ACCEPTANCE_REJECTION_DCA";
@@ -147,5 +145,9 @@ public class ServiceConstants {
     public static final String SMS = "SMS";
 
     public static final String EMAIL = "EMAIL";
-
+    public static final String APPROVAL_REJECTION_ADD_WITNESS = "APPROVAL_REJECTION_ADD_WITNESS";
+    public static final String ERROR_ADDING_WITNESS="ERROR_ADDING_WITNESS";
+    public static final String ADDING_WITNESSES = "ADDING_WITNESSES";
+    public static final String COURT_WITNESS = "-";
+    public static final String ACCUSED = "ACCUSED";
 }

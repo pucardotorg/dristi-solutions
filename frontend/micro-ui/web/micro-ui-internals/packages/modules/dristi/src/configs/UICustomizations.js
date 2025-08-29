@@ -15,6 +15,7 @@ import { constructFullName } from "@egovernments/digit-ui-module-orders/src/util
 import { getAdvocates } from "../pages/citizen/FileCase/EfilingValidationUtils";
 import { OrderWorkflowState } from "../Utils/orderWorkflow";
 import { getFullName } from "../../../cases/src/utils/joinCaseUtils";
+import BailBondModal from "../../../home/src/pages/employee/BailBondModal";
 
 const businessServiceMap = {
   "muster roll": "MR",
@@ -837,7 +838,7 @@ export const UICustomizations = {
           //Need to change the shade as per the value
           return <CustomChip text={t(value)} shade={value === "PUBLISHED" ? "green" : "orange"} />;
         case "OWNER":
-          return removeInvalidNameParts(value);
+          return value ? removeInvalidNameParts(value) : "-";
         case "SUBMISSION_ID":
           return value ? value : "-";
         case "CS_ACTIONS":
@@ -1180,9 +1181,15 @@ export const UICustomizations = {
       };
     },
     additionalCustomizations: (row, key, column, value, t) => {
+      const userInfo = JSON.parse(window.localStorage.getItem("user-info"));
+      const isEmployee = userInfo?.type !== "CITIZEN";
       switch (key) {
         case "FILING_NAME":
-          const showValue = row?.additionalDetails?.formdata?.documentTitle ? row?.additionalDetails?.formdata?.documentTitle : value;
+          const showValue = row?.additionalDetails?.formdata?.documentTitle
+            ? row?.additionalDetails?.formdata?.documentTitle
+            : row?.artifactType === "WITNESS_DEPOSITION"
+            ? `${t(value)} (${row?.tag})`
+            : value;
           return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={showValue} showAsHeading={true} />;
         case "TYPE":
           return t(row?.filingType) || "";
@@ -1204,7 +1211,10 @@ export const UICustomizations = {
               {t("VOID")}
             </div>
           ) : row?.status ? (
-            <CustomChip text={t(row?.status)} shade={"green"} />
+            <CustomChip
+              text={t(row?.artifactType === "WITNESS_DEPOSITION" && row?.status === "COMPLETED" ? "SIGNED" : row?.status)}
+              shade={"green"}
+            />
           ) : (
             ""
           );
@@ -1215,7 +1225,16 @@ export const UICustomizations = {
         case "CS_ACTIONS":
           return <OverlayDropdown style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="FilingsConfig" />;
         case "EVIDENCE_NUMBER":
-          return modifiedEvidenceNumber(value);
+          return (row?.isEvidence || isEmployee) && modifiedEvidenceNumber(value, row?.filingNumber);
+        case "EVIDENCE_STATUS":
+          return row?.evidenceMarkedStatus && (row?.evidenceMarkedStatus === "COMPLETED" || isEmployee) ? (
+            <CustomChip
+              text={row?.evidenceMarkedStatus === "COMPLETED" ? t("SIGNED") : t(row?.evidenceMarkedStatus) || ""}
+              shade={row?.evidenceMarkedStatus === "COMPLETED" ? "green" : "grey"}
+            />
+          ) : (
+            ""
+          );
         default:
           return "N/A";
       }
@@ -1238,19 +1257,29 @@ export const UICustomizations = {
               },
             ]
           : []),
-        ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") &&
-        !row.isEvidence &&
+        ...(userInfo.roles.map((role) => role.code).includes("EMPLOYEE") &&
+        row?.artifactType !== "WITNESS_DEPOSITION" &&
         !row?.isVoid &&
         !(row?.status !== "SUBMITTED" && row?.filingType === "DIRECT")
-          ? [
-              {
-                label: "MARK_AS_EVIDENCE",
-                id: "mark_as_evidence",
-                hide: false,
-                disabled: false,
-                action: column.clickFunc,
-              },
-            ]
+          ? row?.evidenceMarkedStatus !== null || row.isEvidence
+            ? [
+                {
+                  label: "VIEW_MARK_AS_EVIDENCE",
+                  id: "view_mark_as_evidence",
+                  hide: false,
+                  disabled: false,
+                  action: column.clickFunc,
+                },
+              ]
+            : [
+                {
+                  label: "MARK_AS_EVIDENCE",
+                  id: "mark_as_evidence",
+                  hide: false,
+                  disabled: false,
+                  action: column.clickFunc,
+                },
+              ]
           : []),
         // ...(userInfo.roles.map((role) => role.code).includes("JUDGE_ROLE") && row.isEvidence
         //   ? [
@@ -1413,12 +1442,31 @@ export const UICustomizations = {
                 };
               });
 
+            const witnessDetails =
+              data?.criteria[0]?.responseList[0]?.additionalDetails?.witnessDetails?.formdata?.map((itemData) => {
+                const fullName = constructFullName(itemData?.data?.firstName, itemData?.data?.middleName, itemData?.data?.lastName);
+                return {
+                  code: fullName,
+                  name: fullName,
+                  uniqueId: itemData?.uniqueId,
+                  isJoined: false,
+                  associatedWith: itemData?.data?.ownerType || "COMPLAINANT",
+                  partyType: "witness",
+                  caseId: data?.criteria[0]?.responseList[0]?.id,
+                  isEditable: false,
+                  auditDetails: itemData?.data?.createdTime
+                    ? { createdTime: itemData?.data?.createdTime }
+                    : data?.criteria[0]?.responseList[0]?.auditDetails,
+                };
+              }) || [];
+
             const allParties = [
               ...finalLitigantsData,
               ...unjoinedAccused,
               ...joinedAndPartiallyJoinedAdvocates,
               ...joinStatusPendingAdvocates,
               ...finalPoaHoldersData,
+              ...witnessDetails,
             ];
             const paginatedParties = allParties.slice(offset, offset + limit);
             return {
@@ -1442,7 +1490,12 @@ export const UICustomizations = {
           return removeInvalidNameParts(value) || "";
 
         case "ASSOCIATED_WITH":
-          const associatedWith = row?.partyType === "ADVOCATE" || ["poa.regular"]?.includes(row?.partyType) ? row?.representingList : "";
+          const associatedWith =
+            row?.partyType === "ADVOCATE" || ["poa.regular"]?.includes(row?.partyType)
+              ? row?.representingList
+              : row?.partyType === "witness"
+              ? t(row?.associatedWith)
+              : "";
           return associatedWith || "";
         case "STATUS":
           const caseJoinStatus = ["respondent.primary", "respondent.additional"].includes(row?.partyType)
@@ -1468,7 +1521,7 @@ export const UICustomizations = {
           return <span>{formattedDate}</span>;
         case "PARTY_TYPE":
           const partyType = value === "ADVOCATE" ? `${t("ADVOCATE")}` : partyTypes[value] ? t(partyTypes[value]) : t(value);
-          return partyType === "unJoinedAccused" ? "Accused" : partyType;
+          return partyType === "unJoinedAccused" ? "Accused" : partyType === "witness" ? t("WITNESS") : partyType;
         case "ACTIONS":
           return row?.isEditable ? (
             <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center" }}>
@@ -1934,6 +1987,15 @@ export const UICustomizations = {
                   searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
                 }),
             },
+            searchBailBonds: {
+              date: activeTab === "BAIL_BOND_STATUS" ? selectedDateInMs : currentDateInMs,
+              isOnlyCountRequired: activeTab === "BAIL_BOND_STATUS" ? false : true,
+              actionCategory: "Bail Bond",
+              ...(activeTab === "BAIL_BOND_STATUS" &&
+                requestCriteria?.state?.searchForm?.caseSearchText && {
+                  searchableFields: requestCriteria?.state?.searchForm?.caseSearchText,
+                }),
+            },
             limit: requestCriteria?.state?.tableForm?.limit || 10,
             offset: requestCriteria?.state?.tableForm?.offset || 0,
           },
@@ -1945,6 +2007,7 @@ export const UICustomizations = {
             const applicationCount = data?.viewApplicationData?.count || 0;
             const scheduleCount = data?.scheduleHearingData?.count || 0;
             const registerCount = data?.registerCasesData?.count || 0;
+            const bailBondStatusCount = data?.bailBondData?.count || 0;
 
             // setPendingTaskCount();
             additionalDetails?.setCount({
@@ -1952,6 +2015,7 @@ export const UICustomizations = {
               REVIEW_PROCESS: reviwCount,
               VIEW_APPLICATION: applicationCount,
               SCHEDULE_HEARING: scheduleCount,
+              BAIL_BOND_STATUS: bailBondStatusCount,
             });
             const processFields = (fields) => {
               const result = fields?.reduce((acc, curr) => {
@@ -1998,7 +2062,12 @@ export const UICustomizations = {
                 TotalCount: data?.scheduleHearingData?.count,
                 data: data?.scheduleHearingData?.data?.map((item) => processFields(item.fields)),
               };
-            else
+            else if (activeTab === "BAIL_BOND_STATUS") {
+              return {
+                TotalCount: data?.bailBondData?.count,
+                data: data?.bailBondData?.data?.map((item) => processFields(item.fields)),
+              };
+            } else
               return {
                 TotalCount: data?.registerCasesData?.count,
                 data: data?.registerCasesData?.data?.map((item) => processFields(item.fields)) || [],
@@ -2021,7 +2090,10 @@ export const UICustomizations = {
             >
               {value ? value : "-"}
             </Link>
+          ) : row?.tab === "BAIL_BOND_STATUS" ? (
+            <OrderName rowData={row} colData={column} value={value} />
           ) : (
+            // <BailBondModal style={{ position: "relative" }} column={column} row={row} master="commonUiConfig" module="SearchIndividualConfig" />
             <Link
               style={{ color: "black", textDecoration: "underline" }}
               to={{
@@ -2064,6 +2136,60 @@ export const UICustomizations = {
           );
         case "STAGE":
           return t(value);
+        default:
+          return value ? value : "-";
+      }
+    },
+  },
+
+  BailBondConfig: {
+    preProcess: (requestCriteria, additionalDetails) => {
+      const tenantId = window?.Digit.ULBService.getStateId();
+      const userRoles = Digit.UserService.getUser()?.info?.roles.map((role) => role?.code);
+      const currentDateInMs = new Date().setHours(23, 59, 59, 999);
+      const selectedDateInMs = new Date(requestCriteria?.state?.searchForm?.date).setHours(23, 59, 59, 999);
+      const isCitizen = userRoles?.includes("CITIZEN");
+
+      const limit = requestCriteria?.state?.tableForm?.limit || 10;
+      const offSet = requestCriteria?.state?.tableForm?.offset || 0;
+      const bailId = requestCriteria?.state?.searchForm?.bailId;
+      return {
+        ...requestCriteria,
+        body: {
+          ...requestCriteria?.body,
+          tenantId: tenantId,
+          criteria: {
+            ...requestCriteria?.body?.criteria,
+            ...(bailId && { bailId }),
+            ...(isCitizen ? {} : { status: ["PENDING_REVIEW", "COMPLETED", "VOID"] }),
+            fuzzySearch: true,
+          },
+          pagination: {
+            sortBy: "bailCreatedTime",
+            order: "desc",
+            limit: limit,
+            offSet: offSet,
+          },
+        },
+        config: {
+          ...requestCriteria?.config,
+          select: (data) => {
+            return { ...data, totalCount: data?.pagination?.totalCount };
+          },
+        },
+      };
+    },
+
+    additionalCustomizations: (row, key, column, value, t, additionalDetails) => {
+      switch (key) {
+        case "BAIL_TYPE":
+          return <Evidence userRoles={userRoles} rowData={row} colData={column} t={t} value={value} showAsHeading={true} isBail={true} />;
+        case "STAGE":
+          return t(value);
+        case "STATUS":
+          return <CustomChip text={t(value)} shade={value === "COMPLETED" ? "green" : "orange"} />;
+        case "BAIL_ID":
+          return value;
         default:
           return value ? value : "-";
       }

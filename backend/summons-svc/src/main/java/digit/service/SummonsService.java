@@ -321,7 +321,7 @@ public class SummonsService {
                 }
             }
             case WARRANT -> {
-                if(SPECIFIC.equals(templateType)){
+                if (SPECIFIC.equals(templateType)) {
                     if (BAILABLE.equals(docSubType)) {
                         return config.getBailableWarrantPdfTemplateKey();
                     } else if (NON_BAILABLE.equals(docSubType)) {
@@ -329,7 +329,7 @@ public class SummonsService {
                     } else {
                         throw new CustomException("INVALID_DOC_SUB_TYPE", "Document Sub-Type must be valid. Provided: " + docSubType);
                     }
-                } else if(GENERIC.equals(templateType)) {
+                } else if (GENERIC.equals(templateType)) {
                     return config.getTaskWarrantGenericPdfTemplateKey();
                 } else {
                     throw new CustomException("INVALID_TEMPLATE_TYPE", "Template Type must be valid. Provided: " + templateType);
