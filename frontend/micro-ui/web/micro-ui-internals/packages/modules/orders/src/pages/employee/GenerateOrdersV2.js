@@ -260,6 +260,7 @@ const GenerateOrdersV2 = () => {
   const isBenchClerk = roles?.some((role) => role.code === "BENCH_CLERK");
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
   const [itemTextNull, setItemTextNull] = useState(false);
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
   const fetchCaseDetails = async () => {
     try {
@@ -2092,7 +2093,7 @@ const GenerateOrdersV2 = () => {
 
   const updateOrder = async (order, action, unsignedFileStoreId) => {
     try {
-      const localStorageID = sessionStorage.getItem("fileStoreId");
+      let localStorageID = sessionStorage.getItem("fileStoreId");
       const documents = Array.isArray(order?.documents) ? order.documents : [];
       let taskDetails = null;
       const newCompositeItems = [];
@@ -2137,6 +2138,10 @@ const GenerateOrdersV2 = () => {
         }
       }
 
+      if (mockESignEnabled) {
+        localStorageID = orderPdfFileStoreID;
+      }
+
       const documentsFile =
         signedDoucumentUploadedID !== "" || localStorageID
           ? {
@@ -2153,7 +2158,9 @@ const GenerateOrdersV2 = () => {
               additionalDetails: { name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.pdf` },
             }
           : null;
-      const updatedDocuments = getUpdateDocuments(documents, documentsFile, signedDoucumentUploadedID, fileStoreIds);
+      const updatedDocuments = mockESignEnabled
+        ? [documentsFile]
+        : getUpdateDocuments(documents, documentsFile, signedDoucumentUploadedID, fileStoreIds);
       let orderSchema = {};
       try {
         let orderTypeDropDownConfig = order?.orderNumber
