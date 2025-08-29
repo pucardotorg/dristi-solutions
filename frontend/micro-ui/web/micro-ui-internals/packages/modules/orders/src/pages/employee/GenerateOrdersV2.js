@@ -2226,7 +2226,7 @@ const GenerateOrdersV2 = () => {
           if (updatedOrder?.orderNumber) {
             updateOrderResponse = await updateOrder(updatedOrder, OrderWorkflowAction.SAVE_DRAFT);
           } else {
-            updateOrderResponse = await createOrder(updatedOrder, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails);
+            updateOrderResponse = await createOrder(updatedOrder, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails, allParties);
           }
         }
       } else {
@@ -2242,7 +2242,8 @@ const GenerateOrdersV2 = () => {
             tenantId,
             applicationTypeConfigUpdated,
             configKeys,
-            caseDetails
+            caseDetails,
+            allParties
           );
         } else {
           const totalEnabled = updatedOrderData?.compositeItems?.filter((compItem) => compItem?.isEnabled && compItem?.orderType)?.length;
@@ -2254,7 +2255,7 @@ const GenerateOrdersV2 = () => {
             updatedOrder.orderType = t(compositeItem?.orderType);
             updatedOrder.orderCategory = "INTERMEDIATE";
             updatedOrder.orderTitle = t(compositeItem?.orderType);
-            updateOrderResponse = await createOrder(updatedOrder, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails);
+            updateOrderResponse = await createOrder(updatedOrder, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails, allParties);
           } else {
             const updatedOrder = structuredClone(updatedOrderData);
             const enabledCompositeItems = updatedOrderData?.compositeItems?.filter((item) => item?.isEnabled);
@@ -2265,7 +2266,8 @@ const GenerateOrdersV2 = () => {
               tenantId,
               applicationTypeConfigUpdated,
               configKeys,
-              caseDetails
+              caseDetails,
+              allParties
             );
           }
         }
