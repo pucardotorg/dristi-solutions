@@ -646,11 +646,14 @@ public class CaseRegistrationEnrichment {
 
     public void enrichLPRNumber(CaseRequest caseRequest) {
         try {
-            String tenantId = caseRequest.getCases().getCourtId();
+            String year = getCurrentYearAsString();
+            String tenantId = caseRequest.getCases().getCourtId() + year;
             String idName = config.getLprConfig();
             String idFormat = config.getLprFormat();
             List<String> lprNumberIdList = idgenUtil.getIdList(caseRequest.getRequestInfo(), tenantId, idName, idFormat, 1, false);
-            caseRequest.getCases().setLprNumber(lprNumberIdList.get(0));
+            String lprNumber = lprNumberIdList.get(0);
+            lprNumber = lprNumber + "/" + year;
+            caseRequest.getCases().setLprNumber(lprNumber);
         } catch (Exception e) {
             log.error("Error enriching lpr number: {}", e.toString());
             throw new CustomException(ENRICHMENT_EXCEPTION, "Error in case enrichment service while enriching lpr number: " + e.getMessage());
