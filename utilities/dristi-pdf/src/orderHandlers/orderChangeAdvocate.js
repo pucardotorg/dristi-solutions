@@ -57,7 +57,7 @@ const orderChangeAdvocate = async (
   try {
     const resCase = await handleApiCall(
       res,
-      () => search_case(cnrNumber, tenantId, requestInfo),
+      () => search_case(cnrNumber, tenantId, requestInfo, order?.courtId),
       "Failed to query case service"
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
@@ -67,7 +67,7 @@ const orderChangeAdvocate = async (
 
     const resTask = await handleApiCall(
       res,
-      () => search_task(taskNumber, tenantId, requestInfo),
+      () => search_task(taskNumber, tenantId, requestInfo, order?.courtId),
       "Failed to query task service"
     );
     const task = resTask?.data?.list?.[0];

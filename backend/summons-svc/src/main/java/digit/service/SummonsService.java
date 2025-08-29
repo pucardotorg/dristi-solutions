@@ -75,10 +75,18 @@ public class SummonsService {
     public TaskResponse generateSummonsDocument(TaskRequest taskRequest) {
         String taskType = taskRequest.getTask().getTaskType();
         String docSubType = getDocSubType(taskType, taskRequest.getTask().getTaskDetails());
+        String templateType = getTemplateType(taskType, taskRequest.getTask().getTaskDetails());
         String noticeType = getNoticeType(taskRequest.getTask().getTaskDetails());
-        String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, false, noticeType);
+        String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, false, noticeType, templateType);
 
         return generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, false);
+    }
+
+    private String getTemplateType(String taskType, TaskDetails taskDetails) {
+        if(WARRANT.equals(taskType)){
+            return taskDetails.getWarrantDetails() != null ? taskDetails.getWarrantDetails().getTemplateType() : null;
+        }
+        return null; // For other task types, templateType is not applicable
     }
 
     private String getNoticeType(TaskDetails taskDetails) {
@@ -111,7 +119,7 @@ public class SummonsService {
         if (!taskType.equalsIgnoreCase(WARRANT)) {
             String docSubType = getDocSubType(taskType, task.getTaskDetails());
             String noticeType = getNoticeType(task.getTaskDetails());
-            String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, true, noticeType);
+            String pdfTemplateKey = getPdfTemplateKey(taskType, docSubType, true, noticeType, null);
 
             generateDocumentAndUpdateTask(taskRequest, pdfTemplateKey, true);
         }
@@ -194,7 +202,6 @@ public class SummonsService {
         }
         task.setWorkflow(workflow);
         enrichPoliceStationReport(task, request.getSummonsDelivery());
-
         Role role = Role.builder().code(config.getSystemAdmin()).tenantId(config.getEgovStateTenantId()).build();
         request.getRequestInfo().getUserInfo().getRoles().add(role);
         TaskRequest taskRequest = TaskRequest.builder()
@@ -276,6 +283,7 @@ public class SummonsService {
         }
         return null;
     }
+
     private void enrichPoliceStationReport(Task task, @Valid SummonsDelivery summonsDelivery) {
         String fileStoreId = extractFileStoreId(summonsDelivery);
         if (fileStoreId != null) {
@@ -301,30 +309,36 @@ public class SummonsService {
                 .orElse(null);
     }
 
-    private String getPdfTemplateKey(String taskType, String docSubType, boolean qrCode, String noticeType) {
+    private String getPdfTemplateKey(String taskType, String docSubType, boolean qrCode, String noticeType, String templateType) {
         switch (taskType) {
             case SUMMON -> {
-                if (docSubType.equals(ACCUSED)) {
+                if (ACCUSED.equals(docSubType)) {
                     return qrCode ? config.getSummonsAccusedQrPdfTemplateKey() : config.getSummonsAccusedPdfTemplateKey();
-                } else if (docSubType.equals(WITNESS)) {
+                } else if (WITNESS.equals(docSubType)) {
                     return qrCode ? config.getBailableWarrantPdfTemplateKey() : config.getSummonsIssuePdfTemplateKey();
                 } else {
                     throw new CustomException("INVALID_DOC_SUB_TYPE", "Document Sub-Type must be valid. Provided: " + docSubType);
                 }
             }
             case WARRANT -> {
-                if (docSubType.equals(BAILABLE)) {
-                    return config.getBailableWarrantPdfTemplateKey();
-                } else if (docSubType.equals(NON_BAILABLE)) {
-                    return config.getNonBailableWarrantPdfTemplateKey();
+                if (SPECIFIC.equals(templateType)) {
+                    if (BAILABLE.equals(docSubType)) {
+                        return config.getBailableWarrantPdfTemplateKey();
+                    } else if (NON_BAILABLE.equals(docSubType)) {
+                        return config.getNonBailableWarrantPdfTemplateKey();
+                    } else {
+                        throw new CustomException("INVALID_DOC_SUB_TYPE", "Document Sub-Type must be valid. Provided: " + docSubType);
+                    }
+                } else if (GENERIC.equals(templateType)) {
+                    return config.getTaskWarrantGenericPdfTemplateKey();
                 } else {
-                    throw new CustomException("INVALID_DOC_SUB_TYPE", "Document Sub-Type must be valid. Provided: " + docSubType);
+                    throw new CustomException("INVALID_TEMPLATE_TYPE", "Template Type must be valid. Provided: " + templateType);
                 }
             }
             case NOTICE -> {
-                if (Objects.equals(noticeType, BNSS_NOTICE)) {
+                if(Objects.equals(noticeType, BNSS_NOTICE)){
                     return config.getTaskBnssNoticePdfTemplateKey();
-                } else if (Objects.equals(noticeType, DCA_NOTICE)) {
+                } else if(Objects.equals(noticeType, DCA_NOTICE)) {
                     return config.getTaskDcaNoticePdfTemplateKey();
                 } else {
                     return qrCode ? config.getTaskNoticeQrPdfTemplateKey() : config.getTaskNotificationTemplateKey();
@@ -340,12 +354,9 @@ public class SummonsService {
         }
 
         return switch (taskType) {
-            case SUMMON ->
-                    taskDetails.getSummonDetails() != null ? taskDetails.getSummonDetails().getDocSubType() : null;
-            case WARRANT ->
-                    taskDetails.getWarrantDetails() != null ? taskDetails.getWarrantDetails().getDocSubType() : null;
-            case NOTICE ->
-                    taskDetails.getNoticeDetails() != null ? taskDetails.getNoticeDetails().getDocSubType() : null;
+            case SUMMON -> taskDetails.getSummonDetails() != null ? taskDetails.getSummonDetails().getDocSubType() : null;
+            case WARRANT -> taskDetails.getWarrantDetails() != null ? taskDetails.getWarrantDetails().getDocSubType() : null;
+            case NOTICE -> taskDetails.getNoticeDetails() != null ? taskDetails.getNoticeDetails().getDocSubType() : null;
             default -> throw new CustomException("INVALID_TASK_TYPE", "Task Type must be valid. Provided: " + taskType);
         };
     }

@@ -101,6 +101,9 @@ public class Order {
     @NotNull
     private String orderTitle = null;
 
+    @JsonProperty("hearingSummary")
+    private String hearingSummary = null;
+
     @JsonProperty("additionalDetails")
     private Object additionalDetails = null;
 

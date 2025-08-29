@@ -19,7 +19,7 @@ export const applicationTypeConfig = [
             masterName: "OrderType",
             localePrefix: "ORDER_TYPE",
             select:
-              "(data) => {return data['Order'].OrderType?.filter((item)=>[`SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}",
+              "(data) => {return data['Order'].OrderType?.filter((item)=>[`SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}",
           },
         },
       },
@@ -1186,6 +1186,26 @@ export const configsScheduleNextHearingDate = [
         populators: { name: "judgeDesignation", hideInForm: true },
       },
       {
+        label: "CS_CASE_ATTENDEES",
+        schemaKeyPath: "orderDetails.partyName",
+        transformer: "customDropdown",
+        key: "attendees",
+        type: "dropdown",
+        populators: {
+          name: "attendees",
+          allowMultiSelect: true,
+          optionsKey: "label",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          selectedText: "party(s)",
+          options: [
+            {
+              code: "PARTY_1",
+              name: "PARTY_1",
+            },
+          ],
+        },
+      },
+      {
         label: "NAMES_OF_PARTIES_REQUIRED",
         isMandatory: true,
         schemaKeyPath: "orderDetails.partyName",
@@ -1250,6 +1270,26 @@ export const configsScheduleNextHearingDate = [
   //     },
   //   ],
   // },
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "hearingSummary",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "HEARING_SUMMARY",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+    ],
+  },
   {
     body: [
       {
@@ -2310,6 +2350,356 @@ export const configsCaseTransfer = [
   },
 ];
 
+export const configsCaseTransferAccept = [
+  {
+    body: [
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        schemaKeyPath: "orderDetails.refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
+        label: "COURT_NAME",
+        isMandatory: true,
+        key: "courtName",
+        type: "text",
+        populators: { name: "courtName", hideInForm: true },
+      },
+      {
+        label: "CASE_NAME",
+        isMandatory: true,
+        key: "caseName",
+        type: "text",
+        populators: { name: "caseName", hideInForm: true },
+      },
+      {
+        label: "CNR_NUMBER",
+        isMandatory: true,
+        key: "cnrNumber",
+        type: "text",
+        populators: { name: "cnrNumber", hideInForm: true },
+      },
+      {
+        label: "DATE_OF_ORDER",
+        isMandatory: true,
+        key: "dateOfOrder",
+        type: "date",
+        populators: { name: "dateOfOrder", hideInForm: true },
+      },
+      {
+        label: "COMPLAINANT_NAME",
+        isMandatory: true,
+        key: "complainantName",
+        schemaKeyPath: "complainantDetails.name",
+        type: "textarea",
+        populators: { name: "complainantName", hideInForm: true },
+      },
+      {
+        label: "COMPLAINANT_ADDRESS",
+        isMandatory: true,
+        key: "complainantAddress",
+        type: "text",
+        populators: { name: "complainantAddress", hideInForm: true },
+      },
+      {
+        label: "APPLICATION_STATUS",
+        isMandatory: true,
+        key: "applicationStatus",
+        schemaKeyPath: "orderDetails.applicationStatus",
+        type: "text",
+        disable: true,
+        populators: { name: "applicationStatus" },
+      },
+      {
+        label: "TRANSFER_SEEKED_TO",
+        isMandatory: true,
+        key: "transferSeekedTo",
+        type: "text",
+        populators: {
+          name: "transferSeekedTo",
+          error: "CS_ALPHANUMERIC_ALLOWED",
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiOrders",
+              masterName: "alphaNumericInputTextValidation",
+            },
+          },
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "grounds",
+        schemaKeyPath: "orderDetails.grounds",
+        transformer: "customTextArea",
+        isMandatory: true,
+        disable: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "GROUNDS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        label: "APPROVAL_STATUS",
+        isMandatory: false,
+        key: "approvalStatus",
+        type: "text",
+        disable: true,
+        populators: { name: "approvalStatus", hideInForm: true },
+      },
+      {
+        label: "CASE_TRANSFERRED_TO",
+        isMandatory: true,
+        key: "caseTransferredTo",
+        disable: false,
+        type: "text",
+        populators: {
+          name: "caseTransferredTo",
+          error: "CS_ALPHANUMERIC_ALLOWED",
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiOrders",
+              masterName: "alphaNumericInputTextValidation",
+            },
+          },
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "comments",
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: true,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        label: "JUDGE_NAME",
+        isMandatory: true,
+        key: "judgeName",
+        type: "text",
+        populators: { name: "judgeName", hideInForm: true },
+      },
+      {
+        label: "JUDGE_DESIGNATION",
+        isMandatory: true,
+        key: "judgeDesignation",
+        type: "text",
+        populators: { name: "judgeDesignation", hideInForm: true },
+      },
+    ],
+  },
+];
+
+export const configsCaseTransferReject = [
+  {
+    body: [
+      {
+        label: "REF_APPLICATION_ID",
+        isMandatory: false,
+        key: "refApplicationId",
+        schemaKeyPath: "orderDetails.refApplicationId",
+        disable: true,
+        type: "text",
+        populators: { name: "refApplicationId" },
+      },
+      {
+        label: "COURT_NAME",
+        isMandatory: true,
+        key: "courtName",
+        type: "text",
+        populators: { name: "courtName", hideInForm: true },
+      },
+      {
+        label: "CASE_NAME",
+        isMandatory: true,
+        key: "caseName",
+        type: "text",
+        populators: { name: "caseName", hideInForm: true },
+      },
+      {
+        label: "CNR_NUMBER",
+        isMandatory: true,
+        key: "cnrNumber",
+        type: "text",
+        populators: { name: "cnrNumber", hideInForm: true },
+      },
+      {
+        label: "DATE_OF_ORDER",
+        isMandatory: true,
+        key: "dateOfOrder",
+        type: "date",
+        populators: { name: "dateOfOrder", hideInForm: true },
+      },
+      {
+        label: "COMPLAINANT_NAME",
+        isMandatory: true,
+        key: "complainantName",
+        schemaKeyPath: "complainantDetails.name",
+        type: "textarea",
+        populators: { name: "complainantName", hideInForm: true },
+      },
+      {
+        label: "COMPLAINANT_ADDRESS",
+        isMandatory: true,
+        key: "complainantAddress",
+        type: "text",
+        populators: { name: "complainantAddress", hideInForm: true },
+      },
+      {
+        label: "APPLICATION_STATUS",
+        isMandatory: true,
+        key: "applicationStatus",
+        schemaKeyPath: "orderDetails.applicationStatus",
+        type: "text",
+        disable: true,
+        populators: { name: "applicationStatus" },
+      },
+      {
+        label: "TRANSFER_SEEKED_TO",
+        isMandatory: true,
+        key: "transferSeekedTo",
+        type: "text",
+        populators: {
+          name: "transferSeekedTo",
+          error: "CS_ALPHANUMERIC_ALLOWED",
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiOrders",
+              masterName: "alphaNumericInputTextValidation",
+            },
+          },
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "grounds",
+        schemaKeyPath: "orderDetails.grounds",
+        transformer: "customTextArea",
+        isMandatory: true,
+        disable: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "GROUNDS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        label: "APPROVAL_STATUS",
+        isMandatory: false,
+        key: "approvalStatus",
+        type: "text",
+        disable: true,
+        populators: { name: "approvalStatus", hideInForm: true },
+      },
+      {
+        label: "CASE_TRANSFERRED_TO",
+        isMandatory: true,
+        key: "caseTransferredTo",
+        disable: false,
+        type: "text",
+        populators: {
+          name: "caseTransferredTo",
+          error: "CS_ALPHANUMERIC_ALLOWED",
+          validation: {
+            customValidationFn: {
+              moduleName: "dristiOrders",
+              masterName: "alphaNumericInputTextValidation",
+            },
+          },
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "comments",
+        isMandatory: false,
+        populators: {
+          inputs: [
+            {
+              name: "text",
+              textAreaSubHeader: "COMMENTS",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              isOptional: true,
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+    ],
+  },
+  {
+    body: [
+      {
+        label: "JUDGE_NAME",
+        isMandatory: true,
+        key: "judgeName",
+        type: "text",
+        populators: { name: "judgeName", hideInForm: true },
+      },
+      {
+        label: "JUDGE_DESIGNATION",
+        isMandatory: true,
+        key: "judgeDesignation",
+        type: "text",
+        populators: { name: "judgeDesignation", hideInForm: true },
+      },
+    ],
+  },
+];
+
 export const configsCaseSettlement = [
   {
     body: [
@@ -2507,6 +2897,7 @@ export const configsIssueSummons = [
             {
               name: "select party",
               type: "dropdown",
+              addWitness: true,
             },
             {
               name: "select deleivery channels",
@@ -2657,6 +3048,7 @@ export const configsIssueNotice = [
             {
               name: "select party",
               type: "dropdown",
+              addWitness: false,
             },
             {
               name: "select deleivery channels",
@@ -3457,6 +3849,57 @@ export const configsCreateOrderWarrant = [
       },
       {
         isMandatory: true,
+        key: "warrantSubType",
+        type: "component",
+        component: "SelectCustomGroupedDropdown",
+        label: "WARRANT_SUB_TYPE",
+        disable: false,
+        populators: {
+          name: "warrantSubType",
+          optionsKey: "subType",
+          error: "CORE_REQUIRED_FIELD_ERROR",
+          styles: { maxWidth: "100%" },
+          optionsCustomStyle: {
+            height: "30vh",
+            marginTop: "42px",
+            overflowY: "auto",
+          },
+          options: [],
+          // mdmsConfig: {
+          //   moduleName: "Order",
+          //   masterName: "warrantSubType",
+          //   select: `(data) => {
+          //     const list = data?.Order?.warrantSubType || [];
+          //     return list.sort((a, b) => {
+          //       const getPriority = (val) => {
+          //         if (val === "NO") return 0;
+          //         if (val === "YES") return 2;
+          //         return 1;
+          //       };
+          //       return getPriority(a.belowOthers) - getPriority(b.belowOthers);
+          //     });
+          //   }`,
+          // },
+        },
+      },
+      {
+        type: "component",
+        component: "SelectCustomTextArea",
+        key: "warrantText",
+        isMandatory: true,
+        populators: {
+          inputs: [
+            {
+              name: "warrantText",
+              textAreaSubHeader: "Warrant Text",
+              placeholder: "TYPE_HERE_PLACEHOLDER",
+              type: "TextAreaComponent",
+            },
+          ],
+        },
+      },
+      {
+        isMandatory: true,
         type: "component",
         component: "SelectUserTypeComponent",
         key: "bailInfo",
@@ -3990,6 +4433,7 @@ export const configsJudgement = [
         key: "sentence",
         schemaKeyPath: "caseDetails.sentence",
         isMandatory: true,
+        isInfinite: true,
         populators: {
           inputs: [
             {
@@ -4070,25 +4514,20 @@ export const configsIssueBailAcceptance = [
   {
     body: [
       {
-        label: "REF_APPLICATION_ID",
-        isMandatory: false,
-        key: "refApplicationId",
-        disable: true,
-        schemaKeyPath: "orderDetails.refApplicationId",
-        type: "text",
-        populators: { name: "refApplicationId" },
-      },
-      {
         isMandatory: true,
         key: "bailParty",
         type: "dropdown",
         label: "BAIL_PARTY",
-        disable: true,
+        disable: false,
         schemaKeyPath: "orderDetails.bailParty",
         populators: {
+          required: true,
+          isMandatory: true,
           name: "bailParty",
+          optionsKey: "name",
           styles: { maxWidth: "100%" },
           error: "required ",
+          options: [],
         },
       },
       {
@@ -4161,28 +4600,6 @@ export const configsIssueBailAcceptance = [
               placeholder: "TYPE_HERE_PLACEHOLDER",
               isOptional: true,
               type: "TextAreaComponent",
-            },
-          ],
-        },
-      },
-      {
-        type: "component",
-        key: "submissionDocuments",
-        component: "SelectMultiUpload",
-        disable: true,
-        isMandatory: true,
-        populators: {
-          inputs: [
-            {
-              name: "uploadedDocs",
-              isMandatory: true,
-              textAreaHeader: "CS_DOCUMENT_ATTACHED",
-              fileTypes: ["JPG", "PDF", "PNG", "JPEG"],
-              textAreaStyle: {
-                fontSize: "16px",
-                fontWeight: 400,
-                marginBottom: "8px",
-              },
             },
           ],
         },

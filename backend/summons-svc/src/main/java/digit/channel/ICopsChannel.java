@@ -49,7 +49,7 @@ public class ICopsChannel implements ExternalChannel {
             if(task.getTaskDetails().getSummonDetails().getDocSubType().equals(ACCUSED)) {
                 task.getTaskDetails().getSummonDetails().setDocSubType(SUMMON_TO_ACCUSED);
 
-            } else if(task.getTaskDetails().getSummonDetails().getSummonId().equals(WITNESS)) {
+            } else if(task.getTaskDetails().getSummonDetails().getDocSubType().equals(WITNESS)) {
                 task.getTaskDetails().getSummonDetails().setDocSubType(SUMMON_TO_WITNESS);
             }
         } else if(task.getTaskType().equals(WARRANT)) {

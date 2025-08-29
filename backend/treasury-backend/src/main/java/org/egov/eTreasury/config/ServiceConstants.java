@@ -89,4 +89,6 @@ public class ServiceConstants {
     public static final String COURT_FEE = "COURT_FEE";
     public static final String ADVOCATE_WELFARE_FUND = "ADVOCATE_WELFARE_FUND";
     public static final String ADVOCATE_CLERK_WELFARE_FUND = "ADVOCATE_CLERK_WELFARE_FUND";
+    public static final String LEGAL_BENEFIT_FEE = "LEGAL_BENEFIT_FEE";
+    public static final String CASE_DEFAULT_ENTITY_TYPE = "case-default";
 }

@@ -9,6 +9,7 @@ const {
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
 const { cleanName } = require("./cleanName");
+const { htmlToFormattedText } = require("../utils/htmlToFormattedText");
 
 function getOrdinalSuffix(day) {
   if (day > 3 && day < 21) return "th"; // 11th, 12th, 13th, etc.
@@ -66,7 +67,7 @@ const applicationCaseTransfer = async (
   // Search for case details
   try {
     const resCase = await handleApiCall(
-      () => search_case(cnrNumber, tenantId, requestInfo),
+      () => search_case(cnrNumber, tenantId, requestInfo, application?.courtId),
       "Failed to query case service"
     );
     const courtCase = resCase?.data?.criteria[0]?.responseList[0];
@@ -96,8 +97,9 @@ const applicationCaseTransfer = async (
     }
 
     const partyName = application?.additionalDetails?.onBehalOfName || "";
-    const additionalComments =
-      application?.applicationDetails?.additionalComments || "";
+    const additionalComments = htmlToFormattedText(
+      application?.applicationDetails?.additionalComments || ""
+    );
     const grounds =
       application?.applicationDetails?.groundsForSeekingTransfer || "";
     const selectRequestedCourt =

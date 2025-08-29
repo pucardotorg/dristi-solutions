@@ -11,6 +11,7 @@ import digit.web.models.PendingTaskRequest;
 import digit.web.models.ReScheduleHearing;
 import digit.web.models.cases.CaseCriteria;
 import digit.web.models.cases.SearchCaseRequest;
+import digit.web.models.inbox.Inbox;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.User;
@@ -23,6 +24,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static digit.config.ServiceConstants.*;
 
@@ -60,6 +62,7 @@ public class PendingTaskUtil {
         pendingTask.setName(PENDING_TASK_NAME);
         pendingTask.setReferenceId("MANUAL_"+reScheduleHearing.getRescheduledRequestId());
         pendingTask.setStatus(PENDING_TASK_STATUS);
+        pendingTask.setActionCategory(SCHEDULE_HEARING_ACTION_CATEGORY);
         pendingTask.setFilingNumber(reScheduleHearing.getCaseId());
         pendingTask.setAssignedRole(List.of("JUDGE_ROLE"));
         pendingTask.setScreenType(SCREEN_TYPE);
@@ -109,6 +112,28 @@ public class PendingTaskUtil {
             throw new ServiceCallException(e.getResponseBodyAsString());
         } catch (Exception e) {
             log.error(SEARCHER_SERVICE_EXCEPTION, e);
+        }
+    }
+
+    public void expirePendingTasks(List<Inbox> inboxList) {
+        try {
+            if (inboxList == null || inboxList.isEmpty()) {
+                log.info("No pending tasks to expire");
+                return;
+            }
+            for (Inbox inbox : inboxList) {
+                Map<String, Object> businessObject = inbox.getBusinessObject();
+                if (businessObject == null) {
+                    continue;
+                }
+                // Map businessObject to PendingTask
+                PendingTask pendingTask = objectMapper.convertValue(businessObject, PendingTask.class);
+                pendingTask.setIsCompleted(true);
+                pendingTask.setStatus(EXPIRED);
+                callAnalytics(new PendingTaskRequest(createInternalRequestInfo(), pendingTask));
+            }
+        } catch (Exception e) {
+            log.error("Error occurred while expiring pending tasks: {}", e.getMessage());
         }
     }
 }

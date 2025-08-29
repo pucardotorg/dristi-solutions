@@ -66,6 +66,9 @@ public class Configuration {
     @Value("${bailable.warrant.qr.pdf.template.key}")
     private String bailableWarrantQrPdfTemplateKey;
 
+    @Value("${task.warrant.generic.pdf.template.key}")
+    private String taskWarrantGenericPdfTemplateKey;
+
     //MDMS
     @Value("${egov.mdms.host}")
     private String mdmsHost;

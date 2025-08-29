@@ -32,6 +32,7 @@ function OrderReviewModal({
   businessOfDay,
   updateOrder,
   setShowBulkModal,
+  courtId,
 }) {
   const [fileStoreId, setFileStoreID] = useState(null);
   const [fileName, setFileName] = useState();
@@ -71,6 +72,7 @@ function OrderReviewModal({
           orderId: order?.id,
           cnrNumber: order?.cnrNumber,
           qrCode: false,
+          courtId: courtId,
         },
         data: {
           RequestInfo: {

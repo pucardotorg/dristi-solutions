@@ -65,5 +65,7 @@ public class TreasuryPaymentData {
 
     private double advocateClerkWelfareFund;
 
+    private double legalBenefitFee;
+
     private double totalAmount;
 }
