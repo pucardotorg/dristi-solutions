@@ -220,7 +220,7 @@ const PaymentForRPADModal = ({ path }) => {
 
   const filteredTasks = useMemo(() => tasksData?.list, [tasksData]);
 
-  const { data: orderData, isloading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
+  const { data: orderData, isLoading: isOrdersLoading } = Digit.Hooks.orders.useSearchOrdersService(
     { tenantId, criteria: { id: filteredTasks?.[0]?.orderId, ...(caseCourtId && { courtId: caseCourtId }) } },
     { tenantId },
     filteredTasks?.[0]?.orderId,
@@ -533,7 +533,7 @@ const PaymentForRPADModal = ({ path }) => {
     };
   }, [orderType, infos, links, feeOptions, orderDate, paymentLoader, isCaseAdmitted, isUserAdv, history]);
 
-  if (isOrdersLoading || isSummonsBreakUpLoading || isCourtBillLoading || isTaskLoading || isHearingLoading) {
+  if (isOrdersLoading || !orderData || isSummonsBreakUpLoading || isCourtBillLoading || isTaskLoading || isHearingLoading) {
     return <Loader />;
   }
 

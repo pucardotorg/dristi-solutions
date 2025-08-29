@@ -4466,8 +4466,7 @@ const GenerateOrders = () => {
           setShowReviewModal={setShowReviewModal}
           setShowsignatureModal={setShowsignatureModal}
           setOrderPdfFileStoreID={setOrderPdfFileStoreID}
-          showActions={canESign && !currentDiaryEntry}
-          saveSignLater={canSaveSignLater}
+          showActions={(canESign || canSaveSignLater) && !currentDiaryEntry}
           setBusinessOfTheDay={setBusinessOfTheDay}
           currentDiaryEntry={currentDiaryEntry}
           handleUpdateBusinessOfDayEntry={handleUpdateBusinessOfDayEntry}
