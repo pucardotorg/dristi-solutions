@@ -164,10 +164,18 @@ public class EvidenceService {
             String uniqueId = body.getArtifact().getSourceID();
 
             JsonNode courtCase = searchCaseDetails(body, filingNumber);
-            JsonNode formdata = extractWitnessFormData(courtCase, filingNumber);
 
-            boolean witnessFound = processWitnessRecords(body, filingNumber, uniqueId, formdata);
-            if(!witnessFound) {
+            List<WitnessDetails> witnessDetails = objectMapper.convertValue(courtCase.get("witnessDetails"), new TypeReference<>() {});
+            WitnessDetails witness = witnessDetails.stream()
+                    .filter(w -> w.getUniqueId().equalsIgnoreCase(uniqueId))
+                    .findFirst()
+                    .orElse(null);
+            if(witness != null) {
+                log.info("Updating witness with unique id: {}", uniqueId);
+                updateWitnessRecord(body, uniqueId, witness);
+            }
+            else{
+                log.info("No witness exists with unique id: {}", uniqueId);
                 updateWitnessDeposition(body, courtCase);
             }
             log.info("Successfully completed updateCaseWitness for filing number: {}",
@@ -282,6 +290,7 @@ public class EvidenceService {
         return formdata;
     }
 
+    @Deprecated
     private boolean processWitnessRecords(EvidenceRequest body, String filingNumber, String uniqueId, JsonNode formdata) {
         boolean witnessFound = false;
         for (int i = 0; i < formdata.size(); i++) {
@@ -295,7 +304,6 @@ public class EvidenceService {
                 String witnessUniqueId = data.get("uniqueId").textValue();
                 if (witnessUniqueId != null && witnessUniqueId.equals(uniqueId)) {
                     witnessFound = true;
-                    updateWitnessRecord(body, uniqueId, data);
                     break;
                 }
             } catch (CustomException e) {
@@ -313,12 +321,11 @@ public class EvidenceService {
         return witnessFound;
     }
 
-    private void updateWitnessRecord(EvidenceRequest body, String uniqueId, JsonNode data) {
-        WitnessDetails witness = objectMapper.convertValue(data.get("data"), WitnessDetails.class);
+    private void updateWitnessRecord(EvidenceRequest body, String uniqueId, WitnessDetails witness) {
         witness.setUniqueId(uniqueId);
         witness.setWitnessTag(body.getArtifact().getTag());
 
-        // Remark: may need to add email laters to witness details
+        // Remark: may need to add email later to witness details
 //        updateWitnessEmails(body, witness);
         updateWitnessMobileNumbers(body, witness);
 
