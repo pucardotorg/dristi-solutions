@@ -7,7 +7,17 @@ import { Urls } from "../hooks/services/Urls";
 import useDocumentUpload from "../hooks/orders/useDocumentUpload";
 import AuthenticatedLink from "@egovernments/digit-ui-module-dristi/src/Utils/authenticatedLink";
 
-const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData, setSignatureId, signatureId, deliveryChannel }) => {
+const AddSignatureComponent = ({
+  t,
+  isSigned,
+  setIsSigned,
+  handleSigned,
+  rowData,
+  setSignatureId,
+  signatureId,
+  deliveryChannel,
+  handleMockESign,
+}) => {
   const { handleEsign, checkSignStatus } = useESign();
   const { uploadDocuments } = useDocumentUpload();
   const [formData, setFormData] = useState({}); // storing the file upload data
@@ -16,6 +26,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
   const [fileStoreId, setFileStoreId] = useState(rowData?.documents?.[0]?.fileStore || ""); // have to set the uploaded fileStoreID
   const [pageModule, setPageModule] = useState("en");
   const tenantId = window?.Digit.ULBService.getCurrentTenantId();
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
   const uri = `${window.location.origin}${Urls.FileFetchById}?tenantId=${tenantId}&fileStoreId=${fileStoreId}`;
   const name = "Signature";
   const signPlaceHolder = "Signature";
@@ -88,6 +99,16 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
 
   const fileStore = sessionStorage.getItem("fileStoreId") || signatureId;
 
+  const handleClickEsign = () => {
+    if (mockESignEnabled) {
+      setIsSigned(true);
+    } else {
+      sessionStorage.setItem("ESignSummons", JSON.stringify(rowData));
+      sessionStorage.setItem("delieveryChannel", deliveryChannel);
+      handleEsign(name, pageModule, rowData?.documents?.[0]?.fileStore, signPlaceHolder);
+    }
+  };
+
   return (
     <div>
       {!openUploadSignatureModal ? (
@@ -132,11 +153,7 @@ const AddSignatureComponent = ({ t, isSigned, setIsSigned, handleSigned, rowData
               <div style={{ display: "flex", gap: "16px" }}>
                 <Button
                   label={t("CS_ESIGN")}
-                  onButtonClick={() => {
-                    sessionStorage.setItem("ESignSummons", JSON.stringify(rowData));
-                    sessionStorage.setItem("delieveryChannel", deliveryChannel);
-                    handleEsign(name, pageModule, rowData?.documents?.[0]?.fileStore, signPlaceHolder);
-                  }}
+                  onButtonClick={handleClickEsign}
                   style={{
                     width: "96px",
                     background: "none",

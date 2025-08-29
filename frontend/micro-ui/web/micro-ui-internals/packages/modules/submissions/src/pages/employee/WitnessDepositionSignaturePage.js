@@ -94,6 +94,7 @@ const WitnessDepositionSignaturePage = () => {
   const isCitizen = userRoles?.includes("CITIZEN");
 
   const [esignMobileNumber, setEsignMobileNumber] = useState("");
+  const [loader, setLoader] = useState(false);
 
   const { data: witnessDepositionOpenData, isLoading: isWitnessDepositionOpenLoading } = useOpenApiSearchWitnessDeposition(
     {
@@ -227,12 +228,54 @@ const WitnessDepositionSignaturePage = () => {
     }
   }, [showErrorToast]);
 
+  const handleMockESign = async () => {
+    try {
+      setLoader(true);
+
+      const payload = {
+        tenantId,
+        artifactNumber: artifactNumber,
+        partyType: witnessDepositionDetails?.sourceType,
+        mobileNumber: isUserLoggedIn ? userInfo?.mobileNumber : mobileNumber,
+        fileStoreId: fileStoreId,
+      };
+      sessionStorage.removeItem("fileStoreId");
+      const res = await submissionService.updateOpenWitnessDeposition(payload, { tenantId });
+      setShowSignatureModal(false);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("Error while updating witness deposition:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setLoader(false);
+    }
+  };
+
   if (isWitnessDepositionOpenLoading || isWitnessDepositionLoading || isLoading) {
     return <Loader />;
   }
 
   return (
     <React.Fragment>
+      {loader && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "99999999",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
       <div style={styles.header}>{`${t("WITNESS_DEPOSITION")} (${witnessDepositionDetails?.tag})`}</div>
       <div style={styles.docViewer}>
         {!isLoading ? (
@@ -291,6 +334,7 @@ const WitnessDepositionSignaturePage = () => {
           signPlaceHolder={"Deponent"}
           mobileNumber={isUserLoggedIn ? userInfo?.mobileNumber : mobileNumber}
           forWitnessDeposition={true}
+          handleMockESign={handleMockESign}
         />
       )}
       {showSuccessModal && (
