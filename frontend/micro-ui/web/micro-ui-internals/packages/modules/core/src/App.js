@@ -59,7 +59,6 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, de
   }, [pathname]);
 
   useEffect(() => {
-
     // Track web vitals
     const reportWebVitals = ({ name, delta, id, value }) => {
       trackEvent(name, value, "Performance_Metrics");
@@ -113,9 +112,9 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, de
     initData,
   };
 
-  const { t } = useTranslation()
+  const { t } = useTranslation();
 
-  if (isMobileView) {
+  if (false) {
     return (
       <div style={styles.container}>
         <TopBarSideBar
