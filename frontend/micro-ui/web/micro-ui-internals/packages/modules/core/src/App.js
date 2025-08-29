@@ -17,9 +17,15 @@ const styles = {
     boxSizing: "border-box",
   },
   text: {
-    fontSize: "24px",
+    fontSize: "1.2rem",
+    fontWeight: "500",
     color: "#333",
   },
+  list: {
+    paddingLeft: "2rem",
+    marginTop: "1rem",
+    listStyleType: "decimal",
+  }
 };
 
 export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, defaultLanding = "citizen" }) => {
@@ -128,7 +134,15 @@ export const DigitApp = ({ stateCode, modules, appTenants, logoUrl, initData, de
           logoUrl={logoUrl}
           showSidebar={true}
         />
-        <h1 style={styles.text}>{t("MOBILE_VIEW_ERROR")}</h1>
+        <div style={styles.text}>
+          <h2>{t("SITE_NOT_ACCESSIBLE")}</h2>
+          <p>{t("SWITCH_BROWSER_TEXT")}</p>
+          <ol style={styles.list}>
+            <li>{t("TAP_THREE_DOTS")}</li>
+            <li>{t("SELECT_DESKTOP_SITE")}</li>
+            <li>{t("CHECKBOX_TO_ENABLE")}</li>
+          </ol>
+        </div>
       </div>
     );
   }
