@@ -76,7 +76,7 @@ public class CompositeOrderService implements OrderProcessor {
         CaseDiaryEntry diaryEntry = null;
         if (!diaryEntries.isEmpty()) {
             diaryEntry = diaryEntries.get(0);
-            diaryEntry.setBusinessOfDay(orderUtil.getBusinessOfTheDay(order.getAdditionalDetails()));
+            diaryEntry.setBusinessOfDay(orderUtil.getBusinessOfTheDay(order));
         }
         log.info("common processing composite order, result= SUCCESS,orderNumber:{}, orderType:{}", orderRequest.getOrder().getOrderNumber(), orderRequest.getOrder().getOrderType());
 

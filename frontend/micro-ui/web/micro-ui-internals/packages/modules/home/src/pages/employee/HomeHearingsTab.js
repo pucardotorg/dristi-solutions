@@ -242,10 +242,7 @@ const HomeHearingsTab = ({
             { homeFilteredData: filters }
           );
         } else {
-          history.push(
-            `/${window?.contextPath}/employee/dristi/home/view-case?caseId=${hearingDetails?.caseUuid}&filingNumber=${hearingDetails?.filingNumber}&tab=Overview&fromHome=true`,
-            { openOrder: true, homeFilteredData: filters }
-          );
+          history.push(`/${window.contextPath}/employee/orders/generate-orders?filingNumber=${hearingDetails?.filingNumber}`);
         }
         return;
       } else if (isBenchClerk || isCourtRoomManager) {
@@ -608,7 +605,7 @@ const HomeHearingsTab = ({
                     }}
                     className="edit-icon"
                   >
-                    {(isBenchClerk || isCourtRoomManager) ? (
+                    {isBenchClerk || isCourtRoomManager ? (
                       hearingDetails?.status === "PASSED_OVER" || hearingDetails?.status === "SCHEDULED" ? (
                         <span style={{ color: "green", fontWeight: "700", cursor: "pointer" }}>{t("START_HEARING")}</span>
                       ) : (

@@ -19,6 +19,7 @@ function CustomReviewCard({
   isPrevScrutiny,
   setShowImageModal,
   isCaseReAssigned,
+  state,
 }) {
   if (data?.isAdvocateRepresenting?.code === "NO") {
     return null;
@@ -51,6 +52,7 @@ function CustomReviewCard({
             isCaseReAssigned={isCaseReAssigned}
             disableScrutiny={input?.disableScrutiny}
             isWarning={isWarning}
+            caseState={state}
           />
         );
       })}

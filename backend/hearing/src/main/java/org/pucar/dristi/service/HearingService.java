@@ -16,6 +16,8 @@ import org.pucar.dristi.repository.HearingRepository;
 import org.pucar.dristi.util.*;
 import org.pucar.dristi.validator.HearingRegistrationValidator;
 import org.pucar.dristi.web.models.*;
+import org.pucar.dristi.web.models.cases.CaseRequest;
+import org.pucar.dristi.web.models.cases.CourtCase;
 import org.pucar.dristi.web.models.inbox.InboxRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -740,10 +742,7 @@ public class HearingService {
             for (Hearing hearing : hearingList) {
                 hearing.setCourtCaseNumber(body.get("courtCaseNumber") != null ? body.get("courtCaseNumber").toString() : null);
                 hearing.setCmpNumber(body.get("cmpNumber") != null ? body.get("cmpNumber").toString() : null);
-                if ((body.get("isLPRCase") != null && (Boolean) body.get("isLPRCase")) && (body.get("lprNumber") != null && !body.get("lprNumber").toString().isEmpty())) {
-                    hearing.setCaseReferenceNumber(body.get("lprNumber").toString());
-                }
-                else if (body.get("courtCaseNumber") != null) {
+                if (body.get("courtCaseNumber") != null) {
                     hearing.setCaseReferenceNumber(body.get("courtCaseNumber").toString());
                 } else if (body.get("cmpNumber") != null) {
                     hearing.setCaseReferenceNumber(body.get("cmpNumber").toString());
@@ -759,6 +758,42 @@ public class HearingService {
             log.info("operation=updateCaseReferenceHearing, status=SUCCESS, filingNumber={}", body.get("filingNumber").toString());
         } catch (Exception e) {
             log.info("operation=updateCaseReferenceHearing, status=FAILURE, filingNumber={}", body.get("filingNumber").toString());
+            throw new CustomException("Error updating case reference number: {}", e.getMessage());
+        }
+    }
+
+    public void updateCaseReferenceHearingAfterLpr(CaseRequest caseRequest) {
+        try {
+            log.info("operation=updateCaseReferenceHearingAfterLpr, status=IN_PROGRESS");
+            RequestInfo requestInfo = caseRequest.getRequestInfo();
+            CourtCase courtCase = caseRequest.getCases();
+            String filingNumber = courtCase.getFilingNumber();
+            HearingSearchRequest request = HearingSearchRequest.builder()
+                    .requestInfo(requestInfo)
+                    .criteria(HearingCriteria.builder().filingNumber(filingNumber).build())
+                    .build();
+            List<Hearing> hearingList = searchHearing(request);
+            for (Hearing hearing : hearingList) {
+                hearing.setCourtCaseNumber(courtCase.getCourtCaseNumber());
+                hearing.setCmpNumber(courtCase.getCmpNumber());
+                if ((courtCase.getIsLPRCase() != null && courtCase.getIsLPRCase()) && courtCase.getLprNumber() != null) {
+                    hearing.setCaseReferenceNumber(courtCase.getLprNumber());
+                } else if (courtCase.getCourtCaseNumber() != null) {
+                    hearing.setCaseReferenceNumber(courtCase.getCourtCaseNumber());
+                } else if (courtCase.getCmpNumber() != null) {
+                    hearing.setCaseReferenceNumber(courtCase.getCmpNumber());
+                } else {
+                    hearing.setCaseReferenceNumber(filingNumber);
+                }
+                HearingRequest hearingRequest = HearingRequest.builder()
+                        .requestInfo(requestInfo)
+                        .hearing(hearing)
+                        .build();
+                updateHearing(hearingRequest);
+            }
+            log.info("operation=updateCaseReferenceHearingAfterLpr, status=SUCCESS");
+        } catch (Exception e) {
+            log.info("operation=updateCaseReferenceHearingAfterLpr, status=FAILURE, filingNumber={}", caseRequest.getCases().getFilingNumber());
             throw new CustomException("Error updating case reference number: {}", e.getMessage());
         }
     }

@@ -5,6 +5,7 @@ const {
   search_sunbirdrc_credential_service,
   create_pdf,
   search_message,
+  search_hearing,
 } = require("../api");
 const { renderError } = require("../utils/renderError");
 const { formatDate } = require("./formatDate");
@@ -56,6 +57,20 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
       return acc;
     }, {});
 
+    const resHearing = await handleApiCall(
+      res,
+      () => search_hearing(tenantId, cnrNumber, requestInfo, order?.courtId),
+      "Failed to query hearing service"
+    );
+
+    const hearingInProgress = resHearing?.data?.HearingList.find(
+      (hearing) => hearing?.status === config.workFlowState.hearing.INPROGRESS
+    );
+
+    const hearingScheduled = resHearing?.data?.HearingList.find(
+      (hearing) => hearing?.status === config.workFlowState.hearing.SCHEDULED
+    );
+
     const mdmsCourtRoom = courtCaseJudgeDetails.mdmsCourtRoom;
     const judgeDetails = courtCaseJudgeDetails.judgeDetails;
 
@@ -87,7 +102,7 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
 
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
-    const caseNumber = courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = courtCase?.isLPRCase ? courtCase?.lprNumber : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
 
     const litigants = courtCase?.litigants?.map((litigant) => ({
       ...litigant,
@@ -158,12 +173,22 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
       order?.attendance?.Absent?.map(
         (attendee) => messagesMap[attendee] || attendee
       )?.join(", ") || "";
-    const isHearingInProgress = Boolean(
-      order?.attendance && order?.purposeOfNextHearing && order?.nextHearingDate
-    );
+    const isHearingInProgress = !!hearingInProgress;
     const nextHearingDate = order?.nextHearingDate
       ? formatDate(new Date(order?.nextHearingDate), "DD-MM-YYYY")
+      : hearingScheduled?.startTime
+      ? formatDate(new Date(hearingScheduled?.startTime), "DD-MM-YYYY")
       : "";
+    const purposeOfNextHearing =
+      messagesMap[order?.purposeOfNextHearing || ""] ||
+      messagesMap[hearingScheduled?.hearingType || ""] ||
+      "";
+    const isNextHearing = !!(
+      (order?.nextHearingDate &&
+        order?.purposeOfNextHearing &&
+        hearingInProgress) ||
+      hearingScheduled
+    );
 
     const data = {
       Data: [
@@ -179,7 +204,8 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
           listOfPresentAttendees,
           listOfAbsentAttendees,
           itemText: order?.itemText || "",
-          purposeOfNextHearing: order?.purposeOfNextHearing || "",
+          isNextHearing,
+          purposeOfNextHearing,
           nextHearingDate,
           judgeSignature: judgeDetails.judgeSignature,
           courtSeal: judgeDetails.courtSeal,

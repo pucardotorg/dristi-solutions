@@ -646,6 +646,7 @@ function SelectReviewAccordion({ t, config, onSelect, formData = {}, errors, for
                         titleHeading={titleHeading}
                         isPrevScrutiny={isPrevScrutiny}
                         isCaseReAssigned={isCaseReAssigned}
+                        state={state}
                       />
                     );
                   })}

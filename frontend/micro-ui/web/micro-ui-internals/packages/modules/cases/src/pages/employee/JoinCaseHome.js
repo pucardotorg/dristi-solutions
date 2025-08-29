@@ -1,4 +1,4 @@
-import { Button, CloseSvg, Toast } from "@egovernments/digit-ui-react-components";
+import { Button, CloseSvg, Loader, Toast } from "@egovernments/digit-ui-react-components";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { DRISTIService } from "../../../../dristi/src/services";
 import { useTranslation } from "react-i18next";
@@ -477,7 +477,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           },
         },
         isPoaAvailable: isAlreadyPoa,
-        poaAuthorizationDocument : poaAuthorizationDocument,
+        poaAuthorizationDocument: poaAuthorizationDocument,
         poaVerification,
         isAdvocateRepresenting: !!isAdvocateRepresenting,
         advocateRepresentingLength: representatives?.length || 0,
@@ -549,7 +549,7 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
               },
             }),
             isPoaAvailable: isAlreadyPoa,
-            poaAuthorizationDocument : poaAuthorizationDocument,
+            poaAuthorizationDocument: poaAuthorizationDocument,
             poaVerification,
             isAdvocateRepresenting: !!isAdvocateRepresenting,
             advocateRepresentingLength: representatives?.length || 0,
@@ -1357,7 +1357,11 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
                     },
                   },
                   caseTitle: caseDetails?.caseTitle,
-                  caseNumber: caseDetails?.courtCaseNumber || caseDetails?.cmpNumber || caseDetails?.filingNumber,
+                  caseNumber:
+                    (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
+                    caseDetails?.courtCaseNumber ||
+                    caseDetails?.cmpNumber ||
+                    caseDetails?.filingNumber,
                   partyType: selectPartyData?.partyInvolve?.value === "COMPLAINANTS" ? "COMPLAINANTS" : "ACCUSED",
                   owner: removeInvalidNameParts(ownerName),
                   onBehalOfName: removeInvalidNameParts(ownerName),
@@ -1822,6 +1826,25 @@ const JoinCaseHome = ({ refreshInbox, setShowJoinCase, showJoinCase, type, data 
           hideModalActionbar={step === 3 || step === 6 ? true : false}
           popupModuleMianClassName={success ? "success-main" : ""}
         >
+          {isApiCalled && (
+            <div
+              style={{
+                width: "100vw",
+                height: "100vh",
+                zIndex: "9999",
+                position: "fixed",
+                right: "0",
+                display: "flex",
+                top: "0",
+                background: "rgb(234 234 245 / 50%)",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+              className="submit-loader"
+            >
+              <Loader />
+            </div>
+          )}
           {step >= 0 && modalItem[step]?.modalMain}
         </Modal>
       )}

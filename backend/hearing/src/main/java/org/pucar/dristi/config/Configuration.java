@@ -242,6 +242,9 @@ public class Configuration {
     @Value("${dristi.order.search.endpoint}")
     private String orderSearchEndPoint;
 
+    @Value("${dristi.order.create.endpoint}")
+    private String orderCreateEndPoint;
+
     // Task Config
     @Value("${dristi.task.host}")
     private String taskServiceHost;

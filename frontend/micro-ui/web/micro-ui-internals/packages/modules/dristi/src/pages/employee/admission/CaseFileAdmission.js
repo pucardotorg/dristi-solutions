@@ -801,7 +801,7 @@ function CaseFileAdmission({ t, path }) {
           filingNumber: [caseDetails.filingNumber],
           hearingType: purpose,
           status: true,
-          courtCaseNumber: caseDetails?.courtCaseNumber,
+          courtCaseNumber: caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber,
           cmpNumber: caseDetails?.cmpNumber,
           attendees: [
             ...Object.values(participant)

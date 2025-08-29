@@ -142,7 +142,7 @@ public class PublishOrder implements OrderUpdateStrategy {
                 .caseNumber(courtCase.getCmpNumber())
                 .caseId(courtCase.getId().toString())
                 .courtId(courtCase.getCourtId())
-                .businessOfDay(orderUtil.getBusinessOfTheDay(order.getAdditionalDetails()))
+                .businessOfDay(orderUtil.getBusinessOfTheDay(order))
                 .referenceId(order.getOrderNumber())
                 .referenceType("Order")
                 .hearingDate(hearingDate)

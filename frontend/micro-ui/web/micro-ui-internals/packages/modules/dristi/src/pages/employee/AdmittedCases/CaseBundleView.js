@@ -580,7 +580,8 @@ function CaseBundleView({ caseDetails, tenantId, filingNumber }) {
               "UNDELIVERED",
               "NOTICE_SENT",
             ],
-            searchText: caseDetails?.cnrNumber || caseDetails?.cmpNumber || caseDetails?.courtCaseNumber,
+            searchText:
+              caseDetails?.cnrNumber || caseDetails?.cmpNumber || (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber),
             courtId: caseDetails?.courtId,
             tenantId,
           },

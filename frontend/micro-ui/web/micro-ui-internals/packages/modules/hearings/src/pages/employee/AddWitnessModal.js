@@ -433,6 +433,7 @@ const AddWitnessModal = ({ activeTab, tenantId, onCancel, caseDetails, isEmploye
           margin: "0px",
           height: "calc(100% - 65px)",
           overflowY: "auto",
+          maxHeight: "100%",
         }}
         headerBarMain={<h1 className="heading-m">{t("ADD_WITNESS_DETAILS")}</h1>}
         headerBarEnd={<CloseBtn onClick={onCancel} />}

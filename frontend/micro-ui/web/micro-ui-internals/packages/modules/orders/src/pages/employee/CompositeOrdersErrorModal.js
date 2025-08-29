@@ -28,7 +28,7 @@ function CompositeOrdersErrorModal({ t, showOrderValidationModal, setShowOrderVa
 
   return (
     <Modal
-      headerBarMain={<Heading label={t("ERROR")} />}
+      headerBarMain={<Heading label={t("FIELD_ERROR")} />}
       headerBarEnd={<CloseBtn onClick={handleOnClose} />}
       actionSaveLabel={t("CS_BACK")}
       actionSaveOnSubmit={handleOnClose}

@@ -179,6 +179,7 @@ export const documentsTypeMapping = {
   pipAffidavitFileUploadRespondent: "RESPONDENT_PIP_AFFIDAVIT",
   nocJudgeOrder: "NOC_JUDGE_ORDER",
   supportingDocument: "SUPPORTING_DOCUMENT",
+  lprDocument: "LPR_DOCUMENT",
 };
 
 export const documentLabels = {

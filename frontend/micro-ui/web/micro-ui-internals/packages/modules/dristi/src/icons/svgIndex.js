@@ -166,11 +166,11 @@ const JoinCaseIcon = () => (
   </svg>
 );
 
-const CustomDeleteIcon = () => (
-  <svg width="16" height="19" viewBox="0 0 16 19" fill="none" xmlns="http://www.w3.org/2000/svg">
+const CustomDeleteIcon = ({ color = "#C62326", width = "16", height = "19" }) => (
+  <svg width={width} height={height} viewBox="0 0 16 19" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
       d="M3 18.5C2.45 18.5 1.97917 18.3042 1.5875 17.9125C1.19583 17.5208 1 17.05 1 16.5V3.5H0V1.5H5V0.5H11V1.5H16V3.5H15V16.5C15 17.05 14.8042 17.5208 14.4125 17.9125C14.0208 18.3042 13.55 18.5 13 18.5H3ZM13 3.5H3V16.5H13V3.5ZM5 14.5H7V5.5H5V14.5ZM9 14.5H11V5.5H9V14.5Z"
-      fill="#C62326"
+      fill={color}
     />
   </svg>
 );
@@ -1734,6 +1734,33 @@ const WarningInfoRedIcon = () => {
   );
 };
 
+const EditPencilIcon = ({ color = "#007E7E", width = "12", height = "12" }) => {
+  return (
+    <svg width={width} height={height} viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M6.084 3.41719L7.37533 2.12586L9.87333 4.62386L8.582 5.91586L6.084 3.41719ZM11.8067 1.75386L10.2467 0.193862C10.1218 0.0696945 9.95279 0 9.77667 0C9.60054 0 9.43157 0.0696945 9.30667 0.193862L8.08667 1.41386L10.5867 3.91386L11.8067 2.66719C11.9229 2.54356 11.9876 2.38024 11.9876 2.21053C11.9876 2.04082 11.9229 1.8775 11.8067 1.75386ZM3.75333 5.75386L0 9.50053V12.0005H2.5L6.25333 8.25386L8.582 5.91586L6.084 3.41719L3.75333 5.75386Z"
+        fill={color}
+      />
+    </svg>
+  );
+};
+
+const OutlinedInfoIcon = () => (
+  <svg width="19" height="19" viewBox="0 0 19 19" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ position: "absolute", right: -22, top: 0 }}>
+    <g clip-path="url(#clip0_7603_50401)">
+      <path
+        d="M8.70703 5.54232H10.2904V7.12565H8.70703V5.54232ZM8.70703 8.70898H10.2904V13.459H8.70703V8.70898ZM9.4987 1.58398C5.1287 1.58398 1.58203 5.13065 1.58203 9.50065C1.58203 13.8707 5.1287 17.4173 9.4987 17.4173C13.8687 17.4173 17.4154 13.8707 17.4154 9.50065C17.4154 5.13065 13.8687 1.58398 9.4987 1.58398ZM9.4987 15.834C6.00745 15.834 3.16536 12.9919 3.16536 9.50065C3.16536 6.0094 6.00745 3.16732 9.4987 3.16732C12.9899 3.16732 15.832 6.0094 15.832 9.50065C15.832 12.9919 12.9899 15.834 9.4987 15.834Z"
+        fill="#3D3C3C"
+      />
+    </g>
+    <defs>
+      <clipPath id="clip0_7603_50401">
+        <rect width="19" height="19" fill="white" />
+      </clipPath>
+    </defs>
+  </svg>
+);
+
 export {
   AdvocateIcon,
   CalendarLeftArrow,
@@ -1807,4 +1834,6 @@ export {
   TriangleIcon,
   BlackTickIcon,
   WarningInfoRedIcon,
+  EditPencilIcon,
+  OutlinedInfoIcon,
 };
