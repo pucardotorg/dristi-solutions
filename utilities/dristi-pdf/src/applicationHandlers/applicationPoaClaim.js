@@ -110,7 +110,7 @@ async function applicationPoaClaim(
     const partyType =
       application?.additionalDetails?.partyType === "COMPLAINANTS"
         ? "Complainant"
-        : "Accuses";
+        : "Accused";
 
     let poaClaimLitigant = [];
     if (poaCliamList && poaCliamList?.length > 0) {
