@@ -50,7 +50,6 @@ function ConfirmSubmissionAction({
         handleAction(generateOrder, type);
       }}
       popupStyles={{ borderRadius: "4px" }}
-      headerBarMainStyle={{ height: "55px" }}
       isDisabled={!reasonOfApplication}
     >
       <div>
