@@ -1,7 +1,7 @@
 import { Button as ActionButton } from "@egovernments/digit-ui-components";
 import { BreadCrumbsParamsDataContext } from "@egovernments/digit-ui-module-core";
 import { ActionBar, SubmitBar, Header, InboxSearchComposer, Loader, Menu, Toast, CloseSvg, CheckBox } from "@egovernments/digit-ui-react-components";
-import React, { useCallback, useEffect, useMemo, useState, useContext } from "react";
+import React, { useCallback, useEffect, useMemo, useState, useContext, useDebugValue } from "react";
 import { useTranslation } from "react-i18next";
 import { useHistory, useRouteMatch, useLocation } from "react-router-dom";
 import { CustomThreeDots, RightArrow } from "../../../icons/svgIndex";
@@ -492,6 +492,9 @@ const AdmittedCaseV2 = () => {
         ?.map((item) => {
           const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
           const poaHolder = caseDetails?.poaHolders?.find((poa) => poa?.individualId === item?.individualId);
+          const complainantDetails = caseDetails?.additionalDetails?.complainantDetails?.formdata?.find(
+            (obj) => obj?.data?.complainantVerification?.individualDetails?.individualId === item?.individualId
+          )?.data;
           if (poaHolder) {
             return {
               additionalDetails: item?.additionalDetails,
@@ -514,6 +517,7 @@ const AdmittedCaseV2 = () => {
             individualId: item?.individualId,
             isJoined: true,
             partyType: "complainant",
+            poaUuid: complainantDetails?.poaVerification?.individualDetails?.userUuid,
           };
         }) || []
     );
@@ -525,9 +529,10 @@ const AdmittedCaseV2 = () => {
         ?.filter((item) => item?.partyType?.includes("respondent"))
         .map((item) => {
           const fullName = removeInvalidNameParts(item?.additionalDetails?.fullName);
-          const uniqueId = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
+          const respondentDetails = caseDetails?.additionalDetails?.respondentDetails?.formdata?.find(
             (obj) => obj?.data?.respondentVerification?.individualDetails?.individualId === item?.individualId
-          )?.uniqueId;
+          );
+          const respondentPoaDetails = respondentDetails?.data?.poaVerification?.individualDetails?.userUuid;
           return {
             additionalDetails: item?.additionalDetails,
             code: fullName,
@@ -537,7 +542,8 @@ const AdmittedCaseV2 = () => {
             individualId: item?.individualId,
             isJoined: true,
             partyType: "respondent",
-            uniqueId,
+            uniqueId: respondentDetails?.uniqueId,
+            poaUuid: respondentPoaDetails,
           };
         }) || []
     );

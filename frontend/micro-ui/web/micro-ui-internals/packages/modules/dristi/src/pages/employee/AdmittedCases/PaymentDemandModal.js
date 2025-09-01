@@ -119,6 +119,8 @@ const PaymentDemandModal = ({
   const [comments, setComments] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  console.log(joinedLitigants, "klkl");
+
   const stateId = useMemo(() => Digit.ULBService.getStateId(), []);
 
   const totalAmount = useMemo(() => paymentItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0), [paymentItems]);
@@ -183,6 +185,7 @@ const PaymentDemandModal = ({
   }, [setShowPaymentConfirmationModal, setShowPaymentDemandModal]);
 
   const handleSubmit = useCallback(async () => {
+    debugger;
     if (isSubmitting) return;
 
     setIsSubmitting(true);
@@ -222,7 +225,7 @@ const PaymentDemandModal = ({
               },
             },
           },
-          assignedTo: [{ uuid: selectedParty?.partyUuid }],
+          assignedTo: [{ uuid: selectedParty?.partyUuid }, ...(selectedParty?.poaUuid ? [{ uuid: selectedParty?.poaUuid }] : [])],
         },
         tenantId,
       });
