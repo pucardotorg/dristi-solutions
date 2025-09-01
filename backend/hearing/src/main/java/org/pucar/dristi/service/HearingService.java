@@ -876,6 +876,8 @@ public class HearingService {
                     .cnrNumber(cnrNumber)
                     .tenantId(tenantId)
                     .orderCategory("INTERMEDIATE")
+                    .isActive(true)
+                    .status("")
                     .statuteSection(StatuteSection.builder().tenantId(tenantId).build())
                     .build();
 
