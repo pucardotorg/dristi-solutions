@@ -156,6 +156,7 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
           return getStringAddressDetails(addressDetail.addressDetails);
         });
         return {
+          individualId: accused?.individualId,
           name: accused?.additionalDetails?.fullName,
           address: addresses?.join(", ") || "",
           listOfAdvocatesRepresenting: accused?.representatives
@@ -165,8 +166,8 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
       });
 
     const unJoinedAccuseds =
-      courtCase.additionalDetails.respondentDetails.formdata?.map(
-        (formData) => {
+      courtCase.additionalDetails.respondentDetails.formdata
+        ?.map((formData) => {
           const data = formData?.data;
           const firstName = data?.respondentFirstName || "";
           const middleName = data?.respondentMiddleName || "";
@@ -175,12 +176,23 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
             return getStringAddressDetails(addressDetail?.addressDetails);
           });
           return {
+            individualId:
+              data?.respondentVerification?.individualDetails?.individualId ||
+              null,
             name: `${firstName} ${middleName} ${lastName}` || "",
             address: addresses?.join(", ") || "",
             listOfAdvocatesRepresenting: [],
           };
-        }
-      );
+        })
+        ?.filter(
+          (unJoined) =>
+            !joinedAccuseds.some(
+              (joined) =>
+                joined?.individualId &&
+                unJoined?.individualId &&
+                joined?.individualId === unJoined?.individualId
+            )
+        ) || [];
 
     const accusedList = [...joinedAccuseds, ...unJoinedAccuseds];
 
