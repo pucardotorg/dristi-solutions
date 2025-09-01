@@ -222,7 +222,7 @@ const PaymentDemandModal = ({
               },
             },
           },
-          assignedTo: [{ uuid: selectedParty?.partyUuid }],
+          assignedTo: [{ uuid: selectedParty?.partyUuid }, ...(selectedParty?.poaUuid ? [{ uuid: selectedParty?.poaUuid }] : [])],
         },
         tenantId,
       });
