@@ -5,9 +5,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import pucar.config.Configuration;
 import pucar.factory.OrderFactory;
 import pucar.factory.OrderServiceFactoryProvider;
 import pucar.util.ADiaryUtil;
+import pucar.util.CaseUtil;
 import pucar.util.HearingUtil;
 import pucar.util.OrderUtil;
 import pucar.web.models.Order;
@@ -15,10 +17,12 @@ import pucar.web.models.OrderRequest;
 import pucar.web.models.OrderResponse;
 import pucar.web.models.adiary.BulkDiaryEntryRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
-import pucar.web.models.hearing.Hearing;
-import pucar.web.models.hearing.HearingCriteria;
-import pucar.web.models.hearing.HearingSearchRequest;
+import pucar.web.models.courtCase.CaseCriteria;
+import pucar.web.models.courtCase.CaseSearchRequest;
+import pucar.web.models.courtCase.CourtCase;
+import pucar.web.models.hearing.*;
 
+import java.util.Collections;
 import java.util.List;
 
 import static pucar.config.ServiceConstants.*;
@@ -32,13 +36,17 @@ public class OrderService {
     private final OrderServiceFactoryProvider factoryProvider;
     private final ADiaryUtil aDiaryUtil;
     private final HearingUtil hearingUtil;
+    private final CaseUtil caseUtil;
+    private final Configuration configuration;
 
     @Autowired
-    public OrderService(OrderUtil orderUtil, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil) {
+    public OrderService(OrderUtil orderUtil, OrderServiceFactoryProvider factoryProvider, ADiaryUtil aDiaryUtil, HearingUtil hearingUtil, CaseUtil caseUtil, Configuration configuration) {
         this.orderUtil = orderUtil;
         this.factoryProvider = factoryProvider;
         this.aDiaryUtil = aDiaryUtil;
         this.hearingUtil = hearingUtil;
+        this.caseUtil = caseUtil;
+        this.configuration = configuration;
     }
 
 
@@ -55,7 +63,7 @@ public class OrderService {
         Order order = request.getOrder();
         RequestInfo requestInfo = request.getRequestInfo();
 
-        if (SCHEDULING_NEXT_HEARING.equalsIgnoreCase(order.getOrderType())) {
+        if (order.getNextHearingDate()!=null) {
             String hearingNumber = hearingUtil.getHearingNumberFormApplicationAdditionalDetails(order.getAdditionalDetails());
             List<Hearing> hearings = hearingUtil.fetchHearing(HearingSearchRequest.builder().requestInfo(requestInfo)
                     .criteria(HearingCriteria.builder().hearingId(hearingNumber).tenantId(order.getTenantId()).build()).build());
@@ -74,7 +82,15 @@ public class OrderService {
 
         orderProcessor.preProcessOrder(request);
 
+        if(request.getOrder().getNextHearingDate()!=null){
+            preProcessScheduleNextHearing(request);
+        }
+
         OrderResponse orderResponse = orderUtil.updateOrder(request);
+
+        if(request.getOrder().getNextHearingDate()!=null){
+            hearingUtil.updateHearingStatus(request);
+        }
 
         List<CaseDiaryEntry> diaryEntries = orderProcessor.processCommonItems(request);
 
@@ -94,5 +110,29 @@ public class OrderService {
         updateHearingSummary(request);
 
         return orderResponse.getOrder();
+    }
+
+    public void preProcessScheduleNextHearing(OrderRequest orderRequest) {
+        Order order = orderRequest.getOrder();
+        RequestInfo requestInfo = orderRequest.getRequestInfo();
+        log.info("pre processing, result=IN_PROGRESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
+
+        List<CourtCase> cases = caseUtil.getCaseDetailsForSingleTonCriteria(CaseSearchRequest.builder()
+                .criteria(Collections.singletonList(CaseCriteria.builder().filingNumber(order.getFilingNumber()).tenantId(order.getTenantId()).defaultFields(false).build()))
+                .requestInfo(requestInfo).build());
+
+        // add validation here
+        CourtCase courtCase = cases.get(0);
+
+        HearingRequest request = hearingUtil.createHearingRequestForScheduleNextHearing(requestInfo, order, courtCase);
+
+        StringBuilder createHearingURI = new StringBuilder(configuration.getHearingHost()).append(configuration.getHearingCreateEndPoint());
+
+        HearingResponse newHearing = hearingUtil.createOrUpdateHearing(request, createHearingURI);
+
+        order.setHearingNumber(newHearing.getHearing().getHearingId());
+        log.info("hearing number:{}", newHearing.getHearing().getHearingId());
+
+        log.info("pre processing, result=SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
     }
 }
