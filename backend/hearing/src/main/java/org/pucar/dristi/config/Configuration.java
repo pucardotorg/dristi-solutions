@@ -278,4 +278,12 @@ public class Configuration {
     @Value("${dristi.analytics.create.pendingtask}")
     private String createPendingTaskEndPoint;
 
+    @Value("${dristi.pending.task.name}")
+    private String pendingTaskName;
+
+    @Value("${order.businessservice}")
+    private String orderEntityType;
+
+    @Value("${schedule.hearing.sla}")
+    private int scheduleHearingSla;
 }
