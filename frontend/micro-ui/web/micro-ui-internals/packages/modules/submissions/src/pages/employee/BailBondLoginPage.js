@@ -47,7 +47,7 @@ const BailBondLoginPage = () => {
       history.replace(`/${window?.contextPath}/citizen/dristi/home/bail-bond-sign?tenantId=${tenantId}&bailbondId=${bailbondId}`, {
         mobileNumber: mobileNumber,
         tenantId: tenantId,
-        isAuthorised : true,
+        isAuthorised: true,
       });
     } catch (error) {
       setError(true);
@@ -131,7 +131,7 @@ const BailBondLoginPage = () => {
                 <div style={{ display: "flex", justifyContent: "center", paddingTop: "20px" }}>
                   <Button
                     label={t("CONFIRM")}
-                    style={{ boxShadow: "none", padding: "10px 24px", width: "30%", gap: "4px" }}
+                    style={{ boxShadow: "none", padding: "10px 24px", width: "150px", gap: "4px" }}
                     onButtonClick={handleSubmit}
                     isDisabled={isDisabled}
                   />
