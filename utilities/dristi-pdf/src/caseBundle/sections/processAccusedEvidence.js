@@ -49,7 +49,7 @@ async function processAccusedEvidence(
         courtId: courtCase.courtId,
         filingNumber: courtCase.filingNumber,
         artifactType: "WITNESS_DEPOSITION",
-        status: "COMPLETED",
+        status: ["COMPLETED"],
         isVoid: false,
         tenantId,
       },
