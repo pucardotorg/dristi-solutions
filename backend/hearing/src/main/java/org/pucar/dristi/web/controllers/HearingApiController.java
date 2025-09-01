@@ -168,9 +168,9 @@ public class HearingApiController {
     public ResponseEntity<DraftOrderResponse> getDraftOrder(@Parameter(in = ParameterIn.DEFAULT, description = "Check Draft order for hearing Request and RequestInfo", required = true, schema = @Schema()) @Valid @RequestBody HearingDraftOrderRequest request) {
         log.info("api=/v1/getDraftOrder, result=IN_PROGRESS");
         String hearingNumber = request.getHearingDraftOrder().getHearingNumber();
-        String filingNumber = request.getHearingDraftOrder().getHearingNumber();
-        String cnrNumber = request.getHearingDraftOrder().getHearingNumber();
-        String tenantId = request.getHearingDraftOrder().getHearingNumber();
+        String filingNumber = request.getHearingDraftOrder().getFilingNumber();
+        String cnrNumber = request.getHearingDraftOrder().getCnrNumber();
+        String tenantId = request.getHearingDraftOrder().getTenantId();
 
         Order order = hearingService.createDraftOrder(hearingNumber, tenantId, filingNumber, cnrNumber, request.getRequestInfo());
         DraftOrderResponse response = DraftOrderResponse.builder().responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true))
