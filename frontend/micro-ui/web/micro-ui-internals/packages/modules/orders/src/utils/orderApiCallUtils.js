@@ -24,7 +24,7 @@ export const getCourtFee = async (channelId, receiverPincode, taskType, tenantId
   }
 };
 
-export const addOrderItem = async (order, action, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails) => {
+export const addOrderItem = async (order, action, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails, allParties) => {
   const compositeItems = [];
   order?.compositeItems?.forEach((item, index) => {
     let orderSchema = {};
@@ -43,10 +43,15 @@ export const addOrderItem = async (order, action, tenantId, applicationTypeConfi
     } catch (error) {
       console.error("error :>> ", error);
     }
-    const parties = getParties(item?.orderSchema?.additionalDetails?.formdata?.orderType?.code, {
-      ...orderSchema,
-      orderDetails: { ...orderSchema?.orderDetails },
-    });
+
+    const parties = getParties(
+      item?.orderSchema?.additionalDetails?.formdata?.orderType?.code,
+      {
+        ...orderSchema,
+        orderDetails: { ...orderSchema?.orderDetails },
+      },
+      allParties
+    );
 
     const caseNumber =
       (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
@@ -85,7 +90,7 @@ export const addOrderItem = async (order, action, tenantId, applicationTypeConfi
   return await ordersService.createOrder(payload, { tenantId });
 };
 
-export const createOrder = async (order, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails) => {
+export const createOrder = async (order, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails, allParties) => {
   try {
     let orderSchema = {};
     try {
@@ -98,10 +103,14 @@ export const createOrder = async (order, tenantId, applicationTypeConfigUpdated,
     } catch (error) {
       console.error("error :>> ", error);
     }
-    const parties = getParties(order?.orderType, {
-      ...orderSchema,
-      orderDetails: { ...orderSchema?.orderDetails, ...(order?.orderDetails || {}) },
-    });
+    const parties = getParties(
+      order?.orderType,
+      {
+        ...orderSchema,
+        orderDetails: { ...orderSchema?.orderDetails, ...(order?.orderDetails || {}) },
+      },
+      allParties
+    );
 
     const caseNumber =
       (caseDetails?.isLPRCase ? caseDetails?.lprNumber : caseDetails?.courtCaseNumber) ||
