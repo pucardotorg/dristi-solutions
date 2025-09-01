@@ -855,6 +855,7 @@ public class HearingService {
         OrderCriteria criteria = OrderCriteria.builder()
                 .filingNumber(filingNumber)
                 .status("DRAFT_IN_PROGRESS")
+                .hearingNumber(hearingNumber)
                 .tenantId(tenantId)
                 .build();
 
