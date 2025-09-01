@@ -2201,6 +2201,21 @@ const GenerateOrdersV2 = () => {
               ...((hearingNumber || hearingDetails?.hearingId) && {
                 hearingNumber: hearingNumber || hearingDetails?.hearingId,
               }),
+              ...((currentInProgressHearing || hearingId) && {
+                hearingSummary: order?.itemText,
+              }),
+              additionalDetails: {
+                ...order?.additionalDetails,
+                ...((currentInProgressHearing || hearingId) &&
+                  !skipScheduling && {
+                    formdata: {
+                      ...(order?.additionalDetails?.formdata || {}),
+                      attendees: attendeeOptions,
+                      refHearingId: order?.hearingNumber,
+                      namesOfPartiesRequired: [...complainants, ...poaHolders, ...respondents, ...unJoinedLitigant, ...witnesses],
+                    },
+                  }),
+              },
               documents: updatedDocuments,
               workflow: { ...order.workflow, action, documents: [{}] },
             },
@@ -2228,15 +2243,12 @@ const GenerateOrdersV2 = () => {
       let updatedOrder;
       let updateOrderResponse = {};
       if (updatedOrderData?.orderCategory === "INTERMEDIATE") {
-        if (updatedOrderData?.orderType) {
-          updatedOrder = structuredClone(updatedOrderData);
-          updatedOrder.orderTitle = t(updatedOrderData?.orderTitle);
-
-          if (updatedOrder?.orderNumber) {
-            updateOrderResponse = await updateOrder(updatedOrder, OrderWorkflowAction.SAVE_DRAFT);
-          } else {
-            updateOrderResponse = await createOrder(updatedOrder, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails, allParties);
-          }
+        updatedOrder = structuredClone(updatedOrderData);
+        updatedOrder.orderTitle = t(updatedOrderData?.orderTitle);
+        if (updatedOrder?.orderNumber) {
+          updateOrderResponse = await updateOrder(updatedOrder, OrderWorkflowAction.SAVE_DRAFT);
+        } else {
+          updateOrderResponse = await createOrder(updatedOrder, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails, allParties);
         }
       } else {
         if (updatedOrderData?.orderNumber) {
@@ -2342,7 +2354,7 @@ const GenerateOrdersV2 = () => {
       setAddOrderModal(false);
       setEditOrderModal(false);
 
-      if (!orderNumber) {
+      if (!orderNumber || orderNumber === "null" || orderNumber === "undefined" || updateOrderResponse?.order?.orderNumber) {
         history.replace(
           `/${window.contextPath}/employee/orders/generate-orders?filingNumber=${caseDetails?.filingNumber}&orderNumber=${updateOrderResponse?.order?.orderNumber}`
         );
@@ -3168,7 +3180,7 @@ const GenerateOrdersV2 = () => {
               isApplicationCompositeOrder={true}
               compositeOrderObj={currentOrder}
             />
-            {currentInProgressHearing && (
+            {(currentInProgressHearing || currentOrder?.hearingNumber) && (
               <React.Fragment>
                 <LabelFieldPair style={{ width: "100%", display: "flex", flexDirection: "column", alignItems: "left" }}>
                   <CardHeader styles={{ fontSize: "16px", fontWeight: "bold" }}>{t("MARK_WHO_IS_PRESENT")}</CardHeader>
@@ -3313,7 +3325,7 @@ const GenerateOrdersV2 = () => {
               </div>
             </LabelFieldPair>
 
-            {currentInProgressHearing && (
+            {(currentInProgressHearing || currentOrder?.hearingNumber) && (
               <React.Fragment>
                 <div className="checkbox-item">
                   <input
@@ -3415,7 +3427,7 @@ const GenerateOrdersV2 = () => {
           {/* Right Column */}
           <div className="generate-orders-v2-column">
             <div className="section-header">{t("ORDER_TEXT")}</div>
-            {currentInProgressHearing && (
+            {(currentInProgressHearing || currentOrder?.hearingNumber) && (
               <div>
                 <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>{t("ORDER_ATTENDANCE")}</div>
                 <textarea
@@ -3471,23 +3483,31 @@ const GenerateOrdersV2 = () => {
                     });
                   }
                 }}
-                rows={currentInProgressHearing ? 8 : 20}
+                rows={currentInProgressHearing || currentOrder?.hearingNumber ? 8 : 20}
                 maxLength={1000}
                 className={`custom-textarea-style`}
               ></textarea>
               {errors["itemText"] && <CardLabelError>{t(errors["itemText"]?.msg || "CORE_REQUIRED_FIELD_ERROR")}</CardLabelError>}
             </div>
 
-            {currentInProgressHearing && (
+            {(currentInProgressHearing || currentOrder?.hearingNumber) && (
               <div>
                 <div style={{ fontSize: "16px", fontWeight: "400", marginBottom: "5px", marginTop: "12px" }}>{t("NEXT_HEARING_TEXT")}</div>
                 <textarea
                   value={
                     skipScheduling
                       ? `${t("NO_NEXT_HEARING")}`
-                      : `${purposeOfHearing ? `${t("PURPOSE_OF_NEXT_HEARING")} ${t(purposeOfHearing?.code || purposeOfHearing)}` : ``}${
-                          purposeOfHearing && nextHearingDate ? "\n" : ""
-                        }${nextHearingDate ? `${t("DATE_TEXT")} ${new Date(nextHearingDate).toLocaleDateString()}` : ``}`
+                      : `${
+                          purposeOfHearing || currentOrder?.purposeOfNextHearing
+                            ? `${t("PURPOSE_OF_NEXT_HEARING")} ${t(purposeOfHearing?.code || purposeOfHearing || currentOrder?.purposeOfNextHearing)}`
+                            : ``
+                        }${
+                          (purposeOfHearing || currentOrder?.purposeOfNextHearing) && (nextHearingDate || currentOrder?.nextHearingDate) ? "\n" : ""
+                        }${
+                          nextHearingDate || currentOrder?.nextHearingDate
+                            ? `${t("DATE_TEXT")} ${new Date(nextHearingDate || currentOrder?.nextHearingDate).toLocaleDateString()}`
+                            : ``
+                        }`
                   }
                   rows={3}
                   maxLength={1000}
