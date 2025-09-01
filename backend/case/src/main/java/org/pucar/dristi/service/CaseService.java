@@ -37,9 +37,7 @@ import org.pucar.dristi.web.models.analytics.Outcome;
 import org.pucar.dristi.web.models.task.Task;
 import org.pucar.dristi.web.models.task.TaskRequest;
 import org.pucar.dristi.web.models.task.TaskResponse;
-import org.pucar.dristi.web.models.v2.WitnessDetails;
-import org.pucar.dristi.web.models.v2.WitnessDetailsRequest;
-import org.pucar.dristi.web.models.v2.WitnessDetailsResponse;
+import org.pucar.dristi.web.models.v2.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -5698,9 +5696,11 @@ public class CaseService {
                         uniqueId != null &&
                         uniqueId.equals(existingNode.get("uniqueId").asText())) {
 
-                    // Update existing record - replace the data field
+                    JsonNode data = existingNode.get("data");
+                    WitnessDetails existingWitness = objectMapper.convertValue(data, WitnessDetails.class);
+                    updateWitnessDetails(existingWitness, witnessDetails);
                     ObjectNode existingObjectNode = (ObjectNode) existingNode;
-                    JsonNode updatedDataNode = objectMapper.convertValue(witnessDetails, JsonNode.class);
+                    JsonNode updatedDataNode = objectMapper.convertValue(existingWitness, JsonNode.class);
                     existingObjectNode.set("data", updatedDataNode);
                     found = true;
                     log.debug("Updated existing witness record with uniqueId: {}", uniqueId);
@@ -5722,6 +5722,82 @@ public class CaseService {
         }
         courtCase.setAdditionalDetails(additionalDetailsNode);
     }
+
+    private void updateWitnessDetails(WitnessDetails existingWitness, WitnessDetails witnessDetails) {
+        if (witnessDetails == null) {
+            return;
+        }
+
+        // Update phone numbers
+        if (witnessDetails.getPhoneNumbers() != null &&
+                witnessDetails.getPhoneNumbers().getMobileNumber() != null &&
+                !witnessDetails.getPhoneNumbers().getMobileNumber().isEmpty()) {
+
+            if (existingWitness.getPhoneNumbers() == null) {
+                existingWitness.setPhoneNumbers(new PhoneNumbers()); // assuming PhoneNumbers is the class
+            }
+            if (existingWitness.getPhoneNumbers().getMobileNumber() == null) {
+                existingWitness.getPhoneNumbers().setMobileNumber(new ArrayList<>());
+            }
+            existingWitness.getPhoneNumbers().getMobileNumber()
+                    .addAll(witnessDetails.getPhoneNumbers().getMobileNumber());
+        }
+
+        // Update emails
+        if (witnessDetails.getEmails() != null &&
+                witnessDetails.getEmails().getEmailId() != null &&
+                !witnessDetails.getEmails().getEmailId().isEmpty()) {
+
+            if (existingWitness.getEmails() == null) {
+                existingWitness.setEmails(new Emails());
+            }
+            if (existingWitness.getEmails().getEmailId() == null) {
+                existingWitness.getEmails().setEmailId(new ArrayList<>());
+            }
+            existingWitness.getEmails().getEmailId()
+                    .addAll(witnessDetails.getEmails().getEmailId());
+        }
+
+        // Update address details
+        if (witnessDetails.getAddressDetails() != null &&
+                !witnessDetails.getAddressDetails().isEmpty()) {
+
+            if (existingWitness.getAddressDetails() == null) {
+                existingWitness.setAddressDetails(new ArrayList<>());
+            }
+            existingWitness.getAddressDetails().addAll(witnessDetails.getAddressDetails());
+        }
+
+        // Update simple string fields
+        if (witnessDetails.getFirstName() != null && !witnessDetails.getFirstName().trim().isEmpty()) {
+            existingWitness.setFirstName(witnessDetails.getFirstName());
+        }
+        if (witnessDetails.getLastName() != null && !witnessDetails.getLastName().trim().isEmpty()) {
+            existingWitness.setLastName(witnessDetails.getLastName());
+        }
+        if (witnessDetails.getMiddleName() != null && !witnessDetails.getMiddleName().trim().isEmpty()) {
+            existingWitness.setMiddleName(witnessDetails.getMiddleName());
+        }
+        if (witnessDetails.getWitnessDesignation() != null && !witnessDetails.getWitnessDesignation().trim().isEmpty()) {
+            existingWitness.setWitnessDesignation(witnessDetails.getWitnessDesignation());
+        }
+        if (witnessDetails.getWitnessAge() != null && !witnessDetails.getWitnessAge().trim().isEmpty()) {
+            existingWitness.setWitnessAge(witnessDetails.getWitnessAge());
+        }
+        if (witnessDetails.getAdditionalDetails() != null) {
+            existingWitness.setAdditionalDetails(witnessDetails.getAdditionalDetails());
+        }
+        if (witnessDetails.getDateOfService() != null && !witnessDetails.getDateOfService().trim().isEmpty()) {
+            existingWitness.setDateOfService(witnessDetails.getDateOfService());
+        }
+        if (witnessDetails.getWitnessTag() != null && !witnessDetails.getWitnessTag().trim().isEmpty()) {
+            existingWitness.setWitnessTag(witnessDetails.getWitnessTag());
+        }
+        if (witnessDetails.getOwnerType() != null && !witnessDetails.getOwnerType().trim().isEmpty()) {
+            existingWitness.setOwnerType(witnessDetails.getOwnerType());
+        }
+    }
+
 
 
     /**

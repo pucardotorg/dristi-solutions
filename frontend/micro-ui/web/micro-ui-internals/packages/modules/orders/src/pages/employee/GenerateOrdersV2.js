@@ -260,6 +260,7 @@ const GenerateOrdersV2 = () => {
   const isBenchClerk = roles?.some((role) => role.code === "BENCH_CLERK");
   const isTypist = roles?.some((role) => role.code === "TYPIST_ROLE");
   const [itemTextNull, setItemTextNull] = useState(false);
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
   const fetchCaseDetails = async () => {
     try {
@@ -611,7 +612,7 @@ const GenerateOrdersV2 = () => {
     } else if (caseDetails?.courtCaseNumber) {
       if (caseDetails?.isLPRCase) {
         updatedConfig[0].body[0].populators.mdmsConfig.select =
-          "(data) => {return data['Order'].OrderType?.filter((item)=>[`SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`, `MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER`,`COST`, `WITNESS_BATTA`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
+          "(data) => {return data['Order'].OrderType?.filter((item)=>[`SUMMONS`, `NOTICE`, `MANDATORY_SUBMISSIONS_RESPONSES`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`, `MOVE_CASE_OUT_OF_LONG_PENDING_REGISTER`,`COST`, `WITNESS_BATTA`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
       } else if (!caseDetails?.lprNumber) {
         updatedConfig[0].body[0].populators.mdmsConfig.select =
           "(data) => {return data['Order'].OrderType?.filter((item)=>[`SUMMONS`, `NOTICE`, `SECTION_202_CRPC`, `MANDATORY_SUBMISSIONS_RESPONSES`, `REFERRAL_CASE_TO_ADR`, `SCHEDULE_OF_HEARING_DATE`, `WARRANT`, `OTHERS`, `JUDGEMENT`, `ACCEPT_BAIL`, `PROCLAMATION`, `ATTACHMENT`, `MOVE_CASE_TO_LONG_PENDING_REGISTER`,`COST`, `WITNESS_BATTA`].includes(item.type)).map((item) => {return { ...item, name: 'ORDER_TYPE_'+item.code };});}";
@@ -2092,7 +2093,7 @@ const GenerateOrdersV2 = () => {
 
   const updateOrder = async (order, action, unsignedFileStoreId) => {
     try {
-      const localStorageID = sessionStorage.getItem("fileStoreId");
+      let localStorageID = sessionStorage.getItem("fileStoreId");
       const documents = Array.isArray(order?.documents) ? order.documents : [];
       let taskDetails = null;
       const newCompositeItems = [];
@@ -2137,6 +2138,10 @@ const GenerateOrdersV2 = () => {
         }
       }
 
+      if (mockESignEnabled) {
+        localStorageID = orderPdfFileStoreID;
+      }
+
       const documentsFile =
         signedDoucumentUploadedID !== "" || localStorageID
           ? {
@@ -2153,7 +2158,9 @@ const GenerateOrdersV2 = () => {
               additionalDetails: { name: `Order: ${order?.orderCategory === "COMPOSITE" ? order?.orderTitle : t(order?.orderType)}.pdf` },
             }
           : null;
-      const updatedDocuments = getUpdateDocuments(documents, documentsFile, signedDoucumentUploadedID, fileStoreIds);
+      const updatedDocuments = mockESignEnabled
+        ? [documentsFile]
+        : getUpdateDocuments(documents, documentsFile, signedDoucumentUploadedID, fileStoreIds);
       let orderSchema = {};
       try {
         let orderTypeDropDownConfig = order?.orderNumber
@@ -2226,7 +2233,7 @@ const GenerateOrdersV2 = () => {
           if (updatedOrder?.orderNumber) {
             updateOrderResponse = await updateOrder(updatedOrder, OrderWorkflowAction.SAVE_DRAFT);
           } else {
-            updateOrderResponse = await createOrder(updatedOrder, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails);
+            updateOrderResponse = await createOrder(updatedOrder, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails, allParties);
           }
         }
       } else {
@@ -2242,7 +2249,8 @@ const GenerateOrdersV2 = () => {
             tenantId,
             applicationTypeConfigUpdated,
             configKeys,
-            caseDetails
+            caseDetails,
+            allParties
           );
         } else {
           const totalEnabled = updatedOrderData?.compositeItems?.filter((compItem) => compItem?.isEnabled && compItem?.orderType)?.length;
@@ -2254,7 +2262,7 @@ const GenerateOrdersV2 = () => {
             updatedOrder.orderType = t(compositeItem?.orderType);
             updatedOrder.orderCategory = "INTERMEDIATE";
             updatedOrder.orderTitle = t(compositeItem?.orderType);
-            updateOrderResponse = await createOrder(updatedOrder, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails);
+            updateOrderResponse = await createOrder(updatedOrder, tenantId, applicationTypeConfigUpdated, configKeys, caseDetails, allParties);
           } else {
             const updatedOrder = structuredClone(updatedOrderData);
             const enabledCompositeItems = updatedOrderData?.compositeItems?.filter((item) => item?.isEnabled);
@@ -2265,7 +2273,8 @@ const GenerateOrdersV2 = () => {
               tenantId,
               applicationTypeConfigUpdated,
               configKeys,
-              caseDetails
+              caseDetails,
+              allParties
             );
           }
         }
