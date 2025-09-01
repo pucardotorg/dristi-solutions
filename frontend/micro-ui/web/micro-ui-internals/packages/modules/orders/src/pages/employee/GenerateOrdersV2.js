@@ -2159,7 +2159,9 @@ const GenerateOrdersV2 = () => {
             }
           : null;
       const updatedDocuments = mockESignEnabled
-        ? [documentsFile]
+        ? documentsFile
+          ? [documentsFile]
+          : []
         : getUpdateDocuments(documents, documentsFile, signedDoucumentUploadedID, fileStoreIds);
       let orderSchema = {};
       try {
