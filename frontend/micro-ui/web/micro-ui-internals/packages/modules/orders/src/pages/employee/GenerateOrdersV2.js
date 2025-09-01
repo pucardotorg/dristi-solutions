@@ -2198,9 +2198,6 @@ const GenerateOrdersV2 = () => {
                     ...(taskDetails && { taskDetails }),
                   },
                 }),
-              ...((hearingNumber || hearingDetails?.hearingId) && {
-                hearingNumber: hearingNumber || hearingDetails?.hearingId,
-              }),
               ...((currentInProgressHearing || hearingId) && {
                 hearingSummary: order?.itemText,
               }),
