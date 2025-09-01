@@ -220,7 +220,7 @@ public class HearingUpdateConsumer {
 
     private JsonNode getCaseDetails(RequestInfo requestInfo, Hearing hearing) {
         CaseSearchRequest caseSearchRequest = createCaseSearchRequest(requestInfo, hearing);
-        return caseUtil.searchCaseDetails(caseSearchRequest).get(0);
+        return caseUtil.searchCaseDetails(caseSearchRequest);
     }
 
     private String textValueOrNull(JsonNode node, String field) {
