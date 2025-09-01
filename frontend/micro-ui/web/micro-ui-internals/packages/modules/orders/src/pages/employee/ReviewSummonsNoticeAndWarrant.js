@@ -73,10 +73,10 @@ function getAction(selectedDelievery, orderType) {
   }
 
   if (key === "DELIVERED") {
-    return (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT") ? "DELIVERED" : "SERVED";
+    return orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "DELIVERED" : "SERVED";
   }
 
-  return (orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT") ? "NOT_DELIVERED" : "NOT_SERVED";
+  return orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT" ? "NOT_DELIVERED" : "NOT_SERVED";
 }
 
 const ReviewSummonsNoticeAndWarrant = () => {
@@ -113,6 +113,7 @@ const ReviewSummonsNoticeAndWarrant = () => {
   const [updateStatusDate, setUpdateStatusDate] = useState("");
   const userInfo = Digit.UserService.getUser()?.info;
   const userType = useMemo(() => (userInfo?.type === "CITIZEN" ? "citizen" : "employee"), [userInfo?.type]);
+  const mockESignEnabled = window?.globalConfigs?.getConfig("mockESignEnabled") === "true" ? true : false;
 
   const [tabData, setTabData] = useState(
     isJudge
@@ -286,7 +287,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
           },
         };
         await taskService.updateTask(reqBody, { tenantId }).then(async (res) => {
-          if (res?.task && selectedDelievery?.key === "NOT_DELIVERED" && !(orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT")) {
+          if (
+            res?.task &&
+            selectedDelievery?.key === "NOT_DELIVERED" &&
+            !(orderType === "WARRANT" || orderType === "PROCLAMATION" || orderType === "ATTACHMENT")
+          ) {
             await taskService.updateTask(
               {
                 task: {
@@ -505,7 +510,13 @@ const ReviewSummonsNoticeAndWarrant = () => {
 
   const handleSubmitEsign = useCallback(async () => {
     try {
-      const localStorageID = sessionStorage.getItem("fileStoreId");
+      let localStorageID = "";
+      if (mockESignEnabled) {
+        // For mock esign, just send the existing file store id in update calls.
+        localStorageID = rowData?.documents?.[0]?.fileStore;
+      } else {
+        localStorageID = sessionStorage.getItem("fileStoreId");
+      }
       const documents = Array.isArray(rowData?.documents) ? rowData.documents : [];
       const documentsFile =
         signatureId !== "" || localStorageID
@@ -587,7 +598,11 @@ const ReviewSummonsNoticeAndWarrant = () => {
           type: "document",
           modalBody: <DocumentViewerWithComment infos={infos} documents={documents} links={links} />,
           actionSaveOnSubmit: () => {},
-          hideSubmit: isTypist || ((rowData?.taskType === "WARRANT" || rowData?.taskType === "PROCLAMATION" || rowData?.taskType === "ATTACHMENT") && rowData?.documentStatus === "SIGN_PENDING" && !isJudge),
+          hideSubmit:
+            isTypist ||
+            ((rowData?.taskType === "WARRANT" || rowData?.taskType === "PROCLAMATION" || rowData?.taskType === "ATTACHMENT") &&
+              rowData?.documentStatus === "SIGN_PENDING" &&
+              !isJudge),
         },
         {
           heading: { label: t("ADD_SIGNATURE") },

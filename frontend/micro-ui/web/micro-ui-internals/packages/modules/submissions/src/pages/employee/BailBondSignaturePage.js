@@ -108,6 +108,7 @@ const BailBondSignaturePage = () => {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(null);
   const [esignMobileNumber, setEsignMobileNumber] = useState("");
+  const [loader, setLoader] = useState(false);
 
   const { data: bailBondOpenData, isLoading: isBailBondLoading } = useOpenApiSearchBailBond(
     {
@@ -320,12 +321,52 @@ const BailBondSignaturePage = () => {
     }
   }, [showErrorToast]);
 
+  const handleMockESign = async () => {
+    try {
+      setLoader(true);
+      const payload = {
+        tenantId,
+        bailId: bailbondId,
+        mobileNumber: isUserLoggedIn ? userInfo?.mobileNumber : mobileNumber,
+        fileStoreId: fileStoreId,
+      };
+      sessionStorage.removeItem("fileStoreId");
+      const res = await submissionService.updateOpenBailBond(payload, { tenantId });
+      setShowSignatureModal(false);
+      setShowSuccessModal(true);
+    } catch (error) {
+      console.error("Error while updating bail bond:", error);
+      setShowErrorToast({ label: t("SOMETHING_WENT_WRONG"), error: true });
+    } finally {
+      setLoader(false);
+    }
+  };
+
   if (isBailDataLoading || isBailBondLoading) {
     return <Loader />;
   }
 
   return (
     <React.Fragment>
+      {loader && (
+        <div
+          style={{
+            width: "100vw",
+            height: "100vh",
+            zIndex: "99999999",
+            position: "fixed",
+            right: "0",
+            display: "flex",
+            top: "0",
+            background: "rgb(234 234 245 / 50%)",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          className="submit-loader"
+        >
+          <Loader />
+        </div>
+      )}
       <div style={styles.header}>{t("BAIL_BOND")}</div>
       <div style={styles.container}>
         <div style={styles.leftPanel}>
@@ -417,6 +458,7 @@ const BailBondSignaturePage = () => {
           fileStoreId={fileStoreId}
           signPlaceHolder={signingUserDetails?.placeHolder}
           mobileNumber={signingUserDetails?.mobileNumber}
+          handleMockESign={handleMockESign}
         />
       )}
       {showSuccessModal && <SuccessBannerModal t={t} handleCloseSuccessModal={handleCloseSuccessModal} message={"SIGNED_BAIL_BOND_MESSAGE"} />}
