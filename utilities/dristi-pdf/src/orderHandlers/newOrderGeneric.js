@@ -102,7 +102,9 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
 
     const currentDate = new Date();
     const formattedToday = formatDate(currentDate, "DD-MM-YYYY");
-    const caseNumber = courtCase?.isLPRCase ? courtCase?.lprNumber : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
+    const caseNumber = courtCase?.isLPRCase
+      ? courtCase?.lprNumber
+      : courtCase?.courtCaseNumber || courtCase?.cmpNumber || "";
 
     const litigants = courtCase?.litigants?.map((litigant) => ({
       ...litigant,
@@ -139,31 +141,48 @@ async function newOrderGeneric(req, res, qrCode, order, courtCaseJudgeDetails) {
       };
     });
 
-    const accuseds =
-      litigants?.filter((litigant) =>
-        litigant.partyType.includes("respondent")
-      ) || [];
-
-    const accusedList = accuseds?.map((accused) => {
-      const accusedInAdditionalDetails =
-        courtCase?.additionalDetails?.respondentDetails?.formdata?.find(
-          (comp) =>
-            comp?.data?.respondentVerification?.individualDetails
-              ?.individualId === accused?.individualId
-        );
-      const addresses = (
-        accusedInAdditionalDetails?.data?.addressDetails || []
-      )?.map((addressDetail) => {
-        return getStringAddressDetails(addressDetail.addressDetails);
+    const joinedAccuseds = litigants
+      ?.filter((litigant) => litigant.partyType.includes("respondent"))
+      ?.map((accused) => {
+        const accusedInAdditionalDetails =
+          courtCase?.additionalDetails?.respondentDetails?.formdata?.find(
+            (comp) =>
+              comp?.data?.respondentVerification?.individualDetails
+                ?.individualId === accused?.individualId
+          );
+        const addresses = (
+          accusedInAdditionalDetails?.data?.addressDetails || []
+        )?.map((addressDetail) => {
+          return getStringAddressDetails(addressDetail.addressDetails);
+        });
+        return {
+          name: accused?.additionalDetails?.fullName,
+          address: addresses?.join(", ") || "",
+          listOfAdvocatesRepresenting: accused?.representatives
+            ?.map((rep) => rep?.additionalDetails?.advocateName)
+            ?.join(", "),
+        };
       });
-      return {
-        name: accused?.additionalDetails?.fullName,
-        address: addresses?.join(", ") || "",
-        listOfAdvocatesRepresenting: accused?.representatives
-          ?.map((rep) => rep?.additionalDetails?.advocateName)
-          ?.join(", "),
-      };
-    });
+
+    const unJoinedAccuseds =
+      courtCase.additionalDetails.respondentDetails.formdata?.map(
+        (formData) => {
+          const data = formData?.data;
+          const firstName = data?.respondentFirstName || "";
+          const middleName = data?.respondentMiddleName || "";
+          const lastName = data?.respondentLastName || "";
+          const addresses = data?.addressDetails?.map((addressDetail) => {
+            return getStringAddressDetails(addressDetail?.addressDetails);
+          });
+          return {
+            name: `${firstName} ${middleName} ${lastName}` || "",
+            address: addresses?.join(", ") || "",
+            listOfAdvocatesRepresenting: [],
+          };
+        }
+      );
+
+    const accusedList = [...joinedAccuseds, ...unJoinedAccuseds];
 
     const listOfPresentAttendees =
       order?.attendance?.Present?.map(
