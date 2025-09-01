@@ -376,8 +376,7 @@ const SelectParty = ({
                   })
                   ?.map((party) => ({
                     ...party,
-                    isDisabled:
-                      party?.isAdvocateRepresenting || (selectPartyData?.isReplaceAdvocate?.value !== "YES" && party?.advocateRepresentingLength < 1),
+                    isDisabled: party?.isAdvocateRepresenting,
                   }))}
                 selected={party}
                 optionsKey={"fullName"}
