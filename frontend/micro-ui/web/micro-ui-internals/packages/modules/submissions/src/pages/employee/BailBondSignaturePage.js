@@ -13,88 +13,13 @@ import { useLocation } from "react-router-dom/cjs/react-router-dom";
 import useSearchBailBondService from "../../hooks/submissions/useSearchBailBondService";
 import { bailBondWorkflowAction } from "@egovernments/digit-ui-module-dristi/src/Utils/submissionWorkflow";
 
-const getStyles = () => ({
-  header: { fontSize: "26px", padding: "12px 40px", fontWeight: 700, borderBottom: "1px solid #E8E8E8" },
-  container: {
-    display: "flex",
-    flexDirection: "row",
-    marginBottom: "50px",
-    paddingRight: "24px",
-    paddingLeft: "24px",
-    height: "100%",
-  },
-  details: { color: "#0A0A0A", fontWeight: 700, fontSize: "18px", paddingBottom: "22px" },
-  detailsSection: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-  },
-  leftPanel: {
-    width: "350px",
-    paddingTop: "30px",
-    paddingBottom: "16px",
-    paddingLeft: "16px",
-    borderRight: "1px solid #E8E8E8",
-    display: "flex",
-    flexDirection: "column",
-    gap: "16px",
-  },
-  rightPanel: {
-    flex: 1,
-    padding: "24px",
-    height: "100%",
-    boxSizing: "border-box",
-    overflow: "hidden",
-    display: "flex",
-    flexDirection: "column",
-  },
-  docViewer: {
-    flex: 1,
-    marginTop: "24px",
-    border: "1px solid #e0e0e0",
-    overflow: "auto",
-    borderRadius: "8px",
-    background: "#fafafa",
-  },
-  litigantDetails: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    borderBottom: "1px solid #E8E8E8",
-    color: "#77787B",
-    paddingTop: "8px",
-    paddingBottom: "20px",
-    paddingRight: "16px",
-    fontWeight: 700,
-  },
-  signedLabel: {
-    padding: "6px 8px",
-    borderRadius: "999px",
-    color: "#00703C",
-    backgroundColor: "#E4F2E4",
-    fontSize: "14px",
-    fontWeight: 400,
-  },
-  unSignedLabel: {
-    padding: "6px 8px",
-    borderRadius: "999px",
-    color: "#9E400A",
-    backgroundColor: "#FFF6E8",
-    fontSize: "14px",
-    fontWeight: 400,
-  },
-  actionBar: { display: "flex", justifyContent: "flex-end", width: "100%" },
-  submitButton: { boxShadow: "none", backgroundColor: "#008080", color: "#fff", fontWeight: "bold", cursor: "pointer" },
-  editCaseButton: { backgroundColor: "#fff", border: "#007E7E solid", color: "#007E7E", cursor: "pointer" },
-});
-
 const BailBondSignaturePage = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const { bailbondId } = Digit.Hooks.useQueryParams();
   const mobileNumber = location?.state?.mobileNumber;
   const tenantId = Digit.ULBService.getCurrentTenantId();
-  const styles = getStyles();
+  const [viewportWidth, setViewportWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1920);
   const history = useHistory();
   const token = window.localStorage.getItem("token");
   const isAuthorised = location?.state?.isAuthorised;
@@ -348,96 +273,62 @@ const BailBondSignaturePage = () => {
 
   return (
     <React.Fragment>
-      {loader && (
-        <div
-          style={{
-            width: "100vw",
-            height: "100vh",
-            zIndex: "99999999",
-            position: "fixed",
-            right: "0",
-            display: "flex",
-            top: "0",
-            background: "rgb(234 234 245 / 50%)",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-          className="submit-loader"
-        >
-          <Loader />
-        </div>
-      )}
-      <div style={styles.header}>{t("BAIL_BOND")}</div>
-      <div style={styles.container}>
-        <div style={styles.leftPanel}>
-          <div style={styles.detailsSection}>
-            <div style={styles.details}>
-              <div>{t("E-sign Status")}</div>
-            </div>
-            <div>
-              {dummyLitigants?.map((litigant, index) => (
-                <div key={index} style={{ ...styles.litigantDetails, marginTop: "5px", fontSize: "16px" }}>
-                  {litigant?.additionalDetails?.fullName}
-                  {` (${litigant?.additionalDetails?.type})`}
-                  {litigant?.hasSigned ? (
-                    <span style={{ ...styles.signedLabel, alignItems: "right" }}>{t("SIGNED")}</span>
-                  ) : (
-                    <span style={{ ...styles.unSignedLabel, alignItems: "right" }}>{t("PENDING")}</span>
-                  )}
-                </div>
-              ))}
-            </div>
+      <div className="bail-bond-signature-page">
+        {loader && (
+          <div className="submit-loader">
+            <Loader />
           </div>
-        </div>
-        <div style={styles.rightPanel}>
-          <div style={styles.docViewer}>
-            {!isLoading ? (
-              <DocViewerWrapper
-                docWidth={"100%"}
-                docHeight={"100%"}
-                selectedDocs={orderPreviewPdf ? [orderPreviewPdf] : []}
-                tenantId={tenantId}
-                docViewerCardClassName={"doc-card"}
-                showDownloadOption={false}
-              />
-            ) : (
-              <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
-            )}
-          </div>
-        </div>
-        <ActionBar>
-          <div style={styles.actionBar}>
-            {isCreator && (
-              <Button
-                label={t("EDIT")}
-                variation={"secondary"}
-                onButtonClick={() => {
-                  setEditCaseModal(true);
-                }}
-                style={{ backgroundColor: "#fff", padding: "10px", width: "90px", marginRight: "20px" }}
-                textStyles={{
-                  fontFamily: "Roboto",
-                  fontSize: "16px",
-                  fontWeight: 700,
-                  lineHeight: "18.75px",
-                  textAlign: "center",
-                  color: "#007E7E",
-                }}
-              />
-            )}
-            {signingUserDetails?.mobileNumber && !signingUserDetails?.hasSigned && (
-              <SubmitBar
-                label={
-                  <div style={{ boxShadow: "none", display: "flex", alignItems: "center", justifyContent: "center", width: "100%" }}>
-                    <span>{t("PROCEED_TO_E_SIGN")}</span>
+        )}
+        <div className="header">{t("BAIL_BOND")}</div>
+        <div className="container">
+          <div className="left-panel">
+            <div className="details-section">
+              <div className="details">
+                <div>{t("E-sign Status")}</div>
+              </div>
+              <div>
+                {dummyLitigants?.map((litigant, index) => (
+                  <div key={index} className="litigant-details">
+                    {litigant?.additionalDetails?.fullName}
+                    {` (${litigant?.additionalDetails?.type})`}
+                    {litigant?.hasSigned ? (
+                      <span className="signed-label">{t("SIGNED")}</span>
+                    ) : (
+                      <span className="unsigned-label">{t("PENDING")}</span>
+                    )}
                   </div>
-                }
-                onSubmit={handleSubmit}
-                style={styles.submitButton}
-              />
-            )}
+                ))}
+              </div>
+            </div>
           </div>
-        </ActionBar>
+
+          <div className="right-panel">
+            <div className="doc-viewer">
+              {!isLoading ? (
+                <DocViewerWrapper
+                  docWidth="100%"
+                  docHeight="100%"
+                  selectedDocs={orderPreviewPdf ? [orderPreviewPdf] : []}
+                  tenantId={tenantId}
+                  docViewerCardClassName="doc-card"
+                  showDownloadOption={false}
+                />
+              ) : (
+                <h2>{t("PREVIEW_DOC_NOT_AVAILABLE")}</h2>
+              )}
+            </div>
+          </div>
+
+          {signingUserDetails?.mobileNumber && !signingUserDetails?.hasSigned && (
+            <ActionBar className="action-bar-buttons">
+              <div className="action-bar">
+                {isCreator && <Button label={t("EDIT")} variation="secondary" onButtonClick={() => setEditCaseModal(true)} className="edit-btn" />}
+
+                <SubmitBar label={<span>{t("PROCEED_TO_E_SIGN")}</span>} onSubmit={handleSubmit} className="submit-btn" />
+              </div>
+            </ActionBar>
+          )}
+        </div>
       </div>
       {isEditCaseModal && (
         <EditSendBackModal
