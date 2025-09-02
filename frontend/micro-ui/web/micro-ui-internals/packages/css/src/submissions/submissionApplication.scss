@@ -81,14 +81,11 @@
   }
 }
 
-/* Responsive styles for signature modal without affecting desktop */
 .responsive-signature-modal {
   &.popup-module {
     @media (max-width: 1024px) {
       width: 60vw;
-      /* Avoid full-height on smaller desktops */
-      max-height: 88vh;
-      height: auto;
+      height: fit-content;
       .popup-module-main {
         max-height: calc(88vh - 120px);
         overflow: auto;
@@ -96,31 +93,25 @@
     }
 
     @media (max-width: 768px) {
-      width: 80vw;
-      max-height: 90vh;
-      height: auto;
-      .popup-module-main {
-        padding: 24px !important;
-        max-height: calc(90vh - 120px);
-        overflow: auto;
-      }
-    }
-
-    @media (max-width: 480px) {
       width: 95vw;
-      max-height: 86vh;
-      height: auto;
+      height: fit-content;
+      max-height: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       .header-wrap {
         padding: 0 12px !important;
       }
       .popup-module-main {
         padding: 16px !important;
-        max-height: calc(86vh - 112px);
         overflow: auto;
         .add-signature-main-div {
           flex-direction: column;
           .not-signed {
-            h1 { font-size: 20px; }
+            h1 {
+              font-size: 20px;
+            }
             .buttons-div {
               flex-direction: column;
               gap: 12px;
@@ -134,8 +125,51 @@
         flex-direction: column;
         gap: 12px;
         align-items: stretch;
-        padding: 12px 16px !important;
-        button, .selector-button-border, .selector-button-primary, .selector-button-primary-disabled {
+        padding: 0px !important;
+        button,
+        .selector-button-border,
+        .selector-button-primary,
+        .selector-button-primary-disabled {
+          width: 100% !important;
+        }
+      }
+    }
+
+    @media (max-width: 400px) {
+      width: 95vw;
+      max-height: 86vh;
+      height: auto;
+      .header-wrap {
+        padding: 0 12px !important;
+      }
+      .popup-module-main {
+        padding: 16px !important;
+        max-height: calc(86vh - 112px);
+        overflow: auto;
+        .add-signature-main-div {
+          flex-direction: column;
+          .not-signed {
+            h1 {
+              font-size: 20px;
+            }
+            .buttons-div {
+              flex-direction: column;
+              gap: 12px;
+              height: auto;
+            }
+          }
+        }
+      }
+      .popup-module-action-bar {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+        padding: 0px !important;
+        button,
+        .selector-button-border,
+        .selector-button-primary,
+        .selector-button-primary-disabled {
           width: 100% !important;
         }
       }
@@ -350,7 +384,7 @@
         box-shadow: none !important;
         border: 1px #007e7e solid;
         margin-top: 24px;
-    
+
         h2 {
           font-family: Roboto;
           font-size: 16px !important;
@@ -732,7 +766,7 @@
       font-size: 14px;
     }
 
-    .action-bar-buttons{
+    .action-bar-buttons {
       min-width: 100%;
     }
 
@@ -776,7 +810,7 @@
       font-size: 15px;
     }
 
-    .action-bar-buttons{
+    .action-bar-buttons {
       min-width: 100%;
     }
 
@@ -798,3 +832,15 @@
     }
   }
 }
+
+.centered-success-modal {
+  width: 700px;
+  max-width: 90%;
+}
+
+@media (max-width: 768px) {
+  .centered-success-modal {
+    width: 90% !important;
+  }
+}
+

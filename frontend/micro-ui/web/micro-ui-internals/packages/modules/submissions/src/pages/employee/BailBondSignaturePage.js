@@ -318,16 +318,15 @@ const BailBondSignaturePage = () => {
               )}
             </div>
           </div>
+          <ActionBar className="action-bar-buttons">
+            <div className="action-bar">
+              {isCreator && <Button label={t("EDIT")} variation="secondary" onButtonClick={() => setEditCaseModal(true)} className="edit-btn" />}
 
-          {signingUserDetails?.mobileNumber && !signingUserDetails?.hasSigned && (
-            <ActionBar className="action-bar-buttons">
-              <div className="action-bar">
-                {isCreator && <Button label={t("EDIT")} variation="secondary" onButtonClick={() => setEditCaseModal(true)} className="edit-btn" />}
-
+              {signingUserDetails?.mobileNumber && !signingUserDetails?.hasSigned && (
                 <SubmitBar label={<span>{t("PROCEED_TO_E_SIGN")}</span>} onSubmit={handleSubmit} className="submit-btn" />
-              </div>
-            </ActionBar>
-          )}
+              )}
+            </div>
+          </ActionBar>
         </div>
       </div>
       {isEditCaseModal && (
