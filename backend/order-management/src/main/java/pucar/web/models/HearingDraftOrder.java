@@ -1,4 +1,4 @@
-package org.pucar.dristi.web.models.orders;
+package pucar.web.models;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;

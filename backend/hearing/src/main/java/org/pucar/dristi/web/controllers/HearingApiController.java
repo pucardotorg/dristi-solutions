@@ -11,9 +11,6 @@ import org.pucar.dristi.service.WitnessDepositionPdfService;
 import org.pucar.dristi.util.OrderUtil;
 import org.pucar.dristi.util.ResponseInfoFactory;
 import org.pucar.dristi.web.models.*;
-import org.pucar.dristi.web.models.orders.HearingDraftOrderRequest;
-import org.pucar.dristi.web.models.orders.DraftOrderResponse;
-import org.pucar.dristi.web.models.orders.Order;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
@@ -162,22 +159,6 @@ public class HearingApiController {
         List<Integer> noOfDaysToHearingOfEachCase = hearingService.getAvgNoOfDaysToHearingForEachCase();
         log.info("api=/v1/getNoOfDaysToHearing, result=SUCCESS");
         return ResponseEntity.ok(noOfDaysToHearingOfEachCase);
-    }
-
-    @RequestMapping(value = "/v1/getDraftOrder", method = RequestMethod.POST)
-    public ResponseEntity<DraftOrderResponse> getDraftOrder(@Parameter(in = ParameterIn.DEFAULT, description = "Check Draft order for hearing Request and RequestInfo", required = true, schema = @Schema()) @Valid @RequestBody HearingDraftOrderRequest request) {
-        log.info("api=/v1/getDraftOrder, result=IN_PROGRESS");
-        String hearingNumber = request.getHearingDraftOrder().getHearingNumber();
-        String filingNumber = request.getHearingDraftOrder().getFilingNumber();
-        String cnrNumber = request.getHearingDraftOrder().getCnrNumber();
-        String tenantId = request.getHearingDraftOrder().getTenantId();
-
-        Order order = hearingService.createDraftOrder(hearingNumber, tenantId, filingNumber, cnrNumber, request.getRequestInfo());
-        DraftOrderResponse response = DraftOrderResponse.builder().responseInfo(responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true))
-                .order(order)
-                .build();
-        log.info("api=/v1/getDraftOrder, result=SUCCESS");
-        return ResponseEntity.accepted().body(response);
     }
 
 }

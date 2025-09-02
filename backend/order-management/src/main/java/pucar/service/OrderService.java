@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.request.RequestInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 import pucar.config.Configuration;
 import pucar.factory.OrderFactory;
 import pucar.factory.OrderServiceFactoryProvider;
@@ -12,9 +13,7 @@ import pucar.util.ADiaryUtil;
 import pucar.util.CaseUtil;
 import pucar.util.HearingUtil;
 import pucar.util.OrderUtil;
-import pucar.web.models.Order;
-import pucar.web.models.OrderRequest;
-import pucar.web.models.OrderResponse;
+import pucar.web.models.*;
 import pucar.web.models.adiary.BulkDiaryEntryRequest;
 import pucar.web.models.adiary.CaseDiaryEntry;
 import pucar.web.models.courtCase.CaseCriteria;
@@ -134,5 +133,52 @@ public class OrderService {
         log.info("hearing number:{}", newHearing.getHearing().getHearingId());
 
         log.info("pre processing, result=SUCCESS,orderNumber:{}, orderType:{}", order.getOrderNumber(), SCHEDULING_NEXT_HEARING);
+    }
+
+    public Order createDraftOrder(String hearingNumber, String tenantId, String filingNumber, String cnrNumber, RequestInfo requestInfo) {
+        OrderCriteria criteria = OrderCriteria.builder()
+                .filingNumber(filingNumber)
+                .status("DRAFT_IN_PROGRESS")
+                .hearingNumber(hearingNumber)
+                .tenantId(tenantId)
+                .build();
+
+        OrderSearchRequest searchRequest = OrderSearchRequest.builder()
+                .criteria(criteria)
+                .pagination(Pagination.builder().limit(100.0).offSet(0.0).build())
+                .build();
+
+        OrderResponse orderResponse;
+
+        OrderListResponse response = orderUtil.getOrders(searchRequest);
+        if (response != null && !CollectionUtils.isEmpty(response.getList())) {
+            log.info("Found existing SCHEDULING_NEXT_HEARING draft(s) for Hearing ID: {}; skipping creation.", hearingNumber);
+            return response.getList().get(0);
+        } else {
+            Order order = Order.builder()
+                    .hearingNumber(hearingNumber)
+                    .filingNumber(filingNumber)
+                    .cnrNumber(cnrNumber)
+                    .tenantId(tenantId)
+                    .orderCategory("INTERMEDIATE")
+                    .orderTitle("Schedule of Next Hearing Date")
+                    .orderType("SCHEDULING_NEXT_HEARING")
+                    .isActive(true)
+                    .status("")
+                    .statuteSection(StatuteSection.builder().tenantId(tenantId).build())
+                    .build();
+
+            WorkflowObject workflow = new WorkflowObject();
+            workflow.setAction("SAVE_DRAFT");
+            workflow.setDocuments(List.of(new org.egov.common.contract.models.Document()));
+            order.setWorkflow(workflow);
+
+            OrderRequest orderRequest = OrderRequest.builder()
+                    .requestInfo(requestInfo).order(order).build();
+            orderResponse = orderUtil.createOrder(orderRequest);
+            log.info("Order created for Hearing ID: {}, orderNumber:: {}", hearingNumber, orderResponse.getOrder().getOrderNumber());
+        }
+
+        return orderResponse.getOrder();
     }
 }

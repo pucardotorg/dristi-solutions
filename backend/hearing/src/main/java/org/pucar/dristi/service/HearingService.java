@@ -851,7 +851,7 @@ public class HearingService {
         return averageDaysList;
     }
 
-    public Order createDraftOrder(String hearingNumber, String tenantId, String filingNumber, String cnrNumber, RequestInfo requestInfo) {
+    public void createDraftOrder(String hearingNumber, String tenantId, String filingNumber, String cnrNumber, RequestInfo requestInfo) {
         OrderCriteria criteria = OrderCriteria.builder()
                 .filingNumber(filingNumber)
                 .status("DRAFT_IN_PROGRESS")
@@ -869,7 +869,6 @@ public class HearingService {
         OrderListResponse response = orderUtil.getOrders(searchRequest);
         if (response != null && !CollectionUtils.isEmpty(response.getList())) {
             log.info("Found existing SCHEDULING_NEXT_HEARING draft(s) for Hearing ID: {}; skipping creation.", hearingNumber);
-            return response.getList().get(0);
         } else {
             Order order = Order.builder()
                     .hearingNumber(hearingNumber)
@@ -895,7 +894,6 @@ public class HearingService {
             log.info("Order created for Hearing ID: {}, orderNumber:: {}", hearingNumber, orderResponse.getOrder().getOrderNumber());
         }
 
-        return orderResponse.getOrder();
     }
 
 
