@@ -322,8 +322,12 @@ public class TaskService {
                     config.getTaskBailBusinessServiceName(), workflow, config.getTaskBailBusinessName());
             case SUMMON -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskSummonBusinessServiceName(), workflow, config.getTaskSummonBusinessName());
-            case WARRANT, PROCLAMATION, ATTACHMENT -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
+            case WARRANT -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskWarrantBusinessServiceName(), workflow, config.getTaskWarrantBusinessName());
+            case PROCLAMATION-> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
+                    config.getTaskProclamationBusinessServiceName(), workflow, config.getTaskProclamationBusinessName());
+            case ATTACHMENT -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
+                    config.getTaskAttachmentBusinessServiceName(), workflow, config.getTaskAttachmentBusinessName());
             case NOTICE -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
                     config.getTaskNoticeBusinessServiceName(), workflow, config.getTaskNoticeBusinessName());
             case JOIN_CASE -> workflowUtil.updateWorkflowStatus(requestInfo, tenantId, taskNumber,
