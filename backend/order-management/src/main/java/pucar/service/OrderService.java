@@ -82,13 +82,13 @@ public class OrderService {
 
         orderProcessor.preProcessOrder(request);
 
-        if(request.getOrder().getNextHearingDate()!=null){
+        if(E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getNextHearingDate()!=null){
             preProcessScheduleNextHearing(request);
         }
 
         OrderResponse orderResponse = orderUtil.updateOrder(request);
 
-        if(request.getOrder().getNextHearingDate()!=null){
+        if(E_SIGN.equalsIgnoreCase(request.getOrder().getWorkflow().getAction()) && request.getOrder().getNextHearingDate()!=null){
             hearingUtil.updateHearingStatus(request);
         }
 

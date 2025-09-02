@@ -877,6 +877,8 @@ public class HearingService {
                     .cnrNumber(cnrNumber)
                     .tenantId(tenantId)
                     .orderCategory("INTERMEDIATE")
+                    .orderTitle("Schedule of Next Hearing Date")
+                    .orderType("SCHEDULING_NEXT_HEARING")
                     .isActive(true)
                     .status("")
                     .statuteSection(StatuteSection.builder().tenantId(tenantId).build())
