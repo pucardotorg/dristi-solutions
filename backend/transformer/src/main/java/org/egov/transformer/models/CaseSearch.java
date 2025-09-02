@@ -77,4 +77,7 @@ public class CaseSearch {
 
     @JsonProperty("caseSubStage")
     private String caseSubStage = null;
+
+    @JsonProperty("outcome")
+    private String outcome = null;
 }
